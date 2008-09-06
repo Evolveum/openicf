@@ -1,0 +1,178 @@
+<HTML>
+<HEAD>
+    <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=iso-8859-1">
+    <TITLE>Developing Connector Bundles with the Java Toolkit</TITLE>
+</HEAD>
+<DIV ID="projecthome" CLASS="app">
+    <H1>Developing Connector Bundles with the Java Toolkit</H1>
+    <P>This document describes the build environment and usage instructions
+    for the Java Toolkit for Connectors.
+    </P>
+    <P>Requirements: 
+    </P>
+    <UL>
+        <LI><A HREF="http://java.sun.com/">Java
+        1.5.x</A> 
+    
+        <LI><A HREF="http://ant.apache.org/">Ant
+        1.7.x</A> 
+    
+        <LI><A HREF="http://junit.org/">JUnit
+        4.x</A>  
+                
+    </UL>
+    <P>Optional: 
+    </P>
+    <UL>
+        <LI>Code Coverage - Requires
+        <A HREF="http://cobertura.sourceforge.net/">Cobertura 1.9</A> 
+    
+        <LI>Code Analysis - Requires <A HREF="http://findbugs.sourceforge.net/">FindBugs-1.3.2</A>
+            
+    </UL>
+    <H3>Getting Started</H3>
+    <P>The first thing to do is go to the <STRONG><A HREF="https://openconnectors.dev.java.net/servlets/ProjectDocumentList">download center</STRONG></A>
+    and grab the latest version of the Java Toolkit for Connectors. The toolkit contains the following elements:</P> 
+    
+    <UL>
+    <LI>The Connectors Framework
+    <LI>Full API & SPI Documentation 
+    <LI>The Connector Contract Test Suite
+    <LI>A Connector Creation Wizard 
+    <LI>A Groovy Console for testing and debugging   
+    </UL>
+    <P>Think of this as an SDK for Connectors. It is completely Ant-based, self-contained, and <a href="#IDE">IDE-compatible</a>. The directory where you extract the toolkit
+    will be your "framework home" (no need to check out and build the framework from SVN). Once you unzip the toolkit, you can start creating 
+    connectors immediately by running 'ant' from the command line.</P>
+    <P>The toolkit essentially functions to create the necessary files and directory structure for connector bundles, as well as a basic set of test
+    scaffolding (this includes files in the bundle directory, the toolkit (framework) directory, and your <I>$user.home</I> directory). Once this is done, 
+    you will work from the bundle directory itself for the rest of the connector lifecycle. The necessary references back 
+    to the framework will be automatically generated. The toolkit also includes a 'clean' target, which is effectively the opposite of 'create'; it 
+    will remove all the generated files and directories associated with the specified connector bundle, essentially providing an "undo" if the need arises. </P>
+    
+    <H3>Basic Usage</H3>
+   <PRE>ant [options] [target]</PRE>
+<P>Available options:</P><UL>
+    <LI><P>Type "ant -help" to see available options. There are none specific to this toolkit.</P>
+    </UL>   
+                           
+<P>Available targets are:</P><UL>   
+ 
+    <LI><P>"<B>create</B>"                Generates a skeleton Connector bundle in the specified directory.</P> 
+                                        <UL><LI><P><B>This is the default target.</B></P></UL>                
+                                                                        
+    <LI><P>"<B>clean</B>"                 Deletes the specified bundle directory and all its contents.</P>
+                
+    <LI><P>"<B>usage</B>"                 Prints the usage information for this toolkit.</P></UL>              
+       
+Examples:
+    <PRE>ant</PRE>      (launches the bundle creation wizard)
+    <PRE>ant clean</PRE>      (prompts for a bundle directory, runs the cleanup script)
+       
+    <H3>Creating a new Connector</H3>
+    <P>To launch the Connector creator wizard, simply navigate to your framework home (the toolkit directory, after you extract it) and type "<B>ant</B>".</P>
+    <PRE>~/workspace/JavaToolkit$ ant</PRE>
+    <P>This will immediately check your environment to ensure it meets the minimum requirements and then prompt you for a path (directory) for your new bundle. You don't need to create
+    a new folder beforehand; the toolkit will create it for you. Or, if you are re-creating a bundle, you can enter a directory that already exists.
+    <P>Next, if the directory already exists, you will be asked to confirm that you'd like to delete everything in the bundle directory and create a new bundle. You can always choose "No" if you selected the wrong directory.
+    </P><P>Next you will be asked the name of the <B>resource</B> you would like to connect to. This is not the name of the entire bundle,
+    just the name of the target machine or database, such as "LDAP" or "Unix". Finally, you'll have the option to enter a custom package name (or just use the default) and select which
+    operations you will implement.</P><P>Once you have completed these steps, the toolkit will generate your entire bundle directory structure and source tree, with stubbed methods for the 
+    interfaces you selected, as well as common helper and example methods as well. It will also generate a <A HREF="#PropsFile">properties file</A> for use with testing and a <I>bootstrap.groovy</I> script that you can 
+    load up in the <A HREF="#GROOVY">Groovy Console</A> for quick and easy debugging. At this point, the connector is ready for you to begin working on, or to build immediately. For building and
+    running tests, you will want to switch to the bundle directory you just created and use its local <B><I>build.xml</I></B> file. The following sections cover this in detail. You can also <A HREF="#IDE">import
+    your project</A> into an IDE at this point.
+    </P>
+    <P>For details on the directory structure, see Step 4 on the <A HREF="development.html">manual connector development page</A>.</P>
+    
+    <H3><A NAME="Building">Building a Connector</a></H3>
+    <P><B>Prerequisite:</B> The JUnit4 JAR must be on your Ant lib path. The easiest way to accomplish 
+this is to download and copy junit4.jar to the $antHome/lib directory, where $antHome 
+is the base install directory of Ant. You can easily find this by typing "ant -diagnostics"
+at the command line.</P>
+    
+    <P>Building a connector is as simple as running the connector's Ant build file from within the <B>bundle directory</B>:</P>
+    <PRE>~/workspace/FooBundle$ ant</PRE>
+    
+    <P>You can also call individual targets (such as "clean" or "compile") on your connector as well, should you want to. This is accomplished by running a 
+    normal build and specifying the desired target, again from within the bundle directory:</P>
+    <PRE>~/workspace/FooBundle$ ant clean</PRE>
+    
+    <P>See the framwork's common <I>connector_build.xml</I> file for all the available targets. There are also three (optional) ant options
+    that can be set when building as well. These are:</P>
+    <UL>
+        <LI><P>'<B>cobertura.home</B>'  (Install
+        location of Cobertura, if you have it installed and are doing a
+        coverage build)</P>
+        <LI><P>'<B>findbugs.home</B>'  (Install
+        location of FindBugs, if you have it installed and are doing code
+        analysis)</P>
+        <LI><P>'<B>external.reporting</B>'  (Boolean
+        indicating whether there will be an external reporting engine used for test reports)
+        </P>
+    </UL>
+    <P>You can specify these as normal ant options, as follows:</P>
+    <PRE>ant -Dfindbugs.home=/home/programs/findbugs</PRE>
+    <P>As mentioned, each connector has its own <I>build.xml</I>
+    file used to define the build rules. In actuality, this build
+    file simply references a common build file in the framework. When you create and build connectors using this toolkit,
+    the path to the framework is automatically set for you. Should you change the location of the toolkit (framework), you
+    will need to specify the <B>framework.dir</B> option on your build command as well.
+       
+    <H3><A NAME="Tests">Running Tests</A></H3>
+    <P>By default, all tests are run when you do a build on your Connector. This includes first any unit tests that you have written (white-box testing), and then
+    the framework's contract test suite (black-box testing) as well. You do not have to do anything special besides putting the JUnit JAR in the right place (see
+    "<A HREF="#Building">Building a Connector</A>", above) to make this happen. However, if you wish to run either of these two classes of tests independently, you certainly can.
+    There are three main test targets in the build:</P><UL>
+    <LI><P>"<B>test</B>" (Runs all tests)</P>
+    <LI><P>"<B>run-unit-tests</B>" (Runs any user-defined unit tests)</P>
+    <LI><P>"<B>run-contract-tests</B>" (Runs the framework's contract test suite to check that your connector is compliant)</P></UL>
+    <P>To run the contract test suite on your connector, for example, you'd type the following (from within the bundle directory):</P>
+    <PRE>~/workspace/FooBundle$ ant run-contract-tests</PRE>
+    <P>Likewise, if you wanted to run only your own unit tests, you'd run:</P>
+    <PRE>~/workspace/FooBundle$ ant run-unit-tests</PRE><A NAME="PropsFile"/>
+    <P>When writing tests, there is a utility class you may use called TestHelpers. It loads properties from both the connector's <I>build.properties</I> file AND
+    a hidden, environment-specific properties file in your user.home directory. This allows you to extract privileged data (such as a path names or user credentials) from
+    your testing code and place them in this local file. The naming convention for this file is <B>$user.home/.$project-name.properties</B>, where $project-name is the ant
+    project name as defined in the connector's <I>build.xml</I> file. The toolkit auto-generates this file for you, and you are free to add anything you need to it. In code
+    all you need to do is call TestHelpers.getProperty() to retrieve any properties you have set.</P>
+    
+    <H3><A NAME="GROOVY">Using the Groovy Console</A></H3>
+    <P>The Groovy console is provided to allow quick and easy on-the-spot debugging of a connector. It can be launched from the <B>bundle directory</B> by
+    invoking the "console" target, as follows:</P>
+    <PRE>~/workspace/FooBundle$ ant console</PRE>
+    <P>Since it is launched from the bundle directory, the framework gives the console access to your connector classes by adding them
+    to the classpath. Once you have the console open, you can type in any arbitrary Java or Groovy code and execute it as many times as you like. In addition, 
+    there is a pre-built <I>bootstrap.groovy</I> script available to help you test your connector. This will appear under the bundle directory after you create a
+    connector. Feel free to modify and add your own scripts as necessary.</P><P>To open one of these scripts, simply choose <I>File -> Open</I>
+    from the console's graphical menu. More information on the Groovy console can be found <a href="http://groovy.codehaus.org/Groovy+Console">here</a>.</P>
+    
+    <H3><A NAME="IDE">IDE Integration</A></H3>
+    <H4>Netbeans</H4>
+    <p>This toolkit includes a Netbeans Plugin which you can use to further automate the connector construction process if you are a Netbeans user. The plugin is a visual 
+    wrapper for the Ant-based Connector Creation Wizard that is provided with the toolkit. It will create and integrate skeleton connectors into the Netbeans environment
+    based on your input. To install in Netbeans, simply choose <b>Tools -> Plugins</b>
+    and switch to the "<b>Downloaded</b>" tab (since this is a downloaded plugin). Then just add the plugin from your toolkit directory (it is a ".nbm" file) and you're all set.</p>
+    <p>To build a new connector you can now choose <b>Tools -> Connectors Toolkit</b>. Usage is simple:</p>
+      <h5>Step 1: Set Properties</h4>
+      <p>
+        <ol>
+        <li>Tell Netbeans where you extracted the Connectors Toolkit.</li>
+        <li>Choose a directory in which to create your new connector.</li>
+        <li>Enter the name of the <b>target resource</b>.</li>
+        <li>Enter a package name for the generated classes (or use the default).</li>
+    </ol>
+    </p>
+      <h5>Step 2: Choose SPI Operations</h4>
+    <p>All the SPI operations (authenticate, create, delete, etc.) are opt-in, so you may choose
+      whichever ones your resource supports. When finished, click "Finish", and Netbeans will generate
+      a skeleton connector implementing the interfaces you selected. It will also set up the necessary
+      library and javadoc references as well. The new connector project will be automatically opened and
+      at this point is ready for you to begin working on.
+    </p>
+
+    <h4>Other IDE's</h4>
+    <P>The connector skeletons generated by this toolkit also include Eclipse <I>.project</I> and <I>.classpath</I> meta-files, which allows you to import your connector(s) directly into Eclipse and several other IDE's.</P>
+    <P>The build dependencies are already set up; however, if you intend to use your IDE's JUnit runner, you'll need to set the System property "<B>project.name</B>" to the ant project name as
+    defined in your connector's <I>build.xml</I> file. This is so that the TestHelpers class knows where to find any sensitive properties you have defined (see <A HREF="#Tests">Running Tests</A>).</P>
+</DIV>

@@ -1,48 +1,60 @@
 <html>
 <head>
-<title>Project Home Page</title>
+<title>Identity Connectors</title>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 </head>
-
-<body bgcolor="#FFFFFF" text="#000000">
-<h1>Default project home page </h1>
-<p>Congratulations on your new java.net project! </p>
-<p>If your project uses Subversion, you can click on the 'Edit' link at the
-bottom of your project home page and edit it using the WYSIWYG editor.
-You can also create Project Pages by clicking on 'Edit project pages'
-link on the project home page. You can add several tabbed pages using
-the Project Content Editor. For more help click here
-<a href="https://www.dev.java.net/nonav/scdocs/ContentEditor_C.html">https://www.dev.java.net/nonav/scdocs/ContentEditor_C.html</a> </p>
-<p>If your project uses CVS, you can edit the information displayed on this
-page, by checking out your project's CVS repository and editing the
-index.html file in directory www. To get more information on how to
-set-up your local CVS client, click on CVS link on the left nav bar. 
-</p>
+<div id="projecthome" class="app"> 
+ <h1>Identity Connectors</h1>
+  <a href="GovernancePolicy.html">Governance</a> | 
+  <a href="GovernancePolicy.html#SCA_Policy">Contributor Agreement</a>
+<br>
+  <p>
+  <h3>Project highlights</h3>
+<p>The Identity Connectors Toolkit is built to help drive development of
+Connectors. Connectors provide a consistent generic layer between
+applications and target resources. The main focus of the API is
+provisioning operations and password management. The toolkit is intended
+to facilitate development with as few dependences as possible.
+<p>One of the main features of the framework is decoupling
+Connectors from any application that uses them. This means each
+Connector implementation can be easily replaced and not necessarily
+depend on a specific version of the framework. In addition an
+application may choose to use multiple Connectors which can require
+class path isolation. With class path isolation there is no
+issue with conflicting 3rd party libraries. An application will only be
+required to couple to the framework and not to any specific Connector.
 <p>
-If you don't want to use CVS to manage your home page, click on the Edit
-project link on this page and and choose the Description option. Your
-project home page contents will be generated from the Description field.
-Edit the text on that field to change your home page contents. Click on
-Submit changes to save your edits.
-</p>
-<p>You can find lots of helpful information in the Starter Kit to get your project 
-  started. Some of the things you will find in there include:</p>
+Architecture:<br>
 <ul>
-  <li>Hints on how to <a href="https://java-net.dev.java.net/ProjectPages.html#pages">set-up 
-    your project's</a> home page</li>
-  <li>Ideas on how to <a href="https://java-net.dev.java.net/ProjectPages.html#publicity">publicize 
-    your project</a> including RSS feeds</li>
-  <li>Hints on <a href="https://java-net.dev.java.net/pagedesign.html">project 
-    page HTML</a></li>
-  <li>Setting up project <a href="https://java-net.dev.java.net/ProjectPages.html#wiki">wiki 
-    pages</a></li>
-  <li>And places to go if <a href="https://java-net.dev.java.net/ProjectPages.html#feedback">you 
-    have questions</a>.</li>
+<li><a href='design.html'>Design Overview</a></li>
+<li><a href='connector_bundles.html'>Connector Bundles</a></li>
 </ul>
-<p>Remember that you will attract more new members and your project team will 
-  work more effectively if you, as the project owner, supply sufficient information 
-  about your project for visitors to your project space. Good luck with your new 
-  project! </p>
-</body>
-</html>
+Development:<br>
+<ul>
+<li><a href='Java_Toolkit.html'>Developing Connectors with the Java Toolkit</a></li>
+<li><a href='development.html'>Developing Connectors Manually</a></li>
+<li><a href='dotnet_development.html'>Building and Testing .NET Connectors</a></li>
+</ul>
+Testing:<br>
+<ul>
+<li><a href='contract_tests.html'>Contract Tests configuration and running</a></li>
+</ul>
+Downloads:<br>
+<ul>
+<li><a href='/servlets/ProjectDocumentList'>Project Files</a></li>
+</ul>
+Policies:<br>
+<ul>
+<li><a href='commit_rules.html'>Commit Rules</a></li>
+</ul>
+<p>
+<p>
+<h3>Feedback</h3>
+<ul>
+   <li>Click [TODO: Add Wiki Here]</li>
+   <li>Click <a href="servlets/ProjectMailingListList">here</a> for a list of project mailing lists.</li>
+   <li>Click <a href="servlets/ProjectIssues">here</a> to access Issue tracker.</li>
+</ul>
+
+</div>
 

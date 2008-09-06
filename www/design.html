@@ -1,0 +1,72 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<div id="projecthome" class="app">
+ <h1>Design Overview</h1>
+<p>IdentityConnectors is designed to separate the implementation of an
+application from the dependencies of the application or system it is
+attempting to connect to. The IdentityConnectors framework provides a
+container to separate the Connector bundle from the application. The
+framework as provides many common features that developers would need to
+implement on their own. For instance the framework can provide
+connection pooling, buffering, timeouts, and filtering. IdentityConnectors
+is separated into two parts the API for which developers can call
+Connectors and the SPI for which developers can create Connectors.
+<h3>Connector SPI</h3>
+<p>The Connector SPI is decomposed into several interfaces so that
+the Connector developer only has to implement the interfaces that the
+target application or system supports. The Connector API will still
+provide a consistent view regardless of the interfaces the Connector
+developer chooses to implement. The SPI is broken up into operations
+(create, update, delete, search, etc.), features, and requirements. The
+required interfaces include the 'Connector' interface and the
+'Configuration' interface. These interfaces must be implemented in order
+for the API to understand which class contains the implementation of the
+configuration and which contains the implementation of the operations.
+The feature based interfaces at this time are the 'ConnectionFactory'
+and 'Connection' interfaces which are the minimum requirements for the
+framework to implement connection pooling. The operation interfaces
+determine the features the connector supports for instance create or
+simply search. Please see the Javadoc for more details.
+<h3>Connector API</h3>
+<p>The Connector API is responsible for presenting a consistent view
+of a Connector regardless of the operations it has implemented. For the
+convenience of the SPI developer there are several common features that
+a provided without the knowledge of the Connector developer. For most of
+these features there is no need for the API developer to handle them
+either only configure them. Below is a list of features and their
+explanation. The main features/concepts of the API are as follows:
+<ul>
+	<li>Provide 'Connection Pooling' to those Connectors that require
+	it and avoid the API from seeing it, since not all Connectors have
+	connections. In addition if the Connector uses 'Connection Pooling' its
+	not the responsibility of the API developer to handle the connections,
+	nor dispose of them during error conditions.</li>
+	<li>Provide 'Timeouts' to all operations. The API consumer should
+	only configure the appropriate timeout if the default is unacceptable.
+	Each SPI developer should not have to implement such a common service
+	and so it is implemented in the framework.</li>
+	<li>The SPI developer has the ability to choose different
+	implementations of an operation. For instance there are two types of
+	updates. This is hidden from the API consumer because there is no need
+	for the API developer to have to call two different operation that
+	essentially do the same thing. Two operations that fit this example are
+	SearchOp and UpdateOp.</li>
+</ul>
+<h3>Error Handling</h3>
+<p>There are no declared exceptions on any of the interfaces for either
+the SPI or API.  At first this may seem strange but there is a method to the
+madness. We concede the fact that at least one Connector implementation will
+throw a RuntimeException intentionally or not. Also we'd like to encourage the
+use of standard Java exceptions like IllegalArgumentException and 
+IllegalStateException.  Also for the benefit of the debugging and logging we
+like to encourage Connector developers to wrap their native exceptions in
+a RuntimeException so exception data is not lost.
+<p>Please see the Javadoc for more information.
+</div>
+</body>
+</html>

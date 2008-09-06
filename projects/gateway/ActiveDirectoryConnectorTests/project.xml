@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<config>
+  <property name="config_container" value="cn=users,dc=adconnector,dc=central,dc=sun,dc=com"/>
+  <property name="config_host" value="localhost"/>
+  <property name="config_password" value="etegrity"/>
+  <property name="config_port" value="389"/>
+  <property name="config_script_password_domain" value="etegrity"/>
+  <property name="config_script_password_local" value="etegrity"/>
+  <property name="config_script_user_domain" value="dv207518domain2\administrator"/>
+  <property name="config_script_user_local" value="administrator"/>
+  <property name="config_user" value="adconnector\administrator"/>
+  <property name="config_ldap_hostname" value="idmvm1128.central.sun.com"/>
+  <property name="config_search_context" value="dc=adconnector,dc=central,dc=sun,dc=com"/>
+  <property name="config_sync_search_context" value="dc=adconnector,dc=central,dc=sun,dc=com"/>
+  <property name="config_domain_name" value="adconnector.central.sun.com"/>
+  <property name="config_sync_domain_controller" value="idmvm1128.central.sun.com"/>
+  <property name="config_sync_gc_domain_controller" value="idmvm1128.central.sun.com"/>
+  <property name="test_param_shared_home_folder" value="\\idmvm1128.central.sun.com\nunitHomeDirectories"/>
+</config>

@@ -1,0 +1,279 @@
+<html>
+<head>
+<title>Connector Bundles</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+</head>
+<div id="projecthome" class="app">
+ <h1>Connector Bundles</h1>
+ <p>A bundle is nothing more than a specialized JAR. There are
+  special attributes within the JAR's manifest that are recognized
+  by the connectors framework. This document describes the plan for connector bundles and
+ classloading strategy.
+ The goals are as follows:
+ <ol>
+     <li><p>Eliminate classloading conflicts.<p>Connectors are
+     the point of integration with third-party systems. This
+     inherently introduces a number of dependencies on third-party
+     jars. As the number of dependencies increase, the chance of
+a class conflict increases as well. </p></li>
+     <li><p>Support different versions of the same connector from
+     a single provisioner. <p>Often you will have different
+     versions of the same resource that need to be managed from
+     the same provisioner. In these cases, you will typically
+     have multiple versions of the same third-party class and
+     they need to reside in the same JVM.</li>
+     <li><p>Better patch model for delivering hotfixes.
+     <p>By their very nature, connectors are one of the most
+     error prone areas of the system, requiring more hotfixes
+     than any other component. It is essential that we provide
+     a way to deliver a patch without impacting other components
+     in the system or other connectors.</p>
+     </li>
+ </ol>
+ <p>For these reasons, each connector will have its own classloader.
+ Bundles are the deployable unit for a connector that contain
+ the connector class and dependencies, thus defining the
+ contents of a connector's classloader.</p>
+  <h3><A NAME="Structure">Bundle Structure</A></h3>
+  <p>This section summarizes the basic structure of a connector bundle (for an example target resource called <b>Foo</b>):</p>
+  <ul>
+    <li><b>src/org/identityconnectors/foo (directory)</b><p>The source file directory, containg all Java resources and classes for this bundle.</p>
+    <ul>
+        <li><p><b>FooConfiguration.java</b>   The main Configuration class for the connector, which contains annotated ConfigurationProperties (@ConfigurationProperty).</p>
+        <li><p><b>FooConnection.java</b>   The underlying Connection object that the Connector will manage.</p>
+        <li><p><b>FooConnectionFactory.java</b>   A factory to create and provide new Connections to the framework.</p>
+        <li><p><b>FooConnector.java</b>   The actual Connector, which draws a Connection from the framework's connection pool, and performs operations on it.</p>
+        <li><p><b>FooFilterTranslator.java</b>   An implementation of AbstractFilterTranslator which allows you to perform native search optimization by mapping the 
+        framework's generic search contructs to your resource-specific implementation.</p>
+        <li><p><b>FooConnectorTests.java</b>   A class of white-box tests to exercise your Connector implementation.</p>
+        <li><p><b>Messages.properties</b>   Maps ConfigurationProperty keys (from the Configuration class) to specific messages and labels for display in the application's UI.</p>
+    </ul>
+    <li><b>lib/ (directory)</b><p>Contains JARs (or bundles) to distribute with this Connector. Anything in this directory is automatically added to the classpath at runtime (via
+    the framework's custom classloader).</p>
+        <ul><li><p><b>build/ (subdirectory)</b>   Libraries only available on the build classpath (will not be distributed).</p>
+            <li><p><b>test/ (subdirectory)</b>   Libraries only available on the test classpath (will not be distributed).</p>
+        </ul>
+    <li><b>build.properties</b><p>Contains build properties for this Connector. The basic properties are:</p>
+      <ul>
+        <li><p><b>MAJOR=1</b>  The major release version.</p>
+        <li><p><b>MINOR=0</b>  The minor release version.</p>
+        <li><p><b>ConnectorBundle-FrameworkVersion=1.0</b>  The <i><b>minimum</b></i> required framework version for this connector. Newer framework versions will be backwards compatible.</p>
+        <li><p><b>ConnectorBundle-Name=org.identityconnectors.foo</b>  The unique name for this Connector Bundle (usually its package name).</p>
+      </ul>
+    <li><b>build.xml</b><p>The build file for the Connector. This file references <i>connector_build.xml</i> in the framework.</p>   
+  </ul>    
+  <h3>Inside the Bundle JAR</h3>
+  <p>Once built, the bundle becomes a self-contained JAR, with internals as follows:</p>
+  <ul>
+      <li><b>META-INF/MANIFEST.MF (file)</b><p>This is the manifest. You will notice it contains
+        some of the special attributes declared in the <i>build.properties</i> file. Here is a list of the core bundle
+  attributes (used by all bundles, regardless
+  of whether they declare any connectors):</p>
+  <ul>
+      <li><p><b>ConnectorBundle-FrameworkVersion: </b>   The minimum version of the framework required by the connector. If the version
+        is greater than the version of the deployment, an error will be thrown.</p>
+      </li>
+      <li><p><b>ConnectorBundle-Name: </b> Qualified name for the connector bundle. Within a given deployment, the
+         pair (<i>ConnectorBundle-Name</i>,<i>ConnectorBundle-Version</i>) must be unique.</p>
+      </li>
+      <li><p><b>ConnectorBundle-Version: </b>  The version of the bundle. Within a given deployment, the
+         pair (<i>ConnectorBundle-Name</i>,<i>ConnectorBundle-Version</i>)
+         must be unique.</p>
+       </li>
+  </ul>
+      
+      
+      <li><b>lib/ (directory)</b><p>The libraries (or bundles) distributed with the connector. These 
+      are automatically added to the classpath of the bundle at runtime. (This is a non-standard JAR feature, provided by the connectors
+      class loader).</p>
+      </li>
+      
+      <li><p><b>**/* (files)</b></p><p>Source files, classes, and Java resources.
+      (These are standard JAR features). These are intentionally kept
+      as top-level entities to allow you to compile downstream
+      dependencies against the classes within a bundle by simply adding
+      the bundle to your build's classpath. This is to facilitate
+      extending a connector (see "Extending a Connector" below).
+      </p></li>
+  </ul>
+  
+  <h3>Connector Registration</h3>
+  The connector bundle manifest is used merely for the purpose of
+  establishing the classpath and class loader for the bundle. All other meta-data
+  is controlled via Java annotations defined by the Connectors Framework. 
+  In order to register a connector, its class must be present in a 
+  connector bundle and must have the annotation
+  <code>com.sun.openconnectors.framework.spi.ConnectorClass</code>.
+  As an implementation note, the Connector Framework scans the top level <i>.class</i>
+  files in a connector bundle, looking for classes that have the <code>@ConnectorClass</code>
+  annotation, thus auto-discovering connectors which are defined in the bundle.
+  
+
+  <h3>Class Loading</h3>
+
+  <p>Each bundle has its own class loader which resolves classes
+  in the following order:</p>
+  <ol>
+      <li>Classes in the bundle</li>
+      <li>Classes in JARs in the bundle's lib directory, in alphabetical order.
+      Note that the JARS in the bundle's lib directory may themselves be bundles
+      which have their own lib directory. These will be recursively processed
+      and added to the classpath in depth-first-search order.
+      </li>
+      <li>Classes in the framework's classloader (and parent class loaders).</li>
+  </ol>
+
+  As an implementation detail, each bundle will get a BundleClassLoader.
+  A BundleClassLoader is a (subclass of) URLClassLoader where the URLs are the
+  top-level directory of the bundle, the jars in its lib folder, and the
+  same for each of the embedded bundles. The BundleClassLoader
+  will have, as a parent class loader, the ClassLoader that loaded the connectors
+  framework. The BundleClassLoader will override the appropriate methods such
+  that child class loading happens before parent. In addition, when fetching
+  a class from the parent class loader, it will restrict it such that
+  the class cannot access any internal framework classes.
+
+  <h4>ContextClassLoader</h4>
+  <p>
+  The context class loader (<code>Thread.currentThread().getContextClassLoader()</code>)
+  must be set such that during any invocation to
+  a connector method, the connector's class loader is the context class loader.
+  It will be the responsibility of the ConnectorFacade to arrange for this.
+  At the beginning of any invocation to a connector method it should be set
+  and at the end, it should be restored to its previous value.
+  </p>
+  <h3>Deployment in a WAR</h3>
+  When deploying in a war, the connector framework jar(s) should be
+  placed in WEB-INF/lib. The bundles themselves (also .jars) should be placed in
+  a "/bundles" directory at the root of the web application.
+  <p>
+  The bundles will be autodiscovered there and the connector API will
+  provide a way to list the bundles, create connectors from the bundles, etc.
+  <p>
+
+  <h3>Extending a Connector</h3>
+  <p>
+  One of the things we allow for is the ability to extend (subclass) a given
+  connector. The way to do this is to add the extended bundle to the <code>lib</code>
+  directory of a new bundle and create a class which subclasses the target class.</p>
+  
+  <p>The DatabaseConnector is a great example of this. The common logic would be in a common bundle as follows:</p>
+  <ul>
+      <li><p>META-INF/MANIFEST.MF</p>
+        <ul>
+            <li><p><b>ConnectorBundle-FrameworkVersion:</b> 1.0</p>
+            <li><p><b>ConnectorBundle-Name:</b> org.identityconnectors.database.common</p>
+            <li><p><b>ConnectorBundle-Version:</b> 1.0</p>
+        </ul>
+
+      </li>
+      <li><p>org.identityconnectors/database/common/AbstractDatabaseConnector.class</p>
+          <ul>
+              <li><p><b>NOTE</b>: this connector would <b>not</b> have a @ConnectorClass annotation.</p></li>
+          </ul>
+      </li>
+      <li><p>org/identityconnectors/database/common/* (other common source files)</p>
+      <li><p>lib/</p>
+  </ul>
+  <p>Then there would be as many database (resource) specific bundles as necessary, for example:</p>
+  <ul>
+      <li><p>META-INF/MANIFEST.MF</p>
+        <ul>
+            <li><p><b>ConnectorBundle-FrameworkVersion:</b> 1.0</p>
+            <li><p><b>ConnectorBundle-Name:</b> org.identityconnectors.database.mysql</p>
+            <li><p><b>ConnectorBundle-Version:</b> 1.0</p>
+        </ul>
+      </li>
+           
+      <li><p>org/identityconnectors/database/mysql/MySQLConnector.class (subclass of AbstractDatabaseConnector)</p>
+          <ul>
+              <li><p><b>NOTE</b>: this connector <b>would</b> have a @ConnectorClass annotation</p>
+          </ul>
+      </li>
+      <li><p>org/identityconnectors/database/mysql/* (other MySQL source files)</p>
+       <li><p>lib/org.identityconnectors.database.common-1.0.jar (this is the bundle described above)
+      <li><p>lib/* (any specific database drivers and libraries as needed)</p>
+  </ul>
+
+  <h3>Distribution of Connectors</h3>
+  <p>As much as possible, connectors will be distributed in the form of connector
+  bundles. However there are cases where we may need to remove third-party
+  JARs from the bundles we distribute. For these cases, upon deployment,
+  you will need to re-jar the distributed bundle with the required dependencies.</p>
+
+  <h3><A NAME="Versions">Handling Multiple Resource Versions</A></h3>
+  <p>A connector should document which versions of the
+  target resource it supports, and these are expected to evolve and mature over time.
+  For the sake of this example, we will use the fictional
+  vendor Humanitrobe. Let's say they have two major product versions to
+  support, Humanitrobe 8.x and their new release, Humanitrobe 9.x. Let's also assume that
+  we do not have the right to distribute the humanitrobe8x.jar or the
+  humanitrobe9x.jar. We already have a HumanitrobeConnector v1.0
+  in place which supports Humanitrobe 8.x. Regardless of whether their API has changed from release to release, 
+  when we have a new version of the same resource, the obvious and intended solution is to produce
+  a new version of the same Connector.</p>
+    
+  <p>In this case we would distribute two seperate bundles:</p>
+  <ul>
+      <li><p>META-INF/MANIFEST.MF</p>
+        <ul>
+            <li><p><b>ConnectorBundle-FrameworkVersion:</b> 1.0</p></li>
+            <li><p><b>ConnectorBundle-Name:</b> org.identityconnectors.humanitrobe</p></li>
+            <li><p><b>ConnectorBundle-Version:</b> 1.0 <b>#supports 8.x</b></p></li>
+        </ul>
+      </li>    
+      <li><p>org/identityconnectors/humanitrobe/HumanitrobeConnector.class (and other sources)</p>
+      <li><p>lib/ (directory is empty for distro)<i></i></p>
+  </ul>
+  and
+    <ul>
+      <li><p>META-INF/MANIFEST.MF</p>
+        <ul>
+            <li><p><b>ConnectorBundle-FrameworkVersion:</b> 1.0</p></li>
+            <li><p><b>ConnectorBundle-Name:</b> org.identityconnectors.humanitrobe</p></li>
+            <li><p><b>ConnectorBundle-Version:</b> 1.1 <b>#supports 9.x</b></p></li>
+        </ul>
+      </li>     
+      <li><p>org/identityconnectors/humanitrobe/HumanitrobeConnector.class (and other sources)</p>
+ 
+      <li><p>lib/ (directory is empty for distro)<i></i></p>
+  </ul>
+  <p>Upon deployment these bundles would be re-packaged and the humanitrobe[8x/9x].jar would be added to the lib directories, accordingly.</p>
+  <p>On a side note, keep in mind that a new version of a Connector may require a new version of the framework, but a new version of 
+  the framework will never require newer versions of individual Connectors. Thus, framework upgrades should be harmless to existing 
+  deployments.</p>
+
+<h3>Patching Connectors</h3>
+<p>
+One of the goals of connectors is to provide an easier patch
+process. In general, when a customer requests a patch it is for a 
+specific connector, rather than a fix to a shared component. If the fix is 
+to a shared component, they would rather that not impact other connectors 
+in the system (unless they explictly ask for it). For this case the choice 
+has traditionally been either a)copy and paste the common component into the 
+patch or b)change the common component and hope for the best. This is solved in Connectors 
+by the fact that each connector bundle is completely self-contained. A bundle 
+and all of its dependencies are a single unit.
+</p>
+
+<p>This functionality becomes even more important in the future
+once the framework is relatively mature and stable. The end goal is to allow
+customers to grab connectors off of the trunk and drop them into their deployment 
+from a prior release (see <a href="#Versions">Handling Multiple Resource Versions</a>). 
+As long as the <i>ConnectorBundle-FrameworkVersion</i> of the connector on
+the trunk is compatible with what the customer has in their deployment,
+they should be able to do this. In this case, you can see it
+is critical that bundles are self contained.</p>
+
+<h3>Build Notes</h3>
+<p>From a build standpoint, one thing have done is structure our bundle
+manifests so that the version is automatically populated. For each
+bundle, there is a bundle.properties (see <A HREF="#Structure">Bundle Structure</A>). 
+The attribute <i>ConnectorBundle-Version</i> will be left out since it will be
+determined by a global setting passed in by the build machine.
+The attribute <i>ConnectorBundle-FrameworkVersion</i> will be left
+hard-coded for now. We should rarely bump this up and, when we do,
+we need to do so in a controlled fashion.</p>
+
+<p>Also, as implied in the previous section, the names of our bundle.jars
+must include the full version number.</p>

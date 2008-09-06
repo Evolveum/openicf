@@ -1,0 +1,448 @@
+<html>
+<head>
+<title>Contract Tests configuration and running</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+</head>
+<div id="projecthome" class="app">
+ <h3>Contract Tests configuration and running</h3>
+ <ul>
+    <li><a href="#quickstart">Quick start guide</a></li>
+    <li><a href="#propfiles">Properties files and proprietary jars</a></li>
+    <li><a href="#properties">Defining properties</a></li>
+    <ul>
+      <li><a href="#proplookup">Properties lookup</a></li>
+      <li><a href="#proptypes">Properties value types</a></li>
+      <li><a href="#macros">Macros</a></li>
+    </ul>    
+    <li><a href="#configure">Configuring tests</a></li>
+    <ul>
+      <li><a href="#minprop">Required properties</a></li>
+      <li><a href="#optionalprops">Optional properties</a></li>
+    </ul>
+    <li><a href="#run">Running tests</a></li>
+    <ul>
+      <li><a href="#runbasic">Basic usage</a></li>
+      <li><a href="#runexport">Export of generated test parameters</a></li>
+      <li><a href="#runfile">Use of generated property file</a></li>
+      <li><a href="#reports">Reports</a></li>
+      <li><a href="#eclipse">Running in Eclipse</a></li>
+    </ul>
+    <li><a href="#gateways">Gateways</a></li>    
+ </ul>
+
+<h3><a name="quickstart">Quick start guide</a></h3>
+<ol>
+    <li>if you want to setup contract tests for local connector, continue with <strong>a</strong>, it you want to setup tests for connector behind gateway follow <strong>b</strong>:
+    <ol type="a"><li>
+        <p>define <code>bundleJar.testsuite.string</code> property in connector's <code>build.properties</code>:
+            <pre># connector-jar is set by ant
+bundleJar.testsuite.string=${SYSPROPS, connector-jar}</pre>
+        See <a href="#propfiles">Properties files and proprietary jars</a> section to learn about properties files used by tests.              
+        </p></li>
+        <li><p>define following properties in <code>${user.home}/.test-contract-gw.properties</code>:
+        <pre>gwhost.testsuite.string=hostAddress
+gwport.testsuite.integer=portNumber
+# gateway key is "changeit" by default
+gwkey.testsuite.string=gatewayKey</pre>
+There are currently no special properties necessary to identify connector behind the gateway, because there must be <strong>exactly one</strong> connector behind the gateway and the one is tested.<br /><br />
+For more details see section about <a href="#gateways">Gateways</a>.        
+        </p></li>
+    </ol>
+    <li><p>define <code>{$property.name}.connector.{$type.name}</code> for each annotated connector configuration bean (class implementing <code>Configuration</code> interface) property. For gateways
+    use again <code>${user.home}/.test-contract-gw.properties</code>, otherwise use either <code>build.properties</code> for public properties or <code>${user.home}/${project.name}.properties</code> for private properties (such as host, login, password etc):
+<pre># Sample configuration of database table connector
+# driver, keyColumn, DBTable, connectionUrl, login and password are annotated Configuration properties
+driver.connector.string=com.mysql.jdbc.Driver
+keyColumn.connector.string=keyColumnName
+passwordColumn.connector.string=passwordColumnName
+DBTable.connector.string=tableName
+connectionUrl.connector.string=jdbc:mysql://localhost/database
+login.connector.string=login
+password.connector.string=password
+</pre>
+See section <a href="#connconfprop">Connector configuration properties</a> for more details and section <a href="#properties">Defining properties</a> to learn how the properties lookup works, how to define properties values using macros and what are possible properties types.
+    </p></li>
+    <li><p>provide number of iterations of <code>ValidateApiOpTests</code> and at least one <strong>wrongly</strong> configured property per each iteration. By wrongly configured I mean configured
+    so that <code>Configuration#validate</code> should fail. Use properties files as presented in previous step. 
+<pre>
+# test will go through 2 iterations
+iterations.Validate.testsuite.integer=2
+
+# following property will be used in the first iteration (must be at least one)
+1.wrong.DBTable.connector.string=
+
+# following property will be used in the second iteration (must be at least one)
+2.wrong.keyColumn.connector.string=
+</pre>    
+    </p></li>
+    <li><p>define properties necessary to pass <code>SchemaApiOpTests</code>. Use properties files as presented in step 2.<br />
+    Define list of supported object classes by connector (see <code>ObjectClass.java</code> for object class types):
+<pre>
+# database table connector supports only object class 'account'
+oclasses.Schema.testsuite.list=${LIST, account}
+</pre>
+Define list of attributes per <strong>each</strong> supported object class:
+<pre> 
+# list of ALL attributes of object class 'account' for database table connector:
+attributes.account.oclasses.Schema.testsuite.list=${LIST, @@NAME@@, @@PASSWORD@@, MANAGER, MIDDLENAME, FIRSTNAME, LASTNAME, EMAIL, DEPARTMENT, TITLE, AGE, SALARY, JPEGPHOTO}
+</pre>
+Define <strong>every</strong> attribute of <strong>each</strong> object class:
+<pre>
+# definition of attribute '@@NAME@@' of object class 'account' for database table connector
+@@NAME@@.attribute.account.oclasses.Schema.testsuite.map=${MAP, \
+                                                            ${MAPENTRY, type, java.lang.String}, \
+                                                            ${MAPENTRY, readable, true}, \
+                                                            ${MAPENTRY, writable, true}, \
+                                                            ${MAPENTRY, required, true}, \
+                                                            ${MAPENTRY, multiValue, false}, \
+                                                            ${MAPENTRY, returnedByDefault, true} \
+                                                        }
+</pre>
+Define supported object classes by operations. Must contain <strong>exactly</strong> the operations that are implemented by the connector:
+<pre>                                                        
+# object classes suported by operations for database table connector:                                                        
+operations.Schema.testsuite.map=${MAP, \
+                                    ${MAPENTRY, GetApiOp, ${LIST, account}}, \
+                                    ${MAPENTRY, SchemaApiOp, ${LIST, account}}, \
+                                    ${MAPENTRY, ValidateApiOp, ${LIST, account}}, \
+                                    ${MAPENTRY, CreateApiOp, ${LIST, account}}, \
+                                    ${MAPENTRY, SearchApiOp, ${LIST, account}}, \
+                                    ${MAPENTRY, DeleteApiOp, ${LIST, account}}, \
+                                    ${MAPENTRY, ScriptOnConnectorApiOp, ${LIST, account}}, \
+                                    ${MAPENTRY, UpdateApiOp, ${LIST, account}} \
+                                }                                                         
+</pre>    
+    </p></li>
+    <li><p>optionally define other Optional properties.<br /><br />See section <a href="#optionalprops">Optional properties</a> for further details.
+    </p></li>
+    <li><p>if you want to run tests for local connector, continue with <strong>a</strong>, it you want to run tests for connector behind gateway follow <strong>b</strong>:
+    <ol type="a"><li>
+        <p>run <code>ant</code> from within the connector directory to compile connector, then run tests with <code>ant run-contract-tests</code> from within the connector directory.<br />See section <a href="#run">Running tests</a> for more details.
+        </p>
+        </li>
+        <li><p>make sure gateway is running on the host and port as specified by the properties and that connector is running behind the gateway (libs on which connector depends must be available to the gateway). Run <code>ant</code> from within the <code>framework/test-contract</code> directory (won't be necessary in the future), then run tests with <code>ant -Dconfiguration=gw run-contract-tests</code> from within the same directory.<br />See section about <a href="#gateways">Gateways</a> for more details.
+        </p></li>
+    </ol>
+    
+    </p></li>
+</ol>    
+
+<h3><a name="propfiles">Properties files and proprietary jars</a></h3>
+Properties files are read in the following order:
+<pre>
+1: {$connector.dir}\build.properties
+    # PUBLIC properties + PRIVATE properties with sample values (will be overriden)
+    
+2: {$user.home}\.openconnectors.properties
+     # loaded properties are only those named {$project.name}.{$property.name} and {$project.name}-{$configuration}.{$property.name}
+     # property named {$project.name}-{$configuration}.{$property.name} is loaded as property named {$property.name}
+     # PRIVATE properties (for all connectors) in one file
+     
+3: {$user.home}\.{$project.name}.properties
+     # example: {$user.home}\.connector-mysql.properties
+     # PRIVATE properties or PRIVATE properties common to all configurations       
+    
+4: {$user.home}\.{$project.name}-{$configuration}.properties
+     # examples: {$user.home}\.connector-databasetable-oracle.properties, {$user.home}\.connector-databasetable-db2.properties
+     # PRIVATE properties specific for particular connector configuration
+
+</pre>
+Latter properties files <strong>overrides</strong> properties loaded from previous properties files.
+<h4>Proprietary jars</h4>
+Proprietary jars should't be checked-in. They should be placed in the following directories:
+<pre>
+{$user.home}\.{$project.name}\lib
+{$user.home}\.{$project.name}-{$configuration}\lib
+</pre>
+
+<h3><a name="properties">Defining properties</a></h3>
+Test properties follows these patterns:
+<pre>
+# connector configuration
+{$property.name}.connector.${type.name}=some value
+connectionUrl.connector.string=jdbc:mysql://localhost/database
+
+# testsuite configuration
+{$property.name}.testsuite.${type.name}=some value
+bundleJar.testsuite.string=${SYSPROPS, connector-jar}
+
+# DataProvider configuration
+{$iteration}.{$test.name}.{$oclass.name}.${attribute.name}.${type.name}=some value
+0.Create.account.DEPARTMENT.string=some value
+</pre>
+Note that <strong>case sensitivity is important</strong>.
+<h4><a name="proplookup">Properties lookup</a></h4>
+Properties are searched recursively. If test looks for the property <code>1.wrong.login.connector.string</code> and doesn't find its definition
+it tries to look for <code>wrong.login.connector.string</code> etc.<br />
+<br />
+After property value is recursively found it is stored as the value of the property that was initially looked up. So if test looks
+for <code>1.wrong.login.connector.string</code> and recursively finds value of <code>login.connector.string</code> (if the value is macro then it is evaluated), this value
+will also be stored for <code>1.wrong.login.connector.string</code> and the next time test will look for that property, it's value
+will be returned immediatelly.
+
+
+<h4><a name="proptypes">Properties value types</a></h4>
+<code>${type.name}</code> values are lowercased truncated Java type names. Several examples:
+<ul>
+  <li>Java type name: java.lang.String - <code>${type.name}</code>: string</li>
+  <li>Java type name: java.lang.Double - <code>${type.name}</code>: double</li>
+  <li>Java type name: java.util.List - <code>${type.name}</code>: list</li>
+  <li>Java type name: java.util.Map - <code>${type.name}</code>: map</li>
+  <li>Java type name: java.math.BigDecimal - <code>${type.name}</code>: bigdecimal</li>
+</ul>
+However there are two exceptions (due to back compatibility): <code>bytearray</code> for array of bytes and <code>string</code> also for <code>GuardedString</code>.<br /><br />
+
+Default definitions for <code>${type.name}</code> properties are as follows:
+<pre>
+string=${RANDOM, AAAAA##}
+integer=${INTEGER, ${RANDOM, ##}}
+float=${FLOAT, ${RANDOM, #####}${LITERAL, .}${RANDOM, ##}}
+double=${DOUBLE, ${RANDOM, #####}${LITERAL, .}${RANDOM, ##}}
+bytearray=${BYTEARRAY, ${RANDOM, .............}}
+</pre>
+So if the test looks for <code>0.Create.account.DEPARTMENT.string</code> and through recursive lookup ends with <code>string</code> property definition, the value of the <code>0.Create.account.DEPARTMENT.string</code> property would be
+4 uppercase letters followed by 2 digits (eg: JRIW87).
+
+
+<h4><a name="macros">Macros</a></h4>
+Macros have following syntax:
+<pre>
+${macro-name, macro-arguments...}
+</pre>
+<code>macro-arguments</code> can be other macros.
+Following macros are supported:
+<ul>
+  <li><code>${BYTEARRAY, string}</code> - returns <code>byte[]</code> created from <code>string</code><br /><code>${BYTEARRAY, bflmpsvz}</code> results in <code>byte[]</code> created from "bflmpsvz"</li>
+  <li><code>${DOUBLE, double}</code> - returns <code>Double</code> value of <code>double</code></li>
+  <li><code>${FLOAT, float}</code> - returns <code>Float</code> value of <code>float</code></li>
+  <li><code>${GET, name}</code> - returns value of property, whose name is specified by <code>name</code><br /><code>${GET, project.name}</code> returns value of <code>project.name</code> property</code></li>
+  <li><code>${INTEGER, int}</code> - returns <code>Integer</code> value of <code>int</code></li>
+  <li><code>${LIST, args..}</code> - 0-x arguments, returns <code>List</code> of <code>args</code><br /><code>${LIST}</code> returns empty list<br /><code>${LIST, foo, bar}</code> returns list containing 2 strings - <code>foo</code> and <code>bar</code></li>
+  <li><code>${MAP, args..}</code> - 0-x arguments of <code>MAPENTRY</code> macro, returns <code>Map</code> of <code>args</code><br /><code>${MAP}</code> returns empty map<br /><code>${MAP, ${MAPENTRY, key1, value1}, ${MAPENTRY, key2, value2}}</code> returns map [[key1=>value1],[key2=>value2]]</li>
+  <li><code>${MAPENTRY, key, value}</code> - returns <code>Map.Entry</code> mapping <code>key</code> to <code>value</code></li>
+  <li><code>${LITERAL, string}</code> - returns <code>String</code> value of <code>string</code></li>
+  <li><code>${NOTSUPPLIED}</code> - returns <code>ObjectNotFoundException</code><br />properties <code>connector.string</code>, <code>connector.integer</code> etc. are defined as <code>${NOTSUPPLIED}</code> to protect properties lookup mechanism to end with <code>string</code> property - that is by default defined as a random value (see <a href="#proptypes">Properties value types</a> section)</li>
+  <li><code>${RANDOM, format}</code> - returns generated <code>String</code> according to pattern specified by <code>format</code> (<code>a</code>=lowercase letter, <code>A</code>=uppercase letter, <code>?</code>=letter, <code>#</code>=digit, <code>.</code>=letter or digit)<br /><code>${RANDOM, AAAa##}</code> could generate "TEVo56"</li>
+  <li><code>${SYSPROPS, name}</code> - returns value of system property, whose name is specified by <code>name</code></li>
+  <li><code>${OBJECT, typename, value}</code> - returns object defined by <code>typename</code> created by <code>constructor(String value)</code><br /><code>${OBJECT, java.math.BigDecimal, 1}</code> will create BigDecimal object initialized to 1</li>
+</ul>
+
+<h3><a name="configure">Configuring tests</a></h3>
+<h4><a name="minprop">Required properties</a></h4>
+<h5 style="text-decoration:underline">Bundle jar path</h5>
+Path to connector distribution jar file (when compiled it is placed to <code>${project.name}/dist</code> directory).
+<pre>
+bundleJar.testsuite.string=${SYSPROPS, connector-jar}    # set by ant
+</pre>
+Use the <code>SYSPROPS</code> macro to get <code>connector-jar</code> system property, which is set by <code>ant</code>.
+<h5 style="text-decoration:underline"><a name="connconfprop">Connector configuration properties</a></h5>
+Properties declared in connector configuration bean (implementing <code>Configuration</code> interface) using following pattern:
+<pre>
+${property.name}.connector.${type.name}=${value}
+</pre>
+where <code>${property.name}</code> is a property of configuration bean, <code>${value}</code> can be a value or a macro.
+<pre>
+# example configuration of database table connector for MySQL with sample values
+host.connector.string=localhost
+login.connector.string=login
+password.connector.string=password
+port.connector.string=3306
+driver.connector.string=com.mysql.jdbc.Driver
+usermodel.connector.string=modeluser
+</pre>
+<p>
+Note: <code>connector.${type.name}</code> properties and <code>testsuite.${type.name}</code> properties are defined as <code>${NOTSUPPLIED}</code> for integer, float, double and string types to protect generation of random values when configuration property definition is missing.
+</p> 
+<h5 style="text-decoration:underline"><a name="validateprop">ValidateApiOpTests properties</a></h5>
+It is necessary to define following properties:
+<pre>
+# number of iterations ValidateApiOpTest will run
+iterations.Validate.testsuite.integer=1   
+
+# 1 stands for iteration number, property value should contain wrong configuration of connector - test that validate() will throw
+1.wrong.${property.name}.connector.${type.name}=${value}       
+</pre>
+There should be at least one wrongly configured property per each iteration otherwise test will fail.
+
+<h5 style="text-decoration:underline"><a name="schemaprop">SchemaApiOpTests properties</a></h5>
+Define list of supported object classes by connector (see <code>ObjectClass.java</code> for object class types):
+<pre>
+# database table connector supports only object class 'account'
+oclasses.Schema.testsuite.list=${LIST, account}
+</pre>
+Define list of attributes per <strong>each</strong> supported object class:
+<pre> 
+# list of ALL attributes of object class 'account' for database table connector:
+attributes.account.oclasses.Schema.testsuite.list=${LIST, @@NAME@@, @@PASSWORD@@, MANAGER, MIDDLENAME, FIRSTNAME, LASTNAME, EMAIL, DEPARTMENT, TITLE, AGE, SALARY, JPEGPHOTO}
+</pre>
+Define <strong>every</strong> attribute of <strong>each</strong> object class. Attribute's type is class name (for bytearrays use '[B'):
+<pre>
+# definition of attribute '@@NAME@@' of object class 'account' for database table connector
+@@NAME@@.attribute.account.oclasses.Schema.testsuite.map=${MAP, \
+                                                            ${MAPENTRY, type, java.lang.String}, \
+                                                            ${MAPENTRY, readable, true}, \
+                                                            ${MAPENTRY, writable, true}, \
+                                                            ${MAPENTRY, required, true}, \
+                                                            ${MAPENTRY, multiValue, false}, \
+                                                            ${MAPENTRY, returnedByDefault, true} \
+                                                        }
+</pre>
+Define supported object classes by operations. Must contain <strong>exactly</strong> the operations that are implemented by the connector:
+<pre>                                                        
+# object classes suported by operations for database table connector:                                                        
+operations.Schema.testsuite.map=${MAP, \
+                                    ${MAPENTRY, GetApiOp, ${LIST, account}}, \
+                                    ${MAPENTRY, SchemaApiOp, ${LIST, account}}, \
+                                    ${MAPENTRY, ValidateApiOp, ${LIST, account}}, \
+                                    ${MAPENTRY, CreateApiOp, ${LIST, account}}, \
+                                    ${MAPENTRY, SearchApiOp, ${LIST, account}}, \
+                                    ${MAPENTRY, DeleteApiOp, ${LIST, account}}, \
+                                    ${MAPENTRY, ScriptOnConnectorApiOp, ${LIST, account}}, \
+                                    ${MAPENTRY, UpdateApiOp, ${LIST, account}} \
+                                }                                                         
+</pre>
+
+<h4><a name="optionalprops">Optional properties</a></h4>
+<h5 style="text-decoration:underline"><a name="provprops">ScriptOnResourceApiOpTests, ScriptOnConnectorApiOpTests properties</a></h5>
+To be able to run ScriptOnResource and/or ScriptOnConnector tests it's necessary to set following properties. If some of properties is not set, test is skipped.
+<pre>
+# Example properties for ScriptOnResource test
+# Parameters required to construct ScriptContext object: 
+language.ScriptOnResource.testsuite.string=Groovy
+script.ScriptOnResource.testsuite.string=script text
+arguments.ScriptOnResource.testsuite.map=${MAP, ${MAPENTRY, arg1, value1}, ${MAPENTRY, arg1, ${DOUBLE, 22.5}} }
+
+# Expected return value of ScriptOnResource#runScriptOnResource method:
+# use suitable macro depending on what kind of object is expected
+result.ScriptOnResource.testsuite.object=macro
+</pre>
+<code>ScriptOnResource</code> operation supports also following <code>OperationOptions</code>. If none of them is set <code>null</code> is used as <code>OperationOptions</code>. If one or both are set
+<code>OperationOptions</code> are built.
+<pre>
+RUN_AS_USER.ScriptOnResource.testsuite.string=user
+RUN_WITH_PASSWORD.ScriptOnResource.testsuite.string=password
+</pre>
+
+<h5 style="text-decoration:underline"><a name="provprops">DataProvider properties</a></h5>
+These properties define what values should be generated for object classes' attributes returned in connector schema. These properies use following pattern:
+<pre>
+{$identityNumber}.{$test.name}.{$oclass.name}.${attribute.name}.${type.name}=some value
+</pre>
+Some tests (Search, Multi) create more than one identity per test. <code>{$identityNumber}</code> is serial number of the identity. <code>${test.name}</code> is name of the test (Search, Create, ..., see <code>*ApiOpTests#TEST_NAME</code>).
+<code>{$oclass.name}</code> is type of object class. <code>${attribute.name}</code> is name of attribute of object class.<br />
+Examples:
+<pre>
+# first created account by CreateApiOpTests will have FIRSTNAME attribute equal to FOO
+0.Create.account.FIRSTNAME.string=FOO
+
+# all accounts in SearchApiOpTests will have LASTNAME attribute equal to BAR
+Search.account.LASTNAME.string=BAR 
+
+# all accounts in all tests will have PHONE attribute equal to 5-digit random values
+account.PHONE.string=${RANDOM, ######}  
+</pre>
+
+<h5 style="text-decoration:underline">UpdateApiOpTests</h5>
+In the <code>UpdateApiOpTests</code> is created identity updated with new values. For those new values are used following properties:
+<pre>
+${attribute.name}.modified.${type.name}=${value}
+
+# update LASTNAME attribute with value "sellers"
+LASTNAME.modified.string=sellers
+
+# if you don't want so supply new value for update set it to {$NOTSUPPLIED}
+@@NAME@@.modified.string={$NOTSUPPLIED}
+</pre>  
+
+<h3><a name="run">Running tests</a></h3>
+<p>
+First of all, make sure framework, contract tests and connector you want to test are built.
+</p>
+
+<h4><a name="runbasic">Basic usage</a></h4>
+Contract test suite is run from within the connector directory with the following command:
+<pre>
+ant run-contract-tests
+</pre>
+or in case connector has more test configurations:
+<pre>
+ant -Dconfiguration=conf1 run-contract-tests
+</pre>
+where <code>conf1</code> is configuration name. In this case tests will use <code>{$user.home}\.{$project.name}-conf1.properties</code> file.
+</p>
+<p>
+When contract tests are run, there is created a new <code>connector.jar</code> in <code>${connector.dir}/reports</code> directory. This newly created <code>jar</code> contains
+all the connector classes (excluding junit tests), all jars from <code>${connector.dir}/lib</code> directory and proprietary jars from <code>${user.home}/.${project.name}/lib</code>
+directory.
+</p>
+
+<h4><a name="runexport">Export of generated test parameters</a></h4>
+During the test there is generated a lot of parameters used as input data for the tests. These can be exported to a property file to <strong>rerun</strong> the test with the same values (Note: this file will contain all the properties used during 
+the test - <strong>configuration too</strong>).
+To do that you need to pass the name of generated property file in <code>test.parameters.outFile</code> property.<br />
+Example: 
+<pre>
+# run contract tests and store all parameters (attributes values) used by tests in <code>test.properties</code> file
+ant -Dtest.parameters.outFile=generated.properties run-contract-tests
+</pre>
+
+<h4><a name="runfile">Use of generated property file</a></h4> 
+To instruct tests to use generated property file you need to pass its filename in a <code>defaultdataprovider.propertyFile</code> property.<br />
+In this case the only file whose properties are loaded is the one specified by <code>defaultdataprovider.propertyFile</code>.
+Neither <code>build.properties</code> nor <code>${user.home}/.${project.name}.properties</code> etc. are read in this case.<br />
+Example:
+<pre>
+ant -Ddefaultdataprovider.propertyFile=generated.properties run-contract-tests
+</pre>
+Running tests with property file generated by different test configuration is <strong>not</strong> possible.
+
+<h4><a name="reports">Reports</a></h4>
+JUnit XML reports are generated to <code>${connector.dir}/reports</code> directory.
+If you want to see HTML reports you have to run <code>ant report-junits</code> yet.
+</p>
+
+<h4><a name="eclipse">Running in Eclipse</a></h4>
+<p>Create new JUnit run configuration and set values on tab <strong>Test</strong> according to the following screenshot. Don't forget to set JUnit 4 <strong>Test runner</strong>.</p>
+<img src="images/contract-tests/test.jpg" style="widht:999px;height:720px" alt="test.jpg" /><br />
+<p>On tab <strong>Arguments</strong> add following <strong>VM arguments</strong>:
+<ul>
+    <li><code>-Dconfiguration=oracle</code> - optional, set only in case you want to run particular configuration</li>
+    <li><code>-Dproject.name=connector-databasetable</code> - project name from <code>build.xml</code></li>
+    <li><code>-Ddata-provider=org.identityconnectors.contract.data.DefaultDataProvider</code> - set exactly this value</li>
+    <li><code>-Dconnector-jar=dist/org.identityconnectors.databasetable-1.0.x.x.jar</code> - relative (to working directory) path to tested connector jar</li>
+</ul>
+Don't forget to change <strong>Working directory</strong> to the tested connector project.
+</p> 
+<img src="images/contract-tests/arguments.jpg" style="widht:999px;height:720px" alt="arguments.jpg" /><br />
+<p>
+Add all projects connector depends on to the <strong>Classpath</strong> (you can debug then all) and also add references to all required proprietary jars. 
+</p>
+<img src="images/contract-tests/classpath.jpg" style="widht:999px;height:720px" alt="classpath.jpg" /><br />
+
+<h3><a name="gateways">Gateways</a></h3>
+First of all, if you didn't please take a look at <a href="#quickstart">Quick start guide</a>.<br /><br />
+To run tests against connectors running behind gateway it is necessary to create a new configuration (recommend for <code>framework/test-contract</code> project, but it's generally possible to configure it for every project which has <code>build.xml</code> and it imports <code>connector_build.xml</code>) and 
+set following properties in <code>${user.home}/.test-contract-${configuration}.properties</code>:
+<ul>
+<li>Gateway properties (below) - when specified tests will run against gateway</li>
+<li><a href="#connconfprop">Connector configuration properties</a></li>
+<li><a href="#validateprop">ValidateApiOpTests properties</a></li>
+<li><a href="#schemaprop">SchemaApiOpTests properties</a></li>
+<li>optionally other <a href="#optionalprops">Optional properties</a></li>
+</ul>
+<br />
+Gateway properties:
+<pre>gwhost.testsuite.string=hostAddress
+gwport.testsuite.integer=portNumber
+# gateway key is "changeit" by default
+gwkey.testsuite.string=gatewayKey</pre>
+There are currently no special properties necessary to identify connector behind the gateway, because there must be <strong>exactly one</strong> connector behind the gateway and the one is tested.
+<p>
+Before running tests compile contract test suite by running <code>ant</code> from within <code>framework/test-contract</code> (this step is necessary due to <code>run-contract-tests</code> ant target, which creates new <code>connector.jar</code> including proprietary jars which is not obviously necessary for gateway testing -- will be updated in the near future).<br /><br />
+Make sure gateway is running on the host and port as specified by the properties and that connector is running behind the gateway (all libs on which connector depends must be available to the gateway -- on the gateway classpath).<br /><br /> 
+Tests are run as usual (from within <code>framework/test-contract</code> directory):
+<pre>
+ant -Dconfiguration=${configuration} run-contract-tests
+</pre>
+</p>
+</div>

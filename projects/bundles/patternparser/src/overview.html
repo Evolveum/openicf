@@ -1,0 +1,103 @@
+<!--
+  Copyright 2008 Sun Microsystems, Inc. All rights reserved.
+  
+  U.S. Government Rights - Commercial software. Government users 
+  are subject to the Sun Microsystems, Inc. standard license agreement
+  and applicable provisions of the FAR and its supplements.
+  
+  Use is subject to license terms.
+  
+  This distribution may include materials developed by third parties.
+  Sun, Sun Microsystems, the Sun logo, Java and Project Identity 
+  Connectors are trademarks or registered trademarks of Sun 
+  Microsystems, Inc. or its subsidiaries in the U.S. and other
+  countries.
+  
+  UNIX is a registered trademark in the U.S. and other countries,
+  exclusively licensed through X/Open Company, Ltd. 
+  
+  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+  
+  Copyright 2008 Sun Microsystems, Inc. All rights reserved. 
+  
+  The contents of this file are subject to the terms of the Common Development
+  and Distribution License(CDDL) (the License).  You may not use this file
+  except in  compliance with the License. 
+  
+  You can obtain a copy of the License at
+  http://identityconnectors.dev.java.net/CDDLv1.0.html
+  See the License for the specific language governing permissions and 
+  limitations under the License.  
+  
+  When distributing the Covered Code, include this CDDL Header Notice in each
+  file and include the License file at identityconnectors/legal/license.txt.
+  If applicable, add the following below this CDDL Header, with the fields 
+  enclosed by brackets [] replaced by your own identifying information: 
+  "Portions Copyrighted [year] [name of copyright owner]"
+-->
+<html>
+<head>
+</head>
+<body>
+<p>
+<h1>Overview</h1>
+The Pattern Parser is intended to provide a pattern-based method of taking a String, and creating
+a Map containing name-value pairs. Its primary use in the Connectors project is parsing 
+command-line output and producing sets of Attributes.
+<p>
+The most important class is the MapTransform class. The MapTransform parses a String into a Map, 
+using an array of PatternNodes, which contain regular expressions to break up the input. 
+The values stored in the Map can be modified by an array of <code>Transform</code>s attached to the PatternNode.
+<p>
+The Pattern Parser contains a set of pre-defined <code>Transform</code>s:
+<ul>
+<li><code>BooleanTransform</code> -- create a true/false value, if possible</li>
+<li><code>ClassTransform</code> -- instantiate a new Class instance</li>
+<li><code>GroupsTransform</code> -- using a Pattern, create a List, corresponding to the groups in the Pattern</li>
+<li><code>ListTransform</code> -- apply a <code>Transform</code> to each member of a List</li>
+<li><code>MapTransform</code></li>
+<li><code>SplitTransform</code> -- split a String into a List, based on a Pattern</li>
+<li><code>SubstituteTransform</code> -- replace all occurrences of a Pattern in a String with a replacement String</li>
+</ul>
+<h1>Extending the Pattern Parser</h1>
+It is also possible to extend the Pattern Parser with additional <code>Transform</code> subtypes.
+In order to do this, the new <code>Transform</code> class must do the following:
+<ol>
+<li>Extend the <code>Transform</code> class</li>
+<li>Implement the <code>transform(Object)</code>(Object) method</li>
+<li>Have a Constructor taking an Element</li>
+<li>If the <code>Transform</code> has attributes, override the <code>getAttributes()</code> method (the <code>Transform</code> <b>must</b> have an attribute <code>class</code>, which specified the class name of the <code>Transform</code>.</li>
+<li>If the <code>Transform</code> has children, override the <code>getChildren()</code> method</li>
+</ol>
+<h1>Example</h1>
+<pre>
+    public static class SubstringTransform extends Transform {
+        private static final String START = "start";
+        private static final String END = "end";
+        
+        private int start;
+        private int end;
+        
+        public SubstringTransform(Element element) {
+            this(Integer.parseInt(element.getAttribute(START)), Integer.parseInt(element.getAttribute(END)));
+        }
+
+        public SubstringTransform(int start, int length) {
+            this.start = start;
+            this.end = length;
+        }
+
+        @Override
+        protected String getAttributes() {
+            return super.getAttributes()
+            +attributeToString(START, start+"")
+            +attributeToString(END, end+"");
+        }
+
+        @Override
+        public Object transform(Object input) throws Exception {
+            return ((String)input).substring(start, end);
+        }
+        
+    }
+</pre>

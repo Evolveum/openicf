@@ -1,0 +1,194 @@
+/*
+ * Copyright 2008 Sun Microsystems, Inc. All rights reserved.
+ * 
+ * U.S. Government Rights - Commercial software. Government users 
+ * are subject to the Sun Microsystems, Inc. standard license agreement
+ * and applicable provisions of the FAR and its supplements.
+ * 
+ * Use is subject to license terms.
+ * 
+ * This distribution may include materials developed by third parties.
+ * Sun, Sun Microsystems, the Sun logo, Java and Project Identity 
+ * Connectors are trademarks or registered trademarks of Sun 
+ * Microsystems, Inc. or its subsidiaries in the U.S. and other
+ * countries.
+ * 
+ * UNIX is a registered trademark in the U.S. and other countries,
+ * exclusively licensed through X/Open Company, Ltd. 
+ * 
+ * -----------
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ * 
+ * Copyright 2008 Sun Microsystems, Inc. All rights reserved. 
+ * 
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License(CDDL) (the License).  You may not use this file
+ * except in  compliance with the License. 
+ * 
+ * You can obtain a copy of the License at
+ * http://identityconnectors.dev.java.net/CDDLv1.0.html
+ * See the License for the specific language governing permissions and 
+ * limitations under the License.  
+ * 
+ * When distributing the Covered Code, include this CDDL Header Notice in each
+ * file and include the License file at identityconnectors/legal/license.txt.
+ * If applicable, add the following below this CDDL Header, with the fields 
+ * enclosed by brackets [] replaced by your own identifying information: 
+ * "Portions Copyrighted [year] [name of copyright owner]"
+ * -----------
+ */
+using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.ComponentModel;
+using System.Configuration;
+using System.Data;
+using System.Diagnostics;
+using System.IO;
+using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
+using System.ServiceProcess;
+using System.Text;
+using Org.IdentityConnectors.Common;
+using Org.IdentityConnectors.Framework.Server;
+
+namespace Org.IdentityConnectors.Framework.Service
+{
+	public class Service : ServiceBase
+	{		
+        private const string PROP_PORT = "gateway.port";
+        private const string PROP_SSL  = "gateway.usessl";
+        private const string PROP_CERTSTORE = "gateway.certificatestorename";
+        private const string PROP_IFADDRESS = "gateway.ifaddress";
+        public const string PROP_KEY = "gateway.key";
+	    
+	    private ConnectorServer _server;
+	    
+		public Service()
+		{
+		}
+		
+		
+		/// <summary>
+		/// Clean up any resources being used.
+		/// </summary>
+		protected override void Dispose(bool disposing)
+		{
+			base.Dispose(disposing);
+		}
+		
+		private void initializeCurrentDirectory()
+		{
+	        Assembly assembly = 
+	            Assembly.GetExecutingAssembly();
+            FileInfo thisAssemblyFile =
+               new FileInfo(assembly.Location);
+            DirectoryInfo directory =
+               thisAssemblyFile.Directory;
+	        Environment.CurrentDirectory =
+	            directory.FullName;
+		    
+		}
+		
+		private NameValueCollection GetApplicationSettings()
+		{
+		    return ConfigurationManager.AppSettings;
+		}
+		
+		private X509Certificate GetCertificate()
+		{
+		    NameValueCollection settings =
+		        GetApplicationSettings();
+		    String storeName = settings.Get(PROP_CERTSTORE);
+		    if (storeName == null) {
+		        throw new Org.IdentityConnectors.Framework.Common.Exceptions.ConfigurationException("Missing required configuration setting: "+PROP_CERTSTORE);
+		    }
+		        
+    		X509Store store = new X509Store(storeName,
+                                           StoreLocation.LocalMachine);
+		   
+            store.Open(OpenFlags.ReadOnly|OpenFlags.OpenExistingOnly);
+            X509CertificateCollection certificates = store.Certificates;
+            if ( certificates.Count != 1 ) {
+		        throw new Org.IdentityConnectors.Framework.Common.Exceptions.ConfigurationException("There is supported to be exactly one certificate in the store: "+storeName);                
+            }
+            X509Certificate certificate = store.Certificates[0];
+            store.Close();
+            return certificate;
+		}
+		
+		public void StartService(string [] args)
+		{
+		    OnStart(args);
+		}
+		
+		/// <summary>
+		/// Start this service.
+		/// </summary>
+		protected override void OnStart(string[] args)
+		{
+		    try {		        
+		        initializeCurrentDirectory();
+    		    Trace.TraceInformation("Starting connector gateway: "+Environment.CurrentDirectory);
+    		    NameValueCollection settings =
+    		        GetApplicationSettings();
+    		    String portStr =
+    		        settings.Get(PROP_PORT);
+    		    if ( portStr == null ) {
+    		        throw new Org.IdentityConnectors.Framework.Common.Exceptions.ConfigurationException("Missing required configuration property: "+PROP_PORT);
+    		    }
+    		    String keyHash = settings.Get(PROP_KEY);
+    		    if ( keyHash == null ) {
+    		        throw new Org.IdentityConnectors.Framework.Common.Exceptions.ConfigurationException("Missing required configuration property: "+PROP_KEY);
+    		    }
+    		    
+    		    int port = Int32.Parse(portStr);
+    		    bool useSSL = Boolean.Parse(settings.Get(PROP_SSL)??"false");
+    		    _server = ConnectorServer.NewInstance();    		        
+    		    _server.Port = port;
+    		    _server.UseSSL = useSSL;
+    		    _server.KeyHash = keyHash;
+    		    if (useSSL) {
+    		        _server.ServerCertificate =
+    		            GetCertificate();
+    		    }
+    		    String ifaddress = settings.Get(PROP_IFADDRESS);
+    		    if ( ifaddress != null ) {
+    		        _server.IfAddress =
+    		            IOUtil.GetIPAddress(ifaddress);
+    		    }
+    		    _server.Start();
+    		    Trace.TraceInformation("Started connector gateway");
+		    }
+		    catch (Exception e) {
+		        TraceUtil.TraceException("Exception occured starting gateway",
+		                                 e);
+		        throw;
+		    }
+		}
+		
+		public void StopService()
+		{
+		    OnStop();
+		}
+		
+		
+		/// <summary>
+		/// Stop this service.
+		/// </summary>
+		protected override void OnStop()
+		{
+		    try {
+    		    Trace.TraceInformation("Stopping connector gateway");
+    		    if (_server != null) {
+    		        _server.Stop();
+    		    }
+    		    Trace.TraceInformation("Stopped connector gateway");
+		    }
+		    catch (Exception e) {
+		        TraceUtil.TraceException("Exception occured stopping gateway",
+		                                 e);
+		    }
+		}
+	}
+}

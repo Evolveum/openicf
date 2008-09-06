@@ -1,0 +1,146 @@
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=iso-8859-1">
+	<TITLE>Developing Connector Bundles Manually</TITLE>
+</HEAD>
+<DIV ID="projecthome" CLASS="app">
+	<H1>Developing Connector Bundles Manually</H1>
+	<P>This document describes how to set up the basic build environment for developing
+	connectors. This process can be greatly automated by using the <A HREF="Java_Toolkit.html">Java Toolkit</A> for Connectors.
+	</P>
+	<P>Requirements: 
+	</P>
+	<UL>
+		<LI><A HREF="http://java.sun.com/">Java
+		1.5.x</A> 
+	
+		<LI><A HREF="http://ant.apache.org/">Ant
+		1.7.x</A> 
+	
+		<LI><A HREF="http://junit.org/">JUnit
+		4.x</A> 
+	
+		<LI><A HREF="http://subversion.tigris.org/">Subversion 1.4.x</A>
+				
+	</UL>
+	<P>Optional: 
+	</P>
+	<UL>
+		<LI>Code Coverage - Requires
+		<A HREF="http://cobertura.sourceforge.net/">Cobertura 1.9</A> 
+	
+		<LI>Code Analysis - Requires <A HREF="http://findbugs.sourceforge.net/">FindBugs-1.3.2</A>
+			
+	</UL>
+	<H3>Getting Started</H3>
+	<P>It's easy enough to simply checkout the entire source code base from
+	<STRONG>https://openconnectors.dev.java.net/svn/openconnectors/trunk/projects</STRONG>.
+	However if you only intend to work on one connector, it's easier to
+	just checkout the framework and the connector you're interested in.
+	The current available connector implementations can be found under
+	the "bundles" directory. 
+	</P>
+	<H3>Step 1: Checkout the code</H3>
+	<P><B>(Entire Project):</B>  <PRE>svn checkout https://openconnectors.dev.java.net/svn/openconnectors/trunk/projects /your/sandbox</PRE>
+    <B>(Framework Only):</B>  <PRE>svn checkout https://openconnectors.dev.java.net/svn/openconnectors/trunk/projects/framework /your/sandbox</PRE>
+     
+    <B>(Specific Connector):</B>  <PRE>svn checkout https://openconnectors.dev.java.net/svn/openconnectors/trunk/projects/bundles/database /your/sandbox</PRE></P>
+    <H3>Step 2: Before you build</H3>
+	<P>Each connector, along with the framework, has its own <I>build.xml</I>
+	file used to define the build rules. For the connectors, the build
+	files simply reference a common build file in the framework.
+	Currently this reference defaults to the location of the framework
+	in the source tree. If you change the location of the framework you
+	must set the ant property '<B>framework.dir</B>'
+	in one of the following ways: 
+	</P>
+	<UL>
+		<LI><P>Add the location of the framework to the ant call as an
+		argument (-Dframework.dir=/your/framework/location)</P>
+		<LI><P>Add the location of the framework to the connector's
+		properties file ($user-home/$projectname.properties). 
+		This file is auto-generated if you used the <A HREF="Java_Toolkit.html">Java Toolkit</A> 
+		to create your Connector. 
+				</P>
+		<LI><P>Add the location of the framework to the global connector
+		properties file ($user-home/.openconnectors.properties).
+				</P>
+	</UL>
+	<P>Look at '<I>$framework/connector_build.xml</I>' for more info.
+	Obviously, this property only applies to the connectors, not the
+	framework itself. There are three additional (optional) build flags
+	that can also be set in the same ways. These are:</P>
+	<UL>
+		<LI><P>'<B>cobertura.home</B>'  (Install
+		location of Cobertura, if you have it installed and are doing a
+		coverage build)</P>
+		<LI><P>'<B>findbugs.home</B>'  (Install
+		location of FindBugs, if you have it installed and are doing code
+		analysis)</P>
+		<LI><P>'<B>external.reporting</B>'  (Boolean
+		indicating whether there will be an external reporting engine used)
+		</P>
+	</UL>
+	<P>These three apply to both the framework and any connectors that you might
+	wish to enable them for as well.</P>
+<P>JUnit tests cases are currently the only mechanism for exercising the framework and connector code. In order to run the test suites JUnit 4 must be in the Ant lib path. <b>Before building, you should copy the <I>junit4.jar</I> to your Ant lib directory.</b></P>
+	<H3>Step 3: Build the framework</H3>
+   <P>Navigate to the framework directory in your sandbox and list the contents:</P>
+   <PRE>   $ cd /your/framework/location<BR>
+   $ ls</PRE>
+
+   <P>It should contain <I>build.properties</I>, <I>build.xml</I>, and <I>connector_build.xml</I>, as well as lib, test, and other directories. Then simply run Ant, specifying any desired arguments mentioned in Step 2 (remember, none are required to build the framework):<P>
+   <PRE>   $ ant</PRE>
+
+   <P><B>*Note:</B> If you use an IDE, make sure to build with Ant using the framework's custom <I>build.xml</I> file (in most IDE's you can click on the file and choose Run As-&gt;Ant Build), not just the standard <I>javac</I> that is usually run automatically. The build runs JUnit tests and creates reports, so if the JUnit jar is missing, the build will fail.</P>
+
+	<H3>Step 4: Begin development on the target Connector</H3>
+	<P>As mentioned before, the individual connectors have their own <I>build.xml </I>files and are built the same way as the framework, using Ant (again, specifying any necessary arguments from Step 2):</P> 
+<PRE>   $ ant -Dframework.dir=/your/framework/location</PRE>
+<P>If you use an IDE, you will want to add a reference to the framework project in each of the connector projects you are working on.
+	The directory layout for a Connector is very simple and separates
+	libraries and tests out by convention.</P> 
+	<UL>
+		<LI><B>src/</B> All java source (test
+		included). 
+	
+		<LI><B>lib/</B> All distributed
+		libraries (libraries included in the bundle). 
+
+		<LI><B>lib/build/</B> Libraries only
+		used during the build. 
+
+		<LI><B>lib/test/</B> Libraries only
+		used when running tests. 
+	
+		<LI><B>build.xml</B> Used to include
+		the connector build from the framework and allow the connector
+		developer to override anything in the build. 
+
+		<LI><B>build.properties</B> Used to define all the properties of
+		the connector bundle. 
+	</UL>
+	<P>All files in the 'src' directory will be compiled and included in
+	the bundle, except those files that include <STRONG>Test</STRONG> in
+	the name. All 'java' files that have <STRONG>Test</STRONG> in their
+	name will be included in the test run except for the file named
+	'AllTests.java'. 
+	</P>
+	<P>The 'lib' directory breaks down jar dependencies into three
+	categories: distribution, build, and test. Any library that is
+	required in the bundle must be at the top level in the lib
+	directory. Jars in the 'lib/build' directory will be included in the
+	path during compile and test. The jars in 'lib/test' will be
+	included in the path for the JUnit run. 
+	</P>
+	<P>From Step 2, you will recall that a basic '<I>build.xml</I>' is
+	there to include the '<I>connector_build.xml</I>' that is in the
+	framework. The <I>build.properties</I> file is there to fill in the
+	framework and version info for the bundle. Please refer to the
+	<A HREF="connector_bundles.html">Connector
+	Bundles</A> doc for more information on the properties. 
+	</P>
+	<H3>Development</H3>
+	<P>The framework should stabilize soon such that there should be no more dramatic changes to the API or SPI. 
+	</P>
+</DIV>

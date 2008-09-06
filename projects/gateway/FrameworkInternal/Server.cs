@@ -1,0 +1,797 @@
+/*
+ * Copyright 2008 Sun Microsystems, Inc. All rights reserved.
+ * 
+ * U.S. Government Rights - Commercial software. Government users 
+ * are subject to the Sun Microsystems, Inc. standard license agreement
+ * and applicable provisions of the FAR and its supplements.
+ * 
+ * Use is subject to license terms.
+ * 
+ * This distribution may include materials developed by third parties.
+ * Sun, Sun Microsystems, the Sun logo, Java and Project Identity 
+ * Connectors are trademarks or registered trademarks of Sun 
+ * Microsystems, Inc. or its subsidiaries in the U.S. and other
+ * countries.
+ * 
+ * UNIX is a registered trademark in the U.S. and other countries,
+ * exclusively licensed through X/Open Company, Ltd. 
+ * 
+ * -----------
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ * 
+ * Copyright 2008 Sun Microsystems, Inc. All rights reserved. 
+ * 
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License(CDDL) (the License).  You may not use this file
+ * except in  compliance with the License. 
+ * 
+ * You can obtain a copy of the License at
+ * http://identityconnectors.dev.java.net/CDDLv1.0.html
+ * See the License for the specific language governing permissions and 
+ * limitations under the License.  
+ * 
+ * When distributing the Covered Code, include this CDDL Header Notice in each
+ * file and include the License file at identityconnectors/legal/license.txt.
+ * If applicable, add the following below this CDDL Header, with the fields 
+ * enclosed by brackets [] replaced by your own identifying information: 
+ * "Portions Copyrighted [year] [name of copyright owner]"
+ * -----------
+ */
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Net;
+using System.Net.Security;
+using System.Security;
+using System.Security.Cryptography.X509Certificates;
+using System.Net.Sockets;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Reflection;
+using System.Security.Authentication;
+using Org.IdentityConnectors.Common;
+using Org.IdentityConnectors.Common.Security;
+using Org.IdentityConnectors.Framework.Api;
+using Org.IdentityConnectors.Framework.Api.Operations;
+using Org.IdentityConnectors.Framework.Common.Objects;
+using Org.IdentityConnectors.Framework.Common.Objects.Filters;
+using Org.IdentityConnectors.Framework.Common.Serializer;
+using Org.IdentityConnectors.Framework.Server;
+using Org.IdentityConnectors.Framework.Impl.Api;
+using Org.IdentityConnectors.Framework.Impl.Api.Remote.Messages;
+using Org.IdentityConnectors.Framework.Impl.Api.Local;
+using Org.IdentityConnectors.Framework.Impl.Api.Local.Operations;
+using Org.IdentityConnectors.Framework.Impl.Api.Remote;
+namespace Org.IdentityConnectors.Framework.Server
+{
+	/**
+     * Connector server interface. 
+     */
+    public abstract class ConnectorServer {
+    
+        // At some point we might make this pluggable, but for now, hard-code
+        private const String IMPL_NAME 
+         = "Org.IdentityConnectors.Framework.Impl.Server.ConnectorServerImpl";
+    
+        
+        /**
+         * The port to listen on;
+         */
+        private int _port = 0;
+        
+        /**
+         * Base 64 sha1 hash of the gateway key
+         */ 
+        private String _keyHash;
+        
+        /**
+         * The number of connections to queue
+         */
+        private int _maxConnections = 300;
+        
+        /**
+         * The minimum number of worker threads
+         */
+        private int _minWorkers = 10;
+        
+        /**
+         * The maximum number of worker threads
+         */
+        private int _maxWorkers = 100;
+        
+        /**
+         * The network interface address to use. 
+         */
+        private IPAddress _ifAddress = null;
+        
+        /**
+         * Listen on SSL
+         */
+        private bool _useSSL = false;
+                    
+        /**
+         * The server certificate to use
+         */
+        private X509Certificate _serverCertificate = null;
+            
+        /**
+         * Get the singleton instance of the {@link ConnectorServer}.
+         */
+        public static ConnectorServer NewInstance() {
+            Type type = Type.GetType(IMPL_NAME,true);
+            return (ConnectorServer)Activator.CreateInstance(type);
+        }
+        
+        private void AssertNotStarted() {
+            if ( IsStarted() ) {
+                throw new InvalidOperationException("Operation cannot be performed " +
+                		"while server is running");
+            }
+        }
+        
+        /**
+         * Returns the port to listen on.
+         * @return The port to listen on.
+         */
+        public int Port {
+            get {
+                return _port;
+            }
+            set {
+                AssertNotStarted();
+                _port = value;                
+            }
+        }
+    
+        /**
+         * Returns the max connections to queue
+         * @return The max connections to queue
+         */
+        public int MaxConnections {
+            get {
+                return _maxConnections;
+            }
+            set {
+                AssertNotStarted();
+                _maxConnections = value;
+            }
+        }
+        
+        
+        /**
+         * Returns the max worker threads to allow.
+         * @return The max worker threads to allow.
+         */
+        public int MaxWorkers {
+            get {
+                return _maxWorkers;
+            }
+            set {
+                AssertNotStarted();
+                _maxWorkers = value;
+            }
+        }
+        
+        
+    
+        /**
+         * Returns the min worker threads to allow.
+         * @return The min worker threads to allow.
+         */
+        public int MinWorkers {
+            get {
+                return _minWorkers;
+            }
+            set {
+                AssertNotStarted();
+                _minWorkers = value;
+            }
+        }
+        
+        
+    
+        /**
+         * Returns the network interface address to bind to. May be null.
+         * @return The network interface address to bind to or null.
+         */
+        public IPAddress IfAddress {
+            get {
+                return _ifAddress;
+            }
+            set {
+                AssertNotStarted();
+                _ifAddress = value;
+            }
+        }
+                
+        /**
+         * Returns true iff we are to use SSL.
+         * @return true iff we are to use SSL.
+         */
+        public bool UseSSL {
+            get {
+                return _useSSL;
+            }
+            set {
+                AssertNotStarted();
+                _useSSL = value;
+            }
+        }
+        
+            
+        /**
+         * Returns the certificate to use for the SSL connection.
+         */
+        public X509Certificate ServerCertificate {
+            get {
+                return _serverCertificate;
+            }
+            set {
+                AssertNotStarted();
+                _serverCertificate = value;
+            }
+        }
+        
+        public String KeyHash {
+            get {
+                return _keyHash;
+            }
+            set {
+                AssertNotStarted();
+                _keyHash = value;
+            }
+        }
+        
+            
+        /**
+         * Starts the server. All server settings must be configured prior
+         * to calling. The following methods are required to be called:
+         * <ul>
+         *   <li>{@link #Port(int)}</li>
+         *   <li>{@link #KeyHash(String)}</li>
+         * </ul>
+         */
+        abstract public void Start();
+        
+        /**
+         * Stops the server gracefully. Returns when all in-progress connections
+         * have been serviced.
+         */
+        abstract public void Stop();
+        
+        /**
+         * Return true iff the server is started. Note that started is a
+         * logical state (start method has been called). It does not necessarily 
+         * reflect the health of the server
+         * @return true iff the server is started.
+         */
+        abstract public bool IsStarted();
+    }
+}
+
+namespace Org.IdentityConnectors.Framework.Impl.Server
+{
+    public class ConnectionProcessor {
+    
+        private class RemoteResultsHandler : ObjectStreamHandler
+        {
+            private const int PAUSE_INTERVAL = 200;
+
+            private readonly RemoteFrameworkConnection _connection;
+            private long _count = 0;
+            public RemoteResultsHandler(RemoteFrameworkConnection conn) 
+            {
+                _connection = conn;
+            }
+                            
+            public bool Handle(Object obj) {
+                try {
+                    OperationResponsePart part = 
+                        new OperationResponsePart(null,obj);
+                    _connection.WriteObject(part);
+                    _count++;
+                    if ( _count % PAUSE_INTERVAL == 0 ) {
+                        _connection.WriteObject(new OperationResponsePause());
+                        Object message = 
+                            _connection.ReadObject();
+                        return message is OperationRequestMoreData;      
+                    }
+                    else {
+                        return true;
+                    }
+                }
+                catch (IOException e) {
+                    throw new BrokenConnectionException(e);
+                }
+                catch (Exception) {
+                    throw;
+                }
+            }
+        }
+        
+        private readonly ConnectorServer _server;
+        private readonly RemoteFrameworkConnection _connection;
+        
+        public ConnectionProcessor(ConnectorServer server,
+                RemoteFrameworkConnection connection) {
+            _server = server;
+            _connection = connection;
+        }
+        
+        public void Run() {
+            try {
+                try {
+                    while ( true ) {
+                        bool keepGoing = ProcessRequest();
+                        if (!keepGoing) {
+                            break;
+                        }
+                    }
+                }
+                finally {
+                    try {
+                        _connection.Dispose();
+                    }
+                    catch (Exception e) {
+                        TraceUtil.TraceException(null,e);
+                    }
+                }
+            }
+            catch (Exception e) {
+                TraceUtil.TraceException(null,e);
+            }
+        }
+        
+        private bool ProcessRequest() 
+        {
+            GuardedString key;
+            try {
+                key = (GuardedString)_connection.ReadObject();
+            }
+            catch (EndOfStreamException) {
+                return false;
+            }
+
+            bool authorized;
+            try {
+                authorized = key.VerifyBase64SHA1Hash(_server.KeyHash);
+            }
+            finally {
+                key.Dispose();
+            }
+            Org.IdentityConnectors.Framework.Common.Exceptions.InvalidCredentialException authException = null;
+            if (!authorized) {
+                authException = new Org.IdentityConnectors.Framework.Common.Exceptions.InvalidCredentialException("Remote framework key is invalid");
+            }
+            Object requestObject = _connection.ReadObject();
+            if ( requestObject is HelloRequest ) {
+                if ( authException != null ) {
+                    HelloResponse response =
+                        new HelloResponse(authException,null);
+                    _connection.WriteObject(response);                    
+                }
+                else {
+                    HelloResponse response = 
+                        ProcessHelloRequest((HelloRequest)requestObject);
+                    _connection.WriteObject(response);
+                }
+            }
+            else if ( requestObject is OperationRequest ) {
+                if ( authException != null ) {
+                    OperationResponsePart part =
+                        new OperationResponsePart(authException,null);
+                    _connection.WriteObject(part);
+                }
+                else {
+                    OperationRequest opRequest =
+                        (OperationRequest)requestObject;
+                    OperationResponsePart part =
+                        ProcessOperationRequest(opRequest);
+                    _connection.WriteObject(part);
+                }
+            }
+            else if (requestObject is EchoMessage) {
+                if ( authException != null ) {
+                    //echo message probably doesn't need auth, but
+                    //it couldn't hurt - actually it does for test connection
+                    EchoMessage part =
+                        new EchoMessage(authException,null);
+                    _connection.WriteObject(part);
+                }
+                else {                    
+                    EchoMessage message = (EchoMessage)requestObject;
+                    Object obj = message.Object;
+                    String xml = message.ObjectXml;
+                    if ( xml != null ) {
+                        Console.WriteLine("xml: \n"+xml);
+                        Object xmlClone =
+                            SerializerUtil.DeserializeXmlObject(xml,true);
+                        xml =
+                            SerializerUtil.SerializeXmlObject(xmlClone,true);                    
+                    }
+                    EchoMessage message2 = new EchoMessage(obj,xml);
+                    _connection.WriteObject(message2);
+                }
+            }
+            else {
+                throw new Exception("Unexpected request: "+requestObject);
+            }
+            return true;
+        }
+        
+        private ConnectorInfoManager GetConnectorInfoManager() {
+            return ConnectorInfoManagerFactory.GetInstance().GetLocalManager();
+        }
+        
+        private HelloResponse ProcessHelloRequest(HelloRequest request) {
+            IList<RemoteConnectorInfoImpl> connectorInfo;
+            Exception exception = null;
+            try {
+                ConnectorInfoManager manager =
+                    GetConnectorInfoManager();
+                IList<ConnectorInfo> localInfos =
+                    manager.ConnectorInfos;
+                connectorInfo = new List<RemoteConnectorInfoImpl>();
+                foreach (ConnectorInfo localInfo in localInfos) {
+                    LocalConnectorInfoImpl localInfoImpl = 
+                        (LocalConnectorInfoImpl)localInfo;
+                    RemoteConnectorInfoImpl remoteInfo =
+                        localInfoImpl.ToRemote();
+                    connectorInfo.Add(remoteInfo);
+                }
+            }
+            catch (Exception e) {
+                TraceUtil.TraceException(null,e);
+                exception = e;
+                connectorInfo = null;
+            }
+            return new HelloResponse(exception,connectorInfo);
+        }
+                
+        private OperationResponsePart 
+        ProcessOperationRequest(OperationRequest request) {
+            Object result;
+            Exception exception = null;
+            try {
+                MethodInfo [] methods = 
+                    request.Operation.GetMethods();
+                if ( methods.Length != 1) {
+                    throw new Exception("APIOperations are expected "
+                            +"to have exactly one method: "+request.Operation+" "+methods.Length);
+                }
+                MethodInfo method = methods[0];
+                APIOperation operation = GetAPIOperation(request);
+                IList<Object> arguments = request.Arguments;
+                IList<Object> argumentsAndStreamHandlers =
+                    PopulateStreamHandlers(ReflectionUtil.GetParameterTypes(method),
+                            arguments);
+                try {
+                    Object [] args = argumentsAndStreamHandlers.ToArray();
+                    FixupArguments(method,args);
+                    result = method.Invoke(operation, args);
+                }
+                catch (TargetInvocationException e) {
+                    throw e.InnerException;
+                }
+                bool anyStreams =
+                    argumentsAndStreamHandlers.Count > arguments.Count;
+                if ( anyStreams ) {
+                    try {
+                        _connection.WriteObject(new OperationResponseEnd());
+                    }
+                    catch (IOException e) {
+                        throw new BrokenConnectionException(e);
+                    }
+                }
+            }
+            catch (BrokenConnectionException w) {
+                //at this point the stream is broken - just give up
+                throw w.GetIOException();
+            }
+            catch (Exception e) {
+                TraceUtil.TraceException(null,e);
+                exception = e;
+                result = null;
+            }
+            return new OperationResponsePart(exception,result);
+        }
+        
+        private IList<Object> PopulateStreamHandlers(Type [] paramTypes, IList<Object> arguments) {
+            IList<Object> rv = new List<Object>();
+            bool firstStream = true;
+            IEnumerator<Object> argIt = arguments.GetEnumerator();
+            foreach (Type paramType in paramTypes) {
+                if ( StreamHandlerUtil.IsAdaptableToObjectStreamHandler(paramType) ) {
+                    if (!firstStream) {
+                        throw new InvalidOperationException("At most one stream handler is supported");
+                    }
+                    ObjectStreamHandler osh =
+                        new RemoteResultsHandler(_connection);
+                    rv.Add(StreamHandlerUtil.AdaptFromObjectStreamHandler(paramType, osh));
+                    firstStream = false;
+                }
+                else {
+                    argIt.MoveNext();
+                    rv.Add(argIt.Current);
+                }
+            }
+            return rv;
+        }
+        
+        /// <summary>
+        /// When arguments are serialized, we loose the
+        /// generic-type of collections. We must fix
+        /// the arguments 
+        /// </summary>
+        /// <param name="method"></param>
+        /// <param name="args"></param>
+        private void FixupArguments(MethodInfo method,
+                                    object [] args)
+        {
+            Type [] paramTypes = 
+                ReflectionUtil.GetParameterTypes(method);
+            if (paramTypes.Length != args.Length) {
+                throw new ArgumentException("Number of arguments does not match for method: "+method);
+            }
+            for ( int i = 0; i < args.Length; i++ ) {
+                args[i] = FixupArgument(paramTypes[i],
+                                         args[i]);
+            }
+        }
+        
+        private object FixupArgument(Type expectedType,
+                                     object argument) 
+        {
+            //at some point, we might want this to be more general-purpose
+            //for now we just handle those cases that we need to
+            if (typeof(ICollection<ConnectorAttribute>).Equals(expectedType)) {
+                ICollection<object> val = 
+                    (ICollection<object>)argument;
+                return CollectionUtil.NewSet<object,ConnectorAttribute>(val);
+            }
+            else {
+                return argument;
+            }
+        }
+        
+        private APIOperation GetAPIOperation(OperationRequest request)
+        {
+            ConnectorInfoManager manager =
+                GetConnectorInfoManager();
+            ConnectorInfo info = manager.FindConnectorInfo(
+                    request.ConnectorKey);
+            if ( info == null ) {
+                throw new Exception("No such connector: "
+                                    +request.ConnectorKey);
+            }
+            APIConfigurationImpl config = 
+                request.Configuration;
+            
+            //re-wire the configuration with its connector info
+            config.ConnectorInfo=(AbstractConnectorInfo)info;
+            
+            ConnectorFacade facade = 
+                ConnectorFacadeFactory.GetInstance().NewInstance(config);
+            
+            return facade.GetOperation(request.Operation);
+        }
+        
+        private class BrokenConnectionException : Exception {
+            
+            
+            public BrokenConnectionException(IOException ex) 
+                : base("",ex) {
+            }
+            
+            public IOException GetIOException() {
+                return (IOException)InnerException;
+            }
+        }
+    
+    }
+
+    class ConnectionListener {
+    
+        /**
+         * This is the size of our internal queue. For now I have this
+         * relatively small because I want the OS to manage the connect
+         * queue coming in. That way it can properly turn away excessive
+         * requests
+         */
+        private const int INTERNAL_QUEUE_SIZE = 2;
+        
+        
+        /**
+         * The server object that we are using
+         */
+        private readonly ConnectorServer _server;
+        
+        /**
+         * The server socket. This must be bound at the time
+         * of creation.
+         */
+        private readonly TcpListener _socket;
+        
+        /**
+         * Pool of executors
+         */
+        //TODO: add a thread pool
+        //private readonly ExecutorService _threadPool;
+        
+        /**
+         * Set to indicated we need to start shutting down
+         */
+        private bool _stopped = false;
+        
+        private Thread _thisThread;
+        
+        private readonly Object MUTEX = new Object();
+        
+        /**
+         * Creates the listener thread
+         * @param server The server object
+         * @param socket The socket (should already be bound)
+         */
+        public ConnectionListener(ConnectorServer server,
+                TcpListener socket) {
+            _server = server;
+            _socket = socket;
+            //TODO: thread pool
+/*            _threadPool = 
+                new ThreadPoolExecutor
+                (server.getMinWorkers(),
+                 server.getMaxWorkers(),
+                 30, //idle time timeout
+                 TimeUnit.SECONDS,
+                 new ArrayBlockingQueue<Runnable>(
+                         INTERNAL_QUEUE_SIZE,
+                         true)); //fair*/
+        }
+        
+        
+        
+        public void Run(Object o) {
+            Trace.TraceInformation("Server started on port: "+_server.Port);
+            _thisThread = (Thread)o;
+            while (!IsStopped()) {
+                try {
+                    TcpClient connection = null;
+                    Stream stream = null;
+                    try {
+                        connection = _socket.AcceptTcpClient();
+                        stream = connection.GetStream();
+                        if ( _server.UseSSL )
+                        {
+                            SslStream sslStream = new SslStream(stream,false);
+                            stream = sslStream;
+                            sslStream.AuthenticateAsServer(_server.ServerCertificate,
+                                                           false,
+                                                           SslProtocols.Tls,
+                                                           false);                                                           
+                        }
+                        
+                        ConnectionProcessor processor =
+                            new ConnectionProcessor(_server,
+                                                    new RemoteFrameworkConnection(connection,stream));
+                        Thread thread = new Thread(processor.Run);
+                        thread.IsBackground = false;
+                        thread.Start();                    
+                    }
+                    catch (Exception) {
+                        if ( stream != null )
+                        {
+                            try { stream.Close(); } catch (Exception) {}
+                        }
+                        if ( connection != null )
+                        {
+                            try { connection.Close(); } catch (Exception) {}
+                        }
+                        throw;
+                    }
+                }
+                catch (Exception e) {
+                    //log the error unless it's because we've stopped
+                    if (!IsStopped() || !(e is SocketException)) {
+                        TraceUtil.TraceException("Error processing request",e);
+                    }
+                    //wait a second before trying again
+                    if (!IsStopped()) {
+                        Thread.Sleep(1000);
+                    }
+                }
+            }
+        }
+        
+        private void MarkStopped() {
+            lock(MUTEX) {
+                _stopped = true;
+            }
+        }
+        
+        private bool IsStopped() {
+            lock(MUTEX) {
+                return _stopped;
+            }
+        }
+        
+        public void Shutdown() {
+            if (Object.ReferenceEquals(Thread.CurrentThread,_thisThread)) {
+                throw new ArgumentException("Shutdown may not be called from this thread");
+            }
+            if (!IsStopped()) {
+                //set the stopped flag so we no its a normal
+                //shutdown and don't log the SocketException
+                MarkStopped();
+                //close the socket - this causes accept to throw an exception
+                _socket.Stop();
+                //wait for the main listener thread to die so we don't
+                //get any new requests
+                _thisThread.Join();
+                //TODO: shutdown thread pool
+                //wait for all in-progress requests to finish
+                //_threadPool.shutdown();
+            }
+        }
+    }
+
+    public class ConnectorServerImpl : ConnectorServer {
+
+        private ConnectionListener _listener;
+        
+        public override bool IsStarted() {
+            return _listener != null;
+        }
+    
+        
+        public override void Start() {
+            if ( IsStarted() ) {
+                throw new InvalidOperationException("Server is already running.");
+            }
+            if ( Port == 0 ) {
+                throw new InvalidOperationException("Port must be set prior to starting server.");
+            }
+            if (KeyHash == null) {
+                throw new InvalidOperationException("Key hash must be set prior to starting server.");                
+            }
+            if ( UseSSL && ServerCertificate == null ) {
+                throw new InvalidOperationException("ServerCertificate must be set if using SSL.");
+            }
+            //make sure we are configured properly
+            ConnectorInfoManagerFactory.GetInstance().GetLocalManager();
+            
+            TcpListener socket =
+                CreateServerSocket();
+            ConnectionListener listener = new ConnectionListener(this,socket);
+            Thread thread = new Thread(listener.Run);
+            thread.Name="ConnectionListener";
+            thread.Start(thread);
+            thread.IsBackground = false;
+            _listener = listener;
+        }
+        
+        private TcpListener CreateServerSocket() {
+            IPAddress addr = IfAddress;
+   
+            if ( addr == null ) {
+                addr = IOUtil.GetIPAddress("0.0.0.0");
+            }
+            TcpListener rv = new TcpListener(addr,Port);
+            //TODO: specify accept count
+            rv.Start();
+            return rv;
+        }
+        
+        
+        public override void Stop() {
+            if (_listener != null) {
+                _listener.Shutdown();
+                _listener = null;
+            }
+            ConnectorFacadeFactory.GetInstance().Dispose();
+        }
+    
+    }
+
+    
+}
