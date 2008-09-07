@@ -25,13 +25,15 @@
         description="Builds the framework and all know bundles.">
         <oc:ant dir="framework" />
         <oc:ant dir="bundles/flatfile" />
-        <oc:ant dir="bundles/ldap" />
         <oc:ant dir="bundles/as400" target="dist" />
 
         <!-- order is important -->
         <oc:ant dir="bundles/dbcommon" />
         <oc:ant dir="bundles/database" />
-        <oc:ant dir="bundles/mysql" />
+
+        <!-- not everyone's got a local install of mysql ready -->
+        <oc:ant dir="bundles/mysql" target="clean" />
+        <oc:ant dir="bundles/mysql" target="dist" />
 
 	<!-- order is important -->
         <oc:ant dir="bundles/patternparser" />
