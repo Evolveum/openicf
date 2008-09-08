@@ -109,11 +109,6 @@
   <ItemGroup>
     <Compile Include="ActiveDirectoryConnectorTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TestParams.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>TestParams.resx</DependentUpon>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ActiveDirectoryConnector\ActiveDirectoryConnector.csproj">
@@ -128,13 +123,6 @@
       <Project>{8B24461B-456A-4032-89A1-CD418F7B5B62}</Project>
       <Name>Framework</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="TestParams.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>TestParams.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <Content Include="project.xml">

@@ -11,7 +11,8 @@
   <property name="config_user" value="adconnector\administrator"/>
   <property name="config_ldap_hostname" value="idmvm1128.central.sun.com"/>
   <property name="config_search_context" value="dc=adconnector,dc=central,dc=sun,dc=com"/>
-  <property name="config_sync_search_context" value="dc=adconnector,dc=central,dc=sun,dc=com"/>
+  <property name="config_sync_search_context_root" value="dc=adconnector,dc=central,dc=sun,dc=com"/>
+  <property name="config_sync_search_context_child" value="cn=users,dc=adconnector,dc=central,dc=sun,dc=com"/>
   <property name="config_domain_name" value="adconnector.central.sun.com"/>
   <property name="config_sync_domain_controller" value="idmvm1128.central.sun.com"/>
   <property name="config_sync_gc_domain_controller" value="idmvm1128.central.sun.com"/>

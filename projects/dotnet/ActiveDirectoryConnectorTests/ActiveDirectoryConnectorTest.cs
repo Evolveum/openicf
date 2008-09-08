@@ -71,7 +71,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public static readonly string CONFIG_PROPERTY_SCRIPT_PASSWORD_DOMAIN = "config_script_password_domain";
         public static readonly string CONFIG_PROPERTY_LDAPHOSTNAME = "config_ldap_hostname";
         public static readonly string CONFIG_PROPERTY_SEARCH_CONTEXT = "config_search_context";
-        public static readonly string CONFIG_PROPERTY_SYNC_SEARCH_CONTEXT = "config_sync_search_context";
+        public static readonly string CONFIG_PROPERTY_SYNC_SEARCH_CONTEXT_ROOT = "config_sync_search_context_root";
+        public static readonly string CONFIG_PROPERTY_SYNC_SEARCH_CONTEXT_CHILD = "config_sync_search_context_child";
         public static readonly string CONFIG_PROPERTY_DOMAIN_NAME = "config_domain_name";
         public static readonly string CONFIG_PROPERTY_SYNC_DOMAIN_CONTROLLER = "config_sync_domain_controller";
         public static readonly string CONFIG_PROPERTY_GC_DOMAIN_CONTROLLER = "config_sync_gc_domain_controller";
@@ -1196,7 +1197,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void TestSyncGC()
         {
             // test with searchChildDomain (uses GC)
-            TestSync(true);
+            TestSync(true, GetProperty(CONFIG_PROPERTY_SYNC_SEARCH_CONTEXT_ROOT));
+            TestSync(true, GetProperty(CONFIG_PROPERTY_SYNC_SEARCH_CONTEXT_CHILD));
         }
 
         // test sync
@@ -1204,7 +1206,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void TestSyncDC()
         {
             // test withouth searchChildDomains (uses DC)
-            TestSync(false);
+            TestSync(false, GetProperty(CONFIG_PROPERTY_SYNC_SEARCH_CONTEXT_ROOT));
+            TestSync(false, GetProperty(CONFIG_PROPERTY_SYNC_SEARCH_CONTEXT_CHILD));
         }
 
         [Test]
@@ -1304,11 +1307,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
 
-        public void TestSync(bool searchChildDomains) {
+        public void TestSync(bool searchChildDomains, String syncSearchContext)
+        {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
             ActiveDirectoryConfiguration configuration = 
                 (ActiveDirectoryConfiguration)GetConfiguration();
+            configuration.SyncSearchContext = syncSearchContext;
             configuration.SearchChildDomains = searchChildDomains;
             connector.Init(configuration);
 
@@ -1417,23 +1422,28 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             public bool SyncHandler_ModifiedAccounts(SyncDelta delta)
             {
-                // just ignore extra ones.  they might have come in by other means
-                if (_mods.ContainsKey(delta.Uid))
-                {
-                    ICollection<ConnectorAttribute> requestedAttrs = _mods[delta.Uid];
-                    ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
-                    builder.ObjectClass = ObjectClass.ACCOUNT;
-                    builder.SetUid(delta.Uid);
-                    builder.AddAttributes(delta.Attributes);
-                    ActiveDirectoryConnectorTest.VerifyObject(requestedAttrs,
-                        builder.Build());
-                    _mods.Remove(delta.Uid);
+                Token = delta.Token;
+                if(delta.DeltaType.Equals(SyncDeltaType.UPDATE)) {
+                    // just ignore extra ones.  they might have come in by other means
+                    if (_mods.ContainsKey(delta.Uid))
+                    {
+                        ICollection<ConnectorAttribute> requestedAttrs = _mods[delta.Uid];
+                        ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+                        builder.ObjectClass = ObjectClass.ACCOUNT;
+                        builder.SetUid(delta.Uid);
+                        builder.AddAttributes(delta.Attributes);
+                        ActiveDirectoryConnectorTest.VerifyObject(requestedAttrs,
+                            builder.Build());
+                        _mods.Remove(delta.Uid);
+                    }
                 }
                 return true;
             }
 
             public bool SyncHandler_DeletedAccounts(SyncDelta delta)
             {
+                Token = delta.Token;
+
                 _dels.Remove(delta.Uid);
                 return true;
             }
@@ -1508,23 +1518,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 foundObjects.ElementAt(0).GetAttributeByName("distinguishedName"));
             return dnMember;
         }
-        /*
-        public Uid CreateAndVerifyObject(ActiveDirectoryConnector connector,
-            ObjectClass oclass, ICollection<ConnectorAttribute> attributes)
-        {
-            // create object
-            Uid uid = connector.Create(oclass, attributes, null);
-            Assert.IsNotNull(uid);
 
-            // find new object
-            Filter uidFilter = FilterBuilder.EqualTo(uid);
-            ICollection<ConnectorObject> foundObjects = TestHelpers.SearchToList(
-                connector, oclass, uidFilter);
-            Assert.IsTrue(foundObjects.Count == 1);
-            VerifyObject(attributes, foundObjects.ElementAt(0));
-            return uid;
-        }
-        */
         public Uid UpdateReplaceAndVerifyObject(ActiveDirectoryConnector connector,
             ObjectClass oclass, Uid uid, ICollection<ConnectorAttribute> attributes)
         {
@@ -1707,6 +1701,16 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public Uid CreateObject(ActiveDirectoryConnector connector,
             ObjectClass oclass, ICollection<ConnectorAttribute> attributes)
         {
+            // if it exists, remove and recreate
+            Filter nameFilter = FilterBuilder.EqualTo(ConnectorAttributeBuilder.Build(
+                Name.NAME, ConnectorAttributeUtil.GetNameFromAttributes(attributes).Value));
+            ICollection<ConnectorObject> foundObjects = TestHelpers.SearchToList(connector, oclass, nameFilter);
+            if ((foundObjects != null) && (foundObjects.Count > 0))
+            {
+                Assert.AreEqual(1, foundObjects.Count);
+                DeleteAndVerifyObject(connector, oclass, foundObjects.ElementAt(0).Uid, false, true);
+            }
+            
             // create object
             Uid uid = connector.Create(oclass, attributes, null);
             Assert.IsNotNull(uid);
@@ -1736,7 +1740,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
             config.DirectoryAdminName = GetProperty(CONFIG_PROPERTY_USER);
             config.DirectoryAdminPassword = GetProperty(CONFIG_PROPERTY_PASSWORD);
             config.SearchContext = GetProperty(CONFIG_PROPERTY_SEARCH_CONTEXT);
-            config.SyncSearchContext = GetProperty(CONFIG_PROPERTY_SYNC_SEARCH_CONTEXT);
             config.SyncDomainController = GetProperty(CONFIG_PROPERTY_SYNC_DOMAIN_CONTROLLER);
             config.SyncGlobalCatalogServer = GetProperty(CONFIG_PROPERTY_GC_DOMAIN_CONTROLLER);
             return config;

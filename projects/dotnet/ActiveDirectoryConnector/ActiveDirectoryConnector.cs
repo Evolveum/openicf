@@ -215,6 +215,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     ActiveDirectoryUtils.GetADObjectClass(oclass));
 
                 newDe.CommitChanges();
+
+                // default to creating users enabled
+                if ((ObjectClass.ACCOUNT.Equals(oclass)) && 
+                    (ConnectorAttributeUtil.Find(OperationalAttributes.ENABLE_NAME, attributes) == null))
+                {
+                    attributes.Add(ConnectorAttributeBuilder.Build(OperationalAttributes.ENABLE_NAME, true));
+                }
                 _utils.UpdateADObject(oclass, newDe, attributes,
                     UpdateType.REPLACE, _configuration);
                 Object guidValue = newDe.Properties["objectGUID"].Value;
@@ -986,12 +993,17 @@ namespace Org.IdentityConnectors.ActiveDirectory
             SyncResultsHandler _syncResultsHandler;
             string _serverName;
             bool _useGlobalCatalog;
+            long _lastModifiedUsn;
+            long _lastDeletedUsn;
 
             public SyncResults(SyncResultsHandler syncResultsHandler, 
-                bool useGlobalCatalog, string serverName) {
+                bool useGlobalCatalog, string serverName, 
+                long lastModifiedUsn, long lastDeletedUsn) {
                 _syncResultsHandler = syncResultsHandler;
                 _serverName = serverName;
                 _useGlobalCatalog = false;
+                _lastModifiedUsn = lastModifiedUsn;
+                _lastDeletedUsn = lastDeletedUsn;
             }
 
             public bool SyncHandler(ConnectorObject obj)
@@ -1020,17 +1032,22 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 long tokenUsnValue = (long)ConnectorAttributeUtil.GetSingleValue(tokenAttr);
                 string tokenServerName = _serverName;
                 
-                SyncToken token = new SyncToken(String.Format("{0}|{1}|{2}", 
-                    tokenUsnValue, _useGlobalCatalog, tokenServerName));
-                builder.Token = token;
-
                 bool? isDeleted = false;
                 ConnectorAttribute isDeletedAttr =
                     ConnectorAttributeUtil.Find(ATT_IS_DELETED, obj.GetAttributes());
                 if (isDeletedAttr != null)
                 {
                     isDeleted = (bool?)ConnectorAttributeUtil.GetSingleValue(isDeletedAttr);
+                    _lastDeletedUsn = tokenUsnValue;
                 }
+                else
+                {
+                    _lastModifiedUsn = tokenUsnValue;
+                }
+
+                SyncToken token = new SyncToken(String.Format("{0}|{1}|{2}|{3}",
+                    _lastModifiedUsn, _lastDeletedUsn, _useGlobalCatalog, tokenServerName));
+                builder.Token = token;
 
                 if ((isDeleted != null) && (isDeleted.Equals(true)))
                 {
@@ -1050,7 +1067,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void Sync(ObjectClass objClass, SyncToken token, 
             SyncResultsHandler handler, OperationOptions options)
         {
-            string query = null;
+            string modifiedQuery = null;
+            string deletedQuery = null;
             string serverName = null;
             bool useGlobalCatalog = false;
 
@@ -1092,14 +1110,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
 
 
-
+            long lastModToken = 0;
+            long lastDelToken = 0;
             // if the token is not null, we may be able to start from 
             // the usn contained there
             if (token != null)
             {
                 string[] tokenParts = ((string)(token.Value)).Split('|');
-                bool tokenUseGlobalCatalog = bool.Parse(tokenParts[1]);
-                string tokenServerName = tokenParts[2];
+                bool tokenUseGlobalCatalog = bool.Parse(tokenParts[2]);
+                string tokenServerName = tokenParts[3];
 
                 // If the token server is the same as the configured server,
                 // use the token value (usn) to limit the query.  The token is
@@ -1111,21 +1130,43 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     if ((serverName == null) ||
                         (tokenServerName.Equals(serverName)) || (serverName.Length == 0))
                     {
-                        // add usnchanged >= token to search ... active directory doesn't support
-                        // > just >=, so add one, and then search for >=
-                        long nextUsn = long.Parse(tokenParts[0]);
-                        nextUsn++;
-                        query = string.Format("({0}>={1})", ATT_USN_CHANGED, nextUsn);
+                        lastModToken = long.Parse(tokenParts[0]);
+                        lastDelToken = long.Parse(tokenParts[1]);
+                        modifiedQuery = string.Format("(!({0}<={1}))", ATT_USN_CHANGED, tokenParts[0]);
+                        deletedQuery = string.Format("(&(!({0}<={1}))(isDeleted=TRUE))", ATT_USN_CHANGED, tokenParts[1]);
                     }
                 }
             }
+            else
+            {
+                deletedQuery = string.Format("(isDeleted=TRUE)");
+            }
 
             OperationOptionsBuilder builder = new OperationOptionsBuilder();
-            SyncResults syncResults = new SyncResults(handler, useGlobalCatalog, serverName);
+            SyncResults syncResults = new SyncResults(handler, useGlobalCatalog, 
+                serverName, lastModToken, lastDelToken);
 
-            ExecuteQuery(objClass, query, syncResults.SyncHandler, builder.Build(),
-                true, new SortOption(ATT_USN_CHANGED, SortDirection.Ascending), 
+            // find modified usn's
+            ExecuteQuery(objClass, modifiedQuery, syncResults.SyncHandler, builder.Build(),
+                false, new SortOption(ATT_USN_CHANGED, SortDirection.Ascending),
                 serverName, useGlobalCatalog, _configuration.SyncSearchContext);
+
+            // find deleted usn's
+            DirectoryContext domainContext = new DirectoryContext(DirectoryContextType.DirectoryServer, 
+                        serverName,
+                        _configuration.DirectoryAdminName,
+                        _configuration.DirectoryAdminPassword);
+            Domain domain = Domain.GetDomain(domainContext);
+            String deleteObjectsSearchRoot = null;
+            if (domain != null)
+            {
+                DirectoryEntry domainDe = domain.GetDirectoryEntry();
+                deleteObjectsSearchRoot = ActiveDirectoryUtils.GetDnFromPath(domainDe.Path);
+            }
+            ExecuteQuery(objClass, deletedQuery, syncResults.SyncHandler, builder.Build(),
+                true, new SortOption(ATT_USN_CHANGED, SortDirection.Ascending),
+                serverName, useGlobalCatalog, deleteObjectsSearchRoot);
+
         }
 
         #endregion
