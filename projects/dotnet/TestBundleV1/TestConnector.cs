@@ -192,9 +192,15 @@ namespace org.identityconnectors.testconnector
                          SyncResultsHandler handler,
                          OperationOptions options) {
             for (int i = 0; i < _config.numResults; i++ ) {
+                ConnectorObjectBuilder obuilder =
+                    new ConnectorObjectBuilder();
+                obuilder.SetUid(i.ToString());
+                obuilder.SetName(i.ToString());
+                obuilder.ObjectClass=(objClass);
+                
                 SyncDeltaBuilder builder =
                     new SyncDeltaBuilder();
-                builder.Uid=(new Uid(""+i));
+                builder.Object=(obuilder.Build());
                 builder.DeltaType=(SyncDeltaType.CREATE);
                 builder.Token=(new SyncToken("mytoken"));
                 SyncDelta rv = builder.Build();

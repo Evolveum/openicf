@@ -227,12 +227,19 @@ namespace FrameworkTests
         [Test]
         public void TestSyncDelta()
         {
+            ConnectorObjectBuilder objbuilder =
+                new ConnectorObjectBuilder();
+            objbuilder.SetName("myname");
+            objbuilder.SetUid("myuid");
+            objbuilder.AddAttribute(CreateTestAttribute());
+            ConnectorObject obj = objbuilder.Build();
+            
             SyncDeltaBuilder builder =
                 new SyncDeltaBuilder();
              builder.DeltaType=(SyncDeltaType.DELETE);
              builder.Token=(new SyncToken("mytoken"));
              builder.Uid=(new Uid("myuid"));
-             builder.AddAttribute(CreateTestAttribute());
+             builder.Object=(obj);
              SyncDelta v1 = builder.Build();
              SyncDelta v2 = CreateTestNormalizer().NormalizeSyncDelta(v1);
              builder =
@@ -240,7 +247,12 @@ namespace FrameworkTests
              builder.DeltaType=(SyncDeltaType.DELETE);
              builder.Token=(new SyncToken("mytoken"));
              builder.Uid=(new Uid("myuid"));
-             builder.AddAttribute(CreateNormalizedTestAttribute());
+             objbuilder =
+                 new ConnectorObjectBuilder();
+             objbuilder.SetName("myname");
+             objbuilder.SetUid("myuid");
+             objbuilder.AddAttribute(CreateNormalizedTestAttribute());
+             builder.Object = objbuilder.Build();
              SyncDelta expected = builder.Build();
              Assert.AreEqual(expected, v2);
              Assert.IsFalse(expected.Equals(v1));

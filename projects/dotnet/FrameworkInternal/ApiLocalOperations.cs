@@ -408,6 +408,18 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
             }
             return ret;
         }
+        public ConnectorObject ReduceToAttrsToGet(ConnectorObject obj) {
+            // clone the object and reduce the attributes only the set of
+            // attributes.
+            ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
+            bld.SetUid(obj.Uid);
+            bld.SetName(obj.Name);
+            bld.ObjectClass = obj.ObjectClass;
+            ICollection<ConnectorAttribute> objAttrs = obj.GetAttributes();
+            ICollection<ConnectorAttribute> attrs = ReduceToAttrsToGet(objAttrs);
+            bld.AddAttributes(attrs);
+            return bld.Build();
+        }    
     }
     #endregion
     
@@ -432,14 +444,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
         public bool Handle(ConnectorObject obj) {
             // clone the object and reduce the attributes only the set of
             // attributes.
-            ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
-            bld.SetUid(obj.Uid);
-            bld.SetName(obj.Name);
-            bld.ObjectClass = obj.ObjectClass;
-            ICollection<ConnectorAttribute> objAttrs = obj.GetAttributes();
-            ICollection<ConnectorAttribute> attrs = ReduceToAttrsToGet(objAttrs);
-            bld.AddAttributes(attrs);
-            return _handler(bld.Build());
+            return _handler(ReduceToAttrsToGet(obj));
         }    
     }
     #endregion
@@ -467,9 +472,9 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
             bld.Uid = delta.Uid;
             bld.Token = delta.Token;
             bld.DeltaType = delta.DeltaType;
-            ICollection<ConnectorAttribute> deltaAttrs = delta.Attributes;
-            ICollection<ConnectorAttribute> attrs = ReduceToAttrsToGet(deltaAttrs);
-            bld.Attributes = attrs;
+            if ( delta.Object != null ) {
+                bld.Object=ReduceToAttrsToGet(delta.Object);
+            }
             return _handler(bld.Build());
         }
     }
@@ -775,7 +780,9 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
         public SyncDelta NormalizeSyncDelta(SyncDelta delta) {
             SyncDeltaBuilder builder = new
                 SyncDeltaBuilder(delta);
-            builder.Attributes = NormalizeAttributes(delta.Attributes);
+            if ( delta.Object != null ) {
+                builder.Object=NormalizeObject(delta.Object);
+            }
             return builder.Build();
         }
         

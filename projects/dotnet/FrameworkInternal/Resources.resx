@@ -410,7 +410,7 @@ OperationOptionInfo | SyncDeltaType | SyncToken | SyncDelta
 &gt;
 &lt;!ELEMENT SyncDeltaType (#PCDATA)&gt;
 &lt;!ELEMENT SyncToken (value)&gt;
-&lt;!ELEMENT SyncDelta (Uid,SyncDeltaType,SyncToken,Attributes)&gt;
+&lt;!ELEMENT SyncDelta (SyncDeltaType,SyncToken,Uid,ConnectorObject?)&gt;
 
 
 

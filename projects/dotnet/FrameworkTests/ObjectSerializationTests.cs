@@ -956,20 +956,19 @@ namespace FrameworkTests
         
         [Test]
         public void TestSyncDelta() {
+            ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
+            bld.SetUid("foo");
+            bld.SetName("name");
             SyncDeltaBuilder builder = new SyncDeltaBuilder();
             builder.Uid=(new Uid("myuid"));
             builder.DeltaType=(SyncDeltaType.CREATE);
             builder.Token=(new SyncToken("mytoken"));
-            builder.AddAttribute(ConnectorAttributeBuilder.Build("foo", "bar"));
+            builder.Object=(bld.Build());
             SyncDelta v1 = builder.Build();
             SyncDelta v2 = (SyncDelta)CloneObject(v1);
-            Assert.AreEqual(new Uid("myuid"),v2.Uid);
+            Assert.AreEqual(new Uid("foo"),v2.Uid);
             Assert.AreEqual(new SyncToken("mytoken"),v2.Token);
             Assert.AreEqual(SyncDeltaType.CREATE,v2.DeltaType);
-            ICollection<ConnectorAttribute> attributes = v2.Attributes;
-            Assert.AreEqual(1,attributes.Count);
-            ConnectorAttribute attr = attributes.First();
-            Assert.AreEqual("foo",attr.Name);        
             Assert.AreEqual(v1,v2);
         }
         

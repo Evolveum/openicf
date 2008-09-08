@@ -2921,39 +2921,48 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
      * @see SyncOp
      */
     public sealed class SyncDelta {
-        private readonly Uid _uid;
         private readonly SyncToken _token;
         private readonly SyncDeltaType _deltaType;
-        private readonly ICollection<ConnectorAttribute> _attributes;
+        private readonly Uid _uid;
+        private readonly ConnectorObject _object;
     
         /**
          * Creates a SyncDelata
-         * 
-         * @param uid
-         *            The uid. Must not be null.
          * @param token
          *            The token. Must not be null.
          * @param deltaType
          *            The delta. Must not be null.
-         * @param attributes
-         *            May be null.
+         * @param uid
+         *            The uid. Must not be null.           
+         * @param object 
+         *            The object that has changed. May be null for delete.
          */
-        internal SyncDelta(Uid uid, SyncToken token, SyncDeltaType deltaType,
-                ICollection<ConnectorAttribute> attributes) {
-            Assertions.NullCheck(uid, "uid");
+        internal SyncDelta(SyncToken token, SyncDeltaType deltaType,
+                Uid uid,
+                ConnectorObject obj) {
             Assertions.NullCheck(token, "token");
             Assertions.NullCheck(deltaType, "deltaType");
+            Assertions.NullCheck(uid, "uid");
+            
+            //only allow null object for delete
+            if ( obj == null && 
+                 deltaType != SyncDeltaType.DELETE) {
+                throw new ArgumentException("ConnectorObject must be specified for anything other than delete.");
+            }
+            
+            //if object not null, make sure its Uid
+            //matches
+            if ( obj != null ) {
+                if (!uid.Equals(obj.Uid)) {
+                    throw new ArgumentException("Uid does not match that of the object.");                
+                }
+            }
     
-            _uid = uid;
             _token = token;
             _deltaType = deltaType;
-            _attributes = CollectionUtil.NewReadOnlySet(attributes);
+            _uid    = uid;
+            _object = obj;
     
-            // make sure attributes don't also contain uid
-            if (ConnectorAttributeUtil.GetUidAttribute(attributes) != null) {
-                throw new ArgumentException(
-                        "Attributes must not contain a UID");
-            }
         }
     
         /**
@@ -2964,6 +2973,18 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         public Uid Uid {
             get {
                 return _uid;
+            }
+        }
+        
+        /**
+         * Returns the connector object that changed. This
+         * may be null in the case of delete.
+         * @return The object or possibly null if this
+         * represents a delete.
+         */
+        public ConnectorObject Object {
+            get {
+                return _object;
             }
         }
     
@@ -2989,28 +3010,13 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             }
         }
     
-        /**
-         * Returns the attributes associated with the change. TODO: Define whether
-         * this is the whole object or just those that changed. The argument for
-         * just the changes is that it will be faster. The argument against is that
-         * the application will need to whole object anyway in most cases and so for
-         * those cases it will actually be slower. Need some more emperical data
-         * here...
-         * 
-         * @return The attributes
-         */
-        public ICollection<ConnectorAttribute> Attributes {
-            get {
-                return _attributes;
-            }
-        }
         
         public override String ToString() {
             IDictionary<String,Object> values = new Dictionary<String, Object>();
-            values["Uid"] = _uid;
             values["Token"] = _token;
             values["DeltaType"] = _deltaType;
-            values["Attributes"] = _attributes;
+            values["Uid"] = _uid;
+            values["Object"] = _object;
             return values.ToString();
         }
         
@@ -3021,16 +3027,21 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         public override bool Equals(Object o) {
             if ( o is SyncDelta ) {
                 SyncDelta other = (SyncDelta)o;
-                if (!_uid.Equals(other._uid)) {
-                    return false;
-                }
                 if (!_token.Equals(other._token)) {
                     return false;
                 }
                 if (!_deltaType.Equals(other._deltaType)) {
                     return false;
                 }
-                if (!CollectionUtil.SetsEqual(_attributes,other._attributes)) {
+                if (!_uid.Equals(other._uid)) {
+                    return false;
+                }
+                if (_object == null) {
+                    if ( other._object != null ) {
+                        return false;
+                    }
+                }
+                else if (!_object.Equals(other._object)) {
                     return false;
                 }
                 return true;
@@ -3045,10 +3056,10 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
      * Builder for {@link SyncDelta}.
      */
     public sealed class SyncDeltaBuilder {
-        private Uid _uid;
         private SyncToken _token;
         private SyncDeltaType _deltaType;
-        private ICollection<ConnectorAttribute> _attributes = new HashSet<ConnectorAttribute>();
+        private Uid _uid;
+        private ConnectorObject _object;
     
         /**
          * Create a new <code>SyncDeltaBuilder</code>
@@ -3063,26 +3074,12 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          * @param delta The original delta.
          */
         public SyncDeltaBuilder(SyncDelta delta) {
-            _uid = delta.Uid;
             _token = delta.Token;
             _deltaType = delta.DeltaType;
-            _attributes = new HashSet<ConnectorAttribute>(delta.Attributes);
+            _object = delta.Object;
+            _uid = delta.Uid;
         }
-    
-        /**
-         * Returns the <code>Uid</code> of the object that changed.
-         * 
-         * @return the <code>Uid</code> of the object that changed.
-         */
-        public Uid Uid {
-            get {
-                return _uid;
-            }
-            set {
-                _uid = value;
-            }
-        }
-        
+            
         /**
          * Returns the <code>SyncToken</code> of the object that changed.
          * 
@@ -3112,50 +3109,51 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
         
         /**
-         * Returns the attributes associated with the change. TODO: Define whether
-         * this is the whole object or just those that changed. The argument for
-         * just the changes is that it will be faster. The argument against is that
-         * the application will need to whole object anyway in most cases and so for
-         * those cases it will actually be slower. Need some more emperical data
-         * here...
+         * Returns the <code>Uid</code> of the object that changed.
+         * Note that this is implicitly set when you call
+         * {@link #setObject(ConnectorObject)}.
          * 
-         * @return The attributes
+         * @return the <code>Uid</code> of the object that changed.
          */
-        public ICollection<ConnectorAttribute> Attributes {
+        public Uid Uid {
             get {
-                return _attributes;
+                return _uid;
             }
             set {
-                _attributes = CollectionUtil.NullAsEmpty(value);                
+                _uid = value;
             }
         }
         
         /**
-         * Adds an attribute associated with the change. TODO: Define whether this
-         * is the whole object or just those that changed. The argument for just the
-         * changes is that it will be faster. The argument against is that the
-         * application will need to whole object anyway in most cases and so for
-         * those cases it will actually be slower. Need some more emperical data
-         * here...
-         * 
-         * @param attribute
-         *            The attribute
+         * Returns the object that changed.
+         * Sets the object that changed and implicitly
+         * sets Uid if object is not null.
+         * @return The object that changed. May be null for
+         * deletes.
          */
-        public void AddAttribute(ConnectorAttribute attribute) {
-            Assertions.NullCheck(attribute, "attribute");
-            _attributes.Add(attribute);
+        public ConnectorObject Object {
+            get {
+                return _object;
+            }
+            set {
+                _object = value;
+                if ( value != null ) {
+                    _uid = value.Uid;
+                }                
+            }
         }
     
         /**
-         * Creates a SyncDelata. Prior to calling the following must be specified:
+         * Creates a SyncDelta. Prior to calling the following must be specified:
          * <ol>
-         * <li>{@link #setUid(Uid) Uid}</li>
+         * <li>{@link #setObject(ConnectorObject) Object} (for anything other than delete)</li>
+         * <li>{@link #setUid(Uid) Uid} (this is implictly set when calling {@link #setObject(ConnectorObject)})</li>
          * <li>{@link #setToken(SyncToken) Token}</li>
          * <li>{@link #setDeltaType(SyncDeltaType) DeltaType}</li>
          * </ol>
          */
         public SyncDelta Build() {
-            return new SyncDelta(_uid, _token, _deltaType, _attributes);
+            return new SyncDelta(_token, _deltaType, _uid, _object);
         }
     }
     #endregion

@@ -1873,22 +1873,19 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
             }
             public override Object Deserialize(ObjectDecoder decoder) {
                 SyncDeltaBuilder builder = new SyncDeltaBuilder();
-                builder.Uid=((Uid)decoder.ReadObjectField("Uid",typeof(Uid),null));
                 builder.DeltaType=((SyncDeltaType)decoder.ReadObjectField("SyncDeltaType",typeof(SyncDeltaType),null));
                 builder.Token=((SyncToken)decoder.ReadObjectField("SyncToken",typeof(SyncToken),null));
-                ICollection<object> attributesObj = (ICollection<object>)decoder.ReadObjectField("Attributes",typeof(ICollection<object>),null);
-                ICollection<ConnectorAttribute> attributes =
-                    CollectionUtil.NewSet<object,ConnectorAttribute>(attributesObj);
-                builder.Attributes=(attributes);
+                builder.Uid=((Uid)decoder.ReadObjectField("Uid",typeof(Uid),null));
+                builder.Object=((ConnectorObject)decoder.ReadObjectField("ConnectorObject",typeof(ConnectorObject),null));
                 return builder.Build();
             }
         
             public override void Serialize(Object obj, ObjectEncoder encoder) {
                 SyncDelta val = (SyncDelta)obj;
-                encoder.WriteObjectField("Uid", val.Uid,true);
                 encoder.WriteObjectField("SyncDeltaType", val.DeltaType,true);
                 encoder.WriteObjectField("SyncToken", val.Token,true);
-                encoder.WriteObjectField("Attributes", val.Attributes,true);
+                encoder.WriteObjectField("Uid", val.Uid,true);
+                encoder.WriteObjectField("ConnectorObject", val.Object, true);
             }
         }
 
