@@ -51,7 +51,6 @@ import junit.framework.Assert;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
@@ -68,9 +67,12 @@ import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.AndFilter;
+import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
+import org.identityconnectors.framework.common.objects.filter.EndsWithFilter;
 import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
 import org.identityconnectors.framework.common.objects.filter.Filter;
 import org.identityconnectors.framework.common.objects.filter.OrFilter;
+import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
 import org.identityconnectors.framework.test.TestHelpers;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -452,21 +454,58 @@ public class SpmlConnectorTests {
             }
             Assert.assertTrue(count==1);
             Assert.assertTrue(found);
-            
-            
-            // Simple test of EqualsFilter
+                        
+            // Simple test of StartsWithFilter
             //
             handler = new TestHandler();
-            TestHelpers.search(info,ObjectClass.ACCOUNT, new EqualsFilter(createdUserUid), handler, null);
+            TestHelpers.search(info,ObjectClass.ACCOUNT, new StartsWithFilter(AttributeBuilder.build(ATTR_LASTNAME, "User")), handler, null);
             found = false;
-            count = 0;
             for (ConnectorObject user : handler) {
                 if (TEST_USER.equals(user.getName().getNameValue()))
                     found = true;
-                count++;
+                Assert.assertTrue(AttributeUtil.getStringValue(user.getAttributeByName(ATTR_LASTNAME)).startsWith("User"));
             }
-            Assert.assertTrue(count==1);
             Assert.assertTrue(found);
+                        
+            // Simple test of EndsWithFilter
+            //
+            handler = new TestHandler();
+            TestHelpers.search(info,ObjectClass.ACCOUNT, new EndsWithFilter(AttributeBuilder.build(ATTR_LASTNAME, "User")), handler, null);
+            found = false;
+            for (ConnectorObject user : handler) {
+                if (TEST_USER.equals(user.getName().getNameValue()))
+                    found = true;
+                Assert.assertTrue(AttributeUtil.getStringValue(user.getAttributeByName(ATTR_LASTNAME)).endsWith("User"));
+            }
+            Assert.assertTrue(found);
+                        
+            // Simple test of ContainsFilter
+            //
+            handler = new TestHandler();
+            TestHelpers.search(info,ObjectClass.ACCOUNT, new ContainsFilter(AttributeBuilder.build(ATTR_LASTNAME, "User")), handler, null);
+            found = false;
+            for (ConnectorObject user : handler) {
+                if (TEST_USER.equals(user.getName().getNameValue()))
+                    found = true;
+                Assert.assertTrue(AttributeUtil.getStringValue(user.getAttributeByName(ATTR_LASTNAME)).contains("User"));
+            }
+            Assert.assertTrue(found);
+                        
+            // Simple test of EqualsFilter
+            //
+            {
+	            handler = new TestHandler();
+	            TestHelpers.search(info,ObjectClass.ACCOUNT, new EqualsFilter(createdUserUid), handler, null);
+	            found = false;
+	            count = 0;
+	            for (ConnectorObject user : handler) {
+	                if (TEST_USER.equals(user.getName().getNameValue()))
+	                    found = true;
+	                count++;
+	            }
+	            Assert.assertTrue(count==1);
+	            Assert.assertTrue(found);
+            }
             
             // Test of And
             //

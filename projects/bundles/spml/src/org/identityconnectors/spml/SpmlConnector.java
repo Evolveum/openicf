@@ -44,7 +44,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +75,6 @@ import org.identityconnectors.framework.common.objects.SchemaBuilder;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.Configuration;
-import org.identityconnectors.framework.spi.Connector;
 import org.identityconnectors.framework.spi.ConnectorClass;
 import org.identityconnectors.framework.spi.PoolableConnector;
 import org.identityconnectors.framework.spi.operations.CreateOp;
@@ -214,6 +212,9 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
      */
     public Uid create(ObjectClass objectClass, Set<Attribute> attributes, OperationOptions options) {
         try {
+        	//TODO: need to discuss how to handle group membership
+        	// (there may be nothing here, other than remapping name, 
+        	// which is handled by scripts, but want to be sure).
             AddRequest request = new AddRequest();
             Name name = AttributeUtil.getNameFromAttributes(attributes);
             log.info("create(''{0}'')", name.getNameValue());
@@ -579,7 +580,7 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
                 }
             }
 
-            // Attributes other than password are handled here
+            // Remaining attributes are handled here
             //
             if (attrMap.size()>0) {
                 ModifyRequest request = new ModifyRequest();
@@ -764,19 +765,6 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
 
         public void clear() {
             Arrays.fill(_array, 0, _array.length, ' ');
-        }
-    }
-
-    private static class OurHandler implements ResultsHandler, Iterable<ConnectorObject> {
-        private List<ConnectorObject> objects = new LinkedList<ConnectorObject>();
-
-        public boolean handle(ConnectorObject object) {
-            objects.add(object);
-            return true;
-        }
-
-        public Iterator<ConnectorObject> iterator() {
-            return objects.iterator();
         }
     }
 }

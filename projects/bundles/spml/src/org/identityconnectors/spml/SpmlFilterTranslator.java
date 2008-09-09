@@ -49,9 +49,12 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.AbstractFilterTranslator;
+import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
+import org.identityconnectors.framework.common.objects.filter.EndsWithFilter;
 import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
 import org.identityconnectors.framework.common.objects.filter.GreaterThanOrEqualFilter;
 import org.identityconnectors.framework.common.objects.filter.LessThanOrEqualFilter;
+import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
 import org.openspml.v2.profiles.dsml.And;
 import org.openspml.v2.profiles.dsml.DSMLProfileException;
 import org.openspml.v2.profiles.dsml.DSMLValue;
@@ -60,6 +63,7 @@ import org.openspml.v2.profiles.dsml.FilterItem;
 import org.openspml.v2.profiles.dsml.GreaterOrEqual;
 import org.openspml.v2.profiles.dsml.LessOrEqual;
 import org.openspml.v2.profiles.dsml.Or;
+import org.openspml.v2.profiles.dsml.Substrings;
 
 
 public class SpmlFilterTranslator extends AbstractFilterTranslator<FilterItem>{
@@ -96,6 +100,51 @@ public class SpmlFilterTranslator extends AbstractFilterTranslator<FilterItem>{
             return or;
         } else {
             return super.createOrExpression(leftExpression, rightExpression);
+        }
+    }
+    
+    @Override
+    protected FilterItem createStartsWithExpression(StartsWithFilter filter, boolean not) {
+        Attribute attribute = filter.getAttribute();
+        List<Object> value = attribute.getValue();
+        try {
+            if (!not && isSingleString(value)) {
+                return new Substrings(mapQueryName(attribute.getName()), new DSMLValue((String)value.get(0)), new DSMLValue[0], null);
+            } else {
+                return super.createStartsWithExpression(filter, not);
+            }
+        } catch (DSMLProfileException e) {
+            throw ConnectorException.wrap(e);
+        }
+    }
+
+    @Override
+    protected FilterItem createContainsExpression(ContainsFilter filter, boolean not) {
+        Attribute attribute = filter.getAttribute();
+        List<Object> value = attribute.getValue();
+        try {
+            if (!not && isSingleString(value)) {
+                return new Substrings(mapQueryName(attribute.getName()), null, new DSMLValue[] {new DSMLValue((String)value.get(0))}, null);
+            } else {
+                return super.createContainsExpression(filter, not);
+            }
+        } catch (DSMLProfileException e) {
+            throw ConnectorException.wrap(e);
+        }
+    }
+    
+    @Override
+    protected FilterItem createEndsWithExpression(EndsWithFilter filter, boolean not) {
+        Attribute attribute = filter.getAttribute();
+        List<Object> value = attribute.getValue();
+        try {
+            if (!not && isSingleString(value)) {
+                return new Substrings(mapQueryName(attribute.getName()), null, new DSMLValue[0], new DSMLValue((String)value.get(0)));
+            } else {
+                return super.createEndsWithExpression(filter, not);
+            }
+        } catch (DSMLProfileException e) {
+            throw ConnectorException.wrap(e);
         }
     }
 
