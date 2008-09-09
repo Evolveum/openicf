@@ -1428,12 +1428,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     if (_mods.ContainsKey(delta.Uid))
                     {
                         ICollection<ConnectorAttribute> requestedAttrs = _mods[delta.Uid];
-                        ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
-                        builder.ObjectClass = ObjectClass.ACCOUNT;
-                        builder.SetUid(delta.Uid);
-                        builder.AddAttributes(delta.Attributes);
+
                         ActiveDirectoryConnectorTest.VerifyObject(requestedAttrs,
-                            builder.Build());
+                            delta.Object);
                         _mods.Remove(delta.Uid);
                     }
                 }

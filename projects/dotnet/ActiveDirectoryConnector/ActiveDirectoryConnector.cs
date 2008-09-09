@@ -66,7 +66,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 	/// </summary>
     public class ActiveDirectoryConnector : CreateOp, Connector, SchemaOp, DeleteOp,
         SearchOp<String>, TestOp, AdvancedUpdateOp, ScriptOnResourceOp, SyncOp, 
-        AuthenticateOp, AttributeNormalizer
+        AuthenticateOp, AttributeNormalizer, PoolableConnector
 	{
         // This is the list of attributes returned by default if no attributes are
         // requested in the options field of ExecuteQuery
@@ -142,29 +142,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         ActiveDirectoryConfiguration _configuration = null;
         ActiveDirectoryUtils _utils = null;
-        private static Schema _schema = null;
-        private static object _schema_lock = new object();
-        private static object _defaultAttributes_lock = new object();
+        private Schema _schema = null;
 
-        public ActiveDirectoryConnector()
+        static ActiveDirectoryConnector()
         {
-            // if no one has initialized the default attributes,
-            // initialize them
-            if (AttributesReturnedByDefault == null)
-            {
-                // lock the default attibutes lock object
-                lock (_defaultAttributes_lock)
-                {
-                    // make sure no one populated this while we
-                    // were waiting for the lock
-                    if (AttributesReturnedByDefault == null)
-                    {
-                        // populate default attributes
-                        AttributesReturnedByDefault = new Dictionary<ObjectClass, ICollection<string>>();
-                        AttributesReturnedByDefault.Add(ObjectClass.ACCOUNT, AccountAttributesReturnedByDefault);
-                    }
-                }
-            }
+            // populate default attributes
+            AttributesReturnedByDefault = new Dictionary<ObjectClass, ICollection<string>>();
+            AttributesReturnedByDefault.Add(ObjectClass.ACCOUNT, AccountAttributesReturnedByDefault);
         }
 
         #region CreateOp Members
@@ -287,72 +271,69 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 return _schema;
             }
 
-            lock (_schema_lock)
+            // could have blocked on the lock while someone else built the 
+            // schema, so check one more time before building
+            if (_schema == null)
             {
-                // could have blocked on the lock while someone else built the 
-                // schema, so check one more time before building
-                if (_schema == null)
+                String serverName = _configuration.LDAPHostName;
+                Forest forest = null;
+
+                if ((serverName == null) || (serverName.Length == 0))
                 {
-                    String serverName = _configuration.LDAPHostName;
-                    Forest forest = null;
-
-                    if ((serverName == null) || (serverName.Length == 0))
-                    {
-                        // get the active directory schema
-                        DirectoryContext context = new DirectoryContext(
-                                DirectoryContextType.Domain,
-                                _configuration.DomainName,
-                                _configuration.DirectoryAdminName,
-                                _configuration.DirectoryAdminPassword);
-                        DomainController dc = DomainController.FindOne(context);
-                        forest = dc.Forest;
-                    }
-                    else
-                    {
-                        DirectoryContext context = new DirectoryContext(
-                                DirectoryContextType.DirectoryServer,
-                                _configuration.LDAPHostName,
-                                _configuration.DirectoryAdminName,
-                                _configuration.DirectoryAdminPassword);
-                        forest = Forest.GetForest(context);
-                    }
-
-                    ActiveDirectorySchema ADSchema = forest.Schema;
-
-
-                    // get the user attribute infos and operations
-                    ICollection<ConnectorAttributeInfo> userAttributeInfos =
-                        GetUserAttributeInfos(ADSchema);
-                    ICollection<Type> userOperations = GetUserOperations();
-                    ObjectClassInfoBuilder ociBuilder = new ObjectClassInfoBuilder();
-                    ociBuilder.ObjectType = ObjectClass.ACCOUNT_NAME;
-                    ociBuilder.AddAllAttributeInfo(userAttributeInfos);
-                    ObjectClassInfo userInfo = ociBuilder.Build();
-
-                    // get the group attribute infos and operations
-                    ICollection<ConnectorAttributeInfo> groupAttributeInfos =
-                        GetGroupAttributeInfos(ADSchema);
-                    ociBuilder = new ObjectClassInfoBuilder();
-                    ociBuilder.ObjectType = ObjectClass.GROUP_NAME;
-                    ociBuilder.AddAllAttributeInfo(groupAttributeInfos);
-                    ICollection<Type> groupOperations = GetGroupOperations();
-                    ObjectClassInfo groupInfo = ociBuilder.Build();
-
-                    // get the organizationalUnit attribute infos and operations
-                    ICollection<ConnectorAttributeInfo> ouAttributeInfos =
-                        GetOuAttributeInfos(ADSchema);
-                    ociBuilder = new ObjectClassInfoBuilder();
-                    ociBuilder.ObjectType = OBJECTCLASS_OU;
-                    ociBuilder.AddAllAttributeInfo(ouAttributeInfos);
-                    ICollection<Type> ouOperations = GetOuOperations();
-                    ObjectClassInfo ouInfo = ociBuilder.Build();
-
-                    SchemaBuilder schemaBuilder = new SchemaBuilder(typeof(ActiveDirectoryConnector));
-                    schemaBuilder.DefineObjectClass(userInfo);
-                    schemaBuilder.DefineObjectClass(groupInfo);
-                    schemaBuilder.DefineObjectClass(ouInfo);
-                    _schema = schemaBuilder.Build();
+                    // get the active directory schema
+                    DirectoryContext context = new DirectoryContext(
+                            DirectoryContextType.Domain,
+                            _configuration.DomainName,
+                            _configuration.DirectoryAdminName,
+                            _configuration.DirectoryAdminPassword);
+                    DomainController dc = DomainController.FindOne(context);
+                    forest = dc.Forest;
                 }
+                else
+                {
+                    DirectoryContext context = new DirectoryContext(
+                            DirectoryContextType.DirectoryServer,
+                            _configuration.LDAPHostName,
+                            _configuration.DirectoryAdminName,
+                            _configuration.DirectoryAdminPassword);
+                    forest = Forest.GetForest(context);
+                }
+
+                ActiveDirectorySchema ADSchema = forest.Schema;
+
+
+                // get the user attribute infos and operations
+                ICollection<ConnectorAttributeInfo> userAttributeInfos =
+                    GetUserAttributeInfos(ADSchema);
+                ICollection<Type> userOperations = GetUserOperations();
+                ObjectClassInfoBuilder ociBuilder = new ObjectClassInfoBuilder();
+                ociBuilder.ObjectType = ObjectClass.ACCOUNT_NAME;
+                ociBuilder.AddAllAttributeInfo(userAttributeInfos);
+                ObjectClassInfo userInfo = ociBuilder.Build();
+
+                // get the group attribute infos and operations
+                ICollection<ConnectorAttributeInfo> groupAttributeInfos =
+                    GetGroupAttributeInfos(ADSchema);
+                ociBuilder = new ObjectClassInfoBuilder();
+                ociBuilder.ObjectType = ObjectClass.GROUP_NAME;
+                ociBuilder.AddAllAttributeInfo(groupAttributeInfos);
+                ICollection<Type> groupOperations = GetGroupOperations();
+                ObjectClassInfo groupInfo = ociBuilder.Build();
+
+                // get the organizationalUnit attribute infos and operations
+                ICollection<ConnectorAttributeInfo> ouAttributeInfos =
+                    GetOuAttributeInfos(ADSchema);
+                ociBuilder = new ObjectClassInfoBuilder();
+                ociBuilder.ObjectType = OBJECTCLASS_OU;
+                ociBuilder.AddAllAttributeInfo(ouAttributeInfos);
+                ICollection<Type> ouOperations = GetOuOperations();
+                ObjectClassInfo ouInfo = ociBuilder.Build();
+
+                SchemaBuilder schemaBuilder = new SchemaBuilder(typeof(ActiveDirectoryConnector));
+                schemaBuilder.DefineObjectClass(userInfo);
+                schemaBuilder.DefineObjectClass(groupInfo);
+                schemaBuilder.DefineObjectClass(ouInfo);
+                _schema = schemaBuilder.Build();
             }
 
             return _schema;
@@ -760,23 +741,19 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                     foreach (string attributeName in attributesToReturn)
                     {
+                        SearchResult savedResults = savedDcResult;
                         // if we are using the global catalog, we had to get the
                         // dc's version of the directory entry, but for usnchanged, 
                         // we need the gc version of it
                         if (useGlobalCatalog && attributeName.Equals(ATT_USN_CHANGED, 
                             StringComparison.CurrentCultureIgnoreCase))
                         {
-                            AddAttributeIfNotNull(builder,
-                                _utils.GetConnectorAttributeFromADEntry(
-                                oclass, attributeName, savedGcResult));
+                            savedResults = savedGcResult;
                         }
-                        else
-                        {
-                            AddAttributeIfNotNull(builder,
-                                _utils.GetConnectorAttributeFromADEntry(
-                                oclass, attributeName, savedDcResult));
 
-                        }
+                        AddAttributeIfNotNull(builder,
+                            _utils.GetConnectorAttributeFromADEntry(
+                            oclass, attributeName, savedResults));
                     }
                 }
                 else
@@ -1009,18 +986,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             public bool SyncHandler(ConnectorObject obj)
             {
                 SyncDeltaBuilder builder = new SyncDeltaBuilder();
-
-                // for some reason, this cannot contain a uid,
-                // if it does, the builder throws an exception
-                ICollection<ConnectorAttribute> attributes = obj.GetAttributes();
-                foreach (ConnectorAttribute attribute in attributes)
-                {
-                    if (!Uid.NAME.Equals(attribute.Name, StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        builder.AddAttribute(attribute);
-                    }
-                }
-
+                builder.Object = obj;
                 ConnectorAttribute tokenAttr = 
                     ConnectorAttributeUtil.Find(ATT_USN_CHANGED, obj.GetAttributes());
                 if(tokenAttr == null) {
@@ -1226,6 +1192,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
 
             return attribute;
+        }
+
+        #endregion
+
+        #region PoolableConnector Members
+
+        public void CheckAlive()
+        {
+            return;
         }
 
         #endregion
