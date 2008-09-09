@@ -1169,7 +1169,6 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                     CollectionUtil.NewSet<object,Type>(setObj);
                 rv.SupportedOperations=(set);
                 rv.ProducerBufferSize=(decoder.ReadIntField("producerBufferSize",0));
-                rv.CultureInfo=((CultureInfo)decoder.ReadObjectField("Locale",typeof(CultureInfo),null));
                 return rv;
             }
         
@@ -1188,8 +1187,6 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                         val.TimeoutMap,false);
                 encoder.WriteObjectField("SupportedOperations", 
                         val.SupportedOperations,true);
-                encoder.WriteObjectField("Locale", 
-                        val.CultureInfo,true);
             }
         }
         private class ConnectorMessagesHandler : AbstractObjectSerializationHandler {

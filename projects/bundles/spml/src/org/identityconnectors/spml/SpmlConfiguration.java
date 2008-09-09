@@ -44,6 +44,7 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
+import org.identityconnectors.common.l10n.CurrentLocale;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -95,9 +96,10 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _targetNames = arrayCopy(targetClass);
     }
 
+    //TODO: use ConnectorMessages instead
     private ResourceBundle getBundle() {
-        if (_bundle==null || getLocale()!=_lastLocale) {
-            _lastLocale = getLocale();
+        if (_bundle==null || CurrentLocale.get()!=_lastLocale) {
+            _lastLocale = CurrentLocale.get();
             if (_lastLocale==null)
                 _lastLocale = Locale.getDefault();
             _bundle = ResourceBundle.getBundle(CATALOG, _lastLocale); 

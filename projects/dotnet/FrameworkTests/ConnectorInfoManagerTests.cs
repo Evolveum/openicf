@@ -123,21 +123,22 @@ namespace FrameworkTests
             
             Assert.IsNotNull(property);
             
+            Thread.CurrentThread.CurrentUICulture = new CultureInfo("en");
             Assert.AreEqual("Help for test field.",property.GetHelpMessage(null));
             Assert.AreEqual("Display for test field.",property.GetDisplayName(null));
     
             CultureInfo eslocale = new CultureInfo("es");
-            api.CultureInfo = eslocale;
+            Thread.CurrentThread.CurrentUICulture = eslocale;
             Assert.AreEqual("tstField.help_es",property.GetHelpMessage(null));
             Assert.AreEqual("tstField.display_es",property.GetDisplayName(null));
             
             CultureInfo esESlocale = new CultureInfo("es-ES");
-            api.CultureInfo = esESlocale;
+            Thread.CurrentThread.CurrentUICulture = esESlocale;
             Assert.AreEqual("tstField.help_es-ES",property.GetHelpMessage(null));
             Assert.AreEqual("tstField.display_es-ES",property.GetDisplayName(null));
             
             CultureInfo esARlocale = new CultureInfo("es-AR");
-            api.CultureInfo = esARlocale;
+            Thread.CurrentThread.CurrentUICulture = esARlocale;
             Assert.AreEqual("tstField.help_es",property.GetHelpMessage(null));
             Assert.AreEqual("tstField.display_es",property.GetDisplayName(null));
             
@@ -168,11 +169,20 @@ namespace FrameworkTests
             property.Value=true;
             facade = facf.NewInstance(api);
             try {
+                Thread.CurrentThread.CurrentUICulture = new CultureInfo("en");
                 facade.Validate();
                 Assert.Fail("exception expected");
             }
             catch (ConnectorException e) {
-                Assert.AreEqual("validation failed", e.Message);
+                Assert.AreEqual("validation failed en", e.Message);
+            }
+            try {
+                Thread.CurrentThread.CurrentUICulture = new CultureInfo("es");
+                facade.Validate();
+                Assert.Fail("exception expected");
+            }
+            catch (ConnectorException e) {
+                Assert.AreEqual("validation failed es", e.Message);
             }
             ShutdownConnnectorInfoManager();
         }

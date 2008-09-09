@@ -61,7 +61,6 @@ namespace Org.IdentityConnectors.Framework.Api
         ConfigurationProperties ConfigurationProperties { get; }
         bool IsConnectorPoolingSupported { get; }
         ObjectPoolConfiguration ConnectorPoolConfiguration { get; }
-        CultureInfo CultureInfo { get; set; }
         ICollection<Type> SupportedOperations { get; }
         
         int GetTimeout(Type operation);
@@ -217,7 +216,7 @@ namespace Org.IdentityConnectors.Framework.Api
          * 
          * @return The friendly name
          */
-        string GetConnectorDisplayName(CultureInfo info); 
+        string GetConnectorDisplayName(); 
         
         ConnectorKey ConnectorKey { get; }
 

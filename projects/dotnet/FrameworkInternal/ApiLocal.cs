@@ -245,7 +245,6 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
         CreateBean(ConfigurationPropertiesImpl properties,
         Type config) {
             Configuration rv = (Configuration)Activator.CreateInstance(config);
-            rv.CultureInfo=(properties.Parent.CultureInfo);
             rv.ConnectorMessages=properties.Parent.ConnectorInfo.Messages;
             IDictionary<string,PropertyInfo> descriptors =
                 GetFilteredProperties(config);
@@ -281,10 +280,6 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                 String propName = descriptor.Name;
                 if ( !descriptor.CanWrite ) {
                     //if there's no setter, ignore it
-                    continue;
-                }
-                if ( "CultureInfo".Equals(propName) ) {
-                    // exclude setLocale since its part of the interface..
                     continue;
                 }
                 if ("ConnectorMessages".Equals(propName)) {

@@ -43,6 +43,7 @@ using System.IO;
 using System.Net;
 using System.Reflection;
 using System.Security.Authentication;
+using System.Globalization;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
@@ -181,6 +182,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Remote
         {
             using (RemoteFrameworkConnection connection = 
                    new RemoteFrameworkConnection(info)) {
+                connection.WriteObject(CultureInfo.CurrentUICulture);
                 connection.WriteObject(info.Key);
                 connection.WriteObject(new HelloRequest());
                 HelloResponse response = (HelloResponse)connection.ReadObject();
@@ -303,6 +305,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Remote
             RemoteFrameworkConnection connection = 
                 new RemoteFrameworkConnection(connectionInfo);
             try {
+                connection.WriteObject(CultureInfo.CurrentUICulture);
                 connection.WriteObject(connectionInfo.Key);
                 //send the request
                 connection.WriteObject(request);

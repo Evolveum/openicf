@@ -128,10 +128,9 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
         }
         private String FormatMessage(String key, String dflt, params object [] args) {
             APIConfigurationImpl apiConfig = Parent.Parent;
-            CultureInfo locale = apiConfig.CultureInfo;
             ConnectorMessages messages = 
                 apiConfig.ConnectorInfo.Messages;
-            return messages.Format(locale, key, dflt, args);
+            return messages.Format(key, dflt, args);
         }
     }
     #endregion
@@ -219,7 +218,6 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
         
         private IDictionary<Type, int> _timeoutMap =
             new Dictionary<Type, int>();
-        private CultureInfo _cultureInfo;
         
         public ConfigurationProperties ConfigurationProperties { 
             get {
@@ -254,14 +252,6 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
             }
             set {
                 _connectorPooling = value;
-            }
-        }
-        public CultureInfo CultureInfo { 
-            get {
-                return _cultureInfo == null ? CultureInfo.CurrentCulture : _cultureInfo;
-            }
-            set {
-                _cultureInfo = value;
             }
         }
         public ICollection<Type> SupportedOperations {
@@ -302,9 +292,8 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
         private APIConfigurationImpl _defaultAPIConfiguration;
         
         
-        public string GetConnectorDisplayName(CultureInfo info) {
-            return Messages.Format(info,
-                                   ConnectorDisplayNameKey,
+        public string GetConnectorDisplayName() {
+            return Messages.Format(ConnectorDisplayNameKey,
                                    ConnectorKey.ConnectorName);            
         }
         
@@ -345,10 +334,11 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
         private IDictionary<CultureInfo,IDictionary<string,string>> 
             _catalogs = new Dictionary<CultureInfo,IDictionary<String,String>>();
  
-        public String Format(CultureInfo locale, String key, String dflt, params object [] args) {
+        public String Format(String key, String dflt, params object [] args) {
             if ( key == null ) {
                 return dflt;
             }
+            CultureInfo locale = CultureInfo.CurrentUICulture;
             if ( locale == null ) {
                 locale = CultureInfo.CurrentCulture;
             }

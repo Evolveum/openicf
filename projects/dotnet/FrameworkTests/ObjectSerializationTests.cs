@@ -437,7 +437,6 @@ namespace FrameworkTests
             v1.ConnectorPoolConfiguration=(new ObjectPoolConfiguration());
             v1.ConfigurationProperties=(props1);
             v1.IsConnectorPoolingSupported=(true);
-            v1.CultureInfo=(new CultureInfo("en"));
             v1.ProducerBufferSize=(200);
             v1.SupportedOperations=(FrameworkUtil.AllAPIOperations());
             IDictionary<Type,int> map =
@@ -452,7 +451,6 @@ namespace FrameworkTests
             Assert.AreEqual(v1.ConnectorPoolConfiguration,v2.ConnectorPoolConfiguration);
             Assert.AreEqual(v1.ConfigurationProperties,v2.ConfigurationProperties);
             Assert.IsTrue(v2.IsConnectorPoolingSupported);
-            Assert.AreEqual(new CultureInfo("en"), v2.CultureInfo);
             Assert.AreEqual(200, v2.ProducerBufferSize);
             Assert.IsTrue(CollectionUtil.SetsEqual(
                 FrameworkUtil.AllAPIOperations(),

@@ -40,6 +40,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Net;
 using System.Net.Security;
 using System.Security;
@@ -345,13 +346,22 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
         
         private bool ProcessRequest() 
         {
-            GuardedString key;
+            
+            CultureInfo locale;
             try {
-                key = (GuardedString)_connection.ReadObject();
+                locale = (CultureInfo)_connection.ReadObject();
             }
             catch (EndOfStreamException) {
                 return false;
             }
+            
+            //We can't set this because C# does not like language-neutral
+            //cultures for CurrentCulture - this tends to blow up
+            //TODO: think more about this...
+            //Thread.CurrentThread.CurrentCulture = locale;
+            Thread.CurrentThread.CurrentUICulture = locale;                
+            
+            GuardedString key = (GuardedString)_connection.ReadObject();
 
             bool authorized;
             try {

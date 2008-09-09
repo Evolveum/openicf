@@ -263,7 +263,7 @@ OperationOptionInfo | SyncDeltaType | SyncToken | SyncDelta
 &lt;!ELEMENT value (%xmlObject;)&gt; 
 &lt;!ELEMENT ConfigurationProperties ((ConfigurationProperty)*)&gt; 
 
-&lt;!ELEMENT APIConfiguration (connectorPoolConfiguration,ConfigurationProperties,timeoutMap,SupportedOperations,Locale)&gt; 
+&lt;!ELEMENT APIConfiguration (connectorPoolConfiguration,ConfigurationProperties,timeoutMap,SupportedOperations)&gt; 
 &lt;!ATTLIST APIConfiguration
     connectorPoolingSupported CDATA #REQUIRED
     producerBufferSize CDATA #REQUIRED

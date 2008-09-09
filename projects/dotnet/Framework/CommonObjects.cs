@@ -1018,15 +1018,14 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
      */
     public interface ConnectorMessages {
         /**
-         * Formats the given message key.
-         * @param locale The locale to format in. If null, uses the default locale.
+         * Formats the given message key in the current UI culture.
          * @param key The message key to format. 
          * @param dflt The default message if key is not found. If null, defaults
          * to key.
          * @param args Parameters with which to format the message.
          * @return The formatted string.
          */
-        String Format(CultureInfo locale, String key, String dflt, params object [] args);
+        String Format(String key, String dflt, params object [] args);
     }
     #endregion
     

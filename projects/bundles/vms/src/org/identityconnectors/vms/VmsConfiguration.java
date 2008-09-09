@@ -44,6 +44,7 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.common.l10n.CurrentLocale;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
 
@@ -85,9 +86,10 @@ public class VmsConfiguration extends AbstractConfiguration {
             throw new IllegalArgumentException(getMessage(VmsMessages.PASSWORD_NULL));
     }
 
+    //TODO: use ConnectorMessages instead
     private ResourceBundle getBundle() {
-        if (_bundle==null || getLocale()!=_lastLocale) {
-            _lastLocale = getLocale();
+        if (_bundle==null || CurrentLocale.get()!=_lastLocale) {
+            _lastLocale = CurrentLocale.get();
             if (_lastLocale==null)
                 _lastLocale = Locale.getDefault();
             _bundle = ResourceBundle.getBundle(CATALOG, _lastLocale); 

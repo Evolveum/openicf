@@ -78,14 +78,6 @@ namespace Org.IdentityConnectors.Framework.Spi
     /// Configuration information for the Connector.
     ///</summary>
     public interface Configuration {
-        /// <summary>
-        /// Called after the <see cref="IConfiguration"/> instance is created to make
-        /// sure that the <see cref="IConnector"/> has the proper locale to create messages
-        /// for Exceptions etc. We don't explicitly require a getter for
-        /// CultureInfo but we strongly recommend it.
-        /// </summary>
-        /// <param name="info"> current locale the <see cref="IConnector"/> is operating in.</param>
-        CultureInfo CultureInfo{get;set;}
 
         ConnectorMessages ConnectorMessages{get;set;}
         
@@ -98,7 +90,6 @@ namespace Org.IdentityConnectors.Framework.Spi
     
     #region AbstractConfiguration
     public abstract class AbstractConfiguration : Configuration {
-        public CultureInfo CultureInfo{get;set;}
 
         public ConnectorMessages ConnectorMessages{get;set;}
         

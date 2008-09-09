@@ -74,7 +74,7 @@ namespace org.identityconnectors.testconnector
         
         public override void Validate() {
             if (failValidation) {
-                throw new ConnectorException("validation failed");
+                throw new ConnectorException("validation failed "+CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
             }
         }        
 
