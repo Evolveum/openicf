@@ -2415,12 +2415,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         
         public override string ToString()
         {
-            IDictionary<string, object> map = new Dictionary<string, object>();
-            map["ObjectClasses"] = _declaredObjectClasses;
-            map["Options"] = _declaredOperationOptions;
-            map["SupportedClasses"] = _supportedObjectClassesByOperation;
-            map["SupportedOptions"] = _supportedOptionsByOperation;
-            return map.ToString();
+            return SerializerUtil.SerializeXmlObject(this, false);
         }
     }
     #endregion
