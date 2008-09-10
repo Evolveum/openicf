@@ -53,6 +53,7 @@ import javax.naming.NamingException;
 
 import junit.framework.Assert;
 
+import org.identityconnectors.common.l10n.CurrentLocale;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
@@ -239,7 +240,6 @@ public class RW3270ConnectionPoolTests {
         config.setEvictionInterval(60000);
         config.setConnectionClassName(DummyConnection.class.getName());
 
-        config.setLocale(Locale.getDefault());
         OurConnectorMessages messages = new OurConnectorMessages();
         Map<Locale, Map<String, String>> catalogs = new HashMap<Locale, Map<String,String>>();
         ResourceBundle messagesBundle = ResourceBundle.getBundle("org.identityconnectors.rw3270.Messages");
@@ -450,8 +450,9 @@ public class RW3270ConnectionPoolTests {
     public class OurConnectorMessages implements ConnectorMessages {
         private Map<Locale, Map<String, String>> _catalogs = new HashMap<Locale, Map<String, String>>();
 
-        public String format(Locale locale, String key, String defaultValue, Object... args) {
-            Map<String,String> catalog = _catalogs.get(locale);
+        public String format(String key, String defaultValue, Object... args) {
+        	Locale locale = CurrentLocale.isSet()?CurrentLocale.get():Locale.getDefault();
+        	Map<String,String> catalog = _catalogs.get(locale);
             String message = catalog.get(key);
             MessageFormat formatter = new MessageFormat(message,locale);
             return formatter.format(args, new StringBuffer(), null).toString();

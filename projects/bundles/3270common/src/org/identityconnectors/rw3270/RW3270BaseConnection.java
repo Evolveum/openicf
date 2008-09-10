@@ -148,20 +148,20 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
                 } else if (paMatcher.matches()) {
                     int number = Integer.parseInt(paMatcher.group(1));
                     if (number<1 || number>3)
-                        throw new IllegalArgumentException(_config.getConnectorMessages().format(_config.getLocale(), "IllegalPA", "Illegal PA key:{0}", match));
+                        throw new IllegalArgumentException(_config.getConnectorMessages().format("IllegalPA", "Illegal PA key:{0}", match));
                     sendPAKeys(number);
                     waitForUnlock();
                 } else if (pfMatcher.matches()) {
                     int number = Integer.parseInt(pfMatcher.group(1));
                     if (number<1 || number>24)
-                        throw new IllegalArgumentException(_config.getConnectorMessages().format(_config.getLocale(), "IllegalPF", "Illegal PF key:{0}", match));
+                        throw new IllegalArgumentException(_config.getConnectorMessages().format("IllegalPF", "Illegal PF key:{0}", match));
                     sendPFKeys(number);
                     waitForUnlock();
                 } else if (cursorMatcher.matches()) {
                     short cursor = Short.parseShort(cursorMatcher.group(1));
                     setCursorPos(cursor);
                 } else {
-                    throw new IllegalArgumentException(_config.getConnectorMessages().format(_config.getLocale(), "IllegalCommand", "Illegal Command:{0}", match));
+                    throw new IllegalArgumentException(_config.getConnectorMessages().format("IllegalCommand", "Illegal Command:{0}", match));
                 }
                 start = matcher.end();
             }
@@ -241,9 +241,9 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
             throw new ConnectorException(e);
         }
         if (thread.isAlive())
-            throw new ConnectorException(_config.getConnectorMessages().format(_config.getLocale(), "IsAlive", "timed out waiting for ''{0}'':''{1}''", expression, getStandardOutput()));
+            throw new ConnectorException(_config.getConnectorMessages().format("IsAlive", "timed out waiting for ''{0}'':''{1}''", expression, getStandardOutput()));
         if (!getStandardOutput().contains(expression))
-            throw new ConnectorException(_config.getConnectorMessages().format(_config.getLocale(), "NotFound", "''{0}'' not found; instead had ''{1}''", expression, getStandardOutput()));
+            throw new ConnectorException(_config.getConnectorMessages().format("NotFound", "''{0}'' not found; instead had ''{1}''", expression, getStandardOutput()));
     }
 
     /* (non-Javadoc)
@@ -266,9 +266,9 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
             throw new ConnectorException(e);
         }
         if (thread.isAlive())
-            throw new ConnectorException(_config.getConnectorMessages().format(_config.getLocale(), "IsAlive2", "timed out waiting for ''{0}'' or ''{1}'':''{2}''", expression0, expression1, getStandardOutput().trim()));
+            throw new ConnectorException(_config.getConnectorMessages().format("IsAlive2", "timed out waiting for ''{0}'' or ''{1}'':''{2}''", expression0, expression1, getStandardOutput().trim()));
         if (!getStandardOutput().contains(expression1))
-            throw new ConnectorException(_config.getConnectorMessages().format(_config.getLocale(), "NotFound", "''{0}'' not found; instead had ''{1}''", expression1, getStandardOutput()));
+            throw new ConnectorException(_config.getConnectorMessages().format("NotFound", "''{0}'' not found; instead had ''{1}''", expression1, getStandardOutput()));
     }
     
     private static class GuardedStringAccessor implements GuardedString.Accessor {

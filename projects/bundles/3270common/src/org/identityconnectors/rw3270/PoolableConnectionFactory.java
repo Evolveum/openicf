@@ -44,9 +44,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.commons.pool.KeyedPoolableObjectFactory;
+import org.identityconnectors.common.l10n.CurrentLocale;
 import org.identityconnectors.common.script.ScriptExecutor;
 import org.identityconnectors.common.script.ScriptExecutorFactory;
 import org.identityconnectors.common.security.GuardedString;
@@ -125,7 +127,7 @@ public class PoolableConnectionFactory implements KeyedPoolableObjectFactory {
      */
     public Object makeObject(Object key) throws Exception {
         if (_index>=_config.getUserNames().length) {
-            throw new ConnectorException(_config.getConnectorMessages().format(_config.getLocale(), "TooManyConnections", "too many connections requested:{0}", _exceptions.toString()));
+            throw new ConnectorException(_config.getConnectorMessages().format("TooManyConnections", "too many connections requested:{0}", _exceptions.toString()));
         }
         ConnectionInfo info = new ConnectionInfo(
                 _constructor.newInstance(_config),
