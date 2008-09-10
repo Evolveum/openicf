@@ -39,16 +39,21 @@
  */
 package org.identityconnectors.spml;
 
+import java.text.MessageFormat;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.Set;
 
 import junit.framework.Assert;
 
+import org.identityconnectors.common.l10n.CurrentLocale;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
@@ -56,6 +61,7 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
@@ -340,6 +346,7 @@ public class SpmlConnectorTests {
                 config.validate();
                 Assert.fail("no exception for bad port");
             } catch (Exception e) {
+            	e.printStackTrace();
                 // expected
             }
         }
@@ -850,6 +857,20 @@ public class SpmlConnectorTests {
         config.setMapAttributeCommand(getMapAttributeCommand());
         config.setMapSetNameCommand(getMapSetNameCommand());
         config.setMapQueryNameCommand(getMapQueryNameCommand());
+
+        OurConnectorMessages messages = new OurConnectorMessages();
+        Map<Locale, Map<String, String>> catalogs = new HashMap<Locale, Map<String,String>>();
+        Map<String, String> foo = new HashMap<String, String>();
+        ResourceBundle messagesBundle = ResourceBundle.getBundle("org.identityconnectors.spml.Messages");
+        Enumeration<String> enumeration = messagesBundle.getKeys();
+        while (enumeration.hasMoreElements()) {
+            String key = enumeration.nextElement();
+            foo.put(key, messagesBundle.getString(key));
+        }
+        catalogs.put(Locale.getDefault(), foo);
+        messages.setCatalogs(catalogs);
+        config.setConnectorMessages(messages);
+        
         return config;
     }
 
@@ -935,6 +956,22 @@ public class SpmlConnectorTests {
         buffer.append("accessor.clear();\n");
     }
 
+    public class OurConnectorMessages implements ConnectorMessages {
+        private Map<Locale, Map<String, String>> _catalogs = new HashMap<Locale, Map<String, String>>();
+
+        public String format(String key, String defaultValue, Object... args) {
+        	Locale locale = CurrentLocale.isSet()?CurrentLocale.get():Locale.getDefault();
+            Map<String,String> catalog = _catalogs.get(locale);
+            String message = catalog.get(key);
+            MessageFormat formatter = new MessageFormat(message,locale);
+            return formatter.format(args, new StringBuffer(), null).toString();
+        }
+
+        public void setCatalogs(Map<Locale,Map<String,String>> catalogs) {
+            _catalogs = catalogs;
+        }
+    }
+    
     public static class TestHandler implements ResultsHandler, Iterable<ConnectorObject> {
         private List<ConnectorObject> objects = new LinkedList<ConnectorObject>();
 

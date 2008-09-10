@@ -39,12 +39,8 @@
  */
 package org.identityconnectors.spml;
 
-import java.text.MessageFormat;
 import java.util.Arrays;
-import java.util.Locale;
-import java.util.ResourceBundle;
 
-import org.identityconnectors.common.l10n.CurrentLocale;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -74,11 +70,6 @@ public class SpmlConfiguration extends AbstractConfiguration {
     private String             _mapAttributeCommand;
     private String             _mapQueryNameCommand;
 
-    private ResourceBundle     _bundle = null; 
-    private Locale             _lastLocale = null; 
-
-    private static final String CATALOG = "org.identityconnectors.spml.SpmlMessages";
-
     public SpmlConfiguration() {
     }
 
@@ -95,24 +86,12 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _spmlClassNames = arrayCopy(spmlObjectClass);
         _targetNames = arrayCopy(targetClass);
     }
-
-    //TODO: use ConnectorMessages instead
-    private ResourceBundle getBundle() {
-        if (_bundle==null || CurrentLocale.get()!=_lastLocale) {
-            _lastLocale = CurrentLocale.get();
-            if (_lastLocale==null)
-                _lastLocale = Locale.getDefault();
-            _bundle = ResourceBundle.getBundle(CATALOG, _lastLocale); 
-        }
-        return _bundle;
-    }
-
     public String getMessage(String key) {
-        return getBundle().getString(key);
+    	return getConnectorMessages().format(key, key);
     }
 
     public String getMessage(String key, Object... objects) {
-        return MessageFormat.format(getBundle().getString(key), objects);
+    	return getConnectorMessages().format(key, key, objects);
     }
 
     public void validate() {

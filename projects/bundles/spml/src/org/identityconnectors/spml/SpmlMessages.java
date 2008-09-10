@@ -39,9 +39,7 @@
  */
 package org.identityconnectors.spml;
 
-import java.util.ListResourceBundle;
-
-public class SpmlMessages extends ListResourceBundle {
+public interface SpmlMessages {
     public static final String PROTOCOL_NULL                 = "PROTOCOL_NULL";
     public static final String NAME_NULL                     = "NAME_NULL";
     public static final String HOST_NULL                     = "HOST_NULL";
@@ -59,30 +57,4 @@ public class SpmlMessages extends ListResourceBundle {
     public static final String UNSUPPORTED_OBJECTCLASS       = "UNSUPPORTED_OBJECTCLASS";
     public static final String ITERATION_CANCELED            = "ITERATION_CANCELED";
     public static final String NO_ACCOUNT_CLASS              = "NO_ACCOUNT_CLASS";
-
-    private static final String[][] _contents = {
-        { NAME_NULL,             "name attribute may not be null" },
-        { PROTOCOL_NULL,         "protocol may not be null" },
-        { HOST_NULL,             "host name may not be null" },
-        { PORT_NULL,             "port may not be null" },
-        { PORT_RANGE_ERROR,      "host port ''{0,number,#########}'' must be between 1 and 65535" },
-        { FILE_NULL,             "file may not be null" },
-        { USERNAME_NULL,         "user name may not be null" },
-        { PASSWORD_NULL,         "password may not be null" },
-        { OBJECT_CLASS_NULL,     "connector object classes may not be null" },
-        { SPML_CLASS_NULL,       "spml object classes may not be null" },
-        { TARGET_NULL,           "targets may not be null" },
-        { SPML_CLASS_LENGTH,     "size of connectot object classes and spml object classes must be the same" },
-        { PSO_TARGET_NULL,       "PSO target may not be null" },
-        { CLASSMAP_NULL,         "object class map may not be null" },
-        { UNSUPPORTED_OBJECTCLASS, "unsupported Objectclass:{0}" },
-        { ITERATION_CANCELED,    "iteration canceled by handler" },
-        { NO_ACCOUNT_CLASS,      "A mapping for ObjectClass.ACCOUNT_NAME must be specified" },
-    };
-
-    @Override
-    protected Object[][] getContents() {
-        return _contents;
-    }
-
 }
