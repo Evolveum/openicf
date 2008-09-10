@@ -56,5 +56,4 @@ public interface SpmlMessages {
     public static final String CLASSMAP_NULL                 = "CLASSMAP_NULL";
     public static final String UNSUPPORTED_OBJECTCLASS       = "UNSUPPORTED_OBJECTCLASS";
     public static final String ITERATION_CANCELED            = "ITERATION_CANCELED";
-    public static final String NO_ACCOUNT_CLASS              = "NO_ACCOUNT_CLASS";
 }

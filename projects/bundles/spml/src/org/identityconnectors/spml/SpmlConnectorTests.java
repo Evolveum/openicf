@@ -857,6 +857,7 @@ public class SpmlConnectorTests {
         config.setMapAttributeCommand(getMapAttributeCommand());
         config.setMapSetNameCommand(getMapSetNameCommand());
         config.setMapQueryNameCommand(getMapQueryNameCommand());
+        config.setSchemaCommand(getSchemaCommand());
 
         OurConnectorMessages messages = new OurConnectorMessages();
         Map<Locale, Map<String, String>> catalogs = new HashMap<Locale, Map<String,String>>();
@@ -934,8 +935,47 @@ public class SpmlConnectorTests {
         buffer.append("return name;");
         return buffer.toString();
     }
-    
 
+    private String getSchemaCommand() {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("if (org.identityconnectors.framework.common.objects.ObjectClass.ACCOUNT_NAME.equals(objectClass)) {\n");
+        buffer.append("    for (org.identityconnectors.framework.common.objects.AttributeInfo info : attributeInfos)\n");
+        buffer.append("	       if (info.getName().equals(\"credentials\")) {\n");
+        buffer.append("            attributeInfos.remove(info);\n");
+        buffer.append("            break;\n");
+        buffer.append("        }\n");
+        buffer.append("    attributeInfos.add(org.identityconnectors.framework.common.objects.OperationalAttributeInfos.PASSWORD);\n");
+        buffer.append("    attributeInfos.add(asNotByDefault(org.identityconnectors.framework.common.objects.OperationalAttributeInfos.ENABLE));\n");
+        buffer.append("    attributeInfos.add(asWriteOnly(org.identityconnectors.framework.common.objects.OperationalAttributeInfos.ENABLE_DATE));\n");
+        buffer.append("    attributeInfos.add(asWriteOnly(org.identityconnectors.framework.common.objects.OperationalAttributeInfos.DISABLE_DATE));\n");
+        buffer.append("    //attributeInfos.add(org.identityconnectors.framework.common.objects.OperationalAttributeInfos.EXPIRE_PASSWORD);\n");
+        buffer.append("}\n");
+        buffer.append("private org.identityconnectors.framework.common.objects.AttributeInfo asWriteOnly(org.identityconnectors.framework.common.objects.AttributeInfo original) {\n");
+        buffer.append("    org.identityconnectors.framework.common.objects.AttributeInfoBuilder builder = new org.identityconnectors.framework.common.objects.AttributeInfoBuilder();\n");
+        buffer.append("    builder.setMultiValue(original.isMultiValue());\n");
+        buffer.append("    builder.setName(original.getName());\n");
+        buffer.append("    builder.setReadable(original.isReadable());\n");
+        buffer.append("    builder.setRequired(original.isRequired());\n");
+        buffer.append("    builder.setReturnedByDefault(false);\n");
+        buffer.append("    builder.setType(original.getType());\n");
+        buffer.append("    builder.setWriteable(false);\n");
+        buffer.append("    return builder.build();\n");
+        buffer.append("}    \n");
+        buffer.append("\n");
+        buffer.append("private org.identityconnectors.framework.common.objects.AttributeInfo asNotByDefault(org.identityconnectors.framework.common.objects.AttributeInfo original) {\n");
+        buffer.append("    org.identityconnectors.framework.common.objects.AttributeInfoBuilder builder = new org.identityconnectors.framework.common.objects.AttributeInfoBuilder();\n");
+        buffer.append("    builder.setMultiValue(original.isMultiValue());\n");
+        buffer.append("    builder.setName(original.getName());\n");
+        buffer.append("    builder.setReadable(original.isReadable());\n");
+        buffer.append("    builder.setRequired(original.isRequired());\n");
+        buffer.append("    builder.setReturnedByDefault(false);\n");
+        buffer.append("    builder.setType(original.getType());\n");
+        buffer.append("    builder.setWriteable(original.isWritable());\n");
+        buffer.append("    return builder.build();\n");
+        buffer.append("}\n");
+        return buffer.toString();
+    }
+    
     private void addGuardedStringAccessor(StringBuffer buffer) {
         buffer.append("class GuardedStringAccessor implements org.identityconnectors.common.security.GuardedString.Accessor {\n");
         buffer.append("    private char[] _array;\n");

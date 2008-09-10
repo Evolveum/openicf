@@ -67,7 +67,6 @@ import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Schema;
@@ -154,6 +153,7 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
     
     private ScriptExecutor                  _mapAttributeExecutor;
     private ScriptExecutor                  _mapSetNameExecutor;
+    private ScriptExecutor                  _schemaExecutor;
     private Map<String, String>             _objectClassMap;
     private Map<String, String>             _targetMap;
 
@@ -190,10 +190,13 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
         _connection = SpmlConnectionFactory.newConnection(_configuration);
         String mapAttributeCommand = _configuration.getMapAttributeCommand();
         String mapSetNameCommand = _configuration.getMapSetNameCommand();
+        String schemaCommand = _configuration.getSchemaCommand();
         if (mapAttributeCommand!=null && mapAttributeCommand.length()>0)
             _mapAttributeExecutor = factory.newScriptExecutor(getClass().getClassLoader(), mapAttributeCommand, true);
         if (mapSetNameCommand!=null && mapSetNameCommand.length()>0)
             _mapSetNameExecutor = factory.newScriptExecutor(getClass().getClassLoader(), mapSetNameCommand, true);
+        if (schemaCommand!=null && schemaCommand.length()>0)
+            _schemaExecutor = factory.newScriptExecutor(getClass().getClassLoader(), schemaCommand, true);
         _objectClassMap = new HashMap<String, String>();
         _targetMap = new HashMap<String, String>();
         if (_configuration.getObjectClassNames()!=null) {
@@ -630,38 +633,23 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
                 throw new ConnectorException(asString(response.getErrorMessages()));
             }
             Target[] targets = response.getTargets();
+            String[] spmlClassNames = _configuration.getSpmlClassNames();
+            String[] objectClassNames = _configuration.getObjectClassNames();
+            int length = spmlClassNames==null?0:spmlClassNames.length;
+            
             for (Target target : targets) {
                 org.openspml.v2.msg.spml.Schema[] schemas = target.getSchemas();
                 for (org.openspml.v2.msg.spml.Schema schema : schemas) {
                     for (OpenContentElement element : schema.getOpenContentElements()) {
                         if (element instanceof DSMLSchema) {
                             DSMLSchema dsmlSchema = (DSMLSchema)element;
-                            // Create Account schema
-                            //
                             for (ObjectClassDefinition ocd : dsmlSchema.getObjectClassDefinitions()) {
-                                if (_objectClassMap.get(ObjectClass.ACCOUNT_NAME).equals(ocd.getName())) {
-                                    AttributeDefinitionReferences refs = ocd.getMemberAttributes();
-                                    Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
-                                    attributes.add(OperationalAttributeInfos.PASSWORD);
-                                    attributes.add(asNotByDefault(OperationalAttributeInfos.ENABLE));
-                                    attributes.add(asWriteOnly(OperationalAttributeInfos.ENABLE_DATE));
-                                    attributes.add(asWriteOnly(OperationalAttributeInfos.DISABLE_DATE));
-                                    //attributes.add(OperationalAttributeInfos.EXPIRE_PASSWORD);
-                                    fillInSchemaForObjectClass(schemaBuilder, ObjectClass.ACCOUNT_NAME,
-                                            refs, attributes);
-                                } else if (_configuration.getSpmlClassNames()!= null) {
-                                    // Handle any other object classes supported by this connector
-                                    //
-                                    String[] spmlClassNames = _configuration.getSpmlClassNames();
-                                    String[] objectClassNames = _configuration.getObjectClassNames();
-                                    int length = spmlClassNames.length;
-                                    for (int i=0; i<length; i++) {
-                                        if (spmlClassNames[i].equals(ocd.getName())) {
-                                            Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
-                                            AttributeDefinitionReferences refs = ocd.getMemberAttributes();
-                                            fillInSchemaForObjectClass(schemaBuilder, objectClassNames[i],
-                                                    refs, attributes);
-                                        }
+                                for (int i=0; i<length; i++) {
+                                    if (spmlClassNames[i].equals(ocd.getName())) {
+                                        Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
+                                        AttributeDefinitionReferences refs = ocd.getMemberAttributes();
+                                        fillInSchemaForObjectClass(schemaBuilder, objectClassNames[i],
+                                                refs, attributes);
                                     }
                                 }
                             }
@@ -682,38 +670,15 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
     
     private void fillInSchemaForObjectClass(final SchemaBuilder schemaBuilder,
             String objectClass, AttributeDefinitionReferences refs, 
-            Set<AttributeInfo> attributes) {
+            Set<AttributeInfo> attributes) throws Exception {
         for (AttributeDefinitionReference ref : refs.getAttributeDefinitionReferences()) {
             boolean required = false;
             if (ref.getRequired()!=null)
                 required = ref.getRequired();
             attributes.add(AttributeInfoBuilder.build(ref.getName(), required, true, true));
         }
+        updateSchema(objectClass, attributes);
         schemaBuilder.defineObjectClass(objectClass, attributes);
-    }
-
-    private AttributeInfo asWriteOnly(AttributeInfo original) {
-        AttributeInfoBuilder builder = new AttributeInfoBuilder();
-        builder.setMultiValue(original.isMultiValue());
-        builder.setName(original.getName());
-        builder.setReadable(original.isReadable());
-        builder.setRequired(original.isRequired());
-        builder.setReturnedByDefault(false);
-        builder.setType(original.getType());
-        builder.setWriteable(false);
-        return builder.build();
-    }    
-    
-    private AttributeInfo asNotByDefault(AttributeInfo original) {
-        AttributeInfoBuilder builder = new AttributeInfoBuilder();
-        builder.setMultiValue(original.isMultiValue());
-        builder.setName(original.getName());
-        builder.setReadable(original.isReadable());
-        builder.setRequired(original.isRequired());
-        builder.setReturnedByDefault(false);
-        builder.setType(original.getType());
-        builder.setWriteable(original.isWritable());
-        return builder.build();
     }
 
     private String mapSetName(String name) throws Exception {
@@ -724,6 +689,15 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
             return (String)_mapSetNameExecutor.execute(arguments);
         }
         return name;
+    }
+
+    private void updateSchema(String objectClass, Set<AttributeInfo> attributeInfos) throws Exception {
+        if (_mapSetNameExecutor!=null) {
+            Map<String, Object> arguments = new HashMap<String, Object>();
+            arguments.put("objectClass", objectClass);
+            arguments.put("attributeInfos", attributeInfos);
+            _schemaExecutor.execute(arguments);
+        }
     }
 
     private Attribute mapAttribute(Attribute attribute) throws Exception {

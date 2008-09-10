@@ -39,11 +39,8 @@
  */
 package org.identityconnectors.spml;
 
-import java.util.Arrays;
-
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
 
@@ -69,6 +66,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
     private String             _mapSetNameCommand;
     private String             _mapAttributeCommand;
     private String             _mapQueryNameCommand;
+    private String             _schemaCommand;
 
     public SpmlConfiguration() {
     }
@@ -121,9 +119,6 @@ public class SpmlConfiguration extends AbstractConfiguration {
             throw new ConnectorException(getMessage(SpmlMessages.SPML_CLASS_LENGTH));
         if (_psoTarget==null)
             throw new ConnectorException(getMessage(SpmlMessages.PSO_TARGET_NULL));
-        if (!Arrays.asList(_objectClassNames).contains(ObjectClass.ACCOUNT_NAME))
-            throw new ConnectorException(getMessage(SpmlMessages.NO_ACCOUNT_CLASS));
-            
     }
 
     public String getUserName() {
@@ -245,6 +240,14 @@ public class SpmlConfiguration extends AbstractConfiguration {
 
     public void setMapQueryNameCommand(String queryNameCommand) {
         _mapQueryNameCommand = queryNameCommand;
+    }
+
+    public String getSchemaCommand() {
+        return _schemaCommand;
+    }
+
+    public void setSchemaCommand(String schemaCommand) {
+        _schemaCommand = schemaCommand;
     }
 
     public String[] getObjectClassNames() {
