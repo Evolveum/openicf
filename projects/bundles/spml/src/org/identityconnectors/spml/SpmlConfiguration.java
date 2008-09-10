@@ -121,6 +121,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
             throw new ConnectorException(getMessage(SpmlMessages.PSO_TARGET_NULL));
     }
 
+    @ConfigurationProperty(order=1)
     public String getUserName() {
         return _userName;
     }
@@ -129,7 +130,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _userName = userName;
     }
 
-    @ConfigurationProperty(confidential=true)
+    @ConfigurationProperty(order=2, confidential=true)
     public GuardedString getPassword() {
         return _password;
     }
@@ -138,6 +139,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _password = password;
     }
 
+    @ConfigurationProperty(order=3)
     public String getHostNameOrIpAddr() {
         return _hostNameOrIpAddr;
     }
@@ -146,6 +148,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _hostNameOrIpAddr = hostNameOrIpAddr;
     }
 
+    @ConfigurationProperty(order=4)
     public Integer getHostPortNumber() {
         return _hostPortNumber;
     }
@@ -154,6 +157,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _hostPortNumber = hostPortNumber;
     }
 
+    @ConfigurationProperty(order=5)
     public String getProtocol() {
         return _protocol;
     }
@@ -162,6 +166,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _protocol = protocol;
     }
 
+    @ConfigurationProperty(order=6)
     public String getFile() {
         return _file;
     }
@@ -170,38 +175,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _file = file;
     }
 
-    public String getPreSendCommand() {
-        return _preSendCommand;
-    }
-
-    public void setPreSendCommand(String sendCommand) {
-        _preSendCommand = sendCommand;
-    }
-
-    public String getPostReceiveCommand() {
-        return _postReceiveCommand;
-    }
-
-    public void setPostReceiveCommand(String receiveCommand) {
-        _postReceiveCommand = receiveCommand;
-    }
-
-    public String getPreDisconnectCommand() {
-        return _preDisconnectCommand;
-    }
-
-    public void setPreDisconnectCommand(String loginCommand) {
-        _preDisconnectCommand = loginCommand;
-    }
-
-    public String getPostConnectCommand() {
-        return _postConnectCommand;
-    }
-
-    public void setPostConnectCommand(String loginCommand) {
-        _postConnectCommand = loginCommand;
-    }
-
+    @ConfigurationProperty(order=7)
     public String getPsoTarget() {
         return _psoTarget;
     }
@@ -210,6 +184,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _psoTarget = target;
     }
 
+    @ConfigurationProperty(order=8)
     public String getNameAttribute() {
         return _nameAttribute;
     }
@@ -218,6 +193,43 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _nameAttribute = attribute;
     }
 
+    @ConfigurationProperty(order=9)
+    public String getPostConnectCommand() {
+        return _postConnectCommand;
+    }
+
+    public void setPostConnectCommand(String loginCommand) {
+        _postConnectCommand = loginCommand;
+    }
+
+    @ConfigurationProperty(order=10)
+    public String getPreDisconnectCommand() {
+        return _preDisconnectCommand;
+    }
+
+    public void setPreDisconnectCommand(String loginCommand) {
+        _preDisconnectCommand = loginCommand;
+    }
+
+    @ConfigurationProperty(order=11)
+    public String getPreSendCommand() {
+        return _preSendCommand;
+    }
+
+    public void setPreSendCommand(String sendCommand) {
+        _preSendCommand = sendCommand;
+    }
+
+    @ConfigurationProperty(order=12)
+    public String getPostReceiveCommand() {
+        return _postReceiveCommand;
+    }
+
+    public void setPostReceiveCommand(String receiveCommand) {
+        _postReceiveCommand = receiveCommand;
+    }
+
+    @ConfigurationProperty(order=13)
     public String getMapSetNameCommand() {
         return _mapSetNameCommand;
     }
@@ -226,6 +238,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _mapSetNameCommand = setNameCommand;
     }
 
+    @ConfigurationProperty(order=14)
     public String getMapAttributeCommand() {
         return _mapAttributeCommand;
     }
@@ -234,6 +247,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _mapAttributeCommand = attributeCommand;
     }
 
+    @ConfigurationProperty(order=15)
     public String getMapQueryNameCommand() {
         return _mapQueryNameCommand;
     }
@@ -242,6 +256,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _mapQueryNameCommand = queryNameCommand;
     }
 
+    @ConfigurationProperty(order=16)
     public String getSchemaCommand() {
         return _schemaCommand;
     }
@@ -250,6 +265,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _schemaCommand = schemaCommand;
     }
 
+    @ConfigurationProperty(order=17)
     public String[] getObjectClassNames() {
         return arrayCopy(_objectClassNames);
     }
@@ -258,6 +274,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _objectClassNames = arrayCopy(classNames);
     }
 
+    @ConfigurationProperty(order=18)
     public String[] getSpmlClassNames() {
         return arrayCopy(_spmlClassNames);
     }
@@ -266,6 +283,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _spmlClassNames = arrayCopy(classNames);
     }
 
+    @ConfigurationProperty(order=19)
     public String[] getTargetNames() {
         return arrayCopy(_targetNames);
     }
