@@ -37,7 +37,7 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * -----------
  */
-package org.identityconnectors.mysql;
+package org.identityconnectors.mysqluser;
 
 import java.sql.Connection;
 import java.sql.Statement;
@@ -54,7 +54,7 @@ import org.identityconnectors.framework.spi.Configuration;
  * @version $Revision $
  * @since 1.0
  */
-public class MySQLConnection extends DatabaseConnection {
+public class MySQLUserConnection extends DatabaseConnection {
 
     /**
      * Use the {@link Configuration} passed in to immediately connect to a database. If the {@link Connection} fails a
@@ -65,7 +65,7 @@ public class MySQLConnection extends DatabaseConnection {
      * @throws RuntimeException
      *             if there is a problem creating a {@link java.sql.Connection}.
      */
-    public MySQLConnection(Connection conn) {
+    public MySQLUserConnection(Connection conn) {
         super(conn);
     }
 

@@ -37,7 +37,7 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * -----------
  */
-package org.identityconnectors.mysql;
+package org.identityconnectors.mysqluser;
 
 import static org.junit.Assert.*;
 
@@ -85,7 +85,7 @@ import org.junit.Test;
 /**
  * Attempts to test the Connector with the framework.
  */
-public class MySQLConnectorTests {
+public class MySQLUserConnectorTests {
 
     private static String idmDriver = null;
     private static String idmHost = null;
@@ -139,8 +139,8 @@ public class MySQLConnectorTests {
      * Get the configuration
      * @return the initialized configuration
      */
-    private static MySQLConfiguration newConfiguration() {
-        MySQLConfiguration config = new MySQLConfiguration();
+    private static MySQLUserConfiguration newConfiguration() {
+        MySQLUserConfiguration config = new MySQLUserConfiguration();
         config.setDriver(idmDriver);
         config.setHost(idmHost);
         config.setLogin(idmLogin);
@@ -151,7 +151,7 @@ public class MySQLConnectorTests {
     }
     
     // Test config
-    private MySQLConfiguration config = null;
+    private MySQLUserConfiguration config = null;
 
     // Test facade
     private ConnectorFacade facade = null;
@@ -199,7 +199,7 @@ public class MySQLConnectorTests {
     }
 
     /**
-     * Test method for {@link org.identityconnectors.mysql.MySQLConnector#create(ObjectClass, Set, OperationOptions)}.
+     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
      */
     @Test
     public void testCreate() {
@@ -214,7 +214,7 @@ public class MySQLConnectorTests {
     }
     
     /**
-     * Test method for {@link org.identityconnectors.mysql.MySQLConnector#create(ObjectClass, Set, OperationOptions)}.
+     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
      */
     @Test(expected=IllegalArgumentException.class)
     public void testCreateUnsupported() {
@@ -231,7 +231,7 @@ public class MySQLConnectorTests {
  
     
     /**
-     * Test method for {@link org.identityconnectors.mysql.MySQLConnector#update(ObjectClass, Set, OperationOptions)}.
+     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#update(ObjectClass, Set, OperationOptions)}.
      * Test creating of the connector object, searching using UID and update
      */
     @Test
@@ -274,7 +274,7 @@ public class MySQLConnectorTests {
 
     
     /**
-     * Test method for {@link org.identityconnectors.mysql.MySQLConnector#update(ObjectClass, Set, OperationOptions)}.
+     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#update(ObjectClass, Set, OperationOptions)}.
      * Test creating of the connector object, searching using UID and update
      */
     @Test(expected=IllegalStateException.class)
@@ -302,7 +302,7 @@ public class MySQLConnectorTests {
     }    
     
     /**
-     * Test method for {@link org.identityconnectors.mysql.MySQLConnector#delete(ObjectClass, Uid, OperationOptions)}.
+     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#delete(ObjectClass, Uid, OperationOptions)}.
      * 
      */
     @Test
@@ -322,7 +322,7 @@ public class MySQLConnectorTests {
 
     
     /**
-     * Test method for {@link org.identityconnectors.mysql.MySQLConnector#delete(ObjectClass, Uid, OperationOptions)}.
+     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#delete(ObjectClass, Uid, OperationOptions)}.
      * 
      */
     @Test(expected=UnknownUidException.class)
@@ -338,7 +338,7 @@ public class MySQLConnectorTests {
     }    
     
     /**
-     * Test method for {@link org.identityconnectors.mysql.MySQLConnector#newConnection()}.
+     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#newConnection()}.
      * @throws Exception
      */
     @Test()
@@ -436,7 +436,7 @@ public class MySQLConnectorTests {
 
     
     /**
-     * Test method for {@link org.identityconnectors.mysql.MySQLConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
      * @throws Exception
      */
     @Test(expected = IllegalArgumentException.class)
@@ -446,7 +446,7 @@ public class MySQLConnectorTests {
     }
 
     /**
-     * Test method for {@link org.identityconnectors.mysql.MySQLConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
      * @throws Exception
      */
     @Test(expected = IllegalArgumentException.class)
@@ -456,7 +456,7 @@ public class MySQLConnectorTests {
     }
 
     /**
-     * Test method for {@link org.identityconnectors.mysql.MySQLConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
      * @throws Exception
      */
     @Test(expected = IllegalArgumentException.class)
@@ -466,7 +466,7 @@ public class MySQLConnectorTests {
     }
     
     /**
-     * Test method for {@link org.identityconnectors.mysql.MySQLConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
      * @throws Exception
      */
     @Test(expected = IllegalArgumentException.class)
@@ -476,7 +476,7 @@ public class MySQLConnectorTests {
     }
 
     /**
-     * Test method for {@link org.identityconnectors.mysql.MySQLConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
      * @throws Exception
      */
     @Test(expected = IllegalArgumentException.class)
@@ -486,7 +486,7 @@ public class MySQLConnectorTests {
     }
     
     /**
-     * Test method for {@link org.identityconnectors.mysql.MySQLConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
      * @throws Exception
      */
     @Test(expected = IllegalArgumentException.class)
@@ -496,7 +496,7 @@ public class MySQLConnectorTests {
     }
     
     /**
-     * Test method for {@link org.identityconnectors.mysql.MySQLConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
      * @throws Exception
      */
     @Test()
@@ -506,7 +506,7 @@ public class MySQLConnectorTests {
     
     
     /**
-     * Test method for {@link org.identityconnectors.mysql.MySQLConnector#authenticate(username, password, options)}.
+     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#authenticate(username, password, options)}.
      * Test creating of the connector object, searching using UID and update
      */
     @Test
@@ -526,7 +526,7 @@ public class MySQLConnectorTests {
    
     
     /**
-     * Test method for {@link org.identityconnectors.mysql.MySQLConnector#authenticate(username, password, options)}.
+     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#authenticate(username, password, options)}.
      * Test creating of the connector object, searching using UID and update
      */
     @Test(expected=InvalidCredentialException.class)
@@ -546,7 +546,7 @@ public class MySQLConnectorTests {
     }    
         
     /**
-     * Test method for {@link org.identityconnectors.mysql.MySQLConnector#update(ObjectClass, Set, OperationOptions)}.
+     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#update(ObjectClass, Set, OperationOptions)}.
      * Test creating of the connector object, searching using UID and update
      */
     @Test
@@ -589,7 +589,7 @@ public class MySQLConnectorTests {
     private ConnectorFacade getFacade() {
         ConnectorFacadeFactory factory = ConnectorFacadeFactory.getInstance();
         // **test only**
-        APIConfiguration impl = TestHelpers.createTestConfiguration(MySQLConnector.class, config);
+        APIConfiguration impl = TestHelpers.createTestConfiguration(MySQLUserConnector.class, config);
         return factory.newInstance(impl);
     }
     
@@ -620,7 +620,7 @@ public class MySQLConnectorTests {
     }
     
     /**
-     * Test method for {@link org.identityconnectors.mysql.MySQLConnector#schema()}.
+     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#schema()}.
      */
     @Test
     public void testSchemaApi() {
@@ -646,7 +646,7 @@ public class MySQLConnectorTests {
         Set<Attribute> ret = new HashSet<Attribute>();
         ret.add(AttributeBuilder.build(Name.NAME, tstUser));
         ret.add(AttributeBuilder.buildPassword(tstPassword));
-        ret.add(AttributeBuilder.build(MySQLConfiguration.HOST, tstHost));
+        ret.add(AttributeBuilder.build(MySQLUserConfiguration.HOST, tstHost));
         return ret;
     }
     

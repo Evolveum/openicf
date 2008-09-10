@@ -37,7 +37,7 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * -----------
  */
-package org.identityconnectors.mysql;
+package org.identityconnectors.mysqluser;
 
 import org.identityconnectors.dbcommon.DatabaseFilterTranslator;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -51,14 +51,14 @@ import org.identityconnectors.framework.common.objects.Uid;
  * @version $Revision 1.0$
  * @since 1.0
  */
-public class MySQLFilterTranslator extends DatabaseFilterTranslator {
+public class MySQLUserFilterTranslator extends DatabaseFilterTranslator {
 
     /**
      * The filter translator constructor
      * @param oclass object class
      * @param options operation options
      */
-    public MySQLFilterTranslator(ObjectClass oclass, OperationOptions options) {
+    public MySQLUserFilterTranslator(ObjectClass oclass, OperationOptions options) {
         super(oclass, options);
     }
 
@@ -67,9 +67,9 @@ public class MySQLFilterTranslator extends DatabaseFilterTranslator {
      */
     @Override
     protected String getDatabaseColumnName(Attribute attribute, ObjectClass oclass, OperationOptions options) {
-        //MySQL filter a name or uid attribute
+        //MySQLUser filter a name or uid attribute
         if(attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
-            return MySQLConfiguration.MYSQL_USER;
+            return MySQLUserConfiguration.MYSQL_USER;
         }
         //Password or other are invalid columns for query, 
         //There could be an exception,but null value would disable this filter 

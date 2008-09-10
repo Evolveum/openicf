@@ -35,7 +35,7 @@
   enclosed by brackets [] replaced by your own identifying information: 
   "Portions Copyrighted [year] [name of copyright owner]"
 -->
-<project name="connector-mysql" default="all"> 
+<project name="connector-mysqluser" default="all"> 
     <property name="framework.dir" value="../../framework"/>
     <property name="bundles.dir" value="../"/>
     <import file="${framework.dir}/connector_build.xml"/>

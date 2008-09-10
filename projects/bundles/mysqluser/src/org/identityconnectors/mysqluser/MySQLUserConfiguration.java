@@ -37,7 +37,7 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * -----------
  */
-package org.identityconnectors.mysql;
+package org.identityconnectors.mysqluser;
 
 import java.text.MessageFormat;
 
@@ -55,7 +55,7 @@ import org.identityconnectors.framework.spi.ConfigurationProperty;
  * @version $Revision $
  * @since 1.0
  */
-public class MySQLConfiguration extends AbstractConfiguration {
+public class MySQLUserConfiguration extends AbstractConfiguration {
     /**
      * User, Id, Key field
      */
@@ -104,7 +104,7 @@ public class MySQLConfiguration extends AbstractConfiguration {
     /**
      * @return
      */
-    @ConfigurationProperty(order = 3, helpMessageKey = "mysql.driver.help", displayMessageKey = "mysql.driver.display")
+    @ConfigurationProperty(order = 3, helpMessageKey = "mysqluser.driver.help", displayMessageKey = "mysqluser.driver.display")
     public String getDriver() {
         return this.driver;
     }
@@ -112,7 +112,7 @@ public class MySQLConfiguration extends AbstractConfiguration {
     /**
      * @return the host
      */
-    @ConfigurationProperty(order = 4, helpMessageKey = "mysql.host.help", displayMessageKey = "mysql.host.display")
+    @ConfigurationProperty(order = 4, helpMessageKey = "mysqluser.host.help", displayMessageKey = "mysqluser.host.display")
     public String getHost() {
         return host;
     }
@@ -120,7 +120,7 @@ public class MySQLConfiguration extends AbstractConfiguration {
     /**
      * @return
      */
-    @ConfigurationProperty(order = 1, helpMessageKey = "mysql.login.help", displayMessageKey = "mysql.login.display")
+    @ConfigurationProperty(order = 1, helpMessageKey = "mysqluser.login.help", displayMessageKey = "mysqluser.login.display")
     public String getLogin() {
         return this.login;
     }
@@ -128,7 +128,7 @@ public class MySQLConfiguration extends AbstractConfiguration {
     /**
      * @return
      */
-    @ConfigurationProperty(order = 2, helpMessageKey = "mysql.pwd.help", displayMessageKey = "mysql.pwd.display", confidential = true)
+    @ConfigurationProperty(order = 2, helpMessageKey = "mysqluser.pwd.help", displayMessageKey = "mysqluser.pwd.display", confidential = true)
     public String getPassword() {
         return this.password;
     }
@@ -136,7 +136,7 @@ public class MySQLConfiguration extends AbstractConfiguration {
     /**
      * @return the port
      */
-    @ConfigurationProperty(order = 5, helpMessageKey = "mysql.port.help", displayMessageKey = "mysql.port.display")
+    @ConfigurationProperty(order = 5, helpMessageKey = "mysqluser.port.help", displayMessageKey = "mysqluser.port.display")
     public String getPort() {
         return port;
     }
@@ -144,7 +144,7 @@ public class MySQLConfiguration extends AbstractConfiguration {
     /**
      * @return the usermodel
      */
-    @ConfigurationProperty(order = 6, helpMessageKey = "mysql.model.help", displayMessageKey = "mysql.model.display")
+    @ConfigurationProperty(order = 6, helpMessageKey = "mysqluser.model.help", displayMessageKey = "mysqluser.model.display")
     public String getUsermodel() {
         return usermodel;
     }
