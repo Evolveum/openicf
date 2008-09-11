@@ -197,21 +197,30 @@ namespace Org.IdentityConnectors.Common
         /// is suitable for arrays, lists, sets, and dictionaries
         /// </summary>
         /// <param name="enum1">The enumerable</param>
-        /// <param name="comp">The optional equality comparer</param>
         /// <returns>The hashcode</returns>
-        public static int HashCode<T>(IEnumerable<T> enum1,
-                                      IEqualityComparer<T> comp) {
-            if ( comp == null ) {
-                comp = EqualityComparer<T>.Default;
-            }
+        public static int GetEnumerableHashCode<T>(IEnumerable<T> enum1) {
             if ( enum1 == null ) {
                 return 0;
             }         
             int rv = 0;
             foreach (T val1 in enum1) {
                 unchecked {
-                    rv+=comp.GetHashCode(val1);
+                    rv+=CollectionUtil.GetHashCode(val1);
                 }
+            }
+            return rv;
+        }
+        
+        /// <summary>
+        /// Computes a hashCode for a key value pair.
+        /// </summary>
+        /// <param name="pair">The pair</param>
+        /// <returns>The hashcode</returns>
+        public static int GetKeyValuePairHashCode<K,V>(KeyValuePair<K,V> pair) {
+            int rv = 0;
+            unchecked {
+                rv+=CollectionUtil.GetHashCode(pair.Key);
+                rv+=CollectionUtil.GetHashCode(pair.Value);
             }
             return rv;
         }
@@ -641,6 +650,60 @@ namespace Org.IdentityConnectors.Common
             return true;
         }
             
+        /**
+         * hashCode function that properly handles arrays,
+         * collections, maps, collections of arrays, and maps of arrays.
+         * @param o The object. May be null.
+         * @return the hashCode
+         */
+        public static int GetHashCode(Object o) {
+            if ( o == null ) { 
+                return 0; 
+            }
+            else if ( o is Array ) {
+                Array array = (Array)o;
+                int length = array.Length;
+                int rv = 0;
+                for ( int i = 0; i < length; i++ ) {
+                    Object el = array.GetValue(i);
+                    unchecked {
+                        rv += CollectionUtil.GetHashCode(el);
+                    }
+                }
+                return rv;
+            }
+            else if ( ReflectionUtil.IsParentTypeOf(typeof(KeyValuePair<,>),o.GetType()) ) {
+                Type parent = ReflectionUtil.FindInHierarchyOf(typeof(KeyValuePair<,>),o.GetType());
+                Type [] genericArguments = 
+                    parent.GetGenericArguments();
+
+                Type collectionUtil = typeof(CollectionUtil);
+                MethodInfo info = collectionUtil.GetMethod("GetKeyValuePairHashCode");
+
+                info = info.MakeGenericMethod(genericArguments);
+                
+                Object rv = info.Invoke(null, new object[]{o});
+                return (int)rv;
+            }
+            else if ( ReflectionUtil.IsParentTypeOf(typeof(ICollection<>),o.GetType()) ) {
+                Type parent = ReflectionUtil.FindInHierarchyOf(typeof(ICollection<>),o.GetType());
+                
+                Type [] genericArguments = 
+                    parent.GetGenericArguments();
+
+
+                Type collectionUtil = typeof(CollectionUtil);
+                MethodInfo info = collectionUtil.GetMethod("GetEnumerableHashCode");
+
+                info = info.MakeGenericMethod(genericArguments);
+                
+                Object rv = info.Invoke(null, new object[]{o});
+                return (int)rv;
+            }
+            else {
+                return o.GetHashCode();
+            }
+        }
         
         /**
          * Equality function that properly handles arrays,

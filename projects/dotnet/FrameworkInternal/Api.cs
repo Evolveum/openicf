@@ -190,7 +190,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
         
         public override int GetHashCode()
         {
-            return CollectionUtil.HashCode(_properties,null);
+            return CollectionUtil.GetHashCode(_properties);
         }
         
         public override bool Equals(object o) {

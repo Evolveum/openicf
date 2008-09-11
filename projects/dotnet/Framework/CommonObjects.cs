@@ -1075,7 +1075,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             }
         }
         public override int GetHashCode() {
-            return CollectionUtil.HashCode(_attrs,null);
+            return CollectionUtil.GetHashCode(_attrs);
         }
         public override bool Equals(Object o) {
             ConnectorObject other = o as ConnectorObject;
@@ -2387,7 +2387,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         
         
         public override int GetHashCode() {
-            return CollectionUtil.HashCode(_declaredObjectClasses,null);
+            return CollectionUtil.GetHashCode(_declaredObjectClasses);
         }
         
         public override bool Equals(object o) {
@@ -3228,7 +3228,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
         
         public override int GetHashCode() {
-            return _value.GetHashCode();
+            return CollectionUtil.GetHashCode(_value);
         }
         
         public override bool Equals(Object o) {
