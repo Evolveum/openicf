@@ -136,7 +136,8 @@ public class FlatFileConnector implements Connector, SearchOp<String>, SchemaOp 
             for (String fieldName : fieldNames) {
                 AttributeInfoBuilder abld = new AttributeInfoBuilder();
                 abld.setName(fieldName);
-                abld.setWriteable(false);
+                abld.setCreateable(false);
+                abld.setUpdateable(false);
                 attrInfos.add(abld.build());
             }
             // set it to object class account..

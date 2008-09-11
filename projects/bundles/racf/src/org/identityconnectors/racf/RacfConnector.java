@@ -612,7 +612,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         builder.setType(clazz);
         builder.setRequired(required);
         builder.setMultiValue(true);
-        builder.setWriteable(false);
+        builder.setCreateable(false);
+        builder.setUpdateable(false);
         return builder.build();
     }
 
@@ -630,7 +631,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         builder.setName(name);
         builder.setType(clazz);
         builder.setRequired(required);
-        builder.setWriteable(false);
+        builder.setCreateable(false);
+        builder.setUpdateable(false);
         return builder.build();
     }
 

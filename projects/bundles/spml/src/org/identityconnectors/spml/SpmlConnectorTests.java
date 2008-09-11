@@ -365,7 +365,7 @@ public class SpmlConnectorTests {
                     System.out.println("Schema for "+ocInfo.getType());
                     personFound = true;
                     for (AttributeInfo attr : ocInfo.getAttributeInfo()) {
-                        System.out.println("    "+attr.getName()+",type="+attr.getType().getCanonicalName()+",required="+attr.isRequired()+",readable="+attr.isReadable()+",writeable="+attr.isWritable()+",multivalue="+attr.isMultiValue());
+                        System.out.println("    "+attr);
                         if (attr.getName().equals("firstname")) {
                             firstnameFound = true;
                         }

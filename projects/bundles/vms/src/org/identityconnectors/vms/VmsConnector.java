@@ -843,7 +843,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         builder.setType(clazz);
         builder.setRequired(true);
         builder.setMultiValue(false);
-        builder.setWriteable(true);
         return builder.build();
     }
 
@@ -853,7 +852,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         builder.setType(clazz);
         builder.setRequired(required);
         builder.setMultiValue(true);
-        builder.setWriteable(false);
+        builder.setCreateable(false);
+        builder.setUpdateable(false);
         return builder.build();
     }
 
@@ -863,7 +863,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         builder.setType(clazz);
         builder.setRequired(required);
         builder.setMultiValue(multi);
-        builder.setWriteable(true);
         builder.setReadable(false);
         return builder.build();
     }
