@@ -54,6 +54,7 @@ import java.util.Set;
 import junit.framework.Assert;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.l10n.CurrentLocale;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
@@ -467,7 +468,6 @@ public class RacfConnectorTests {
         config.setUseSsl(USE_SSL);
         config.setSuffix(SUFFIX);
 
-        config.setLocale(Locale.getDefault());
         OurConnectorMessages messages = new OurConnectorMessages();
         Map<Locale, Map<String, String>> catalogs = new HashMap<Locale, Map<String,String>>();
         Map<String, String> foo = new HashMap<String, String>();
@@ -537,7 +537,8 @@ public class RacfConnectorTests {
     public class OurConnectorMessages implements ConnectorMessages {
         private Map<Locale, Map<String, String>> _catalogs = new HashMap<Locale, Map<String, String>>();
 
-        public String format(Locale locale, String key, String defaultValue, Object... args) {
+        public String format(String key, String defaultValue, Object... args) {
+        	Locale locale = CurrentLocale.isSet()?CurrentLocale.get():Locale.getDefault();
             Map<String,String> catalog = _catalogs.get(locale);
             String message = catalog.get(key);
             MessageFormat formatter = new MessageFormat(message,locale);
