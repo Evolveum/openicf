@@ -32,8 +32,8 @@
         <oc:ant dir="bundles/database" />
 
         <!-- not everyone's got a local install of mysql ready -->
-        <oc:ant dir="bundles/mysql" target="clean" />
-        <oc:ant dir="bundles/mysql" target="dist" />
+        <oc:ant dir="bundles/mysqluser" target="clean" />
+        <oc:ant dir="bundles/mysqluser" target="dist" />
 
 	<!-- order is important -->
         <oc:ant dir="bundles/patternparser" />
