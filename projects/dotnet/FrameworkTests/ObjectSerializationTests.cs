@@ -854,6 +854,7 @@ namespace FrameworkTests
                 "my connector"),
                     apiImpl,
                     typeof(CreateApiOp),
+                    "mymethodName",
                     args);
             OperationRequest v2 = (OperationRequest)CloneObject(v1);
             Assert.AreEqual("my bundle", v2.ConnectorKey.BundleName);
@@ -861,6 +862,7 @@ namespace FrameworkTests
             Assert.AreEqual("my connector", v2.ConnectorKey.ConnectorName);
             Assert.IsNotNull(v2.Configuration);
             Assert.AreEqual(typeof(CreateApiOp), v2.Operation);
+            Assert.AreEqual("mymethodName",v2.OperationMethodName);
             Assert.IsTrue(
                 CollectionUtil.Equals(
                     args, v2.Arguments));

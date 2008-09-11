@@ -117,6 +117,13 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Remote.Messages
         private readonly Type _operation;
         
         /**
+         * The name of the method since operations can have more
+         * than one method.
+         * NOTE: this is case-insensitive
+         */
+        private readonly String _operationMethodName;
+        
+        /**
          * The arguments to the operation. In general, these correspond
          * to the actual arguments of the method. The one exception is
          * search - in this case, the callback is not passed.
@@ -126,10 +133,12 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Remote.Messages
         public OperationRequest(ConnectorKey key,
                 APIConfigurationImpl apiConfiguration,
                 Type operation,
+                string operationMethodName,
                 IList<Object> arguments) {
             _connectorKey = key;
             _configuration = apiConfiguration;
             _operation = operation;
+            _operationMethodName = operationMethodName;
             _arguments = CollectionUtil.NewReadOnlyList<object>(arguments);
         }
         
@@ -148,6 +157,12 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Remote.Messages
         public Type Operation {
             get {
                 return _operation;
+            }
+        }
+        
+        public string OperationMethodName {
+            get {
+                return _operationMethodName;
             }
         }
         

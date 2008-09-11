@@ -2150,11 +2150,14 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                     (APIConfigurationImpl)decoder.ReadObjectField("APIConfiguration",typeof(APIConfigurationImpl),null);
                 Type operation = 
                     decoder.ReadClassField("operation",null);
+                string operationMethodName =
+                    decoder.ReadStringField("operationMethodName",null);
                 IList<object> arguments = (IList<object>)
                     decoder.ReadObjectField("Arguments",typeof(IList<object>),null);
                 return new OperationRequest(connectorKey,
                         configuration,
                         operation,
+                        operationMethodName,
                         arguments);
             }
     
@@ -2164,6 +2167,8 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                     (OperationRequest)obj;
                 encoder.WriteClassField("operation", 
                         val.Operation);
+                encoder.WriteStringField("operationMethodName",
+                                         val.OperationMethodName);
                 encoder.WriteObjectField("ConnectorKey", 
                         val.ConnectorKey,true);
                 encoder.WriteObjectField("APIConfiguration", 

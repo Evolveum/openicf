@@ -299,6 +299,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Remote
                     connectorInfo.ConnectorKey,
                     _configuration,
                     _operation,
+                    method.Name,
                     simpleMarshallArgs);
             
             //create the connection

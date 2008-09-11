@@ -56,6 +56,7 @@ using Org.IdentityConnectors.Common.Security;
 using Org.IdentityConnectors.Framework.Api;
 using Org.IdentityConnectors.Framework.Api.Operations;
 using Org.IdentityConnectors.Framework.Common.Objects;
+using Org.IdentityConnectors.Framework.Common.Exceptions;
 using Org.IdentityConnectors.Framework.Common.Objects.Filters;
 using Org.IdentityConnectors.Framework.Common.Serializer;
 using Org.IdentityConnectors.Framework.Server;
@@ -459,18 +460,33 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
             return new HelloResponse(exception,connectorInfo);
         }
                 
+        private MethodInfo GetOperationMethod(OperationRequest request) {
+            MethodInfo [] methods = 
+                request.Operation.GetMethods();
+            MethodInfo found = null;
+            foreach (MethodInfo m in methods) {
+                if ( found != null ) {
+                    throw new ConnectorException("APIOperations are expected "
+                            +"to have exactly one method of a given name: "+request.Operation+" "+methods.Length);
+                }
+                if ( m.Name.ToUpper().Equals(request.OperationMethodName.ToUpper()) ) {
+                    found = m;
+                }
+            }
+            
+            if ( found == null ) {
+                throw new ConnectorException("APIOperations are expected "
+                        +"to have exactly one method of a given name: "+request.Operation+" "+methods.Length);
+            }
+            return found;            
+        }
+        
         private OperationResponsePart 
         ProcessOperationRequest(OperationRequest request) {
             Object result;
             Exception exception = null;
             try {
-                MethodInfo [] methods = 
-                    request.Operation.GetMethods();
-                if ( methods.Length != 1) {
-                    throw new Exception("APIOperations are expected "
-                            +"to have exactly one method: "+request.Operation+" "+methods.Length);
-                }
-                MethodInfo method = methods[0];
+                MethodInfo method = GetOperationMethod(request);
                 APIOperation operation = GetAPIOperation(request);
                 IList<Object> arguments = request.Arguments;
                 IList<Object> argumentsAndStreamHandlers =

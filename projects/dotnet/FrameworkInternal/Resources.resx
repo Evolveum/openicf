@@ -447,6 +447,7 @@ OperationOptionInfo | SyncDeltaType | SyncToken | SyncDelta
 &lt;!ELEMENT OperationRequest (ConnectorKey,APIConfiguration,Arguments)&gt;
 &lt;!ATTLIST OperationRequest
     operation CDATA #REQUIRED
+    operationMethodName CDATA #REQUIRED
 &gt;
 &lt;!ELEMENT Arguments ((%xmlObject;)*)&gt;
 &lt;!ELEMENT OperationResponseEnd EMPTY&gt;
