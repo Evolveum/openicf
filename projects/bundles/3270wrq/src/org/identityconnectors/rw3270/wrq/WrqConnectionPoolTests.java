@@ -40,17 +40,24 @@
 package org.identityconnectors.rw3270.wrq;
 
 import java.io.StringReader;
+import java.text.MessageFormat;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.ResourceBundle;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import junit.framework.Assert;
 
+import org.identityconnectors.common.l10n.CurrentLocale;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
@@ -293,7 +300,22 @@ public class WrqConnectionPoolTests {
         config.setPoolNames(new String[] { "TODO" });
         config.setEvictionInterval(60000);
         config.setConnectionClassName(WrqConnection.class.getName());
-        return config;
+
+        OurConnectorMessages messages = new OurConnectorMessages();
+        Map<Locale, Map<String, String>> catalogs = new HashMap<Locale, Map<String,String>>();
+        Map<String, String> foo = new HashMap<String, String>();
+        for (String bundleName : new String[] { "org.identityconnectors.rw3270.Messages" }) {
+	        ResourceBundle messagesBundle = ResourceBundle.getBundle(bundleName);
+	        Enumeration<String> enumeration = messagesBundle.getKeys();
+	        while (enumeration.hasMoreElements()) {
+	            String key = enumeration.nextElement();
+	            foo.put(key, messagesBundle.getString(key));
+	        }
+        }
+
+        catalogs.put(Locale.getDefault(), foo);
+        messages.setCatalogs(catalogs);
+        config.setConnectorMessages(messages);        return config;
     }
     
     private String getLoginScript() {
@@ -433,6 +455,22 @@ public class WrqConnectionPoolTests {
         
         public void validate() {
             
+        }
+    }
+
+    public class OurConnectorMessages implements ConnectorMessages {
+        private Map<Locale, Map<String, String>> _catalogs = new HashMap<Locale, Map<String, String>>();
+
+        public String format(String key, String defaultValue, Object... args) {
+        	Locale locale = CurrentLocale.isSet()?CurrentLocale.get():Locale.getDefault();
+            Map<String,String> catalog = _catalogs.get(locale);
+            String message = catalog.get(key);
+            MessageFormat formatter = new MessageFormat(message,locale);
+            return formatter.format(args, new StringBuffer(), null).toString();
+        }
+
+        public void setCatalogs(Map<Locale,Map<String,String>> catalogs) {
+            _catalogs = catalogs;
         }
     }
 }
