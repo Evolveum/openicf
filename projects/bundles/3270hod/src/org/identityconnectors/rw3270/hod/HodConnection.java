@@ -146,7 +146,7 @@ public class HodConnection extends RW3270BaseConnection implements ECLPSListener
                     Thread.sleep(2000);
                 } catch (InterruptedException e) {
                 }
-                throw new ConnectorException(_config.getConnectorMessages().format(_config.getLocale(), "NoConnection", "No connection to host:{0}", _lastConnError));
+                throw new ConnectorException(_config.getConnectorMessages().format("NoConnection", "No connection to host:{0}", _lastConnError));
             }
 
             _ps = _session.GetPS();

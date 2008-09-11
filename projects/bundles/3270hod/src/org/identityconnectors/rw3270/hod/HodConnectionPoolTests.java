@@ -55,6 +55,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import junit.framework.Assert;
 
+import org.identityconnectors.common.l10n.CurrentLocale;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
@@ -303,7 +304,6 @@ public class HodConnectionPoolTests {
         config.setEvictionInterval(60000);
         config.setConnectionClassName(HodConnection.class.getName());
 
-        config.setLocale(Locale.getDefault());
         OurConnectorMessages messages = new OurConnectorMessages();
         Map<Locale, Map<String, String>> catalogs = new HashMap<Locale, Map<String,String>>();
         Map<String, String> foo = new HashMap<String, String>();
@@ -332,7 +332,7 @@ public class HodConnectionPoolTests {
             "connection.send(\"[enter]\");\n" +
             "connection.waitFor(\"***\", SHORT_WAIT);\n" +
             "connection.send(\"[enter]\");\n" +
-            "connection.waitFor(\"Option ===>\", SHORT_WAIT);\n" +
+            "connection.waitFor(\"OPTION ===>\", SHORT_WAIT);\n" +
             "connection.send(\"[pf3]\");\n" +
             "connection.waitFor(\"READY\", SHORT_WAIT);";
         return script;
@@ -463,7 +463,8 @@ public class HodConnectionPoolTests {
     public class OurConnectorMessages implements ConnectorMessages {
         private Map<Locale, Map<String, String>> _catalogs = new HashMap<Locale, Map<String, String>>();
 
-        public String format(Locale locale, String key, String defaultValue, Object... args) {
+        public String format(String key, String defaultValue, Object... args) {
+        	Locale locale = CurrentLocale.isSet()?CurrentLocale.get():Locale.getDefault();
             Map<String,String> catalog = _catalogs.get(locale);
             String message = catalog.get(key);
             MessageFormat formatter = new MessageFormat(message,locale);
