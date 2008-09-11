@@ -46,11 +46,11 @@ import java.util.regex.Pattern;
 import org.w3c.dom.Element;
 
 /**
- * A SplitTransform specifies a pattern to be used to split the value into an List.
+ * A SplitTransform specifies a pattern to be used to split the value into a List&lt;String&gt;.
  * <p>
  * Represented in XML by
  * <pre>
- * &ltSplitTransform splitPattern='&lt;pattern&gt;'/&gt;
+ * &lt;SplitTransform splitPattern='&lt;pattern&gt;'/&gt;
  * </pre>
  */
 public class SplitTransform extends Transform {
