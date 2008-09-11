@@ -400,7 +400,7 @@ public class FH3270ConnectionPoolTests {
             "connection.send(\"[enter]\");\n" +
             "connection.waitFor(\"***\", SHORT_WAIT);\n" +
             "connection.send(\"[enter]\");\n" +
-            "connection.waitFor(\"OPTION ===>\", SHORT_WAIT);\n" +
+            "connection.waitFor(\"Option ===>\", SHORT_WAIT);\n" +
             "connection.send(\"[pf3]\");\n" +
             "connection.waitFor(\"READY\", SHORT_WAIT);";
         return script;
