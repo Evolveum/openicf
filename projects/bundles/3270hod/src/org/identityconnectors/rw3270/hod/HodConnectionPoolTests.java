@@ -306,17 +306,17 @@ public class HodConnectionPoolTests {
 
         OurConnectorMessages messages = new OurConnectorMessages();
         Map<Locale, Map<String, String>> catalogs = new HashMap<Locale, Map<String,String>>();
+        Map<String, String> foo = new HashMap<String, String>();
         for (String bundleName : new String[] { "org.identityconnectors.rw3270.Messages", "org.identityconnectors.rw3270.hod.Messages" }) {
 	        ResourceBundle messagesBundle = ResourceBundle.getBundle(bundleName);
-	        Map<String, String> foo = new HashMap<String, String>();
 	        Enumeration<String> enumeration = messagesBundle.getKeys();
 	        while (enumeration.hasMoreElements()) {
 	            String key = enumeration.nextElement();
 	            foo.put(key, messagesBundle.getString(key));
 	        }
-	        catalogs.put(Locale.getDefault(), foo);
         }
 
+        catalogs.put(Locale.getDefault(), foo);
         messages.setCatalogs(catalogs);
         config.setConnectorMessages(messages);
         
