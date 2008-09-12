@@ -39,7 +39,6 @@
  */
 package org.identityconnectors.mysqluser;
 
-import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -242,8 +241,6 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      * @see DeleteOp#delete(ObjectClass, Uid, OperationOptions)
      */
     public void delete(final ObjectClass objClass, final Uid uid, final OperationOptions options) {
-        final String SQL_DELETE_TEMPLATE = "DROP USER ?";
-
         if (objClass == null || (!objClass.equals(ObjectClass.ACCOUNT))) {
             throw new IllegalArgumentException("Delete operation received a wrong ObjectClass.");
         }
@@ -254,7 +251,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         
         log.info("Delete user uid: {0}", uid.getName());
         //Delete the user
-        deleteUser(SQL_DELETE_TEMPLATE, uid);
+        deleteUser(uid);
         //Commit delete
         conn.commit();
         log.ok("Deleted user uid: {0}", uid.getName());
@@ -491,11 +488,11 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      */
     private List<String> readGrantsForModelUser(String modelUser) {
         final String SQL_SHOW_GRANTS = "SHOW GRANTS FOR ?";
-        CallableStatement c2 = null;
+        PreparedStatement c2 = null;
         List<String> grants = new ArrayList<String>();
         try {
             // created, read the model user grants
-            c2 = conn.getConnection().prepareCall(SQL_SHOW_GRANTS);
+            c2 = conn.prepareStatement(SQL_SHOW_GRANTS, null);
             c2.setString(1, modelUser);
             ResultSet grantRs = c2.executeQuery();
             while (grantRs.next()) {
@@ -539,9 +536,9 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      */
     private void grantingRights(List<String> grants, String userName) {
         for (String grant : grants) {
-            CallableStatement c3 = null;
+            PreparedStatement c3 = null;
             try {
-                c3 = conn.getConnection().prepareCall(grant);
+                c3 = conn.prepareStatement(grant, null);
                 log.info("Granting rights {0} for user: {1}", userName, grant);
                 c3.execute();
             } catch (SQLException e) {
@@ -557,18 +554,17 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
     /**
      * Delete The User
      * 
-     * @param sql
-     *            detele sql
      * @param uid
      *            the uid of the user
      * @param connection
      */
-    private void deleteUser(String sql, final Uid uid) {
-        CallableStatement stmt = null;
+    private void deleteUser(final Uid uid) {
+        final String SQL_DELETE_TEMPLATE = "DROP USER ?";
 
+        PreparedStatement stmt = null;
         try {
             // create a prepared call..
-            stmt = conn.getConnection().prepareCall(sql);
+            stmt = conn.prepareStatement(SQL_DELETE_TEMPLATE, null);
             // set object to delete..
             stmt.setString(1, uid.getUidValue());
             // uid to delete..
@@ -577,7 +573,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             log.ok("Deleted Uid: {0}", uid.getUidValue());
         } catch (SQLException e) {
             SQLUtil.rollbackQuietly(conn.getConnection());
-            log.error(e, "SQL: " + sql);
+            log.error(e, "SQL: " + SQL_DELETE_TEMPLATE);
             throw new UnknownUidException(e);
         } finally {
             // clean up..
@@ -610,11 +606,11 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             // clean up..
             SQLUtil.closeQuietly(stmt);
         }
-        // Plush privileges
-        CallableStatement cstmt = null;
+        // Flush privileges
+        PreparedStatement cstmt = null;
         try {
             // create the prepared statement..
-            cstmt = conn.getConnection().prepareCall(FLUSH_PRIVILEGES);
+            cstmt = conn.prepareStatement(FLUSH_PRIVILEGES, null);
             cstmt.execute();
         } catch (SQLException e) {
             SQLUtil.rollbackQuietly(conn.getConnection());
