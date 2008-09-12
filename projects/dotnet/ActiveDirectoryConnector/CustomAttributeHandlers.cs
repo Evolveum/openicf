@@ -715,20 +715,20 @@ namespace Org.IdentityConnectors.ActiveDirectory
         private ConnectorAttribute GetCaFromDe_OpAtt_Name(
             ObjectClass oclass, string attributeName, SearchResult searchResult)
         {
-            ICollection<Object> value = new List<Object>();
+            String value = null;
             ResultPropertyValueCollection pvc = null;
 
             pvc = searchResult.Properties[ActiveDirectoryConnector.ATT_DISTINGUISHED_NAME];
-            if ((pvc != null) && (pvc.Count == 1))
+            if ((pvc != null) && (pvc.Count == 1) && (pvc[0] is String))
             {
-                value.Add(pvc[0]);
+                value = (String)pvc[0];
             }
-            else if (pvc.Count > 1)
+            else
             {
                 throw new ConnectorException("There should be exactly one value for the name attribute");
-            }
+            }          
 
-            return ConnectorAttributeBuilder.Build(Name.NAME, value);
+            return ConnectorAttributeBuilder.Build(Name.NAME, ActiveDirectoryUtils.NormalizeLdapString(value));
         }
 
         private ConnectorAttribute GetCaFromDe_OpAtt_Uid(

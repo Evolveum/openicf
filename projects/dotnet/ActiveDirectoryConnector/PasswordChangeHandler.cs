@@ -45,6 +45,7 @@ using System.Text;
 using System.DirectoryServices;
 using Org.IdentityConnectors.Common.Security;
 using ActiveDs;
+using Org.IdentityConnectors.Framework.Common.Exceptions;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
@@ -145,7 +146,17 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             DirectoryEntry userDe = new DirectoryEntry(directoryEntry.Path, 
                 sAMAccountName, _currentPassword);
-            userDe.RefreshCache();
+            try
+            {
+                // this will cause a bind.  Maybe there is a better 
+                // way to do this.  If you know of one, please change
+                // this, as this seems a little weird
+                userDe.RefreshCache();
+            }
+            catch (Exception e)
+            {
+                throw new InvalidCredentialException();
+            }
 
         }
     }

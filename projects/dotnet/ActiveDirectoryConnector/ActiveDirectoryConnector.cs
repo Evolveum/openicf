@@ -305,7 +305,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 // get the user attribute infos and operations
                 ICollection<ConnectorAttributeInfo> userAttributeInfos =
                     GetUserAttributeInfos(ADSchema);
-                ICollection<Type> userOperations = GetUserOperations();
                 ObjectClassInfoBuilder ociBuilder = new ObjectClassInfoBuilder();
                 ociBuilder.ObjectType = ObjectClass.ACCOUNT_NAME;
                 ociBuilder.AddAllAttributeInfo(userAttributeInfos);
@@ -317,7 +316,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 ociBuilder = new ObjectClassInfoBuilder();
                 ociBuilder.ObjectType = ObjectClass.GROUP_NAME;
                 ociBuilder.AddAllAttributeInfo(groupAttributeInfos);
-                ICollection<Type> groupOperations = GetGroupOperations();
                 ObjectClassInfo groupInfo = ociBuilder.Build();
 
                 // get the organizationalUnit attribute infos and operations
@@ -326,13 +324,19 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 ociBuilder = new ObjectClassInfoBuilder();
                 ociBuilder.ObjectType = OBJECTCLASS_OU;
                 ociBuilder.AddAllAttributeInfo(ouAttributeInfos);
-                ICollection<Type> ouOperations = GetOuOperations();
                 ObjectClassInfo ouInfo = ociBuilder.Build();
 
-                SchemaBuilder schemaBuilder = new SchemaBuilder(typeof(ActiveDirectoryConnector));
+                SchemaBuilder schemaBuilder = new SchemaBuilder(this.GetType());
+                
                 schemaBuilder.DefineObjectClass(userInfo);
                 schemaBuilder.DefineObjectClass(groupInfo);
+                schemaBuilder.RemoveSupportedObjectClass(typeof(AuthenticateOp), groupInfo);
                 schemaBuilder.DefineObjectClass(ouInfo);
+                schemaBuilder.RemoveSupportedObjectClass(typeof(AuthenticateOp), ouInfo);
+                schemaBuilder.RemoveSupportedObjectClass(typeof(CreateOp), ouInfo);
+                schemaBuilder.RemoveSupportedObjectClass(typeof(DeleteOp), ouInfo);
+                schemaBuilder.RemoveSupportedObjectClass(typeof(SearchOp<String>), ouInfo);
+
                 _schema = schemaBuilder.Build();
             }
 
@@ -364,10 +368,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
             PopulateSchemaFromAD(_configuration.ObjectClass, ADSchema, attributeInfos, 
                 attributesToIgnore, ObjectClass.ACCOUNT);
 
-            // add in the uid
-            attributeInfos.Add(GetConnectorAttributeInfo(Uid.NAME,
-                typeof(string), false, true, true, false, ObjectClass.ACCOUNT));
-                
             // now add in container ... 
             attributeInfos.Add(GetConnectorAttributeInfo(ATT_CONTAINER, 
                 typeof(string), true, true, false, false, ObjectClass.ACCOUNT));
@@ -433,10 +433,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // put in operational attributes
             //attributeInfos.Add(OperationalAttributeInfos.EXPIRE_PASSWORD);
 
-            // add in the uid
-            attributeInfos.Add(GetConnectorAttributeInfo(Uid.NAME,
-                typeof(string), false, true, true, false, ObjectClass.GROUP));
-
             // now add in container ... 
             attributeInfos.Add(GetConnectorAttributeInfo(ATT_CONTAINER,
                 typeof(string), true, true, false, false, ObjectClass.GROUP));
@@ -452,10 +448,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
             ActiveDirectorySchema ADSchema)
         {
             ICollection<ConnectorAttributeInfo> attributeInfos = new Collection<ConnectorAttributeInfo>();
-
-            // add in the uid
-            attributeInfos.Add(GetConnectorAttributeInfo(Uid.NAME,
-                typeof(string), false, true, true, false, ouObjectClass));
 
             // add in container ... 
             attributeInfos.Add(GetConnectorAttributeInfo(ATT_CONTAINER,
@@ -536,33 +528,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
 */
             }
-        }
-
-        public ICollection<Type> GetUserOperations()
-        {
-            ICollection<Type> operations = new Collection<Type>();
-            operations.Add(typeof(CreateApiOp));
-            operations.Add(typeof(DeleteApiOp));
-            operations.Add(typeof(UpdateApiOp));
-            operations.Add(typeof(SearchApiOp));
-            operations.Add(typeof(ScriptOnResourceApiOp));
-            operations.Add(typeof(SyncApiOp));
-            
-            return operations;
-        }
-
-        public ICollection<Type> GetGroupOperations()
-        {
-            ICollection<Type> operations = new Collection<Type>();
-            operations.Add(typeof(CreateApiOp));
-            return operations;
-        }
-
-        public ICollection<Type> GetOuOperations()
-        {
-            ICollection<Type> operations = new Collection<Type>();
-            operations.Add(typeof(SearchApiOp));
-            return operations;
         }
 
         private ConnectorAttributeInfo GetConnectorAttributeInfo(string name,
@@ -927,6 +892,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 // if it's a group (container), delete this
                 // entry and all it's children
                 de.DeleteTree();
+            }
+            else
+            {
+                throw new ConnectorException(String.Format("Delete is not supported for ObjectClass {0}", objClass.GetObjectClassValue()));
             }
         }
 
