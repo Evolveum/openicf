@@ -356,7 +356,8 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         }
         // Database query builder will create SQL query.
         // if where == null then all users are returned
-        final DatabaseQueryBuilder query = new DatabaseQueryBuilder(ALL_USER_QUERY, where);
+        final DatabaseQueryBuilder query = new DatabaseQueryBuilder(ALL_USER_QUERY);
+        query.setWhere(where);
 
         ResultSet result = null;
         PreparedStatement statement = null;
