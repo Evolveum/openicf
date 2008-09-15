@@ -87,6 +87,7 @@
     <Compile Include="ObjectNormalizerFacadeTests.cs" />
     <Compile Include="ObjectSerializationTests.cs" />
     <Compile Include="ProxyTests.cs" />
+    <Compile Include="SafeTypeTest.cs" />
     <Compile Include="ScriptTests.cs" />
     <Compile Include="GuardedStringTests.cs" />
     <Compile Include="TestHelperTests.cs" />

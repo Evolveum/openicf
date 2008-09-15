@@ -90,6 +90,7 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="Assertions.cs" />
+    <Compile Include="SafeType.cs" />
     <Compile Include="DateTimeUtil.cs" />
     <Compile Include="FrameworkInternalBridge.cs" />
     <Compile Include="IOUtil.cs" />
