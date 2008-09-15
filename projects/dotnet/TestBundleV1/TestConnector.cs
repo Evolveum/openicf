@@ -209,6 +209,11 @@ namespace org.identityconnectors.testconnector
                 }
             }
         }
+        
+        public SyncToken GetLatestSyncToken() 
+        {
+            return new SyncToken("mylatest");
+        }
     
         public Schema Schema() {
             SchemaBuilder builder = new SchemaBuilder(typeof(TstConnector));

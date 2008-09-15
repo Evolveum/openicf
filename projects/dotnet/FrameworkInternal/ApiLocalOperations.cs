@@ -1139,7 +1139,10 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
             handler = new NormalizingSyncResultsHandler(handler,normalizer).Handle;
             ((SyncOp)GetConnector()).Sync(objClass, token, handler, options);
         }
-    
+        public SyncToken GetLatestSyncToken() 
+        {
+            return ((SyncOp) GetConnector()).GetLatestSyncToken();        
+        }    
     }
     #endregion
     

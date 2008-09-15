@@ -614,6 +614,11 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
             .Sync(objClass, token, handler, options);
         }
         
+        public SyncToken GetLatestSyncToken() {
+            return ((SyncApiOp)this.GetOperationCheckSupported(typeof(SyncApiOp)))
+            .GetLatestSyncToken();
+        }
+        
         private APIOperation GetOperationCheckSupported(Type api) {
             // check if this operation is supported.
             if (!SupportedOperations.Contains(api)) {

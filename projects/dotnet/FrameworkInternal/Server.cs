@@ -465,11 +465,11 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
                 request.Operation.GetMethods();
             MethodInfo found = null;
             foreach (MethodInfo m in methods) {
-                if ( found != null ) {
-                    throw new ConnectorException("APIOperations are expected "
-                            +"to have exactly one method of a given name: "+request.Operation+" "+methods.Length);
-                }
                 if ( m.Name.ToUpper().Equals(request.OperationMethodName.ToUpper()) ) {
+                    if ( found != null ) {
+                        throw new ConnectorException("APIOperations are expected "
+                                +"to have exactly one method of a given name: "+request.Operation);
+                    }
                     found = m;
                 }
             }
