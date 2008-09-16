@@ -126,7 +126,9 @@ public class MySQLUserConnectorTests {
         idmPort = TestHelpers.getProperty("port.connector.string", null);
         idmDriver = TestHelpers.getProperty("driver.connector.string", null); 
         idmModelUser = TestHelpers.getProperty("usermodel.connector.string", null);        
-        testPassword = new GuardedString(TestHelpers.getProperty("testpassword.connector.string", null).toCharArray());
+        final String passwd = TestHelpers.getProperty("testpassword.connector.string", null);
+        assertNotNull("Password must be configured for test", passwd);
+        testPassword = new GuardedString(passwd.toCharArray());
         
         assertNotNull("Host must be configured for test", idmHost);
         assertNotNull("Login must be c  onfigured for test", idmLogin);
@@ -353,6 +355,15 @@ public class MySQLUserConnectorTests {
         //facade.test();
     }
 
+    /**
+     * test method
+     */
+    @Test
+    public void testTestMethod() {
+        ConnectorFacade facade = getFacade();
+        facade.test();
+    }        
+    
     /**
      * Test Find the user model, this must be found for proper functionality
      */
