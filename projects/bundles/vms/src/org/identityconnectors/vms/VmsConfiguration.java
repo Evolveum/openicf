@@ -66,24 +66,33 @@ public class VmsConfiguration extends AbstractConfiguration {
     private static final String CATALOG = "org.identityconnectors.vms.VmsMessages";
 
     public void validate() {
-        if (_hostLineTerminator==null)
+    	if (isNull(_hostLineTerminator))
             throw new IllegalArgumentException(getMessage(VmsMessages.TERMINATOR_NULL));
-        if (_isSSH==null)
+        if (_isSSH)
             throw new IllegalArgumentException(getMessage(VmsMessages.SSH_NULL));
-        if (_hostShellPrompt==null)
+        if (isNull(_hostShellPrompt))
             throw new IllegalArgumentException(getMessage(VmsMessages.SHELL_PROMPT_NULL));
-        if (_connectScript==null)
+        if (isNull(_connectScript))
             throw new IllegalArgumentException(getMessage(VmsMessages.CONN_SCRIPT_NULL));
-        if (_hostNameOrIpAddr==null)
+        if (isNull(_hostNameOrIpAddr))
             throw new IllegalArgumentException(getMessage(VmsMessages.HOST_NULL));
         if (_hostPortNumber==null)
             throw new IllegalArgumentException(getMessage(VmsMessages.PORT_NULL));
         if (_hostPortNumber<1 || _hostPortNumber>65535)
             throw new IllegalArgumentException(getMessage(VmsMessages.PORT_RANGE_ERROR, _hostPortNumber));
-        if (_userName==null)
+        if (isNull(_userName))
             throw new IllegalArgumentException(getMessage(VmsMessages.USERNAME_NULL));
-        if (_password==null)
+        if (isNull(_password))
             throw new IllegalArgumentException(getMessage(VmsMessages.PASSWORD_NULL));
+    }
+    
+    private boolean isNull(String string) {
+    	return string==null || string.length()==0;
+    }
+
+    private static GuardedString _nullGuardedString = new GuardedString(new char[0]);
+    private boolean isNull(GuardedString string) {
+    	return string==null || string.equals(_nullGuardedString);
     }
 
     //TODO: use ConnectorMessages instead
@@ -131,14 +140,14 @@ public class VmsConfiguration extends AbstractConfiguration {
     }
 
     public String getHostLineTerminator() {
-        if (_hostLineTerminator!=null)
+    	if (_hostLineTerminator!=null)
             return _hostLineTerminator.replaceAll("\n", "\\n").replaceAll("\r", "\\r");
         else
             return null;
     }
 
     public String getRealHostLineTerminator() {
-        return _hostLineTerminator;
+    	return _hostLineTerminator;
     }
 
     public void setHostLineTerminator(String hostLineTerminator) {
@@ -149,7 +158,7 @@ public class VmsConfiguration extends AbstractConfiguration {
     }
 
     public String getHostShellPrompt() {
-        return _hostShellPrompt;
+    	return _hostShellPrompt;
     }
 
     public void setHostShellPrompt(String hostShellPrompt) {

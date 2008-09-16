@@ -78,7 +78,7 @@ public class VmsConnection {
         GuardedStringAccessor accessor = new GuardedStringAccessor();
         configuration.getPassword().access(accessor);
         char[] passwordArray = accessor.getArray();
-        parameters.put("password", passwordArray);
+        parameters.put("password", new String(passwordArray));
         parameters.put("host", configuration.getHostNameOrIpAddr());
         parameters.put("port", configuration.getHostPortNumber());
         try {
@@ -124,6 +124,8 @@ public class VmsConnection {
         // so, we have to coerce back to a string, but, if this is updated
         // we'll be ready.
         log.info("send(encoded data)");
+        System.out.println(">>>>"+new String(string));
+        log.info("send(''{0}'')", new String(string));
         _expect4j.send(new String(string)+_configuration.getRealHostLineTerminator());
     }
 

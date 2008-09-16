@@ -54,6 +54,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -63,6 +64,7 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.script.ScriptExecutor;
 import org.identityconnectors.common.script.ScriptExecutorFactory;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.api.operations.ValidateApiOp;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
@@ -76,6 +78,9 @@ import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.ObjectClassInfo;
+import org.identityconnectors.framework.common.objects.OperationOptionInfo;
+import org.identityconnectors.framework.common.objects.OperationOptionInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
@@ -89,6 +94,7 @@ import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.ConnectorClass;
 import org.identityconnectors.framework.spi.PoolableConnector;
+import org.identityconnectors.framework.spi.operations.AuthenticateOp;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
@@ -97,7 +103,10 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
 import org.identityconnectors.patternparser.MapTransform;
 import org.identityconnectors.patternparser.Transform;
 
-
+//TODO: Open Issues
+// PasswordExpired -- must be computed on the VMS system due to time skew
+// List-Valued attributes -- must be updated to set all values (i.e. REPLACE)
+//
 @ConnectorClass(
     displayNameKey="VMSConnector",
     configurationClass= VmsConfiguration.class)
@@ -122,10 +131,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
 
     private static final String SEPARATOR       = "Username: ";
     private static final String UAF_PROMPT      = "UAF>";
+    private static final String UAF_PROMPT_CONTINUE      = "_UAF>";
     private static final Transform TRANSFORM    = new MapTransform(VmsAuthorizeInfo.getInfo());
 
     public static final int    LONG_WAIT       = 60000;
     public static final int    SHORT_WAIT      = 5000;
+    private static final int   SEGMENT_MAX	   = 500;	
     
 
     // VMS messages we search for
@@ -133,9 +144,35 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
     private static final String USER_ADDED       = "%UAF-I-ADDMSG,";     // user record successfully added
     private static final String USER_EXISTS      = "%UAF-E-UAEERR,";     // invalid user name, user name already exists
     private static final String USER_REMOVED     = "%UAF-I-REMMSG,";     // record removed from system authorization file
+    private static final String USER_RENAMED     = "%UAF-I-RENMSG,";     // user record renamed
     private static final String USER_UPDATED     = "%UAF-I-MDFYMSG,";    // user record(s) updated
     private static final String BAD_USER         = "%UAF-W-BADUSR,";     // user name does not exist
     private static final String BAD_SPEC         = "%UAF-W-BADSPC,";     // no user matches specification
+    
+    public static void main(String[] args) {
+    	VmsConnector connector = new VmsConnector();
+    	Schema schema = connector.schema();
+    	for (ObjectClassInfo oci : schema.getObjectClassInfo()) {
+    		if (oci.getType().equals("account")) {
+    			Properties properties = new Properties();
+    			System.out.print("attributes.account.oclasses.Schema.testsuite.list=${LIST ");
+    			for (AttributeInfo info : oci.getAttributeInfo()) {
+    				System.out.print(", "+info.getName());
+    			}
+				System.out.println("}");
+    			for (AttributeInfo info : oci.getAttributeInfo()) {
+	    			System.out.println(info.getName()+".attribute.account.oclasses.Schema.testsuite.map=${MAP, \\");
+	    			System.out.println("    ${MAPENTRY, type, "+info.getType().toString()+"},\\");
+	    			System.out.println("    ${MAPENTRY, readable, "+info.isReadable()+"},\\");
+	    			System.out.println("    ${MAPENTRY, writable, "+info.isUpdateable()+"},\\");
+	    			System.out.println("    ${MAPENTRY, required, "+info.isRequired()+"},\\");
+	    			System.out.println("    ${MAPENTRY, multiValue, "+info.isMultiValue()+"},\\");
+	    			System.out.println("    ${MAPENTRY, returnedByDefault, "+info.isReturnedByDefault()+"}}");
+    			}
+
+    		}
+    	}
+    }
 
     public VmsConnector() {
         _changeOwnPasswordCommandScript = 
@@ -157,6 +194,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
             "connection.waitFor(SHELL_PROMPT, SHORT_WAIT);\n" +
             "connection.send(\"RUN AUTHORIZE\");\n" +
             "connection.waitFor(UAF_PROMPT, SHORT_WAIT);\n" +
+            "for (command in COMMANDS) {\n" +
+            "    connection.send(command);\n" +
+            "    connection.waitFor(UAF_PROMPT_CONTINUE, SHORT_WAIT);\n" +
+            "}\n" +
             "connection.send(COMMAND);\n" +
             "connection.waitFor(UAF_PROMPT, SHORT_WAIT);\n" +
             "connection.send(\"EXIT\");\n" +
@@ -272,8 +313,13 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
             return base.contains(subString);
     }
 
-    private void appendAttributes(Set<? extends Attribute> attrs, CharArrayBuffer addCommand) {
-        Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
+    private List<CharArrayBuffer> appendAttributes(String prefix, Set<? extends Attribute> attrs) {
+    	List<CharArrayBuffer> commandList = new LinkedList<CharArrayBuffer>();
+    	CharArrayBuffer command = new CharArrayBuffer();
+    	command.append(prefix);
+    	commandList.add(command);
+    	
+    	Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
 
         // Enable/disable is handled by FLAGS=([NO]DISUSER)
         //
@@ -282,7 +328,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
             Attribute flags = attrMap.remove(VmsConstants.ATTR_FLAGS);
             List<Object> flagsValue = new LinkedList<Object>();
             if (flags!= null)
-                flagsValue = flags.getValue();
+                flagsValue = new LinkedList<Object>(flags.getValue());
             if (AttributeUtil.getBooleanValue(enable))
                 flagsValue.add(VmsConstants.NO+FLAG_DISUSER);
             else
@@ -298,23 +344,47 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         //
         Attribute expiration = attrMap.remove(OperationalAttributes.PASSWORD_EXPIRED_NAME);
         if (expiration!=null) {
-            if (AttributeUtil.getBooleanValue(expiration)) 
-                addCommand.append("/"+VmsConstants.ATTR_PWDEXPIRED);
-            else
-                addCommand.append("/"+VmsConstants.NO+VmsConstants.ATTR_PWDEXPIRED);
-        }
-        // Password expiration date is handled by the /PWDLIFETIME qualifier
-        // VMS uses a delta time for lifetime, not an expiration date, so we need to convert
-        //
-        Attribute expirationDate = attrMap.remove(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME);
-        if (expirationDate!=null) {
-            long expirationTime = AttributeUtil.getLongValue(expirationDate).longValue();
-            if (expirationTime==0) {
-                addCommand.append("/"+VmsConstants.NO+ATTR_PWDLIFETIME);
+            if (AttributeUtil.getBooleanValue(expiration)) {
+            	String value = "/"+VmsConstants.ATTR_PWDEXPIRED;
+            	if (command.length()+value.length()>SEGMENT_MAX) {
+            		command.append("-");
+            		command = new CharArrayBuffer();
+                	commandList.add(command);            		
+            	}
+        		command.append(value);
             } else {
-                long now = new Date().getTime();
-                String value = remapToDelta(expirationTime-now);
-                addCommand.append("/"+VmsConstants.ATTR_PWDLIFETIME+"="+new String(quoteWhenNeeded(value.toCharArray(), true)));
+            	String value = "/"+VmsConstants.NO+VmsConstants.ATTR_PWDEXPIRED;
+            	if (command.length()+value.length()>SEGMENT_MAX) {
+            		command.append("-");
+            		command = new CharArrayBuffer();
+                	commandList.add(command);            		
+            	}
+        		command.append(value);
+            }
+        }
+        
+        // Password change interval is handled by the /PWDLIFETIME qualifier
+        //
+        Attribute changeInterval = attrMap.remove(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME);
+        if (changeInterval!=null) {
+            long expirationTime = AttributeUtil.getLongValue(changeInterval).longValue();
+            if (expirationTime==0) {
+            	String value = "/"+VmsConstants.NO+ATTR_PWDLIFETIME;
+            	if (command.length()+value.length()>SEGMENT_MAX) {
+            		command.append("-");
+            		command = new CharArrayBuffer();
+                	commandList.add(command);            		
+            	}
+        		command.append(value);
+            } else {
+                String deltaValue = remapToDelta(expirationTime);
+            	String value = "/"+VmsConstants.ATTR_PWDLIFETIME+"="+new String(quoteWhenNeeded(deltaValue.toCharArray(), true));
+            	if (command.length()+value.length()>SEGMENT_MAX) {
+            		command.append("-");
+            		command = new CharArrayBuffer();
+                	commandList.add(command);            		
+            	}
+        		command.append(value);
             }
         }
         
@@ -324,19 +394,32 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
             if (!name.equals(Name.NAME) && isNeedsValidation(attribute)) {
                 VmsAttributeValidator.validate(name, values, _configuration);
                 if (values.size()==0) {
-                    addCommand.append("/"+remapName(attribute));
+                	String value = "/"+remapName(attribute);
+                	if (command.length()+value.length()>SEGMENT_MAX) {
+                		command.append("-");
+                		command = new CharArrayBuffer();
+                    	commandList.add(command);            		
+                	}
+            		command.append(value);
                 } else {
                     if (isDateTimeAttribute(name))
                         remapToDateTime(values);
                     if (isDeltaAttribute(name))
                         remapToDelta(values);
                     char[] value = listToVmsValueList(values);
-                    addCommand.append("/"+remapName(attribute)+"=");
-                    addCommand.append(value);
+                    String first = "/"+remapName(attribute)+"=";
+                	if (command.length()+first.length()+value.length>SEGMENT_MAX) {
+                		command.append("-");
+                		command = new CharArrayBuffer();
+                    	commandList.add(command);            		
+                	}
+            		command.append(first);
+            		command.append(value);
                     Arrays.fill(value, 0, value.length, ' ');
                 }
             }
         }
+        return commandList;
     }
     
     private boolean isDateTimeAttribute(String attributeName) {
@@ -366,6 +449,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
 
     Pattern _deltaPattern = Pattern.compile("(?:(\\d+)\\s)?(\\d+):(\\d+)(?:(\\d+))?(?:.(\\d+))?");
     private long remapFromDelta(String delta) {
+    	if (delta==null)
+    		System.out.println("oops");
         Matcher matcher = _deltaPattern.matcher(delta);
         if (matcher.matches()) {
             String daysS         = matcher.group(1);
@@ -432,28 +517,27 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
      * {@inheritDoc}
      */
     public Uid create(ObjectClass objectClass, final Set<Attribute> attrs, final OperationOptions options) {
+    	if (!objectClass.equals(ObjectClass.ACCOUNT))
+    		throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
         Name name = AttributeUtil.getNameFromAttributes(attrs);
-        CharArrayBuffer addCommand = new CharArrayBuffer();
         String accountId = name.getNameValue();
         _log.info("create(''{0}'')", accountId);
-        addCommand.append("ADD "+accountId);
-        appendAttributes(attrs, addCommand);
+        List<CharArrayBuffer> addCommand = appendAttributes("ADD "+accountId, attrs);
 
         Map<String, Object> variables = new HashMap<String, Object>();
         variables.put("SHELL_PROMPT", _configuration.getHostShellPrompt());
         variables.put("SHORT_WAIT", SHORT_WAIT);
         variables.put("UAF_PROMPT", UAF_PROMPT);
-        char[] commandContents = addCommand.getArray();
-        addCommand.clear();
-        variables.put("COMMAND", commandContents);
+        variables.put("UAF_PROMPT_CONTINUE", UAF_PROMPT_CONTINUE);
+        fillInCommand(addCommand, variables);
         variables.put("connection", _connection);
 
         String result = "";
         try {
             result = (String)_authorizeCommandExecutor.execute(variables);
-            Arrays.fill(commandContents, 0, commandContents.length, ' ');
+            clearArrays(variables);
         } catch (Exception e) {
-            Arrays.fill(commandContents, 0, commandContents.length, ' ');
+            clearArrays(variables);
             _log.error(e, "error in create");
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE), e);
         }
@@ -472,13 +556,17 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
      * {@inheritDoc}
      */
     public void delete(ObjectClass objectClass, Uid uid, OperationOptions options) {
+    	if (!objectClass.equals(ObjectClass.ACCOUNT))
+    		throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
         _log.info("delete(''{0}'')", uid.getUidValue());
         String removeCommand = "REMOVE "+uid.getUidValue();
         Map<String, Object> variables = new HashMap<String, Object>();
         variables.put("SHELL_PROMPT", _configuration.getHostShellPrompt());
         variables.put("SHORT_WAIT", SHORT_WAIT);
         variables.put("UAF_PROMPT", UAF_PROMPT);
+        variables.put("UAF_PROMPT_CONTINUE", UAF_PROMPT_CONTINUE);
         variables.put("COMMAND", removeCommand);
+        variables.put("COMMANDS", new LinkedList<CharArrayBuffer>());
         variables.put("connection", _connection);
 
         String result = "";
@@ -514,6 +602,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
      * {@inheritDoc}
      */
     public void executeQuery(ObjectClass objectClass, String query, ResultsHandler handler, OperationOptions options) {
+    	if (!objectClass.equals(ObjectClass.ACCOUNT))
+    		throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
         try {
             if ( query == null ) {
                 query = "*";
@@ -550,7 +640,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         if (searchAttributesToGet!=null)
             attributesToGet = CollectionUtil.newList(searchAttributesToGet);
         for (int i=1; i<userArray.length; i++) {
-            String user = SEPARATOR+userArray[i].replaceAll("\r\n", "\n");
+            String user = SEPARATOR+userArray[i].replaceAll("\r\n", "\n")+"\n";
             try {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> attributes = (Map<String, Object>)TRANSFORM.transform(user);
@@ -572,7 +662,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
                     if (includeInAttributes(OperationalAttributes.ENABLE_NAME, attributesToGet))
                         builder.addAttribute(OperationalAttributes.ENABLE_NAME, Boolean.TRUE);
                 }
-                
+
                 // PASSWORD_EXPIRED is handled by seeing the last password change plus
                 // the password lifetime is before the current time.
                 // If the password is pre-expired, we always set this to TRUE 
@@ -582,8 +672,20 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
                     if (lastChange.contains("(pre-expired)")) {
                         builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRED_NAME, Boolean.TRUE);
                     } else {
-                        Date expiredDate = getPasswordExpirationDate(attributes); 
+                        Date expiredDate = getPasswordExpirationDate(attributes);
+                        System.out.println("expiredDate="+expiredDate);
+                        System.out.println("current Date="+new Date());
                         builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRED_NAME, expiredDate.before(new Date()));
+                    }
+                }
+
+                // PASSWORD_CHANGE_INTERVAL_NAME 
+                //
+                if (includeInAttributes(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, attributesToGet)) {
+                    String lifetime = (String)attributes.remove(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME);
+                    if (lifetime!=null) {
+                        long lifetimeLong = remapFromDelta(lifetime);
+                        builder.addAttribute(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, lifetimeLong);
                     }
                 }
                 
@@ -627,7 +729,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
     private Date getPasswordExpirationDate(Map<String, Object> attributes) throws ParseException {
         String lastChange = (String)attributes.get(VmsConstants.ATTR_PWDCHANGE);
         long lastChangeDate = VMS_DATE_FORMAT.parse(lastChange).getTime();
-        String lifetime = (String)attributes.get(VmsConstants.ATTR_PWDLIFETIME);
+        String lifetime = (String)attributes.get(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME);
+        if (lifetime==null)
+        	return null;
         long lifetimeLong = remapFromDelta(lifetime);
         Date expiredDate = new Date(lastChangeDate+lifetimeLong);
         return expiredDate;
@@ -650,7 +754,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
     /**
      * {@inheritDoc}
      */
-    public Uid update(ObjectClass objclass, Set<Attribute> attributes, OperationOptions options) {
+    public Uid update(ObjectClass objectClass, Set<Attribute> attributes, OperationOptions options) {
+    	if (!objectClass.equals(ObjectClass.ACCOUNT))
+    		throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
         Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attributes));
         
         // Operational Attributes are handled specially
@@ -660,7 +766,43 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         Attribute currentPassword = attrMap.remove(OperationalAttributes.CURRENT_PASSWORD_NAME);
         Attribute newPassword = attrMap.remove(OperationalAttributes.PASSWORD_NAME);
 
-        
+        // If name is different form Uid, we are performing a RENAME operation.
+        // Do this first, followed by the MODIFY
+        //
+        if (name!=null && uid!=null && !uid.getUidValue().equals(name.getNameValue())) {
+            CharArrayBuffer renameCommand = new CharArrayBuffer();
+            String accountId = AttributeUtil.getUidAttribute(attributes).getUidValue();
+            renameCommand.append("RENAME "+uid.getUidValue()+" "+name.getNameValue());
+
+            Map<String, Object> variables = new HashMap<String, Object>();
+            variables.put("SHELL_PROMPT", _configuration.getHostShellPrompt());
+            variables.put("SHORT_WAIT", SHORT_WAIT);
+            variables.put("UAF_PROMPT", UAF_PROMPT);
+            variables.put("UAF_PROMPT_CONTINUE", UAF_PROMPT_CONTINUE);
+            char[] commandContents = renameCommand.getArray();
+            renameCommand.clear();
+            variables.put("COMMAND", commandContents);
+            variables.put("COMMANDS", new LinkedList<CharArrayBuffer>());
+            variables.put("connection", _connection);
+
+            String result = "";
+            try {
+                result = (String)_authorizeCommandExecutor.execute(variables);
+                Arrays.fill(commandContents, 0, commandContents.length, ' ');
+            } catch (Exception e) {
+                Arrays.fill(commandContents, 0, commandContents.length, ' ');
+                _log.error(e, "error in rename");
+                throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY), e);
+            }
+            
+            if (isPresent(result, USER_RENAMED)) {
+                uid = new Uid(name.getNameValue());
+            } else if (isPresent(result, BAD_SPEC)) {
+                throw new UnknownUidException();
+            } else {
+                throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
+            }
+        }
         
         // If the only attributes are
         //    UID
@@ -709,42 +851,62 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
                 String errortext = result.substring(result.indexOf("%SET-")).split("\n")[0];
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, errortext));
             }
-            String accountId = AttributeUtil.getUidAttribute(attributes).getUidValue();
-            return new Uid(accountId);
+            return uid;
 
         } else {
-            CharArrayBuffer modifyCommand = new CharArrayBuffer();
-            String accountId = AttributeUtil.getUidAttribute(attributes).getUidValue();
-            modifyCommand.append("MODIFY "+accountId);
-            appendAttributes(attributes, modifyCommand);
+            String accountId = uid.getUidValue();
+            List<CharArrayBuffer> modifyCommand = appendAttributes("MODIFY "+accountId, attributes);
 
             Map<String, Object> variables = new HashMap<String, Object>();
             variables.put("SHELL_PROMPT", _configuration.getHostShellPrompt());
             variables.put("SHORT_WAIT", SHORT_WAIT);
             variables.put("UAF_PROMPT", UAF_PROMPT);
-            char[] commandContents = modifyCommand.getArray();
-            modifyCommand.clear();
-            variables.put("COMMAND", commandContents);
+            fillInCommand(modifyCommand, variables);
             variables.put("connection", _connection);
 
             String result = "";
             try {
                 result = (String)_authorizeCommandExecutor.execute(variables);
-                Arrays.fill(commandContents, 0, commandContents.length, ' ');
+                clearArrays(variables);
             } catch (Exception e) {
-                Arrays.fill(commandContents, 0, commandContents.length, ' ');
+                clearArrays(variables);
                 _log.error(e, "error in create");
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY), e);
             }
             
             if (isPresent(result, USER_UPDATED)) {
-                return new Uid(accountId);
+                return uid;
             } else if (isPresent(result, BAD_SPEC)) {
                 throw new UnknownUidException();
             } else {
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
             }
         }
+    }
+    
+    private void fillInCommand(List<CharArrayBuffer> command, Map<String, Object> variables) {
+    	List<CharArrayBuffer> localCommand = new LinkedList<CharArrayBuffer>(command);
+    	CharArrayBuffer lastPart = localCommand.remove(command.size()-1);
+    	char[] commandContents = lastPart.getArray();
+    	lastPart.clear();
+        variables.put("COMMAND", commandContents);
+        List<char[]> firstContents = new LinkedList<char[]>();
+        for (CharArrayBuffer part : localCommand) {
+        	commandContents = part.getArray();
+        	part.clear();
+        	firstContents.add(commandContents);
+        }
+        variables.put("COMMANDS", firstContents);
+    }
+    
+    private void clearArrays(Map<String, Object> variables) {
+    	char[] commandContents = (char[])variables.get("COMMAND");
+        Arrays.fill(commandContents, 0, commandContents.length, ' ');
+    	List<char[]> commandPrefixContents = (List<char[]>)variables.get("COMMANDS");
+    	if (commandPrefixContents!=null) {
+	    	for (char[] commandPrefix : commandPrefixContents)
+	    		Arrays.fill(commandPrefix, 0, commandPrefix.length, ' ');
+    	}
     }
 
     /**
@@ -771,7 +933,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         attributes.add(AttributeInfoBuilder.build(ATTR_LGICMD,      String.class, false));
         //attributes.add(AttributeInfoBuilder.build(ATTR_EXPIRATION,  String.class, false));
         attributes.add(AttributeInfoBuilder.build(ATTR_PWDMINIMUM,  Integer.class, false));
-        //attributes.add(AttributeInfoBuilder.build(ATTR_PWDLIFETIME, String.class, false));
         attributes.add(AttributeInfoBuilder.build(ATTR_MAXJOBS,     Integer.class, false));
         attributes.add(AttributeInfoBuilder.build(ATTR_MAXACCTJOBS, Integer.class, false));
         attributes.add(AttributeInfoBuilder.build(ATTR_SHRFILLM,    Integer.class, false));
@@ -785,7 +946,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         attributes.add(AttributeInfoBuilder.build(ATTR_WSQUOTA,     Integer.class, false));
         attributes.add(AttributeInfoBuilder.build(ATTR_QUEPRIO,     Integer.class, false));
         attributes.add(AttributeInfoBuilder.build(ATTR_WSEXTENT,    Integer.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CPUTIME,     String.class, false));
+        //attributes.add(AttributeInfoBuilder.build(ATTR_CPUTIME,     String.class, false));
         attributes.add(AttributeInfoBuilder.build(ATTR_ENQLM,       Integer.class, false));
         attributes.add(AttributeInfoBuilder.build(ATTR_PGFLQUOTA,   Integer.class, false));
         attributes.add(AttributeInfoBuilder.build(ATTR_TQELM,       Integer.class, false));
@@ -804,24 +965,31 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
 
         // Read-only attributes
         //
-        attributes.add(buildReadonlyAttribute(ATTR_SECDAYS,         String.class, false));
+        //attributes.add(buildReadonlyAttribute(ATTR_SECDAYS,         String.class, false));
 
         // Write-only attributes
         //
-        attributes.add(buildWriteonlyAttribute(ATTR_ALGORITHM,      String.class, false, false));
+        //attributes.add(buildWriteonlyAttribute(ATTR_ALGORITHM,      String.class, false, false));
 
         // Operational Attributes
         //
         attributes.add(OperationalAttributeInfos.PASSWORD);
         attributes.add(OperationalAttributeInfos.CURRENT_PASSWORD);
         attributes.add(OperationalAttributeInfos.ENABLE);
-        attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
-        attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRATION_DATE);
+        //attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
+        //attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRATION_DATE);
         
         // Predefined Attributes
         //
         attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
 
+		// Remove unsupported operations
+        //
+        /*
+        schemaBuilder.removeSupportedOperationOption(
+        	AuthenticateOp.class, 
+        	OperationOptionInfoBuilder.build(ObjectClass.ACCOUNT_NAME));
+        */
         schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
         _schema = schemaBuilder.build();
         _attributeMap = AttributeInfoUtil.toMap(attributes);
@@ -843,6 +1011,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         builder.setType(clazz);
         builder.setRequired(true);
         builder.setMultiValue(false);
+        builder.setUpdateable(true);
+        builder.setCreateable(true);
         return builder.build();
     }
 
@@ -863,6 +1033,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         builder.setType(clazz);
         builder.setRequired(required);
         builder.setMultiValue(multi);
+        builder.setUpdateable(true);
+        builder.setCreateable(true);
         builder.setReadable(false);
         return builder.build();
     }
@@ -935,6 +1107,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
             char[] result = new char[_position];
             System.arraycopy(_array, 0, result, 0, _position);
             return result;
+        }
+        
+        public int length() {
+        	return _position;
         }
     }
     

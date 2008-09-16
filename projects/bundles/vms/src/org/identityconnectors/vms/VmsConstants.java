@@ -84,7 +84,7 @@ public interface VmsConstants {
     public static final String ATTR_PWDEXPIRED          = "PWDEXPIRED";
     public static final String ATTR_PWDLIFETIME         = "PWDLIFETIME";
     public static final String ATTR_PWDMINIMUM          = "PWDMINIMUM";
-    public static final String ATTR_PWDCHANGE          = "PWDCHANGE";
+    public static final String ATTR_PWDCHANGE           = "PWDCHANGE";
     public static final String ATTR_QUEPRIO             = "QUEPRIO";
     public static final String ATTR_REMOTE              = "REMOTE";
     public static final String ATTR_SECDAYS             = "Secondary Days";

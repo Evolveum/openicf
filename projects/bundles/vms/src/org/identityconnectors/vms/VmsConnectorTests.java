@@ -115,6 +115,7 @@ import org.identityconnectors.framework.common.objects.filter.NotFilter;
 import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
 import org.identityconnectors.framework.test.TestHelpers;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 
@@ -122,7 +123,7 @@ public class VmsConnectorTests {
 
     // Connector Configuration information
     //
-    private static final String LINE_TERMINATOR     = "\r\n";
+    private static final String LINE_TERMINATOR     = "\\r\\n";
     private static final String SHELL_PROMPT        = "$";
     private static String TEST_USER_START           = "TEST";
     private static String TEST_USER_MIDDLE          = "ST";
@@ -497,13 +498,13 @@ public class VmsConnectorTests {
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_ALGORITHM, "CURRENT=CUSTOMER=200"), false);
             
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_OWNER, "SUPERMAN"));
-            // Conversionns are inexact : testModifyUserAttribute(info.connector, AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, new Date().getTime()));
+            // Conversions are inexact : testModifyUserAttribute(info.connector, AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, new Date().getTime()));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_FILLM, Integer.valueOf(12)));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_BYTLM, Integer.valueOf(12)));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_MAXACCTJOBS, Integer.valueOf(12)));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_SHRFILLM, Integer.valueOf(12)));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_PBYTLM, Integer.valueOf(2)));
-            testModifyUserAttribute(info, AttributeBuilder.build(ATTR_MAXDETACH, "12"));
+            testModifyUserAttribute(info, AttributeBuilder.build(ATTR_MAXDETACH, Integer.valueOf(12)));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_BIOLM, Integer.valueOf(12)));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_JTQUOTA, Integer.valueOf(12)));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_PRCLM, Integer.valueOf(12)));
@@ -583,7 +584,7 @@ public class VmsConnectorTests {
         }
     }
     
-    @Test
+    @Test@Ignore
     public void testExpiration() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
@@ -631,7 +632,7 @@ public class VmsConnectorTests {
         }
     }
     
-    @Test
+    @Test@Ignore
     public void testExpirationDates() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
@@ -999,7 +1000,7 @@ public class VmsConnectorTests {
         Name name = new Name(testUser);
         attrs.add(name);
         
-        attrs.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, new Date(108, 12, 31).getTime()));
+        //attrs.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, new Date(108, 12, 31).getTime()));
 
         return attrs;
     }

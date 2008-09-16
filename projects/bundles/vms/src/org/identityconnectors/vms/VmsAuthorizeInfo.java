@@ -43,6 +43,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.PredefinedAttributes;
 import org.identityconnectors.patternparser.ClassTransform;
 import org.identityconnectors.patternparser.GroupsTransform;
 import org.identityconnectors.patternparser.ListTransform;
@@ -86,9 +87,12 @@ public class VmsAuthorizeInfo {
                     new SplitTransform("[ \\t]+")
             }));
             _parser.add(new PatternNode("EXPIRATION",         "Expiration:"+TO_NEXT+"(?=Pwdminimum)"));
-            _parser.add(new PatternNode("PWDMINIMUM",         "Pwdminimum:"+TO_NEXT+"(?=Login Fails)"));
+            _parser.add(new PatternNode("PWDMINIMUM",         "Pwdminimum:"+TO_NEXT+"(?=Login Fails)", false, false, 
+                new Transform[] {
+                    new ClassTransform(Integer.class)
+            }));
             _parser.add(new PatternNode("loginfails",         "Login Fails:"+TO_EOL));
-            _parser.add(new PatternNode("PWDLIFETIME",        "Pwdlifetime:"+TO_NEXT+"(?=Pwdchange)"));
+            _parser.add(new PatternNode(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME,        "Pwdlifetime:"+TO_NEXT+"(?=Pwdchange)"));
             _parser.add(new PatternNode("PWDCHANGE",          "Pwdchange:"+TO_EOL));        
             _parser.add(new PatternNode("lastlogin",          "Last Login:"+TO_EOL));        
             _parser.add(new PatternNode("MAXJOBS",            "Maxjobs:"+TO_NEXT+"(?=Fillm)", false, false, 
@@ -115,7 +119,10 @@ public class VmsAuthorizeInfo {
                 new Transform[] {
                     new ClassTransform(Integer.class)
             }));
-            _parser.add(new PatternNode("MAXDETACH",          "Maxdetach:"+TO_NEXT+"(?=BIOlm)"));
+            _parser.add(new PatternNode("MAXDETACH",          "Maxdetach:"+TO_NEXT+"(?=BIOlm)", false, false, 
+                new Transform[] {
+                    new ClassTransform(Integer.class)
+            }));
             _parser.add(new PatternNode("BIOLM",              "BIOlm:"+TO_NEXT+"(?=JTquota)", false, false, 
                 new Transform[] {
                     new ClassTransform(Integer.class)
@@ -172,11 +179,14 @@ public class VmsAuthorizeInfo {
             _parser.add(new PatternNode("PRIVILEGES",         "Authorized Privileges:[ \\t]+"+PLUS_INDENTED_LINES, true, false, 
                 new Transform[] {
                     new SubstituteTransform("IMPERSONAT(\\w\\w+)", "IMPERSONATE $1"),
+                    new SubstituteTransform("(.*?)\\nUAF>.*$", "$1"),
+                    new SubstituteTransform("(.*?)\\s+$", "$1"),
                     new SplitTransform("[ \\t]+"),
             }));
             _parser.add(new PatternNode("DEFPRIVILEGES",      "Default Privileges:[ \\t]+"+PLUS_INDENTED_LINES, true, false, 
                 new Transform[] {
                     new SubstituteTransform("IMPERSONAT(\\w\\w+)", "IMPERSONATE $1"),
+                    new SubstituteTransform("(.*?)\\s+$", "$1"),
                     new SplitTransform("[ \\t]+"),
             }));
             _parser.add(new PatternNode("Identifier",         "Identifier[^\\n]*?"+PLUS_INDENTED_LINES, true, false, 
