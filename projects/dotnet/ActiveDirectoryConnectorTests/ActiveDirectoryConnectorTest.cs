@@ -1319,6 +1319,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             Uid createUid = null;
 
+            ICollection<Uid> createdUids = new List<Uid>();
             try
             {
                 SyncTestHelper syncHelper = new SyncTestHelper();
@@ -1328,7 +1329,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                 syncHelper.Init();
                 ICollection<ConnectorAttribute> attributes = null;
-                ICollection<Uid> createdUids = new List<Uid>();
 
                 // create some users
                 for (int i = 0; i < 10; i++)
@@ -1384,10 +1384,38 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 // sync and verify
                 connector.Sync(ObjectClass.ACCOUNT, syncHelper.Token, syncHelper.SyncHandler_DeletedAccounts, null);
                 syncHelper.CheckAllSyncsProcessed();
+
+                createUid = CreateAndVerifyObject(connector, ObjectClass.ACCOUNT,
+                    GetNormalAttributes_Account());
+                syncHelper.AddModUid(createUid, attributes);
+                createdUids.Add(createUid);
+
+                // now get the latest sync token, and it
+                // should be greater or equal to the last one we saw
+                SyncToken latestToken = connector.GetLatestSyncToken();
+                Assert.Greater(GetUpdateUsnFromToken(latestToken), GetUpdateUsnFromToken(syncHelper.Token));
+                Assert.GreaterOrEqual(GetDeleteUsnFromToken(latestToken), GetDeleteUsnFromToken(syncHelper.Token));
             }
             finally
             {
+                foreach (Uid uid in createdUids)
+                {
+                    DeleteAndVerifyObject(connector, ObjectClass.ACCOUNT, uid,
+                        false, false);
+                }
             }
+        }
+
+        public long GetUpdateUsnFromToken(SyncToken token)
+        {
+            string[] tokenParts = ((string)token.Value).Split('|');
+            return long.Parse(tokenParts[0]);
+        }
+
+        public long GetDeleteUsnFromToken(SyncToken token)
+        {
+            string[] tokenParts = ((string)token.Value).Split('|');
+            return long.Parse(tokenParts[1]);
         }
 
         class SyncTestHelper
@@ -1622,7 +1650,18 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
 
             // delete
-            connector.Delete(oclass, uid, null);
+            try
+            {
+                connector.Delete(oclass, uid, null);
+            }
+            catch
+            {
+                if (verifyDeleted)
+                {
+                    throw;
+                }
+            }
+
             if (verifyDeleted)
             {
                 // verify that object was deleted
@@ -1994,7 +2033,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             ICollection<String> ldapStringAttributes = new List<String>();
             ldapStringAttributes.Add("AD_CONTAINER");
-            ldapStringAttributes.Add("@@NAME@@");
+            ldapStringAttributes.Add(Name.NAME);
+            ldapStringAttributes.Add(PredefinedAttributes.GROUPS_NAME);
+            ldapStringAttributes.Add(PredefinedAttributes.ACCOUNTS_NAME);
 
             // for each attribute in the connector object ...
             foreach (ConnectorAttribute attribute in requestedAttributes)

@@ -80,6 +80,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="ActiveDirectoryFilterTranslator.cs" />
+    <Compile Include="ActiveDirectorySyncToken.cs" />
     <Compile Include="ActiveDirectoryUtils.cs" />
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="CustomAttributeHandlers.cs" />
