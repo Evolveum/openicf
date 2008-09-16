@@ -39,20 +39,28 @@
  */
 package org.identityconnectors.mysqluser;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.dbcommon.DatabaseConnection;
+import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.api.ConnectorFacadeFactory;
 import org.identityconnectors.framework.api.operations.UpdateApiOp;
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -86,7 +94,11 @@ import org.junit.Test;
  * Attempts to test the Connector with the framework.
  */
 public class MySQLUserConnectorTests {
-
+    /**
+     * Setup logging for the {@link DatabaseConnection}.
+     */
+    private static final Log log = Log.getLog(DatabaseConnection.class);
+   
     private static String idmDriver = null;
     private static String idmHost = null;
 
@@ -199,7 +211,7 @@ public class MySQLUserConnectorTests {
     }
 
     /**
-     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
      */
     @Test
     public void testCreate() {
@@ -214,7 +226,7 @@ public class MySQLUserConnectorTests {
     }
     
     /**
-     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
      */
     @Test(expected=IllegalArgumentException.class)
     public void testCreateUnsupported() {
@@ -231,7 +243,7 @@ public class MySQLUserConnectorTests {
  
     
     /**
-     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#update(ObjectClass, Set, OperationOptions)}.
+     * Test method for {@link MySQLUserConnector#update(ObjectClass, Set, OperationOptions)}.
      * Test creating of the connector object, searching using UID and update
      */
     @Test
@@ -242,12 +254,9 @@ public class MySQLUserConnectorTests {
         //To be sure it is created
         quitellyCreateUser(userName);    
         quitellyDeleteUser(newName);    
-
         
-        // retrieve the object
-        ConnectorObject co = testUserFound(userName, true);
-        
-        Uid uid = co.getUid();
+        // retrieve the object      
+        Uid uid = new Uid(testUserFound(userName, true)); 
         
         // create updated connector object
         ConnectorObjectBuilder coBuilder = new ConnectorObjectBuilder();
@@ -264,9 +273,9 @@ public class MySQLUserConnectorTests {
         assertEquals(newName, uidUpdate.getUidValue());
         
         // retrieve the updated object
-        // retrieve the object
-        ConnectorObject coAfterUpdate = testUserFound(newName, true);
-        assertEquals(coBeforeUpdate.getName().getNameValue(), coAfterUpdate.getName().getNameValue());
+        // retrieve the object      
+        String actual = testUserFound(newName, true); 
+        assertEquals(coBeforeUpdate.getName().getNameValue(), actual);
         
         quitellyDeleteUser(TST_USER1); 
         quitellyDeleteUser(TST_USER3);   
@@ -274,7 +283,7 @@ public class MySQLUserConnectorTests {
 
     
     /**
-     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#update(ObjectClass, Set, OperationOptions)}.
+     * Test method for {@link MySQLUserConnector#update(ObjectClass, Set, OperationOptions)}.
      * Test creating of the connector object, searching using UID and update
      */
     @Test(expected=IllegalStateException.class)
@@ -283,11 +292,8 @@ public class MySQLUserConnectorTests {
         assertNotNull(facade);
         //To be sure it is created
         quitellyCreateUser(userName);    
-        // retrieve the object
-        ConnectorObject co = testUserFound(userName, true);
-        
-        Uid uid = co.getUid();
-        
+        // retrieve the object      
+        Uid uid = new Uid(testUserFound(userName, true)); 
         // create updated connector object
         ConnectorObjectBuilder coBuilder = new ConnectorObjectBuilder();
         ObjectClass oc = new ObjectClass("UNSUPPORTED");
@@ -302,7 +308,7 @@ public class MySQLUserConnectorTests {
     }    
     
     /**
-     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#delete(ObjectClass, Uid, OperationOptions)}.
+     * Test method for {@link MySQLUserConnector#delete(ObjectClass, Uid, OperationOptions)}.
      * 
      */
     @Test
@@ -322,7 +328,7 @@ public class MySQLUserConnectorTests {
 
     
     /**
-     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#delete(ObjectClass, Uid, OperationOptions)}.
+     * Test method for {@link MySQLUserConnector#delete(ObjectClass, Uid, OperationOptions)}.
      * 
      */
     @Test(expected=UnknownUidException.class)
@@ -338,7 +344,7 @@ public class MySQLUserConnectorTests {
     }    
     
     /**
-     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#newConnection()}.
+     * Test method for {@link MySQLUserConnector#newConnection()}.
      * @throws Exception
      */
     @Test()
@@ -354,15 +360,13 @@ public class MySQLUserConnectorTests {
     @Test
     public void testFindJustOneObject() {
         final Attribute expected = AttributeBuilder.build(Name.NAME, idmModelUser);
-        FindObjectHandler handler = new FindObjectHandler(expected);
+        FindUidObjectHandler handler = new FindUidObjectHandler(new Uid(idmModelUser));
         // attempt to find the newly created object..
         facade.search(ObjectClass.ACCOUNT, new EqualsFilter(expected), handler, null);
         assertTrue("The modeluser was not found", handler.found);
-        final List<ConnectorObject> actual = handler.getConnectorObjects();
+        final ConnectorObject actual = handler.getConnectorObject();
         assertNotNull(actual);
-        ConnectorObject co = actual.get(0);
-        assertEquals("Expected user is not same",idmModelUser, AttributeUtil.getAsStringValue(co.getName()));
-        assertEquals("The model user is not mapped to one object", 1, actual.size());        
+        assertEquals("Expected user is not same",idmModelUser, AttributeUtil.getAsStringValue(actual.getName()));
      }
 
     /**
@@ -372,14 +376,13 @@ public class MySQLUserConnectorTests {
     @Test
     public void testFindModelUserByContains() {
         final Attribute expected = AttributeBuilder.build(Name.NAME, idmModelUser);
-        FindObjectHandler handler = new FindObjectHandler(expected);
+        FindUidObjectHandler handler = new FindUidObjectHandler(new Uid(idmModelUser));
         // attempt to find the newly created object..
         facade.search(ObjectClass.ACCOUNT, new ContainsFilter(expected), handler, null);
         assertTrue("The modeluser was not found", handler.found);
-        final List<ConnectorObject> actual = handler.getConnectorObjects();
+        final ConnectorObject actual = handler.getConnectorObject();
         assertNotNull(actual);
-        ConnectorObject co = actual.get(0);
-        assertEquals("Expected user is not same",idmModelUser, AttributeUtil.getAsStringValue(co.getName()));
+        assertEquals("Expected user is not same",idmModelUser, AttributeUtil.getAsStringValue(actual.getName()));
      }
 
     /**
@@ -389,14 +392,13 @@ public class MySQLUserConnectorTests {
     @Test
     public void testFindModelUserByEndWith() {
         final Attribute expected = AttributeBuilder.build(Name.NAME, idmModelUser);
-        FindObjectHandler handler = new FindObjectHandler(expected);
+        FindUidObjectHandler handler = new FindUidObjectHandler(new Uid(idmModelUser));
         // attempt to find the newly created object..
         facade.search(ObjectClass.ACCOUNT, new EndsWithFilter(expected), handler, null);
         assertTrue("The modeluser was not found", handler.found);
-        final List<ConnectorObject> actual = handler.getConnectorObjects();
+        final ConnectorObject actual = handler.getConnectorObject();
         assertNotNull(actual);
-        ConnectorObject co = actual.get(0);
-        assertEquals("Expected user is not same",idmModelUser, AttributeUtil.getAsStringValue(co.getName()));
+        assertEquals("Expected user is not same",idmModelUser, AttributeUtil.getAsStringValue(actual.getName()));
      }
 
 
@@ -407,14 +409,13 @@ public class MySQLUserConnectorTests {
     @Test
     public void testFindModelUserByStartWith() {
         final Attribute expected = AttributeBuilder.build(Name.NAME, idmModelUser);
-        FindObjectHandler handler = new FindObjectHandler(expected);
+        FindUidObjectHandler handler = new FindUidObjectHandler(new Uid(idmModelUser));
         // attempt to find the newly created object..
         facade.search(ObjectClass.ACCOUNT, new StartsWithFilter(expected), handler, null);
         assertTrue("The modeluser was not found", handler.found);
-        final List<ConnectorObject> actual = handler.getConnectorObjects();
+        final ConnectorObject actual = handler.getConnectorObject();
         assertNotNull(actual);
-        ConnectorObject co = actual.get(0);
-        assertEquals("Expected user is not same",idmModelUser, AttributeUtil.getAsStringValue(co.getName()));
+        assertEquals("Expected user is not same",idmModelUser, AttributeUtil.getAsStringValue(actual.getName()));
      }
 
     /**
@@ -436,7 +437,7 @@ public class MySQLUserConnectorTests {
 
     
     /**
-     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method for {@link MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
      * @throws Exception
      */
     @Test(expected = IllegalArgumentException.class)
@@ -446,7 +447,7 @@ public class MySQLUserConnectorTests {
     }
 
     /**
-     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method for {@link MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
      * @throws Exception
      */
     @Test(expected = IllegalArgumentException.class)
@@ -456,7 +457,7 @@ public class MySQLUserConnectorTests {
     }
 
     /**
-     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method for {@link MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
      * @throws Exception
      */
     @Test(expected = IllegalArgumentException.class)
@@ -466,7 +467,7 @@ public class MySQLUserConnectorTests {
     }
     
     /**
-     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method for {@link MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
      * @throws Exception
      */
     @Test(expected = IllegalArgumentException.class)
@@ -476,7 +477,7 @@ public class MySQLUserConnectorTests {
     }
 
     /**
-     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method for {@link MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
      * @throws Exception
      */
     @Test(expected = IllegalArgumentException.class)
@@ -486,7 +487,7 @@ public class MySQLUserConnectorTests {
     }
     
     /**
-     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method for {@link MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
      * @throws Exception
      */
     @Test(expected = IllegalArgumentException.class)
@@ -496,7 +497,7 @@ public class MySQLUserConnectorTests {
     }
     
     /**
-     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method for {@link MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
      * @throws Exception
      */
     @Test()
@@ -506,7 +507,7 @@ public class MySQLUserConnectorTests {
     
     
     /**
-     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#authenticate(username, password, options)}.
+     * Test method for {@link MySQLUserConnector#authenticate(username, password, options)}.
      * Test creating of the connector object, searching using UID and update
      */
     @Test
@@ -526,7 +527,7 @@ public class MySQLUserConnectorTests {
    
     
     /**
-     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#authenticate(username, password, options)}.
+     * Test method for {@link MySQLUserConnector#authenticate(String, GuardedString, OperationOptions)}.
      * Test creating of the connector object, searching using UID and update
      */
     @Test(expected=InvalidCredentialException.class)
@@ -546,7 +547,7 @@ public class MySQLUserConnectorTests {
     }    
         
     /**
-     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#update(ObjectClass, Set, OperationOptions)}.
+     * Test method for {@link MySQLUserConnector#update(ObjectClass, Set, OperationOptions)}.
      * Test creating of the connector object, searching using UID and update
      */
     @Test
@@ -557,9 +558,8 @@ public class MySQLUserConnectorTests {
         //To be sure it is created
         quitellyCreateUser(userName);    
         
-        // retrieve the object
-        ConnectorObject co = testUserFound(userName, true);        
-        Uid uid = co.getUid();
+        // retrieve the object      
+        Uid uid = new Uid(testUserFound(userName, true)); 
         
         // create updated connector object
         ConnectorObjectBuilder coBuilder = new ConnectorObjectBuilder();
@@ -597,30 +597,59 @@ public class MySQLUserConnectorTests {
      * Create not created user and test it was created
      */
     private void quitellyCreateUser(String userName) {
+        PreparedStatement ps = null;
+        MySQLUserConnection conn = null;
+        ResultSet result = null;
+        final List<Object> values = new ArrayList<Object>();
+        values.add(userName);
+        values.add(testPassword);
+        final String SQL_CREATE_TEMPLATE = "CREATE USER ? IDENTIFIED BY ?";
+        log.info("quitelly Create User {0}", userName);
         try {
-            createUser(userName, testPassword, TST_HOST);
-        } catch (ConnectorException e) {
-            // expected
+            conn = MySQLUserConnector.newConnection(newConfiguration());
+            ps = conn.prepareStatement(SQL_CREATE_TEMPLATE, values);
+            ps.execute();
+            conn.commit();
+        } catch (SQLException ex) {
+            log.info("quitelly Create User {0} has expected exception {1}", userName, ex.getMessage());
         } finally {
-            testUserFound(userName, true);
+            SQLUtil.closeQuietly(result);
+            SQLUtil.closeQuietly(ps);
+            SQLUtil.closeQuietly(conn);
         }
+        testUserFound(userName, true);
+        log.ok("quitelly Create User {0}", userName);
     }
 
     /**
      * Delete not deleted User and test it was deleted
      */
     private void quitellyDeleteUser(String userName) {
+        PreparedStatement ps = null;
+        MySQLUserConnection conn = null;
+        ResultSet result = null;
+        final List<Object> values = new ArrayList<Object>();
+        values.add(userName);
+        final String SQL_DELETE_TEMPLATE = "DROP USER ?";
+        log.info("quitelly Delete User {0}", userName);
         try {
-            facade.delete(ObjectClass.ACCOUNT, new Uid(userName), null);
-        } catch (ConnectorException expected) {
-            //expected
+            conn = MySQLUserConnector.newConnection(newConfiguration());
+            ps = conn.prepareStatement(SQL_DELETE_TEMPLATE, values);
+            ps.execute();
+            conn.commit();
+        } catch (SQLException ex) {
+            log.info("quitelly Delete User {0} has expected exception {1}", userName, ex.getMessage());
         } finally {
-            testUserFound(userName, false);  
+            SQLUtil.closeQuietly(result);
+            SQLUtil.closeQuietly(ps);
+            SQLUtil.closeQuietly(conn);
         }
+        testUserFound(userName, false);
+        log.ok("quitelly Delete User {0}", userName);
     }
     
     /**
-     * Test method for {@link org.identityconnectors.mysqluser.MySQLUserConnector#schema()}.
+     * Test method for {@link MySQLUserConnector#schema()}.
      */
     @Test
     public void testSchemaApi() {
@@ -651,83 +680,43 @@ public class MySQLUserConnectorTests {
     }
     
     /**
-     * @param useName
+     * @param userName
      */
-    @SuppressWarnings("synthetic-access")
-    private ConnectorObject testUserFound(String useName, boolean found) {
-        Uid uid = new Uid(useName);
-        FindUidObjectHandler handler = new FindUidObjectHandler(uid);
-        facade.search(ObjectClass.ACCOUNT, new EqualsFilter(uid), handler, null);
-        if(found) {
-            assertTrue("The object for "+useName+" was not found",handler.found);
-            assertNotNull("The object for "+useName+" is null", handler.getConnectorObject());
-            return handler.getConnectorObject();
-        } else {
-            assertFalse("The object for "+useName+" was found",handler.found);
-            assertNull("The object for "+useName+" is not null", handler.getConnectorObject());
-            return null;
-        }        
-    }  
-    
-    /**
-     * Test internal implementation for finding the objects
-     */
-    static class FindObjectHandler implements ResultsHandler {
+    private String testUserFound(String userName, boolean found) {
+        String ret = null;
 
-        private final Attribute attribute;
-        
-        private List<ConnectorObject> connectorObjects = new ArrayList<ConnectorObject>();
-        
-        private boolean found = false;
-        
-        /**
-         * @param attribute
-         */
-        public FindObjectHandler(Attribute attribute) {
-            this.attribute = attribute;
-        }
-        
-        /**
-         * @return
-         */
-        public List<ConnectorObject> getConnectorObjects() {
-            return connectorObjects;
-        }
-        
-        /**
-         * @return
-         */
-        public List<ConnectorObject> getObjects() {
-            return connectorObjects;
-        }
-
-
-        public boolean handle(ConnectorObject obj) {
-            System.out.println("Object: " + obj);
-            if (obj.getName().is(attribute.getName())) {
-                found = true;
-                connectorObjects.add(obj);
+        // update the last change
+        PreparedStatement ps = null;
+        MySQLUserConnection conn = null;
+        ResultSet result = null;
+        final List<Object> values = new ArrayList<Object>();
+        values.add(userName);
+        final String SQL_SELECT = "SELECT user FROM mysql.user WHERE user = ?";               
+        log.info("test User {0} found {1} ", userName, found);   
+        try {
+            conn  =  MySQLUserConnector.newConnection(newConfiguration());
+            ps = conn.prepareStatement(SQL_SELECT, values);
+            result = ps.executeQuery();
+            if(result.next()) {
+                ret = result.getString(1);
             }
-            return true;
+            conn.commit();
+        } catch (SQLException ex) {
+            log.error(ex,"test User {0} found {1} ", userName, found);   
+        } finally {
+            SQLUtil.closeQuietly(result);
+            SQLUtil.closeQuietly(ps);
+            SQLUtil.closeQuietly(conn);
         }
-
- 
-        /**
-         * @return
-         */
-        public boolean isFound() {
-            return found;
+        if(found) {
+            assertNotNull("The object for "+userName+" is null", ret);
+        } else {
+            assertNull("The object for "+userName+" is not null", ret);
         }
+        log.ok("test User {0} found {1} ", userName, found);   
+        return ret;
+    }  
 
-
-        /**
-         * @param found
-         */
-        public void setFound(boolean found) {
-            this.found = found;
-        }
-
-    }
     /**
      * Test internal implementation for finding the objects
      * @author Petr Jung

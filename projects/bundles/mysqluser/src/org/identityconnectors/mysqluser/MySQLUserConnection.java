@@ -40,7 +40,7 @@
 package org.identityconnectors.mysqluser;
 
 import java.sql.Connection;
-import java.sql.Statement;
+import java.sql.PreparedStatement;
 
 import org.identityconnectors.dbcommon.DatabaseConnection;
 import org.identityconnectors.dbcommon.SQLUtil;
@@ -81,11 +81,11 @@ public class MySQLUserConnection extends DatabaseConnection {
     	// make sure to clear any buffers in database
         final String VALIDATE_CONNECTION = "FLUSH STATUS";
         // attempt through auto commit..
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         try {
-            stmt = getConnection().createStatement();
+            stmt = prepareStatement(VALIDATE_CONNECTION, null);
             // valid queries will return a result set...
-            stmt.execute(VALIDATE_CONNECTION);
+            stmt.execute();
         } catch (Exception ex) {
             // anything, not just SQLException
             // nothing to do, just invalidate the connection

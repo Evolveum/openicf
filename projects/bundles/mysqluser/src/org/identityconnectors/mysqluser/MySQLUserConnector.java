@@ -141,7 +141,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      */
     public void init(Configuration cfg) {
         this.config = (MySQLUserConfiguration) cfg;
-        this.conn = newConnection();
+        this.conn = MySQLUserConnector.newConnection(this.config);
     }
 
     
@@ -474,7 +474,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             c1.execute();
         } catch (SQLException e) {
             log.error(e, "Create user {0} error", name);
-            SQLUtil.rollbackQuietly(conn.getConnection());
+            SQLUtil.rollbackQuietly(conn);
             throw new AlreadyExistsException(e);
         } finally {
             SQLUtil.closeQuietly(c1);
@@ -543,7 +543,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
                 c3.execute();
             } catch (SQLException e) {
                 log.error(e, "Error granting rights {0} for user: {1}", userName, grant);
-                SQLUtil.rollbackQuietly(conn.getConnection());
+                SQLUtil.rollbackQuietly(conn);
                 throw ConnectorException.wrap(e);
             } finally {
                 SQLUtil.closeQuietly(c3);
@@ -572,7 +572,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             stmt.execute();
             log.ok("Deleted Uid: {0}", uid.getUidValue());
         } catch (SQLException e) {
-            SQLUtil.rollbackQuietly(conn.getConnection());
+            SQLUtil.rollbackQuietly(conn);
             log.error(e, "SQL: " + SQL_DELETE_TEMPLATE);
             throw new UnknownUidException(e);
         } finally {
@@ -599,7 +599,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             stmt = conn.prepareStatement(updstr, values);
             stmt.execute();
         } catch (SQLException e) {
-            SQLUtil.rollbackQuietly(conn.getConnection());
+            SQLUtil.rollbackQuietly(conn);
             log.error(e, "SQL: " + updstr);
             throw ConnectorException.wrap(e);
         } finally {
@@ -613,7 +613,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             cstmt = conn.prepareStatement(FLUSH_PRIVILEGES, null);
             cstmt.execute();
         } catch (SQLException e) {
-            SQLUtil.rollbackQuietly(conn.getConnection());
+            SQLUtil.rollbackQuietly(conn);
             log.error(e, "SQL: " + FLUSH_PRIVILEGES);
             throw ConnectorException.wrap(e);
         } finally {
@@ -632,10 +632,11 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
     }
 
     /**
-     * @param configuration
-     * @return
+     * Test enabled create connection function
+     * @param config The configuration
+     * @return The connection
      */
-    private MySQLUserConnection newConnection() {
+    static MySQLUserConnection newConnection(MySQLUserConfiguration config) {
         final java.sql.Connection connection = SQLUtil.getDriverMangerConnection(
                     config.getDriver(), 
                     config.getUrlString(), 
