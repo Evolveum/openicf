@@ -173,7 +173,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
             Connector connector = null;
             ObjectPool<PoolableConnector> pool = _context.GetPool();
             // get the connector class..
-            Type connectorClazz = _context.GetConnectorClass();
+            SafeType<Connector> connectorClazz = _context.GetConnectorClass();
             try {
                 // pooling is implemented get one..
                 if (pool != null) {
@@ -181,7 +181,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
                 }
                 else {
                     // get a new instance of the connector..
-                    connector = (Connector)Activator.CreateInstance(connectorClazz);
+                    connector = connectorClazz.CreateInstance();
                     // initialize the connector..
                     connector.Init(_context.GetConfiguration());
                 }
@@ -255,7 +255,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
         }
     
     
-        public Type GetConnectorClass() {
+        public SafeType<Connector> GetConnectorClass() {
             return GetConnectorInfo().ConnectorClass;
         }
     

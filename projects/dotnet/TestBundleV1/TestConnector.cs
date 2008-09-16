@@ -108,7 +108,7 @@ namespace org.identityconnectors.testconnector
     }
     
     [ConnectorClass("TestConnector",
-                      typeof(TstConnectorConfig),
+                    typeof(TstConnectorConfig),
                       MessageCatalogPath="TestBundleV1.Messages"
                         )]
     public class TstConnector : CreateOp, PoolableConnector, SchemaOp, SearchOp<String>, SyncOp
@@ -216,7 +216,7 @@ namespace org.identityconnectors.testconnector
         }
     
         public Schema Schema() {
-            SchemaBuilder builder = new SchemaBuilder(typeof(TstConnector));
+            SchemaBuilder builder = new SchemaBuilder(SafeType<Connector>.Get<TstConnector>());
             for ( int i = 0 ; i < 2; i++ ) {
                 ObjectClassInfoBuilder classBuilder = new ObjectClassInfoBuilder();
                 classBuilder.ObjectType=("class"+i);

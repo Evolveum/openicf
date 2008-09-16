@@ -47,6 +47,7 @@ using System.Text;
 using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Common.Security;
 
+using Org.IdentityConnectors.Framework.Spi;
 using Org.IdentityConnectors.Framework.Spi.Operations;
 using Org.IdentityConnectors.Framework.Api.Operations;
 using Org.IdentityConnectors.Framework.Common.Serializer;
@@ -2230,9 +2231,9 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
     public sealed class Schema {
         private readonly ICollection<ObjectClassInfo> _declaredObjectClasses;
         private readonly ICollection<OperationOptionInfo> _declaredOperationOptions;
-        private readonly IDictionary<Type,ICollection<ObjectClassInfo>>
+        private readonly IDictionary<SafeType<APIOperation>,ICollection<ObjectClassInfo>>
         _supportedObjectClassesByOperation; 
-        private readonly IDictionary<Type,ICollection<OperationOptionInfo>>
+        private readonly IDictionary<SafeType<APIOperation>,ICollection<OperationOptionInfo>>
         _supportedOptionsByOperation;     
 
         /**
@@ -2243,18 +2244,18 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          */
         public Schema(ICollection<ObjectClassInfo> info,
                       ICollection<OperationOptionInfo> options,
-                      IDictionary<Type,ICollection<ObjectClassInfo>> supportedObjectClassesByOperation,
-                      IDictionary<Type,ICollection<OperationOptionInfo>> supportedOptionsByOperation) {
+                      IDictionary<SafeType<APIOperation>,ICollection<ObjectClassInfo>> supportedObjectClassesByOperation,
+                      IDictionary<SafeType<APIOperation>,ICollection<OperationOptionInfo>> supportedOptionsByOperation) {
             _declaredObjectClasses = CollectionUtil.NewReadOnlySet<ObjectClassInfo>(info);
             _declaredOperationOptions = CollectionUtil.NewReadOnlySet(options);
 
             //make read-only
             {
-                IDictionary<Type,ICollection<ObjectClassInfo>> temp = 
-                    new Dictionary<Type,ICollection<ObjectClassInfo>>();
-                foreach (KeyValuePair<Type,ICollection<ObjectClassInfo>> entry in 
+                IDictionary<SafeType<APIOperation>,ICollection<ObjectClassInfo>> temp = 
+                    new Dictionary<SafeType<APIOperation>,ICollection<ObjectClassInfo>>();
+                foreach (KeyValuePair<SafeType<APIOperation>,ICollection<ObjectClassInfo>> entry in 
                     supportedObjectClassesByOperation) {
-                    Type op =
+                    SafeType<APIOperation> op =
                         entry.Key;
                     ICollection<ObjectClassInfo> resolvedClasses =
                         CollectionUtil.NewReadOnlySet(entry.Value);
@@ -2264,11 +2265,11 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             }
             //make read-only
             {
-                IDictionary<Type,ICollection<OperationOptionInfo>> temp = 
-                    new Dictionary<Type,ICollection<OperationOptionInfo>>();
-                foreach (KeyValuePair<Type,ICollection<OperationOptionInfo>> entry in 
+                IDictionary<SafeType<APIOperation>,ICollection<OperationOptionInfo>> temp = 
+                    new Dictionary<SafeType<APIOperation>,ICollection<OperationOptionInfo>>();
+                foreach (KeyValuePair<SafeType<APIOperation>,ICollection<OperationOptionInfo>> entry in 
                     supportedOptionsByOperation) {
-                    Type op =
+                    SafeType<APIOperation> op =
                         entry.Key;
                     ICollection<OperationOptionInfo> resolvedClasses =
                         CollectionUtil.NewReadOnlySet(entry.Value);
@@ -2333,7 +2334,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          * @param apiop The operation.
          * @return the supported object classes for the given operation.
          */
-        public ICollection<ObjectClassInfo> GetSupportedObjectClassesByOperation(Type apiop) {
+        public ICollection<ObjectClassInfo> GetSupportedObjectClassesByOperation(SafeType<APIOperation> apiop) {
             ICollection<ObjectClassInfo> rv = 
                 CollectionUtil.GetValue(_supportedObjectClassesByOperation,apiop,null);
             if ( rv == null ) {
@@ -2352,7 +2353,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          * @param apiop The operation.
          * @return the supported options for the given operation.
          */
-        public ICollection<OperationOptionInfo> GetSupportedOptionsByOperation(Type apiop) {
+        public ICollection<OperationOptionInfo> GetSupportedOptionsByOperation(SafeType<APIOperation> apiop) {
             ICollection<OperationOptionInfo> rv = 
                 CollectionUtil.GetValue(_supportedOptionsByOperation,apiop,null);
             if ( rv == null ) {
@@ -2369,7 +2370,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          * Returns the set of object classes that apply to a particular operation.
          * @return the set of object classes that apply to a particular operation.
          */
-        public IDictionary<Type,ICollection<ObjectClassInfo>> SupportedObjectClassesByOperation {
+        public IDictionary<SafeType<APIOperation>,ICollection<ObjectClassInfo>> SupportedObjectClassesByOperation {
             get {
                 return _supportedObjectClassesByOperation;
             }
@@ -2378,7 +2379,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          * Returns the set of operation options that apply to a particular operation.
          * @return the set of operation options that apply to a particular operation.
          */
-        public IDictionary<Type,ICollection<OperationOptionInfo>> SupportedOptionsByOperation {
+        public IDictionary<SafeType<APIOperation>,ICollection<OperationOptionInfo>> SupportedOptionsByOperation {
             get {
                 return _supportedOptionsByOperation;
             }
@@ -2424,26 +2425,25 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
      * Simple builder class to help facilitate creating a {@link Schema} object.
      */
     public sealed class SchemaBuilder {
-        private readonly Type _connectorClass;
+        private readonly SafeType<Connector> _connectorClass;
         private readonly ICollection<ObjectClassInfo> _declaredObjectClasses
         = new HashSet<ObjectClassInfo>();
         private readonly ICollection<OperationOptionInfo> _declaredOperationOptions
         = new HashSet<OperationOptionInfo>();
         
-        private readonly IDictionary<Type,ICollection<ObjectClassInfo>>
+        private readonly IDictionary<SafeType<APIOperation>,ICollection<ObjectClassInfo>>
             _supportedObjectClassesByOperation = 
-                new Dictionary<Type,ICollection<ObjectClassInfo>>();
-        private readonly IDictionary<Type,ICollection<OperationOptionInfo>>
+                new Dictionary<SafeType<APIOperation>,ICollection<ObjectClassInfo>>();
+        private readonly IDictionary<SafeType<APIOperation>,ICollection<OperationOptionInfo>>
             _supportedOptionsByOperation = 
-                new Dictionary<Type,ICollection<OperationOptionInfo>>();
+                new Dictionary<SafeType<APIOperation>,ICollection<OperationOptionInfo>>();
     
     
         /**
          * 
          */
-        public SchemaBuilder(Type connectorClass) {
+        public SchemaBuilder(SafeType<Connector> connectorClass) {
             Assertions.NullCheck(connectorClass, "connectorClass");
-            FrameworkUtil.AssertConnectorType(connectorClass);
             _connectorClass = connectorClass;
         }
     
@@ -2462,7 +2462,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                         info.ObjectType);
             }
             _declaredObjectClasses.Add(info);
-            foreach (Type op in 
+            foreach (SafeType<APIOperation> op in 
                 FrameworkUtil.GetDefaultSupportedOperations(_connectorClass)) {
                 ICollection<ObjectClassInfo> oclasses = 
                     CollectionUtil.GetValue(_supportedObjectClassesByOperation,op,null);
@@ -2485,7 +2485,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                         info.Name);
             }
             _declaredOperationOptions.Add(info);
-            foreach (Type op in 
+            foreach (SafeType<APIOperation> op in 
                 FrameworkUtil.GetDefaultSupportedOperations(_connectorClass)) {
                 ICollection<OperationOptionInfo> oclasses = 
                     CollectionUtil.GetValue(_supportedOptionsByOperation,op,null);
@@ -2533,27 +2533,27 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          * @throws IllegalArgumentException If the given ObjectClassInfo was
          *  not already defined using {@link #defineObjectClass(ObjectClassInfo)}.
          */
-        public void AddSupportedObjectClass(Type op,
+        public void AddSupportedObjectClass(SafeType<SPIOperation> op,
                 ObjectClassInfo def)
         {
             Assertions.NullCheck(op, "op");
             Assertions.NullCheck(def, "def");
-            ICollection<Type> apis =
+            ICollection<SafeType<APIOperation>> apis =
                 FrameworkUtil.Spi2Apis(op);
             if (!_declaredObjectClasses.Contains(def)) {
                 throw new ArgumentException("ObjectClass "+def.ObjectType+
                         " not defined in schema.");
             }
-            foreach (Type api in apis) {
+            foreach (SafeType<APIOperation> api in apis) {
                 ICollection<ObjectClassInfo> infos = 
                     CollectionUtil.GetValue(_supportedObjectClassesByOperation,api,null);
                 if ( infos == null ) {
-                    throw new ArgumentException("Operation "+op.Name+
+                    throw new ArgumentException("Operation "+op+
                             " not implement by connector.");                
                 }
                 if ( infos.Contains(def)) {
                     throw new ArgumentException("ObjectClass "+def.ObjectType+
-                            " already supported for operation "+op.Name);
+                            " already supported for operation "+op);
                 }
                 infos.Add(def);
             }
@@ -2567,27 +2567,27 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          * @throws IllegalArgumentException If the given ObjectClassInfo was
          *  not already defined using {@link #defineObjectClass(ObjectClassInfo)}.
          */
-        public void RemoveSupportedObjectClass(Type op,
+        public void RemoveSupportedObjectClass(SafeType<SPIOperation> op,
                 ObjectClassInfo def)
         {
             Assertions.NullCheck(op, "op");
             Assertions.NullCheck(def, "def");
-            ICollection<Type> apis =
+            ICollection<SafeType<APIOperation>> apis =
                 FrameworkUtil.Spi2Apis(op);
             if (!_declaredObjectClasses.Contains(def)) {
                 throw new ArgumentException("ObjectClass "+def.ObjectType+
                         " not defined in schema.");
             }
-            foreach (Type api in apis) {
+            foreach (SafeType<APIOperation> api in apis) {
                 ICollection<ObjectClassInfo> infos = 
                     CollectionUtil.GetValue(_supportedObjectClassesByOperation,api,null);
                 if ( infos == null ) {
-                    throw new ArgumentException("Operation "+op.Name+
+                    throw new ArgumentException("Operation "+op+
                             " not implement by connector.");                
                 }
                 if ( !infos.Contains(def)) {
                     throw new ArgumentException("ObjectClass "+def.ObjectType
-                            +" already removed for operation "+op.Name);
+                            +" already removed for operation "+op);
                 }
                 infos.Remove(def);
             }
@@ -2600,26 +2600,26 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          * @throws IllegalArgumentException If the given OperationOptionInfo was
          *  not already defined using {@link #defineOperationOption(OperationOptionInfo)}.
          */
-        public void AddSupportedOperationOption(Type op,
+        public void AddSupportedOperationOption(SafeType<SPIOperation> op,
                 OperationOptionInfo def) {
             Assertions.NullCheck(op, "op");
             Assertions.NullCheck(def, "def");
-            ICollection<Type> apis =
+            ICollection<SafeType<APIOperation>> apis =
                 FrameworkUtil.Spi2Apis(op);
             if (!_declaredOperationOptions.Contains(def)) {
                 throw new ArgumentException("OperationOption "+def.Name+
                         " not defined in schema.");
             }
-            foreach (Type api in apis) {
+            foreach (SafeType<APIOperation> api in apis) {
                 ICollection<OperationOptionInfo> infos =
                     CollectionUtil.GetValue(_supportedOptionsByOperation,api,null);
                 if ( infos == null ) {
-                    throw new ArgumentException("Operation "+op.Name+
+                    throw new ArgumentException("Operation "+op+
                             " not implement by connector.");                
                 }
                 if ( infos.Contains(def) ) {
                     throw new ArgumentException("OperationOption "+def.Name+
-                            " already supported for operation "+op.Name);
+                            " already supported for operation "+op);
                 }
                 infos.Add(def);
             }
@@ -2633,26 +2633,26 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          * @throws IllegalArgumentException If the given OperationOptionInfo was
          *  not already defined using {@link #defineOperationOption(OperationOptionInfo)}.
          */
-        public void RemoveSupportedOperationOption(Type op,
+        public void RemoveSupportedOperationOption(SafeType<SPIOperation> op,
                 OperationOptionInfo def) {
             Assertions.NullCheck(op, "op");
             Assertions.NullCheck(def, "def");
-            ICollection<Type> apis =
+            ICollection<SafeType<APIOperation>> apis =
                 FrameworkUtil.Spi2Apis(op);
             if (!_declaredOperationOptions.Contains(def)) {
                 throw new ArgumentException("OperationOption "+def.Name+
                         " not defined in schema.");
             }
-            foreach (Type api in apis) {
+            foreach (SafeType<APIOperation> api in apis) {
                 ICollection<OperationOptionInfo> infos = 
                     CollectionUtil.GetValue(_supportedOptionsByOperation,api,null);
                 if ( infos == null ) {
-                    throw new ArgumentException("Operation "+op.Name+
+                    throw new ArgumentException("Operation "+op+
                             " not implement by connector.");                
                 }
                 if ( !infos.Contains(def) ) {
                     throw new ArgumentException("OperationOption "+def.Name+
-                            " already removed for operation "+op.Name);
+                            " already removed for operation "+op);
                 }
                 infos.Remove(def);
             }

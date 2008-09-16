@@ -56,7 +56,7 @@ namespace Org.IdentityConnectors.Framework.Common
         /// </summary>
         /// <param name="typeName"></param>
         /// <returns></returns>
-        public static Type LoadType(String typeName) {
+        public static SafeType<T> LoadType<T>(String typeName) where T : class {
             
             Assembly assembly;
             lock(LOCK) {                
@@ -68,30 +68,41 @@ namespace Org.IdentityConnectors.Framework.Common
                 assembly = _assembly;
             }
             
-            return assembly.GetType(typeName,true);
+            return SafeType<T>.ForRawType(assembly.GetType(typeName,true));
             
         }
     }
     
     public static class FrameworkUtil {
-        private static readonly IDictionary<Type,Type> SPI_TO_API;
+        private static readonly IDictionary<SafeType<SPIOperation>,SafeType<APIOperation>> SPI_TO_API;
         private static readonly ICollection<Type> CONFIG_SUPPORTED_TYPES;
         private static readonly ICollection<Type> ATTR_SUPPORTED_TYPES;
 
         static FrameworkUtil() {
-            IDictionary<Type,Type> temp =
-                new Dictionary<Type,Type>();
-            temp[typeof(AuthenticateOp)]=typeof(AuthenticationApiOp);
-            temp[typeof(CreateOp)]=typeof(CreateApiOp);
-            temp[typeof(DeleteOp)]=typeof(DeleteApiOp);
-            temp[typeof(SearchOp<>)]=typeof(SearchApiOp);
-            temp[typeof(UpdateOp)]=typeof(UpdateApiOp);
-            temp[typeof(AdvancedUpdateOp)]=typeof(UpdateApiOp);
-            temp[typeof(SchemaOp)]=typeof(SchemaApiOp);
-            temp[typeof(TestOp)]=typeof(TestApiOp);
-            temp[typeof(ScriptOnConnectorOp)]=typeof(ScriptOnConnectorApiOp);
-            temp[typeof(ScriptOnResourceOp)]=typeof(ScriptOnResourceApiOp);
-            temp[typeof(SyncOp)]=typeof(SyncApiOp);
+            IDictionary<SafeType<SPIOperation>,SafeType<APIOperation>> temp =
+                new Dictionary<SafeType<SPIOperation>,SafeType<APIOperation>>();
+            temp[SafeType<SPIOperation>.Get<AuthenticateOp>()]=
+                SafeType<APIOperation>.Get<AuthenticationApiOp>();
+            temp[SafeType<SPIOperation>.Get<CreateOp>()]=
+                SafeType<APIOperation>.Get<CreateApiOp>();
+            temp[SafeType<SPIOperation>.Get<DeleteOp>()]=
+                SafeType<APIOperation>.Get<DeleteApiOp>();
+            temp[SafeType<SPIOperation>.ForRawType(typeof(SearchOp<>))]=
+                SafeType<APIOperation>.Get<SearchApiOp>();
+            temp[SafeType<SPIOperation>.Get<UpdateOp>()]=
+                SafeType<APIOperation>.Get<UpdateApiOp>();
+            temp[SafeType<SPIOperation>.Get<AdvancedUpdateOp>()]=
+                SafeType<APIOperation>.Get<UpdateApiOp>();
+            temp[SafeType<SPIOperation>.Get<SchemaOp>()]=
+                SafeType<APIOperation>.Get<SchemaApiOp>();
+            temp[SafeType<SPIOperation>.Get<TestOp>()]=
+                SafeType<APIOperation>.Get<TestApiOp>();
+            temp[SafeType<SPIOperation>.Get<ScriptOnConnectorOp>()]=
+                SafeType<APIOperation>.Get<ScriptOnConnectorApiOp>();
+            temp[SafeType<SPIOperation>.Get<ScriptOnResourceOp>()]=
+                SafeType<APIOperation>.Get<ScriptOnResourceApiOp>();
+            temp[SafeType<SPIOperation>.Get<SyncOp>()]=
+                SafeType<APIOperation>.Get<SyncApiOp>();
             SPI_TO_API = CollectionUtil.NewReadOnlyDictionary(temp);
             
             CONFIG_SUPPORTED_TYPES = CollectionUtil.NewReadOnlySet<Type>
@@ -176,36 +187,37 @@ namespace Org.IdentityConnectors.Framework.Common
                 CheckAttributeType(value.GetType());
             }
         }
-        public static ICollection<Type> Spi2Apis(Type type) {
-            type = ReflectionUtil.GetTypeErasure(type);
-            AssertSpiOperation(type);     
-            HashSet<Type> set = new HashSet<Type>();
+        public static ICollection<SafeType<APIOperation>> Spi2Apis(SafeType<SPIOperation> type) {
+            type = type.GetTypeErasure();
+            HashSet<SafeType<APIOperation>> set = new HashSet<SafeType<APIOperation>>();
             set.Add(SPI_TO_API[type]);
             // add GetApiOp if search is available..
             
-            if (type.Equals(typeof(SearchOp<>))) {
-                set.Add(typeof(GetApiOp));
+            if (type.RawType.Equals(typeof(SearchOp<>))) {
+                set.Add(SafeType<APIOperation>.Get<GetApiOp>());
             }
             return set;
         }
-        public static ICollection<Type> AllSPIOperations() {
+        public static ICollection<SafeType<SPIOperation>> AllSPIOperations() {
             return SPI_TO_API.Keys;
         }
-        public static ICollection<Type> AllAPIOperations() {
-            ICollection<Type> set = new HashSet<Type>();
+        public static ICollection<SafeType<APIOperation>> AllAPIOperations() {
+            ICollection<SafeType<APIOperation>> set = 
+                new HashSet<SafeType<APIOperation>>();
             CollectionUtil.AddAll(set,
                                   SPI_TO_API.Values);
             // add Get because it doesn't have a corresponding SPI.
-            set.Add(typeof(GetApiOp));
-            set.Add(typeof(ValidateApiOp));
+            set.Add(SafeType<APIOperation>.Get<GetApiOp>());
+            set.Add(SafeType<APIOperation>.Get<ValidateApiOp>());
             return CollectionUtil.AsReadOnlySet(set);
         }
-        public static ICollection<Type> GetDefaultSupportedOperations(Type connector) {
-            AssertConnectorType(connector);
-            ICollection<Type> rv = new HashSet<Type>();
-            ICollection<Type> interfaces = ReflectionUtil.GetTypeErasure(ReflectionUtil.GetAllInterfaces(connector));
-            foreach (Type spi in AllSPIOperations()) {
-                if (interfaces.Contains(spi)) {                    
+        public static ICollection<SafeType<APIOperation>> GetDefaultSupportedOperations(SafeType<Connector> connector) {
+            ICollection<SafeType<APIOperation>> rv = 
+                new HashSet<SafeType<APIOperation>>();
+            ICollection<Type> interfaces = 
+                ReflectionUtil.GetTypeErasure(ReflectionUtil.GetAllInterfaces(connector.RawType));
+            foreach (SafeType<SPIOperation> spi in AllSPIOperations()) {
+                if (interfaces.Contains(spi.RawType)) {                    
                     CollectionUtil.AddAll(rv,Spi2Apis(spi));
                 }
             }
@@ -213,13 +225,13 @@ namespace Org.IdentityConnectors.Framework.Common
             CollectionUtil.AddAll(rv,GetUnconditionallySupportedOperations());
             return CollectionUtil.AsReadOnlySet(rv);
         }
-        public static ICollection<Type> GetUnconditionallySupportedOperations() {
-            HashSet<Type> ret;
-            ret = new HashSet<Type>();
+        public static ICollection<SafeType<APIOperation>> GetUnconditionallySupportedOperations() {
+            HashSet<SafeType<APIOperation>> ret;
+            ret = new HashSet<SafeType<APIOperation>>();
             //add validate api op always
-            ret.Add(typeof(ValidateApiOp));
+            ret.Add(SafeType<APIOperation>.Get<ValidateApiOp>());
             //add ScriptOnConnectorApiOp always
-            ret.Add(typeof(ScriptOnConnectorApiOp));
+            ret.Add(SafeType<APIOperation>.Get<ScriptOnConnectorApiOp>());
             return ret;        
         }
         public static ICollection<Type> GetAllSupportedConfigTypes() {
@@ -240,24 +252,6 @@ namespace Org.IdentityConnectors.Framework.Common
             return ATTR_SUPPORTED_TYPES.Contains(clazz);
         }
         
-        public static void AssertConnectorType(Type connector) {
-            Type connectorInter = typeof(Connector);
-            if (!connectorInter.IsAssignableFrom(connector)) {
-                throw new ArgumentException(connector+" does not implement IConnector");
-            }
-        }
-        public static void AssertSpiOperation(Type operation) {
-            Type spiInter = typeof(SPIOperation);
-            if (!spiInter.IsAssignableFrom(operation)) {
-                throw new ArgumentException(operation+" does not implement ISPIOperation");
-            }
-        }
-        public static void AssertApiOperation(Type operation) {
-            Type spiInter = typeof(APIOperation);
-            if (!spiInter.IsAssignableFrom(operation)) {
-                throw new ArgumentException(operation+" does not implement APIOperation");
-            }
-        }
         /**
          * Determines if the class is a supported type for an OperationOption. If not it throws
          * an {@link IllegalArgumentException}.

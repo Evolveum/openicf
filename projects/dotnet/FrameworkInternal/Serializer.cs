@@ -1159,15 +1159,25 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                         decoder.ReadObjectField("connectorPoolConfiguration",null,null));
                 rv.ConfigurationProperties=((ConfigurationPropertiesImpl)
                                             decoder.ReadObjectField("ConfigurationProperties",typeof(ConfigurationPropertiesImpl),null));
-                IDictionary<object, object> map =
+                IDictionary<object, object> timeoutMapObj =
                     (IDictionary<object, object>)decoder.ReadObjectField("timeoutMap",null,null);
-                rv.TimeoutMap=
-                    CollectionUtil.NewDictionary<object,object,Type,int>(map);
-                ICollection<Object> setObj =
+                IDictionary<SafeType<APIOperation>,int> timeoutMap =
+                    new Dictionary<SafeType<APIOperation>,int>();
+                foreach (KeyValuePair<object, object> entry in timeoutMapObj) {
+                    Type type = (Type)entry.Key;
+                    int val = (int)entry.Value;
+                    timeoutMap[SafeType<APIOperation>.ForRawType(type)] = val;
+                }
+                rv.TimeoutMap=timeoutMap;
+                ICollection<Object> supportedOperationsObj =
                     (ICollection<object>)decoder.ReadObjectField("SupportedOperations",typeof(ICollection<object>),null);
-                ICollection<Type> set =
-                    CollectionUtil.NewSet<object,Type>(setObj);
-                rv.SupportedOperations=(set);
+                ICollection<SafeType<APIOperation>> supportedOperations =
+                    new HashSet<SafeType<APIOperation>>();
+                foreach (object obj in supportedOperationsObj) {
+                    Type type = (Type)obj;
+                    supportedOperations.Add(SafeType<APIOperation>.ForRawType(type));
+                }
+                rv.SupportedOperations=supportedOperations;
                 rv.ProducerBufferSize=(decoder.ReadIntField("producerBufferSize",0));
                 return rv;
             }
@@ -1175,6 +1185,22 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
             public override void Serialize(Object obj, ObjectEncoder encoder) {
                 APIConfigurationImpl val =
                     (APIConfigurationImpl)obj;
+                
+                ICollection<Type> supportedOperations =
+                    new HashSet<Type>();
+                if ( val.SupportedOperations != null ) {
+                    foreach (SafeType<APIOperation> op in val.SupportedOperations ) {
+                        supportedOperations.Add(op.RawType);
+                    }
+                }
+                IDictionary<Type,int> timeoutMap =
+                    new Dictionary<Type,int>();
+                if ( val.TimeoutMap != null ) {
+                    foreach (KeyValuePair<SafeType<APIOperation>, int> entry in val.TimeoutMap) {
+                        timeoutMap[entry.Key.RawType] = entry.Value;
+                    }
+                }
+                
                 encoder.WriteIntField("producerBufferSize", 
                         val.ProducerBufferSize);
                 encoder.WriteBooleanField("connectorPoolingSupported",
@@ -1184,9 +1210,9 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                 encoder.WriteObjectField("ConfigurationProperties",
                         val.ConfigurationProperties,true);
                 encoder.WriteObjectField("timeoutMap",
-                        val.TimeoutMap,false);
+                        timeoutMap,false);
                 encoder.WriteObjectField("SupportedOperations", 
-                        val.SupportedOperations,true);
+                        supportedOperations,true);
             }
         }
         private class ConnectorMessagesHandler : AbstractObjectSerializationHandler {
@@ -1699,11 +1725,11 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                 }
                 IDictionary<object, object> objectClassNamesByOperationObj =
                     (IDictionary<object, object>)decoder.ReadObjectField("objectClassesByOperation",null,null);
-                IDictionary<Type,ICollection<ObjectClassInfo>>
+                IDictionary<SafeType<APIOperation>,ICollection<ObjectClassInfo>>
                    objectClassesByOperation =
-                    new Dictionary<Type, ICollection<ObjectClassInfo>>();
+                    new Dictionary<SafeType<APIOperation>, ICollection<ObjectClassInfo>>();
                 foreach (KeyValuePair<object, object> entry in objectClassNamesByOperationObj) {
-                    Type op = (Type)entry.Key;
+                    SafeType<APIOperation> op = SafeType<APIOperation>.ForRawType((Type)entry.Key);
                     ICollection<object> namesObj =
                         (ICollection<object>)entry.Value;
                     ICollection<ObjectClassInfo> infos =
@@ -1718,11 +1744,11 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                 }
                 IDictionary<object, object> optionsByOperationObj =
                        (IDictionary<object, object>)decoder.ReadObjectField("optionsByOperation",null,null);
-                IDictionary<Type,ICollection<OperationOptionInfo>>
+                IDictionary<SafeType<APIOperation>,ICollection<OperationOptionInfo>>
                    optionsByOperation =
-                    new Dictionary<Type, ICollection<OperationOptionInfo>>();
+                    new Dictionary<SafeType<APIOperation>, ICollection<OperationOptionInfo>>();
                 foreach (KeyValuePair<object, object> entry in optionsByOperationObj) {
-                    Type op = (Type)entry.Key;
+                    SafeType<APIOperation> op = SafeType<APIOperation>.ForRawType((Type)entry.Key);
                     ICollection<object> namesObj =
                         (ICollection<object>)entry.Value;
                     ICollection<OperationOptionInfo> infos =
@@ -1751,23 +1777,23 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                 optionNamesByOperation = new Dictionary<Type,ICollection<String>>();
                 
                 
-                foreach (KeyValuePair<Type, ICollection<ObjectClassInfo>> 
+                foreach (KeyValuePair<SafeType<APIOperation>, ICollection<ObjectClassInfo>> 
                 entry in val.SupportedObjectClassesByOperation) {
                     ICollection<ObjectClassInfo> value = entry.Value;
                     ICollection<String> names = new HashSet<String>();
                     foreach (ObjectClassInfo info in value) {
                         names.Add(info.ObjectType);
                     }
-                    objectClassNamesByOperation[entry.Key] = names;
+                    objectClassNamesByOperation[entry.Key.RawType] = names;
                 }
-                foreach (KeyValuePair<Type, ICollection<OperationOptionInfo>> 
+                foreach (KeyValuePair<SafeType<APIOperation>, ICollection<OperationOptionInfo>> 
                 entry in val.SupportedOptionsByOperation) {
                     ICollection<OperationOptionInfo> value = entry.Value;
                     ICollection<String> names = new HashSet<String>();
                     foreach (OperationOptionInfo info in value) {
                         names.Add(info.Name);
                     }
-                    optionNamesByOperation[entry.Key] = names;
+                    optionNamesByOperation[entry.Key.RawType] = names;
                 }
                 encoder.WriteObjectField("objectClassesByOperation",objectClassNamesByOperation,false);
                 encoder.WriteObjectField("optionsByOperation",optionNamesByOperation,false);
@@ -2156,7 +2182,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                     decoder.ReadObjectField("Arguments",typeof(IList<object>),null);
                 return new OperationRequest(connectorKey,
                         configuration,
-                        operation,
+                        SafeType<APIOperation>.ForRawType(operation),
                         operationMethodName,
                         arguments);
             }
@@ -2166,7 +2192,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                 OperationRequest val = 
                     (OperationRequest)obj;
                 encoder.WriteClassField("operation", 
-                        val.Operation);
+                        val.Operation.RawType);
                 encoder.WriteStringField("operationMethodName",
                                          val.OperationMethodName);
                 encoder.WriteObjectField("ConnectorKey", 

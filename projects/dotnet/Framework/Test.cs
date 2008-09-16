@@ -73,7 +73,7 @@ namespace Org.IdentityConnectors.Framework.Test
         /**
          * Method for convenient testing of local connectors. 
          */
-        public static APIConfiguration CreateTestConfiguration(Type clazz,
+        public static APIConfiguration CreateTestConfiguration(SafeType<Connector> clazz,
                 Configuration config) {
             return GetInstance().CreateTestConfigurationImpl(clazz, config);
         }
@@ -170,16 +170,15 @@ namespace Org.IdentityConnectors.Framework.Test
         private static TestHelpers GetInstance() {
             lock(LOCK) {
                 if (_instance == null) {
-                    Type type = FrameworkInternalBridge.LoadType(IMPL_NAME);
-                    Object obj = Activator.CreateInstance(type);
-                    _instance = (TestHelpers)obj;
+                    SafeType<TestHelpers> type = FrameworkInternalBridge.LoadType<TestHelpers>(IMPL_NAME);
+                    _instance = type.CreateInstance();
                 }
                 return _instance;
             }
         }
     
         
-        abstract protected APIConfiguration CreateTestConfigurationImpl(Type clazz,
+        abstract protected APIConfiguration CreateTestConfigurationImpl(SafeType<Connector> clazz,
                 Configuration config);
         abstract protected void SearchImpl<T>(SearchOp<T> search,
                 ObjectClass oclass, 

@@ -48,47 +48,81 @@ namespace Org.IdentityConnectors.Common
    /// The equivalent of java's Class&lt;? extends...%gt; syntax.
    /// Allows you to restrict a Type to a certain class hierarchy.
    /// </summary>
-   public abstract class SafeType<T>
+   public sealed class SafeType<T>
        where T : class
    {
+       private readonly Type _rawType;
+       
        /// <summary>
-       /// Make private so no one else can subclass this.
+       /// Make private so no one can create directly
        /// </summary>
-       private SafeType()
-       {
+       private SafeType(Type rawType)
+       {           
+           if (!ReflectionUtil.IsParentTypeOf(typeof(T),rawType)) {
+               throw new ArgumentException("Type: "+rawType+" is not a subclass of"+typeof(T));
+           }
+           _rawType = rawType;
        }
        
        /// <summary>
-       /// Returns the member of the group by its C# type
+       /// Returns the SafeType for a given raw type. 
+       /// NOTE: If possible use Get<U>() instead since it is statically
+       /// checked at compile time.
        /// </summary>
        /// <param name="type"></param>
        /// <returns></returns>
        public static SafeType<T> ForRawType(Type type)
        {
-           if (!typeof(T).IsAssignableFrom(type)) {
-               throw new ArgumentException("Type: "+type+" is not a subclass of"+typeof(T));
-           }
-           Type safeType = typeof(SafeType<T>);
-           MethodInfo info = safeType.GetMethod("Get");
-           info = info.MakeGenericMethod(new Type[]{type});                
-           Object rv = info.Invoke(null,null);
-           return (SafeType<T>)rv;
+           return new SafeType<T>(type);
        }
        
        /// <summary>
-       /// Gets an instance of the safe type.
+       /// Gets an instance of the safe type in a type-safe fashion.
        /// </summary>
        /// <returns>The instance of the safe type</returns>
        public static SafeType<T> Get<U>()
            where U : T
        {
-           return new Impl<U>();
+           return new SafeType<T>(typeof(U));
+       }
+       
+       /// <summary>
+       /// Gets an instance of the safe type in a type-safe fashion from an object.
+       /// </summary>
+       /// <returns>The instance of the safe type</returns>
+       public static SafeType<T> Get(T obj)
+       {
+           return new SafeType<T>(obj.GetType());
+       }
+       
+       /// <summary>
+       /// Returns the generic type definition corresponding to this type.
+       /// Will return the same type if this is already a generic type.
+       /// </summary>
+       /// <returns></returns>
+       public SafeType<T> GetTypeErasure()
+       {
+           return SafeType<T>.ForRawType(ReflectionUtil.GetTypeErasure(RawType));
        }
        
        /// <summary>
        /// Returns the underlying C# type
        /// </summary>
-       public abstract Type RawType {get;}
+       public Type RawType {
+           get {
+               return _rawType;
+           }
+       }
+       
+       /// <summary>
+       /// Creates a new instance of the given type
+       /// </summary>
+       /// <returns>The new instance</returns>
+       public T CreateInstance()
+       {
+           return (T)Activator.CreateInstance(RawType);
+       }
+       
        /// <summary>
        /// Returns true iff these represent the same underlying type
        /// and the SafeType has the same parent type.
@@ -119,29 +153,6 @@ namespace Org.IdentityConnectors.Common
        public override string ToString()
        {
            return RawType.ToString();
-       }
-       /// <summary>
-       /// Implementation
-       /// </summary>
-       private class Impl<U> : SafeType<T>
-           where U : T
-       {
-           /// <summary>
-           /// Creates the implementation
-           /// </summary>
-           public Impl()
-           {
-           }
-           /// <summary>
-           /// Returns the underlying raw type
-           /// </summary>
-           public override Type RawType
-           {
-               get
-               {
-                   return typeof(U);
-               }
-           }
        }
    }
 

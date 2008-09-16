@@ -40,6 +40,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using Org.IdentityConnectors.Common;
 namespace Org.IdentityConnectors.Framework.Common.Serializer
 {
     /**
@@ -103,10 +104,10 @@ namespace Org.IdentityConnectors.Framework.Common.Serializer
         public static ObjectSerializerFactory GetInstance() {
             lock (LOCK) {
                 if (_instance == null) {
-                    Type t = 
-                        FrameworkInternalBridge.LoadType(IMPL_NAME);
-                    Object obj = Activator.CreateInstance(t);
-                    _instance = (ObjectSerializerFactory)obj;
+                    SafeType<ObjectSerializerFactory> t = 
+                        FrameworkInternalBridge.LoadType<ObjectSerializerFactory>(IMPL_NAME);
+                  
+                    _instance = t.CreateInstance();
                 }
                 return _instance;
             }

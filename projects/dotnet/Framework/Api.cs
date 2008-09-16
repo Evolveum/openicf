@@ -45,6 +45,7 @@ using System.Net.Security;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Common.Pooling;
 using Org.IdentityConnectors.Common.Security;
 using Org.IdentityConnectors.Framework.Api.Operations;
@@ -61,10 +62,10 @@ namespace Org.IdentityConnectors.Framework.Api
         ConfigurationProperties ConfigurationProperties { get; }
         bool IsConnectorPoolingSupported { get; }
         ObjectPoolConfiguration ConnectorPoolConfiguration { get; }
-        ICollection<Type> SupportedOperations { get; }
+        ICollection<SafeType<APIOperation>> SupportedOperations { get; }
         
-        int GetTimeout(Type operation);
-        void SetTimeout(Type operation, int timeout);
+        int GetTimeout(SafeType<APIOperation> operation);
+        void SetTimeout(SafeType<APIOperation> operation, int timeout);
         
         int ProducerBufferSize { get; set; }
     }
@@ -155,12 +156,12 @@ namespace Org.IdentityConnectors.Framework.Api
         /**
          * Get the set of operations that this {@link ConnectorFacade} will support.
          */
-        ICollection<Type> SupportedOperations { get; }
+        ICollection<SafeType<APIOperation>> SupportedOperations { get; }
 
         /**
          * Get an instance of an operation that this facade supports.
          */
-        APIOperation GetOperation(Type type);
+        APIOperation GetOperation(SafeType<APIOperation> type);
  
     }
     
@@ -182,8 +183,8 @@ namespace Org.IdentityConnectors.Framework.Api
         public static ConnectorFacadeFactory GetInstance() {
             lock(LOCK) {
                 if (_instance == null) {
-                    Type t = FrameworkInternalBridge.LoadType(IMPL_NAME);
-                    _instance = (ConnectorFacadeFactory)Activator.CreateInstance(t);
+                    SafeType<ConnectorFacadeFactory> t = FrameworkInternalBridge.LoadType<ConnectorFacadeFactory>(IMPL_NAME);
+                    _instance = t.CreateInstance();
                 }
             }
             return _instance;
@@ -264,9 +265,9 @@ namespace Org.IdentityConnectors.Framework.Api
         public static ConnectorInfoManagerFactory GetInstance() {
             lock(LOCK) {
                 if (_instance == null) {
-                    Type t = 
-                        FrameworkInternalBridge.LoadType(IMPL_NAME);
-                    _instance = (ConnectorInfoManagerFactory)Activator.CreateInstance(t);
+                    SafeType<ConnectorInfoManagerFactory> t = 
+                        FrameworkInternalBridge.LoadType<ConnectorInfoManagerFactory>(IMPL_NAME);
+                    _instance = t.CreateInstance();
                 }
             }
             return _instance;

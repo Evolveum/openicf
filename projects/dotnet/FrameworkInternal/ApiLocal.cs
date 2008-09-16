@@ -109,7 +109,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                     CSharpClassProperties.CreateBean((ConfigurationPropertiesImpl)_apiConfiguration.ConfigurationProperties,
                         _localInfo.ConnectorConfigurationClass);
                 PoolableConnector connector =
-                    (PoolableConnector)(Activator.CreateInstance(_localInfo.ConnectorClass));
+                    (PoolableConnector)_localInfo.ConnectorClass.CreateInstance();
                 connector.Init(config);
                 return connector;
             }
@@ -185,7 +185,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
         public static ConfigurationPropertiesImpl 
         CreateConfigurationProperties(Configuration defaultObject) 
         {
-            Type config = defaultObject.GetType();
+            SafeType<Configuration> config = SafeType<Configuration>.Get(defaultObject);
             ConfigurationPropertiesImpl properties = 
                 new ConfigurationPropertiesImpl();
             IList<ConfigurationPropertyImpl> temp = 
@@ -243,8 +243,8 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
     
         public static Configuration 
         CreateBean(ConfigurationPropertiesImpl properties,
-        Type config) {
-            Configuration rv = (Configuration)Activator.CreateInstance(config);
+        SafeType<Configuration> config) {
+            Configuration rv = config.CreateInstance();
             rv.ConnectorMessages=properties.Parent.ConnectorInfo.Messages;
             IDictionary<string,PropertyInfo> descriptors =
                 GetFilteredProperties(config);
@@ -256,7 +256,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                     String FMT = 
                         "Class ''{0}'' does not have a property ''{1}''.";
                     String MSG = String.Format(FMT, 
-                            config.Name,
+                            config.RawType.Name,
                             name);
                     throw new ArgumentException(MSG);
                 }
@@ -271,11 +271,11 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
         }
         
         private static IDictionary<string,PropertyInfo> 
-        GetFilteredProperties(Type config)
+        GetFilteredProperties(SafeType<Configuration> config)
         {
             IDictionary<string,PropertyInfo> rv = 
                 new Dictionary<string,PropertyInfo>();
-            PropertyInfo [] descriptors = config.GetProperties();
+            PropertyInfo [] descriptors = config.RawType.GetProperties();
             foreach (PropertyInfo descriptor in descriptors) {
                 String propName = descriptor.Name;
                 if ( !descriptor.CanWrite ) {
@@ -367,26 +367,22 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
         }
         
         private LocalConnectorInfoImpl CreateConnectorInfo(Assembly assembly, 
-                                                           Type connectorClass, 
+                                                           Type rawConnectorClass, 
                                                            ConnectorClassAttribute attribute) {
             String fileName = assembly.Location;
-            if (!typeof(Connector).IsAssignableFrom(connectorClass)) {
+            if (!typeof(Connector).IsAssignableFrom(rawConnectorClass)) {
                 String MSG = ( "File "+fileName+
-                               " declares a connector "+connectorClass+
+                               " declares a connector "+rawConnectorClass+
                                " that does not implement Connector.");
                 throw new ConfigurationException(MSG);                
             }
-            Type connectorConfigurationClass = attribute.ConnectorConfigurationType;
+            SafeType<Connector> connectorClass =
+                SafeType<Connector>.ForRawType(rawConnectorClass);
+            SafeType<Configuration> connectorConfigurationClass = attribute.ConnectorConfigurationType;
             if ( connectorConfigurationClass == null ) {
                 String MSG = ( "File "+fileName+
                              " contains a ConnectorInfo attribute "+
                              "with no connector configuration class.");
-                throw new ConfigurationException(MSG);                
-            }
-            if (!typeof(Configuration).IsAssignableFrom(connectorConfigurationClass)) {
-                String MSG = ("File "+fileName+" declared a connector "+
-                              "configuration class "+connectorConfigurationClass+
-                              " that does not implement IConfiguration.");
                 throw new ConfigurationException(MSG);                
             }
             String connectorDisplayNameKey = 
@@ -400,7 +396,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
             ConnectorKey key = 
                 new ConnectorKey(assembly.GetName().Name,
                                  assembly.GetName().Version.ToString(),
-                                 connectorClass.Namespace+"."+connectorClass.Name);
+                                 connectorClass.RawType.Namespace+"."+connectorClass.RawType.Name);
             LocalConnectorInfoImpl rv = new LocalConnectorInfoImpl();
             rv.ConnectorClass = connectorClass;
             rv.ConnectorConfigurationClass = connectorConfigurationClass;
@@ -413,11 +409,11 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
         
         private APIConfigurationImpl 
         CreateDefaultAPIConfiguration(LocalConnectorInfoImpl localInfo) {
-            Type connectorClass =
+            SafeType<Connector> connectorClass =
                 localInfo.ConnectorClass;
             APIConfigurationImpl rv = new APIConfigurationImpl();
             Configuration config = 
-                (Configuration)Activator.CreateInstance(localInfo.ConnectorConfigurationClass);
+                localInfo.ConnectorConfigurationClass.CreateInstance();
             bool pooling = IsPoolingSupported(connectorClass);
             rv.IsConnectorPoolingSupported=pooling;
             rv.ConfigurationProperties=(CSharpClassProperties.CreateConfigurationProperties(config));
@@ -426,8 +422,8 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
             return rv;
         }
 
-        private static bool IsPoolingSupported(Type clazz) {
-            return ReflectionUtil.IsParentTypeOf(typeof(PoolableConnector),clazz);
+        private static bool IsPoolingSupported(SafeType<Connector> clazz) {
+            return ReflectionUtil.IsParentTypeOf(typeof(PoolableConnector),clazz.RawType);
         }
         /// <summary>
         /// Given an assembly, returns the list of cultures that
@@ -473,7 +469,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                                                    String nameBase) {
             if ( StringUtil.IsBlank(nameBase) ) {
                 String pkage =
-                    info.ConnectorClass.Namespace;
+                    info.ConnectorClass.RawType.Namespace;
                 nameBase = pkage+".Messages";
             }
             ConnectorMessagesImpl rv = new ConnectorMessagesImpl();
@@ -526,8 +522,8 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
             rv.Messages=Messages;
             return rv;
         }
-        public Type ConnectorClass {get;set;}
-        public Type ConnectorConfigurationClass {get;set;}
+        public SafeType<Connector> ConnectorClass {get;set;}
+        public SafeType<Configuration> ConnectorConfigurationClass {get;set;}
     }
     #endregion
     
@@ -540,13 +536,13 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
         /**
          * Map the API interfaces to their implementation counterparts.
          */
-        private static readonly IDictionary<Type,ConstructorInfo> API_TO_IMPL=
-            new Dictionary<Type,ConstructorInfo>();
+        private static readonly IDictionary<SafeType<APIOperation>,ConstructorInfo> API_TO_IMPL=
+            new Dictionary<SafeType<APIOperation>,ConstructorInfo>();
     
-        private static void AddImplementation(Type inter,
-                Type impl) {
+        private static void AddImplementation(SafeType<APIOperation> inter,
+                SafeType<APIOperation> impl) {
             ConstructorInfo info =
-                impl.GetConstructor(new Type[]{typeof(ConnectorOperationalContext),
+                impl.RawType.GetConstructor(new Type[]{typeof(ConnectorOperationalContext),
                                         typeof(Connector)});
             if ( info == null ) {
                 throw new ArgumentException(impl+" does not define the proper constructor");
@@ -555,16 +551,26 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
         }
         
         static LocalConnectorFacadeImpl() {
-            AddImplementation(typeof(CreateApiOp), typeof(CreateImpl));
-            AddImplementation(typeof(DeleteApiOp), typeof(DeleteImpl));
-            AddImplementation(typeof(SchemaApiOp), typeof(SchemaImpl));
-            AddImplementation(typeof(SearchApiOp), typeof(SearchImpl));
-            AddImplementation(typeof(UpdateApiOp), typeof(UpdateImpl));
-            AddImplementation(typeof(AuthenticationApiOp), typeof(AuthenticationImpl));
-            AddImplementation(typeof(TestApiOp), typeof(TestImpl));
-            AddImplementation(typeof(ScriptOnConnectorApiOp), typeof(ScriptOnConnectorImpl));
-            AddImplementation(typeof(ScriptOnResourceApiOp), typeof(ScriptOnResourceImpl));
-            AddImplementation(typeof(SyncApiOp), typeof(SyncImpl));
+            AddImplementation(SafeType<APIOperation>.Get<CreateApiOp>(),
+                              SafeType<APIOperation>.Get<CreateImpl>());
+            AddImplementation(SafeType<APIOperation>.Get<DeleteApiOp>(), 
+                              SafeType<APIOperation>.Get<DeleteImpl>());
+            AddImplementation(SafeType<APIOperation>.Get<SchemaApiOp>(), 
+                              SafeType<APIOperation>.Get<SchemaImpl>());
+            AddImplementation(SafeType<APIOperation>.Get<SearchApiOp>(), 
+                              SafeType<APIOperation>.Get<SearchImpl>());
+            AddImplementation(SafeType<APIOperation>.Get<UpdateApiOp>(), 
+                              SafeType<APIOperation>.Get<UpdateImpl>());
+            AddImplementation(SafeType<APIOperation>.Get<AuthenticationApiOp>(),
+                              SafeType<APIOperation>.Get<AuthenticationImpl>());
+            AddImplementation(SafeType<APIOperation>.Get<TestApiOp>(),
+                              SafeType<APIOperation>.Get<TestImpl>());
+            AddImplementation(SafeType<APIOperation>.Get<ScriptOnConnectorApiOp>(), 
+                              SafeType<APIOperation>.Get<ScriptOnConnectorImpl>());
+            AddImplementation(SafeType<APIOperation>.Get<ScriptOnResourceApiOp>(),
+                              SafeType<APIOperation>.Get<ScriptOnResourceImpl>());
+            AddImplementation(SafeType<APIOperation>.Get<SyncApiOp>(),
+                              SafeType<APIOperation>.Get<SyncImpl>());
         }
         
    
@@ -594,11 +600,11 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
         // ConnectorFacade Interface
         // =======================================================================
     
-        protected override APIOperation GetOperationImplementation(Type api) {
+        protected override APIOperation GetOperationImplementation(SafeType<APIOperation> api) {
             APIOperation ret = null;
             // need to figure out if api operation is a get op..
-            if (api.Equals(typeof(GetApiOp))) {
-                APIOperation op = GetAPIOperationRunner(typeof(SearchApiOp));
+            if (api.RawType.Equals(typeof(GetApiOp))) {
+                APIOperation op = GetAPIOperationRunner(SafeType<APIOperation>.Get<SearchApiOp>());
                 ret = new GetImpl((SearchApiOp) op);
             } else {
                 ret = GetAPIOperationRunner(api);
@@ -606,13 +612,13 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
             return ret;
         }
     
-        APIOperation GetAPIOperationRunner(Type api) {
+        APIOperation GetAPIOperationRunner(SafeType<APIOperation> api) {
             APIOperation proxy;
             //first create the inner proxy - this is the proxy that obtaining
             //a connection from the pool, etc
             //NOTE: we want to skip this part of the proxy for
             //validate op, but we will want the timeout proxy
-            if ( api.Equals(typeof(ValidateApiOp))) {
+            if ( api.RawType.Equals(typeof(ValidateApiOp))) {
                 OperationalContext context =
                     new OperationalContext(connectorInfo,GetAPIConfiguration());
                 proxy = new ValidateImpl(context);
@@ -628,8 +634,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                 ConnectorAPIOperationRunnerProxy handler =
                     new ConnectorAPIOperationRunnerProxy(context,constructor);
                 proxy =
-                    (APIOperation)Proxy.NewProxyInstance(api, 
-                            handler);
+                    NewAPIOperationProxy(api,handler);
             }
             
             //TODO: timeout

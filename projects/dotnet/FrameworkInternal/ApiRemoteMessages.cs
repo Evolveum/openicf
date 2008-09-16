@@ -41,6 +41,7 @@ using System;
 using System.Collections.Generic;
 using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Framework.Api;
+using Org.IdentityConnectors.Framework.Api.Operations;
 namespace Org.IdentityConnectors.Framework.Impl.Api.Remote.Messages
 {
     /// <summary>
@@ -114,7 +115,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Remote.Messages
         /**
          * The operation to perform.
          */
-        private readonly Type _operation;
+        private readonly SafeType<APIOperation> _operation;
         
         /**
          * The name of the method since operations can have more
@@ -132,7 +133,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Remote.Messages
         
         public OperationRequest(ConnectorKey key,
                 APIConfigurationImpl apiConfiguration,
-                Type operation,
+                SafeType<APIOperation> operation,
                 string operationMethodName,
                 IList<Object> arguments) {
             _connectorKey = key;
@@ -154,7 +155,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Remote.Messages
             }
         }
         
-        public Type Operation {
+        public SafeType<APIOperation> Operation {
             get {
                 return _operation;
             }

@@ -213,11 +213,11 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
         private ObjectPoolConfiguration _connectorPooling;
         
         private ConfigurationPropertiesImpl _configurationProperties;
-        private ICollection<Type> _supportedOperations =
-            CollectionUtil.NewReadOnlySet<Type>(new Type[0]);
+        private ICollection<SafeType<APIOperation>> _supportedOperations =
+            CollectionUtil.NewReadOnlySet<SafeType<APIOperation>>(new SafeType<APIOperation>[0]);
         
-        private IDictionary<Type, int> _timeoutMap =
-            new Dictionary<Type, int>();
+        private IDictionary<SafeType<APIOperation>, int> _timeoutMap =
+            new Dictionary<SafeType<APIOperation>, int>();
         
         public ConfigurationProperties ConfigurationProperties { 
             get {
@@ -233,7 +233,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
                 }  
             }
         }
-        public IDictionary<Type, int> TimeoutMap {
+        public IDictionary<SafeType<APIOperation>, int> TimeoutMap {
             get {
                 return _timeoutMap;
             }
@@ -254,22 +254,20 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
                 _connectorPooling = value;
             }
         }
-        public ICollection<Type> SupportedOperations {
+        public ICollection<SafeType<APIOperation>> SupportedOperations {
             get {
                 return _supportedOperations;
             }
             set {
-                _supportedOperations = CollectionUtil.NewReadOnlySet<Type>(value);
+                _supportedOperations = CollectionUtil.NewReadOnlySet<SafeType<APIOperation>>(value);
             }
         }
         
-        public int GetTimeout(Type operation) {
-            FrameworkUtil.AssertApiOperation(operation);
+        public int GetTimeout(SafeType<APIOperation> operation) {
             return CollectionUtil.GetValue(_timeoutMap,operation,
                                            APIConstants.NO_TIMEOUT);
         }
-        public void SetTimeout(Type operation, int timeout) {
-            FrameworkUtil.AssertApiOperation(operation);
+        public void SetTimeout(SafeType<APIOperation> operation, int timeout) {
             _timeoutMap[operation] = timeout;
         }
         
@@ -499,7 +497,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
          *         return an instance of the operation.
          * @see com.sun.openconnectors.framework.api.ConnectorFacade#getOperation(java.lang.Class)
          */
-        public APIOperation GetOperation(Type api) {
+        public APIOperation GetOperation(SafeType<APIOperation> api) {
             if (!SupportedOperations.Contains(api)) {
                 return null;
             }
@@ -509,7 +507,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
         /**
          * {@inheritDoc}
          */
-        public ICollection<Type> SupportedOperations {
+        public ICollection<SafeType<APIOperation>> SupportedOperations {
             get {
                 return _configuration.SupportedOperations;
             }
@@ -522,7 +520,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
          * {@inheritDoc}
          */
         public Schema Schema() {
-            return ((SchemaApiOp) this.GetOperationCheckSupported(typeof(SchemaApiOp)))
+            return ((SchemaApiOp) this.GetOperationCheckSupported(SafeType<APIOperation>.Get<SchemaApiOp>()))
                     .Schema();
         }
     
@@ -530,7 +528,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
          * {@inheritDoc}
          */
         public Uid Create(ObjectClass oclass, ICollection<ConnectorAttribute> attrs, OperationOptions options) {
-            CreateApiOp op = ((CreateApiOp) GetOperationCheckSupported(typeof(CreateApiOp)));
+            CreateApiOp op = ((CreateApiOp) GetOperationCheckSupported(SafeType<APIOperation>.Get<CreateApiOp>()));
             return op.Create(oclass,attrs,options);
         }
     
@@ -538,14 +536,16 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
          * {@inheritDoc}
          */
         public void Delete(ObjectClass objClass, Uid uid, OperationOptions options) {
-            ((DeleteApiOp) this.GetOperationCheckSupported(typeof(DeleteApiOp))).Delete(objClass, uid, options);
+            ((DeleteApiOp) 
+             this.GetOperationCheckSupported(SafeType<APIOperation>.Get<DeleteApiOp>()))
+                .Delete(objClass, uid, options);
         }
     
         /**
          * {@inheritDoc}
          */
         public void Search(ObjectClass oclass,Filter filter, ResultsHandler handler, OperationOptions options) {
-            ((SearchApiOp) this.GetOperationCheckSupported(typeof(SearchApiOp))).Search(
+            ((SearchApiOp) this.GetOperationCheckSupported(SafeType<APIOperation>.Get<SearchApiOp>())).Search(
                     oclass,filter, handler, options);
         }
     
@@ -553,7 +553,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
          * {@inheritDoc}
          */
         public Uid Update(UpdateApiType type, ObjectClass objclass, ICollection<ConnectorAttribute> attrs, OperationOptions options) {
-            return ((UpdateApiOp) this.GetOperationCheckSupported(typeof(UpdateApiOp)))
+            return ((UpdateApiOp) this.GetOperationCheckSupported(SafeType<APIOperation>.Get<UpdateApiOp>()))
                     .Update(type, objclass, attrs, options);
         }
         
@@ -562,7 +562,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
          */
         public void Authenticate(String username, GuardedString password, OperationOptions options) {
             ((AuthenticationApiOp) this
-             .GetOperationCheckSupported(typeof(AuthenticationApiOp))).Authenticate(
+             .GetOperationCheckSupported(SafeType<APIOperation>.Get<AuthenticationApiOp>())).Authenticate(
                     username, password, options);
         }
 
@@ -570,7 +570,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
          * {@inheritDoc}
          */
         public ConnectorObject GetObject(ObjectClass objClass, Uid uid, OperationOptions options) {
-            return ((GetApiOp) this.GetOperationCheckSupported(typeof(GetApiOp)))
+            return ((GetApiOp) this.GetOperationCheckSupported(SafeType<APIOperation>.Get<GetApiOp>()))
                     .GetObject(objClass, uid, options);
         }
         /**
@@ -579,7 +579,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
         public Object RunScriptOnConnector(ScriptContext request,
                 OperationOptions options) {
             return ((ScriptOnConnectorApiOp) this
-                    .GetOperationCheckSupported(typeof(ScriptOnConnectorApiOp)))
+                    .GetOperationCheckSupported(SafeType<APIOperation>.Get<ScriptOnConnectorApiOp>()))
                     .RunScriptOnConnector(request, options);        
         }
         
@@ -589,7 +589,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
         public Object RunScriptOnResource(ScriptContext request,
                 OperationOptions options) {
             return ((ScriptOnResourceApiOp) this
-                    .GetOperationCheckSupported(typeof(ScriptOnResourceApiOp)))
+                    .GetOperationCheckSupported(SafeType<APIOperation>.Get<ScriptOnResourceApiOp>()))
                     .RunScriptOnResource(request, options);        
         }
     
@@ -597,29 +597,29 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
          * {@inheritDoc}
          */
         public void Test() {
-            ((TestApiOp) this.GetOperationCheckSupported(typeof(TestApiOp))).Test();
+            ((TestApiOp) this.GetOperationCheckSupported(SafeType<APIOperation>.Get<TestApiOp>())).Test();
         }
     
         /**
          * {@inheritDoc}
          */
         public void Validate() {
-            ((ValidateApiOp) this.GetOperationCheckSupported(typeof(ValidateApiOp))).Validate();
+            ((ValidateApiOp) this.GetOperationCheckSupported(SafeType<APIOperation>.Get<ValidateApiOp>())).Validate();
         }
         
         public void Sync(ObjectClass objClass, SyncToken token,
                 SyncResultsHandler handler,
                 OperationOptions options) {
-            ((SyncApiOp)this.GetOperationCheckSupported(typeof(SyncApiOp)))
+            ((SyncApiOp)this.GetOperationCheckSupported(SafeType<APIOperation>.Get<SyncApiOp>()))
             .Sync(objClass, token, handler, options);
         }
         
         public SyncToken GetLatestSyncToken() {
-            return ((SyncApiOp)this.GetOperationCheckSupported(typeof(SyncApiOp)))
+            return ((SyncApiOp)this.GetOperationCheckSupported(SafeType<APIOperation>.Get<SyncApiOp>()))
             .GetLatestSyncToken();
         }
         
-        private APIOperation GetOperationCheckSupported(Type api) {
+        private APIOperation GetOperationCheckSupported(SafeType<APIOperation> api) {
             // check if this operation is supported.
             if (!SupportedOperations.Contains(api)) {
                 String MSG = "Operation ''{0}'' not supported.";
@@ -634,7 +634,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
          * @param api The operation to implement.
          * @return The implementation
          */
-        protected abstract APIOperation GetOperationImplementation(Type api);
+        protected abstract APIOperation GetOperationImplementation(SafeType<APIOperation> api);
     
         protected APIConfigurationImpl GetAPIConfiguration() {
             return _configuration;
@@ -643,8 +643,8 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
         /**
          * Creates a new {@link APIOperation} proxy given a handler.
          */
-        protected APIOperation NewAPIOperationProxy(Type api, InvocationHandler handler) {
-            return (APIOperation) Proxy.NewProxyInstance(api, handler);
+        protected APIOperation NewAPIOperationProxy(SafeType<APIOperation> api, InvocationHandler handler) {
+            return (APIOperation) Proxy.NewProxyInstance(api.RawType, handler);
         }
 
         private static bool LOGGINGPROXY_ENABLED;
@@ -654,7 +654,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
             LOGGINGPROXY_ENABLED = StringUtil.IsTrue(enabled);            
         }
         
-        protected APIOperation CreateLoggingProxy(Type api, APIOperation target) {
+        protected APIOperation CreateLoggingProxy(SafeType<APIOperation> api, APIOperation target) {
             APIOperation ret = target;
             if (LOGGINGPROXY_ENABLED) {
                 LoggingProxy logging = new LoggingProxy(api, target); 
@@ -796,10 +796,10 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
     #region LoggingProxy
     public class LoggingProxy : InvocationHandler {
         
-        private readonly Type _op;
+        private readonly SafeType<APIOperation> _op;
         private readonly object _target;
         
-        public LoggingProxy(Type api, object target) {
+        public LoggingProxy(SafeType<APIOperation> api, object target) {
             _op = api;
             _target = target;
         }
@@ -841,7 +841,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
         }
         
         private void AddMethodName(StringBuilder bld, MethodInfo method) {
-            bld.Append(_op.Name);
+            bld.Append(_op.RawType.Name);
             bld.Append('.');
             bld.Append(method.Name);
         }

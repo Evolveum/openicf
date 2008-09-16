@@ -58,16 +58,16 @@ namespace Org.IdentityConnectors.Framework.Impl.Test
         /**
          * Method for convenient testing of local connectors. 
          */
-        protected override APIConfiguration CreateTestConfigurationImpl(Type clazz,
+        protected override APIConfiguration CreateTestConfigurationImpl(SafeType<Connector> clazz,
                 Configuration config) {
             LocalConnectorInfoImpl info = new LocalConnectorInfoImpl();
-            info.ConnectorConfigurationClass=(config.GetType());
+            info.ConnectorConfigurationClass=SafeType<Configuration>.Get(config);
             info.ConnectorClass=(clazz);
             info.ConnectorDisplayNameKey=("DUMMY_DISPLAY_NAME");
             info.ConnectorKey=(
-                   new ConnectorKey(clazz.Name+".bundle",
+                   new ConnectorKey(clazz.RawType.Name+".bundle",
                     "1.0",
-                    clazz.Name));
+                    clazz.RawType.Name));
             info.Messages=(new ConnectorMessagesImpl());
             APIConfigurationImpl rv = new APIConfigurationImpl();
             rv.IsConnectorPoolingSupported=(
@@ -84,8 +84,8 @@ namespace Org.IdentityConnectors.Framework.Impl.Test
         }
         
         
-        private static bool IsConnectorPoolingSupported(Type clazz) {
-            return ReflectionUtil.IsParentTypeOf(typeof(PoolableConnector),clazz);
+        private static bool IsConnectorPoolingSupported(SafeType<Connector> clazz) {
+            return ReflectionUtil.IsParentTypeOf(typeof(PoolableConnector),clazz.RawType);
         }
 
         /**

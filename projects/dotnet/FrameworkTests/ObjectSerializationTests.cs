@@ -261,11 +261,16 @@ namespace FrameworkTests
                 CollectionUtil.SetsEqual(
                 CollectionUtil.NewSet<Type,object>(FrameworkUtil.GetAllSupportedAttributeTypes()),
                 (ICollection<object>)CloneObject(FrameworkUtil.GetAllSupportedAttributeTypes())));
+            ICollection<Type> apiOperations =
+                new HashSet<Type>();
+            foreach (SafeType<APIOperation> op in FrameworkUtil.AllAPIOperations()) {
+                apiOperations.Add(op.RawType);
+            }
             //if this fails, need to add to the OperationMappings class
             Assert.IsTrue(
                 CollectionUtil.SetsEqual(
-                CollectionUtil.NewSet<Type,object>(FrameworkUtil.AllAPIOperations()),
-                (ICollection<object>)CloneObject(FrameworkUtil.AllAPIOperations())));
+                CollectionUtil.NewSet<Type,object>(apiOperations),
+                (ICollection<object>)CloneObject(apiOperations)));
 
         }
         
@@ -439,8 +444,8 @@ namespace FrameworkTests
             v1.IsConnectorPoolingSupported=(true);
             v1.ProducerBufferSize=(200);
             v1.SupportedOperations=(FrameworkUtil.AllAPIOperations());
-            IDictionary<Type,int> map =
-                CollectionUtil.NewDictionary<Type,int>(typeof(CreateApiOp),6);
+            IDictionary<SafeType<APIOperation>,int> map =
+                CollectionUtil.NewDictionary<SafeType<APIOperation>,int>(SafeType<APIOperation>.Get<CreateApiOp>(),6);
             v1.TimeoutMap=(map);
             
             APIConfigurationImpl v2 = (APIConfigurationImpl)
@@ -601,13 +606,13 @@ namespace FrameworkTests
             bld.ObjectType = ObjectClass.ORGANIZATION_NAME;
             ObjectClassInfo info = bld.Build();
             ICollection<ObjectClassInfo> temp = CollectionUtil.NewSet(info);
-            IDictionary<Type,ICollection<ObjectClassInfo>> map = 
-                new Dictionary<Type,ICollection<ObjectClassInfo>>();
-            map[typeof(CreateApiOp)] = temp;
+            IDictionary<SafeType<APIOperation>,ICollection<ObjectClassInfo>> map = 
+                new Dictionary<SafeType<APIOperation>,ICollection<ObjectClassInfo>>();
+            map[SafeType<APIOperation>.Get<CreateApiOp>()] = temp;
             ICollection<OperationOptionInfo> temp2 = CollectionUtil.NewSet(opInfo);
-            IDictionary<Type,ICollection<OperationOptionInfo>> map2 = 
-                new Dictionary<Type,ICollection<OperationOptionInfo>>();
-            map2[typeof(CreateApiOp)] = temp2;
+            IDictionary<SafeType<APIOperation>,ICollection<OperationOptionInfo>> map2 = 
+                new Dictionary<SafeType<APIOperation>,ICollection<OperationOptionInfo>>();
+            map2[SafeType<APIOperation>.Get<CreateApiOp>()] = temp2;
             Schema v1 = new Schema(CollectionUtil.NewSet(info),
                     CollectionUtil.NewSet(opInfo),
                     map,
@@ -853,7 +858,7 @@ namespace FrameworkTests
                     "my version",
                 "my connector"),
                     apiImpl,
-                    typeof(CreateApiOp),
+                    SafeType<APIOperation>.Get<CreateApiOp>(),
                     "mymethodName",
                     args);
             OperationRequest v2 = (OperationRequest)CloneObject(v1);
@@ -861,7 +866,7 @@ namespace FrameworkTests
             Assert.AreEqual("my version", v2.ConnectorKey.BundleVersion);
             Assert.AreEqual("my connector", v2.ConnectorKey.ConnectorName);
             Assert.IsNotNull(v2.Configuration);
-            Assert.AreEqual(typeof(CreateApiOp), v2.Operation);
+            Assert.AreEqual(SafeType<APIOperation>.Get<CreateApiOp>(), v2.Operation);
             Assert.AreEqual("mymethodName",v2.OperationMethodName);
             Assert.IsTrue(
                 CollectionUtil.Equals(

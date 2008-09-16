@@ -40,6 +40,7 @@
 using System;
 using System.Globalization;
 using System.Collections.Generic;
+using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Common.Pooling;
 using Org.IdentityConnectors.Framework.Common.Objects;
 namespace Org.IdentityConnectors.Framework.Spi
@@ -102,12 +103,12 @@ namespace Org.IdentityConnectors.Framework.Spi
     public class ConnectorClassAttribute : System.Attribute {
         
         private readonly String _connectorDisplayNameKey;
-        private readonly Type _connectorConfigurationClass;
+        private readonly SafeType<Configuration> _connectorConfigurationClass;
         
         public ConnectorClassAttribute(String connectorDisplayNameKey,
                                       Type connectorConfigurationClass) {
             _connectorDisplayNameKey = connectorDisplayNameKey;
-            _connectorConfigurationClass = connectorConfigurationClass;
+            _connectorConfigurationClass = SafeType<Configuration>.ForRawType(connectorConfigurationClass);
         }
                 
         public string ConnectorDisplayNameKey {
@@ -116,7 +117,7 @@ namespace Org.IdentityConnectors.Framework.Spi
             }
         }
                 
-        public Type ConnectorConfigurationType {
+        public SafeType<Configuration> ConnectorConfigurationType {
             get {
                 return _connectorConfigurationClass;
             }

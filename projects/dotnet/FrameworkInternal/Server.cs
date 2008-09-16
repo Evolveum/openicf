@@ -121,8 +121,9 @@ namespace Org.IdentityConnectors.Framework.Server
          * Get the singleton instance of the {@link ConnectorServer}.
          */
         public static ConnectorServer NewInstance() {
-            Type type = Type.GetType(IMPL_NAME,true);
-            return (ConnectorServer)Activator.CreateInstance(type);
+            SafeType<ConnectorServer> type = 
+                SafeType<ConnectorServer>.ForRawType(Type.GetType(IMPL_NAME,true));
+            return type.CreateInstance();
         }
         
         private void AssertNotStarted() {
@@ -462,7 +463,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
                 
         private MethodInfo GetOperationMethod(OperationRequest request) {
             MethodInfo [] methods = 
-                request.Operation.GetMethods();
+                request.Operation.RawType.GetMethods();
             MethodInfo found = null;
             foreach (MethodInfo m in methods) {
                 if ( m.Name.ToUpper().Equals(request.OperationMethodName.ToUpper()) ) {

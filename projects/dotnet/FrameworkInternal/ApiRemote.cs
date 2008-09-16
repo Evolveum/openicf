@@ -249,7 +249,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Remote
             :base(configuration) {
         }
     
-        protected override APIOperation GetOperationImplementation(Type api) {
+        protected override APIOperation GetOperationImplementation(SafeType<APIOperation> api) {
             InvocationHandler handler = new RemoteOperationInvocationHandler(
                     GetAPIConfiguration(),
                     api);
@@ -266,10 +266,10 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Remote
      */
     public class RemoteOperationInvocationHandler : InvocationHandler {
         private readonly APIConfigurationImpl _configuration;
-        private readonly Type _operation;
+        private readonly SafeType<APIOperation> _operation;
         
         public RemoteOperationInvocationHandler(APIConfigurationImpl configuration,
-               Type operation) {
+               SafeType<APIOperation> operation) {
             _configuration = configuration;
             _operation = operation;
         }
