@@ -42,7 +42,7 @@ using System.Reflection;
 using ActiveDs;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Org.IdentityConnectors.Common.Pooling;
+using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Framework.Api.Operations;
 using Org.IdentityConnectors.Framework.Spi;
 using Org.IdentityConnectors.Framework.Spi.Operations;
@@ -326,16 +326,17 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 ociBuilder.AddAllAttributeInfo(ouAttributeInfos);
                 ObjectClassInfo ouInfo = ociBuilder.Build();
 
-                SchemaBuilder schemaBuilder = new SchemaBuilder(this.GetType());
+                SchemaBuilder schemaBuilder = 
+                    new SchemaBuilder(SafeType<Connector>.Get(this));
                 
                 schemaBuilder.DefineObjectClass(userInfo);
                 schemaBuilder.DefineObjectClass(groupInfo);
-                schemaBuilder.RemoveSupportedObjectClass(typeof(AuthenticateOp), groupInfo);
+                schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<AuthenticateOp>(), groupInfo);
                 schemaBuilder.DefineObjectClass(ouInfo);
-                schemaBuilder.RemoveSupportedObjectClass(typeof(AuthenticateOp), ouInfo);
-                schemaBuilder.RemoveSupportedObjectClass(typeof(CreateOp), ouInfo);
-                schemaBuilder.RemoveSupportedObjectClass(typeof(DeleteOp), ouInfo);
-                schemaBuilder.RemoveSupportedObjectClass(typeof(SearchOp<String>), ouInfo);
+                schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<AuthenticateOp>(), ouInfo);
+                schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<CreateOp>(), ouInfo);
+                schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<DeleteOp>(), ouInfo);
+                schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<SearchOp<String>>(), ouInfo);
 
                 _schema = schemaBuilder.Build();
             }
