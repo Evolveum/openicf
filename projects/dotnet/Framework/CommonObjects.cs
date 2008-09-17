@@ -617,9 +617,22 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         private readonly IList<object> _value;
 
         internal ConnectorAttribute(string name, IList<object> val) {
-            if (name == null) {
-                throw new ArgumentException("Name may not be null.");
+            if (StringUtil.IsBlank(name)) {
+                throw new ArgumentException("Name must not be blank!");
             }
+            if (OperationalAttributes.PASSWORD_NAME.Equals(name) ||
+                OperationalAttributes.CURRENT_PASSWORD_NAME.Equals(name) ||
+                OperationalAttributes.RESET_PASSWORD_NAME.Equals(name)) {
+                // check the value..
+                if (val == null || val.Count != 1) {
+                    String MSG = "Must be a single value.";
+                    throw new ArgumentException(MSG);
+                }
+                if (!(val[0] is GuardedString)) {
+                    const string MSG = "Password value must be an instance of GuardedString.";
+                    throw new ArgumentException(MSG);
+                }
+            }            
             _name = name;
             // copy to prevent corruption preserve null
             _value = (val == null) ? null : CollectionUtil.NewReadOnlyList<object>(val);
@@ -744,15 +757,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                 return new Uid(GetSingleStringValue());
             } else if (Org.IdentityConnectors.Framework.Common.Objects.Name.NAME.Equals(_name)) {
                 return new Name(GetSingleStringValue());
-            } else if (OperationalAttributes.PASSWORD_NAME.Equals(_name) ||
-                       OperationalAttributes.CURRENT_PASSWORD_NAME.Equals(_name) ||
-                       OperationalAttributes.RESET_PASSWORD_NAME.Equals(_name)) {
-                CheckSingleValue();
-                if (!(_value[0] is GuardedString)) {
-                    const string MSG = "Password value must be an instance of GuardedString.";
-                    throw new ArgumentException(MSG);
-                }
-            }
+            } 
             return new ConnectorAttribute(Name, _value);
         }
         private void CheckSingleValue() {
@@ -1181,20 +1186,34 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         private readonly Type _type;
         private readonly bool _required;
         private readonly bool _readable;
-        private readonly bool _writeable;
+        private readonly bool _creatable;
+        private readonly bool _updateable;
         private readonly bool _multivalue;
         private readonly bool _returnedByDefault;
 
-        public ConnectorAttributeInfo(string name, Type type,
-                bool readable, bool writeable,
+        internal ConnectorAttributeInfo(string name, Type type,
+                bool readable, bool creatable,
                 bool required, bool multivalue, 
-                bool returnedByDefault) {
+                bool updateable, bool returnedByDefault) {
+            if (StringUtil.IsBlank(name)) {
+                throw new ArgumentException("Name must not be blank!");
+            }
+            if ((OperationalAttributes.PASSWORD_NAME.Equals(name) ||
+                    OperationalAttributes.RESET_PASSWORD_NAME.Equals(name) ||
+                    OperationalAttributes.CURRENT_PASSWORD_NAME.Equals(name)) &&
+                    !typeof(GuardedString).Equals(type)) {
+                String MSG = "Password based attributes must be of type GuardedString.";
+                throw new ArgumentException(MSG);
+            }
+            // check the type..
+            FrameworkUtil.CheckAttributeType(type);
             _name = name;
             _type = type;
             _readable = readable;
-            _writeable = writeable;
+            _creatable = creatable;
             _required = required;
             _multivalue = multivalue;
+    		_updateable = updateable;
             _returnedByDefault = returnedByDefault;
         }
 
@@ -1238,15 +1257,26 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
 
         /**
-         * Determines if the attribute is writable.
+         * Determines if the attribute is writable on create.
          * 
-         * @return true if the attribute is writable else false.
+         * @return true if the attribute is writable on create else false.
          */
-        public bool IsWritable {
+        public bool IsCreatable {
             get {
-                return _writeable;
+                return _creatable;
             }
         }
+        
+    	/**
+    	 * Determines if the attribute is writable on update.
+    	 * 
+    	 * @return true if the attribute is writable on update else false.
+    	 */
+    	public bool IsUpdateable {
+    	    get {
+        		return _updateable;
+    	    }
+    	}
 
         /**
          * Determines whether this attribute is required for creates.
@@ -1298,7 +1328,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                 if (IsReadable != other.IsReadable) {
                     return false;
                 }
-                if (IsWritable != other.IsWritable) {
+                if (IsCreatable != other.IsCreatable) {
                     return false;
                 }
                 if (IsRequired != other.IsRequired) {
@@ -1308,6 +1338,9 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                     return false;
                 }
                 if (IsReturnedByDefault != other.IsReturnedByDefault) {
+                    return false;
+                }
+                if (IsUpdateable != other.IsUpdateable) {
                     return false;
                 }
                 return true;
@@ -1325,8 +1358,9 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             map["Type"] = ValueType;
             map["Required"] = IsRequired;
             map["Readable"] = IsReadable;
-            map["Writeable"] = IsWritable;
+            map["Createable"] = IsCreatable;
             map["MultiValue"] = IsMultiValue;
+            map["Updateable"] = IsUpdateable;
             map["ReturnedByDefault"] = IsReturnedByDefault;
             return map.ToString();
         }
@@ -1343,39 +1377,31 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// </summary>
         public Type ValueType { get; set; }
         public bool Readable { get; set; }
-        public bool Writeable { get; set; }
+        public bool Creatable { get; set; }
         public bool Required { get; set; }
         public bool MultiValue { get; set; }
+        public bool Updateable { get; set; }
         public bool ReturnedByDefault { get; set; }
         
         public ConnectorAttributeInfoBuilder() {
             Name = null;
             Readable = true;
-            Writeable = true;
+            Creatable = true;
             Required = false;
+            Updateable = true;
             MultiValue = false;
             ValueType = typeof(string);
             ReturnedByDefault = true;
         }
         
         public ConnectorAttributeInfo Build() {
-            if (StringUtil.IsBlank(Name)) {
-                throw new InvalidOperationException("Name must not be blank!");
-            }
-            if ((OperationalAttributes.PASSWORD_NAME.Equals(Name) ||
-                OperationalAttributes.RESET_PASSWORD_NAME.Equals(Name) ||
-                OperationalAttributes.CURRENT_PASSWORD_NAME.Equals(Name)) &&
-                !typeof(GuardedString).Equals(ValueType)) {
-                string MSG = "Password based attributes must be of type GuardedString.";
-                throw new ArgumentException(MSG);
-            }
-            FrameworkUtil.CheckAttributeType(ValueType);
             return new ConnectorAttributeInfo(Name,
                                               ValueType,
                                               Readable,
-                                              Writeable,
+                                              Creatable,
                                               Required,
                                               MultiValue,
+                                              Updateable,
                                               ReturnedByDefault);
         }
         public static ConnectorAttributeInfo Build(String name) {
@@ -1397,23 +1423,25 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             }.Build();
         }
         public static ConnectorAttributeInfo Build( String name,
-             bool required,  bool readable, bool writeable) {
+             bool required,  bool readable, bool creatable, bool updateable) {
             ConnectorAttributeInfoBuilder bld = new ConnectorAttributeInfoBuilder();
             bld.Name = name;
             bld.Required = required;
             bld.Readable = readable;
-            bld.Writeable = writeable;
+            bld.Creatable = creatable;
+            bld.Updateable = updateable;
             return bld.Build();
         }
     
         public static ConnectorAttributeInfo Build( String name,  Type type,
-                 bool required,  bool readable, bool writeable) {
+                 bool required,  bool readable, bool creatable, bool updateable) {
             ConnectorAttributeInfoBuilder bld = new ConnectorAttributeInfoBuilder();
             bld.Name = name;
             bld.ValueType = type;
             bld.Required = required;
             bld.Readable = readable;
-            bld.Writeable = writeable;
+            bld.Creatable = creatable;
+            bld.Updateable = updateable;
             return bld.Build();
         }  
     }
@@ -1678,7 +1706,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         public static readonly ConnectorAttributeInfo PASSWORD = 
             ConnectorAttributeInfoBuilder.Build(
                 OperationalAttributes.PASSWORD_NAME, typeof(GuardedString), 
-                true, false, true);
+                true, false, true, true);
     
         /**
          * Used in conjunction with password to do an account level password change.
@@ -1688,7 +1716,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         public static readonly ConnectorAttributeInfo CURRENT_PASSWORD = 
             ConnectorAttributeInfoBuilder.Build(
                 OperationalAttributes.CURRENT_PASSWORD_NAME, typeof(GuardedString), 
-                false, false, true);
+                false, false, true, true);
     
         /**
          * Used to do an administrator reset of the password. The value is the reset
@@ -1697,7 +1725,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         public static readonly ConnectorAttributeInfo RESET_PASSWORD = 
             ConnectorAttributeInfoBuilder.Build(
                 OperationalAttributes.RESET_PASSWORD_NAME, typeof(GuardedString),
-                false, false, true);
+                false, false, true, true);
         
         /**
          * Used to determine if a password is expired or to expire a password.
@@ -1838,7 +1866,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          */
         public static readonly ConnectorAttributeInfo LAST_PASSWORD_CHANGE_DATE = 
             ConnectorAttributeInfoBuilder.Build(
-                PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME, typeof(long), false, true, false);
+                PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME, typeof(long), false, true, false, false);
     
         /**
          * Common password policy attribute where the password must be changed every
@@ -1855,7 +1883,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          */
         public static readonly ConnectorAttributeInfo LAST_LOGIN_DATE = 
             ConnectorAttributeInfoBuilder.Build(
-                PredefinedAttributes.LAST_LOGIN_DATE_NAME, typeof(long), false, true, false);
+                PredefinedAttributes.LAST_LOGIN_DATE_NAME, typeof(long), false, true, false, false);
         
         static PredefinedAttributeInfos()  {
             // define GROUPS attribute info
@@ -1980,9 +2008,9 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /**
          * Get the password to run the operation as..
          */
-        public string RunWithPassword {
+        public GuardedString RunWithPassword {
             get {
-                return (string) CollectionUtil.GetValue(
+                return (GuardedString) CollectionUtil.GetValue(
                     _operationOptions, OP_RUN_WITH_PASSWORD, null);
             }
         }
@@ -2066,7 +2094,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /**
          * Set the run with password option.
          */
-        public string RunWithPassword {
+        public GuardedString RunWithPassword {
             set {
                 Assertions.NullCheck(value, "RunWithPassword");
                 _options[OperationOptions.OP_RUN_WITH_PASSWORD] = value;

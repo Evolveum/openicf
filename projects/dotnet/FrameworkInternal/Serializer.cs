@@ -1602,8 +1602,10 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                         decoder.ReadBooleanField("required",false));
                 builder.Readable=(
                         decoder.ReadBooleanField("readable",false));
-                builder.Writeable=(
-                        decoder.ReadBooleanField("writeable",false));
+                builder.Creatable=(
+                        decoder.ReadBooleanField("creatable",false));
+                builder.Updateable=(
+                        decoder.ReadBooleanField("updateable",false));
                 builder.MultiValue=(
                         decoder.ReadBooleanField("multivalue",false));
                 builder.ReturnedByDefault=(
@@ -1617,7 +1619,8 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                 encoder.WriteClassField("type", val.ValueType);
                 encoder.WriteBooleanField("required", val.IsRequired);
                 encoder.WriteBooleanField("readable", val.IsReadable);
-                encoder.WriteBooleanField("writeable", val.IsWritable);
+                encoder.WriteBooleanField("creatable", val.IsCreatable);
+                encoder.WriteBooleanField("updateable", val.IsUpdateable);
                 encoder.WriteBooleanField("multivalue", val.IsMultiValue);
                 encoder.WriteBooleanField("returnedbydefault", val.IsReturnedByDefault);
             }

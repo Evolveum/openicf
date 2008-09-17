@@ -369,7 +369,8 @@ OperationOptionInfo | SyncDeltaType | SyncToken | SyncDelta
    type CDATA #REQUIRED
    required CDATA #IMPLIED
    readable CDATA #IMPLIED
-   writeable CDATA #IMPLIED
+   creatable CDATA #IMPLIED
+   updateable CDATA #IMPLIED
    multivalue CDATA #IMPLIED
    returnedbydefault CDATA #IMPLIED
 &gt;

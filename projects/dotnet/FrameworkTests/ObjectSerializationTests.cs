@@ -524,7 +524,8 @@ namespace FrameworkTests
             builder.ValueType=(typeof(String));
             builder.Required=(true);
             builder.Readable=(true);
-            builder.Writeable=(true);
+            builder.Creatable=(true);
+            builder.Updateable=(true);
             builder.MultiValue=(true);
             builder.ReturnedByDefault = false;
             ConnectorAttributeInfo v1 = builder.Build();
@@ -535,7 +536,8 @@ namespace FrameworkTests
             Assert.IsTrue(v2.IsMultiValue);
             Assert.IsTrue(v2.IsReadable);
             Assert.IsTrue(v2.IsRequired);
-            Assert.IsTrue(v2.IsWritable);
+            Assert.IsTrue(v2.IsUpdateable);
+            Assert.IsTrue(v2.IsCreatable);
             Assert.IsFalse(v2.IsReturnedByDefault);
         }
         
@@ -572,7 +574,7 @@ namespace FrameworkTests
             builder.ValueType=(typeof(String));
             builder.Required=(true);
             builder.Readable=(true);
-            builder.Writeable=(true);
+            builder.Updateable=(true);
             builder.MultiValue=(true);
             ObjectClassInfoBuilder obld = new ObjectClassInfoBuilder();
             obld.ObjectType = ObjectClass.ORGANIZATION_NAME;

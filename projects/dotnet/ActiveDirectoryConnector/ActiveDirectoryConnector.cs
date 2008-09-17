@@ -538,7 +538,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             ConnectorAttributeInfoBuilder builder = new ConnectorAttributeInfoBuilder();
             builder.Name = name;
             builder.ValueType = type;
-            builder.Writeable = writable;
+            builder.Creatable = writable;
+            builder.Updateable = writable;
             builder.Readable = readable;
             builder.Required = required;
             builder.MultiValue = multivalue;
@@ -895,7 +896,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 {
                     arguments.Add("USERNAME", options.RunAsUser);
                     arguments.Add("PASSWORD", 
-                        ActiveDirectoryUtils.GetSecureString(options.RunWithPassword));
+                                  options.RunWithPassword.ToSecureString());
                 }
             }
 
