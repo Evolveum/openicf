@@ -48,6 +48,7 @@ public class VmsMessages extends ListResourceBundle {
     public static final String EXCEPTION_IN_ATTR             = "EXCEPTION_IN_ATTR";
     public static final String ERROR_IN_CREATE               = "ERROR_IN_CREATE";
     public static final String ERROR_IN_MODIFY               = "ERROR_IN_MODIFY";
+    public static final String ERROR_IN_GETDATE               = "ERROR_IN_GETDATE";
     public static final String ERROR_IN_DELETE               = "ERROR_IN_DELETE";
     public static final String ERROR_IN_SCRIPT               = "ERROR_IN_SCRIPT";
     public static final String BAD_SCRIPT_LANGUAGE           = "BAD_SCRIPT_LANGUAGE";
@@ -75,6 +76,7 @@ public class VmsMessages extends ListResourceBundle {
         { EXCEPTION_IN_ATTR,             "Exception checking Attribute ''{0}''" },
         { ERROR_IN_CREATE,               "Unexpected error performing Create" },
         { ERROR_IN_MODIFY,               "Unexpected error performing Modify" },
+        { ERROR_IN_GETDATE,              "Unexpected error performing GetVmsDate" },
         { ERROR_IN_DELETE,               "Unexpected error performing Delete" },
         { ERROR_IN_SEARCH,               "Unexpected error performing Search" },
         { ERROR_IN_SCRIPT,               "Unexpected error running script" },

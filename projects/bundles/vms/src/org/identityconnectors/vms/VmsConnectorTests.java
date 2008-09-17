@@ -584,7 +584,7 @@ public class VmsConnectorTests {
         }
     }
     
-    @Test@Ignore
+    @Test
     public void testExpiration() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);

@@ -63,6 +63,8 @@ public class VmsConfiguration extends AbstractConfiguration {
     private ResourceBundle _bundle = null; 
     private Locale         _lastLocale = null; 
 
+    private String         _localHostShellPrompt = "BOOMBOOM";
+    
     private static final String CATALOG = "org.identityconnectors.vms.VmsMessages";
 
     public void validate() {
@@ -159,6 +161,10 @@ public class VmsConfiguration extends AbstractConfiguration {
 
     public String getHostShellPrompt() {
     	return _hostShellPrompt;
+    }
+
+    String getLocalHostShellPrompt() {
+    	return _localHostShellPrompt;
     }
 
     public void setHostShellPrompt(String hostShellPrompt) {

@@ -40,7 +40,10 @@
 package org.identityconnectors.vms;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 
 import org.apache.oro.text.regex.MalformedPatternException;
@@ -97,6 +100,8 @@ public class VmsConnection {
             Arrays.fill(passwordArray, 0, passwordArray.length, ' ');
             throw e;
         }
+        send("SET PROMPT=\""+_configuration.getLocalHostShellPrompt()+"\"");
+        waitFor(_configuration.getLocalHostShellPrompt());
     }
 
     public void dispose() {
@@ -104,11 +109,14 @@ public class VmsConnection {
         _expect4j.close();
     }
 
+    private static final DateFormat _vmsDateFormat = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
     public void test() {
         try {
-            waitFor(_configuration.getHostShellPrompt(), _wait);
-            send("WRITE SYS$OUTPUT \"Hi there big guy\"");
-            waitFor("Hi there big guy", _wait);
+            resetStandardOutput();
+            send("SHOW TIME");
+            waitFor(_configuration.getLocalHostShellPrompt(), _wait);
+            String result = getStandardOutput().replaceAll(_configuration.getLocalHostShellPrompt(), "").trim();
+            Date date = _vmsDateFormat.parse(result);
         } catch (Exception e) {
             throw new ConnectorException(e);
         }
@@ -152,6 +160,7 @@ public class VmsConnection {
                 }),
                 new TimeoutMatch(millis,  new Closure() {
                     public void run(ExpectState state) {
+                    	System.out.println(state.getBuffer());
                         ConnectorException e = new ConnectorException(_configuration.getMessage(VmsMessages.TIMEOUT_IN_MATCH, string));
                         log.error(e, "timeout in waitFor");
                         throw e;

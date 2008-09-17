@@ -125,6 +125,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
     private ScriptExecutor              _authorizeCommandExecutor;
     private String                      _listCommandScript;
     private ScriptExecutor              _listCommandExecutor;
+    private String                      _dateCommandScript;
+    private ScriptExecutor              _dateCommandExecutor;
 
     private final DateFormat VMS_DATE_FORMAT = new SimpleDateFormat("dd-MMM-yyyy HH:mm");
     private final static String VMS_DELTA_FORMAT = "{0,number,##}-{1,number,##}:{2,number,##}:{3,number,##}.{4,number,00}";
@@ -220,10 +222,18 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
             "return connection.getStandardOutput();"
             ;
 
+        _dateCommandScript = 
+            "connection.resetStandardOutput();\n" +
+            "connection.send(\"SHOW TIME\");\n" +
+            "connection.waitFor(SHELL_PROMPT, SHORT_WAIT);\n" +
+            "return connection.getStandardOutput();"
+            ;
+
         _groovyFactory = ScriptExecutorFactory.newInstance("GROOVY");
         _authorizeCommandExecutor = _groovyFactory.newScriptExecutor(getClass().getClassLoader(), _authorizeCommandScript, true);
         _changeOwnPasswordCommandExecutor = _groovyFactory.newScriptExecutor(getClass().getClassLoader(), _changeOwnPasswordCommandScript, true);
         _listCommandExecutor = _groovyFactory.newScriptExecutor(getClass().getClassLoader(), _listCommandScript, true);
+        _dateCommandExecutor = _groovyFactory.newScriptExecutor(getClass().getClassLoader(), _dateCommandScript, true);
     }
 
     /**
@@ -313,9 +323,13 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
             return base.contains(subString);
     }
 
-    private List<CharArrayBuffer> appendAttributes(String prefix, Set<? extends Attribute> attrs) {
+    private List<CharArrayBuffer> appendAttributes(boolean modify, String prefix, Set<? extends Attribute> attrs) {
     	List<CharArrayBuffer> commandList = new LinkedList<CharArrayBuffer>();
     	CharArrayBuffer command = new CharArrayBuffer();
+    	if (modify)
+    		command.append("MODIFY ");
+    	else
+    		command.append("ADD ");
     	command.append(prefix);
     	commandList.add(command);
     	
@@ -347,20 +361,49 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
             if (AttributeUtil.getBooleanValue(expiration)) {
             	String value = "/"+VmsConstants.ATTR_PWDEXPIRED;
             	if (command.length()+value.length()>SEGMENT_MAX) {
-            		command.append("-");
-            		command = new CharArrayBuffer();
-                	commandList.add(command);            		
+            		command = addNewCommandSegment(commandList, command);            		
             	}
         		command.append(value);
             } else {
             	String value = "/"+VmsConstants.NO+VmsConstants.ATTR_PWDEXPIRED;
             	if (command.length()+value.length()>SEGMENT_MAX) {
-            		command.append("-");
-            		command = new CharArrayBuffer();
-                	commandList.add(command);            		
+            		command = addNewCommandSegment(commandList, command);            		
             	}
         		command.append(value);
             }
+        } else {
+        	Attribute password = attrMap.get(OperationalAttributes.PASSWORD_NAME);
+        	// If the password is being changed, VMS automatically pre-expires the password.
+        	// If it wasn't already expired, we don't want to change that.
+        	//
+        	if (password!=null && modify) {
+        		// Get the user and find if currently pre-expired
+        		//
+                List<CharArrayBuffer> addCommand = new LinkedList<CharArrayBuffer>();
+                CharArrayBuffer buffer = new CharArrayBuffer();
+                buffer.append("SHOW "+prefix);
+                addCommand.add(buffer);
+
+                Map<String, Object> variables = new HashMap<String, Object>();
+                fillInCommand(addCommand, variables);
+
+                String result = "";
+                try {
+                    result = (String)_authorizeCommandExecutor.execute(variables);
+                    if (!result.contains("(pre-expired)")) {
+                    	String value = "/"+VmsConstants.NO+VmsConstants.ATTR_PWDEXPIRED;
+                    	if (command.length()+value.length()>SEGMENT_MAX) {
+                    		command = addNewCommandSegment(commandList, command);            		
+                    	}
+                		command.append(value);
+                    }
+                    clearArrays(variables);
+                } catch (Exception e) {
+                    clearArrays(variables);
+                    _log.error(e, "error in create");
+                    throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE), e);
+                }
+        	}
         }
         
         // Password change interval is handled by the /PWDLIFETIME qualifier
@@ -371,18 +414,14 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
             if (expirationTime==0) {
             	String value = "/"+VmsConstants.NO+ATTR_PWDLIFETIME;
             	if (command.length()+value.length()>SEGMENT_MAX) {
-            		command.append("-");
-            		command = new CharArrayBuffer();
-                	commandList.add(command);            		
+            		command = addNewCommandSegment(commandList, command);            		
             	}
         		command.append(value);
             } else {
                 String deltaValue = remapToDelta(expirationTime);
             	String value = "/"+VmsConstants.ATTR_PWDLIFETIME+"="+new String(quoteWhenNeeded(deltaValue.toCharArray(), true));
             	if (command.length()+value.length()>SEGMENT_MAX) {
-            		command.append("-");
-            		command = new CharArrayBuffer();
-                	commandList.add(command);            		
+            		command = addNewCommandSegment(commandList, command);            		
             	}
         		command.append(value);
             }
@@ -396,9 +435,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
                 if (values.size()==0) {
                 	String value = "/"+remapName(attribute);
                 	if (command.length()+value.length()>SEGMENT_MAX) {
-                		command.append("-");
-                		command = new CharArrayBuffer();
-                    	commandList.add(command);            		
+                		command = addNewCommandSegment(commandList, command);            		
                 	}
             		command.append(value);
                 } else {
@@ -409,9 +446,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
                     char[] value = listToVmsValueList(values);
                     String first = "/"+remapName(attribute)+"=";
                 	if (command.length()+first.length()+value.length>SEGMENT_MAX) {
-                		command.append("-");
-                		command = new CharArrayBuffer();
-                    	commandList.add(command);            		
+                		command = addNewCommandSegment(commandList, command);            		
                 	}
             		command.append(first);
             		command.append(value);
@@ -421,6 +456,14 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         }
         return commandList;
     }
+
+	private CharArrayBuffer addNewCommandSegment(
+			List<CharArrayBuffer> commandList, CharArrayBuffer command) {
+		command.append("-");
+		command = new CharArrayBuffer();
+		commandList.add(command);
+		return command;
+	}
     
     private boolean isDateTimeAttribute(String attributeName) {
         return false;
@@ -522,15 +565,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         Name name = AttributeUtil.getNameFromAttributes(attrs);
         String accountId = name.getNameValue();
         _log.info("create(''{0}'')", accountId);
-        List<CharArrayBuffer> addCommand = appendAttributes("ADD "+accountId, attrs);
+        List<CharArrayBuffer> addCommand = appendAttributes(false, accountId, attrs);
 
         Map<String, Object> variables = new HashMap<String, Object>();
-        variables.put("SHELL_PROMPT", _configuration.getHostShellPrompt());
-        variables.put("SHORT_WAIT", SHORT_WAIT);
-        variables.put("UAF_PROMPT", UAF_PROMPT);
-        variables.put("UAF_PROMPT_CONTINUE", UAF_PROMPT_CONTINUE);
         fillInCommand(addCommand, variables);
-        variables.put("connection", _connection);
 
         String result = "";
         try {
@@ -561,7 +599,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         _log.info("delete(''{0}'')", uid.getUidValue());
         String removeCommand = "REMOVE "+uid.getUidValue();
         Map<String, Object> variables = new HashMap<String, Object>();
-        variables.put("SHELL_PROMPT", _configuration.getHostShellPrompt());
+        variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
         variables.put("SHORT_WAIT", SHORT_WAIT);
         variables.put("UAF_PROMPT", UAF_PROMPT);
         variables.put("UAF_PROMPT_CONTINUE", UAF_PROMPT_CONTINUE);
@@ -626,7 +664,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         for (String filter : filters)
             commands.add("SHOW "+filter);
         Map<String, Object> variables = new HashMap<String, Object>();
-        variables.put("SHELL_PROMPT", _configuration.getHostShellPrompt());
+        variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
         variables.put("SHORT_WAIT", SHORT_WAIT);
         variables.put("LONG_WAIT", LONG_WAIT);
         variables.put("UAF_PROMPT", UAF_PROMPT);
@@ -640,7 +678,13 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         if (searchAttributesToGet!=null)
             attributesToGet = CollectionUtil.newList(searchAttributesToGet);
         for (int i=1; i<userArray.length; i++) {
-            String user = SEPARATOR+userArray[i].replaceAll("\r\n", "\n")+"\n";
+            String user = SEPARATOR+userArray[i].replaceAll("\r\n", "\n");
+            // Now, we truncate from the UAF_PROMPT, if present
+            //
+            int index = user.indexOf(UAF_PROMPT);
+            if (index>-1)
+            	user = user.substring(0, index);
+            user += "\n";
             try {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> attributes = (Map<String, Object>)TRANSFORM.transform(user);
@@ -673,9 +717,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
                         builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRED_NAME, Boolean.TRUE);
                     } else {
                         Date expiredDate = getPasswordExpirationDate(attributes);
-                        System.out.println("expiredDate="+expiredDate);
-                        System.out.println("current Date="+new Date());
-                        builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRED_NAME, expiredDate.before(new Date()));
+                        Date vmsDate = getVmsDate();
+                        builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRED_NAME, expiredDate.before(vmsDate));
                     }
                 }
 
@@ -724,6 +767,26 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
                 throw new ConnectorException(e);
             }
         }
+    }
+    
+    private static final DateFormat _vmsDateFormat = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
+    private Date getVmsDate() {
+        Map<String, Object> variables = new HashMap<String, Object>();
+        variables.put("connection", _connection);
+        variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
+        variables.put("SHORT_WAIT", SHORT_WAIT);
+
+        String result = "";
+        try {
+            result = (String)_dateCommandExecutor.execute(variables);
+            result = result.substring(0, result.indexOf(_configuration.getLocalHostShellPrompt())).trim();
+            Date date = _vmsDateFormat.parse(result);
+            return date;
+        } catch (Exception e) {
+            _log.error(e, "error in getVmsDate");
+            throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_GETDATE), e);
+        }
+        
     }
 
     private Date getPasswordExpirationDate(Map<String, Object> attributes) throws ParseException {
@@ -775,7 +838,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
             renameCommand.append("RENAME "+uid.getUidValue()+" "+name.getNameValue());
 
             Map<String, Object> variables = new HashMap<String, Object>();
-            variables.put("SHELL_PROMPT", _configuration.getHostShellPrompt());
+            variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
             variables.put("SHORT_WAIT", SHORT_WAIT);
             variables.put("UAF_PROMPT", UAF_PROMPT);
             variables.put("UAF_PROMPT_CONTINUE", UAF_PROMPT_CONTINUE);
@@ -821,7 +884,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
                 name.getNameValue().equalsIgnoreCase(_configuration.getUserName())) {
             _log.info("update[changePassword](''{0}'')", _configuration.getUserName());
             Map<String, Object> variables = new HashMap<String, Object>();
-            variables.put("SHELL_PROMPT", _configuration.getHostShellPrompt());
+            variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
             variables.put("SHORT_WAIT", SHORT_WAIT);
             variables.put("UAF_PROMPT", UAF_PROMPT);
             GuardedString currentGS = AttributeUtil.getGuardedStringValue(currentPassword);
@@ -855,14 +918,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
 
         } else {
             String accountId = uid.getUidValue();
-            List<CharArrayBuffer> modifyCommand = appendAttributes("MODIFY "+accountId, attributes);
+            List<CharArrayBuffer> modifyCommand = appendAttributes(true, accountId, attributes);
 
             Map<String, Object> variables = new HashMap<String, Object>();
-            variables.put("SHELL_PROMPT", _configuration.getHostShellPrompt());
-            variables.put("SHORT_WAIT", SHORT_WAIT);
-            variables.put("UAF_PROMPT", UAF_PROMPT);
             fillInCommand(modifyCommand, variables);
-            variables.put("connection", _connection);
 
             String result = "";
             try {
@@ -897,6 +956,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         	firstContents.add(commandContents);
         }
         variables.put("COMMANDS", firstContents);
+        variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
+        variables.put("SHORT_WAIT", SHORT_WAIT);
+        variables.put("UAF_PROMPT", UAF_PROMPT);
+        variables.put("UAF_PROMPT_CONTINUE", UAF_PROMPT_CONTINUE);
+        variables.put("connection", _connection);
     }
     
     private void clearArrays(Map<String, Object> variables) {
@@ -976,7 +1040,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         attributes.add(OperationalAttributeInfos.PASSWORD);
         attributes.add(OperationalAttributeInfos.CURRENT_PASSWORD);
         attributes.add(OperationalAttributeInfos.ENABLE);
-        //attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
+        attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
         //attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRATION_DATE);
         
         // Predefined Attributes
