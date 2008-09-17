@@ -675,7 +675,7 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
             boolean required = false;
             if (ref.getRequired()!=null)
                 required = ref.getRequired();
-            attributes.add(AttributeInfoBuilder.build(ref.getName(), required, true, true));
+            attributes.add(AttributeInfoBuilder.build(ref.getName(), required, true, true, true));
         }
         updateSchema(objectClass, attributes);
         schemaBuilder.defineObjectClass(objectClass, attributes);

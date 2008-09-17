@@ -397,7 +397,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
     public Schema schema() {
         //The Name is supported attribute
         Set<AttributeInfo> attrInfoSet = new HashSet<AttributeInfo>();
-        attrInfoSet.add(AttributeInfoBuilder.build(Name.NAME,true,true,true));
+        attrInfoSet.add(AttributeInfoBuilder.build(Name.NAME,true,true,true,true));
         //Password is operationalAttribute 
         attrInfoSet.add(OperationalAttributeInfos.PASSWORD);
 
