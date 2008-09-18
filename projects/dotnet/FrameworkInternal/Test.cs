@@ -38,6 +38,7 @@
  * -----------
  */
 using System;
+using System.Text;
 
 using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Framework.Api;
@@ -68,7 +69,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Test
                    new ConnectorKey(clazz.RawType.Name+".bundle",
                     "1.0",
                     clazz.RawType.Name));
-            info.Messages=(new ConnectorMessagesImpl());
+            info.Messages=(CreateDummyMessages());
             APIConfigurationImpl rv = new APIConfigurationImpl();
             rv.IsConnectorPoolingSupported=(
                     IsConnectorPoolingSupported(clazz));
@@ -111,6 +112,25 @@ namespace Org.IdentityConnectors.Framework.Impl.Test
             }
             RawSearcherImpl<T>.RawSearch(
                  search, oclass, filter, handler, options);
+        }
+        
+        protected override ConnectorMessages CreateDummyMessagesImpl() {
+            return new DummyConnectorMessages();
+        }
+        
+        private class DummyConnectorMessages : ConnectorMessages {
+            public String Format(String key, String dflt, params Object [] args) {
+                StringBuilder builder = new StringBuilder();
+                builder.Append(key);
+                builder.Append(": ");
+                String sep = "";
+                foreach (Object arg in args ) {
+                    builder.Append(sep);
+                    builder.Append(arg);
+                    sep=", ";
+                }
+                return builder.ToString();
+            }
         }
     
     }

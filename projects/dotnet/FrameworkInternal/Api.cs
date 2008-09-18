@@ -299,7 +299,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
         
         public string ConnectorDisplayNameKey { get; set; }
         
-        public ConnectorMessagesImpl Messages { get; set; }
+        public ConnectorMessages Messages { get; set; }
         
         public APIConfigurationImpl DefaultAPIConfiguration {
             get {

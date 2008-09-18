@@ -78,6 +78,16 @@ namespace Org.IdentityConnectors.Framework.Test
             return GetInstance().CreateTestConfigurationImpl(clazz, config);
         }
         
+        /**
+         * Creates an dummy message catalog ideal for unit testing.
+         * All messages are formatted as follows:
+         * <p>
+         * <code><i>message-key</i>: <i>arg0.toString()</i>, ..., <i>argn.toString</i></code>
+         * @return A dummy message catalog.
+         */
+        public static ConnectorMessages CreateDummyMessages() {
+            return GetInstance().CreateDummyMessagesImpl();
+        }
             
         public static IList<ConnectorObject> SearchToList(SearchApiOp search, 
                 ObjectClass oclass, 
@@ -299,5 +309,7 @@ namespace Org.IdentityConnectors.Framework.Test
             }
             return ret;
         }
+        
+        abstract protected ConnectorMessages CreateDummyMessagesImpl();
     }
 }
