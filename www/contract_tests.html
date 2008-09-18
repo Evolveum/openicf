@@ -31,8 +31,12 @@
  </ul>
 
 <h3><a name="quickstart">Quick start guide</a></h3>
+<p>
+This section represents an easy way to configure contract tests. If you are reading this manual the first time, go through all the sections to understand the motivation behind.
+</p>
+
 <ol>
-    <li>if you want to setup contract tests for local connector, continue with <strong>a</strong>, it you want to setup tests for connector behind gateway follow <strong>b</strong>:
+    <li>if you want to setup contract tests for local connector, continue with <strong>a</strong>, if you want to setup tests for connector behind gateway follow <strong>b</strong>:
     <ol type="a"><li>
         <p>define <code>bundleJar.testsuite.string</code> property in connector's <code>build.properties</code>:
             <pre># connector-jar is set by ant
@@ -84,8 +88,8 @@ oclasses.Schema.testsuite.list=${LIST, account}
 Define list of attributes per <strong>each</strong> supported object class:
 <pre> 
 # list of ALL attributes of object class 'account' for database table connector:
-attributes.account.oclasses.Schema.testsuite.list=${LIST, @@NAME@@, @@PASSWORD@@, MANAGER, MIDDLENAME, FIRSTNAME, LASTNAME, EMAIL, \
-                                                        DEPARTMENT, TITLE, AGE, SALARY, JPEGPHOTO}
+attributes.account.oclasses.Schema.testsuite.list=${LIST, @@NAME@@, @@PASSWORD@@, MANAGER, \ 
+   MIDDLENAME, FIRSTNAME, LASTNAME, EMAIL, DEPARTMENT, TITLE, AGE, SALARY, JPEGPHOTO}
 </pre>
 Define <strong>every</strong> attribute of <strong>each</strong> object class:
 <pre>
@@ -93,7 +97,8 @@ Define <strong>every</strong> attribute of <strong>each</strong> object class:
 @@NAME@@.attribute.account.oclasses.Schema.testsuite.map=${MAP, \
                                                             ${MAPENTRY, type, java.lang.String}, \
                                                             ${MAPENTRY, readable, true}, \
-                                                            ${MAPENTRY, writable, true}, \
+                                                            ${MAPENTRY, createable, true}, \
+                                                            ${MAPENTRY, updateable, true}, \
                                                             ${MAPENTRY, required, true}, \
                                                             ${MAPENTRY, multiValue, false}, \
                                                             ${MAPENTRY, returnedByDefault, true} \
@@ -128,6 +133,25 @@ operations.Schema.testsuite.map=${MAP, \
     </p></li>
 </ol>    
 
+<table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="background-color: rgb(204, 204, 255);">
+      <!-- ******* -->
+      <strong>Troubleshooting build.properties files</strong>
+      <ul>
+      <li>contract test property names are case sensitive.</li>
+      <li>if don't have a special object type supported by contract tests, use Object macro e.g.:
+<code>file.connector.file=${OBJECT, java.io.File, test.csv}</code> . This macro will result in call of <code>new File("test.csv")</code></li>
+      <li>contract test attribute values are sensitive to whitespaces! the attribute value cannot end with whitespace attribute_ , where _ is any whitespace character, will be parsed as it is, whitespaces won't be ignored.</li>
+      </ul>
+      <!-- ******* -->
+      </td>
+    </tr>
+  </tbody>
+</table>
+
 <h3><a name="propfiles">Properties files and proprietary jars</a></h3>
 Properties files are read in the following order:
 <pre>
@@ -148,16 +172,16 @@ Properties files are read in the following order:
      # PRIVATE properties specific for particular connector configuration
 
 </pre>
-Latter properties files <strong>overrides</strong> properties loaded from previous properties files.
+Latter properties files <strong>override </strong> properties loaded from previous properties files.
 <h4>Proprietary jars</h4>
-Proprietary jars should't be checked-in. They should be placed in the following directories:
+Proprietary jars should not be checked-in. They should be placed in the following directories:
 <pre>
 {$user.home}\.{$project.name}\lib
 {$user.home}\.{$project.name}-{$configuration}\lib
 </pre>
 
 <h3><a name="properties">Defining properties</a></h3>
-Test properties follows these patterns:
+<p>Test properties follows these patterns:</p>
 <pre>
 # connector configuration
 {$property.name}.connector.${type.name}=some value
@@ -171,19 +195,59 @@ bundleJar.testsuite.string=${SYSPROPS, connector-jar}
 {$iteration}.{$test.name}.{$oclass.name}.${attribute.name}.${type.name}=some value
 0.Create.account.DEPARTMENT.string=some value
 </pre>
-Note that <strong>case sensitivity is important</strong>.
+<p>Note 1: that <strong>case sensitivity is important</strong>.</p>
+<p>Note 2: The <code>property.name</code> is derived from the setXYZ() method for the property (inside <code>FooConnectorConfiguration</code> class).</p>
 <h4><a name="proplookup">Properties lookup</a></h4>
-Properties are searched recursively. If test looks for the property <code>1.wrong.login.connector.string</code> and doesn't find its definition
-it tries to look for <code>wrong.login.connector.string</code> etc.<br />
+Properties are searched recursively. If a test looks for the property <code>1.wrong.login.connector.string</code> and doesn't find its definition
+it tries to look for <code>wrong.login.connector.string</code>, if still nothing found it tries <code>login.connector.string</code> etc.<br />
 <br />
-After property value is recursively found it is stored as the value of the property that was initially looked up. So if test looks
-for <code>1.wrong.login.connector.string</code> and recursively finds value of <code>login.connector.string</code> (if the value is macro then it is evaluated), this value
-will also be stored for <code>1.wrong.login.connector.string</code> and the next time test will look for that property, it's value
-will be returned immediatelly.
+<p>
+If the value is <a href="#macros">macro</a> then it is evaluated.
+</p>
+<p>
+After property value is recursively found it is stored as the value of the property that was initially looked up. For instance, test looks
+for <code>1.wrong.login.connector.string</code> and recursively finds <strong>value</strong> of <code>login.connector.string</code>. This <strong>value</strong>
+will also be stored for <code>1.wrong.login.connector.string</code>. The next time test will look for the original property (<code>1.wrong...</code>), its value
+will be returned immediately.
+</p>
 
 
 <h4><a name="proptypes">Properties value types</a></h4>
 <code>${type.name}</code> values are lowercased truncated Java type names. Several examples:
+
+<!-- ***************************************** -->
+<table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="background-color: rgb(204, 204, 204);">Java
+type name</td>
+      <td style="background-color: rgb(204, 204, 204);"><code>${type.name}</code></td>
+    </tr>
+    <tr>
+      <td>java.lang.String</td>
+      <td>string</td>
+    </tr>
+    <tr>
+      <td>java.lang.Double</td>
+      <td>double</td>
+    </tr>
+    <tr>
+      <td>java.util.List</td>
+      <td>list</td>
+    </tr>
+    <tr>
+      <td>java.util.Map</td>
+      <td>map</td>
+    </tr>
+    <tr>
+      <td>java.math.BigDecimal</td>
+      <td>bigdecimal</td>
+    </tr>
+  </tbody>
+</table> 
+<!-- ***************************************** -->
+<!--
 <ul>
   <li>Java type name: java.lang.String - <code>${type.name}</code>: string</li>
   <li>Java type name: java.lang.Double - <code>${type.name}</code>: double</li>
@@ -191,6 +255,7 @@ will be returned immediatelly.
   <li>Java type name: java.util.Map - <code>${type.name}</code>: map</li>
   <li>Java type name: java.math.BigDecimal - <code>${type.name}</code>: bigdecimal</li>
 </ul>
+-->
 However there are two exceptions (due to back compatibility): <code>bytearray</code> for array of bytes and <code>string</code> also for <code>GuardedString</code>.<br /><br />
 
 Default definitions for <code>${type.name}</code> properties are as follows:
@@ -213,7 +278,7 @@ ${macro-name, macro-arguments...}
 <code>macro-arguments</code> can be other macros.
 Following macros are supported:
 <ul>
-  <li><code>${BYTEARRAY, string}</code> - returns <code>byte[]</code> created from <code>string</code><br /><code>${BYTEARRAY, bflmpsvz}</code> results in <code>byte[]</code> created from "bflmpsvz"</li>
+  <li><code>${BYTEARRAY, string}</code> - returns <code>byte[]</code> created from <code>string</code><br /><code>${BYTEARRAY, foo}</code> results in <code>byte[]</code> created from "foo"</li> 
   <li><code>${DOUBLE, double}</code> - returns <code>Double</code> value of <code>double</code></li>
   <li><code>${FLOAT, float}</code> - returns <code>Float</code> value of <code>float</code></li>
   <li><code>${GET, name}</code> - returns value of property, whose name is specified by <code>name</code><br /><code>${GET, project.name}</code> returns value of <code>project.name</code> property</code></li>
@@ -224,7 +289,7 @@ Following macros are supported:
   <li><code>${LITERAL, string}</code> - returns <code>String</code> value of <code>string</code></li>
   <li><code>${NOTSUPPLIED}</code> - returns <code>ObjectNotFoundException</code><br />properties <code>connector.string</code>, <code>connector.integer</code> etc. are defined as <code>${NOTSUPPLIED}</code> to protect properties lookup mechanism to end with <code>string</code> property - that is by default defined as a random value (see <a href="#proptypes">Properties value types</a> section)</li>
   <li><code>${RANDOM, format}</code> - returns generated <code>String</code> according to pattern specified by <code>format</code> (<code>a</code>=lowercase letter, <code>A</code>=uppercase letter, <code>?</code>=letter, <code>#</code>=digit, <code>.</code>=letter or digit)<br /><code>${RANDOM, AAAa##}</code> could generate "TEVo56"</li>
-  <li><code>${SYSPROPS, name}</code> - returns value of system property, whose name is specified by <code>name</code></li>
+  <li><code>${SYSPROPS, name}</code> - returns value of system property (System.getProperty()), whose name is specified by <code>name</code></li>
   <li><code>${OBJECT, typename, value}</code> - returns object defined by <code>typename</code> created by <code>constructor(String value)</code><br /><code>${OBJECT, java.math.BigDecimal, 1}</code> will create BigDecimal object initialized to 1</li>
 </ul>
 
@@ -233,7 +298,7 @@ Following macros are supported:
 <h5 style="text-decoration:underline">Bundle jar path</h5>
 Path to connector distribution jar file (when compiled it is placed to <code>${project.name}/dist</code> directory).
 <pre>
-bundleJar.testsuite.string=${SYSPROPS, connector-jar}    # set by ant
+bundleJar.testsuite.string=${SYSPROPS, connector-jar}    # connector-jar System property is set by ant to the current connector, will be read by SysPropsMacro.
 </pre>
 Use the <code>SYSPROPS</code> macro to get <code>connector-jar</code> system property, which is set by <code>ant</code>.
 <h5 style="text-decoration:underline"><a name="connconfprop">Connector configuration properties</a></h5>
@@ -258,10 +323,11 @@ Note: <code>connector.${type.name}</code> properties and <code>testsuite.${type.
 It is necessary to define following properties:
 <pre>
 # number of iterations ValidateApiOpTest will run
-iterations.Validate.testsuite.integer=1   
+iterations.Validate.testsuite.integer=2   
 
 # 1 stands for iteration number, property value should contain wrong configuration of connector - test that validate() will throw
-1.wrong.${property.name}.connector.${type.name}=${value}       
+1.wrong.${property.name}.connector.${type.name}=${value}        
+2.wrong.${property.name}.connector.${type.name}=${value} #value used in the 2nd iteration
 </pre>
 There should be at least one wrongly configured property per each iteration otherwise test will fail.
 
@@ -274,8 +340,8 @@ oclasses.Schema.testsuite.list=${LIST, account}
 Define list of attributes per <strong>each</strong> supported object class:
 <pre> 
 # list of ALL attributes of object class 'account' for database table connector:
-attributes.account.oclasses.Schema.testsuite.list=${LIST, @@NAME@@, @@PASSWORD@@, MANAGER, MIDDLENAME, FIRSTNAME, LASTNAME, EMAIL, \
-                                                        DEPARTMENT, TITLE, AGE, SALARY, JPEGPHOTO}
+attributes.account.oclasses.Schema.testsuite.list=${LIST, @@NAME@@, @@PASSWORD@@, MANAGER, \ 
+    MIDDLENAME, FIRSTNAME, LASTNAME, EMAIL, DEPARTMENT, TITLE, AGE, SALARY, JPEGPHOTO}
 </pre>
 Define <strong>every</strong> attribute of <strong>each</strong> object class. Attribute's type is class name (for bytearrays use '[B'):
 <pre>
@@ -283,7 +349,8 @@ Define <strong>every</strong> attribute of <strong>each</strong> object class. A
 @@NAME@@.attribute.account.oclasses.Schema.testsuite.map=${MAP, \
                                                             ${MAPENTRY, type, java.lang.String}, \
                                                             ${MAPENTRY, readable, true}, \
-                                                            ${MAPENTRY, writable, true}, \
+                                                            ${MAPENTRY, createable, true}, \
+                                                            ${MAPENTRY, updateable, true}, \
                                                             ${MAPENTRY, required, true}, \
                                                             ${MAPENTRY, multiValue, false}, \
                                                             ${MAPENTRY, returnedByDefault, true} \
@@ -360,6 +427,32 @@ LASTNAME.modified.string=sellers
 <p>
 First of all, make sure framework, contract tests and connector you want to test are built.
 </p>
+<table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="background-color: rgb(204, 204, 255);">
+      <!-- ******* -->
+      <strong>Quick start for running contract tests:</strong>
+      <ol>
+      <li>First compile the Framework and Connector classes by executing command <code>ant</code> in the <code>/framework</code> and <code>/bundles/fooconnector</code> directories.</li>
+      <li>To run the Contract tests go to directory of the connector (e.g. <code>/bundles/fooconnector</code>) launch in the command line: <code>ant run-contract-tests</code>. </li>
+      <li>It is nice to have a HTML summary of the test results, issue command for it: <code>ant report-junits</code> . A new subdirectory <code>/reports</code> will contain test results, view the HTML file...</li>
+      </ol>
+      <!-- ******* -->
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<pre>
+You can run contract tests by:
+1) ant (in the framework dir)
+2) ant (in the connector project dir, e.g. FlatFile)
+3) ant run-contract-tests
+ant report-junits
+-> will genereate html report in /reports folder.
+</pre>
 
 <h4><a name="runbasic">Basic usage</a></h4>
 Contract test suite is run from within the connector directory with the following command:
@@ -400,7 +493,7 @@ Running tests with property file generated by different test configuration is <s
 
 <h4><a name="reports">Reports</a></h4>
 JUnit XML reports are generated to <code>${connector.dir}/reports</code> directory.
-If you want to see HTML reports you have to run <code>ant report-junits</code> yet.
+To see HTML reports run command <code>ant report-junits</code>
 </p>
 
 <h4><a name="eclipse">Running in Eclipse</a></h4>
