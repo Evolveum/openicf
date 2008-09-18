@@ -330,7 +330,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 ICollection<Object> newValues = attribute.Value;
                 PropertyValueCollection oldValues = null;
                 if(directoryEntry.Properties.Contains(ActiveDirectoryConnector.ATT_MEMBEROF)) {
-                    PropertyValueCollection pvc = directoryEntry.Properties[ActiveDirectoryConnector.ATT_MEMBEROF];                    
+                    oldValues = directoryEntry.Properties[ActiveDirectoryConnector.ATT_MEMBEROF];
                 }
 
                 ICollection<Object> groupsToAdd = new HashSet<Object>();

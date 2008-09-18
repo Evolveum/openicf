@@ -69,7 +69,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         AuthenticateOp, AttributeNormalizer, PoolableConnector
 	{
         // This is the list of attributes returned by default if no attributes are
-        // requested in the options field of ExecuteQuery
+        // requested in the options field of ExecuteQuery for Account
         public readonly static ICollection<string> AccountAttributesReturnedByDefault = 
             new HashSet<string>(StringComparer.CurrentCultureIgnoreCase) {
 //            "userPassword",
@@ -119,6 +119,28 @@ namespace Org.IdentityConnectors.ActiveDirectory
             "homeDirectory",
        };
 
+        // This is the list of attributes returned by default if no attributes are
+        // requested in the options field of ExecuteQuery for groups
+        public readonly static ICollection<string> GroupAttributesReturnedByDefault =
+            new HashSet<string>(StringComparer.CurrentCultureIgnoreCase)
+            {
+                "cn",
+                "samAccountName",
+                "description",
+                "managedby",
+                "mail",
+                "groupType",
+                "authOrig",
+                "unauthOrig",
+            };
+
+        // This is the list of attributes returned by default if no attributes are
+        // requested in the options field of ExecuteQuery for groups
+        public readonly static ICollection<string> OuAttributesReturnedByDefault =
+            new HashSet<string>(StringComparer.CurrentCultureIgnoreCase)
+            {
+            };
+
         public static IDictionary<ObjectClass, ICollection<string>> AttributesReturnedByDefault = null;
             
 
@@ -149,6 +171,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // populate default attributes
             AttributesReturnedByDefault = new Dictionary<ObjectClass, ICollection<string>>();
             AttributesReturnedByDefault.Add(ObjectClass.ACCOUNT, AccountAttributesReturnedByDefault);
+            AttributesReturnedByDefault.Add(ObjectClass.GROUP, GroupAttributesReturnedByDefault);
+            AttributesReturnedByDefault.Add(ouObjectClass, OuAttributesReturnedByDefault);
         }
 
         #region CreateOp Members
