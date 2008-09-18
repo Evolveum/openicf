@@ -117,7 +117,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 {                    
                     Assert.IsNotNull(caInfo);
                     Console.WriteLine("{0} {1} {2} {3}", caInfo.Name, 
-                        caInfo.IsWritable ? "writable" : "",
+                        caInfo.IsCreatable ? "createable" : "",
+                        caInfo.IsUpdateable ? "updateable" : "",
                         caInfo.IsRequired ? "required" : "",
                         caInfo.IsMultiValue ? "multivalue" : "");
                     if(ConnectorAttributeUtil.IsSpecial(caInfo)) {
@@ -1224,11 +1225,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 ICollection<ConnectorAttribute> createAttributes = GetNormalAttributes_Account();
                 // remove password, and set to something memorable
                 createAttributes.Remove(ConnectorAttributeUtil.Find(OperationalAttributes.PASSWORD_NAME, createAttributes));
-                GuardedString gsCurrentPassword = new GuardedString();
-                foreach (char c in "1Password")
-                {
-                    gsCurrentPassword.AppendChar(c);
-                }
+                GuardedString gsCurrentPassword = GetGuardedString("1Password");
                 createAttributes.Add(ConnectorAttributeBuilder.BuildPassword(gsCurrentPassword));
                 createAttributes.Add(ConnectorAttributeBuilder.BuildEnabled(true));
                 createUid = CreateAndVerifyObject(connector,
@@ -1240,11 +1237,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                 ICollection<ConnectorAttribute> updateReplaceAttributes =
                     new HashSet<ConnectorAttribute>();
-                GuardedString gsNewPassword = new GuardedString();
-                foreach (char c in "LongPassword2MeetTheRequirements!")
-                {
-                    gsNewPassword.AppendChar(c);
-                }
+                GuardedString gsNewPassword = GetGuardedString("LongPassword2MeetTheRequirements!");
                 updateReplaceAttributes.Add(ConnectorAttributeBuilder.BuildCurrentPassword(gsCurrentPassword));
                 updateReplaceAttributes.Add(ConnectorAttributeBuilder.BuildPassword(gsNewPassword));
                 UpdateReplaceAndVerifyObject(connector, ObjectClass.ACCOUNT,
@@ -1270,11 +1263,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
 
                 // now a negative test case
-                GuardedString gsBogusPassword = new GuardedString();
-                foreach (char c in "BogusPassword")
-                {
-                    gsBogusPassword.AppendChar(c);
-                }
+                GuardedString gsBogusPassword = GetGuardedString("BogusPassword");
                 ICollection<ConnectorAttribute> updateErrorReplaceAttributes =
                     new HashSet<ConnectorAttribute>();
                 updateErrorReplaceAttributes.Add(ConnectorAttributeBuilder.BuildCurrentPassword(gsBogusPassword));
@@ -1510,7 +1499,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             if (password.Length > 0)
             {
-                builder.RunWithPassword = password;
+                builder.RunWithPassword = GetGuardedString(password);
             }
 
             ScriptContext context = new ScriptContext("Shell", scriptText, arguments);
@@ -2005,12 +1994,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             Random random = new Random();
             Int32 randomNumber = random.Next(10000);
 
-            // the container ... is a fabricated attribute
             attributes.Add(ConnectorAttributeBuilder.Build(
-                "ad_container", GetProperty(CONFIG_PROPERTY_CONTAINER)));
-            attributes.Add(ConnectorAttributeBuilder.Build(
-                "displayName", "nunit test group" + randomNumber + "," +
-                GetProperty(CONFIG_PROPERTY_CONTAINER)));
+                "mail", "groupmail@example.com"));
             attributes.Add(ConnectorAttributeBuilder.Build(
                 "description", "Original Description" + randomNumber));
             attributes.Add(ConnectorAttributeBuilder.Build(
@@ -2160,5 +2145,16 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             return attributesToGet;
         }
+
+        public GuardedString GetGuardedString(string regularString)
+        {
+            GuardedString guardedString = new GuardedString();
+            foreach (char c in regularString)
+            {
+                guardedString.AppendChar(c);
+            }
+            return guardedString;
+        }
     }
+
 }

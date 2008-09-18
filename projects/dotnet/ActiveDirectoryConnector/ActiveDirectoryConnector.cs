@@ -139,6 +139,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public readonly static ICollection<string> OuAttributesReturnedByDefault =
             new HashSet<string>(StringComparer.CurrentCultureIgnoreCase)
             {
+                Name.NAME,
             };
 
         public static IDictionary<ObjectClass, ICollection<string>> AttributesReturnedByDefault = null;
