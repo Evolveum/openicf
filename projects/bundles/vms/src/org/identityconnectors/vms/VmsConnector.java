@@ -779,7 +779,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         String result = "";
         try {
             result = (String)_dateCommandExecutor.execute(variables);
-            result = result.substring(0, result.indexOf(_configuration.getLocalHostShellPrompt())).trim();
+            result = result.replaceAll("SHOW TIME", "").replaceAll(_configuration.getLocalHostShellPrompt(), "").trim();
             Date date = _vmsDateFormat.parse(result);
             return date;
         } catch (Exception e) {

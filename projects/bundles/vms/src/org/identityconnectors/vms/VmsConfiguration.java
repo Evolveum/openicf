@@ -70,7 +70,7 @@ public class VmsConfiguration extends AbstractConfiguration {
     public void validate() {
     	if (isNull(_hostLineTerminator))
             throw new IllegalArgumentException(getMessage(VmsMessages.TERMINATOR_NULL));
-        if (_isSSH)
+        if (_isSSH==null)
             throw new IllegalArgumentException(getMessage(VmsMessages.SSH_NULL));
         if (isNull(_hostShellPrompt))
             throw new IllegalArgumentException(getMessage(VmsMessages.SHELL_PROMPT_NULL));

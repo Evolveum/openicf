@@ -114,8 +114,11 @@ public class VmsConnection {
         try {
             resetStandardOutput();
             send("SHOW TIME");
+            if (_configuration.getSSH())
+            	waitFor("SHOW TIME", _wait);
             waitFor(_configuration.getLocalHostShellPrompt(), _wait);
-            String result = getStandardOutput().replaceAll(_configuration.getLocalHostShellPrompt(), "").trim();
+            String result = getStandardOutput();
+            result = result.replaceAll("SHOW TIME", "").replaceAll("\"", "").replaceAll(_configuration.getLocalHostShellPrompt(), "").trim();
             Date date = _vmsDateFormat.parse(result);
         } catch (Exception e) {
             throw new ConnectorException(e);
@@ -160,7 +163,6 @@ public class VmsConnection {
                 }),
                 new TimeoutMatch(millis,  new Closure() {
                     public void run(ExpectState state) {
-                    	System.out.println(state.getBuffer());
                         ConnectorException e = new ConnectorException(_configuration.getMessage(VmsMessages.TIMEOUT_IN_MATCH, string));
                         log.error(e, "timeout in waitFor");
                         throw e;
