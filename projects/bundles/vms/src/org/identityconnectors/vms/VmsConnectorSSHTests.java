@@ -40,7 +40,7 @@
 package org.identityconnectors.vms;
 
 public class VmsConnectorSSHTests extends VmsConnectorTests {
-
+/*
     protected int getHostPort() {
         return 22;
     }
@@ -64,4 +64,5 @@ public class VmsConnectorSSHTests extends VmsConnectorTests {
             ;
         return script;
     }
+    */
 }
