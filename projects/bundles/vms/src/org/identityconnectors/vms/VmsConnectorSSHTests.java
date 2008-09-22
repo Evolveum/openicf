@@ -40,7 +40,6 @@
 package org.identityconnectors.vms;
 
 public class VmsConnectorSSHTests extends VmsConnectorTests {
-/*
     protected int getHostPort() {
         return 22;
     }
@@ -53,6 +52,9 @@ public class VmsConnectorSSHTests extends VmsConnectorTests {
         return "TEST107";
     }
 
+    protected String getLineTerminator() {
+        return "\\r";
+    }
 
     protected String getTestUserEnd() {
         return "107";
@@ -64,5 +66,4 @@ public class VmsConnectorSSHTests extends VmsConnectorTests {
             ;
         return script;
     }
-    */
 }

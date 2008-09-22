@@ -1028,6 +1028,10 @@ public class VmsConnectorTests {
         return "106";
     }
 
+    protected String getLineTerminator() {
+        return LINE_TERMINATOR;
+    }
+
     protected String getConnectScript() {
         String script =
             "connection.waitFor(\"sername:\");\n" +
@@ -1041,7 +1045,7 @@ public class VmsConnectorTests {
 
     private VmsConfiguration createConfiguration() {
         VmsConfiguration config = new VmsConfiguration();
-        config.setHostLineTerminator(LINE_TERMINATOR);
+        config.setHostLineTerminator(getLineTerminator());
         config.setHostNameOrIpAddr(HOST_NAME);
         config.setHostPortNumber(getHostPort());
         config.setHostShellPrompt(SHELL_PROMPT);
@@ -1055,7 +1059,7 @@ public class VmsConnectorTests {
 
     private VmsConfiguration createUserConfiguration(String userName) {
         VmsConfiguration config = new VmsConfiguration();
-        config.setHostLineTerminator(LINE_TERMINATOR);
+        config.setHostLineTerminator(getLineTerminator());
         config.setHostNameOrIpAddr(HOST_NAME);
         config.setHostPortNumber(getHostPort());
         config.setHostShellPrompt(SHELL_PROMPT);

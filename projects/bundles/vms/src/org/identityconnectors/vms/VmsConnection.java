@@ -100,6 +100,8 @@ public class VmsConnection {
             Arrays.fill(passwordArray, 0, passwordArray.length, ' ');
             throw e;
         }
+        send("SET TERM/NOECHO");
+        waitFor(_configuration.getHostShellPrompt());
         send("SET PROMPT=\""+_configuration.getLocalHostShellPrompt()+"\"");
         waitFor(_configuration.getLocalHostShellPrompt());
     }
@@ -114,11 +116,9 @@ public class VmsConnection {
         try {
             resetStandardOutput();
             send("SHOW TIME");
-            if (_configuration.getSSH())
-            	waitFor("SHOW TIME", _wait);
             waitFor(_configuration.getLocalHostShellPrompt(), _wait);
             String result = getStandardOutput();
-            result = result.replaceAll("SHOW TIME", "").replaceAll("\"", "").replaceAll(_configuration.getLocalHostShellPrompt(), "").trim();
+            result = result.replaceAll(_configuration.getLocalHostShellPrompt(), "").trim();
             Date date = _vmsDateFormat.parse(result);
         } catch (Exception e) {
             throw new ConnectorException(e);
