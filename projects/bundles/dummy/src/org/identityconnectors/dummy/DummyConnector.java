@@ -234,7 +234,12 @@ public class DummyConnector
             methods[index].invoke(builder, new Object[] {
                 Boolean.valueOf(true)
             });
-            buildAttributeInfo(builder, methods, index + 1, (new StringBuilder()).append(name).append("_T").toString(), list, supportedTypes, typeIndex);
+            // We want to make arrays more obvious, so we will use Array in the name
+            //
+            String t = "_T";
+            if (methods[index].getName().contains("MultiValue"))
+            	t = "_Array";
+            buildAttributeInfo(builder, methods, index + 1, (new StringBuilder()).append(name).append(t).toString(), list, supportedTypes, typeIndex);
             methods[index].invoke(builder, new Object[] {
                 Boolean.valueOf(false)
             });
