@@ -82,8 +82,7 @@ public class DummyConnector
     private void validateAttributes(ObjectClass oclass, Set<Attribute> attrs, boolean checkRequired) {
         ObjectClassInfo oci = _schema.findObjectClassInfo(oclass.getObjectClassValue());
         Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
-        for(Iterator<AttributeInfo> i$ = oci.getAttributeInfo().iterator(); i$.hasNext();) {
-            AttributeInfo attributeInfo = i$.next();
+        for (AttributeInfo attributeInfo : oci.getAttributeInfo()) {
             if(checkRequired && attributeInfo.isRequired() && !attrMap.containsKey(attributeInfo.getName()))
                 throw new IllegalArgumentException((new StringBuilder()).append("Required attribute ").append(attributeInfo.getName()).append(" is missing").toString());
             if(!(attributeInfo.isCreateable() || attributeInfo.isUpdateable()) && attrMap.containsKey(attributeInfo.getName()))
@@ -91,8 +90,7 @@ public class DummyConnector
         }
 
         Map<String, AttributeInfo> ociMap = AttributeInfoUtil.toMap(oci.getAttributeInfo());
-        for(Iterator<Attribute> i$ = attrs.iterator(); i$.hasNext();) {
-            Attribute attribute = i$.next();
+        for (Attribute attribute : attrs) {
             if(!ociMap.containsKey(attribute.getName()))
                 throw new IllegalArgumentException((new StringBuilder()).append("Unknown attribute ").append(attribute.getName()).append(" is present").toString());
         }
@@ -105,7 +103,7 @@ public class DummyConnector
     }
 
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
-        if(!_map.containsKey(uid)) {
+        if (!_map.containsKey(uid)) {
             throw new UnknownUidException();
         } else {
             _map.remove(uid);
@@ -120,7 +118,7 @@ public class DummyConnector
     public void executeQuery(ObjectClass oclass, String query, ResultsHandler handler, OperationOptions options) {
         String attrsToGet[] = options.getAttributesToGet();
         ConnectorObjectBuilder builder;
-        for(Iterator<Map.Entry<Uid, Set<Attribute>>> iter = _map.entrySet().iterator(); iter.hasNext(); handler.handle(builder.build())) {
+        for (Iterator<Map.Entry<Uid, Set<Attribute>>> iter = _map.entrySet().iterator(); iter.hasNext(); handler.handle(builder.build())) {
             java.util.Map.Entry<Uid, Set<Attribute>> entry = iter.next();
             builder = new ConnectorObjectBuilder();
             if(attrsToGet == null) {
@@ -146,9 +144,9 @@ public class DummyConnector
         validateAttributes(objclass, attrs, false);
         Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
         Uid uid = (Uid)attrMap.remove(Uid.NAME);
-        if(uid == null)
+        if (uid == null)
             throw new RuntimeException("missing Uid");
-        if(!_map.containsKey(uid)) {
+        if (!_map.containsKey(uid)) {
             throw new UnknownUidException();
         } else {
             Name name = (Name)attrMap.remove(Name.NAME);
@@ -160,14 +158,12 @@ public class DummyConnector
         }
     }
 
-    public Schema schema()
-    {
+    public Schema schema() {
         return staticSchema();
     }
 
-    public static Schema staticSchema()
-    {
-        if(_schema != null)
+    public static Schema staticSchema() {
+        if (_schema != null)
             return _schema;
         try {
             SchemaBuilder schemaBuilder = new SchemaBuilder(DummyConnector.class);
@@ -202,7 +198,7 @@ public class DummyConnector
 
     private static void buildAttributeInfo(AttributeInfoBuilder builder, Method methods[], int index, String name, List<AttributeInfo> list, Class<? extends Object> supportedTypes[], int typeIndex[])
         throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-        if(index < methods.length) {
+        if (index < methods.length) {
             methods[index].invoke(builder, new Object[] {
                 Boolean.valueOf(true)
             });
@@ -219,12 +215,12 @@ public class DummyConnector
         } else {
             Class<? extends Object> clazz = supportedTypes[typeIndex[0]];
             String prefix = clazz.getSimpleName();
-            if(clazz.isArray())
+            if (clazz.isArray())
                 prefix = (new StringBuilder()).append(clazz.getComponentType().getSimpleName()).append("Array").toString();
             builder.setName((new StringBuilder()).append(prefix).append(name).toString().toUpperCase());
             builder.setType(clazz);
             AttributeInfo info = builder.build();
-            if((info.isCreateable() || info.isUpdateable()) || !info.isRequired()) {
+            if ((info.isCreateable() || info.isUpdateable()) || !info.isRequired()) {
             	if (!(info.isRequired() && clazz.equals(byte[].class))) {
 	                list.add(info);
 	                typeIndex[0]++;
@@ -238,10 +234,8 @@ public class DummyConnector
     private static Method[] getAttributeInfoBuilderSetters() {
         List<Method> setters = new LinkedList<Method>();
         Method methods[] = AttributeInfoBuilder.class.getMethods();
-        int length = methods.length;
-        for(int i = 0; i < length; i++) {
-            Method method = methods[i];
-            if(!method.getName().startsWith("setReturned") && method.getName().startsWith("set") && 
+        for (Method method : methods) {
+            if (!method.getName().startsWith("setReturned") && method.getName().startsWith("set") && 
                 method.getParameterTypes().length == 1 && 
             	(method.getParameterTypes()[0] == Boolean.TYPE || method.getParameterTypes()[0] == Boolean.class))
                 setters.add(method);
