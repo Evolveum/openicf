@@ -103,9 +103,7 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
 import org.identityconnectors.patternparser.MapTransform;
 import org.identityconnectors.patternparser.Transform;
 
-//TODO: Open Issues
-// PasswordExpired -- must be computed on the VMS system due to time skew
-// List-Valued attributes -- must be updated to set all values (i.e. REPLACE)
+//TODO: List-Valued attributes -- must be updated to set all values (i.e. REPLACE)
 //
 @ConnectorClass(
     displayNameKey="VMSConnector",
@@ -150,31 +148,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
     private static final String USER_UPDATED     = "%UAF-I-MDFYMSG,";    // user record(s) updated
     private static final String BAD_USER         = "%UAF-W-BADUSR,";     // user name does not exist
     private static final String BAD_SPEC         = "%UAF-W-BADSPC,";     // no user matches specification
-    
-    public static void main(String[] args) {
-    	VmsConnector connector = new VmsConnector();
-    	Schema schema = connector.schema();
-    	for (ObjectClassInfo oci : schema.getObjectClassInfo()) {
-    		if (oci.getType().equals("account")) {
-    			Properties properties = new Properties();
-    			System.out.print("attributes.account.oclasses.Schema.testsuite.list=${LIST ");
-    			for (AttributeInfo info : oci.getAttributeInfo()) {
-    				System.out.print(", "+info.getName());
-    			}
-				System.out.println("}");
-    			for (AttributeInfo info : oci.getAttributeInfo()) {
-	    			System.out.println(info.getName()+".attribute.account.oclasses.Schema.testsuite.map=${MAP, \\");
-	    			System.out.println("    ${MAPENTRY, type, "+info.getType().toString()+"},\\");
-	    			System.out.println("    ${MAPENTRY, readable, "+info.isReadable()+"},\\");
-	    			System.out.println("    ${MAPENTRY, writable, "+info.isUpdateable()+"},\\");
-	    			System.out.println("    ${MAPENTRY, required, "+info.isRequired()+"},\\");
-	    			System.out.println("    ${MAPENTRY, multiValue, "+info.isMultiValue()+"},\\");
-	    			System.out.println("    ${MAPENTRY, returnedByDefault, "+info.isReturnedByDefault()+"}}");
-    			}
-
-    		}
-    	}
-    }
 
     public VmsConnector() {
         _changeOwnPasswordCommandScript = 
@@ -1132,7 +1105,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
      */
     public void init(Configuration cfg) {
         _configuration = (VmsConfiguration)cfg;
-        _connection = VmsConnectionFactory.newConnection(_configuration);
+        try {
+            _connection = new VmsConnection(_configuration, VmsConnector.SHORT_WAIT);
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }
     }
     
     private static class CharArrayBuffer {
@@ -1175,23 +1152,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         
         public int length() {
         	return _position;
-        }
-    }
-    
-    private static class GuardedStringAccessor implements GuardedString.Accessor {
-        private char[] _array;
-        
-        public void access(char[] clearChars) {
-            _array = new char[clearChars.length];
-            System.arraycopy(clearChars, 0, _array, 0, _array.length);            
-        }
-        
-        public char[] getArray() {
-            return _array;
-        }
-
-        public void clear() {
-            Arrays.fill(_array, 0, _array.length, ' ');
         }
     }
 }

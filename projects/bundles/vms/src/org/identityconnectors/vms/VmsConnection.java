@@ -135,15 +135,10 @@ public class VmsConnection {
         // so, we have to coerce back to a string, but, if this is updated
         // we'll be ready.
         log.info("send(encoded data)");
-        System.out.println(">>>>"+new String(string));
         log.info("send(''{0}'')", new String(string));
         _expect4j.send(new String(string)+_configuration.getRealHostLineTerminator());
     }
 
-    //TODO: The waitFor matches may not be robust enough if the string to be matched
-    //      has already been seen, since we do not have control over the expect4j buffer.
-    //      We may need to match in our buffer, and 'continue' if not found
-    //
     public void waitFor(String string) throws Exception{
         log.info("waitFor(''{0}'')", string);
         _expect4j.expect(string, new Closure() {
@@ -178,22 +173,5 @@ public class VmsConnection {
 
     public void resetStandardOutput() {
         _buffer.setLength(0);
-    }
-
-    private static class GuardedStringAccessor implements GuardedString.Accessor {
-        private char[] _array;
-        
-        public void access(char[] clearChars) {
-            _array = new char[clearChars.length];
-            System.arraycopy(clearChars, 0, _array, 0, _array.length);            
-        }
-        
-        public char[] getArray() {
-            return _array;
-        }
-
-        public void clear() {
-            Arrays.fill(_array, 0, _array.length, ' ');
-        }
     }
 }
