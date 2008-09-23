@@ -127,7 +127,7 @@ public class DummyConnector
 
     public FilterTranslator createFilterTranslator(ObjectClass oclass, OperationOptions options)
     {
-        return null;
+        return new DummyFilterTranslator();
     }
 
     public void executeQuery(ObjectClass oclass, String query, ResultsHandler handler, OperationOptions options)
