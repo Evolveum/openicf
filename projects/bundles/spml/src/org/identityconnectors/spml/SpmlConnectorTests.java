@@ -186,14 +186,6 @@ public class SpmlConnectorTests {
         }
         {
             SpmlConfiguration config = new SpmlConfiguration();
-            config.getPsoTarget();
-            // Validate that setting this to null doesn't error out
-            //
-            config.setPsoTarget(null);
-            config.getPsoTarget();
-        }
-        {
-            SpmlConfiguration config = new SpmlConfiguration();
             config.getPreDisconnectCommand();
             // Validate that setting this to null doesn't error out
             //
@@ -305,25 +297,6 @@ public class SpmlConnectorTests {
                 // expected
             }
         }
-        {
-            try {
-                SpmlConfiguration config = createConfiguration();
-                config.setPsoTarget(null);
-                config.validate();
-                Assert.fail("expected exception");
-            } catch (RuntimeException rte) {
-                // expected
-            }
-        }
-    }
-
-    public static void main(String[] args) {
-        SpmlConnectorTests tests = new SpmlConnectorTests();
-        try {
-            tests.testCreate();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     @BeforeClass
@@ -352,7 +325,7 @@ public class SpmlConnectorTests {
         }
     }
 
-    @Test@Ignore
+    @Test//@Ignore
     public void testListSchema() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
@@ -939,11 +912,18 @@ public class SpmlConnectorTests {
     private String getSchemaCommand() {
         StringBuffer buffer = new StringBuffer();
         buffer.append("if (org.identityconnectors.framework.common.objects.ObjectClass.ACCOUNT_NAME.equals(objectClass)) {\n");
-        buffer.append("    for (org.identityconnectors.framework.common.objects.AttributeInfo info : attributeInfos)\n");
+        buffer.append("    for (org.identityconnectors.framework.common.objects.AttributeInfo info : attributeInfos) {\n");
         buffer.append("	       if (info.getName().equals(\"credentials\")) {\n");
         buffer.append("            attributeInfos.remove(info);\n");
         buffer.append("            break;\n");
         buffer.append("        }\n");
+        buffer.append("    }\n");
+        buffer.append("    for (org.identityconnectors.framework.common.objects.AttributeInfo info : attributeInfos) {\n");
+        buffer.append("	       if (info.getName().equals(\"accountId\")) {\n");
+        buffer.append("            attributeInfos.remove(info);\n");
+        buffer.append("            break;\n");
+        buffer.append("        }\n");
+        buffer.append("    }\n");
         buffer.append("    attributeInfos.add(org.identityconnectors.framework.common.objects.OperationalAttributeInfos.PASSWORD);\n");
         buffer.append("    attributeInfos.add(asNotByDefault(org.identityconnectors.framework.common.objects.OperationalAttributeInfos.ENABLE));\n");
         buffer.append("    attributeInfos.add(asWriteOnly(org.identityconnectors.framework.common.objects.OperationalAttributeInfos.ENABLE_DATE));\n");
@@ -958,7 +938,8 @@ public class SpmlConnectorTests {
         buffer.append("    builder.setRequired(original.isRequired());\n");
         buffer.append("    builder.setReturnedByDefault(false);\n");
         buffer.append("    builder.setType(original.getType());\n");
-        buffer.append("    builder.setWriteable(false);\n");
+        buffer.append("    builder.setCreateable(false);\n");
+        buffer.append("    builder.setUpdateable(false);\n");
         buffer.append("    return builder.build();\n");
         buffer.append("}    \n");
         buffer.append("\n");
@@ -970,7 +951,8 @@ public class SpmlConnectorTests {
         buffer.append("    builder.setRequired(original.isRequired());\n");
         buffer.append("    builder.setReturnedByDefault(false);\n");
         buffer.append("    builder.setType(original.getType());\n");
-        buffer.append("    builder.setWriteable(original.isWritable());\n");
+        buffer.append("    builder.setCreateable(original.isCreateable());\n");
+        buffer.append("    builder.setUpdateable(original.isUpdateable());\n");
         buffer.append("    return builder.build();\n");
         buffer.append("}\n");
         return buffer.toString();

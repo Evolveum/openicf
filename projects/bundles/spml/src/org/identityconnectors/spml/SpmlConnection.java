@@ -209,7 +209,7 @@ public class SpmlConnection  {
      */
     public void test() {
         try {
-            get("random name", _configuration.getPsoTarget());
+            get("random name", _configuration.getTargetNames()[0]);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
@@ -240,6 +240,7 @@ public class SpmlConnection  {
             throw ConnectorException.wrap(e);
         }
     }
+    
     protected String asString(String[] strings) {
         if (strings.length==0)
             return "";

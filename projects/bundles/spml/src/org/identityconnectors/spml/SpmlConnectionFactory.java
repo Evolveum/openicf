@@ -40,10 +40,8 @@
 package org.identityconnectors.spml;
 
 import java.net.URL;
-import java.util.Arrays;
 
 import org.identityconnectors.common.logging.Log;
-import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorIOException;
 import org.openspml.v2.client.Spml2Client;
 
@@ -70,24 +68,6 @@ public class SpmlConnectionFactory {
             throw rte;
         } catch (Exception e) {
             throw new ConnectorIOException(e);
-        }
-    }
-
-    
-    private static class GuardedStringAccessor implements GuardedString.Accessor {
-        private char[] _array;
-        
-        public void access(char[] clearChars) {
-            _array = new char[clearChars.length];
-            System.arraycopy(clearChars, 0, _array, 0, _array.length);
-        }
-        
-        public char[] getArray() {
-            return _array;
-        }
-
-        public void clear() {
-            Arrays.fill(_array, 0, _array.length, ' ');
         }
     }
 }

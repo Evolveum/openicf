@@ -39,6 +39,8 @@
  */
 package org.identityconnectors.spml;
 
+import java.util.Arrays;
+
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
@@ -56,7 +58,6 @@ public class SpmlConfiguration extends AbstractConfiguration {
     private String[]           _objectClassNames;
     private String[]           _spmlClassNames;
     private String[]           _targetNames;
-    private String             _psoTarget;
     private String             _nameAttribute;
 
     private String             _preSendCommand;
@@ -91,23 +92,38 @@ public class SpmlConfiguration extends AbstractConfiguration {
     public String getMessage(String key, Object... objects) {
     	return getConnectorMessages().format(key, key, objects);
     }
+    
+    private boolean isNull(String string) {
+    	return string==null || string.length()==0;
+    }
+
+    private boolean isNull(GuardedString string) {
+    	if (string==null)
+    		return true;
+    	GuardedStringAccessor accessor = new GuardedStringAccessor();
+    	string.access(accessor);
+    	char[] password = accessor.getArray();
+    	boolean isNull = password.length==0;
+    	Arrays.fill(password, ' ');
+    	return isNull;
+    }
 
     public void validate() {
-        if (_nameAttribute==null)
+        if (isNull(_nameAttribute))
             throw new ConnectorException(getMessage(SpmlMessages.NAME_NULL));
-        if (_protocol==null)
+        if (isNull(_protocol))
             throw new ConnectorException(getMessage(SpmlMessages.PROTOCOL_NULL));
-        if (_hostNameOrIpAddr==null)
+        if (isNull(_hostNameOrIpAddr))
             throw new ConnectorException(getMessage(SpmlMessages.HOST_NULL));
         if (_hostPortNumber==null)
             throw new ConnectorException(getMessage(SpmlMessages.PORT_NULL));
         if (_hostPortNumber<1 || _hostPortNumber>65535)
             throw new ConnectorException(getMessage(SpmlMessages.PORT_RANGE_ERROR, _hostPortNumber));
-        if (_file==null)
+        if (isNull(_file))
             throw new ConnectorException(getMessage(SpmlMessages.FILE_NULL));
-        if (_userName==null)
+        if (isNull(_userName))
             throw new ConnectorException(getMessage(SpmlMessages.USERNAME_NULL));
-        if (_password==null)
+        if (isNull(_password))
             throw new ConnectorException(getMessage(SpmlMessages.PASSWORD_NULL));
         if (_objectClassNames==null)
             throw new ConnectorException(getMessage(SpmlMessages.OBJECT_CLASS_NULL));
@@ -117,8 +133,6 @@ public class SpmlConfiguration extends AbstractConfiguration {
             throw new ConnectorException(getMessage(SpmlMessages.TARGET_NULL));
         if (_objectClassNames.length!=_spmlClassNames.length || _objectClassNames.length!=_targetNames.length)
             throw new ConnectorException(getMessage(SpmlMessages.SPML_CLASS_LENGTH));
-        if (_psoTarget==null)
-            throw new ConnectorException(getMessage(SpmlMessages.PSO_TARGET_NULL));
     }
 
     @ConfigurationProperty(order=1)
@@ -174,17 +188,8 @@ public class SpmlConfiguration extends AbstractConfiguration {
     public void setFile(String file) {
         _file = file;
     }
-
-    @ConfigurationProperty(order=7)
-    public String getPsoTarget() {
-        return _psoTarget;
-    }
-
-    public void setPsoTarget(String target) {
-        _psoTarget = target;
-    }
-
-    @ConfigurationProperty(order=8)
+    
+   @ConfigurationProperty(order=8)
     public String getNameAttribute() {
         return _nameAttribute;
     }

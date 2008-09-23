@@ -40,7 +40,6 @@
 package org.identityconnectors.spml;
 
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -474,10 +473,20 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
         }
         builder.setObjectClass(objectClass);
         if (attributesToGet==null || attributesToGet.contains(OperationalAttributes.ENABLE_NAME)) {
-            builder.addAttribute(getActiveStatus(uid, _configuration.getPsoTarget()));
+            builder.addAttribute(getActiveStatus(uid, getTargetforObjectClass(objectClass)));
         }
         builder.setName(name);
         return builder.build();
+    }
+    
+    private String getTargetforObjectClass(ObjectClass objectClass) {
+    	String[] classNames = _configuration.getObjectClassNames();
+    	String[] targetNames = _configuration.getTargetNames();
+    	for (int i=0; i<classNames.length; i++) {
+    		if (classNames[i].equals(objectClass.getObjectClassValue()))
+    			return targetNames[i];
+    	}
+    	return null;
     }
 
     private PSOIdentifier getPsoIdentifier(Uid uid, ObjectClass objectClass) {
@@ -722,23 +731,6 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
             return _objectClassMap.get(objectClass);
         } else {
             throw new ConnectorException(_configuration.getMessage(SpmlMessages.UNSUPPORTED_OBJECTCLASS, objectClass));
-        }
-    }
-    
-    private static class GuardedStringAccessor implements GuardedString.Accessor {
-        private char[] _array;
-        
-        public void access(char[] clearChars) {
-            _array = new char[clearChars.length];
-            System.arraycopy(clearChars, 0, _array, 0, _array.length);            
-        }
-        
-        public char[] getArray() {
-            return _array;
-        }
-
-        public void clear() {
-            Arrays.fill(_array, 0, _array.length, ' ');
         }
     }
 }
