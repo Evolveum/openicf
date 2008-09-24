@@ -81,9 +81,6 @@ namespace Org.IdentityConnectors.Common.Script.Shell
             public ShellScriptExecutor(string script) {
                 _script = script;             
             }
-            public void Dispose() {
-                
-            }
             public object Execute(IDictionary<string,object> arguments) {
                 // create the process info..
                 Process process = new Process();

@@ -81,8 +81,6 @@ namespace Org.IdentityConnectors.Common.Script.Boo
                     _engine.References.Add(assembly);       
                 }
             }
-            public void Dispose() {
-            }
             public object Execute(IDictionary<string,object> arguments) {
                 // add all the globals
                 IDictionary<string, object> args = CollectionUtil.NullAsEmpty(arguments);
