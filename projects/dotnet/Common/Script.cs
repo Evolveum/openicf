@@ -45,7 +45,7 @@ using System.Diagnostics;
 
 namespace Org.IdentityConnectors.Common.Script
 {
-    public interface ScriptExecutor {
+    public interface ScriptExecutor : IDisposable  {
         /// <summary>
         /// Executes the script with the given arguments.
         /// </summary>
