@@ -325,7 +325,7 @@ public class SpmlConnectorTests {
         }
     }
 
-    @Test//@Ignore
+    @Test@Ignore
     public void testListSchema() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
