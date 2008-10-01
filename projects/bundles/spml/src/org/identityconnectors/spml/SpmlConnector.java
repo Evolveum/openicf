@@ -54,6 +54,7 @@ import org.identityconnectors.common.script.ScriptExecutor;
 import org.identityconnectors.common.script.ScriptExecutorFactory;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
+import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -208,7 +209,7 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
             }
         }
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -407,7 +408,12 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
     }
     
     private String getTargetForObjectClass(ObjectClass objectClass) {
-        return _targetMap.get(objectClass.getObjectClassValue());
+    	String key = objectClass.getObjectClassValue();
+        if (_targetMap.containsKey(key)) {
+            return _targetMap.get(key);
+        } else {
+            throw new ConnectorException(_configuration.getMessage(SpmlMessages.UNSUPPORTED_OBJECTCLASS, objectClass));
+        }
     }
 
     private void closeIterator(ResultsIterator iterator)
