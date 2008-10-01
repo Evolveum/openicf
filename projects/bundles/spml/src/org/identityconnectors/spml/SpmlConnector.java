@@ -214,6 +214,7 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
      */
     public Uid create(ObjectClass objectClass, Set<Attribute> attributes, OperationOptions options) {
         try {
+            Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attributes));
         	//TODO: need to discuss how to handle group membership
         	// (there may be nothing here, other than remapping name, 
         	// which is handled by scripts, but want to be sure).
@@ -223,12 +224,27 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
             request.setTargetId(getTargetForObjectClass(objectClass));
             request.setRequestID(objectClassAsString(objectClass.getObjectClassValue())+":"+name.getNameValue());
             request.setExecutionMode(ExecutionMode.SYNCHRONOUS);
-            request.setData(getCreateAttributes(objectClass, attributes));
+            
+            // If we are enabling/disabling, that is a separate request
+            //
+            Attribute enable = attrMap.remove(OperationalAttributes.ENABLE_NAME);
+            Attribute disableDate = attrMap.remove(OperationalAttributes.DISABLE_DATE_NAME);
+            Attribute enableDate = attrMap.remove(OperationalAttributes.ENABLE_DATE_NAME);
+
+            // If we are expiring password, that is a separate request
+            //
+            Attribute expirePassword = attrMap.remove(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME);
+
+            request.setData(getCreateAttributes(objectClass, attrMap));
             AddResponse response = (AddResponse)_connection.send(request);
+            Uid uid = null;
             if (response.getStatus().equals(StatusCode.SUCCESS))
-                return new Uid(response.getPso().getPsoID().getID());
+                uid = new Uid(response.getPso().getPsoID().getID());
             else
                 throw new ConnectorException(asString(response.getErrorMessages()));
+            processEnable(objectClass, uid, enable, disableDate, enableDate);
+            processExpirePassword(objectClass, uid, expirePassword);
+            return uid;
         } catch (Spml2ExceptionWithResponse e) {
             log.error(e, "create failed:''{0}''", e.getResponse().getError());
             if (e.getResponse().getError()==ErrorCode.ALREADY_EXISTS)
@@ -250,9 +266,9 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
         return buffer.toString().substring(1);
     }
 
-    protected Extensible getCreateAttributes(ObjectClass objectClass, Set<Attribute> attributes) throws Exception {
+    protected Extensible getCreateAttributes(ObjectClass objectClass, Map<String, Attribute> attrMap) throws Exception {
         Extensible extensible = new Extensible();
-        for (Attribute attribute : attributes) {
+        for (Attribute attribute : attrMap.values()) {
             extensible.addOpenContentElement(new DSMLAttr(mapSetName(attribute.getName()), asDSMLValueArray(attribute.getValue())));
         }
         extensible.addOpenContentElement(new DSMLAttr("objectclass", _objectClassMap.get(objectClass.getObjectClassValue())));
@@ -510,87 +526,17 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
             Attribute enable = attrMap.remove(OperationalAttributes.ENABLE_NAME);
             Attribute disableDate = attrMap.remove(OperationalAttributes.DISABLE_DATE_NAME);
             Attribute enableDate = attrMap.remove(OperationalAttributes.ENABLE_DATE_NAME);
-            if (enable!=null) {
-                boolean isEnable = AttributeUtil.getBooleanValue(enable);
-                if (isEnable) {
-                    ResumeRequest request = new ResumeRequest();
-                    Long date = enableDate!=null?AttributeUtil.getLongValue(enableDate):null;
-                    if (date!=null) {
-                        // Date must be specified as UTC date with no Time Zone component
-                        //
-                        Date effectiveDate = new Date(date);
-                        String dateString = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSS").format(effectiveDate);
-                        request.setEffectiveDate(dateString);
-                    }
-                    request.setPsoID(getPsoIdentifier(uid, objectClass));
-                    request.setRequestID(uid.getUidValue());
-                    request.setExecutionMode(ExecutionMode.SYNCHRONOUS);
-                    log.info("enable(''{0}'')", uid.getUidValue());
-                    Response response = _connection.send(request);
-                    if (!response.getStatus().equals(StatusCode.SUCCESS)) {
-                        log.error("enable failed:''{0}''", response.getError());
-                        throw exceptionForId(response);
-                    }
-                } else {
-                    SuspendRequest request = new SuspendRequest();
-                    Long date = disableDate!=null?AttributeUtil.getLongValue(disableDate):null;
-                    if (date!=null) {
-                        // Date must be specified as UTC date with no Time Zone component
-                        //
-                        Date effectiveDate = new Date(date);
-                        String dateString = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSS").format(effectiveDate);
-                        request.setEffectiveDate(dateString);
-                    }
-                    request.setPsoID(getPsoIdentifier(uid, objectClass));
-                    request.setRequestID(uid.getUidValue());
-                    request.setExecutionMode(ExecutionMode.SYNCHRONOUS);
-                    log.info("disable(''{0}'')", uid.getUidValue());
-                    Response response = _connection.send(request);
-                    if (!response.getStatus().equals(StatusCode.SUCCESS)) {
-                        log.error("disable failed:''{0}''", response.getError());
-                        throw exceptionForId(response);
-                    }
-                }
-            }
+            processEnable(objectClass, uid, enable, disableDate, enableDate);
             
             // If we are changing password, that is a separate request
             //
             Attribute password = attrMap.remove(OperationalAttributes.PASSWORD_NAME);
-            if (password!=null) {
-                SetPasswordRequest request = new SetPasswordRequest();
-                GuardedString passwordGS = AttributeUtil.getGuardedStringValue(password);
-                GuardedStringAccessor accessor = new GuardedStringAccessor();
-                passwordGS.access(accessor);
-                String passwordString = new String(accessor.getArray());
-                accessor.clear();
-                request.setPassword(passwordString);
-                request.setPsoID(getPsoIdentifier(uid, objectClass));
-                request.setRequestID(uid.getUidValue());
-                request.setExecutionMode(ExecutionMode.SYNCHRONOUS);
-                log.info("change password(''{0}'')", uid.getUidValue());
-                SetPasswordResponse response = (SetPasswordResponse)_connection.send(request);
-                if (!response.getStatus().equals(StatusCode.SUCCESS)) {
-                    log.error("change password failed:''{0}''", response.getError());
-                    throw exceptionForId(response);
-                }
-             }
+            processPassword(objectClass, uid, password);
 
             // If we are expiring password, that is a separate request
             //
             Attribute expirePassword = attrMap.remove(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME);
-            if (expirePassword!=null) {
-                ExpirePasswordRequest request = new ExpirePasswordRequest();
-                request.setRemainingLogins(0);
-                request.setPsoID(getPsoIdentifier(uid, objectClass));
-                request.setRequestID(uid.getUidValue());
-                request.setExecutionMode(ExecutionMode.SYNCHRONOUS);
-                log.info("expire password(''{0}''", uid.getUidValue());
-                ExpirePasswordResponse response = (ExpirePasswordResponse)_connection.send(request);
-                if (!response.getStatus().equals(StatusCode.SUCCESS)) {
-                    log.error("expire password failed:''{0}''", response.getError());
-                    throw exceptionForId(response);
-                }
-            }
+            processExpirePassword(objectClass, uid, expirePassword);
 
             // Remaining attributes are handled here
             //
@@ -617,6 +563,94 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
             throw ConnectorException.wrap(e);
         }
     }
+
+	private void processPassword(ObjectClass objectClass, Uid uid,
+			Attribute password) throws Spml2ExceptionWithResponse,
+			Spml2Exception {
+		if (password!=null) {
+		    SetPasswordRequest request = new SetPasswordRequest();
+		    GuardedString passwordGS = AttributeUtil.getGuardedStringValue(password);
+		    GuardedStringAccessor accessor = new GuardedStringAccessor();
+		    passwordGS.access(accessor);
+		    String passwordString = new String(accessor.getArray());
+		    accessor.clear();
+		    request.setPassword(passwordString);
+		    request.setPsoID(getPsoIdentifier(uid, objectClass));
+		    request.setRequestID(uid.getUidValue());
+		    request.setExecutionMode(ExecutionMode.SYNCHRONOUS);
+		    log.info("change password(''{0}'')", uid.getUidValue());
+		    SetPasswordResponse response = (SetPasswordResponse)_connection.send(request);
+		    if (!response.getStatus().equals(StatusCode.SUCCESS)) {
+		        log.error("change password failed:''{0}''", response.getError());
+		        throw exceptionForId(response);
+		    }
+		 }
+	}
+
+	private void processExpirePassword(ObjectClass objectClass, Uid uid,
+			Attribute expirePassword) throws Spml2ExceptionWithResponse,
+			Spml2Exception {
+		if (expirePassword!=null) {
+		    ExpirePasswordRequest request = new ExpirePasswordRequest();
+		    request.setRemainingLogins(0);
+		    request.setPsoID(getPsoIdentifier(uid, objectClass));
+		    request.setRequestID(uid.getUidValue());
+		    request.setExecutionMode(ExecutionMode.SYNCHRONOUS);
+		    log.info("expire password(''{0}''", uid.getUidValue());
+		    ExpirePasswordResponse response = (ExpirePasswordResponse)_connection.send(request);
+		    if (!response.getStatus().equals(StatusCode.SUCCESS)) {
+		        log.error("expire password failed:''{0}''", response.getError());
+		        throw exceptionForId(response);
+		    }
+		}
+	}
+
+	private void processEnable(ObjectClass objectClass, Uid uid,
+			Attribute enable, Attribute disableDate, Attribute enableDate)
+			throws Spml2ExceptionWithResponse, Spml2Exception {
+		if (enable!=null) {
+		    boolean isEnable = AttributeUtil.getBooleanValue(enable);
+		    if (isEnable) {
+		        ResumeRequest request = new ResumeRequest();
+		        Long date = enableDate!=null?AttributeUtil.getLongValue(enableDate):null;
+		        if (date!=null) {
+		            // Date must be specified as UTC date with no Time Zone component
+		            //
+		            Date effectiveDate = new Date(date);
+		            String dateString = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSS").format(effectiveDate);
+		            request.setEffectiveDate(dateString);
+		        }
+		        request.setPsoID(getPsoIdentifier(uid, objectClass));
+		        request.setRequestID(uid.getUidValue());
+		        request.setExecutionMode(ExecutionMode.SYNCHRONOUS);
+		        log.info("enable(''{0}'')", uid.getUidValue());
+		        Response response = _connection.send(request);
+		        if (!response.getStatus().equals(StatusCode.SUCCESS)) {
+		            log.error("enable failed:''{0}''", response.getError());
+		            throw exceptionForId(response);
+		        }
+		    } else {
+		        SuspendRequest request = new SuspendRequest();
+		        Long date = disableDate!=null?AttributeUtil.getLongValue(disableDate):null;
+		        if (date!=null) {
+		            // Date must be specified as UTC date with no Time Zone component
+		            //
+		            Date effectiveDate = new Date(date);
+		            String dateString = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSS").format(effectiveDate);
+		            request.setEffectiveDate(dateString);
+		        }
+		        request.setPsoID(getPsoIdentifier(uid, objectClass));
+		        request.setRequestID(uid.getUidValue());
+		        request.setExecutionMode(ExecutionMode.SYNCHRONOUS);
+		        log.info("disable(''{0}'')", uid.getUidValue());
+		        Response response = _connection.send(request);
+		        if (!response.getStatus().equals(StatusCode.SUCCESS)) {
+		            log.error("disable failed:''{0}''", response.getError());
+		            throw exceptionForId(response);
+		        }
+		    }
+		}
+	}
 
     protected void setModifications(ModifyRequest modifyRequest, ObjectClass objectClass, Map<String, Attribute> attributes) throws Exception {
         for (Attribute attribute : attributes.values()) {
