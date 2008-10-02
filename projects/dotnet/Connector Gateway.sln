@@ -24,6 +24,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BooScriptExecutorFactory", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShellScriptExecutorFactory", "ShellScriptExecutorFactory\ShellScriptExecutorFactory.csproj", "{4700690A-2D29-40A0-86AC-E5A9F71A479A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActiveDirectoryConnector", "ActiveDirectoryConnector\ActiveDirectoryConnector.csproj", "{BDF495CA-0FCD-4E51-A871-D467CDE3B43E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
