@@ -38,6 +38,7 @@
  * -----------
  */
 using System;
+using Org.IdentityConnectors.Framework.Common.Objects;
 
 namespace Org.IdentityConnectors.Framework.Common.Exceptions
 {
@@ -233,10 +234,15 @@ namespace Org.IdentityConnectors.Framework.Common.Exceptions
     }
     
     public class UnknownUidException : InvalidCredentialException {
+        const string MSG = "Object with Uid '{0}' and ObjectClass '{1}' does not exist!";
         
         public UnknownUidException() : base() {
         }
     
+        public UnknownUidException(Uid uid, ObjectClass objclass) : 
+        	base(String.Format(MSG, uid, objclass)){
+        }
+        
         public UnknownUidException(String message) : base(message) {
         }
         

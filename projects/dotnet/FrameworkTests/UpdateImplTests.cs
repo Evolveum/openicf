@@ -320,6 +320,7 @@ namespace FrameworkTests
             ConnectorAttribute cattr = ConnectorAttributeBuilder.Build("abc", 1);
             baseAttrs.Add(battr);
             changeset.Add(cattr);
+            expected.Add(cattr);
             actual = up.Merge(UpdateApiType.REPLACE, changeset, baseAttrs);
             Assert.IsTrue(AreEqual(expected, actual));
         }

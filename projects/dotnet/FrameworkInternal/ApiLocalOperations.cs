@@ -1243,9 +1243,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
                 Uid uid = ConnectorAttributeUtil.GetUidAttribute(normalizedAttributes);
                 ConnectorObject o = GetConnectorObject(objclass, uid, options);
                 if (o == null) {
-                    string MSG = "Object with Uid '{0}' and ObjectClass '{1}' does not exist!";
-                    string ERR = String.Format(MSG, uid, objclass);
-                    throw new UnknownUidException(ERR);
+                    throw new UnknownUidException(uid, objclass);
                 }
                 // merge the update data..
                 ICollection<ConnectorAttribute> mergeAttrs = Merge(type, normalizedAttributes, o.GetAttributes());
@@ -1274,37 +1272,38 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
                 // get the name of the update attributes
                 string name = updateAttr.Name;
                 ConnectorAttribute baseAttr = CollectionUtil.GetValue(baseAttrMap, name, null);
-                // if this is a delete and the base attribute doesn't exist
-                if (UpdateApiType.DELETE.Equals(type) && baseAttr == null) {
-                    continue;
-                }
-                // exclude attributes that are the same on replace
-                if (UpdateApiType.REPLACE.Equals(type) && updateAttr.Equals(baseAttr)) {
-                    continue;
-                }
                 ICollection<object> values;
                 ConnectorAttribute modifiedAttr; 
-                if (UpdateApiType.ADD.Equals(type) && baseAttr != null) {
-                    // create a new list with the base attribute to add to..
-                    values = CollectionUtil.NewList(baseAttr.Value);
-                    CollectionUtil.AddAll(values,updateAttr.Value);
-                    modifiedAttr = ConnectorAttributeBuilder.Build(name, values);
+                if (UpdateApiType.ADD.Equals(type)) {
+                	if (baseAttr == null) {
+                		modifiedAttr = updateAttr;
+                	} else {
+	                    // create a new list with the base attribute to add to..
+	                    values = CollectionUtil.NewList(baseAttr.Value);
+	                    CollectionUtil.AddAll(values,updateAttr.Value);
+	                    modifiedAttr = ConnectorAttributeBuilder.Build(name, values);
+                	}
                 } else if (UpdateApiType.DELETE.Equals(type)) {
-                    // create a list with the base attribute to remove from..
-                    values = CollectionUtil.NewList(baseAttr.Value);
-                    foreach (Object val in updateAttr.Value) {
-                        values.Remove(val);
-                    }
-                    // if the values are empty send a null to the connector..
-                    if (values.Count == 0) {
-                        modifiedAttr = ConnectorAttributeBuilder.Build(name);
-                    } else {
-                        modifiedAttr = ConnectorAttributeBuilder.Build(name, values);
-                    }
+                	if (baseAttr == null) {
+                		// nothing to actually do the attribute does not exist
+                		continue;
+                	} else {
+	                    // create a list with the base attribute to remove from..
+	                    values = CollectionUtil.NewList(baseAttr.Value);
+	                    foreach (Object val in updateAttr.Value) {
+	                        values.Remove(val);
+	                    }
+	                    // if the values are empty send a null to the connector..
+	                    if (values.Count == 0) {
+	                        modifiedAttr = ConnectorAttributeBuilder.Build(name);
+	                    } else {
+	                        modifiedAttr = ConnectorAttributeBuilder.Build(name, values);
+	                    }
+                	}
+                } else if (UpdateApiType.REPLACE.Equals(type)) {
+                	modifiedAttr = updateAttr;
                 } else {
-                    // replace the attribute w/ the change set value.
-                    values = updateAttr.Value;
-                    modifiedAttr = ConnectorAttributeBuilder.Build(name, values);
+                	throw new ArgumentException("Unknown Type: " + type);
                 }
                 ret.Add(modifiedAttr);
             }
