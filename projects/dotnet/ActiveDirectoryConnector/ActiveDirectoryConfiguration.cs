@@ -64,43 +64,43 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public String DomainName
         { get; set; }
 
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display.DirectoryAdminName", HelpMessageKey = "help.DirectoryAdminName")]
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_DirectoryAdminName", HelpMessageKey = "help_DirectoryAdminName")]
         public String DirectoryAdminName
         { get; set; }
 
-        [ConfigurationProperty(Confidential = true, DisplayMessageKey = "display.DirectoryAdminPassword", HelpMessageKey = "help.DirectoryAdminPassword")]
+        [ConfigurationProperty(Confidential = true, DisplayMessageKey = "display_DirectoryAdminPassword", HelpMessageKey = "help_DirectoryAdminPassword")]
         public String DirectoryAdminPassword
         { get; set; }
 
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display.ObjectClass", HelpMessageKey = "help.ObjectClass")]
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_ObjectClass", HelpMessageKey = "help_ObjectClass")]
         public String ObjectClass
         { get; set; }
 
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display.UserProvidesPasswordOnChange", HelpMessageKey = "help.UserProvidesPasswordOnChange")]
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_UserProvidesPasswordOnChange", HelpMessageKey = "help_UserProvidesPasswordOnChange")]
         public bool UserProvidesPasswordOnChange{get;set;}
 
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display.CreateHomeDirectory", HelpMessageKey = "help.CreateHomeDirectory")]
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_CreateHomeDirectory", HelpMessageKey = "help_CreateHomeDirectory")]
         public bool CreateHomeDirectory { get; set; }
 
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display.SearchContext", HelpMessageKey = "help.SearchContext")]
-        public String SearchContext
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_SearchContainer", HelpMessageKey = "help_SearchContainer")]
+        public String SearchContainer
         { get; set; }
 
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display.SearchChildDomains", HelpMessageKey = "help.SearchChildDomains")]
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_SearchChildDomains", HelpMessageKey = "help_SearchChildDomains")]
         public bool SearchChildDomains {get;set;}
 
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display.EncryptionType", HelpMessageKey = "help.EncryptionType")]
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_EncryptionType", HelpMessageKey = "help_EncryptionType")]
         public String EncryptionType
         { get; set; }
 
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display.LDAPHostName", HelpMessageKey = "help.LDAPHostName")]
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_LDAPHostName", HelpMessageKey = "help_LDAPHostName")]
         public String LDAPHostName
         { get; set; }
 
         public ActiveDirectoryConfiguration()
         {
             DomainName = "";
-            SearchContext = "";
+            SearchContainer = "";
             DirectoryAdminName = "cn=DirectoryAdmin";
             ObjectClass = "User";
             UserProvidesPasswordOnChange = false;

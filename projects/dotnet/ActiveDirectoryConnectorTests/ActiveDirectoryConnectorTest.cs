@@ -54,6 +54,7 @@ using System.Resources;
 using System.IO;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using Org.IdentityConnectors.Framework.Common.Exceptions;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
@@ -84,6 +85,30 @@ namespace Org.IdentityConnectors.ActiveDirectory
             String directoryAdminName = GetProperty(CONFIG_PROPERTY_USER);
             config.DirectoryAdminName = directoryAdminName;
             Assert.AreEqual(directoryAdminName, config.DirectoryAdminName);
+        }
+
+        [Test]
+        public void TestTest()
+        {
+            ActiveDirectoryConnector connectorGood = new ActiveDirectoryConnector();
+            ActiveDirectoryConfiguration config = (ActiveDirectoryConfiguration)GetConfiguration();
+            connectorGood.Init(config);
+            connectorGood.Test();
+
+            bool threwException = false;
+            try
+            {
+                config.ObjectClass = "BadObjectClass";
+                ActiveDirectoryConnector connectorBad = new ActiveDirectoryConnector();
+                connectorBad.Init(config);
+                connectorBad.Test();
+            }
+            catch (ConnectorException e)
+            {
+                threwException = true;
+            }
+
+            Assert.IsTrue(threwException, "Bad configuration should have caused an exception");
         }
 
         [Test]
@@ -1395,6 +1420,22 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
 
+        [Test]
+        public void TestGetLastSyncToken()
+        {
+            //Initialize Connector
+            ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
+            ActiveDirectoryConfiguration configuration = 
+                (ActiveDirectoryConfiguration)GetConfiguration();
+            configuration.SearchChildDomains = false;
+            connector.Init(configuration);
+            SyncToken noGCToken = connector.GetLatestSyncToken();
+
+            configuration.SearchChildDomains = true;
+            connector.Init(configuration);
+            SyncToken GCToken = connector.GetLatestSyncToken();
+        }
+
         public long GetUpdateUsnFromToken(SyncToken token)
         {
             string[] tokenParts = ((string)token.Value).Split('|');
@@ -1764,7 +1805,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             config.LDAPHostName = GetProperty(CONFIG_PROPERTY_LDAPHOSTNAME);
             config.DirectoryAdminName = GetProperty(CONFIG_PROPERTY_USER);
             config.DirectoryAdminPassword = GetProperty(CONFIG_PROPERTY_PASSWORD);
-            config.SearchContext = GetProperty(CONFIG_PROPERTY_SEARCH_CONTEXT);
+            config.SearchContainer = GetProperty(CONFIG_PROPERTY_SEARCH_CONTEXT);
             config.SyncDomainController = GetProperty(CONFIG_PROPERTY_SYNC_DOMAIN_CONTROLLER);
             config.SyncGlobalCatalogServer = GetProperty(CONFIG_PROPERTY_GC_DOMAIN_CONTROLLER);
             return config;

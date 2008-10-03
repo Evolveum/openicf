@@ -132,6 +132,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 "groupType",
                 "authOrig",
                 "unauthOrig",
+                "objectClass",
             };
 
         // This is the list of attributes returned by default if no attributes are
@@ -296,77 +297,77 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 return _schema;
             }
 
-            // could have blocked on the lock while someone else built the 
-            // schema, so check one more time before building
-            if (_schema == null)
-            {
-                String serverName = _configuration.LDAPHostName;
-                Forest forest = null;
+            ActiveDirectorySchema ADSchema = GetADSchema();
 
-                if ((serverName == null) || (serverName.Length == 0))
-                {
-                    // get the active directory schema
-                    DirectoryContext context = new DirectoryContext(
-                            DirectoryContextType.Domain,
-                            _configuration.DomainName,
-                            _configuration.DirectoryAdminName,
-                            _configuration.DirectoryAdminPassword);
-                    DomainController dc = DomainController.FindOne(context);
-                    forest = dc.Forest;
-                }
-                else
-                {
-                    DirectoryContext context = new DirectoryContext(
-                            DirectoryContextType.DirectoryServer,
-                            _configuration.LDAPHostName,
-                            _configuration.DirectoryAdminName,
-                            _configuration.DirectoryAdminPassword);
-                    forest = Forest.GetForest(context);
-                }
+            // get the user attribute infos and operations
+            ICollection<ConnectorAttributeInfo> userAttributeInfos =
+                GetUserAttributeInfos(ADSchema);
+            ObjectClassInfoBuilder ociBuilder = new ObjectClassInfoBuilder();
+            ociBuilder.ObjectType = ObjectClass.ACCOUNT_NAME;
+            ociBuilder.AddAllAttributeInfo(userAttributeInfos);
+            ObjectClassInfo userInfo = ociBuilder.Build();
 
-                ActiveDirectorySchema ADSchema = forest.Schema;
+            // get the group attribute infos and operations
+            ICollection<ConnectorAttributeInfo> groupAttributeInfos =
+                GetGroupAttributeInfos(ADSchema);
+            ociBuilder = new ObjectClassInfoBuilder();
+            ociBuilder.ObjectType = ObjectClass.GROUP_NAME;
+            ociBuilder.AddAllAttributeInfo(groupAttributeInfos);
+            ObjectClassInfo groupInfo = ociBuilder.Build();
 
+            // get the organizationalUnit attribute infos and operations
+            ICollection<ConnectorAttributeInfo> ouAttributeInfos =
+                GetOuAttributeInfos(ADSchema);
+            ociBuilder = new ObjectClassInfoBuilder();
+            ociBuilder.ObjectType = OBJECTCLASS_OU;
+            ociBuilder.AddAllAttributeInfo(ouAttributeInfos);
+            ObjectClassInfo ouInfo = ociBuilder.Build();
 
-                // get the user attribute infos and operations
-                ICollection<ConnectorAttributeInfo> userAttributeInfos =
-                    GetUserAttributeInfos(ADSchema);
-                ObjectClassInfoBuilder ociBuilder = new ObjectClassInfoBuilder();
-                ociBuilder.ObjectType = ObjectClass.ACCOUNT_NAME;
-                ociBuilder.AddAllAttributeInfo(userAttributeInfos);
-                ObjectClassInfo userInfo = ociBuilder.Build();
+            SchemaBuilder schemaBuilder = 
+                new SchemaBuilder(SafeType<Connector>.Get(this));
+            
+            schemaBuilder.DefineObjectClass(userInfo);
+            schemaBuilder.DefineObjectClass(groupInfo);
+            schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<AuthenticateOp>(), groupInfo);
+            schemaBuilder.DefineObjectClass(ouInfo);
+            schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<AuthenticateOp>(), ouInfo);
+            schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<CreateOp>(), ouInfo);
+            schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<DeleteOp>(), ouInfo);
+            schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<SearchOp<String>>(), ouInfo);
 
-                // get the group attribute infos and operations
-                ICollection<ConnectorAttributeInfo> groupAttributeInfos =
-                    GetGroupAttributeInfos(ADSchema);
-                ociBuilder = new ObjectClassInfoBuilder();
-                ociBuilder.ObjectType = ObjectClass.GROUP_NAME;
-                ociBuilder.AddAllAttributeInfo(groupAttributeInfos);
-                ObjectClassInfo groupInfo = ociBuilder.Build();
-
-                // get the organizationalUnit attribute infos and operations
-                ICollection<ConnectorAttributeInfo> ouAttributeInfos =
-                    GetOuAttributeInfos(ADSchema);
-                ociBuilder = new ObjectClassInfoBuilder();
-                ociBuilder.ObjectType = OBJECTCLASS_OU;
-                ociBuilder.AddAllAttributeInfo(ouAttributeInfos);
-                ObjectClassInfo ouInfo = ociBuilder.Build();
-
-                SchemaBuilder schemaBuilder = 
-                    new SchemaBuilder(SafeType<Connector>.Get(this));
-                
-                schemaBuilder.DefineObjectClass(userInfo);
-                schemaBuilder.DefineObjectClass(groupInfo);
-                schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<AuthenticateOp>(), groupInfo);
-                schemaBuilder.DefineObjectClass(ouInfo);
-                schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<AuthenticateOp>(), ouInfo);
-                schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<CreateOp>(), ouInfo);
-                schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<DeleteOp>(), ouInfo);
-                schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<SearchOp<String>>(), ouInfo);
-
-                _schema = schemaBuilder.Build();
-            }
+            _schema = schemaBuilder.Build();
 
             return _schema;
+        }
+
+        private ActiveDirectorySchema GetADSchema()
+        {
+            String serverName = _configuration.LDAPHostName;
+            Forest forest = null;
+
+            if ((serverName == null) || (serverName.Length == 0))
+            {
+                // get the active directory schema
+                DirectoryContext context = new DirectoryContext(
+                        DirectoryContextType.Domain,
+                        _configuration.DomainName,
+                        _configuration.DirectoryAdminName,
+                        _configuration.DirectoryAdminPassword);
+                DomainController dc = DomainController.FindOne(context);
+                forest = dc.Forest;
+            }
+            else
+            {
+                DirectoryContext context = new DirectoryContext(
+                        DirectoryContextType.DirectoryServer,
+                        _configuration.LDAPHostName,
+                        _configuration.DirectoryAdminName,
+                        _configuration.DirectoryAdminPassword);
+                forest = Forest.GetForest(context);
+            }
+
+            ActiveDirectorySchema ADSchema = forest.Schema;
+            return ADSchema;
         }
 
         public ICollection<ConnectorAttributeInfo> GetUserAttributeInfos(
@@ -609,7 +610,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
 
                 ExecuteQuery(oclass, query, handler, options,
-                    false, null, _configuration.LDAPHostName, useGC, _configuration.SearchContext);
+                    false, null, _configuration.LDAPHostName, useGC, _configuration.SearchContainer);
             }
             catch (Exception e)
             {
@@ -686,6 +687,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             {
                 Trace.TraceInformation("Found object {0}", result.Path);
                 ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+                builder.ObjectClass = oclass;
 
                 bool isDeleted = false;
                 if(result.Properties.Contains(ATT_IS_DELETED)) {
@@ -836,6 +838,26 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void Test()
         {
             _configuration.Validate();
+
+            bool objectFound = true;
+            // now make sure they specified a valid value for the User Object Class
+            ActiveDirectorySchema ADSchema = GetADSchema();
+            ActiveDirectorySchemaClass ADSchemaClass = null;
+            try
+            {
+                ADSchemaClass = ADSchema.FindClass(_configuration.ObjectClass);
+
+            }
+            catch (ActiveDirectoryObjectNotFoundException exception)
+            {
+                objectFound = false;
+            }
+            if ((!objectFound) || (ADSchemaClass == null))
+            {
+                throw new ConnectorException(
+                    String.Format("Invalid Object Class was specified in the connector configuration.  Object Class \'{0}\' was not found in Active Directory",
+                    _configuration.ObjectClass));
+            }
         }
 
         #endregion
@@ -1035,65 +1057,29 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         public SyncToken GetLatestSyncToken()
         {
-            String serverName = GetSyncServerName();
-
-            ActiveDirectorySyncToken adSyncToken =
-                new ActiveDirectorySyncToken((string)null, serverName, UseGlobalCatalog());
-
-            string updatedQuery = GetSyncUpdateQuery(adSyncToken);
-            string deletedQuery = GetSyncDeleteQuery(adSyncToken);
-
-            string updateSearchRoot;
-            string deleteSearchRoot;
-
-            if (UseGlobalCatalog())
+            string serverName = GetSyncServerName();
+            long highestCommittedUsn = 0;
+            bool useGlobalCatalog = UseGlobalCatalog();
+            if (useGlobalCatalog)
             {
-                updateSearchRoot = ActiveDirectoryUtils.GetGCPath(serverName, 
-                    _configuration.SyncSearchContext);
-                deleteSearchRoot = ActiveDirectoryUtils.GetGCPath(serverName, null);
+                DirectoryContext context = new DirectoryContext(DirectoryContextType.DirectoryServer,
+                    serverName, _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
+                GlobalCatalog gc = GlobalCatalog.GetGlobalCatalog(context);
+                highestCommittedUsn = gc.HighestCommittedUsn;
             }
             else
             {
-                updateSearchRoot = ActiveDirectoryUtils.GetLDAPPath(serverName, 
-                    _configuration.SyncSearchContext);
-                deleteSearchRoot = ActiveDirectoryUtils.GetGCPath(serverName, null);
+                DirectoryContext context = new DirectoryContext(DirectoryContextType.DirectoryServer,
+                    serverName, _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
+                DomainController dc = DomainController.GetDomainController(context);
+                highestCommittedUsn = dc.HighestCommittedUsn;
             }
 
-            DirectoryEntry updateSearchRootEntry = new DirectoryEntry(updateSearchRoot,
-                _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
-            DirectoryEntry deleteSearchRootEntry = new DirectoryEntry(deleteSearchRoot,
-                _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
-
-
-            DirectorySearcher updateSearcher = 
-                new DirectorySearcher(updateSearchRootEntry, updatedQuery);
-            DirectorySearcher deleteSearcher =
-                new DirectorySearcher(deleteSearchRootEntry, deletedQuery);
-
-            // according to the docs, I would think that this would make the sort order
-            // to be descending.  It does not, so setting the direction below.
-            updateSearcher.Sort = new SortOption(ATT_USN_CHANGED, SortDirection.Descending);
-            updateSearcher.Sort.Direction = SortDirection.Descending;
-            updateSearcher.PageSize = 10;
-            SearchResultCollection updateResults = updateSearcher.FindAll();
-            if ((updateResults != null) && (updateResults.Count > 0))
-            {
-                adSyncToken.LastModifiedUsn = (long)updateResults[0].Properties[ATT_USN_CHANGED][0];
-            }
-
-            // according to the docs, I would think that this would make the sort order
-            // to be descending.  It does not, so setting the direction below.
-            deleteSearcher.Sort = new SortOption(ATT_USN_CHANGED, SortDirection.Descending);
-            deleteSearcher.Sort.Direction = SortDirection.Descending;
-            deleteSearcher.PageSize = 10;
-            deleteSearcher.Tombstone = true;
-            SearchResultCollection deleteResults = deleteSearcher.FindAll();
-            if ((deleteResults != null) && (deleteResults.Count > 0))
-            {
-                adSyncToken.LastDeleteUsn = (long)deleteResults[0].Properties[ATT_USN_CHANGED][0];
-            }
-
-            return adSyncToken.GetSyncToken();
+            ActiveDirectorySyncToken token = 
+                new ActiveDirectorySyncToken("", serverName, useGlobalCatalog);
+            token.LastDeleteUsn = highestCommittedUsn;
+            token.LastModifiedUsn = highestCommittedUsn;
+            return token.GetSyncToken();
         }
 
         string GetSyncServerName()
