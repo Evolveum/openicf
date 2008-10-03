@@ -130,18 +130,22 @@
 		</Content>
 	</ItemGroup>
 	<Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-	<!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+	<Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" Condition=" !Exists('$(SharpDevelopBinPath)') " />
+	<Target Name="BeforeBuild">
+	</Target>
+	<Target Name="AfterBuild">
+		<!-- Run the tests -->
+		<CreateItem Include="ActiveDirectoryConnectorTests.dll">
+			<Output TaskParameter="Include" ItemName="TestAssembly" />
+		</CreateItem>
+		<MSBuild.Community.Tasks.NUnit DisableShadowCopy="true" WorkingDirectory="bin\$(Configuration)" Assemblies="@(TestAssembly)" ContinueOnError="true" ToolPath="$(NUNIT_HOME)\bin" OutputXmlFile="TestResults_$(Configuration).xml" />
+	</Target>
+	
 	<PropertyGroup>
 		<PreBuildEvent>
 		</PreBuildEvent>
 		<PostBuildEvent>copy "$(ProjectDir)\..\FrameworkInternal\bin\Debug\FrameworkInternal.dll" "$(ProjectDir)\$(OutDir)";
-copy "$(ProjectDir)\..\ShellScriptExecutorFactory\bin\Debug\Shell.ScriptExecutorFactory.dll" "$(ProjectDir)\$(OutDir)";
-</PostBuildEvent>
+		copy "$(ProjectDir)\..\ShellScriptExecutorFactory\bin\Debug\Shell.ScriptExecutorFactory.dll" "$(ProjectDir)\$(OutDir)";
+		</PostBuildEvent>
 	</PropertyGroup>
 </Project>
