@@ -144,8 +144,8 @@
 	<PropertyGroup>
 		<PreBuildEvent>
 		</PreBuildEvent>
-		<PostBuildEvent>copy "$(ProjectDir)\..\FrameworkInternal\bin\Debug\FrameworkInternal.dll" "$(ProjectDir)\$(OutDir)";
-		copy "$(ProjectDir)\..\ShellScriptExecutorFactory\bin\Debug\Shell.ScriptExecutorFactory.dll" "$(ProjectDir)\$(OutDir)";
+		<PostBuildEvent>copy "$(ProjectDir)\..\FrameworkInternal\bin\$(Configuration)\FrameworkInternal.dll" "$(ProjectDir)\$(OutDir)";
+		copy "$(ProjectDir)\..\ShellScriptExecutorFactory\bin\$(Configuration)\Shell.ScriptExecutorFactory.dll" "$(ProjectDir)\$(OutDir)";
 		</PostBuildEvent>
 	</PropertyGroup>
 </Project>
