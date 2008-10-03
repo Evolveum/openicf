@@ -1261,11 +1261,10 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
                 ICollection<ConnectorAttribute> baseAttrs) {
             // return the merged attributes
             ICollection<ConnectorAttribute> ret = new HashSet<ConnectorAttribute>();
-            ret.Add(ConnectorAttributeUtil.GetUidAttribute(baseAttrs));
             IDictionary<String, ConnectorAttribute> baseAttrMap = ConnectorAttributeUtil.ToMap(baseAttrs);
             // run through attributes of the current object..
             foreach (ConnectorAttribute updateAttr in updateAttrs) {
-                // ignore uid because its immutable from this layer..
+                // ignore uid because its immutable..
                 if (updateAttr is Uid) {
                     continue;
                 }
@@ -1307,6 +1306,16 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
                 }
                 ret.Add(modifiedAttr);
             }
+            // add the rest of the base attributes that were not update attrs
+            IDictionary<String, ConnectorAttribute> updateAttrMap = 
+            	ConnectorAttributeUtil.ToMap(updateAttrs);
+            foreach (ConnectorAttribute a in baseAttrs) {
+            	if (!updateAttrMap.ContainsKey(a.Name)) {
+            		ret.Add(a);
+            	}
+            }
+           	// always add the UID..
+           	ret.Add(updateAttrMap[Uid.NAME]);
             return ret;
         }
 
