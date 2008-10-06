@@ -212,10 +212,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
             
             try
             {
+                /*
                 if (!DirectoryEntry.Exists(ldapContainerPath))
                 {
                     throw new ConnectorException("Container does not exist");
                 }
+                */
 
                 // Get the correct container, and put the new user in it
                 DirectoryEntry containerDe = new DirectoryEntry(ldapContainerPath,
