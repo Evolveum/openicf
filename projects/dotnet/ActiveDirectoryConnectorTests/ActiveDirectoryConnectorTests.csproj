@@ -138,7 +138,7 @@
 		<CreateItem Include="ActiveDirectoryConnectorTests.dll">
 			<Output TaskParameter="Include" ItemName="TestAssembly" />
 		</CreateItem>
-		<MSBuild.Community.Tasks.NUnit DisableShadowCopy="true" WorkingDirectory="bin\$(Configuration)" Assemblies="@(TestAssembly)" ContinueOnError="true" ToolPath="$(NUNIT_HOME)\bin" OutputXmlFile="TestResults_$(Configuration).xml" />
+		<MSBuild.Community.Tasks.NUnit DisableShadowCopy="true" WorkingDirectory="bin/$(Configuration)" Assemblies="@(TestAssembly)" ContinueOnError="true" ToolPath="$(NUNIT_HOME)/bin" OutputXmlFile="TestResults_$(Configuration).xml" />
 	</Target>
 	
 	<PropertyGroup>
