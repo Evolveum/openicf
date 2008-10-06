@@ -2145,6 +2145,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public string GetProperty(string propertyName)
         {
             string x = TestHelpers.GetProperty(propertyName, null);
+            Console.WriteLine(String.Format("GetProperty: {0}={1}", propertyName, x));
             return x;
         }
 
