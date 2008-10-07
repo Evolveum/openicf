@@ -40,8 +40,6 @@
 package org.identityconnectors.vms;
 
 public interface VmsConstants {
-    public static final String NO                       = "NO";
-
     // Names of ATTRIBUTES
     //
     public static final String ATTR_ACCESS              = "ACCESS";
@@ -122,8 +120,6 @@ public interface VmsConstants {
     public static final String FLAG_RESTRICTED          = "RESTRICTED";
     public static final String FLAG_VMSAUTH             = "VMSAUTH";
 
-    public static final String FLAG_NOT                 = NO;
-
     // VMS Privileges
     //
     public static final String PRIV_ACNT                = "ACNT";
@@ -196,6 +192,4 @@ public interface VmsConstants {
     public static final String DAYS_THU                  = "Thu";
     public static final String DAYS_FRI                  = "Fri";
     public static final String DAYS_SAT                  = "Sat";
-
-    public static final String DAYS_NOT                  = NO;
 }

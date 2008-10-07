@@ -39,44 +39,7 @@
  */
 package org.identityconnectors.vms;
 
-import static org.identityconnectors.vms.VmsConstants.ATTR_ALGORITHM;
-import static org.identityconnectors.vms.VmsConstants.ATTR_ASTLM;
-import static org.identityconnectors.vms.VmsConstants.ATTR_BIOLM;
-import static org.identityconnectors.vms.VmsConstants.ATTR_BYTLM;
-import static org.identityconnectors.vms.VmsConstants.ATTR_DEFPRIVILEGES;
-import static org.identityconnectors.vms.VmsConstants.ATTR_DIOLM;
-import static org.identityconnectors.vms.VmsConstants.ATTR_EXPIRATION;
-import static org.identityconnectors.vms.VmsConstants.ATTR_FILLM;
-import static org.identityconnectors.vms.VmsConstants.ATTR_FLAGS;
-import static org.identityconnectors.vms.VmsConstants.ATTR_JTQUOTA;
-import static org.identityconnectors.vms.VmsConstants.ATTR_MAXACCTJOBS;
-import static org.identityconnectors.vms.VmsConstants.ATTR_MAXDETACH;
-import static org.identityconnectors.vms.VmsConstants.ATTR_OWNER;
-import static org.identityconnectors.vms.VmsConstants.ATTR_PBYTLM;
-import static org.identityconnectors.vms.VmsConstants.ATTR_PRCLM;
-import static org.identityconnectors.vms.VmsConstants.ATTR_PRIMEDAYS;
-import static org.identityconnectors.vms.VmsConstants.ATTR_PRIORITY;
-import static org.identityconnectors.vms.VmsConstants.ATTR_PRIVILEGES;
-import static org.identityconnectors.vms.VmsConstants.ATTR_PWDEXPIRED;
-import static org.identityconnectors.vms.VmsConstants.ATTR_QUEPRIO;
-import static org.identityconnectors.vms.VmsConstants.ATTR_SHRFILLM;
-import static org.identityconnectors.vms.VmsConstants.ATTR_TQELM;
-import static org.identityconnectors.vms.VmsConstants.ATTR_WSDEFAULT;
-import static org.identityconnectors.vms.VmsConstants.ATTR_WSEXTENT;
-import static org.identityconnectors.vms.VmsConstants.ATTR_WSQUOTA;
-import static org.identityconnectors.vms.VmsConstants.DAYS_FRI;
-import static org.identityconnectors.vms.VmsConstants.DAYS_MON;
-import static org.identityconnectors.vms.VmsConstants.DAYS_NOT;
-import static org.identityconnectors.vms.VmsConstants.DAYS_SAT;
-import static org.identityconnectors.vms.VmsConstants.DAYS_SUN;
-import static org.identityconnectors.vms.VmsConstants.DAYS_THU;
-import static org.identityconnectors.vms.VmsConstants.DAYS_TUE;
-import static org.identityconnectors.vms.VmsConstants.DAYS_WED;
-import static org.identityconnectors.vms.VmsConstants.FLAG_DISUSER;
-import static org.identityconnectors.vms.VmsConstants.FLAG_NOT;
-import static org.identityconnectors.vms.VmsConstants.FLAG_PWD_EXPIRED;
-import static org.identityconnectors.vms.VmsConstants.PRIV_NETMBX;
-import static org.identityconnectors.vms.VmsConstants.PRIV_TMPMBX;
+import static org.identityconnectors.vms.VmsConstants.*;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -971,16 +934,10 @@ public class VmsConnectorTests {
             primary_days.add(DAYS_WED);
             primary_days.add(DAYS_SAT);
             primary_days.add(DAYS_SUN);
-        } else {
-            primary_days.add(DAYS_NOT+DAYS_WED);
-            primary_days.add(DAYS_NOT+DAYS_SAT);
-            primary_days.add(DAYS_NOT+DAYS_SUN);
         }
         attrs.add(AttributeBuilder.build(VmsConstants.ATTR_PRIMEDAYS, primary_days));
 
         List<String> flags = new LinkedList<String>();
-        flags.add(FLAG_NOT+FLAG_DISUSER);
-        flags.add(FLAG_NOT+FLAG_PWD_EXPIRED);
         attrs.add(AttributeBuilder.build(VmsConstants.ATTR_FLAGS, flags));
 
 

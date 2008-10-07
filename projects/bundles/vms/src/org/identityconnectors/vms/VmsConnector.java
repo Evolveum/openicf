@@ -103,8 +103,6 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
 import org.identityconnectors.patternparser.MapTransform;
 import org.identityconnectors.patternparser.Transform;
 
-//TODO: List-Valued attributes -- must be updated to set all values (i.e. REPLACE)
-//
 @ConnectorClass(
     displayNameKey="VMSConnector",
     configurationClass= VmsConfiguration.class)
@@ -317,7 +315,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
             if (flags!= null)
                 flagsValue = new LinkedList<Object>(flags.getValue());
             if (AttributeUtil.getBooleanValue(enable))
-                flagsValue.add(VmsConstants.NO+FLAG_DISUSER);
+                flagsValue.add("NO"+FLAG_DISUSER);
             else
                 flagsValue.add(VmsConstants.FLAG_DISUSER);
             attrMap.put(VmsConstants.ATTR_FLAGS, AttributeBuilder.build(VmsConstants.ATTR_FLAGS, flagsValue));
@@ -338,7 +336,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
             	}
         		command.append(value);
             } else {
-            	String value = "/"+VmsConstants.NO+VmsConstants.ATTR_PWDEXPIRED;
+            	String value = "/"+"NO"+VmsConstants.ATTR_PWDEXPIRED;
             	if (command.length()+value.length()>SEGMENT_MAX) {
             		command = addNewCommandSegment(commandList, command);            		
             	}
@@ -364,7 +362,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
                 try {
                     result = (String)_authorizeCommandExecutor.execute(variables);
                     if (!result.contains("(pre-expired)")) {
-                    	String value = "/"+VmsConstants.NO+VmsConstants.ATTR_PWDEXPIRED;
+                    	String value = "/"+"NO"+VmsConstants.ATTR_PWDEXPIRED;
                     	if (command.length()+value.length()>SEGMENT_MAX) {
                     		command = addNewCommandSegment(commandList, command);            		
                     	}
@@ -385,7 +383,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         if (changeInterval!=null) {
             long expirationTime = AttributeUtil.getLongValue(changeInterval).longValue();
             if (expirationTime==0) {
-            	String value = "/"+VmsConstants.NO+ATTR_PWDLIFETIME;
+            	String value = "/"+"NO"+ATTR_PWDLIFETIME;
             	if (command.length()+value.length()>SEGMENT_MAX) {
             		command = addNewCommandSegment(commandList, command);            		
             	}
@@ -403,6 +401,17 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         for (Attribute attribute : attrMap.values()) {
             String name = attribute.getName();
             List<Object> values = new LinkedList<Object>(attribute.getValue());
+            // Need to update values for list-valued attributes to specify
+            // negated values, as well as positive values
+            if (VmsConstants.ATTR_FLAGS.equalsIgnoreCase(name)) {
+            	updateValues(values, VmsAttributeValidator.FLAGS_LIST);
+            } else if (VmsConstants.ATTR_PRIVILEGES.equalsIgnoreCase(name)) {
+            	updateValues(values, VmsAttributeValidator.PRIVS_LIST);
+            } else if (VmsConstants.ATTR_DEFPRIVILEGES.equalsIgnoreCase(name)) {
+            	updateValues(values, VmsAttributeValidator.PRIVS_LIST);
+            } else if (VmsConstants.ATTR_PRIMEDAYS.equalsIgnoreCase(name)) {
+            	updateValues(values, VmsAttributeValidator.PRIMEDAYS_LIST);
+            }
             if (!name.equals(Name.NAME) && isNeedsValidation(attribute)) {
                 VmsAttributeValidator.validate(name, values, _configuration);
                 if (values.size()==0) {
@@ -428,6 +437,19 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
             }
         }
         return commandList;
+    }
+    
+    /** 
+     * The values list is updated to hold negated values for every possibility that
+     * is not in the list
+     * @param values
+     * @param possibilities
+     */
+    private void updateValues(List<Object> values, List<String> possibilities) {
+    	for (String possibility : possibilities) {
+    		if (!values.contains(possibility))
+    			values.add("NO"+possibility);
+    	}
     }
 
 	private CharArrayBuffer addNewCommandSegment(

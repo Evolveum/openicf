@@ -73,8 +73,10 @@ public class VmsAuthorizeInfo {
             _parser.add(new PatternNode("CLITABLES",         "Tables:"+TO_EOL));        
             _parser.add(new PatternNode("default",           "Default:"+TO_EOL));        
             _parser.add(new PatternNode("LGICMD",            "LGICMD:"+TO_EOL));        
-            _parser.add(new PatternNode("FLAGS",             "Flags:"+TO_EOL+"(?=Primary days)", false, false, 
+            _parser.add(new PatternNode("FLAGS",             "Flags:((?:[^\\n]+\\n)+)(?=Primary days)", false, false, 
                 new Transform[] {
+                    new SubstituteTransform("(.*?)\\s+$", "$1"),
+                    new SubstituteTransform("^\\s+(.*?)", "$1"),
                     new ToUpperCaseTransform(),
                     new SplitTransform("[ \\t]+")
             }));
