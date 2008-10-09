@@ -130,7 +130,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 Assert.That((ocInfo.ObjectType == ObjectClass.ACCOUNT.GetObjectClassValue())
                     || (ocInfo.ObjectType == ObjectClass.GROUP.GetObjectClassValue()) 
                     || (ocInfo.ObjectType == ActiveDirectoryConnector.OBJECTCLASS_OU));
-                Console.WriteLine("****** " + ocInfo.ObjectType);
+                Trace.WriteLine("****** " + ocInfo.ObjectType);
 
                 // skip this for organizational unit ... it doesnt really have this
                 if (ocInfo.ObjectType.Equals(ActiveDirectoryConnector.ouObjectClass))
@@ -141,11 +141,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 foreach (ConnectorAttributeInfo caInfo in ocInfo.ConnectorAttributeInfos)
                 {                    
                     Assert.IsNotNull(caInfo);
-                    Console.WriteLine("{0} {1} {2} {3}", caInfo.Name, 
+                    Trace.WriteLine(String.Format("{0} {1} {2} {3}", caInfo.Name, 
                         caInfo.IsCreatable ? "createable" : "",
                         caInfo.IsUpdateable ? "updateable" : "",
                         caInfo.IsRequired ? "required" : "",
-                        caInfo.IsMultiValue ? "multivalue" : "");
+                        caInfo.IsMultiValue ? "multivalue" : ""));
                     if(ConnectorAttributeUtil.IsSpecial(caInfo)) {
                         foundOperationalAttributes = true;
                     } else {
@@ -1339,9 +1339,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 SyncTestHelper syncHelper = new SyncTestHelper();
 
                 // do the first sync
-                connector.Sync(ObjectClass.ACCOUNT, syncHelper.Token, syncHelper.SyncHandler_Initial, null);
+                //connector.Sync(ObjectClass.ACCOUNT, syncHelper.Token, syncHelper.SyncHandler_Initial, null);
 
-                syncHelper.Init();
+                syncHelper.Init(connector.GetLatestSyncToken());
                 ICollection<ConnectorAttribute> attributes = null;
 
                 // create some users
@@ -1355,11 +1355,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
 
                 // sync, and verify
-                connector.Sync(ObjectClass.ACCOUNT, syncHelper.Token, syncHelper.SyncHandler_ModifiedAccounts, null);
+                connector.Sync(ObjectClass.ACCOUNT, syncHelper._token, syncHelper.SyncHandler_ModifiedAccounts, null);
                 syncHelper.CheckAllSyncsProcessed();
 
                 // reset everything
-                syncHelper.Init();
+                syncHelper.Init(connector.GetLatestSyncToken());
 
                 // modify a user, then add some users, then modify one of the added users
                 attributes = new List<ConnectorAttribute>();
@@ -1384,10 +1384,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 syncHelper.AddModUid(createdUids.Last(), attributes);
 
                 // sync, and verify
-                connector.Sync(ObjectClass.ACCOUNT, syncHelper.Token, syncHelper.SyncHandler_ModifiedAccounts, null);
+                connector.Sync(ObjectClass.ACCOUNT, syncHelper._token, syncHelper.SyncHandler_ModifiedAccounts, null);
                 syncHelper.CheckAllSyncsProcessed();
 
-                syncHelper.Init();
+                syncHelper.Init(connector.GetLatestSyncToken());
                 // delete the user
                 foreach (Uid uid in createdUids)
                 {
@@ -1396,7 +1396,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     syncHelper.AddDelUid(uid);
                 }
                 // sync and verify
-                connector.Sync(ObjectClass.ACCOUNT, syncHelper.Token, syncHelper.SyncHandler_DeletedAccounts, null);
+                connector.Sync(ObjectClass.ACCOUNT, syncHelper._token, syncHelper.SyncHandler_DeletedAccounts, null);
                 syncHelper.CheckAllSyncsProcessed();
 
                 createUid = CreateAndVerifyObject(connector, ObjectClass.ACCOUNT,
@@ -1407,8 +1407,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 // now get the latest sync token, and it
                 // should be greater or equal to the last one we saw
                 SyncToken latestToken = connector.GetLatestSyncToken();
-                Assert.Greater(GetUpdateUsnFromToken(latestToken), GetUpdateUsnFromToken(syncHelper.Token));
-                Assert.GreaterOrEqual(GetDeleteUsnFromToken(latestToken), GetDeleteUsnFromToken(syncHelper.Token));
+                Assert.Greater(GetUpdateUsnFromToken(latestToken), GetUpdateUsnFromToken(syncHelper._token));
+                Assert.GreaterOrEqual(GetDeleteUsnFromToken(latestToken), GetDeleteUsnFromToken(syncHelper._token));
             }
             finally
             {
@@ -1453,12 +1453,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
             IDictionary<Uid, ICollection<ConnectorAttribute>> _mods = null;
             IList<Uid> _dels = null;
 
-            public SyncToken Token { get; set; }
+            public SyncToken _token { get; set; }
 
-            public void Init()
+            public void Init(SyncToken token)
             {
                 _mods = new Dictionary<Uid, ICollection<ConnectorAttribute>>();
                 _dels = new List<Uid>();
+                _token = token;
             }
 
             public void AddModUid(Uid uid, ICollection<ConnectorAttribute> attributes)
@@ -1474,13 +1475,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
             public bool SyncHandler_Initial(SyncDelta delta)
             {
                 // do nothing .. just establishing the baseline
-                Token = delta.Token;
+                _token = delta.Token;
                 return true;
             }
 
             public bool SyncHandler_ModifiedAccounts(SyncDelta delta)
             {
-                Token = delta.Token;
+                _token = delta.Token;
                 if(delta.DeltaType.Equals(SyncDeltaType.UPDATE)) {
                     // just ignore extra ones.  they might have come in by other means
                     if (_mods.ContainsKey(delta.Uid))
@@ -1497,7 +1498,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             public bool SyncHandler_DeletedAccounts(SyncDelta delta)
             {
-                Token = delta.Token;
+                _token = delta.Token;
 
                 _dels.Remove(delta.Uid);
                 return true;
@@ -1557,6 +1558,37 @@ namespace Org.IdentityConnectors.ActiveDirectory
             Assert.AreEqual(arg0, returnedArray[0]);
             Assert.AreEqual(arg1, returnedArray[1]);
         }
+/*
+        [Test]
+        public void testBooScript()
+        {
+            //Initialize Connector
+            ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
+            connector.Init(GetConfiguration());
+
+            try
+            {
+                string tempFileName = Path.GetTempFileName();
+                StringBuilder scriptText = new StringBuilder();
+                scriptText.Append("print(\"this is, \");");
+                scriptText.Append("print(\"a test.\");");
+
+                IDictionary<string, object> arguments = new Dictionary<string, object>();
+                string arg0 = "argument_zero";
+                string arg1 = "argument one";
+                arguments.Add("ARG0", arg0);
+                arguments.Add("ARG1", arg1);
+
+                OperationOptionsBuilder builder = new OperationOptionsBuilder();
+
+                ScriptContext context = new ScriptContext("Boo", scriptText.ToString(), arguments);
+                object resultObject = connector.RunScriptOnResource(context, builder.Build());
+            }
+            finally
+            {
+            }
+        }
+*/
 
         // does a create and verify, then looks up and returns
         // the new user's dn (used for adding to a group)
@@ -2144,9 +2176,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
         // this needs to be replaced by the real one.
         public string GetProperty(string propertyName)
         {
-            string x = TestHelpers.GetProperty(propertyName, null);
-            Console.WriteLine(String.Format("GetProperty: {0}={1}", propertyName, x));
-            return x;
+            string propertyValue = TestHelpers.GetProperty(propertyName, null);
+            Trace.WriteLine(String.Format("GetProperty: {0} = {1}", propertyName, propertyValue));
+            return propertyValue;
         }
 
         public ConnectorObject GetConnectorObjectFromUid(
