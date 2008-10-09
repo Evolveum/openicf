@@ -601,18 +601,6 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
         // =======================================================================
     
         protected override APIOperation GetOperationImplementation(SafeType<APIOperation> api) {
-            APIOperation ret = null;
-            // need to figure out if api operation is a get op..
-            if (api.RawType.Equals(typeof(GetApiOp))) {
-                APIOperation op = GetAPIOperationRunner(SafeType<APIOperation>.Get<SearchApiOp>());
-                ret = new GetImpl((SearchApiOp) op);
-            } else {
-                ret = GetAPIOperationRunner(api);
-            }
-            return ret;
-        }
-    
-        APIOperation GetAPIOperationRunner(SafeType<APIOperation> api) {
             APIOperation proxy;
             //first create the inner proxy - this is the proxy that obtaining
             //a connection from the pool, etc
@@ -622,6 +610,19 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                 OperationalContext context =
                     new OperationalContext(connectorInfo,GetAPIConfiguration());
                 proxy = new ValidateImpl(context);
+            }
+            else if ( api.RawType.Equals( typeof(GetApiOp) ) ) {
+                ConstructorInfo constructor =
+                    API_TO_IMPL[SafeType<APIOperation>.Get<SearchApiOp>()];
+                ConnectorOperationalContext context =
+                new ConnectorOperationalContext(connectorInfo,
+                        GetAPIConfiguration(),
+                        GetPool());
+            
+                ConnectorAPIOperationRunnerProxy handler =
+                    new ConnectorAPIOperationRunnerProxy(context,constructor);
+                proxy =
+                    new GetImpl((SearchApiOp)NewAPIOperationProxy(SafeType<APIOperation>.Get<SearchApiOp>(),handler));                
             }
             else {
                 ConstructorInfo constructor =
