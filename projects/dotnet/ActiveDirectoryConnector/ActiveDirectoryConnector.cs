@@ -179,7 +179,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         #region CreateOp Members
         // implementation of CreateSpiOp
-        public Uid Create(ObjectClass oclass, 
+        public virtual Uid Create(ObjectClass oclass, 
             ICollection<ConnectorAttribute> attributes, OperationOptions options)
         {
             Uid uid = null;
@@ -271,7 +271,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         #region Connector Members
 
         // implementation of Connector
-        public void Init(Configuration configuration)
+        public virtual void Init(Configuration configuration)
         {
             Trace.TraceInformation("Init method");
             _configuration = (ActiveDirectoryConfiguration)configuration;
@@ -290,7 +290,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         #region SchemaOp Members
         // implementation of SchemaSpiOp
-        public Schema Schema()
+        public virtual Schema Schema()
         {            
             Trace.TraceInformation("Schema method");
 
@@ -594,13 +594,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
         #region SearchOp<string> Members
 
         // implementation of SearchSpiOp
-        public Org.IdentityConnectors.Framework.Common.Objects.Filters.FilterTranslator<string> CreateFilterTranslator(ObjectClass oclass, OperationOptions options)
+        public virtual Org.IdentityConnectors.Framework.Common.Objects.Filters.FilterTranslator<string> CreateFilterTranslator(ObjectClass oclass, OperationOptions options)
         {
             return new ActiveDirectoryFilterTranslator();
         }
 
         // implementation of SearchSpiOp
-        public void ExecuteQuery(ObjectClass oclass, string query, 
+        public virtual void ExecuteQuery(ObjectClass oclass, string query, 
             ResultsHandler handler, OperationOptions options)
         {
             try
@@ -837,7 +837,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         #region TestOp Members
 
-        public void Test()
+        public virtual void Test()
         {
             _configuration.Validate();
 
@@ -867,7 +867,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         #region AdvancedUpdateOp Members
 
         // implementation of AdvancedUpdateSpiOp
-        public Uid Update(UpdateType type, ObjectClass oclass, 
+        public virtual Uid Update(UpdateType type, ObjectClass oclass, 
             ICollection<ConnectorAttribute> attributes, OperationOptions options)
         {
             Uid updatedUid = null;
@@ -899,7 +899,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         #region DeleteOp Members
 
         // implementation of DeleteSpiOp
-        public void Delete(ObjectClass objClass, Uid uid, OperationOptions options)
+        public virtual void Delete(ObjectClass objClass, Uid uid, OperationOptions options)
         {
             DirectoryEntry de = null;
 
@@ -1015,7 +1015,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
 
-        public void Sync(ObjectClass objClass, SyncToken token, 
+        public virtual void Sync(ObjectClass objClass, SyncToken token, 
             SyncResultsHandler handler, OperationOptions options)
         {
             if (!ObjectClass.ACCOUNT.Equals(objClass))
@@ -1057,7 +1057,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         }
 
-        public SyncToken GetLatestSyncToken()
+        public virtual SyncToken GetLatestSyncToken()
         {
             string serverName = GetSyncServerName();
             long highestCommittedUsn = 0;
