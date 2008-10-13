@@ -76,9 +76,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public String ObjectClass
         { get; set; }
 
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_UserProvidesPasswordOnChange", HelpMessageKey = "help_UserProvidesPasswordOnChange")]
-        public bool UserProvidesPasswordOnChange{get;set;}
-
         [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_CreateHomeDirectory", HelpMessageKey = "help_CreateHomeDirectory")]
         public bool CreateHomeDirectory { get; set; }
 
@@ -103,7 +100,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
             SearchContainer = "";
             DirectoryAdminName = "cn=DirectoryAdmin";
             ObjectClass = "User";
-            UserProvidesPasswordOnChange = false;
             CreateHomeDirectory = false;
             SearchChildDomains = false;
             EncryptionType = "NONE";
