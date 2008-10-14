@@ -46,9 +46,12 @@ using System.DirectoryServices;
 using Org.IdentityConnectors.Common.Security;
 using ActiveDs;
 using Org.IdentityConnectors.Framework.Common.Exceptions;
+using System.DirectoryServices.AccountManagement;
+using System.DirectoryServices.ActiveDirectory;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
+
     /** 
      * This class will decrypt passwords, and handle
      * authentication and password changes (both
@@ -58,9 +61,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
     {
         String _currentPassword;
         String _newPassword;
+        ActiveDirectoryConfiguration _configuration = null;
 
-        internal PasswordChangeHandler()
+        internal PasswordChangeHandler(ActiveDirectoryConfiguration configuration)
         {
+            _configuration = configuration;
         }
 
         /// <summary>
@@ -148,10 +153,27 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 sAMAccountName, _currentPassword);
             try
             {
-                // this will cause a bind.  Maybe there is a better 
-                // way to do this.  If you know of one, please change
-                // this, as this seems a little weird
-                userDe.RefreshCache();
+                string serverName = _configuration.LDAPHostName;
+                PrincipalContext context = null;
+                if ((serverName == null) || (serverName.Length == 0))
+                {
+                    DomainController domainController = ActiveDirectoryUtils.GetDomainController(_configuration);
+                    context = new PrincipalContext(ContextType.Domain, 
+                        domainController.Domain.Name);
+                }
+                else
+                {
+                    context = new PrincipalContext(ContextType.Machine, _configuration.LDAPHostName);
+                }
+
+                if (context == null)
+                {
+                    throw new ConnectorException("Unable to get PrincipalContext");
+                }
+
+                if(!context.ValidateCredentials(sAMAccountName, _currentPassword)) {
+                    throw new InvalidCredentialException();
+                }
             }
             catch (Exception e)
             {

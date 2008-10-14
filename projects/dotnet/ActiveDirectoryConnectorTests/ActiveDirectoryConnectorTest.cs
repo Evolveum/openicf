@@ -61,6 +61,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
     [TestFixture]
     public class ActiveDirectoryConnectorTest
     {
+        Random _rand = new Random();
+
         public static readonly string CONFIG_PROPERTY_USER = "config_user";
         public static readonly string CONFIG_PROPERTY_PASSWORD = "config_password";
         public static readonly string CONFIG_PROPERTY_HOST = "config_host";
@@ -808,8 +810,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             try
             {
-                Random random = new Random();
-                Int32 randomNumber = random.Next(1000000);
+                int randomNumber = GetRandomNumber();
 
                 String snPrefix = "nunitWCTest";
 
@@ -819,7 +820,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         GetNormalAttributes_Account();
                     attributes.Remove(ConnectorAttributeUtil.Find("sn", attributes));
                     attributes.Add(ConnectorAttributeBuilder.Build("sn",
-                        snPrefix + random.Next()));
+                        snPrefix + GetRandomNumber()));
                     Uid tempUid = CreateAndVerifyObject(connector, ObjectClass.ACCOUNT,
                         attributes);
                     Assert.IsNotNull(tempUid);
@@ -924,6 +925,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         // Test scripting
+        [Ignore] // ignoring until issue # 302 is addressed
         [Test]
         public void TestScriptOnResource()
         {
@@ -1007,8 +1009,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             try
             {
-                Random random = new Random();
-                Int32 randomNumber = random.Next(1000000);
+                int randomNumber = GetRandomNumber();
                 ICollection<ConnectorAttribute> attributes = new HashSet<ConnectorAttribute>();
 
                 attributes.Add(ConnectorAttributeBuilder.Build(
@@ -1856,8 +1857,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public ICollection<ConnectorAttribute> GetNormalAttributes_Account()
         {
             ICollection<ConnectorAttribute> attributes = new HashSet<ConnectorAttribute>();
-            Random random = new Random();
-            Int32 randomNumber = random.Next(10000);
+            int randomNumber = GetRandomNumber();
 
             // the container ... is a fabricated attribute
             attributes.Add(ConnectorAttributeBuilder.Build(
@@ -1885,8 +1885,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public ICollection<ConnectorAttribute> GetAllAttributes_Account()
         {
             ICollection<ConnectorAttribute> attributes = new HashSet<ConnectorAttribute>();
-            Random random = new Random();
-            Int32 randomNumber = random.Next(10000);
+            int randomNumber = GetRandomNumber();
 
             // the container ... is a fabricated attribute
             attributes.Add(ConnectorAttributeBuilder.Build(
@@ -2064,8 +2063,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public ICollection<ConnectorAttribute> GetNormalAttributes_Group()
         {
             ICollection<ConnectorAttribute> attributes = new List<ConnectorAttribute>();
-            Random random = new Random();
-            Int32 randomNumber = random.Next(10000);
+            int randomNumber = GetRandomNumber();
 
             attributes.Add(ConnectorAttributeBuilder.Build(
                 "mail", "groupmail@example.com"));
@@ -2228,6 +2226,19 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 guardedString.AppendChar(c);
             }
             return guardedString;
+        }
+
+        int GetRandomNumber()
+        {
+            const int randomRange = 100000;
+            int number = _rand.Next(randomRange);
+#if DEBUG
+            // make sure the debug numbers are in a different
+            // range than release ones to eliminate conflicts during
+            // the build where both configurations are run concurrently
+            number += randomRange;              
+#endif
+            return number;
         }
     }
 

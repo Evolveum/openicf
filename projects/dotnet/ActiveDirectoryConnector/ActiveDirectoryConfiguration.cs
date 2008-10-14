@@ -86,10 +86,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
         [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_SearchChildDomains", HelpMessageKey = "help_SearchChildDomains")]
         public bool SearchChildDomains {get;set;}
 
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_EncryptionType", HelpMessageKey = "help_EncryptionType")]
-        public String EncryptionType
-        { get; set; }
-
         [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_LDAPHostName", HelpMessageKey = "help_LDAPHostName")]
         public String LDAPHostName
         { get; set; }
@@ -102,7 +98,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
             ObjectClass = "User";
             CreateHomeDirectory = false;
             SearchChildDomains = false;
-            EncryptionType = "NONE";
             LDAPHostName = "";
         }
 

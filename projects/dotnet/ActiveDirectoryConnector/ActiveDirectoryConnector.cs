@@ -1171,7 +1171,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             Org.IdentityConnectors.Common.Security.GuardedString password, 
             OperationOptions options)
         {
-            PasswordChangeHandler handler = new PasswordChangeHandler();
+            PasswordChangeHandler handler = new PasswordChangeHandler(_configuration);
             String ldapEntryPath = ActiveDirectoryUtils.GetLDAPPath(_configuration.LDAPHostName, 
                 username);
 

@@ -50,6 +50,7 @@ using Org.IdentityConnectors.Framework.Spi.Operations;
 using System.Security;
 using ActiveDs;
 using Org.IdentityConnectors.Common.Security;
+using System.DirectoryServices.ActiveDirectory;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
@@ -226,7 +227,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 if (gsNewPassword != null)
                 {
                     GuardedString gsCurrentPassword = ConnectorAttributeUtil.GetCurrentPasswordValue(attributes);
-                    PasswordChangeHandler changeHandler = new PasswordChangeHandler();
+                    PasswordChangeHandler changeHandler = new PasswordChangeHandler(_configuration);
                     if (gsCurrentPassword == null)
                     {
                         // just a normal password change
@@ -590,6 +591,33 @@ namespace Org.IdentityConnectors.ActiveDirectory
             return pathName.Retrieve((int)ADS_FORMAT_ENUM.ADS_FORMAT_X500_DN);
         }
 
+        internal static DomainController GetDomainController(ActiveDirectoryConfiguration configuration)
+        {
+            String serverName = configuration.LDAPHostName;
+            DomainController controller = null;
+
+            if ((serverName == null) || (serverName.Length == 0))
+            {
+                // get the active directory schema
+                DirectoryContext context = new DirectoryContext(
+                        DirectoryContextType.Domain,
+                        configuration.DomainName,
+                        configuration.DirectoryAdminName,
+                        configuration.DirectoryAdminPassword);
+                controller = DomainController.FindOne(context);
+            }
+            else
+            {
+                DirectoryContext context = new DirectoryContext(
+                        DirectoryContextType.DirectoryServer,
+                        configuration.LDAPHostName,
+                        configuration.DirectoryAdminName,
+                        configuration.DirectoryAdminPassword);
+                controller = DomainController.GetDomainController(context);
+            }
+            
+            return controller;
+        }
     }
 
 }
