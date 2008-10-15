@@ -1,0 +1,14 @@
+connection.resetStandardOutput();
+connection.send("SET DEFAULT SYS\$SYSTEM:");
+connection.waitFor(SHELL_PROMPT, SHORT_WAIT);
+connection.send("RUN AUTHORIZE");
+connection.waitFor(UAF_PROMPT, SHORT_WAIT);
+for (command in COMMANDS) {
+    connection.send(command);
+    connection.waitFor(UAF_PROMPT_CONTINUE, SHORT_WAIT);
+}
+connection.send(COMMAND);
+connection.waitFor(UAF_PROMPT, SHORT_WAIT);
+connection.send("EXIT");
+connection.waitFor(SHELL_PROMPT, SHORT_WAIT);
+return connection.getStandardOutput();
