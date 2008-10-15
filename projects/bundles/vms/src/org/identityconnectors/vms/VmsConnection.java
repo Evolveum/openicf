@@ -70,6 +70,7 @@ public class VmsConnection {
     private StringBuffer        _buffer;
     private ScriptExecutorFactory _groovyFactory;
 
+
     public VmsConnection(VmsConfiguration configuration, int wait) throws Exception {
         _wait = wait;
         _configuration = configuration;
@@ -123,6 +124,10 @@ public class VmsConnection {
         } catch (Exception e) {
             throw new ConnectorException(e);
         }
+    }
+    
+    public Expect4j getExpect() {
+    	return _expect4j;
     }
 
     public void send(String string) throws IOException {

@@ -785,8 +785,6 @@ public class VmsConnectorTests {
             builder.setUid(getTestUser());
             builder.setName(getTestUser());
             Attribute password = AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString("xyzzy123".toCharArray()));
-            Attribute current_password = AttributeBuilder.build(OperationalAttributes.CURRENT_PASSWORD_NAME, new GuardedString("password".toCharArray()));
-            builder.addAttribute(current_password);
             builder.addAttribute(password);
             ConnectorObject newUser = builder.build();
             info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
@@ -822,8 +820,8 @@ public class VmsConnectorTests {
         // Now, create a configuration for the user we created
         // and change password
         //
-        VmsConfiguration userConfig = createUserConfiguration(localUserName);
-        VmsConnector userInfo = createConnector(userConfig);
+        //VmsConfiguration userConfig = createUserConfiguration(localUserName);
+        //VmsConnector userInfo = createConnector(userConfig);
         try {
             ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
             builder.setUid(localUserName);
@@ -833,9 +831,9 @@ public class VmsConnectorTests {
             builder.addAttribute(current_password);
             builder.addAttribute(password);
             ConnectorObject newUser = builder.build();
-            userInfo.update(newUser.getObjectClass(), newUser.getAttributes(), null);
+            info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
         } finally {
-            userInfo.dispose();
+            info.dispose();
         }
     }
 

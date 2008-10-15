@@ -41,6 +41,10 @@ package org.identityconnectors.vms;
 
 import static org.identityconnectors.vms.VmsConstants.*;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.ParseException;
@@ -148,64 +152,51 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
     private static final String BAD_SPEC         = "%UAF-W-BADSPC,";     // no user matches specification
 
     public VmsConnector() {
-        _changeOwnPasswordCommandScript = 
-            "connection.resetStandardOutput();\n" +
-            "connection.send(\"SET PASSWORD\");\n" +
-            "connection.waitFor(\"ld password:\", SHORT_WAIT);\n" +
-            "connection.send(CURRENT_PASSWORD);\n" +
-            "connection.waitFor(\"ew password:\", SHORT_WAIT);\n" +
-            "connection.send(NEW_PASSWORD);\n" +
-            "connection.waitFor(\"erification:\", SHORT_WAIT);\n" +
-            "connection.send(NEW_PASSWORD);\n" +
-            "connection.waitFor(SHELL_PROMPT, SHORT_WAIT);\n" +
-            "return connection.getStandardOutput();"
-            ;
-
-        _authorizeCommandScript = 
-            "connection.resetStandardOutput();\n" +
-            "connection.send(\"SET DEFAULT SYS\\$SYSTEM:\");\n" +
-            "connection.waitFor(SHELL_PROMPT, SHORT_WAIT);\n" +
-            "connection.send(\"RUN AUTHORIZE\");\n" +
-            "connection.waitFor(UAF_PROMPT, SHORT_WAIT);\n" +
-            "for (command in COMMANDS) {\n" +
-            "    connection.send(command);\n" +
-            "    connection.waitFor(UAF_PROMPT_CONTINUE, SHORT_WAIT);\n" +
-            "}\n" +
-            "connection.send(COMMAND);\n" +
-            "connection.waitFor(UAF_PROMPT, SHORT_WAIT);\n" +
-            "connection.send(\"EXIT\");\n" +
-            "connection.waitFor(SHELL_PROMPT, SHORT_WAIT);\n" +
-            "return connection.getStandardOutput();"
-            ;
-
-        _listCommandScript = 
-            "connection.resetStandardOutput();\n" +
-            "connection.send(\"SET DEFAULT SYS\\$SYSTEM:\");\n" +
-            "connection.waitFor(SHELL_PROMPT, SHORT_WAIT);\n" +
-            "connection.send(\"RUN AUTHORIZE\");\n" +
-            "connection.waitFor(UAF_PROMPT, SHORT_WAIT);\n" +
-            "for (command in COMMANDS) {\n" +
-            "    connection.send(command.toString());\n" +
-            "    connection.waitFor(UAF_PROMPT, LONG_WAIT);\n" +
-            "}\n" +
-            "connection.send(\"EXIT\");\n" +
-            "connection.waitFor(SHELL_PROMPT, SHORT_WAIT);\n" +
-            "return connection.getStandardOutput();"
-            ;
-
-        _dateCommandScript = 
-            "connection.resetStandardOutput();\n" +
-            "connection.send(\"SHOW TIME\");\n" +
-            "connection.waitFor(SHELL_PROMPT, SHORT_WAIT);\n" +
-            "return connection.getStandardOutput();"
-            ;
-
+    	try {
+    		_changeOwnPasswordCommandScript = readFileFromClassPath("org/identityconnectors/vms/UserPasswordScript.txt");
+            _authorizeCommandScript = readFileFromClassPath("org/identityconnectors/vms/AuthorizeCommandScript.txt");
+            _listCommandScript = readFileFromClassPath("org/identityconnectors/vms/ListCommandScript.txt");
+            _dateCommandScript = readFileFromClassPath("org/identityconnectors/vms/DateCommandScript.txt");
+    	} catch (IOException ioe) {
+    		throw ConnectorException.wrap(ioe);
+    	}
         _groovyFactory = ScriptExecutorFactory.newInstance("GROOVY");
         _authorizeCommandExecutor = _groovyFactory.newScriptExecutor(getClass().getClassLoader(), _authorizeCommandScript, true);
         _changeOwnPasswordCommandExecutor = _groovyFactory.newScriptExecutor(getClass().getClassLoader(), _changeOwnPasswordCommandScript, true);
         _listCommandExecutor = _groovyFactory.newScriptExecutor(getClass().getClassLoader(), _listCommandScript, true);
         _dateCommandExecutor = _groovyFactory.newScriptExecutor(getClass().getClassLoader(), _dateCommandScript, true);
     }
+
+    private String readFileFromClassPath(String fileName) throws IOException {
+		ClassLoader cl = null;
+		InputStream is = null;
+		StringBuffer buf = new StringBuffer();
+
+		try {
+			cl = getClass().getClassLoader();
+			is = cl.getResourceAsStream(fileName);
+
+			if (is != null) {
+				InputStreamReader isr = new InputStreamReader(is);
+				BufferedReader br = new BufferedReader(isr);
+				String s = null;
+				while ((s = br.readLine()) != null) {
+					buf.append(s);
+					buf.append("\n");
+				}
+			}
+		} finally {
+			if (is != null) {
+				try {
+					is.close();
+				} catch (Exception e) {
+				}
+			}
+		}
+
+		return buf.toString();
+	}
+
 
     /**
      * Since the exclamation point is a comment delimiter in DCL (and
@@ -294,7 +285,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
             return base.contains(subString);
     }
 
-    private List<CharArrayBuffer> appendAttributes(boolean modify, String prefix, Set<? extends Attribute> attrs) {
+    private List<CharArrayBuffer> appendAttributes(boolean modify, String prefix, Collection<? extends Attribute> attrs) {
     	List<CharArrayBuffer> commandList = new LinkedList<CharArrayBuffer>();
     	CharArrayBuffer command = new CharArrayBuffer();
     	if (modify)
@@ -331,16 +322,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         if (expiration!=null) {
             if (AttributeUtil.getBooleanValue(expiration)) {
             	String value = "/"+VmsConstants.ATTR_PWDEXPIRED;
-            	if (command.length()+value.length()>SEGMENT_MAX) {
-            		command = addNewCommandSegment(commandList, command);            		
-            	}
-        		command.append(value);
+            	command = appendToCommand(commandList, command, value);
             } else {
             	String value = "/"+"NO"+VmsConstants.ATTR_PWDEXPIRED;
-            	if (command.length()+value.length()>SEGMENT_MAX) {
-            		command = addNewCommandSegment(commandList, command);            		
-            	}
-        		command.append(value);
+            	command = appendToCommand(commandList, command, value);
             }
         } else {
         	Attribute password = attrMap.get(OperationalAttributes.PASSWORD_NAME);
@@ -363,10 +348,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
                     result = (String)_authorizeCommandExecutor.execute(variables);
                     if (!result.contains("(pre-expired)")) {
                     	String value = "/"+"NO"+VmsConstants.ATTR_PWDEXPIRED;
-                    	if (command.length()+value.length()>SEGMENT_MAX) {
-                    		command = addNewCommandSegment(commandList, command);            		
-                    	}
-                		command.append(value);
+                    	command = appendToCommand(commandList, command, value);
                     }
                     clearArrays(variables);
                 } catch (Exception e) {
@@ -384,17 +366,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
             long expirationTime = AttributeUtil.getLongValue(changeInterval).longValue();
             if (expirationTime==0) {
             	String value = "/"+"NO"+ATTR_PWDLIFETIME;
-            	if (command.length()+value.length()>SEGMENT_MAX) {
-            		command = addNewCommandSegment(commandList, command);            		
-            	}
-        		command.append(value);
+            	command = appendToCommand(commandList, command, value);
             } else {
                 String deltaValue = remapToDelta(expirationTime);
             	String value = "/"+VmsConstants.ATTR_PWDLIFETIME+"="+new String(quoteWhenNeeded(deltaValue.toCharArray(), true));
-            	if (command.length()+value.length()>SEGMENT_MAX) {
-            		command = addNewCommandSegment(commandList, command);            		
-            	}
-        		command.append(value);
+            	command = appendToCommand(commandList, command, value);
             }
         }
         
@@ -416,10 +392,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
                 VmsAttributeValidator.validate(name, values, _configuration);
                 if (values.size()==0) {
                 	String value = "/"+remapName(attribute);
-                	if (command.length()+value.length()>SEGMENT_MAX) {
-                		command = addNewCommandSegment(commandList, command);            		
-                	}
-            		command.append(value);
+                	command = appendToCommand(commandList, command, value);
                 } else {
                     if (isDateTimeAttribute(name))
                         remapToDateTime(values);
@@ -438,6 +411,15 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         }
         return commandList;
     }
+
+	private CharArrayBuffer appendToCommand(List<CharArrayBuffer> commandList,
+			CharArrayBuffer command, String value) {
+		if (command.length()+value.length()>SEGMENT_MAX) {
+			command = addNewCommandSegment(commandList, command);            		
+		}
+		command.append(value);
+		return command;
+	}
     
     /** 
      * The values list is updated to hold negated values for every possibility that
@@ -862,26 +844,15 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
             }
         }
         
-        // If the only attributes are
-        //    UID
-        //    Name
-        //    Password
-        //    CurrentPassword
-        // AND we are changing OUR OWN password,
-        // we don't need to use AUTHORIZE.
-        // Instead, we can use set password command
+        // If Password and CurrentPassword
+        // are specified, we change password via SET PASSWORD, rather than AUTHORIIZE
         //
-        if (attrMap.size()==0 &&
-                uid!=null &&
-                name!=null &&
-                currentPassword!=null &&
-                newPassword!=null &&
-                name.getNameValue().equalsIgnoreCase(_configuration.getUserName())) {
+        if (currentPassword!=null && newPassword!=null) {
             _log.info("update[changePassword](''{0}'')", _configuration.getUserName());
             Map<String, Object> variables = new HashMap<String, Object>();
             variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
             variables.put("SHORT_WAIT", SHORT_WAIT);
-            variables.put("UAF_PROMPT", UAF_PROMPT);
+            variables.put("USERNAME", uid.getUidValue());
             GuardedString currentGS = AttributeUtil.getGuardedStringValue(currentPassword);
             GuardedString newGS = AttributeUtil.getGuardedStringValue(newPassword);
             GuardedStringAccessor accessor = new GuardedStringAccessor();
@@ -891,7 +862,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
             char[] newArray = accessor.getArray();
             variables.put("CURRENT_PASSWORD", currentArray);
             variables.put("NEW_PASSWORD", newArray);
-            variables.put("connection", _connection);
+            variables.put("configuration", _configuration);
 
             String result = "";
             try {
@@ -909,11 +880,17 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
                 String errortext = result.substring(result.indexOf("%SET-")).split("\n")[0];
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, errortext));
             }
-            return uid;
-
-        } else {
+        } else if (newPassword!=null) {
+        	// Put back the new password, so it can be changed administratively
+        	//
+        	attrMap.put(OperationalAttributes.PASSWORD_NAME, newPassword);
+        }
+        
+        // If we have any remaining attributes, process them
+        //
+        if (attrMap.size()>0) {
             String accountId = uid.getUidValue();
-            List<CharArrayBuffer> modifyCommand = appendAttributes(true, accountId, attributes);
+            List<CharArrayBuffer> modifyCommand = appendAttributes(true, accountId, attrMap.values());
 
             Map<String, Object> variables = new HashMap<String, Object>();
             fillInCommand(modifyCommand, variables);
@@ -936,6 +913,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
             }
         }
+        return uid;
     }
     
     private void fillInCommand(List<CharArrayBuffer> command, Map<String, Object> variables) {
