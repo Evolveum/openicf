@@ -226,4 +226,7 @@ DC=COM.</value>
   <data name="ex_ObjectClassInvalidForConnector" xml:space="preserve">
     <value>ObjectClass \'{0}\' is not valid for this connector</value>
   </data>
+  <data name="ex_InvalidCredentials" xml:space="preserve">
+    <value>Invalid credentials supplied for user {0}</value>
+  </data>
 </root>

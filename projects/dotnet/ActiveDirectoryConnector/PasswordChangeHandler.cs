@@ -189,7 +189,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             catch (Exception e)
             {
-                throw new InvalidCredentialException();
+                throw new InvalidCredentialException(_configuration.ConnectorMessages.Format(
+                    "ex_InvalidCredentials", "Invalid credentials supplied for user {0}", 
+                    directoryEntry.Path));
             }
 
         }
