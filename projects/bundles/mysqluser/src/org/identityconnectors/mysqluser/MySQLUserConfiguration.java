@@ -42,6 +42,7 @@ package org.identityconnectors.mysqluser;
 import java.text.MessageFormat;
 
 import org.identityconnectors.common.Assertions;
+import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.Configuration;
@@ -89,7 +90,7 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
     /**
      * password
      */
-    private String password = ""; // Password
+    private GuardedString password; // Password
 
     /**
      * port
@@ -129,7 +130,7 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
      * @return
      */
     @ConfigurationProperty(order = 2, helpMessageKey = "mysqluser.pwd.help", displayMessageKey = "mysqluser.pwd.display", confidential = true)
-    public String getPassword() {
+    public GuardedString getPassword() {
         return this.password;
     }
 
@@ -174,7 +175,7 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
     /**
      * @param value
      */
-    public void setPassword(final String value) {
+    public void setPassword(final GuardedString value) {
         this.password = value;
     }
 
@@ -204,7 +205,7 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
         // determine if you can get a connection to the database..
         Assertions.blankCheck(getLogin(), "login");
         // check that there is a table to query..
-        Assertions.blankCheck(getPassword(), "password");
+        Assertions.nullCheck(getPassword(), "password");
         // check that there is a driver..
         Assertions.blankCheck(getDriver(), "driver");
 

@@ -105,7 +105,7 @@ public class MySQLUserConnectorTests {
     private static String idmLogin = null;
     private static GuardedString testPassword = null;
     private static String idmModelUser = null;
-    private static String idmPassword = null;
+    private static GuardedString idmPassword = null;
     private static String idmPort = null;
     private static final String TST_HOST = "%";
     private static final String TST_USER1 = "test1";
@@ -122,7 +122,7 @@ public class MySQLUserConnectorTests {
         
         idmHost = TestHelpers.getProperty("host.connector.string", null);
         idmLogin = TestHelpers.getProperty("login.connector.string", null);
-        idmPassword = TestHelpers.getProperty("password.connector.string", null);
+        idmPassword = new GuardedString(TestHelpers.getProperty("password.connector.string", null).toCharArray());
         idmPort = TestHelpers.getProperty("port.connector.string", null);
         idmDriver = TestHelpers.getProperty("driver.connector.string", null); 
         idmModelUser = TestHelpers.getProperty("usermodel.connector.string", null);        
@@ -496,17 +496,7 @@ public class MySQLUserConnectorTests {
         config.setUsermodel("");
         config.validate();
     }
-    
-    /**
-     * Test method for {@link MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
-     * @throws Exception
-     */
-    @Test(expected = IllegalArgumentException.class)
-    public void testInvalidConfigurationPassword() throws Exception {
-        config.setPassword("");
-        config.validate();
-    }
-    
+
     /**
      * Test method for {@link MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
      * @throws Exception
