@@ -132,9 +132,6 @@
   <data name="display_domainName" xml:space="preserve">
     <value>Domain Name</value>
   </data>
-  <data name="display_EncryptionType" xml:space="preserve">
-    <value>EncryptionType</value>
-  </data>
   <data name="display_LDAPHostName" xml:space="preserve">
     <value>Active Directory Domain Controller Hostname</value>
   </data>
@@ -168,9 +165,6 @@
   <data name="help_domainName" xml:space="preserve">
     <value>Name of the windows domain (e.g. windowsdomain.mycompany.com)</value>
   </data>
-  <data name="help_EncryptionType" xml:space="preserve">
-    <value />
-  </data>
   <data name="help_LDAPHostName" xml:space="preserve">
     <value>For cross-domain administration, enter the hostname, IP address, or domain name of the LDAP server.</value>
   </data>
@@ -195,5 +189,41 @@ DC=COM.</value>
   </data>
   <data name="help_SyncSearchContext" xml:space="preserve">
     <value>Distinguished name of the object under which to search for changes during ActiveSync</value>
+  </data>
+  <data name="ex_ConnectorNotConfigured" xml:space="preserve">
+    <value>Connector has not been configured</value>
+  </data>
+  <data name="ex_DeleteNotSupported" xml:space="preserve">
+    <value>Delete is not supported for ObjectClass {0}</value>
+  </data>
+  <data name="ex_InvalidObjectClass" xml:space="preserve">
+    <value>Invalid object class: {0}</value>
+  </data>
+  <data name="ex_missingSyncAttribute" xml:space="preserve">
+    <value>Attribute {0} is not present in connector object.  Cannot proceed with synchronization</value>
+  </data>
+  <data name="ex_OperationalAttributeNull" xml:space="preserve">
+    <value>The name operational attribute cannot be null</value>
+  </data>
+  <data name="ex_SyncNotAvailable" xml:space="preserve">
+    <value>Sync operation is not available for ObjectClass {0}</value>
+  </data>
+  <data name="ex_UIDNotPresent" xml:space="preserve">
+    <value>Uid was not present</value>
+  </data>
+  <data name="ex_InvalidObjectClassInConfiguration" xml:space="preserve">
+    <value>Invalid Object Class was specified in the connector configuration.  Object Class \'{0}\' was not found in Active Directory</value>
+  </data>
+  <data name="ex_AttributeNull" xml:space="preserve">
+    <value>Could not add connector attribute to &lt;null&gt; search result</value>
+  </data>
+  <data name="ex_CouldNotAddNullAttributeToDe" xml:space="preserve">
+    <value>Could not add connector attribute to &lt;null&gt; directory entry</value>
+  </data>
+  <data name="ex_ExpectingSingleValue" xml:space="preserve">
+    <value>Expecting single value, but found multiple values for attribute {0}</value>
+  </data>
+  <data name="ex_ObjectClassInvalidForConnector" xml:space="preserve">
+    <value>ObjectClass \'{0}\' is not valid for this connector</value>
   </data>
 </root>

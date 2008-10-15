@@ -267,7 +267,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             else
             {
                 throw new ConnectorException(
-                    String.Format("Invalid object class: {0}", oclass.GetObjectClassValue()));
+                    _configuration.ConnectorMessages.Format("ex_InvalidObjectClass", 
+                    "Invalid object class: {0}", oclass.GetObjectClassValue()));
             }            
         }
 
@@ -277,7 +278,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // Boolean translated = false;
             if (searchResult == null)
             {
-                throw new ConnectorException("Could not add connector attribute to <null> search result");
+                throw new ConnectorException(_configuration.ConnectorMessages.Format(
+                    "ex_AttributeNull",
+                    "Could not add connector attribute to <null> search result"));
             }
 
             return _customHandlers.GetCaFromDe(oclass, 
@@ -292,7 +295,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // Boolean translated = false;
             if (directoryEntry == null)
             {
-                throw new ConnectorException("Could not add connector attribute to <null> directory entry");
+                throw new ConnectorException(_configuration.ConnectorMessages.Format(
+                    "ex_CouldNotAddNullAttributeToDe",
+                    "Could not add connector attribute to <null> directory entry"));
             }
 
             _customHandlers.UpdateDeFromCa(oclass, type,
@@ -380,7 +385,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// </summary>
         /// <param name="pvc"></param>
         /// <returns></returns>
-        internal static Object GetSingleValue(PropertyValueCollection pvc)
+        internal Object GetSingleValue(PropertyValueCollection pvc)
         {
             if((pvc == null) || (pvc.Count == 0))
             {
@@ -389,7 +394,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             if (pvc.Count > 1)
             {
-                String msg = String.Format("Expecting single value, but found multiple values for attribute {0}",
+                String msg = _configuration.ConnectorMessages.Format(
+                    "ex_ExpectingSingleValue",
+                    "Expecting single value, but found multiple values for attribute {0}",
                     pvc.PropertyName);
                 throw new ConnectorException(msg);
             }
@@ -424,7 +431,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// </summary>
         /// <param name="oclass"></param>
         /// <returns></returns>
-        internal static String GetADObjectClass(ObjectClass oclass)
+        internal String GetADObjectClass(ObjectClass oclass)
         {
 
             if (oclass.Equals(ObjectClass.ACCOUNT))
@@ -441,7 +448,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             else
             { 
-                String msg = String.Format("ObjectClass \'{0}\' is not valid for this connector",
+                String msg = _configuration.ConnectorMessages.Format(
+                    "ex_ObjectClassInvalidForConnector",
+                    "ObjectClass \'{0}\' is not valid for this connector",
                     oclass.GetObjectClassValue());
                 throw new ConnectorException(msg);
             }

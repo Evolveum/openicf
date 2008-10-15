@@ -84,6 +84,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         [Test]
         public void TestConfiguration() {
             ActiveDirectoryConfiguration config = new ActiveDirectoryConfiguration();
+            config.ConnectorMessages = TestHelpers.CreateDummyMessages();
             String directoryAdminName = GetProperty(CONFIG_PROPERTY_USER);
             config.DirectoryAdminName = directoryAdminName;
             Assert.AreEqual(directoryAdminName, config.DirectoryAdminName);
@@ -448,7 +449,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void TestSearchNoFilter_Account()
         {
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            Configuration config = GetConfiguration();
+            config.ConnectorMessages = TestHelpers.CreateDummyMessages();
+            connector.Init(config);
+
             ICollection<Uid> createdUids = new HashSet<Uid>();
 
             try
@@ -1841,6 +1845,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             config.SearchContainer = GetProperty(CONFIG_PROPERTY_SEARCH_CONTEXT);
             config.SyncDomainController = GetProperty(CONFIG_PROPERTY_SYNC_DOMAIN_CONTROLLER);
             config.SyncGlobalCatalogServer = GetProperty(CONFIG_PROPERTY_GC_DOMAIN_CONTROLLER);
+            config.ConnectorMessages = TestHelpers.CreateDummyMessages();
             return config;
         }
 

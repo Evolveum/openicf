@@ -150,9 +150,17 @@ namespace Org.IdentityConnectors.ActiveDirectory
             String sAMAccountName = (String)directoryEntry.Properties[ActiveDirectoryConnector.ATT_SAMACCOUNT_NAME][0];
 
             DirectoryEntry userDe = new DirectoryEntry(directoryEntry.Path, 
-                sAMAccountName, _currentPassword);
+                sAMAccountName, _currentPassword);            
+
             try
             {
+                userDe.RefreshCache();
+
+                /*
+                 * 
+                 * This seems like the right way to do this ... but it doesn't work
+                 * everywhere, so I'm reverting to creating a directory entry and doing 
+                 * a refreshcashe to force a bind.
                 string serverName = _configuration.LDAPHostName;
                 PrincipalContext context = null;
                 if ((serverName == null) || (serverName.Length == 0))
@@ -163,7 +171,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
                 else
                 {
-                    context = new PrincipalContext(ContextType.Machine, _configuration.LDAPHostName);
+                    context = new PrincipalContext(ContextType.Machine, 
+                        _configuration.LDAPHostName, _configuration.DirectoryAdminName, 
+                        _configuration.DirectoryAdminPassword);
                 }
 
                 if (context == null)
@@ -171,9 +181,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     throw new ConnectorException("Unable to get PrincipalContext");
                 }
 
-                if(!context.ValidateCredentials(sAMAccountName, _currentPassword)) {
+                if (!context.ValidateCredentials(sAMAccountName, _currentPassword))
+                {
                     throw new InvalidCredentialException();
                 }
+                */
             }
             catch (Exception e)
             {

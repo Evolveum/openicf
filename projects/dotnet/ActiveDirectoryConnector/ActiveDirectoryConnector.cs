@@ -197,12 +197,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
             Trace.TraceInformation("Create method");
             if (_configuration == null)
             {
-                throw new ConfigurationException("Connector has not been configured");
+                throw new ConfigurationException(_configuration.ConnectorMessages.Format(
+                    "ex_ConnectorNotConfigured", "Connector has not been configured"));
             }
             Name nameAttribute = ConnectorAttributeUtil.GetNameFromAttributes(attributes);
             if (nameAttribute == null)
             {
-                throw new ConnectorException("The name operational attribute cannot be null");
+                throw new ConnectorException(
+                    _configuration.ConnectorMessages.Format("ex_OperationalAttributeNull", 
+                        "The name operational attribute cannot be null"));
             }
 
             String ldapContainerPath = ActiveDirectoryUtils.GetLDAPPath(_configuration.LDAPHostName,
@@ -224,7 +227,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
                 DirectoryEntry newDe = containerDe.Children.Add(
                     ActiveDirectoryUtils.GetRelativeName(nameAttribute),
-                    ActiveDirectoryUtils.GetADObjectClass(oclass));
+                    _utils.GetADObjectClass(oclass));
 
                 newDe.CommitChanges();
 
@@ -631,13 +634,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
             if (query == null)
             {
                 fullQueryBuilder.Append("(objectclass=");
-                fullQueryBuilder.Append(ActiveDirectoryUtils.GetADObjectClass(oclass));
+                fullQueryBuilder.Append(_utils.GetADObjectClass(oclass));
                 fullQueryBuilder.Append(")");
             }
             else
             {
                 fullQueryBuilder.Append("(&(objectclass=");
-                fullQueryBuilder.Append(ActiveDirectoryUtils.GetADObjectClass(oclass));
+                fullQueryBuilder.Append(_utils.GetADObjectClass(oclass));
                 fullQueryBuilder.Append(")");
                 fullQueryBuilder.Append(query);
                 fullQueryBuilder.Append(")");
@@ -857,7 +860,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             if ((!objectFound) || (ADSchemaClass == null))
             {
                 throw new ConnectorException(
-                    String.Format("Invalid Object Class was specified in the connector configuration.  Object Class \'{0}\' was not found in Active Directory",
+                    _configuration.ConnectorMessages.Format(
+                    "ex_InvalidObjectClassInConfiguration",
+                    "Invalid Object Class was specified in the connector configuration.  Object Class \'{0}\' was not found in Active Directory",
                     _configuration.ObjectClass));
             }
         }
@@ -875,13 +880,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
             Trace.TraceInformation("Update method");
             if (_configuration == null)
             {
-                throw new ConfigurationException("Connector has not been configured");
+                throw new ConfigurationException(_configuration.ConnectorMessages.Format(
+                    "ex_ConnectorNotConfigured", "Connector has not been configured"));
             }
 
             updatedUid = ConnectorAttributeUtil.GetUidAttribute(attributes);
             if (updatedUid == null)
             {
-                throw new ConnectorException("Uid was not present in attributes to be modified");
+                throw new ConnectorException(_configuration.ConnectorMessages.Format(
+                    "ex_UIDNotPresent", "Uid was not present"));
             }
             
             DirectoryEntry updateEntry =
@@ -921,7 +928,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             else
             {
-                throw new ConnectorException(String.Format("Delete is not supported for ObjectClass {0}", objClass.GetObjectClassValue()));
+                throw new ConnectorException(_configuration.ConnectorMessages.Format(
+                    "ex_DeleteNotSupported", "Delete is not supported for ObjectClass {0}", 
+                    objClass.GetObjectClassValue()));
             }
         }
 
@@ -964,11 +973,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             SyncResultsHandler _syncResultsHandler;
             ActiveDirectorySyncToken _adSyncToken;
+            ActiveDirectoryConfiguration _configuration;
 
             internal SyncResults(SyncResultsHandler syncResultsHandler, 
-                ActiveDirectorySyncToken adSyncToken) {
+                ActiveDirectorySyncToken adSyncToken, ActiveDirectoryConfiguration configuration) {
                 _syncResultsHandler = syncResultsHandler;
                 _adSyncToken = adSyncToken;
+                _configuration = configuration;
             }
 
             public bool SyncHandler(ConnectorObject obj)
@@ -978,8 +989,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 ConnectorAttribute tokenAttr = 
                     ConnectorAttributeUtil.Find(ATT_USN_CHANGED, obj.GetAttributes());
                 if(tokenAttr == null) {
-                    string msg = String.Format("Attribute {0} is not present " +
-                        "in connector object.  Cannot proceed with synchronization", ATT_USN_CHANGED);
+                    string msg = _configuration.ConnectorMessages.Format("ex_missingSyncAttribute", 
+                        "Attribute {0} is not present in connector object.  Cannot proceed with Synchronization", 
+                        ATT_USN_CHANGED);
                     Trace.TraceError(msg);
                     throw new ConnectorException(msg);
                 }
@@ -1020,7 +1032,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             if (!ObjectClass.ACCOUNT.Equals(objClass))
             {
-                throw new ConnectorException(String.Format("Sync operation is not available for ObjectClass {0}", objClass.GetObjectClassValue()));
+                throw new ConnectorException(_configuration.ConnectorMessages.Format(
+                    "ex_SyncNotAvailable",
+                    "Sync operation is not available for ObjectClass {0}", 
+                    objClass.GetObjectClassValue()));
             }
 
             String serverName = GetSyncServerName();
@@ -1032,7 +1047,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             string deletedQuery = GetSyncDeleteQuery(adSyncToken);
 
             OperationOptionsBuilder builder = new OperationOptionsBuilder();
-            SyncResults syncResults = new SyncResults(handler, adSyncToken);
+            SyncResults syncResults = new SyncResults(handler, adSyncToken, _configuration);
 
             // find modified usn's
             ExecuteQuery(objClass, modifiedQuery, syncResults.SyncHandler, builder.Build(),
