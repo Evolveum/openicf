@@ -690,96 +690,109 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             foreach (SearchResult result in resultSet)
             {
-                Trace.TraceInformation("Found object {0}", result.Path);
-                ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
-                builder.ObjectClass = oclass;
-
-                bool isDeleted = false;
-                if(result.Properties.Contains(ATT_IS_DELETED)) {
-                    ResultPropertyValueCollection pvc = result.Properties[ATT_IS_DELETED];
-                    if(pvc.Count > 0) {
-                        isDeleted = (bool)pvc[0];
-                    }
-                }
-                
-                if (isDeleted.Equals(false))
+                try
                 {
-                    // if we were using the global catalog (gc), we have to 
-                    // now retrieve the object from a domain controller (dc) 
-                    // because the gc may not have have all of the attributes,
-                    // depending on which attributes are replicated to the gc.                    
-                    SearchResult savedGcResult = null;
-                    SearchResult savedDcResult = result;
-                    if (useGlobalCatalog)
+                    Trace.TraceInformation("Found object {0}", result.Path);
+                    ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+                    builder.ObjectClass = oclass;
+
+                    bool isDeleted = false;
+                    if (result.Properties.Contains(ATT_IS_DELETED))
                     {
-                        savedGcResult = result;
-
-                        String dcSearchRootPath = ActiveDirectoryUtils.GetLDAPPath(
-                            _configuration.LDAPHostName, searchRoot);
-
-                        DirectoryEntry dcSearchRoot = new DirectoryEntry(dcSearchRootPath,
-                            _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
-
-                        string dcSearchQuery = String.Format("(" + ATT_DISTINGUISHED_NAME + "={0})",
-                            ActiveDirectoryUtils.GetDnFromPath(savedGcResult.Path));
-                        DirectorySearcher dcSearrcher = 
-                            new DirectorySearcher(dcSearchRoot, dcSearchQuery);
-                        savedDcResult = dcSearrcher.FindOne();
-                        if (savedDcResult == null)
+                        ResultPropertyValueCollection pvc = result.Properties[ATT_IS_DELETED];
+                        if (pvc.Count > 0)
                         {
-                            // in this case, we found it in the gc, but not in the
-                            // domain controller.  We cant return a result.  The could
-                            // be a case where the account was deleted, but the global
-                            // catalog doesn't know it yet
-                            Trace.TraceWarning(String.Format("Found result in global catalog " + 
-                                "for ''{0}'', but could not retrieve the entry from the domain " + 
-                                "controller", savedGcResult.Path));
-                            continue;
+                            isDeleted = (bool)pvc[0];
                         }
                     }
 
-                    foreach (string attributeName in attributesToReturn)
+                    if (isDeleted.Equals(false))
                     {
-                        SearchResult savedResults = savedDcResult;
-                        // if we are using the global catalog, we had to get the
-                        // dc's version of the directory entry, but for usnchanged, 
-                        // we need the gc version of it
-                        if (useGlobalCatalog && attributeName.Equals(ATT_USN_CHANGED, 
-                            StringComparison.CurrentCultureIgnoreCase))
+                        // if we were using the global catalog (gc), we have to 
+                        // now retrieve the object from a domain controller (dc) 
+                        // because the gc may not have have all of the attributes,
+                        // depending on which attributes are replicated to the gc.                    
+                        SearchResult savedGcResult = null;
+                        SearchResult savedDcResult = result;
+                        if (useGlobalCatalog)
                         {
-                            savedResults = savedGcResult;
+                            savedGcResult = result;
+
+                            String dcSearchRootPath = ActiveDirectoryUtils.GetLDAPPath(
+                                _configuration.LDAPHostName, searchRoot);
+
+                            DirectoryEntry dcSearchRoot = new DirectoryEntry(dcSearchRootPath,
+                                _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
+
+                            string dcSearchQuery = String.Format("(" + ATT_DISTINGUISHED_NAME + "={0})",
+                                ActiveDirectoryUtils.GetDnFromPath(savedGcResult.Path));
+                            DirectorySearcher dcSearrcher =
+                                new DirectorySearcher(dcSearchRoot, dcSearchQuery);
+                            savedDcResult = dcSearrcher.FindOne();
+                            if (savedDcResult == null)
+                            {
+                                // in this case, we found it in the gc, but not in the
+                                // domain controller.  We cant return a result.  The could
+                                // be a case where the account was deleted, but the global
+                                // catalog doesn't know it yet
+                                Trace.TraceWarning(String.Format("Found result in global catalog " +
+                                    "for ''{0}'', but could not retrieve the entry from the domain " +
+                                    "controller", savedGcResult.Path));
+                                continue;
+                            }
                         }
 
+                        foreach (string attributeName in attributesToReturn)
+                        {
+                            SearchResult savedResults = savedDcResult;
+                            // if we are using the global catalog, we had to get the
+                            // dc's version of the directory entry, but for usnchanged, 
+                            // we need the gc version of it
+                            if (useGlobalCatalog && attributeName.Equals(ATT_USN_CHANGED,
+                                StringComparison.CurrentCultureIgnoreCase))
+                            {
+                                savedResults = savedGcResult;
+                            }
+
+                            AddAttributeIfNotNull(builder,
+                                _utils.GetConnectorAttributeFromADEntry(
+                                oclass, attributeName, savedResults));
+                        }
+                    }
+                    else
+                    {
+                        // get uid
                         AddAttributeIfNotNull(builder,
                             _utils.GetConnectorAttributeFromADEntry(
-                            oclass, attributeName, savedResults));
+                            oclass, Uid.NAME, result));
+
+                        // get uid
+                        AddAttributeIfNotNull(builder,
+                            _utils.GetConnectorAttributeFromADEntry(
+                            oclass, Name.NAME, result));
+
+                        // get usnchanged
+                        AddAttributeIfNotNull(builder,
+                            _utils.GetConnectorAttributeFromADEntry(
+                            oclass, ATT_USN_CHANGED, result));
+
+                        // add isDeleted
+                        builder.AddAttribute(ATT_IS_DELETED, true);
                     }
+
+                    String msg = String.Format("Returning ''{0}''",
+                        (result.Path != null) ? result.Path : "<path is null>");
+                    Trace.TraceInformation(msg);
+                    handler(builder.Build());
                 }
-                else
+                catch (DirectoryServicesCOMException e)
                 {
-                    // get uid
-                    AddAttributeIfNotNull(builder,
-                        _utils.GetConnectorAttributeFromADEntry(
-                        oclass, Uid.NAME, result));
-
-                    // get uid
-                    AddAttributeIfNotNull(builder,
-                        _utils.GetConnectorAttributeFromADEntry(
-                        oclass, Name.NAME, result));
-
-                    // get usnchanged
-                    AddAttributeIfNotNull(builder,
-                        _utils.GetConnectorAttributeFromADEntry(
-                        oclass, ATT_USN_CHANGED, result));
-
-                    // add isDeleted
-                    builder.AddAttribute(ATT_IS_DELETED, true);
+                    // there is a chance that we found the result, but
+                    // in the mean time, it was deleted.  In that case, 
+                    // log an error and continue
+                    Trace.TraceWarning("Error in creating ConnectorObject from DirectoryEntry.  It may have been deleted during search.");
+                    Trace.TraceWarning(e.Message);
                 }
-
-                String msg = String.Format("Returning ''{0}''",
-                    (result.Path != null) ? result.Path : "<path is null>");
-                Trace.TraceInformation(msg);
-                handler(builder.Build());
             }
         }
 
