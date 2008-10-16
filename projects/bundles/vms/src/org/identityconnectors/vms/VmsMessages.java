@@ -68,6 +68,7 @@ public class VmsMessages extends ListResourceBundle {
     public static final String PASSWORD_NULL                 = "PASSWORD_NULL";
     public static final String TIMEOUT_IN_MATCH              = "TIMEOUT_IN_MATCH";
     public static final String UNSUPPORTED_OBJECT_CLASS		 = "UNSUPPORTED_OBJECT_CLASS";
+    public static final String TEST_FAILED					 = "TEST_FAILED";
 
     private static final String[][] _contents = {
         { INVALID_ATTR_MULTIPLICITY,     "Invalid multiplicity for Attribute ''{0}''" },
@@ -96,6 +97,7 @@ public class VmsMessages extends ListResourceBundle {
         { PASSWORD_NULL,                 "password may not be null" },
         { TIMEOUT_IN_MATCH,              "timeout waiting for pattern ''{0}''" },
         { UNSUPPORTED_OBJECT_CLASS,		 "Object Class ''{0}'' is not supported" },
+        { TEST_FAILED,					 "Test failed" },
     };
 
     @Override
