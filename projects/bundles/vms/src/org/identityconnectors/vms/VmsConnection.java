@@ -116,11 +116,11 @@ public class VmsConnection {
     public void test() {
         try {
             resetStandardOutput();
-            send("SHOW TIME");
+            send("WRITE SYS$OUTPUT \"Hello, World\"");
             waitFor(_configuration.getLocalHostShellPrompt(), _wait);
             String result = getStandardOutput();
-            result = result.replaceAll(_configuration.getLocalHostShellPrompt(), "").trim();
-            Date date = _vmsDateFormat.parse(result);
+            if (!result.contains("Hello, World"))
+            	throw new ConnectorException(_configuration.getMessage(VmsMessages.TEST_FAILED));
         } catch (Exception e) {
             throw new ConnectorException(e);
         }
