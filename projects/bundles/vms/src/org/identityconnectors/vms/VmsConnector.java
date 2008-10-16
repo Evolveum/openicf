@@ -57,9 +57,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -113,6 +115,8 @@ import org.identityconnectors.patternparser.Transform;
 public class VmsConnector implements PoolableConnector, CreateOp,
 DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
     private Log                         _log = Log.getLog(VmsConnector.class);
+    private DateFormat                  _vmsDateFormatWithSecs;
+    private DateFormat                  _vmsDateFormatWithoutSecs;
     private VmsConfiguration            _configuration;
     private VmsConnection               _connection;
     private Schema                      _schema;
@@ -128,7 +132,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
     private String                      _dateCommandScript;
     private ScriptExecutor              _dateCommandExecutor;
 
-    private final DateFormat VMS_DATE_FORMAT = new SimpleDateFormat("dd-MMM-yyyy HH:mm");
     private final static String VMS_DELTA_FORMAT = "{0,number,##}-{1,number,##}:{2,number,##}:{3,number,##}.{4,number,00}";
 
     private static final String SEPARATOR       = "Username: ";
@@ -138,7 +141,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
 
     public static final int    LONG_WAIT       = 60000;
     public static final int    SHORT_WAIT      = 5000;
-    private static final int   SEGMENT_MAX	   = 500;	
+    private static final int   SEGMENT_MAX       = 500;    
     
 
     // VMS messages we search for
@@ -152,14 +155,14 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
     private static final String BAD_SPEC         = "%UAF-W-BADSPC,";     // no user matches specification
 
     public VmsConnector() {
-    	try {
-    		_changeOwnPasswordCommandScript = readFileFromClassPath("org/identityconnectors/vms/UserPasswordScript.txt");
+        try {
+            _changeOwnPasswordCommandScript = readFileFromClassPath("org/identityconnectors/vms/UserPasswordScript.txt");
             _authorizeCommandScript = readFileFromClassPath("org/identityconnectors/vms/AuthorizeCommandScript.txt");
             _listCommandScript = readFileFromClassPath("org/identityconnectors/vms/ListCommandScript.txt");
             _dateCommandScript = readFileFromClassPath("org/identityconnectors/vms/DateCommandScript.txt");
-    	} catch (IOException ioe) {
-    		throw ConnectorException.wrap(ioe);
-    	}
+        } catch (IOException ioe) {
+            throw ConnectorException.wrap(ioe);
+        }
         _groovyFactory = ScriptExecutorFactory.newInstance("GROOVY");
         _authorizeCommandExecutor = _groovyFactory.newScriptExecutor(getClass().getClassLoader(), _authorizeCommandScript, true);
         _changeOwnPasswordCommandExecutor = _groovyFactory.newScriptExecutor(getClass().getClassLoader(), _changeOwnPasswordCommandScript, true);
@@ -168,34 +171,34 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
     }
 
     private String readFileFromClassPath(String fileName) throws IOException {
-		ClassLoader cl = null;
-		InputStream is = null;
-		StringBuffer buf = new StringBuffer();
+        ClassLoader cl = null;
+        InputStream is = null;
+        StringBuffer buf = new StringBuffer();
 
-		try {
-			cl = getClass().getClassLoader();
-			is = cl.getResourceAsStream(fileName);
+        try {
+            cl = getClass().getClassLoader();
+            is = cl.getResourceAsStream(fileName);
 
-			if (is != null) {
-				InputStreamReader isr = new InputStreamReader(is);
-				BufferedReader br = new BufferedReader(isr);
-				String s = null;
-				while ((s = br.readLine()) != null) {
-					buf.append(s);
-					buf.append("\n");
-				}
-			}
-		} finally {
-			if (is != null) {
-				try {
-					is.close();
-				} catch (Exception e) {
-				}
-			}
-		}
+            if (is != null) {
+                InputStreamReader isr = new InputStreamReader(is);
+                BufferedReader br = new BufferedReader(isr);
+                String s = null;
+                while ((s = br.readLine()) != null) {
+                    buf.append(s);
+                    buf.append("\n");
+                }
+            }
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (Exception e) {
+                }
+            }
+        }
 
-		return buf.toString();
-	}
+        return buf.toString();
+    }
 
 
     /**
@@ -215,6 +218,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
             if (character == '!' | character == ' ' | character == '\t')
                 quote = true;
         }
+        if (unquoted.length==0)
+            quote=true;
         if (!quote) {
             char[] result = new char[unquoted.length];
             System.arraycopy(unquoted, 0, result, 0, result.length);
@@ -286,16 +291,16 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
     }
 
     private List<CharArrayBuffer> appendAttributes(boolean modify, String prefix, Collection<? extends Attribute> attrs) {
-    	List<CharArrayBuffer> commandList = new LinkedList<CharArrayBuffer>();
-    	CharArrayBuffer command = new CharArrayBuffer();
-    	if (modify)
-    		command.append("MODIFY ");
-    	else
-    		command.append("ADD ");
-    	command.append(prefix);
-    	commandList.add(command);
-    	
-    	Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
+        List<CharArrayBuffer> commandList = new LinkedList<CharArrayBuffer>();
+        CharArrayBuffer command = new CharArrayBuffer();
+        if (modify)
+            command.append("MODIFY ");
+        else
+            command.append("ADD ");
+        command.append(prefix);
+        commandList.add(command);
+        
+        Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
 
         // Enable/disable is handled by FLAGS=([NO]DISUSER)
         //
@@ -321,20 +326,20 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         Attribute expiration = attrMap.remove(OperationalAttributes.PASSWORD_EXPIRED_NAME);
         if (expiration!=null) {
             if (AttributeUtil.getBooleanValue(expiration)) {
-            	String value = "/"+VmsConstants.ATTR_PWDEXPIRED;
-            	command = appendToCommand(commandList, command, value);
+                String value = "/"+VmsConstants.ATTR_PWDEXPIRED;
+                command = appendToCommand(commandList, command, value);
             } else {
-            	String value = "/"+"NO"+VmsConstants.ATTR_PWDEXPIRED;
-            	command = appendToCommand(commandList, command, value);
+                String value = "/"+"NO"+VmsConstants.ATTR_PWDEXPIRED;
+                command = appendToCommand(commandList, command, value);
             }
         } else {
-        	Attribute password = attrMap.get(OperationalAttributes.PASSWORD_NAME);
-        	// If the password is being changed, VMS automatically pre-expires the password.
-        	// If it wasn't already expired, we don't want to change that.
-        	//
-        	if (password!=null && modify) {
-        		// Get the user and find if currently pre-expired
-        		//
+            Attribute password = attrMap.get(OperationalAttributes.PASSWORD_NAME);
+            // If the password is being changed, VMS automatically pre-expires the password.
+            // If it wasn't already expired, we don't want to change that.
+            //
+            if (password!=null && modify) {
+                // Get the user and find if currently pre-expired
+                //
                 List<CharArrayBuffer> addCommand = new LinkedList<CharArrayBuffer>();
                 CharArrayBuffer buffer = new CharArrayBuffer();
                 buffer.append("SHOW "+prefix);
@@ -347,8 +352,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
                 try {
                     result = (String)_authorizeCommandExecutor.execute(variables);
                     if (!result.contains("(pre-expired)")) {
-                    	String value = "/"+"NO"+VmsConstants.ATTR_PWDEXPIRED;
-                    	command = appendToCommand(commandList, command, value);
+                        String value = "/"+"NO"+VmsConstants.ATTR_PWDEXPIRED;
+                        command = appendToCommand(commandList, command, value);
                     }
                     clearArrays(variables);
                 } catch (Exception e) {
@@ -356,7 +361,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
                     _log.error(e, "error in create");
                     throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE), e);
                 }
-        	}
+            }
         }
         
         // Password change interval is handled by the /PWDLIFETIME qualifier
@@ -365,12 +370,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         if (changeInterval!=null) {
             long expirationTime = AttributeUtil.getLongValue(changeInterval).longValue();
             if (expirationTime==0) {
-            	String value = "/"+"NO"+ATTR_PWDLIFETIME;
-            	command = appendToCommand(commandList, command, value);
+                String value = "/"+"NO"+ATTR_PWDLIFETIME;
+                command = appendToCommand(commandList, command, value);
             } else {
                 String deltaValue = remapToDelta(expirationTime);
-            	String value = "/"+VmsConstants.ATTR_PWDLIFETIME+"="+new String(quoteWhenNeeded(deltaValue.toCharArray(), true));
-            	command = appendToCommand(commandList, command, value);
+                String value = "/"+VmsConstants.ATTR_PWDLIFETIME+"="+new String(quoteWhenNeeded(deltaValue.toCharArray(), true));
+                command = appendToCommand(commandList, command, value);
             }
         }
         
@@ -380,19 +385,24 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
             // Need to update values for list-valued attributes to specify
             // negated values, as well as positive values
             if (VmsConstants.ATTR_FLAGS.equalsIgnoreCase(name)) {
-            	updateValues(values, VmsAttributeValidator.FLAGS_LIST);
+                updateValues(values, VmsAttributeValidator.FLAGS_LIST);
             } else if (VmsConstants.ATTR_PRIVILEGES.equalsIgnoreCase(name)) {
-            	updateValues(values, VmsAttributeValidator.PRIVS_LIST);
+                updateValues(values, VmsAttributeValidator.PRIVS_LIST);
             } else if (VmsConstants.ATTR_DEFPRIVILEGES.equalsIgnoreCase(name)) {
-            	updateValues(values, VmsAttributeValidator.PRIVS_LIST);
+                updateValues(values, VmsAttributeValidator.PRIVS_LIST);
             } else if (VmsConstants.ATTR_PRIMEDAYS.equalsIgnoreCase(name)) {
-            	updateValues(values, VmsAttributeValidator.PRIMEDAYS_LIST);
+                updateValues(values, VmsAttributeValidator.PRIMEDAYS_LIST);
             }
+            // If OWNER is specified as empty list, we change it to
+            // a list containing the empty string
+            //
+            if (ATTR_OWNER.equalsIgnoreCase(name) && values.size()==0)
+                values.add("");
             if (!name.equals(Name.NAME) && isNeedsValidation(attribute)) {
                 VmsAttributeValidator.validate(name, values, _configuration);
                 if (values.size()==0) {
-                	String value = "/"+remapName(attribute);
-                	command = appendToCommand(commandList, command, value);
+                    String value = "/"+remapName(attribute);
+                    command = appendToCommand(commandList, command, value);
                 } else {
                     if (isDateTimeAttribute(name))
                         remapToDateTime(values);
@@ -400,11 +410,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
                         remapToDelta(values);
                     char[] value = listToVmsValueList(values);
                     String first = "/"+remapName(attribute)+"=";
-                	if (command.length()+first.length()+value.length>SEGMENT_MAX) {
-                		command = addNewCommandSegment(commandList, command);            		
-                	}
-            		command.append(first);
-            		command.append(value);
+                    if (command.length()+first.length()+value.length>SEGMENT_MAX) {
+                        command = addNewCommandSegment(commandList, command);
+                    }
+                    command.append(first);
+                    command.append(quoteWhenNeeded(value));
                     Arrays.fill(value, 0, value.length, ' ');
                 }
             }
@@ -412,14 +422,14 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         return commandList;
     }
 
-	private CharArrayBuffer appendToCommand(List<CharArrayBuffer> commandList,
-			CharArrayBuffer command, String value) {
-		if (command.length()+value.length()>SEGMENT_MAX) {
-			command = addNewCommandSegment(commandList, command);            		
-		}
-		command.append(value);
-		return command;
-	}
+    private CharArrayBuffer appendToCommand(List<CharArrayBuffer> commandList,
+            CharArrayBuffer command, String value) {
+        if (command.length()+value.length()>SEGMENT_MAX) {
+            command = addNewCommandSegment(commandList, command);                    
+        }
+        command.append(value);
+        return command;
+    }
     
     /** 
      * The values list is updated to hold negated values for every possibility that
@@ -428,19 +438,19 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
      * @param possibilities
      */
     private void updateValues(List<Object> values, List<String> possibilities) {
-    	for (String possibility : possibilities) {
-    		if (!values.contains(possibility))
-    			values.add("NO"+possibility);
-    	}
+        for (String possibility : possibilities) {
+            if (!values.contains(possibility))
+                values.add("NO"+possibility);
+        }
     }
 
-	private CharArrayBuffer addNewCommandSegment(
-			List<CharArrayBuffer> commandList, CharArrayBuffer command) {
-		command.append("-");
-		command = new CharArrayBuffer();
-		commandList.add(command);
-		return command;
-	}
+    private CharArrayBuffer addNewCommandSegment(
+            List<CharArrayBuffer> commandList, CharArrayBuffer command) {
+        command.append("-");
+        command = new CharArrayBuffer();
+        commandList.add(command);
+        return command;
+    }
     
     private boolean isDateTimeAttribute(String attributeName) {
         return false;
@@ -455,7 +465,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
     private void remapToDateTime(List<Object> values) {
         for (int i=0; i<values.size(); i++) {
             Object value = values.get(i);
-            values.set(i, VMS_DATE_FORMAT.format(new Date((Long)value)));
+            values.set(i, _vmsDateFormatWithoutSecs.format(new Date((Long)value)));
         }
     }
 
@@ -469,8 +479,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
 
     Pattern _deltaPattern = Pattern.compile("(?:(\\d+)\\s)?(\\d+):(\\d+)(?:(\\d+))?(?:.(\\d+))?");
     private long remapFromDelta(String delta) {
-    	if (delta==null)
-    		System.out.println("oops");
+        if (delta==null)
+            System.out.println("oops");
         Matcher matcher = _deltaPattern.matcher(delta);
         if (matcher.matches()) {
             String daysS         = matcher.group(1);
@@ -537,8 +547,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
      * {@inheritDoc}
      */
     public Uid create(ObjectClass objectClass, final Set<Attribute> attrs, final OperationOptions options) {
-    	if (!objectClass.equals(ObjectClass.ACCOUNT))
-    		throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
+        if (!objectClass.equals(ObjectClass.ACCOUNT))
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
         Name name = AttributeUtil.getNameFromAttributes(attrs);
         String accountId = name.getNameValue();
         _log.info("create(''{0}'')", accountId);
@@ -571,8 +581,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
      * {@inheritDoc}
      */
     public void delete(ObjectClass objectClass, Uid uid, OperationOptions options) {
-    	if (!objectClass.equals(ObjectClass.ACCOUNT))
-    		throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
+        if (!objectClass.equals(ObjectClass.ACCOUNT))
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
         _log.info("delete(''{0}'')", uid.getUidValue());
         String removeCommand = "REMOVE "+uid.getUidValue();
         Map<String, Object> variables = new HashMap<String, Object>();
@@ -617,8 +627,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
      * {@inheritDoc}
      */
     public void executeQuery(ObjectClass objectClass, String query, ResultsHandler handler, OperationOptions options) {
-    	if (!objectClass.equals(ObjectClass.ACCOUNT))
-    		throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
+        if (!objectClass.equals(ObjectClass.ACCOUNT))
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
         try {
             if ( query == null ) {
                 query = "*";
@@ -660,7 +670,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
             //
             int index = user.indexOf(UAF_PROMPT);
             if (index>-1)
-            	user = user.substring(0, index);
+                user = user.substring(0, index);
             user += "\n";
             try {
                 @SuppressWarnings("unchecked")
@@ -746,7 +756,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         }
     }
     
-    private static final DateFormat _vmsDateFormat = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
     private Date getVmsDate() {
         Map<String, Object> variables = new HashMap<String, Object>();
         variables.put("connection", _connection);
@@ -757,7 +766,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         try {
             result = (String)_dateCommandExecutor.execute(variables);
             result = result.replaceAll(_configuration.getLocalHostShellPrompt(), "").trim();
-            Date date = _vmsDateFormat.parse(result);
+            Date date = _vmsDateFormatWithSecs.parse(result);
             return date;
         } catch (Exception e) {
             _log.error(e, "error in getVmsDate");
@@ -768,10 +777,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
 
     private Date getPasswordExpirationDate(Map<String, Object> attributes) throws ParseException {
         String lastChange = (String)attributes.get(VmsConstants.ATTR_PWDCHANGE);
-        long lastChangeDate = VMS_DATE_FORMAT.parse(lastChange).getTime();
+        long lastChangeDate = _vmsDateFormatWithoutSecs.parse(lastChange).getTime();
         String lifetime = (String)attributes.get(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME);
         if (lifetime==null)
-        	return null;
+            return null;
         long lifetimeLong = remapFromDelta(lifetime);
         Date expiredDate = new Date(lastChangeDate+lifetimeLong);
         return expiredDate;
@@ -795,8 +804,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
      * {@inheritDoc}
      */
     public Uid update(ObjectClass objectClass, Set<Attribute> attributes, OperationOptions options) {
-    	if (!objectClass.equals(ObjectClass.ACCOUNT))
-    		throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
+        if (!objectClass.equals(ObjectClass.ACCOUNT))
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
         Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attributes));
         
         // Operational Attributes are handled specially
@@ -806,7 +815,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         Attribute currentPassword = attrMap.remove(OperationalAttributes.CURRENT_PASSWORD_NAME);
         Attribute newPassword = attrMap.remove(OperationalAttributes.PASSWORD_NAME);
 
-        // If name is different form Uid, we are performing a RENAME operation.
+        // If name is different from Uid, we are performing a RENAME operation.
         // Do this first, followed by the MODIFY
         //
         if (name!=null && uid!=null && !uid.getUidValue().equals(name.getNameValue())) {
@@ -881,9 +890,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, errortext));
             }
         } else if (newPassword!=null) {
-        	// Put back the new password, so it can be changed administratively
-        	//
-        	attrMap.put(OperationalAttributes.PASSWORD_NAME, newPassword);
+            // Put back the new password, so it can be changed administratively
+            //
+            attrMap.put(OperationalAttributes.PASSWORD_NAME, newPassword);
         }
         
         // If we have any remaining attributes, process them
@@ -917,16 +926,16 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
     }
     
     private void fillInCommand(List<CharArrayBuffer> command, Map<String, Object> variables) {
-    	List<CharArrayBuffer> localCommand = new LinkedList<CharArrayBuffer>(command);
-    	CharArrayBuffer lastPart = localCommand.remove(command.size()-1);
-    	char[] commandContents = lastPart.getArray();
-    	lastPart.clear();
+        List<CharArrayBuffer> localCommand = new LinkedList<CharArrayBuffer>(command);
+        CharArrayBuffer lastPart = localCommand.remove(command.size()-1);
+        char[] commandContents = lastPart.getArray();
+        lastPart.clear();
         variables.put("COMMAND", commandContents);
         List<char[]> firstContents = new LinkedList<char[]>();
         for (CharArrayBuffer part : localCommand) {
-        	commandContents = part.getArray();
-        	part.clear();
-        	firstContents.add(commandContents);
+            commandContents = part.getArray();
+            part.clear();
+            firstContents.add(commandContents);
         }
         variables.put("COMMANDS", firstContents);
         variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
@@ -937,13 +946,13 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
     }
     
     private void clearArrays(Map<String, Object> variables) {
-    	char[] commandContents = (char[])variables.get("COMMAND");
+        char[] commandContents = (char[])variables.get("COMMAND");
         Arrays.fill(commandContents, 0, commandContents.length, ' ');
-    	List<char[]> commandPrefixContents = (List<char[]>)variables.get("COMMANDS");
-    	if (commandPrefixContents!=null) {
-	    	for (char[] commandPrefix : commandPrefixContents)
-	    		Arrays.fill(commandPrefix, 0, commandPrefix.length, ' ');
-    	}
+        List<char[]> commandPrefixContents = (List<char[]>)variables.get("COMMANDS");
+        if (commandPrefixContents!=null) {
+            for (char[] commandPrefix : commandPrefixContents)
+                Arrays.fill(commandPrefix, 0, commandPrefix.length, ' ');
+        }
     }
 
     /**
@@ -1000,10 +1009,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         attributes.add(buildMultivaluedAttribute(ATTR_DEFPRIVILEGES,String.class, false));
         attributes.add(buildMultivaluedAttribute(ATTR_FLAGS,        String.class, false));
 
-        // Read-only attributes
-        //
-        //attributes.add(buildReadonlyAttribute(ATTR_SECDAYS,         String.class, false));
-
         // Write-only attributes
         //
         //attributes.add(buildWriteonlyAttribute(ATTR_ALGORITHM,      String.class, false, false));
@@ -1020,12 +1025,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         //
         attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
 
-		// Remove unsupported operations
+        // Remove unsupported operations
         //
         /*
         schemaBuilder.removeSupportedOperationOption(
-        	AuthenticateOp.class, 
-        	OperationOptionInfoBuilder.build(ObjectClass.ACCOUNT_NAME));
+            AuthenticateOp.class, 
+            OperationOptionInfoBuilder.build(ObjectClass.ACCOUNT_NAME));
         */
         schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
         _schema = schemaBuilder.build();
@@ -1105,6 +1110,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
      */
     public void init(Configuration cfg) {
         _configuration = (VmsConfiguration)cfg;
+        _vmsDateFormatWithSecs = new SimpleDateFormat(_configuration.getVmsDateFormatWithSecs(), new Locale(_configuration.getVmsLocale()));
+        TimeZone timeZone = TimeZone.getTimeZone(_configuration.getVmsTimeZone());
+        _vmsDateFormatWithSecs.setTimeZone(timeZone);
+        _vmsDateFormatWithoutSecs = new SimpleDateFormat(_configuration.getVmsDateFormatWithoutSecs(), new Locale(_configuration.getVmsLocale()));
+        _vmsDateFormatWithoutSecs.setTimeZone(timeZone);
         try {
             _connection = new VmsConnection(_configuration, VmsConnector.SHORT_WAIT);
         } catch (Exception e) {
@@ -1151,7 +1161,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         }
         
         public int length() {
-        	return _position;
+            return _position;
         }
     }
 }

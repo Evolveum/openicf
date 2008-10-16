@@ -485,6 +485,27 @@ public class VmsConnectorTests {
     }
 
     @Test
+    public void testNullOwner() throws Exception {
+        VmsConfiguration config = createConfiguration();
+        VmsConnector info = createConnector(config);
+
+        try {
+            Set<Attribute> attrs = fillInSampleUser(getTestUser());
+    
+            // Recreate the account
+            //
+            deleteUser(getTestUser(), info);
+            info.create(ObjectClass.ACCOUNT, attrs, null);
+    
+            // Test the write-only attributes
+            //
+            testModifyUserAttribute(info, AttributeBuilder.build(ATTR_OWNER, new Object[0]), false);
+        } finally {
+            info.dispose();
+        }
+    }
+
+    @Test
     public void testEnableDisable() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
@@ -1008,6 +1029,10 @@ public class VmsConnectorTests {
         config.setUserName(SYSTEM_USER);
         config.setConnectScript(getConnectScript());
         config.setSSH(isSSH());
+        config.setVmsLocale("en_US");
+        config.setVmsDateFormatWithoutSecs("dd-MMM-yyyy HH:mm");
+        config.setVmsDateFormatWithSecs("dd-MMM-yyyy HH:mm:ss");
+        config.setVmsTimeZone("GMT-06:00");
         return config;
     }
 

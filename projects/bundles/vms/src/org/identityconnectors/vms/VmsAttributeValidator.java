@@ -111,7 +111,6 @@ public class VmsAttributeValidator {
     private static final Pattern _devicePattern 		= Pattern.compile("[a-zA-Z0-9:]{1,31}"); 
     private static final Pattern _directoryPattern 		= Pattern.compile("(\\[[a-zA-Z0-9:]{1,39}\\])|[a-zA-Z0-9:]{1,39}"); 
     private static final Pattern _fileSpecPattern 		= Pattern.compile("[a-zA-Z0-9$_:]+"); 
-    private static final Pattern _ownerPattern 			= Pattern.compile(".{1,31}"); 
     private static final Pattern _passwordPattern 		= null; 
     private static final Pattern _uicPattern 			= Pattern.compile("\\[[0-3][0-7][0-7],[0-3][0-7][0-7]\\]"); 
 
@@ -121,6 +120,22 @@ public class VmsAttributeValidator {
     	public boolean isValid(List<Object> dateList);
     };
 
+    /**
+     * Determine if the string represents a valid VMS date stamp
+     * 
+     * @param date
+     * @return
+     */
+    
+    public static class ValidOwner implements Validity {
+	    public boolean isValid(List<Object> ownerList) {
+	        if (ownerList.size()!=1)
+	            return false;
+	        String owner = (String)ownerList.get(0).toString();
+	        return (owner==null || owner.length()<32);
+	    }
+    }
+    
     /**
      * Determine if the string represents a valid VMS date stamp
      * 
@@ -674,7 +689,7 @@ public class VmsAttributeValidator {
         VALIDATOR_INFO.put(ATTR_MAXDETACH, new ValidatorInfo(new ValidNumberOrNone()));
         VALIDATOR_INFO.put(ATTR_MAXJOBS, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_NETWORK, new ValidatorInfo(new ValidAccessList()));
-        VALIDATOR_INFO.put(ATTR_OWNER, new ValidatorInfo(_ownerPattern, 1));
+        VALIDATOR_INFO.put(ATTR_OWNER, new ValidatorInfo(new ValidOwner()));
         VALIDATOR_INFO.put(ATTR_PASSWORD, new ValidatorInfo(_passwordPattern, 1));
         VALIDATOR_INFO.put(ATTR_PBYTLM, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_PGFLQUOTA, new ValidatorInfo(1));

@@ -60,12 +60,16 @@ public class VmsMessages extends ListResourceBundle {
     public static final String HOST_NULL                     = "HOST_NULL";
     public static final String PORT_NULL                     = "PORT_NULL";
     public static final String PORT_RANGE_ERROR              = "PORT_RANGE_ERROR";
+    public static final String LOCALE_NULL               	 = "LOCALE_NULL";
     public static final String TERMINATOR_NULL               = "TERMINATOR_NULL";
     public static final String SHELL_PROMPT_NULL             = "SHELL_PROMPT_NULL";
     public static final String SSH_NULL                      = "SSH_NULL";
     public static final String CONN_SCRIPT_NULL              = "CONN_SCRIPT_NULL";
     public static final String USERNAME_NULL                 = "USERNAME_NULL";
     public static final String PASSWORD_NULL                 = "PASSWORD_NULL";
+    public static final String TIMEZONE_NULL                 = "TIMEZONE_NULL";
+    public static final String DATEFORMAT1_NULL              = "DATEFORMAT1_NULL";
+    public static final String DATEFORMAT2_NULL              = "DATEFORMAT2_NULL";
     public static final String TIMEOUT_IN_MATCH              = "TIMEOUT_IN_MATCH";
     public static final String UNSUPPORTED_OBJECT_CLASS		 = "UNSUPPORTED_OBJECT_CLASS";
     public static final String TEST_FAILED					 = "TEST_FAILED";
@@ -89,12 +93,16 @@ public class VmsMessages extends ListResourceBundle {
         { PORT_NULL,                     "port may not be null" },
         { HOST_NULL,                     "host name may not be null" },
         { PORT_RANGE_ERROR,              "host port ''{0,number,#########}'' must be between 1 and 65535" },
+        { LOCALE_NULL,               	 "VMS locale may not be null" },
         { TERMINATOR_NULL,               "line terminator may not be null" },
         { SHELL_PROMPT_NULL,             "shell prompt may not be null" },
         { SSH_NULL,                      "SSH may not be null" },
         { CONN_SCRIPT_NULL,              "connect script may not be null" },
         { USERNAME_NULL,                 "user name may not be null" },
         { PASSWORD_NULL,                 "password may not be null" },
+        { TIMEZONE_NULL,                 "Vms timezone may not be null" },
+        { DATEFORMAT1_NULL,              "Vms DateFormat without seconds may not be null" },
+        { DATEFORMAT2_NULL,              "Vms DateFormat with seconds may not be null" },
         { TIMEOUT_IN_MATCH,              "timeout waiting for pattern ''{0}''" },
         { UNSUPPORTED_OBJECT_CLASS,		 "Object Class ''{0}'' is not supported" },
         { TEST_FAILED,					 "Test failed" },

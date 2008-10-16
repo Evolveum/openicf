@@ -58,6 +58,10 @@ public class VmsConfiguration extends AbstractConfiguration {
     private String         _hostShellPrompt;
     private Integer        _hostPortNumber;
     private String         _connectScript;
+    private String         _vmsLocale;
+    private String         _vmsDateFormatWithSecs;
+    private String         _vmsDateFormatWithoutSecs;
+    private String         _vmsTimeZone;
     private Boolean        _isSSH;
 
     private ResourceBundle _bundle = null; 
@@ -68,6 +72,14 @@ public class VmsConfiguration extends AbstractConfiguration {
     private static final String CATALOG = "org.identityconnectors.vms.VmsMessages";
 
     public void validate() {
+    	if (isNull(_vmsLocale))
+            throw new IllegalArgumentException(getMessage(VmsMessages.LOCALE_NULL));
+    	if (isNull(_vmsDateFormatWithSecs))
+            throw new IllegalArgumentException(getMessage(VmsMessages.DATEFORMAT1_NULL));
+    	if (isNull(_vmsTimeZone))
+            throw new IllegalArgumentException(getMessage(VmsMessages.TIMEZONE_NULL));
+    	if (isNull(_vmsDateFormatWithoutSecs))
+            throw new IllegalArgumentException(getMessage(VmsMessages.DATEFORMAT2_NULL));
     	if (isNull(_hostLineTerminator))
             throw new IllegalArgumentException(getMessage(VmsMessages.TERMINATOR_NULL));
         if (_isSSH==null)
@@ -114,6 +126,38 @@ public class VmsConfiguration extends AbstractConfiguration {
 
     public String getMessage(String key, Object... objects) {
         return MessageFormat.format(getBundle().getString(key), objects);
+    }
+
+    public String getVmsLocale() {
+        return _vmsLocale;
+    }
+
+    public void setVmsLocale(String vmsLocale) {
+        _vmsLocale = vmsLocale;
+    }
+
+    public String getVmsTimeZone() {
+        return _vmsTimeZone;
+    }
+
+    public void setVmsTimeZone(String vmsTimeZone) {
+        _vmsTimeZone = vmsTimeZone;
+    }
+
+    public String getVmsDateFormatWithSecs() {
+        return _vmsDateFormatWithSecs;
+    }
+
+    public void setVmsDateFormatWithSecs(String vmsDateFormatWithSecs) {
+        _vmsDateFormatWithSecs = vmsDateFormatWithSecs;
+    }
+
+    public String getVmsDateFormatWithoutSecs() {
+        return _vmsDateFormatWithoutSecs;
+    }
+
+    public void setVmsDateFormatWithoutSecs(String vmsDateFormatWithoutSecs) {
+        _vmsDateFormatWithoutSecs = vmsDateFormatWithoutSecs;
     }
 
     public String getUserName() {
