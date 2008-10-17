@@ -229,4 +229,7 @@ DC=COM.</value>
   <data name="ex_InvalidCredentials" xml:space="preserve">
     <value>Invalid credentials supplied for user {0}</value>
   </data>
+  <data name="ex_PasswordMustBeReset" xml:space="preserve">
+    <value>Password expiration can only be reset by reseting the password</value>
+  </data>
 </root>

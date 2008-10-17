@@ -160,7 +160,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public static readonly string ATT_MEMBEROF = "memberOf";
         public static readonly string ATT_HOME_DIRECTORY = "homeDirectory";
         public static readonly string ATT_OBJECT_SID = "objectSid";
-
+        public static readonly string ATT_PWD_LAST_SET = "pwdLastSet";
         public static readonly string OBJECTCLASS_OU = "organizationalUnit";
         public static readonly ObjectClass ouObjectClass = new ObjectClass(OBJECTCLASS_OU);
 
@@ -215,12 +215,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
             
             try
             {
-                /*
                 if (!DirectoryEntry.Exists(ldapContainerPath))
                 {
                     throw new ConnectorException("Container does not exist");
                 }
-                */
 
                 // Get the correct container, and put the new user in it
                 DirectoryEntry containerDe = new DirectoryEntry(ldapContainerPath,
@@ -386,6 +384,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             attributeInfos.Add(OperationalAttributeInfos.DISABLE_DATE);
             attributeInfos.Add(OperationalAttributeInfos.LOCK_OUT);
              */
+            attributeInfos.Add(OperationalAttributeInfos.PASSWORD_EXPIRED);
             attributeInfos.Add(OperationalAttributeInfos.CURRENT_PASSWORD);
             // dont think I need this
             // attributeInfos.Add(OperationalAttributeInfos.RESET_PASSWORD);
@@ -1200,13 +1199,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             OperationOptions options)
         {
             PasswordChangeHandler handler = new PasswordChangeHandler(_configuration);
-            String ldapEntryPath = ActiveDirectoryUtils.GetLDAPPath(_configuration.LDAPHostName, 
-                username);
-
-            DirectoryEntry directoryEntry = new DirectoryEntry(ldapEntryPath,
-                _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
-
-            handler.Authenticate(directoryEntry, username, password);
+            handler.Authenticate(username, password);
         }
 
         #endregion

@@ -143,57 +143,38 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// <param name="directoryEntry"></param>
         /// <param name="username"></param>
         /// <param name="password"></param>
-        internal void Authenticate(DirectoryEntry directoryEntry, string username,
+        internal void Authenticate(/*DirectoryEntry directoryEntry,*/ string username,
             Org.IdentityConnectors.Common.Security.GuardedString password)
         {
             password.Access(setCurrentPassword);
-            String sAMAccountName = (String)directoryEntry.Properties[ActiveDirectoryConnector.ATT_SAMACCOUNT_NAME][0];
 
-            DirectoryEntry userDe = new DirectoryEntry(directoryEntry.Path, 
-                sAMAccountName, _currentPassword);            
-
-            try
+            string serverName = _configuration.LDAPHostName;
+            PrincipalContext context = null;
+            if ((serverName == null) || (serverName.Length == 0))
             {
-                userDe.RefreshCache();
-
-                /*
-                 * 
-                 * This seems like the right way to do this ... but it doesn't work
-                 * everywhere, so I'm reverting to creating a directory entry and doing 
-                 * a refreshcashe to force a bind.
-                string serverName = _configuration.LDAPHostName;
-                PrincipalContext context = null;
-                if ((serverName == null) || (serverName.Length == 0))
-                {
-                    DomainController domainController = ActiveDirectoryUtils.GetDomainController(_configuration);
-                    context = new PrincipalContext(ContextType.Domain, 
-                        domainController.Domain.Name);
-                }
-                else
-                {
-                    context = new PrincipalContext(ContextType.Machine, 
-                        _configuration.LDAPHostName, _configuration.DirectoryAdminName, 
-                        _configuration.DirectoryAdminPassword);
-                }
-
-                if (context == null)
-                {
-                    throw new ConnectorException("Unable to get PrincipalContext");
-                }
-
-                if (!context.ValidateCredentials(sAMAccountName, _currentPassword))
-                {
-                    throw new InvalidCredentialException();
-                }
-                */
+                DomainController domainController = ActiveDirectoryUtils.GetDomainController(_configuration);
+                context = new PrincipalContext(ContextType.Domain,
+                    domainController.Domain.Name, 
+                    username, _currentPassword);
             }
-            catch (Exception e)
+            else
+            {
+                context = new PrincipalContext(ContextType.Machine, 
+                    _configuration.LDAPHostName,
+                    username, _currentPassword);
+            }
+
+            if (context == null)
+            {
+                throw new ConnectorException("Unable to get PrincipalContext");
+            }
+
+            if (!context.ValidateCredentials(username, _currentPassword))
             {
                 throw new InvalidCredentialException(_configuration.ConnectorMessages.Format(
-                    "ex_InvalidCredentials", "Invalid credentials supplied for user {0}", 
-                    directoryEntry.Path));
+                "ex_InvalidCredentials", "Invalid credentials supplied for user {0}",
+                username));
             }
-
         }
     }
 }

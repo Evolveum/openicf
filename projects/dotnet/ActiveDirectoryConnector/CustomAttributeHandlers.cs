@@ -117,6 +117,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 UpdateDeFromCa_Att_HomeDirectory);
             UpdateDeFromCaDelegates.Add(OperationalAttributes.ENABLE_NAME,
                 UpdateDeFromCa_OpAtt_Enable);
+            UpdateDeFromCaDelegates.Add(OperationalAttributes.PASSWORD_EXPIRED_NAME,
+                UpdateDeFromCa_OpAtt_PasswordExpired);
             // supporting class not implemented in the framework
             /*
             UpdateDeFromCaDelegates.Add(OperationalAttributes.ENABLE_DATE_NAME,
@@ -166,6 +168,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 GetCaFromDe_OpAtt_Groups);
             GetCaFromDeDelegates.Add(OperationalAttributes.ENABLE_NAME,
                 GetCaFromDe_OpAtt_Enabled);
+            GetCaFromDeDelegates.Add(OperationalAttributes.PASSWORD_EXPIRED_NAME,
+                GetCaFromDe_OpAtt_PasswordExpired);
             // supporting class not implemented in the framework
             /*
             GetCaFromDeDelegates.Add(OperationalAttributes.ENABLE_DATE_NAME,
@@ -465,7 +469,28 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 !ConnectorAttributeUtil.GetBooleanValue(attribute));
         }
 
-// supporting class not implemented in the framework
+        internal void UpdateDeFromCa_OpAtt_PasswordExpired(ObjectClass oclass,
+            UpdateType type, DirectoryEntry directoryEntry,
+            ConnectorAttribute attribute)
+        {
+            bool? passwordExpired = ConnectorAttributeUtil.GetBooleanValue(attribute);
+            if ((passwordExpired.HasValue) && (passwordExpired.Value == true))
+            {
+                directoryEntry.Properties[ActiveDirectoryConnector.ATT_PWD_LAST_SET].Clear();
+                directoryEntry.Properties[ActiveDirectoryConnector.ATT_PWD_LAST_SET].Value = GetLargeIntegerFromLong(0);
+            }
+            else
+            { 
+                // this value can't be set (other than to zero) I'm throwing my own exception
+                // here, because if not, AD thows this (at least on my machine):
+                //      System.DirectoryServices.DirectoryServicesCOMException : A device attached to the system is not functioning. (Exception from HRESULT: 0x8007001F)
+                throw new ConnectorException(_configuration.ConnectorMessages.Format(
+                    "ex_PasswordMustBeReset",
+                    "Password expiration can only be reset by reseting the password"));
+            }
+        }
+
+        // supporting class not implemented in the framework
 /*
         internal void UpdateDeFromCa_OpAtt_EnableDate(ObjectClass oclass,
             UpdateType type, DirectoryEntry directoryEntry,
@@ -817,8 +842,22 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             return ConnectorAttributeBuilder.BuildEnabled(!disabled);
         }
-        
-// supporting class not implemented in the framework
+
+        private ConnectorAttribute GetCaFromDe_OpAtt_PasswordExpired(
+            ObjectClass oclass, string attributeName, SearchResult searchResult)
+        {
+            ConnectorAttribute realAttribute = GetCaFromDe_Att_Generic(
+                oclass, ActiveDirectoryConnector.ATT_PWD_LAST_SET, searchResult);
+            long? lastSetDate = ConnectorAttributeUtil.GetLongValue(realAttribute);
+            if ((lastSetDate.HasValue) && (lastSetDate.Value != 0))
+            {
+                return ConnectorAttributeBuilder.BuildPasswordExpired(false);
+            }
+
+            return ConnectorAttributeBuilder.BuildPasswordExpired(true);
+        }
+
+        // supporting class not implemented in the framework
 /*
         private ConnectorAttribute GetCaFromDe_OpAtt_EnableDate(
             ObjectClass oclass, string attributeName, SearchResult searchResult)
@@ -976,6 +1015,22 @@ namespace Org.IdentityConnectors.ActiveDirectory
             return newAttribute;
         }
 
+        // gets a long from a LargeInteger (COM object)
+        long GetLongFromLargeInteger(LargeInteger largeInteger)
+        {
+            long longValue = largeInteger.HighPart << 32;
+            longValue += largeInteger.LowPart;
+            return longValue;
+        }
+
+        // sets a LargeInteger (COM object) from a long
+        LargeInteger GetLargeIntegerFromLong(long longValue)
+        {
+            LargeInteger largeInteger = new LargeIntegerClass();
+            largeInteger.HighPart = (int)((longValue & 0xFFFFFFFF0000L) >> 32);
+            largeInteger.LowPart = (int)(longValue & 0x0000FFFFFFFFL);
+            return largeInteger;
+        }
     }
     
 }

@@ -1262,7 +1262,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     ObjectClass.ACCOUNT, createAttributes);
 
                 // make sure authenticate works here                
-                connector.Authenticate(ConnectorAttributeUtil.GetNameFromAttributes(createAttributes).GetNameValue(),
+                connector.Authenticate(
+                    ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                     gsCurrentPassword, null);
 
                 ICollection<ConnectorAttribute> updateReplaceAttributes =
@@ -1274,14 +1275,16 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     createUid, updateReplaceAttributes);
 
                 // make sure authenticate works here
-                connector.Authenticate(ConnectorAttributeUtil.GetNameFromAttributes(createAttributes).GetNameValue(),
+                connector.Authenticate(
+                    ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                     gsNewPassword, null);
 
                 bool caughtAuthenticateFailedException = false;
                 try
                 {
                     // make sure authenticate doesnt work with original password
-                    connector.Authenticate(ConnectorAttributeUtil.GetNameFromAttributes(createAttributes).GetNameValue(),
+                    connector.Authenticate(
+                        ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                         gsCurrentPassword, null);
                 }
                 catch (Exception e)
@@ -1314,6 +1317,157 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                 // make sure authenticate works here                
 
+            }
+            finally
+            {
+                if (createUid != null)
+                {
+                    //remove the one we created
+                    DeleteAndVerifyObject(connector, ObjectClass.ACCOUNT,
+                        createUid, false, true);
+                }
+            }
+        }
+
+        [Test]
+        public void TestAuthenticateUser()
+        {
+            //Initialize Connector
+            ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
+            connector.Init(GetConfiguration());
+            Uid createUid = null;
+
+            try
+            {
+                // create user
+                ICollection<ConnectorAttribute> createAttributes = GetNormalAttributes_Account();
+                // remove password, and set to something memorable
+                createAttributes.Remove(ConnectorAttributeUtil.Find(OperationalAttributes.PASSWORD_NAME, createAttributes));
+                GuardedString gsCurrentPassword = GetGuardedString("1Password");
+                createAttributes.Add(ConnectorAttributeBuilder.BuildPassword(gsCurrentPassword));
+                createAttributes.Add(ConnectorAttributeBuilder.BuildEnabled(true));
+                createUid = CreateAndVerifyObject(connector,
+                    ObjectClass.ACCOUNT, createAttributes);
+
+                // make sure authenticate works here                
+                connector.Authenticate(
+                    ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
+                    gsCurrentPassword, null);
+
+                // make sure authenticate fails - wrong password
+                bool caughtException = false;
+                try
+                {
+                    connector.Authenticate(
+                        ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
+                        GetGuardedString("boguspassword"), null);
+
+                }
+                catch (InvalidCredentialException e)
+                {
+                    caughtException = true;
+                }                
+                Assert.IsTrue(caughtException, "Negative test case should throw InvalidCredentialsException");
+
+                // change password
+                ICollection<ConnectorAttribute> updateReplaceAttributes =
+                    new HashSet<ConnectorAttribute>();
+                GuardedString gsNewPassword = GetGuardedString("LongPassword2MeetTheRequirements!");
+                updateReplaceAttributes.Add(ConnectorAttributeBuilder.BuildCurrentPassword(gsCurrentPassword));
+                updateReplaceAttributes.Add(ConnectorAttributeBuilder.BuildPassword(gsNewPassword));
+                UpdateReplaceAndVerifyObject(connector, ObjectClass.ACCOUNT,
+                    createUid, updateReplaceAttributes);
+
+                // make sure authenticate works here - new password    
+                connector.Authenticate(
+                    ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
+                    gsNewPassword, null);
+
+                // make sure it fails with the wrong password
+                caughtException = false;
+                try {
+                connector.Authenticate(
+                    ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
+                    GetGuardedString("bogusPassword"), null);
+                }
+                catch (Exception e)
+                {
+                    caughtException = true;
+                }
+                Assert.IsTrue(caughtException, "Negative test case should throw an exception");
+
+                // now set user must change password attribute
+                ICollection<ConnectorAttribute> expirePasswordAttrs =
+                    new HashSet<ConnectorAttribute>();
+                expirePasswordAttrs.Add(ConnectorAttributeBuilder.BuildPasswordExpired(true));
+                UpdateReplaceAndVerifyObject(connector, ObjectClass.ACCOUNT,
+                    createUid, expirePasswordAttrs);
+
+                // make sure authenticate fails - correct password, but expired
+                caughtException = false;
+                try
+                {
+                    // make sure authenticate fails with correct password
+                    connector.Authenticate(
+                        ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
+                        gsNewPassword, null);
+                }
+                catch (Exception e)
+                {
+                    caughtException = true;
+                }
+                Assert.IsTrue(caughtException, "Negative test case should throw an exception");
+
+                // make sure authenticate fails - incorrect password, and expired
+                caughtException = false;
+                try
+                {
+                    // make sure authenticate fails with wrong password (invalid credentials exception)
+                    connector.Authenticate(
+                        ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
+                        GetGuardedString("bogusPassword"), null);
+                }
+                catch (InvalidCredentialException e)
+                {
+                    caughtException = true;
+                }
+                Assert.IsTrue(caughtException, "Negative test case should throw an exception");
+            }
+            finally
+            {
+                if (createUid != null)
+                {
+                    //remove the one we created
+                    DeleteAndVerifyObject(connector, ObjectClass.ACCOUNT,
+                        createUid, false, true);
+                }
+            }
+        }
+
+        [Test]
+        public void TestPasswordExpiration()
+        {
+            //Initialize Connector
+            ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
+            connector.Init(GetConfiguration());
+            Uid createUid = null;
+
+            try
+            {
+                // create user
+                ICollection<ConnectorAttribute> createAttributes = GetNormalAttributes_Account();
+                // remove password, and set to something memorable
+                createAttributes.Remove(ConnectorAttributeUtil.Find(OperationalAttributes.PASSWORD_NAME, createAttributes));
+                GuardedString gsCurrentPassword = GetGuardedString("1Password");
+                createAttributes.Add(ConnectorAttributeBuilder.BuildPassword(gsCurrentPassword));
+                createAttributes.Add(ConnectorAttributeBuilder.BuildEnabled(true));
+                createUid = CreateAndVerifyObject(connector,
+                    ObjectClass.ACCOUNT, createAttributes);
+
+                // make sure authenticate works here                
+                connector.Authenticate(
+                    ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
+                    gsCurrentPassword, null);
             }
             finally
             {
