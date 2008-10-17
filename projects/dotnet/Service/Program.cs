@@ -57,11 +57,11 @@ namespace Org.IdentityConnectors.Framework.Service
         
 	    private static void Usage()
 	    {
-	        Console.WriteLine("Usage: Gateway.exe <command> [option], where command is one of the following: ");
+	        Console.WriteLine("Usage: ConnectorServer.exe <command> [option], where command is one of the following: ");
 	        Console.WriteLine("       /install [/serviceName <serviceName>] - Installs the service.");
 	        Console.WriteLine("       /uninstall [/serviceName <serviceName>] - Uninstalls the service.");
 	        Console.WriteLine("       /run - Runs the service from the console.");
-	        Console.WriteLine("       /setKey [<key>] - Sets the gateway key.");
+	        Console.WriteLine("       /setKey [<key>] - Sets the connector server key.");
 	    }
 	    
 	    private static IDictionary<string, string> ParseOptions(string [] args)

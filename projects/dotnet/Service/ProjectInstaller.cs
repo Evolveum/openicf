@@ -52,7 +52,7 @@ namespace Org.IdentityConnectors.Framework.Service
 	    
 	    static ProjectInstaller()
 	    {
-	        ServiceName = "Connector Gateway";
+	        ServiceName = "Connector Server";
 	    }
 	    
 		private ServiceProcessInstaller serviceProcessInstaller;

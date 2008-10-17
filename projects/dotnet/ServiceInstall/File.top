@@ -3,19 +3,19 @@
 	<Fragment>
 		<DirectoryRef Id="TARGETDIR">
 			<Directory Id="ProgramFilesFolder" Name="PFiles">
-				<Directory Id="INSTALLDIR" Name="Sun Connector Gateway">
-					<Component Id="GatewayService" Guid="8B1F7E82-46D7-4F88-A1FA-44FCBF7E684F" DiskId="1">
+				<Directory Id="INSTALLDIR" Name="Sun Connector Server">
+					<Component Id="ConnectorServerService" Guid="8B1F7E82-46D7-4F88-A1FA-44FCBF7E684F" DiskId="1">
 						<ServiceInstall
-							Id="GatewayServiceInstall"
-							Name="GatewayService"
-							DisplayName="Remote Connector Framework"
+							Id="ConnectorServerServiceInstall"
+							Name="ConnectorServerService"
+							DisplayName="Connector Server"
 							Type="ownProcess"
 							Start="auto"
 							ErrorControl="normal"
-							Description="Remote Connector Framework"
+							Description="Connector Server"
 							Account="[SERVICEACCOUNT]"
 							Password="[SERVICEPASSWORD]">
 						</ServiceInstall>
-						<ServiceControl Id="StartGatewayService" Name="GatewayService" Start="install" Wait="no" />
-						<ServiceControl Id="StopGatewayService" Name="GatewayService" Stop="both" Wait="yes" Remove="uninstall" />
+						<ServiceControl Id="StartConnectorServerService" Name="ConnectorServerService" Start="install" Wait="no" />
+						<ServiceControl Id="StopConnectorServerService" Name="ConnectorServerService" Stop="both" Wait="yes" Remove="uninstall" />
 						<File Id="LicenseFile" Name="license.rtf" Source="license.rtf"/>

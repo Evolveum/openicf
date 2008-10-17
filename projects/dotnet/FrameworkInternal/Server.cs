@@ -83,7 +83,7 @@ namespace Org.IdentityConnectors.Framework.Server
         private int _port = 0;
         
         /**
-         * Base 64 sha1 hash of the gateway key
+         * Base 64 sha1 hash of the connector server key
          */ 
         private String _keyHash;
         

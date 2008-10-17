@@ -56,11 +56,11 @@ namespace Org.IdentityConnectors.Framework.Service
 {
 	public class Service : ServiceBase
 	{		
-        private const string PROP_PORT = "gateway.port";
-        private const string PROP_SSL  = "gateway.usessl";
-        private const string PROP_CERTSTORE = "gateway.certificatestorename";
-        private const string PROP_IFADDRESS = "gateway.ifaddress";
-        public const string PROP_KEY = "gateway.key";
+        private const string PROP_PORT = "connectorserver.port";
+        private const string PROP_SSL  = "connectorserver.usessl";
+        private const string PROP_CERTSTORE = "connectorserver.certificatestorename";
+        private const string PROP_IFADDRESS = "connectorserver.ifaddress";
+        public const string PROP_KEY = "connectorserver.key";
 	    
 	    private ConnectorServer _server;
 	    
@@ -129,7 +129,7 @@ namespace Org.IdentityConnectors.Framework.Service
 		{
 		    try {		        
 		        initializeCurrentDirectory();
-    		    Trace.TraceInformation("Starting connector gateway: "+Environment.CurrentDirectory);
+    		    Trace.TraceInformation("Starting connector server: "+Environment.CurrentDirectory);
     		    NameValueCollection settings =
     		        GetApplicationSettings();
     		    String portStr =
@@ -158,10 +158,10 @@ namespace Org.IdentityConnectors.Framework.Service
     		            IOUtil.GetIPAddress(ifaddress);
     		    }
     		    _server.Start();
-    		    Trace.TraceInformation("Started connector gateway");
+    		    Trace.TraceInformation("Started connector server");
 		    }
 		    catch (Exception e) {
-		        TraceUtil.TraceException("Exception occured starting gateway",
+		        TraceUtil.TraceException("Exception occured starting connector server",
 		                                 e);
 		        throw;
 		    }
@@ -179,14 +179,14 @@ namespace Org.IdentityConnectors.Framework.Service
 		protected override void OnStop()
 		{
 		    try {
-    		    Trace.TraceInformation("Stopping connector gateway");
+    		    Trace.TraceInformation("Stopping connector server");
     		    if (_server != null) {
     		        _server.Stop();
     		    }
-    		    Trace.TraceInformation("Stopped connector gateway");
+    		    Trace.TraceInformation("Stopped connector server");
 		    }
 		    catch (Exception e) {
-		        TraceUtil.TraceException("Exception occured stopping gateway",
+		        TraceUtil.TraceException("Exception occured stopping connector server",
 		                                 e);
 		    }
 		}

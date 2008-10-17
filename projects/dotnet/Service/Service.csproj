@@ -42,7 +42,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <OutputType>Exe</OutputType>
     <RootNamespace>Sun.OpenConnectors.Framework.Service</RootNamespace>
-    <AssemblyName>Gateway</AssemblyName>
+    <AssemblyName>ConnectorServer</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <NoStdLib>False</NoStdLib>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
@@ -55,7 +55,7 @@
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <OutputType>Exe</OutputType>
-    <AssemblyName>Gateway</AssemblyName>
+    <AssemblyName>ConnectorServer</AssemblyName>
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -67,7 +67,7 @@
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>TRACE</DefineConstants>
     <OutputType>Exe</OutputType>
-    <AssemblyName>Gateway</AssemblyName>
+    <AssemblyName>ConnectorServer</AssemblyName>
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
