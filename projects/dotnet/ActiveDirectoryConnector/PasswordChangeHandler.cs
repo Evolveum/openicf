@@ -148,10 +148,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             password.Access(setCurrentPassword);
 
+            // create principle context for authentication
             string serverName = _configuration.LDAPHostName;
             PrincipalContext context = null;
             if ((serverName == null) || (serverName.Length == 0))
             {
+                // if they haven't specified an ldap host, use the domain that is
+                // in the connector configuration
                 DomainController domainController = ActiveDirectoryUtils.GetDomainController(_configuration);
                 context = new PrincipalContext(ContextType.Domain,
                     domainController.Domain.Name, 
@@ -159,6 +162,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             else
             {
+                // if the specified an ldap host, use it.
                 context = new PrincipalContext(ContextType.Machine, 
                     _configuration.LDAPHostName,
                     username, _currentPassword);
