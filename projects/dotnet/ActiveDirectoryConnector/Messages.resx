@@ -232,4 +232,7 @@ DC=COM.</value>
   <data name="ex_PasswordMustBeReset" xml:space="preserve">
     <value>Password expiration can only be reset by reseting the password</value>
   </data>
+  <data name="ex_LockAccountNotAllowed" xml:space="preserve">
+    <value>Active Directory does not support locking users.  User may be unlocked only</value>
+  </data>
 </root>

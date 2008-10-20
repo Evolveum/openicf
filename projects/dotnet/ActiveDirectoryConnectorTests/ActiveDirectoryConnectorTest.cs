@@ -1519,6 +1519,120 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
 
+        [Test]
+        public void TestAccountLocked()
+        {
+            //Initialize Connector
+            ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
+            connector.Init(GetConfiguration());
+            Uid createUid = null;
+
+            try
+            {
+                // create user
+                ICollection<ConnectorAttribute> createAttributes = GetNormalAttributes_Account();
+                // remove password, and set to something memorable
+                createAttributes.Remove(ConnectorAttributeUtil.Find(OperationalAttributes.PASSWORD_NAME, createAttributes));
+                GuardedString gsCurrentPassword = GetGuardedString("1Password");
+                createAttributes.Add(ConnectorAttributeBuilder.BuildPassword(gsCurrentPassword));
+                createAttributes.Add(ConnectorAttributeBuilder.BuildEnabled(true));
+                createUid = CreateAndVerifyObject(connector,
+                    ObjectClass.ACCOUNT, createAttributes);
+
+                // make sure authenticate works here                
+                connector.Authenticate(
+                    ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
+                    gsCurrentPassword, null);
+
+                // not allowed to lock ... only unlock, so test unlock
+                // setting on machine must lockout user after 3 unsuccessful 
+                // attempst for this to work.
+                // lock out by having unsucessful attempts.
+                try
+                {
+                    connector.Authenticate(
+                        ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
+                        GetGuardedString("bogusPassword"), null);
+                }
+                catch(Exception e)
+                {
+                }
+
+                try
+                {
+                    connector.Authenticate(
+                        ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
+                        GetGuardedString("bogusPassword"), null);
+                }
+                catch (Exception e)
+                {
+                }
+
+                try
+                {
+                    connector.Authenticate(
+                        ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
+                        GetGuardedString("bogusPassword"), null);
+                }
+                catch (Exception e)
+                {
+                }
+
+                bool exceptionCaught = false;
+                try
+                {
+                    connector.Authenticate(
+                        ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
+                        gsCurrentPassword, null);
+                }
+                catch (Exception e)
+                {
+                    exceptionCaught = true;
+                }
+                Assert.IsTrue(exceptionCaught, "Account not locked.  Make sure that the server is setup for account lockout after 3 attempts");
+
+                ICollection<ConnectorAttribute> unlockAttrs =
+                    new HashSet<ConnectorAttribute>();
+                unlockAttrs.Add(
+                    ConnectorAttributeBuilder.BuildLockOut(false));
+                UpdateReplaceAndVerifyObject(connector, ObjectClass.ACCOUNT,
+                    createUid, unlockAttrs);
+
+                // make sure succeeds
+                connector.Authenticate(
+                    ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
+                    gsCurrentPassword, null);
+
+
+                // now try to write lockout.   Should get connector exception
+                bool connectorExceptionCaught = false;
+                try
+                {
+                    ICollection<ConnectorAttribute> lockAttrs =
+                        new HashSet<ConnectorAttribute>();
+                    lockAttrs.Add(
+                        ConnectorAttributeBuilder.BuildLockOut(true));
+                    UpdateReplaceAndVerifyObject(connector, ObjectClass.ACCOUNT,
+                        createUid, lockAttrs);
+
+                }
+                catch (ConnectorException e)
+                {
+                    connectorExceptionCaught = true;
+                }
+                Assert.IsTrue(connectorExceptionCaught);
+            }
+            finally
+            {
+                if (createUid != null)
+                {
+                    //remove the one we created
+                    DeleteAndVerifyObject(connector, ObjectClass.ACCOUNT,
+                        createUid, false, true);
+                }
+            }
+        }
+
         public void TestSync(bool searchChildDomains, String syncSearchContext)
         {
             //Initialize Connector

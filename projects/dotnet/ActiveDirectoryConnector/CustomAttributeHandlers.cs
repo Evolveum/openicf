@@ -122,6 +122,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 UpdateDeFromCa_OpAtt_PasswordExpired);
             UpdateDeFromCaDelegates.Add(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,
                 UpdateDeFromCa_OpAtt_PasswordExpireDate);
+            UpdateDeFromCaDelegates.Add(OperationalAttributes.LOCK_OUT_NAME,
+                UpdateDeFromCa_OpAtt_Lockout);
             // supporting class not implemented in the framework
             /*
             UpdateDeFromCaDelegates.Add(OperationalAttributes.ENABLE_DATE_NAME,
@@ -173,6 +175,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 GetCaFromDe_OpAtt_Enabled);
             GetCaFromDeDelegates.Add(OperationalAttributes.PASSWORD_EXPIRED_NAME,
                 GetCaFromDe_OpAtt_PasswordExpired);
+            GetCaFromDeDelegates.Add(OperationalAttributes.LOCK_OUT_NAME,
+                GetCaFromDe_OpAtt_Lockout);
             GetCaFromDeDelegates.Add(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,
                 GetCaFromDe_OpAtt_PasswordExpireDate);
             // supporting class not implemented in the framework
@@ -505,6 +509,24 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     GetLargeIntegerFromLong((ulong)expireDate.Value.ToFileTime());
             }
         }
+        internal void UpdateDeFromCa_OpAtt_Lockout(ObjectClass oclass,
+            UpdateType type, DirectoryEntry directoryEntry,
+            ConnectorAttribute attribute)
+        {
+            bool? lockout = ConnectorAttributeUtil.GetBooleanValue(attribute);
+            if (lockout.HasValue)
+            {
+                long lockoutTime = lockout.Value ? DateTimeUtil.GetCurrentUtcTimeMillis() : 0;
+
+                if(lockoutTime != 0) {
+                    throw new ConnectorException(_configuration.ConnectorMessages.Format(
+                        "ex_LockAccountNotAllowed", "Active Directory does not support locking users.  User may be unlocked only"));
+                }
+                directoryEntry.Properties[ActiveDirectoryConnector.ATT_LOCKOUT_TIME].Value = 
+                    GetLargeIntegerFromLong((ulong)lockoutTime);
+            }
+        }
+
         // supporting class not implemented in the framework
 /*
         internal void UpdateDeFromCa_OpAtt_EnableDate(ObjectClass oclass,
@@ -893,6 +915,26 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
             }
             return null;
+        }
+
+        private ConnectorAttribute GetCaFromDe_OpAtt_Lockout(
+            ObjectClass oclass, string attributeName, SearchResult searchResult)
+        {
+            bool locked = false;
+
+            ConnectorAttribute realAttribute = GetCaFromDe_Att_Generic(
+                oclass, ActiveDirectoryConnector.ATT_LOCKOUT_TIME, searchResult);
+            if (realAttribute != null)
+            {
+                long? lockoutDate = ConnectorAttributeUtil.GetLongValue(realAttribute);
+                if ((lockoutDate.HasValue) && (lockoutDate.Value != 0))
+                {
+                    // if there is a date (non zero), then the account
+                    // is locked
+                    locked = true;
+                }
+            }
+            return ConnectorAttributeBuilder.BuildLockOut(locked);
         }
 
         // supporting class not implemented in the framework

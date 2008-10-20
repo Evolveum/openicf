@@ -162,6 +162,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public static readonly string ATT_OBJECT_SID = "objectSid";
         public static readonly string ATT_PWD_LAST_SET = "pwdLastSet";
         public static readonly string ATT_ACCOUNT_EXPIRES = "accountExpires";
+        public static readonly string ATT_LOCKOUT_TIME = "lockoutTime";
         public static readonly string OBJECTCLASS_OU = "organizationalUnit";
         public static readonly ObjectClass ouObjectClass = new ObjectClass(OBJECTCLASS_OU);
 
@@ -383,8 +384,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             /*
             attributeInfos.Add(OperationalAttributeInfos.ENABLE_DATE);
             attributeInfos.Add(OperationalAttributeInfos.DISABLE_DATE);
-            attributeInfos.Add(OperationalAttributeInfos.LOCK_OUT);
              */
+            attributeInfos.Add(OperationalAttributeInfos.LOCK_OUT);
 
             attributeInfos.Add(OperationalAttributeInfos.PASSWORD_EXPIRATION_DATE);
             attributeInfos.Add(OperationalAttributeInfos.PASSWORD_EXPIRED);
