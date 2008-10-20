@@ -1680,7 +1680,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             public bool SyncHandler_ModifiedAccounts(SyncDelta delta)
             {
                 _token = delta.Token;
-                if(delta.DeltaType.Equals(SyncDeltaType.UPDATE)) {
+                if(delta.DeltaType.Equals(SyncDeltaType.CREATE_OR_UPDATE)) {
                     // just ignore extra ones.  they might have come in by other means
                     if (_mods.ContainsKey(delta.Uid))
                     {

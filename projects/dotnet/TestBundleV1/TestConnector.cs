@@ -202,7 +202,7 @@ namespace org.identityconnectors.testconnector
                 SyncDeltaBuilder builder =
                     new SyncDeltaBuilder();
                 builder.Object=(obuilder.Build());
-                builder.DeltaType=(SyncDeltaType.CREATE);
+                builder.DeltaType=(SyncDeltaType.CREATE_OR_UPDATE);
                 builder.Token=(new SyncToken("mytoken"));
                 SyncDelta rv = builder.Build();
                 if (!handler(rv)) {

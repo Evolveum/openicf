@@ -1031,7 +1031,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
                 else
                 {
-                    builder.DeltaType = SyncDeltaType.UPDATE;
+                    builder.DeltaType = SyncDeltaType.CREATE_OR_UPDATE;
                 }
 
                 builder.Uid = obj.Uid;

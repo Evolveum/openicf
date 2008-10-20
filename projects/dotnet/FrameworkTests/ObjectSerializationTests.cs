@@ -973,14 +973,14 @@ namespace FrameworkTests
             bld.SetName("name");
             SyncDeltaBuilder builder = new SyncDeltaBuilder();
             builder.Uid=(new Uid("myuid"));
-            builder.DeltaType=(SyncDeltaType.CREATE);
+            builder.DeltaType=(SyncDeltaType.CREATE_OR_UPDATE);
             builder.Token=(new SyncToken("mytoken"));
             builder.Object=(bld.Build());
             SyncDelta v1 = builder.Build();
             SyncDelta v2 = (SyncDelta)CloneObject(v1);
             Assert.AreEqual(new Uid("foo"),v2.Uid);
             Assert.AreEqual(new SyncToken("mytoken"),v2.Token);
-            Assert.AreEqual(SyncDeltaType.CREATE,v2.DeltaType);
+            Assert.AreEqual(SyncDeltaType.CREATE_OR_UPDATE,v2.DeltaType);
             Assert.AreEqual(v1,v2);
         }
         
