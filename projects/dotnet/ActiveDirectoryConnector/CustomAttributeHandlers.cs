@@ -53,6 +53,7 @@ using ActiveDs;
 using System.IO;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using Org.IdentityConnectors.Common;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {   
@@ -119,6 +120,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 UpdateDeFromCa_OpAtt_Enable);
             UpdateDeFromCaDelegates.Add(OperationalAttributes.PASSWORD_EXPIRED_NAME,
                 UpdateDeFromCa_OpAtt_PasswordExpired);
+            UpdateDeFromCaDelegates.Add(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,
+                UpdateDeFromCa_OpAtt_PasswordExpireDate);
             // supporting class not implemented in the framework
             /*
             UpdateDeFromCaDelegates.Add(OperationalAttributes.ENABLE_DATE_NAME,
@@ -170,6 +173,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 GetCaFromDe_OpAtt_Enabled);
             GetCaFromDeDelegates.Add(OperationalAttributes.PASSWORD_EXPIRED_NAME,
                 GetCaFromDe_OpAtt_PasswordExpired);
+            GetCaFromDeDelegates.Add(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,
+                GetCaFromDe_OpAtt_PasswordExpireDate);
             // supporting class not implemented in the framework
             /*
             GetCaFromDeDelegates.Add(OperationalAttributes.ENABLE_DATE_NAME,
@@ -490,6 +495,16 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
 
+        internal void UpdateDeFromCa_OpAtt_PasswordExpireDate(ObjectClass oclass,
+            UpdateType type, DirectoryEntry directoryEntry,
+            ConnectorAttribute attribute)
+        {
+            DateTime? expireDate = ConnectorAttributeUtil.GetDateTimeValue(attribute);
+            if(expireDate.HasValue) {
+                directoryEntry.Properties[ActiveDirectoryConnector.ATT_ACCOUNT_EXPIRES].Value =
+                    GetLargeIntegerFromLong((ulong)expireDate.Value.ToFileTime());
+            }
+        }
         // supporting class not implemented in the framework
 /*
         internal void UpdateDeFromCa_OpAtt_EnableDate(ObjectClass oclass,
@@ -857,6 +872,29 @@ namespace Org.IdentityConnectors.ActiveDirectory
             return ConnectorAttributeBuilder.BuildPasswordExpired(true);
         }
 
+        private ConnectorAttribute GetCaFromDe_OpAtt_PasswordExpireDate(
+            ObjectClass oclass, string attributeName, SearchResult searchResult)
+        {
+            // get the value from ad
+            ConnectorAttribute accountExpireAttribute = GetCaFromDe_Att_Generic(
+                oclass, ActiveDirectoryConnector.ATT_ACCOUNT_EXPIRES, searchResult);
+
+            // now change name
+            if (accountExpireAttribute != null)
+            {
+                long? expireValue = ConnectorAttributeUtil.GetLongValue(accountExpireAttribute);
+                if (expireValue != null)
+                {
+                    return ConnectorAttributeBuilder.BuildPasswordExpirationDate(expireValue.Value);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            return null;
+        }
+
         // supporting class not implemented in the framework
 /*
         private ConnectorAttribute GetCaFromDe_OpAtt_EnableDate(
@@ -1016,19 +1054,19 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         // gets a long from a LargeInteger (COM object)
-        long GetLongFromLargeInteger(LargeInteger largeInteger)
+        ulong GetLongFromLargeInteger(LargeInteger largeInteger)
         {
-            long longValue = largeInteger.HighPart << 32;
-            longValue += largeInteger.LowPart;
+            ulong longValue = ((ulong)largeInteger.HighPart) << 32;
+            longValue += (ulong)largeInteger.LowPart;
             return longValue;
         }
 
         // sets a LargeInteger (COM object) from a long
-        LargeInteger GetLargeIntegerFromLong(long longValue)
+        LargeInteger GetLargeIntegerFromLong(ulong longValue)
         {
             LargeInteger largeInteger = new LargeIntegerClass();
-            largeInteger.HighPart = (int)((longValue & 0xFFFFFFFF0000L) >> 32);
-            largeInteger.LowPart = (int)(longValue & 0x0000FFFFFFFFL);
+            largeInteger.HighPart = (int)((longValue & 0xFFFFFFFF00000000) >> 32);
+            largeInteger.LowPart = (int)(longValue & 0x00000000FFFFFFFF);
             return largeInteger;
         }
     }

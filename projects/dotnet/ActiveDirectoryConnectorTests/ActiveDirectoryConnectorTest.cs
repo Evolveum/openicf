@@ -55,6 +55,7 @@ using System.IO;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using Org.IdentityConnectors.Framework.Common.Exceptions;
+using Org.IdentityConnectors.Common;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
@@ -1468,6 +1469,44 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 connector.Authenticate(
                     ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                     gsCurrentPassword, null);
+
+                // now set expiration to right now
+                ICollection<ConnectorAttribute> expirePasswordNowAttrs =
+                    new HashSet<ConnectorAttribute>();
+
+                expirePasswordNowAttrs.Add(
+                    ConnectorAttributeBuilder.BuildPasswordExpirationDate(DateTime.UtcNow));
+                UpdateReplaceAndVerifyObject(connector, ObjectClass.ACCOUNT,
+                    createUid, expirePasswordNowAttrs);
+
+                // make sure authenticate fails - correct password, but expired
+                bool caughtException = false;
+                try
+                {
+                    // make sure authenticate fails with correct password
+                    connector.Authenticate(
+                        ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
+                        gsCurrentPassword, null);
+                }
+                catch (Exception e)
+                {
+                    caughtException = true;
+                }
+                Assert.IsTrue(caughtException, "Negative test case should throw an exception");
+
+                // set expiration to tommorrow
+                ICollection<ConnectorAttribute> expirePasswordTomorrowAttrs =
+                    new HashSet<ConnectorAttribute>();
+                expirePasswordTomorrowAttrs.Add(
+                    ConnectorAttributeBuilder.BuildPasswordExpirationDate(DateTime.UtcNow.AddDays(1)));
+                UpdateReplaceAndVerifyObject(connector, ObjectClass.ACCOUNT,
+                    createUid, expirePasswordTomorrowAttrs);
+
+                // make sure succeeds
+                connector.Authenticate(
+                    ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
+                    gsCurrentPassword, null);
+
             }
             finally
             {
@@ -2245,6 +2284,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
             skipAttributeNames.Add("USERPASSWORD");
             skipAttributeNames.Add(OperationalAttributes.PASSWORD_NAME);
             skipAttributeNames.Add(OperationalAttributes.CURRENT_PASSWORD_NAME);
+            // have to ignore the password expire attribute.  It will not come 
+            // back EXACTLY the same as it was set.  It seems like may ad rounds
+            // off to the nearest second, or minute, or something.
+            skipAttributeNames.Add(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME);
 
             ICollection<String> ldapStringAttributes = new List<String>();
             ldapStringAttributes.Add("AD_CONTAINER");
