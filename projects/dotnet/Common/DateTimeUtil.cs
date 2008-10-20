@@ -47,7 +47,7 @@ namespace Org.IdentityConnectors.Common
     public static class DateTimeUtil
     {
         public static DateTime GetDateTimeFromUtcMillis(long dateTime) {
-            return new DateTime(dateTime * 1000, DateTimeKind.Utc);
+            return DateTime.FromFileTimeUtc(dateTime*1000);
         }
         
         public static long GetUtcTimeMillis(DateTime dateTime) {
