@@ -251,7 +251,7 @@ OperationOptionInfo | SyncDeltaType | SyncToken | SyncDelta
     minIdle CDATA #IMPLIED
 &gt;
 
-&lt;!ELEMENT ConfigurationProperty (value)&gt; 
+&lt;!ELEMENT ConfigurationProperty (value,operations)&gt; 
 &lt;!ATTLIST ConfigurationProperty
     order CDATA #IMPLIED
     confidential CDATA #IMPLIED
@@ -261,6 +261,7 @@ OperationOptionInfo | SyncDeltaType | SyncToken | SyncDelta
     type CDATA #REQUIRED
 &gt;
 &lt;!ELEMENT value (%xmlObject;)&gt; 
+&lt;!ELEMENT operations (Class)*&gt;
 &lt;!ELEMENT ConfigurationProperties ((ConfigurationProperty)*)&gt; 
 
 &lt;!ELEMENT APIConfiguration (connectorPoolConfiguration,ConfigurationProperties,timeoutMap,SupportedOperations)&gt; 

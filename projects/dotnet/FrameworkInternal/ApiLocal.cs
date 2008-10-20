@@ -51,6 +51,7 @@ using Org.IdentityConnectors.Framework.Common.Serializer;
 using Org.IdentityConnectors.Framework.Impl.Api.Remote;
 using Org.IdentityConnectors.Framework.Impl.Api.Local.Operations;
 using Org.IdentityConnectors.Framework.Spi;
+using Org.IdentityConnectors.Framework.Spi.Operations;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
@@ -233,6 +234,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                 prop.Order=order;
                 prop.Value=value;
                 prop.ValueType=type;
+                prop.Operations = options == null ? null : TranslateOperations(options.Operations);
                 
                 temp.Add(prop);
     
@@ -240,7 +242,17 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
             properties.Properties=(temp);
             return properties;
         }
-    
+        
+        private static ICollection<SafeType<APIOperation>> TranslateOperations(SafeType<SPIOperation> [] ops)
+        {
+            ICollection<SafeType<APIOperation>> set =
+                new HashSet<SafeType<APIOperation>>();
+            foreach (SafeType<SPIOperation> spi in ops) {
+                CollectionUtil.AddAll(set,FrameworkUtil.Spi2Apis(spi));
+            }
+            return set;
+        }
+        
         public static Configuration 
         CreateBean(ConfigurationPropertiesImpl properties,
         SafeType<Configuration> config) {

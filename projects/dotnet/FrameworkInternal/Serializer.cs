@@ -1091,6 +1091,16 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                         decoder.ReadClassField("type",null));
                 rv.Value=(
                         decoder.ReadObjectField("value",null,null));
+                ICollection<object> operationsObj =
+                    (ICollection<object>)decoder.ReadObjectField("operations",typeof(ICollection<object>),null);
+                ICollection<SafeType<APIOperation>> operations =
+                    new HashSet<SafeType<APIOperation>>();
+                foreach (object o in operationsObj) {
+                    Type type = (Type)o;
+                    operations.Add(SafeType<APIOperation>.ForRawType(type));
+                }
+                rv.Operations = operations;
+                
                 return rv;
             }
         
@@ -1112,6 +1122,12 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                 encoder.WriteObjectField("value",
                         val.Value,
                         false);
+                ICollection<Type> operationsObj =
+                    new HashSet<Type>();
+                foreach(SafeType<APIOperation> op in val.Operations) {
+                    operationsObj.Add(op.RawType);
+                }
+                encoder.WriteObjectField("operations",operationsObj,true);
             }
         }
         private class ConfigurationPropertiesHandler : AbstractObjectSerializationHandler {

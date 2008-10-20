@@ -392,6 +392,7 @@ namespace FrameworkTests
             v1.DisplayMessageKey=("display key");
             v1.Value=("bar");
             v1.ValueType=(typeof(string));
+            v1.Operations = FrameworkUtil.AllAPIOperations();
             
             ConfigurationPropertyImpl v2 = (ConfigurationPropertyImpl)
                 CloneObject(v1);
@@ -402,6 +403,8 @@ namespace FrameworkTests
             Assert.AreEqual("display key", v2.DisplayMessageKey);
             Assert.AreEqual("bar", v2.Value);
             Assert.AreEqual(typeof(string), v2.ValueType);
+            Assert.IsTrue(CollectionUtil.Equals(
+                FrameworkUtil.AllAPIOperations(),v2.Operations));
         }
         
         [Test]
@@ -414,6 +417,7 @@ namespace FrameworkTests
             prop1.DisplayMessageKey=("display key");
             prop1.Value=("bar");
             prop1.ValueType=(typeof(string));
+            prop1.Operations=null;
             
             ConfigurationPropertiesImpl v1 = new ConfigurationPropertiesImpl();
             v1.Properties=(CollectionUtil.NewReadOnlyList<ConfigurationPropertyImpl>(prop1));
@@ -434,6 +438,7 @@ namespace FrameworkTests
             prop1.DisplayMessageKey=("display key");
             prop1.Value=("bar");
             prop1.ValueType=(typeof(string));
+            prop1.Operations=null;
             
             ConfigurationPropertiesImpl props1 = new ConfigurationPropertiesImpl();
             props1.Properties=(CollectionUtil.NewReadOnlyList<ConfigurationPropertyImpl>(prop1));

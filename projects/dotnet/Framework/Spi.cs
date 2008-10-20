@@ -43,6 +43,7 @@ using System.Collections.Generic;
 using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Common.Pooling;
 using Org.IdentityConnectors.Framework.Common.Objects;
+using Org.IdentityConnectors.Framework.Spi.Operations;
 namespace Org.IdentityConnectors.Framework.Spi
 {
     #region AttributeNormalizer
@@ -162,6 +163,35 @@ namespace Org.IdentityConnectors.Framework.Spi
         /// Change the default display message key.
         /// </summary>
         public string DisplayMessageKey {get;set;}
+        
+        /**
+         * List of operations for which this property must be specified.
+         * This is used for the case where a connector may or may not
+         * implement certain operations depending in the configuration.
+         * The default value of "empty array" is special in that
+         * it means that this property is applicable to all operations.
+         * MUST be SPI operations
+         */
+        public Type [] OperationTypes {get;set;}
+        
+        /**
+         * List of operations for which this property must be specified.
+         * This is used for the case where a connector may or may not
+         * implement certain operations depending in the configuration.
+         * The default value of "empty array" is special in that
+         * it means that this property is applicable to all operations.
+         */
+        public SafeType<SPIOperation> [] Operations {
+            get {
+                Type [] types = OperationTypes;
+                SafeType<SPIOperation> [] rv = new SafeType<SPIOperation>[types.Length];
+                for ( int i = 0; i < types.Length; i++ ) {
+                    rv[i] =
+                        SafeType<SPIOperation>.ForRawType(types[i]);
+                }
+                return rv;
+            }
+        }
 
         /// <summary>
         /// Default constructor 
@@ -171,6 +201,7 @@ namespace Org.IdentityConnectors.Framework.Spi
             Confidential = false;
             HelpMessageKey = null;
             DisplayMessageKey = null;
+            OperationTypes = new Type[0];
         }
     } 
     #endregion

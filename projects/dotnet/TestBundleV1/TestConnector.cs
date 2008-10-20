@@ -55,6 +55,7 @@ namespace org.identityconnectors.testconnector
         /// <summary>
         /// keep lower case for consistent unit tests
         /// </summary>
+        [ConfigurationProperty(OperationTypes=new Type[]{typeof(SyncOp)})]
         public string tstField{get;set;}
     
         /// <summary>

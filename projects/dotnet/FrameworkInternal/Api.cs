@@ -68,6 +68,17 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
     /// </summary>
     public class ConfigurationPropertyImpl : ConfigurationProperty {
         
+        private ICollection<SafeType<APIOperation>> _operations;
+
+        public ICollection<SafeType<APIOperation>> Operations {
+            get {
+                return _operations;
+            }
+            set {
+                _operations = CollectionUtil.NewReadOnlySet(value);
+            }
+        }
+        
         public ConfigurationPropertiesImpl Parent { get; set; }
         
         public int Order { get; set; }
@@ -119,6 +130,9 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
                     return false;
                 }
                 if (!CollectionUtil.Equals(ValueType,other.ValueType)) {
+                    return false;
+                }
+                if (!CollectionUtil.Equals(_operations,other._operations)) {
                     return false;
                 }
                 
@@ -274,7 +288,6 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
         public AbstractConnectorInfo ConnectorInfo { get; set; }
         
         public int ProducerBufferSize { get; set; }
-        
         public APIConfigurationImpl() {
             ProducerBufferSize = 100;
         }

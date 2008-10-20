@@ -45,6 +45,7 @@ using System.Diagnostics;
 using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Common.Security;
 using Org.IdentityConnectors.Framework.Api;
+using Org.IdentityConnectors.Framework.Api.Operations;
 using Org.IdentityConnectors.Framework.Common.Exceptions;
 using Org.IdentityConnectors.Framework.Common.Objects;
 using Org.IdentityConnectors.Framework.Server;
@@ -122,7 +123,11 @@ namespace FrameworkTests
             ConfigurationProperty property  = props.GetProperty("tstField");
             
             Assert.IsNotNull(property);
-            
+            ICollection<SafeType<APIOperation>> operations =
+            property.Operations;
+            Assert.AreEqual(1, operations.Count);
+            Assert.IsTrue(operations.Contains(SafeType<APIOperation>.Get<SyncApiOp>()));
+        
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en");
             Assert.AreEqual("Help for test field.",property.GetHelpMessage(null));
             Assert.AreEqual("Display for test field.",property.GetDisplayName(null));

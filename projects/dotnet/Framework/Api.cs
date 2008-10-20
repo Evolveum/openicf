@@ -143,6 +143,15 @@ namespace Org.IdentityConnectors.Framework.Api
          * the application when persisted?
          */
         bool IsConfidential { get; }
+        
+        /**
+         * Set of operations for which this property must be specified.
+         * This is used for the case where a connector may or may not
+         * implement certain operations depending in the configuration.
+         * The default value of "empty array" is special in that
+         * it means that this property is applicable to all operations.
+         */        
+        ICollection<SafeType<APIOperation>> Operations { get; }
     }
     
     /**
