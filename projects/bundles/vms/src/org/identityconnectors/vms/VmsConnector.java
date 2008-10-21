@@ -393,15 +393,21 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
             } else if (VmsConstants.ATTR_PRIMEDAYS.equalsIgnoreCase(name)) {
                 updateValues(values, VmsAttributeValidator.PRIMEDAYS_LIST);
             }
-            // If OWNER is specified as empty list, we change it to
-            // a list containing the empty string
+            // We treat empty lists as list containing empty strong
             //
-            if (ATTR_OWNER.equalsIgnoreCase(name) && values.size()==0)
+            if (values.size()==0)
                 values.add("");
             if (!name.equals(Name.NAME) && isNeedsValidation(attribute)) {
                 VmsAttributeValidator.validate(name, values, _configuration);
-                if (values.size()==0) {
-                    String value = "/"+remapName(attribute);
+                if (values.size()==1 && values.get(0) instanceof Boolean) {
+                    // We use boolean value to indicate negatable, valueless
+                    // attributes
+                    //
+                    String value = null;
+                    if (((Boolean)values.get(0)).booleanValue())
+                        value = "/"+remapName(attribute);
+                    else
+                        value = "/NO"+remapName(attribute);
                     command = appendToCommand(commandList, command, value);
                 } else {
                     if (isDateTimeAttribute(name))
@@ -680,9 +686,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
                 // ENABLE is handled by checking to see if the DisUser Flag is
                 // present
                 //
+                @SuppressWarnings("unchecked")
                 List<String> flags = (List<String>)attributes.get(VmsConstants.ATTR_FLAGS);
                 if (flags.size()>0) {
-                    int size = flags.size();
                     if (includeInAttributes(OperationalAttributes.ENABLE_NAME, attributesToGet)) {
                         if (flags.contains(VmsConstants.FLAG_DISUSER))
                             builder.addAttribute(OperationalAttributes.ENABLE_NAME, Boolean.FALSE);
@@ -820,7 +826,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         //
         if (name!=null && uid!=null && !uid.getUidValue().equals(name.getNameValue())) {
             CharArrayBuffer renameCommand = new CharArrayBuffer();
-            String accountId = AttributeUtil.getUidAttribute(attributes).getUidValue();
             renameCommand.append("RENAME "+uid.getUidValue()+" "+name.getNameValue());
 
             Map<String, Object> variables = new HashMap<String, Object>();
@@ -948,6 +953,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
     private void clearArrays(Map<String, Object> variables) {
         char[] commandContents = (char[])variables.get("COMMAND");
         Arrays.fill(commandContents, 0, commandContents.length, ' ');
+        @SuppressWarnings("unchecked")
         List<char[]> commandPrefixContents = (List<char[]>)variables.get("COMMANDS");
         if (commandPrefixContents!=null) {
             for (char[] commandPrefix : commandPrefixContents)
