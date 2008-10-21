@@ -141,6 +141,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             new HashSet<string>(StringComparer.CurrentCultureIgnoreCase)
             {
                 Name.NAME,
+                "ou",
             };
 
         public static IDictionary<ObjectClass, ICollection<string>> AttributesReturnedByDefault = null;
@@ -483,7 +484,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             ICollection<ConnectorAttributeInfo> attributeInfos = new Collection<ConnectorAttributeInfo>();
 
             // add in container ... 
-            attributeInfos.Add(GetConnectorAttributeInfo(ATT_CONTAINER,
+            attributeInfos.Add(GetConnectorAttributeInfo(ATT_OU,
                 typeof(string), true, true, false, false, ouObjectClass));
 
             // add in name ... 
@@ -727,9 +728,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                             string dcSearchQuery = String.Format("(" + ATT_DISTINGUISHED_NAME + "={0})",
                                 ActiveDirectoryUtils.GetDnFromPath(savedGcResult.Path));
-                            DirectorySearcher dcSearrcher =
+                            DirectorySearcher dcSearcher =
                                 new DirectorySearcher(dcSearchRoot, dcSearchQuery);
-                            savedDcResult = dcSearrcher.FindOne();
+                            savedDcResult = dcSearcher.FindOne();
                             if (savedDcResult == null)
                             {
                                 // in this case, we found it in the gc, but not in the
