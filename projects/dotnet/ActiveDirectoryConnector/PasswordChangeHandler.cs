@@ -165,13 +165,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     // in the connector configuration
                     DomainController domainController = ActiveDirectoryUtils.GetDomainController(_configuration);
                     context = new PrincipalContext(ContextType.Domain,
-                        domainController.Domain.Name);
+                        domainController.Domain.Name, _configuration.DirectoryAdminName, 
+                        _configuration.DirectoryAdminPassword);
                 }
                 else
                 {
                     // if the specified an ldap host, use it.
                     context = new PrincipalContext(ContextType.Machine,
-                        _configuration.LDAPHostName);
+                        _configuration.LDAPHostName, _configuration.DirectoryAdminName,
+                        _configuration.DirectoryAdminPassword);
                 }
 
                 if (context == null)
@@ -185,6 +187,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     "ex_InvalidCredentials", "Invalid credentials supplied for user {0}",
                     username));
                 }
+                Thread.Sleep(2000);
+
             }
             finally
             {
