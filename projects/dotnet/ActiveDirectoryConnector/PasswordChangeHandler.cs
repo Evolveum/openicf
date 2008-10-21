@@ -48,6 +48,7 @@ using ActiveDs;
 using Org.IdentityConnectors.Framework.Common.Exceptions;
 using System.DirectoryServices.AccountManagement;
 using System.DirectoryServices.ActiveDirectory;
+using System.Threading;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
@@ -62,6 +63,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         String _currentPassword;
         String _newPassword;
         ActiveDirectoryConfiguration _configuration = null;
+        static Semaphore authenticationSem = new Semaphore(1, 1, "ActiveDirectoryConnectorAuthSem");
 
         internal PasswordChangeHandler(ActiveDirectoryConfiguration configuration)
         {
@@ -151,33 +153,46 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // create principle context for authentication
             string serverName = _configuration.LDAPHostName;
             PrincipalContext context = null;
-            if ((serverName == null) || (serverName.Length == 0))
+            try
             {
-                // if they haven't specified an ldap host, use the domain that is
-                // in the connector configuration
-                DomainController domainController = ActiveDirectoryUtils.GetDomainController(_configuration);
-                context = new PrincipalContext(ContextType.Domain,
-                    domainController.Domain.Name, 
-                    username, _currentPassword);
-            }
-            else
-            {
-                // if the specified an ldap host, use it.
-                context = new PrincipalContext(ContextType.Machine, 
-                    _configuration.LDAPHostName,
-                    username, _currentPassword);
-            }
+                // according to microsoft docs:
+                // Wait on return - true if the current instance receives a signal. If the current instance is never signaled, WaitOne never returns. 
+                // no need to check return, since it will not return false;
+                authenticationSem.WaitOne();
+                if ((serverName == null) || (serverName.Length == 0))
+                {
+                    // if they haven't specified an ldap host, use the domain that is
+                    // in the connector configuration
+                    DomainController domainController = ActiveDirectoryUtils.GetDomainController(_configuration);
+                    context = new PrincipalContext(ContextType.Domain,
+                        domainController.Domain.Name);
+                }
+                else
+                {
+                    // if the specified an ldap host, use it.
+                    context = new PrincipalContext(ContextType.Machine,
+                        _configuration.LDAPHostName);
+                }
 
-            if (context == null)
-            {
-                throw new ConnectorException("Unable to get PrincipalContext");
-            }
+                if (context == null)
+                {
+                    throw new ConnectorException("Unable to get PrincipalContext");
+                }
 
-            if (!context.ValidateCredentials(username, _currentPassword))
+                if (!context.ValidateCredentials(username, _currentPassword))
+                {
+                    throw new InvalidCredentialException(_configuration.ConnectorMessages.Format(
+                    "ex_InvalidCredentials", "Invalid credentials supplied for user {0}",
+                    username));
+                }
+            }
+            finally
             {
-                throw new InvalidCredentialException(_configuration.ConnectorMessages.Format(
-                "ex_InvalidCredentials", "Invalid credentials supplied for user {0}",
-                username));
+                if (context != null)
+                {
+                    context.Dispose();
+                }
+                authenticationSem.Release();
             }
         }
     }
