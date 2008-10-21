@@ -100,7 +100,6 @@ public class SpmlConnectorTests {
     private static final String ATTR_FIRSTNAME        = "firstname";
     private static final String ATTR_LASTNAME         = "lastname";
     private static final String ATTR_FULLNAME         = "fullname";
-    private static final String ATTR_PASSWORD         = "credentials";
 
     private static String HOST_NAME;
     private static String SYSTEM_PASSWORD;
@@ -154,11 +153,11 @@ public class SpmlConnectorTests {
         }
         {
             SpmlConfiguration config = new SpmlConfiguration();
-            config.getNameAttribute();
+            config.getNameAttributes();
             // Validate that setting this to null doesn't error out
             //
-            config.setNameAttribute(null);
-            config.getNameAttribute();
+            config.setNameAttributes(null);
+            config.getNameAttributes();
         }
         {
             SpmlConfiguration config = new SpmlConfiguration();
@@ -260,7 +259,7 @@ public class SpmlConnectorTests {
         {
             try {
                 SpmlConfiguration config = createConfiguration();
-                config.setNameAttribute(null);
+                config.setNameAttributes(null);
                 config.validate();
                 Assert.fail("expected exception");
             } catch (RuntimeException rte) {
@@ -810,7 +809,7 @@ public class SpmlConnectorTests {
         attrs.add(AttributeBuilder.build(ATTR_FIRSTNAME, "SPML"));
         attrs.add(AttributeBuilder.build(ATTR_LASTNAME, "User"));
         attrs.add(AttributeBuilder.build(ATTR_FULLNAME, "SMPL User"));
-        attrs.add(AttributeBuilder.build(ATTR_PASSWORD, new GuardedString(ATTR_PASSWORD.toCharArray())));
+        attrs.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString("xyzzy".toCharArray())));
         return attrs;
     }
 
@@ -822,7 +821,7 @@ public class SpmlConnectorTests {
     }
 
     private SpmlConfiguration createConfiguration() {
-        SpmlConfiguration config = new SpmlConfiguration(PROTOCOL, HOST_NAME, HOST_PORT, FILE, new String[] {CONNECTOR_OBJ_CLASS}, new String[] {SPML_OBJ_CLASS}, new String[] {PSO_TARGET_CLASS}, ACCOUNT_ID, SYSTEM_USER, new GuardedString(SYSTEM_PASSWORD.toCharArray()));
+        SpmlConfiguration config = new SpmlConfiguration(PROTOCOL, HOST_NAME, HOST_PORT, FILE, new String[] {CONNECTOR_OBJ_CLASS}, new String[] {SPML_OBJ_CLASS}, new String[] {PSO_TARGET_CLASS}, new String[] {ACCOUNT_ID}, SYSTEM_USER, new GuardedString(SYSTEM_PASSWORD.toCharArray()));
         config.setPreSendCommand(getPreSendCommand());
         config.setPostReceiveCommand(getPostReceiveCommand());
         config.setPostConnectCommand(getPostConnectCommand());
@@ -884,18 +883,32 @@ public class SpmlConnectorTests {
     private String getMapSetNameCommand() {
         StringBuffer buffer = new StringBuffer();
         buffer.append("if (org.identityconnectors.framework.common.objects.Name.NAME.equals(name))\n");
-        buffer.append("    return configuration.getNameAttribute();\n");
-        buffer.append("return name;");
+        buffer.append("    return getNameAttribute(configuration, objectClass);\n");
+        buffer.append("if (org.identityconnectors.framework.common.objects.OperationalAttributes.PASSWORD_NAME.equals(name))\n");
+        buffer.append("    return \"credentials\";\n");
+        buffer.append("return name;\n");
+        buffer.append("private String getNameAttribute(org.identityconnectors.spml.SpmlConfiguration configuration, String objectClass) {\n");
+        buffer.append("    for (int i=0; i<configuration.getObjectClassNames().length; i++) \n");
+        buffer.append("        if (configuration.getObjectClassNames()[i].equals(objectClass))\n");
+        buffer.append("            return configuration.getNameAttributes()[i];\n");
+        buffer.append("    return \"\";\n");
+        buffer.append("}\n");
         return buffer.toString();
     }
-
+    
     private String getMapAttributeCommand() {
         StringBuffer buffer = new StringBuffer();
         buffer.append("if (attribute.getName().equalsIgnoreCase(\"credentials\"))\n");
         buffer.append("    return org.identityconnectors.framework.common.objects.AttributeBuilder.buildPassword(new org.identityconnectors.common.security.GuardedString(((String)attribute.getValue().get(0)).toCharArray()));\n");
-        buffer.append("else if (attribute.getName().equalsIgnoreCase(configuration.getNameAttribute()))\n");
+        buffer.append("else if (attribute.getName().equalsIgnoreCase(getNameAttribute(configuration, objectClass)))\n");
         buffer.append("    return new org.identityconnectors.framework.common.objects.Name((String)attribute.getValue().get(0));\n");
         buffer.append("return attribute;");
+        buffer.append("private String getNameAttribute(org.identityconnectors.spml.SpmlConfiguration configuration, String objectClass) {\n");
+        buffer.append("    for (int i=0; i<configuration.getObjectClassNames().length; i++) \n");
+        buffer.append("        if (configuration.getObjectClassNames()[i].equals(objectClass))\n");
+        buffer.append("            return configuration.getNameAttributes()[i];\n");
+        buffer.append("    return \"\";\n");
+        buffer.append("}\n");
         return buffer.toString();
     }
 
@@ -926,9 +939,6 @@ public class SpmlConnectorTests {
         buffer.append("    }\n");
         buffer.append("    attributeInfos.add(org.identityconnectors.framework.common.objects.OperationalAttributeInfos.PASSWORD);\n");
         buffer.append("    attributeInfos.add(asNotByDefault(org.identityconnectors.framework.common.objects.OperationalAttributeInfos.ENABLE));\n");
-        buffer.append("    attributeInfos.add(asWriteOnly(org.identityconnectors.framework.common.objects.OperationalAttributeInfos.ENABLE_DATE));\n");
-        buffer.append("    attributeInfos.add(asWriteOnly(org.identityconnectors.framework.common.objects.OperationalAttributeInfos.DISABLE_DATE));\n");
-        buffer.append("    //attributeInfos.add(org.identityconnectors.framework.common.objects.OperationalAttributeInfos.EXPIRE_PASSWORD);\n");
         buffer.append("}\n");
         buffer.append("private org.identityconnectors.framework.common.objects.AttributeInfo asWriteOnly(org.identityconnectors.framework.common.objects.AttributeInfo original) {\n");
         buffer.append("    org.identityconnectors.framework.common.objects.AttributeInfoBuilder builder = new org.identityconnectors.framework.common.objects.AttributeInfoBuilder();\n");

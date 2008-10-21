@@ -58,7 +58,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
     private String[]           _objectClassNames;
     private String[]           _spmlClassNames;
     private String[]           _targetNames;
-    private String             _nameAttribute;
+    private String[]           _nameAttributes;
 
     private String             _preSendCommand;
     private String             _postReceiveCommand;
@@ -72,14 +72,14 @@ public class SpmlConfiguration extends AbstractConfiguration {
     public SpmlConfiguration() {
     }
 
-    public SpmlConfiguration(String protocol, String hostName, Integer port, String file, String[] connectorObjectClass, String[] spmlObjectClass, String[] targetClass, String nameAttribute, String userName, GuardedString password) {
+    public SpmlConfiguration(String protocol, String hostName, Integer port, String file, String[] connectorObjectClass, String[] spmlObjectClass, String[] targetClass, String[] nameAttributes, String userName, GuardedString password) {
         this();
         _protocol = protocol;
         _hostNameOrIpAddr = hostName;
         _hostPortNumber = port;
         _file = file;
         _userName = userName;
-        _nameAttribute = nameAttribute;
+        _nameAttributes = nameAttributes;
         _password = password;
         _objectClassNames = arrayCopy(connectorObjectClass);
         _spmlClassNames = arrayCopy(spmlObjectClass);
@@ -109,8 +109,6 @@ public class SpmlConfiguration extends AbstractConfiguration {
     }
 
     public void validate() {
-        if (isNull(_nameAttribute))
-            throw new ConnectorException(getMessage(SpmlMessages.NAME_NULL));
         if (isNull(_protocol))
             throw new ConnectorException(getMessage(SpmlMessages.PROTOCOL_NULL));
         if (isNull(_hostNameOrIpAddr))
@@ -131,7 +129,9 @@ public class SpmlConfiguration extends AbstractConfiguration {
             throw new ConnectorException(getMessage(SpmlMessages.SPML_CLASS_NULL));
         if (_targetNames==null)
             throw new ConnectorException(getMessage(SpmlMessages.TARGET_NULL));
-        if (_objectClassNames.length!=_spmlClassNames.length || _objectClassNames.length!=_targetNames.length)
+        if (_nameAttributes==null)
+            throw new ConnectorException(getMessage(SpmlMessages.NAME_NULL));
+        if (_objectClassNames.length!=_spmlClassNames.length || _objectClassNames.length!=_targetNames.length || _objectClassNames.length!=_nameAttributes.length)
             throw new ConnectorException(getMessage(SpmlMessages.SPML_CLASS_LENGTH));
     }
 
@@ -190,12 +190,12 @@ public class SpmlConfiguration extends AbstractConfiguration {
     }
     
    @ConfigurationProperty(order=8)
-    public String getNameAttribute() {
-        return _nameAttribute;
+    public String[] getNameAttributes() {
+        return _nameAttributes;
     }
 
-    public void setNameAttribute(String attribute) {
-        _nameAttribute = attribute;
+    public void setNameAttributes(String[] attribute) {
+        _nameAttributes = attribute;
     }
 
     @ConfigurationProperty(order=9)
