@@ -12,5 +12,5 @@
   <property name="config_domain_name" value="adconnector.central.sun.com"/>
   <property name="config_sync_domain_controller" value="idmvm1129.central.sun.com"/>
   <property name="config_sync_gc_domain_controller" value="idmvm1129.central.sun.com"/>
-  <property name="test_param_shared_home_folder" value="\\idmvm1129.central.sun.com\nunitHomeDirectories"/>
+  <property name="test_param_shared_home_folder" value="\\idmvm1128.central.sun.com\nunitHomeDirectories"/>
 </config>

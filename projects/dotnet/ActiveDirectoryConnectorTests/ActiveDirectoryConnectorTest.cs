@@ -212,50 +212,61 @@ namespace Org.IdentityConnectors.ActiveDirectory
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
             connector.Init(GetConfiguration());
 
-            // create group
-            ICollection<ConnectorAttribute> createAttributes = GetNormalAttributes_Group();
-            createAttributes.Add(ConnectorAttributeBuilder.Build(PredefinedAttributes.ACCOUNTS_NAME,
-                CreateGroupMember(connector)));
+            Uid uidToDelete = null;
+            try
+            {
+                // create group
+                ICollection<ConnectorAttribute> createAttributes = GetNormalAttributes_Group();
+                createAttributes.Add(ConnectorAttributeBuilder.Build(PredefinedAttributes.ACCOUNTS_NAME,
+                    CreateGroupMember(connector)));
 
-            // create object
-            Uid createUid = connector.Create(ObjectClass.GROUP, createAttributes, null);
-            Assert.IsNotNull(createUid);
+                // create object
+                uidToDelete = connector.Create(ObjectClass.GROUP, createAttributes, null);
+                Uid createUid = uidToDelete;
+                Assert.IsNotNull(createUid);
 
-            // find new object ... have to add groups to list of things to return
-            OperationOptionsBuilder optionsBuilder = new OperationOptionsBuilder();
-            ICollection<String> attributesToGet = GetDefaultAttributesToGet(ObjectClass.GROUP);
-            attributesToGet.Add(PredefinedAttributes.ACCOUNTS_NAME);
-            optionsBuilder.AttributesToGet = attributesToGet.ToArray();
+                // find new object ... have to add groups to list of things to return
+                OperationOptionsBuilder optionsBuilder = new OperationOptionsBuilder();
+                ICollection<String> attributesToGet = GetDefaultAttributesToGet(ObjectClass.GROUP);
+                attributesToGet.Add(PredefinedAttributes.ACCOUNTS_NAME);
+                optionsBuilder.AttributesToGet = attributesToGet.ToArray();
 
-            ConnectorObject newObject = GetConnectorObjectFromUid(connector,
-                ObjectClass.GROUP, createUid, optionsBuilder.Build());
-            VerifyObject(createAttributes, newObject);
-            // update the group - replace
-            ICollection<ConnectorAttribute> updateReplaceAttrs =
-                new List<ConnectorAttribute>();
-            Name oldName = ConnectorAttributeUtil.GetNameFromAttributes(createAttributes);
-            String newName = ActiveDirectoryUtils.GetRelativeName(oldName);
-            newName = newName.Trim() + "_new, " + GetProperty(CONFIG_PROPERTY_CONTAINER);
+                ConnectorObject newObject = GetConnectorObjectFromUid(connector,
+                    ObjectClass.GROUP, createUid, optionsBuilder.Build());
+                VerifyObject(createAttributes, newObject);
+                // update the group - replace
+                ICollection<ConnectorAttribute> updateReplaceAttrs =
+                    new List<ConnectorAttribute>();
+                Name oldName = ConnectorAttributeUtil.GetNameFromAttributes(createAttributes);
+                String newName = ActiveDirectoryUtils.GetRelativeName(oldName);
+                newName = newName.Trim() + "_new, " + GetProperty(CONFIG_PROPERTY_CONTAINER);
 
-            updateReplaceAttrs.Add(createUid);
-            updateReplaceAttrs.Add(ConnectorAttributeBuilder.Build(
-                Name.NAME, newName));
-            updateReplaceAttrs.Add(ConnectorAttributeBuilder.Build(
-                "description", "New description"));
-            Uid updateReplaceUid = UpdateReplaceAndVerifyObject(connector,
-                ObjectClass.GROUP, createUid, updateReplaceAttrs);
+                updateReplaceAttrs.Add(createUid);
+                updateReplaceAttrs.Add(ConnectorAttributeBuilder.Build(
+                    Name.NAME, newName));
+                updateReplaceAttrs.Add(ConnectorAttributeBuilder.Build(
+                    "description", "New description"));
+                uidToDelete = UpdateReplaceAndVerifyObject(connector,
+                    ObjectClass.GROUP, createUid, updateReplaceAttrs);
+                Uid updateReplaceUid = uidToDelete;
 
-            // update the group - add
-            ICollection<ConnectorAttribute> updateAddAttrs =
-                new List<ConnectorAttribute>();
-            updateAddAttrs.Add(ConnectorAttributeBuilder.Build(PredefinedAttributes.ACCOUNTS_NAME,
-                CreateGroupMember(connector), CreateGroupMember(connector)));
+                // update the group - add
+                ICollection<ConnectorAttribute> updateAddAttrs =
+                    new List<ConnectorAttribute>();
+                updateAddAttrs.Add(ConnectorAttributeBuilder.Build(PredefinedAttributes.ACCOUNTS_NAME,
+                    CreateGroupMember(connector), CreateGroupMember(connector)));
 
-            Uid updateAddUid = UpdateAddAndVerifyUser(connector,
-                ObjectClass.GROUP, createUid, updateAddAttrs, optionsBuilder.Build());
-
-            // delete user
-            DeleteAndVerifyObject(connector, ObjectClass.GROUP, createUid, true, true);
+                uidToDelete = UpdateAddAndVerifyUser(connector,
+                    ObjectClass.GROUP, updateReplaceUid, updateAddAttrs, optionsBuilder.Build());
+            }
+            finally
+            {
+                if (uidToDelete != null)
+                {
+                    // delete user
+                    DeleteAndVerifyObject(connector, ObjectClass.GROUP, uidToDelete, true, true);
+                }
+            }
         }
 
         [Test]
@@ -1959,6 +1970,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             Assert.IsNotNull(updatedUid);
 
+            uidFilter = FilterBuilder.EqualTo(updatedUid);
             ICollection<ConnectorObject> updatedConnectorObjects = TestHelpers.SearchToList(
                 connector, oclass, uidFilter);
             Assert.IsTrue(updatedConnectorObjects.Count == 1);
@@ -2079,7 +2091,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
             ActiveDirectoryConfiguration config = (ActiveDirectoryConfiguration)GetConfiguration();
             connector.Init(config);
-            ObjectClass OUObjectClass = new ObjectClass("organizationalUnit");
+            ObjectClass OUObjectClass = ActiveDirectoryConnector.ouObjectClass;
             
             ICollection<ConnectorObject> foundObjects = TestHelpers.SearchToList(
                 connector, OUObjectClass, null);
@@ -2436,6 +2448,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             skipAttributeNames.Add("USERPASSWORD");
             skipAttributeNames.Add(OperationalAttributes.PASSWORD_NAME);
             skipAttributeNames.Add(OperationalAttributes.CURRENT_PASSWORD_NAME);
+            skipAttributeNames.Add(Uid.NAME);
             // have to ignore the password expire attribute.  It will not come 
             // back EXACTLY the same as it was set.  It seems like may ad rounds
             // off to the nearest second, or minute, or something.

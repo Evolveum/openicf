@@ -461,7 +461,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             {
                 return "Group";
             }
-            else if ("ORGANIZATIONALUNIT".Equals(oclass.GetObjectClassValue(), StringComparison.CurrentCultureIgnoreCase))
+            else if ("ORGANIZATIONAL UNIT".Equals(oclass.GetObjectClassValue(), StringComparison.CurrentCultureIgnoreCase))
             {
                 return "organizationalUnit";
             }

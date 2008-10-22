@@ -115,6 +115,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             // Connector attributes names to ignore for ous
             IgnoreConnectorAttributeNames_ou.Add(Name.NAME);
+            IgnoreConnectorAttributeNames_ou.Add(Uid.NAME);
 
             // methods to update a directory entry from a connectorattribute
             UpdateDeFromCaDelegates.Add(PredefinedAttributes.ACCOUNTS_NAME,

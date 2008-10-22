@@ -163,7 +163,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public static readonly string ATT_ACCOUNT_EXPIRES = "accountExpires";
         public static readonly string ATT_LOCKOUT_TIME = "lockoutTime";
         public static readonly string ATT_GROUP_TYPE = "groupType";
-        public static readonly string OBJECTCLASS_OU = "organizationalUnit";
+        public static readonly string OBJECTCLASS_OU = "Organizational Unit";
         public static readonly ObjectClass ouObjectClass = new ObjectClass(OBJECTCLASS_OU);
 
         ActiveDirectoryConfiguration _configuration = null;
@@ -964,6 +964,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
             _utils.UpdateADObject(oclass, updateEntry,
                 attributes, type, _configuration);
 
+            if(!ObjectClass.ACCOUNT.Equals(oclass)) {
+                // other objects use dn as guid for idm backward compatibility
+                updatedUid = new Uid((string)updateEntry.Properties["distinguishedName"][0]);
+            }
             return updatedUid;
         }
 
