@@ -80,6 +80,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         // generic translation 
         IList<string> IgnoreConnectorAttributeNames_account = new List<string>();
         IList<string> IgnoreConnectorAttributeNames_group = new List<string>();
+        IList<string> IgnoreConnectorAttributeNames_ou = new List<string>();
 
         // method to update a directory entry from a connector attribute
         Dictionary<string, UpdateDeFromCa_delegate> 
@@ -111,6 +112,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             IgnoreConnectorAttributeNames_group.Add("authOrig");
             IgnoreConnectorAttributeNames_group.Add("unauthOrig");
             IgnoreConnectorAttributeNames_group.Add("groupTypes");
+
+            // Connector attributes names to ignore for ous
+            IgnoreConnectorAttributeNames_ou.Add(Name.NAME);
 
             // methods to update a directory entry from a connectorattribute
             UpdateDeFromCaDelegates.Add(PredefinedAttributes.ACCOUNTS_NAME,
@@ -233,6 +237,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
             else if (oclass.Equals(ObjectClass.GROUP))
             {
                 ignoreList = IgnoreConnectorAttributeNames_group;
+            }
+            else if (oclass.Equals(ActiveDirectoryConnector.ouObjectClass))
+            {
+                ignoreList = IgnoreConnectorAttributeNames_ou;
             }
 
             // if it's an ignored attribute, we're done

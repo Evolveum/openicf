@@ -264,6 +264,25 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 HandleNameChange(type, directoryEntry, attributes);
                 HandleContainerChange(type, directoryEntry, attributes, config);
             }
+            else if (oclass.Equals(ActiveDirectoryConnector.ouObjectClass))
+            {
+                // translate attribute passed in
+                foreach (ConnectorAttribute attribute in attributes)
+                {
+                    // Temporary
+                    // Trace.TraceInformation(String.Format("Setting attribute {0} to {1}",
+                    //    attribute.Name, attribute.Value));
+                    AddConnectorAttributeToADProperties(oclass,
+                        directoryEntry, attribute, type);
+                    //                  Uncommenting the next line is very helpful in
+                    //                  finding mysterious errors.
+                    directoryEntry.CommitChanges();
+                }
+
+                directoryEntry.CommitChanges();
+                HandleNameChange(type, directoryEntry, attributes);
+                HandleContainerChange(type, directoryEntry, attributes, config);
+            }
             else
             {
                 throw new ConnectorException(

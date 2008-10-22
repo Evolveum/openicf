@@ -298,7 +298,32 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 if (createUid != null)
                 {
                     //remove the one we created
-                    DeleteAndVerifyObject(connector, ObjectClass.ACCOUNT,
+                    DeleteAndVerifyObject(connector, ObjectClass.GROUP,
+                        createUid, false, true);
+                }
+            }
+        }
+
+        [Test]
+        public void TestCreate_OrganizationalUnit()
+        {
+            //Initialize Connector
+            ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
+            connector.Init(GetConfiguration());
+            Uid createUid = null;
+            try
+            {
+                ICollection<ConnectorAttribute> createAttributes = GetNormalAttributes_OrganizationalUnit();
+                createUid = CreateAndVerifyObject(connector, 
+                    ActiveDirectoryConnector.ouObjectClass, createAttributes);
+            }
+            finally
+            {
+                if (createUid != null)
+                {
+                    //remove the one we created
+                    DeleteAndVerifyObject(connector,
+                        ActiveDirectoryConnector.ouObjectClass,
                         createUid, false, true);
                 }
             }
@@ -2386,6 +2411,17 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 GetProperty(CONFIG_PROPERTY_CONTAINER)));
             attributes.Add(ConnectorAttributeBuilder.Build(
                 "groupType", 4));
+            return attributes;
+        }
+
+        public ICollection<ConnectorAttribute> GetNormalAttributes_OrganizationalUnit()
+        {
+            ICollection<ConnectorAttribute> attributes = new List<ConnectorAttribute>();
+            int randomNumber = GetRandomNumber();
+
+            attributes.Add(ConnectorAttributeBuilder.Build(
+                Name.NAME, "ou=nunitOU" + randomNumber + "," +
+                GetProperty(CONFIG_PROPERTY_CONTAINER)));
             return attributes;
         }
 

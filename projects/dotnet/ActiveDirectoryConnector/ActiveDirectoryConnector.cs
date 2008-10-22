@@ -355,8 +355,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
             schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<AuthenticateOp>(), groupInfo);
             schemaBuilder.DefineObjectClass(ouInfo);
             schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<AuthenticateOp>(), ouInfo);
-            schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<CreateOp>(), ouInfo);
-            schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<DeleteOp>(), ouInfo);
             //schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<SearchOp<String>>(), ouInfo);
 
             _schema = schemaBuilder.Build();
@@ -505,7 +503,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             // add in container ... 
             attributeInfos.Add(GetConnectorAttributeInfo(ATT_OU,
-                typeof(string), true, true, false, false, ouObjectClass));
+                typeof(string), false, true, false, false, ouObjectClass));
 
             // add in name ... 
             attributeInfos.Add(
@@ -999,9 +997,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 DirectoryEntry parent = de.Parent;
                 parent.Children.Remove(de);
             }
-            else if (objClass.Equals(ObjectClass.GROUP))
+            else if (objClass.Equals(ObjectClass.GROUP) || objClass.Equals(ouObjectClass))
             {
-                // if it's a group (container), delete this
+                // if it's a group or ou (container), delete this
                 // entry and all it's children
                 de.DeleteTree();
             }
