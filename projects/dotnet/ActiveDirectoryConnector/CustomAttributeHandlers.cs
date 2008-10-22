@@ -108,6 +108,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             IgnoreConnectorAttributeNames_group.Add(Name.NAME);
             IgnoreConnectorAttributeNames_group.Add(ActiveDirectoryConnector.ATT_CONTAINER);
             IgnoreConnectorAttributeNames_group.Add(Uid.NAME);
+            IgnoreConnectorAttributeNames_group.Add("authOrig");
+            IgnoreConnectorAttributeNames_group.Add("unauthOrig");
 
             // methods to update a directory entry from a connectorattribute
             UpdateDeFromCaDelegates.Add(PredefinedAttributes.ACCOUNTS_NAME,

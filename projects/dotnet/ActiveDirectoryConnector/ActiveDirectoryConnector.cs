@@ -130,8 +130,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 "managedby",
                 "mail",
                 "groupType",
-                "authOrig",
-                "unauthOrig",
                 "objectClass",
             };
 
@@ -339,7 +337,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<AuthenticateOp>(), ouInfo);
             schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<CreateOp>(), ouInfo);
             schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<DeleteOp>(), ouInfo);
-            schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<SearchOp<String>>(), ouInfo);
+            //schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<SearchOp<String>>(), ouInfo);
 
             _schema = schemaBuilder.Build();
 
@@ -616,8 +614,37 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     useGC = true;
                 }
 
+                IDictionary<string, object>searchOptions = options.Options;
+                
+                SearchScope searchScope = SearchScope.Subtree;
+                string searchContext = _configuration.SearchContainer;
+
+                if(searchOptions != null) {
+                    if(searchOptions.Keys.Contains("searchScope")) {
+                        String scopeString = (string)searchOptions["searchScope"];
+                        if(scopeString.Equals("oneLevel", StringComparison.CurrentCultureIgnoreCase)) {
+                            searchScope = SearchScope.OneLevel;
+                        } else if (scopeString.Equals("object", StringComparison.CurrentCultureIgnoreCase)){
+                            searchScope = SearchScope.Base;
+                        } else if (scopeString.Equals("subTree", StringComparison.CurrentCultureIgnoreCase)) {
+                            searchScope = SearchScope.Subtree;
+                        } else {
+                            throw new ConnectorException(_configuration.ConnectorMessages.Format("ex_invalidSearchScope", 
+                                "An invalid searchscope was supplied:  {0}", scopeString));
+                        }
+                    }
+
+                    if(searchOptions.Keys.Contains("searchContext")) {
+                        string tempSearchContext = (string)searchOptions["searchContext"];
+                        tempSearchContext = tempSearchContext.Trim();
+                        if(tempSearchContext.Trim().Length > 0) {
+                            searchContext = tempSearchContext;
+                        }
+                    }
+                }
+
                 ExecuteQuery(oclass, query, handler, options,
-                    false, null, _configuration.LDAPHostName, useGC, _configuration.SearchContainer);
+                    false, null, _configuration.LDAPHostName, useGC, searchContext, searchScope);
             }
             catch (Exception e)
             {
@@ -630,7 +657,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         // by the SyncSpiOp 
         private void ExecuteQuery(ObjectClass oclass, string query,
             ResultsHandler handler, OperationOptions options, bool includeDeleted,
-            SortOption sortOption, string serverName, bool useGlobalCatalog, string searchRoot)
+            SortOption sortOption, string serverName, bool useGlobalCatalog, 
+            string searchRoot, SearchScope searchScope)
         {
             StringBuilder fullQueryBuilder = new StringBuilder();
             if (query == null)
@@ -673,6 +701,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
             DirectorySearcher searcher = new DirectorySearcher(searchRootEntry, query);
             searcher.PageSize = 1000;
+            searcher.SearchScope = searchScope;
+            
             if (includeDeleted)
             {
                 searcher.Tombstone = true;
@@ -924,9 +954,20 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public virtual void Delete(ObjectClass objClass, Uid uid, OperationOptions options)
         {
             DirectoryEntry de = null;
-
-            de = ActiveDirectoryUtils.GetDirectoryEntryFromUid(_configuration.LDAPHostName, uid, 
-                _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
+            try
+            {
+                de = ActiveDirectoryUtils.GetDirectoryEntryFromUid(_configuration.LDAPHostName, uid,
+                    _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
+            }
+            catch (System.DirectoryServices.DirectoryServicesCOMException e)
+            {
+                // if it's not found, throw that, else just rethrow
+                if (e.ErrorCode == -2147016656)
+                {
+                    throw new UnknownUidException();
+                }
+                throw;
+            }
 
             if (objClass.Equals(ObjectClass.ACCOUNT))
             {
@@ -1067,7 +1108,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // find modified usn's
             ExecuteQuery(objClass, modifiedQuery, syncResults.SyncHandler, builder.Build(),
                 false, new SortOption(ATT_USN_CHANGED, SortDirection.Ascending),
-                serverName, UseGlobalCatalog(), _configuration.SyncSearchContext);
+                serverName, UseGlobalCatalog(), _configuration.SyncSearchContext, SearchScope.Subtree);
 
             // find deleted usn's
             DirectoryContext domainContext = new DirectoryContext(DirectoryContextType.DirectoryServer, 
@@ -1083,7 +1124,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             ExecuteQuery(objClass, deletedQuery, syncResults.SyncHandler, builder.Build(),
                 true, new SortOption(ATT_USN_CHANGED, SortDirection.Ascending),
-                serverName, UseGlobalCatalog(), deleteObjectsSearchRoot);
+                serverName, UseGlobalCatalog(), deleteObjectsSearchRoot, SearchScope.Subtree);
 
         }
 

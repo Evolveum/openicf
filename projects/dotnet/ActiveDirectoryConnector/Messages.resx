@@ -235,4 +235,7 @@ DC=COM.</value>
   <data name="ex_LockAccountNotAllowed" xml:space="preserve">
     <value>Active Directory does not support locking users.  User may be unlocked only</value>
   </data>
+  <data name="ex_invalidSearchScope" xml:space="preserve">
+    <value>An invalid searchscope was supplied:  {0}</value>
+  </data>
 </root>
