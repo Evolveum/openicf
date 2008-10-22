@@ -162,6 +162,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public static readonly string ATT_PWD_LAST_SET = "pwdLastSet";
         public static readonly string ATT_ACCOUNT_EXPIRES = "accountExpires";
         public static readonly string ATT_LOCKOUT_TIME = "lockoutTime";
+        public static readonly string ATT_GROUP_TYPE = "groupType";
         public static readonly string OBJECTCLASS_OU = "organizationalUnit";
         public static readonly ObjectClass ouObjectClass = new ObjectClass(OBJECTCLASS_OU);
 
@@ -228,6 +229,20 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     ActiveDirectoryUtils.GetRelativeName(nameAttribute),
                     _utils.GetADObjectClass(oclass));
 
+                if (oclass.Equals(ObjectClass.GROUP))
+                {
+                    ConnectorAttribute groupAttribute = 
+                        ConnectorAttributeUtil.Find(ActiveDirectoryConnector.ATT_GROUP_TYPE, attributes);
+                    if (groupAttribute != null)
+                    {
+                        int? groupType = ConnectorAttributeUtil.GetIntegerValue(groupAttribute);
+                        if (groupType.HasValue)
+                        {
+                            newDe.Properties[ActiveDirectoryConnector.ATT_GROUP_TYPE].Value = groupType;
+                        }
+                    }
+                }
+
                 newDe.CommitChanges();
 
                 // default to creating users enabled
@@ -265,6 +280,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 throw;
             }
 
+            if (!oclass.Equals(ObjectClass.ACCOUNT))
+            {
+                // uid will be the dn for non account objects
+                return new Uid(nameAttribute.GetNameValue());
+            }
             return uid;
         }
 
@@ -470,6 +490,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 typeof(string), true, true, false, false, ObjectClass.GROUP));
 
             attributeInfos.Add(PredefinedAttributeInfos.ACCOUNTS);
+            attributeInfos.Add(ConnectorAttributeInfoBuilder.Build(Name.NAME, typeof(string),
+                true, true, true, false));
 
             // get everything else from the schema
             PopulateSchemaFromAD("Group", ADSchema, attributeInfos, null, ObjectClass.GROUP);
@@ -486,8 +508,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 typeof(string), true, true, false, false, ouObjectClass));
 
             // add in name ... 
-            attributeInfos.Add(GetConnectorAttributeInfo(Name.NAME,
-                typeof(string), true, true, true, false, ouObjectClass));
+            attributeInfos.Add(
+                ConnectorAttributeInfoBuilder.Build(Name.NAME, typeof(string),
+                true, true, true, false));
 
             return attributeInfos;
         }
@@ -538,7 +561,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 {
                     connectorType = typeof(bool);
                 }
-                else if ("INTEGER".Equals(syntax, StringComparison.CurrentCultureIgnoreCase))
+                else if ("INTEGER".Equals(syntax, StringComparison.CurrentCultureIgnoreCase) || "INT".Equals(syntax, StringComparison.CurrentCultureIgnoreCase))
                 {
                     connectorType = typeof(int);
                 }

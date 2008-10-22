@@ -257,7 +257,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         directoryEntry, attribute, type);
                     //                  Uncommenting the next line is very helpful in
                     //                  finding mysterious errors.
-                    //                 directoryEntry.CommitChanges();
+                                     directoryEntry.CommitChanges();
                 }
 
                 directoryEntry.CommitChanges();

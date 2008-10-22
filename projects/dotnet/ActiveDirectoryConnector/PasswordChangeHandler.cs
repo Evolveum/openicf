@@ -187,8 +187,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     "ex_InvalidCredentials", "Invalid credentials supplied for user {0}",
                     username));
                 }
-                Thread.Sleep(2000);
-
             }
             finally
             {

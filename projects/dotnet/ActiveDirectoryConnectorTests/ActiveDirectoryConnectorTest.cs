@@ -2384,6 +2384,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             attributes.Add(ConnectorAttributeBuilder.Build(
                 Name.NAME, "cn=nunitGroup" + randomNumber + "," +
                 GetProperty(CONFIG_PROPERTY_CONTAINER)));
+            attributes.Add(ConnectorAttributeBuilder.Build(
+                "groupType", 4));
             return attributes;
         }
 

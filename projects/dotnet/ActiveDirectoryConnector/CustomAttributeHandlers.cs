@@ -110,6 +110,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             IgnoreConnectorAttributeNames_group.Add(Uid.NAME);
             IgnoreConnectorAttributeNames_group.Add("authOrig");
             IgnoreConnectorAttributeNames_group.Add("unauthOrig");
+            IgnoreConnectorAttributeNames_group.Add("groupTypes");
 
             // methods to update a directory entry from a connectorattribute
             UpdateDeFromCaDelegates.Add(PredefinedAttributes.ACCOUNTS_NAME,
@@ -800,17 +801,25 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             ICollection<Object> value = new List<Object>();
 
-            // uid is objectGuid
-            ResultPropertyValueCollection pvc =
-                searchResult.Properties[ActiveDirectoryConnector.ATT_OBJECT_GUID];
+            if (ObjectClass.ACCOUNT.Equals(oclass))
+            {
+                // uid is objectGuid
+                ResultPropertyValueCollection pvc =
+                    searchResult.Properties[ActiveDirectoryConnector.ATT_OBJECT_GUID];
 
-            if ((pvc.Count == 1) && (pvc[0] is Byte[]))
-            {
-                value.Add(ActiveDirectoryUtils.ConvertUIDBytesToGUIDString((Byte[])pvc[0]));
+                if ((pvc.Count == 1) && (pvc[0] is Byte[]))
+                {
+                    value.Add(ActiveDirectoryUtils.ConvertUIDBytesToGUIDString((Byte[])pvc[0]));
+                }
+                else if (pvc.Count > 1)
+                {
+                    throw new ConnectorException("There should be only one UID, but multiple values were specified");
+                }
             }
-            else if (pvc.Count > 1)
+            else
             {
-                throw new ConnectorException("There should be only one UID, but multiple values were specified");
+                ConnectorAttribute name = GetCaFromDe_OpAtt_Name(oclass, attributeName, searchResult);
+                value = name.Value;
             }
 
             return ConnectorAttributeBuilder.Build(Uid.NAME, value);

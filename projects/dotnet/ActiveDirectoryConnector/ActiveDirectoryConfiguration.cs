@@ -43,20 +43,21 @@ using System.Text;
 using System.Diagnostics;
 using Org.IdentityConnectors.Framework.Spi;
 using Org.IdentityConnectors.Framework.Common.Exceptions;
+using Org.IdentityConnectors.Framework.Spi.Operations;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
     public class ActiveDirectoryConfiguration : Org.IdentityConnectors.Framework.Spi.AbstractConfiguration
     {
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_SyncGlobalCatalogServer", HelpMessageKey = "help_SyncGlobalCatalogServer")]
+        [ConfigurationProperty(OperationTypes=new Type[]{typeof(SyncOp)}, Confidential = false, DisplayMessageKey = "display_SyncGlobalCatalogServer", HelpMessageKey = "help_SyncGlobalCatalogServer")]
         public String SyncGlobalCatalogServer
         { get; set; }
-            
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_SyncDomainController", HelpMessageKey = "help_SyncDomainController")]
+
+        [ConfigurationProperty(OperationTypes = new Type[] { typeof(SyncOp) }, Confidential = false, DisplayMessageKey = "display_SyncDomainController", HelpMessageKey = "help_SyncDomainController")]
         public String SyncDomainController
         { get; set; }
 
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_SyncSearchContext", HelpMessageKey = "help_SyncSearchContext")]
+        [ConfigurationProperty(OperationTypes = new Type[] { typeof(SyncOp) }, Confidential = false, DisplayMessageKey = "display_SyncSearchContext", HelpMessageKey = "help_SyncSearchContext")]
         public String SyncSearchContext
         { get; set; }
 

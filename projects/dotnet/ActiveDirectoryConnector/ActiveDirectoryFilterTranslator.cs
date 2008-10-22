@@ -205,8 +205,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // sense for uid.
             if (attr is Uid)
             {
-                String searchGuid = GetUidSearchString(((Uid)attr).GetUidValue());
-                attr = new Uid(searchGuid);
+                String attrValue = ((Uid)attr).GetUidValue();
+                if (LooksLikeGUID(attrValue))
+                {
+                    String searchGuid = GetUidSearchString(((Uid)attr).GetUidValue());
+                    attr = new Uid(searchGuid);
+                } else {
+                    attr = new Name(attrValue);
+                }
+                
             }
 
 
@@ -435,7 +442,24 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 builder.Append(')');
             }
         }
-        
+
+        // This is a special case for IDM backward compatibility for 
+        // non account objects.  If it doesn't look like a UID, just
+        // assume it's a dn
+        static internal bool LooksLikeGUID(string value)
+        {
+            string[] uidStringParts = value.Split('=');
+            if ((uidStringParts.Length != 2) || (uidStringParts[1] == null))
+            {
+                // This is a special case for IDM backward compatibility for 
+                // non account objects.  If it doesn't look like a UID, just
+                // assume it's a dn
+                return false;
+            }
+
+            return true;
+        }
+               
         // This is called to fix up UID values which are in the
         // format <GUID=xxxxx...>, but need to be in the 
         // format \\xx\\xx\\xx...        
