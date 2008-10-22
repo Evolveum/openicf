@@ -825,20 +825,37 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                 return null;
             }
             public override Object Deserialize(ObjectDecoder decoder)  {
-                IDictionary<object, object> rv = 
-                    new Dictionary<object,object>();
-                int count = decoder.GetNumSubObjects();
-                for (int i = 0; i < count; i++) {
-                    MapEntry entry = (MapEntry)decoder.ReadObjectContents(i);
-                    rv[entry.key] = entry.val;
+                bool caseInsensitive =
+                    decoder.ReadBooleanField("caseInsensitive",false);
+                if (caseInsensitive) {
+                    IDictionary<string, object> rv =
+                        CollectionUtil.NewCaseInsensitiveDictionary<object>();
+                    int count = decoder.GetNumSubObjects();
+                    for (int i = 0; i < count; i++) {
+                        MapEntry entry = (MapEntry)decoder.ReadObjectContents(i);
+                        rv[""+entry.key] = entry.val;
+                    }
+                    return rv;
                 }
-                return rv;
+                else {
+                    IDictionary<object, object> rv = 
+                        new Dictionary<object,object>();
+                    int count = decoder.GetNumSubObjects();
+                    for (int i = 0; i < count; i++) {
+                        MapEntry entry = (MapEntry)decoder.ReadObjectContents(i);
+                        rv[entry.key] = entry.val;
+                    }
+                    return rv;
+                }
             }
 
             public override void Serialize(Object obj, ObjectEncoder encoder)
             {
                 IDictionary<TKey,TValue> map = (IDictionary<TKey,TValue>)obj;
-                if ( map is SortedDictionary<TKey,TValue> ) {
+                if (CollectionUtil.IsCaseInsensitiveDictionary(map)) {
+                    encoder.WriteBooleanField("caseInsensitive",true);
+                }
+                else if ( map is SortedDictionary<TKey,TValue> ) {
                     throw new Exception("Serialization of SortedDictionary not supported");
                 }
                 foreach (KeyValuePair<TKey, TValue> entry in map) {
@@ -929,18 +946,34 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                 return null;
             }
             public override Object Deserialize(ObjectDecoder decoder)  {
-                ICollection<object> rv = 
-                    new HashSet<object>();
-                int count = decoder.GetNumSubObjects();
-                for (int i = 0; i < count; i++) {
-                    rv.Add(decoder.ReadObjectContents(i));
+                bool caseInsensitive =
+                    decoder.ReadBooleanField("caseInsensitive",false);
+                if (caseInsensitive) {
+                    ICollection<string> rv =
+                        CollectionUtil.NewCaseInsensitiveSet();
+                    int count = decoder.GetNumSubObjects();
+                    for (int i = 0; i < count; i++) {
+                        rv.Add(""+decoder.ReadObjectContents(i));
+                    }
+                    return rv;
                 }
-                return rv;
+                else {
+                    ICollection<object> rv = 
+                        new HashSet<object>();
+                    int count = decoder.GetNumSubObjects();
+                    for (int i = 0; i < count; i++) {
+                        rv.Add(decoder.ReadObjectContents(i));
+                    }
+                    return rv;
+                }
             }
 
             public override void Serialize(Object obj, ObjectEncoder encoder)
             {
                 ICollection<T> list = (ICollection<T>)obj;
+                if (CollectionUtil.IsCaseInsensitiveSet(list)) {
+                    encoder.WriteBooleanField("caseInsensitive",true);
+                }
                 foreach (T o in list) {
                     encoder.WriteObjectContents(o);
                 }

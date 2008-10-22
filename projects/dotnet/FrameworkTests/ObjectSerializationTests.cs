@@ -311,6 +311,18 @@ namespace FrameworkTests
             Assert.AreEqual("val1",map4["key1"]);
             Assert.AreEqual("val2",map4["key2"]);
         }
+        [Test]
+        public void TestCaseInsensitiveMap() {
+            HashSet<ConnectorAttribute> set = new HashSet<ConnectorAttribute>();
+            set.Add(ConnectorAttributeBuilder.Build("foo1"));
+            set.Add(ConnectorAttributeBuilder.Build("foo2"));
+            IDictionary<String,ConnectorAttribute> map = ConnectorAttributeUtil.ToMap(set);
+            Assert.IsTrue(map.ContainsKey("Foo1"));
+            Assert.IsTrue(map.ContainsKey("Foo2"));
+            IDictionary<String,object> map2 = (IDictionary<String,object>)CloneObject(map);
+            Assert.IsTrue(map2.ContainsKey("Foo1"));
+            Assert.IsTrue(map2.ContainsKey("Foo2"));        
+        }
         
         [Test]
         public void TestList() {
@@ -353,6 +365,16 @@ namespace FrameworkTests
             Assert.IsTrue(v4.Contains("val1"));
             Assert.IsTrue(v4.Contains("val2"));
         }
+        
+        [Test]
+        public void TestCaseInsensitiveSet() {
+            ICollection<String> v1 = CollectionUtil.NewCaseInsensitiveSet();
+            v1.Add("foo");
+            v1.Add("foo2");
+            ICollection<String> v2 = (ICollection<String>)CloneObject(v1);
+            Assert.IsTrue(v2.Contains("Foo"));
+            Assert.IsTrue(v2.Contains("Foo2"));
+        }        
         
         [Test] 
         public void TestCultureInfo() {

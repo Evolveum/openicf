@@ -91,7 +91,7 @@ namespace Org.IdentityConnectors.Common
             _target.CopyTo(array,arrayIndex);
         }
         
-        protected ICollection<T> GetTarget() {
+        public ICollection<T> GetTarget() {
             return _target;
         }
 
@@ -179,6 +179,63 @@ namespace Org.IdentityConnectors.Common
     /// </summary>
     public static class CollectionUtil
     {
+        /// <summary>
+        /// Creates a case-insensitive set
+        /// </summary>
+        /// <returns>An empty case-insensitive set</returns>
+        public static ICollection<String> NewCaseInsensitiveSet() {
+            HashSet<string> rv = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            return rv;
+        }
+        
+        /// <summary>
+        /// Returns true iff the collection is a case-insensitive set
+        /// </summary>
+        /// <param name="collection">The collection. May be null.</param>
+        /// <returns>true iff the collection is a case-insensitive set</returns>
+        public static bool IsCaseInsensitiveSet<T>(ICollection<T> collection) {
+            if ( collection is ReadOnlyCollection<T> ) {
+                ReadOnlyCollection<T> roc =
+                    (ReadOnlyCollection<T>)collection;
+                return IsCaseInsensitiveSet(roc.GetTarget());
+            }
+            else if ( collection is HashSet<string> ) {
+                HashSet<string> set = (HashSet<string>)collection;
+                return StringComparer.OrdinalIgnoreCase.Equals(set.Comparer);
+            }
+            else {
+                return false;
+            }
+       }
+        /// <summary>
+        /// Creates a case-insensitive map
+        /// </summary>
+        /// <returns>An empty case-insensitive map</returns>
+        public static IDictionary<String,T> NewCaseInsensitiveDictionary<T>() {
+            Dictionary<string,T> rv = new Dictionary<string,T>(StringComparer.OrdinalIgnoreCase);
+            return rv;
+        }
+        
+        /// <summary>
+        /// Returns true iff the collection is a case-insensitive map
+        /// </summary>
+        /// <param name="map">The map. May be null.</param>
+        /// <returns>true iff the collection is a case-insensitive map</returns>
+        public static bool IsCaseInsensitiveDictionary<K,V>(IDictionary<K,V> map) {
+            if ( map is ReadOnlyDictionary<K,V> ) {
+                ReadOnlyDictionary<K,V> roc =
+                    (ReadOnlyDictionary<K,V>)map;
+                return IsCaseInsensitiveDictionary((IDictionary<K,V>)roc.GetTarget());
+            }
+            else if ( map is Dictionary<string,V> ) {
+                Dictionary<string,V> d = (Dictionary<string,V>)map;
+                return StringComparer.OrdinalIgnoreCase.Equals(d.Comparer);
+            }
+            else {
+                return false;
+            }
+       }
+        
         /// <summary>
         /// Creates a dictionary where the keys are looked up using
         /// reference equality
