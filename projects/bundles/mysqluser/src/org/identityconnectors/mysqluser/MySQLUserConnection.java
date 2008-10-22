@@ -83,7 +83,7 @@ public class MySQLUserConnection extends DatabaseConnection {
         // attempt through auto commit..
         PreparedStatement stmt = null;
         try {
-            stmt = prepareStatement(VALIDATE_CONNECTION, null);
+            stmt = prepareStatement(VALIDATE_CONNECTION);
             // valid queries will return a result set...
             stmt.execute();
         } catch (Exception ex) {
