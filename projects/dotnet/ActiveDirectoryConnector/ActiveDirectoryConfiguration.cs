@@ -108,21 +108,27 @@ namespace Org.IdentityConnectors.ActiveDirectory
             Boolean foundError = false;
 
             // can't lookup the schema without the domain name
-            if (DomainName.Length == 0)
+            if ((DomainName == null) || (DomainName.Length == 0))
             {
                 message += "->Domain name not supplied  ";
                 foundError = true;
             }
 
-            if (DirectoryAdminName.Length == 0)
+            if ((DirectoryAdminName == null) || (DirectoryAdminName.Length == 0))
             {
                 message += "->Directory administrator name not supplied  ";
                 foundError = true;
             }
 
-            if (ObjectClass.Length == 0)
+            if ((ObjectClass == null) || (ObjectClass.Length == 0))
             {
                 message += "->ObjectClass was not supplied  ";
+                foundError = true;
+            }
+
+            if ((SearchContainer == null) || (SearchContainer.Length == 0))
+            {
+                message += "->Search Container was not supplied  ";
                 foundError = true;
             }
 
