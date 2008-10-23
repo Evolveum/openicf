@@ -58,7 +58,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             : this(token == null ? null : (string)token.Value, serverName, useGlobalCatalog)
         {
         }
-
+         
         public ActiveDirectorySyncToken(String tokenValue, string configServerName, bool configUseGlobalCatalog)
         {
             UseGlobalCatalog = configUseGlobalCatalog;
