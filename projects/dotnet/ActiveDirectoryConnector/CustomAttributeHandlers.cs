@@ -708,7 +708,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 directoryEntry.Properties[attribute.Name].Value = null;
             }
 
-            // if we are updating or adding, put the
+            if (attribute.Value == null)
+            {
+                return;
+            }
+                // if we are updating or adding, put the
             // new values in.
             if (type.Equals(UpdateType.ADD) ||
                 type.Equals(UpdateType.REPLACE))
@@ -732,7 +736,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         {
                             pvc.Remove(valueObject);
                         }
-                    }
+                    }                
                 }
                 
             }
