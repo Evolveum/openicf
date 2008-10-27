@@ -47,6 +47,7 @@
                 <exclude name="profile.jaw"/>
                 <exclude name="wrqtls12.jar"/>
                 <exclude name="RWebSDK.jar"/>
+                <exclude name="expect4j*.jar"/>
             </fileset>
         </delete>
     </target>
