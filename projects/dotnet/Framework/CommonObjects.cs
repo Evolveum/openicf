@@ -1833,6 +1833,19 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
      */
     public static class PredefinedAttributes {
         /**
+         * Attribute that should hold a reasonable value to
+         * display for the value of an object.  If this is not present, then the
+         * application will have to use the NAME to show the value.
+         */
+        public static readonly String SHORT_NAME = ConnectorAttributeUtil.CreateSpecialName("SHORT_NAME");
+        
+        /**
+         * Attribute that should hold the value of the object's description,
+         * if one is available.
+         */
+        public static readonly String DESCRIPTION = ConnectorAttributeUtil.CreateSpecialName("DESCRIPTION");
+        
+        /**
          * Read-only attribute that shows the last date/time the password was
          * changed.
          */
@@ -1869,6 +1882,24 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
 
     #region PredefinedAttributeInfos
     public static class PredefinedAttributeInfos {
+        /**
+         * Attribute that should hold a reasonable value to
+         * display for the value of an object.  If this is not present, then the
+         * application will have to use the NAME to show the value.
+         */
+        public static readonly ConnectorAttributeInfo SHORT_NAME = 
+            ConnectorAttributeInfoBuilder.Build(PredefinedAttributes.SHORT_NAME,
+                  typeof(String),
+                  false, true, true, true);
+        
+        /**
+         * Attribute that should hold the value of the object's description,
+         * if one is available.
+         */
+        public static readonly ConnectorAttributeInfo DESCRIPTION = 
+            ConnectorAttributeInfoBuilder.Build(PredefinedAttributes.DESCRIPTION,
+                  typeof(String),
+                  false, true, true, true);
         /**
          * Read-only attribute that shows the last date/time the password was
          * changed.
