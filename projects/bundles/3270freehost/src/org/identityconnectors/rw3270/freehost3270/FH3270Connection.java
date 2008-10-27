@@ -141,16 +141,19 @@ public class FH3270Connection extends RW3270BaseConnection {
     }
 
     public void dispose() {
+        if (_rw3270==null)
+            return;
         _rw3270.disconnect();
         _rw3270 = null;
     }
 
     public String getStandardOutput() {
-        return _buffer.toString()+new String(_rw3270.getDisplay());
+        return _buffer.toString();//+new String(_rw3270.getDisplay());
     }
 
     public void resetStandardOutput() {
         _buffer.setLength(0);
+        _ioPair.reset();
     }
 
     public void test() {
