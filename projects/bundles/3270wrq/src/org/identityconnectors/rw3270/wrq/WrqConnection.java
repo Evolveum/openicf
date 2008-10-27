@@ -161,12 +161,14 @@ public class WrqConnection extends RW3270BaseConnection implements ECLPSListener
     }
 
     public void dispose() {
+        if (_session==null)
+            return;
         _session.dispose();
         _session = null;
     }
 
     public String getStandardOutput() {
-        return _buffer.toString()+_ps.GetString().getDataString();
+        return _buffer.toString();//+_ps.GetString().getDataString();
     }
 
     public void resetStandardOutput() {
