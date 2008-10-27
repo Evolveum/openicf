@@ -48,6 +48,7 @@
             <fileset dir="${lib}" includes="**/*.jar">
                 <exclude name="commons-pool*.jar"/>
                 <exclude name="habeans2.jar"/>
+                <exclude name="expect4j*.jar"/>
             </fileset>
         </delete>
     </target>
