@@ -86,6 +86,8 @@ public class HodConnectionPoolTests {
     private static final int        HOST_TELNET_PORT    = 23;
     private static final Boolean    USE_SSL             = Boolean.FALSE;
     private static final int        SHORT_WAIT          = 5000;
+    private static final String  READY               = "\\sREADY\\s{74}";
+    private static final String  CONTINUE            = "\\s\\*\\*\\*\\s{76}";
 
 
     @BeforeClass
@@ -109,16 +111,9 @@ public class HodConnectionPoolTests {
             try {
                 // Now, display a user
                 //
-                connection.send("[clear]LISTUSER IDM03[enter]");
-                connection.waitFor("***", "READY", SHORT_WAIT);
-                String line = connection.getStandardOutput();
+                String command = "LISTUSER IDM03";
+                String line = executeCommand(connection, command);
                 Assert.assertTrue(line.contains("USER=IDM03"));
-                while (line.length()>80 && line.charAt(line.length()-2)==' ')
-                    line = line.substring(0, line.length()-1);
-                while (line.length()>80) {
-                    System.out.println(line.substring(0, 80));
-                    line = line.substring(80);
-                }
                 System.out.println(line);
                 pool.returnObject("TODO", info);
             } finally {
@@ -128,6 +123,22 @@ public class HodConnectionPoolTests {
             e.printStackTrace();
             Assert.fail(e.toString());
         }
+    }
+
+    private String executeCommand(RW3270Connection connection, String command) {
+        connection.resetStandardOutput();
+        connection.send("[clear]"+command+"[enter]");
+        connection.waitFor(CONTINUE, READY, SHORT_WAIT);
+        String line = connection.getStandardOutput();
+        line = line.substring(0, line.lastIndexOf(" READY"));
+        // break into lines
+        //
+        int index = line.indexOf(" USER=");
+        System.out.println("index="+index);
+        if (index>-1)
+            line = line.substring(index);
+        line = line.replaceAll("(.{80})", "$1\n");
+        return line;
     }
     
     private static MapTransform fillInPatternNodes(String parserString) throws Exception {
@@ -176,12 +187,8 @@ public class HodConnectionPoolTests {
             try {
                 // Now, display a user's OMVS info
                 //
-                connection.send("[clear]LISTUSER "+SYSTEM_USER+" NORACF OMVS[enter]");
-                connection.waitFor("***", "READY", SHORT_WAIT);
-                String line = connection.getStandardOutput();
-                // break into lines
-                //
-                line = line.replaceAll("(.{80})", "$1\n");
+                String command = "LISTUSER "+SYSTEM_USER+" NORACF OMVS";
+                String line = executeCommand(connection, command);
                 if (line.contains("NO OMVS INFO")) {
                     // Oh, well
                 } else {
@@ -224,12 +231,8 @@ public class HodConnectionPoolTests {
             try {
                 // Now, display a user's CICS info
                 //
-                connection.send("[clear]LISTUSER CICSUSER NORACF CICS[enter]");
-                connection.waitFor("***", "READY", SHORT_WAIT);
-                String line = connection.getStandardOutput();
-                // break into lines
-                //
-                line = line.replaceAll("(.{80})", "$1\n");
+                String command = "LISTUSER CICSUSER NORACF CICS";
+                String line = executeCommand(connection, command);
                 MapTransform transform = fillInPatternNodes(cicsParser);
                 @SuppressWarnings("unchecked")
                 Map<String, Object> attributes = (Map<String, Object>)transform.transform(line);
@@ -271,9 +274,8 @@ public class HodConnectionPoolTests {
             try {
                 // Now, display a user's TSO info
                 //
-                connection.send("[clear]LISTUSER "+SYSTEM_USER+" NORACF TSO[enter]");
-                connection.waitFor("***", "READY", SHORT_WAIT);
-                String line = connection.getStandardOutput();
+                String command = "LISTUSER "+SYSTEM_USER+" NORACF TSO";
+                String line = executeCommand(connection, command);
                 // break into lines
                 //
                 line = line.replaceAll("(.{80})", "$1\n");
@@ -333,11 +335,11 @@ public class HodConnectionPoolTests {
             "connection.waitFor(\"Password  ===>\", SHORT_WAIT);\n" +
             "connection.send(PASSWORD);\n" +
             "connection.send(\"[enter]\");\n" +
-            "connection.waitFor(\"***\", SHORT_WAIT);\n" +
+            "connection.waitFor(\"\\\\*\\\\*\\\\*\", SHORT_WAIT);\n" +
             "connection.send(\"[enter]\");\n" +
             "connection.waitFor(\"Option ===>\", SHORT_WAIT);\n" +
             "connection.send(\"[pf3]\");\n" +
-            "connection.waitFor(\"READY\", SHORT_WAIT);";
+            "connection.waitFor(\"READY\\\\s{74}\", SHORT_WAIT);";
         return script;
     }
 

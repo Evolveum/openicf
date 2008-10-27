@@ -159,16 +159,19 @@ public class HodConnection extends RW3270BaseConnection implements ECLPSListener
     }
 
     public void dispose() {
+        if (_session==null)
+            return;
         _session.dispose();
         _session = null;
     }
 
     public String getStandardOutput() {
-        return _buffer.toString()+_ps.getString();
+        return _buffer.toString();//+_ps.getString();
     }
 
     public void resetStandardOutput() {
         _buffer.setLength(0);
+        _ioPair.reset();
     }
 
     public void test() {
