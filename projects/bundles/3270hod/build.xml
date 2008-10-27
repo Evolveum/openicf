@@ -42,7 +42,10 @@
     <property name="patternparser.dir" value="../patternparser"/>
     <target name="-pre-clean-extra">
         <delete>
-            <fileset dir="${lib}" excludes="habeans2.jar"/>
+            <fileset dir="${lib}" includes="**/*.jar">
+                <exclude name="habeans2.jar"/>
+                <exclude name="expect4j*.jar"/>
+            </fileset>
         </delete> 
     </target>
     <target name="-pre-compile-extra">
