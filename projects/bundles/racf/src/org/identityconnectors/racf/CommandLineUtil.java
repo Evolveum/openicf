@@ -80,10 +80,11 @@ import org.xml.sax.InputSource;
 
 class CommandLineUtil {
     private static ConnectionPool       _pool;
+    private static final String         OUTPUT_COMPLETE_PATTERN = "\\sREADY\\s{74}";
     private static final String         OUTPUT_COMPLETE         = " READY";
     private static final String         DEFAULT_GROUP_NAME      = "DFLTGRP";
     private static final String         LONG_DEFAULT_GROUP_NAME = "RACF.DFLTGRP";
-    private static final String         OUTPUT_CONTINUING       = " ***";
+    private static final String         OUTPUT_CONTINUING       = "\\s\\*\\*\\*\\s{76}";
     private static final String         RACF                    = "RACF";
     private static final String         DELETE_SEGMENT          = "Delete Segment";
     private static final int            COMMAND_TIMEOUT         = 60000;
@@ -188,7 +189,7 @@ class CommandLineUtil {
     public void checkCommand(CharArrayBuffer command) {
         String output = getCommandOutput(command);
         if (output.trim().length()>0) {
-            throw new ConnectorException("TODO: error in command "+command+"\n"+"\""+output+"\"");
+            throw new ConnectorException("TODO: error in command "+new String(command.getArray())+"\n"+"\""+output+"\"");
         }
     }
     
@@ -213,7 +214,7 @@ class CommandLineUtil {
             connection.send(command);
             connection.send("[enter]");
             System.out.println("execute:'"+new String(command)+"'");
-            connection.waitFor(OUTPUT_CONTINUING, OUTPUT_COMPLETE, COMMAND_TIMEOUT);
+            connection.waitFor(OUTPUT_CONTINUING, OUTPUT_COMPLETE_PATTERN, COMMAND_TIMEOUT);
             String output = connection.getStandardOutput();
             // Remove OUTPUT_COMPLETE from end of output
             //
@@ -224,7 +225,7 @@ class CommandLineUtil {
             if (index>-1) {
                 // Round up to line length
                 //
-                index = connection.getWidth()+index/connection.getWidth()*connection.getWidth();
+                index += connection.getWidth();//= connection.getWidth()+index/connection.getWidth()*connection.getWidth();
                 output = output.substring(index);
             }
             output = output.replaceAll("(.{"+connection.getWidth()+"})", "$1\n");
@@ -444,8 +445,11 @@ class CommandLineUtil {
             checkCommand(command);
         } else if (isGroupid(uidString)) {
             String name = _connector.extractRacfIdFromLdapId(uidString);
-            if (!groupExists(name))
+            int status = groupExistsAndIsEmpty(name);
+            if (status==-1)
                 throw new UnknownUidException();
+            if (status>0)
+                throw new ConnectorException("TODO: cannot delete grop with members");
             String command = "DELGROUP "+name;
             checkCommand(command);
         } else if (isConnection(uidString)) {
@@ -466,12 +470,31 @@ class CommandLineUtil {
         return !notFound;
     }
 
+    private int groupExistsAndIsEmpty(String name) {
+        // TSO gets into a funny state if you attempt to delete an nonexisting group
+        // so, check and see if the group already exists
+        //
+        String output = getCommandOutput("LISTGRP "+name);
+        boolean notFound = (output.toUpperCase().contains("NAME NOT FOUND"));
+        if (notFound)
+            return -1;
+        try {
+            Map<String, Object> attributes = (Map<String, Object>)_membersOfGroupTransform.transform(output);
+            List<Object> members = (List<Object>)attributes.get("MEMBERS");
+            if (members==null)
+                return 0;
+            return members.size();
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }
+    }
+
     private boolean userExists(String name) {
         // TSO gets into a funny state if you attempt to delete an nonexisting user
         // so, check and see if the user already exists
         //
         String output = getCommandOutput("LISTUSER "+name);
-        boolean notFound = (output.toUpperCase().contains("UNABLE TO LOCATE"));
+        boolean notFound = (output.toUpperCase().contains("UNABLE TO LOCATE USER"));
         return !notFound;
     }
     
@@ -482,8 +505,10 @@ class CommandLineUtil {
             Map<String, Object> attributes = (Map<String, Object>)_membersOfGroupTransform.transform(output);
             List<Object> members = (List<Object>)attributes.get("MEMBERS");
             List<String> membersAsString = new LinkedList<String>();
-            for (Object member : members)
-                membersAsString.add(_connector.createUidFromName(ObjectClass.ACCOUNT, (String)member).getUidValue());
+            if (members!=null) {
+                for (Object member : members)
+                    membersAsString.add(_connector.createUidFromName(ObjectClass.ACCOUNT, (String)member).getUidValue());
+            }
             return membersAsString;
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
@@ -515,6 +540,10 @@ class CommandLineUtil {
         else
             command = "SEARCH CLASS(USER)";
         String users = getCommandOutput(command);
+        if (users.contains("NO ENTRIES MEET SEARCH CRITERIA")) {
+            return new LinkedList<String>();
+        }
+
         // Error messages all start with a 9 character error code,
         // and users are at most 8 characters long. This allow us to
         // determine if there are any error messages in the text
