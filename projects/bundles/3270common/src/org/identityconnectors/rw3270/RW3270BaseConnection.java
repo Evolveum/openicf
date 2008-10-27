@@ -39,7 +39,10 @@
  */
 package org.identityconnectors.rw3270;
 
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,7 +53,12 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.rw3270.RW3270Connection;
 
-
+import expect4j.Closure;
+import expect4j.Expect4j;
+import expect4j.ExpectState;
+import expect4j.matches.Match;
+import expect4j.matches.RegExpMatch;
+import expect4j.matches.TimeoutMatch;
 
 public abstract class RW3270BaseConnection implements RW3270Connection {
     protected String                    _lastConnError;
@@ -58,6 +66,8 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
     protected Semaphore                 _semaphore;
     protected StringBuffer              _buffer;
     protected PoolableConnectionConfiguration _config;
+    protected Expect4j                  _expect4j;
+    protected RW3270IOPair              _ioPair;
     protected Pattern                   _commandPattern = Pattern.compile("(?<!\\[)\\[([^]]*)\\]");
     protected Pattern                   _pfPattern      = Pattern.compile("PF(\\d+)", Pattern.CASE_INSENSITIVE);
     protected Pattern                   _paPattern      = Pattern.compile("PA(\\d+)", Pattern.CASE_INSENSITIVE);
@@ -70,6 +80,7 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
         _buffer = new StringBuffer();
         _model = 2;
         _semaphore = new Semaphore(0);
+        _expect4j = new Expect4j(_ioPair = new RW3270IOPair(this));
     }
 
     protected abstract void sendKeys(String keys);
@@ -127,6 +138,14 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
      */
     public void send(String command) {
         try {
+            _expect4j.send(command);
+        } catch (IOException e) {
+            throw ConnectorException.wrap(e);
+        }
+    }
+    
+    public void sendFromIOPair(String command) {
+        try {
             waitForUnlock();
 
             // Loop through the string, extracting any commands
@@ -176,99 +195,128 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
     /* (non-Javadoc)
      * @see org.identityconnectors.racf.RW3270Connection#waitFor(java.lang.String)
      */
-    public void waitFor(String expression) {
+    private String _lastDisplay = "";
+    public synchronized String waitForInput() {
         try {
-            while (true) {
-                _semaphore.acquire();
-                String display = getDisplay();
-                if (display.contains(expression)) {
-                    return;
-                }
+            _semaphore.acquire();
+            // Eliminate any trailing blank lines
+            //
+            StringBuffer buffer = new StringBuffer(getDisplay());
+            int last = buffer.length();
+            while (last>0)
+                if (buffer.charAt(--last)!=' ')
+                    break;
+            last += getWidth()-(last%getWidth());
+            String value = "";
+            buffer.setLength(last);
+            String display = buffer.toString();
+            if (display.startsWith(_lastDisplay)) {
+                value = display.substring(_lastDisplay.length());
+            } else {
+                value = display;
             }
+            _lastDisplay = display;
+            return value;
         } catch (InterruptedException e) {
             throw new ConnectorException(e);
         }
     }
-    
+
     /* (non-Javadoc)
-     * @see org.identityconnectors.racf.RW3270Connection#waitFor(java.lang.String, java.lang.String)
+     * @see org.identityconnectors.racf.RW3270Connection#waitFor(java.lang.String)
      */
-    public void waitFor(String expression0, String expression1) {
-        try {
-            while (true) {
-                _semaphore.acquire();
-                String display = getDisplay();
-                //dump();
-                // This is used to signal commands which may continue over
-                // multiple screens.
-                //  expression[0] signals more data is to come
-                //  expression[1] signals all data has been presented
-                //
-                boolean endsWith0 = display.trim().endsWith(expression0); 
-                boolean endsWith1 = display.trim().endsWith(expression1); 
-                if (endsWith0) {
-                    // Save the existing screen's data
-                    // 
-                    _buffer.append(display.substring(0, display.lastIndexOf(expression0)));
-                    clearAndUnlock();
-                    sendEnter();
-                } else if (endsWith1) {
-                    return;
-                }
-            }
-        } catch (InterruptedException e) {
-            throw new ConnectorException(e);
-        }
+    public void waitFor(String expression) {
+        waitForLocal(expression, null);
     }
 
     /* (non-Javadoc)
      * @see org.identityconnectors.racf.RW3270Connection#waitFor(java.lang.String, int)
      */
     public void waitFor(final String expression, int timeOut) {
-        Thread thread = new Thread() {
-            public void run() {
-                try {
-                    waitFor(expression);
-                } catch (Exception e) {
-                    throw new ConnectorException(e);
-                }
-            }
-        };
-        thread.start();
+        waitForLocal(expression, new Integer(timeOut));
+    }
+
+    private void waitForLocal(String expression, Integer timeout) {
         try {
-            thread.join(timeOut);
-        } catch (InterruptedException e) {
-            throw new ConnectorException(e);
+            List<Match> matches = new LinkedList<Match>();
+            matches.add(new RegExpMatch(expression, new Closure() {
+                public void run(ExpectState state) throws Exception {
+                    state.addVar("timeout", Boolean.FALSE);
+                }
+            }));
+            if (timeout != null)
+                matches.add(new TimeoutMatch(timeout, new Closure() {
+                    public void run(ExpectState state) throws Exception {
+                        _buffer.append(state.getBuffer());
+                        state.addVar("timeout", Boolean.TRUE);
+                    }
+                }));
+            _expect4j.expect(matches);
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
         }
-        if (thread.isAlive())
+        Boolean isTimeout = (Boolean)_expect4j.getLastState().getVar("timeout");
+        if (isTimeout==null || isTimeout.booleanValue())
             throw new ConnectorException(_config.getConnectorMessages().format("IsAlive", "timed out waiting for ''{0}'':''{1}''", expression, getStandardOutput()));
-        if (!getStandardOutput().contains(expression))
-            throw new ConnectorException(_config.getConnectorMessages().format("NotFound", "''{0}'' not found; instead had ''{1}''", expression, getStandardOutput()));
+    }
+    
+    /* (non-Javadoc)
+     * @see org.identityconnectors.racf.RW3270Connection#waitFor(java.lang.String, java.lang.String)
+     */
+    public void waitFor(String expression0, String expression1) {
+        waitForLocal(expression0, expression1, null);
     }
 
     /* (non-Javadoc)
      * @see org.identityconnectors.racf.RW3270Connection#waitFor(java.lang.String, java.lang.String, int)
      */
-    public void waitFor(final String expression0, final String expression1, int timeOut) {
-        Thread thread = new Thread() {
-            public void run() {
-                try {
-                    waitFor(expression0, expression1);
-                } catch (Exception e) {
-                    throw new ConnectorException(e);
-                }
-            }
-        };
-        thread.start();
+    public void waitFor(String expression0, String expression1, int timeOut) {
+        waitForLocal(expression0, expression1, new Integer(timeOut));
+    }
+    
+    private void waitForLocal(final String expression0, final String expression1,
+            Integer timeout) {
         try {
-            thread.join(timeOut);
-        } catch (InterruptedException e) {
-            throw new ConnectorException(e);
+            List<Match> matches = new LinkedList<Match>();
+            final Pattern pattern = Pattern.compile(expression0);
+            matches.add(new RegExpMatch(expression0, new Closure() {
+                public void run(ExpectState state) throws Exception {
+                    // Need to strip off the match
+                    //
+                    String data = state.getBuffer();
+                    Matcher matcher = pattern.matcher(data);
+                    if (matcher.find()) {
+                        data = data.substring(0, matcher.start());
+                    }
+                    _buffer.append(data);
+                    clearAndUnlock();
+                    sendEnter();
+                    state.exp_continue();
+                }
+            }));
+            matches.add(new RegExpMatch(expression1, new Closure() {
+                public void run(ExpectState state) throws Exception {
+                    String data = state.getBuffer();
+                    _buffer.append(data);
+                    state.addVar("timeout", Boolean.FALSE);
+                }
+            }));
+            if (timeout != null)
+                matches.add(new TimeoutMatch(timeout, new Closure() {
+                    public void run(ExpectState state) throws Exception {
+                        state.addVar("timeout", Boolean.TRUE);
+                    }
+                }));
+            _expect4j.expect(matches);
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
         }
-        if (thread.isAlive())
-            throw new ConnectorException(_config.getConnectorMessages().format("IsAlive2", "timed out waiting for ''{0}'' or ''{1}'':''{2}''", expression0, expression1, getStandardOutput().trim()));
-        if (!getStandardOutput().contains(expression1))
-            throw new ConnectorException(_config.getConnectorMessages().format("NotFound", "''{0}'' not found; instead had ''{1}''", expression1, getStandardOutput()));
+        
+        Boolean isTimeout = (Boolean)_expect4j.getLastState().getVar("timeout"); 
+        if (isTimeout==null || isTimeout.booleanValue())
+            throw new ConnectorException(_config.getConnectorMessages().format(
+                    "IsAlive", "timed out waiting for ''{0}'':''{1}''",
+                    expression1, getStandardOutput()));
     }
     
     private static class GuardedStringAccessor implements GuardedString.Accessor {
@@ -276,7 +324,7 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
         
         public void access(char[] clearChars) {
             _array = new char[clearChars.length];
-            System.arraycopy(clearChars, 0, _array, 0, _array.length);            
+            System.arraycopy(clearChars, 0, _array, 0, _array.length);
         }
         
         public char[] getArray() {

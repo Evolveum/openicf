@@ -58,10 +58,13 @@ public interface RW3270Connection {
     public void resetStandardOutput();
 
     public void send(String command);
+    public void sendFromIOPair(String command);
 
     public void send(GuardedString command);
 
     public void send(char[] command);
+
+    public String waitForInput();
 
     public void waitFor(String expression);
 

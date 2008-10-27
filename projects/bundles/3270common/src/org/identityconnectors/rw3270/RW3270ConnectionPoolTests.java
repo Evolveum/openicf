@@ -327,6 +327,7 @@ public class RW3270ConnectionPoolTests {
         }
 
         public void resetStandardOutput() {
+            _ioPair.reset();
         }
 
         public void test() {
