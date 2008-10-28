@@ -428,7 +428,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      *  
      * @see org.identityconnectors.framework.spi.operations.AuthenticateOp#authenticate(java.lang.String, java.lang.String, org.identityconnectors.framework.common.objects.OperationOptions)
      */
-    public void authenticate(String username, GuardedString password, OperationOptions options) {
+    public Uid authenticate(String username, GuardedString password, OperationOptions options) {
         final String AUTH_SELECT="SELECT user FROM mysql.user WHERE user = ? AND password = password(?)";
         
         log.info("authenticate user: {0}", username);
@@ -457,6 +457,9 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             SQLUtil.closeQuietly(result);
             SQLUtil.closeQuietly(stmt);            
         }
+        //TODO: return Uid
+        //TODO: throw PasswordExpiredException
+        return null;
     }
     
     /**
