@@ -54,7 +54,6 @@ import org.identityconnectors.common.script.ScriptExecutor;
 import org.identityconnectors.common.script.ScriptExecutorFactory;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
-import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -145,7 +144,7 @@ import org.openspml.v2.util.xml.ObjectFactory;
 public class SpmlConnector implements PoolableConnector, CreateOp,
 DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
     private Log log = Log.getLog(SpmlConnector.class);
-    private static final ScriptExecutorFactory factory = ScriptExecutorFactory.newInstance("GROOVY");
+    private final ScriptExecutorFactory factory = ScriptExecutorFactory.newInstance("GROOVY");
     private static final ObjectFactory.ProfileRegistrar mDSMLRegistrar = new DSMLProfileRegistrar();
 
     public static final String              PSOID = "psoID";
