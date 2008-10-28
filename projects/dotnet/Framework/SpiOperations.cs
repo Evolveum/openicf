@@ -124,7 +124,7 @@ namespace Org.IdentityConnectors.Framework.Spi.Operations
          *             iff native authentication fails. If a native exception if
          *             available attempt to throw it.
          */
-        void Authenticate(String username, GuardedString password, OperationOptions options);
+        Uid Authenticate(String username, GuardedString password, OperationOptions options);
     }
     
     /**

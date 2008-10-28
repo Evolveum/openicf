@@ -1263,12 +1263,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         #region AuthenticateOp Members
 
-        public void Authenticate(string username, 
+        public Uid Authenticate(string username, 
             Org.IdentityConnectors.Common.Security.GuardedString password, 
             OperationOptions options)
         {
             PasswordChangeHandler handler = new PasswordChangeHandler(_configuration);
             handler.Authenticate(username, password);
+            //TODO: return Uid
+            //TODO: PasswordExpiredException
+            return null;
         }
 
         #endregion

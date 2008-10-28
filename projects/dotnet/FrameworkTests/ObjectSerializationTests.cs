@@ -807,6 +807,14 @@ namespace FrameworkTests
             }
             
             {
+                PasswordExpiredException v1 = new PasswordExpiredException("ex");
+                v1.Uid=(new Uid("myuid"));
+                PasswordExpiredException v2 = (PasswordExpiredException)CloneObject(v1);
+                Assert.AreEqual("ex",v2.Message);
+                Assert.AreEqual("myuid", v2.Uid.GetUidValue());
+            }
+            
+            {
                 OperationTimeoutException v1 = new OperationTimeoutException("ex");
                 OperationTimeoutException v2 = (OperationTimeoutException)CloneObject(v1);
                 Assert.AreEqual("ex",v2.Message);

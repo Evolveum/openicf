@@ -518,12 +518,12 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
         }
         
         
-        public override sealed Object Deserialize(ObjectDecoder decoder) {
+        public override Object Deserialize(ObjectDecoder decoder) {
             String message = decoder.ReadStringField("message",null);
             return CreateException(message);
         }
 
-        public override sealed void Serialize(Object obj, ObjectEncoder encoder)
+        public override void Serialize(Object obj, ObjectEncoder encoder)
         {
             Exception val = (Exception)obj;
             encoder.WriteStringField("message", val.Message);
@@ -1431,6 +1431,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
             HANDLERS.Add( new ConnectionBrokenExceptionHandler() );
             HANDLERS.Add( new ConnectionFailedExceptionHandler() );
             HANDLERS.Add( new ConnectorIOExceptionHandler() );
+            HANDLERS.Add( new PasswordExpiredExceptionHandler() );
             HANDLERS.Add( new InvalidPasswordExceptionHandler() );
             HANDLERS.Add( new UnknownUidExceptionHandler() );
             HANDLERS.Add( new InvalidCredentialExceptionHandler() );
@@ -1502,6 +1503,30 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
             }
             protected override ConnectorIOException CreateException(String msg) {
                 return new ConnectorIOException(msg);
+            }
+        }
+        private class PasswordExpiredExceptionHandler : AbstractExceptionHandler<PasswordExpiredException> {
+            public PasswordExpiredExceptionHandler() 
+                : base("PasswordExpiredException") {
+                
+            }
+            
+            public override Object Deserialize(ObjectDecoder decoder) {
+                Uid uid = (Uid)decoder.ReadObjectField("Uid", typeof(Uid), null);
+                PasswordExpiredException ex =
+                    (PasswordExpiredException)base.Deserialize(decoder);
+                ex.Uid = uid;
+                return ex;
+            }
+    
+            public override void Serialize(Object obj, ObjectEncoder encoder)
+            {
+                base.Serialize(obj, encoder);
+                PasswordExpiredException val = (PasswordExpiredException)obj;
+                encoder.WriteObjectField("Uid", val.Uid, true);
+            }
+            protected override PasswordExpiredException CreateException(String msg) {
+                return new PasswordExpiredException(msg);
             }
         }
         private class InvalidPasswordExceptionHandler : AbstractExceptionHandler<InvalidPasswordException> {

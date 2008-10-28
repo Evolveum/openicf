@@ -573,8 +573,8 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
         /**
          * {@inheritDoc}
          */
-        public void Authenticate(String username, GuardedString password, OperationOptions options) {
-            ((AuthenticationApiOp) this
+        public Uid Authenticate(String username, GuardedString password, OperationOptions options) {
+            return ((AuthenticationApiOp) this
              .GetOperationCheckSupported(SafeType<APIOperation>.Get<AuthenticationApiOp>())).Authenticate(
                     username, password, options);
         }

@@ -138,7 +138,7 @@
   | ConnectionFailedException | ConnectorIOException | InvalidPasswordException 
   | UnknownUidException | InvalidCredentialException | PermissionDeniedException
   | ConnectorSecurityException | OperationTimeoutException | ConnectorException
-  | RuntimeException | Exception | Throwable
+  | RuntimeException | Exception | Throwable | PasswordExpiredException
   "&gt;
   
 &lt;!ENTITY % messageTypes
@@ -170,7 +170,7 @@ ObjectPoolConfiguration | ConfigurationProperty | ConfigurationProperties |
 APIConfiguration | ConnectorMessages | ConnectorKey | ConnectorInfo |
 UpdateApiOpType | AttributeInfo | ConnectorObject | ObjectClass |
 ObjectClassInfo | Schema | ScriptContext | OperationOptions | 
-OperationOptionInfo | SyncDeltaType | SyncToken | SyncDelta | QualifiedUid
+OperationOptionInfo | SyncDeltaType | SyncToken | SyncDelta | QualifiedUid 
 "&gt;
   
   
@@ -332,6 +332,10 @@ OperationOptionInfo | SyncDeltaType | SyncToken | SyncDelta | QualifiedUid
 &gt;
 &lt;!ELEMENT InvalidPasswordException EMPTY&gt; 
 &lt;!ATTLIST InvalidPasswordException
+   message CDATA #IMPLIED
+&gt;
+&lt;!ELEMENT PasswordExpiredException (Uid?)&gt; 
+&lt;!ATTLIST PasswordExpiredException 
    message CDATA #IMPLIED
 &gt;
 &lt;!ELEMENT UnknownUidException EMPTY&gt; 

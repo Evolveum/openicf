@@ -42,7 +42,7 @@ using Org.IdentityConnectors.Framework.Common.Objects;
 
 namespace Org.IdentityConnectors.Framework.Common.Exceptions
 {
-   
+    #region AlreadyExistsException
     public class AlreadyExistsException : ConnectorException {
             
         public AlreadyExistsException() : base() {
@@ -58,7 +58,9 @@ namespace Org.IdentityConnectors.Framework.Common.Exceptions
         public AlreadyExistsException(String message, Exception ex) : base(message,ex) {
         }
     }
+    #endregion
     
+    #region ConfigurationException
     public class ConfigurationException : ConnectorException {
             
         public ConfigurationException() : base() {
@@ -73,7 +75,9 @@ namespace Org.IdentityConnectors.Framework.Common.Exceptions
         public ConfigurationException(String message, Exception ex) : base(message,ex) {
         }
     }
+    #endregion
     
+    #region ConnectionBrokenException
     public class ConnectionBrokenException : ConnectorIOException {
         
     
@@ -89,6 +93,9 @@ namespace Org.IdentityConnectors.Framework.Common.Exceptions
         public ConnectionBrokenException(String message, Exception ex) : base(message,ex) {          
         }    
     } 
+    #endregion
+    
+    #region ConnectionFailedException
     public class ConnectionFailedException : ConnectorIOException {
         
     
@@ -105,7 +112,9 @@ namespace Org.IdentityConnectors.Framework.Common.Exceptions
         }
     
     }
+    #endregion
     
+    #region ConnectorException
     public class ConnectorException : ApplicationException {
                 
         public ConnectorException() : base() {
@@ -142,7 +151,9 @@ namespace Org.IdentityConnectors.Framework.Common.Exceptions
         }
     
     }
+    #endregion
     
+    #region ConnectorIOException
     public class ConnectorIOException : ConnectorException {
             
         public ConnectorIOException() : base() {
@@ -157,7 +168,9 @@ namespace Org.IdentityConnectors.Framework.Common.Exceptions
         public ConnectorIOException(String message, Exception ex) : base(message,ex) {
         }
     }
+    #endregion
     
+    #region ConnectorSecurityException
     public class ConnectorSecurityException : ConnectorException {
             
         public ConnectorSecurityException() : base() {
@@ -172,7 +185,9 @@ namespace Org.IdentityConnectors.Framework.Common.Exceptions
         public ConnectorSecurityException(String message, Exception ex) : base(message,ex) {
         }
     }
+    #endregion
     
+    #region InvalidCredentialException
     public class InvalidCredentialException : ConnectorSecurityException {
         
         public InvalidCredentialException() : base() {
@@ -187,6 +202,9 @@ namespace Org.IdentityConnectors.Framework.Common.Exceptions
         public InvalidCredentialException(String message, Exception ex) : base(message,ex) {
         }
     }
+    #endregion 
+    
+    #region InvalidPasswordException
     public class InvalidPasswordException : InvalidCredentialException {
         
         public InvalidPasswordException() : base() {
@@ -201,7 +219,9 @@ namespace Org.IdentityConnectors.Framework.Common.Exceptions
         public InvalidPasswordException(String message, Exception ex) : base(message,ex) {
         }
     }
+    #endregion
     
+    #region OperationTimeoutException
     public class OperationTimeoutException : ConnectorException {
             
         public OperationTimeoutException() : base() {
@@ -217,7 +237,37 @@ namespace Org.IdentityConnectors.Framework.Common.Exceptions
         }
     
     }
+    #endregion
     
+    #region PasswordExpiredException
+    public class PasswordExpiredException : InvalidPasswordException {
+        
+        private Uid _uid;
+        
+        public PasswordExpiredException() : base() {
+        }
+        
+        public PasswordExpiredException(String message) : base(message) {
+        }
+    
+        public PasswordExpiredException(Exception ex) : base(ex) {
+        }
+    
+        public PasswordExpiredException(String message, Exception ex) : base(message,ex) {
+        }
+        
+        public Uid Uid {
+            get {
+                return _uid;
+            }
+            set {
+                _uid = value;
+            }
+        }
+    }
+    #endregion
+    
+    #region PermissionDeniedException
     public class PermissionDeniedException : ConnectorSecurityException {
     
         public PermissionDeniedException() : base() {
@@ -232,7 +282,9 @@ namespace Org.IdentityConnectors.Framework.Common.Exceptions
         public PermissionDeniedException(String message, Exception ex) : base(message,ex) {
         }
     }
+    #endregion
     
+    #region UnknownUidException
     public class UnknownUidException : InvalidCredentialException {
         const string MSG = "Object with Uid '{0}' and ObjectClass '{1}' does not exist!";
         
@@ -252,6 +304,5 @@ namespace Org.IdentityConnectors.Framework.Common.Exceptions
         public UnknownUidException(String message, Exception ex) : base(message,ex) {
         }
     }
-
-    
+    #endregion    
 }

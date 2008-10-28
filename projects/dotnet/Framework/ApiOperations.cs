@@ -67,7 +67,7 @@ namespace Org.IdentityConnectors.Framework.Api.Operations
          *             iff the credentials do not pass authentication otherwise
          *             nothing.
          */
-        void Authenticate(string username, GuardedString password, OperationOptions options);
+        Uid Authenticate(string username, GuardedString password, OperationOptions options);
     }
 
     /// <summary>

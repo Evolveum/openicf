@@ -278,14 +278,14 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
          * 
          * @see Authentication#authenticate(String, String)
          */
-        public void Authenticate(String username, GuardedString password, OperationOptions options) {
+        public Uid Authenticate(String username, GuardedString password, OperationOptions options) {
             Assertions.NullCheck(username, "username");
             Assertions.NullCheck(password, "password");
             //convert null into empty
             if ( options == null ) {
                 options = new OperationOptionsBuilder().Build();
             }
-            ((AuthenticateOp) GetConnector()).Authenticate(username, password,options);
+            return ((AuthenticateOp) GetConnector()).Authenticate(username, password,options);
         }
     }
     #endregion
