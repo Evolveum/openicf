@@ -263,11 +263,32 @@ namespace Org.IdentityConnectors.Framework.Common
          */
         public static void CheckOperationOptionType(Type clazz) {
             //the set of supported operation option types
-            //is the same as that for configuration beans
-            if (!FrameworkUtil.IsSupportedConfigurationType(clazz)) {
-                String MSG = "ConfigurationOption type '+"+clazz.Name+"+' is not supported.";
-                throw new ArgumentException(MSG);
+            //is the same as that for configuration beans plus Name,
+            //ObjectClass, Uid, and QualifiedUid
+        
+            if ( clazz.IsArray ) {
+                CheckOperationOptionType(clazz.GetElementType());
+                return;
             }
+                    
+            if (FrameworkUtil.IsSupportedConfigurationType(clazz)) {
+                return; //ok
+            }
+    
+            if (typeof(ObjectClass).IsAssignableFrom(clazz)) {
+                return; //ok
+            }
+            
+            if (typeof(Uid).IsAssignableFrom(clazz)) {
+                return; //ok
+            }
+            
+            if (typeof(QualifiedUid).IsAssignableFrom(clazz)) {
+                return; //ok
+            }
+
+            String MSG = "ConfigurationOption type '+"+clazz.Name+"+' is not supported.";
+            throw new ArgumentException(MSG);
         }
         /**
          * Determines if the class of the object is a supported attribute type.

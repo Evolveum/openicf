@@ -170,7 +170,7 @@ ObjectPoolConfiguration | ConfigurationProperty | ConfigurationProperties |
 APIConfiguration | ConnectorMessages | ConnectorKey | ConnectorInfo |
 UpdateApiOpType | AttributeInfo | ConnectorObject | ObjectClass |
 ObjectClassInfo | Schema | ScriptContext | OperationOptions | 
-OperationOptionInfo | SyncDeltaType | SyncToken | SyncDelta
+OperationOptionInfo | SyncDeltaType | SyncToken | SyncDelta | QualifiedUid
 "&gt;
   
   
@@ -393,6 +393,7 @@ OperationOptionInfo | SyncDeltaType | SyncToken | SyncDelta
 &lt;!ELEMENT ObjectClassInfo (AttributeInfos)&gt;
 &lt;!ATTLIST ObjectClassInfo  
    type CDATA #REQUIRED
+   container CDATA #IMPLIED
 &gt;
 &lt;!ELEMENT AttributeInfos ((AttributeInfo)*)&gt;
 
@@ -419,7 +420,7 @@ OperationOptionInfo | SyncDeltaType | SyncToken | SyncDelta
 &lt;!ELEMENT SyncDeltaType (#PCDATA)&gt;
 &lt;!ELEMENT SyncToken (value)&gt;
 &lt;!ELEMENT SyncDelta (SyncDeltaType,SyncToken,Uid,ConnectorObject?)&gt;
-
+&lt;!ELEMENT QualifiedUid (ObjectClass,Uid)&gt;
 
 
 &lt;!--=======================================================--&gt;

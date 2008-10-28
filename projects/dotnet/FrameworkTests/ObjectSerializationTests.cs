@@ -605,10 +605,12 @@ namespace FrameworkTests
             builder.MultiValue=(true);
             ObjectClassInfoBuilder obld = new ObjectClassInfoBuilder();
             obld.ObjectType = ObjectClass.ORGANIZATION_NAME;
+            obld.IsContainer = true;
             obld.AddAttributeInfo(builder.Build());
             ObjectClassInfo v1 = obld.Build();
             ObjectClassInfo v2 = (ObjectClassInfo)CloneObject(v1);
             Assert.AreEqual(v1, v2);
+            Assert.IsTrue(v2.IsContainer);
         }
         
         [Test]
@@ -1024,6 +1026,16 @@ namespace FrameworkTests
             v1.AppendChar('r');
             GuardedString v2 = (GuardedString)CloneObject(v1);
             Assert.AreEqual("foobar",DecryptToString(v2));
+        }
+        
+        [Test]
+        public void TestQualifiedUid() {
+            QualifiedUid v1 = new QualifiedUid(new ObjectClass("myclass"),
+                    new Uid("myuid"));
+            QualifiedUid v2 = (QualifiedUid)CloneObject(v1);
+            Assert.AreEqual(v1, v2);
+            Assert.AreEqual("myclass", v2.ObjectClass.GetObjectClassValue());
+            Assert.AreEqual("myuid", v2.Uid.GetUidValue());
         }
         
         /**

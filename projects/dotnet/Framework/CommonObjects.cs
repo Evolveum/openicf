@@ -1567,11 +1567,14 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         
         private readonly String _type;
         private readonly ICollection<ConnectorAttributeInfo> _info;
+        private readonly bool _isContainer;
 
         public ObjectClassInfo(String type, 
-                               ICollection<ConnectorAttributeInfo> attrInfo) {
+                               ICollection<ConnectorAttributeInfo> attrInfo,
+                               bool isContainer) {
             _type = type;
             _info = CollectionUtil.NewReadOnlySet(attrInfo);
+            _isContainer = isContainer;
             // check to make sure name exists
             IDictionary<string, ConnectorAttributeInfo> dict 
                 = ConnectorAttributeInfoUtil.ToMap(attrInfo);
@@ -1593,6 +1596,12 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             }
         }
         
+        public bool IsContainer {
+            get {
+                return this._isContainer;
+            }
+        }
+        
         public override int GetHashCode() {
             return _type.GetHashCode();
         }
@@ -1607,6 +1616,9 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                                            other.ConnectorAttributeInfos)) {
                     return false;
                 }
+                if (_isContainer != other._isContainer) {
+                    return false;
+                }
                 return true;
             }
             return false;
@@ -1614,10 +1626,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         
         public override string ToString()
         {
-            IDictionary<string, object> map = new Dictionary<string, object>();
-            map["Type"] = _type;
-            map["ConnectorAttributes"] = _info;
-            return map.ToString();
+            return SerializerUtil.SerializeXmlObject(this,false);
         }
     }
     #endregion
@@ -1627,7 +1636,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
      * Used to help facilitate the building of {@link ObjectClassInfo} objects.
      */
     public sealed class ObjectClassInfoBuilder {
-    
+        private bool _isContainer;
         private IDictionary<string, ConnectorAttributeInfo> _info;
     
         public ObjectClassInfoBuilder() {
@@ -1655,6 +1664,15 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             }
         	return this;
         }
+        
+        public bool IsContainer {
+            get {
+                return _isContainer;
+            }
+            set {
+                _isContainer = value;
+            }
+        }
     
         public ObjectClassInfo Build() {
             // determine if name is missing and add it by default
@@ -1664,7 +1682,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                         Name.NAME, typeof(string), true);
                 _info[info.Name] = info;
             }
-            return new ObjectClassInfo(ObjectType, _info.Values);
+            return new ObjectClassInfo(ObjectType, _info.Values, _isContainer);
         }
     }
     #endregion
@@ -1973,6 +1991,30 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
      * as a catch-all for extra options.
      */
     public sealed class OperationOptions {
+    
+        /**
+         * An option to use with {@link SearchApiOp} that specified the scope
+         * under which to perform the search. To be used in conjunction with
+         * {@link #OP_CONTAINER}. Must be one of the following values
+         * <ol>
+         *    <li>{@link #SCOPE_OBJECT}</li>
+         *    <li>{@link #SCOPE_ONE_LEVEL}</li>
+         *    <li>{@link #SCOPE_SUBTREE}</li>
+         * </ol>
+         */
+        public const String OP_SCOPE = "SCOPE";
+        public const String SCOPE_OBJECT = "object";
+        public const String SCOPE_ONE_LEVEL = "onelevel";
+        public const String SCOPE_SUBTREE = "subtree";
+        
+        /**
+         * An option to use with {@link SearchApiOp} that specified the container
+         * under which to perform the search. Must be of type {@link QualifiedUid}.
+         * Should be implemented for those object classes whose {@link ObjectClassInfo#isContainer()}
+         * returns true.
+         */
+        public const String OP_CONTAINER = "CONTAINER";
+        
         /**
          * An option to use with {@link ScriptOnResourceApiOp} and possibly others
          * that specifies an account under which to execute the script/operation.
@@ -2022,6 +2064,26 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         public IDictionary<String,Object> Options {
             get {
                 return _operationOptions;
+            }
+        }
+        
+        /**
+         * Convenience method that returns {@link #OP_SCOPE}.
+         * @return The value for {@link #OP_SCOPE}.
+         */
+        public String Scope {
+            get {
+                return (String) CollectionUtil.GetValue(_operationOptions,OP_SCOPE,null);
+            }
+        }
+        
+        /**
+         * Convenience method that returns {@link #OP_CONTAINER}.
+         * @return The value for {@link #OP_CONTAINER}.
+         */
+        public QualifiedUid getContainer {
+            get {
+                return (QualifiedUid) CollectionUtil.GetValue(_operationOptions,OP_CONTAINER,null);
             }
         }
         
@@ -2150,6 +2212,29 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                 _options[OperationOptions.OP_RUN_AS_USER] = value;
             }
         }
+        /**
+         * Convenience method to set {@link OperationOptions#OP_SCOPE}
+         * @param scope The scope. May not be null.
+         * @return A this reference to allow chaining
+         */
+        public string Scope {
+            set {
+                Assertions.NullCheck(value, "scope");
+                _options[OperationOptions.OP_SCOPE] = value;
+            }
+        }
+        
+        /**
+         * Convenience method to set {@link OperationOptions#OP_CONTAINER}
+         * @param container The container. May not be null.
+         * @return A this reference to allow chaining
+         */
+        public QualifiedUid Container {
+            set {
+                Assertions.NullCheck(value, "container");
+                _options[OperationOptions.OP_CONTAINER] = value;
+            }
+        }
 
     }
     #endregion
@@ -2267,7 +2352,85 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         public static OperationOptionInfo BuildRunAsUser() {
             return Build(OperationOptions.OP_RUN_AS_USER);
         }
+        public static OperationOptionInfo BuildScope() {
+            return Build(OperationOptions.OP_SCOPE);
+        }
+        
+        public static OperationOptionInfo BuildContainer() {
+            return Build(OperationOptions.OP_CONTAINER,typeof(QualifiedUid));
+        }
     }
+    #endregion
+
+    #region QualifiedUid
+    /**
+     * A fully-qualified uid. That is, a pair of {@link ObjectClass} and
+     * {@link Uid}.
+     */
+    public sealed class QualifiedUid {
+        private readonly ObjectClass _objectClass;
+        private readonly Uid _uid;
+        
+        /**
+         * Create a QualifiedUid.
+         * @param objectClass The object class. May not be null.
+         * @param uid The uid. May not be null.
+         */
+        public QualifiedUid(ObjectClass objectClass,
+                Uid uid) {
+            Assertions.NullCheck(objectClass,"objectClass");
+            Assertions.NullCheck(uid,"uid");
+            _objectClass = objectClass;
+            _uid = uid;
+        }
+        
+        /**
+         * Returns the object class.
+         * @return The object class.
+         */
+        public ObjectClass ObjectClass {
+            get {
+                return _objectClass;
+            }
+        }
+        
+        /**
+         * Returns the uid.
+         * @return The uid.
+         */
+        public Uid Uid {
+            get {
+                return _uid;
+            }
+        }
+        
+        /**
+         * Returns true iff o is a QualifiedUid and the object class and uid match.
+         */
+        public override bool Equals(Object o) {
+            if ( o is QualifiedUid ) {
+                QualifiedUid other = (QualifiedUid)o;
+                return ( _objectClass.Equals(other._objectClass) &&
+                         _uid.Equals(other._uid) );
+            }
+            return false;
+        }
+        
+        /**
+         * Returns a hash code based on uid
+         */
+        public override int GetHashCode() {
+            return _uid.GetHashCode();
+        }
+        
+        /**
+         * Returns a string representation acceptible for debugging.
+         */
+        public override String ToString() {
+            return SerializerUtil.SerializeXmlObject(this, false);
+        }
+        
+    }    
     #endregion
     
     #region ResultsHandler

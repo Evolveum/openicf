@@ -1456,6 +1456,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                                                        "SyncDeltaType") );
             HANDLERS.Add( new SyncTokenHandler() );
             HANDLERS.Add( new SyncDeltaHandler() );
+            HANDLERS.Add( new QualifiedUidHandler() );
         } 
         
         private class AlreadyExistsExceptionHandler : AbstractExceptionHandler<AlreadyExistsException> {
@@ -1736,6 +1737,8 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
             public override Object Deserialize(ObjectDecoder decoder) {
                 string type = 
                     decoder.ReadStringField("type",null);
+                bool container =
+                    decoder.ReadBooleanField("container", false);
                 
                 ICollection<object> attrInfoObj =
                     (ICollection<object>)decoder.ReadObjectField("AttributeInfos",typeof(ICollection<object>),null);
@@ -1743,12 +1746,13 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                 ICollection<ConnectorAttributeInfo> attrInfo = 
                     CollectionUtil.NewSet<object,ConnectorAttributeInfo>(attrInfoObj);
                 
-                return new ObjectClassInfo(type,attrInfo);
+                return new ObjectClassInfo(type,attrInfo,container);
             }
         
             public override void Serialize(Object obj, ObjectEncoder encoder) {
                 ObjectClassInfo val = (ObjectClassInfo)obj;                
                 encoder.WriteStringField("type",val.ObjectType);
+                encoder.WriteBooleanField("container",val.IsContainer);
                 encoder.WriteObjectField("AttributeInfos", val.ConnectorAttributeInfos,true);
             }
         }
@@ -1961,6 +1965,23 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                 encoder.WriteObjectField("SyncToken", val.Token,true);
                 encoder.WriteObjectField("Uid", val.Uid,true);
                 encoder.WriteObjectField("ConnectorObject", val.Object, true);
+            }
+        }
+        private class QualifiedUidHandler : AbstractObjectSerializationHandler {
+            public QualifiedUidHandler() 
+                : base(typeof(QualifiedUid),"QualifiedUid") {
+                
+            }
+            public override Object Deserialize(ObjectDecoder decoder) {
+                ObjectClass objectClass = (ObjectClass)decoder.ReadObjectField("ObjectClass", typeof(ObjectClass),null);
+                Uid uid = (Uid)decoder.ReadObjectField("Uid",typeof(Uid),null);
+                return new QualifiedUid(objectClass,uid);
+            }
+        
+            public override void Serialize(Object obj, ObjectEncoder encoder) {
+                QualifiedUid val = (QualifiedUid)obj;
+                encoder.WriteObjectField("ObjectClass", val.ObjectClass, true);
+                encoder.WriteObjectField("Uid", val.Uid, true);
             }
         }
 
