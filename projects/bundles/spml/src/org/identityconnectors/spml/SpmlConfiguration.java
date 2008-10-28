@@ -188,17 +188,8 @@ public class SpmlConfiguration extends AbstractConfiguration {
     public void setFile(String file) {
         _file = file;
     }
-    
-   @ConfigurationProperty(order=8)
-    public String[] getNameAttributes() {
-        return _nameAttributes;
-    }
 
-    public void setNameAttributes(String[] attribute) {
-        _nameAttributes = attribute;
-    }
-
-    @ConfigurationProperty(order=9)
+    @ConfigurationProperty(order=8)
     public String getPostConnectCommand() {
         return _postConnectCommand;
     }
@@ -207,7 +198,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _postConnectCommand = loginCommand;
     }
 
-    @ConfigurationProperty(order=10)
+    @ConfigurationProperty(order=9)
     public String getPreDisconnectCommand() {
         return _preDisconnectCommand;
     }
@@ -216,7 +207,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _preDisconnectCommand = loginCommand;
     }
 
-    @ConfigurationProperty(order=11)
+    @ConfigurationProperty(order=10)
     public String getPreSendCommand() {
         return _preSendCommand;
     }
@@ -225,7 +216,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _preSendCommand = sendCommand;
     }
 
-    @ConfigurationProperty(order=12)
+    @ConfigurationProperty(order=11)
     public String getPostReceiveCommand() {
         return _postReceiveCommand;
     }
@@ -234,7 +225,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _postReceiveCommand = receiveCommand;
     }
 
-    @ConfigurationProperty(order=13)
+    @ConfigurationProperty(order=12)
     public String getMapSetNameCommand() {
         return _mapSetNameCommand;
     }
@@ -243,7 +234,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _mapSetNameCommand = setNameCommand;
     }
 
-    @ConfigurationProperty(order=14)
+    @ConfigurationProperty(order=13)
     public String getMapAttributeCommand() {
         return _mapAttributeCommand;
     }
@@ -252,7 +243,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _mapAttributeCommand = attributeCommand;
     }
 
-    @ConfigurationProperty(order=15)
+    @ConfigurationProperty(order=14)
     public String getMapQueryNameCommand() {
         return _mapQueryNameCommand;
     }
@@ -261,7 +252,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _mapQueryNameCommand = queryNameCommand;
     }
 
-    @ConfigurationProperty(order=16)
+    @ConfigurationProperty(order=15)
     public String getSchemaCommand() {
         return _schemaCommand;
     }
@@ -269,6 +260,15 @@ public class SpmlConfiguration extends AbstractConfiguration {
     public void setSchemaCommand(String schemaCommand) {
         _schemaCommand = schemaCommand;
     }
+    
+    @ConfigurationProperty(order=16)
+     public String[] getNameAttributes() {
+         return _nameAttributes;
+     }
+
+     public void setNameAttributes(String[] attribute) {
+         _nameAttributes = attribute;
+     }
 
     @ConfigurationProperty(order=17)
     public String[] getObjectClassNames() {
