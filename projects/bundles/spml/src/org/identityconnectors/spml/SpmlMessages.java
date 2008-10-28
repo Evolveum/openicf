@@ -41,6 +41,7 @@ package org.identityconnectors.spml;
 
 public interface SpmlMessages {
     public static final String PROTOCOL_NULL                 = "PROTOCOL_NULL";
+    public static final String LANGUAGE_NULL                 = "LANGUAGE_NULL";
     public static final String NAME_NULL                     = "NAME_NULL";
     public static final String HOST_NULL                     = "HOST_NULL";
     public static final String PORT_NULL                     = "PORT_NULL";

@@ -65,7 +65,7 @@ import org.openspml.v2.util.Spml2ExceptionWithResponse;
  * A Connection to a SPML 2.0 Server
  */
 public class SpmlConnection  {
-    private static final ScriptExecutorFactory factory = ScriptExecutorFactory.newInstance("GROOVY");
+    private ScriptExecutorFactory  _factory;
     private Log                    log = Log.getLog(SpmlConnection.class);
     private Spml2Client            _client;
     private SpmlConfiguration      _configuration;
@@ -90,18 +90,19 @@ public class SpmlConnection  {
     public SpmlConnection(Spml2Client client, SpmlConfiguration configuration) {
         _client = client;
         _configuration = configuration;
+        _factory = ScriptExecutorFactory.newInstance(configuration.getScriptingLanguage());
 
         String preCommand = _configuration.getPreSendCommand();
         String postCommand = _configuration.getPostReceiveCommand();
         if (preCommand!=null && preCommand.length()>0)
-            _preSendExecutor = factory.newScriptExecutor(getClass().getClassLoader(), preCommand, true);
+            _preSendExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), preCommand, true);
         if (postCommand!=null && postCommand.length()>0)
-            _postReceiveExecutor = factory.newScriptExecutor(getClass().getClassLoader(), postCommand, true);
+            _postReceiveExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), postCommand, true);
         _memory = new HashMap<Object, Object>();
         String postConnectCommand = _configuration.getPostConnectCommand();
         try {
             if (postConnectCommand!=null && postConnectCommand.length()>0) {
-                ScriptExecutor executor = factory.newScriptExecutor(getClass().getClassLoader(), postConnectCommand, true);
+                ScriptExecutor executor = _factory.newScriptExecutor(getClass().getClassLoader(), postConnectCommand, true);
                 HashMap<String, Object> map = new HashMap<String, Object>();
                 map.put("connection", this);
                 map.put("username", _configuration.getUserName());
@@ -191,7 +192,7 @@ public class SpmlConnection  {
     public void dispose() {
         String preCommand = _configuration.getPreDisconnectCommand();
         if (preCommand!=null && preCommand.length()>0) {
-            ScriptExecutor executor = factory.newScriptExecutor(getClass().getClassLoader(), preCommand, true);
+            ScriptExecutor executor = _factory.newScriptExecutor(getClass().getClassLoader(), preCommand, true);
             HashMap<String, Object> map = new HashMap<String, Object>();
             map.put("connection", this);
             map.put("username", _configuration.getUserName());

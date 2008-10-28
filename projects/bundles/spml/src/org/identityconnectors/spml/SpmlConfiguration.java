@@ -69,6 +69,8 @@ public class SpmlConfiguration extends AbstractConfiguration {
     private String             _mapQueryNameCommand;
     private String             _schemaCommand;
 
+    private String             _scriptingLanguage;
+
     public SpmlConfiguration() {
     }
 
@@ -131,6 +133,8 @@ public class SpmlConfiguration extends AbstractConfiguration {
             throw new ConnectorException(getMessage(SpmlMessages.TARGET_NULL));
         if (_nameAttributes==null)
             throw new ConnectorException(getMessage(SpmlMessages.NAME_NULL));
+        if (_scriptingLanguage==null)
+            throw new ConnectorException(getMessage(SpmlMessages.LANGUAGE_NULL));
         if (_objectClassNames.length!=_spmlClassNames.length || _objectClassNames.length!=_targetNames.length || _objectClassNames.length!=_nameAttributes.length)
             throw new ConnectorException(getMessage(SpmlMessages.SPML_CLASS_LENGTH));
     }
@@ -190,6 +194,15 @@ public class SpmlConfiguration extends AbstractConfiguration {
     }
 
     @ConfigurationProperty(order=8)
+    public String getScriptingLanguage() {
+        return _scriptingLanguage;
+    }
+
+    public void setScriptingLanguage(String language) {
+        _scriptingLanguage = language;
+    }
+
+    @ConfigurationProperty(order=9)
     public String getPostConnectCommand() {
         return _postConnectCommand;
     }
@@ -198,7 +211,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _postConnectCommand = loginCommand;
     }
 
-    @ConfigurationProperty(order=9)
+    @ConfigurationProperty(order=10)
     public String getPreDisconnectCommand() {
         return _preDisconnectCommand;
     }
@@ -207,7 +220,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _preDisconnectCommand = loginCommand;
     }
 
-    @ConfigurationProperty(order=10)
+    @ConfigurationProperty(order=11)
     public String getPreSendCommand() {
         return _preSendCommand;
     }
@@ -216,7 +229,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _preSendCommand = sendCommand;
     }
 
-    @ConfigurationProperty(order=11)
+    @ConfigurationProperty(order=12)
     public String getPostReceiveCommand() {
         return _postReceiveCommand;
     }
@@ -225,7 +238,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _postReceiveCommand = receiveCommand;
     }
 
-    @ConfigurationProperty(order=12)
+    @ConfigurationProperty(order=13)
     public String getMapSetNameCommand() {
         return _mapSetNameCommand;
     }
@@ -234,7 +247,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _mapSetNameCommand = setNameCommand;
     }
 
-    @ConfigurationProperty(order=13)
+    @ConfigurationProperty(order=14)
     public String getMapAttributeCommand() {
         return _mapAttributeCommand;
     }
@@ -243,7 +256,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _mapAttributeCommand = attributeCommand;
     }
 
-    @ConfigurationProperty(order=14)
+    @ConfigurationProperty(order=15)
     public String getMapQueryNameCommand() {
         return _mapQueryNameCommand;
     }
@@ -252,7 +265,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _mapQueryNameCommand = queryNameCommand;
     }
 
-    @ConfigurationProperty(order=15)
+    @ConfigurationProperty(order=16)
     public String getSchemaCommand() {
         return _schemaCommand;
     }
@@ -261,7 +274,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _schemaCommand = schemaCommand;
     }
     
-    @ConfigurationProperty(order=16)
+    @ConfigurationProperty(order=17)
      public String[] getNameAttributes() {
          return _nameAttributes;
      }
@@ -270,7 +283,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
          _nameAttributes = attribute;
      }
 
-    @ConfigurationProperty(order=17)
+    @ConfigurationProperty(order=18)
     public String[] getObjectClassNames() {
         return arrayCopy(_objectClassNames);
     }
@@ -279,7 +292,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _objectClassNames = arrayCopy(classNames);
     }
 
-    @ConfigurationProperty(order=18)
+    @ConfigurationProperty(order=19)
     public String[] getSpmlClassNames() {
         return arrayCopy(_spmlClassNames);
     }
@@ -288,7 +301,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _spmlClassNames = arrayCopy(classNames);
     }
 
-    @ConfigurationProperty(order=19)
+    @ConfigurationProperty(order=20)
     public String[] getTargetNames() {
         return arrayCopy(_targetNames);
     }

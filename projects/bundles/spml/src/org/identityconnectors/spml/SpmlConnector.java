@@ -144,7 +144,7 @@ import org.openspml.v2.util.xml.ObjectFactory;
 public class SpmlConnector implements PoolableConnector, CreateOp,
 DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
     private Log log = Log.getLog(SpmlConnector.class);
-    private final ScriptExecutorFactory factory = ScriptExecutorFactory.newInstance("GROOVY");
+    private ScriptExecutorFactory _factory;
     private static final ObjectFactory.ProfileRegistrar mDSMLRegistrar = new DSMLProfileRegistrar();
 
     public static final String              PSOID = "psoID";
@@ -192,15 +192,16 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
     public void init(Configuration configuration) {
         _configuration = (SpmlConfiguration)configuration;
         _connection = SpmlConnectionFactory.newConnection(_configuration);
+        _factory = ScriptExecutorFactory.newInstance(_configuration.getScriptingLanguage());
         String mapAttributeCommand = _configuration.getMapAttributeCommand();
         String mapSetNameCommand = _configuration.getMapSetNameCommand();
         String schemaCommand = _configuration.getSchemaCommand();
         if (mapAttributeCommand!=null && mapAttributeCommand.length()>0)
-            _mapAttributeExecutor = factory.newScriptExecutor(getClass().getClassLoader(), mapAttributeCommand, true);
+            _mapAttributeExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), mapAttributeCommand, true);
         if (mapSetNameCommand!=null && mapSetNameCommand.length()>0)
-            _mapSetNameExecutor = factory.newScriptExecutor(getClass().getClassLoader(), mapSetNameCommand, true);
+            _mapSetNameExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), mapSetNameCommand, true);
         if (schemaCommand!=null && schemaCommand.length()>0)
-            _schemaExecutor = factory.newScriptExecutor(getClass().getClassLoader(), schemaCommand, true);
+            _schemaExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), schemaCommand, true);
         _objectClassMap = new HashMap<String, String>();
         _targetMap = new HashMap<String, String>();
         _nameAttributeMap = new HashMap<String, String>();
