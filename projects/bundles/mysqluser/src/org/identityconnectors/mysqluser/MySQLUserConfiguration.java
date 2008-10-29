@@ -103,7 +103,8 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
     private String usermodel = "idm"; // Default User
 
     /**
-     * @return
+     * The setter method 
+     * @return a driver value
      */
     @ConfigurationProperty(order = 3, helpMessageKey = "mysqluser.driver.help", displayMessageKey = "mysqluser.driver.display")
     public String getDriver() {
@@ -119,7 +120,8 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
     }
 
     /**
-     * @return
+     * The setter method 
+     * @return login value
      */
     @ConfigurationProperty(order = 1, helpMessageKey = "mysqluser.login.help", displayMessageKey = "mysqluser.login.display")
     public String getLogin() {
@@ -127,7 +129,8 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
     }
 
     /**
-     * @return
+     * The setter method 
+     * @return passport value
      */
     @ConfigurationProperty(order = 2, helpMessageKey = "mysqluser.pwd.help", displayMessageKey = "mysqluser.pwd.display", confidential = true)
     public GuardedString getPassword() {

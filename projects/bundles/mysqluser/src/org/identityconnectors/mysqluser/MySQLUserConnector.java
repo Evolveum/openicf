@@ -446,10 +446,13 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             stmt = conn.prepareStatement(AUTH_SELECT);
             SQLUtil.setParams(stmt, values);
             result = stmt.executeQuery();
+            //No PasswordExpired capability
             if (!result.next()) {
                 throw new InvalidCredentialException("user: "+username+" authentication failed");
             }            
-            log.info("user: {0} authenticated ", username);            
+            final Uid uid = new Uid( result.getString(1));
+            log.info("user: {0} authenticated ", username);
+            return uid;
         } catch (SQLException e) {
             log.error(e, "user: {0} authentication failed ", username);
             throw ConnectorException.wrap(e);
@@ -457,9 +460,6 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             SQLUtil.closeQuietly(result);
             SQLUtil.closeQuietly(stmt);            
         }
-        //TODO: return Uid
-        //TODO: throw PasswordExpiredException
-        return null;
     }
     
     /**

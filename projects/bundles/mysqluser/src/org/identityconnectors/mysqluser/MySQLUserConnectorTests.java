@@ -521,8 +521,8 @@ public class MySQLUserConnectorTests {
         // test user created
         testUserFound(userName, true);
         
-        facade.authenticate(userName, testPassword, null);
-        
+        final Uid uid = facade.authenticate(userName, testPassword, null);
+        assertEquals(userName, uid.getUidValue());
         quitellyDeleteUser(userName); 
     }
    
@@ -741,7 +741,8 @@ public class MySQLUserConnectorTests {
         }
         
         /**
-         * @return
+         * getter method
+         * @return object value
          */
         public ConnectorObject getConnectorObject() {
             return connectorObject;
