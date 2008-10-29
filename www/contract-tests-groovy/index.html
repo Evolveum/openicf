@@ -1,8 +1,12 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head>
-<meta content="text/html; charset=windows-1250" http-equiv="content-type"><title>Groovy Contract Tests Manual</title></head>
+<meta content="text/html; charset=windows-1250" http-equiv="content-type"><title>Groovy Contract Tests Manual</title>
+
+</head>
 <body>
-<h1>Groovy contract tests 1st <span style="color: rgb(51, 102, 255);">DRAFT</span><br></h1><h1>Table of contents</h1>
+<h1>Groovy contract tests 1st <span style="color: rgb(51, 102, 255);">DRAFT</span><br>
+</h1>
+<h1>Table of contents</h1>
 <span style="font-style: italic;"></span>
 <ul>
 <li>Quick start guide</li>
@@ -77,7 +81,7 @@ ordering of configuration files.</td>
 contract test configurations:</p>
 <ol>
 <li><span style="font-family: monospace;">{$user.home}\.bundle-name\contract-tests.groovy</span></li>
-<li><span style="font-family: monospace;">{$user.home}\.bundle-name-${configuration}\contract-tests.groovy</span></li>
+<li><span style="font-family: monospace;">{$user.home}\.bundle-name-{$configuration}\contract-tests.groovy</span></li>
 </ol>
 <p>Latter properties files <strong>override
 </strong>properties loaded from previous properties files.</p>
@@ -114,9 +118,10 @@ are located in<span style="font-family: monospace;"> \lib</span>
 subdirectories of configuration specific folders:<br>
 <ol>
 <li><span style="font-family: monospace;">user-home\.bundle-name\lib</span></li>
-<li><span style="font-family: monospace;">user-home\.bundle-name-${configuration}\lib</span></li>
+<li><span style="font-family: monospace;">user-home\.bundle-name-{$configuration}\lib</span></li>
 </ol>
 <hr>
+<p></p>
 <p>In the following we will observe
 basic contract test
 configuration
@@ -129,10 +134,12 @@ Connector Server</li>
 <!-- ======================================================================== -->
 <h3>A) Configuring
 local&nbsp;Connector</h3>
-<p>To get real about the local
-connector configuration you can
-check the full <a href="#attachdbtableconfig">database
-table configuration</a> in the attachments.</p>
+<p><span style="font-style: italic; color: rgb(153, 0, 0);">The
+following
+properties (from 1 to 6) will be defined in connector's property file:</span>
+<span style="font-family: monospace;">{$user.home}\.bundle-name\contract-tests.groovy</span>.
+The presented script fragments are from <a href="#attachdbtableconfig">DatabaseTable connector's
+configuration files</a>.&nbsp;</p>
 <ol>
 <li>define <span style="font-family: monospace;">testsuite.bundleJar</span>
 property in connector's
@@ -142,15 +149,177 @@ file:<br>
 // path to bundle jar - property is set by ant - leave it as it is</span><br>
 <span style="font-family: monospace;">
 testsuite.bundleJar=System.getProperty("connector-jar")</span><br>
+<br>
 </li>
-<li>sdfsd</li>
+<li>define <span style="font-family: monospace;">connector.{$property.name}</span>&nbsp;for
+each annotated connector configuration bean property (in class
+implementing
+<a href="http://idmvm120.central.sun.com/hudson/job/framework/javadoc/org/identityconnectors/framework/spi/Configuration.html"><span style="font-family: monospace;">Configuration</span></a>
+interface).<br>
+<span style="font-family: monospace;">// Connector
+configuration</span><br>
+<span style="font-family: monospace;">connector.driver="com.mysql.jdbc.Driver"</span><br>
+<span style="font-family: monospace;">connector.keyColumn="ACCOUNTID"</span><br>
+<span style="font-family: monospace;">connector.passwordColumn="PASSWORD"</span><br>
+<span style="font-family: monospace;">connector.DBTable="idm_sync"</span><br>
+<span style="font-family: monospace;">connector.connectionUrl="jdbc:mysql://idmserv1.czech.sun.com/idm_sync"</span><br>
+<span style="font-family: monospace;">connector.login="testsuite"</span><br>
+<span style="font-family: monospace;">connector.password="testsuite"</span><br>
+<br>
+</li>
+<li>Provide number of iterations of <span style="font-family: monospace;">ValidateApiOpTests</span>
+and at least one <strong>wrongly</strong> configured
+property per each iteration. By wrongly configured property I mean
+configured so that <a href="http://idmvm120.central.sun.com/hudson/job/framework/javadoc/org/identityconnectors/framework/spi/Configuration.html"><span style="font-family: monospace;">Configuration#validate</span></a>
+method should fail.
+<br>
+<span style="font-family: monospace;">// Test will go
+through 3 iterations</span><br>
+<span style="font-family: monospace;">Validate.iterations="3"</span><br>
+<span style="font-family: monospace;">// Connector
+WRONG configuration for ValidateApiOpTests</span><br>
+<span style="font-family: monospace;">connector.i1.wrong.host=""
+// there can be additional properties defined, such as:
+connector.i1.wrong.password=""</span><br>
+<span style="font-family: monospace;">connector.i2.wrong.login=""</span><br>
+<span style="font-family: monospace;">connector.i3.wrong.password=""</span><br>
+<br>
+<br>
+</li>
+<li>
+Define properties necessary to pass <a href="http://idmvm120.central.sun.com/hudson/job/framework/javadoc/org/identityconnectors/framework/api/operations/SchemaApiOp.html"><span style="font-family: monospace;">SchemaApiOpTests</span></a>.
+<br>
+Define <span style="font-style: italic;">list</span>
+of supported object classes by connector (see <a href="http://idmvm120.central.sun.com/hudson/job/framework/javadoc/org/identityconnectors/framework/common/objects/ObjectClass.html"><span style="font-family: monospace;">
+ObjectClass.java</span></a> for up-to-date object class
+types):<br>
+<span style="font-family: monospace;">// database
+table connector supports only object class 'account'</span><br>
+<span style="font-family: monospace;">testsuite.Schema.oclasses=['account']</span>
+<br>
+<br>
+Define list of attributes per <strong>each</strong>
+supported object class:<br>
+<span style="font-family: monospace;">// list of ALL
+attributes of object class 'account' for database table connector:</span><br>
+<span style="font-family: monospace;">testsuite.Schema.attributes.account.oclasses=['@@NAME@@',
+'@@PASSWORD@@', 'MANAGER', 'MIDDLENAME', </span> (continued next
+line)<br>
+<span style="font-family: monospace;">&nbsp;&nbsp;
+'FIRSTNAME', 'LASTNAME', 'EMAIL', 'DEPARTMENT', 'TITLE', 'AGE',
+'SALARY', 'JPEGPHOTO']</span><br>
+<br>
+Define <strong>every</strong> attribute of <strong>each</strong>
+object class:<br>
+<span style="font-family: monospace;">// definition of
+attribute @@NAME@@ of object class 'account' for databse table connector</span><br>
+<span style="font-family: monospace;">testsuite.Schema."@@NAME@@".attribute.account.oclasses=[</span><br>
+<span style="font-family: monospace;">&nbsp;&nbsp;
+type:
+'java.lang.String',</span><br>
+<span style="font-family: monospace;">&nbsp;&nbsp;
+readable:
+"true",</span><br>
+<span style="font-family: monospace;">&nbsp;&nbsp;
+createable:
+"true",</span><br>
+<span style="font-family: monospace;">&nbsp;&nbsp;
+updateable:
+"true",</span><br>
+<span style="font-family: monospace;">&nbsp;&nbsp;
+required:
+"true",</span><br>
+<span style="font-family: monospace;">&nbsp;&nbsp;
+multiValue:
+"false",</span><br>
+<span style="font-family: monospace;">
+&nbsp;&nbsp; returnedByDefault: "true" </span><br>
+<span style="font-family: monospace;"> ]</span><br>
+<br>
+<br>
+Define supported object classes by operations. Must contain <strong>exactly</strong>
+the operations that are implemented by the connector:<br>
+<span style="font-family: monospace;">// object
+classes supported by operations for database table connector</span><br>
+<span style="font-family: monospace;">Schema.operations=[</span><br>
+<span style="font-family: monospace;">&nbsp;&nbsp;
+GetApiOp: ['account'],</span><br>
+<span style="font-family: monospace;">&nbsp;&nbsp;
+SchemaApiOp: ['account'],</span><br>
+<span style="font-family: monospace;">&nbsp;&nbsp;
+ValidateApiOp: ['account'],</span><br>
+<span style="font-family: monospace;">&nbsp;&nbsp;
+CreateApiOp: ['account'],</span><br>
+<span style="font-family: monospace;">&nbsp;&nbsp;
+SearchApiOp: ['account'],</span><br>
+<span style="font-family: monospace;">&nbsp;&nbsp;
+DeleteApiOp: ['account'],</span><br>
+<span style="font-family: monospace;">&nbsp;&nbsp;
+ScriptOnConnectorApiOp: ['account'],</span><br>
+<span style="font-family: monospace;">
+&nbsp;&nbsp; UpdateApiOp: ['account'],</span><br>
+<span style="font-family: monospace;">&nbsp;&nbsp;
+AuthenticationApiOp: ['account'],</span><br>
+<span style="font-family: monospace;">
+&nbsp;&nbsp; TestApiOp: ['account'],</span><br>
+<span style="font-family: monospace;">&nbsp;&nbsp;
+SyncApiOp: []</span><br>
+<span style="font-family: monospace;"> ]</span><br>
+<br>
+<br>
+</li>
+<li>Alternatively define other <a href="#optionalprops">Optional
+properties</a></li>
+<li><strong>Howto run tests for a local connector</strong></li>
+<ul>
+<li>compile the connector: run <span style="font-family: monospace;">ant</span>
+from the connector directory</li>
+<li>launch tests: issue command <span style="font-family: monospace;">ant run-contract-tests</span>
+from the connector directory. For details see section&nbsp;<a href="#runcontractt">Running tests</a>.</li>
+</ul>
 </ol>
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+<tbody>
+<tr>
+<td style="background-color: rgb(204, 204, 255);">
+<!-- ******* --><strong>Troubleshooting
+contract-test.groovy files</strong>
+<ul>
+<li>contract test <span style="font-weight: bold;">property
+names</span> are:</li>
+<ul>
+<li>case sensitive</li>
+<li>must be valid Java identificators, OR invalid parts
+of property name should be escaped, for instance<br>
+&nbsp;-- WRONG:<br>
+&nbsp;&nbsp;<span style="font-family: monospace;">testsuite.Schema.<span style="font-style: italic; color: rgb(51, 51, 255);">@@NAME@@</span>.attribute.account.oclasses</span>
+or <span style="font-family: monospace;"><span style="font-style: italic; color: rgb(51, 51, 255);">"@@NAME@@"</span>.attribute.account.oclasses</span><br>
+&nbsp;-- CORRECT:<br>
+&nbsp;&nbsp;<span style="font-family: monospace;">testsuite.</span><span style="font-family: monospace;">Schema.<span style="color: rgb(204, 0, 0);">"</span>@@NAME@@<span style="color: rgb(204, 0, 0);">"</span>.attribute.account.oclasses</span><br>
+</li>
+</ul>
+<li>creation of any special object type is supported by
+Groovy contract tests. By default Groovy imports six packages and two
+classes: <span style="font-family: monospace;">java.lang.*,
+&nbsp;java.util.*, &nbsp;java.io.*,
+&nbsp;java.net.*, &nbsp;groovy.lang.*, groovy.util.*,
+java.math.BigInteger, java.math.BigDecimal</span>.<code></code></li>
+</ul>
+<!-- ******* -->
+</td>
+</tr>
+</tbody>
+</table>
+<!-- =========================================== -->
 <h3>B) Configuring behind a Connector Server</h3>
 This configuration is mostly based on A), we will emphasize just the
 differences. <span style="font-weight: bold; color: rgb(255, 204, 51);">TODO<br>
 <br>
-<br>
 </span>
+<hr style="width: 100%; height: 2px;"><span style="font-weight: bold; color: rgb(255, 204, 51);"><br>
+</span>
+<h2><a name="optionalprops">Optional properties</a></h2>
+<h2><a name="runcontractt">Running tests</a></h2>
 <h1>Attachments</h1>
 <br>
 <h2>Javadoc for&nbsp;RandomGenerator pattern</h2>
@@ -173,9 +342,14 @@ output. <br>
 <br>
 <span style="font-weight: bold;">Backslash</span><!-- ========================================= -->&nbsp;is
 used to escape any character. For instance pattern "###\.##" prints a
-floating point random number&nbsp;
+floating point random number <br>
+<hr style="width: 100%; height: 2px;">
 <h2><a name="attachdbtableconfig">Database table
-connector Groovy configuration file</a></h2>
+connector Groovy configuration files</a></h2>
+<p>We will observe two groovy scripts used in database table
+connector, one is generic, the second is specific for MySQL database,
+contains connection username/password.</p>
+<h3>{$user.home}\.connector-databasetable\contract-tests.groovy</h3>
 <pre>/*&nbsp; +---------------------------------------------------+</pre>
 <pre>&nbsp;*&nbsp; ----------- Contract Tests configuration ------------</pre>
 <pre>&nbsp;*&nbsp; +---------------------------------------------------+ </pre>
@@ -290,5 +464,25 @@ connector Groovy configuration file</a></h2>
 <pre>// longer bytearray value</pre>
 <pre>JPEGPHOTO=Lazy.random("????????????????????????????????????????", byte[].class)</pre>
 <br>
-dssfds<br>
+<h3>{$user.home}\.connector-databasetable-mysql\contract-tests.groovy</h3>
+<p>Contains the database specific credentials.</p>
+<pre>/*&nbsp; +---------------------------------------------------+</pre>
+<pre>&nbsp;*&nbsp; ----------- Contract Tests configuration ------------</pre>
+<pre>&nbsp;*&nbsp; +---------------------------------------------------+ </pre>
+<pre>&nbsp;*/</pre>
+<pre><br>import org.identityconnectors.contract.data.groovy.Lazy</pre>
+<pre>import org.identityconnectors.contract.data.groovy.Random</pre>
+<pre>import org.identityconnectors.contract.data.groovy.Get</pre>
+<pre>import org.identityconnectors.contract.exceptions.ObjectNotFoundException;</pre>
+<pre><br>// Connector configuration</pre>
+<pre>connector{</pre>
+<pre>&nbsp;&nbsp;&nbsp; driver="com.mysql.jdbc.Driver"</pre>
+<pre>&nbsp;&nbsp;&nbsp; keyColumn="ACCOUNTID"</pre>
+<pre>&nbsp;&nbsp;&nbsp; passwordColumn="PASSWORD"</pre>
+<pre>&nbsp;&nbsp;&nbsp; DBTable="idm_sync"</pre>
+<pre>&nbsp;&nbsp;&nbsp; connectionUrl="jdbc:mysql://idmserv1.czech.sun.com/idm_sync"</pre>
+<pre>&nbsp;&nbsp;&nbsp; login="testsuite"</pre>
+<pre>&nbsp;&nbsp;&nbsp; password="testsuite"</pre>
+<pre>}</pre>
+<hr style="width: 100%; height: 2px;">&nbsp;<br>
 </body></html>
