@@ -830,6 +830,7 @@ public class SpmlConnectorTests {
         config.setMapSetNameCommand(getMapSetNameCommand());
         config.setMapQueryNameCommand(getMapQueryNameCommand());
         config.setSchemaCommand(getSchemaCommand());
+        config.setScriptingLanguage("GROOVY");
 
         OurConnectorMessages messages = new OurConnectorMessages();
         Map<Locale, Map<String, String>> catalogs = new HashMap<Locale, Map<String,String>>();
