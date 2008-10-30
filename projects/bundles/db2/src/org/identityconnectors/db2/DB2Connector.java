@@ -2,18 +2,24 @@ package org.identityconnectors.db2;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.common.security.GuardedString.Accessor;
 import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -39,10 +45,14 @@ import org.identityconnectors.framework.spi.operations.SearchOp;
 public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<String>, PoolableConnector {
 	
 	private final static Log log = Log.getLog(DB2Connector.class);
-	private DB2Connection adminConn;
+	private Connection adminConn;
 	private DB2Configuration cfg;
+    // DB2 limitation on account id size
+    private static final int maxNameSize = 30;
+    private static final String USER_AUTH_GRANTS = "grants";
 
-	public void authenticate(String username, GuardedString password,OperationOptions options) {
+
+	public Uid authenticate(String username, GuardedString password,OperationOptions options) {
 		log.info("authenticate user: {0}", username);
 		//just try to create connection with passed credentials
 		Connection conn = null;
@@ -64,6 +74,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<S
 			SQLUtil.closeQuietly(conn);
 		}
 		log.info("User {0} authenticated",username);
+		return null;
 	}
 	
 	public Schema schema() {
@@ -80,11 +91,11 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<S
     } 
 
 	public void checkAlive() {
-		adminConn.test();
+		DB2Specifics.testConnection(adminConn);
 	}
 
 	public void dispose() {
-		adminConn.dispose();
+		SQLUtil.closeQuietly(adminConn);
 	}
 
 	public Configuration getConfiguration() {
@@ -93,7 +104,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<S
 
 	public void init(Configuration cfg) {
 		this.cfg = (DB2Configuration) cfg;
-		this.adminConn = new DB2Connection(createAdminConnection());
+		this.adminConn = createAdminConnection();
 	}
 	
 	private Connection createAdminConnection(){
@@ -106,13 +117,9 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<S
 		String port = cfg.getPort();
 		String subProtocol = cfg.getJdbcSubProtocol();
 		String databaseName = cfg.getDatabaseName();
-		return DB2Connection.createDB2Connection(driver, host, port, subProtocol, databaseName, user, password);
+		return DB2Specifics.createDB2Connection(driver, host, port, subProtocol, databaseName, user, password);
 	}
 
-	public Uid create(ObjectClass oclass, Set<Attribute> attrs,
-			OperationOptions options) {
-		return new Uid("xx");
-	}
 
 	public FilterTranslator<String> createFilterTranslator(ObjectClass oclass,
 			OperationOptions options) {
@@ -132,5 +139,162 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<S
 		attributeSet.add(new Uid("xx"));
 		handler.handle(new ConnectorObject(ObjectClass.ACCOUNT,attributeSet));
 	}
+	
+	public Uid create(ObjectClass oclass, Set<Attribute> attrs,OperationOptions options) {
+        if ( oclass == null || !oclass.equals(ObjectClass.ACCOUNT)) {
+            throw new IllegalArgumentException(
+                    "Create operation requires an 'ObjectClass' attribute of type 'Account'.");
+        }
+        Name user = AttributeUtil.getNameFromAttributes(attrs);
+        if (user == null || StringUtil.isBlank(user.getNameValue())) {
+            throw new IllegalArgumentException("The Name attribute cannot be null or empty.");
+        }
+        // Password is Operational
+        GuardedString password = AttributeUtil.getPasswordValue(attrs);
+        if (password == null) {
+            throw new IllegalArgumentException("The Password attribute cannot be null.");
+        }
+        updateAuthority(user.getNameValue(),password, attrs);
+		
+		return new Uid("xx");
+	}
+	
+	
+	/**
+     *  Applies resources grants and revokes to the passed user.  Updates
+     *  occur in a transaction.  Assumes connection is already open.
+	 * @param password 
+     */
+    private void updateAuthority(String user, GuardedString password, Set<Attribute> attrs)   {
+        checkDB2Validity(user,password);
+        checkAdminConnection();
 
+        Collection<String> grants = null;
+        Attribute wsAttr = AttributeUtil.find(USER_AUTH_GRANTS, attrs);
+        if (wsAttr != null) {
+            String delimitedGrants = AttributeUtil.getStringValue(wsAttr);
+            if (delimitedGrants != null) {
+                // yuck, this utility method should be somewhere central...
+                grants = DB2Specifics.divideString(delimitedGrants, ',', true);
+            }
+            else if (cfg.isRemoveAllGrants()) {
+                    throw new IllegalStateException("When DB2 RA 'removeForeignGrants' = 1, " +
+                                                "at least 1 grant is required.");
+            }
+        }
+        else if (cfg.isRemoveAllGrants()) {
+                throw new IllegalStateException("When DB2 RA 'removeForeignGrants' = 1, " +
+                                            "at least 1 grant is required.");
+        }
+        try {
+        	adminConn.setAutoCommit(false);
+            if (grants != null) {
+                if (cfg.isRemoveAllGrants()) {
+                    revokeAllGrants(user);
+                }
+                executeGrants("", grants, "", user);
+            }
+            adminConn.commit();
+            adminConn.setAutoCommit(true);
+        }
+        catch (Exception e) {
+        	SQLUtil.rollbackQuietly(adminConn);
+        	throw ConnectorException.wrap(e);
+        }
+    }
+    
+    
+    private void checkAdminConnection() {
+		if(adminConn == null){
+			throw new IllegalStateException("No admin connection present");
+		}
+	}
+
+	/**
+     *  Checks a given account id and password to make sure they follow DB2
+     *  rules for validity.  The rules are given in the DB2 SQL Reference
+     *  Manual.  They include length limits, forbidden prefixes, and forbidden
+     *  keywords.  Throws and exception if the name or password are invalid.
+     */
+    private void checkDB2Validity(String accountID, GuardedString password)  {
+        if (accountID.length() > maxNameSize) {
+        	throw new IllegalArgumentException("Name to short");
+        }
+        if (DB2Specifics.containsIllegalDB2Chars(accountID.toCharArray())) {
+        	throw new IllegalArgumentException("Name contains illegal characters");
+        }
+        if (!DB2Specifics.isValidName(accountID.toUpperCase())) {
+            throw new IllegalArgumentException("Name is reserved keyword or its substring");
+        }
+
+        if (password != null) {
+        	password.access(new Accessor(){
+				public void access(char[] clearChars) {
+			        if (DB2Specifics.containsIllegalDB2Chars(clearChars)) {
+			        	throw new IllegalArgumentException("Password contains illegal characters");
+			        }
+			        if (!DB2Specifics.isValidName(new String(clearChars).toUpperCase())) {
+			            throw new IllegalArgumentException("Password is reserved keyword or its substring");
+			        }
+				}
+        	});
+        }
+    }
+    
+    /**
+     *  Removes all grants for a user on the resource.  Effectively
+     *  deletes them from the resource.
+     */
+    private void revokeAllGrants(String user) throws Exception {
+        checkDB2Validity(user,null);
+        Collection<DB2Authority> allAuthorities = new DB2AuthorityReader(adminConn).readAllAuthorities(user);
+        revokeGrants(allAuthorities);
+    }
+
+    
+    
+    /**
+     *  For a given grant type and user, revokes the passed collection
+     *  of grant objects from the resource.
+     */
+    private void revokeGrants(Collection<DB2Authority> db2AuthoritiesToRevoke)   throws  SQLException {
+        for(DB2Authority auth : db2AuthoritiesToRevoke){
+            DB2AuthorityTable authTable = (DB2AuthorityTable)DB2Specifics.authType2DB2AuthorityTable(auth.authorityType);
+            String revokeSQL = authTable.generateRevokeSQL(auth);
+            executeSQL(revokeSQL);
+        }
+    }
+    
+    
+    private void executeSQL(String sql) throws SQLException {
+        checkAdminConnection();
+        Statement statement = null;
+        try {
+            statement = adminConn.createStatement();
+            statement.execute(sql);
+        }
+        finally {
+            SQLUtil.closeQuietly(statement);
+        }
+    }
+    
+    
+    /**
+     *  Executes a set of sql GRANT statements built using an sql
+     *  prefix, a collection of grant objects, a postfix, and a user.
+     *  Throws if anything goes wrong.
+     */
+    private void executeGrants(String prefix, Collection<String> grants,String postfix, String user)  throws SQLException{
+        for(String grant : grants){
+            String sql = "GRANT " + prefix + " " + grant
+			             + " " + postfix + " TO USER "
+			             + user.toUpperCase() + ";";
+            executeSQL(sql);
+        }
+    }
+    
+    
+    
+    
+  
 }

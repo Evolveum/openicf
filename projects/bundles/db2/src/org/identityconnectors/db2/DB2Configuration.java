@@ -39,13 +39,7 @@
  */
 package org.identityconnectors.db2;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.StringTokenizer;
-
 import org.identityconnectors.common.Assertions;
-import org.identityconnectors.common.IOUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
@@ -82,7 +76,7 @@ public class DB2Configuration extends AbstractConfiguration {
 	/** Name of database we will connect to */
 	private String databaseName;
 	/** Class name of jdbc driver */
-	private String jdbcDriver = DB2Connection.APP_DRIVER;
+	private String jdbcDriver = DB2Specifics.APP_DRIVER;
 	/** Whether we should remove all grants on update authority */
 	private boolean removeAllGrants;
 	/** DB2 host name*/
@@ -90,8 +84,6 @@ public class DB2Configuration extends AbstractConfiguration {
 	/** DB2 listening port */
 	private String port = "50000";
 	
-	/** List of db2 keywords */
-	private static Collection<String> excludeNames;
 	
 	@ConfigurationProperty(order = 1, helpMessageKey = "db2.adminAccount.help", displayMessageKey = "db2.adminAccount.display")
 	public String getAdminAccount(){
@@ -112,9 +104,6 @@ public class DB2Configuration extends AbstractConfiguration {
 	}
 	
 	
-	public static Collection<String> getExcludeNames(){
-		return Collections.unmodifiableCollection(readExcludeNames());
-	}
 	
 	@ConfigurationProperty
 	public String getJdbcSubProtocol(){
@@ -183,25 +172,6 @@ public class DB2Configuration extends AbstractConfiguration {
 		this.port = port;
 	}
 
-	private static Collection<String> readExcludeNames() {
-		if(excludeNames == null){
-			synchronized (DB2Configuration.class) {
-				if(excludeNames == null){
-					//We will read exclude names from resource named "exclude.names"
-					String names = IOUtil.getResourceAsString(DB2Configuration.class, "exclude.names");
-					if(names == null){
-						throw new IllegalStateException("Cannot load exclude names for DB2 connector");
-					}
-					excludeNames = new HashSet<String>();
-					StringTokenizer tokenizer = new StringTokenizer(names,",\n",false);
-					while(tokenizer.hasMoreTokens()){
-						excludeNames.add(tokenizer.nextToken());
-					}
-				}
-			}
-		}
-		return excludeNames;
-	}
 
 	@Override
 	public void validate() {
