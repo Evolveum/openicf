@@ -2,7 +2,7 @@
 <html>
 <head>
 
-  <meta content="text/html; charset=windows-1250" http-equiv="content-type">
+  <meta http-equiv="content-type" content="text/html; charset=windows-1250">
   <title>Groovy Contract Tests Manual</title>
 
 
@@ -48,7 +48,19 @@ jars</a></li>
 Configuring
 a local Connector</a></li>
 
-    <li></li>
+    <li><a href="#runcontractt">1.4 Running test</a></li>
+
+    <ul>
+
+      <li><a href="#Basic_usage">Basic usage</a></li>
+
+      <li><a href="#runexport">Export of generated
+test parameters</a></li>
+
+      <li><a href="#runfile">Use of generated
+property file</a></li>
+
+    </ul>
 
   </ul>
 
@@ -170,9 +182,9 @@ contract test configurations:</p>
 
 <ol>
 
-  <li><span style="font-family: monospace;">{$user.home}\.bundle-name\contract-tests.groovy</span></li>
+  <li><span style="font-family: monospace;">{$user.home}/.bundle-name/contract-tests.groovy</span></li>
 
-  <li><span style="font-family: monospace;">{$user.home}\.bundle-name-{$configuration}\contract-tests.groovy</span></li>
+  <li><span style="font-family: monospace;">{$user.home}/.bundle-name-{$configuration}/contract-tests.groovy</span></li>
 
 </ol>
 
@@ -285,11 +297,11 @@ configuration</span><br>
 
     <br>
 
-    <span style="background-color: rgb(204, 204, 204);"> <span style="font-family: monospace;"><span style="font-style: italic;">see In-depth guide: </span></span></span>
+    <span style="background-color: rgb(204, 204, 204);"> <span style="font-family: monospace;"><span style="font-style: italic;">see In-depth guide: </span></span></span><span style="color: rgb(255, 0, 0);">
 sections Connector configuration properties for more details, and
 section Defining properties to learn how the properties lookup works,
 how to define properties values using macros and what are possible
-properties types. <span style="color: rgb(255, 102, 0); font-weight: bold;">TODO
+properties types</span>. <span style="color: rgb(255, 102, 0); font-weight: bold;">TODO
 TODO TODO</span> <br>
 
     <br>
@@ -307,16 +319,35 @@ through 3 iterations</span><br>
 
     <span style="font-family: monospace;">Validate.iterations="3"</span><br>
 
+    <br>
+
     <span style="font-family: monospace;">// Connector
 WRONG configuration for ValidateApiOpTests</span><br>
 
-    <span style="font-family: monospace;">connector.i1.wrong.host=""
-// there can be additional properties defined, such as:
-connector.i1.wrong.password=""</span><br>
+    <br>
 
-    <span style="font-family: monospace;">connector.i2.wrong.login=""</span><br>
+    <span style="font-family: monospace;">&nbsp;&nbsp;//
+following
+property will be used in the first iteration (must be at least one)</span><br>
 
-    <span style="font-family: monospace;">connector.i3.wrong.password=""</span><br>
+    <span style="font-family: monospace;">&nbsp;&nbsp;connector.i1.wrong.host=""
+    </span><br>
+
+    <br>
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;//
+following
+property will be used in the second iteration</span><br>
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;connector.i2.wrong.login=""</span><br>
+
+    <br>
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;//
+following
+property will be used in the third iteration</span><br>
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;connector.i3.wrong.password=""</span><br>
 
     <br>
 
@@ -493,16 +524,31 @@ or <span style="font-family: monospace;"><span style="font-style: italic; color:
 
 &nbsp;&nbsp;<span style="font-family: monospace;">testsuite.</span><span style="font-family: monospace;">Schema.<span style="color: rgb(204, 0, 0);">"</span>@@NAME@@<span style="color: rgb(204, 0, 0);">"</span>.attribute.account.oclasses</span><br>
 
+            <br>
+
           </li>
 
         </ul>
 
-        <li>creation of any special object type is supported by
+        <li><a name="stdgroovyimports"></a>[<span style="font-weight: bold;">standard groovy imports</span>]
+creation of any special object type is supported by
 Groovy contract tests. By default Groovy imports six packages and two
 classes: <span style="font-family: monospace;">java.lang.*,
 &nbsp;java.util.*, &nbsp;java.io.*,
 &nbsp;java.net.*, &nbsp;groovy.lang.*, groovy.util.*,
-java.math.BigInteger, java.math.BigDecimal</span>.<code></code></li>
+java.math.BigInteger, java.math.BigDecimal</span>. &nbsp;In
+case &nbsp;you want &nbsp;to use additional types, add an
+import to the &nbsp;start of you &nbsp;configuration file.<br>
+          <br>
+        </li>
+
+        <li>[<span style="font-weight: bold; color: rgb(204, 0, 0);">contract
+test specific imports</span>] don't forget to add the following
+imports when you use Lazy proprety evaluation (optionally: your additional types) <br>
+
+          <pre>import org.identityconnectors.contract.data.groovy.Lazy<br>import org.identityconnectors.contract.data.groovy.Random<br>import org.identityconnectors.contract.data.groovy.Get<br>import org.identityconnectors.contract.exceptions.ObjectNotFoundException;<br></pre>
+
+        </li>
 
       </ul>
 
@@ -519,9 +565,168 @@ java.math.BigInteger, java.math.BigDecimal</span>.<code></code></li>
 
 </span>
 <hr style="width: 100%; height: 2px;"><span style="font-weight: bold; color: rgb(255, 204, 51);"></span>
-<h2><a name="runcontractt">Running tests</a></h2>
+<h2><a name="runcontractt">1.4 Running tests</a></h2>
 
-&nbsp;<br>
+&nbsp;<span style="font-weight: bold;">Checkpoint:</span>
+make sure that <span style="font-style: italic;">framework,
+contract tests</span> and the <span style="font-style: italic;">connector to test</span>
+are built by <span style="font-family: monospace;">
+ant</span> (as a result&nbsp;<span style="font-family: monospace;">/dist</span>
+folder will be created).<br>
+
+<!-- TABLE -->
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <td style="background-color: rgb(204, 204, 255);"><!-- ******* -->
+      <strong>Simple steps for running contract tests:</strong>
+      <ol>
+
+        <li>First compile the Framework and Connector classes by
+executing command <code>ant</code> in the <code>/framework</code>
+and <code>/bundles/fooconnector</code> directories.</li>
+
+        <li>To run the Contract tests go to directory of the
+connector (e.g. <code>/bundles/fooconnector</code>) launch
+in the command line: <code>ant run-contract-tests</code>. </li>
+
+        <li>It is nice to have a HTML summary of the test
+results, issue command for it: <code>ant report-junits</code>
+. A new subdirectory <code>/reports</code> contains
+overview of test results.</li>
+
+      </ol>
+
+<!-- ******* --> </td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<!-- EOF TABLE -->
+<h3><a name="Basic_usage"></a>Basic usage</h3>
+
+Contract test suite is run from within the connector directory with the
+following command:
+<pre>ant run-contract-tests<br></pre>
+
+or in case connector has more test configurations:
+<pre>ant -Dconfiguration=conf1 run-contract-tests<br></pre>
+
+where <code>conf1</code> is configuration name. In this
+case tests will use <code>{$user.home}\.{$project.name}-conf1.properties</code>
+file.
+<p></p>
+
+<p>
+When contract tests are run, there is created a new <code>connector.jar</code>
+in <code>${connector.dir}/reports</code> directory. This
+newly created <code>jar</code> contains
+all the connector classes (excluding junit tests), all jars from <code>${connector.dir}/lib</code>
+directory and proprietary jars from <code>${user.home}/.${project.name}/lib</code>
+directory.
+</p>
+
+<h3><a name="runexport">Export of generated test
+parameters</a></h3>
+
+During the test there is generated a lot of parameters used as input
+data for the tests. These can be exported to a property file to <strong>rerun</strong>
+the test with the same values (Note: this file will contain all the
+properties used during the test - <strong>configuration too</strong>).
+To do that you need to pass the name of <a href="#runfile">generated
+property file</a> in <code>test.parameters.outFile</code>
+property.<br>
+
+Example:
+<pre># run contract tests and store all parameters (attributes values) used by tests in <code>test.properties</code> file<br>ant -Dtest.parameters.outFile=generated.properties run-contract-tests<br></pre>
+
+<br>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <td style="background-color: rgb(204, 204, 255);">
+<!-- ****** -->
+      <h4><a name="runfile">Use of generated
+property file</a></h4>
+
+To instruct tests to use generated property file you need to pass its
+filename in a <code>defaultdataprovider.propertyFile</code>
+property.<br>
+
+In this case the only file whose properties are loaded is the one
+specified by <code>defaultdataprovider.propertyFile</code>.
+Neither <code>build.properties</code> nor <code>${user.home}/.${project.name}.properties</code>
+etc. are read in this case.<br>
+
+Example:
+      <pre>ant -Ddefaultdataprovider.propertyFile=generated.properties run-contract-tests<br></pre>
+
+Running tests with property file generated by different test
+configuration is <strong>not</strong> possible.
+<!-- ****** --></td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<h3><a name="reports">Reports</a></h3>
+
+JUnit XML reports are generated to <code>${connector.dir}/reports</code>
+directory.
+To see HTML reports run command <code>ant report-junits</code>
+<p></p>
+
+<h3><a name="eclipse">Running in Eclipse</a></h3>
+
+<p>Create new JUnit run configuration and set values on tab <strong>Test</strong>
+according to the following screenshot. Don't forget to set JUnit 4 <strong>Test
+runner</strong>.</p>
+
+<img src="../images/contract-tests/test.jpg" style="width: 999px; height: 720px;" alt="test.jpg"><br>
+
+<p>On tab <strong>Arguments</strong> add following <strong>VM
+arguments</strong>:
+</p>
+
+<ul>
+
+  <li><code>-Dconfiguration=oracle</code> - optional,
+set only in case you want to run particular configuration</li>
+
+  <li><code>-Dproject.name=connector-databasetable</code>
+- project name from <code>build.xml</code></li>
+
+  <li><code>-Ddata-provider=org.identityconnectors.contract.data.<span style="font-weight: bold;">GroovyDataProvider</span></code>
+- set exactly this value</li>
+
+  <li><code>-Dconnector-jar=dist/org.identityconnectors.databasetable-1.0.x.jar</code>
+- relative (to working directory) path to tested connector jar</li>
+
+</ul>
+
+[<span style="color: rgb(255, 0, 0);">!</span>]
+Don't forget to change <strong>Working directory</strong>
+to the tested connector project.
+<p></p>
+
+<img src="../images/contract-tests/arguments.jpg" style="width: 999px; height: 720px;" alt="arguments.jpg"><br>
+
+<p>
+Add all projects connector depends on to the <strong>Classpath</strong>
+(you can debug then all) and also add references to all required
+proprietary jars. </p>
+
+<img src="../images/contract-tests/classpath.jpg" style="width: 999px; height: 720px;" alt="classpath.jpg"><br>
 
 </body>
 </html>

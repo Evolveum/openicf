@@ -7,6 +7,8 @@
 
 
 </head>
+
+
 <body>
 
 <pre>-&lt;( <a href="index.html">Contract tests manual</a> &gt; Appendix )&gt;-</pre>
@@ -30,6 +32,7 @@ RandomGenerator pattern</a></li>
 
     <li><a href="#A.2.2">A.2.2
 {$user.home}\.connector-databasetable-mysql\contract-tests.groovy</a></li>
+    <li><a href="#transtable">A.3 Table of translation from the old configuration files</a></li>
 
   </ul>
 
@@ -353,7 +356,113 @@ contains connection username/password.</p>
 
 <pre>}</pre>
 
-<hr style="width: 100%; height: 2px;">&nbsp;<br>
+<hr style="width: 100%; height: 2px;">
+<h2>&nbsp;<a name="transtable"></a>A.3 Table of translation from the old configuration
+files</h2>
+
+<br>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <td style="background-color: rgb(204, 204, 255);">DefaultDataProvider
+-- using legacy macros</td>
+
+      <td style="background-color: rgb(204, 204, 255);">GroovyDataProvider
+-- simple way to achieve anything</td>
+
+    </tr>
+
+    <tr>
+
+      <td>typenames such as: <span style="font-family: monospace;">string</span>, <span style="font-family: monospace;">integer</span>, <span style="font-family: monospace;">float,long</span>...</td>
+
+      <td>@deprecated <br>
+
+They are no longer needed in Groovy (implicit typing given by
+expression on the right side of assignment).<br>
+
+Exceptionally, if it is needed to use these with prefix&nbsp;T,
+such as Tstring etc.</td>
+
+    </tr>
+
+    <tr>
+
+      <td><span style="font-family: monospace;">${RANDOM,
+AAAAA##}</span></td>
+
+      <td><span style="font-family: monospace;">Lazy.random("AAAAA##")</span></td>
+
+    </tr>
+
+    <tr>
+
+      <td>
+      <pre>${LONG, ${RANDOM, #####}}</pre>
+
+      </td>
+
+      <td>
+      <pre>Lazy.random("#####", Long.class)</pre>
+
+      </td>
+
+    </tr>
+
+    <tr>
+
+      <td><span style="font-family: monospace;">foo=</span><span style="font-family: monospace;">${NOTSUPPLIED}</span></td>
+
+      <td><span style="font-family: monospace;">foo=new
+ObjectNotFoundException()</span></td>
+
+    </tr>
+
+    <tr>
+
+      <td><span style="font-family: monospace;">${FLOAT,
+${RANDOM, #####}${LITERAL, .}${RANDOM, ##}}</span></td>
+
+      <td><span style="font-family: monospace;">Lazy.random("#####\\.##",
+Float.class)</span></td>
+
+    </tr>
+
+    <tr>
+      <td><span style="font-family: monospace;">list=${LIST, item1, item2}</span></td>
+      <td><span style="font-family: monospace;">list = ["item1", "item2"]</span></td>
+    </tr>
+    <tr>
+
+      <td><span style="font-family: monospace;">multiString=${LIST,
+${RANDOM, AAAAA##}, ${RANDOM, AAAAA##}}</span></td>
+
+      <td><span style="font-family: monospace;">multiString=[Lazy.random("AAAAA##")
+, Lazy.random("AAAAA##")]</span></td>
+
+    </tr>
+
+    <tr>
+
+      <td><span style="font-family: monospace;">map=${MAP, <br>
+&nbsp; ${MAPENTRY, SchemaApiOp, ${LIST, account}}<br>
+}</span>
+      </td>
+
+      <td><span style="font-family: monospace;">map=[<br>
+&nbsp; SchemaApiOp : ["account"]<br>
+]<br>
+      </span>
+      </td>
+
+    </tr>
+
+  </tbody>
+</table>
 
 </body>
 </html>

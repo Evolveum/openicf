@@ -7,20 +7,129 @@
 
 
 </head>
+
+
 <body>
 
 <pre>-&lt;( <a href="index.html">Contract tests manual</a> &gt; In-depth manual )&gt;-</pre>
 
 <hr style="width: 100%; height: 2px;">
 <h1>In-depth guide</h1>
+
 Table of contents:<br>
+
 <ul>
-  <li><a href="#optionalprops">&nbsp; &nbsp; </a></li>
+
+  <li><a href="#optionalprops">&nbsp; &nbsp;
+    </a></li>
+
   <li>b</li>
+
   <li>c</li>
+
 </ul>
+
 <hr style="width: 100%; height: 2px;">
 <h2><a name="optionalprops">Optional properties</a></h2>
-<h2></h2>
+
+<h2><a name="properties">Defining properties</a></h2>
+
+<p>Test properties follows these patterns:</p>
+
+<pre>// connector configuration<br>connector.{$property.name}="some value"<br>connector.connectionUrl="jdbc:mysql://localhost/database"<br><br>// testsuite configuration<br>testsuite.{$property.name}="some value"<br>testsuite.bundleJar=System.getProperty("connector-jar")<br><br>// DataProvider configuration<br>i{$iteration}.{$test.name}.{$oclass.name}.${attribute.name}="some value"<br>i0.Create.account.DEPARTMENT="some value"<br></pre>
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <td style="background-color: rgb(204, 204, 204);">
+      <p>Note 1: that <strong>case sensitivity is important</strong>.</p>
+
+      <p>Note 2: The <code>property.name</code> is
+derived
+from the setXYZ() method for the property (typically inside <code>FooConnectorConfiguration</code>
+class).</p>
+
+      </td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<p></p>
+
+<h3><a name="proplookup">Properties lookup</a></h3>
+
+Properties are searched recursively. If a test looks for the property <code>connector.i1.wrong.login</code>
+and doesn't find its definition
+it tries to look for <code>i1.wrong.login</code>,
+if still nothing found it tries <code>wrong.login</code>
+etc. In last iteration, where there is nothing left from the originally
+queried name, the GroovyDataProvider sets the default value according
+to the type of the property.<!-- TODO: maybe addition info is needed to clarify this type resolution, see the place where the types are defined exactly.--><br>
+
+<p>The values of the properties are evaluated at the initial
+parsing of the property files. The only exception is a use of <span style="font-family: monospace;">Lazy.random()</span>, <span style="font-family: monospace;">Lazy.get()</span>
+macros, as these implement lazy evaluation (just in the time of request
+for property).
+</p>
+
+<p>
+After property value is recursively found it is stored as the value of
+the property that was initially looked up. For instance, test looks
+for <code style="color: rgb(51, 51, 255);">connector.i1.wrong.login</code>
+and
+recursively finds <strong>value</strong> of&nbsp;<code style="color: rgb(0, 102, 0);">wrong.login</code>.
+This <strong>value</strong>
+will also be stored for <code style="color: rgb(51, 51, 255);">connector.i1.wrong.login</code>.
+The next time test will look for the original property (<code style="color: rgb(51, 51, 255);">connector.i1.wrong...</code>),
+its value
+will be returned immediately.
+</p>
+
+<h3>Property value types</h3>
+
+<p>Any Java type can be used (see <a href="index.html#stdgroovyimports">standard imports</a>),
+in case you need additional types, take care of imports.<!-- TODO: v starych materialech v sekci Properties value types pod tabulkou tam je jeste poznamka o Guarded string a kol. Je to jeste porad platny? -->
+&nbsp;
+</p>
+
+<p><span style="font-style: italic;">
+Default value definitions</span> for property types are:
+</p>
+
+<pre>Tstring = Lazy.random("AAAAA##")<br>Tinteger= Lazy.random("##", Integer.class)<br>Tint= Lazy.random("##", Integer.class)<br>Tlong= Lazy.random("#####", Long.class)<br>// for full list of default values see /framework/contract-tests/src/bootstrap.groovy<br></pre>
+
+<p>Properties that has not been defined, are assigned the default
+values by GroovyDataProvider. So for instance&nbsp;the test looks
+for property&nbsp;not yet defined: <span style="font-family: monospace; color: rgb(0, 153, 0);">i0.Create.account.DEPARTMENT</span>&nbsp;</p>
+
+<ul>
+
+  <li>through recursive lookup it finds out that there is no such
+a property</li>
+
+  <li>based on the type of&nbsp;<span style="font-family: monospace; color: rgb(0, 153, 0);">i0.Create.account.DEPARTMENT</span>
+we return the default value:&nbsp;
+    <span style="font-family: monospace;">Tstring =
+Lazy.random("AAAAA##")</span>
+  </li>
+
+  <li>expression on the right hand side is dynamically evaluated,
+will result in random string according to pattern: 4 uppercase letters
+concatenated with 2 digits (e.g.: JRIW87).</li>
+
+
+</ul>
+
+<h3>Macros</h3>
+
+<p>There are no macros used in the new Groovy Contract tests,
+however if you would like to transfer your old configuration there is a
+<a href="appendix.html#transtable">Translation table</a> to groovy.</p>
+
 </body>
 </html>
