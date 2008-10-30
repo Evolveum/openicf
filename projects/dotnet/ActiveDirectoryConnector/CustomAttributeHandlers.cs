@@ -183,6 +183,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 GetCaFromDe_OpAtt_Enabled);
             GetCaFromDeDelegates.Add(OperationalAttributes.PASSWORD_EXPIRED_NAME,
                 GetCaFromDe_OpAtt_PasswordExpired);
+            GetCaFromDeDelegates.Add(PredefinedAttributes.DESCRIPTION,
+                GetCaFromDe_OpAtt_Description);
+            GetCaFromDeDelegates.Add(PredefinedAttributes.SHORT_NAME,
+                GetCaFromDe_OpAtt_ShortName);
             GetCaFromDeDelegates.Add(OperationalAttributes.LOCK_OUT_NAME,
                 GetCaFromDe_OpAtt_Lockout);
             GetCaFromDeDelegates.Add(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,
@@ -521,6 +525,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     GetLargeIntegerFromLong((ulong)expireDate.Value.ToFileTime());
             }
         }
+
         internal void UpdateDeFromCa_OpAtt_Lockout(ObjectClass oclass,
             UpdateType type, DirectoryEntry directoryEntry,
             ConnectorAttribute attribute)
@@ -916,6 +921,42 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
 
             return ConnectorAttributeBuilder.BuildPasswordExpired(true);
+        }
+
+        private ConnectorAttribute GetCaFromDe_OpAtt_Description(
+            ObjectClass oclass, string attributeName, SearchResult searchResult)
+        {
+            ConnectorAttribute realDescription = GetCaFromDe_Att_Generic(
+                oclass, ActiveDirectoryConnector.ATT_DESCRIPTION, searchResult);
+
+            if (realDescription != null)
+            {
+                string description = ConnectorAttributeUtil.GetStringValue(realDescription);
+
+                if (description != null)
+                {
+                    return ConnectorAttributeBuilder.Build(PredefinedAttributes.DESCRIPTION, description);
+                }
+            }
+            return null;
+        }
+
+        private ConnectorAttribute GetCaFromDe_OpAtt_ShortName(
+            ObjectClass oclass, string attributeName, SearchResult searchResult)
+        {
+            ConnectorAttribute realShortName = GetCaFromDe_Att_Generic(
+                oclass, ActiveDirectoryConnector.ATT_SHORT_NAME, searchResult);
+
+            if (realShortName != null)
+            {
+                string shortName = ConnectorAttributeUtil.GetStringValue(realShortName);
+
+                if (shortName != null)
+                {
+                    return ConnectorAttributeBuilder.Build(PredefinedAttributes.SHORT_NAME, shortName);
+                }
+            }
+            return null;
         }
 
         private ConnectorAttribute GetCaFromDe_OpAtt_PasswordExpireDate(

@@ -102,11 +102,21 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// <returns></returns>
         internal static String ConvertUIDBytesToGUIDString(Byte[] guidBytes)
         {
-            String guidString = "<GUID=";
+            return ConvertBytesToADSpecialString("GUID", guidBytes);
+        }
 
-            for (int i = 0; i < guidBytes.Length; i++)
+        internal static String ConvertSIDBytesToGUIDString(Byte[] guidBytes)
+        {
+            return ConvertBytesToADSpecialString("SID", guidBytes);
+        }
+
+        internal static String ConvertBytesToADSpecialString(string attribute, Byte[] bytes)
+        {
+            String guidString = "<" + attribute + "=";
+
+            for (int i = 0; i < bytes.Length; i++)
             {
-                guidString += String.Format("{0:X2}", guidBytes[i]);
+                guidString += String.Format("{0:X2}", bytes[i]);
             }
             guidString += ">";
 

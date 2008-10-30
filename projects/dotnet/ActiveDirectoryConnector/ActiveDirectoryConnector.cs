@@ -127,6 +127,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 "cn",
                 "samAccountName",
                 "description",
+                "displayName",
                 "managedby",
                 "mail",
                 "groupType",
@@ -140,6 +141,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             {
                 Name.NAME,
                 "ou",
+                "displayName",
             };
 
         public static IDictionary<ObjectClass, ICollection<string>> AttributesReturnedByDefault = null;
@@ -163,6 +165,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public static readonly string ATT_ACCOUNT_EXPIRES = "accountExpires";
         public static readonly string ATT_LOCKOUT_TIME = "lockoutTime";
         public static readonly string ATT_GROUP_TYPE = "groupType";
+        public static readonly string ATT_DESCRIPTION = "description";
+        public static readonly string ATT_SHORT_NAME = "name";
         public static readonly string OBJECTCLASS_OU = "Organizational Unit";
         public static readonly ObjectClass ouObjectClass = new ObjectClass(OBJECTCLASS_OU);
 
@@ -329,6 +333,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             ObjectClassInfoBuilder ociBuilder = new ObjectClassInfoBuilder();
             ociBuilder.ObjectType = ObjectClass.ACCOUNT_NAME;
             ociBuilder.AddAllAttributeInfo(userAttributeInfos);
+            ociBuilder.IsContainer = false;
             ObjectClassInfo userInfo = ociBuilder.Build();
 
             // get the group attribute infos and operations
@@ -337,6 +342,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             ociBuilder = new ObjectClassInfoBuilder();
             ociBuilder.ObjectType = ObjectClass.GROUP_NAME;
             ociBuilder.AddAllAttributeInfo(groupAttributeInfos);
+            ociBuilder.IsContainer = false;
             ObjectClassInfo groupInfo = ociBuilder.Build();
 
             // get the organizationalUnit attribute infos and operations
@@ -345,6 +351,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             ociBuilder = new ObjectClassInfoBuilder();
             ociBuilder.ObjectType = OBJECTCLASS_OU;
             ociBuilder.AddAllAttributeInfo(ouAttributeInfos);
+            ociBuilder.IsContainer = true;
             ObjectClassInfo ouInfo = ociBuilder.Build();
 
             SchemaBuilder schemaBuilder = 
@@ -410,9 +417,30 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // dont think I need this
             // attributeInfos.Add(OperationalAttributeInfos.RESET_PASSWORD);
             attributeInfos.Add(PredefinedAttributeInfos.GROUPS);
-            attributeInfos.Add(OperationalAttributeInfos.PASSWORD);            
+            attributeInfos.Add(OperationalAttributeInfos.PASSWORD);
+
+            ConnectorAttributeInfoBuilder descriptionBuilder = new ConnectorAttributeInfoBuilder();
+            descriptionBuilder.Name = PredefinedAttributeInfos.DESCRIPTION.Name;
+            descriptionBuilder.ValueType = PredefinedAttributeInfos.DESCRIPTION.ValueType;
+            descriptionBuilder.Readable = true;
+            descriptionBuilder.Creatable = false;
+            descriptionBuilder.Updateable = false;
+            descriptionBuilder.Required = false;
+            descriptionBuilder.ReturnedByDefault = true;
+            attributeInfos.Add(descriptionBuilder.Build());
+
+            ConnectorAttributeInfoBuilder shortNameBuilder = new ConnectorAttributeInfoBuilder();
+            shortNameBuilder.Name = PredefinedAttributeInfos.SHORT_NAME.Name;
+            shortNameBuilder.ValueType = PredefinedAttributeInfos.SHORT_NAME.ValueType;
+            shortNameBuilder.Readable = true;
+            shortNameBuilder.Creatable = false;
+            shortNameBuilder.Updateable = false;
+            shortNameBuilder.Required = false;
+            shortNameBuilder.ReturnedByDefault = true;
+            attributeInfos.Add(shortNameBuilder.Build());
 
             ICollection<String> attributesToIgnore = new List<String>();
+
             attributesToIgnore.Add("CN");
             attributesToIgnore.Add(ATT_USER_PASSWORD);
 
@@ -488,6 +516,27 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 typeof(string), true, true, false, false, ObjectClass.GROUP));
 
             attributeInfos.Add(PredefinedAttributeInfos.ACCOUNTS);
+
+            ConnectorAttributeInfoBuilder descriptionBuilder = new ConnectorAttributeInfoBuilder();
+            descriptionBuilder.Name = PredefinedAttributeInfos.DESCRIPTION.Name;
+            descriptionBuilder.ValueType = PredefinedAttributeInfos.DESCRIPTION.ValueType;
+            descriptionBuilder.Readable = true;
+            descriptionBuilder.Creatable = false;
+            descriptionBuilder.Updateable = false;
+            descriptionBuilder.Required = false;
+            descriptionBuilder.ReturnedByDefault = true;
+            attributeInfos.Add(descriptionBuilder.Build());
+
+            ConnectorAttributeInfoBuilder shortNameBuilder = new ConnectorAttributeInfoBuilder();
+            shortNameBuilder.Name = PredefinedAttributeInfos.SHORT_NAME.Name;
+            shortNameBuilder.ValueType = PredefinedAttributeInfos.SHORT_NAME.ValueType;
+            shortNameBuilder.Readable = true;
+            shortNameBuilder.Creatable = false;
+            shortNameBuilder.Updateable = false;
+            shortNameBuilder.Required = false;
+            shortNameBuilder.ReturnedByDefault = true;
+            attributeInfos.Add(shortNameBuilder.Build());
+
             attributeInfos.Add(ConnectorAttributeInfoBuilder.Build(Name.NAME, typeof(string),
                 true, true, true, false));
 
@@ -504,6 +553,26 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // add in container ... 
             attributeInfos.Add(GetConnectorAttributeInfo(ATT_OU,
                 typeof(string), false, true, false, false, ouObjectClass));
+
+            ConnectorAttributeInfoBuilder descriptionBuilder = new ConnectorAttributeInfoBuilder();
+            descriptionBuilder.Name = PredefinedAttributeInfos.DESCRIPTION.Name;
+            descriptionBuilder.ValueType = PredefinedAttributeInfos.DESCRIPTION.ValueType;
+            descriptionBuilder.Readable = true;
+            descriptionBuilder.Creatable = false;
+            descriptionBuilder.Updateable = false;
+            descriptionBuilder.Required = false;
+            descriptionBuilder.ReturnedByDefault = true;
+            attributeInfos.Add(descriptionBuilder.Build());
+
+            ConnectorAttributeInfoBuilder shortNameBuilder = new ConnectorAttributeInfoBuilder();
+            shortNameBuilder.Name = PredefinedAttributeInfos.SHORT_NAME.Name;
+            shortNameBuilder.ValueType = PredefinedAttributeInfos.SHORT_NAME.ValueType;
+            shortNameBuilder.Readable = true;
+            shortNameBuilder.Creatable = false;
+            shortNameBuilder.Updateable = false;
+            shortNameBuilder.Required = false;
+            shortNameBuilder.ReturnedByDefault = true;
+            attributeInfos.Add(shortNameBuilder.Build());
 
             // add in name ... 
             attributeInfos.Add(
@@ -636,33 +705,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
 
                 IDictionary<string, object>searchOptions = options.Options;
-                
-                SearchScope searchScope = SearchScope.Subtree;
-                string searchContext = _configuration.SearchContainer;
 
-                if(searchOptions != null) {
-                    if(searchOptions.Keys.Contains("searchScope")) {
-                        String scopeString = (string)searchOptions["searchScope"];
-                        if(scopeString.Equals("oneLevel", StringComparison.CurrentCultureIgnoreCase)) {
-                            searchScope = SearchScope.OneLevel;
-                        } else if (scopeString.Equals("object", StringComparison.CurrentCultureIgnoreCase)){
-                            searchScope = SearchScope.Base;
-                        } else if (scopeString.Equals("subTree", StringComparison.CurrentCultureIgnoreCase)) {
-                            searchScope = SearchScope.Subtree;
-                        } else {
-                            throw new ConnectorException(_configuration.ConnectorMessages.Format("ex_invalidSearchScope", 
-                                "An invalid searchscope was supplied:  {0}", scopeString));
-                        }
-                    }
-
-                    if(searchOptions.Keys.Contains("searchContext")) {
-                        string tempSearchContext = (string)searchOptions["searchContext"];
-                        tempSearchContext = tempSearchContext.Trim();
-                        if(tempSearchContext.Trim().Length > 0) {
-                            searchContext = tempSearchContext;
-                        }
-                    }
-                }
+                SearchScope searchScope = GetADSearchScopeFromOptions(options);
+                string searchContext = GetADSearchContextFromOptions(options);
 
                 ExecuteQuery(oclass, query, handler, options,
                     false, null, _configuration.LDAPHostName, useGC, searchContext, searchScope);
@@ -672,6 +717,51 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 Trace.TraceError(String.Format("Caught Exception: {0}", e));
                 throw;
             }
+        }
+
+        public string GetADSearchContextFromOptions(OperationOptions options)
+        {
+            if (options != null)
+            {
+                QualifiedUid qUid = options.getContainer;
+                if (qUid != null)
+                {
+                    return ConnectorAttributeUtil.GetStringValue(qUid.Uid);
+                }
+            }
+
+            return _configuration.SearchContainer;
+        }
+
+        public SearchScope GetADSearchScopeFromOptions(OperationOptions options)
+        {
+            if (options != null)
+            {
+                string scope = options.Scope;
+                if (scope != null)
+                {
+                    if (scope.Equals(OperationOptions.SCOPE_ONE_LEVEL))
+                    {
+                        return SearchScope.OneLevel;
+                    }
+                    else if (scope.Equals(OperationOptions.SCOPE_SUBTREE))
+                    {
+                        return SearchScope.Subtree;
+                    }
+                    else if (scope.Equals(OperationOptions.SCOPE_OBJECT))
+                    {
+                        return SearchScope.Base;
+                    }
+                    else
+                    {
+                        throw new ConnectorException(_configuration.ConnectorMessages.Format(
+                            "ex_invalidSearchScope", "An invalid search scope was specified: {0}", scope));
+                    }
+                }
+            }
+
+            // default value is subtree;
+            return SearchScope.Subtree;
         }
 
         // this is used by the ExecuteQuery method of SearchSpiOp, and
@@ -1268,10 +1358,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             OperationOptions options)
         {
             PasswordChangeHandler handler = new PasswordChangeHandler(_configuration);
-            handler.Authenticate(username, password);
-            //TODO: return Uid
-            //TODO: PasswordExpiredException
-            return null;
+            return handler.Authenticate(username, password);
         }
 
         #endregion

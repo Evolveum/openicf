@@ -56,6 +56,7 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using Org.IdentityConnectors.Framework.Common.Exceptions;
 using Org.IdentityConnectors.Common;
+using System.Threading;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
@@ -1387,9 +1388,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     ObjectClass.ACCOUNT, createAttributes);
 
                 // make sure authenticate works here                
-                connector.Authenticate(
+                Uid authUid = connector.Authenticate(
                     ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                     gsCurrentPassword, null);
+                
+                Assert.AreEqual(createUid, authUid);
 
                 // make sure authenticate fails - wrong password
                 bool caughtException = false;
@@ -1449,7 +1452,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                         gsNewPassword, null);
                 }
-                catch (Exception e)
+                catch (PasswordExpiredException e)
                 {
                     caughtException = true;
                 }
@@ -1477,6 +1480,136 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     //remove the one we created
                     DeleteAndVerifyObject(connector, ObjectClass.ACCOUNT,
                         createUid, false, true);
+                }
+            }
+        }
+
+        [Test]
+        public void TestShortnameAndDescription()
+        {
+            //Initialize Connector
+            ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
+            connector.Init(GetConfiguration());
+            Uid uidAccount = null;
+            Uid uidGroup = null;
+            Uid uidOu = null;
+            string accountDescription = "nunit test account description";
+            string groupDescription = "nunit test group description";
+            string ouDescription = "nunit test ou description";
+            try
+            {
+                ICollection<ConnectorAttribute> accountAttributes = GetNormalAttributes_Account();
+                RemoveAttributeByName(accountAttributes, "description");
+                accountAttributes.Add(ConnectorAttributeBuilder.Build(
+                    "description", accountDescription));
+                ICollection<ConnectorAttribute> groupAttributes = GetNormalAttributes_Group();
+                RemoveAttributeByName(groupAttributes, "description");
+                groupAttributes.Add(ConnectorAttributeBuilder.Build(
+                    "description", groupDescription));
+                ICollection<ConnectorAttribute> ouAttributes = GetNormalAttributes_OrganizationalUnit();
+                RemoveAttributeByName(ouAttributes, "description");
+                ouAttributes.Add(ConnectorAttributeBuilder.Build(
+                    "description", ouDescription));
+
+                uidAccount = CreateObject(connector, ObjectClass.ACCOUNT, accountAttributes);
+
+                OperationOptionsBuilder accountOptionsBuilder = new OperationOptionsBuilder();
+                ICollection<String> accountAttributesToGet = GetDefaultAttributesToGet(ObjectClass.ACCOUNT);
+                accountAttributesToGet.Add(PredefinedAttributes.DESCRIPTION);
+                accountAttributesToGet.Add(PredefinedAttributes.SHORT_NAME);
+                accountAttributesToGet.Add("name");
+                accountAttributesToGet.Add("description");
+                accountOptionsBuilder.AttributesToGet = accountAttributesToGet.ToArray();
+
+                ConnectorObject accountObject = GetConnectorObjectFromUid(connector,
+                    ObjectClass.ACCOUNT, uidAccount, accountOptionsBuilder.Build());
+
+                // compare description
+                string foundAccountDescription = ConnectorAttributeUtil.GetStringValue(
+                    ConnectorAttributeUtil.Find(PredefinedAttributes.DESCRIPTION, accountObject.GetAttributes()));
+                Assert.AreEqual(accountDescription, foundAccountDescription);
+
+                // compare shortname
+                string accountShortName = ConnectorAttributeUtil.GetStringValue(
+                    ConnectorAttributeUtil.Find(
+                    PredefinedAttributes.SHORT_NAME, accountObject.GetAttributes()));
+                string accountDisplayName = ConnectorAttributeUtil.GetStringValue(
+                    ConnectorAttributeUtil.Find(
+                    "name", accountObject.GetAttributes()));
+                Assert.AreEqual(accountShortName, accountDisplayName);
+
+                uidGroup = CreateObject(connector, ObjectClass.GROUP, groupAttributes);
+
+                OperationOptionsBuilder groupOptionsBuilder = new OperationOptionsBuilder();
+                ICollection<String> groupAttributesToGet = GetDefaultAttributesToGet(ObjectClass.GROUP);
+                groupAttributesToGet.Add(PredefinedAttributes.DESCRIPTION);
+                groupAttributesToGet.Add(PredefinedAttributes.SHORT_NAME);
+                groupAttributesToGet.Add("name");
+                groupAttributesToGet.Add("description");
+                groupOptionsBuilder.AttributesToGet = groupAttributesToGet.ToArray();
+
+                ConnectorObject groupObject = GetConnectorObjectFromUid(connector,
+                    ObjectClass.GROUP, uidGroup, groupOptionsBuilder.Build());
+
+                // compare description
+                string foundGroupDescription = ConnectorAttributeUtil.GetStringValue(
+                    ConnectorAttributeUtil.Find(PredefinedAttributes.DESCRIPTION, groupObject.GetAttributes()));
+                Assert.AreEqual(groupDescription, foundGroupDescription);
+
+                // compare shortnameB
+                string groupShortName = ConnectorAttributeUtil.GetStringValue(
+                    ConnectorAttributeUtil.Find(
+                    PredefinedAttributes.SHORT_NAME, groupObject.GetAttributes()));
+                string groupDisplayName = ConnectorAttributeUtil.GetStringValue(
+                    ConnectorAttributeUtil.Find(
+                    "name", groupObject.GetAttributes()));
+                Assert.AreEqual(groupShortName, groupDisplayName);
+
+                uidOu = CreateObject(connector, ActiveDirectoryConnector.ouObjectClass, ouAttributes);
+                OperationOptionsBuilder ouOptionsBuilder = new OperationOptionsBuilder();
+                ICollection<String> ouAttributesToGet = GetDefaultAttributesToGet(ActiveDirectoryConnector.ouObjectClass);
+                ouAttributesToGet.Add(PredefinedAttributes.DESCRIPTION);
+                ouAttributesToGet.Add(PredefinedAttributes.SHORT_NAME);
+                ouAttributesToGet.Add("name");
+                ouAttributesToGet.Add("description");
+                ouOptionsBuilder.AttributesToGet = ouAttributesToGet.ToArray();
+
+                ConnectorObject ouObject = GetConnectorObjectFromUid(connector,
+                    ActiveDirectoryConnector.ouObjectClass, uidOu, ouOptionsBuilder.Build());
+
+                // compare description
+                string foundOuDescription = ConnectorAttributeUtil.GetStringValue(
+                    ConnectorAttributeUtil.Find(PredefinedAttributes.DESCRIPTION, ouObject.GetAttributes()));
+                Assert.AreEqual(ouDescription, foundOuDescription);
+
+                // compare shortname
+                string ouShortName = ConnectorAttributeUtil.GetStringValue(
+                    ConnectorAttributeUtil.Find(
+                    PredefinedAttributes.SHORT_NAME, ouObject.GetAttributes()));
+                string ouDisplayName = ConnectorAttributeUtil.GetStringValue(
+                    ConnectorAttributeUtil.Find(
+                    "name", ouObject.GetAttributes()));
+                Assert.AreEqual(ouShortName, ouDisplayName);
+            }
+            finally
+            {
+                if (uidAccount != null)
+                {
+                    //remove the one we created
+                    DeleteAndVerifyObject(connector, ObjectClass.ACCOUNT,
+                        uidAccount, false, true);
+                }
+                if (uidGroup != null)
+                {
+                    //remove the one we created
+                    DeleteAndVerifyObject(connector, ObjectClass.GROUP,
+                        uidGroup, false, true);
+                }
+                if (uidOu != null)
+                {
+                    //remove the one we created
+                    DeleteAndVerifyObject(connector, ActiveDirectoryConnector.ouObjectClass,
+                        uidOu, false, true);
                 }
             }
         }
@@ -1514,6 +1647,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     ConnectorAttributeBuilder.BuildPasswordExpirationDate(DateTime.UtcNow));
                 UpdateReplaceAndVerifyObject(connector, ObjectClass.ACCOUNT,
                     createUid, expirePasswordNowAttrs);
+
+                // sometimes expiring now, really means in a few milliseconds
+                // there is some rounding or something that happens.
+                Thread.Sleep(30000);
 
                 // make sure authenticate fails - correct password, but expired
                 bool caughtException = false;
@@ -2168,14 +2305,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void VerifyObject(ActiveDirectoryConnector connector, Uid uid,
             ObjectClass oclass, ICollection<ConnectorAttribute> attributes)
         {
-            // find the object
-            Filter uidFilter = FilterBuilder.EqualTo(uid);
-            ICollection<ConnectorObject> foundObjects = TestHelpers.SearchToList(
-                connector, oclass, uidFilter);
-            Assert.IsTrue(foundObjects.Count == 1);
-
             // verify the object
-            VerifyObject(attributes, foundObjects.ElementAt(0));
+            VerifyObject(attributes, GetConnectorObjectFromUid(connector, oclass, uid));
         }
 
 
@@ -2606,6 +2737,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
             number += randomRange;              
 #endif
             return number;
+        }
+
+        public void RemoveAttributeByName(ICollection<ConnectorAttribute> accountAttributes, string name)
+        {
+            ConnectorAttribute ca = ConnectorAttributeUtil.Find(name, accountAttributes);
+            if (ca != null)
+            {
+                accountAttributes.Remove(ca);
+            }
         }
     }
 

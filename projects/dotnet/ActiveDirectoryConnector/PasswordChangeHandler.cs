@@ -49,6 +49,8 @@ using Org.IdentityConnectors.Framework.Common.Exceptions;
 using System.DirectoryServices.AccountManagement;
 using System.DirectoryServices.ActiveDirectory;
 using System.Threading;
+using Org.IdentityConnectors.Framework.Common.Objects;
+using System.Security.Principal;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
@@ -64,6 +66,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
         String _newPassword;
         ActiveDirectoryConfiguration _configuration = null;
         static Semaphore authenticationSem = new Semaphore(1, 1, "ActiveDirectoryConnectorAuthSem");
+        static readonly int ERR_PASSWORD_MUST_BE_CHANGED = -2147022989;
+        static readonly int ERR_PASSWORD_EXPIRED = -2147023688;
+
 
         internal PasswordChangeHandler(ActiveDirectoryConfiguration configuration)
         {
@@ -145,7 +150,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// <param name="directoryEntry"></param>
         /// <param name="username"></param>
         /// <param name="password"></param>
-        internal void Authenticate(/*DirectoryEntry directoryEntry,*/ string username,
+        internal Uid Authenticate(/*DirectoryEntry directoryEntry,*/ string username,
             Org.IdentityConnectors.Common.Security.GuardedString password)
         {
             password.Access(setCurrentPassword);
@@ -153,6 +158,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // create principle context for authentication
             string serverName = _configuration.LDAPHostName;
             PrincipalContext context = null;
+            UserPrincipal userPrincipal = null;
             try
             {
                 // according to microsoft docs:
@@ -165,7 +171,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     // in the connector configuration
                     DomainController domainController = ActiveDirectoryUtils.GetDomainController(_configuration);
                     context = new PrincipalContext(ContextType.Domain,
-                        domainController.Domain.Name, _configuration.DirectoryAdminName, 
+                        domainController.Domain.Name, _configuration.DirectoryAdminName,
                         _configuration.DirectoryAdminPassword);
                 }
                 else
@@ -187,12 +193,45 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     "ex_InvalidCredentials", "Invalid credentials supplied for user {0}",
                     username));
                 }
+                userPrincipal = UserPrincipal.FindByIdentity(context,
+                    IdentityType.SamAccountName, username);
+
+                if (userPrincipal.Sid == null)
+                {
+                    throw new ConnectorException(_configuration.ConnectorMessages.Format(
+                    "ex_SIDLookup", "An execption occurred during validation of user {0}.  The user was successfully authenticated, but the user's sid could not be determined.",
+                    username));
+                }
+
+                string sidString = "<SID=" + userPrincipal.Sid.Value + ">";
+                DirectoryEntry userDe = new DirectoryEntry(
+                    ActiveDirectoryUtils.GetLDAPPath(_configuration.LDAPHostName, sidString),
+                    _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
+
+                return new Uid(ActiveDirectoryUtils.ConvertUIDBytesToGUIDString(userDe.Guid.ToByteArray()));
+            }
+            catch (PrincipalOperationException e)
+            {
+                if ((e.ErrorCode.Equals(ERR_PASSWORD_MUST_BE_CHANGED)) || 
+                    (e.ErrorCode.Equals(ERR_PASSWORD_EXPIRED)))
+                {
+                    throw new PasswordExpiredException(e.Message);
+                }
+
+                throw;
             }
             finally
             {
+                if (userPrincipal != null)
+                {
+                    userPrincipal.Dispose();
+                    userPrincipal = null;
+                }
+
                 if (context != null)
                 {
                     context.Dispose();
+                    context = null;
                 }
                 authenticationSem.Release();
             }
