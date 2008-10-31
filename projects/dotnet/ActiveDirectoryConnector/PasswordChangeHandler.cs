@@ -193,14 +193,46 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     "ex_InvalidCredentials", "Invalid credentials supplied for user {0}",
                     username));
                 }
+                return GetUidFromSamAccountName(context, username);
+            }
+            catch (PrincipalOperationException e)
+            {
+                if ((e.ErrorCode.Equals(ERR_PASSWORD_MUST_BE_CHANGED)) || 
+                    (e.ErrorCode.Equals(ERR_PASSWORD_EXPIRED)))
+                {
+                    Uid uid = GetUidFromSamAccountName(context, username);
+                    PasswordExpiredException exception = new PasswordExpiredException(e.Message);
+                    exception.Uid = uid;
+                    throw exception;
+                }
+
+                throw;
+            }
+            finally
+            {
+                if (context != null)
+                {
+                    context.Dispose();
+                    context = null;
+                }
+                authenticationSem.Release();
+            }
+        }
+
+        public Uid GetUidFromSamAccountName(PrincipalContext context, String sAMAccountName)
+        {
+            UserPrincipal userPrincipal = null;
+
+            try
+            {
                 userPrincipal = UserPrincipal.FindByIdentity(context,
-                    IdentityType.SamAccountName, username);
+                    IdentityType.SamAccountName, sAMAccountName);
 
                 if (userPrincipal.Sid == null)
                 {
                     throw new ConnectorException(_configuration.ConnectorMessages.Format(
                     "ex_SIDLookup", "An execption occurred during validation of user {0}.  The user was successfully authenticated, but the user's sid could not be determined.",
-                    username));
+                    sAMAccountName));
                 }
 
                 string sidString = "<SID=" + userPrincipal.Sid.Value + ">";
@@ -210,16 +242,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                 return new Uid(ActiveDirectoryUtils.ConvertUIDBytesToGUIDString(userDe.Guid.ToByteArray()));
             }
-            catch (PrincipalOperationException e)
-            {
-                if ((e.ErrorCode.Equals(ERR_PASSWORD_MUST_BE_CHANGED)) || 
-                    (e.ErrorCode.Equals(ERR_PASSWORD_EXPIRED)))
-                {
-                    throw new PasswordExpiredException(e.Message);
-                }
-
-                throw;
-            }
             finally
             {
                 if (userPrincipal != null)
@@ -227,13 +249,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     userPrincipal.Dispose();
                     userPrincipal = null;
                 }
-
-                if (context != null)
-                {
-                    context.Dispose();
-                    context = null;
-                }
-                authenticationSem.Release();
             }
         }
     }

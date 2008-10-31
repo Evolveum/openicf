@@ -217,16 +217,22 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 // translate attribute passed in
                 foreach (ConnectorAttribute attribute in attributes)
                 {
-                    // Temporary
-                    // Trace.TraceInformation(String.Format("Setting attribute {0} to {1}",
-                    //    attribute.Name, attribute.Value));
+                    // encountered problems when processing change password at the same time 
+                    // as setting expired.  It would be set to expired, but the change would 
+                    // clear that.  So we must ensure that expired comes last.
+                    if (OperationalAttributes.PASSWORD_EXPIRED_NAME.Equals(attribute.Name))
+                    {
+                        continue;
+                    }
+
                     AddConnectorAttributeToADProperties(oclass,
                         directoryEntry, attribute, type);
+
                     //  Uncommenting the next line is very helpful in
                     //  finding mysterious errors.                    
                     //  directoryEntry.CommitChanges();
                 }
-               
+
                 directoryEntry.CommitChanges();
 
                 // now do the password change.  This is handled separately, because
@@ -251,6 +257,18 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                     directoryEntry.CommitChanges();
                 }
+
+                // see note in loop above for explaination of this
+                ConnectorAttribute expirePasswordAttribute = ConnectorAttributeUtil.Find(
+                    OperationalAttributes.PASSWORD_EXPIRED_NAME, attributes);
+
+                if (expirePasswordAttribute != null)
+                {
+                    AddConnectorAttributeToADProperties(oclass,
+                        directoryEntry, expirePasswordAttribute, type);
+                    directoryEntry.CommitChanges();
+                }
+
 
                 HandleNameChange(type, directoryEntry, attributes);
                 HandleContainerChange(type, directoryEntry, attributes, config);

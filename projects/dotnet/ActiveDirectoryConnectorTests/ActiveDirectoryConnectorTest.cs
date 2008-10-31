@@ -1455,6 +1455,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 catch (PasswordExpiredException e)
                 {
                     caughtException = true;
+                    Assert.AreEqual(createUid, e.Uid);
                 }
                 Assert.IsTrue(caughtException, "Negative test case should throw an exception");
 
@@ -1661,9 +1662,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                         gsCurrentPassword, null);
                 }
-                catch (Exception e)
+                catch (PasswordExpiredException e)
                 {
                     caughtException = true;
+                    Assert.AreEqual(createUid, e.Uid);
                 }
                 Assert.IsTrue(caughtException, "Negative test case should throw an exception");
 
