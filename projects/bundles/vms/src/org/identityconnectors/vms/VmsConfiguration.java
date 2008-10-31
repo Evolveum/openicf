@@ -42,6 +42,7 @@ package org.identityconnectors.vms;
 import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.TimeZone;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.common.l10n.CurrentLocale;
@@ -70,6 +71,14 @@ public class VmsConfiguration extends AbstractConfiguration {
     private String         _localHostShellPrompt = "BOOMBOOM";
     
     private static final String CATALOG = "org.identityconnectors.vms.VmsMessages";
+    
+    public VmsConfiguration() {
+        _vmsLocale = Locale.getDefault().toString();
+        _vmsTimeZone = TimeZone.getDefault().getID();
+        _vmsDateFormatWithoutSecs = "dd-MMM-yyyy HH:mm";
+        _vmsDateFormatWithSecs = "dd-MMM-yyyy HH:mm:ss";
+        _hostShellPrompt = "$";
+    }
 
     public void validate() {
     	if (isNull(_vmsLocale))
@@ -128,38 +137,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         return MessageFormat.format(getBundle().getString(key), objects);
     }
 
-    public String getVmsLocale() {
-        return _vmsLocale;
-    }
-
-    public void setVmsLocale(String vmsLocale) {
-        _vmsLocale = vmsLocale;
-    }
-
-    public String getVmsTimeZone() {
-        return _vmsTimeZone;
-    }
-
-    public void setVmsTimeZone(String vmsTimeZone) {
-        _vmsTimeZone = vmsTimeZone;
-    }
-
-    public String getVmsDateFormatWithSecs() {
-        return _vmsDateFormatWithSecs;
-    }
-
-    public void setVmsDateFormatWithSecs(String vmsDateFormatWithSecs) {
-        _vmsDateFormatWithSecs = vmsDateFormatWithSecs;
-    }
-
-    public String getVmsDateFormatWithoutSecs() {
-        return _vmsDateFormatWithoutSecs;
-    }
-
-    public void setVmsDateFormatWithoutSecs(String vmsDateFormatWithoutSecs) {
-        _vmsDateFormatWithoutSecs = vmsDateFormatWithoutSecs;
-    }
-
+    @ConfigurationProperty(order=1)
     public String getUserName() {
         return _userName;
     }
@@ -168,7 +146,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         _userName = userName;
     }
 
-    @ConfigurationProperty(confidential=true)
+    @ConfigurationProperty(confidential=true, order=2)
     public GuardedString getPassword() {
         return _password;
     }
@@ -177,6 +155,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         _password = password;
     }
 
+    @ConfigurationProperty(order=3)
     public String getHostNameOrIpAddr() {
         return _hostNameOrIpAddr;
     }
@@ -185,6 +164,24 @@ public class VmsConfiguration extends AbstractConfiguration {
         _hostNameOrIpAddr = hostNameOrIpAddr;
     }
 
+    @ConfigurationProperty(order=4)
+    public Integer getHostPortNumber() {
+        return _hostPortNumber;
+    }
+
+    public void setHostPortNumber(Integer hostPortNumber) {
+        _hostPortNumber = hostPortNumber;
+    }
+
+    @ConfigurationProperty(displayMessageKey="SSH.display", helpMessageKey="SSH.help", order=5)
+    public Boolean getSSH() {
+        return _isSSH;
+    }
+
+    public void setSSH(Boolean isSSH) {
+        _isSSH = isSSH;
+    }
+    @ConfigurationProperty(order=6)
     public String getHostLineTerminator() {
     	if (_hostLineTerminator!=null)
             return _hostLineTerminator.replaceAll("\n", "\\n").replaceAll("\r", "\\r");
@@ -203,6 +200,7 @@ public class VmsConfiguration extends AbstractConfiguration {
             _hostLineTerminator = null;
     }
 
+    @ConfigurationProperty(order=7)
     public String getHostShellPrompt() {
     	return _hostShellPrompt;
     }
@@ -215,14 +213,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         _hostShellPrompt = hostShellPrompt;
     }
 
-    public Integer getHostPortNumber() {
-        return _hostPortNumber;
-    }
-
-    public void setHostPortNumber(Integer hostPortNumber) {
-        _hostPortNumber = hostPortNumber;
-    }
-
+    @ConfigurationProperty(order=8)
     public String getConnectScript() {
         return _connectScript;
     }
@@ -231,12 +222,41 @@ public class VmsConfiguration extends AbstractConfiguration {
         _connectScript = connectScript;
     }
 
-    @ConfigurationProperty(displayMessageKey="SSH.display", helpMessageKey="SSH.help")
-    public Boolean getSSH() {
-        return _isSSH;
+    @ConfigurationProperty(order=9)
+    public String getVmsLocale() {
+        return _vmsLocale;
     }
 
-    public void setSSH(Boolean isSSH) {
-        _isSSH = isSSH;
+    public void setVmsLocale(String vmsLocale) {
+        _vmsLocale = vmsLocale;
     }
+
+    @ConfigurationProperty(order=10)
+    public String getVmsTimeZone() {
+        return _vmsTimeZone;
+    }
+
+    public void setVmsTimeZone(String vmsTimeZone) {
+        _vmsTimeZone = vmsTimeZone;
+    }
+
+    @ConfigurationProperty(order=11)
+    public String getVmsDateFormatWithSecs() {
+        return _vmsDateFormatWithSecs;
+    }
+
+    public void setVmsDateFormatWithSecs(String vmsDateFormatWithSecs) {
+        _vmsDateFormatWithSecs = vmsDateFormatWithSecs;
+    }
+
+    @ConfigurationProperty(order=12)
+    public String getVmsDateFormatWithoutSecs() {
+        return _vmsDateFormatWithoutSecs;
+    }
+
+    public void setVmsDateFormatWithoutSecs(String vmsDateFormatWithoutSecs) {
+        _vmsDateFormatWithoutSecs = vmsDateFormatWithoutSecs;
+    }
+
+
 }
