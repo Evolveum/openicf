@@ -3,7 +3,8 @@
 <meta http-equiv="content-type" content="text/html; charset=windows-1250"><title>Groovy Contract Tests Manual</title>
 
 </head>
-<body style="color: rgb(0, 0, 0);" alink="#ee0000" link="#0000ee" vlink="#551a8b">
+<body>
+<div id="projecthome" class="app">
 <h1>Groovy contract tests manual<span style="color: rgb(51, 102, 255);"></span><br>
 </h1>
 <span style="font-weight: bold;">Table of contents</span><br>
@@ -37,12 +38,11 @@ property file</a></li>
 </ul>
 </ul>
 <ul>
-<li>1.5 Configuring connector on <span style="font-style: italic;">Connector server <span style="color: rgb(204, 0, 0);">TODO</span></span></li>
+<li><a href="conserver">1.5 Configuring
+connector on <span style="font-style: italic;">Connector
+server&nbsp;<span style="color: rgb(204, 0, 0);"></span></span></a></li>
 </ul>
 <li><a href="indepth.html">2 In-depth manual</a></li>
-<li>Running tests</li>
-<li>Connector servers</li>
-<li>Notation</li>
 <li><a href="appendix.html">A) Appendix</a></li>
 <!-- former name: Gateway -->
 </ul>
@@ -68,9 +68,8 @@ start guide</h1>
 Contract test configuration files are Groovy scripts. So they
 have to
 respect syntax&nbsp;of the Groovy language. 98% of Java syntax will
-work in Groovy also.&nbsp;For more information on Groovy see <a href="http://groovy.codehaus.org/">http://groovy.codehaus.org</a>.
-Or see the <span style="font-weight: bold; color: rgb(255, 204, 0);">Groovy
-TOI</span> -- make a link here...
+work in Groovy also.&nbsp;For more information on Groovy see<!-- TODO insert a more specific link here, maybe my tutorial -->
+<a href="http://groovy.codehaus.org/">http://groovy.codehaus.org</a>.&nbsp;
 <!-- ======================================================================== -->
 <h2><a name="Introduction_to_Groovy"></a>1.1
 Introduction
@@ -114,21 +113,14 @@ mixing nested maps into lists is not supported.-->
 Properties
 files location and
 proprietary jars</h2>
-<table style="text-align: left; width: 100%;" border="5" cellpadding="2" cellspacing="2">
-<tbody>
-<tr>
-<td style="background-color: rgb(255, 255, 153);">Warning:
-This part (order of configuration files) will <span style="color: rgb(204, 0, 0);">change</span> due to
-Issue #312, difference will be in the
-ordering of configuration files.</td>
-</tr>
-</tbody>
-</table>
-<p>Following directories hold the
-contract test configurations:</p>
+Following directories hold the
+contract test configurations:
 <ol>
-<li><span style="font-family: monospace;">{$user.home}/.bundle-name/contract-tests.groovy</span></li>
-<li><span style="font-family: monospace;">{$user.home}/.bundle-name-{$configuration}/contract-tests.groovy</span></li>
+<li><span style="font-family: monospace;">{$user.home}/.connectors/.bundle-name/contract-tests.groovy
+&nbsp; //main configuration file</span></li>
+<li><span style="font-family: monospace;">{$user.home}/.connectors/.bundle-name/{$configuration}/contract-tests.groovy
+&nbsp;// optional for resource specific configs
+(databasetable/mysql etc.)</span></li>
 </ol>
 <p>Latter properties files <strong>override
 </strong>properties loaded from previous properties files.</p>
@@ -165,8 +157,8 @@ to versioning system. They
 are located in<span style="font-family: monospace;"> \lib</span>
 subdirectories of configuration specific folders:<br>
 <ol>
-<li><span style="font-family: monospace;">user-home/.bundle-name/lib</span></li>
-<li><span style="font-family: monospace;">user-home/.bundle-name-{$configuration}\lib</span></li>
+<li><span style="font-family: monospace;">{$user-home}/.bundle-name/lib</span></li>
+<li><span style="font-family: monospace;">{$user-home}/.bundle-name/{$configuration}/lib</span></li>
 </ol>
 <hr><!-- ======================================================================== -->
 <h2><a name="A_Configuring_a_local_Connector"></a>1.3
@@ -187,6 +179,20 @@ file:<br>
 bundle jar - property is set by ant - leave it as it is</span><br>
 <span style="font-family: monospace;">testsuite.bundleJar=System.getProperty("connector-jar")</span><br>
 <br>
+<span style="background-color: rgb(204, 204, 204);">[Note
+-- </span><span style="font-style: italic; background-color: rgb(204, 204, 204);">remote
+connector on Connector Server</span><span style="background-color: rgb(204, 204, 204);">] in case of
+connector on a
+Connector Server replace </span><span style="font-family: monospace; background-color: rgb(204, 204, 204);">testsuite.bundleJar</span><span style="background-color: rgb(204, 204, 204);"> with the
+following:</span><br style="background-color: rgb(204, 204, 204);">
+<span style="font-family: monospace; background-color: rgb(204, 204, 204);">testsuite.gwhost="hostAddress"</span><br style="background-color: rgb(204, 204, 204);">
+<span style="font-family: monospace; background-color: rgb(204, 204, 204);">testsuite.gwport=portNumber
+// e.g. 21</span><br style="background-color: rgb(204, 204, 204);">
+<span style="font-family: monospace; background-color: rgb(204, 204, 204);">//
+gateway key is "changeit" by default</span><br style="background-color: rgb(204, 204, 204);">
+<span style="font-family: monospace; background-color: rgb(204, 204, 204);">testsuite.gwkey="gatewayKey"</span><br>
+<br>
+<br>
 </li>
 <li>define <span style="font-family: monospace;">connector.{$property.name}</span>&nbsp;for
 each annotated connector configuration bean property (in class
@@ -202,12 +208,14 @@ configuration</span><br>
 <span style="font-family: monospace;">connector.login="testsuite"</span><br>
 <span style="font-family: monospace;">connector.password="testsuite"</span><br>
 <br>
-<span style="background-color: rgb(204, 204, 204);"> <span style="font-family: monospace;"><span style="font-style: italic;">see In-depth guide: </span></span></span><span style="color: rgb(255, 0, 0);">
-sections Connector configuration properties for more details, and
-section Defining properties to learn how the properties lookup works,
-how to define properties values using macros and what are possible
-properties types</span>. <span style="color: rgb(255, 102, 0); font-weight: bold;">TODO
-TODO TODO</span> <br>
+<span style="background-color: rgb(204, 204, 204);"> <span style="font-family: monospace;"><span style="font-style: italic;">see In-depth guide: </span></span></span>
+sections <a href="indepth.html#connconfprop">Connector
+configuration properties</a> for more details, and
+section <a href="indepth.html#properties">Defining
+properties</a> to learn how the properties lookup works,
+how to define properties values using static/lazy init. and what are
+possible
+properties types. <br>
 <br>
 </li>
 <li>Provide number of iterations of <span style="font-family: monospace;">ValidateApiOpTests</span>
@@ -325,12 +333,12 @@ SyncApiOp: []</span><br>
 define other <a href="indepth.html#optionalprops">Optional
 properties</a> <span style="background-color: rgb(204, 204, 204);"><span style="font-family: monospace;">&nbsp;<span style="font-style: italic;">see In-depth guide</span></span>.</span></li>
 <li><strong>Howto run tests for a local connector</strong></li>
-<ul>
+<ol>
 <li>compile the connector: run <span style="font-family: monospace;">ant</span>
 from the connector directory</li>
 <li>launch tests: issue command <span style="font-family: monospace;">ant run-contract-tests</span>
 from the connector directory. For details see section&nbsp;<a href="#runcontractt">Running tests</a>.</li>
-</ul>
+</ol>
 </ol>
 <table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
 <tbody>
@@ -492,5 +500,82 @@ Add all projects connector depends on to the <strong>Classpath</strong>
 (you can debug then all) and also add references to all required
 proprietary jars. </p>
 <img src="../images/contract-tests/classpath.jpg" style="width: 999px; height: 720px;" alt="classpath.jpg"><br>
-<h2>1.5 Configuring connector on <span style="font-style: italic;">Connector server</span></h2><span style="font-style: italic;">Connector server</span> (formely called Gateway)
+<h2><a name="conserver">1.5 Configuring connector on
+<span style="font-style: italic;">Connector server</span></a></h2>
+<table style="text-align: left; background-color: rgb(204, 204, 255); width: 100%;" border="1" cellpadding="2" cellspacing="2">
+<tbody>
+<tr>
+<td>[<span style="font-weight: bold;">Easy
+steps</span>] <br>
+<ul>
+<li>add <span style="font-family: monospace;">gwhost,
+gwport, gwkey</span> to the configuration &nbsp;(<code>${user.home}/.connectors/.bundle-name/contract-tests.groovy</code>).
+The rest of configuration remains as in <a href="#A_Configuring_a_local_Connector">points from 2 up to 5 for local connectors</a>.</li>
+<li>add a <span style="font-family: monospace;">build.xml</span>
+file
+to <span style="font-style: italic;">bundle
+directory</span> with the following content:<br>
+</li>
+<pre>&lt;project name="connector-ad" default="all"&gt; <br> &lt;property name="framework.dir" value="../../framework"/&gt;<br> &lt;property name="bundles.dir" value="../"/&gt; <br> &lt;property name="contracts.run" value="true"/&gt;<br> &lt;import file="${framework.dir}/connector_build.xml"/&gt;<br>&lt;/project&gt;<br><br></pre>
+<li>run using&nbsp;<code>ant
+run-gw-contract-tests</code></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<span style="font-style: italic;"><br>
+Connector Server</span>
+(formely called Gateway) will be referred as Server during this
+section. The Server contains connectors that are called by connector
+framework through a <span style="font-style: italic;">remote
+facade</span> (facade&nbsp;handles remote calls
+transparently).
+<p>First&nbsp;please take a look at <a href="#Quick_start_guide">Quick
+start guide</a>, if you haven't done that already.</p>
+<p>
+To run tests against connectors running behind Server it is necessary
+to create a new configuration (recommend for <code>framework/test-contract</code>
+project, but it's generally possible to configure it for every project
+which has <code>build.xml</code> and it imports <code>connector_build.xml</code>)
+and set following properties in
+<code>${user.home}/.connectors/.bundle-name/contract-tests.groovy</code>:</p>
+<ul>
+<li><span style="font-style: italic;">Server
+properties</span> (below) - when specified tests will run
+against Server</li>
+<li><a href="indepth.html#connconfprop">Connector
+configuration properties</a></li>
+<li><a href="indepth.html#validateprop">ValidateApiOpTests
+properties</a></li>
+<li><a href="indepth.html#schemaprop">SchemaApiOpTests
+properties</a></li>
+<li>optionally other <a href="indepth.html#optionalprops">Optional
+properties</a></li>
+</ul>
+<br>
+<span style="font-style: italic;">Server properties</span>:
+<pre>testsuite.gwhost="hostAddress"<br>testsuite.gwport=portNumber // e.g. 21<br>// gateway key is "changeit" by default<br>testsuite.gwkey="gatewayKey"</pre>
+There are currently no special properties necessary to identify
+connector behind the Server, because there must be <strong>exactly
+one</strong> connector behind the Server and the one is tested.
+<p>Before running tests compile contract test suite by running <code>ant</code>
+from within <code>framework/test-contract</code> (this
+step is necessary due to <code>run-contract-tests</code>
+ant target, which creates new <code>connector.jar</code>
+including proprietary jars which is not obviously necessary for
+Connector Server
+testing -- will be updated in the near future).<br>
+<br>
+Make sure Server is running on the host and port as specified by the
+properties and that connector is running behind the Server (all
+libraries
+on which connector depends must be available to the Server -- on the
+Server classpath).<br>
+<br>
+Tests are run&nbsp;from the <span style="font-style: italic;">bundle's
+directory</span> using command:
+</p>
+<pre><code>ant run-gw-contract-tests </code><br></pre>
+</div>
 </body></html>

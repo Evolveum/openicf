@@ -4,18 +4,40 @@
 
 </head>
 <body>
+<div id="projecthome" class="app">
 <pre>-&lt;( <a href="index.html">Contract tests manual</a> &gt; In-depth manual )&gt;-</pre>
 <hr style="width: 100%; height: 2px;">
-<h1>In-depth guide</h1>
-Table of contents:<br>
+<h1>2) In-depth guide</h1>
+Table of contents:&nbsp;
 <ul>
-<li><a href="#optionalprops">&nbsp; &nbsp;
-</a></li>
-<li>b</li>
-<li>c</li>
+<li><a href="#properties">2.1 Defining properties</a></li>
+<ul>
+<li><a href="#proplookup">Properties lookup</a></li>
+</ul>
+<ul>
+<li><a href="#pvaltypes">Properties value types</a></li>
+</ul>
+<ul>
+<li><a href="#macros">Macros</a>
+@deprecated</li>
+</ul>
+<li><a href="#Configuring_tests">2.2 Configuring tests</a></li><ul><li><a href="#minprop">Required properties</a></li></ul>
+<ul><ul><li><a href="#Bundle_jar_path">Bundle jar path</a></li></ul></ul>
+<ul><ul><li><a href="#connconfprop">Connector
+configuration properties</a></li></ul></ul>
+<ul><ul><li><a href="#validateprop">ValidateApiOpTests
+properties</a></li></ul></ul>
+<ul><ul><li><a href="#schemaprop">SchemaApiOpTests
+properties</a></li></ul></ul>
+<ul><li><a href="#optionalprops">Optional properties</a></li></ul>
+<ul><ul><li><a href="#provprops">ScriptOnResourceApiOpTests,
+ScriptOnConnectorApiOpTests properties</a></li></ul></ul>
+<ul><ul><li><a href="#dataprovprops">DataProvider properties</a></li></ul></ul><ul><ul><li><a href="#UpdateApiOpTests">UpdateApiOpTests</a></li></ul></ul>
+</ul>
+<ul>
 </ul>
 <hr style="width: 100%; height: 2px;">
-<h2><a name="properties">Defining properties</a></h2>
+<h2><a name="properties">2.1 Defining properties</a></h2>
 <p>Test properties follows these patterns:</p>
 <pre>// connector configuration<br>connector.{$property.name}="some value"<br>connector.connectionUrl="jdbc:mysql://localhost/database"<br><br>// testsuite configuration<br>testsuite.{$property.name}="some value"<br>testsuite.bundleJar=System.getProperty("connector-jar")<br><br>// DataProvider configuration<br>i{$iteration}.{$test.name}.{$oclass.name}.${attribute.name}="some value"<br>i0.Create.account.DEPARTMENT="some value"<br></pre>
 <table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
@@ -42,7 +64,8 @@ queried name, the GroovyDataProvider sets the default value according
 to the type of the property.<!-- TODO: maybe addition info is needed to clarify this type resolution, see the place where the types are defined exactly.--><br>
 <p>The values of the properties are evaluated at the initial
 parsing of the property files. The only exception is a use of <span style="font-family: monospace;">Lazy.random()</span>, <span style="font-family: monospace;">Lazy.get()</span>
-macros, as these implement lazy evaluation (just in the time of request
+static util methods, as these implement lazy evaluation (just in the
+time of request
 for property).
 </p>
 <p>
@@ -57,7 +80,8 @@ The next time test will look for the original property (<code style="color: rgb(
 its value
 will be returned immediately.
 </p>
-<h3>Property value types</h3>
+<h3><a name="pvaltypes"></a>Property value
+types</h3>
 <p>Any Java type can be used (see <a href="index.html#stdgroovyimports">standard imports</a>),
 in case you need additional types, take care of imports.<!-- TODO: v starych materialech v sekci Properties value types pod tabulkou tam je jeste poznamka o Guarded string a kol. Je to jeste porad platny? -->
 &nbsp;
@@ -79,15 +103,21 @@ Lazy.random("AAAAA##")</span> </li>
 will result in random string according to pattern: 4 uppercase letters
 concatenated with 2 digits (e.g.: JRIW87).</li>
 </ul>
-<h3>Macros</h3>
+<h3>Mac<a name="macros"></a>ros</h3>
 <p>There are no macros used in the new Groovy Contract tests,
 however if you would like to transfer your old configuration there is a
 <a href="appendix.html#transtable">Translation table</a>
 to groovy.</p>
-<h2>Configuring tests</h2>
+<h2></h2>
+<hr style="width: 100%; height: 2px;">
+<h2><br>
+</h2>
+<h2><a name="Configuring_tests"></a>2.2 Configuring
+tests</h2>
 <!-- ============================== -->
 <h3><a name="minprop">Required properties</a></h3>
-<h4>Bundle jar path</h4>
+<h4><a name="Bundle_jar_path"></a>Bundle jar
+path</h4>
 Path to connector distribution jar file (when compiled it is placed to <code>${project.name}/dist</code>
 directory).
 <pre>testsuite.bundleJar=System.getProperty("connector-jar") // connector-jar System property is set by ant to the current connector<br></pre>
@@ -301,7 +331,7 @@ is set <code>null</code> is used as <code>OperationOptions</code>.
 If one or both are set
 <code>OperationOptions</code> are built.
 <pre>testsuite.RUN_AS_USER.ScriptOnResource="user"<br>testsuite.RUN_WITH_PASSWORD.ScriptOnResource="password"<br></pre>
-<h4><a name="provprops">DataProvider properties</a></h4>
+<h4><a name="dataprovprops">DataProvider properties</a></h4>
 These properties define what values should be generated for object
 classes' attributes returned in connector schema. These properies use
 following pattern:
@@ -313,10 +343,11 @@ is name of the test (Search, Create, ..., see <code>*ApiOpTests#TEST_NAME</code>
 is name of attribute of object class.<br>
 Examples:
 <pre>// first created account by CreateApiOpTests will have FIRSTNAME attribute equal to FOO<br><span style="color: rgb(51, 102, 255);">i</span>0.Create.account.FIRSTNAME="FOO"<br><br>// all accounts in SearchApiOpTests will have LASTNAME attribute equal to BAR<br>Search.account.LASTNAME="BAR"<br><br>// all accounts in all tests will have PHONE attribute equal to 5-digit random values<br>account.PHONE=Lazy.random("######") <br></pre>
-<h4>UpdateApiOpTests</h4>
+<h4><a name="UpdateApiOpTests"></a>UpdateApiOpTests</h4>
 In the <code>UpdateApiOpTests</code> is created identity
 updated with new values. For those new values are used following
 properties:
 <pre>modified.${attribute.name}=${value}<br><br>// update LASTNAME attribute with value "sellers"<br>modified.LASTNAME="sellers"<br><br>// if you don't want so supply new value for update set it to the ObjectNotFoundException exception:<br>modified."@@NAME@@"= <span style="font-family: monospace;">ObjectNotFoundException() // means that value is not supplied</span><br></pre>
 <!-- -------------========== -->
+</div>
 </body></html>
