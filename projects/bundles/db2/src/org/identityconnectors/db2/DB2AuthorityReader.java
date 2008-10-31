@@ -76,8 +76,8 @@ class DB2AuthorityReader {
     
     
     private ResultSet executeQuery(String sql) throws SQLException {
-			Statement statement = conn.createStatement();
-	        ResultSet rs = statement.executeQuery(sql);
+			Statement statement = null;
+	        ResultSet rs = null;
             try{
 	    		statement = conn.createStatement();
 	            rs = statement.executeQuery(sql);

@@ -1,48 +1,23 @@
 package org.identityconnectors.db2;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.sql.*;
+import java.util.*;
 
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.common.security.GuardedString.Accessor;
-import org.identityconnectors.dbcommon.SQLUtil;
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeInfo;
-import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.ConnectorObject;
-import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
-import org.identityconnectors.framework.common.objects.ResultsHandler;
-import org.identityconnectors.framework.common.objects.Schema;
-import org.identityconnectors.framework.common.objects.SchemaBuilder;
-import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.framework.common.objects.filter.Filter;
-import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
-import org.identityconnectors.framework.spi.Configuration;
-import org.identityconnectors.framework.spi.ConnectorClass;
-import org.identityconnectors.framework.spi.PoolableConnector;
-import org.identityconnectors.framework.spi.operations.AuthenticateOp;
-import org.identityconnectors.framework.spi.operations.CreateOp;
-import org.identityconnectors.framework.spi.operations.SchemaOp;
-import org.identityconnectors.framework.spi.operations.SearchOp;
+import org.identityconnectors.dbcommon.*;
+import org.identityconnectors.framework.common.exceptions.*;
+import org.identityconnectors.framework.common.objects.*;
+import org.identityconnectors.framework.common.objects.filter.*;
+import org.identityconnectors.framework.spi.*;
+import org.identityconnectors.framework.spi.operations.*;
 
 @ConnectorClass(
         displayNameKey = "DatabaseTable",
         configurationClass = DB2Configuration.class)
-public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<String>, PoolableConnector {
+public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<FilterWhereBuilder>,DeleteOp,PoolableConnector {
 	
 	private final static Log log = Log.getLog(DB2Connector.class);
 	private Connection adminConn;
@@ -121,23 +96,59 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<S
 	}
 
 
-	public FilterTranslator<String> createFilterTranslator(ObjectClass oclass,
-			OperationOptions options) {
-		return new MyFilterTranslator();
-	}
+    public FilterTranslator<FilterWhereBuilder> createFilterTranslator(ObjectClass oclass, OperationOptions options) {
+        return new DB2FilterTranslator(oclass, options);
+    }
 	
-	private static class MyFilterTranslator implements FilterTranslator<String>{
-		public List<String> translate(Filter filter) {
-			return Arrays.asList("xx");
-		}
-		
-	}
 
-	public void executeQuery(ObjectClass oclass, String query,ResultsHandler handler, OperationOptions options) {
-		Set<Attribute> attributeSet = new HashSet<Attribute>();
-		attributeSet.add(new Name("xx"));
-		attributeSet.add(new Uid("xx"));
-		handler.handle(new ConnectorObject(ObjectClass.ACCOUNT,attributeSet));
+	public void executeQuery(ObjectClass oclass, FilterWhereBuilder where,ResultsHandler handler, OperationOptions options) {
+        /**
+         * The query to get the user columns
+         * The Password <> '' mean we want to avoid reading duplicates
+         * Every base user has password set up
+         */
+        final String ALL_USER_QUERY = "SELECT GRANTEE FROM SYSIBM.SYSDBAUTH WHERE GRANTEETYPE = 'U'"
+                    + " AND CONNECTAUTH = 'Y'";
+
+        if (oclass == null || !ObjectClass.ACCOUNT.equals(oclass)) {
+            throw new IllegalArgumentException("Unsupported objectclass '" + oclass + "'");
+        }
+        // Database query builder will create SQL query.
+        // if where == null then all users are returned
+        final DatabaseQueryBuilder query = new DatabaseQueryBuilder(ALL_USER_QUERY);
+        query.setWhere(where);
+        String sql = query.getSQL();
+        ResultSet result = null;
+        PreparedStatement statement = null;
+        try {
+            statement = adminConn.prepareStatement(sql);
+            SQLUtil.setParams(statement, query.getParams());
+            result = statement.executeQuery();
+            while (result.next()) {
+                ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
+                
+                //To be sure that uid and name are present for mysql
+                final String userName = result.getString("GRANTEE").trim();                
+                bld.setUid(new Uid(userName));
+                bld.setName(userName);
+                //No other attributes are now supported.
+                //Password can be encoded and it is not provided as an attribute
+                
+                // only deals w/ accounts..
+                bld.setObjectClass(ObjectClass.ACCOUNT);
+                
+                // create the connector object..
+                ConnectorObject ret = bld.build();
+                if (!handler.handle(ret)) {
+                    break;
+                }
+            }
+        } catch (SQLException e) {
+            throw ConnectorException.wrap(e);
+        } finally {
+            SQLUtil.closeQuietly(result);
+            SQLUtil.closeQuietly(statement);
+        }
 	}
 	
 	public Uid create(ObjectClass oclass, Set<Attribute> attrs,OperationOptions options) {
@@ -156,7 +167,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<S
         }
         updateAuthority(user.getNameValue(),password, attrs);
 		
-		return new Uid("xx");
+		return new Uid(user.getName());
 	}
 	
 	
@@ -245,7 +256,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<S
      *  Removes all grants for a user on the resource.  Effectively
      *  deletes them from the resource.
      */
-    private void revokeAllGrants(String user) throws Exception {
+    private void revokeAllGrants(String user) throws SQLException {
         checkDB2Validity(user,null);
         Collection<DB2Authority> allAuthorities = new DB2AuthorityReader(adminConn).readAllAuthorities(user);
         revokeGrants(allAuthorities);
@@ -292,6 +303,18 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<S
             executeSQL(sql);
         }
     }
+
+	public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
+        if ( objClass == null || !objClass.equals(ObjectClass.ACCOUNT)) {
+            throw new IllegalArgumentException(
+                    "Create operation requires an 'ObjectClass' attribute of type 'Account'.");
+        }
+		try {
+			revokeAllGrants(uid.getName());
+		} catch (SQLException e) {
+			throw new ConnectorException("Error revoking user grants",e);
+		}
+	}
     
     
     
