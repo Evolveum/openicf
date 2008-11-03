@@ -385,12 +385,22 @@ additional types) <br>
 </span>
 <hr style="width: 100%; height: 2px;"><span style="font-weight: bold; color: rgb(255, 204, 51);"></span>
 <h2><a name="runcontractt">1.4 Running tests</a></h2>
-&nbsp;<span style="font-weight: bold;">Checkpoint:</span>
-make sure that <span style="font-style: italic;">framework,
-contract tests</span> and the <span style="font-style: italic;">connector to test</span>
+<span style="font-weight: bold;"><span
+ style="color: rgb(204, 0, 0);">Checkpoint</span>:</span>
+<br>
+<ul>
+  <li>make sure that <span style="font-style: italic;">framework,
+contract tests</span> and the <span
+ style="font-style: italic;">connector to test</span>
 are built by <span style="font-family: monospace;">
-ant</span> (as a result&nbsp;<span style="font-family: monospace;">/dist</span>
-folder will be created).<br>
+ant</span> (as a result&nbsp;<span
+ style="font-family: monospace;">/dist</span>
+folder will be created).&nbsp;</li>
+  <li>verify if one of <code>fooconnector/build.xml</code>
+or <code>fooconnector/build.properties</code> contains
+line&nbsp;<code style="color: rgb(204, 0, 0);">contracts.run=true</code>
+that enables launch of contract tests.</li>
+</ul>
 <!-- TABLE -->
 <table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
 <tbody>
