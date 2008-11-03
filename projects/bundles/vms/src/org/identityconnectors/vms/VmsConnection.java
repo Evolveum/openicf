@@ -40,19 +40,14 @@
 package org.identityconnectors.vms;
 
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.script.ScriptExecutor;
 import org.identityconnectors.common.script.ScriptExecutorFactory;
-import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-
 
 import expect4j.Closure;
 import expect4j.Expect4j;
@@ -112,7 +107,6 @@ public class VmsConnection {
         _expect4j.close();
     }
 
-    private static final DateFormat _vmsDateFormat = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
     public void test() {
         try {
             resetStandardOutput();

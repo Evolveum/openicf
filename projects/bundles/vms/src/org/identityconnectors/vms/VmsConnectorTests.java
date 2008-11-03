@@ -497,9 +497,7 @@ public class VmsConnectorTests {
             deleteUser(getTestUser(), info);
             info.create(ObjectClass.ACCOUNT, attrs, null);
     
-            // Test the write-only attributes
-            //
-            testModifyUserAttribute(info, AttributeBuilder.build(ATTR_OWNER, new Object[0]), false);
+            testModifyUserAttribute(info, AttributeBuilder.build(ATTR_OWNER, ""), true);
         } finally {
             info.dispose();
         }
@@ -734,7 +732,9 @@ public class VmsConnectorTests {
         if (check) {
             ConnectorObject user = getUser(connector, getTestUser());
             Attribute newAttribute = user.getAttributeByName(attribute.getName());
-            Assert.assertEquals(attribute.getValue(), newAttribute.getValue());
+            Object one = attribute.getValue();
+            Object two = newAttribute.getValue();
+            Assert.assertEquals(one, two);
         }
     }
 
@@ -1035,21 +1035,6 @@ public class VmsConnectorTests {
         config.setVmsTimeZone("GMT-06:00");
         return config;
     }
-
-
-    private VmsConfiguration createUserConfiguration(String userName) {
-        VmsConfiguration config = new VmsConfiguration();
-        config.setHostLineTerminator(getLineTerminator());
-        config.setHostNameOrIpAddr(HOST_NAME);
-        config.setHostPortNumber(getHostPort());
-        config.setHostShellPrompt(SHELL_PROMPT);
-        config.setPassword(new GuardedString("password".toCharArray()));
-        config.setUserName(userName);
-        config.setConnectScript(getConnectScript());
-        config.setSSH(isSSH());
-        return config;
-    }
-
 
     public static class TestHandler implements ResultsHandler, Iterable<ConnectorObject> {
         private List<ConnectorObject> objects = new LinkedList<ConnectorObject>();
