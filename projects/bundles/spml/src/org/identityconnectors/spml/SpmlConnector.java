@@ -780,7 +780,7 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
     }
 
     private void updateSchema(String objectClass, Set<AttributeInfo> attributeInfos) throws Exception {
-        if (_mapSetNameExecutor!=null) {
+        if (_schemaExecutor!=null) {
             Map<String, Object> arguments = new HashMap<String, Object>();
             arguments.put("objectClass", objectClass);
             arguments.put("attributeInfos", attributeInfos);
