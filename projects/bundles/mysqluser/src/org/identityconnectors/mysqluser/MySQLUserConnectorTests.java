@@ -119,25 +119,35 @@ public class MySQLUserConnectorTests {
      */
     @BeforeClass
     public static void setUpClass() throws Exception {
-        
-        idmHost = TestHelpers.getProperty("connector.host", null);
-        idmLogin = TestHelpers.getProperty("connector.login", null);
-        idmPassword = new GuardedString(TestHelpers.getProperty("connector.password", null).toCharArray());
-        idmPort = TestHelpers.getProperty("connector.port", null);
-        idmDriver = TestHelpers.getProperty("connector.driver", null); 
-        idmModelUser = TestHelpers.getProperty("connector.usermodel", null);        
-        final String passwd = TestHelpers.getProperty("connector.testpassword", null);
-        assertNotNull("Password must be configured for test", passwd);
-        testPassword = new GuardedString(passwd.toCharArray());
-        
-        assertNotNull("Host must be configured for test", idmHost);
-        assertNotNull("Login must be c  onfigured for test", idmLogin);
-        assertNotNull("Password must be configured for test", idmPassword);
-        assertNotNull("Port must be configured for test", idmPort);
-        assertNotNull("Driver must be configured for test", idmDriver);
-        assertNotNull("ModelUser must be configured for test", idmModelUser);
-        assertNotNull("ModelPassword must be configured for test", testPassword);
+        final String MSG = " must be configured for running unit test";
+        final String HOST = "connector.host";
+        idmHost = TestHelpers.getProperty(HOST, null);
+        assertNotNull(HOST + MSG, idmHost);
 
+        final String LOGIN = "connector.login";
+        idmLogin = TestHelpers.getProperty(LOGIN, null);
+        assertNotNull(LOGIN + MSG, idmLogin);
+
+        final String PASSWD = "connector.password";
+        idmPassword = new GuardedString(TestHelpers.getProperty(PASSWD, null).toCharArray());
+        assertNotNull(PASSWD + MSG, idmPassword);
+
+        final String PORT = "connector.port";
+        idmPort = TestHelpers.getProperty(PORT, null);
+        assertNotNull(PORT + MSG, idmPort);
+
+        final String DRIVER = "connector.driver";
+        idmDriver = TestHelpers.getProperty(DRIVER, null);
+        assertNotNull(DRIVER + MSG, idmDriver);
+
+        final String USER_MODEL = "connector.usermodel";
+        idmModelUser = TestHelpers.getProperty(USER_MODEL, null);
+        assertNotNull(USER_MODEL + MSG, idmModelUser);
+
+        final String TEST_PASSWD = "connector.testpassword";
+        final String passwd = TestHelpers.getProperty(TEST_PASSWD, null);
+        assertNotNull(TEST_PASSWD + MSG, passwd);
+        testPassword = new GuardedString(passwd.toCharArray());
     }
 
     /**
