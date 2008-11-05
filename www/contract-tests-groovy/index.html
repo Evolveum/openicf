@@ -1,102 +1,179 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html><head>
-<meta http-equiv="content-type" content="text/html; charset=windows-1250"><title>Groovy Contract Tests Manual</title></head>
-<body>
+<html>
+<head>
+
+  <meta http-equiv="content-type" content="text/html; charset=windows-1250">
+  <title>Groovy Contract Tests Manual</title>
+
+
+</head>
+
+
+<body style="color: rgb(0, 0, 0);" alink="#ee0000" link="#0000ee" vlink="#551a8b">
+
 <div id="projecthome" class="app">
 <h1>Groovy contract tests manual<span style="color: rgb(51, 102, 255);"></span><br>
+
 </h1>
+
 <span style="font-weight: bold;">Table of contents</span><br>
+
 <span style="font-style: italic;"></span>
 <ul>
-<li><a href="#Quick_start_guide">1 Quick start
+
+  <li><a href="#Quick_start_guide">1 Quick start
 guide</a></li>
-<ul>
-<li><a href="#Introduction_to_Groovy">1.1
+
+  <ul>
+
+    <li><a href="#Introduction_to_Groovy">1.1
 Introduction
 to Groovy</a></li>
-<li><a href="#Properties_files_location_and">1.2
+
+    <li><a href="#Properties_files_location_and">1.2
 Properties
 files location and proprietary jars</a></li>
-<ul>
-<li><a href="#Proprietary_jars">Proprietary
+
+    <ul>
+
+      <li><a href="#Proprietary_jars">Proprietary
 jars</a></li>
-</ul>
-</ul>
-<ul>
-<li><a href="#A_Configuring_a_local_Connector">1.3
+
+    </ul>
+
+  </ul>
+
+  <ul>
+
+    <li><a href="#A_Configuring_a_local_Connector">1.3
 Configuring
 a local Connector</a></li>
-<li><a href="#runcontractt">1.4 Running test</a></li>
-<ul>
-<li><a href="#Basic_usage">Basic usage</a></li>
-<li><a href="#runexport">Export of generated
+
+    <li><a href="#runcontractt">1.4 Running test</a></li>
+
+    <ul>
+
+      <li><a href="#Basic_usage">Basic usage</a></li>
+
+      <li><a href="#runexport">Export of generated
 test parameters</a></li>
-<li><a href="#runfile">Use of generated
+
+      <li><a href="#runfile">Use of generated
 property file</a></li>
-</ul>
-</ul>
-<ul>
-<li><a href="conserver">1.5 Configuring
+
+    </ul>
+
+  </ul>
+
+  <ul>
+
+    <li><a href="conserver">1.5 Configuring
 connector on <span style="font-style: italic;">Connector
-server&nbsp;<span style="color: rgb(204, 0, 0);"></span></span></a></li>
-</ul>
-<li><a href="indepth.html">2 In-depth manual</a></li>
-<li><a href="appendix.html">A) Appendix</a></li>
+server&nbsp;</span></a></li>
+
+    <li><a href="#lazys">1.6 Lazy evaluation helper
+methods</a></li>
+
+    <ul>
+
+      <li><a href="#lazyget">Lazy.get()</a></li>
+
+      <li><a href="#lazyrandom">Lazy.random()</a></li>
+
+    </ul>
+
+  </ul>
+
+  <li><a href="indepth.html">2 In-depth manual</a></li>
+
+  <li><a href="appendix.html">A) Appendix</a></li>
+
 <!-- former name: Gateway -->
 </ul>
+
 <hr style="width: 100%; height: 2px;">
 <!-- ======================================================================== -->
 <h2>Notation</h2>
+
 <ul>
-<li><span style="background-color: rgb(204, 204, 204);"><span style="font-family: monospace;"><span style="font-style: italic;">see In-depth guide: </span></span></span>
+
+  <li><span style="background-color: rgb(204, 204, 204);"><span style="font-family: monospace;"><span style="font-style: italic;">see In-depth guide: </span></span></span>
 -- is marker for hyperlinks to the advanced guide.</li>
-<li>The following means all
+
+  <li>The following means all
 the same in this text:<span style="font-style: italic;"></span></li>
-<ul>
-<li><span style="font-style: italic;">properties
+
+  <ul>
+
+    <li><span style="font-style: italic;">properties
 file = contract test configuration file = test configuration</span>&nbsp;</li>
-</ul>
-<ul>
-<li><span style="font-style: italic;">connector
+
+  </ul>
+
+  <ul>
+
+    <li><span style="font-style: italic;">connector
 = bundle</span></li>
+
+  </ul>
+
 </ul>
-</ul>
+
 <h1><a name="Quick_start_guide"></a>1. Quick
 start guide</h1>
+
 Contract test configuration files are Groovy scripts. So they
 have to
-respect syntax&nbsp;of the Groovy language. 98% of Java syntax will
+respect syntax&nbsp;of the Groovy language (particularly <a href="http://groovy.codehaus.org/ConfigSlurper">CONFIG
+SLURPER</a>). 98% of Java syntax will
 work in Groovy also.&nbsp;For more information on Groovy see<!-- TODO insert a more specific link here, maybe my tutorial -->
 <a href="http://groovy.codehaus.org/">http://groovy.codehaus.org</a>.&nbsp;
 <!-- ======================================================================== -->
 <h2><a name="Introduction_to_Groovy"></a>1.1
 Introduction
 to Groovy</h2>
+
 <p>Essential Groovy contructs used to configure contract tests
 follow:</p>
+
 <ul>
-<li>create a map: <span style="font-family: monospace;">map
+
+  <li>create a map: <span style="font-family: monospace;">map
 = [key1 :&nbsp;value1, key2 : value2]</span>&nbsp;</li>
-<li>new list: <span style="font-family: monospace;">list
+
+  <li>new list: <span style="font-family: monospace;">list
 = [item1, item2]</span>&nbsp;</li>
-<li>calls of static contract test helpers: <span style="font-family: monospace;">Lazy.random()</span>, <span style="font-family: monospace;">Lazy.get()</span>.
+
+  <li>calls of
+static contract test helpers: <a href="#lazyrandom"><span style="font-family: monospace;">Lazy.random()</span></a>,
+    <a href="#lazyget"><span style="font-family: monospace;">Lazy.get()</span></a>.
 These methods are evaluated just in time of user query.</li>
-<li>TIP: you can reduce repetition of the same prefix, for
+
+  <li>TIP: you can reduce repetition of the same prefix, for
 instance state <span style="font-style: italic;">before</span>:<br>
-<pre>// path to bundle jar - property is set by ant - leave it as it is<br>testsuite.bundleJar=System.getProperty("connector-jar")<br>// ValidateApiOpTests:<br>testsuite.Validate.iterations="3"<br></pre>
-<a name="after"><span style="font-style: italic;">after</span>:</a><br>
-<pre>testsuite {<br>&nbsp;&nbsp;&nbsp; // path to bundle jar - property is set by ant - leave it as it is<br>&nbsp;&nbsp;&nbsp; bundleJar=System.getProperty("connector-jar")<br>&nbsp;&nbsp;&nbsp; // ValidateApiOpTests:<br>&nbsp;&nbsp;&nbsp; Validate.iterations="3"<br>}</pre>
-</li>
-<ul>
-<li>[PITFALL] in one
+
+    <pre>// path to bundle jar - property is set by ant - leave it as it is<br>testsuite.bundleJar=System.getProperty("connector-jar")<br>// ValidateApiOpTests:<br>testsuite.Validate.iterations="3"<br></pre>
+
+    <a name="after"><span style="font-style: italic;">after</span>:</a><br>
+
+    <pre>testsuite {<br>&nbsp;&nbsp;&nbsp; // path to bundle jar - property is set by ant - leave it as it is<br>&nbsp;&nbsp;&nbsp; bundleJar=System.getProperty("connector-jar")<br>&nbsp;&nbsp;&nbsp; // ValidateApiOpTests:<br>&nbsp;&nbsp;&nbsp; Validate.iterations="3"<br>}</pre>
+
+  </li>
+
+  <ul>
+
+    <li>[PITFALL] in one
 configuration file there could be only
 one prefix defined, so in case of <a href="#after"><span style="font-family: monospace;">testsuite</span>
 example</a> there
 can't be more then one blocks with testsuite prefix in a single file.
 E.g. following is invalid combination: <span style="font-family: monospace;">testsuite{...}
 testsuite{...}</span> </li>
+
+  </ul>
+
 </ul>
-</ul>
+
 Where key-value pairs, items are
 typically&nbsp;<span style="font-family: monospace;">"quoted
 strings"</span><!-- Note: This is not always true, as we can have nested lists allowed. -->.
@@ -104,109 +181,158 @@ Note that groovy scripts' <span style="font-style: italic;">properties</span>
 use implicit type definition (no need to type <span style="font-family: monospace;">java.util.Map</span>
 neither <span style="font-family: monospace;">List</span>
 interfaces).<br>
-<!-- [Advanced] Nested lists are allowed in the configuration files, however
-mixing nested maps into lists is not supported.-->
+
+<!-- [Advanced] Nested lists are allowed in the configuration files, however mixing nested maps into lists is not supported.-->
 <!-- ======================================================================== -->
 <h2><a name="Properties_files_location_and"></a>1.2
 Properties
 files location and
 proprietary jars</h2>
+
 Following directories hold the
 contract test configurations:
 <ol>
-<li><span style="font-family: monospace;">{$user.home}/.connectors/.bundle-name/contract-tests.groovy
+
+  <li><span style="font-family: monospace;">{$user.home}/.connectors/bundle-name/build.groovy
 &nbsp; //main configuration file</span></li>
-<li><span style="font-family: monospace;">{$user.home}/.connectors/.bundle-name/{$configuration}/contract-tests.groovy
+
+  <li><span style="font-family: monospace;">{$user.home}/.connectors/bundle-name/{$configuration}/build.groovy
 &nbsp;// optional for resource specific configs
 (databasetable/mysql etc.)</span></li>
+
 </ol>
+
 <p>Latter properties files <strong>override
 </strong>properties loaded from previous properties files.</p>
+
 <table style="text-align: left; width: 100%;" border="0" cellpadding="2" cellspacing="2">
-<tbody>
-<tr>
-<td style="background-color: rgb(204, 204, 204);">Note:
-<span style="font-family: monospace;"><br>
-</span>
-<ul>
-<li><span style="font-family: monospace;">user-home</span>
+
+  <tbody>
+
+    <tr>
+
+      <td style="background-color: rgb(204, 204, 204);">Note:
+      <span style="font-family: monospace;"><br>
+
+      </span>
+      <ul>
+
+        <li><span style="font-family: monospace;">user-home</span>
 would be <span style="font-family: monospace;">/home/john</span>
 or <span style="font-family: monospace;">C:\Users\john</span>
 on Unix or Windows platforms
 typically.&nbsp;</li>
-<li><span style="font-family: monospace;">bundle-name</span>
+
+        <li><span style="font-family: monospace;">bundle-name</span>
 equals the connector's <span style="font-family: monospace;">project
 name</span> property, which resides in&nbsp;&nbsp;<span style="font-family: monospace;">build.xml</span>&nbsp;in
 the connector's folder.</li>
-<li><span style="font-family: monospace;">${configuration}</span>
+
+        <li><span style="font-family: monospace;">${configuration}</span>
 is to be replaced by resource specific configuration. For instance <span style="font-family: monospace;">databasetable</span>
 connector can run against various databases, so in case of MySQL
 configuration the folder name would be: <span style="font-family: monospace;">.databasetable-mysql</span>.</li>
-</ul>
-</td>
-</tr>
-</tbody>
+
+      </ul>
+
+      </td>
+
+    </tr>
+
+  </tbody>
 </table>
+
 <!-- ======================================================================== -->
 <h3><a name="Proprietary_jars"></a>Proprietary
 jars</h3>
+
 Proprietary jars should not be checked-in
 to versioning system. They
 are located in<span style="font-family: monospace;"> \lib</span>
 subdirectories of configuration specific folders:<br>
+
 <ol>
-<li><span style="font-family: monospace;">{$user-home}/.connectors/.bundle-name/lib</span></li>
-<li><span style="font-family: monospace;">{$user-home}/.connectors/.bundle-name/{$configuration}/lib</span></li>
+
+  <li><span style="font-family: monospace;">{$user-home}/.connectors/bundle-name/lib</span></li>
+
+  <li><span style="font-family: monospace;">{$user-home}/.connectors/bundle-name/{$configuration}/lib</span></li>
+
 </ol>
+
 <hr><!-- ======================================================================== -->
 <h2><a name="A_Configuring_a_local_Connector"></a>1.3
 Configuring
 a local&nbsp;Connector</h2>
+
 <p><span style="font-style: italic; color: rgb(153, 0, 0);">The
 following
 properties (from 1 to 6) will be defined in connector's property file:</span>
-<span style="font-family: monospace;">{$user.home}\.bundle-name\contract-tests.groovy</span>.
+<span style="font-family: monospace;">{$user.home}\bundle-name\build.groovy</span>.
 The presented script fragments are from <a href="appendix.html#attachdbtableconfig">DatabaseTable
 connector's
 configuration files</a>.&nbsp;</p>
+
 <ol>
-<li>define <span style="font-family: monospace;">testsuite.bundleJar</span>
-property in connector's <span style="font-family: monospace;">contract-tests.groovy</span>
+
+  <li>define <span style="font-family: monospace;">testsuite.bundleJar</span>
+property in connector's <span style="font-family: monospace;">build.groovy</span>
 file:<br>
-<span style="font-family: monospace;">// path to
+
+    <span style="font-family: monospace;">// path to
 bundle jar - property is set by ant - leave it as it is</span><br>
-<span style="font-family: monospace;">testsuite.bundleJar=System.getProperty("connector-jar")</span><br>
-<br>
-<span style="background-color: rgb(204, 204, 204);">[Note
+
+    <span style="font-family: monospace;">testsuite.bundleJar=System.getProperty("connector-jar")</span><br>
+
+    <br>
+
+    <span style="background-color: rgb(204, 204, 204);">[Note
 -- </span><span style="font-style: italic; background-color: rgb(204, 204, 204);">remote
 connector on Connector Server</span><span style="background-color: rgb(204, 204, 204);">] in case of
 connector on a
 Connector Server replace </span><span style="font-family: monospace; background-color: rgb(204, 204, 204);">testsuite.bundleJar</span><span style="background-color: rgb(204, 204, 204);"> with the
 following:</span><br style="background-color: rgb(204, 204, 204);">
-<span style="font-family: monospace; background-color: rgb(204, 204, 204);">testsuite.gwhost="hostAddress"</span><br style="background-color: rgb(204, 204, 204);">
-<span style="font-family: monospace; background-color: rgb(204, 204, 204);">testsuite.gwport=portNumber
+
+    <span style="font-family: monospace; background-color: rgb(204, 204, 204);">testsuite.gwhost="hostAddress"</span><br style="background-color: rgb(204, 204, 204);">
+
+    <span style="font-family: monospace; background-color: rgb(204, 204, 204);">testsuite.gwport=portNumber
 // e.g. 21</span><br style="background-color: rgb(204, 204, 204);">
-<span style="font-family: monospace; background-color: rgb(204, 204, 204);">//
+
+    <span style="font-family: monospace; background-color: rgb(204, 204, 204);">//
 gateway key is "changeit" by default</span><br style="background-color: rgb(204, 204, 204);">
-<span style="font-family: monospace; background-color: rgb(204, 204, 204);">testsuite.gwkey="gatewayKey"</span><br>
-<br>
-<br>
-</li>
-<li>define <span style="font-family: monospace;">connector.{$property.name}</span>&nbsp;for
+
+    <span style="font-family: monospace; background-color: rgb(204, 204, 204);">testsuite.gwkey="gatewayKey"</span><br>
+
+    <br>
+
+    <br>
+
+  </li>
+
+  <li>define <span style="font-family: monospace;">connector.{$property.name}</span>&nbsp;for
 each annotated connector configuration bean property (in class
 implementing <a href="http://idmvm120.central.sun.com/hudson/job/framework/javadoc/org/identityconnectors/framework/spi/Configuration.html"><span style="font-family: monospace;">Configuration</span></a>
 interface).<br>
-<span style="font-family: monospace;">// Connector
+
+    <span style="font-family: monospace;">// Connector
 configuration</span><br>
-<span style="font-family: monospace;">connector.driver="com.mysql.jdbc.Driver"</span><br>
-<span style="font-family: monospace;">connector.keyColumn="ACCOUNTID"</span><br>
-<span style="font-family: monospace;">connector.passwordColumn="PASSWORD"</span><br>
-<span style="font-family: monospace;">connector.DBTable="idm_sync"</span><br>
-<span style="font-family: monospace;">connector.connectionUrl="jdbc:mysql://idmserv1.czech.sun.com/idm_sync"</span><br>
-<span style="font-family: monospace;">connector.login="testsuite"</span><br>
-<span style="font-family: monospace;">connector.password="testsuite"</span><br>
-<br>
-<span style="background-color: rgb(204, 204, 204);"> <span style="font-family: monospace;"><span style="font-style: italic;">see In-depth guide: </span></span></span>
+
+    <span style="font-family: monospace;">connector.driver="com.mysql.jdbc.Driver"</span><br>
+
+    <span style="font-family: monospace;">connector.keyColumn="ACCOUNTID"</span><br>
+
+    <span style="font-family: monospace;">connector.passwordColumn="PASSWORD"</span><br>
+
+    <span style="font-family: monospace;">connector.DBTable="idm_sync"</span><br>
+
+    <span style="font-family: monospace;">connector.connectionUrl="jdbc:mysql://idmserv1.czech.sun.com/idm_sync"</span><br>
+
+    <span style="font-family: monospace;">connector.login="testsuite"</span><br>
+
+    <span style="font-family: monospace;">connector.password="testsuite"</span><br>
+
+    <br>
+
+    <span style="background-color: rgb(204, 204, 204);"> <span style="font-family: monospace;"><span style="font-style: italic;">see In-depth guide: </span></span></span>
 sections <a href="indepth.html#connconfprop">Connector
 configuration properties</a> for more details, and
 section <a href="indepth.html#properties">Defining
@@ -214,151 +340,234 @@ properties</a> to learn how the properties lookup works,
 how to define properties values using static/lazy init. and what are
 possible
 properties types. <br>
-<br>
-</li>
-<li>Provide number of iterations of <span style="font-family: monospace;">ValidateApiOpTests</span>
+
+    <br>
+
+  </li>
+
+  <li>Provide number of iterations of <span style="font-family: monospace;">ValidateApiOpTests</span>
 and at least one <strong>wrongly</strong> configured
 property per each iteration. By wrongly configured property I mean
 configured so that <a href="http://idmvm120.central.sun.com/hudson/job/framework/javadoc/org/identityconnectors/framework/spi/Configuration.html"><span style="font-family: monospace;">Configuration#validate</span></a>
 method should fail. <br>
-<span style="font-family: monospace;">// Test will go
+
+    <span style="font-family: monospace;">// Test will go
 through 3 iterations</span><br>
-<span style="font-family: monospace;">Validate.iterations="3"</span><br>
-<br>
-<span style="font-family: monospace;">// Connector
+
+    <span style="font-family: monospace;">Validate.iterations="3"</span><br>
+
+    <br>
+
+    <span style="font-family: monospace;">// Connector
 WRONG configuration for ValidateApiOpTests</span><br>
-<br>
-<span style="font-family: monospace;">&nbsp;&nbsp;//
+
+    <br>
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;//
 following
 property will be used in the first iteration (must be at least one)</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;connector.i1.wrong.host=""
-</span><br>
-<br>
-<span style="font-family: monospace;">&nbsp;&nbsp;//
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;connector.i1.wrong.host=""
+    </span><br>
+
+    <br>
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;//
 following
 property will be used in the second iteration</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;connector.i2.wrong.login=""</span><br>
-<br>
-<span style="font-family: monospace;">&nbsp;&nbsp;//
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;connector.i2.wrong.login=""</span><br>
+
+    <br>
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;//
 following
 property will be used in the third iteration</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;connector.i3.wrong.password=""</span><br>
-<br>
-<br>
-</li>
-<li>Define properties necessary to pass <a href="http://idmvm120.central.sun.com/hudson/job/framework/javadoc/org/identityconnectors/framework/api/operations/SchemaApiOp.html"><span style="font-family: monospace;">SchemaApiOpTests</span></a>.
-<br>
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;connector.i3.wrong.password=""</span><br>
+
+    <br>
+
+    <br>
+
+  </li>
+
+  <li>Define properties necessary to pass <a href="http://idmvm120.central.sun.com/hudson/job/framework/javadoc/org/identityconnectors/framework/api/operations/SchemaApiOp.html"><span style="font-family: monospace;">SchemaApiOpTests</span></a>.
+    <br>
+
 Define <span style="font-style: italic;">list</span>
 of supported object classes by connector (see <a href="http://idmvm120.central.sun.com/hudson/job/framework/javadoc/org/identityconnectors/framework/common/objects/ObjectClass.html"><span style="font-family: monospace;">
 ObjectClass.java</span></a> for up-to-date object class
 types):<br>
-<span style="font-family: monospace;">// database
+
+    <span style="font-family: monospace;">// database
 table connector supports only object class 'account'</span><br>
-<span style="font-family: monospace;">testsuite.Schema.oclasses=['account']</span>
-<br>
-<br>
+
+    <span style="font-family: monospace;">testsuite.Schema.oclasses=['account']</span>
+    <br>
+
+    <br>
+
 Define list of attributes per <strong>each</strong>
 supported object class:<br>
-<span style="font-family: monospace;">// list of ALL
+
+    <span style="font-family: monospace;">// list of ALL
 attributes of object class 'account' for database table connector:</span><br>
-<span style="font-family: monospace;">testsuite.Schema.attributes.account.oclasses=['@@NAME@@',
+
+    <span style="font-family: monospace;">testsuite.Schema.attributes.account.oclasses=['@@NAME@@',
 '@@PASSWORD@@', 'MANAGER', 'MIDDLENAME', </span> (continued next
 line)<br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;
 'FIRSTNAME', 'LASTNAME', 'EMAIL', 'DEPARTMENT', 'TITLE', 'AGE',
 'SALARY', 'JPEGPHOTO']</span><br>
-<br>
+
+    <br>
+
 Define <strong>every</strong> attribute of <strong>each</strong>
 object class:<br>
-<span style="font-family: monospace;">// definition of
+
+    <span style="font-family: monospace;">// definition of
 attribute @@NAME@@ of object class 'account' for databse table connector</span><br>
-<span style="font-family: monospace;">testsuite.Schema."@@NAME@@".attribute.account.oclasses=[</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+
+    <span style="font-family: monospace;">testsuite.Schema."@@NAME@@".attribute.account.oclasses=[</span><br>
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;
 type:
 'java.lang.String',</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;
 readable:
 "true",</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;
 createable:
 "true",</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;
 updateable:
 "true",</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;
 required:
 "true",</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;
 multiValue:
 "false",</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;
 returnedByDefault: "true" </span><br>
-<span style="font-family: monospace;"> ]</span><br>
-<br>
-<br>
+
+    <span style="font-family: monospace;"> ]</span><br>
+
+    <br>
+
+    <br>
+
 Define supported object classes by operations. Must contain <strong>exactly</strong>
 the operations that are implemented by the connector:<br>
-<span style="font-family: monospace;">// object
+
+    <span style="font-family: monospace;">// object
 classes supported by operations for database table connector</span><br>
-<span style="font-family: monospace;">Schema.operations=[</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+
+    <span style="font-family: monospace;">Schema.operations=[</span><br>
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;
 GetApiOp: ['account'],</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;
 SchemaApiOp: ['account'],</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;
 ValidateApiOp: ['account'],</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;
 CreateApiOp: ['account'],</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;
 SearchApiOp: ['account'],</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;
 DeleteApiOp: ['account'],</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;
 ScriptOnConnectorApiOp: ['account'],</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;
 UpdateApiOp: ['account'],</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;
 AuthenticationApiOp: ['account'],</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;
 TestApiOp: ['account'],</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+
+    <span style="font-family: monospace;">&nbsp;&nbsp;
 SyncApiOp: []</span><br>
-<span style="font-family: monospace;"> ]</span><br>
-<br>
-<br>
-</li>
-<li>Alternatively
+
+    <span style="font-family: monospace;"> ]</span><br>
+
+    <br>
+
+    <br>
+
+  </li>
+
+  <li>Alternatively
 define other <a href="indepth.html#optionalprops">Optional
 properties</a> <span style="background-color: rgb(204, 204, 204);"><span style="font-family: monospace;">&nbsp;<span style="font-style: italic;">see In-depth guide</span></span>.</span></li>
-<li><strong>Howto run tests for a local connector</strong></li>
-<ol>
-<li>compile the connector: run <span style="font-family: monospace;">ant</span>
+
+  <li><strong>Howto run tests for a local connector</strong></li>
+
+  <ol>
+
+    <li>compile the connector: run <span style="font-family: monospace;">ant</span>
 from the connector directory</li>
-<li>launch tests: issue command <span style="font-family: monospace;">ant run-contract-tests</span>
+
+    <li>launch tests: issue command <span style="font-family: monospace;">ant run-build</span>
 from the connector directory. For details see section&nbsp;<a href="#runcontractt">Running tests</a>.</li>
+
+  </ol>
+
 </ol>
-</ol>
+
 <table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
-<tbody>
-<tr>
-<td style="background-color: rgb(204, 204, 255);"><!-- ******* --><strong>Troubleshooting
+
+  <tbody>
+
+    <tr>
+
+      <td style="background-color: rgb(204, 204, 255);"><!-- ******* --><strong>Troubleshooting
 contract-test.groovy files</strong>
-<ul>
-<li>contract test <span style="font-weight: bold;">property
+      <ul>
+
+        <li>contract test <span style="font-weight: bold;">property
 names</span> are:</li>
-<ul>
-<li>case sensitive</li>
-<li>must be valid Java identificators, OR invalid parts
+
+        <ul>
+
+          <li>case sensitive</li>
+
+          <li>must be valid Java identificators, OR invalid parts
 of property name should be escaped, for instance<br>
+
 &nbsp;-- WRONG:<br>
+
 &nbsp;&nbsp;<span style="font-family: monospace;">testsuite.Schema.<span style="font-style: italic; color: rgb(51, 51, 255);">@@NAME@@</span>.attribute.account.oclasses</span>
 or <span style="font-family: monospace;"><span style="font-style: italic; color: rgb(51, 51, 255);">"@@NAME@@"</span>.attribute.account.oclasses</span><br>
+
 &nbsp;-- CORRECT:<br>
+
 &nbsp;&nbsp;<span style="font-family: monospace;">testsuite.</span><span style="font-family: monospace;">Schema.<span style="color: rgb(204, 0, 0);">"</span>@@NAME@@<span style="color: rgb(204, 0, 0);">"</span>.attribute.account.oclasses</span><br>
-<br>
-</li>
-</ul>
-<li><a name="stdgroovyimports"></a>[<span style="font-weight: bold;">standard groovy imports</span>]
+
+            <br>
+
+          </li>
+
+        </ul>
+
+        <li><a name="stdgroovyimports"></a>[<span style="font-weight: bold;">standard groovy imports</span>]
 creation of any special object type is supported by
 Groovy contract tests. By default Groovy imports six packages and two
 classes: <span style="font-family: monospace;">java.lang.*,
@@ -367,73 +576,103 @@ classes: <span style="font-family: monospace;">java.lang.*,
 java.math.BigInteger, java.math.BigDecimal</span>. &nbsp;In
 case &nbsp;you want &nbsp;to use additional types, add an
 import to the &nbsp;start of you &nbsp;configuration file.<br>
-<br>
-</li>
-<li>[<span style="font-weight: bold; color: rgb(204, 0, 0);">contract
+
+          <br>
+
+        </li>
+
+        <li>[<span style="font-weight: bold; color: rgb(204, 0, 0);">contract
 test specific imports</span>] don't forget to add the following
 imports when you use Lazy proprety evaluation (optionally: your
 additional types) <br>
-<pre>import org.identityconnectors.contract.data.groovy.Lazy<br>import org.identityconnectors.contract.data.groovy.Random<br>import org.identityconnectors.contract.data.groovy.Get<br>import org.identityconnectors.contract.exceptions.ObjectNotFoundException;<br></pre>
-</li>
-</ul>
+
+          <pre>import org.identityconnectors.contract.data.groovy.Lazy<br>import org.identityconnectors.contract.data.groovy.Random<br>import org.identityconnectors.contract.data.groovy.Get<br>import org.identityconnectors.contract.exceptions.ObjectNotFoundException;<br></pre>
+
+        </li>
+
+      </ul>
+
 <!-- ******* --> </td>
-</tr>
-</tbody>
+
+    </tr>
+
+  </tbody>
 </table>
+
 <span style="font-weight: bold; color: rgb(255, 204, 51);"><br>
+
 <br>
+
 </span>
 <hr style="width: 100%; height: 2px;"><span style="font-weight: bold; color: rgb(255, 204, 51);"></span>
 <h2><a name="runcontractt">1.4 Running tests</a></h2>
-<span style="font-weight: bold;"><span
- style="color: rgb(204, 0, 0);">Checkpoint</span>:</span>
+
+<span style="font-weight: bold;"><span style="color: rgb(204, 0, 0);">Checkpoint</span>:</span>
 <br>
+
 <ul>
+
   <li>make sure that <span style="font-style: italic;">framework,
-contract tests</span> and the <span
- style="font-style: italic;">connector to test</span>
+contract tests</span> and the <span style="font-style: italic;">connector to test</span>
 are built by <span style="font-family: monospace;">
-ant</span> (as a result&nbsp;<span
- style="font-family: monospace;">/dist</span>
+ant</span> (as a result&nbsp;<span style="font-family: monospace;">/dist</span>
 folder will be created).&nbsp;</li>
+
   <li>verify if one of <code>fooconnector/build.xml</code>
 or <code>fooconnector/build.properties</code> contains
 line&nbsp;<code style="color: rgb(204, 0, 0);">contracts.run=true</code>
 that enables launch of contract tests.</li>
+
 </ul>
+
 <!-- TABLE -->
 <table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
-<tbody>
-<tr>
-<td style="background-color: rgb(204, 204, 255);"><!-- ******* -->
-<strong>Simple steps for running contract tests:</strong>
-<ol>
-<li>First compile the Framework and Connector classes by
+
+  <tbody>
+
+    <tr>
+
+      <td style="background-color: rgb(204, 204, 255);"><!-- ******* -->
+      <strong>Simple steps for running contract tests:</strong>
+      <ol>
+
+        <li>First compile the Framework and Connector classes by
 executing command <code>ant</code> in the <code>/framework</code>
 and <code>/bundles/fooconnector</code> directories.</li>
-<li>To run the Contract tests go to directory of the
+
+        <li>To run the Contract tests go to directory of the
 connector (e.g. <code>/bundles/fooconnector</code>) launch
-in the command line: <code>ant run-contract-tests</code>. </li>
-<li>It is nice to have a HTML summary of the test
+in the command line: <code>ant run-build</code>. </li>
+
+        <li>It is nice to have a HTML summary of the test
 results, issue command for it: <code>ant report-junits</code>
 . A new subdirectory <code>/reports</code> contains
 overview of test results.</li>
-</ol>
+
+      </ol>
+
 <!-- ******* --> </td>
-</tr>
-</tbody>
+
+    </tr>
+
+  </tbody>
 </table>
+
 <!-- EOF TABLE -->
 <h3><a name="Basic_usage"></a>Basic usage</h3>
+
 Contract test suite is run from within the connector directory with the
 following command:
-<pre>ant run-contract-tests<br></pre>
+<pre>ant run-build<br></pre>
+
 or in case connector has more test configurations:
-<pre>ant -Dconfiguration=conf1 run-contract-tests<br></pre>
+<pre>ant -Dconfiguration=conf1 run-build<br></pre>
+
 where <code>conf1</code> is configuration name. In this
 case tests will use <code>{$user.home}\.{$project.name}-conf1.properties</code>
 file.
 <p></p>
+
 <p>
 When contract tests are run, there is created a new <code>connector.jar</code>
 in <code>${connector.dir}/reports</code> directory. This
@@ -442,8 +681,10 @@ all the connector classes (excluding junit tests), all jars from <code>${connect
 directory and proprietary jars from <code>${user.home}/.${project.name}/lib</code>
 directory.
 </p>
+
 <h3><a name="runexport">Export of generated test
 parameters</a></h3>
+
 During the test there is generated a lot of parameters used as input
 data for the tests. These can be exported to a property file to <strong>rerun</strong>
 the test with the same values (Note: this file will contain all the
@@ -451,88 +692,134 @@ properties used during the test - <strong>configuration too</strong>).
 To do that you need to pass the name of <a href="#runfile">generated
 property file</a> in <code>test.parameters.outFile</code>
 property.<br>
+
 Example:
-<pre># run contract tests and store all parameters (attributes values) used by tests in <code>test.properties</code> file<br>ant -Dtest.parameters.outFile=generated.properties run-contract-tests<br></pre>
+<pre># run contract tests and store all parameters (attributes values) used by tests in <code>test.properties</code> file<br>ant -Dtest.parameters.outFile=generated.properties run-build<br></pre>
+
 <br>
+
 <table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
-<tbody>
-<tr>
-<td style="background-color: rgb(204, 204, 255);"><!-- ****** -->
-<h4><a name="runfile">Use of generated
+
+  <tbody>
+
+    <tr>
+
+      <td style="background-color: rgb(204, 204, 255);"><!-- ****** -->
+      <h4><a name="runfile">Use of generated
 property file</a></h4>
+
 To instruct tests to use generated property file you need to pass its
 filename in a <code>defaultdataprovider.propertyFile</code>
 property.<br>
+
 In this case the only file whose properties are loaded is the one
 specified by <code>defaultdataprovider.propertyFile</code>.
 Neither <code>build.properties</code> nor <code>${user.home}/.${project.name}.properties</code>
 etc. are read in this case.<br>
+
 Example:
-<pre>ant -Ddefaultdataprovider.propertyFile=generated.properties run-contract-tests<br></pre>
+      <pre>ant -Ddefaultdataprovider.propertyFile=generated.properties run-build<br></pre>
+
 Running tests with property file generated by different test
 configuration is <strong>not</strong> possible.
 <!-- ****** --></td>
-</tr>
-</tbody>
+
+    </tr>
+
+  </tbody>
 </table>
+
 <h3><a name="reports">Reports</a></h3>
+
 JUnit XML reports are generated to <code>${connector.dir}/reports</code>
 directory.
 To see HTML reports run command <code>ant report-junits</code>
 <p></p>
+
 <h3><a name="eclipse">Running in Eclipse</a></h3>
+
 <p>Create new JUnit run configuration and set values on tab <strong>Test</strong>
 according to the following screenshot. Don't forget to set JUnit 4 <strong>Test
 runner</strong>.</p>
+
 <img src="../images/contract-tests/test.jpg" style="width: 999px; height: 720px;" alt="test.jpg"><br>
+
 <p>On tab <strong>Arguments</strong> add following <strong>VM
 arguments</strong>:
 </p>
+
 <ul>
-<li><code>-Dconfiguration=oracle</code> - optional,
+
+  <li><code>-Dconfiguration=oracle</code> - optional,
 set only in case you want to run particular configuration</li>
-<li><code>-Dproject.name=connector-databasetable</code>
+
+  <li><code>-Dproject.name=connector-databasetable</code>
 - project name from <code>build.xml</code></li>
-<li><code>-Ddata-provider=org.identityconnectors.contract.data.<span style="font-weight: bold;">GroovyDataProvider</span></code>
+
+  <li><code>-Ddata-provider=org.identityconnectors.contract.data.<span style="font-weight: bold;">GroovyDataProvider</span></code>
 - set exactly this value</li>
-<li><code>-Dconnector-jar=dist/org.identityconnectors.databasetable-1.0.x.jar</code>
+
+  <li><code>-Dconnector-jar=dist/org.identityconnectors.databasetable-1.0.x.jar</code>
 - relative (to working directory) path to tested connector jar</li>
+
 </ul>
+
 [<span style="color: rgb(255, 0, 0);">!</span>]
 Don't forget to change <strong>Working directory</strong>
 to the tested connector project.
 <p></p>
+
 <img src="../images/contract-tests/arguments.jpg" style="width: 999px; height: 720px;" alt="arguments.jpg"><br>
+
 <p>
 Add all projects connector depends on to the <strong>Classpath</strong>
 (you can debug then all) and also add references to all required
 proprietary jars. </p>
+
 <img src="../images/contract-tests/classpath.jpg" style="width: 999px; height: 720px;" alt="classpath.jpg"><br>
+
 <h2><a name="conserver">1.5 Configuring connector on
 <span style="font-style: italic;">Connector server</span></a></h2>
+
 <table style="text-align: left; background-color: rgb(204, 204, 255); width: 100%;" border="1" cellpadding="2" cellspacing="2">
-<tbody>
-<tr>
-<td>[<span style="font-weight: bold;">Easy
+
+  <tbody>
+
+    <tr>
+
+      <td>[<span style="font-weight: bold;">Easy
 steps</span>] <br>
-<ul>
-<li>add <span style="font-family: monospace;">gwhost,
-gwport, gwkey</span> to the configuration &nbsp;(<code>${user.home}/.connectors/.bundle-name/contract-tests.groovy</code>).
-The rest of configuration remains as in <a href="#A_Configuring_a_local_Connector">points from 2 up to 5 for local connectors</a>.</li>
-<li>add a <span style="font-family: monospace;">build.xml</span>
+
+      <ul>
+
+        <li>add <span style="font-family: monospace;">gwhost,
+gwport, gwkey</span> to the configuration &nbsp;(<code>${user.home}/.connectors/bundle-name/build.groovy</code>).
+The rest of configuration remains as in <a href="#A_Configuring_a_local_Connector">points from 2 up to
+5 for local connectors</a>.</li>
+
+        <li>add a <span style="font-family: monospace;">build.xml</span>
 file
 to <span style="font-style: italic;">bundle
 directory</span> with the following content:<br>
-</li>
-<pre>&lt;project name="connector-ad" default="all"&gt; <br> &lt;property name="framework.dir" value="../../framework"/&gt;<br> &lt;property name="bundles.dir" value="../"/&gt; <br> &lt;property name="contracts.run" value="true"/&gt;<br> &lt;import file="${framework.dir}/connector_build.xml"/&gt;<br>&lt;/project&gt;<br><br></pre>
-<li>run using&nbsp;<code>ant
-run-gw-contract-tests</code></li>
-</ul>
-</td>
-</tr>
-</tbody>
+
+        </li>
+
+        <pre>&lt;project name="connector-ad" default="all"&gt; <br> &lt;property name="framework.dir" value="../../framework"/&gt;<br> &lt;property name="bundles.dir" value="../"/&gt; <br> &lt;property name="contracts.run" value="true"/&gt;<br> &lt;import file="${framework.dir}/connector_build.xml"/&gt;<br>&lt;/project&gt;<br><br></pre>
+
+        <li>run using&nbsp;<code>ant
+run-gw-build</code></li>
+
+      </ul>
+
+      </td>
+
+    </tr>
+
+  </tbody>
 </table>
+
 <span style="font-style: italic;"><br>
+
 Connector Server</span>
 (formely called Gateway) will be referred as Server during this
 section. The Server contains connectors that are called by connector
@@ -541,49 +828,95 @@ facade</span> (facade&nbsp;handles remote calls
 transparently).
 <p>First&nbsp;please take a look at <a href="#Quick_start_guide">Quick
 start guide</a>, if you haven't done that already.</p>
+
 <p>
 To run tests against connectors running behind Server it is necessary
 to create a new configuration (recommend for <code>framework/test-contract</code>
 project, but it's generally possible to configure it for every project
 which has <code>build.xml</code> and it imports <code>connector_build.xml</code>)
 and set following properties in
-<code>${user.home}/.connectors/.bundle-name/contract-tests.groovy</code>:</p>
+<code>${user.home}/.connectors/bundle-name/build.groovy</code>:</p>
+
 <ul>
-<li><span style="font-style: italic;">Server
+
+  <li><span style="font-style: italic;">Server
 properties</span> (below) - when specified tests will run
 against Server</li>
-<li><a href="indepth.html#connconfprop">Connector
+
+  <li><a href="indepth.html#connconfprop">Connector
 configuration properties</a></li>
-<li><a href="indepth.html#validateprop">ValidateApiOpTests
+
+  <li><a href="indepth.html#validateprop">ValidateApiOpTests
 properties</a></li>
-<li><a href="indepth.html#schemaprop">SchemaApiOpTests
+
+  <li><a href="indepth.html#schemaprop">SchemaApiOpTests
 properties</a></li>
-<li>optionally other <a href="indepth.html#optionalprops">Optional
+
+  <li>optionally other <a href="indepth.html#optionalprops">Optional
 properties</a></li>
+
 </ul>
+
 <br>
+
 <span style="font-style: italic;">Server properties</span>:
 <pre>testsuite.gwhost="hostAddress"<br>testsuite.gwport=portNumber // e.g. 21<br>// gateway key is "changeit" by default<br>testsuite.gwkey="gatewayKey"</pre>
+
 There are currently no special properties necessary to identify
 connector behind the Server, because there must be <strong>exactly
 one</strong> connector behind the Server and the one is tested.
 <p>Before running tests compile contract test suite by running <code>ant</code>
 from within <code>framework/test-contract</code> (this
-step is necessary due to <code>run-contract-tests</code>
+step is necessary due to <code>run-build</code>
 ant target, which creates new <code>connector.jar</code>
 including proprietary jars which is not obviously necessary for
 Connector Server
 testing -- will be updated in the near future).<br>
+
 <br>
+
 Make sure Server is running on the host and port as specified by the
 properties and that connector is running behind the Server (all
 libraries
 on which connector depends must be available to the Server -- on the
 Server classpath).<br>
+
 <br>
+
 Tests are run&nbsp;from the <span style="font-style: italic;">bundle's
 directory</span> using command:
 </p>
-<pre><code>ant run-gw-contract-tests </code><br></pre>
+
+<pre><code>ant run-gw-build </code><br></pre>
+
+<hr>
+<h2><a name="lazys"></a>1.6 Lazy evaluation
+helper methods</h2>
+
+<p>These methods are evaluated just in time of call.</p>
+
+<h3><code><a name="lazyrandom"></a>Lazy.random()</code></h3>
+
+<p>Uses RandomGenerator's pattern as an argument for dynamic
+generation of random string or other types (second argument).
+Escaping works the following way:</p>
+
+<pre>Lazy.random("AAA\s\u\p\e\rAAA") // generates XIOsuperBYK, use \ to generate a constant character<br></pre>
+
+<p>To generate certain types, use: (requirement, the given type
+shall have a constructor accepting strings.</p>
+
+<pre>Lazy.random("###.##", Long.class) // generates a random Long value <br></pre>
+
+<!-- TODO extend this in javadoc -->
+<h3><code><a name="lazyget"></a>Lazy.get()</code></h3>
+
+It acquires the argument property. This is useful, when on the right
+hand side of a property there is needed a value of another one, for
+instance:
+<pre>propertyA = "constant"<br>propertyB = Lazy.get("propertyA")<br></pre>
+
 </div>
-</body></html>
+
+</body>
+</html>

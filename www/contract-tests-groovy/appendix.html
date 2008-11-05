@@ -13,9 +13,9 @@ RandomGenerator pattern</a></li>
 <li>A.2 Database table connector Groovy configuration files</li>
 <ul>
 <li><a href="#A.2.1">A.2.1
-{$user.home}\.connector-databasetable\contract-tests.groovy</a></li>
+{$user.home}/.connectors/connector-databasetable/build.groovy</a></li>
 <li><a href="#A.2.2">A.2.2
-{$user.home}\.connector-databasetable-mysql\contract-tests.groovy</a></li>
+{$user.home}/.connectors/connector-databasetable/mysql/build.groovy</a></li>
 <li><a href="#transtable">A.3 Table of
 translation from the old configuration files</a></li>
 </ul>
@@ -23,11 +23,10 @@ translation from the old configuration files</a></li>
 <br>
 <h2><a name="rangendoc"></a>A.1 Javadoc
 for&nbsp;RandomGenerator pattern</h2>
-<span style="color: red;">TODO write here a word about
-usage of Lazy.random()</span>...
-Random
+<p><code>Lazy.random()</code> uses the pattern described further.</p>
+<p>Random
 generator uses a pattern to generate a random sequence based on given
-pattern. The supported characters are (can appear in pattern string): <br>
+pattern. The supported characters are (can appear in pattern string):</p>
 <ul>
 <li>&nbsp;# - numeric</li>
 <li>a - lowercase letter</li>
@@ -258,6 +257,10 @@ ${RANDOM, AAAAA##}, ${RANDOM, AAAAA##}}</span></td>
 </td>
 <td><span style="font-family: monospace;">connector.targetNames=new String[2]; connector.targetNames[0] = "java.lang.String"; connector.targetName[1] = "spml2-DSML-Target";</span>
 </td>
+</tr>
+<tr>
+<td>account.modified.string={$NOTSUPPLIED}</td>
+<td>modified.account=new ObjectNotFoundException()</td>
 </tr>
 </tbody>
 </table>
