@@ -10,6 +10,7 @@ import java.util.*;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.*;
+import org.identityconnectors.framework.api.operations.UpdateApiOp.Type;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.common.objects.filter.*;
 import org.identityconnectors.framework.test.TestHelpers;
@@ -24,7 +25,7 @@ import org.junit.*;
 public class DB2ConnectorTest {
 	private static DB2Configuration testConf;
     private static ConnectorFacade facade;
-    private static String findUser = TestHelpers.getProperty("findUser","TEST");
+    private static String findUser = TestHelpers.getProperty("testUser","test");
 
 	
 	
@@ -100,6 +101,7 @@ public class DB2ConnectorTest {
 		Set<Attribute> attributes = new HashSet<Attribute>();
 		attributes.add(new Name(username));
 		attributes.add(AttributeBuilder.buildPassword(new char[]{'a','b','c'}));
+		attributes.add(AttributeBuilder.build("grants","CONNECT ON DATABASE"));
 		facade.create(ObjectClass.ACCOUNT, attributes, new OperationOptions(emptyMap));
 		//find user
 		Uid uid = findUser(username);
@@ -151,6 +153,15 @@ public class DB2ConnectorTest {
         assertEquals("Expected user is not same",findUser, AttributeUtil.getAsStringValue(actual.getName()));
      }
     
+    public void testUpdate(){
+		String username = getTestRequiredProperty("testUser");
+		Map<String, Object> emptyMap = Collections.emptyMap();
+		Set<Attribute> attributes = new HashSet<Attribute>();
+		attributes.add(new Name(username));
+		Uid uid =  facade.update(Type.REPLACE, ObjectClass.ACCOUNT, attributes, new OperationOptions(emptyMap));
+		assertNotNull(uid);
+    }
+    
 	
     
     private static class FindUidObjectHandler implements ResultsHandler {
@@ -189,7 +200,10 @@ public class DB2ConnectorTest {
             }
             return true;
         }
-    }    
+    }
+    
+    
+    
     
 	
 	

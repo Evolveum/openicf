@@ -10,14 +10,14 @@ import org.identityconnectors.common.security.GuardedString.Accessor;
 import org.identityconnectors.dbcommon.*;
 import org.identityconnectors.framework.common.exceptions.*;
 import org.identityconnectors.framework.common.objects.*;
-import org.identityconnectors.framework.common.objects.filter.*;
+import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.*;
 import org.identityconnectors.framework.spi.operations.*;
 
 @ConnectorClass(
         displayNameKey = "DatabaseTable",
         configurationClass = DB2Configuration.class)
-public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<FilterWhereBuilder>,DeleteOp,PoolableConnector {
+public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<FilterWhereBuilder>,DeleteOp,UpdateOp,PoolableConnector {
 	
 	private final static Log log = Log.getLog(DB2Connector.class);
 	private Connection adminConn;
@@ -49,7 +49,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 			SQLUtil.closeQuietly(conn);
 		}
 		log.info("User {0} authenticated",username);
-		return null;
+		return new Uid(username);
 	}
 	
 	public Schema schema() {
@@ -92,7 +92,13 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 		String port = cfg.getPort();
 		String subProtocol = cfg.getJdbcSubProtocol();
 		String databaseName = cfg.getDatabaseName();
-		return DB2Specifics.createDB2Connection(driver, host, port, subProtocol, databaseName, user, password);
+		final Connection conn = DB2Specifics.createDB2Connection(driver, host, port, subProtocol, databaseName, user, password);
+		try {
+			conn.setAutoCommit(false);
+		} catch (SQLException e) {
+			throw new ConnectorException("Cannot switch off autocommit",e);
+		}
+		return conn;
 	}
 
 
@@ -107,8 +113,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
          * The Password <> '' mean we want to avoid reading duplicates
          * Every base user has password set up
          */
-        final String ALL_USER_QUERY = "SELECT GRANTEE FROM SYSIBM.SYSDBAUTH WHERE GRANTEETYPE = 'U'"
-                    + " AND CONNECTAUTH = 'Y'";
+        final String ALL_USER_QUERY = "SELECT GRANTEE FROM SYSIBM.SYSDBAUTH WHERE GRANTEETYPE = 'U' AND CONNECTAUTH = 'Y'";
 
         if (oclass == null || !ObjectClass.ACCOUNT.equals(oclass)) {
             throw new IllegalArgumentException("Unsupported objectclass '" + oclass + "'");
@@ -165,9 +170,9 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
         if (password == null) {
             throw new IllegalArgumentException("The Password attribute cannot be null.");
         }
-        updateAuthority(user.getNameValue(),password, attrs);
-		
-		return new Uid(user.getName());
+        checkDB2Validity(user.getNameValue(),password);
+        updateAuthority(user.getNameValue(),attrs);
+		return new Uid(user.getNameValue());
 	}
 	
 	
@@ -176,8 +181,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
      *  occur in a transaction.  Assumes connection is already open.
 	 * @param password 
      */
-    private void updateAuthority(String user, GuardedString password, Set<Attribute> attrs)   {
-        checkDB2Validity(user,password);
+    private void updateAuthority(String user,Set<Attribute> attrs)   {
         checkAdminConnection();
 
         Collection<String> grants = null;
@@ -198,15 +202,13 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
                                             "at least 1 grant is required.");
         }
         try {
-        	adminConn.setAutoCommit(false);
             if (grants != null) {
                 if (cfg.isRemoveAllGrants()) {
                     revokeAllGrants(user);
                 }
                 executeGrants("", grants, "", user);
+                adminConn.commit();
             }
-            adminConn.commit();
-            adminConn.setAutoCommit(true);
         }
         catch (Exception e) {
         	SQLUtil.rollbackQuietly(adminConn);
@@ -297,9 +299,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
      */
     private void executeGrants(String prefix, Collection<String> grants,String postfix, String user)  throws SQLException{
         for(String grant : grants){
-            String sql = "GRANT " + prefix + " " + grant
-			             + " " + postfix + " TO USER "
-			             + user.toUpperCase() + ";";
+            String sql = "GRANT " + prefix + " " + grant  + " " + postfix + " TO USER " + user.toUpperCase() ;
             executeSQL(sql);
         }
     }
@@ -314,6 +314,21 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 		} catch (SQLException e) {
 			throw new ConnectorException("Error revoking user grants",e);
 		}
+	}
+	
+	
+
+	public Uid update(ObjectClass objclass, Set<Attribute> attrs, OperationOptions options) {
+        if ( objclass == null || !objclass.equals(ObjectClass.ACCOUNT)) {
+            throw new IllegalArgumentException(
+                    "Create operation requires an 'ObjectClass' attribute of type 'Account'.");
+        }
+        Name user = AttributeUtil.getNameFromAttributes(attrs);
+        if (user == null || StringUtil.isBlank(user.getNameValue())) {
+            throw new IllegalArgumentException("The Name attribute cannot be null or empty.");
+        }
+		updateAuthority(user.getName(), attrs);
+		return new Uid(user.getName());
 	}
     
     

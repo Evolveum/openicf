@@ -70,7 +70,5 @@ class DB2FilterTranslator extends DatabaseFilterTranslator {
         //There could be an exception,but null value would disable this filter 
         return null;
     }
-    
-    
-
+ 
 }
