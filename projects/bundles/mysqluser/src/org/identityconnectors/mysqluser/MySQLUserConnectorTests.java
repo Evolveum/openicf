@@ -120,13 +120,13 @@ public class MySQLUserConnectorTests {
     @BeforeClass
     public static void setUpClass() throws Exception {
         
-        idmHost = TestHelpers.getProperty("host.connector.string", null);
-        idmLogin = TestHelpers.getProperty("login.connector.string", null);
-        idmPassword = new GuardedString(TestHelpers.getProperty("password.connector.string", null).toCharArray());
-        idmPort = TestHelpers.getProperty("port.connector.string", null);
-        idmDriver = TestHelpers.getProperty("driver.connector.string", null); 
-        idmModelUser = TestHelpers.getProperty("usermodel.connector.string", null);        
-        final String passwd = TestHelpers.getProperty("testpassword.connector.string", null);
+        idmHost = TestHelpers.getProperty("connector.host", null);
+        idmLogin = TestHelpers.getProperty("connector.login", null);
+        idmPassword = new GuardedString(TestHelpers.getProperty("connector.password", null).toCharArray());
+        idmPort = TestHelpers.getProperty("connector.port", null);
+        idmDriver = TestHelpers.getProperty("connector.driver", null); 
+        idmModelUser = TestHelpers.getProperty("connector.usermodel", null);        
+        final String passwd = TestHelpers.getProperty("connector.testpassword", null);
         assertNotNull("Password must be configured for test", passwd);
         testPassword = new GuardedString(passwd.toCharArray());
         

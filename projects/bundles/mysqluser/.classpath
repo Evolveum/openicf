@@ -6,6 +6,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorDatabaseCommon"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-HEAD"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-Internal-HEAD"/>
-	<classpathentry kind="lib" path="lib/mysql-connector-java-5.0.8-bin.jar"/>
+	<classpathentry kind="lib" path="C:/Documents and Settings/petr/.connectors/connector-mysqluser/lib/mysql-connector-java-5.0.8-bin.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorContractTests"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>
