@@ -198,6 +198,7 @@ namespace Org.IdentityConnectors.Framework.Test
  
 
         private static IDictionary<string, string> _properties = null;
+        private static readonly string PREFIX = Environment.GetEnvironmentVariable("USERPROFILE") + "/.connectors/";
         public static readonly string GLOBAL_PROPS = "connectors.xml";
         
         public static string GetProperty(string key, string def) {
@@ -215,62 +216,52 @@ namespace Org.IdentityConnectors.Framework.Test
         }
         
         private static IDictionary<string, string> LoadProperties() {
-            const string ERR = "Unable to load optional XML properties file: ";
+            const string ERR = "Unable to load optional XML properties file: ";            
             string fn = null;
             IDictionary<string, string> props = null;
             IDictionary<string, string> ret = new Dictionary<string, string>();
+            
+            //load global properties file
             try {
-                // load the local properties file
+            	fn = Path.Combine(PREFIX, GLOBAL_PROPS);
+            	props = LoadPropertiesFile(fn);
+            	CollectionUtil.AddAll(ret, props);
+            } catch (Exception e) {
+            	TraceUtil.TraceException(ERR + fn, e);        	
+            }       
+            
+            // load the project properties file
+            try {    
                 fn = Path.Combine(Environment.CurrentDirectory, "project.xml");
                 props = LoadPropertiesFile(fn);
                 CollectionUtil.AddAll(ret, props);
             } catch (Exception e) {
                 TraceUtil.TraceException(ERR + fn, e);
             }
-            // global settings are prefixed w/ the project name
+            
+            // private settings are in the "project name" folder
             string prjName = Environment.GetEnvironmentVariable("project.name");
-            if (!StringUtil.IsBlank(prjName)) {
-                // includes the parent configuration and the specific config.
-                IList<string> configurations = CollectionUtil.NewList(new string[] {prjName});
-                // determine the configuration property
-                string cfg = Environment.GetEnvironmentVariable("configuration");
-                if (!StringUtil.IsBlank(cfg)) {
-                    string name = prjName + "-" + cfg;
-                    configurations.Add(name);
-                }
-                // load the user properties file (project specific)
-                fn = Path.Combine(
-                    Environment.SpecialFolder.LocalApplicationData.ToString(),
-                    GLOBAL_PROPS);
+            if (!StringUtil.IsBlank(prjName)) {           
+				//load private project properties file
                 try {
+					fn = Path.Combine(PREFIX, prjName + "/project.xml");
                     props = LoadPropertiesFile(fn);
-                    foreach (string cfgName in configurations) {
-                        string cmp = cfgName + ".";
-                        foreach (string key in props.Keys) {
-                            if (key.StartsWith(cmp)) {
-                                String newKey = key.Substring(cmp.Length);
-                                ret[newKey] = props[key];
-                            }
-                        }
-                    }
+                    CollectionUtil.AddAll(ret, props);
                 } catch (IOException e) {
                     TraceUtil.TraceException(ERR + fn, e);
                 }
-                // load the project file then the project 
-                // configuration specific file
-                foreach (string cfgFn in configurations) {
-                    // load the user project specific file
-                    try {
-                        // load the local properties file
-                        fn = System.IO.Path.Combine(
-                            Environment.SpecialFolder.LocalApplicationData.ToString(),
-                            cfgFn + ".xml");
+				
+               	string cfg = Environment.GetEnvironmentVariable("configuration");
+               	if(!StringUtil.IsBlank(cfg)) {
+               		 try {
+                        // load a config-specific properties file
+                        fn = Path.Combine(PREFIX, prjName + "/" + cfg + "/project.xml");
                         props = LoadPropertiesFile(fn);
                         CollectionUtil.AddAll(ret, props);
                     } catch (IOException e) {
                         TraceUtil.TraceException(ERR + fn, e);
                     }
-                }
+               	}           
             }
             // load the environment variables
             foreach (DictionaryEntry entry in Environment.GetEnvironmentVariables()) {
