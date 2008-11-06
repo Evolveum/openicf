@@ -97,6 +97,7 @@ import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
+import org.identityconnectors.framework.spi.AttributeNormalizer;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.ConnectorClass;
 import org.identityconnectors.framework.spi.PoolableConnector;
@@ -113,7 +114,7 @@ import org.identityconnectors.patternparser.Transform;
     displayNameKey="VMSConnector",
     configurationClass= VmsConfiguration.class)
 public class VmsConnector implements PoolableConnector, CreateOp,
-DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
+DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
     private Log                         _log = Log.getLog(VmsConnector.class);
     private DateFormat                  _vmsDateFormatWithSecs;
     private DateFormat                  _vmsDateFormatWithoutSecs;
@@ -1169,5 +1170,20 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp {
         public int length() {
             return _position;
         }
+    }
+
+    public Attribute normalizeAttribute(ObjectClass oclass, Attribute attribute) {
+        // Because VMS reports NAME (and UID) in upper case, they will not match
+        // against a lower case name unless the values are forced to upper case.
+        //
+        if (attribute instanceof Name) {
+            Name name = (Name)attribute;
+            return new Name(name.getNameValue().toUpperCase());
+        }
+        if (attribute instanceof Uid) {
+            Uid uid = (Uid)attribute;
+            return new Uid(uid.getUidValue().toUpperCase());
+        }
+        return attribute;
     }
 }
