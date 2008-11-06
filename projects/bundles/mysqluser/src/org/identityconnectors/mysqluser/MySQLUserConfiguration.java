@@ -42,6 +42,7 @@ package org.identityconnectors.mysqluser;
 import java.text.MessageFormat;
 
 import org.identityconnectors.common.Assertions;
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
@@ -57,6 +58,7 @@ import org.identityconnectors.framework.spi.ConfigurationProperty;
  * @since 1.0
  */
 public class MySQLUserConfiguration extends AbstractConfiguration {
+   
     /**
      * User, Id, Key field
      */
@@ -66,11 +68,80 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
      * table name
      */
     public static final String MYSQL_USER_TABLE = "mysql.user";
+    
+    
+    
+    /**
+     * The datasource name is used to connect to database.
+     */
+    private String datasource;
+
+    /**
+     * Return the datasource 
+     * @return datasource value
+     */
+    @ConfigurationProperty(order = 1, helpMessageKey = "mysqluser.datasource.help", displayMessageKey = "mysqluser.datasource.display")
+    public String getDatasource() {
+        return datasource;
+    }
+
+    /**
+     * @param value
+     */
+    public void setDatasource(String value) {
+        this.datasource = value;
+    }
+    
+    
+    /**
+     * The jndiFactory name is used to connect to database.
+     */
+    private String jndiFactory;
+
+    /**
+     * Return the jndiFactory 
+     * @return jndiFactory value
+     */
+    @ConfigurationProperty(order = 2, helpMessageKey = "mysqluser.datasource.help", displayMessageKey = "mysqluser.datasource.display")
+    public String getJndiFactory() {
+        return jndiFactory;
+    }
+
+    /**
+     * @param value
+     */
+    public void setJndiFactory(String value) {
+        this.jndiFactory = value;
+    }
+    
+    
+    /**
+     * The jndiProvider name is used to connect to database.
+     */
+    private String jndiProvider;
+
+    /**
+     * Return the jndiProvider 
+     * @return jndiProvider value
+     */
+    @ConfigurationProperty(order = 3, helpMessageKey = "mysqluser.jndiProvider.help", displayMessageKey = "mysqluser.jndiProvider.display")
+    public String getJndiProvider() {
+        return jndiProvider;
+    }
+
+    /**
+     * @param value
+     */
+    public void setJndiProvider(String value) {
+        this.jndiProvider = value;
+    }        
 
     /**
      * Host
      */
     public static final String HOST = "Host";
+
+
 
     /**
      * driver
@@ -78,81 +149,14 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
     private String driver = "com.mysql.jdbc.Driver"; // Driver
 
     /**
-     * host
-     */
-    private String host = ""; // Host
-
-    /**
-     * login
-     */
-    private String login = ""; // Login
-
-    /**
-     * password
-     */
-    private GuardedString password; // Password
-
-    /**
-     * port
-     */
-    private String port = "3306"; // Port
-
-    /**
-     * user model
-     */
-    private String usermodel = "idm"; // Default User
-
-    /**
      * The setter method 
      * @return a driver value
      */
-    @ConfigurationProperty(order = 3, helpMessageKey = "mysqluser.driver.help", displayMessageKey = "mysqluser.driver.display")
+    @ConfigurationProperty(order = 4, helpMessageKey = "mysqluser.driver.help", displayMessageKey = "mysqluser.driver.display")
     public String getDriver() {
         return this.driver;
     }
-
-    /**
-     * @return the host
-     */
-    @ConfigurationProperty(order = 4, helpMessageKey = "mysqluser.host.help", displayMessageKey = "mysqluser.host.display")
-    public String getHost() {
-        return host;
-    }
-
-    /**
-     * The setter method 
-     * @return login value
-     */
-    @ConfigurationProperty(order = 1, helpMessageKey = "mysqluser.login.help", displayMessageKey = "mysqluser.login.display")
-    public String getLogin() {
-        return this.login;
-    }
-
-    /**
-     * The setter method 
-     * @return passport value
-     */
-    @ConfigurationProperty(order = 2, helpMessageKey = "mysqluser.pwd.help", displayMessageKey = "mysqluser.pwd.display", confidential = true)
-    public GuardedString getPassword() {
-        return this.password;
-    }
-
-    /**
-     * @return the port
-     */
-    @ConfigurationProperty(order = 5, helpMessageKey = "mysqluser.port.help", displayMessageKey = "mysqluser.port.display")
-    public String getPort() {
-        return port;
-    }
-
-    /**
-     * @return the usermodel
-     */
-    @ConfigurationProperty(order = 6, helpMessageKey = "mysqluser.model.help", displayMessageKey = "mysqluser.model.display")
-    public String getUsermodel() {
-        return usermodel;
-    }
-
+        
     /**
      * @param value
      */
@@ -161,11 +165,38 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
     }
 
     /**
+     * host
+     */
+    private String host = ""; // Host
+    
+    /**
+     * @return the host
+     */
+    @ConfigurationProperty(order = 5, helpMessageKey = "mysqluser.host.help", displayMessageKey = "mysqluser.host.display")
+    public String getHost() {
+        return host;
+    }    
+
+    /**
      * @param host
      *            the host to set
      */
     public void setHost(String host) {
         this.host = host;
+    }    
+
+    /**
+     * login
+     */
+    private String login = ""; // Login
+
+    /**
+     * The setter method 
+     * @return login value
+     */
+    @ConfigurationProperty(order = 6, helpMessageKey = "mysqluser.login.help", displayMessageKey = "mysqluser.login.display")
+    public String getLogin() {
+        return this.login;
     }
 
     /**
@@ -176,10 +207,38 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
     }
 
     /**
+     * password
+     */
+    private GuardedString password; // Password
+
+
+    /**
+     * The setter method 
+     * @return passport value
+     */
+    @ConfigurationProperty(order = 7, helpMessageKey = "mysqluser.pwd.help", displayMessageKey = "mysqluser.pwd.display", confidential = true)
+    public GuardedString getPassword() {
+        return this.password;
+    }
+
+    /**
      * @param value
      */
     public void setPassword(final GuardedString value) {
         this.password = value;
+    }
+    
+    /**
+     * port
+     */
+    private String port = "3306"; // Port
+
+    /**
+     * @return the port
+     */
+    @ConfigurationProperty(order = 8, helpMessageKey = "mysqluser.port.help", displayMessageKey = "mysqluser.port.display")
+    public String getPort() {
+        return port;
     }
 
     /**
@@ -188,6 +247,20 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
      */
     public void setPort(String port) {
         this.port = port;
+    }    
+    
+    /**
+     * user model
+     */
+    private String usermodel = "idm"; // Default User
+
+
+    /**
+     * @return the usermodel
+     */
+    @ConfigurationProperty(order = 9, helpMessageKey = "mysqluser.model.help", displayMessageKey = "mysqluser.model.display")
+    public String getUsermodel() {
+        return usermodel;
     }
 
     /**
@@ -209,21 +282,31 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
         Assertions.blankCheck(getLogin(), "login");
         // check that there is a table to query..
         Assertions.nullCheck(getPassword(), "password");
-        // check that there is a driver..
-        Assertions.blankCheck(getDriver(), "driver");
 
-        Assertions.blankCheck(getHost(), "host");
+        Assertions.blankCheck(getUsermodel(), "usermodel");        
+        
+        // check that there is not a datasource
+        if(StringUtil.isBlank(getDatasource())){ 
+            // check that there is a driver..
+            Assertions.blankCheck(getDriver(), "driver");
 
-        Assertions.blankCheck(getPort(), "port");
+            Assertions.blankCheck(getHost(), "host");
 
-        Assertions.blankCheck(getUsermodel(), "usermodel");
+            Assertions.blankCheck(getPort(), "port");
 
-        // make sure the driver is in the class path..
-        try {
-            Class.forName(getDriver());
-        } catch (final ClassNotFoundException e) {
-            throw new IllegalArgumentException(e);
-        }
+            // make sure the driver is in the class path..
+            try {
+                Class.forName(getDriver());
+            } catch (final ClassNotFoundException e) {
+                throw new IllegalArgumentException(e);
+            }
+        } else { // Datasource is active         
+            // When JNDI provider is set up, factory need to be there too 
+            if (StringUtil.isNotBlank(getJndiProvider()) || StringUtil.isNotBlank(getJndiFactory())) {
+                Assertions.blankCheck(getJndiFactory(), "jndiFactory");
+                Assertions.blankCheck(getJndiProvider(), "jndiProvider");
+            }
+        }          
     }
     
     /**

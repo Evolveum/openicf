@@ -46,8 +46,11 @@ import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
+
+import javax.naming.Context;
 
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.StringUtil;
@@ -644,13 +647,23 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      * @return The connection
      */
     static MySQLUserConnection newConnection(MySQLUserConfiguration config) {
-        final java.sql.Connection connection = SQLUtil.getDriverMangerConnection(
+        java.sql.Connection connection;
+        if (StringUtil.isNotBlank(config.getDatasource())) {
+            if (StringUtil.isNotBlank(config.getJndiFactory()) && StringUtil.isNotBlank(config.getJndiProvider())) {
+                Hashtable<String, String> env = new Hashtable<String, String>();
+                env.put(Context.INITIAL_CONTEXT_FACTORY, config.getJndiFactory());
+                env.put(Context.PROVIDER_URL, config.getJndiProvider());
+                connection = SQLUtil.getDatasourceConnection(config.getDatasource(), env);
+            } else {
+                connection = SQLUtil.getDatasourceConnection(config.getDatasource());
+            }
+        } else {
+            connection = SQLUtil.getDriverMangerConnection(
                     config.getDriver(), 
                     config.getUrlString(), 
                     config.getLogin(), 
                     config.getPassword());
+        }
         return new MySQLUserConnection(connection);
-    }
-
-
+    }    
 }

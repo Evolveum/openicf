@@ -39,10 +39,7 @@
  */
 package org.identityconnectors.mysqluser;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -458,7 +455,7 @@ public class MySQLUserConnectorTests {
 
     
     /**
-     * Test method for {@link MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method 
      * @throws Exception
      */
     @Test(expected = IllegalArgumentException.class)
@@ -468,7 +465,7 @@ public class MySQLUserConnectorTests {
     }
 
     /**
-     * Test method for {@link MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method 
      * @throws Exception
      */
     @Test(expected = IllegalArgumentException.class)
@@ -478,7 +475,7 @@ public class MySQLUserConnectorTests {
     }
 
     /**
-     * Test method for {@link MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method 
      * @throws Exception
      */
     @Test(expected = IllegalArgumentException.class)
@@ -488,7 +485,7 @@ public class MySQLUserConnectorTests {
     }
     
     /**
-     * Test method for {@link MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method 
      * @throws Exception
      */
     @Test(expected = IllegalArgumentException.class)
@@ -498,7 +495,7 @@ public class MySQLUserConnectorTests {
     }
 
     /**
-     * Test method for {@link MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method 
      * @throws Exception
      */
     @Test(expected = IllegalArgumentException.class)
@@ -508,13 +505,43 @@ public class MySQLUserConnectorTests {
     }
 
     /**
-     * Test method for {@link MySQLUserConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method 
      * @throws Exception
      */
     @Test()
     public void testValidateConfiguration() throws Exception {
         config.validate();
     }    
+
+
+    /**
+     * Test method
+     * 
+     * @throws Exception
+     */
+    @Test()
+    public void testValidateConfigurationDatasource() throws Exception {
+        config.setPort("");
+        config.setDriver("");
+        config.setDatasource(TST_HOST);
+        config.validate();
+
+        config.setJndiFactory("JndiFactory");
+        assertEquals("JndiFactory", config.getJndiFactory());
+
+        try {
+            config.validate();
+            fail("JndiProvider is missing expected");
+        } catch (IllegalArgumentException expected) {
+            //expected
+        }
+
+        config.setJndiProvider("JndiProvider");
+        assertEquals("JndiProvider", config.getJndiProvider());
+
+        config.validate();
+    }    
+    
     
     
     /**
