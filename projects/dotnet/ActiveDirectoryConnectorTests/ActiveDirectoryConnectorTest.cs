@@ -967,7 +967,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         // Test scripting
-        [Ignore] // ignoring until issue # 302 is addressed
         [Test]
         public void TestScriptOnResource()
         {

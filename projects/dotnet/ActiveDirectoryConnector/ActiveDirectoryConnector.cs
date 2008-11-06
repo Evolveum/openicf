@@ -360,8 +360,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
             schemaBuilder.DefineObjectClass(userInfo);
             schemaBuilder.DefineObjectClass(groupInfo);
             schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<AuthenticateOp>(), groupInfo);
+            schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<SyncOp>(), groupInfo);
             schemaBuilder.DefineObjectClass(ouInfo);
             schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<AuthenticateOp>(), ouInfo);
+            schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<SyncOp>(), ouInfo);
             //schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<SearchOp<String>>(), ouInfo);
 
             _schema = schemaBuilder.Build();
