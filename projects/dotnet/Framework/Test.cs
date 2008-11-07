@@ -262,7 +262,16 @@ namespace Org.IdentityConnectors.Framework.Test
                         TraceUtil.TraceException(ERR + fn, e);
                     }
                	}           
+            } else {
+            	//debugging
+            	TraceUtil.TraceException("project.name property was not set.", new Exception());
             }
+            
+            //debugging..
+            foreach(KeyValuePair<string, string> entry in ret ) {
+            	Console.WriteLine("Property: " + entry.Key.ToString() + "=" + entry.Value.ToString());
+            }
+            
             // load the environment variables
             foreach (DictionaryEntry entry in Environment.GetEnvironmentVariables()) {
                 ret[entry.Key.ToString()] = entry.Value.ToString();
