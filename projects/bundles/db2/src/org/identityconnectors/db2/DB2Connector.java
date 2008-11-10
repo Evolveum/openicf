@@ -14,6 +14,11 @@ import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.*;
 import org.identityconnectors.framework.spi.operations.*;
 
+/**
+ * Connector to DB2
+ * @author kitko
+ *
+ */
 @ConnectorClass(
         displayNameKey = "DatabaseTable",
         configurationClass = DB2Configuration.class)
@@ -87,12 +92,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	}
 	
 	private Connection createConnection(String user,GuardedString password){
-		String driver = cfg.getJdbcDriver();
-		String host = cfg.getHost();
-		String port = cfg.getPort();
-		String subProtocol = cfg.getJdbcSubProtocol();
-		String databaseName = cfg.getDatabaseName();
-		final Connection conn = DB2Specifics.createDB2Connection(driver, host, port, subProtocol, databaseName, user, password);
+		final Connection conn = cfg.createUserConnection(user, password);
 		try {
 			conn.setAutoCommit(false);
 		} catch (SQLException e) {

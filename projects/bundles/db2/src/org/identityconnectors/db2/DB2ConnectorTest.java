@@ -27,8 +27,9 @@ public class DB2ConnectorTest {
     private static ConnectorFacade facade;
     private static String findUser = TestHelpers.getProperty("testUser","test");
 
-	
-	
+	/**
+	 * Setup for all tests
+	 */
 	@BeforeClass
 	public static void setupClass(){
 		testConf = DB2ConfigurationTest.createTestConfiguration();
@@ -42,6 +43,9 @@ public class DB2ConnectorTest {
         return factory.newInstance(apiCfg);
     }
     
+    /**
+     * Test schema api
+     */
     @Test
     public void testSchemaApi() {
         Schema schema = facade.schema();
@@ -61,8 +65,9 @@ public class DB2ConnectorTest {
         assertNotNull(AttributeInfoUtil.find(OperationalAttributes.PASSWORD_NAME, attInfos));
     }
     
-	
-	
+	/**
+	 * test successful Authenticate
+	 */
 	@Test
 	public void testAuthenticateSuc(){
 		String username = getTestRequiredProperty("testUser");
@@ -71,6 +76,9 @@ public class DB2ConnectorTest {
 		facade.authenticate(username, new GuardedString(password.toCharArray()),new OperationOptions(emptyMap));
 	}
 	
+	/**
+	 * Test fail of Authenticate
+	 */
 	@Test(expected=RuntimeException.class)
 	public void testAuthenticateFail(){
 		String username = "undefined";
@@ -81,9 +89,7 @@ public class DB2ConnectorTest {
 
 	static Connection createTestConnection() throws Exception{
 		DB2Configuration conf = DB2ConfigurationTest.createTestConfiguration();
-		return DB2Specifics.createDB2Connection(DB2Specifics.APP_DRIVER,
-				conf.getHost(), conf.getPort(), "db2", conf.getDatabaseName(),conf.getAdminAccount(),
-				conf.getAdminPassword());
+		return conf.createAdminConnection();
 	}
 
 	static String getTestRequiredProperty(String name){
@@ -94,6 +100,9 @@ public class DB2ConnectorTest {
 	    return value;
 	}
 	
+	/**
+	 * test create
+	 */
 	@Test
 	public void testCreate(){
 		String username = getTestRequiredProperty("testUser");
@@ -116,8 +125,11 @@ public class DB2ConnectorTest {
         return actual;
 	}
 	
+    /**
+     * test find by uid 
+     */
     @Test
-    public void testFindModelUserByUid() {
+    public void testFindUserByUid() {
         final Uid expected = new Uid(findUser);
         FindUidObjectHandler handler = new FindUidObjectHandler(expected);
         // attempt to find the newly created object..
@@ -128,8 +140,11 @@ public class DB2ConnectorTest {
         assertTrue(actual.is(expected.getName()));  
      }
     
+    /**
+     * Test find by end with operator
+     */
     @Test
-    public void testFindModelUserByEndWith() {
+    public void testFindUserByEndWith() {
         final Attribute expected = AttributeBuilder.build(Name.NAME, findUser);
         FindUidObjectHandler handler = new FindUidObjectHandler(new Uid(findUser));
         // attempt to find the newly created object..
@@ -141,8 +156,11 @@ public class DB2ConnectorTest {
      }
 
 
+    /**
+     * test find by start with operator
+     */
     @Test
-    public void testFindModelUserByStartWith() {
+    public void testFindUserByStartWith() {
         final Attribute expected = AttributeBuilder.build(Name.NAME, findUser);
         FindUidObjectHandler handler = new FindUidObjectHandler(new Uid(findUser));
         // attempt to find the newly created object..
@@ -153,6 +171,9 @@ public class DB2ConnectorTest {
         assertEquals("Expected user is not same",findUser, AttributeUtil.getAsStringValue(actual.getName()));
      }
     
+    /**
+     * Testing update
+     */
     public void testUpdate(){
 		String username = getTestRequiredProperty("testUser");
 		Map<String, Object> emptyMap = Collections.emptyMap();
@@ -190,6 +211,8 @@ public class DB2ConnectorTest {
         public Uid getUid() {
             return uid;
         }
+        
+        
 
         public boolean handle(ConnectorObject obj) {
             System.out.println("Object: " + obj);

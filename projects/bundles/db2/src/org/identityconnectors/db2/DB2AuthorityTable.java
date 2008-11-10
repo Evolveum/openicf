@@ -10,7 +10,7 @@ class DB2AuthorityTable {
     /**
      *  Constructor.
      */
-    public DB2AuthorityTable(String sqlRevokeFunctionObjectConnector)
+    DB2AuthorityTable(String sqlRevokeFunctionObjectConnector)
     {
         this.sqlRevokeFunctionObjectConnector
             = sqlRevokeFunctionObjectConnector;
@@ -19,7 +19,7 @@ class DB2AuthorityTable {
     /**
      *  Generates sql to revoke a given DB2Authority
      */
-    public String generateRevokeSQL(DB2Authority auth) {
+    String generateRevokeSQL(DB2Authority auth) {
         return "REVOKE " + auth.authorityFunction + " "
             + sqlRevokeFunctionObjectConnector + " "
             + auth.authorityObject + " FROM USER "
@@ -29,7 +29,7 @@ class DB2AuthorityTable {
     /**
      *
      */
-    public String generateGrant(DB2Authority auth) {
+    String generateGrant(DB2Authority auth) {
         return (auth.authorityFunction + " "
             + sqlRevokeFunctionObjectConnector + " "
             + auth.authorityObject).trim();
@@ -38,7 +38,7 @@ class DB2AuthorityTable {
     /**
      *
      */
-    public String generateGrantSQL(DB2Authority auth) {
+    String generateGrantSQL(DB2Authority auth) {
         return "GRANT " + generateGrant(auth) + " TO USER "
             + auth.userName + ";";
     }

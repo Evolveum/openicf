@@ -9,7 +9,7 @@ class DB2Authority {
     /**
      *  Constructor.
      */
-    public DB2Authority(String authorityType,
+    DB2Authority(String authorityType,
         String authorityFunction, String authorityObject,
         String userName)
     {

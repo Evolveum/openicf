@@ -1,31 +1,24 @@
 package org.identityconnectors.db2;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.sql.*;
+import java.util.*;
 
 import org.identityconnectors.common.IOUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
 
 /**
- * Here I hide DB2 specifics constants,mappings,restrictions ...
+ * Here we hide DB2 specifics constants,mappings,restrictions ...
  * @author kitko
  *
  */
 class DB2Specifics {
 	
-	/** Classname of DB2 app driver */
-	final static String APP_DRIVER = "com.ibm.db2.jcc.DB2Driver"; 
+	/** Classname of DB2 jcc driver , type 4 driver*/
+	final static String JCC_DRIVER = "com.ibm.db2.jcc.DB2Driver";
+	/** Old driver that uses local db2 client with stored aliases , type 2 driver */
+	final static String APP_DRIVER = "COM.ibm.db2.jdbc.app.DB2Driver";
+	
 	
     // These names come from the DB2 SQL Reference manual.
     // None of these names are legal for starting account id
@@ -200,7 +193,7 @@ class DB2Specifics {
 		}
 	}
 	
-	static Connection createDB2Connection(String driver,String host,String port,String subprotocol,String database,String user,GuardedString password){
+	static Connection createType4Connection(String driver,String host,String port,String subprotocol,String database,String user,GuardedString password){
 		StringBuilder urlBuilder = new StringBuilder();
 		urlBuilder.append("jdbc:").append(subprotocol);
 		if(host != null && host.length() > 0){
@@ -212,5 +205,21 @@ class DB2Specifics {
 		urlBuilder.append("/").append(database);
 		return SQLUtil.getDriverMangerConnection(driver, urlBuilder.toString(), user, password);
 	}
+	
+	static Connection createType2Connection(String driver,String aliasName,String user,GuardedString password){
+		StringBuilder urlBuilder = new StringBuilder();
+		urlBuilder.append("jdbc:db2:");
+		urlBuilder.append(aliasName);
+		return SQLUtil.getDriverMangerConnection(driver, urlBuilder.toString(), user, password);
+	}
+	
+	static Connection createDataSourceConnection(String dsName,Hashtable<?,?> env){
+		return SQLUtil.getDatasourceConnection(dsName,env);
+	}
+	
+	static Connection createDataSourceConnection(String dsName,String user,GuardedString password,Hashtable<?,?> env){
+		return SQLUtil.getDatasourceConnection(dsName,user,password,env);
+	}
+	
     
 }

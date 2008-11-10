@@ -8,6 +8,11 @@ import java.util.Collection;
 
 import org.junit.Test;
 
+/**
+ * Test DB2 specifics
+ * @author kitko
+ *
+ */
 public class DB2SpecificsTest {
 	/** Test loading of exclude names from resource */
 	@Test

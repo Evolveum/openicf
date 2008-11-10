@@ -14,6 +14,9 @@ import org.junit.Test;
  */
 public class DB2ConfigurationTest {
 	
+	/**
+	 * Test validation
+	 */
 	@Test
 	public void testValidate(){
 		DB2Configuration testee = createTestConfiguration();
@@ -22,12 +25,12 @@ public class DB2ConfigurationTest {
 	
 	static DB2Configuration createTestConfiguration(){
 		DB2Configuration conf = new DB2Configuration();
-		String host = DB2ConnectorTest.getTestRequiredProperty("host.connector.string");
-		String port = DB2ConnectorTest.getTestRequiredProperty("port.connector.integer");
-		String databaseName = DB2ConnectorTest.getTestRequiredProperty("databaseName.connector.string");
-		String adminAcoount = DB2ConnectorTest.getTestRequiredProperty("adminAccount.connector.string");
-		String adminPassword = DB2ConnectorTest.getTestRequiredProperty("adminPassword.connector.string");
-		String jdbcDriver = TestHelpers.getProperty("jdbcDriver.connector.string",DB2Specifics.APP_DRIVER);
+		String host = TestHelpers.getProperty("host",null);
+		String port = TestHelpers.getProperty("port",null);
+		String databaseName = DB2ConnectorTest.getTestRequiredProperty("databaseName");
+		String adminAcoount = DB2ConnectorTest.getTestRequiredProperty("adminAccount");
+		String adminPassword = DB2ConnectorTest.getTestRequiredProperty("adminPassword");
+		String jdbcDriver = TestHelpers.getProperty("jdbcDriver.connector.string",DB2Specifics.JCC_DRIVER);
 		conf.setHost(host);
 		conf.setPort(port);
 		conf.setAdminAccount(adminAcoount);
