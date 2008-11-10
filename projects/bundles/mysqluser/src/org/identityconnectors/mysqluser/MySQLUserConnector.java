@@ -50,14 +50,13 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
 
-import javax.naming.Context;
-
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.DatabaseQueryBuilder;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
+import org.identityconnectors.dbcommon.JNDIUtil;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
@@ -67,6 +66,7 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
@@ -648,15 +648,18 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      */
     static MySQLUserConnection newConnection(MySQLUserConfiguration config) {
         java.sql.Connection connection;
-        if (StringUtil.isNotBlank(config.getDatasource())) {
-            if (StringUtil.isNotBlank(config.getJndiFactory()) && StringUtil.isNotBlank(config.getJndiProvider())) {
-                Hashtable<String, String> env = new Hashtable<String, String>();
-                env.put(Context.INITIAL_CONTEXT_FACTORY, config.getJndiFactory());
-                env.put(Context.PROVIDER_URL, config.getJndiProvider());
-                connection = SQLUtil.getDatasourceConnection(config.getDatasource(), env);
+        final String login = config.getLogin();
+        final GuardedString password = config.getPassword();
+        final String datasource = config.getDatasource();
+        final String[] jndiProperties = config.getJndiProperties();
+        final ConnectorMessages connectorMessages = config.getConnectorMessages();
+        if (StringUtil.isNotBlank(datasource)) {
+            Hashtable<String, String> prop = JNDIUtil.arrayToHashtable(jndiProperties, connectorMessages);                
+            if(StringUtil.isNotBlank(login) && password != null) {
+                connection = SQLUtil.getDatasourceConnection(datasource, login, password, prop);
             } else {
-                connection = SQLUtil.getDatasourceConnection(config.getDatasource());
-            }
+                connection = SQLUtil.getDatasourceConnection(datasource, prop);
+            } 
         } else {
             connection = SQLUtil.getDriverMangerConnection(
                     config.getDriver(), 

@@ -526,19 +526,10 @@ public class MySQLUserConnectorTests {
         config.setDatasource(TST_HOST);
         config.validate();
 
-        config.setJndiFactory("JndiFactory");
-        assertEquals("JndiFactory", config.getJndiFactory());
-
-        try {
-            config.validate();
-            fail("JndiProvider is missing expected");
-        } catch (IllegalArgumentException expected) {
-            //expected
-        }
-
-        config.setJndiProvider("JndiProvider");
-        assertEquals("JndiProvider", config.getJndiProvider());
-
+        final String[] tstProp = {"a=a","b=b"};
+        config.setJndiProperties(tstProp);
+        assertEquals(tstProp[0], config.getJndiProperties()[0]);
+        assertEquals(tstProp[1], config.getJndiProperties()[1]);
         config.validate();
     }    
     

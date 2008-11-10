@@ -44,6 +44,7 @@ import java.text.MessageFormat;
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.dbcommon.JNDIUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.Configuration;
@@ -96,45 +97,23 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
     /**
      * The jndiFactory name is used to connect to database.
      */
-    private String jndiFactory;
+    private String[] jndiProperties;
 
     /**
      * Return the jndiFactory 
      * @return jndiFactory value
      */
-    @ConfigurationProperty(order = 2, helpMessageKey = "mysqluser.datasource.help", displayMessageKey = "mysqluser.datasource.display")
-    public String getJndiFactory() {
-        return jndiFactory;
+    @ConfigurationProperty(order = 2, helpMessageKey = "mysqluser.jndiProperties.help", displayMessageKey = "mysqluser.jndiProperties.display")
+    public String[] getJndiProperties() {
+        return jndiProperties;
     }
 
     /**
      * @param value
      */
-    public void setJndiFactory(String value) {
-        this.jndiFactory = value;
+    public void setJndiProperties(String[] value) {
+        this.jndiProperties = value;
     }
-    
-    
-    /**
-     * The jndiProvider name is used to connect to database.
-     */
-    private String jndiProvider;
-
-    /**
-     * Return the jndiProvider 
-     * @return jndiProvider value
-     */
-    @ConfigurationProperty(order = 3, helpMessageKey = "mysqluser.jndiProvider.help", displayMessageKey = "mysqluser.jndiProvider.display")
-    public String getJndiProvider() {
-        return jndiProvider;
-    }
-
-    /**
-     * @param value
-     */
-    public void setJndiProvider(String value) {
-        this.jndiProvider = value;
-    }        
 
     /**
      * Host
@@ -278,15 +257,16 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
      */
     @Override
     public void validate() {
-        // determine if you can get a connection to the database..
-        Assertions.blankCheck(getLogin(), "login");
-        // check that there is a table to query..
-        Assertions.nullCheck(getPassword(), "password");
 
         Assertions.blankCheck(getUsermodel(), "usermodel");        
         
         // check that there is not a datasource
         if(StringUtil.isBlank(getDatasource())){ 
+            // determine if you can get a connection to the database..
+            Assertions.blankCheck(getLogin(), "login");
+            // check that there is a table to query..
+            Assertions.nullCheck(getPassword(), "password");
+
             // check that there is a driver..
             Assertions.blankCheck(getDriver(), "driver");
 
@@ -300,13 +280,10 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
             } catch (final ClassNotFoundException e) {
                 throw new IllegalArgumentException(e);
             }
-        } else { // Datasource is active         
-            // When JNDI provider is set up, factory need to be there too 
-            if (StringUtil.isNotBlank(getJndiProvider()) || StringUtil.isNotBlank(getJndiFactory())) {
-                Assertions.blankCheck(getJndiFactory(), "jndiFactory");
-                Assertions.blankCheck(getJndiProvider(), "jndiProvider");
-            }
-        }          
+        } else {
+            //Validate the JNDI properties
+            JNDIUtil.arrayToHashtable(getJndiProperties(), getConnectorMessages());
+        }
     }
     
     /**
