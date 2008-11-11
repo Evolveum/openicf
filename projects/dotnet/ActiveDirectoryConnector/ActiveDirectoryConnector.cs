@@ -167,6 +167,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public static readonly string ATT_GROUP_TYPE = "groupType";
         public static readonly string ATT_DESCRIPTION = "description";
         public static readonly string ATT_SHORT_NAME = "name";
+        public static readonly string ATT_DISPLAY_NAME = "displayName";
         public static readonly string OBJECTCLASS_OU = "Organizational Unit";
         public static readonly ObjectClass ouObjectClass = new ObjectClass(OBJECTCLASS_OU);
 
@@ -555,7 +556,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // add in container ... 
             attributeInfos.Add(GetConnectorAttributeInfo(ATT_OU,
                 typeof(string), false, true, false, false, ouObjectClass));
-
+            attributeInfos.Add(GetConnectorAttributeInfo(ATT_DISPLAY_NAME,
+                typeof(string), false, true, false, false, ouObjectClass));
             ConnectorAttributeInfoBuilder descriptionBuilder = new ConnectorAttributeInfoBuilder();
             descriptionBuilder.Name = PredefinedAttributeInfos.DESCRIPTION.Name;
             descriptionBuilder.ValueType = PredefinedAttributeInfos.DESCRIPTION.ValueType;
