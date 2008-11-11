@@ -57,13 +57,13 @@ using Org.IdentityConnectors.Common.Script;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
+    /// <summary>
+    /// The Active Directory Connector
+    /// </summary>
     [ConnectorClass("connector_displayName",
                       typeof(ActiveDirectoryConfiguration),
                       MessageCatalogPath = "Org.IdentityConnectors.ActiveDirectory.Messages"
-                      )]
-    /// <summary>
-	/// The Active Directory Connector
-	/// </summary>
+                      )]    
     public class ActiveDirectoryConnector : CreateOp, Connector, SchemaOp, DeleteOp,
         SearchOp<String>, TestOp, AdvancedUpdateOp, ScriptOnResourceOp, SyncOp, 
         AuthenticateOp, AttributeNormalizer, PoolableConnector
@@ -174,6 +174,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         ActiveDirectoryConfiguration _configuration = null;
         ActiveDirectoryUtils _utils = null;
         private Schema _schema = null;
+        private ActiveDirectorySchema _ADSchema = null;
 
         static ActiveDirectoryConnector()
         {
@@ -309,7 +310,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         #region IDisposable Members
 
-        public void Dispose()
+        public virtual void Dispose()
         {
         }
 
@@ -317,7 +318,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         #region SchemaOp Members
         // implementation of SchemaSpiOp
-        public virtual Schema Schema()
+        public Schema Schema()
         {            
             Trace.TraceInformation("Schema method");
 
@@ -326,51 +327,129 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 return _schema;
             }
 
-            ActiveDirectorySchema ADSchema = GetADSchema();
-
-            // get the user attribute infos and operations
-            ICollection<ConnectorAttributeInfo> userAttributeInfos =
-                GetUserAttributeInfos(ADSchema);
-            ObjectClassInfoBuilder ociBuilder = new ObjectClassInfoBuilder();
-            ociBuilder.ObjectType = ObjectClass.ACCOUNT_NAME;
-            ociBuilder.AddAllAttributeInfo(userAttributeInfos);
-            ociBuilder.IsContainer = false;
-            ObjectClassInfo userInfo = ociBuilder.Build();
-
-            // get the group attribute infos and operations
-            ICollection<ConnectorAttributeInfo> groupAttributeInfos =
-                GetGroupAttributeInfos(ADSchema);
-            ociBuilder = new ObjectClassInfoBuilder();
-            ociBuilder.ObjectType = ObjectClass.GROUP_NAME;
-            ociBuilder.AddAllAttributeInfo(groupAttributeInfos);
-            ociBuilder.IsContainer = false;
-            ObjectClassInfo groupInfo = ociBuilder.Build();
-
-            // get the organizationalUnit attribute infos and operations
-            ICollection<ConnectorAttributeInfo> ouAttributeInfos =
-                GetOuAttributeInfos(ADSchema);
-            ociBuilder = new ObjectClassInfoBuilder();
-            ociBuilder.ObjectType = OBJECTCLASS_OU;
-            ociBuilder.AddAllAttributeInfo(ouAttributeInfos);
-            ociBuilder.IsContainer = true;
-            ObjectClassInfo ouInfo = ociBuilder.Build();
-
             SchemaBuilder schemaBuilder = 
                 new SchemaBuilder(SafeType<Connector>.Get(this));
             
-            schemaBuilder.DefineObjectClass(userInfo);
-            schemaBuilder.DefineObjectClass(groupInfo);
-            schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<AuthenticateOp>(), groupInfo);
-            schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<SyncOp>(), groupInfo);
-            schemaBuilder.DefineObjectClass(ouInfo);
-            schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<AuthenticateOp>(), ouInfo);
-            schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<SyncOp>(), ouInfo);
-            //schemaBuilder.RemoveSupportedObjectClass(SafeType<SPIOperation>.Get<SearchOp<String>>(), ouInfo);
+            //iterate through supported object classes
+            foreach(ObjectClass oc in GetSupportedObjectClasses())
+            {
+                ObjectClassInfo ocInfo = GetObjectClassInfo(oc);
+                Assertions.NullCheck(ocInfo, "ocInfo");
+
+                //add object class to schema
+                schemaBuilder.DefineObjectClass(ocInfo);
+
+                //add supported operations
+                IList<SafeType<SPIOperation>> supportedOps = GetSupportedOperations(oc);
+                if (supportedOps != null)
+                {
+                    foreach (SafeType<SPIOperation> op in supportedOps)
+                    {                        
+                        schemaBuilder.AddSupportedObjectClass(op, ocInfo);
+                    }
+                }
+
+                //remove unsupported operatons
+                IList<SafeType<SPIOperation>> unSupportedOps = GetUnSupportedOperations(oc);
+                if (unSupportedOps != null)
+                {
+                    foreach (SafeType<SPIOperation> op in unSupportedOps)
+                    {
+                        schemaBuilder.RemoveSupportedObjectClass(op, ocInfo);
+                    }
+                }
+            }
 
             _schema = schemaBuilder.Build();
 
             return _schema;
         }
+
+        /// <summary>
+        /// Defines the supported object classes by the connector, used for schema building
+        /// </summary>
+        /// <returns>List of supported object classes</returns>
+        protected virtual IList<ObjectClass> GetSupportedObjectClasses()
+        {
+            IList<ObjectClass> ocList = new List<ObjectClass> {ObjectClass.ACCOUNT, ObjectClass.GROUP, ouObjectClass};
+            return ocList;
+        }
+
+        /// <summary>
+        /// Gets the object class info for specified object class, used for schema building
+        /// </summary>
+        /// <param name="oc">ObjectClass to get info for</param>
+        /// <returns>ObjectClass' ObjectClassInfo</returns>
+        protected virtual ObjectClassInfo GetObjectClassInfo(ObjectClass oc)
+        {
+            if (_ADSchema == null)
+            {
+                _ADSchema = GetADSchema();
+            }
+            
+            if (oc == ObjectClass.ACCOUNT)
+            {
+                // get the user attribute infos and operations
+                ICollection<ConnectorAttributeInfo> userAttributeInfos =
+                    GetUserAttributeInfos(_ADSchema);
+                var ociBuilder = new ObjectClassInfoBuilder {ObjectType = ObjectClass.ACCOUNT_NAME, IsContainer = false};
+                ociBuilder.AddAllAttributeInfo(userAttributeInfos);
+                ObjectClassInfo userInfo = ociBuilder.Build();
+                return userInfo;
+            }
+            
+            if (oc == ObjectClass.GROUP)
+            {
+                // get the group attribute infos and operations
+                ICollection<ConnectorAttributeInfo> groupAttributeInfos =
+                    GetGroupAttributeInfos(_ADSchema);
+                var ociBuilder = new ObjectClassInfoBuilder {ObjectType = ObjectClass.GROUP_NAME, IsContainer = false};
+                ociBuilder.AddAllAttributeInfo(groupAttributeInfos);     
+                ObjectClassInfo groupInfo = ociBuilder.Build();
+                return groupInfo;
+            }
+            
+            if (oc == ouObjectClass)
+            {
+                // get the organizationalUnit attribute infos and operations
+                ICollection<ConnectorAttributeInfo> ouAttributeInfos =
+                    GetOuAttributeInfos(_ADSchema);
+                var ociBuilder = new ObjectClassInfoBuilder {ObjectType = OBJECTCLASS_OU, IsContainer = true};
+                ociBuilder.AddAllAttributeInfo(ouAttributeInfos);
+                ObjectClassInfo ouInfo = ociBuilder.Build();
+                return ouInfo;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the list of supported operations by the object class, used for schema building
+        /// </summary>
+        /// <param name="oc"></param>
+        /// <returns></returns>
+        protected virtual IList<SafeType<SPIOperation>> GetSupportedOperations(ObjectClass oc)
+        {
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the list of UNsupported operations by the object class, used for schema building
+        /// </summary>
+        /// <param name="oc"></param>
+        /// <returns></returns>
+        protected virtual IList<SafeType<SPIOperation>> GetUnSupportedOperations(ObjectClass oc)
+        {
+            if (oc == ObjectClass.GROUP || oc == ouObjectClass)
+            {
+                return new List<SafeType<SPIOperation>> {
+                    SafeType<SPIOperation>.Get<AuthenticateOp>(),
+                    SafeType<SPIOperation>.Get<SyncOp>()};         
+            }
+
+            return null;
+        }
+
 
         private ActiveDirectorySchema GetADSchema()
         {
