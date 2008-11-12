@@ -88,6 +88,7 @@ import org.identityconnectors.framework.spi.*;
  * <ul>
  * 		<li> aliasName : Name of local alias created using <code>"db2 catalag database command"</code></li>
  * 		<li> jdbcDriver  : Classname of jdbc driver, default to COM.ibm.db2.jdbc.app.DB2Driver</li>
+ * 		<li> subprotocol : db2,db2iSeries. Default to db2 </li>
  * 		<li> adminAccount : Administrative account when connecting to DB2 in non user contexts. E.g listing of users. </li>
  * 		<li> adminPassword : Password for admin account. </li>
  * </ul>
@@ -132,7 +133,7 @@ public class DB2Configuration extends AbstractConfiguration {
 	 */
 	private String dataSource;
 	/** Class name of jdbc driver */
-	private String jdbcDriver = DB2Specifics.JCC_DRIVER;
+	private String jdbcDriver;
 	/** Whether we should remove all grants on update authority */
 	private boolean removeAllGrants;
 	/** DB2 host name*/
@@ -327,6 +328,7 @@ public class DB2Configuration extends AbstractConfiguration {
 	
 	@Override
 	public void validate() {
+		setConnType(null);
 		new DB2ConfigurationValidator(this).validate();
 	}
 	
@@ -352,7 +354,7 @@ public class DB2Configuration extends AbstractConfiguration {
 			return DB2Specifics.createType4Connection(jdbcDriver, host, port, jdbcSubProtocol,databaseName, user, password);
 		}
 		else if(ConnectionType.TYPE2.equals(connType)){
-			return DB2Specifics.createType2Connection(jdbcDriver, aliasName, user, password);
+			return DB2Specifics.createType2Connection(jdbcDriver, aliasName, jdbcSubProtocol, user, password);
 		}
 		throw new IllegalStateException("Invalid state DB2Configuration");
 	}

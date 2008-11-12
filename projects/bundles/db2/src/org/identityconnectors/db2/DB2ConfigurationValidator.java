@@ -24,22 +24,11 @@ class DB2ConfigurationValidator {
 
 	private interface ConfigChecker{
 		void checkRequired();
-		void checkRequiredAndEmpty(ConfigChecker...checkers);
 		void checkEmpty();
 		ConnectionType getType();
 	}
 	
-	private abstract class AbstractChecker implements ConfigChecker{
-		public final void checkRequiredAndEmpty(ConfigChecker...emptyCheckers){
-			checkRequired();
-			cfg.setConnType(getType());
-			for(ConfigChecker emptyChecker : emptyCheckers){
-				emptyChecker.checkEmpty();
-			}
-		}
-	}
-	
-	private class DataSourceChecker extends AbstractChecker implements ConfigChecker{
+	private class DataSourceChecker implements ConfigChecker{
 		public void checkRequired() {
 			Assertions.blankCheck(cfg.getDataSource(),"dataSource");
 			//User and password can be specified, then they will be use instead of stored user/password in AS ds configuration.
@@ -56,7 +45,7 @@ class DB2ConfigurationValidator {
 		}
 	}
 	
-	private class Type4DriverChecker extends AbstractChecker implements ConfigChecker{
+	private class Type4DriverChecker implements ConfigChecker{
 		public void checkRequired() {
 			Assertions.blankCheck(cfg.getHost(), "host");
 			Assertions.blankCheck(cfg.getPort(), "port");
@@ -68,7 +57,7 @@ class DB2ConfigurationValidator {
 			try {
 				Class.forName(cfg.getJdbcDriver());
 			} catch (ClassNotFoundException e) {
-				throw new ConnectorException("Cannot load jdbc driver class",e);
+				throw new ConnectorException("Cannot load jdbc driver class " + cfg.getJdbcDriver(),e);
 			}
 		}
 		public void checkEmpty() {
@@ -76,23 +65,23 @@ class DB2ConfigurationValidator {
 			Asserts.blank(cfg.getPort(),"Port property cannot be set");
 			Asserts.blank(cfg.getDatabaseName(),"DatabaseName property cannot be set");
 			Asserts.blank(cfg.getJdbcDriver(),"JdbcDriver property cannot be set");
-			Asserts.blank(cfg.getJdbcSubProtocol(),"JdbcSubProtocol property cannot be set");
 		}
 		public ConnectionType getType() {
 			return ConnectionType.TYPE4;
 		}
 	}
 	
-	private class Type2DriverChecker extends AbstractChecker implements ConfigChecker{
+	private class Type2DriverChecker implements ConfigChecker{
 		public void checkRequired() {
 			Assertions.blankCheck(cfg.getAliasName(), "aliasName");
 			Assertions.blankCheck(cfg.getAdminAccount(), "adminAccount");
 			Assertions.nullCheck(cfg.getAdminPassword(), "adminPassword");
 			Assertions.blankCheck(cfg.getJdbcDriver(),"jdbcDriver");
+			Assertions.blankCheck(cfg.getJdbcSubProtocol(),"jdbcSubProtocol");
 			try {
 				Class.forName(cfg.getJdbcDriver());
 			} catch (ClassNotFoundException e) {
-				throw new ConnectorException("Cannot load jdbc driver class",e);
+				throw new ConnectorException("Cannot load jdbc driver class : " + cfg.getJdbcDriver(),e);
 			}
 		}
 		public void checkEmpty() {
@@ -120,39 +109,45 @@ class DB2ConfigurationValidator {
 		
 	}
 	
+	private void runCheck(List<RuntimeException> reqEx,ConfigChecker reqChecker,ConfigChecker ...emptyCheckers){
+		if(cfg.getConnType() != null){
+			return;
+		}
+		try{
+			reqChecker.checkRequired();
+			cfg.setConnType(reqChecker.getType());
+		}
+		catch(RuntimeException e){
+			reqEx.add(e);
+		}
+		if(cfg.getConnType() != null){
+			for(ConfigChecker emptyChecker : emptyCheckers){
+				emptyChecker.checkEmpty();
+			}
+		}
+	}
+	
 	void validate(){
 		//We will use all checkers to check for required fields and check whether other fields are empty
-		List<Throwable> reqChecks = new ArrayList<Throwable>(2);
-		try{
-			new DataSourceChecker().checkRequiredAndEmpty(new Type4DriverChecker(),new Type2DriverChecker());
-		}
-		catch(Throwable e){
-			reqChecks.add(e);
-		}
-		if(cfg.getConnType() == null){
-			try{
-				new Type4DriverChecker().checkRequiredAndEmpty(new Type2DriverChecker());
-			}
-			catch(Throwable e){
-				reqChecks.add(e);
-			}
-		}
-		if(cfg.getConnType() == null){
-			try{
-				new Type2DriverChecker().checkRequiredAndEmpty();
-			}
-			catch(Throwable e){
-				reqChecks.add(e);
-			}
-		}
+		List<RuntimeException> reqChecksEx = new ArrayList<RuntimeException>(2);
+		runCheck(reqChecksEx, new DataSourceChecker(), new Type4DriverChecker(),new Type2DriverChecker());
+		runCheck(reqChecksEx, new Type4DriverChecker(), new Type2DriverChecker());
+		runCheck(reqChecksEx, new Type2DriverChecker());
 		if(cfg.getConnType() == null){
 			//Build exception from messages
 			StringBuilder builder = new StringBuilder();
-			for(Throwable ex : reqChecks){
+			builder.append(LINE_SEPARATOR);
+			for(Throwable ex : reqChecksEx){
 				builder.append(LINE_SEPARATOR);
 				builder.append(ex.getMessage());
+				builder.append(LINE_SEPARATOR);
+				for(StackTraceElement el : ex.getStackTrace()){
+					builder.append(el);
+					builder.append(LINE_SEPARATOR);
+				}
 			}
-			final ConnectorException connectorException = new ConnectorException("Validate of DB2Configuration failed",new Exception(builder.toString()));
+			final ConnectorException connectorException = new ConnectorException("Validate of DB2Configuration failed : ",new Exception(builder.toString()));
+			connectorException.printStackTrace();
 			throw connectorException;
 		}
 	}

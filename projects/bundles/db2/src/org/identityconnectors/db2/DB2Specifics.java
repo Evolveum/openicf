@@ -206,9 +206,9 @@ class DB2Specifics {
 		return SQLUtil.getDriverMangerConnection(driver, urlBuilder.toString(), user, password);
 	}
 	
-	static Connection createType2Connection(String driver,String aliasName,String user,GuardedString password){
+	static Connection createType2Connection(String driver,String aliasName,String subprotocol,String user,GuardedString password){
 		StringBuilder urlBuilder = new StringBuilder();
-		urlBuilder.append("jdbc:db2:");
+		urlBuilder.append("jdbc:").append(subprotocol).append(':');
 		urlBuilder.append(aliasName);
 		return SQLUtil.getDriverMangerConnection(driver, urlBuilder.toString(), user, password);
 	}
