@@ -89,9 +89,7 @@ public class SpmlConnectorTests {
 
     // Connector Configuration information
     //
-    private static final String PROTOCOL              = "http";
-    private static final int    HOST_PORT             = 8080;
-    private static final String FILE                  = "/idm/servlet/openspml2";
+    private static final String URL                   = "http://localhost:8080/idm/servlet/openspml2";
     private static final String SPML_OBJ_CLASS        = "spml2Person";
     private static final String CONNECTOR_OBJ_CLASS   = ObjectClass.ACCOUNT_NAME;
     private static final String PSO_TARGET_CLASS      = "spml2-DSML-Target";
@@ -129,27 +127,11 @@ public class SpmlConnectorTests {
         }
         {
             SpmlConfiguration config = new SpmlConfiguration();
-            config.getFile();
+            config.getUrl();
             // Validate that setting this to null doesn't error out
             //
-            config.setFile(null);
-            config.getFile();
-        }
-        {
-            SpmlConfiguration config = new SpmlConfiguration();
-            config.getHostNameOrIpAddr();
-            // Validate that setting this to null doesn't error out
-            //
-            config.setHostNameOrIpAddr(null);
-            config.getHostNameOrIpAddr();
-        }
-        {
-            SpmlConfiguration config = new SpmlConfiguration();
-            config.getHostPortNumber();
-            // Validate that setting this to null doesn't error out
-            //
-            config.setHostPortNumber(null);
-            config.getHostPortNumber();
+            config.setUrl(null);
+            config.getUrl();
         }
         {
             SpmlConfiguration config = new SpmlConfiguration();
@@ -174,14 +156,6 @@ public class SpmlConnectorTests {
             //
             config.setUserName(null);
             config.getUserName();
-        }
-        {
-            SpmlConfiguration config = new SpmlConfiguration();
-            config.getProtocol();
-            // Validate that setting this to null doesn't error out
-            //
-            config.setProtocol(null);
-            config.getProtocol();
         }
         {
             SpmlConfiguration config = new SpmlConfiguration();
@@ -229,27 +203,7 @@ public class SpmlConnectorTests {
         {
             try {
                 SpmlConfiguration config = createConfiguration();
-                config.setFile(null);
-                config.validate();
-                Assert.fail("expected exception");
-            } catch (RuntimeException rte) {
-                // expected
-            }
-        }
-        {
-            try {
-                SpmlConfiguration config = createConfiguration();
-                config.setHostNameOrIpAddr(null);
-                config.validate();
-                Assert.fail("expected exception");
-            } catch (RuntimeException rte) {
-                // expected
-            }
-        }
-        {
-            try {
-                SpmlConfiguration config = createConfiguration();
-                config.setHostPortNumber(null);
+                config.setUrl(null);
                 config.validate();
                 Assert.fail("expected exception");
             } catch (RuntimeException rte) {
@@ -286,16 +240,6 @@ public class SpmlConnectorTests {
                 // expected
             }
         }
-        {
-            try {
-                SpmlConfiguration config = createConfiguration();
-                config.setProtocol(null);
-                config.validate();
-                Assert.fail("expected exception");
-            } catch (RuntimeException rte) {
-                // expected
-            }
-        }
     }
 
     @BeforeClass
@@ -309,22 +253,7 @@ public class SpmlConnectorTests {
         Assert.assertNotNull("SYSTEM_USER must be specified", SYSTEM_USER);
     }
 
-    @Test
-    public void testBadPort() throws Exception {
-        {
-           SpmlConfiguration config = createConfiguration();
-            config.setHostPortNumber(100000);
-            try {
-                config.validate();
-                Assert.fail("no exception for bad port");
-            } catch (Exception e) {
-            	e.printStackTrace();
-                // expected
-            }
-        }
-    }
-
-    @Test@Ignore
+    @Test//@Ignore
     public void testListSchema() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
@@ -351,7 +280,7 @@ public class SpmlConnectorTests {
         }
     }
 
-    @Test@Ignore
+    @Test//@Ignore
     public void testListAllUsers() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
@@ -366,7 +295,7 @@ public class SpmlConnectorTests {
         }
     }
 
-    @Test@Ignore
+    @Test//@Ignore
     public void testGetSpecifiedUser() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
@@ -399,7 +328,7 @@ public class SpmlConnectorTests {
         }
     }
 
-    @Test@Ignore
+    @Test//@Ignore
     public void testTest() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
@@ -410,7 +339,7 @@ public class SpmlConnectorTests {
         }
     }
 
-    @Test@Ignore
+    @Test//@Ignore
     public void testSearchSpecifiedUser() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
@@ -551,7 +480,7 @@ public class SpmlConnectorTests {
         }
     }
 
-    @Test@Ignore
+    @Test//@Ignore
     public void testModifyUser() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
@@ -651,7 +580,7 @@ public class SpmlConnectorTests {
 
     }
 
-    @Test@Ignore
+    @Test//@Ignore
     public void testCreate() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
@@ -677,7 +606,7 @@ public class SpmlConnectorTests {
         }
     }
 
-    @Test@Ignore
+    @Test//@Ignore
     public void testChangePassword() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
@@ -705,7 +634,7 @@ public class SpmlConnectorTests {
         }
     }
 
-    @Test@Ignore
+    @Test//@Ignore
     public void testEnableDisable() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
@@ -765,7 +694,7 @@ public class SpmlConnectorTests {
         }
     }
 
-    @Test@Ignore
+    @Test//@Ignore
     public void testDelete() throws Exception {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
@@ -821,7 +750,7 @@ public class SpmlConnectorTests {
     }
 
     private SpmlConfiguration createConfiguration() {
-        SpmlConfiguration config = new SpmlConfiguration(PROTOCOL, HOST_NAME, HOST_PORT, FILE, new String[] {CONNECTOR_OBJ_CLASS}, new String[] {SPML_OBJ_CLASS}, new String[] {PSO_TARGET_CLASS}, new String[] {ACCOUNT_ID}, SYSTEM_USER, new GuardedString(SYSTEM_PASSWORD.toCharArray()));
+        SpmlConfiguration config = new SpmlConfiguration(URL, new String[] {CONNECTOR_OBJ_CLASS}, new String[] {SPML_OBJ_CLASS}, new String[] {PSO_TARGET_CLASS}, new String[] {ACCOUNT_ID}, SYSTEM_USER, new GuardedString(SYSTEM_PASSWORD.toCharArray()));
         config.setPreSendCommand(getPreSendCommand());
         config.setPostReceiveCommand(getPostReceiveCommand());
         config.setPostConnectCommand(getPostConnectCommand());

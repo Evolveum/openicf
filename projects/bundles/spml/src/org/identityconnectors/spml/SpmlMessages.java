@@ -43,10 +43,7 @@ public interface SpmlMessages {
     public static final String PROTOCOL_NULL                 = "PROTOCOL_NULL";
     public static final String LANGUAGE_NULL                 = "LANGUAGE_NULL";
     public static final String NAME_NULL                     = "NAME_NULL";
-    public static final String HOST_NULL                     = "HOST_NULL";
-    public static final String PORT_NULL                     = "PORT_NULL";
-    public static final String PORT_RANGE_ERROR              = "PORT_RANGE_ERROR";
-    public static final String FILE_NULL                     = "FILE_NULL";
+    public static final String URL_NULL                      = "URL_NULL";
     public static final String USERNAME_NULL                 = "USERNAME_NULL";
     public static final String PASSWORD_NULL                 = "PASSWORD_NULL";
     public static final String OBJECT_CLASS_NULL             = "OBJECT_CLASS_NULL";

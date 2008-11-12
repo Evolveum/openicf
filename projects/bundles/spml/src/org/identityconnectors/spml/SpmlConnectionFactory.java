@@ -54,7 +54,7 @@ public class SpmlConnectionFactory {
     public static SpmlConnection newConnection(SpmlConfiguration configuration) {
         Spml2Client client = null;
         try {
-            URL url = new URL(configuration.getProtocol(), configuration.getHostNameOrIpAddr(), configuration.getHostPortNumber(), configuration.getFile());
+            URL url = new URL(configuration.getUrl());
             GuardedStringAccessor accessor = new GuardedStringAccessor();
             configuration.getPassword().access(accessor);
             String password = new String(accessor.getArray());
@@ -62,7 +62,7 @@ public class SpmlConnectionFactory {
             //TODO: Spml2Client requires clear text password
             client = new Spml2Client(url.toExternalForm(), configuration.getUserName(), password);
             SpmlConnection connection = new SpmlConnection(client, configuration);
-            log.info("created SPML connection to ''{0}''", configuration.getHostNameOrIpAddr());
+            log.info("created SPML connection to ''{0}''", configuration.getUrl());
             return connection;
         } catch (RuntimeException rte) {
             throw rte;

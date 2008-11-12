@@ -51,10 +51,11 @@ public class SpmlConfiguration extends AbstractConfiguration {
     private String             _userName;
     private GuardedString      _password;
 
-    private String             _protocol;
-    private String             _hostNameOrIpAddr;
-    private Integer            _hostPortNumber;
-    private String             _file;
+    //private String             _protocol;
+    //private String             _hostNameOrIpAddr;
+    //private Integer            _hostPortNumber;
+    //private String             _file;
+    private String             _url;
     private String[]           _objectClassNames;
     private String[]           _spmlClassNames;
     private String[]           _targetNames;
@@ -74,12 +75,9 @@ public class SpmlConfiguration extends AbstractConfiguration {
     public SpmlConfiguration() {
     }
 
-    public SpmlConfiguration(String protocol, String hostName, Integer port, String file, String[] connectorObjectClass, String[] spmlObjectClass, String[] targetClass, String[] nameAttributes, String userName, GuardedString password) {
+    public SpmlConfiguration(String url, String[] connectorObjectClass, String[] spmlObjectClass, String[] targetClass, String[] nameAttributes, String userName, GuardedString password) {
         this();
-        _protocol = protocol;
-        _hostNameOrIpAddr = hostName;
-        _hostPortNumber = port;
-        _file = file;
+        _url = url;
         _userName = userName;
         _nameAttributes = nameAttributes;
         _password = password;
@@ -111,16 +109,8 @@ public class SpmlConfiguration extends AbstractConfiguration {
     }
 
     public void validate() {
-        if (isNull(_protocol))
-            throw new ConnectorException(getMessage(SpmlMessages.PROTOCOL_NULL));
-        if (isNull(_hostNameOrIpAddr))
-            throw new ConnectorException(getMessage(SpmlMessages.HOST_NULL));
-        if (_hostPortNumber==null)
-            throw new ConnectorException(getMessage(SpmlMessages.PORT_NULL));
-        if (_hostPortNumber<1 || _hostPortNumber>65535)
-            throw new ConnectorException(getMessage(SpmlMessages.PORT_RANGE_ERROR, _hostPortNumber));
-        if (isNull(_file))
-            throw new ConnectorException(getMessage(SpmlMessages.FILE_NULL));
+        if (isNull(_url))
+            throw new ConnectorException(getMessage(SpmlMessages.URL_NULL));
         if (isNull(_userName))
             throw new ConnectorException(getMessage(SpmlMessages.USERNAME_NULL));
         if (isNull(_password))
@@ -158,39 +148,12 @@ public class SpmlConfiguration extends AbstractConfiguration {
     }
 
     @ConfigurationProperty(order=3)
-    public String getHostNameOrIpAddr() {
-        return _hostNameOrIpAddr;
+    public String getUrl() {
+        return _url;
     }
 
-    public void setHostNameOrIpAddr(String hostNameOrIpAddr) {
-        _hostNameOrIpAddr = hostNameOrIpAddr;
-    }
-
-    @ConfigurationProperty(order=4)
-    public Integer getHostPortNumber() {
-        return _hostPortNumber;
-    }
-
-    public void setHostPortNumber(Integer hostPortNumber) {
-        _hostPortNumber = hostPortNumber;
-    }
-
-    @ConfigurationProperty(order=5)
-    public String getProtocol() {
-        return _protocol;
-    }
-
-    public void setProtocol(String protocol) {
-        _protocol = protocol;
-    }
-
-    @ConfigurationProperty(order=6)
-    public String getFile() {
-        return _file;
-    }
-
-    public void setFile(String file) {
-        _file = file;
+    public void setUrl(String url) {
+        _url = url;
     }
 
     @ConfigurationProperty(order=8)
