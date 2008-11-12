@@ -63,8 +63,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
     [TestFixture]
     public class ActiveDirectoryConnectorTest
     {
-        Random _rand = new Random();
-
+        Random _rand = new Random();  
         public static readonly string CONFIG_PROPERTY_USER = "config_user";
         public static readonly string CONFIG_PROPERTY_PASSWORD = "config_password";
         public static readonly string CONFIG_PROPERTY_HOST = "config_host";
@@ -83,6 +82,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public static readonly string CONFIG_PROPERTY_GC_DOMAIN_CONTROLLER = "config_sync_gc_domain_controller";
         public static readonly string TEST_PARAM_SHARED_HOME_FOLDER = "test_param_shared_home_folder";
 
+        [TestFixtureSetUp]
+        public void TestFixtureSetUp() {
+        	Environment.SetEnvironmentVariable("project.name", "ActiveDirectoryConnectorTests");
+        }
+        
         [Test]
         public void TestConfiguration() {
             ActiveDirectoryConfiguration config = new ActiveDirectoryConfiguration();
@@ -2674,7 +2678,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public string GetProperty(string propertyName)
         {
             string propertyValue = TestHelpers.GetProperty(propertyName, null);
-            Trace.WriteLine(String.Format("GetProperty: {0} = {1}", propertyName, propertyValue));
+            //Trace.WriteLine(String.Format("GetProperty: {0} = {1}", propertyName, propertyValue));
             return propertyValue;
         }
 
