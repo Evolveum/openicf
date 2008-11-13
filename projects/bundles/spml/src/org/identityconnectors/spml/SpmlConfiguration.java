@@ -51,10 +51,6 @@ public class SpmlConfiguration extends AbstractConfiguration {
     private String             _userName;
     private GuardedString      _password;
 
-    //private String             _protocol;
-    //private String             _hostNameOrIpAddr;
-    //private Integer            _hostPortNumber;
-    //private String             _file;
     private String             _url;
     private String[]           _objectClassNames;
     private String[]           _spmlClassNames;
@@ -79,7 +75,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         this();
         _url = url;
         _userName = userName;
-        _nameAttributes = nameAttributes;
+        _nameAttributes = arrayCopy(nameAttributes);
         _password = password;
         _objectClassNames = arrayCopy(connectorObjectClass);
         _spmlClassNames = arrayCopy(spmlObjectClass);
@@ -239,7 +235,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
     
     @ConfigurationProperty(order=17)
      public String[] getNameAttributes() {
-         return _nameAttributes;
+         return arrayCopy(_nameAttributes);
      }
 
      public void setNameAttributes(String[] attribute) {
