@@ -145,7 +145,7 @@ scripting language (parsed by <a href="http://groovy.codehaus.org/ConfigSlurper"
 Groovy features a Java-like and most Java code will work in Groovy
 without
 modification.&nbsp;For
-more information on Groovy, see<!-- TODO insert a more specific link here, maybe my tutorial -->
+more information on Groovy, see 
 <a href="http://groovy.codehaus.org/">http://groovy.codehaus.org</a>.
 <br>
 
@@ -924,23 +924,16 @@ file.
 </p>
 
 <a name="runexport"></a>
-<h4>Export of Generated Test Parameters <big><big><big><big><span style="color: rgb(204, 0, 0);">TODOTODOTODO</span></big></big></big></big></h4>
+<h4>Export of Generated Test Parameters</h4>
 
 During the test many parameters are generated that are used as input
-data for the tests. These can be exported to a property file so that
-the test can be&nbsp;rerun&nbsp;with the same values. (Note:
-This file will contain all the
-properties used during the test, <span style="font-style: italic;">including
-configuration properties</span>.)
-To rerun the test using the saved values, you need to pass the name of
-the&nbsp; <a href="#runfile">generated
-property file</a> using the <code>test.parameters.outFile</code>
-property.<br>
+data for the tests. These can be exported to a property file that is useful when debugging connectors' contract tests. 
+<br>
 
 <br>
 
-For example:
-<pre><span class="codeComment"># run contract tests and store all parameters (attributes values) used by tests in </span><code class="codeComment">test.properties</code><span class="codeComment"> file</span><br>ant -Dtest.parameters.outFile=generated.properties run-contract-tests<br></pre>
+To generate the snapshot:
+<pre><span class="codeComment">// run contract tests and store all parameters (attributes values) used by tests in </span><code class="codeComment">test.properties</code><span class="codeComment"> file</span><br>ant -Dtest.parameters.outFile=generated.properties run-contract-tests<br></pre>
 
 <br>
 
