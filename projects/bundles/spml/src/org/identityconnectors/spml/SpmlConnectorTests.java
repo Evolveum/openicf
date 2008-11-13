@@ -89,7 +89,7 @@ public class SpmlConnectorTests {
 
     // Connector Configuration information
     //
-    private static final String URL                   = "http://localhost:8080/idm/servlet/openspml2";
+    private static final String URL                   = "http://idmvm2026.central.sun.com:8080/idm/servlet/openspml2";
     private static final String SPML_OBJ_CLASS        = "spml2Person";
     private static final String CONNECTOR_OBJ_CLASS   = ObjectClass.ACCOUNT_NAME;
     private static final String PSO_TARGET_CLASS      = "spml2-DSML-Target";
