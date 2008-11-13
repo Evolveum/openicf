@@ -1,353 +1,579 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html><head>
-<meta http-equiv="content-type" content="text/html; charset=windows-1250"><title>Groovy Contract Tests Manual -- In-depth</title>
+<html>
+<head>
 
+  <meta http-equiv="content-type" content="text/html; charset=windows-1250">
+  <title>Groovy Contract Tests Manual -- In-depth</title>
+
+
+<!-- Commenting out links to local CSS files. I added these so that I could test the page locally. Thanks. -Kevin Kessler <link rel="stylesheet" type="text/css" href="tigris.css"> <link rel="stylesheet" type="text/css" href="inst.css"> -->
+  <style type="text/css" media="all">
+.literal {
+font-size: medium;
+font-family: monospace;
+}
+.codeComment {
+color: #006600;
+}
+hr {
+margin-top: 20px;
+margin-bottom: 7px;
+width: 100%; height: 2px;
+}
+  </style>
 </head>
+
 <body>
+
 <div id="projecthome" class="app">
 <pre>-&lt;( <a href="index.html">Contract tests manual</a> &gt; In-depth manual )&gt;-</pre>
+
 <hr style="width: 100%; height: 2px;">
 <h1>2) In-depth guide</h1>
+
 Table of contents:&nbsp;
 <ul>
-<li><a href="#properties">2.1 Defining properties</a></li>
-<ul>
-<li><a href="#proplookup">Properties lookup</a></li>
-</ul>
-<ul>
-<li><a href="#pvaltypes">Properties value types</a></li>
-</ul>
-<ul>
-<li><a href="#macros">Macros</a>
+
+  <li><a href="#properties">2.1 Defining properties</a></li>
+
+  <ul>
+
+    <li><a href="#proplookup">Properties lookup</a></li>
+
+  </ul>
+
+  <ul>
+
+    <li><a href="#pvaltypes">Properties value types</a></li>
+
+  </ul>
+
+  <ul>
+
+    <li><a href="#macros">Macros</a>
 @deprecated</li>
+
+  </ul>
+
+  <li><a href="#Configuring_tests">2.2 Configuring
+tests</a></li>
+
+  <ul>
+
+    <li><a href="#minprop">Required properties</a></li>
+
+  </ul>
+
+  <ul>
+
+    <ul>
+
+      <li><a href="#Bundle_jar_path">Bundle jar path</a></li>
+
+    </ul>
+
+  </ul>
+
+  <ul>
+
+    <ul>
+
+      <li><a href="#connconfprop">Connector
+configuration properties</a></li>
+
+    </ul>
+
+  </ul>
+
+  <ul>
+
+    <ul>
+
+      <li><a href="#validateprop">ValidateApiOpTests
+properties</a></li>
+
+    </ul>
+
+  </ul>
+
+  <ul>
+
+    <ul>
+
+      <li><a href="#schemaprop">SchemaApiOpTests
+properties</a></li>
+
+    </ul>
+
+  </ul>
+
+  <ul>
+
+    <li><a href="#optionalprops">Optional properties</a></li>
+
+  </ul>
+
+  <ul>
+
+    <ul>
+
+      <li><a href="#provprops">ScriptOnResourceApiOpTests,
+ScriptOnConnectorApiOpTests properties</a></li>
+
+    </ul>
+
+  </ul>
+
+  <ul>
+
+    <ul>
+
+      <li><a href="#dataprovprops">DataProvider
+properties</a></li>
+
+    </ul>
+
+  </ul>
+
+  <ul>
+
+    <ul>
+
+      <li><a href="#UpdateApiOpTests">UpdateApiOpTests</a></li>
+
+    </ul>
+
+  </ul>
+
 </ul>
-<li><a href="#Configuring_tests">2.2 Configuring tests</a></li><ul><li><a href="#minprop">Required properties</a></li></ul>
-<ul><ul><li><a href="#Bundle_jar_path">Bundle jar path</a></li></ul></ul>
-<ul><ul><li><a href="#connconfprop">Connector
-configuration properties</a></li></ul></ul>
-<ul><ul><li><a href="#validateprop">ValidateApiOpTests
-properties</a></li></ul></ul>
-<ul><ul><li><a href="#schemaprop">SchemaApiOpTests
-properties</a></li></ul></ul>
-<ul><li><a href="#optionalprops">Optional properties</a></li></ul>
-<ul><ul><li><a href="#provprops">ScriptOnResourceApiOpTests,
-ScriptOnConnectorApiOpTests properties</a></li></ul></ul>
-<ul><ul><li><a href="#dataprovprops">DataProvider properties</a></li></ul></ul><ul><ul><li><a href="#UpdateApiOpTests">UpdateApiOpTests</a></li></ul></ul>
-</ul>
+
 <ul>
+
 </ul>
+
 <hr style="width: 100%; height: 2px;">
 <h2><a name="properties">2.1 Defining properties</a></h2>
+
 <p>Test properties follows these patterns:</p>
-<pre>// connector configuration<br>connector.{$property.name}="some value"<br>connector.connectionUrl="jdbc:mysql://localhost/database"<br><br>// testsuite configuration<br>testsuite.{$property.name}="some value"<br>testsuite.bundleJar=System.getProperty("connector-jar")<br><br>// DataProvider configuration<br>i{$iteration}.{$test.name}.{$oclass.name}.${attribute.name}="some value"<br>i0.Create.account.DEPARTMENT="some value"<br></pre>
-<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
-<tbody>
-<tr>
-<td style="background-color: rgb(204, 204, 204);">
-<p>Note 1: that <strong>case sensitivity is important</strong>.</p>
-<p>Note 2: The <code>property.name</code> is
+
+<pre><span class="codeComment">// connector configuration</span><br>connector.{$property.name}="some value"<br>connector.connectionUrl="jdbc:mysql://localhost/database"<br><br><span class="codeComment">// testsuite configuration</span><br>testsuite.{$property.name}="some value"<br>testsuite.bundleJar=System.getProperty("connector-jar")<br><br><span class="codeComment">// DataProvider configuration</span><br>i{$iteration}.{$test.name}.{$oclass.name}.${attribute.name}="some value"<br>i0.Create.account.DEPARTMENT="some value"<br></pre>
+
+<br>
+
+<table style="text-align: left; width: 90%;" border="1" cellpadding="4" cellspacing="0">
+
+  <tbody>
+
+    <tr>
+
+      <td style="vertical-align: top; background-color: rgb(239, 239, 239);"><span style="font-weight: bold;">&nbsp;Note:</span></td>
+
+      <td>
+      <p>When defining properties, case sensitivity is important.</p>
+
+      <p>The property <code>property.name</code> is
 derived
-from the setXYZ() method for the property (typically inside <code>FooConnectorConfiguration</code>
-class).</p>
-</td>
-</tr>
-</tbody>
+from the <code>setXYZ()</code> method,
+which is typically inside the <code>FooConnectorConfiguration</code>
+class.</p>
+
+      </td>
+
+    </tr>
+
+  </tbody>
 </table>
+
 <p></p>
+
 <h3><a name="proplookup">Properties lookup</a></h3>
+
 Properties are searched recursively. If a test looks for the property <code>connector.i1.wrong.login</code>
-and doesn't find its definition
-it tries to look for <code>i1.wrong.login</code>,
-if still nothing found it tries <code>wrong.login</code>
-etc. In last iteration, where there is nothing left from the originally
-queried name, the GroovyDataProvider sets the default value according
-to the type of the property.<!-- TODO: maybe addition info is needed to clarify this type resolution, see the place where the types are defined exactly.--><br>
-<p>The values of the properties are evaluated at the initial
-parsing of the property files. The only exception is a use of <span style="font-family: monospace;">Lazy.random()</span>, <span style="font-family: monospace;">Lazy.get()</span>
-static util methods, as these implement lazy evaluation (just in the
-time of request
-for property).
-</p>
-<p>
-After property value is recursively found it is stored as the value of
+and does not find its definition,
+it trys to look for <code>i1.wrong.login</code>.
+If&nbsp;nothing is found, it trys <code>wrong.login</code>
+and so on. After the last iteration, the GroovyDataProvider sets the
+default value according
+to the&nbsp;property type.<br>
+
+<p>Property values are evaluated during the initial
+parsing of the property files. The only exception is if either
+the&nbsp;<span style="font-family: monospace;">Lazy.random()</span>or
+<span style="font-family: monospace;">Lazy.get()</span>
+static util methods, which specify lazy evaluation, are used. If lazy
+evaluation is specified, a property value is not evaluated until the
+property is requested.</p>
+
+<p>When a property value is recursively found, it is stored as
+the value of
 the property that was initially looked up. For instance, test looks
 for <code style="color: rgb(51, 51, 255);">connector.i1.wrong.login</code>
 and
-recursively finds <strong>value</strong> of&nbsp;<code style="color: rgb(0, 102, 0);">wrong.login</code>.
+recursively finds the <strong>value</strong> of&nbsp;<code style="color: rgb(0, 102, 0);">wrong.login</code>.
 This <strong>value</strong>
 will also be stored for <code style="color: rgb(51, 51, 255);">connector.i1.wrong.login</code>.
-The next time test will look for the original property (<code style="color: rgb(51, 51, 255);">connector.i1.wrong...</code>),
+The next time test looks for the original property (<code style="color: rgb(51, 51, 255);">connector.i1.wrong...</code>),
 its value
 will be returned immediately.
 </p>
+
 <h3><a name="pvaltypes"></a>Property value
 types</h3>
-<p>Any Java type can be used (see <a href="index.html#stdgroovyimports">standard imports</a>),
-in case you need additional types, take care of imports.<!-- TODO: v starych materialech v sekci Properties value types pod tabulkou tam je jeste poznamka o Guarded string a kol. Je to jeste porad platny? -->
+
+<p>Any Java type can be used. (For more information, see <a href="index.html#stdgroovyimports">standard imports</a>.)
+If additional types are needed, these can be imported.<!-- TODO: v starych materialech v sekci Properties value types pod tabulkou tam je jeste poznamka o Guarded string a kol. Je to jeste porad platny? -->
 &nbsp;
 </p>
+
 <p><span style="font-style: italic;">
 Default value definitions</span> for property types are:
 </p>
-<pre>Tstring = Lazy.random("AAAAA##")<br>Tinteger= Lazy.random("##", Integer.class)<br>Tint= Lazy.random("##", Integer.class)<br>Tlong= Lazy.random("#####", Long.class)<br>// for full list of default values see /framework/contract-tests/src/bootstrap.groovy<br></pre>
-<p>Properties that has not been defined, are assigned the default
-values by GroovyDataProvider. So for instance&nbsp;the test looks
-for property&nbsp;not yet defined: <span style="font-family: monospace; color: rgb(0, 153, 0);">i0.Create.account.DEPARTMENT</span>&nbsp;</p>
-<ul>
-<li>through recursive lookup it finds out that there is no such
-a property</li>
-<li>based on the type of&nbsp;<span style="font-family: monospace; color: rgb(0, 153, 0);">i0.Create.account.DEPARTMENT</span>
-we return the default value:&nbsp; <span style="font-family: monospace;">Tstring =
-Lazy.random("AAAAA##")</span> </li>
-<li>expression on the right hand side is dynamically evaluated,
-will result in random string according to pattern: 4 uppercase letters
-concatenated with 2 digits (e.g.: JRIW87).</li>
-</ul>
-<h3>Mac<a name="macros"></a>ros</h3>
+
+<pre>Tstring = Lazy.random("AAAAA##")<br>Tinteger= Lazy.random("##", Integer.class)<br>Tint= Lazy.random("##", Integer.class)<br>Tlong= Lazy.random("#####", Long.class)<br><span class="codeComment">// for full list of default values see /framework/contract-tests/src/bootstrap.groovy</span><br></pre>
+
+<p>Properties that have not been defined are
+assigned&nbsp;default
+values by GroovyDataProvider. For example, the test looks
+for the&nbsp;undefined property <code>i0.Create.account.DEPARTMENT</code>
+as follows:</p>
+
+<ol>
+
+  <li>The test uses&nbsp;recursive lookup and determines
+there
+is no such&nbsp;property&nbsp;</li>
+
+  <li>Because&nbsp;<code>i0.Create.account.DEPARTMENT</code>
+is a String,
+we return the default value <span style="font-family: monospace;">Tstring
+=
+Lazy.random("AAAAA##")</span>
+    <br>
+
+The expression to the right of the =
+operator
+is dynamically evaluated and a random string is created
+following the pattern four uppercase letters
+concatenated with two digits (for example,&nbsp;JRIW87).
+  </li>
+
+</ol>
+
+<a name="macros"></a>
+<h3>Macros</h3>
+
 <p>There are no macros used in the new Groovy Contract tests,
-however if you would like to transfer your old configuration there is a
+however, if you would like to transfer your old configuration, a
 <a href="appendix.html#transtable">Translation table</a>
-to groovy.</p>
-<h2></h2>
+to Groovy is available.</p>
+
 <hr style="width: 100%; height: 2px;">
-<h2><br>
-</h2>
-<h2><a name="Configuring_tests"></a>2.2 Configuring
+<br>
+
+<h2><a name="Configuring_tests"></a>2.2
+Configuring
 tests</h2>
+
 <!-- ============================== -->
 <h3><a name="minprop">Required properties</a></h3>
-<h4><a name="Bundle_jar_path"></a>Bundle jar
-path</h4>
-Path to connector distribution jar file (when compiled it is placed to <code>${project.name}/dist</code>
-directory).
-<pre>testsuite.bundleJar=System.getProperty("connector-jar") // connector-jar System property is set by ant to the current connector<br></pre>
-Use the <code>System.getProperty()</code> call to get <code>connector-jar</code>
-system property, which is set by <code>ant</code>.
-<h4><a name="connconfprop">Connector configuration
-properties</a></h4>
-Properties declared in connector configuration bean (implementing <a href="http://idmvm120.central.sun.com/hudson/job/framework/javadoc/org/identityconnectors/framework/spi/Configuration.html"><code>Configuration</code></a>
-interface) using following pattern:
-<pre>connector.${property.name}=${value}<br></pre>
+
+<h4><a name="Bundle_jar_path"></a>Bundle JAR
+Path</h4>
+
+<p>After it is compiled, the path to the connector distribution
+JAR file
+is&nbsp;<code>${project.name}/dist</code>.</p>
+
+<p>Use the <code>System.getProperty()</code> call to
+get the <code>connector-jar</code>
+system property that is set by <code>ant</code>.</p>
+
+<pre style="margin-left: 40px;">testsuite.bundleJar=System.getProperty("connector-jar") <span class="codeComment">// connector-jar System property is <br> // set by ant to the current connector</span><br></pre>
+
+<h4><a name="connconfprop">Connector Configuration
+Properties</a></h4>
+
+Properties declared in the connector configuration bean (see
+implementing <a href="http://idmvm120.central.sun.com/hudson/job/framework/javadoc/org/identityconnectors/framework/spi/Configuration.html"><code>Interface
+Configuration</code></a> ) use the following pattern:
+<pre style="margin-left: 40px;">connector.${property.name}=${value}<br></pre>
+
 where <code>${property.name}</code> is a property of
-configuration bean, <code>${value}</code> can be a value
-(any java object).
+the configuration bean, and <code>${value}</code> can be a
+value
+(any Java object).
 <p>The following table represents two equivalent forms of
-defining connector properties. In most cases<a href="#note1"><span style="color: rgb(51, 51, 255);">(*)</span></a>
-we favor
-option on the
-right.
+defining connector properties. In most cases <a href="#note1"><span style="color: rgb(51, 51, 255);">(see note)</span></a>
+the option on the
+right is favored.
 <table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
-<tbody>
-<tr>
-<td>
-<pre>// example configuration of database table connector for MySQL with sample values<br>connector.host="localhost"<br>connector.login="login"<br>connector.password="password"<br>connector.port="3306"<br>connector.driver="com.mysql.jdbc.Driver"<br>connector.usermodel="modeluser"</pre>
-</td>
-<td>
-<pre>// example configuration of database table connector for MySQL with sample values<br>connector {<br> host="localhost"<br> login="login"<br> password="password"<br> port="3306"<br> driver="com.mysql.jdbc.Driver"<br> usermodel="modeluser"<br>} // connector</pre>
-</td>
-</tr>
-<tr>
-<td colspan="2" rowspan="2"><small><span style="color: rgb(51, 51, 255);">(*)</span><a name="note1"></a> Note 1:
-property names containing special characters (invalid Java
-identificators), such as <span style="font-family: monospace;">
+
+  <tbody>
+
+    <tr>
+
+      <td>
+      <pre><span class="codeComment">// example configuration of database table connector<br>// for MySQL with sample values</span><br>connector.host="localhost"<br>connector.login="login"<br>connector.password="password"<br>connector.port="3306"<br>connector.driver="com.mysql.jdbc.Driver"<br>connector.usermodel="modeluser"</pre>
+
+      </td>
+
+      <td>
+      <pre><span class="codeComment">// example configuration of database table connector<br>// for MySQL with sample values</span><br>connector {<br> host="localhost"<br> login="login"<br> password="password"<br> port="3306"<br> driver="com.mysql.jdbc.Driver"<br> usermodel="modeluser"<br>} <span class="codeComment">// connector</span></pre>
+
+      </td>
+
+    </tr>
+
+    <tr>
+
+      <td colspan="2" rowspan="2"><a name="note1"></a>
+Note 1: Property names containing
+special characters (invalid Java
+identifiers), such as <span style="font-family: monospace;">
 @</span>, <span style="font-family: monospace;">
--</span>, etc. should be escaped. For instance
-<span style="font-family: monospace;">testsuite.Schema."@@NAME@@".attribute.account.oclasses</span>.
-However
-property name cannot start with the escaped part (<span style="font-family: monospace;">@@NAME@@</span> in
+-</span>, and so on, should be escaped. <br>
+
+For example,
+      <span style="font-family: monospace;">testsuite.Schema."@@NAME@@".attribute.account.oclasses</span>.
+Property names, however, cannot start with the escaped part (<span style="font-family: monospace;">@@NAME@@</span> in
 this
 case).<br>
-Note 2: the prefix tree should be <span style="font-style: italic;">unique</span>
+
+      <br>
+
+Note 2: The prefix tree should be <span style="font-style: italic;">unique</span>
 in the whole configuration
 file (in this case <span style="font-family: monospace;">
-connector { ... }</span> ).</small></td>
-</tr>
-</tbody>
+connector { ... }</span> ).</td>
+
+    </tr>
+
+  </tbody>
 </table>
+
 </p>
+
 <p>There are two classes of default values:</p>
+
 <ol>
-<li>[<span style="font-weight: bold;">Not supplied
-default values</span>] Default values of properties: <code>connector.*</code>,
+
+  <li><span style="font-weight: bold;">Missing
+default values</span>. Default values of properties: <code>connector.*</code>,
 and <code>testsuite.*</code> is defined as&nbsp;<code>ObjectNotFoundException</code>
 for
 integer, float, double and string types to protect generation of random
-values when configuration property definition is <span style="font-style: italic;">missing</span>.</li>
-<li>[<span style="font-weight: bold;">Supplied
-default values</span>] Default values for iterative properties
-(e.g. <span style="font-family: monospace;">connector.i1.wrong.host</span>)
-are listed here (and in <span style="font-family: monospace;">bootstrap.groovy</span>):
-<br>
+values when configuration property definition is <span style="font-style: italic;">missing</span>.<br>
+
+  </li>
+
+  <li><span style="font-weight: bold;">Supplied
+default values</span>. Default values for iterative properties
+(for example,&nbsp;<code>connector.i1.wrong.host</code>)
+are listed here (and in <code>bootstrap.groovy</code>):
+    <br>
+
 <!-- ======================= -->
-<span style="font-family: monospace;">/*</span><br>
-<span style="font-family: monospace;">&nbsp;*
-Default data values for iterative types</span><br>
-<span style="font-family: monospace;">&nbsp;*/</span><br>
-<span style="font-family: monospace;">Tstring =
-Lazy.random("AAAAA##")</span><br>
-<span style="font-family: monospace;">Tinteger=
-Lazy.random("##", Integer.class)</span><br>
-<span style="font-family: monospace;">Tint=
-Lazy.random("##", Integer.class)</span><br>
-<span style="font-family: monospace;">Tlong=
-Lazy.random("#####", Long.class)</span><br>
-<span style="font-family: monospace;">Tbiginteger=Lazy.random("#####",
-java.math.BigInteger.class)</span><br>
-<span style="font-family: monospace;">Tfloat=Lazy.random("#####\\.##",
-Float.class)</span><br>
-<span style="font-family: monospace;">Tdouble=Lazy.random("#####\\.##",
-Double.class)</span><br>
-<span style="font-family: monospace;">Tbigdecimal=Lazy.random("#####\\.##",
-java.math.BigDecimal.class)</span><br>
-<span style="font-family: monospace;">Tboolean=false</span><br>
-<span style="font-family: monospace;">Tbytearray=Lazy.random(".............",
-byte[].class)</span><br>
-<span style="font-family: monospace;">Tcharacter=Lazy.random(".",
-Character.class)</span><br>
-<br>
-<span style="font-family: monospace;">// Default data
-for multivalue attributes of common types</span><br>
-<span style="font-family: monospace;">multi.Tstring=[Lazy.random("AAAAA##")
-, Lazy.random("AAAAA##")]</span><br>
-<span style="font-family: monospace;">multi.Tinteger=[Lazy.random("##",
-Integer.class), Lazy.random("##", Integer.class)]</span><br>
-<span style="font-family: monospace;">multi.Tlong=[Lazy.random("#####",
-Long.class), Lazy.random("#####", Long.class)]</span><br>
-<span style="font-family: monospace;">multi.Tbiginteger=[Lazy.random("#####",
-java.math.BigInteger.class), Lazy.random("#####",
-java.math.BigInteger.class)]</span><br>
-<span style="font-family: monospace;">multi.Tfloat=[Lazy.random("#####\\.##",
-Float.class), Lazy.random("#####\\.##", Float.class)]</span><br>
-<span style="font-family: monospace;">multi.Tdouble=[Lazy.random("#####\\.##",
-Double.class), Lazy.random("#####\\.##", Double.class)]</span><br>
-<span style="font-family: monospace;">multi.Tbigdecimal=[Lazy.random("#####\\.##",
-java.math.BigDecimal.class), Lazy.random("#####\\.##",
-java.math.BigDecimal.class)]</span><br>
-<span style="font-family: monospace;">multi.Tboolean=[false,
-false]</span><br>
-<span style="font-family: monospace;">multi.Tbytearray=</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;&nbsp;&nbsp;[Lazy.random(".............",
-byte[].class), Lazy.random(".............", byte[].class)]</span><br>
-<span style="font-family: monospace;">multi.Tcharacter
-= [Lazy.random(".", Character.class), Lazy.random(".", Character.class)]</span><br>
-<span style="font-family: monospace;">//:~ default
-values</span><br>
+    <pre><span class="codeComment">/*</span><br class="codeComment"><span class="codeComment">&nbsp;* </span><span class="codeComment">Default data values for iterative types</span><br class="codeComment"><span class="codeComment">&nbsp;*/</span><br><br>Tstring = Lazy.random("AAAAA##")<br>Tinteger = Lazy.random("##", Integer.class)<br>Tint = Lazy.random("##", Integer.class)<br>Tlong = Lazy.random("#####", Long.class)<br>Tbiginteger = Lazy.random("#####", java.math.BigInteger.class)<br>Tfloat = Lazy.random("#####\\.##", Float.class)<br>Tdouble=Lazy.random("#####\\.##", Double.class)<br>Tbigdecimal=Lazy.random("#####\\.##", java.math.BigDecimal.class)<br>Tboolean=false<br>Tbytearray=Lazy.random(".............", byte[].class)<br>Tcharacter=Lazy.random(".", Character.class)<br><br><span class="codeComment">//Default data for multivalue attributes of common types</span><br><br>multi.Tstring=[Lazy.random("AAAAA##"), Lazy.random("AAAAA##")]<br>multi.Tinteger=[Lazy.random("##",Integer.class), Lazy.random("##", Integer.class)]<br>multi.Tlong=[Lazy.random("#####", Long.class), Lazy.random("#####", Long.class)]<br>multi.Tbiginteger=[Lazy.random("#####", java.math.BigInteger.class), Lazy.random("#####", java.math.BigInteger.class)]<br>multi.Tfloat=[Lazy.random("#####\\.##", Float.class), Lazy.random("#####\\.##", Float.class)]<br>multi.Tdouble=[Lazy.random("#####\\.##", Double.class), Lazy.random("#####\\.##", Double.class)]<br>multi.Tbigdecimal=[Lazy.random("#####\\.##", java.math.BigDecimal.class), Lazy.random("#####\\.##", java.math.BigDecimal.class)]<br>multi.Tboolean=[false, false]<br>multi.Tbytearray=<br>&nbsp;&nbsp;&nbsp;&nbsp;[Lazy.random(".............", byte[].class), Lazy.random(".............", byte[].class)]<br>multi.Tcharacter = [Lazy.random(".", Character.class), Lazy.random(".", Character.class)]<br><br>//:~ default values<br></pre>
+
 <!-- ========================== --></li>
+
 </ol>
+
 <h4><a name="validateprop">ValidateApiOpTests
-properties</a></h4>
-It is necessary to define following properties:
-<pre>// number of iterations ValidateApiOpTest will run<br>testsuite.i<span style="color: rgb(51, 51, 255);">${iterations}</span>.Validate=2 <br><br>// 1 stands for iteration number, property value should contain wrong configuration of connector-test that validate() will throw.<br>connector.i<span style="color: rgb(51, 51, 255);">1</span>.wrong.${property.name}=${value} <br>connector.i<span style="color: rgb(51, 102, 255);">2</span>.wrong.${property.name}=${value} //value used in the 2nd iteration<br></pre>
-There should be at least one wrongly configured property per each
-iteration otherwise test will fail.
-<h4><a name="schemaprop">SchemaApiOpTests properties</a></h4>
+Properties</a></h4>
+
+It is necessary to define the following properties:
+<pre><span class="codeComment">// number of iterations ValidateApiOpTest will run</span><br>testsuite.i<span style="color: rgb(51, 51, 255);">${iterations}</span>.Validate=2 <br><br><span class="codeComment">// 1 stands for iteration number, property value should contain wrong configuration of connector-test that validate() will throw.</span><br>connector.i<span style="color: rgb(51, 51, 255);">1</span>.wrong.${property.name}=${value} <br>connector.i<span style="color: rgb(51, 102, 255);">2</span>.wrong.${property.name}=${value} <span class="codeComment">//value used in the 2nd iteration</span><br></pre>
+
+There should be at least one incorrectly configured property
+per&nbsp;iteration, otherwise the test will fail.
+<h4><a name="schemaprop">SchemaApiOpTests Properties</a></h4>
+
 <!-- note: this section is the same as in index.html / Quick start, point 4 -->
-Define <span style="font-style: italic;">list</span>
+Define the <span style="font-style: italic;">list</span>
 of supported object classes by connector (see <a href="http://idmvm120.central.sun.com/hudson/job/framework/javadoc/org/identityconnectors/framework/common/objects/ObjectClass.html"><span style="font-family: monospace;">
 ObjectClass.java</span></a> for up-to-date object class
 types):<br>
-<span style="font-family: monospace;">// database
+
+<br>
+
+<code><span class="codeComment">//
+database
 table connector supports only object class 'account'</span><br>
-<span style="font-family: monospace;">testsuite.Schema.oclasses=['account']</span>
+
+testsuite.Schema.oclasses=['account']
+</code><br>
+
 <br>
-<br>
-Define list of attributes per <strong>each</strong>
+
+Define the list of attributes per <strong>each</strong>
 supported object class:<br>
-<span style="font-family: monospace;">// list of ALL
-attributes of object class 'account' for database table connector:</span><br>
-<span style="font-family: monospace;">testsuite.Schema.attributes.account.oclasses=['@@NAME@@',
-'@@PASSWORD@@', 'MANAGER', 'MIDDLENAME', </span> (continued next
-line)<br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
-'FIRSTNAME', 'LASTNAME', 'EMAIL', 'DEPARTMENT', 'TITLE', 'AGE',
-'SALARY', 'JPEGPHOTO']</span><br>
+
 <br>
+
+<code><span class="codeComment">//
+list of ALL
+attributes of object class 'account' for database table connector</span><br>
+
+testsuite.Schema.attributes.account.oclasses=['@@NAME@@',
+'@@PASSWORD@@', 'MANAGER', 'MIDDLENAME', (continued next
+line)<br>
+
+&nbsp;&nbsp;
+'FIRSTNAME', 'LASTNAME', 'EMAIL', 'DEPARTMENT', 'TITLE', 'AGE',
+'SALARY', 'JPEGPHOTO']</code>
+<br>
+
+<br>
+
 Define <strong>every</strong> attribute of <strong>each</strong>
 object class:<br>
-<span style="font-family: monospace;">// definition of
+
+<code><span class="codeComment">//
+definition of
 attribute @@NAME@@ of object class 'account' for databse table connector</span><br>
-<span style="font-family: monospace;">testsuite.Schema."@@NAME@@".attribute.account.oclasses=[</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+
+testsuite.Schema."@@NAME@@".attribute.account.oclasses=[<br>
+
+&nbsp;&nbsp;
 type:
-'java.lang.String',</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+'java.lang.String',<br>
+
+&nbsp;&nbsp;
 readable:
-"true",</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+"true",<br>
+
+&nbsp;&nbsp;
 createable:
-"true",</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+"true",<br>
+
+&nbsp;&nbsp;
 updateable:
-"true",</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+"true",<br>
+
+&nbsp;&nbsp;
 required:
-"true",</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
+"true",<br>
+
+&nbsp;&nbsp;
 multiValue:
-"false",</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
-returnedByDefault: "true" </span><br>
-<span style="font-family: monospace;"> ]</span><br>
+"false",<br>
+
+&nbsp;&nbsp;
+returnedByDefault: "true" </code>
 <br>
+
+]<br>
+
 <br>
+
 Define supported object classes by operations. Must contain <strong>exactly</strong>
 the operations that are implemented by the connector:<br>
-<span style="font-family: monospace;">// object
+
+<span style="font-family: monospace;"><br>
+
+</span><code><span class="codeComment">//
+object
 classes supported by operations for database table connector</span><br>
-<span style="font-family: monospace;">Schema.operations=[</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
-GetApiOp: ['account'],</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
-SchemaApiOp: ['account'],</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
-ValidateApiOp: ['account'],</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
-CreateApiOp: ['account'],</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
-SearchApiOp: ['account'],</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
-DeleteApiOp: ['account'],</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
-ScriptOnConnectorApiOp: ['account'],</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
-UpdateApiOp: ['account'],</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
-AuthenticationApiOp: ['account'],</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
-TestApiOp: ['account'],</span><br>
-<span style="font-family: monospace;">&nbsp;&nbsp;
-SyncApiOp: []</span><br>
-<span style="font-family: monospace;"> ]</span>
-<h3><a name="optionalprops">Optional properties</a></h3>
+
+Schema.operations=[<br>
+
+&nbsp;&nbsp;
+GetApiOp: ['account'],<br>
+
+&nbsp;&nbsp;
+SchemaApiOp: ['account'],<br>
+
+&nbsp;&nbsp;
+ValidateApiOp: ['account'],<br>
+
+&nbsp;&nbsp;
+CreateApiOp: ['account'],<br>
+
+&nbsp;&nbsp;
+SearchApiOp: ['account'],<br>
+
+&nbsp;&nbsp;
+DeleteApiOp: ['account'],<br>
+
+&nbsp;&nbsp;
+ScriptOnConnectorApiOp: ['account'],<br>
+
+&nbsp;&nbsp;
+UpdateApiOp: ['account'],<br>
+
+&nbsp;&nbsp;
+AuthenticationApiOp: ['account'],<br>
+
+&nbsp;&nbsp;
+TestApiOp: ['account'],<br>
+
+&nbsp;&nbsp;
+SyncApiOp: []<br>
+
+]</code>
+<h3><a name="optionalprops">Optional Properties</a></h3>
+
 <h4><a name="provprops">ScriptOnResourceApiOpTests,
-ScriptOnConnectorApiOpTests properties</a></h4>
-To be able to run ScriptOnResource and/or ScriptOnConnector tests it's
-necessary to set following properties. If some of properties is not
-set, test is skipped.
-<pre>// Example properties for ScriptOnResource test<br>// Parameters required to construct ScriptContext object: <br>testsuite.language.ScriptOnResource="Groovy"<br>testsuite.script.ScriptOnResource="script text"<br>/* <br> // alternative: -- good for embedding scripts as a block:<br> testsuite.script.ScriptOnResource='''<br> multi line <br> script text<br> '''<br>*/<br>testsuite.arguments.ScriptOnResource=[<br> arg1: "value1", <br> arg2: "22.5"} <br>]//map<br><br>// Expected return value of ScriptOnResource#runScriptOnResource method:<br>// use suitable macro depending on what kind of object is expected<br>testsuite.result.ScriptOnResource=SomeObject<br></pre>
-<code>ScriptOnResource</code> operation supports also
-following <code>OperationOptions</code>. If none of them
-is set <code>null</code> is used as <code>OperationOptions</code>.
-If one or both are set
+ScriptOnConnectorApiOpTests Properties</a></h4>
+
+To be able to run ScriptOnResource and/or ScriptOnConnector tests, it
+is
+necessary to set the following properties. If some&nbsp;properties
+are not
+set, the test is skipped.
+<pre><span class="codeComment">// Example properties for ScriptOnResource test</span><br class="codeComment"><span class="codeComment">// Parameters required to construct ScriptContext object</span><br><br>testsuite.language.ScriptOnResource="Groovy"<br>testsuite.script.ScriptOnResource="script text"<br><br><span class="codeComment">/* </span><br class="codeComment"><span class="codeComment"> // alternative: -- good for embedding scripts as a block:</span><br class="codeComment"><span class="codeComment"> testsuite.script.ScriptOnResource='''</span><br class="codeComment"><span class="codeComment"> multi line </span><br class="codeComment"><span class="codeComment"> script text</span><br class="codeComment"><span class="codeComment"> '''</span><br class="codeComment"><span class="codeComment">*/</span><br><br>testsuite.arguments.ScriptOnResource=[<br> arg1: "value1", <br> arg2: "22.5"} <br>]//map<br><br><span class="codeComment">// Expected return value of ScriptOnResource#runScriptOnResource method:</span><br class="codeComment"><span class="codeComment">// use suitable macro depending on what kind of object is expected</span><br>testsuite.result.ScriptOnResource=SomeObject<br></pre>
+
+The <code>ScriptOnResource</code> operation also supports
+the
+following <code>OperationOptions</code>. If none are
+set,&nbsp;<code>OperationOptions</code> is set to <code>null</code>.
+If one or both are set,
 <code>OperationOptions</code> are built.
 <pre>testsuite.RUN_AS_USER.ScriptOnResource="user"<br>testsuite.RUN_WITH_PASSWORD.ScriptOnResource="password"<br></pre>
-<h4><a name="dataprovprops">DataProvider properties</a></h4>
-These properties define what values should be generated for object
-classes' attributes returned in connector schema. These properies use
-following pattern:
+
+<h4><a name="dataprovprops">DataProvider Properties</a></h4>
+
+These properties define which values should be generated for the
+attributes of the object
+classes that are returned in connector schema. These properties use
+the following pattern:
 <pre><span style="color: rgb(51, 102, 255);">i</span>{$identityNumber}.{$test.name}.{$oclass.name}.${attribute.name}=some value<br></pre>
-Some tests (Search, Multi) create more than one identity per test. <code><span style="color: rgb(51, 102, 255);">i</span>{$identityNumber}</code>
-is serial number of the identity. <code>${test.name}</code>
-is name of the test (Search, Create, ..., see <code>*ApiOpTests#TEST_NAME</code>).
-<code>{$oclass.name}</code> is type of object class. <code>${attribute.name}</code>
-is name of attribute of object class.<br>
+
+Some tests (Search, Multi) create more than one identity per test:<br>
+
+<ul>
+
+  <li>&nbsp;<code><span style="color: rgb(51, 102, 255);">i</span>{$identityNumber}</code>
+is the serial number of the identity&nbsp;<code></code></li>
+
+  <li><code>{</code><code>$test.name}</code>
+is the name of the test (Search, Create, ..., see <code>*ApiOpTests#TEST_NAME</code>)&nbsp;<code></code></li>
+
+  <li><code>{$oclass.name}</code> is the type of
+object class&nbsp;<code></code></li>
+
+  <li><code>${attribute.name}</code>
+is name of an attribute of an object class</li>
+
+</ul>
+
+<br>
+
 Examples:
-<pre>// first created account by CreateApiOpTests will have FIRSTNAME attribute equal to FOO<br><span style="color: rgb(51, 102, 255);">i</span>0.Create.account.FIRSTNAME="FOO"<br><br>// all accounts in SearchApiOpTests will have LASTNAME attribute equal to BAR<br>Search.account.LASTNAME="BAR"<br><br>// all accounts in all tests will have PHONE attribute equal to 5-digit random values<br>account.PHONE=Lazy.random("######") <br></pre>
+<pre><span class="codeComment">// First created account by CreateApiOpTests will have FIRSTNAME attribute equal to FOO</span><br><span style="color: rgb(51, 102, 255);">i</span>0.Create.account.FIRSTNAME="FOO"<br><br><span class="codeComment">// All accounts in SearchApiOpTests will have a LASTNAME attribute equal to BAR</span><br>Search.account.LASTNAME="BAR"<br><br><span class="codeComment">// All accounts in all tests will have PHONE attribute equal to 5-digit random values</span><br>account.PHONE=Lazy.random("######") <br></pre>
+
 <h4><a name="UpdateApiOpTests"></a>UpdateApiOpTests</h4>
-In the <code>UpdateApiOpTests</code> is created identity
-updated with new values. For those new values are used following
-properties:
-<pre>modified.${attribute.name}=${value}<br><br>// update LASTNAME attribute with value "sellers"<br>modified.LASTNAME="sellers"<br><br>// if you don't want so supply new value for update set it to the ObjectNotFoundException exception:<br>modified."@@NAME@@"= <span style="font-family: monospace;">ObjectNotFoundException() // means that value is not supplied</span><br></pre>
+
+<span style="background-color: rgb(255, 255, 51); color: rgb(153, 0, 0);"></span>In
+the <code>UpdateApiOpTests</code>
+is created identity
+updated with new values. The following properties are used
+for&nbsp;those new values:
+<pre>${attribute.name}=${value} <span class="codeComment">// old value</span><br>modified.${attribute.name}=${value} <span class="codeComment">// new value</span><br>added.${attribute.name}=${value} <span class="codeComment">// new value added to a multivalue property (for example: list)</span><br><br class="codeComment"><span class="codeComment">// Example update LASTNAME attribute with value "sellers":</span><br>modified.LASTNAME="sellers"<br><br><span class="codeComment">// if you don't want to supply a new value for update, set it to the ObjectNotFoundException exception</span><br>modified."@@NAME@@"= <span style="font-family: monospace;">ObjectNotFoundException() <span class="codeComment">// means that value is not supplied</span></span><br></pre>
+
 <!-- -------------========== -->
 </div>
-</body></html>
+
+</body>
+</html>

@@ -1,215 +1,108 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html><head>
-<meta content="text/html; charset=windows-1250" http-equiv="content-type"><title>Groovy Contract Tests Manual - Attachments</title></head>
-<body>&nbsp;&nbsp; &nbsp;
+<html>
+<head>
+
+  <meta content="text/html; charset=windows-1250" http-equiv="content-type">
+  <title>Groovy Contract Tests Manual - Attachments</title>
+</head>
+
+<body>
+&nbsp;&nbsp; &nbsp;
 <div id="projecthome" class="app">
 <pre>-&lt;( <a href="index.html">Contract tests manual</a> &gt; Appendix )&gt;-</pre>
+
 <hr style="width: 100%; height: 2px;">
 <h1>A) Appendix</h1>
+
 Table of contents:<br>
+
 <ul>
-<li><a href="#rangendoc">A.1 Javadoc for
+
+  <li><a href="#rangendoc">A.1 Javadoc for
 RandomGenerator pattern</a></li>
-<li>A.2 Database table connector Groovy configuration files</li>
-<ul>
-<li><a href="#A.2.1">A.2.1
+
+  <li>A.2 Database table connector Groovy configuration files</li>
+
+  <ul>
+
+    <li><a href="#A.2.1">A.2.1
 {$user.home}/.connectors/connector-databasetable/build.groovy</a></li>
-<li><a href="#A.2.2">A.2.2
+
+    <li><a href="#A.2.2">A.2.2
 {$user.home}/.connectors/connector-databasetable/mysql/build.groovy</a></li>
-<li><a href="#transtable">A.3 Table of
-translation from the old configuration files</a></li>
+
+<!--<li><a href="#transtable">A.3 Table of
+translation from the old configuration files</a></li>-->
+  </ul>
+
 </ul>
-</ul>
+
 <br>
+
 <h2><a name="rangendoc"></a>A.1 Javadoc
 for&nbsp;RandomGenerator pattern</h2>
-<p><code>Lazy.random()</code> uses the pattern described further.</p>
+
+<p><a href="index.html#lazyrandom"><code>Lazy.random()</code></a> uses the pattern described further.</p>
+
 <p>Random
 generator uses a pattern to generate a random sequence based on given
 pattern. The supported characters are (can appear in pattern string):</p>
+
 <ul>
-<li>&nbsp;# - numeric</li>
-<li>a - lowercase letter</li>
-<li>A - uppercase letter </li>
-<li>? - lowercase and uppercase letter</li>
-<li>. - any character<br>
-</li>
+
+  <li>&nbsp;# - numeric</li>
+
+  <li>a - lowercase letter</li>
+
+  <li>A - uppercase letter </li>
+
+  <li>? - lowercase and uppercase letter</li>
+
+  <li>. - any character<br>
+
+  </li>
+
 </ul>
+
 <br>
+
 Any other character inside the pattern is directly printed to the
 output. <br>
+
 <br>
-<span style="font-weight: bold;">Backslash</span><!-- ========================================= -->&nbsp;is
-used to escape any character. For instance pattern "###\.##" prints a
+
+<span style="font-weight: bold;">Backslash &nbsp;</span>( \ )<!-- ========================================= -->&nbsp;is
+used to escape any character. For instance pattern "###\\.##" prints a
 floating point random number <br>
+
 <hr style="width: 100%; height: 2px;">
 <h2><a name="attachdbtableconfig">A.2 Database table
 connector Groovy configuration files</a></h2>
+
 <p>We will observe two groovy scripts used in database table
 connector, one is generic, the second is specific for MySQL database,
 contains connection username/password.</p>
+
 <h3><a name="A.2.1"></a>A.2.1
 {$user.home}/.connectors/connector-databasetable/build.groovy</h3>
-<pre>
-/*  +---------------------------------------------------+
- *  ----------- Contract Tests configuration ------------
- *  +---------------------------------------------------+ 
- */
 
-import org.identityconnectors.contract.data.groovy.Lazy
-import org.identityconnectors.contract.data.groovy.Random
-import org.identityconnectors.contract.data.groovy.Get
-import org.identityconnectors.contract.exceptions.ObjectNotFoundException;
+<pre>/*  +---------------------------------------------------+<br> *  ----------- Contract Tests configuration ------------<br> *  +---------------------------------------------------+ <br> */<br><br>import org.identityconnectors.contract.data.groovy.Lazy<br>import org.identityconnectors.contract.data.groovy.Random<br>import org.identityconnectors.contract.data.groovy.Get<br>import org.identityconnectors.contract.exceptions.ObjectNotFoundException;<br><br><br>// Connector WRONG configuration for ValidateApiOpTests<br>connector.i1.wrong.host=""<br>connector.i2.wrong.login=""<br>connector.i3.wrong.password=""<br><br><br>testsuite {<br>    // path to bundle jar - property is set by ant - leave it as it is<br>    bundleJar=System.getProperty("bundleJar")<br>    bundleName=System.getProperty("bundleName")<br>    bundleVersion=System.getProperty("bundleVersion")<br>    connectorName="org.identityconnectors.databasetable.DatabaseTableConnector"    <br><br>    // ValidateApiOpTests:<br>    Validate.iterations="3"<br><br>    // AuthenticationApiOpTests:<br>    Authentication.account.username=Lazy.get("i0.Authentication.account.@@NAME@@")<br>    Authentication.account.wrong.password="bogus"<br><br>    // SyncApiOpTests:<br>    Sync.disable.delete=true<br>    <br>    // SchemaApiOpTests:<br>    Schema.oclasses=['account']<br>    Schema.attributes.account.oclasses=['@@NAME@@', '@@PASSWORD@@', 'MANAGER', 'MIDDLENAME', 'FIRSTNAME', 'LASTNAME', 'EMAIL', 'DEPARTMENT', 'TITLE', 'AGE', 'SALARY', 'JPEGPHOTO']<br><br><br>    Schema."@@NAME@@".attribute.account.oclasses=[<br>                                                            type: 'java.lang.String',<br>                                                            readable: "true",<br>                                                            createable: "true",<br>                                                            updateable: "true",<br>                                                            required: "true",<br>                                                            multiValue: "false",<br>                                                            returnedByDefault: "true" <br>                                              ]        <br><br>    Schema."@@PASSWORD@@".attribute.account.oclasses=[<br>                                                            type: "org.identityconnectors.common.security.GuardedString", <br>                                                            readable: "false",<br>                                                            createable: "true",<br>                                                            updateable: "true", <br>                                                            required: "true",<br>                                                            multiValue: "false",<br>                                                            returnedByDefault: "true"<br>                                             ]                                                        <br>    // many attributes have similar values                                                <br>    Schema.common.attribute=[<br>                                            type: "java.lang.String",<br>                                            readable: "true",<br>                                            createable: "true",<br>                                            updateable: "true",<br>                                            required: "false",<br>                                            multiValue: "false",<br>                                            returnedByDefault: "true"<br>                    ]                                        <br>    Schema.MIDDLENAME.attribute.account.oclasses=Lazy.get("testsuite.Schema.common.attribute")                                                        <br>    Schema.FIRSTNAME.attribute.account.oclasses=Lazy.get("testsuite.Schema.common.attribute")<br>    Schema.MANAGER.attribute.account.oclasses=Lazy.get("testsuite.Schema.common.attribute")                                                        <br>    Schema.EMAIL.attribute.account.oclasses=Lazy.get("testsuite.Schema.common.attribute")                                                                                                                                                                                                                                                                                                                                                         <br>    Schema.DEPARTMENT.attribute.account.oclasses=Lazy.get("testsuite.Schema.common.attribute")<br>    Schema.TITLE.attribute.account.oclasses=Lazy.get("testsuite.Schema.common.attribute")                                                                                                                                                                        <br>    Schema.LASTNAME.attribute.account.oclasses=Lazy.get("testsuite.Schema.common.attribute")                                        <br><br>    Schema.AGE.attribute.account.oclasses=[<br>                                                        type: "java.lang.Integer",<br>                                                        readable: "true",<br>                                                        createable: "true",<br>                                                        updateable: "true",<br>                                                        required: "false",<br>                                                        multiValue: "false",<br>                                                        returnedByDefault: "true"<br>                                ]                                        <br>                                                                                                    <br>    Schema.SALARY.attribute.account.oclasses=[<br>                                                            type: "java.math.BigDecimal",<br>                                                            readable: "true",<br>                                                            createable: "true",<br>                                                            updateable: "true",<br>                                                            required: "false",<br>                                                            multiValue: "false",<br>                                                            returnedByDefault: "true"<br>                                   ]                                         <br>                                                                                                                                                                                                                                                                                                                                                                        <br>    Schema.JPEGPHOTO.attribute.account.oclasses=[<br>                                                            type: "[B",<br>                                                            readable: "true",<br>                                                            createable: "true",<br>                                                            updateable: "true",<br>                                                            required: "false",<br>                                                            multiValue: "false",<br>                                                            returnedByDefault: "false"<br>                                                        ]<br><br>    // object classes supported by operations                                                                                                              <br>    Schema.operations=[<br>                                    GetApiOp: ['account'],<br>                                    SchemaApiOp: ['account'],<br>                                    ValidateApiOp: ['account'],<br>                                    CreateApiOp: ['account'],<br>                                    SearchApiOp: ['account'],<br>                                    DeleteApiOp: ['account'],<br>                                    ScriptOnConnectorApiOp: ['account'],<br>                                    UpdateApiOp: ['account'],<br>                                    AuthenticationApiOp: ['account'],<br>                                    TestApiOp: ['account'],<br>                                    SyncApiOp: [] // sync column is missing in the tables.<br>                ]<br>  <br>} // testsuite<br><br><br>// ATTRIBUTES' VALUES:<br>// longer bytearray value<br>JPEGPHOTO=Lazy.random("????????????????????????????????????????", byte[].class)<br></pre>
 
-
-// Connector WRONG configuration for ValidateApiOpTests
-connector.i1.wrong.host=""
-connector.i2.wrong.login=""
-connector.i3.wrong.password=""
-
-
-testsuite {
-    // path to bundle jar - property is set by ant - leave it as it is
-    bundleJar=System.getProperty("bundleJar")
-    bundleName=System.getProperty("bundleName")
-    bundleVersion=System.getProperty("bundleVersion")
-    connectorName="org.identityconnectors.databasetable.DatabaseTableConnector"    
-
-    // ValidateApiOpTests:
-    Validate.iterations="3"
-
-    // AuthenticationApiOpTests:
-    Authentication.account.username=Lazy.get("i0.Authentication.account.@@NAME@@")
-    Authentication.account.wrong.password="bogus"
-
-    // SyncApiOpTests:
-    Sync.disable.delete=true
-    
-    // SchemaApiOpTests:
-    Schema.oclasses=['account']
-    Schema.attributes.account.oclasses=['@@NAME@@', '@@PASSWORD@@', 'MANAGER', 'MIDDLENAME', 'FIRSTNAME', 'LASTNAME', 'EMAIL', 'DEPARTMENT', 'TITLE', 'AGE', 'SALARY', 'JPEGPHOTO']
-
-
-    Schema."@@NAME@@".attribute.account.oclasses=[
-                                                            type: 'java.lang.String',
-                                                            readable: "true",
-                                                            createable: "true",
-                                                            updateable: "true",
-                                                            required: "true",
-                                                            multiValue: "false",
-                                                            returnedByDefault: "true" 
-                                              ]        
-
-    Schema."@@PASSWORD@@".attribute.account.oclasses=[
-                                                            type: "org.identityconnectors.common.security.GuardedString", 
-                                                            readable: "false",
-                                                            createable: "true",
-                                                            updateable: "true", 
-                                                            required: "true",
-                                                            multiValue: "false",
-                                                            returnedByDefault: "true"
-                                             ]                                                        
-    // many attributes have similar values                                                
-    Schema.common.attribute=[
-                                            type: "java.lang.String",
-                                            readable: "true",
-                                            createable: "true",
-                                            updateable: "true",
-                                            required: "false",
-                                            multiValue: "false",
-                                            returnedByDefault: "true"
-                    ]                                        
-    Schema.MIDDLENAME.attribute.account.oclasses=Lazy.get("testsuite.Schema.common.attribute")                                                        
-    Schema.FIRSTNAME.attribute.account.oclasses=Lazy.get("testsuite.Schema.common.attribute")
-    Schema.MANAGER.attribute.account.oclasses=Lazy.get("testsuite.Schema.common.attribute")                                                        
-    Schema.EMAIL.attribute.account.oclasses=Lazy.get("testsuite.Schema.common.attribute")                                                                                                                                                                                                                                                                                                                                                         
-    Schema.DEPARTMENT.attribute.account.oclasses=Lazy.get("testsuite.Schema.common.attribute")
-    Schema.TITLE.attribute.account.oclasses=Lazy.get("testsuite.Schema.common.attribute")                                                                                                                                                                        
-    Schema.LASTNAME.attribute.account.oclasses=Lazy.get("testsuite.Schema.common.attribute")                                        
-
-    Schema.AGE.attribute.account.oclasses=[
-                                                        type: "java.lang.Integer",
-                                                        readable: "true",
-                                                        createable: "true",
-                                                        updateable: "true",
-                                                        required: "false",
-                                                        multiValue: "false",
-                                                        returnedByDefault: "true"
-                                ]                                        
-                                                                                                    
-    Schema.SALARY.attribute.account.oclasses=[
-                                                            type: "java.math.BigDecimal",
-                                                            readable: "true",
-                                                            createable: "true",
-                                                            updateable: "true",
-                                                            required: "false",
-                                                            multiValue: "false",
-                                                            returnedByDefault: "true"
-                                   ]                                         
-                                                                                                                                                                                                                                                                                                                                                                        
-    Schema.JPEGPHOTO.attribute.account.oclasses=[
-                                                            type: "[B",
-                                                            readable: "true",
-                                                            createable: "true",
-                                                            updateable: "true",
-                                                            required: "false",
-                                                            multiValue: "false",
-                                                            returnedByDefault: "false"
-                                                        ]
-
-    // object classes supported by operations                                                                                                              
-    Schema.operations=[
-                                    GetApiOp: ['account'],
-                                    SchemaApiOp: ['account'],
-                                    ValidateApiOp: ['account'],
-                                    CreateApiOp: ['account'],
-                                    SearchApiOp: ['account'],
-                                    DeleteApiOp: ['account'],
-                                    ScriptOnConnectorApiOp: ['account'],
-                                    UpdateApiOp: ['account'],
-                                    AuthenticationApiOp: ['account'],
-                                    TestApiOp: ['account'],
-                                    SyncApiOp: [] // sync column is missing in the tables.
-                ]
-  
-} // testsuite
-
-
-// ATTRIBUTES' VALUES:
-// longer bytearray value
-JPEGPHOTO=Lazy.random("????????????????????????????????????????", byte[].class)
-</pre>
 <br>
+
 <h3><a name="A.2.2"></a>A.2.2
 {$user.home}/.connectors/connector-databasetable/mysql/build.groovy</h3>
+
 <p>Contains the database specific credentials.</p>
-<pre>
-/*  +---------------------------------------------------+
- *  ----------- Contract Tests configuration ------------
- *  +---------------------------------------------------+ 
- */
 
-import org.identityconnectors.contract.data.groovy.Lazy
-import org.identityconnectors.contract.data.groovy.Random
-import org.identityconnectors.contract.data.groovy.Get
-import org.identityconnectors.contract.exceptions.ObjectNotFoundException;
+<pre>/*  +---------------------------------------------------+<br> *  ----------- Contract Tests configuration ------------<br> *  +---------------------------------------------------+ <br> */<br><br>import org.identityconnectors.contract.data.groovy.Lazy<br>import org.identityconnectors.contract.data.groovy.Random<br>import org.identityconnectors.contract.data.groovy.Get<br>import org.identityconnectors.contract.exceptions.ObjectNotFoundException;<br><br>// Connector configuration<br>connector{<br>    driver="com.mysql.jdbc.Driver"<br>    keyColumn="ACCOUNTID"<br>    passwordColumn="PASSWORD"<br>    DBTable="idm_sync"<br>    connectionUrl="jdbc:mysql://localhost/database"<br>    login="loginname"<br>    password="password"<br>}<br></pre>
 
-// Connector configuration
-connector{
-    driver="com.mysql.jdbc.Driver"
-    keyColumn="ACCOUNTID"
-    passwordColumn="PASSWORD"
-    DBTable="idm_sync"
-    connectionUrl="jdbc:mysql://localhost/database"
-    login="loginname"
-    password="password"
-}
-</pre>
-<hr style="width: 100%; height: 2px;">
+<!--<hr style="width: 100%; height: 2px;">
 <h2>&nbsp;<a name="transtable"></a>A.3
 Table of translation from the old configuration
 files</h2>
 <br>
+
 <table style="text-align: left; width: 1000px;" border="1" cellpadding="2" cellspacing="2">
 <tbody>
 <tr>
@@ -284,5 +177,8 @@ ${RANDOM, AAAAA##}, ${RANDOM, AAAAA##}}</span></td>
 </tr>
 </tbody>
 </table>
+-->
 </div>
-</body></html>
+
+</body>
+</html>
