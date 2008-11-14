@@ -38,4 +38,5 @@
 <project name="connector-spml" default="all"> 
     <property name="framework.dir" value="../../framework"/>
     <import file="${framework.dir}/connector_build.xml"/>
+    <property name="contracts.run" value="true"/>
 </project>
