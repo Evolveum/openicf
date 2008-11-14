@@ -239,7 +239,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
      }
 
      public void setNameAttributes(String[] attribute) {
-         _nameAttributes = attribute;
+         _nameAttributes = arrayCopy(attribute);
      }
 
     @ConfigurationProperty(order=18)
