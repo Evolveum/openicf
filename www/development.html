@@ -34,17 +34,17 @@
 	</UL>
 	<H3>Getting Started</H3>
 	<P>It's easy enough to simply checkout the entire source code base from
-	<STRONG>https://openconnectors.dev.java.net/svn/openconnectors/trunk/projects</STRONG>.
+	<STRONG>https://identityconnectors.dev.java.net/svn/identityconnectors/trunk/projects</STRONG>.
 	However if you only intend to work on one connector, it's easier to
 	just checkout the framework and the connector you're interested in.
 	The current available connector implementations can be found under
 	the "bundles" directory. 
 	</P>
 	<H3>Step 1: Checkout the code</H3>
-	<P><B>(Entire Project):</B>  <PRE>svn checkout https://openconnectors.dev.java.net/svn/openconnectors/trunk/projects /your/sandbox</PRE>
-    <B>(Framework Only):</B>  <PRE>svn checkout https://openconnectors.dev.java.net/svn/openconnectors/trunk/projects/framework /your/sandbox</PRE>
+	<P><B>(Entire Project):</B>  <PRE>svn checkout https://identityconnectors.dev.java.net/svn/identityconnectors/trunk/projects /your/sandbox</PRE>
+    <B>(Framework Only):</B>  <PRE>svn checkout https://identityconnectors.dev.java.net/svn/identityconnectors/trunk/projects/framework /your/sandbox</PRE>
      
-    <B>(Specific Connector):</B>  <PRE>svn checkout https://openconnectors.dev.java.net/svn/openconnectors/trunk/projects/bundles/database /your/sandbox</PRE></P>
+    <B>(Specific Connector):</B>  <PRE>svn checkout https://identityconnectors.dev.java.net/svn/identityconnectors/trunk/projects/bundles/database /your/sandbox</PRE></P>
     <H3>Step 2: Before you build</H3>
 	<P>Each connector, along with the framework, has its own <I>build.xml</I>
 	file used to define the build rules. For the connectors, the build
@@ -58,12 +58,12 @@
 		<LI><P>Add the location of the framework to the ant call as an
 		argument (-Dframework.dir=/your/framework/location)</P>
 		<LI><P>Add the location of the framework to the connector's
-		properties file ($user-home/$projectname.properties). 
+		properties file ($user-home/.connectors/${project-name}/build.groovy). 
 		This file is auto-generated if you used the <A HREF="Java_Toolkit.html">Java Toolkit</A> 
 		to create your Connector. 
 				</P>
 		<LI><P>Add the location of the framework to the global connector
-		properties file ($user-home/.openconnectors.properties).
+		properties file ($user-home/.connectors/connectors.properties).
 				</P>
 	</UL>
 	<P>Look at '<I>$framework/connector_build.xml</I>' for more info.

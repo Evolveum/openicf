@@ -31,7 +31,7 @@
             
     </UL>
     <H3>Getting Started</H3>
-    <P>The first thing to do is go to the <STRONG><A HREF="https://openconnectors.dev.java.net/servlets/ProjectDocumentList">download center</STRONG></A>
+    <P>The first thing to do is go to the <STRONG><A HREF="https://identityconnectors.dev.java.net/servlets/ProjectDocumentList">download center</STRONG></A>
     and grab the latest version of the Java Toolkit for Connectors. The toolkit contains the following elements:</P> 
     
     <UL>
@@ -45,7 +45,7 @@
     will be your "framework home" (no need to check out and build the framework from SVN). Once you unzip the toolkit, you can start creating 
     connectors immediately by running 'ant' from the command line.</P>
     <P>The toolkit essentially functions to create the necessary files and directory structure for connector bundles, as well as a basic set of test
-    scaffolding (this includes files in the bundle directory, the toolkit (framework) directory, and your <I>$user.home</I> directory). Once this is done, 
+    scaffolding (this includes files in the bundle directory, the toolkit (framework) directory, and your <I>${user-home}</I> directory). Once this is done, 
     you will work from the bundle directory itself for the rest of the connector lifecycle. The necessary references back 
     to the framework will be automatically generated. The toolkit also includes a 'clean' target, which is effectively the opposite of 'create'; it 
     will remove all the generated files and directories associated with the specified connector bundle, essentially providing an "undo" if the need arises. </P>
@@ -132,10 +132,23 @@ at the command line.</P>
     <P>Likewise, if you wanted to run only your own unit tests, you'd run:</P>
     <PRE>~/workspace/FooBundle$ ant run-unit-tests</PRE><A NAME="PropsFile"/>
     <P>When writing tests, there is a utility class you may use called TestHelpers. It loads properties from both the connector's <I>build.properties</I> file AND
-    a hidden, environment-specific properties file in your user.home directory. This allows you to extract privileged data (such as a path names or user credentials) from
-    your testing code and place them in this local file. The naming convention for this file is <B>$user.home/.$project-name.properties</B>, where $project-name is the ant
+    a hidden, environment-specific properties file in your "${user-home}/.connectors" directory. This allows you to extract privileged data (such as a path names or user credentials) from
+    your testing code and place them in this local file. The naming convention for this file is <B>${user-home}/.connectors/${project-name}/build.groovy</B>, where ${project-name} is the ant
     project name as defined in the connector's <I>build.xml</I> file. The toolkit auto-generates this file for you, and you are free to add anything you need to it. In code
     all you need to do is call TestHelpers.getProperty() to retrieve any properties you have set.</P>
+    <P>
+    TestHelpers actually aggregates properties from potentially four different files, if they are present. It loads properties in the following order: <BR>
+    <OL>
+    <LI><P><B>${user.home}/.connectors/connectors.properties</B> //(optional) global properties file</P>
+	<LI><P><B>${bundle.dir}/build.properties</B> //(required) public build properties file</P>
+	<LI><P><B>${user.home}/.connectors/${project-name}/build.groovy</B> //(optional) private build properties file, also includes contract test properties</P>
+	<LI><P><B>${user.home}/.connectors/${project-name}/${configuration}/build.groovy</B> //(optional) configuration-specific properties file</P>
+    </OL>
+    <BR>
+    Properties defined in subsequent files override those defined in earlier files (the underlying structure for TestHelpers is just a standard Java Properties object). Also, you should notice
+    that the latter two files are Groovy config files. These are very similar but have a <a href="http://groovy.codehaus.org/ConfigSlurper" target="blank">different syntax</a> than standard Java properties files. The reason for this is to
+    allow for greater flexibility in writing test cases and specifically for the Connectors Contract Tests.
+    For more information on Groovy configuration files and the contract tests, see the <a href="contract-tests-groovy/index.html">Groovy Contract Tests</a> manual.</P>
     
     <H3><A NAME="GROOVY">Using the Groovy Console</A></H3>
     <P>The Groovy console is provided to allow quick and easy on-the-spot debugging of a connector. It can be launched from the <B>bundle directory</B> by
