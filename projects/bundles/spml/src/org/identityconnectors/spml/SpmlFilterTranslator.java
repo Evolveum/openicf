@@ -76,9 +76,13 @@ public class SpmlFilterTranslator extends AbstractFilterTranslator<FilterItem>{
     public SpmlFilterTranslator(SpmlConfiguration configuration, SpmlConnection connection) {
         _connection = connection;
         _configuration = configuration;
-        String mapQueryNameCommand = _configuration.getMapQueryNameCommand();
-        if (mapQueryNameCommand!=null && mapQueryNameCommand.length()>0)
-            _mapQueryNameExecutor = factory.newScriptExecutor(getClass().getClassLoader(), mapQueryNameCommand, true);
+        try {
+	        String mapQueryNameCommand = _configuration.getMapQueryNameCommand();
+	        if (mapQueryNameCommand!=null && mapQueryNameCommand.length()>0)
+	            _mapQueryNameExecutor = factory.newScriptExecutor(getClass().getClassLoader(), mapQueryNameCommand, true);
+	    } catch (Exception e) {
+	    	throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPQUERYNAME_SCRIPT_ERROR), e);
+	    }
     }
 
     @Override
@@ -213,9 +217,9 @@ public class SpmlFilterTranslator extends AbstractFilterTranslator<FilterItem>{
                 arguments.put("memory", _connection.getMemory());
                 return (String)_mapQueryNameExecutor.execute(arguments);
             }
-        } catch (Exception e) {
-            throw ConnectorException.wrap(e);
-        }
+	    } catch (Exception e) {
+	    	throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPQUERYNAME_SCRIPT_ERROR), e);
+	    }
         return name;
     }
     

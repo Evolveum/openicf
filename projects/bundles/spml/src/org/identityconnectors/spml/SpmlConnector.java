@@ -196,12 +196,24 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
         String mapAttributeCommand = _configuration.getMapAttributeCommand();
         String mapSetNameCommand = _configuration.getMapSetNameCommand();
         String schemaCommand = _configuration.getSchemaCommand();
-        if (mapAttributeCommand!=null && mapAttributeCommand.length()>0)
-            _mapAttributeExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), mapAttributeCommand, true);
-        if (mapSetNameCommand!=null && mapSetNameCommand.length()>0)
-            _mapSetNameExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), mapSetNameCommand, true);
-        if (schemaCommand!=null && schemaCommand.length()>0)
-            _schemaExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), schemaCommand, true);
+        try {
+	        if (mapAttributeCommand!=null && mapAttributeCommand.length()>0)
+	            _mapAttributeExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), mapAttributeCommand, true);
+        } catch (Exception e) {
+        	throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPATTRIBUTE_SCRIPT_ERROR), e);
+        }
+        try {
+	        if (mapSetNameCommand!=null && mapSetNameCommand.length()>0)
+	            _mapSetNameExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), mapSetNameCommand, true);
+        } catch (Exception e) {
+        	throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPSETNAME_SCRIPT_ERROR), e);
+        }
+        try {
+	        if (schemaCommand!=null && schemaCommand.length()>0)
+	            _schemaExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), schemaCommand, true);
+        } catch (Exception e) {
+        	throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPSCHEMA_SCRIPT_ERROR), e);
+        }
         _objectClassMap = new HashMap<String, String>();
         _targetMap = new HashMap<String, String>();
         _nameAttributeMap = new HashMap<String, String>();
@@ -768,37 +780,49 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
     }
 
     private String mapSetName(String name, String objectClass) throws Exception {
-        if (_mapSetNameExecutor!=null) {
-            Map<String, Object> arguments = new HashMap<String, Object>();
-            arguments.put("name", name);
-            arguments.put("objectClass", objectClass);
-            arguments.put("configuration", _configuration);
-            arguments.put("memory", _connection.getMemory());
-            return (String)_mapSetNameExecutor.execute(arguments);
-        }
-        return name;
+    	try {
+	        if (_mapSetNameExecutor!=null) {
+	            Map<String, Object> arguments = new HashMap<String, Object>();
+	            arguments.put("name", name);
+	            arguments.put("objectClass", objectClass);
+	            arguments.put("configuration", _configuration);
+	            arguments.put("memory", _connection.getMemory());
+	            return (String)_mapSetNameExecutor.execute(arguments);
+	        }
+	        return name;
+    	} catch (Exception e) {
+            throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPSETNAME_SCRIPT_ERROR), e);
+    	}
     }
 
     private void updateSchema(String objectClass, Set<AttributeInfo> attributeInfos) throws Exception {
-        if (_schemaExecutor!=null) {
-            Map<String, Object> arguments = new HashMap<String, Object>();
-            arguments.put("objectClass", objectClass);
-            arguments.put("attributeInfos", attributeInfos);
-            arguments.put("memory", _connection.getMemory());
-            _schemaExecutor.execute(arguments);
-        }
+    	try {
+	        if (_schemaExecutor!=null) {
+	            Map<String, Object> arguments = new HashMap<String, Object>();
+	            arguments.put("objectClass", objectClass);
+	            arguments.put("attributeInfos", attributeInfos);
+	            arguments.put("memory", _connection.getMemory());
+	            _schemaExecutor.execute(arguments);
+	        }
+    	} catch (Exception e) {
+            throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPSCHEMA_SCRIPT_ERROR), e);
+    	}
     }
 
     private Attribute mapAttribute(Attribute attribute, String objectClass) throws Exception {
-        if (_mapAttributeExecutor!=null) {
-            Map<String, Object> arguments = new HashMap<String, Object>();
-            arguments.put("attribute", attribute);
-            arguments.put("objectClass", objectClass);
-            arguments.put("configuration", _configuration);
-            arguments.put("memory", _connection.getMemory());
-            return (Attribute)_mapAttributeExecutor.execute(arguments);
-        }
-        return attribute;
+    	try {
+	        if (_mapAttributeExecutor!=null) {
+	            Map<String, Object> arguments = new HashMap<String, Object>();
+	            arguments.put("attribute", attribute);
+	            arguments.put("objectClass", objectClass);
+	            arguments.put("configuration", _configuration);
+	            arguments.put("memory", _connection.getMemory());
+	            return (Attribute)_mapAttributeExecutor.execute(arguments);
+	        }
+	        return attribute;
+    	} catch (Exception e) {
+            throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPATTRIBUTE_SCRIPT_ERROR), e);
+    	}
     }
 
     private ConnectorException exceptionForId(Response response) {

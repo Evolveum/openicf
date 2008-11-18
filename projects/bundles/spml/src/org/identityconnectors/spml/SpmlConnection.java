@@ -94,10 +94,18 @@ public class SpmlConnection  {
 
         String preCommand = _configuration.getPreSendCommand();
         String postCommand = _configuration.getPostReceiveCommand();
-        if (preCommand!=null && preCommand.length()>0)
-            _preSendExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), preCommand, true);
-        if (postCommand!=null && postCommand.length()>0)
-            _postReceiveExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), postCommand, true);
+        try {
+	            if (preCommand!=null && preCommand.length()>0)
+	                _preSendExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), preCommand, true);
+        } catch (Exception e) {
+        	throw new ConnectorException(_configuration.getMessage(SpmlMessages.PRESEND_SCRIPT_ERROR), e);
+        }
+        try {
+	        if (postCommand!=null && postCommand.length()>0)
+	            _postReceiveExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), postCommand, true);
+        } catch (Exception e) {
+        	throw new ConnectorException(_configuration.getMessage(SpmlMessages.POSTRECEIVE_SCRIPT_ERROR), e);
+        }
         _memory = new HashMap<Object, Object>();
         String postConnectCommand = _configuration.getPostConnectCommand();
         try {
@@ -112,7 +120,7 @@ public class SpmlConnection  {
             }
         } catch (Exception e) {
             log.error(e, "error in SpmlConnection constructor");
-            throw ConnectorException.wrap(e);
+            throw new ConnectorException(_configuration.getMessage(SpmlMessages.POSTCONNECT_SCRIPT_ERROR), e);
         }
         log.info("created SpmlConnection");
     }
@@ -159,7 +167,7 @@ public class SpmlConnection  {
             }
         } catch (Exception e) {
             log.error(e, "error in send");
-            throw ConnectorException.wrap(e);
+            throw new ConnectorException(_configuration.getMessage(SpmlMessages.PRESEND_SCRIPT_ERROR), e);
         }
         Response response = _client.send(req);
         try {
@@ -171,7 +179,7 @@ public class SpmlConnection  {
             }
         } catch (Exception e) {
             log.error(e, "error in receive");
-            throw ConnectorException.wrap(e);
+            throw new ConnectorException(_configuration.getMessage(SpmlMessages.POSTRECEIVE_SCRIPT_ERROR), e);
         }
         return response;
     }
@@ -201,7 +209,7 @@ public class SpmlConnection  {
             try {
                 executor.execute(map);
             } catch (Exception e) {
-                throw ConnectorException.wrap(e);
+                throw new ConnectorException(_configuration.getMessage(SpmlMessages.PREDISCONNECT_SCRIPT_ERROR), e);
             }
         }
     }

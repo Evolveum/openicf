@@ -54,4 +54,12 @@ public interface SpmlMessages {
     public static final String UNSUPPORTED_OBJECTCLASS       = "UNSUPPORTED_OBJECTCLASS";
     public static final String ITERATION_CANCELED            = "ITERATION_CANCELED";
     public static final String ILLEGAL_MODIFICATION          = "ILLEGAL_MODIFICATION";
+    public static final String POSTCONNECT_SCRIPT_ERROR		 = "POSTCONNECT_SCRIPT_ERROR";
+    public static final String PRESEND_SCRIPT_ERROR		 	 = "PRESEND_SCRIPT_ERROR";
+    public static final String POSTRECEIVE_SCRIPT_ERROR 	 = "POSTRECEIVE_SCRIPT_ERROR";
+    public static final String PREDISCONNECT_SCRIPT_ERROR 	 = "PREDISCONNECT_SCRIPT_ERROR";
+    public static final String MAPSETNAME_SCRIPT_ERROR 		 = "MAPSETNAME_SCRIPT_ERROR";
+    public static final String MAPSCHEMA_SCRIPT_ERROR 		 = "MAPSCHEMA_SCRIPT_ERROR";
+    public static final String MAPATTRIBUTE_SCRIPT_ERROR	 = "MAPATTRIBUTE_SCRIPT_ERROR";
+    public static final String MAPQUERYNAME_SCRIPT_ERROR	 = "MAPQUERYNAME_SCRIPT_ERROR";    
 }
