@@ -200,27 +200,26 @@ namespace Org.IdentityConnectors.Framework.Test
  
 
         private static IDictionary<string, string> _properties = null;
-        private static Assembly _asm = null;
         private static readonly string PREFIX = Environment.GetEnvironmentVariable("USERPROFILE") + "/.connectors/";
         public static readonly string GLOBAL_PROPS = "connectors.xml";
         
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static string GetProperty(string key, string def) {
-        	_asm = Assembly.GetCallingAssembly();
-        	return CollectionUtil.GetValue(GetProperties(), key, def);
+        	Assembly asm = Assembly.GetCallingAssembly();
+        	return CollectionUtil.GetValue(GetProperties(asm), key, def);
         }
         
-        private static IDictionary<string, string> GetProperties() {
+        private static IDictionary<string, string> GetProperties(Assembly asm) {
             lock(LOCK) {
                 if (_properties == null) {
-                    _properties = LoadProperties();
+                    _properties = LoadProperties(asm);
                 }
             }
             // create a new instance so its not mutable
             return CollectionUtil.NewReadOnlyDictionary(_properties);
         }
         
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static IDictionary<string, string> LoadProperties() {
+        private static IDictionary<string, string> LoadProperties(Assembly asm) {
             const string ERR = "Unable to load optional XML properties file: ";            
             string fn = null;
             IDictionary<string, string> props = null;
@@ -245,7 +244,7 @@ namespace Org.IdentityConnectors.Framework.Test
             }
             
             // private settings are in the "assembly name" folder, as defined in the assembly
-            string prjName = _asm.GetName().Name;
+            string prjName = asm.GetName().Name;
             if (!StringUtil.IsBlank(prjName)) {           
 				//load private project properties file
                 try {
