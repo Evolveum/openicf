@@ -51,6 +51,7 @@ using System.Linq;
 using System.Threading;
 using System.Reflection;
 using System.Security.Authentication;
+using System.Text;
 using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Common.Security;
 using Org.IdentityConnectors.Framework.Api;
@@ -246,6 +247,10 @@ namespace Org.IdentityConnectors.Framework.Server
             }
         }
         
+        /**
+         * Produces a thread dump of all pending requests
+         */
+        abstract public void DumpRequests();
             
         /**
          * Starts the server. All server settings must be configured prior
@@ -277,6 +282,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
 {
     public class ConnectionProcessor {
     
+        
         private class RemoteResultsHandler : ObjectStreamHandler
         {
             private const int PAUSE_INTERVAL = 200;
@@ -313,17 +319,18 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
             }
         }
         
-        private readonly ConnectorServer _server;
+        private readonly ConnectorServerImpl _server;
         private readonly RemoteFrameworkConnection _connection;
         
-        public ConnectionProcessor(ConnectorServer server,
+        public ConnectionProcessor(ConnectorServerImpl server,
                 RemoteFrameworkConnection connection) {
             _server = server;
             _connection = connection;
         }
-        
+                
         public void Run() {
             try {
+                _server.BeginRequest();
                 try {
                     while ( true ) {
                         bool keepGoing = ProcessRequest();
@@ -343,6 +350,9 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
             }
             catch (Exception e) {
                 TraceUtil.TraceException(null,e);
+            }
+            finally {
+                _server.EndRequest();
             }
         }
         
@@ -632,7 +642,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
         /**
          * The server object that we are using
          */
-        private readonly ConnectorServer _server;
+        private readonly ConnectorServerImpl _server;
         
         /**
          * The server socket. This must be bound at the time
@@ -660,7 +670,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
          * @param server The server object
          * @param socket The socket (should already be bound)
          */
-        public ConnectionListener(ConnectorServer server,
+        public ConnectionListener(ConnectorServerImpl server,
                 TcpListener socket) {
             _server = server;
             _socket = socket;
@@ -762,14 +772,96 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
         }
     }
 
+    internal class RequestStats {
+        public RequestStats() {
+        }
+        public Thread RequestThread { get; set; }
+        public long StartTimeMillis { get; set; }
+        public long RequestID { get; set; }
+    }
+    
     public class ConnectorServerImpl : ConnectorServer {
 
+        private readonly IDictionary<Thread, RequestStats>
+            _pendingRequests = CollectionUtil.NewIdentityDictionary<Thread,RequestStats>();
         private ConnectionListener _listener;
+        private Object COUNT_LOCK = new Object();
+        private long _requestCount = 0;
         
         public override bool IsStarted() {
             return _listener != null;
         }
     
+        public void BeginRequest() {
+            long requestID;
+            lock(COUNT_LOCK) {
+                requestID = _requestCount++;
+            }
+            Thread requestThread = Thread.CurrentThread;
+            RequestStats stats = new RequestStats();
+            stats.StartTimeMillis =
+                DateTimeUtil.GetCurrentUtcTimeMillis();
+            stats.RequestThread = Thread.CurrentThread;
+            stats.RequestID = requestID;
+            lock (_pendingRequests) {
+                _pendingRequests[stats.RequestThread]
+                    = stats;
+            }            
+        }
+        
+        public void EndRequest() {
+            lock (_pendingRequests) {
+                _pendingRequests.Remove(Thread.CurrentThread);
+            }            
+        }
+        public override void DumpRequests() {
+            long currentTime = DateTimeUtil.GetCurrentUtcTimeMillis();
+            IDictionary<Thread, RequestStats>
+                pending;
+            lock(_pendingRequests) {
+                pending = new Dictionary<Thread, RequestStats>(_pendingRequests);
+            }
+            StringBuilder builder = new StringBuilder();
+            builder.Append("****Pending Requests Summary*****");
+            foreach (RequestStats stats in pending.Values) {
+                DumpStats(stats,builder,currentTime);
+            }
+            //here we purposefully use write line since
+            //we always want to see it. in general, don't
+            //use this method
+            Trace.WriteLine(builder.ToString());
+        }
+        
+        private void DumpStats(RequestStats stats,
+                               StringBuilder builder,
+                               long currentTime)
+        {
+            builder.AppendLine("**Request #"+stats.RequestID+" pending for "+(currentTime-stats.StartTimeMillis)+" millis.");
+            StackTrace stackTrace = GetStackTrace(stats.RequestThread);
+            if ( stackTrace == null ) {
+                builder.AppendLine("    <stack trace unavailable>");
+            }
+            else {
+                builder.AppendLine(stackTrace.ToString());
+            }
+        }
+        
+        private static StackTrace GetStackTrace(Thread thread) {
+            bool suspended = false;
+            try {
+                thread.Suspend();
+                suspended = true;
+                return new StackTrace(thread,true);
+            }
+            catch (ThreadStateException) {
+                return null; //we missed this one
+            }
+            finally {
+                if ( suspended ) {
+                    thread.Resume();
+                }
+            }
+        }
         
         public override void Start() {
             if ( IsStarted() ) {
@@ -786,7 +878,8 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
             }
             //make sure we are configured properly
             ConnectorInfoManagerFactory.GetInstance().GetLocalManager();
-            
+            _requestCount = 0;
+            _pendingRequests.Clear();
             TcpListener socket =
                 CreateServerSocket();
             ConnectionListener listener = new ConnectionListener(this,socket);

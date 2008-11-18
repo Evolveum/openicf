@@ -68,6 +68,11 @@ namespace Org.IdentityConnectors.Framework.Service
 		{
 		}
 		
+		public void DumpRequests()
+		{
+		    _server.DumpRequests();
+		}
+		
 		
 		/// <summary>
 		/// Clean up any resources being used.

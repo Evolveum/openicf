@@ -181,8 +181,17 @@ namespace Org.IdentityConnectors.Framework.Service
               svc.StartService(new String[0]);
         
               Console.WriteLine("Press q to shutdown.");
+              Console.WriteLine("Press t for a thread dump.");
         
-              while (Console.ReadKey().KeyChar != 'q') ;
+              while ( true ) {
+                  ConsoleKeyInfo info = Console.ReadKey();
+                  if ( info.KeyChar == 'q' ) {
+                      break;
+                  }
+                  else if ( info.KeyChar == 't' ) {
+                      svc.DumpRequests();
+                  }
+              }
         
               svc.StopService();
 		}
