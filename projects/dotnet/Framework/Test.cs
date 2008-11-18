@@ -43,6 +43,8 @@ using System.IO;
 using System.Xml;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Framework.Api;
 using Org.IdentityConnectors.Framework.Api.Operations;
@@ -198,11 +200,13 @@ namespace Org.IdentityConnectors.Framework.Test
  
 
         private static IDictionary<string, string> _properties = null;
+        private static Assembly _asm = null;
         private static readonly string PREFIX = Environment.GetEnvironmentVariable("USERPROFILE") + "/.connectors/";
         public static readonly string GLOBAL_PROPS = "connectors.xml";
         
         public static string GetProperty(string key, string def) {
-            return CollectionUtil.GetValue(GetProperties(), key, def);
+        	_asm = Assembly.GetCallingAssembly();
+        	return CollectionUtil.GetValue(GetProperties(), key, def);
         }
         
         private static IDictionary<string, string> GetProperties() {
@@ -215,6 +219,7 @@ namespace Org.IdentityConnectors.Framework.Test
             return CollectionUtil.NewReadOnlyDictionary(_properties);
         }
         
+        [MethodImpl(MethodImplOptions.NoInlining)]
         private static IDictionary<string, string> LoadProperties() {
             const string ERR = "Unable to load optional XML properties file: ";            
             string fn = null;
@@ -239,8 +244,8 @@ namespace Org.IdentityConnectors.Framework.Test
                 TraceUtil.TraceException(ERR + fn, e);
             }
             
-            // private settings are in the "project name" folder
-            string prjName = Environment.GetEnvironmentVariable("project.name");
+            // private settings are in the "assembly name" folder, as defined in the assembly
+            string prjName = _asm.GetName().Name;
             if (!StringUtil.IsBlank(prjName)) {           
 				//load private project properties file
                 try {
@@ -263,7 +268,7 @@ namespace Org.IdentityConnectors.Framework.Test
                     }
                	}           
             } else {
-            	TraceUtil.TraceException("project.name property was not set.", new Exception());
+            	TraceUtil.TraceException("Could not infer assembly name.", new Exception());
             }
             
             // load the environment variables

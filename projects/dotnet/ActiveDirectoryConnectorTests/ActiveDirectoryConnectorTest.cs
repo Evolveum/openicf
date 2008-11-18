@@ -81,11 +81,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public static readonly string CONFIG_PROPERTY_SYNC_DOMAIN_CONTROLLER = "config_sync_domain_controller";
         public static readonly string CONFIG_PROPERTY_GC_DOMAIN_CONTROLLER = "config_sync_gc_domain_controller";
         public static readonly string TEST_PARAM_SHARED_HOME_FOLDER = "test_param_shared_home_folder";
-
-        [TestFixtureSetUp]
-        public void TestFixtureSetUp() {
-        	Environment.SetEnvironmentVariable("project.name", "ActiveDirectoryConnectorTests");
-        }
         
         [Test]
         public void TestConfiguration() {
