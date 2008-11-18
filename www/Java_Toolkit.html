@@ -137,14 +137,14 @@ at the command line.</P>
     project name as defined in the connector's <I>build.xml</I> file. The toolkit auto-generates this file for you, and you are free to add anything you need to it. In code
     all you need to do is call TestHelpers.getProperty() to retrieve any properties you have set.</P>
     <P>
-    TestHelpers actually aggregates properties from potentially four different files, if they are present. It loads properties in the following order: <BR>
+    TestHelpers actually aggregates properties from potentially four different files, if they are present. It loads properties in the following order:</P>
     <OL>
     <LI><P><B>${user.home}/.connectors/connectors.properties</B> //(optional) global properties file</P>
 	<LI><P><B>${bundle.dir}/build.properties</B> //(required) public build properties file</P>
 	<LI><P><B>${user.home}/.connectors/${project-name}/build.groovy</B> //(optional) private build properties file, also includes contract test properties</P>
 	<LI><P><B>${user.home}/.connectors/${project-name}/${configuration}/build.groovy</B> //(optional) configuration-specific properties file</P>
     </OL>
-    <BR>
+	<P>
     Properties defined in subsequent files override those defined in earlier files (the underlying structure for TestHelpers is just a standard Java Properties object). Also, you should notice
     that the latter two files are Groovy config files. These are very similar but have a <a href="http://groovy.codehaus.org/ConfigSlurper" target="blank">different syntax</a> than standard Java properties files. The reason for this is to
     allow for greater flexibility in writing test cases and specifically for the Connectors Contract Tests.
