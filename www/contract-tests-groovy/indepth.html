@@ -156,7 +156,7 @@ properties</a></li>
 
 <p>Test properties follows these patterns:</p>
 
-<pre><span class="codeComment">// connector configuration</span><br>connector.{$property.name}="some value"<br>connector.connectionUrl="jdbc:mysql://localhost/database"<br><br><span class="codeComment">// testsuite configuration</span><br>testsuite.{$property.name}="some value"<br>testsuite.bundleJar=System.getProperty("connector-jar")<br><br><span class="codeComment">// DataProvider configuration</span><br>i{$iteration}.{$test.name}.{$oclass.name}.${attribute.name}="some value"<br>i0.Create.account.DEPARTMENT="some value"<br></pre>
+<pre><span class="codeComment">// connector configuration</span><br>connector.{$property.name}="some value"<br>connector.connectionUrl="jdbc:mysql://localhost/database"<br><br><span class="codeComment">// testsuite configuration</span><br>testsuite.{$property.name}="some value"<br>testsuite.bundleJar=System.getProperty("bundleJar")<br><br><span class="codeComment">// DataProvider configuration</span><br>i{$iteration}.{$test.name}.{$oclass.name}.${attribute.name}="some value"<br>i0.Create.account.DEPARTMENT="some value"<br></pre>
 
 <br>
 
@@ -285,10 +285,10 @@ JAR file
 is&nbsp;<code>${project.name}/dist</code>.</p>
 
 <p>Use the <code>System.getProperty()</code> call to
-get the <code>connector-jar</code>
+get the <code>bundleJar</code>
 system property that is set by <code>ant</code>.</p>
 
-<pre style="margin-left: 40px;">testsuite.bundleJar=System.getProperty("connector-jar") <span class="codeComment">// connector-jar System property is <br> // set by ant to the current connector</span><br></pre>
+<pre style="margin-left: 40px;">testsuite.bundleJar=System.getProperty("bundleJar") <span class="codeComment">// bundleJar System property is <br> // set by ant to the current connector</span><br></pre>
 
 <h4><a name="connconfprop">Connector Configuration
 Properties</a></h4>
@@ -383,7 +383,7 @@ are listed here (and in <code>bootstrap.groovy</code>):
 Properties</a></h4>
 
 It is necessary to define the following properties:
-<pre><span class="codeComment">// number of iterations ValidateApiOpTest will run</span><br>testsuite.i<span style="color: rgb(51, 51, 255);">${iterations}</span>.Validate=2 <br><br><span class="codeComment">// 1 stands for iteration number, property value should contain wrong configuration of connector-test that validate() will throw.</span><br>connector.i<span style="color: rgb(51, 51, 255);">1</span>.wrong.${property.name}=${value} <br>connector.i<span style="color: rgb(51, 102, 255);">2</span>.wrong.${property.name}=${value} <span class="codeComment">//value used in the 2nd iteration</span><br></pre>
+<pre><span class="codeComment">// number of iterations ValidateApiOpTest will run</span><br>testsuite.Validate.iterations="2" <br><br><span class="codeComment">// 1 stands for iteration number, property value should contain wrong configuration of connector-test that validate() will throw.</span><br>connector.i<span style="color: rgb(51, 51, 255);">1</span>.wrong.${property.name}=${value} <br>connector.i<span style="color: rgb(51, 102, 255);">2</span>.wrong.${property.name}=${value} <span class="codeComment">//value used in the 2nd iteration</span><br></pre>
 
 There should be at least one incorrectly configured property
 per&nbsp;iteration, otherwise the test will fail.
@@ -476,7 +476,7 @@ the operations that are implemented by the connector:<br>
 object
 classes supported by operations for database table connector</span><br>
 
-Schema.operations=[<br>
+testsuite.Schema.operations=[<br>
 
 &nbsp;&nbsp;
 GetApiOp: ['account'],<br>
@@ -522,7 +522,7 @@ is
 necessary to set the following properties. If some&nbsp;properties
 are not
 set, the test is skipped.
-<pre><span class="codeComment">// Example properties for ScriptOnResource test</span><br class="codeComment"><span class="codeComment">// Parameters required to construct ScriptContext object</span><br><br>testsuite.language.ScriptOnResource="Groovy"<br>testsuite.script.ScriptOnResource="script text"<br><br><span class="codeComment">/* </span><br class="codeComment"><span class="codeComment"> // alternative: -- good for embedding scripts as a block:</span><br class="codeComment"><span class="codeComment"> testsuite.script.ScriptOnResource='''</span><br class="codeComment"><span class="codeComment"> multi line </span><br class="codeComment"><span class="codeComment"> script text</span><br class="codeComment"><span class="codeComment"> '''</span><br class="codeComment"><span class="codeComment">*/</span><br><br>testsuite.arguments.ScriptOnResource=[<br> arg1: "value1", <br> arg2: "22.5"} <br>]//map<br><br><span class="codeComment">// Expected return value of ScriptOnResource#runScriptOnResource method:</span><br class="codeComment"><span class="codeComment">// use suitable macro depending on what kind of object is expected</span><br>testsuite.result.ScriptOnResource=SomeObject<br></pre>
+<pre><span class="codeComment">// Example properties for ScriptOnResource test</span><br class="codeComment"><span class="codeComment">// Parameters required to construct ScriptContext object</span><br><br>testsuite.ScriptOnResource.language="Groovy"<br>testsuite.ScriptOnResource.script="script text"<br><br><span class="codeComment">/* </span><br class="codeComment"><span class="codeComment"> // alternative: -- good for embedding scripts as a block:</span><br class="codeComment"><span class="codeComment"> testsuite.ScriptOnResource.script='''</span><br class="codeComment"><span class="codeComment"> multi line </span><br class="codeComment"><span class="codeComment"> script text</span><br class="codeComment"><span class="codeComment"> '''</span><br class="codeComment"><span class="codeComment">*/</span><br><br>testsuite.ScriptOnResource.arguments=[<br> arg1: "value1", <br> arg2: "22.5"} <br>]//map<br><br><span class="codeComment">// Expected return value of ScriptOnResource#runScriptOnResource method:</span><br class="codeComment"><span class="codeComment">// use suitable macro depending on what kind of object is expected</span><br>testsuite.ScriptOnResource.result=SomeObject<br></pre>
 
 The <code>ScriptOnResource</code> operation also supports
 the
@@ -530,7 +530,7 @@ following <code>OperationOptions</code>. If none are
 set,&nbsp;<code>OperationOptions</code> is set to <code>null</code>.
 If one or both are set,
 <code>OperationOptions</code> are built.
-<pre>testsuite.RUN_AS_USER.ScriptOnResource="user"<br>testsuite.RUN_WITH_PASSWORD.ScriptOnResource="password"<br></pre>
+<pre>testsuite.ScriptOnResource.RUN_AS_USER="user"<br>testsuite.ScriptOnResource.RUN_WITH_PASSWORD="password"<br></pre>
 
 <h4><a name="dataprovprops">DataProvider Properties</a></h4>
 

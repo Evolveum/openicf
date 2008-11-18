@@ -240,12 +240,12 @@ statements inside of curly braces.<br>
 
       </p>
 
-      <pre><span class="codeComment">// path to bundle jar - property is set by ant - leave it as it is</span><br>testsuite.bundleJar=System.getProperty("connector-jar")<br><br><span class="codeComment">// ValidateApiOpTests</span><br>testsuite.Validate.iterations="3"<br></pre>
+      <pre><span class="codeComment">// path to bundle jar - property is set by ant - leave it as it is</span><br>testsuite.bundleJar=System.getProperty("bundleJar")<br><br><span class="codeComment">// ValidateApiOpTests</span><br>testsuite.Validate.iterations="3"<br></pre>
 
       <a name="after"><span style="font-style: italic;">After</span>:<br>
 
       </a>
-      <pre>testsuite {<br>&nbsp;&nbsp;&nbsp; <span class="codeComment">// path to bundle jar - property is set by ant - leave it as it is</span><br>&nbsp;&nbsp;&nbsp; bundleJar=System.getProperty("connector-jar")<br><br>&nbsp;&nbsp;&nbsp; <span class="codeComment">// ValidateApiOpTests</span><br>&nbsp;&nbsp;&nbsp; Validate.iterations="3"<br>}</pre>
+      <pre>testsuite {<br>&nbsp;&nbsp;&nbsp; <span class="codeComment">// path to bundle jar - property is set by ant - leave it as it is</span><br>&nbsp;&nbsp;&nbsp; bundleJar=System.getProperty("bundleJar")<br><br>&nbsp;&nbsp;&nbsp; <span class="codeComment">// ValidateApiOpTests</span><br>&nbsp;&nbsp;&nbsp; Validate.iterations="3"<br>}</pre>
 
 There is a limitation, however: A&nbsp;prefix can only be defined
 this way once per configuration file. So in the previous example, there
@@ -417,7 +417,7 @@ property:<br>
 path to
 bundleJar&nbsp;property is set by ant - leave it as it is</span><br>
 
-    <span class="literal">testsuite.bundleJar=System.getProperty("connector-jar")</span><br>
+    <span class="literal">testsuite.bundleJar=System.getProperty("bundleJar")</span><br>
 
     <br>
 
@@ -429,15 +429,15 @@ following:<br>
 
     <br>
 
-    <div class="literal">testsuite.gwhost="<span style="font-style: italic;">hostAddress</span>"<br>
+    <div class="literal">testsuite.serverHost="<span style="font-style: italic;">hostAddress</span>"<br>
 
-testsuite.gwport="<span style="font-style: italic;">portNumber</span>"
+testsuite.serverPort=<span style="font-style: italic;">portNumber</span>
     <span class="codeComment">//
-e.g. 21</span><br>
+e.g. 8759</span><br>
 
-testsuite.gwkey="<span style="font-style: italic;">gatewayKey</span>"
-    <span class="codeComment">//gateway
-key is "changeit" by default</span><br>
+testsuite.serverKey="<span style="font-style: italic;">connectorServerKey</span>"
+    <span class="codeComment">//default connector server
+key is "changeit"</span><br>
 
     <br>
 
@@ -945,7 +945,7 @@ To generate the snapshot:
 tab according to the following screenshot. Don't forget to set JUnit 4 <strong>Test
 runner</strong>.</p>
 
-<img src="../images/contract-tests/test.jpg" style="width: 999px; height: 720px;" alt="test.jpg"><br>
+<img src="../images/contract-tests/test.jpg" alt="test.jpg"><br>
 
 <br>
 
@@ -984,7 +984,7 @@ to the tested connector project.
 
 <br>
 
-<img src="../images/contract-tests/arguments.jpg" style="width: 999px; height: 720px;" alt="arguments.jpg"><br>
+<img src="../images/contract-tests/arguments.jpg" alt="arguments.jpg"><br>
 
 <p><br>
 
@@ -996,7 +996,7 @@ proprietary JARs.<br>
 
 </p>
 
-<img src="../images/contract-tests/classpath.jpg" style="width: 999px; height: 720px;" alt="classpath.jpg"><br>
+<img src="../images/contract-tests/classpath.jpg" alt="classpath.jpg"><br>
 
 <br>
 
@@ -1019,8 +1019,8 @@ on
 
       <ul>
 
-        <li>Add <code>gwhost,
-gwport, gwkey</code> to the configuration &nbsp;(<code>${user.home}/.connectors/bundle-name/build.groovy</code>).
+        <li>Add <code>testsuite.serverHost,
+testsuite.serverPort, testsuite.serverKey</code> to the configuration &nbsp;(<code>${user.home}/.connectors/bundle-name/build.groovy</code>).
 The rest of configuration is the same as&nbsp; <a href="#A_Configuring_a_local_Connector">steps 2 through
 5 for local connectors</a>.</li>
 
@@ -1034,7 +1034,7 @@ directory</span> with the following content:<br>
         <pre>&lt;project name="connector-ad" default="all"&gt; <br> &lt;property name="framework.dir" value="../../framework"/&gt;<br> &lt;property name="bundles.dir" value="../"/&gt; <br> &lt;property name="contracts.run" value="true"/&gt;<br> &lt;import file="${framework.dir}/connector_build.xml"/&gt;<br>&lt;/project&gt;<br><br></pre>
 
         <li>Run the test using&nbsp;<code>ant
-run-gw-contract-tests</code></li>
+run-cs-contract-tests</code><br />or with additional connector server properties which will override those specified in configuration file <code>ant -DserverHost=host -DserverPort=8759 -DserverKey=changeit run-cs-contract-tests</code></li>
 
       </ul>
 
@@ -1077,7 +1077,7 @@ which has <code>build.xml</code> and imports <code>connector_build.xml</code>.)&
 properties (when specified tests will run
 against Server)</li>
 
-  <pre>testsuite.gwhost="hostAddress"<br>testsuite.gwport=portNumber <span class="codeComment">// e.g. 21</span><br><span class="codeComment">// gateway key is "changeit" by default</span><br>testsuite.gwkey="gatewayKey"</pre>
+  <pre>testsuite.serverHost="hostAddress"<br>testsuite.serverPort=portNumber <span class="codeComment">// e.g. 8759</span><br><span class="codeComment">// connector server key is "changeit" by default</span><br>testsuite.serverKey="server key"</pre>
 
   <li><a href="indepth.html#connconfprop">Connector
 configuration properties</a></li>
@@ -1123,7 +1123,7 @@ Tests are run&nbsp;from the bundle's
 directory using command:
 </p>
 
-<pre><code>ant run-gw-contract-tests </code><br></pre>
+<code>ant run-cs-contract-tests </code><br />or with additional connector server properties which will override those specified in configuration file <code>ant -DserverHost=host -DserverPort=8759 -DserverKey=changeit run-cs-contract-tests</code></li>
 
 <hr>
 <h2><a name="lazys"></a>1.6 Lazy evaluation
