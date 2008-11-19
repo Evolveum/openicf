@@ -80,6 +80,9 @@ class DB2AuthorityReader {
             try{
 	    		statement = conn.createStatement();
 	            rs = statement.executeQuery(sql);
+	            //Here we use sun proprietary impl class.
+	            //But this class is present also in IBM java(5 and 6 version).
+	            //If that would make problem, we can use something like spring JDBC template.
 	            CachedRowSet cr = new CachedRowSetImpl();
 	            cr.populate(rs);
 	            return cr;
