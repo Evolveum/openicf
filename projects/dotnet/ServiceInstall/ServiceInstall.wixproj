@@ -50,20 +50,32 @@
     <WixVariables>WixUILicenseRtf=license.rtf</WixVariables>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <OutputPath>bin\Debug\</OutputPath>
     <DebugSymbols>True</DebugSymbols>
     <DebugType>Full</DebugType>
     <Optimize>False</Optimize>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>pdbonly</DebugType>
     <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>False</DebugSymbols>
-    <DebugType>None</DebugType>
     <Optimize>True</Optimize>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
   </PropertyGroup>
   <Import Project="$(WixToolPath)\wix.targets" />
   <ItemGroup>
-    <WixExtension Include="$(WixToolPath)\WixUIExtension.dll" />
+    <WixExtension Include="WixUIExtension">
+      <HintPath>c:\Program Files\Windows Installer XML v3\bin\WixUIExtension.dll</HintPath>
+    </WixExtension>
     <Compile Include="Files.wxs" />
     <Compile Include="Setup.wxs" />
     <None Include="license.rtf" />

@@ -48,7 +48,8 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-    <OutputPath>./bin/Debug/</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <OutputPath>\bin\Debug/</OutputPath>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>Full</DebugType>
     <Optimize>False</Optimize>
@@ -60,12 +61,13 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <OutputPath>./bin/Release/</OutputPath>
+    <OutputPath>\bin\Release/</OutputPath>
     <DebugSymbols>False</DebugSymbols>
-    <DebugType>None</DebugType>
+    <DebugType>pdbonly</DebugType>
     <Optimize>True</Optimize>
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
     <OutputType>Exe</OutputType>
     <AssemblyName>ConnectorServer</AssemblyName>
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
@@ -93,8 +95,12 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="ProjectInstaller.cs" />
-    <Compile Include="Service.cs" />
+    <Compile Include="ProjectInstaller.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Service.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <None Include="app.config" />
   </ItemGroup>
   <Target Name="Clean">
