@@ -58,12 +58,12 @@
                            
 <P>Available targets are:</P><UL>   
  
-    <LI><P>"<B>create</B>"                Generates a skeleton Connector bundle in the specified directory.</P> 
-                                        <UL><LI><P><B>This is the default target.</B></P></UL>                
+    <LI><P>"<B>create</B>"                Generates a skeleton Connector bundle in the specified directory.</P></LI> 
+                                        <UL><LI><P><B>This is the default target.</B></P></LI></UL>                
                                                                         
-    <LI><P>"<B>clean</B>"                 Deletes the specified bundle directory and all its contents.</P>
+    <LI><P>"<B>clean</B>"                 Deletes the specified bundle directory and all its contents.</P></LI>
                 
-    <LI><P>"<B>usage</B>"                 Prints the usage information for this toolkit.</P></UL>              
+    <LI><P>"<B>usage</B>"                 Prints the usage information for this toolkit.</P></LI></UL>              
        
 Examples:
     <PRE>ant</PRE>      (launches the bundle creation wizard)
@@ -103,13 +103,13 @@ at the command line.</P>
     <UL>
         <LI><P>'<B>cobertura.home</B>'  (Install
         location of Cobertura, if you have it installed and are doing a
-        coverage build)</P>
+        coverage build)</P></LI>
         <LI><P>'<B>findbugs.home</B>'  (Install
         location of FindBugs, if you have it installed and are doing code
-        analysis)</P>
+        analysis)</P></LI>
         <LI><P>'<B>external.reporting</B>'  (Boolean
         indicating whether there will be an external reporting engine used for test reports)
-        </P>
+        </P></LI>
     </UL>
     <P>You can specify these as normal ant options, as follows:</P>
     <PRE>ant -Dfindbugs.home=/home/programs/findbugs</PRE>
@@ -124,9 +124,9 @@ at the command line.</P>
     the framework's contract test suite (black-box testing) as well. You do not have to do anything special besides putting the JUnit JAR in the right place (see
     "<A HREF="#Building">Building a Connector</A>", above) to make this happen. However, if you wish to run either of these two classes of tests independently, you certainly can.
     There are three main test targets in the build:</P><UL>
-    <LI><P>"<B>test</B>" (Runs all tests)</P>
-    <LI><P>"<B>run-unit-tests</B>" (Runs any user-defined unit tests)</P>
-    <LI><P>"<B>run-contract-tests</B>" (Runs the framework's contract test suite to check that your connector is compliant)</P></UL>
+    <LI><P>"<B>test</B>" (Runs all tests)</P></LI>
+    <LI><P>"<B>run-unit-tests</B>" (Runs any user-defined unit tests)</P></LI>
+    <LI><P>"<B>run-contract-tests</B>" (Runs the framework's contract test suite to check that your connector is compliant)</P></LI></UL>
     <P>To run the contract test suite on your connector, for example, you'd type the following (from within the bundle directory):</P>
     <PRE>~/workspace/FooBundle$ ant run-contract-tests</PRE>
     <P>Likewise, if you wanted to run only your own unit tests, you'd run:</P>
