@@ -1,7 +1,7 @@
 <HTML>
 <HEAD>
     <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=iso-8859-1">
-    <TITLE>Developing Connector Bundles with the Java Toolkit</TITLE>
+    <TITLE>Developing Connectors with the Java Toolkit</TITLE>
 </HEAD>
 <DIV ID="projecthome" CLASS="app">
     <H1>Developing Connector Bundles with the Java Toolkit</H1>
@@ -131,7 +131,8 @@ at the command line.</P>
     <PRE>~/workspace/FooBundle$ ant run-contract-tests</PRE>
     <P>Likewise, if you wanted to run only your own unit tests, you'd run:</P>
     <PRE>~/workspace/FooBundle$ ant run-unit-tests</PRE><A NAME="PropsFile"/>
-    <P>When writing tests, there is a utility class you may use called TestHelpers. It loads properties from both the connector's <I>build.properties</I> file AND
+   
+	<P>When writing tests, there is a utility class you may use called TestHelpers. It loads properties from both the connector's <I>build.properties</I> file AND
     a hidden, environment-specific properties file in your "${user-home}/.connectors" directory. This allows you to extract privileged data (such as a path names or user credentials) from
     your testing code and place them in this local file. The naming convention for this file is <B>${user-home}/.connectors/${project-name}/build.groovy</B>, where ${project-name} is the ant
     project name as defined in the connector's <I>build.xml</I> file. The toolkit auto-generates this file for you, and you are free to add anything you need to it. In code
@@ -139,10 +140,10 @@ at the command line.</P>
     <P>
     TestHelpers actually aggregates properties from potentially four different files, if they are present. It loads properties in the following order:</P>
     <OL>
-    <LI><P><B>${user.home}/.connectors/connectors.properties</B> //(optional) global properties file</P>
-	<LI><P><B>${bundle.dir}/build.properties</B> //(required) public build properties file</P>
-	<LI><P><B>${user.home}/.connectors/${project-name}/build.groovy</B> //(optional) private build properties file, also includes contract test properties</P>
-	<LI><P><B>${user.home}/.connectors/${project-name}/${configuration}/build.groovy</B> //(optional) configuration-specific properties file</P>
+    <LI><P><B>${user.home}/.connectors/connectors.properties</B> //(optional) global properties file</P></LI>
+	<LI><B>${bundle.dir}/build.properties</B> //(required) public build properties file</P></LI>
+	<LI><B>${user.home}/.connectors/${project-name}/build.groovy</B> //(optional) private build properties file, also includes contract test properties</P></LI>
+	<LI><B>${user.home}/.connectors/${project-name}/${configuration}/build.groovy</B> //(optional) configuration-specific properties file</P></LI>
     </OL>
 	<P>
     Properties defined in subsequent files override those defined in earlier files (the underlying structure for TestHelpers is just a standard Java Properties object). Also, you should notice

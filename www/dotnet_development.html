@@ -1,10 +1,10 @@
 <html>
 <head>
-<title>Developer Guide Connector Bundles</title>
+<title>Developing .NET Connector Bundles</title>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 </head>
 <div id="projecthome" class="app">
-<h1>HowTo Develop .NET Connector Bundles</h1>
+<h1>Developing .NET Connector Bundles</h1>
 <p>The document describes the basic build environment for developing
 .NET connectors.</p>
 <p>Requirements:</p>
@@ -26,21 +26,15 @@
     applications with plus it includes most of the dependencies.</li>
 </ul>
 <p>Its easy enough to simply checkout the entire source code base
-from <strong>https://openconnectors.dev.java.net/svn/openconnectors/trunk/projects</strong>.
-If you are only interested in developing a .NET based Connector this its
-best to only check the gateway directory.
+from <strong>https://identityconnectors.dev.java.net/svn/identityconnectors/trunk/projects/dotnet</strong>.
+All .NET based connectors (such as the Active Directory Connector) as well as the .NET version of the Connector Framework
+live under this directory.
 <h3>Checkout the code.</h3>
 <pre>
-C:\build&gt; svn checkout https://openconnectors.dev.java.net/svn/openconnectors/trunk openconnectors 
-A    openconnectors/projects/bundles
-A    openconnectors/projects/bundles/ldap
-A    openconnectors/projects/bundles/ldap/build
-A    openconnectors/projects/bundles/ldap/ext
-A    openconnectors/projects/gateway/framework/
-....
+C:\build&gt; svn checkout https://identityconnectors.dev.java.net/svn/identityconnectors/trunk/projects/dotnet dotnet 
 </pre>
 <h3>Directory Components</h3>
-The layout to the .NET develop directory is split into several smaller projects.
+The layout to the .NET development directory is split into several smaller projects.
 <ul>
 	<li>Common - Assembly for all Framework and Connector common code.</li>
 	<li>Console - Boo console to help hand test Connectors with automatic setup.</li>
@@ -53,7 +47,7 @@ The layout to the .NET develop directory is split into several smaller projects.
 	<li>ToolkitInstall - Install for the Framework and Console for custom Connector development.</li>
 </ul>
 <h3>Build</h3>
-<p>All .NET content is under the directory 'gateway'.  There is a top level 
+<p>All .NET content is under the directory 'dotnet'.  There is a top level 
 solution which can be used by SharpDevelop and Visual Studio 2008 (VS will 
 complain because some of the projects are Wix based and not part of the 
 standard set of MS projects).
@@ -61,33 +55,33 @@ standard set of MS projects).
 <p>To build simply install all the required software above.  If ShapDevelop is installed one should be able to just open the solution.  If Visual Studio is install it should work with the solution as well only it will complain about a few projects.  VS2008 will modify the solution and projects please *DO NOT* check them in unless you know exactly what your doing VS2008 tends to change it to whatever it wants with little regard to customization. The same can be said about SharpDevelop to some extent.
 <p>For a command line build one environment variable must be set.  This is the location for Wix.  The environment variable WIX_HOME must be set in order to build.
 <pre>
-C:\build\openconnectors\projects\gateway&gt;msbuild "Connector Gateway.sln"
+C:\build\identityconnectors\projects\dotnet&gt;msbuild "DotNetConnectors.sln"
 Microsoft (R) Build Engine Version 3.5.21022.8
 [Microsoft .NET Framework, Version 2.0.50727.1433]
 Copyright (C) Microsoft Corporation 2007. All rights reserved.
 
 Build started 5/14/2008 10:05:17 PM.
-Project "C:\build\openconnectors\projects\gateway\Connector Gateway.sln" on nod
+Project "C:\build\identityconnectors\projects\dotnet\DotNetConnectors.sln" on nod
 e 0 (default targets).
   Building solution configuration "Debug|Any CPU".
-Project "C:\build\openconnectors\projects\gateway\Connector Gateway.sln" (1) is
- building "C:\build\openconnectors\projects\gateway\Common\Common.csproj" (2) o
+Project "C:\build\identityconnectors\projects\dotnet\Connector Gateway.sln" (1) is
+ building "C:\build\identityconnectors\projects\dotnet\Common\Common.csproj" (2) o
 n node 0 (default targets).
 Skipping target "CoreCompile" because all output files are up-to-date with resp
 ect to the input files.
 CopyFilesToOutputDirectory:
-  Common -&gt; C:\build\openconnectors\projects\gateway\Common\bin\Debug\Common.dl
+  Common -&gt; C:\build\identityconnectors\projects\dotnet\Common\bin\Debug\Common.dl
   l
-Done Building Project "C:\build\openconnectors\projects\gateway\Common\Common.c
+Done Building Project "C:\build\identityconnectors\projects\dotnet\Common\Common.c
 sproj" (default targets).
 
-Project "C:\build\openconnectors\projects\gateway\Connector Gateway.sln" (1) is
- building "C:\build\openconnectors\projects\gateway\ServiceInstall\ServiceInsta
+Project "C:\build\identityconnectors\projects\dotnet\Connector Gateway.sln" (1) is
+ building "C:\build\identityconnectors\projects\dotnet\ServiceInstall\ServiceInsta
 ll.wixproj" (3) on node 0 (default targets).
 
 </pre>
 <p>This will build everything and run all the Framework tests. The result is a full Remote Connector Framework Windows Service install.  The default compliation is 'Debug'.
 <h3>Connector Development</h3>
-<p>Connector bundles are simply .NET class libraries that follow some distinct patterns.  Good examples are contained with in TestBundleV1 and TestBundleV2 these are least skeletons to get one started.  The only required refereces are the 'Common' and 'Framework' assemblies.  These contained all the functionality necessary to create a .NET Connector.
+<p>Connector bundles are simply .NET class libraries that follow some distinct patterns.  Good examples are contained with in TestBundleV1 and TestBundleV2; these are least skeletons to get one started.  The only required references are the 'Common' and 'Framework' assemblies.  These contained all the functionality necessary to create a .NET Connector.
 </div>
 </html>
