@@ -134,8 +134,6 @@ public class DB2Configuration extends AbstractConfiguration {
 	private String dataSource;
 	/** Class name of jdbc driver */
 	private String jdbcDriver;
-	/** Whether we should remove all grants on update authority */
-	private boolean removeAllGrants;
 	/** DB2 host name*/
 	private String host;
 	/** DB2 listening port */
@@ -224,22 +222,6 @@ public class DB2Configuration extends AbstractConfiguration {
 	 */
 	public void setJdbcDriver(String jdbcDriver) {
 		this.jdbcDriver = jdbcDriver;
-	}
-	
-	/**
-	 * @return whether we remove all grants on create/update
-	 */
-	@ConfigurationProperty
-	public boolean isRemoveAllGrants() {
-		return removeAllGrants;
-	}
-
-	/**
-	 * Sets flag to remove all grants on update/create
-	 * @param removeAllGrants
-	 */
-	public void setRemoveAllGrants(boolean removeAllGrants) {
-		this.removeAllGrants = removeAllGrants;
 	}
 	
 	/**

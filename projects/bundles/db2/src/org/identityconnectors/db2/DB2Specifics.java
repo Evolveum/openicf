@@ -141,8 +141,7 @@ class DB2Specifics {
      * http://developer.java.sun.com/developer/bugParade/bugs/4086845.html
      * for more details.
      */
-    static Collection<String> divideString(String stringToDivide, char delim,
-                                          boolean trimTokens) {
+    static Collection<String> divideString(String stringToDivide, char delim, boolean trimTokens) {
         Collection<String> strings = new ArrayList<String>();
         int length = stringToDivide.length();
         int firstDelimPos = stringToDivide.indexOf(delim);

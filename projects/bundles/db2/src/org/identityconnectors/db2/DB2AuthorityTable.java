@@ -23,7 +23,7 @@ class DB2AuthorityTable {
         return "REVOKE " + auth.authorityFunction + " "
             + sqlRevokeFunctionObjectConnector + " "
             + auth.authorityObject + " FROM USER "
-            + auth.userName + ";";
+            + auth.userName ;
     }
 
     /**
@@ -40,7 +40,7 @@ class DB2AuthorityTable {
      */
     String generateGrantSQL(DB2Authority auth) {
         return "GRANT " + generateGrant(auth) + " TO USER "
-            + auth.userName + ";";
+            + auth.userName ;
     }
 
     public final String sqlRevokeFunctionObjectConnector;

@@ -34,8 +34,7 @@ class DB2AuthorityReader {
     Collection<DB2Authority> readDatabaseAuthorities(String user)  throws SQLException{
         String accountIDUC = user.toUpperCase();
 
-        String sql = "SELECT * FROM SYSIBM.SYSDBAUTH WHERE GRANTEE = '"
-            + accountIDUC + "' AND GRANTEETYPE = 'U'";
+        String sql = "SELECT * FROM SYSIBM.SYSDBAUTH WHERE GRANTEE = '" + accountIDUC + "' AND GRANTEETYPE = 'U'";
 
         Collection<DB2Authority> grants = new ArrayList<DB2Authority>();
 
@@ -99,13 +98,13 @@ class DB2AuthorityReader {
      */
     Collection<DB2Authority> readAllAuthorities(String user) throws SQLException  {
         Collection<DB2Authority> allAuths = new ArrayList<DB2Authority>();
-        allAuths.addAll(readDatabaseAuthorities(user));
         allAuths.addAll(readIndexAuthorities(user));
-        allAuths.addAll(readPackageAuthorities(user));
         allAuths.addAll(readSchemaAuthorities(user));
         allAuths.addAll(readServerAuthorities(user));
         allAuths.addAll(readTableAuthorities(user));
         allAuths.addAll(readTablespaceAuthorities(user));
+        allAuths.addAll(readPackageAuthorities(user));
+        allAuths.addAll(readDatabaseAuthorities(user));
         return allAuths;
     }
     
@@ -134,26 +133,27 @@ class DB2AuthorityReader {
     Collection<DB2Authority> readPackageAuthorities(String user) throws SQLException{
 	    String accountIDUC = user.toUpperCase();
 	
-	    String sql = "SELECT * FROM SYSIBM.SYSPLANAUTH WHERE GRANTEE = '"
-	        + accountIDUC + "' AND GRANTEETYPE = 'U'";
+	    String sql = "SELECT * FROM SYSIBM.SYSPLANAUTH WHERE GRANTEE = '" + accountIDUC + "' AND GRANTEETYPE = 'U'";
 	
 	    Collection<DB2Authority> grants = new ArrayList<DB2Authority>();
 	
 	    ResultSet rs = executeQuery(sql);
         while (rs.next()) {
+        	String creator = rs.getString("CREATOR").trim();
+        	String packageName = creator + "." +  rs.getString("NAME");
             if (rs.getString("CONTROLAUTH").equals("Y")) {
                 grants.add(new DB2Authority(AUTH_TYPE_PACKAGE,
-                    "CONTROL", rs.getString("NAME"),
+                    "CONTROL",packageName,
                     accountIDUC));
             }
             if (rs.getString("BINDAUTH").equals("Y")) {
                 grants.add(new DB2Authority(AUTH_TYPE_PACKAGE,
-                    "BIND", rs.getString("NAME"),
+                    "BIND",packageName,
                     accountIDUC));
             }
             if (rs.getString("EXECUTEAUTH").equals("Y")) {
                 grants.add(new DB2Authority(AUTH_TYPE_PACKAGE,
-                    "EXECUTE", rs.getString("NAME"),
+                    "EXECUTE",packageName,
                     accountIDUC));
             }
         }

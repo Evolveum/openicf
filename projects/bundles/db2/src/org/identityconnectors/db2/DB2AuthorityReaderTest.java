@@ -1,13 +1,15 @@
 package org.identityconnectors.db2;
 
 import java.sql.*;
-import java.util.Collection;
 
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.test.TestHelpers;
 import org.junit.*;
 
-/** Test of DB2AuthorityReader */
+/** Test of DB2AuthorityReader 
+ * All of tests are just smoke test.
+ * TODO : For each reading try to revoke,grant and test that reading is correct
+ * */
 public class DB2AuthorityReaderTest {
 	
 	private static Connection conn;
@@ -33,10 +35,6 @@ public class DB2AuthorityReaderTest {
 	public static void afterClass(){
 		SQLUtil.closeQuietly(conn);
 	}
-	
-	private void testAuthoritiesNotEmpty(final Collection<DB2Authority> authorities){
-		Assert.assertTrue(!authorities.isEmpty());
-	}
 
 	/**
 	 * Test reading database authorities
@@ -53,7 +51,7 @@ public class DB2AuthorityReaderTest {
 	 */
 	@Test
 	public void testReadAllAuthorities() throws SQLException {
-		testAuthoritiesNotEmpty(testee.readAllAuthorities(testUser));
+		testee.readAllAuthorities(testUser);
 	}
 
 	/**
@@ -62,7 +60,7 @@ public class DB2AuthorityReaderTest {
 	 */
 	@Test
 	public void testReadIndexAuthorities() throws SQLException {
-		testAuthoritiesNotEmpty(testee.readIndexAuthorities(testUser));
+		testee.readIndexAuthorities(testUser);
 	}
 
 	/**
@@ -71,7 +69,7 @@ public class DB2AuthorityReaderTest {
 	 */
 	@Test
 	public void testReadPackageAuthorities() throws SQLException {
-		testAuthoritiesNotEmpty(testee.readPackageAuthorities(testUser));
+		testee.readPackageAuthorities(testUser);
 	}
 
 	/**
@@ -98,7 +96,7 @@ public class DB2AuthorityReaderTest {
 	 */
 	@Test
 	public void testReadTableAuthorities() throws SQLException {
-		testAuthoritiesNotEmpty(testee.readTableAuthorities(testUser));
+		testee.readTableAuthorities(testUser);
 	}
 
 	/**
@@ -107,7 +105,7 @@ public class DB2AuthorityReaderTest {
 	 */
 	@Test
 	public void testReadTablespaceAuthorities() throws SQLException {
-		testAuthoritiesNotEmpty(testee.readTablespaceAuthorities(testUser));
+		testee.readTablespaceAuthorities(testUser);
 	}
 
 }

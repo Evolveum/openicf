@@ -36,28 +36,25 @@ public class DB2ConfigurationTest {
 	}
 	
 	static DB2Configuration createTestConfiguration(){
-		DB2Configuration conf = new DB2Configuration();
-		String host = TestHelpers.getProperty("host",null);
-		String port = TestHelpers.getProperty("port",null);
-		String databaseName = TestHelpers.getProperty("databaseName",null);
-		String adminAcoount = TestHelpers.getProperty("adminAccount",null);
-		String adminPassword = TestHelpers.getProperty("adminPassword",null);
-		String jdbcDriver = TestHelpers.getProperty("jdbcDriver",null);
-		String aliasName = TestHelpers.getProperty("aliasName",null);
-		String dataSource = TestHelpers.getProperty("dataSource",null);
-		conf.setHost(host);
-		conf.setPort(port);
-		conf.setAdminAccount(adminAcoount);
-		conf.setAdminPassword(new GuardedString(adminPassword.toCharArray()));
-		conf.setDatabaseName(databaseName);
-		conf.setJdbcDriver(jdbcDriver);
-		conf.setAliasName(aliasName);
-		conf.setDataSource(dataSource);
+		DB2Configuration conf = null;
+		String connType = TestHelpers.getProperty("connType",null);
+		if("type4".equals(connType)){
+			conf = createTestType4Configuration();
+		}
+		else if("type2".equals(connType)){
+			conf = createTestType2Configuration();
+		}
+		else{
+			throw new IllegalArgumentException("Ilegall connType " + connType);
+		}
+		if(conf == null){
+			throw new IllegalStateException("Configuration not created");
+		}
 		conf.validate();
 		return conf;
 	}
 	
-	private DB2Configuration createTestType4Configuration(){
+	private static DB2Configuration createTestType4Configuration(){
 		DB2Configuration conf = new DB2Configuration();
 		Properties properties = TestHelpers.getProperties();
 		properties = PropertiesResolver.resolveProperties(properties);
@@ -93,7 +90,7 @@ public class DB2ConfigurationTest {
 	}
 	
 	
-	private DB2Configuration createTestType2Configuration(){
+	private static DB2Configuration createTestType2Configuration(){
 		Properties properties = TestHelpers.getProperties();
 		properties = PropertiesResolver.resolveProperties(properties);
 		String alias = properties.getProperty("type2.alias");

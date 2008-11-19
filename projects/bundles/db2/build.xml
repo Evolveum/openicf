@@ -38,17 +38,16 @@
 <project name="connector-db2" default="all"> 
     <property name="framework.dir" value="../../framework"/>
     <property name="bundles.dir" value="../"/>
-	<property name="contract.suite.classname" value="org.identityconnectors.contract.test.AuthenticationApiOpTests"/>
     <import file="${framework.dir}/connector_build.xml"/>
     <property name="databasecommon.dir" value="../dbcommon"/>
     <target name="-pre-clean-extra">
-        <delete failonerror="false">
-            <fileset dir="${lib}"/>
+        <delete>
+            <fileset dir="${lib}" includes="*common*jar"/>
         </delete>
     </target>
     <target name="-pre-compile-extra">
         <copy todir="${lib}">
             <fileset dir="${databasecommon.dir}/dist" includes="*.jar"/>
         </copy>
-    </target>	  
+    </target>   
 </project>

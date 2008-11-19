@@ -18,10 +18,10 @@ class DB2Authority {
         this.authorityObject = authorityObject;
         this.userName = userName;
     }
-    public final String authorityType;
-    public final String authorityFunction;
-    public final String authorityObject;
-    public final String userName;
+    final String authorityType;
+    final String authorityFunction;
+    final String authorityObject;
+    final String userName;
 
     public String toString() {
         return "{DB2Authority: Type=" + authorityType + ", Function="
