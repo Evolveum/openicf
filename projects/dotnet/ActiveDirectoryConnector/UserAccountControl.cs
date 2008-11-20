@@ -89,8 +89,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             else
             {
-                throw new ConnectorException("Active Directory attribute '" +
-                    UAC_ATTRIBUTE_NAME + "' was expected to be a single integer, but was not");
+                return 0;
             }
         }
 
