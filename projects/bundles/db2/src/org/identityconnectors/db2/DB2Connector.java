@@ -137,7 +137,6 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	public void executeQuery(ObjectClass oclass, FilterWhereBuilder where,ResultsHandler handler, OperationOptions options) {
 		//Read users from SYSIBM.SYSDBAUTH table
 		//DB2 stores users in UPPERCASE , we must do UPPER(TRIM(GRANTEE)) = upper('john')
-		//but we must return users in normal case, because framework will use another filter.
         final String ALL_USER_QUERY = "SELECT GRANTEE FROM SYSIBM.SYSDBAUTH WHERE GRANTEETYPE = 'U' AND CONNECTAUTH = 'Y'";
 
         if (oclass == null || !ObjectClass.ACCOUNT.equals(oclass)) {
@@ -147,7 +146,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
         // if where == null then all users are returned
         final DatabaseQueryBuilder query = new DatabaseQueryBuilder(ALL_USER_QUERY);
         query.setWhere(where);
-        String sql = query.getSQL();
+        final String sql = query.getSQL();
         ResultSet result = null;
         PreparedStatement statement = null;
         try {
