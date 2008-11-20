@@ -572,6 +572,11 @@ updated with new values. The following properties are used
 for&nbsp;those new values:
 <pre>${attribute.name}=${value} <span class="codeComment">// old value</span><br>modified.${attribute.name}=${value} <span class="codeComment">// new value</span><br>added.${attribute.name}=${value} <span class="codeComment">// new value added to a multivalue property (for example: list)</span><br><br class="codeComment"><span class="codeComment">// Example update LASTNAME attribute with value "sellers":</span><br>modified.LASTNAME="sellers"<br><br><span class="codeComment">// if you don't want to supply a new value for update, set it to the ObjectNotFoundException exception</span><br>modified."@@NAME@@"= <span style="font-family: monospace;">ObjectNotFoundException() <span class="codeComment">// means that value is not supplied</span></span><br></pre>
 
+<h4><a name="SearchApiOpTests"></a>SearchApiOpTests</h4>
+<p>
+Case sensitive search tests are enabled by default, optional property <code>testsuite.Search.disable.caseinsensitive</code> is used for explicit setting.
+</p>
+
 <!-- -------------========== -->
 </div>
 
