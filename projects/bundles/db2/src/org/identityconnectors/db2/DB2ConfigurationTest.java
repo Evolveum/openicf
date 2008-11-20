@@ -146,7 +146,9 @@ public class DB2ConfigurationTest {
 		conf.setDataSource("testDS");
 		conf.setAdminAccount("user");
 		conf.setAdminPassword(new GuardedString(new char[]{'t'}));
-		conf.setDsJNDIEnv(new String[]{"java.naming.factory.initial=" + MockContextFactory.class.getName()});
+		final String[] dsJNDIEnv = new String[]{"java.naming.factory.initial=" + MockContextFactory.class.getName()};
+		conf.setDsJNDIEnv(dsJNDIEnv);
+		assertArrayEquals(conf.getDsJNDIEnv(), dsJNDIEnv);
 		conf.validate();
 		Connection conn = conf.createAdminConnection();
 		conf.setAdminAccount(null);

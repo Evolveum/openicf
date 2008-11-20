@@ -58,7 +58,7 @@ class DB2Specifics {
     
 
 	/** List of db2 keywords */
-	private static Collection<String> excludeNames;
+	private static volatile Collection<String> excludeNames;
 	
 	private static Collection<String> readExcludeNames() {
 		if(excludeNames == null){

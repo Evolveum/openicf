@@ -286,14 +286,25 @@ public class DB2Configuration extends AbstractConfiguration {
 	 * @return the dsJNDIEnv
 	 */
 	public String[] getDsJNDIEnv() {
-		return dsJNDIEnv;
+		if(dsJNDIEnv == null){
+			return new String[0];
+		}
+		String[] res = new String[dsJNDIEnv.length];
+		System.arraycopy(dsJNDIEnv,0,res,0,dsJNDIEnv.length);
+		return res;
 	}
 
 	/**
 	 * @param dsJNDIEnv the dsJNDIEnv to set
 	 */
 	public void setDsJNDIEnv(String[] dsJNDIEnv) {
-		this.dsJNDIEnv = dsJNDIEnv;
+		if(dsJNDIEnv == null){
+			this.dsJNDIEnv = null;
+		}
+		else{
+			this.dsJNDIEnv = new String[dsJNDIEnv.length];
+			System.arraycopy(dsJNDIEnv,0,this.dsJNDIEnv,0,dsJNDIEnv.length);
+		}
 	}
 
 	/**
