@@ -39,12 +39,8 @@
  */
 package org.identityconnectors.db2;
 
-import org.identityconnectors.dbcommon.DatabaseFilterTranslator;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.dbcommon.*;
+import org.identityconnectors.framework.common.objects.*;
 
 /**
  * DB2 filter translator
@@ -64,11 +60,18 @@ class DB2FilterTranslator extends DatabaseFilterTranslator {
     @Override
     protected String getDatabaseColumnName(Attribute attribute, ObjectClass oclass, OperationOptions options) {
         if(attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
-            return "TRIM(GRANTEE)";
+            return "UPPER(TRIM(GRANTEE))";
         }
         //Password or other are invalid columns for query, 
         //There could be an exception,but null value would disable this filter 
         return null;
     }
+    
+	@Override
+	protected FilterWhereBuilder createBuilder() {
+		return new FilterWhereBuilder();
+	}
+    
+    
  
 }

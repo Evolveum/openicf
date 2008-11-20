@@ -22,7 +22,7 @@ import org.identityconnectors.framework.spi.operations.*;
 @ConnectorClass(
         displayNameKey = "DatabaseTable",
         configurationClass = DB2Configuration.class)
-public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<FilterWhereBuilder>,DeleteOp,UpdateOp,TestOp,PoolableConnector,AdvancedUpdateOp {
+public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<FilterWhereBuilder>,DeleteOp,UpdateOp,TestOp,PoolableConnector,AdvancedUpdateOp,AttributeNormalizer {
 	
 	private final static Log log = Log.getLog(DB2Connector.class);
 	private Connection adminConn;
@@ -54,7 +54,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 			SQLUtil.closeQuietly(conn);
 		}
 		log.info("User {0} authenticated",username);
-		return new Uid(username);
+		return new Uid(username.toUpperCase());
 	}
 	
 	public Schema schema() {
@@ -108,11 +108,6 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 		}
 		return conn;
 	}
-
-
-    public FilterTranslator<FilterWhereBuilder> createFilterTranslator(ObjectClass oclass, OperationOptions options) {
-        return new DB2FilterTranslator(oclass, options);
-    }
     
     String buildAuthorityString(String userName){
     	DB2AuthorityReader dB2AuthorityReader = new DB2AuthorityReader(adminConn);
@@ -133,14 +128,16 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
     	}
     	return buffer.toString();
     }
+    
+    public FilterTranslator<FilterWhereBuilder> createFilterTranslator(ObjectClass oclass, OperationOptions options) {
+        return new DB2FilterTranslator(oclass, options);
+    }
 	
 
 	public void executeQuery(ObjectClass oclass, FilterWhereBuilder where,ResultsHandler handler, OperationOptions options) {
-        /**
-         * The query to get the user columns
-         * The Password <> '' mean we want to avoid reading duplicates
-         * Every base user has password set up
-         */
+		//Read users from SYSIBM.SYSDBAUTH table
+		//DB2 stores users in UPPERCASE , we must do UPPER(TRIM(GRANTEE)) = upper('john')
+		//but we must return users in normal case, because framework will use another filter.
         final String ALL_USER_QUERY = "SELECT GRANTEE FROM SYSIBM.SYSDBAUTH WHERE GRANTEETYPE = 'U' AND CONNECTAUTH = 'Y'";
 
         if (oclass == null || !ObjectClass.ACCOUNT.equals(oclass)) {
@@ -160,7 +157,6 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
             while (result.next()) {
                 ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
                 
-                //To be sure that uid and name are present for mysql
                 final String userName = result.getString("GRANTEE").trim();
                 if(options.getAttributesToGet() != null && Arrays.asList(options.getAttributesToGet()).contains(USER_AUTH_GRANTS)){
                 	String authString = buildAuthorityString(userName);
@@ -451,6 +447,18 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
         	throw new ConnectorException("Cannot commit update",e);
         }
 		return uid;
+	}
+
+	public Attribute normalizeAttribute(ObjectClass oclass, Attribute attribute) {
+		if(attribute.is(Name.NAME)){
+			String value = (String) attribute.getValue().get(0);
+			return new Name(value.trim().toUpperCase());
+		}
+		else if(attribute.is(Uid.NAME)){
+			String value = (String) attribute.getValue().get(0);
+			return new Uid(value.trim().toUpperCase());
+		}
+		return attribute;
 	}
     
     

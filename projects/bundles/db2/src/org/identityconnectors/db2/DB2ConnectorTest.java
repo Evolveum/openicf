@@ -130,7 +130,7 @@ public class DB2ConnectorTest {
 		}
 		//find user
 		uid = findUser(username);
-		assertNotNull(uid);
+		assertNotNull("Cannot find new created user",uid);
 	}
 	
 	private Uid createTestUser(){
@@ -211,7 +211,7 @@ public class DB2ConnectorTest {
         assertTrue("The user was not found", handler.found);
         final ConnectorObject actual = handler.getFoundObject();
         assertNotNull(actual);
-        assertEquals("Expected user is not same",username, AttributeUtil.getAsStringValue(actual.getName()));
+        assertEquals("Expected user is not same",username.toUpperCase(), AttributeUtil.getAsStringValue(actual.getName()).toUpperCase());
      }
 
 
@@ -229,7 +229,7 @@ public class DB2ConnectorTest {
         assertTrue("The user was not found", handler.found);
         final ConnectorObject actual = handler.getFoundObject();
         assertNotNull(actual);
-        assertEquals("Expected user is not same",username, AttributeUtil.getAsStringValue(actual.getName()));
+        assertEquals("Expected user is not same",username.toUpperCase(), AttributeUtil.getAsStringValue(actual.getName()).toUpperCase());
      }
     
     /**
@@ -347,7 +347,7 @@ public class DB2ConnectorTest {
 
         public boolean handle(ConnectorObject obj) {
             System.out.println("Object: " + obj);
-            if (obj.getUid().equals(uid)) {
+            if (obj.getUid().getUidValue().equalsIgnoreCase(uid.getUidValue())) {
                 found = true;
                 connectorObject = obj;
                 return false;
