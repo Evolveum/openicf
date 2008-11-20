@@ -144,7 +144,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 "displayName",
             };
 
-        public static IDictionary<ObjectClass, ICollection<string>> AttributesReturnedByDefault = null;
+        public static IDictionary<ObjectClass, ICollection<string>> RegularAttributesReturnedByDefault = null;
+        // optimization for attrs to get in the hopse of improving recon performance for idm
+        public static IDictionary<ObjectClass, ICollection<string>> SpecialAttributesReturnedByDefault = null;
             
 
         // special attribute names
@@ -179,10 +181,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
         static ActiveDirectoryConnector()
         {
             // populate default attributes
-            AttributesReturnedByDefault = new Dictionary<ObjectClass, ICollection<string>>();
-            AttributesReturnedByDefault.Add(ObjectClass.ACCOUNT, AccountAttributesReturnedByDefault);
-            AttributesReturnedByDefault.Add(ObjectClass.GROUP, GroupAttributesReturnedByDefault);
-            AttributesReturnedByDefault.Add(ouObjectClass, OuAttributesReturnedByDefault);
+            RegularAttributesReturnedByDefault = new Dictionary<ObjectClass, ICollection<string>>();
+            RegularAttributesReturnedByDefault.Add(ObjectClass.ACCOUNT, AccountAttributesReturnedByDefault);
+            RegularAttributesReturnedByDefault.Add(ObjectClass.GROUP, GroupAttributesReturnedByDefault);
+            RegularAttributesReturnedByDefault.Add(ouObjectClass, OuAttributesReturnedByDefault);
+
+            SpecialAttributesReturnedByDefault = new Dictionary<ObjectClass, ICollection<string>>();
         }
 
         #region CreateOp Members
@@ -301,7 +305,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         // implementation of Connector
         public virtual void Init(Configuration configuration)
         {
-            Trace.TraceInformation("Init method");
+            Trace.TraceInformation("Active Directory Init method");
             _configuration = (ActiveDirectoryConfiguration)configuration;
             _utils = new ActiveDirectoryUtils(_configuration);
         }
@@ -324,8 +328,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             if (_schema != null)
             {
+                Trace.TraceInformation("Returning cached schema");
                 return _schema;
             }
+
+            Trace.TraceInformation("Retrieving schema");
 
             SchemaBuilder schemaBuilder = 
                 new SchemaBuilder(SafeType<Connector>.Get(this));
@@ -359,8 +366,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     }
                 }
             }
-
+            Trace.TraceInformation("Finished retrieving schema");
             _schema = schemaBuilder.Build();
+            Trace.TraceInformation("Returning schema");
 
             return _schema;
         }
@@ -751,8 +759,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // if there is a set of attributes to return by default
             // for this object class use it.  If not, just use the
             // the builder's default value
-            if(AttributesReturnedByDefault.Keys.Contains(oclass)) {               
-                if (AttributesReturnedByDefault[oclass].Contains(name))
+            if(RegularAttributesReturnedByDefault.Keys.Contains(oclass)) {               
+                if (RegularAttributesReturnedByDefault[oclass].Contains(name))
                 {
                     builder.ReturnedByDefault = true;
                 }
@@ -854,6 +862,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             SortOption sortOption, string serverName, bool useGlobalCatalog, 
             string searchRoot, SearchScope searchScope)
         {
+            Trace.TraceInformation("Search: modifying query");
             StringBuilder fullQueryBuilder = new StringBuilder();
             if (query == null)
             {
@@ -891,6 +900,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 path = ActiveDirectoryUtils.GetLDAPPath(serverName, searchRoot);
             }
 
+            Trace.TraceInformation("Search: Getting root node for search");
             DirectoryEntry searchRootEntry = new DirectoryEntry(path,
                 _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
             DirectorySearcher searcher = new DirectorySearcher(searchRootEntry, query);
@@ -907,13 +917,16 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 searcher.Sort = sortOption;
             }
 
+            Trace.TraceInformation("Search: Performing query");
             SearchResultCollection resultSet = searcher.FindAll();
+            Trace.TraceInformation("Search: found {0} results", resultSet.Count);
             ICollection<string> attributesToReturn = null;
             if (resultSet.Count > 0)
             {
                 attributesToReturn = GetAttributesToReturn(oclass, options);
             }
 
+            Trace.TraceInformation("Building connectorObjects");
             foreach (SearchResult result in resultSet)
             {
                 try
@@ -1033,17 +1046,33 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     attributeNames.Add(name);
                 }
                 // now add in operational attributes ... they are always returned
-                ObjectClassInfo ocInfo = Schema().FindObjectClassInfo(oclass.GetObjectClassValue());
-                foreach (ConnectorAttributeInfo info in ocInfo.ConnectorAttributeInfos)
+                ICollection<string> specialAttributes = null;
+                if (SpecialAttributesReturnedByDefault.Keys.Contains(oclass))
                 {
-                    Trace.TraceInformation(String.Format(
-                        "Adding {0} to list of returned attributes", info.Name));
-                    if ((info.IsReturnedByDefault) && (ConnectorAttributeUtil.IsSpecial(info)))
+                    specialAttributes = SpecialAttributesReturnedByDefault[oclass];
+                }
+
+                if (specialAttributes == null)
+                {
+                    specialAttributes = new List<string>();
+                    ObjectClassInfo ocInfo = Schema().FindObjectClassInfo(oclass.GetObjectClassValue());
+                    foreach (ConnectorAttributeInfo info in ocInfo.ConnectorAttributeInfos)
                     {
-                        if (!attributeNames.Contains(info.Name))
+                        Trace.TraceInformation(String.Format(
+                            "Adding {0} to list of returned attributes", info.Name));
+                        if ((info.IsReturnedByDefault) && (ConnectorAttributeUtil.IsSpecial(info)))
                         {
-                            attributeNames.Add(info.Name);
+                            specialAttributes.Add(info.Name);
                         }
+                    }
+                    SpecialAttributesReturnedByDefault.Add(oclass, specialAttributes);
+                }
+                
+                foreach (string specialAttributeName in specialAttributes)
+                {
+                    if (!attributeNames.Contains(specialAttributeName))
+                    {
+                        attributeNames.Add(specialAttributeName);
                     }
                 }
             }
