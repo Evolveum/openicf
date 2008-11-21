@@ -6,7 +6,7 @@ package org.identityconnectors.db2;
 import static org.junit.Assert.*;
 
 import java.lang.reflect.*;
-import java.sql.Connection;
+import java.sql.*;
 import java.util.*;
 
 import javax.naming.*;
@@ -16,6 +16,7 @@ import javax.sql.DataSource;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.PropertiesResolver;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.test.TestHelpers;
 import org.junit.*;
 
@@ -126,9 +127,8 @@ public class DB2ConfigurationTest {
 			try{
 				conf.validate();
 			}
-			catch(UnsatisfiedLinkError error){
-				//This will happen when having driver on classpath, but db2 client is not installed
-				log.warn(error,"Cannot load db2 type2 driver, probably db2client not installed");
+			catch(Exception e){
+				handleType2Exception(e);
 			}
 		}
 		else{
@@ -137,11 +137,31 @@ public class DB2ConfigurationTest {
 				final Connection conn = conf.createAdminConnection();
 				assertNotNull(conn);
 			}
-			catch(UnsatisfiedLinkError error){
-				//This will happen when having driver on classpath, but db2 client is not installed
-				log.warn(error,"Cannot load db2 type2 driver, probably db2client not installed");
+			catch(Exception e){
+				handleType2Exception(e);
 			}
 		}
+	}
+	
+	private void handleType2Exception(Exception e){
+		boolean rethrow = true;
+		System.err.println("Handling type2Exception");
+		if(e.getCause() instanceof SQLException){
+			System.err.println("Handling SQLException");
+			if(((SQLException)e.getCause()).getErrorCode() == -4472){
+				System.err.println("Errorcode = -4472");
+				System.err.println(e.getCause().getCause());
+				if(e.getCause().getCause() instanceof UnsatisfiedLinkError){
+					//This will happen when having driver on classpath, but db2 client is not installed
+					rethrow = false;
+					log.warn(e,"Cannot load db2 type2 driver, probably db2client not installed");
+				}
+			}
+		}
+		if(rethrow){
+			throw ConnectorException.wrap(e);
+		}
+		
 	}
 
 	/**
