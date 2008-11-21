@@ -150,8 +150,9 @@ public class DB2ConfigurationTest {
 			System.err.println("Handling SQLException");
 			if(((SQLException)e.getCause()).getErrorCode() == -4472){
 				System.err.println("Errorcode = -4472");
-				System.err.println(e.getCause().getCause());
-				if(e.getCause().getCause() instanceof UnsatisfiedLinkError){
+				//UnsatisfiedLinkError is not cause of SQLException , why db2 guys ???
+				System.err.println("XXX  " + e.getCause().toString());
+				if(e.getCause().toString().contains("UnsatisfiedLinkError")){
 					//This will happen when having driver on classpath, but db2 client is not installed
 					rethrow = false;
 					log.warn(e,"Cannot load db2 type2 driver, probably db2client not installed");
