@@ -1,0 +1,55 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+
+  <meta content="text/html; charset=windows-1250" http-equiv="content-type">
+  <title>Contract tests FAQ</title>
+
+
+</head>
+<body>
+
+<pre>-&lt;( <a href="index.html">Contract tests manual</a> &gt; FAQ )&gt;-</pre>
+
+<hr style="width: 100%; height: 2px;">
+<h2>Contract tests FAQ</h2>
+
+Contents<br>
+
+<ul>
+
+  <li><a href="#Troubleshooting_tests_errors_">Troubleshooting
+tests' errors</a></li>
+
+  <ul>
+
+    <li><a href="#SearchApiOpTests_case_insensitive">[SearchApiOpTests]
+&nbsp;case insensitive tests fail</a></li>
+
+  </ul>
+
+</ul>
+
+<hr style="width: 100%; height: 2px;">
+<h2><a name="Troubleshooting_tests_errors_"></a>Troubleshooting
+tests' errors<br>
+
+</h2>
+
+<h3><a name="SearchApiOpTests_case_insensitive"></a>[SearchApiOpTests]
+&nbsp;case insensitive tests fail</h3>
+
+<span style="font-weight: bold;">Symtop</span>
+&nbsp; &nbsp; The following exception <br>
+
+<code>java.lang.AssertionError: [query by
+changed case uid] Search filter by
+uid with no OperationOptions failed, expected to return one object, but
+returned 0</code><br>
+
+indicates that the tested connector does not fulfill test <code>SearchApiOpTests#testCaseInsensitiveSearch</code>.<br>
+
+<span style="font-weight: bold;">Fix</span>
+&nbsp; &nbsp; see section <a href="indepth.html#SearchApiOpTests">SearchApiOpTests#testCaseInsensitiveSearch</a>.
+</body>
+</html>
