@@ -141,7 +141,6 @@ public class DummyConnector
     }
 
     public Uid update(ObjectClass objclass, Set<Attribute> attrs, OperationOptions options) {
-        validateAttributes(objclass, attrs, false);
         Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
         Uid uid = (Uid)attrMap.remove(Uid.NAME);
         if (uid == null)
@@ -153,6 +152,7 @@ public class DummyConnector
             Attribute currentPassword = (Attribute)attrMap.remove(OperationalAttributeInfos.CURRENT_PASSWORD);
             Attribute resetPassword = (Attribute)attrMap.remove(OperationalAttributeInfos.RESET_PASSWORD);
             Set<Attribute> object = _map.get(uid);
+            validateAttributes(objclass, attrs, false);
             object.addAll(attrMap.values());
             return uid;
         }
