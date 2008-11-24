@@ -110,25 +110,36 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // can't lookup the schema without the domain name
             if ((DomainName == null) || (DomainName.Length == 0))
             {
-                message += "->Domain name not supplied  ";
+                message += ConnectorMessages.Format(
+                            "confReqParam_domainName", "Domain name not supplied  ");
                 foundError = true;
             }
 
             if ((DirectoryAdminName == null) || (DirectoryAdminName.Length == 0))
             {
-                message += "->Directory administrator name not supplied  ";
+                message += ConnectorMessages.Format(
+                            "confReqParam_adminName", "Directory administrator name not supplied  ");
+                foundError = true;
+            }
+
+            if ((DirectoryAdminPassword == null) || (DirectoryAdminPassword.Length == 0))
+            {
+                message += ConnectorMessages.Format(
+                            "confReqParam_adminPass", "Directory administrator password not supplied  ");
                 foundError = true;
             }
 
             if ((ObjectClass == null) || (ObjectClass.Length == 0))
             {
-                message += "->ObjectClass was not supplied  ";
+                message += ConnectorMessages.Format(
+                            "confReqParam_objClass", "ObjectClass was not supplied  ");
                 foundError = true;
             }
 
             if ((SearchContainer == null) || (SearchContainer.Length == 0))
             {
-                message += "->Search Container was not supplied  ";
+                message += ConnectorMessages.Format(
+                            "confReqParam_searchContainer", "Search Container was not supplied  ");
                 foundError = true;
             }
 

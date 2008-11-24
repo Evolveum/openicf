@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="connector_displayName" xml:space="preserve">
-    <value>Windows Active Directory Connector</value>
+    <value>Windows Active Directory Connector.  </value>
   </data>
   <data name="display_CreateHomeDirectory" xml:space="preserve">
     <value>Create Home Directory</value>
@@ -239,5 +239,20 @@
   </data>
   <data name="ex_SIDLookup" xml:space="preserve">
     <value>An execption occurred during validation of user {0}.  The user was successfully authenticated, but the user's sid could not be determined.</value>
+  </data>
+  <data name="confReqParam_adminName" xml:space="preserve">
+    <value>Directory administrator name not supplied.  </value>
+  </data>
+  <data name="confReqParam_adminPass" xml:space="preserve">
+    <value>Directory administrator password not supplied.  </value>
+  </data>
+  <data name="confReqParam_domainName" xml:space="preserve">
+    <value>Domain name not supplied.  </value>
+  </data>
+  <data name="confReqParam_objClass" xml:space="preserve">
+    <value>ObjectClass was not supplied.  </value>
+  </data>
+  <data name="confReqParam_searchContainer" xml:space="preserve">
+    <value>Search Container was not supplied.  </value>
   </data>
 </root>
