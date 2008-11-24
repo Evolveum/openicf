@@ -220,7 +220,7 @@ public class DummyConnector
             builder.setName((new StringBuilder()).append(prefix).append(name).toString().toUpperCase());
             builder.setType(clazz);
             AttributeInfo info = builder.build();
-            if ((info.isCreateable() || info.isUpdateable()) || !info.isRequired()) {
+            if (!((info.isCreateable() || info.isUpdateable()) && info.isRequired())) {
             	if (!(info.isRequired() && clazz.equals(byte[].class))) {
 	                list.add(info);
 	                typeIndex[0]++;
@@ -250,5 +250,4 @@ public class DummyConnector
     private static Map<Uid, Set<Attribute>> _map = new HashMap<Uid, Set<Attribute>>();
     private DummyConfiguration _configuration;
     private DummyConnection _connection;
-
 }
