@@ -362,8 +362,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         ResultSet result = null;
         PreparedStatement statement = null;
         try {
-            statement = conn.prepareStatement(query.getSQL());
-            SQLUtil.setParams(statement, query.getParams());
+            statement = conn.prepareStatement(query);
             result = statement.executeQuery();
             while (result.next()) {
                 ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
@@ -446,8 +445,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         PreparedStatement stmt = null;
         ResultSet result = null;
         try {
-            stmt = conn.prepareStatement(AUTH_SELECT);
-            SQLUtil.setParams(stmt, values);
+            stmt = conn.prepareStatement(AUTH_SELECT, values);
             result = stmt.executeQuery();
             //No PasswordExpired capability
             if (!result.next()) {
@@ -478,8 +476,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             List<Object> values = new ArrayList<Object>();
             values.add(name);
             values.add(password);
-            c1 = conn.prepareStatement(SQL_CREATE_TEMPLATE);
-            SQLUtil.setParams(c1, values);
+            c1 = conn.prepareStatement(SQL_CREATE_TEMPLATE, values);
             c1.execute();
         } catch (SQLException e) {
             log.error(e, "Create user {0} error", name);
@@ -501,7 +498,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         List<String> grants = new ArrayList<String>();
         try {
             // created, read the model user grants
-            c2 = conn.prepareStatement(SQL_SHOW_GRANTS);
+            c2 = conn.getConnection().prepareStatement(SQL_SHOW_GRANTS);
             c2.setString(1, modelUser);
             ResultSet grantRs = c2.executeQuery();
             while (grantRs.next()) {
@@ -547,7 +544,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         for (String grant : grants) {
             PreparedStatement c3 = null;
             try {
-                c3 = conn.prepareStatement(grant);
+                c3 = conn.getConnection().prepareStatement(grant);
                 log.info("Granting rights {0} for user: {1}", userName, grant);
                 c3.execute();
             } catch (SQLException e) {
@@ -573,7 +570,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         PreparedStatement stmt = null;
         try {
             // create a prepared call..
-            stmt = conn.prepareStatement(SQL_DELETE_TEMPLATE);
+            stmt = conn.getConnection().prepareStatement(SQL_DELETE_TEMPLATE);
             // set object to delete..
             stmt.setString(1, uid.getUidValue());
             // uid to delete..
@@ -605,7 +602,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         PreparedStatement stmt = null;
         try {
             // create the prepared statement..
-            stmt = conn.prepareStatement(updstr);
+            stmt = conn.getConnection().prepareStatement(updstr);
             SQLUtil.setParams(stmt, values);            
             stmt.execute();
         } catch (SQLException e) {
@@ -620,7 +617,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         PreparedStatement cstmt = null;
         try {
             // create the prepared statement..
-            cstmt = conn.prepareStatement(FLUSH_PRIVILEGES);
+            cstmt = conn.getConnection().prepareStatement(FLUSH_PRIVILEGES);
             cstmt.execute();
         } catch (SQLException e) {
             SQLUtil.rollbackQuietly(conn);

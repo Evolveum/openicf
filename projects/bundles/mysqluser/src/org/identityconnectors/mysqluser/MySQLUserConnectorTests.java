@@ -636,8 +636,7 @@ public class MySQLUserConnectorTests {
         log.info("quitelly Create User {0}", userName);
         try {
             conn = MySQLUserConnector.newConnection(newConfiguration());
-            ps = conn.prepareStatement(SQL_CREATE_TEMPLATE);
-            SQLUtil.setParams(ps, values);
+            ps = conn.prepareStatement(SQL_CREATE_TEMPLATE, values);
             ps.execute();
             conn.commit();
         } catch (SQLException ex) {
@@ -664,8 +663,7 @@ public class MySQLUserConnectorTests {
         log.info("quitelly Delete User {0}", userName);
         try {
             conn = MySQLUserConnector.newConnection(newConfiguration());
-            ps = conn.prepareStatement(SQL_DELETE_TEMPLATE);
-            SQLUtil.setParams(ps, values);
+            ps = conn.prepareStatement(SQL_DELETE_TEMPLATE, values);
             ps.execute();
             conn.commit();
         } catch (SQLException ex) {
@@ -726,8 +724,7 @@ public class MySQLUserConnectorTests {
         log.info("test User {0} found {1} ", userName, found);   
         try {
             conn  =  MySQLUserConnector.newConnection(newConfiguration());
-            ps = conn.prepareStatement(SQL_SELECT);
-            SQLUtil.setParams(ps, values);
+            ps = conn.prepareStatement(SQL_SELECT, values);
             result = ps.executeQuery();
             if(result.next()) {
                 ret = result.getString(1);

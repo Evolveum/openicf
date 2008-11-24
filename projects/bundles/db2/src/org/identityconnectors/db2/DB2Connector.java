@@ -354,7 +354,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
      */
     private void revokeGrants(Collection<DB2Authority> db2AuthoritiesToRevoke)   throws  SQLException {
         for(DB2Authority auth : db2AuthoritiesToRevoke){
-            DB2AuthorityTable authTable = (DB2AuthorityTable)DB2Specifics.authType2DB2AuthorityTable(auth.authorityType);
+            DB2AuthorityTable authTable = DB2Specifics.authType2DB2AuthorityTable(auth.authorityType);
             String revokeSQL = authTable.generateRevokeSQL(auth);
             executeSQL(revokeSQL);
         }
