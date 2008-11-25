@@ -146,7 +146,7 @@ public class DB2Configuration extends AbstractConfiguration {
 	/**
 	 * @return admin account
 	 */
-	@ConfigurationProperty(order = 1, helpMessageKey = "db2.adminAccount.help", displayMessageKey = "db2.adminAccount.display")
+	@ConfigurationProperty(order = 0, helpMessageKey = "db2.adminAccount.help", displayMessageKey = "db2.adminAccount.display")
 	public String getAdminAccount(){
 		return adminAccount;
 	}
@@ -178,9 +178,17 @@ public class DB2Configuration extends AbstractConfiguration {
 	/**
 	 * @return subprotocol when connecting using type 4 driver
 	 */
-	@ConfigurationProperty
+	@ConfigurationProperty(order=2,displayMessageKey="db2.jdbcSubProtocol.display",helpMessageKey="db2.jdbcSubProtocol.help")
 	public String getJdbcSubProtocol(){
 		return jdbcSubProtocol;
+	}
+	
+	/**
+	 * @return databasename
+	 */
+	@ConfigurationProperty(order=3,displayMessageKey="db2.databaseName.display",helpMessageKey="db2.databaseName.help")
+	public String getDatabaseName(){
+		return databaseName;
 	}
 	
 	/**
@@ -195,23 +203,14 @@ public class DB2Configuration extends AbstractConfiguration {
 	 * Sets database name
 	 * @param databaseName
 	 */
-	@ConfigurationProperty
 	public void setDatabaseName(String databaseName){
 		this.databaseName = databaseName;
 	}
 	
 	/**
-	 * @return databasename
-	 */
-	@ConfigurationProperty
-	public String getDatabaseName(){
-		return databaseName;
-	}
-	
-	/**
 	 * @return classname of jdbc driver
 	 */
-	@ConfigurationProperty
+	@ConfigurationProperty(order=4,displayMessageKey="db2.jdbcDriver.display",helpMessageKey="db2.jdbcDriver.help")
 	public String getJdbcDriver() {
 		return jdbcDriver;
 	}
@@ -227,7 +226,7 @@ public class DB2Configuration extends AbstractConfiguration {
 	/**
 	 * @return the host
 	 */
-	@ConfigurationProperty
+	@ConfigurationProperty(order=5,displayMessageKey="db2.host.display",helpMessageKey="db2.host.help")
 	public String getHost() {
 		return host;
 	}
@@ -242,7 +241,7 @@ public class DB2Configuration extends AbstractConfiguration {
 	/**
 	 * @return the port
 	 */
-	@ConfigurationProperty
+	@ConfigurationProperty(order=6,displayMessageKey="db2.port.display",helpMessageKey="db2.port.help")
 	public String getPort() {
 		return port;
 	}
@@ -257,6 +256,7 @@ public class DB2Configuration extends AbstractConfiguration {
 	/**
 	 * @return the aliasName
 	 */
+	@ConfigurationProperty(order=7,displayMessageKey="db2.aliasName.display",helpMessageKey="db2.aliasName.help")
 	public String getAliasName() {
 		return aliasName;
 	}
@@ -271,6 +271,7 @@ public class DB2Configuration extends AbstractConfiguration {
 	/**
 	 * @return the dataSource
 	 */
+	@ConfigurationProperty(order=8,displayMessageKey="db2.dataSource.display",helpMessageKey="db2.dataSource.help")
 	public String getDataSource() {
 		return dataSource;
 	}
@@ -285,6 +286,7 @@ public class DB2Configuration extends AbstractConfiguration {
 	/**
 	 * @return the dsJNDIEnv
 	 */
+	@ConfigurationProperty(order=9,displayMessageKey="db2.dsJNDIEnv.display",helpMessageKey="db2.dsJNDIEnv.help")
 	public String[] getDsJNDIEnv() {
 		if(dsJNDIEnv == null){
 			return new String[0];

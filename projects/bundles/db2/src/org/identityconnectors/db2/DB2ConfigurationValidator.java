@@ -135,19 +135,21 @@ class DB2ConfigurationValidator {
 		runCheck(reqChecksEx, new Type2DriverChecker());
 		if(cfg.getConnType() == null){
 			//Build exception from messages
-			StringBuilder builder = new StringBuilder();
-			builder.append(LINE_SEPARATOR);
+			StringBuilder stackBuilder = new StringBuilder();
+			StringBuilder msgBuilder = new StringBuilder();
+			stackBuilder.append(LINE_SEPARATOR);
 			for(Throwable ex : reqChecksEx){
-				builder.append(LINE_SEPARATOR);
-				builder.append(ex.getMessage());
-				builder.append(LINE_SEPARATOR);
+				stackBuilder.append(LINE_SEPARATOR);
+				stackBuilder.append(ex.getMessage());
+				stackBuilder.append(LINE_SEPARATOR);
+				msgBuilder.append(ex.getMessage());
+				msgBuilder.append(LINE_SEPARATOR);
 				for(StackTraceElement el : ex.getStackTrace()){
-					builder.append(el);
-					builder.append(LINE_SEPARATOR);
+					stackBuilder.append(el);
+					stackBuilder.append(LINE_SEPARATOR);
 				}
 			}
-			final ConnectorException connectorException = new ConnectorException("Validate of DB2Configuration failed : ",new Exception(builder.toString()));
-			connectorException.printStackTrace();
+			final ConnectorException connectorException = new ConnectorException("Validate of DB2Configuration failed : " + msgBuilder,new Exception(stackBuilder.toString()));
 			throw connectorException;
 		}
 	}

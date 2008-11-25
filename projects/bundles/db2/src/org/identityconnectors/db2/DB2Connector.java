@@ -20,7 +20,7 @@ import org.identityconnectors.framework.spi.operations.*;
  *
  */
 @ConnectorClass(
-        displayNameKey = "DatabaseTable",
+        displayNameKey = "db2.connector",
         configurationClass = DB2Configuration.class)
 public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<FilterWhereBuilder>,DeleteOp,UpdateOp,TestOp,PoolableConnector,AdvancedUpdateOp,AttributeNormalizer {
 	
