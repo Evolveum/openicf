@@ -129,11 +129,13 @@ public class DummyConnector
                 int length = attributes.length;
                 for(int i = 0; i < length; i++) {
                     String attribute = attributes[i];
-                    builder.addAttribute(new Attribute[] {
-                        (Attribute)map.get(attribute)
-                    });
+                    Attribute fetchedAttribute = (Attribute)map.get(attribute);
+                    if (fetchedAttribute!=null) {
+                        builder.addAttribute(new Attribute[] {
+                            fetchedAttribute
+                        });
+                    }
                 }
-
             }
             builder.setUid((Uid)entry.getKey());
         }
@@ -220,7 +222,10 @@ public class DummyConnector
             builder.setName((new StringBuilder()).append(prefix).append(name).toString().toUpperCase());
             builder.setType(clazz);
             AttributeInfo info = builder.build();
-            if (!((info.isCreateable() || info.isUpdateable()) && info.isRequired())) {
+            // Exclude attributes marked required, but not creatable
+            //
+            boolean ignore = !info.isCreateable() && info.isRequired();
+            if (!ignore) {
             	if (!(info.isRequired() && clazz.equals(byte[].class))) {
 	                list.add(info);
 	                typeIndex[0]++;
@@ -240,8 +245,16 @@ public class DummyConnector
             	(method.getParameterTypes()[0] == Boolean.TYPE || method.getParameterTypes()[0] == Boolean.class))
                 setters.add(method);
         }
-
-        return (Method[])setters.toArray(new Method[0]);
+        Method[] methodArray = (Method[])setters.toArray(new Method[0]);
+        Arrays.sort(methodArray, new MethodComparator());
+        return methodArray;
+    }
+    
+    static class MethodComparator implements Comparator<Method> {
+        public int compare(Method o1, Method o2) {
+            return o1.getName().compareTo(o2.getName());
+        }
+        
     }
 
     private static int _uidIndex;
