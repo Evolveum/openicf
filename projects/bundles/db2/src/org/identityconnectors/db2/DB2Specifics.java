@@ -18,6 +18,7 @@ class DB2Specifics {
 	final static String JCC_DRIVER = "com.ibm.db2.jcc.DB2Driver";
 	/** Old driver that uses local db2 client with stored aliases , type 2 driver */
 	final static String APP_DRIVER = "COM.ibm.db2.jdbc.app.DB2Driver";
+	final static String DEFAULT_TYPE4_PORT = "50000";
 	
 	
     // These names come from the DB2 SQL Reference manual.

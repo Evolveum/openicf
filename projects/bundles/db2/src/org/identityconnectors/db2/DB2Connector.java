@@ -434,10 +434,16 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
             throw new IllegalArgumentException(
                     "Update operation requires an 'ObjectClass' attribute of type 'Account'.");
         }
+        Name name = AttributeUtil.getNameFromAttributes(attrs);
+        if(name != null){
+        	throw new IllegalArgumentException("Name attribute is nonUpdatable, cannot appear in update operation");
+        }
+        
         Uid uid = AttributeUtil.getUidAttribute(attrs);
         if (uid == null || StringUtil.isBlank(uid.getUidValue())){
-            throw new IllegalArgumentException("The Name attribute cannot be null or empty.");
+            throw new IllegalArgumentException("The uid attribute cannot be null or empty.");
         }
+        
         try{
         	updateAuthority(uid.getUidValue(), attrs, type);
         	adminConn.commit();

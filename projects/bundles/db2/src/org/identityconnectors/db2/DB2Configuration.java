@@ -133,11 +133,11 @@ public class DB2Configuration extends AbstractConfiguration {
 	 */
 	private String dataSource;
 	/** Class name of jdbc driver */
-	private String jdbcDriver;
+	private String jdbcDriver = DB2Specifics.JCC_DRIVER;
 	/** DB2 host name*/
 	private String host;
 	/** DB2 listening port */
-	private String port;
+	private String port = DB2Specifics.DEFAULT_TYPE4_PORT;
 	/** Type/manner of connection to DB */
 	private ConnectionType connType;
 	/** JNDI environment entries for lookuping DS */
@@ -351,7 +351,7 @@ public class DB2Configuration extends AbstractConfiguration {
 		else if(ConnectionType.TYPE2.equals(connType)){
 			return DB2Specifics.createType2Connection(jdbcDriver, aliasName, jdbcSubProtocol, user, password);
 		}
-		throw new IllegalStateException("Invalid state DB2Configuration");
+		throw new IllegalStateException("Invalid state of DB2Configuration");
 	}
 	
 	

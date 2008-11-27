@@ -24,7 +24,7 @@ class DB2ConfigurationValidator {
 
 	private interface ConfigChecker{
 		void checkRequired();
-		void checkEmpty();
+		void checkEmpty(ConfigChecker reqChecker);
 		ConnectionType getType();
 	}
 	
@@ -37,8 +37,8 @@ class DB2ConfigurationValidator {
 				Assertions.nullCheck(cfg.getAdminPassword(),"adminPassword");
 			}
 		}
-		public void checkEmpty() {
-			Asserts.blank(cfg.getDataSource(),"DataSource property cannot be set");
+		public void checkEmpty(ConfigChecker reqChecker) {
+			Asserts.isBlankMsg(cfg.getDataSource(),"DataSource property cannot be set");
 		}
 		public ConnectionType getType() {
 			return ConnectionType.DATASOURCE;
@@ -57,14 +57,19 @@ class DB2ConfigurationValidator {
 			try {
 				Class.forName(cfg.getJdbcDriver());
 			} catch (ClassNotFoundException e) {
-				throw new ConnectorException("Cannot load jdbc driver class " + cfg.getJdbcDriver(),e);
+				throw new ConnectorException("Cannot load jdbc driver class " + cfg.getJdbcDriver() + ".",e);
 			}
 		}
-		public void checkEmpty() {
-			Asserts.blank(cfg.getHost(),"Host property cannot be set");
-			Asserts.blank(cfg.getPort(),"Port property cannot be set");
-			Asserts.blank(cfg.getDatabaseName(),"DatabaseName property cannot be set");
-			Asserts.blank(cfg.getJdbcDriver(),"JdbcDriver property cannot be set");
+		public void checkEmpty(ConfigChecker reqChecker) {
+			if(!(reqChecker instanceof Type2DriverChecker)){
+				Asserts.isBlankMsg(cfg.getJdbcDriver(),"JdbcDriver property cannot be set.");
+			}
+			//User and password can be set for all types of connections
+			//Asserts.isBlankMsg(cfg.getAdminAccount(), "AdminAccount cannot be set");
+			//Asserts.isNullMsg(cfg.getAdminPassword(), "AdminPassword cannot be set");
+			Asserts.isBlankMsg(cfg.getHost(),"Host property cannot be set.");
+			Asserts.isBlankMsg(cfg.getPort(),"Port property cannot be set.");
+			Asserts.isBlankMsg(cfg.getDatabaseName(),"DatabaseName property cannot be set.");
 		}
 		public ConnectionType getType() {
 			return ConnectionType.TYPE4;
@@ -81,11 +86,14 @@ class DB2ConfigurationValidator {
 			try {
 				Class.forName(cfg.getJdbcDriver());
 			} catch (ClassNotFoundException e) {
-				throw new ConnectorException("Cannot load jdbc driver class : " + cfg.getJdbcDriver(),e);
+				throw new ConnectorException("Cannot load jdbc driver class : " + cfg.getJdbcDriver() + ".",e);
 			}
 		}
-		public void checkEmpty() {
-			Asserts.blank(cfg.getAliasName(),"AliasName property cannot be set");
+		public void checkEmpty(ConfigChecker reqChecker) {
+			if(!(reqChecker instanceof Type4DriverChecker)){
+				Asserts.isBlankMsg(cfg.getJdbcDriver(),"JdbcDriver property cannot be set.");
+			}
+			Asserts.isBlankMsg(cfg.getAliasName(),"AliasName property cannot be set.");
 		}
 		public ConnectionType getType() {
 			return ConnectionType.TYPE2;
@@ -94,18 +102,34 @@ class DB2ConfigurationValidator {
 	
 	private static class Asserts{
 		
-		static String blankArgument(String s,String argument){
+		static String isBlankArgument(String s,String argument){
 			if(s != null && s.length() > 0){
 				throw new IllegalArgumentException("Passed argument [" + argument + "] is not blank");
 			}
 			return s;
 		}
-		static String blank(String s,String msg){
+		
+		static String isBlankMsg(String s,String msg){
 			if(s != null && s.length() > 0){
 				throw new IllegalArgumentException(msg);
 			}
 			return s;
 		}
+		
+		static <T> T isNullArgument(T o,String argument){
+			if(o != null){
+				throw new IllegalArgumentException("Passed argument [" + argument + "] is not null");
+			}
+			return o;
+		}
+		
+		static <T> T isNullMsg(T o,String msg){
+			if(o != null){
+				throw new IllegalArgumentException(msg);
+			}
+			return o;
+		}
+		
 		
 	}
 	
@@ -122,7 +146,7 @@ class DB2ConfigurationValidator {
 		}
 		if(cfg.getConnType() != null){
 			for(ConfigChecker emptyChecker : emptyCheckers){
-				emptyChecker.checkEmpty();
+				emptyChecker.checkEmpty(reqChecker);
 			}
 		}
 	}
@@ -131,8 +155,8 @@ class DB2ConfigurationValidator {
 		//We will use all checkers to check for required fields and check whether other fields are empty
 		List<RuntimeException> reqChecksEx = new ArrayList<RuntimeException>(2);
 		runCheck(reqChecksEx, new DataSourceChecker(), new Type4DriverChecker(),new Type2DriverChecker());
-		runCheck(reqChecksEx, new Type4DriverChecker(), new Type2DriverChecker());
-		runCheck(reqChecksEx, new Type2DriverChecker());
+		runCheck(reqChecksEx, new Type4DriverChecker(), new DataSourceChecker(),new Type2DriverChecker());
+		runCheck(reqChecksEx, new Type2DriverChecker(), new DataSourceChecker(), new Type4DriverChecker());
 		if(cfg.getConnType() == null){
 			//Build exception from messages
 			StringBuilder stackBuilder = new StringBuilder();
@@ -143,7 +167,7 @@ class DB2ConfigurationValidator {
 				stackBuilder.append(ex.getMessage());
 				stackBuilder.append(LINE_SEPARATOR);
 				msgBuilder.append(ex.getMessage());
-				msgBuilder.append(LINE_SEPARATOR);
+				msgBuilder.append(" | ");
 				for(StackTraceElement el : ex.getStackTrace()){
 					stackBuilder.append(el);
 					stackBuilder.append(LINE_SEPARATOR);

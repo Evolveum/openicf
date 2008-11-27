@@ -107,6 +107,7 @@ public class DB2ConfigurationTest {
 		conf.setAdminAccount(adminAccount);
 		conf.setAdminPassword(new GuardedString(adminPassword.toCharArray()));
 		conf.setJdbcDriver(DB2Specifics.APP_DRIVER);
+		conf.setPort(null);
 		return conf;
 	}
 
@@ -124,6 +125,7 @@ public class DB2ConfigurationTest {
 			conf.setAdminAccount("dummy");
 			conf.setAdminPassword(new GuardedString());
 			conf.setJdbcDriver(DB2Specifics.APP_DRIVER);
+			conf.setPort(null);
 			try{
 				conf.validate();
 			}
@@ -160,20 +162,29 @@ public class DB2ConfigurationTest {
 		}
 		
 	}
+	
+	private final String[] dsJNDIEnv = new String[]{"java.naming.factory.initial=" + MockContextFactory.class.getName()};
+	
+	private DB2Configuration createDataSourceConfiguration(){
+		DB2Configuration conf = new DB2Configuration();
+		conf.setDataSource("testDS");
+		conf.setAdminAccount("user");
+		conf.setAdminPassword(new GuardedString(new char[]{'t'}));
+		conf.setDsJNDIEnv(dsJNDIEnv);
+		conf.setPort(null);
+		conf.setJdbcDriver(null);
+		return conf;
+	}
+	
 
 	/**
 	 * Test getting Connection from DS
 	 */
 	@Test
-	public void testDataSourceConfig(){
-		DB2Configuration conf = new DB2Configuration();
+	public void testDataSourceConfiguration(){
+		DB2Configuration conf = createDataSourceConfiguration();
 		//set to thread local
 		cfg.set(conf);
-		conf.setDataSource("testDS");
-		conf.setAdminAccount("user");
-		conf.setAdminPassword(new GuardedString(new char[]{'t'}));
-		final String[] dsJNDIEnv = new String[]{"java.naming.factory.initial=" + MockContextFactory.class.getName()};
-		conf.setDsJNDIEnv(dsJNDIEnv);
 		assertArrayEquals(conf.getDsJNDIEnv(), dsJNDIEnv);
 		conf.validate();
 		Connection conn = conf.createAdminConnection();
@@ -183,6 +194,8 @@ public class DB2ConfigurationTest {
 		conn = conf.createAdminConnection();
 		assertNotNull(conn);
 	}
+	
+	
 	
 	
 	/**
