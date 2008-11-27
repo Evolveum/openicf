@@ -252,7 +252,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
     private void updateAuthority(String user,Set<Attribute> attrs,AdvancedUpdateOp.Type type)   {
         checkAdminConnection();
         Attribute wsAttr = AttributeUtil.find(USER_AUTH_GRANTS, attrs);
-        String delimitedGrants = AttributeUtil.getStringValue(wsAttr);
+        String delimitedGrants = wsAttr != null ? AttributeUtil.getStringValue(wsAttr) : null;
         Collection<String> grants = delimitedGrants != null ? DB2Specifics.divideString(delimitedGrants, ',', true) : new ArrayList<String>();
         try{
 	        switch(type){
