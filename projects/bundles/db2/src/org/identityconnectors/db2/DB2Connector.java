@@ -65,8 +65,11 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
         grantsBuilder.setName(USER_AUTH_GRANTS).setCreateable(true).
         setUpdateable(true).setRequired(true).setReadable(false);
         attrInfoSet.add(grantsBuilder.build());
-        //Password is operationalAttribute 
-        attrInfoSet.add(OperationalAttributeInfos.PASSWORD);
+        //Password is operationalAttribute
+        AttributeInfoBuilder passwordBuilder = new AttributeInfoBuilder();
+        passwordBuilder.setName(OperationalAttributes.PASSWORD_NAME).setType(GuardedString.class).setCreateable(true).
+        setUpdateable(false).setRequired(true).setReadable(false).setReturnedByDefault(false);
+        attrInfoSet.add(passwordBuilder.build());
 
         // Use SchemaBuilder to build the schema. Currently, only ACCOUNT type is supported.
         SchemaBuilder schemaBld = new SchemaBuilder(getClass());
