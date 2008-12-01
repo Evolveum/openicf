@@ -5,7 +5,21 @@
   <meta content="text/html; charset=windows-1250" http-equiv="content-type">
   <title>Contract tests FAQ</title>
 
-
+<!-- Commenting out links to local CSS files. I added these so that I could test the page locally. Thanks. -Kevin Kessler <link rel="stylesheet" type="text/css" href="tigris.css"> <link rel="stylesheet" type="text/css" href="inst.css"> -->
+  <style type="text/css" media="all">
+.literal {
+font-size: medium;
+font-family: monospace;
+}
+.codeComment {
+color: #006600;
+}
+hr {
+margin-top: 20px;
+margin-bottom: 7px;
+width: 100%; height: 2px;
+}
+  </style>
 </head>
 <body>
 <div id="projecthome" class="app">
@@ -27,7 +41,8 @@ tests' errors</a></li>
 &nbsp;case insensitive tests fail</a></li>
 
   </ul>
-  <li><a href="#conf">Common confusions</a></li>
+  <li><a href="#confusion">Common confusions</a></li>
+  <li><a href="#configs">Howto run tests with different configurations</a></li>
 
 </ul>
 
@@ -50,14 +65,59 @@ returned 0</code><br>
 
 indicates that the tested connector does not fulfill test <code>SearchApiOpTests#testCaseInsensitiveSearch</code>.<br>
 
-<span style="font-weight: bold;">Fix</span>
-&nbsp; &nbsp; see section <a href="indepth.html#SearchApiOpTests">SearchApiOpTests#testCaseInsensitiveSearch</a>.
+<p><span style="font-weight: bold;">Fix</span>
+&nbsp; &nbsp; see section <a href="indepth.html#SearchApiOpTests">SearchApiOpTests#testCaseInsensitiveSearch</a>.</p>
 
-<h2><a name="conf"></a>Common confusions</h2>
+<h2><a name="confusion"></a>Common confusions</h2>
 <p><strong>#1 the connector schema can be modified by <code>Schema.*</code> properties</strong> -- These lines of 
 <code>build.groovy</code> are used in <code>SchemaApiOpTests</code> to compare the schema returned by connector 
 with the correct schema defined in <code>build.groovy</code>. However this has nothing to do with the configuration 
 of schema, that is just the competence of connector.</p>
+
+<h2><a name="configs"></a>Howto run tests with different configurations (Hudson)</h2>
+<p>One connector can have multiple configurations for Contract tests. For example <code>Databasetable</code> connector
+has configurations to databases: MySQL, Oracle. To be able to run these configurations automatically with <code>ant</code>
+we edit <code>${bundle-folder}/build.xml</code> the following way:
+</p>
+<div class="literal">
+&lt;project name="connector-databasetable" default="all"&gt; <br>
+ &nbsp;&nbsp;&lt;property name="framework.dir" value="../../framework"/&gt;<br>
+ &nbsp;&nbsp;&lt;property name="bundles.dir" value="../"/&gt;    <br>
+ &nbsp;&nbsp;&lt;import file="${framework.dir}/connector_build.xml"/&gt;<br>
+ &nbsp;&nbsp;&lt;property name="databasecommon.dir" value="../dbcommon"/&gt;<br>
+ &nbsp;&nbsp;&lt;target name="-pre-clean-extra"&gt;<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&lt;delete&gt;<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;fileset dir="${lib}" includes="*common*jar"/&gt;<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&lt;/delete&gt;<br> 
+&nbsp;&nbsp;&lt;/target&gt;<br> 
+&lt;target name="-pre-compile-extra"&gt;<br>
+&nbsp;&nbsp;&lt;copy todir="${lib}"&gt;<br> 
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;fileset dir="${databasecommon.dir}/dist" includes="*.jar"/&gt;<br> 
+&nbsp;&nbsp;&lt;/copy&gt;<br>    &lt;/target&gt;<br>    <br> 
+&lt;target name="run-contract-tests" depends="contract-init"&gt;<br> 
+&lt;!-- mysql configuration --&gt;<br> 
+&lt;antcall target="contract-dist" inheritAll="false"&gt;<br> 
+&lt;param name="configuration" value="mysql"/&gt;<br> 
+&lt;/antcall&gt;<br> 
+&lt;antcall target="contract-tests" inheritAll="false"&gt;<br> 
+&lt;param name="configuration" value="mysql"/&gt;<br> 
+&lt;/antcall&gt;<br>        <br> 
+&lt;!-- mssql configuration --&gt;<br> 
+&lt;antcall target="contract-dist" inheritAll="false"&gt;<br> 
+&lt;param name="configuration" value="mssql"/&gt;<br> 
+&lt;/antcall&gt;<br> 
+&lt;antcall target="contract-tests" inheritAll="false"&gt;<br> 
+&lt;param name="configuration" value="mssql"/&gt;<br> 
+&lt;/antcall&gt;<br>        <br> 
+&lt;!-- db2 configuration --&gt;<br> 
+&lt;antcall target="contract-dist" inheritAll="false"&gt;<br> 
+&lt;param name="configuration" value="db2"/&gt;<br> 
+&lt;/antcall&gt;<br> 
+&lt;antcall target="contract-tests" inheritAll="false"&gt;<br> 
+&lt;param name="configuration" value="db2"/&gt;<br> 
+&lt;/antcall&gt;<br>    &lt;/target&gt; 
+<br>&lt;/project&gt;<br>
+</div>
 </div>
 </body>
 </html>
