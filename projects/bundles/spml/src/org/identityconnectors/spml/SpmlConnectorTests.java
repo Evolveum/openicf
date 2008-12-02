@@ -88,7 +88,7 @@ public class SpmlConnectorTests {
 
     // Connector Configuration information
     //
-    private static final String URL                   = "http://idmvm2026.central.sun.com:8080/idm/servlet/openspml2";
+    private static final String URL                   = "http://localhost:8080/idm/servlet/openspml2";
     private static final String SPML_OBJ_CLASS        = "spml2Person";
     private static final String CONNECTOR_OBJ_CLASS   = ObjectClass.ACCOUNT_NAME;
     private static final String PSO_TARGET_CLASS      = "spml2-DSML-Target";
@@ -520,12 +520,16 @@ public class SpmlConnectorTests {
     }
 
     private ConnectorObject getUser(String accountId) throws Exception  {
+        return getUser(accountId, null);
+    }
+
+    private ConnectorObject getUser(String accountId, OperationOptions options) throws Exception  {
         SpmlConfiguration config = createConfiguration();
         SpmlConnector info = createConnector(config);
 
         try {
             TestHandler handler = new TestHandler();
-            TestHelpers.search(info,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Name.NAME, accountId)), handler, null);
+            TestHelpers.search(info,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Name.NAME, accountId)), handler, options);
             if (!handler.iterator().hasNext())
                 return null;
             return handler.iterator().next();
@@ -659,7 +663,11 @@ public class SpmlConnectorTests {
                 ConnectorObject newUser = builder.build();
                 info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
                 
-                ConnectorObject user = getUser(TEST_USER);
+                Map map = new HashMap<String, Object>();
+                map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] {OperationalAttributes.ENABLE_NAME});
+                OperationOptions options = new OperationOptions(map);
+                
+                ConnectorObject user = getUser(TEST_USER, options);
                 Attribute enabled = user.getAttributeByName(OperationalAttributes.ENABLE_NAME);
                 Assert.assertNotNull(enabled);
                 Assert.assertFalse(AttributeUtil.getBooleanValue(enabled));
@@ -675,8 +683,7 @@ public class SpmlConnectorTests {
                 ConnectorObject newUser = builder.build();
                 info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
                 
-                ConnectorObject user = getUser(TEST_USER);
-                Attribute enabled = user.getAttributeByName(OperationalAttributes.ENABLE_NAME);
+                Attribute enabled = newUser.getAttributeByName(OperationalAttributes.ENABLE_NAME);
                 Assert.assertNotNull(enabled);
                 Assert.assertTrue(AttributeUtil.getBooleanValue(enabled));
             }
