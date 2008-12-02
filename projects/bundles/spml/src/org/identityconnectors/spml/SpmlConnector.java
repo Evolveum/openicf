@@ -526,7 +526,20 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
             }
         }
         builder.setObjectClass(objectClass);
-        if (attributesToGet==null || attributesToGet.contains(OperationalAttributes.ENABLE_NAME)) {
+        
+        boolean getEnable = false;
+        if (attributesToGet!=null)
+            getEnable = attributesToGet.contains(OperationalAttributes.ENABLE_NAME);
+        if (!getEnable && _oci!=null) {
+            Map<String, AttributeInfo> infos = _oci.get(objectClass.getObjectClassValue());
+            if (infos!=null) {
+                AttributeInfo enableInfo = infos.get(OperationalAttributes.ENABLE_NAME);
+                if (enableInfo!=null)
+                    getEnable = enableInfo.isReturnedByDefault();
+            }
+        }
+        
+        if (getEnable) {
             builder.addAttribute(getActiveStatus(uid, getTargetforObjectClass(objectClass)));
         }
         builder.setName(name);
