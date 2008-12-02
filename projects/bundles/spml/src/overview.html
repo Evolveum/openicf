@@ -43,7 +43,7 @@
 The SPML Connector can provision users to any SPML 2.0 server.
 <p>
 Since SPML 2.0 does not specify how to establish and maintain a Session, the SPML 2.0
-Connector allows Groovy scripts to be performed at specified points in the execution,
+Connector allows scripts to be performed at specified points in the execution,
 so that Session management can be performed.
 <p>
 These points are:
@@ -80,34 +80,38 @@ These points are:
 </ul>
 </ul>
 <p>
-Additionally, Groovy scripts can be executed to change the Attributes before they are 
+Additionally, scripts can be executed to change the Attributes before they are 
 sent to the server, or after they are received back from the server. This can be necessary
 since the Connector Framework uses reserved names for some attributes (such as '@@PASSWORD@@'
 for password) that may not correspond to the names used by the server.
 <p>
 <ul>
-<li>A Groovy script can be executed to modify attribute names on Create and Modify. 
+<li>A script can be executed to modify attribute names on Create and Modify. 
 <br>The script should return the name to be used. 
-The following variables will be available to the script: 
+The following variables will be available to the script:
 <ul> 
 <li>name -- the name of the attribute</li>
-<li>configuration -- the SPMLConfiguration object</li> 
+<li>objectClass -- the name of the objectClass</li>
+<li>configuration -- the SPMLConfiguration object</li>
+<li>memory -- a java.util.Map persisted between script executions</li>
 </ul>
-</li>
-<li>A Groovy script can be executed to modify Attributes returned by Search. 
+<li>A script can be executed to modify Attributes returned by Search. 
 <br>The script should return the Attribute to be used. 
-The following variables will be available to the script: 
-<ul> 
+The following variables will be available to the script:
+<ul>
 <li>attribute -- the com.sun.openconnectors.framework.common.objects.Attribute</li>
-<li>configuration -- the SPMLConfiguration object</li> 
+<li>objectClass -- the name of the objectClass</li>
+<li>configuration -- the SPMLConfiguration object</li>
+<li>memory -- a java.util.Map persisted between script executions</li>
 </ul>
 </li>
-<li>A Groovy script can be executed to modify attribute names on Search. 
+<li>A script can be executed to modify attribute names on Search. 
 <br>The script should return the name to be used. 
-The following variables will be available to the script: 
-<ul> 
+The following variables will be available to the script :
+<ul>
 <li>name -- the name of the attribute</li>
-<li>configuration -- the SPMLConfiguration object</li> 
+<li>configuration -- the SPMLConfiguration object</li>
+<li>memory -- a java.util.Map persisted between script executions</li>
 </ul>
 </li>
 </ul>
