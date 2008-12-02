@@ -318,7 +318,10 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
                 array[i] = new DSMLValue(new String(accessor.getArray()));
                 accessor.clear();
             } else {
-                array[i] = new DSMLValue(value.toString());
+                String string = null;
+                if (value!=null)
+                    string = value.toString();
+                array[i] = new DSMLValue(string);
             }
         }
         return array;
