@@ -8,6 +8,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-HEAD"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-Internal-HEAD"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/PatternParser"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/HABEANS2"/>
+	<classpathentry kind="var" path="USER_HOME/.connectors/3270hod/lib/habeans2.jar"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>
