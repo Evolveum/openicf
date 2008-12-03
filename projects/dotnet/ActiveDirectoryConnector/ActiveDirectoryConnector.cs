@@ -139,6 +139,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 "mail",
                 "groupType",
                 "objectClass",
+                "member",
             };
 
         // This is the list of attributes returned by default if no attributes are
