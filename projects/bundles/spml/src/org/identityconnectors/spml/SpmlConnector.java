@@ -302,13 +302,14 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
 	        				throw new IllegalArgumentException(_configuration.getMessage(SpmlMessages.ILLEGAL_MODIFICATION, name));
 	        	}
         	}
-            extensible.addOpenContentElement(new DSMLAttr(mapSetName(name, objectClass.getObjectClassValue()), asDSMLValueArray(attribute.getValue())));
+            extensible.addOpenContentElement(new DSMLAttr(mapSetName(name, objectClass.getObjectClassValue()), asDSMLValueArray(attribute)));
         }
         extensible.addOpenContentElement(new DSMLAttr("objectclass", _objectClassMap.get(objectClass.getObjectClassValue())));
         return extensible;
     }
 
-    private DSMLValue[] asDSMLValueArray(List<Object> values) {
+    private DSMLValue[] asDSMLValueArray(Attribute attribute) {
+        List<Object> values = attribute.getValue();
         DSMLValue[] array = new DSMLValue[values.size()];
         for (int i=0; i<values.size(); i++) {
             Object value = values.get(i);
@@ -318,10 +319,9 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
                 array[i] = new DSMLValue(new String(accessor.getArray()));
                 accessor.clear();
             } else {
-                String string = null;
-                if (value!=null)
-                    string = value.toString();
-                array[i] = new DSMLValue(string);
+                if (value==null)
+                    throw new IllegalArgumentException(_configuration.getMessage(SpmlMessages.NULL_VALUE, attribute.getName()));
+                array[i] = new DSMLValue(value.toString());
             }
         }
         return array;
@@ -725,7 +725,7 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
 	        	}
         	}
             Modification modification = new Modification();
-            modification.addOpenContentElement(new DSMLModification(mapSetName(name, objectClass.getObjectClassValue()), asDSMLValueArray(attribute.getValue()), ModificationMode.REPLACE));
+            modification.addOpenContentElement(new DSMLModification(mapSetName(name, objectClass.getObjectClassValue()), asDSMLValueArray(attribute), ModificationMode.REPLACE));
             modifyRequest.addModification(modification);
         }
     }

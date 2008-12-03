@@ -54,6 +54,7 @@ public interface SpmlMessages {
     public static final String UNSUPPORTED_OBJECTCLASS       = "UNSUPPORTED_OBJECTCLASS";
     public static final String ITERATION_CANCELED            = "ITERATION_CANCELED";
     public static final String ILLEGAL_MODIFICATION          = "ILLEGAL_MODIFICATION";
+    public static final String NULL_VALUE                    = "NULL_VALUE";
     public static final String POSTCONNECT_SCRIPT_ERROR		 = "POSTCONNECT_SCRIPT_ERROR";
     public static final String PRESEND_SCRIPT_ERROR		 	 = "PRESEND_SCRIPT_ERROR";
     public static final String POSTRECEIVE_SCRIPT_ERROR 	 = "POSTRECEIVE_SCRIPT_ERROR";
