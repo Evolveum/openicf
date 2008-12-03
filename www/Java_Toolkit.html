@@ -123,10 +123,12 @@ at the command line.</P>
     <P>By default, all tests are run when you do a build on your Connector. This includes first any unit tests that you have written (white-box testing), and then
     the framework's contract test suite (black-box testing) as well. You do not have to do anything special besides putting the JUnit JAR in the right place (see
     "<A HREF="#Building">Building a Connector</A>", above) to make this happen. However, if you wish to run either of these two classes of tests independently, you certainly can.
-    There are three main test targets in the build:</P><UL>
+    There are three main test targets in the build:</P>
+    <UL>
     <LI><P>"<B>test</B>" (Runs all tests)</P></LI>
     <LI><P>"<B>run-unit-tests</B>" (Runs any user-defined unit tests)</P></LI>
-    <LI><P>"<B>run-contract-tests</B>" (Runs the framework's contract test suite to check that your connector is compliant)</P></LI></UL>
+    <LI><P>"<B>run-contract-tests</B>" (Runs the framework's contract test suite to check that your connector is compliant)</P></LI>
+    </UL>
     <P>To run the contract test suite on your connector, for example, you'd type the following (from within the bundle directory):</P>
     <PRE>~/workspace/FooBundle$ ant run-contract-tests</PRE>
     <P>Likewise, if you wanted to run only your own unit tests, you'd run:</P>
@@ -145,7 +147,7 @@ at the command line.</P>
 	<LI><p><B>${user.home}/.connectors/${project-name}/build.groovy</B> //(optional) private build properties file, also includes contract test properties</p></LI>
 	<LI><p><B>${user.home}/.connectors/${project-name}/${configuration}/build.groovy</B> //(optional) configuration-specific properties file</p></LI>
     </OL>
-	<P>
+    <P>
     Properties defined in subsequent files override those defined in earlier files (the underlying structure for TestHelpers is just a standard Java Properties object). Also, you should notice
     that the latter two files are Groovy config files. These are very similar but have a <a href="http://groovy.codehaus.org/ConfigSlurper" target="blank">different syntax</a> than standard Java properties files. The reason for this is to
     allow for greater flexibility in writing test cases and specifically for the Connectors Contract Tests.
@@ -190,3 +192,4 @@ at the command line.</P>
     <P>The build dependencies are already set up; however, if you intend to use your IDE's JUnit runner, you'll need to set the System property "<B>project.name</B>" to the ant project name as
     defined in your connector's <I>build.xml</I> file. This is so that the TestHelpers class knows where to find any sensitive properties you have defined (see <A HREF="#Tests">Running Tests</A>).</P>
 </DIV>
+</html>

@@ -92,6 +92,7 @@ TestHelpers actually aggregates properties from potentially four different files
 	<li><p><b>${user-home}/.connectors/${assembly-name}/project.xml</b>  //(optional) private build properties file</p></li>
     <li><p><b>${user-home}/.connectors/${assembly-name}/${configuration}/project.xml</b>  //(optional) configuration-specific properties file</p></li>
 </ol>
-<p>Note that in this case all properties files are optional, whereas on the Java side, the second one is required.</p>
+<p><i>${assembly-name}</i> is the name of the calling assembly as defined in the connector's project (.csproj) file. Note that in this case all properties files are optional, whereas on the Java side, the second one is required. 
+For an example project.xml file, take a look at the <a href="https://identityconnectors.dev.java.net/source/browse/identityconnectors/trunk/projects/dotnet/ActiveDirectoryConnectorTests/">ActiveDirectoryConnectorTests</a> project.</p>
 </div>
 </html>
