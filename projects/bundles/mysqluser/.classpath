@@ -7,6 +7,6 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/MYSQL"/>
+	<classpathentry kind="var" path="USER_HOME/.connectors/connector-mysqluser/lib/mysql-connector-java-5.0.8-bin.jar"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>
