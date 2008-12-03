@@ -260,6 +260,10 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         log.ok("Deleted user uid: {0}", uid.getName());
     }
     
+    public Uid update(ObjectClass obj, Uid uid, Set<Attribute> attrs, OperationOptions options) {
+        return update(obj, AttributeUtil.addUid(attrs, uid), options);
+    }
+    
     /**
      * Update the database row w/ the data provided.
      * @param objClass the {@link ObjectClass} type (must be ACCOUNT )
@@ -268,7 +272,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      * 
      * @see UpdateOp#update(ConnectorObject, Set, OperationOptions )
      */
-    public Uid update(final ObjectClass objClass, final Set<Attribute> attrs, final OperationOptions options) {
+    private Uid update(final ObjectClass objClass, final Set<Attribute> attrs, final OperationOptions options) {
         final String SQL_UPDATE = "UPDATE mysql.user SET {0} WHERE user=?";
         final String SQL_SET_USER = "user = ?";
         final String SQL_SET_PASSWORD = "password = password(?)";

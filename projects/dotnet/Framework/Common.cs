@@ -91,7 +91,7 @@ namespace Org.IdentityConnectors.Framework.Common
                 SafeType<APIOperation>.Get<SearchApiOp>();
             temp[SafeType<SPIOperation>.Get<UpdateOp>()]=
                 SafeType<APIOperation>.Get<UpdateApiOp>();
-            temp[SafeType<SPIOperation>.Get<AdvancedUpdateOp>()]=
+            temp[SafeType<SPIOperation>.Get<UpdateAttributeValuesOp>()]=
                 SafeType<APIOperation>.Get<UpdateApiOp>();
             temp[SafeType<SPIOperation>.Get<SchemaOp>()]=
                 SafeType<APIOperation>.Get<SchemaApiOp>();

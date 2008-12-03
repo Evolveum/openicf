@@ -276,7 +276,7 @@ public class MySQLUserConnectorTests {
         
         // do the update
         Set<Attribute> changeSet = CollectionUtil.newSet(coBeforeUpdate.getAttributes());
-        final Uid uidUpdate = facade.update(UpdateApiOp.Type.REPLACE, ObjectClass.ACCOUNT, changeSet, null);
+        final Uid uidUpdate = facade.update(ObjectClass.ACCOUNT, coBeforeUpdate.getUid(), AttributeUtil.filterUid(changeSet), null);
         
         // uids should be the same
         assertEquals(newName, uidUpdate.getUidValue());
@@ -313,7 +313,7 @@ public class MySQLUserConnectorTests {
         // do the update
         Set<Attribute> changeSet = CollectionUtil.newSet(coBeforeUpdate.getAttributes());
 
-        facade.update(UpdateApiOp.Type.REPLACE, oc, changeSet, null);
+        facade.update(oc, coBeforeUpdate.getUid(), AttributeUtil.filterUid(changeSet), null);
     }    
     
     /**
@@ -599,7 +599,7 @@ public class MySQLUserConnectorTests {
         ConnectorObject coUpdate = coBuilder.build();
         
         // do the update
-        final Uid uidUpdate = facade.update(UpdateApiOp.Type.REPLACE, coUpdate.getObjectClass() , coUpdate.getAttributes(), null);
+        final Uid uidUpdate = facade.update(coUpdate.getObjectClass() , coUpdate.getUid(), AttributeUtil.filterUid(coUpdate.getAttributes()), null);
         
         // uids should be the same
         assertEquals(userName, uidUpdate.getUidValue());

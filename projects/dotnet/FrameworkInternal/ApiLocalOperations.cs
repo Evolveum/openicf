@@ -53,6 +53,7 @@ using Org.IdentityConnectors.Framework.Spi;
 using Org.IdentityConnectors.Framework.Spi.Operations;
 using System.Reflection;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
 {    
@@ -1179,11 +1180,6 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
      */
     public class UpdateImpl : ConnectorAPIOperationRunner , UpdateApiOp {
         /**
-         * Static map between API/SPI update types.
-         */
-        private static readonly IDictionary<UpdateApiType, UpdateType> CONV_TYPE = 
-            new Dictionary<UpdateApiType, UpdateType>();
-        /**
          * All the operational attributes that can not be added or deleted.
          */
         static readonly HashSet<String> OPERATIONAL_ATTRIBUTE_NAMES = new HashSet<String>();
@@ -1192,9 +1188,6 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
             "Operational attribute '{0}' can not be added or deleted only replaced.";
         
         static UpdateImpl() {
-            CONV_TYPE[UpdateApiType.ADD]= UpdateType.ADD;
-            CONV_TYPE[UpdateApiType.DELETE]= UpdateType.DELETE;
-            CONV_TYPE[UpdateApiType.REPLACE]= UpdateType.REPLACE;
             OPERATIONAL_ATTRIBUTE_NAMES.Add(Name.NAME);
             CollectionUtil.AddAll(OPERATIONAL_ATTRIBUTE_NAMES,
                                   OperationalAttributes.OPERATIONAL_ATTRIBUTE_NAMES);
@@ -1208,159 +1201,215 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
                 Connector connector) 
                 :base(context,connector){
         }
-        /**
-         * Create a new instance of the handler for the type of update the connector
-         * can support and run it.
-         * 
-         * @see UpdateApiOp#update(UpdateApiOp.Type, ConnectorObject)
-         */
-        public Uid Update(UpdateApiType type, ObjectClass objclass, 
-                          ICollection<ConnectorAttribute> attributes,
-                          OperationOptions options) {
+        
+        public Uid Update(ObjectClass objclass,
+                Uid uid,
+                ICollection<ConnectorAttribute> replaceAttributes,
+                OperationOptions options) {
             // validate all the parameters..
-            ValidateInput(type, objclass, attributes);
-            //convert null into empty
+            ValidateInput(objclass,uid,replaceAttributes,false);
+            //cast null as empty
             if ( options == null ) {
                 options = new OperationOptionsBuilder().Build();
             }
     
-            Uid ret = null;
-            Connector c = GetConnector();
             ObjectNormalizerFacade normalizer =
                 GetNormalizer(objclass);
-            ICollection<ConnectorAttribute> normalizedAttributes =
-                normalizer.NormalizeAttributes(attributes);
-            if (c is AdvancedUpdateOp) {
-                // easy way its an advance update
-                ret = ((AdvancedUpdateOp) c).Update(CONV_TYPE[type], objclass, normalizedAttributes, options);
-            } else if (c is UpdateOp) {
-                // check that this connector supports Search..
-                if (ReflectionUtil.FindInHierarchyOf(typeof(SearchOp<>),c.GetType()) == null) {
-                    string MSG = "Connector must support: " + typeof(SearchOp<>);
-                    throw new ConfigurationException(MSG);
-                }
-                // get the connector object from the resource...
-                Uid uid = ConnectorAttributeUtil.GetUidAttribute(normalizedAttributes);
-                ConnectorObject o = GetConnectorObject(objclass, uid, options);
-                if (o == null) {
-                    throw new UnknownUidException(uid, objclass);
-                }
-                // merge the update data..
-                ICollection<ConnectorAttribute> mergeAttrs = Merge(type, normalizedAttributes, o.GetAttributes());
-                // update the object..
-                ret = ((UpdateOp) c).Update(objclass, mergeAttrs, options);
+            uid = (Uid)normalizer.NormalizeAttribute(uid);
+            replaceAttributes =
+                normalizer.NormalizeAttributes(replaceAttributes);
+            UpdateOp op = (UpdateOp)GetConnector();
+            Uid ret = op.Update(objclass, uid, replaceAttributes, options);
+            return (Uid)normalizer.NormalizeAttribute(ret);
+        }
+        
+        public Uid AddAttributeValues(ObjectClass objclass,
+                Uid uid,
+                ICollection<ConnectorAttribute> valuesToAdd,
+                OperationOptions options) {
+            // validate all the parameters..
+            ValidateInput(objclass,uid,valuesToAdd,true);
+            //cast null as empty
+            if ( options == null ) {
+                options = new OperationOptionsBuilder().Build();
+            }
+            
+            ObjectNormalizerFacade normalizer =
+                GetNormalizer(objclass);
+            uid = (Uid)normalizer.NormalizeAttribute(uid);
+            valuesToAdd =
+                normalizer.NormalizeAttributes(valuesToAdd);
+            UpdateOp op = (UpdateOp)GetConnector();
+            Uid ret;
+            if ( op is UpdateAttributeValuesOp ) {
+                UpdateAttributeValuesOp valueOp =
+                    (UpdateAttributeValuesOp)op;
+                ret = valueOp.AddAttributeValues(objclass, uid, valuesToAdd, options);
+            }
+            else {
+                ICollection<ConnectorAttribute> replaceAttributes =
+                    FetchAndMerge(objclass,uid,valuesToAdd,true,options);
+                ret = op.Update(objclass, uid, replaceAttributes, options);
             }
             return (Uid)normalizer.NormalizeAttribute(ret);
+        }
+        
+        public Uid RemoveAttributeValues(ObjectClass objclass,
+                Uid uid,
+                ICollection<ConnectorAttribute> valuesToRemove,
+                OperationOptions options) {
+            // validate all the parameters..
+            ValidateInput(objclass,uid,valuesToRemove,true);
+            //cast null as empty
+            if ( options == null ) {
+                options = new OperationOptionsBuilder().Build();
+            }
+            
+            ObjectNormalizerFacade normalizer =
+                GetNormalizer(objclass);
+            uid = (Uid)normalizer.NormalizeAttribute(uid);
+            valuesToRemove =
+                normalizer.NormalizeAttributes(valuesToRemove);
+            UpdateOp op = (UpdateOp)GetConnector();
+            Uid ret;
+            if ( op is UpdateAttributeValuesOp ) {
+                UpdateAttributeValuesOp valueOp =
+                    (UpdateAttributeValuesOp)op;
+                ret = valueOp.RemoveAttributeValues(objclass, uid, valuesToRemove, options);
+            }
+            else {
+                ICollection<ConnectorAttribute> replaceAttributes =
+                    FetchAndMerge(objclass,uid,valuesToRemove,false,options);
+                ret = op.Update(objclass, uid, replaceAttributes, options);
+            }
+            return (Uid)normalizer.NormalizeAttribute(ret);
+        }
+        
+        private ICollection<ConnectorAttribute> FetchAndMerge(ObjectClass objclass, Uid uid, 
+                ICollection<ConnectorAttribute> valuesToChange, 
+                bool add,
+                OperationOptions options)
+        {
+            // check that this connector supports Search..
+            if (ReflectionUtil.FindInHierarchyOf(typeof(SearchOp<>),GetConnector().GetType()) != null) {
+                String MSG = "Connector must support search";
+                throw new InvalidOperationException(MSG);
+            }
+            
+            //add attrs to get to operation options, so that the
+            //object we fetch has exactly the set of attributes we require
+            //(there may be ones that are not in the default set)
+            OperationOptionsBuilder builder = new OperationOptionsBuilder(options);
+            ICollection<String> attrNames = new HashSet<String>();
+            foreach (ConnectorAttribute attribute in valuesToChange) {
+                attrNames.Add(attribute.Name);
+            }
+            builder.AttributesToGet=(attrNames.ToArray());
+            options = builder.Build();
+            
+            // get the connector object from the resource...
+            ConnectorObject o = GetConnectorObject(objclass, uid, options);
+            if (o == null) {
+                throw new UnknownUidException(uid, objclass);
+            }
+            // merge the update data..
+            ICollection<ConnectorAttribute> mergeAttrs = Merge(valuesToChange, o.GetAttributes(),add);
+            return mergeAttrs;
         }
     
         /**
          * Merges two connector objects into a single updated object.
          */
-        public ICollection<ConnectorAttribute> Merge(UpdateApiType type, 
-                ICollection<ConnectorAttribute> updateAttrs,
-                ICollection<ConnectorAttribute> baseAttrs) {
+        public ICollection<ConnectorAttribute> Merge(ICollection<ConnectorAttribute> updateAttrs,
+                ICollection<ConnectorAttribute> baseAttrs, bool add) {
             // return the merged attributes
             ICollection<ConnectorAttribute> ret = new HashSet<ConnectorAttribute>();
+            // create map that can be modified to get the subset of changes 
             IDictionary<String, ConnectorAttribute> baseAttrMap = ConnectorAttributeUtil.ToMap(baseAttrs);
             // run through attributes of the current object..
             foreach (ConnectorAttribute updateAttr in updateAttrs) {
-                // ignore uid because its immutable..
-                if (updateAttr is Uid) {
-                    continue;
-                }
                 // get the name of the update attributes
-                string name = updateAttr.Name;
-                ConnectorAttribute baseAttr = CollectionUtil.GetValue(baseAttrMap, name, null);
-                ICollection<object> values;
+                String name = updateAttr.Name;
+                // remove each attribute that is an update attribute..
+                ConnectorAttribute baseAttr = CollectionUtil.GetValue(baseAttrMap,name,null);
+                IList<Object> values;
                 ConnectorAttribute modifiedAttr; 
-                if (UpdateApiType.ADD.Equals(type)) {
-                	if (baseAttr == null) {
-                		modifiedAttr = updateAttr;
-                	} else {
-	                    // create a new list with the base attribute to add to..
-	                    values = CollectionUtil.NewList(baseAttr.Value);
-	                    CollectionUtil.AddAll(values,updateAttr.Value);
-	                    modifiedAttr = ConnectorAttributeBuilder.Build(name, values);
-                	}
-                } else if (UpdateApiType.DELETE.Equals(type)) {
-                	if (baseAttr == null) {
-                		// nothing to actually do the attribute does not exist
-                		continue;
-                	} else {
-	                    // create a list with the base attribute to remove from..
-	                    values = CollectionUtil.NewList(baseAttr.Value);
-	                    foreach (Object val in updateAttr.Value) {
-	                        values.Remove(val);
-	                    }
-	                    // if the values are empty send a null to the connector..
-	                    if (values.Count == 0) {
-	                        modifiedAttr = ConnectorAttributeBuilder.Build(name);
-	                    } else {
-	                        modifiedAttr = ConnectorAttributeBuilder.Build(name, values);
-	                    }
-                	}
-                } else if (UpdateApiType.REPLACE.Equals(type)) {
-                	modifiedAttr = updateAttr;
-                } else {
-                	throw new ArgumentException("Unknown Type: " + type);
-                }
+                if (add) {
+                    if (baseAttr == null) {
+                        modifiedAttr = updateAttr;
+                    } else {
+                        // create a new list with the base attribute to add to..
+                        values = CollectionUtil.NewList(baseAttr.Value);
+                        CollectionUtil.AddAll(values,updateAttr.Value);
+                        modifiedAttr = ConnectorAttributeBuilder.Build(name, values);
+                    }
+                } 
+                else {
+                    if (baseAttr == null) {
+                        // nothing to actually do the attribute do not exist
+                        continue;                    
+                    } else {
+                        // create a list with the base attribute to remove from..
+                        values = CollectionUtil.NewList(baseAttr.Value);
+                        foreach (Object val in updateAttr.Value) {
+                            values.Remove(val);
+                        }
+                        // if the values are empty send a null to the connector..
+                        if (values.Count == 0) {
+                            modifiedAttr = ConnectorAttributeBuilder.Build(name);
+                        } else {
+                            modifiedAttr = ConnectorAttributeBuilder.Build(name, values);
+                        }
+                    }
+                } 
                 ret.Add(modifiedAttr);
             }
-            // add the rest of the base attributes that were not update attrs
-            IDictionary<String, ConnectorAttribute> updateAttrMap = 
-            	ConnectorAttributeUtil.ToMap(updateAttrs);
-            foreach (ConnectorAttribute a in baseAttrs) {
-            	if (!updateAttrMap.ContainsKey(a.Name)) {
-            		ret.Add(a);
-            	}
-            }
-           	// always add the UID..
-           	ret.Add(updateAttrMap[Uid.NAME]);
             return ret;
         }
-
-
-        /// <summary>
-        /// Get the ConnectorObject that is merged to create the change set
-        /// for the SPI simple update.
-        /// </summary>
-        ConnectorObject GetConnectorObject(ObjectClass oclass, Uid uid, OperationOptions options) {
+    
+        /**
+         * Get the {@link ConnectorObject} to modify.
+         */
+        private ConnectorObject GetConnectorObject(ObjectClass oclass, Uid uid, OperationOptions options) {
             // attempt to get the connector object..
-            GetApiOp get = new GetImpl(new SearchImpl((ConnectorOperationalContext)GetOperationalContext(),GetConnector()));
+            GetApiOp get = new GetImpl(new SearchImpl((ConnectorOperationalContext)GetOperationalContext(),
+                    GetConnector()));
             return get.GetObject(oclass, uid, options);
         }
-        /// <summary>
-        /// Validate all the input to determine if request can be handled.
-        /// </summary>
-        public static void ValidateInput(UpdateApiType type, ObjectClass objclass, 
-                          ICollection<ConnectorAttribute> attrs) {
-            Assertions.NullCheck(type, "type");
+    
+        /**
+         * Makes things easier if you can trust the input.
+         */
+        public static void ValidateInput(ObjectClass objclass,
+                Uid uid,
+                ICollection<ConnectorAttribute> attrs, bool isDelta) {
+            Assertions.NullCheck(uid, "uid");
             Assertions.NullCheck(objclass, "objclass");
             Assertions.NullCheck(attrs, "attrs");
-            // check to make sure there's a uid..
-            if (ConnectorAttributeUtil.GetUidAttribute(attrs) == null) {
+            // check to make sure there's not a uid..
+            if (ConnectorAttributeUtil.GetUidAttribute(attrs) != null) {
                 throw new ArgumentException(
-                        "Parameter 'attrs' must contain a 'Uid'!");
+                        "Parameter 'attrs' contains a uid.");
             }
             // check for things only valid during ADD/DELETE
-            if (UpdateApiType.ADD.Equals(type) || UpdateApiType.DELETE.Equals(type)) {
+            if (isDelta) {
                 foreach (ConnectorAttribute attr in attrs) {
                     Assertions.NullCheck(attr, "attr");
                     // make sure that none of the values are null..
                     if (attr.Value == null) {
                         throw new ArgumentException(
-                                "Can not ADD or DELETE 'null' value.");
+                                "Can not add or remove a 'null' value.");
                     }
                     // make sure that if this an delete/add that it doesn't include
-                    // certain attributes because it doesn't make any since..
-                    string name = attr.Name;
+                    // certain attributes because it doesn't make any sense..
+                    String name = attr.Name;
                     if (OPERATIONAL_ATTRIBUTE_NAMES.Contains(name)) {
                         String msg = String.Format(OPERATIONAL_ATTRIBUTE_ERR, name);
                         throw new ArgumentException(msg);
                     }
                 }
             }
-        }
+        }        
     }
     #endregion
     

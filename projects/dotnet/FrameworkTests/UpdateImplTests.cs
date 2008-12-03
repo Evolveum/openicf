@@ -57,20 +57,27 @@ namespace FrameworkTests
     {    
         [Test]
         [ExpectedException(typeof(ArgumentNullException ))]
+        public void ValidateUidArg() {
+            UpdateImpl.ValidateInput(ObjectClass.ACCOUNT, null, new HashSet<ConnectorAttribute>(),true);
+        }
+        [Test]
+        [ExpectedException(typeof(ArgumentNullException ))]
         public void ValidateObjectClassArg() {
-            UpdateImpl.ValidateInput(UpdateApiType.ADD, null, new HashSet<ConnectorAttribute>());
+            UpdateImpl.ValidateInput(null, new Uid("foo"), new HashSet<ConnectorAttribute>(),true);
         }
         
         [Test]
         [ExpectedException(typeof(ArgumentNullException ))]
         public void ValidateAttrsArg() {
-            UpdateImpl.ValidateInput(UpdateApiType.ADD, ObjectClass.ACCOUNT, null);
+            UpdateImpl.ValidateInput(ObjectClass.ACCOUNT, new Uid("foo"),null,true);
         }
         
         [Test]
         [ExpectedException(typeof(ArgumentException ))]
-        public void ValidateNoUidAttribute() {
-            UpdateImpl.ValidateInput(UpdateApiType.ADD, ObjectClass.ACCOUNT, new HashSet<ConnectorAttribute>());
+        public void ValidateUidAttribute() {
+            HashSet<ConnectorAttribute> attrs=new HashSet<ConnectorAttribute>();
+            attrs.Add(new Uid("foo"));
+            UpdateImpl.ValidateInput(ObjectClass.ACCOUNT, new Uid("foo"),attrs,true);
         }
         
         [Test]
@@ -78,35 +85,17 @@ namespace FrameworkTests
         public void ValidateAddWithNullAttribute() {
             ICollection<ConnectorAttribute> attrs = new HashSet<ConnectorAttribute>();
             attrs.Add(ConnectorAttributeBuilder.Build("something"));
-            UpdateImpl.ValidateInput(UpdateApiType.ADD, ObjectClass.ACCOUNT, attrs);        
+            UpdateImpl.ValidateInput(ObjectClass.ACCOUNT, new Uid("foo"), attrs, true);        
         }
-    
-        [Test]
-        [ExpectedException(typeof(ArgumentException ))]
-        public void ValidateDeleteWithNullAttribute() {
-            ICollection<ConnectorAttribute> attrs = new HashSet<ConnectorAttribute>();
-            attrs.Add(ConnectorAttributeBuilder.Build("something"));
-            UpdateImpl.ValidateInput(UpdateApiType.DELETE, ObjectClass.ACCOUNT, attrs);        
-        }
-    
+        
         [Test]
         [ExpectedException(typeof(ArgumentException))]
         public void ValidateAttemptToAddName() {
             ICollection<ConnectorAttribute> attrs = new HashSet<ConnectorAttribute>();
             attrs.Add(new Name("fadf"));
-            attrs.Add(new Uid(1 + ""));
-            UpdateImpl.ValidateInput(UpdateApiType.ADD, ObjectClass.ACCOUNT, attrs);                
+            UpdateImpl.ValidateInput(ObjectClass.ACCOUNT, new Uid("foo"), attrs, true);
         }
     
-        [Test]
-        [ExpectedException(typeof(ArgumentException))]
-        public void ValidateAttemptToDeleteName() {
-            ICollection<ConnectorAttribute> attrs = new HashSet<ConnectorAttribute>();
-            attrs.Add(new Name("fadf"));
-            attrs.Add(new Uid(1 + ""));
-            UpdateImpl.ValidateInput(UpdateApiType.DELETE, ObjectClass.ACCOUNT, attrs);                
-        }
-
         [Test]
         public void ValidateAttemptToAddDeleteOperationalAttribute() {
             // list of all the operational attributes..
@@ -119,9 +108,8 @@ namespace FrameworkTests
             foreach (ConnectorAttribute attr in list) {
                 ICollection<ConnectorAttribute> attrs = new HashSet<ConnectorAttribute>();
                 attrs.Add(attr);
-                attrs.Add(new Uid(1 + ""));
                 try {
-                    UpdateImpl.ValidateInput(UpdateApiType.DELETE, ObjectClass.ACCOUNT, attrs);
+                    UpdateImpl.ValidateInput(ObjectClass.ACCOUNT, new Uid("1"), attrs, true);
                     Assert.Fail("Failed: " + attr.Name);
                 } catch (ArgumentException) {
                     // this is a good thing..
@@ -135,24 +123,6 @@ namespace FrameworkTests
                 rv.AppendChar(c);
             }
             return rv;
-        }
-
-        [Test]
-        [ExpectedException(typeof(ArgumentException))]
-        public void ValidateAttemptToAddNull() {
-            ICollection<ConnectorAttribute> attrs = new HashSet<ConnectorAttribute>();
-            attrs.Add(ConnectorAttributeBuilder.Build("something w/ null"));
-            attrs.Add(new Uid(1 + ""));
-            UpdateImpl.ValidateInput(UpdateApiType.ADD, ObjectClass.ACCOUNT, attrs);        
-        }
-        
-        [Test]
-        [ExpectedException(typeof(ArgumentException))]
-        public void ValidateAttemptToDeleteNull() {
-            ICollection<ConnectorAttribute> attrs = new HashSet<ConnectorAttribute>();
-            attrs.Add(ConnectorAttributeBuilder.Build("something w/ null"));
-            attrs.Add(new Uid(1 + ""));
-            UpdateImpl.ValidateInput(UpdateApiType.DELETE, ObjectClass.ACCOUNT, attrs);        
         }
     
         /// <summary>
@@ -174,15 +144,14 @@ namespace FrameworkTests
         public void MergeAddAttribute() {
             UpdateImpl up = new UpdateImpl(null, null);
             ICollection<ConnectorAttribute> actual;
-            ConnectorAttribute uid = new Uid(1 + "");
-            ICollection<ConnectorAttribute> baseAttrs = CollectionUtil.NewSet(uid);
-            ICollection<ConnectorAttribute> expected = CollectionUtil.NewSet(uid);
-            ICollection<ConnectorAttribute> changeset = CollectionUtil.NewSet(uid);
+            ICollection<ConnectorAttribute> baseAttrs = CollectionUtil.NewSet<ConnectorAttribute>();
+            ICollection<ConnectorAttribute> expected = CollectionUtil.NewSet<ConnectorAttribute>();
+            ICollection<ConnectorAttribute> changeset = CollectionUtil.NewSet<ConnectorAttribute>();
             // attempt to add a value to an attribute..
             ConnectorAttribute cattr = ConnectorAttributeBuilder.Build("abc", 2);
             changeset.Add(cattr);
             expected.Add(ConnectorAttributeBuilder.Build("abc", 2));        
-            actual = up.Merge(UpdateApiType.ADD, changeset, baseAttrs);
+            actual = up.Merge(changeset, baseAttrs,true);
             Assert.IsTrue(AreEqual(expected, actual));
         }
     
@@ -190,17 +159,16 @@ namespace FrameworkTests
         public void MergeAddToExistingAttribute() {
             UpdateImpl up = new UpdateImpl(null, null);
             ICollection<ConnectorAttribute> actual;
-            ConnectorAttribute uid = new Uid(1 + "");
-            ICollection<ConnectorAttribute> baseAttrs = CollectionUtil.NewSet(uid);
-            ICollection<ConnectorAttribute> expected = CollectionUtil.NewSet(uid);
-            ICollection<ConnectorAttribute> changeset = CollectionUtil.NewSet(uid);
+            ICollection<ConnectorAttribute> baseAttrs = CollectionUtil.NewSet<ConnectorAttribute>();
+            ICollection<ConnectorAttribute> expected = CollectionUtil.NewSet<ConnectorAttribute>();
+            ICollection<ConnectorAttribute> changeset = CollectionUtil.NewSet<ConnectorAttribute>();
             // attempt to add a value to an attribute..
             ConnectorAttribute battr = ConnectorAttributeBuilder.Build("abc", 1);
             ConnectorAttribute cattr = ConnectorAttributeBuilder.Build("abc", 2);
             baseAttrs.Add(battr);
             changeset.Add(cattr);
             expected.Add(ConnectorAttributeBuilder.Build("abc", 1, 2));        
-            actual = up.Merge(UpdateApiType.ADD, changeset, baseAttrs);
+            actual = up.Merge(changeset, baseAttrs, true);
             Assert.IsTrue(AreEqual(expected, actual));
         }
         
@@ -208,14 +176,13 @@ namespace FrameworkTests
         public void MergeDeleteNonExistentAttribute() {
             UpdateImpl up = new UpdateImpl(null, null);
             ICollection<ConnectorAttribute> actual;
-            ConnectorAttribute uid = new Uid(1 + "");
-            ICollection<ConnectorAttribute> baseAttrs = CollectionUtil.NewSet(uid);
-            ICollection<ConnectorAttribute> expected = CollectionUtil.NewSet(uid);
-            ICollection<ConnectorAttribute> changeset = CollectionUtil.NewSet(uid);
+            ICollection<ConnectorAttribute> baseAttrs = CollectionUtil.NewSet<ConnectorAttribute>();
+            ICollection<ConnectorAttribute> expected = CollectionUtil.NewSet<ConnectorAttribute>();
+            ICollection<ConnectorAttribute> changeset = CollectionUtil.NewSet<ConnectorAttribute>();
             // attempt to add a value to an attribute..
             ConnectorAttribute cattr = ConnectorAttributeBuilder.Build("abc", 2);
             changeset.Add(cattr);
-            actual = up.Merge(UpdateApiType.DELETE, changeset, baseAttrs);
+            actual = up.Merge(changeset, baseAttrs, false);
             Assert.IsTrue(AreEqual(expected, actual));
         }
     
@@ -223,17 +190,16 @@ namespace FrameworkTests
         public void MergeDeleteToExistingAttribute() {
             UpdateImpl up = new UpdateImpl(null, null);
             ICollection<ConnectorAttribute> actual;
-            ConnectorAttribute uid = new Uid(1 + "");
-            ICollection<ConnectorAttribute> baseAttrs = CollectionUtil.NewSet(uid);
-            ICollection<ConnectorAttribute> expected = CollectionUtil.NewSet(uid);
-            ICollection<ConnectorAttribute> changeset = CollectionUtil.NewSet(uid);
+            ICollection<ConnectorAttribute> baseAttrs = CollectionUtil.NewSet<ConnectorAttribute>();
+            ICollection<ConnectorAttribute> expected = CollectionUtil.NewSet<ConnectorAttribute>();
+            ICollection<ConnectorAttribute> changeset = CollectionUtil.NewSet<ConnectorAttribute>();
             // attempt to add a value to an attribute..
             ConnectorAttribute battr = ConnectorAttributeBuilder.Build("abc", 1, 2);
             ConnectorAttribute cattr = ConnectorAttributeBuilder.Build("abc", 2);
             baseAttrs.Add(battr);
             changeset.Add(cattr);
             expected.Add(ConnectorAttributeBuilder.Build("abc", 1));
-            actual = up.Merge(UpdateApiType.DELETE, changeset, baseAttrs);
+            actual = up.Merge(changeset, baseAttrs, false);
             Assert.IsTrue(AreEqual(expected, actual));
         }
     
@@ -241,88 +207,20 @@ namespace FrameworkTests
         public void MergeDeleteToExistingAttributeCompletely() {
             UpdateImpl up = new UpdateImpl(null, null);
             ICollection<ConnectorAttribute> actual;
-            ConnectorAttribute uid = new Uid(1 + "");
-            ICollection<ConnectorAttribute> baseAttrs = CollectionUtil.NewSet(uid);
-            ICollection<ConnectorAttribute> expected = CollectionUtil.NewSet(uid);
-            ICollection<ConnectorAttribute> changeset = CollectionUtil.NewSet(uid);
+            ICollection<ConnectorAttribute> baseAttrs = CollectionUtil.NewSet<ConnectorAttribute>();
+            ICollection<ConnectorAttribute> expected = CollectionUtil.NewSet<ConnectorAttribute>();
+            ICollection<ConnectorAttribute> changeset = CollectionUtil.NewSet<ConnectorAttribute>();
             // attempt to add a value to an attribute..
             ConnectorAttribute battr = ConnectorAttributeBuilder.Build("abc", 1, 2);
             ConnectorAttribute cattr = ConnectorAttributeBuilder.Build("abc", 1, 2);
             baseAttrs.Add(battr);
             changeset.Add(cattr);
             expected.Add(ConnectorAttributeBuilder.Build("abc"));
-            actual = up.Merge(UpdateApiType.DELETE, changeset, baseAttrs);
+            actual = up.Merge(changeset, baseAttrs, false);
             Assert.IsTrue(AreEqual(expected, actual));
         }
-    
-        [Test]
-        public void MergeReplaceExistingAttribute() {
-            UpdateImpl up = new UpdateImpl(null, null);
-            ICollection<ConnectorAttribute> actual;
-            ConnectorAttribute uid = new Uid(1 + "");
-            ICollection<ConnectorAttribute> baseAttrs = CollectionUtil.NewSet(uid);
-            ICollection<ConnectorAttribute> expected = CollectionUtil.NewSet(uid);
-            ICollection<ConnectorAttribute> changeset = CollectionUtil.NewSet(uid);
-            // attempt to add a value to an attribute..
-            ConnectorAttribute battr = ConnectorAttributeBuilder.Build("abc", 1, 2);
-            ConnectorAttribute cattr = ConnectorAttributeBuilder.Build("abc", 2);
-            baseAttrs.Add(battr);
-            changeset.Add(cattr);
-            expected.Add(ConnectorAttributeBuilder.Build("abc", 2));
-            actual = up.Merge(UpdateApiType.REPLACE, changeset, baseAttrs);
-            Assert.IsTrue(AreEqual(expected, actual));
-        }
+            
         
-        [Test]
-        public void MergeReplaceNonExistentAttribute() {
-            UpdateImpl up = new UpdateImpl(null, null);
-            ICollection<ConnectorAttribute> actual;
-            ConnectorAttribute uid = new Uid(1 + "");
-            ICollection<ConnectorAttribute> baseAttrs = CollectionUtil.NewSet(uid);
-            ICollection<ConnectorAttribute> expected = CollectionUtil.NewSet(uid);
-            ICollection<ConnectorAttribute> changeset = CollectionUtil.NewSet(uid);
-            // attempt to add a value to an attribute..
-            ConnectorAttribute cattr = ConnectorAttributeBuilder.Build("abc", 2);
-            changeset.Add(cattr);
-            expected.Add(ConnectorAttributeBuilder.Build("abc", 2));
-            actual = up.Merge(UpdateApiType.REPLACE, changeset, baseAttrs);
-            Assert.IsTrue(AreEqual(expected, actual));
-        }
         
-        [Test]
-        public void MergeReplaceAttributeRemoval() {
-            UpdateImpl up = new UpdateImpl(null, null);
-            ICollection<ConnectorAttribute> actual;
-            ConnectorAttribute uid = new Uid(1 + "");
-            ICollection<ConnectorAttribute> baseAttrs = CollectionUtil.NewSet(uid);
-            ICollection<ConnectorAttribute> expected = CollectionUtil.NewSet(uid);
-            ICollection<ConnectorAttribute> changeset = CollectionUtil.NewSet(uid);
-            // attempt to add a value to an attribute..
-            ConnectorAttribute battr = ConnectorAttributeBuilder.Build("abc", 1, 2);
-            ConnectorAttribute cattr = ConnectorAttributeBuilder.Build("abc");
-            baseAttrs.Add(battr);
-            changeset.Add(cattr);
-            expected.Add(ConnectorAttributeBuilder.Build("abc"));
-            actual = up.Merge(UpdateApiType.REPLACE, changeset, baseAttrs);
-            Assert.IsTrue(AreEqual(expected, actual));
-        }
-        
-        [Test]
-        public void MergeReplaceSameAttribute() {
-            UpdateImpl up = new UpdateImpl(null, null);
-            ICollection<ConnectorAttribute> actual;
-            ConnectorAttribute uid = new Uid(1 + "");
-            ICollection<ConnectorAttribute> baseAttrs = CollectionUtil.NewSet(uid);
-            ICollection<ConnectorAttribute> expected = CollectionUtil.NewSet(uid);
-            ICollection<ConnectorAttribute> changeset = CollectionUtil.NewSet(uid);
-            // attempt to add a value to an attribute..
-            ConnectorAttribute battr = ConnectorAttributeBuilder.Build("abc", 1);
-            ConnectorAttribute cattr = ConnectorAttributeBuilder.Build("abc", 1);
-            baseAttrs.Add(battr);
-            changeset.Add(cattr);
-            expected.Add(cattr);
-            actual = up.Merge(UpdateApiType.REPLACE, changeset, baseAttrs);
-            Assert.IsTrue(AreEqual(expected, actual));
-        }
     }
 }

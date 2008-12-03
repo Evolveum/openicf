@@ -845,16 +845,7 @@ namespace FrameworkTests
             }
                 
         }
-                
-        [Test]
-        public void TestUpdateApiOpType() {
-            UpdateApiType v1 = UpdateApiType.ADD;
-            UpdateApiType v2 = (UpdateApiType)CloneObject(v1);
-            
-            Assert.AreEqual(v1, v2);
-        }
-        
-        
+                               
         [Test]
         public void TestHelloRequest() {
             HelloRequest v1 = new HelloRequest();

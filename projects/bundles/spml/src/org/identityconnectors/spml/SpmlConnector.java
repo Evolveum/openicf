@@ -565,11 +565,15 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
         pso.setTargetID(getTargetForObjectClass(objectClass));
         return pso;
     }
+    
+    public Uid update(ObjectClass obj, Uid uid, Set<Attribute> attrs, OperationOptions options) {
+        return update(obj, AttributeUtil.addUid(attrs, uid), options);
+    }
 
     /**
      * {@inheritDoc}
      */
-    public Uid update(ObjectClass objectClass, Set<Attribute> attributes, OperationOptions options) {
+    Uid update(ObjectClass objectClass, Set<Attribute> attributes, OperationOptions options) {
         try {
             Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attributes));
             Uid uid = (Uid)attrMap.remove(Uid.NAME);

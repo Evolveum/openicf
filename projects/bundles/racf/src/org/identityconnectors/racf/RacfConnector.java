@@ -433,11 +433,15 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             return _clUtil.getGroupsViaCommandLine(query);
         }
     }
+    
+    public Uid update(ObjectClass obj, Uid uid, Set<Attribute> attrs, OperationOptions options) {
+        return update(obj, AttributeUtil.addUid(attrs, uid), options);
+    }
 
     /**
      * {@inheritDoc}
      */
-    public Uid update(ObjectClass objectClass, Set<Attribute> attrs, OperationOptions options) {
+    Uid update(ObjectClass objectClass, Set<Attribute> attrs, OperationOptions options) {
         Set<Attribute> ldapAttrs = new HashSet<Attribute>();
         Set<Attribute> commandLineAttrs = new HashSet<Attribute>();
         splitUpAttributes(attrs, ldapAttrs, commandLineAttrs);

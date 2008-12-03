@@ -42,6 +42,7 @@ package org.identityconnectors.dummy;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+
 import org.identityconnectors.framework.common.FrameworkUtil;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.*;
@@ -142,7 +143,12 @@ public class DummyConnector
 
     }
 
-    public Uid update(ObjectClass objclass, Set<Attribute> attrs, OperationOptions options) {
+    
+    public Uid update(ObjectClass obj, Uid uid, Set<Attribute> attrs, OperationOptions options) {
+        return update(obj, AttributeUtil.addUid(attrs, uid), options);
+    }
+    
+    private Uid update(ObjectClass objclass, Set<Attribute> attrs, OperationOptions options) {
         Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
         Uid uid = (Uid)attrMap.remove(Uid.NAME);
         if (uid == null)

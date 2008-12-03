@@ -22,7 +22,7 @@ import org.identityconnectors.framework.spi.operations.*;
 @ConnectorClass(
         displayNameKey = "db2.connector",
         configurationClass = DB2Configuration.class)
-public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<FilterWhereBuilder>,DeleteOp,UpdateOp,TestOp,PoolableConnector,AdvancedUpdateOp,AttributeNormalizer {
+public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<FilterWhereBuilder>,DeleteOp,UpdateAttributeValuesOp,TestOp,PoolableConnector,AttributeNormalizer {
 	
 	private final static Log log = Log.getLog(DB2Connector.class);
 	private Connection adminConn;
@@ -204,7 +204,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
         checkUserNotExist(user.getNameValue());
         checkDB2Validity(user.getNameValue(),password);
         try{
-        	updateAuthority(user.getNameValue(),attrs,Type.ADD);
+        	updateAuthority(user.getNameValue(),attrs,UpdateType.ADD);
         	adminConn.commit();
         }
         catch(SQLException e){
@@ -252,7 +252,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
      *  occur in a transaction.  Assumes connection is already open.
 	 * @param password 
      */
-    private void updateAuthority(String user,Set<Attribute> attrs,AdvancedUpdateOp.Type type)   {
+    private void updateAuthority(String user,Set<Attribute> attrs,UpdateType type)   {
         checkAdminConnection();
         Attribute wsAttr = AttributeUtil.find(USER_AUTH_GRANTS, attrs);
         String delimitedGrants = wsAttr != null ? AttributeUtil.getStringValue(wsAttr) : null;
@@ -423,16 +423,31 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	}
 	
 
-	public Uid update(ObjectClass objclass, Set<Attribute> attrs, OperationOptions options) {
-		return update(Type.REPLACE,objclass,attrs,options);
-	}
 
 	public void test() {
 		cfg.validate();
 		DB2Specifics.testConnection(adminConn);
 	}
 
-	public Uid update(Type type, ObjectClass objclass, Set<Attribute> attrs,OperationOptions options) {
+    public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
+        return update(UpdateType.REPLACE,objclass,AttributeUtil.addUid(attrs,uid),options);
+    }
+    
+    public Uid addAttributeValues(ObjectClass objclass,
+            Uid uid,
+            Set<Attribute> valuesToAdd,
+            OperationOptions options) {
+        return update(UpdateType.ADD,objclass,AttributeUtil.addUid(valuesToAdd, uid),options);
+    }
+
+    public Uid removeAttributeValues(ObjectClass objclass,
+            Uid uid,
+            Set<Attribute> valuesToRemove,
+            OperationOptions options) {
+        return update(UpdateType.DELETE,objclass,AttributeUtil.addUid(valuesToRemove, uid),options);
+    }
+	
+	private Uid update(UpdateType type, ObjectClass objclass, Set<Attribute> attrs,OperationOptions options) {
         if ( objclass == null || !objclass.equals(ObjectClass.ACCOUNT)) {
             throw new IllegalArgumentException(
                     "Update operation requires an 'ObjectClass' attribute of type 'Account'.");

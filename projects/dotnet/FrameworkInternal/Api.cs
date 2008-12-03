@@ -565,9 +565,33 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
         /**
          * {@inheritDoc}
          */
-        public Uid Update(UpdateApiType type, ObjectClass objclass, ICollection<ConnectorAttribute> attrs, OperationOptions options) {
+        public Uid Update(ObjectClass objclass, Uid uid, ICollection<ConnectorAttribute> attrs, OperationOptions options) {
             return ((UpdateApiOp) this.GetOperationCheckSupported(SafeType<APIOperation>.Get<UpdateApiOp>()))
-                    .Update(type, objclass, attrs, options);
+                    .Update(objclass, uid, attrs, options);
+        }
+        
+        /**
+         * {@inheritDoc}
+         */
+        public Uid AddAttributeValues(
+                ObjectClass objclass,
+                Uid uid,
+                ICollection<ConnectorAttribute> attrs,
+                OperationOptions options) {
+            return ((UpdateApiOp) this.GetOperationCheckSupported(SafeType<APIOperation>.Get<UpdateApiOp>()))
+                .AddAttributeValues(objclass, uid, attrs, options);
+        }
+        
+        /**
+         * {@inheritDoc}
+         */
+        public Uid RemoveAttributeValues(
+                ObjectClass objclass,
+                Uid uid,
+                ICollection<ConnectorAttribute> attrs,
+                OperationOptions options) {
+            return ((UpdateApiOp) this.GetOperationCheckSupported(SafeType<APIOperation>.Get<UpdateApiOp>()))
+                .RemoveAttributeValues(objclass, uid, attrs, options);
         }
         
         /**

@@ -254,6 +254,36 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             }
             return ret;
         }
+        
+        /**
+         * Returns a mutable copy of the original set with the uid attribute removed.
+         * @param attrs The original set. Must not be null.
+         * @return A mutable copy of the original set with the uid attribute removed.
+         */
+        public static ICollection<ConnectorAttribute> FilterUid(ICollection<ConnectorAttribute> attrs) {
+            Assertions.NullCheck(attrs, "attrs");
+            HashSet<ConnectorAttribute> ret = new HashSet<ConnectorAttribute>();
+            foreach (ConnectorAttribute attr in attrs) {
+                if (!(attr is Uid)) {
+                    ret.Add(attr);
+                }
+            }
+            return ret;        
+        }
+        
+        /**
+         * Returns a mutable copy of the original set with the uid attribute added.
+         * @param attrs The original set. Must not be null.
+         * @param uid The uid. Must not be null.
+         * @return A mutable copy of the original set with the uid attribute added.
+         */
+        public static ICollection<ConnectorAttribute> AddUid(ICollection<ConnectorAttribute> attrs, Uid uid) {
+            Assertions.NullCheck(attrs, "attrs");
+            Assertions.NullCheck(uid, "uid");
+            HashSet<ConnectorAttribute> ret = new HashSet<ConnectorAttribute>(attrs);
+            ret.Add(uid);
+            return ret;
+        }
     
         /**
          * Determines if this attribute is a special attribute.
@@ -2131,14 +2161,26 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
      * Builder for {@link OperationOptions}.
      */
     public sealed class OperationOptionsBuilder {
-        private readonly IDictionary<String,Object> _options = new
-        Dictionary<String, Object>();
+        private readonly IDictionary<String,Object> _options; 
     
         /**
          * Create a builder with an empty set of options.
          */
         public OperationOptionsBuilder() {
-            
+            _options = new Dictionary<String, Object>();            
+        }
+        
+        /**
+         * Create a builder from an existing set of options.
+         * @param options The existing set of options. Must not be null.
+         */
+        public OperationOptionsBuilder(OperationOptions options) {
+            Assertions.NullCheck(options, "options");
+            // clone options to do a deep copy in case anything
+            // is an array
+            IDictionary<Object, Object> operationOptionsClone = (IDictionary<Object, Object>) SerializerUtil
+                    .CloneObject(options.Options);
+            _options = CollectionUtil.NewDictionary<object,object,string,object>(operationOptionsClone);
         }
     
         /**

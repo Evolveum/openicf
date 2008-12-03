@@ -46,54 +46,7 @@ using Org.IdentityConnectors.Framework.Common.Objects.Filters;
 
 namespace Org.IdentityConnectors.Framework.Spi.Operations
 {
-    /**
-     * Used as a parameter to specify the type of update to perform.
-     */
-    public enum UpdateType {
-        /**
-         * Replace each attribute value with the one provided. If the value is
-         * <code>null</code> then remove the attribute on set it to
-         * <code>null</code> as applicable.
-         */
-        REPLACE,
-        /**
-         * Adds the values provided to the existing attribute values on the
-         * native target.
-         */
-        ADD,
-        /**
-         * Remove the attribute values from the existing target values.
-         */
-        DELETE
-    }
 
-    /**
-     * The implementation of this method is expected to handle the following types
-     * of update.
-     * 
-     * @author Will Droste
-     * @version $Revision $
-     * @since 1.0
-     */
-    public interface AdvancedUpdateOp : SPIOperation {
-    
-    
-        /**
-         * The {@link Connector} developer is responsible for updating the object
-         * provided based on the type provided. If the operation can not be
-         * accomplished with the information provided throw a type of
-         * {@link RuntimeException} that best describes the problem.
-         * 
-         * @param type
-         *            determines the type of update to expect.
-         * @param obj
-         *            information to find the object and the attributes to perform
-         *            the type of update against.
-         * @return the {@link Uid} of the updated object in case the update changes
-         *         the formation of the unique identifier.
-         */
-        Uid Update(UpdateType type, ObjectClass objclass, ICollection<ConnectorAttribute> attrs, OperationOptions options);
-    }
 
     /**
      * Authenticate an object based on their unique identifier and password.
@@ -319,20 +272,140 @@ namespace Org.IdentityConnectors.Framework.Spi.Operations
     }
     
     /**
-     * The developer of a Connector should implement this interface 
-     * if the Connector will allow an authorized caller to update
-     * (i.e., modify or replace) objects on the target resource.
+     * The developer of a Connector should implement either this interface or the
+     * {@link UpdateAttributeValuesOp} interface if the Connector will allow an authorized
+     * caller to update (i.e., modify or replace) objects on the target resource.
+     * <p>
+     * This update method is simpler to implement than {link UpdateAttributeValuesOp},
+     * which must handle any of several different types of update that the caller
+     * may specify. However a true implementation of {link UpdateAttributeValuesOp}
+     * offers better performance and atomicity semantics.
+     * 
+     * @author Will Droste
+     * @version $Revision $
+     * @since 1.0
      */
     public interface UpdateOp : SPIOperation {
-        /// <summary>
-        /// Update a particular object based on the ObjectClass and change set provided.
-        /// </summary>
-        /// <param name="objectclass">Type of object to change.</param>
-        /// <param name="changeSet">Deltas for the object which include the Uid so the 
-        /// object can be found.</param>
-        /// <returns>a new Uid if the deltra prompt a change the Uid otherwise the orginal
-        /// one passed in.</returns>
-        Uid Update(ObjectClass objectclass, ICollection<ConnectorAttribute> attrs, OperationOptions options);
+        /**
+         * Update the object specified by the {@link ObjectClass} and {@link Uid}, 
+         * replacing the current values of each attribute with the values
+         * provided.
+         * <p>
+         * For each input attribute, replace
+         * all of the current values of that attribute in the target object with
+         * the values of that attribute.
+         * <p>
+         * If the target object does not currently contain an attribute that the
+         * input set contains, then add this
+         * attribute (along with the provided values) to the target object.
+         * <p>
+         * If the value of an attribute in the input set is
+         * {@code null}, then do one of the following, depending on
+         * which is most appropriate for the target:
+         * <ul>
+         * <li>If possible, <em>remove</em> that attribute from the target
+         * object entirely.</li>
+         * <li>Otherwise, <em>replace all of the current values</em> of that
+         * attribute in the target object with a single value of
+         * {@code null}.</li>
+         * </ul>
+         * @param objclass
+         *            the type of object to modify. Will never be null.
+         * @param uid
+         *            the uid of the object to modify. Will never be null.
+         * @param replaceAttributes
+         *            set of new {@link Attribute}. the values in this set
+         *            represent the new, merged values to be applied to the object. 
+         *            This set may also include {@link OperationalAttributes operational attributes}. 
+         *            Will never be null.
+         * @param options
+         *            additional options that impact the way this operation is run.
+         *            Will never be null.
+         * @return the {@link Uid} of the updated object in case the update changes
+         *         the formation of the unique identifier.
+         */
+        Uid Update(ObjectClass objclass,
+                Uid uid,
+                ICollection<ConnectorAttribute> replaceAttributes,
+                OperationOptions options);
+    }
+    
+    /**
+     * More advanced implementation of {@link UpdateOp} to be implemented by
+     * connectors that wish to offer better performance and atomicity semantics
+     * for the methods {@link UpdateApiOp#addAttributeValues(ObjectClass, Uid, Set, OperationOptions)}
+     * and {@link UpdateApiOp#removeAttributeValues(ObjectClass, Uid, Set, OperationOptions)}.
+     */
+    public interface UpdateAttributeValuesOp : UpdateOp {
+        
+        /**
+         * Update the object specified by the {@link ObjectClass} and {@link Uid}, 
+         * adding to the current values of each attribute the values provided.
+         * <p>
+         * For each attribute that the input set contains, add to
+         * the current values of that attribute in the target object all of the
+         * values of that attribute in the input set.
+         * <p>
+         * NOTE that this does not specify how to handle duplicate values. 
+         * The general assumption for an attribute of a {@code ConnectorObject} 
+         * is that the values for an attribute may contain duplicates. 
+         * Therefore, in general simply <em>append</em> the provided values 
+         * to the current value for each attribute.
+         * <p>
+         * @param objclass
+         *            the type of object to modify. Will never be null.
+         * @param uid
+         *            the uid of the object to modify. Will never be null.
+         * @param valuesToAdd
+         *            set of {@link Attribute} deltas. The values for the attributes
+         *            in this set represent the values to add to attributes in the object.
+         *            merged. This set will never include {@link OperationalAttributes operational attributes}. 
+         *            Will never be null.
+         * @param options
+         *            additional options that impact the way this operation is run.
+         *            Will never be null.
+         * @return the {@link Uid} of the updated object in case the update changes
+         *         the formation of the unique identifier.
+         */
+        Uid AddAttributeValues(ObjectClass objclass,
+                Uid uid,
+                ICollection<ConnectorAttribute> valuesToAdd,
+                OperationOptions options);
+        
+        /**
+         * Update the object specified by the {@link ObjectClass} and {@link Uid}, 
+         * removing from the current values of each attribute the values provided.
+         * <p>
+         * For each attribute that the input set contains, 
+         * remove from the current values of that attribute in the target object 
+         * any value that matches one of the values of the attribute from the input set.
+         * <p>
+         * NOTE that this does not specify how to handle unmatched values. 
+         * The general assumption for an attribute of a {@code ConnectorObject}
+         * is that the values for an attribute are merely <i>representational state</i>.
+         * Therefore, the implementer should simply ignore any provided value
+         * that does not match a current value of that attribute in the target
+         * object. Deleting an unmatched value should always succeed.
+         * @param objclass
+         *            the type of object to modify. Will never be null.
+         * @param uid
+         *            the uid of the object to modify. Will never be null.
+         * @param valuesToRemove
+         *            set of {@link Attribute} deltas. The values for the attributes
+         *            in this set represent the values to remove from attributes in the object.
+         *            merged. This set will never include {@link OperationalAttributes operational attributes}. 
+         *            Will never be null.
+         * @param options
+         *            additional options that impact the way this operation is run.
+         *            Will never be null..
+         * @return the {@link Uid} of the updated object in case the update changes
+         *         the formation of the unique identifier.
+         */
+        Uid RemoveAttributeValues(ObjectClass objclass,
+                Uid uid,
+                ICollection<ConnectorAttribute> valuesToRemove,
+                OperationOptions options);
+    
     }
 
     public interface TestOp : SPIOperation {

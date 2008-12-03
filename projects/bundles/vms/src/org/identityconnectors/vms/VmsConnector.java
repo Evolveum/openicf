@@ -806,11 +806,14 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
         }
         return false;
     }
+    public Uid update(ObjectClass obj, Uid uid, Set<Attribute> attrs, OperationOptions options) {
+        return update(obj, AttributeUtil.addUid(attrs, uid), options);
+    }
 
     /**
      * {@inheritDoc}
      */
-    public Uid update(ObjectClass objectClass, Set<Attribute> attributes, OperationOptions options) {
+    Uid update(ObjectClass objectClass, Set<Attribute> attributes, OperationOptions options) {
         if (!objectClass.equals(ObjectClass.ACCOUNT))
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
         Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attributes));

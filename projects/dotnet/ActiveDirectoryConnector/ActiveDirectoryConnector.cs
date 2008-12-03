@@ -57,6 +57,13 @@ using Org.IdentityConnectors.Common.Script;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
+    public enum UpdateType {
+        ADD,
+        DELETE,
+        REPLACE
+    }
+    
+    
     /// <summary>
     /// The Active Directory Connector
     /// </summary>
@@ -65,7 +72,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                       MessageCatalogPath = "Org.IdentityConnectors.ActiveDirectory.Messages"
                       )]    
     public class ActiveDirectoryConnector : CreateOp, Connector, SchemaOp, DeleteOp,
-        SearchOp<String>, TestOp, AdvancedUpdateOp, ScriptOnResourceOp, SyncOp, 
+        SearchOp<String>, TestOp, UpdateAttributeValuesOp, ScriptOnResourceOp, SyncOp, 
         AuthenticateOp, AttributeNormalizer, PoolableConnector
 	{
         // This is the list of attributes returned by default if no attributes are
@@ -1138,9 +1145,26 @@ namespace Org.IdentityConnectors.ActiveDirectory
         #endregion
 
         #region AdvancedUpdateOp Members
+        public Uid Update(ObjectClass objclass, Uid uid, ICollection<ConnectorAttribute> attrs, OperationOptions options) {
+            return Update(UpdateType.REPLACE,objclass,ConnectorAttributeUtil.AddUid(attrs,uid),options);
+        }
+        
+        public Uid AddAttributeValues(ObjectClass objclass,
+                Uid uid,
+                ICollection<ConnectorAttribute> valuesToAdd,
+                OperationOptions options) {
+            return Update(UpdateType.ADD,objclass,ConnectorAttributeUtil.AddUid(valuesToAdd, uid),options);
+        }
+    
+        public Uid RemoveAttributeValues(ObjectClass objclass,
+                Uid uid,
+                ICollection<ConnectorAttribute> valuesToRemove,
+                OperationOptions options) {
+            return Update(UpdateType.DELETE,objclass,ConnectorAttributeUtil.AddUid(valuesToRemove, uid),options);
+        }
 
         // implementation of AdvancedUpdateSpiOp
-        public virtual Uid Update(UpdateType type, ObjectClass oclass, 
+        protected virtual Uid Update(UpdateType type, ObjectClass oclass, 
             ICollection<ConnectorAttribute> attributes, OperationOptions options)
         {
             Uid updatedUid = null;

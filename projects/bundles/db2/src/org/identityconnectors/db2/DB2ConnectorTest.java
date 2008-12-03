@@ -10,7 +10,6 @@ import java.util.*;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.*;
-import org.identityconnectors.framework.api.operations.UpdateApiOp.Type;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.common.objects.filter.*;
@@ -277,7 +276,7 @@ public class DB2ConnectorTest {
         Map<String, Object> emptyMap = Collections.emptyMap();
         
         //Test add
-        facade.update(Type.ADD, ObjectClass.ACCOUNT,attributes, new OperationOptions(emptyMap));
+        facade.addAttributeValues(ObjectClass.ACCOUNT,uid,AttributeUtil.filterUid(attributes), new OperationOptions(emptyMap));
         facade.search(ObjectClass.ACCOUNT, new EqualsFilter(uid), handler, options);
         actual = handler.getFoundObject();
         String newGrantsValue = (String) actual.getAttributeByName(DB2Connector.USER_AUTH_GRANTS).getValue().get(0);
@@ -290,7 +289,7 @@ public class DB2ConnectorTest {
         attributes.clear();
         attributes.add(uid);
         attributes.add(AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"SELECT ON TABLE SYSIBM.DUAL"));
-        facade.update(Type.REPLACE,ObjectClass.ACCOUNT,attributes, new OperationOptions(emptyMap));
+        facade.update(ObjectClass.ACCOUNT,uid, AttributeUtil.filterUid(attributes), new OperationOptions(emptyMap));
         facade.search(ObjectClass.ACCOUNT, new EqualsFilter(uid), handler, options);
         actual = handler.getFoundObject();
         newGrantsValue = (String) actual.getAttributeByName(DB2Connector.USER_AUTH_GRANTS).getValue().get(0);
@@ -300,7 +299,7 @@ public class DB2ConnectorTest {
         
         //Test delete
         handler.clear();
-        facade.update(Type.DELETE,ObjectClass.ACCOUNT,attributes, new OperationOptions(emptyMap));
+        facade.removeAttributeValues(ObjectClass.ACCOUNT,uid, AttributeUtil.filterUid(attributes), new OperationOptions(emptyMap));
         facade.search(ObjectClass.ACCOUNT, new EqualsFilter(uid), handler, options);
         actual = handler.getFoundObject();
         newGrantsValue = (String) actual.getAttributeByName(DB2Connector.USER_AUTH_GRANTS).getValue().get(0);
@@ -312,7 +311,7 @@ public class DB2ConnectorTest {
         attributes.clear();
         attributes.add(uid);
         attributes.add(oldGrants);
-        facade.update(Type.REPLACE,ObjectClass.ACCOUNT,attributes, new OperationOptions(emptyMap));
+        facade.update(ObjectClass.ACCOUNT,uid,AttributeUtil.filterUid(attributes), new OperationOptions(emptyMap));
     }
     
     

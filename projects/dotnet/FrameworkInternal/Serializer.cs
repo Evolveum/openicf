@@ -1424,8 +1424,6 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
         new List<ObjectTypeMapper>();
         static CommonObjectHandlers() {
         
-            HANDLERS.Add( new EnumSerializationHandler(typeof(UpdateApiType),
-                                                       "UpdateApiOpType") );
             HANDLERS.Add( new AlreadyExistsExceptionHandler() );
             HANDLERS.Add( new ConfigurationExceptionHandler() );
             HANDLERS.Add( new ConnectionBrokenExceptionHandler() );
