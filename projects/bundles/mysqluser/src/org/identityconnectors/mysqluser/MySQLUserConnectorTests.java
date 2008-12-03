@@ -295,7 +295,7 @@ public class MySQLUserConnectorTests {
      * Test method for {@link MySQLUserConnector#update(ObjectClass, Set, OperationOptions)}.
      * Test creating of the connector object, searching using UID and update
      */
-    @Test(expected=IllegalStateException.class)
+    @Test(expected=IllegalArgumentException.class)
     public void testUpdateUnsupported() {
         String userName = TST_USER1;
         assertNotNull(facade);
