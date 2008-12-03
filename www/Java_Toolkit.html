@@ -140,10 +140,10 @@ at the command line.</P>
     <P>
     TestHelpers actually aggregates properties from potentially four different files, if they are present. It loads properties in the following order:</P>
     <OL>
-    <LI><P><B>${user.home}/.connectors/connectors.properties</B> //(optional) global properties file</P></LI>
-	<LI><B>${bundle.dir}/build.properties</B> //(required) public build properties file</P></LI>
-	<LI><B>${user.home}/.connectors/${project-name}/build.groovy</B> //(optional) private build properties file, also includes contract test properties</P></LI>
-	<LI><B>${user.home}/.connectors/${project-name}/${configuration}/build.groovy</B> //(optional) configuration-specific properties file</P></LI>
+    <LI><p><B>${user.home}/.connectors/connectors.properties</B> //(optional) global properties file</p></LI>
+	<LI><p><B>${bundle.dir}/build.properties</B> //(required) public build properties file</p></LI>
+	<LI><p><B>${user.home}/.connectors/${project-name}/build.groovy</B> //(optional) private build properties file, also includes contract test properties</p></LI>
+	<LI><p><B>${user.home}/.connectors/${project-name}/${configuration}/build.groovy</B> //(optional) configuration-specific properties file</p></LI>
     </OL>
 	<P>
     Properties defined in subsequent files override those defined in earlier files (the underlying structure for TestHelpers is just a standard Java Properties object). Also, you should notice

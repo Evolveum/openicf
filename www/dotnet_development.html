@@ -52,7 +52,7 @@ solution which can be used by SharpDevelop and Visual Studio 2008 (VS will
 complain because some of the projects are Wix based and not part of the 
 standard set of MS projects).
 <p>The .NET side of the project uses MSBuild exclusively because its compatible with the two most popular .NET development IDEs.
-<p>To build simply install all the required software above.  If ShapDevelop is installed one should be able to just open the solution.  If Visual Studio is install it should work with the solution as well only it will complain about a few projects.  VS2008 will modify the solution and projects please *DO NOT* check them in unless you know exactly what your doing VS2008 tends to change it to whatever it wants with little regard to customization. The same can be said about SharpDevelop to some extent.
+<p>To build simply install all the required software above.  If SharpDevelop is installed one should be able to just open the solution.  If Visual Studio is install it should work with the solution as well only it will complain about a few projects.  VS2008 will modify the solution and projects please *DO NOT* check them in unless you know exactly what your doing VS2008 tends to change it to whatever it wants with little regard to customization. The same can be said about SharpDevelop to some extent.
 <p>For a command line build one environment variable must be set.  This is the location for Wix.  The environment variable WIX_HOME must be set in order to build.
 <pre>
 C:\build\identityconnectors\projects\dotnet&gt;msbuild "DotNetConnectors.sln"
@@ -80,8 +80,18 @@ Project "C:\build\identityconnectors\projects\dotnet\Connector Gateway.sln" (1) 
 ll.wixproj" (3) on node 0 (default targets).
 
 </pre>
-<p>This will build everything and run all the Framework tests. The result is a full Remote Connector Framework Windows Service install.  The default compliation is 'Debug'.
+<p>This will build everything and run all the Framework tests. The result is a full Remote Connector Framework Windows Service install.  The default configuration is 'Debug'.
 <h3>Connector Development</h3>
-<p>Connector bundles are simply .NET class libraries that follow some distinct patterns.  Good examples are contained with in TestBundleV1 and TestBundleV2; these are least skeletons to get one started.  The only required references are the 'Common' and 'Framework' assemblies.  These contained all the functionality necessary to create a .NET Connector.
+<p>Connector bundles are simply .NET class libraries that follow some distinct patterns. Good examples are contained with in TestBundleV1 and TestBundleV2; these are skeletons to get you started. The only required references are the 'Common' and 'Framework' assemblies. These contain all the functionality necessary to create a .NET Connector.
+<h3>Property Files in .NET</h3>
+<p>On the Java side you will see the TestHelpers mechanism, which loads in configuration properties at runtime from several different sources. The .NET side has this functionality as well.
+TestHelpers actually aggregates properties from potentially four different files, if they are present. It loads properties in the following order:</p>
+<ol>
+	<li><p><b>${user-home}/.connectors/connectors.xml</b>  //(optional) global properties file</p></li>
+	<li><p><b>${bundle-dir}/project.xml</b> //(optional) public build properties file</p></li>
+	<li><p><b>${user-home}/.connectors/${assembly-name}/project.xml</b>  //(optional) private build properties file</p></li>
+    <li><p><b>${user-home}/.connectors/${assembly-name}/${configuration}/project.xml</b>  //(optional) configuration-specific properties file</p></li>
+</ol>
+<p>Note that in this case all properties files are optional, whereas on the Java side, the second one is required.</p>
 </div>
 </html>
