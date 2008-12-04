@@ -54,7 +54,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
     /// C#.  There are a few changes, but not many ... that will change over
     /// time of course.
     /// </summary>
-    class ActiveDirectoryFilterTranslator : AbstractFilterTranslator<String>
+    public class ActiveDirectoryFilterTranslator : AbstractFilterTranslator<String>
     {
         protected override String CreateAndExpression(String leftExpression,
                                              String rightExpression) {          
@@ -347,7 +347,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
          *         Returns null if the attribute cannot be specified in an LDAP
          *         filter.
          */
-        String[] GetLdapNamesForAttribute(ConnectorAttribute attr) {
+
+        protected virtual String[] GetLdapNamesForAttribute(ConnectorAttribute attr) {
             // Special processing for certain connector attributes.
             String[] attrNames = null;
             if (attr is Uid) {
