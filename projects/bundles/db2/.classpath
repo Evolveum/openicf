@@ -6,5 +6,5 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-HEAD"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorContractTests"/>
-	<classpathentry kind="output" path="build"/>
+	<classpathentry kind="output" path="ide-build"/>
 </classpath>

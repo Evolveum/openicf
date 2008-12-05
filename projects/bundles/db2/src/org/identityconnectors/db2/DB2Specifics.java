@@ -131,45 +131,6 @@ class DB2Specifics {
         return false;
     }
     
-    /**
-     * A utility method that breaks up a String into an Collection of Strings
-     * by cutting at each delimiter.  This works around a difficulty
-     * with the StringTokenizer class where multiple adjacent delimiters are
-     * treated as a single delimiter.  Thus "1,2,,4" is considered to have
-     * only three tokens instead of four which would be expected in CSV
-     * format.  This is a known issue with StringTokenizer which is probably
-     * not going to be addressed. See
-     * http://developer.java.sun.com/developer/bugParade/bugs/4086845.html
-     * for more details.
-     */
-    static Collection<String> divideString(String stringToDivide, char delim, boolean trimTokens) {
-        Collection<String> strings = new ArrayList<String>();
-        int length = stringToDivide.length();
-        int firstDelimPos = stringToDivide.indexOf(delim);
-
-        if (firstDelimPos == -1) {
-            strings.add(trimTokens ? stringToDivide.trim() : stringToDivide);
-        }
-        else {
-            String token = stringToDivide.substring(0, firstDelimPos);
-            strings.add(trimTokens ? token.trim() : token);
-            int currentDelimPos = firstDelimPos;
-
-            while (currentDelimPos < length) {
-                int nextDelimPos = stringToDivide.indexOf(delim, currentDelimPos + 1);
-
-                if (nextDelimPos == -1) {
-                    nextDelimPos = length;
-                }
-                token = stringToDivide.substring(currentDelimPos + 1, nextDelimPos);
-                strings.add(trimTokens ? token.trim() : token);
-                currentDelimPos = nextDelimPos;
-            }
-        }
-
-        return strings;
-    }
-    
     
 	static void testConnection(Connection connection){
 		//We will execute very simple " select 1 from sysibm.dual "

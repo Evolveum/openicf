@@ -197,6 +197,47 @@ public class DB2ConnectorTest {
      }
     
     /**
+     * Test searching by grants attribute
+     */
+    @Test
+    public void testFindByGrants(){
+    	AllResultsHandler handler = new AllResultsHandler();
+    	facade.search(ObjectClass.ACCOUNT, null,handler, null);
+    	for(ConnectorObject object : handler.getResults()){
+    		if(!"db2inst1".equalsIgnoreCase(object.getUid().getUidValue()) && !"db2admin".equalsIgnoreCase(object.getUid().getUidValue())){
+    			facade.delete(ObjectClass.ACCOUNT, object.getUid(), null);
+    		}
+    	}
+    	Attribute grants1 = AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"LOAD ON DATABASE","SELECT ON SYSIBM.DUAL");
+    	Set<Attribute> attributes1 = new HashSet<Attribute>();
+    	attributes1.add(grants1);
+    	attributes1.add(new Name("TEST1"));
+    	Uid testUid1 = facade.create(ObjectClass.ACCOUNT,attributes1,null);
+    	assertNotNull(testUid1);
+    	
+    	Attribute grants2 = AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"LOAD ON DATABASE","SELECT ON SYSIBM.DUAL");
+    	Set<Attribute> attributes2 = new HashSet<Attribute>();
+    	attributes2.add(grants2);
+    	attributes2.add(new Name("TEST2"));
+    	Uid testUid2 = facade.create(ObjectClass.ACCOUNT,attributes2,null);
+    	assertNotNull(testUid2);
+    	
+    	Attribute grants3 = AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"LOAD ON DATABASE");
+    	Set<Attribute> attributes3 = new HashSet<Attribute>();
+    	attributes3.add(grants3);
+    	attributes3.add(new Name("TEST3"));
+    	Uid testUid3 = facade.create(ObjectClass.ACCOUNT,attributes3,null);
+    	assertNotNull(testUid3);
+    	
+    	handler.clear();
+    	facade.search(ObjectClass.ACCOUNT, new ContainsAllValuesFilter(grants1), handler, new OperationOptionsBuilder().setAttributesToGet(Arrays.asList(DB2Connector.USER_AUTH_GRANTS)).build());
+    	assertTrue(!handler.getResults().isEmpty());
+    	assertTrue(handler.getResultUids().contains(new Uid("TEST1")));
+    	assertTrue(handler.getResultUids().contains(new Uid("TEST2")));
+    	assertFalse(handler.getResultUids().contains(new Uid("TEST3")));
+    }
+    
+    /**
      * Test find by end with operator
      */
     @Test
@@ -269,7 +310,7 @@ public class DB2ConnectorTest {
         assertNotNull(actual);
         Attribute grants1 = actual.getAttributeByName(DB2Connector.USER_AUTH_GRANTS);
         Attribute oldGrants = grants1; 
-        grants1 = AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"LOAD ON DATABASE,SELECT ON TABLE SYSIBM.DUAL");
+        grants1 = AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"LOAD ON DATABASE","SELECT ON SYSIBM.DUAL");
         Set<Attribute> attributes = new HashSet<Attribute>();
         attributes.add(uid);
         attributes.add(grants1);
@@ -279,7 +320,7 @@ public class DB2ConnectorTest {
         facade.addAttributeValues(ObjectClass.ACCOUNT,uid,AttributeUtil.filterUid(attributes), new OperationOptions(emptyMap));
         facade.search(ObjectClass.ACCOUNT, new EqualsFilter(uid), handler, options);
         actual = handler.getFoundObject();
-        String newGrantsValue = (String) actual.getAttributeByName(DB2Connector.USER_AUTH_GRANTS).getValue().get(0);
+        List<Object> newGrantsValue = actual.getAttributeByName(DB2Connector.USER_AUTH_GRANTS).getValue();
 		assertTrue(newGrantsValue.contains("LOAD ON DATABASE"));
         assertTrue(newGrantsValue.contains("CONNECT ON DATABASE"));
         assertTrue(newGrantsValue.contains("SELECT ON SYSIBM.DUAL"));
@@ -288,11 +329,11 @@ public class DB2ConnectorTest {
         handler.clear();
         attributes.clear();
         attributes.add(uid);
-        attributes.add(AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"SELECT ON TABLE SYSIBM.DUAL"));
+        attributes.add(AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"SELECT ON SYSIBM.DUAL"));
         facade.update(ObjectClass.ACCOUNT,uid, AttributeUtil.filterUid(attributes), new OperationOptions(emptyMap));
         facade.search(ObjectClass.ACCOUNT, new EqualsFilter(uid), handler, options);
         actual = handler.getFoundObject();
-        newGrantsValue = (String) actual.getAttributeByName(DB2Connector.USER_AUTH_GRANTS).getValue().get(0);
+        newGrantsValue = actual.getAttributeByName(DB2Connector.USER_AUTH_GRANTS).getValue();
 		assertFalse(newGrantsValue.contains("LOAD ON DATABASE"));
         assertTrue(newGrantsValue.contains("CONNECT ON DATABASE"));
         assertTrue(newGrantsValue.contains("SELECT ON SYSIBM.DUAL"));
@@ -302,7 +343,7 @@ public class DB2ConnectorTest {
         facade.removeAttributeValues(ObjectClass.ACCOUNT,uid, AttributeUtil.filterUid(attributes), new OperationOptions(emptyMap));
         facade.search(ObjectClass.ACCOUNT, new EqualsFilter(uid), handler, options);
         actual = handler.getFoundObject();
-        newGrantsValue = (String) actual.getAttributeByName(DB2Connector.USER_AUTH_GRANTS).getValue().get(0);
+        newGrantsValue = actual.getAttributeByName(DB2Connector.USER_AUTH_GRANTS).getValue();
 		assertFalse(newGrantsValue.contains("LOAD ON DATABASE"));
         assertTrue(newGrantsValue.contains("CONNECT ON DATABASE"));
         assertFalse(newGrantsValue.contains("SELECT ON SYSIBM.DUAL"));
@@ -353,6 +394,27 @@ public class DB2ConnectorTest {
             }
             return true;
         }
+    }
+    
+    private static class AllResultsHandler implements ResultsHandler{
+    	private List<ConnectorObject> results = new ArrayList<ConnectorObject>();
+		public boolean handle(ConnectorObject obj) {
+			results.add(obj);
+			return true;
+		}
+		List<ConnectorObject> getResults(){
+			return Collections.unmodifiableList(results);
+		}
+		void clear(){
+			results.clear();
+		}
+		List<Uid> getResultUids(){
+			List<Uid> uids = new ArrayList<Uid>(results.size());
+			for(ConnectorObject co : results){
+				uids.add(co.getUid());
+			}
+			return uids;
+		}
     }
     
     

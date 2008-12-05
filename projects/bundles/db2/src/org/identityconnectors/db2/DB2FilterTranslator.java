@@ -71,6 +71,16 @@ class DB2FilterTranslator extends DatabaseFilterTranslator {
 	protected FilterWhereBuilder createBuilder() {
 		return new FilterWhereBuilder();
 	}
+
+	@Override
+	protected boolean validateSearchAttribute(Attribute attribute) {
+		if(DB2Connector.USER_AUTH_GRANTS.equals(attribute.getName())){
+			return false;
+		}
+		return super.validateSearchAttribute(attribute);
+	}
+	
+	
     
     
  

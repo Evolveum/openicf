@@ -6,7 +6,6 @@ import java.util.*;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.common.security.GuardedString.Accessor;
 import org.identityconnectors.dbcommon.*;
 import org.identityconnectors.framework.common.exceptions.*;
 import org.identityconnectors.framework.common.objects.*;
@@ -63,13 +62,9 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
         attrInfoSet.add(AttributeInfoBuilder.build(Name.NAME,true,true,true,false));
         AttributeInfoBuilder grantsBuilder = new AttributeInfoBuilder();
         grantsBuilder.setName(USER_AUTH_GRANTS).setCreateable(true).
-        setUpdateable(true).setRequired(true).setReadable(false);
+        setUpdateable(true).setRequired(true).setReadable(true).
+        setMultiValue(true).setReturnedByDefault(true);
         attrInfoSet.add(grantsBuilder.build());
-        //Password is operationalAttribute
-        AttributeInfoBuilder passwordBuilder = new AttributeInfoBuilder();
-        passwordBuilder.setName(OperationalAttributes.PASSWORD_NAME).setType(GuardedString.class).setCreateable(true).
-        setUpdateable(false).setRequired(true).setReadable(false).setReturnedByDefault(false);
-        attrInfoSet.add(passwordBuilder.build());
 
         // Use SchemaBuilder to build the schema. Currently, only ACCOUNT type is supported.
         SchemaBuilder schemaBld = new SchemaBuilder(getClass());
@@ -112,7 +107,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 		return conn;
 	}
     
-    String buildAuthorityString(String userName){
+    List<String> buildAuthorityAttributeValue(String userName){
     	DB2AuthorityReader dB2AuthorityReader = new DB2AuthorityReader(adminConn);
     	Collection<DB2Authority> allAuths = null;
 		try {
@@ -120,16 +115,13 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 		} catch (SQLException e) {
 			throw new ConnectorException("Error reading db2 authorities",e);
 		}
-    	StringBuilder buffer = new StringBuilder();
+    	List<String> result = new ArrayList<String>(2);
     	for(DB2Authority authority : allAuths){
     		final DB2AuthorityTable authorityTable = DB2Specifics.authType2DB2AuthorityTable(authority.authorityType);
             String grantString = authorityTable.generateGrant(authority);
-            buffer.append(grantString).append(',');
+            result.add(grantString);
     	}
-    	if(buffer.length() > 0){
-    		buffer.deleteCharAt(buffer.length() - 1);
-    	}
-    	return buffer.toString();
+    	return result;
     }
     
     public FilterTranslator<FilterWhereBuilder> createFilterTranslator(ObjectClass oclass, OperationOptions options) {
@@ -160,10 +152,10 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
                 ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
                 
                 final String userName = result.getString("GRANTEE").trim();
-                if(options.getAttributesToGet() != null && Arrays.asList(options.getAttributesToGet()).contains(USER_AUTH_GRANTS)){
-                	String authString = buildAuthorityString(userName);
-                	bld.addAttribute(USER_AUTH_GRANTS,authString);
-                }
+                //if(options.getAttributesToGet() != null && Arrays.asList(options.getAttributesToGet()).contains(USER_AUTH_GRANTS)){
+                List<String> authStrings = buildAuthorityAttributeValue(userName);
+                bld.addAttribute(USER_AUTH_GRANTS,authStrings);
+                //}
                 
                 bld.setUid(new Uid(userName));
                 bld.setName(userName);
@@ -196,13 +188,8 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
         if (user == null || StringUtil.isBlank(user.getNameValue())) {
             throw new IllegalArgumentException("The Name attribute cannot be null or empty.");
         }
-        // Password is Operational
-        GuardedString password = AttributeUtil.getPasswordValue(attrs);
-        if (password == null) {
-            throw new IllegalArgumentException("The Password attribute cannot be null.");
-        }
         checkUserNotExist(user.getNameValue());
-        checkDB2Validity(user.getNameValue(),password);
+        checkDB2Validity(user.getNameValue());
         try{
         	updateAuthority(user.getNameValue(),attrs,UpdateType.ADD);
         	adminConn.commit();
@@ -243,20 +230,21 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 			throw new ConnectorException("Cannot test whether user exist",e);
 		}
 		finally{
+			SQLUtil.closeQuietly(rs);
 			SQLUtil.closeQuietly(st);
 		}
 	}
 
 	/**
      *  Applies resources grants and revokes to the passed user.  Updates
-     *  occur in a transaction.  Assumes connection is already open.
+     *  occurs in a transaction.  Assumes connection is already open.
 	 * @param password 
      */
-    private void updateAuthority(String user,Set<Attribute> attrs,UpdateType type)   {
+    @SuppressWarnings("unchecked")
+	private void updateAuthority(String user,Set<Attribute> attrs,UpdateType type)   {
         checkAdminConnection();
         Attribute wsAttr = AttributeUtil.find(USER_AUTH_GRANTS, attrs);
-        String delimitedGrants = wsAttr != null ? AttributeUtil.getStringValue(wsAttr) : null;
-        Collection<String> grants = delimitedGrants != null ? DB2Specifics.divideString(delimitedGrants, ',', true) : new ArrayList<String>();
+        Collection<String> grants = (Collection<String>) (wsAttr != null ? new ArrayList<Object>(wsAttr.getValue()) : new ArrayList<String>(3)); 
         try{
 	        switch(type){
 	        	case ADD : 		{
@@ -316,7 +304,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
      *  Manual.  They include length limits, forbidden prefixes, and forbidden
      *  keywords.  Throws and exception if the name or password are invalid.
      */
-    private void checkDB2Validity(String accountID, GuardedString password)  {
+    private void checkDB2Validity(String accountID)  {
         if (accountID.length() > maxNameSize) {
         	throw new IllegalArgumentException("Name to short");
         }
@@ -326,19 +314,6 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
         if (!DB2Specifics.isValidName(accountID.toUpperCase())) {
             throw new IllegalArgumentException("Name is reserved keyword or its substring");
         }
-
-        if (password != null) {
-        	password.access(new Accessor(){
-				public void access(char[] clearChars) {
-			        if (DB2Specifics.containsIllegalDB2Chars(clearChars)) {
-			        	throw new IllegalArgumentException("Password contains illegal characters");
-			        }
-			        if (!DB2Specifics.isValidName(new String(clearChars).toUpperCase())) {
-			            throw new IllegalArgumentException("Password is reserved keyword or its substring");
-			        }
-				}
-        	});
-        }
     }
     
     /**
@@ -346,7 +321,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
      *  deletes them from the resource.
      */
     private void revokeAllGrants(String user) throws SQLException {
-        checkDB2Validity(user,null);
+        checkDB2Validity(user);
         Collection<DB2Authority> allAuthorities = new DB2AuthorityReader(adminConn).readAllAuthorities(user);
         revokeGrants(allAuthorities);
     }
@@ -456,14 +431,13 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
         if(name != null){
         	throw new IllegalArgumentException("Name attribute is nonUpdatable, cannot appear in update operation");
         }
-        
         Uid uid = AttributeUtil.getUidAttribute(attrs);
-        if (uid == null || StringUtil.isBlank(uid.getUidValue())){
+		if (uid == null || StringUtil.isBlank(uid.getUidValue())){
             throw new IllegalArgumentException("The uid attribute cannot be null or empty.");
         }
-        
         try{
-        	updateAuthority(uid.getUidValue(), attrs, type);
+            final String uidValue = uid.getUidValue();
+        	updateAuthority(uidValue, attrs, type);
         	adminConn.commit();
         }
         catch(SQLException e){
@@ -482,6 +456,12 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 			return new Uid(value.trim().toUpperCase());
 		}
 		return attribute;
+	}
+	
+	private enum UpdateType {
+	    ADD,
+	    REPLACE,
+	    DELETE
 	}
     
     
