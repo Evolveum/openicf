@@ -982,34 +982,34 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
 
         // Optional Attributes (have VMS default values)
         //
-        attributes.add(AttributeInfoBuilder.build(ATTR_OWNER,       String.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_ACCOUNT,     String.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CLI,         String.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CLITABLES,   String.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LGICMD,      String.class, false));
+        attributes.add(AttributeInfoBuilder.build(ATTR_OWNER,       String.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_ACCOUNT,     String.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_CLI,         String.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_CLITABLES,   String.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_LGICMD,      String.class));
         //attributes.add(AttributeInfoBuilder.build(ATTR_EXPIRATION,  String.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_PWDMINIMUM,  Integer.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_MAXJOBS,     Integer.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_MAXACCTJOBS, Integer.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_SHRFILLM,    Integer.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_PBYTLM,      Integer.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_MAXDETACH,   Integer.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_BIOLM,       Integer.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_JTQUOTA,     Integer.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_DIOLM,       Integer.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_WSDEFAULT,   Integer.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_PRIORITY,    Integer.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_WSQUOTA,     Integer.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_QUEPRIO,     Integer.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_WSEXTENT,    Integer.class, false));
+        attributes.add(AttributeInfoBuilder.build(ATTR_PWDMINIMUM,  Integer.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_MAXJOBS,     Integer.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_MAXACCTJOBS, Integer.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_SHRFILLM,    Integer.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_PBYTLM,      Integer.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_MAXDETACH,   Integer.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_BIOLM,       Integer.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_JTQUOTA,     Integer.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_DIOLM,       Integer.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_WSDEFAULT,   Integer.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_PRIORITY,    Integer.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_WSQUOTA,     Integer.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_QUEPRIO,     Integer.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_WSEXTENT,    Integer.class));
         //attributes.add(AttributeInfoBuilder.build(ATTR_CPUTIME,     String.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_ENQLM,       Integer.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_PGFLQUOTA,   Integer.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_TQELM,       Integer.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_ASTLM,       Integer.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_BYTLM,       Integer.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_FILLM,       Integer.class, false));
-        attributes.add(AttributeInfoBuilder.build(ATTR_PRCLM,       Integer.class, false));
+        attributes.add(AttributeInfoBuilder.build(ATTR_ENQLM,       Integer.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_PGFLQUOTA,   Integer.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_TQELM,       Integer.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_ASTLM,       Integer.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_BYTLM,       Integer.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_FILLM,       Integer.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_PRCLM,       Integer.class));
 
         // Multi-valued attributes
         //
@@ -1053,7 +1053,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
         builder.setName(name);
         builder.setType(clazz);
         builder.setRequired(required);
-        builder.setMultiValue(true);
+        builder.setMultiValued(true);
         return builder.build();
     }
 
@@ -1062,7 +1062,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
         builder.setName(name);
         builder.setType(clazz);
         builder.setRequired(true);
-        builder.setMultiValue(false);
+        builder.setMultiValued(false);
         builder.setUpdateable(true);
         builder.setCreateable(true);
         return builder.build();
@@ -1073,7 +1073,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
         builder.setName(name);
         builder.setType(clazz);
         builder.setRequired(required);
-        builder.setMultiValue(true);
+        builder.setMultiValued(true);
         builder.setCreateable(false);
         builder.setUpdateable(false);
         return builder.build();
@@ -1084,7 +1084,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
         builder.setName(name);
         builder.setType(clazz);
         builder.setRequired(required);
-        builder.setMultiValue(multi);
+        builder.setMultiValued(multi);
         builder.setUpdateable(true);
         builder.setCreateable(true);
         builder.setReadable(false);

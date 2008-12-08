@@ -312,7 +312,7 @@ class LdapUtil {
                 AttributeInfo attributeInfo = getAttributeInfo(attributeInfos, attributeName);
                 if (attributeInfo==null)
                     throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNKNOWN_ATTRIBUTE, attributeName));
-                if (attributeInfo.isMultiValue())
+                if (attributeInfo.isMultiValued())
                     basicAttributes.put(attributeName, attribute.getValue());
                 else
                     basicAttributes.put(attributeName, AttributeUtil.getSingleValue(attribute));

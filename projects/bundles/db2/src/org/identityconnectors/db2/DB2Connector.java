@@ -9,6 +9,7 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.*;
 import org.identityconnectors.framework.common.exceptions.*;
 import org.identityconnectors.framework.common.objects.*;
+import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.*;
 import org.identityconnectors.framework.spi.operations.*;
@@ -59,11 +60,12 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	public Schema schema() {
         //The Name is supported attribute
         Set<AttributeInfo> attrInfoSet = new HashSet<AttributeInfo>();
-        attrInfoSet.add(AttributeInfoBuilder.build(Name.NAME,true,true,true,false));
+        attrInfoSet.add(AttributeInfoBuilder.build(Name.NAME,String.class,
+                EnumSet.of(Flags.NOT_UPDATEABLE)));
         AttributeInfoBuilder grantsBuilder = new AttributeInfoBuilder();
         grantsBuilder.setName(USER_AUTH_GRANTS).setCreateable(true).
         setUpdateable(true).setRequired(true).setReadable(true).
-        setMultiValue(true).setReturnedByDefault(true);
+        setMultiValued(true).setReturnedByDefault(true);
         attrInfoSet.add(grantsBuilder.build());
 
         // Use SchemaBuilder to build the schema. Currently, only ACCOUNT type is supported.
