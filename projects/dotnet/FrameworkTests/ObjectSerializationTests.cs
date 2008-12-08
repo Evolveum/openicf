@@ -553,14 +553,14 @@ namespace FrameworkTests
             builder.Readable=(true);
             builder.Creatable=(true);
             builder.Updateable=(true);
-            builder.MultiValue=(true);
+            builder.MultiValued=(true);
             builder.ReturnedByDefault = false;
             ConnectorAttributeInfo v1 = builder.Build();
             ConnectorAttributeInfo v2 = (ConnectorAttributeInfo)CloneObject(v1);
             Assert.AreEqual(v1,v2);
             Assert.AreEqual("foo", v2.Name);
             Assert.AreEqual(typeof(String), v2.ValueType);
-            Assert.IsTrue(v2.IsMultiValue);
+            Assert.IsTrue(v2.IsMultiValued);
             Assert.IsTrue(v2.IsReadable);
             Assert.IsTrue(v2.IsRequired);
             Assert.IsTrue(v2.IsUpdateable);
@@ -602,7 +602,7 @@ namespace FrameworkTests
             builder.Required=(true);
             builder.Readable=(true);
             builder.Updateable=(true);
-            builder.MultiValue=(true);
+            builder.MultiValued=(true);
             ObjectClassInfoBuilder obld = new ObjectClassInfoBuilder();
             obld.ObjectType = ObjectClass.ORGANIZATION_NAME;
             obld.IsContainer = true;

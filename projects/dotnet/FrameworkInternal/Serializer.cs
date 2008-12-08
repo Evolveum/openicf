@@ -1679,7 +1679,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                         decoder.ReadBooleanField("creatable",false));
                 builder.Updateable=(
                         decoder.ReadBooleanField("updateable",false));
-                builder.MultiValue=(
+                builder.MultiValued=(
                         decoder.ReadBooleanField("multivalue",false));
                 builder.ReturnedByDefault=(
                         decoder.ReadBooleanField("returnedbydefault",true));
@@ -1694,7 +1694,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                 encoder.WriteBooleanField("readable", val.IsReadable);
                 encoder.WriteBooleanField("creatable", val.IsCreatable);
                 encoder.WriteBooleanField("updateable", val.IsUpdateable);
-                encoder.WriteBooleanField("multivalue", val.IsMultiValue);
+                encoder.WriteBooleanField("multivalue", val.IsMultiValued);
                 encoder.WriteBooleanField("returnedbydefault", val.IsReturnedByDefault);
             }
         }

@@ -149,7 +149,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         caInfo.IsCreatable ? "createable" : "",
                         caInfo.IsUpdateable ? "updateable" : "",
                         caInfo.IsRequired ? "required" : "",
-                        caInfo.IsMultiValue ? "multivalue" : ""));
+                        caInfo.IsMultiValued ? "multivalue" : ""));
                     if(ConnectorAttributeUtil.IsSpecial(caInfo)) {
                         foundOperationalAttributes = true;
                     } else {
@@ -268,37 +268,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
             }
         }
-
-        /*
-         * This is not a test at all, it's just a convienient way to create a
-         * bunch of users
-         * 
-        [Test]
-        public void TestCreate_aBunchOfAccounts()
-        {
-            //Initialize Connector
-            ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
-            Uid createUid = null;
-            for (int i = 0; i < 6500; i++)
-            {
-                if (i % 500 == 0)
-                {
-                    Console.Write("Created {0} users", i);
-                }
-
-                try
-                {
-                    ICollection<ConnectorAttribute> createAttributes = GetNormalAttributes_Account();
-                    createUid = CreateAndVerifyObject(connector, ObjectClass.ACCOUNT, createAttributes);
-                }
-                catch (Exception e)
-                {
-                    // ignore
-                }
-            }
-        }
-        */
 
         [Test]
         public void TestCreate_Account()
@@ -1110,9 +1079,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 modifyAttributes.Add(createUid);
                 modifyAttributes.Add(ConnectorAttributeBuilder.Build("otherHomePhone", "512.555.1212"));
 
-                connector.RemoveAttributeValues(ObjectClass.ACCOUNT,
-                    ConnectorAttributeUtil.GetUidAttribute(modifyAttributes),
-                    modifyAttributes, null);
+                connector.Update(UpdateType.DELETE, ObjectClass.ACCOUNT, modifyAttributes, null);
 
                 Filter uidFilter = FilterBuilder.EqualTo(createUid);
                 IList<ConnectorObject> objects = TestHelpers.SearchToList(connector, ObjectClass.ACCOUNT, uidFilter);
@@ -1169,7 +1136,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 updateAttrs.Add(ConnectorAttributeBuilder.Build("ad_container", groupPath));
                 updateAttrs.Add(createUserUid);
 
-                connector.Update(ObjectClass.ACCOUNT, ConnectorAttributeUtil.GetUidAttribute(updateAttrs), updateAttrs, null);
+                connector.Update(UpdateType.REPLACE, ObjectClass.ACCOUNT, updateAttrs, null);
 
                 ICollection<ConnectorObject> results = TestHelpers.SearchToList(
                     connector, ObjectClass.ACCOUNT, FilterBuilder.EqualTo(createUserUid));
@@ -1883,8 +1850,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 attributes = new List<ConnectorAttribute>();
                 attributes.Add(createdUids.First());
                 attributes.Add(ConnectorAttributeBuilder.Build("sn", "replaced"));
-                connector.Update(ObjectClass.ACCOUNT,
-                    ConnectorAttributeUtil.GetUidAttribute(attributes), attributes, null);
+                connector.Update(UpdateType.REPLACE, ObjectClass.ACCOUNT, attributes, null);
                 syncHelper.AddModUid(createdUids.First(), attributes);
 
                 for(int i = 0; i < 10; i++)
@@ -1899,7 +1865,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 attributes = new List<ConnectorAttribute>();
                 attributes.Add(createdUids.Last());
                 attributes.Add(ConnectorAttributeBuilder.Build("sn", "replaced"));
-                connector.Update(ObjectClass.ACCOUNT, ConnectorAttributeUtil.GetUidAttribute(attributes), attributes, null);
+                connector.Update(UpdateType.REPLACE, ObjectClass.ACCOUNT, attributes, null);
                 syncHelper.AddModUid(createdUids.Last(), attributes);
 
                 // sync, and verify
@@ -2136,8 +2102,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 connector, oclass, uidFilter);
             Assert.AreEqual(1, currentConnectorObjects.Count);
 
-            Uid updatedUid = connector.Update(oclass, 
-                ConnectorAttributeUtil.GetUidAttribute(attributes),
+            Uid updatedUid = connector.Update(UpdateType.REPLACE, oclass,
                 attributes, null);
 
             Assert.IsNotNull(updatedUid);
@@ -2174,8 +2139,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // make sure the uid is present in the attributes
             attributes.Add(uid);
             // now update with ADD to add additional home phones
-            Uid updatedUid = connector.AddAttributeValues(oclass,
-                ConnectorAttributeUtil.GetUidAttribute(attributes),
+            Uid updatedUid = connector.Update(UpdateType.ADD, oclass,
                 attributes, null);
 
             // find it back
@@ -2764,7 +2728,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         int GetRandomNumber()
         {
-            const int randomRange = 1000000;
+            const int randomRange = 100000;
             int number = _rand.Next(randomRange);
 #if DEBUG
             // make sure the debug numbers are in a different

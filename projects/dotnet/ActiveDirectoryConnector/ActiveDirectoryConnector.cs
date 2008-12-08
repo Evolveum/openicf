@@ -742,7 +742,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         // implementation of AdvancedUpdateSpiOp
-        protected virtual Uid Update(UpdateType type, ObjectClass oclass, 
+        public virtual Uid Update(UpdateType type, ObjectClass oclass, 
             ICollection<ConnectorAttribute> attributes, OperationOptions options)
         {
             Uid updatedUid = null;

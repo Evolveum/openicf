@@ -1221,17 +1221,34 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
     public sealed class ConnectorAttributeInfo {
         private readonly string _name;
         private readonly Type _type;
-        private readonly bool _required;
-        private readonly bool _readable;
-        private readonly bool _creatable;
-        private readonly bool _updateable;
-        private readonly bool _multivalue;
-        private readonly bool _returnedByDefault;
+        private readonly Flags _flags;
+        
+    	/**
+    	 * Enum of modifier flags to use for attributes. Note that
+    	 * this enum is designed for configuration by exception such that
+    	 * an empty set of flags are the defaults:
+    	 * <ul>
+         *     <li>updateable</li>
+         *     <li>creatable</li>
+         *     <li>returned by default</li>
+         *     <li>readable</li>
+         *     <li>single-valued</li>
+         *     <li>optional</li>
+         * </ul>
+    	 */
+    	[FlagsAttribute]
+    	public enum Flags {
+    	    NONE = 0,
+    	    REQUIRED = 1,
+    	    MULTIVALUED = 2,
+    	    NOT_CREATABLE = 4,
+    	    NOT_UPDATEABLE = 8,
+    	    NOT_READABLE = 16,
+    	    NOT_RETURNED_BY_DEFAULT = 32
+    	}
 
         internal ConnectorAttributeInfo(string name, Type type,
-                bool readable, bool creatable,
-                bool required, bool multivalue, 
-                bool updateable, bool returnedByDefault) {
+                Flags flags) {
             if (StringUtil.IsBlank(name)) {
                 throw new ArgumentException("Name must not be blank!");
             }
@@ -1246,12 +1263,10 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             FrameworkUtil.CheckAttributeType(type);
             _name = name;
             _type = type;
-            _readable = readable;
-            _creatable = creatable;
-            _required = required;
-            _multivalue = multivalue;
-    		_updateable = updateable;
-            _returnedByDefault = returnedByDefault;
+            _flags = flags;
+    		if (!IsReadable && IsReturnedByDefault) {
+    		    throw new ArgumentException("Attribute "+name+" is flagged as not-readable, so it should also be as not-returned-by-default.");
+    		}
         }
 
         
@@ -1277,6 +1292,17 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                 return _type;
             }
         }
+        
+    	/**
+    	 * Returns the set of flags associated with the attribute.
+    	 * @return the set of flags associated with the attribute
+    	 */
+    	public Flags InfoFlags {
+    	    get {
+        	    return _flags;
+    	    }
+    	}
+        
 
         public bool Is(string name) {
             return Name.ToUpper().Equals(name.ToUpper());
@@ -1289,7 +1315,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          */
         public bool IsReadable {
             get {
-                return _readable;
+                return (_flags & Flags.NOT_READABLE) == 0;
             }
         }
 
@@ -1300,7 +1326,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          */
         public bool IsCreatable {
             get {
-                return _creatable;
+                return (_flags & Flags.NOT_CREATABLE) == 0;
             }
         }
         
@@ -1311,7 +1337,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
     	 */
     	public bool IsUpdateable {
     	    get {
-        		return _updateable;
+    	        return (_flags & Flags.NOT_UPDATEABLE) == 0;
     	    }
     	}
 
@@ -1322,7 +1348,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          */
         public bool IsRequired {
             get {
-                return _required;
+                return (_flags & Flags.REQUIRED) != 0;
             }
         }
 
@@ -1333,9 +1359,9 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          * 
          * @return true if the attribute is multi-value otherwise false.
          */
-        public bool IsMultiValue {
+        public bool IsMultiValued {
             get {
-                return _multivalue;
+                return (_flags & Flags.MULTIVALUED) != 0;
             }
         }
         
@@ -1349,7 +1375,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         */
         public bool IsReturnedByDefault {
             get {
-                return _returnedByDefault;
+                return (_flags & Flags.NOT_RETURNED_BY_DEFAULT) == 0;
             }
         }
         
@@ -1362,22 +1388,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                 if (!ValueType.Equals(other.ValueType)) {
                     return false;
                 }
-                if (IsReadable != other.IsReadable) {
-                    return false;
-                }
-                if (IsCreatable != other.IsCreatable) {
-                    return false;
-                }
-                if (IsRequired != other.IsRequired) {
-                    return false;
-                }
-                if (IsMultiValue != other.IsMultiValue) {
-                    return false;
-                }
-                if (IsReturnedByDefault != other.IsReturnedByDefault) {
-                    return false;
-                }
-                if (IsUpdateable != other.IsUpdateable) {
+                if (_flags != other._flags) {
                     return false;
                 }
                 return true;
@@ -1390,97 +1401,249 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
        
         public override string ToString() {
-           IDictionary<string, object> map = new Dictionary<string, object>();
-            map["Name"] = Name;
-            map["Type"] = ValueType;
-            map["Required"] = IsRequired;
-            map["Readable"] = IsReadable;
-            map["Createable"] = IsCreatable;
-            map["MultiValue"] = IsMultiValue;
-            map["Updateable"] = IsUpdateable;
-            map["ReturnedByDefault"] = IsReturnedByDefault;
-            return map.ToString();
+           return SerializerUtil.SerializeXmlObject(this,false);
         }
     }
     #endregion
 
     #region ConnectorAttributeInfoBuilder
+    /**
+     * Simplifies the process of building 'AttributeInfo' objects. This class is
+     * responsible for providing a default implementation of {@link AttributeInfo}.
+     * 
+     * <code>
+     * AttributeInfoBuilder bld = new AttributeInfoBuilder("email");
+     * bld.setRequired(true);
+     * AttributeInfo info = bld.build();
+     * </code>
+     * 
+     * @author Will Droste
+     * @version $Revision: 1.9 $
+     * @since 1.0
+     */
     public sealed class ConnectorAttributeInfoBuilder {
-        public string Name { get; set; }
-        /// <summary>
-        /// Determines the type for the attribute. Please see
-        /// {@link FrameworkUtil#checkAttributeType(Class)} for
-        /// more information.
-        /// </summary>
-        public Type ValueType { get; set; }
-        public bool Readable { get; set; }
-        public bool Creatable { get; set; }
-        public bool Required { get; set; }
-        public bool MultiValue { get; set; }
-        public bool Updateable { get; set; }
-        public bool ReturnedByDefault { get; set; }
-        
+    
+    	private String _name;
+    	private Type _type;
+    	private ConnectorAttributeInfo.Flags _flags;
+    
+        /**
+         * Creates an builder with all the defaults set. The name must be set before
+         * the 'build' method is called otherwise an {@link IllegalStateException}
+         * is thrown.
+         * 
+         * <pre>
+         * Name: &lt;not set&gt;
+         * Readable: true
+         * Writeable: true
+         * Required: false
+         * Type: string
+         * MultiValue: false
+         * </pre>
+         */
         public ConnectorAttributeInfoBuilder() {
-            Name = null;
-            Readable = true;
-            Creatable = true;
-            Required = false;
-            Updateable = true;
-            MultiValue = false;
-            ValueType = typeof(string);
-            ReturnedByDefault = true;
+            ValueType=(typeof(String));
+            _flags = ConnectorAttributeInfo.Flags.NONE;
         }
         
-        public ConnectorAttributeInfo Build() {
-            return new ConnectorAttributeInfo(Name,
-                                              ValueType,
-                                              Readable,
-                                              Creatable,
-                                              Required,
-                                              MultiValue,
-                                              Updateable,
-                                              ReturnedByDefault);
+        /**
+         * Creates an builder with all the defaults set. The name must be set before
+         * the 'build' method is called otherwise an {@link IllegalStateException}
+         * is thrown.
+         * 
+         * <pre>
+         * Name: &lt;not set&gt;
+         * Readable: true
+         * Writeable: true
+         * Required: false
+         * Type: string
+         * MultiValue: false
+         * </pre>
+         */
+        public ConnectorAttributeInfoBuilder(String name) : this(name,typeof(String)){
         }
-        public static ConnectorAttributeInfo Build(String name) {
-            return new ConnectorAttributeInfoBuilder() {
-                Name = name
-            }.Build();
+        
+    	/**
+    	 * Creates an builder with all the defaults set. The name must be set before
+    	 * the 'build' method is called otherwise an {@link IllegalStateException}
+    	 * is thrown.
+    	 * 
+    	 * <pre>
+    	 * Name: &lt;not set&gt;
+    	 * Readable: true
+    	 * Writeable: true
+    	 * Required: false
+    	 * Type: string
+    	 * MultiValue: false
+    	 * </pre>
+    	 */
+    	public ConnectorAttributeInfoBuilder(String name, Type type) {
+    		Name=(name);
+    		ValueType=(type);
+    		//noneOf means the defaults
+    		_flags = ConnectorAttributeInfo.Flags.NONE;
+    	}
+    
+    	/**
+    	 * Builds an {@link AttributeInfo} object based on the properties set.
+    	 * 
+    	 * @return {@link AttributeInfo} based on the properties set.
+    	 */
+    	public ConnectorAttributeInfo Build() {
+    		return new ConnectorAttributeInfo(_name, _type, _flags);
+    	}
+    
+    	/**
+    	 * Sets the unique name of the {@link AttributeInfo} object.
+    	 * 
+    	 * @param name
+    	 *            unique name of the {@link AttributeInfo} object.
+    	 */
+    	public String Name {
+    	    set {
+        		if (StringUtil.IsBlank(value)) {
+        			throw new ArgumentException("Argument must not be blank.");
+        		}
+        		_name = value;
+    	    }
+    	}
+    
+    	/**
+    	 * Please see {@link FrameworkUtil#checkAttributeType(Class)} for the
+    	 * definitive list of supported types.
+    	 * 
+    	 * @param value
+    	 *            type for an {@link Attribute}'s value.
+    	 * @throws IllegalArgumentException
+    	 *             if the Class is not a supported type.
+    	 */
+    	public Type ValueType {
+    	    set {
+        		FrameworkUtil.CheckAttributeType(value);
+        		_type = value;
+    	    }
+    	}
+    
+    	/**
+    	 * Determines if the attribute is readable.
+    	 */
+    	public bool Readable {
+    	    set {
+        	    SetFlag(ConnectorAttributeInfo.Flags.NOT_READABLE,!value);
+    	    }
+    	}
+    
+    	/**
+    	 * Determines if the attribute is writable.
+    	 */
+    	public bool Creatable {
+    	    set {
+                SetFlag(ConnectorAttributeInfo.Flags.NOT_CREATABLE,!value);
+    	    }
+    	}
+    
+    	/**
+    	 * Determines if this attribute is required.
+    	 */
+    	public bool Required {
+    	    set {
+                SetFlag(ConnectorAttributeInfo.Flags.REQUIRED,value);
+    	    }
+    	}
+    
+    	/**
+    	 * Determines if this attribute supports multivalue.
+    	 */
+    	public bool MultiValued {
+    	    set {
+                SetFlag(ConnectorAttributeInfo.Flags.MULTIVALUED,value);
+    	    }
+    	}
+    
+    	/**
+    	 * Determines if this attribute writable during update.
+    	 */
+    	public bool Updateable {
+    	    set {
+                SetFlag(ConnectorAttributeInfo.Flags.NOT_UPDATEABLE,!value);
+    	    }
+    	}
+    	
+    	public bool ReturnedByDefault {
+    	    set {
+                SetFlag(ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT,!value);
+    	    }
+    	}
+    		
+    	/**
+    	 * Sets all of the flags for this builder.
+    	 * @param flags The set of attribute info flags. Null means clear all flags.
+    	 * <p>
+    	 * NOTE: EnumSet.noneOf(AttributeInfo.Flags.class) results in
+    	 * an attribute with the default behavior:
+    	 * <ul>
+    	 *     <li>updateable</li>
+    	 *     <li>creatable</li>
+         *     <li>returned by default</li>
+         *     <li>readable</li>
+         *     <li>single-valued</li>
+         *     <li>optional</li>
+    	 * </ul>
+    	 */
+    	public ConnectorAttributeInfo.Flags InfoFlags {
+    	    set {
+        	    _flags = value;
+    	    }
+    	}
+    	
+        private void SetFlag(ConnectorAttributeInfo.Flags flag, bool value) {
+            if (value) {
+                _flags = _flags | flag;
+            }
+            else {
+                _flags = _flags & ~flag;
+            }
         }
+    	
+    	/**
+    	 * Convenience method to create an AttributeInfo. Equivalent to
+    	 * <code>
+    	 * new AttributeInfoBuilder(name,type).setFlags(flags).build()
+    	 * </code>
+    	 * @param name The name of the attribute
+    	 * @param type The type of the attribute
+    	 * @param flags The flags for the attribute. Null means clear all flags
+    	 * @return The attribute info 
+    	 */
+    	public static ConnectorAttributeInfo Build(String name, Type type,
+    	        ConnectorAttributeInfo.Flags flags) {
+    	    return new ConnectorAttributeInfoBuilder(name,type){InfoFlags=flags}.Build();
+    	}
+        /**
+         * Convenience method to create an AttributeInfo. Equivalent to
+         * <code>
+         * AttributeInfoBuilder.build(name,type,null)
+         * </code>
+         * @param name The name of the attribute
+         * @param type The type of the attribute
+         * @param flags The flags for the attribute
+         * @return The attribute info 
+         */
         public static ConnectorAttributeInfo Build(String name, Type type) {
-            return new ConnectorAttributeInfoBuilder() {
-                Name = name,
-                ValueType = type
-            }.Build();
-        }
-        public static ConnectorAttributeInfo Build(String name, Type type, bool required) {
-            return new ConnectorAttributeInfoBuilder() {
-                Name = name,
-                ValueType = type,
-                Required = required
-            }.Build();
-        }
-        public static ConnectorAttributeInfo Build( String name,
-             bool required,  bool readable, bool creatable, bool updateable) {
-            ConnectorAttributeInfoBuilder bld = new ConnectorAttributeInfoBuilder();
-            bld.Name = name;
-            bld.Required = required;
-            bld.Readable = readable;
-            bld.Creatable = creatable;
-            bld.Updateable = updateable;
-            return bld.Build();
+            return Build(name,type,ConnectorAttributeInfo.Flags.NONE);
         }
     
-        public static ConnectorAttributeInfo Build( String name,  Type type,
-                 bool required,  bool readable, bool creatable, bool updateable) {
-            ConnectorAttributeInfoBuilder bld = new ConnectorAttributeInfoBuilder();
-            bld.Name = name;
-            bld.ValueType = type;
-            bld.Required = required;
-            bld.Readable = readable;
-            bld.Creatable = creatable;
-            bld.Updateable = updateable;
-            return bld.Build();
-        }  
+        /**
+         * Convenience method to create an AttributeInfo. Equivalent to
+         * <code>
+         * AttributeInfoBuilder.build(name,type)
+         * </code>
+         * @param name The name of the attribute
+         * @return The attribute info 
+         */
+        public static ConnectorAttributeInfo Build(String name) {
+            return Build(name,typeof(String));
+        }
     }
     #endregion
     
@@ -1523,6 +1686,8 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
     public sealed class Name : ConnectorAttribute {
         
         public readonly static string NAME = ConnectorAttributeUtil.CreateSpecialName("NAME");
+        public readonly static ConnectorAttributeInfo INFO =
+            new ConnectorAttributeInfoBuilder(NAME) {Required=true}.Build();
         
         public Name(String value) : base(NAME, CollectionUtil.NewReadOnlyList<object>(value)) {
         }
@@ -1707,10 +1872,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         public ObjectClassInfo Build() {
             // determine if name is missing and add it by default
             if (!_info.ContainsKey(Name.NAME)) {
-                ConnectorAttributeInfo info =
-                    ConnectorAttributeInfoBuilder.Build(
-                        Name.NAME, typeof(string), true);
-                _info[info.Name] = info;
+                _info[Name.NAME] = Name.INFO;
             }
             return new ObjectClassInfo(ObjectType, _info.Values, _isContainer);
         }
@@ -1763,7 +1925,9 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         public static readonly ConnectorAttributeInfo PASSWORD = 
             ConnectorAttributeInfoBuilder.Build(
                 OperationalAttributes.PASSWORD_NAME, typeof(GuardedString), 
-                true, false, true, true);
+                ConnectorAttributeInfo.Flags.REQUIRED |
+                ConnectorAttributeInfo.Flags.NOT_READABLE |
+                ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT);
     
         /**
          * Used in conjunction with password to do an account level password change.
@@ -1772,8 +1936,9 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          */
         public static readonly ConnectorAttributeInfo CURRENT_PASSWORD = 
             ConnectorAttributeInfoBuilder.Build(
-                OperationalAttributes.CURRENT_PASSWORD_NAME, typeof(GuardedString), 
-                false, false, true, true);
+                OperationalAttributes.CURRENT_PASSWORD_NAME, typeof(GuardedString),                 
+                ConnectorAttributeInfo.Flags.NOT_READABLE |
+                ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT);
     
         /**
          * Used to do an administrator reset of the password. The value is the reset
@@ -1782,7 +1947,8 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         public static readonly ConnectorAttributeInfo RESET_PASSWORD = 
             ConnectorAttributeInfoBuilder.Build(
                 OperationalAttributes.RESET_PASSWORD_NAME, typeof(GuardedString),
-                false, false, true, true);
+                ConnectorAttributeInfo.Flags.NOT_READABLE |
+                ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT);
         
         /**
          * Used to determine if a password is expired or to expire a password.
@@ -1936,25 +2102,24 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          * application will have to use the NAME to show the value.
          */
         public static readonly ConnectorAttributeInfo SHORT_NAME = 
-            ConnectorAttributeInfoBuilder.Build(PredefinedAttributes.SHORT_NAME,
-                  typeof(String),
-                  false, true, true, true);
+            ConnectorAttributeInfoBuilder.Build(PredefinedAttributes.SHORT_NAME);
         
         /**
          * Attribute that should hold the value of the object's description,
          * if one is available.
          */
         public static readonly ConnectorAttributeInfo DESCRIPTION = 
-            ConnectorAttributeInfoBuilder.Build(PredefinedAttributes.DESCRIPTION,
-                  typeof(String),
-                  false, true, true, true);
+            ConnectorAttributeInfoBuilder.Build(PredefinedAttributes.DESCRIPTION);
         /**
          * Read-only attribute that shows the last date/time the password was
          * changed.
          */
         public static readonly ConnectorAttributeInfo LAST_PASSWORD_CHANGE_DATE = 
             ConnectorAttributeInfoBuilder.Build(
-                PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME, typeof(long), false, true, false, false);
+                PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME, 
+                typeof(long), 
+                ConnectorAttributeInfo.Flags.NOT_CREATABLE |
+                ConnectorAttributeInfo.Flags.NOT_UPDATEABLE);
     
         /**
          * Common password policy attribute where the password must be changed every
@@ -1971,47 +2136,43 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          */
         public static readonly ConnectorAttributeInfo LAST_LOGIN_DATE = 
             ConnectorAttributeInfoBuilder.Build(
-                PredefinedAttributes.LAST_LOGIN_DATE_NAME, typeof(long), false, true, false, false);
-        
-        static PredefinedAttributeInfos()  {
-            // define GROUPS attribute info
-            ConnectorAttributeInfoBuilder bld = new ConnectorAttributeInfoBuilder();
-            bld.Name = PredefinedAttributes.GROUPS_NAME;
-            bld.MultiValue = true;
-            bld.ReturnedByDefault = false;
-            GROUPS = bld.Build();
-            // define ACCOUNTS attribute info
-            bld = new ConnectorAttributeInfoBuilder();
-            bld.Name = PredefinedAttributes.ACCOUNTS_NAME;
-            bld.MultiValue = true;
-            bld.ReturnedByDefault = false;
-            ACCOUNTS = bld.Build();
-            // define ORGANIZATION
-            bld = new ConnectorAttributeInfoBuilder();
-            bld.Name = PredefinedAttributes.ORGANIZATION_NAME;
-            bld.ReturnedByDefault = false;
-            ORGANIZATIONS = bld.Build();
-        }
-    
+                PredefinedAttributes.LAST_LOGIN_DATE_NAME, 
+                typeof(long), 
+                ConnectorAttributeInfo.Flags.NOT_CREATABLE |
+                ConnectorAttributeInfo.Flags.NOT_UPDATEABLE);
+            
         /**
          * Groups that an account or person belong to. The Attribute values are the
          * UID value of each group that an account has membership in.
          */
-        public static readonly ConnectorAttributeInfo GROUPS;
+        public static readonly ConnectorAttributeInfo GROUPS = 
+            ConnectorAttributeInfoBuilder.Build(PredefinedAttributes.GROUPS_NAME,
+                    typeof(String),
+                    ConnectorAttributeInfo.Flags.MULTIVALUED |
+                    ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT);
+            
     
         /**
          * Accounts that are members of a group or organization. The Attribute
          * values are the UID value of each account the has a group or organization
          * membership.
          */
-        public static readonly ConnectorAttributeInfo ACCOUNTS;
+        public static readonly ConnectorAttributeInfo ACCOUNTS =
+            ConnectorAttributeInfoBuilder.Build(PredefinedAttributes.ACCOUNTS_NAME,
+                    typeof(String),
+                    ConnectorAttributeInfo.Flags.MULTIVALUED|
+                    ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT);
+            
     
         /**
          * Organizations that an account or person is a member of. The Attribute
          * values are the UID value of each organization that an account or person is
          * a member of.
          */
-        public static readonly ConnectorAttributeInfo ORGANIZATIONS;
+        public static readonly ConnectorAttributeInfo ORGANIZATIONS =
+            ConnectorAttributeInfoBuilder.Build(PredefinedAttributes.ORGANIZATION_NAME,
+                                       typeof(String),
+                    ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT);
     }
     #endregion
 
