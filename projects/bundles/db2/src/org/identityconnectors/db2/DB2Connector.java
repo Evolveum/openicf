@@ -15,7 +15,20 @@ import org.identityconnectors.framework.spi.*;
 import org.identityconnectors.framework.spi.operations.*;
 
 /**
- * Connector to DB2
+ * Connector to DB2 database.
+ * DB2Connector is main class of connector contract when DB2 database is target resource. DB2 uses external authentication provider and internal
+ * authorization service. DB2 stores authorization for users of DB2 objects : database,schema,table,index,procedure,package,server,tablespace.
+ * It supports just one ObjectClass : ObjectClass.ACCOUNT.
+ * DB2 connector is case insensitive, DB2 stores uppercase value in system tables.
+ * DB2 connector uses following attributes :
+ * <ol>
+ * 	<li>Name : is name of user</li>
+ * 	<li>grants : is multivalue attribute that means list of grants user has</li>
+ * </ol>
+ * 
+ * {@link DB2Configuration}
+ * 
+ * 
  * @author kitko
  *
  */
@@ -31,8 +44,15 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
     private static final int maxNameSize = 30;
     static final String USER_AUTH_GRANTS = "grants";
 
+    
 
-	public Uid authenticate(String username, GuardedString password,OperationOptions options) {
+	/**
+	 * Authenticates user in DB2 database. Here we create new SQL connection with passed credentials to authenticate user. 
+	 * We check SQL state and return code to verify that possibly thrown exception really means user/password is invalid.
+	 * When we are able to get connection using passed credentials, we consider that authenticate passed.
+	 * @see {@link AuthenticateOp#authenticate(String, GuardedString, OperationOptions)}
+	 */
+    public Uid authenticate(String username, GuardedString password,OperationOptions options) {
 		log.info("authenticate user: {0}", username);
 		//just try to create connection with passed credentials
 		Connection conn = null;
@@ -130,7 +150,11 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
         return new DB2FilterTranslator(oclass, options);
     }
 	
-
+    /**
+     * Executes search using DB2 system table. We support searching by UID/Name and grants. When searching by uid/name we use
+     * <code>SYSIBM.SYSDBAUTH table</code> to execute search. We always include grants attribute by reading all grants from system tables.
+     * Then when searching by grants, we will return now all users and framework will filter users that have filtered grants. 
+     */
 	public void executeQuery(ObjectClass oclass, FilterWhereBuilder where,ResultsHandler handler, OperationOptions options) {
 		//Read users from SYSIBM.SYSDBAUTH table
 		//DB2 stores users in UPPERCASE , we must do UPPER(TRIM(GRANTEE)) = upper('john')
@@ -181,6 +205,11 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
         }
 	}
 	
+	/**
+	 * Create user in case of DB2 means only storing passed grants. We will actually not create any new user, DB2 uses externally authentication
+	 * provider to do real authentication, default to underlying OS. So here we just verify name of user and verify if same user is not already stored
+	 * in DB2 system tables. Then we store passed user grants using grant statement. 
+	 */
 	public Uid create(ObjectClass oclass, Set<Attribute> attrs,OperationOptions options) {
         if ( oclass == null || !oclass.equals(ObjectClass.ACCOUNT)) {
             throw new IllegalArgumentException(
@@ -384,7 +413,10 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
     }
     
 
-	public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
+	/**
+	 * Removes all associated grants from user, so do all revoke statement.
+	 */
+    public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
         if ( objClass == null || !objClass.equals(ObjectClass.ACCOUNT)) {
             throw new IllegalArgumentException(
                     "Create operation requires an 'ObjectClass' attribute of type 'Account'.");
@@ -400,24 +432,35 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	}
 	
 
-
+    /**
+     * Test of configuration and validity of connection
+     */
 	public void test() {
 		cfg.validate();
 		DB2Specifics.testConnection(adminConn);
 	}
 
-    public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
+    /**
+     * Replaces value of grants attribute. 
+     */
+	public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
         return update(UpdateType.REPLACE,objclass,AttributeUtil.addUid(attrs,uid),options);
     }
     
-    public Uid addAttributeValues(ObjectClass objclass,
+    /**
+     * Add grants to existing grants of user
+     */
+	public Uid addAttributeValues(ObjectClass objclass,
             Uid uid,
             Set<Attribute> valuesToAdd,
             OperationOptions options) {
         return update(UpdateType.ADD,objclass,AttributeUtil.addUid(valuesToAdd, uid),options);
     }
 
-    public Uid removeAttributeValues(ObjectClass objclass,
+    /**
+     * Removes grants from user
+     */
+	public Uid removeAttributeValues(ObjectClass objclass,
             Uid uid,
             Set<Attribute> valuesToRemove,
             OperationOptions options) {

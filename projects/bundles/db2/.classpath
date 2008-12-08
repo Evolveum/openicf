@@ -6,5 +6,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-HEAD"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorContractTests"/>
+	<classpathentry kind="var" path="USER_HOME/.connectors/connector-db2/lib/db2jcc.jar"/>
+	<classpathentry kind="var" path="USER_HOME/.connectors/connector-db2/lib/db2java.jar"/>
 	<classpathentry kind="output" path="ide-build"/>
 </classpath>
