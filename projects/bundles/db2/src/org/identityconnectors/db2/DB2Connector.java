@@ -81,7 +81,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
         //The Name is supported attribute
         Set<AttributeInfo> attrInfoSet = new HashSet<AttributeInfo>();
         attrInfoSet.add(AttributeInfoBuilder.build(Name.NAME,String.class,
-                EnumSet.of(Flags.NOT_UPDATEABLE)));
+                EnumSet.of(Flags.NOT_UPDATEABLE,Flags.REQUIRED)));
         AttributeInfoBuilder grantsBuilder = new AttributeInfoBuilder();
         grantsBuilder.setName(USER_AUTH_GRANTS).setCreateable(true).
         setUpdateable(true).setRequired(true).setReadable(true).
