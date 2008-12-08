@@ -53,6 +53,7 @@
         <mkdir dir="${reports}" />
         <junitreport todir="${reports}">
             <fileset dir="." includes="**/reports/junit/TEST-*.xml"/>
+            <fileset dir="." includes="**/reports/contracts/TEST-*.xml"/> 
             <report todir="${reports}" format="frames"/>
         </junitreport>
     </target>
