@@ -1,0 +1,126 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Copyright 2008 Sun Microsystems, Inc. All rights reserved.
+  
+  U.S. Government Rights - Commercial software. Government users 
+  are subject to the Sun Microsystems, Inc. standard license agreement
+  and applicable provisions of the FAR and its supplements.
+  
+  Use is subject to license terms.
+  
+  This distribution may include materials developed by third parties.
+  Sun, Sun Microsystems, the Sun logo, Java and Project Identity 
+  Connectors are trademarks or registered trademarks of Sun 
+  Microsystems, Inc. or its subsidiaries in the U.S. and other
+  countries.
+  
+  UNIX is a registered trademark in the U.S. and other countries,
+  exclusively licensed through X/Open Company, Ltd. 
+  
+  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+  
+  Copyright 2008 Sun Microsystems, Inc. All rights reserved. 
+  
+  The contents of this file are subject to the terms of the Common Development
+  and Distribution License(CDDL) (the License).  You may not use this file
+  except in  compliance with the License. 
+  
+  You can obtain a copy of the License at
+  http://identityconnectors.dev.java.net/CDDLv1.0.html
+  See the License for the specific language governing permissions and 
+  limitations under the License.  
+  
+  When distributing the Covered Code, include this CDDL Header Notice in each
+  file and include the License file at identityconnectors/legal/license.txt.
+  If applicable, add the following below this CDDL Header, with the fields 
+  enclosed by brackets [] replaced by your own identifying information: 
+  "Portions Copyrighted [year] [name of copyright owner]"
+-->
+<List>
+  <ObjectClassInfo container="false" type="account">
+    <AttributeInfos>
+      <AttributeInfo name="sAMAccountName" type="String" creatable="true" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="givenName" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="sn" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="displayName" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="mail" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="telephoneNumber" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="employeeID" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="division" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="mobile" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="middleName" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="description" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="true"/>
+      <AttributeInfo name="department" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="manager" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="title" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="initials" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="co" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="company" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="facsimileTelephoneNumber" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="homePhone" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="streetAddress" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="l" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="st" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="postalCode" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="TerminalServicesInitialProgram" type="String" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="TerminalServicesWorkDirectory" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="AllowLogon" type="Integer" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="MaxConnectionTime" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>      
+      <AttributeInfo name="MaxDisconnectionTime" type="Integer" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="MaxIdleTime" type="Integer" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="ConnectClientDrivesAtLogon" type="Integer" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="ConnectClientPrintersAtLogon" type="Integer" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="DefaultToMainPrinter" type="Integer" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="BrokenConnectionAction" type="Integer" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="ReconnectionAction" type="Integer" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="EnableRemoteControl" type="String" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="TerminalServicesProfilePath" type="String" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="TerminalServicesHomeDirectory" type="String" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="TerminalServicesHomeDrive" type="String" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="uSNChanged" type="String" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="ad_container" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="otherHomePhone" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="true"/>
+      <AttributeInfo name="distinguishedName" type="String" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="objectClass" type="String" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="homeDirectory" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="@@ENABLE@@" type="Boolean" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="@@ENABLE_DATE@@" type="long" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="@@LOCK_OUT@@" type="Boolean" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="@@PASSWORD_EXPIRATION_DATE@@" type="long" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="@@PASSWORD_EXPIRED@@" type="Boolean" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="@@CURRENT_PASSWORD@@" type="GuardedString" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="@@PASSWORD@@" type="GuardedString" creatable="true" readable="false" required="false" updatable="true" returnedbydefault="false" multivalue="true"/>
+      <AttributeInfo name="@@GROUPS@@" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="@@DESCRIPTION@@" type="String" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="@@SHORT_NAME@@" type="String" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="@@NAME@@" type="String" creatable="true" readable="true" required="true" updatable="true" returnedbydefault="true" multivalue="false"/>
+    </AttributeInfos>
+  </ObjectClassInfo>
+  <ObjectClassInfo container="false" type="group">
+    <AttributeInfos>
+      <AttributeInfo name="cn" type="String" creatable="false" readable="true" required="false" updatable="false" returned-by-default="true" multivalue="false"/>
+      <AttributeInfo name="samAccountName" type="String" creatable="true" readable="true" required="false" updatable="true" returned-by-default="true" multivalue="false"/>
+      <AttributeInfo name="description" type="String" creatable="true" readable="true" required="false" updatable="true" returned-by-default="true" multivalue="false"/>
+      <AttributeInfo name="displayName" type="String" creatable="false" readable="true" required="false" updatable="false" returned-by-default="true" multivalue="false"/>
+      <AttributeInfo name="managedby" type="String" creatable="true" readable="true" required="false" updatable="true" returned-by-default="true" multivalue="false"/>
+      <AttributeInfo name="mail" type="String" creatable="true" readable="true" required="false" updatable="true" returned-by-default="true" multivalue="false"/>
+      <AttributeInfo name="groupType" type="String" creatable="true" readable="true" required="false" updatable="true" returned-by-default="true" multivalue="false"/>
+      <AttributeInfo name="objectClass" type="String" creatable="false" readable="true" required="false" updatable="false" returned-by-default="true" multivalue="false"/>
+      <AttributeInfo name="member" type="String" creatable="true" readable="true" required="false" updatable="false" returned-by-default="true" multivalue="true"/>
+      <AttributeInfo name="ad_container" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="@@ACCOUNTS@@" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="@@DESCRIPTION@@" type="String" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="@@SHORT_NAME@@" type="String" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="@@NAME@@" type="String" creatable="true" readable="true" required="true" updatable="true" returnedbydefault="true" multivalue="false"/>
+    </AttributeInfos>
+  </ObjectClassInfo>
+  <ObjectClassInfo container="true" type="Organizational Unit">
+    <AttributeInfos>
+      <AttributeInfo name="ou" type="String" creatable="false" readable="true" required="false" updatable="false" returned-by-default="true" multivalue="false"/>
+      <AttributeInfo name="displayName" type="String" creatable="false" readable="true" required="false" updatable="false" returned-by-default="true" multivalue="false"/>
+      <AttributeInfo name="@@DESCRIPTION@@" type="String" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="@@SHORT_NAME@@" type="String" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="@@NAME@@" type="String" creatable="true" readable="true" required="true" updatable="true" returnedbydefault="true" multivalue="false"/>
+    </AttributeInfos>
+  </ObjectClassInfo>
+</List>

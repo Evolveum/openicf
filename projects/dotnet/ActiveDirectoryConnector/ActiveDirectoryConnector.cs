@@ -75,87 +75,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         SearchOp<String>, TestOp, UpdateAttributeValuesOp, ScriptOnResourceOp, SyncOp, 
         AuthenticateOp, AttributeNormalizer, PoolableConnector
 	{
-        // This is the list of attributes returned by default if no attributes are
-        // requested in the options field of ExecuteQuery for Account
-        public readonly static ICollection<string> AccountAttributesReturnedByDefault = 
-            new HashSet<string>(StringComparer.CurrentCultureIgnoreCase) {
-//            "userPassword",
-            "sAMAccountName",
-            "givenName",
-            "sn",
-            "displayName",
-            "mail",
-            "telephoneNumber",
-            "employeeId",
-            "division",
-            "mobile",
-            "middleName",
-            "description",
-            "department",
-            "manager",
-            "title",
-            "initials",
-            "co",
-            "company",
-            "facsimileTelephoneNumber",
-            "homePhone",
-            "streetAddress",
-            "l",
-            "st",
-            "postalCode",
-            "TerminalServicesInitialProgram",
-            "TerminalServicesWorkDirectory",
-            "AllowLogon",
-            "MaxConnectionTime",
-            "MaxDisconnectionTime",
-            "MaxIdleTime",
-            "ConnectClientDrivesAtLogon",
-            "ConnectClientPrintersAtLogon",
-            "DefaultToMainPrinter",
-            "BrokenConnectionAction",
-            "ReconnectionAction",
-            "EnableRemoteControl",
-            "TerminalServicesProfilePath",
-            "TerminalServicesHomeDirectory",
-            "TerminalServicesHomeDrive",
-            "uSNChanged",
-            "ad_container",
-            "otherHomePhone",
-            "distinguishedName",
-            "objectClass",
-            "homeDirectory",
-       };
-
-        // This is the list of attributes returned by default if no attributes are
-        // requested in the options field of ExecuteQuery for groups
-        public readonly static ICollection<string> GroupAttributesReturnedByDefault =
-            new HashSet<string>(StringComparer.CurrentCultureIgnoreCase)
-            {
-                "cn",
-                "samAccountName",
-                "description",
-                "displayName",
-                "managedby",
-                "mail",
-                "groupType",
-                "objectClass",
-                "member",
-            };
-
-        // This is the list of attributes returned by default if no attributes are
-        // requested in the options field of ExecuteQuery for groups
-        public readonly static ICollection<string> OuAttributesReturnedByDefault =
-            new HashSet<string>(StringComparer.CurrentCultureIgnoreCase)
-            {
-                Name.NAME,
-                "ou",
-                "displayName",
-            };
-
-        public static IDictionary<ObjectClass, ICollection<string>> RegularAttributesReturnedByDefault = null;
-        // optimization for attrs to get in the hopse of improving recon performance for idm
-        public static IDictionary<ObjectClass, ICollection<string>> SpecialAttributesReturnedByDefault = null;
-            
+        public static IDictionary<ObjectClass, ICollection<string>> AttributesReturnedByDefault = null;
 
         // special attribute names
         public static readonly string ATT_CONTAINER = "ad_container";
@@ -183,18 +103,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         ActiveDirectoryConfiguration _configuration = null;
         ActiveDirectoryUtils _utils = null;
-        private Schema _schema = null;
-        private ActiveDirectorySchema _ADSchema = null;
-
-        static ActiveDirectoryConnector()
+        private static Schema _schema = null;
+        public ActiveDirectoryConnector()
         {
-            // populate default attributes
-            RegularAttributesReturnedByDefault = new Dictionary<ObjectClass, ICollection<string>>();
-            RegularAttributesReturnedByDefault.Add(ObjectClass.ACCOUNT, AccountAttributesReturnedByDefault);
-            RegularAttributesReturnedByDefault.Add(ObjectClass.GROUP, GroupAttributesReturnedByDefault);
-            RegularAttributesReturnedByDefault.Add(ouObjectClass, OuAttributesReturnedByDefault);
-
-            SpecialAttributesReturnedByDefault = new Dictionary<ObjectClass, ICollection<string>>();
+            // populate default attributes and Schema
+            Schema();
         }
 
         #region CreateOp Members
@@ -328,28 +241,51 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         #endregion
 
+        protected ICollection<string> GetDefaultAttributeListForObjectClass(
+            ObjectClass oclass, ObjectClassInfo oclassInfo)
+        {
+            ICollection<string> defaultAttributeList = new List<string>();
+
+            foreach (ConnectorAttributeInfo attInfo in oclassInfo.ConnectorAttributeInfos)
+            {
+                if (attInfo.IsReturnedByDefault)
+                {
+                    defaultAttributeList.Add(attInfo.Name);
+                }
+            }
+
+            return defaultAttributeList;
+        }
+
         #region SchemaOp Members
         // implementation of SchemaSpiOp
         public Schema Schema()
         {            
             Trace.TraceInformation("Schema method");
-
             if (_schema != null)
             {
                 Trace.TraceInformation("Returning cached schema");
                 return _schema;
             }
 
-            Trace.TraceInformation("Retrieving schema");
-
             SchemaBuilder schemaBuilder = 
                 new SchemaBuilder(SafeType<Connector>.Get(this));
+            AttributesReturnedByDefault = new Dictionary<ObjectClass, ICollection<string>>();
             
             //iterate through supported object classes
             foreach(ObjectClass oc in GetSupportedObjectClasses())
             {
                 ObjectClassInfo ocInfo = GetObjectClassInfo(oc);
                 Assertions.NullCheck(ocInfo, "ocInfo");
+
+                //populate the list of default attributes to get
+                AttributesReturnedByDefault.Add(oc, new HashSet<string>());
+                foreach (ConnectorAttributeInfo caInfo in ocInfo.ConnectorAttributeInfos)
+                {
+                    if( caInfo.IsReturnedByDefault ) {
+                        AttributesReturnedByDefault[oc].Add(caInfo.Name);
+                    }
+                }
 
                 //add object class to schema
                 schemaBuilder.DefineObjectClass(ocInfo);
@@ -385,11 +321,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// Defines the supported object classes by the connector, used for schema building
         /// </summary>
         /// <returns>List of supported object classes</returns>
-        protected virtual IList<ObjectClass> GetSupportedObjectClasses()
+        protected virtual ICollection<ObjectClass> GetSupportedObjectClasses()
         {
-            IList<ObjectClass> ocList = new List<ObjectClass> {ObjectClass.ACCOUNT, ObjectClass.GROUP, ouObjectClass};
-            return ocList;
-        }
+            IDictionary<ObjectClass, ObjectClassInfo> objectClassInfos = 
+                    CommonUtils.GetOCInfo("Org.IdentityConnectors.ActiveDirectory.ObjectClasses.xml");
+
+            return objectClassInfos.Keys;
+		}
 
         /// <summary>
         /// Gets the object class info for specified object class, used for schema building
@@ -398,45 +336,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// <returns>ObjectClass' ObjectClassInfo</returns>
         protected virtual ObjectClassInfo GetObjectClassInfo(ObjectClass oc)
         {
-            if (_ADSchema == null)
-            {
-                _ADSchema = GetADSchema();
-            }
-            
-            if (oc == ObjectClass.ACCOUNT)
-            {
-                // get the user attribute infos and operations
-                ICollection<ConnectorAttributeInfo> userAttributeInfos =
-                    GetUserAttributeInfos(_ADSchema);
-                var ociBuilder = new ObjectClassInfoBuilder {ObjectType = ObjectClass.ACCOUNT_NAME, IsContainer = false};
-                ociBuilder.AddAllAttributeInfo(userAttributeInfos);
-                ObjectClassInfo userInfo = ociBuilder.Build();
-                return userInfo;
-            }
-            
-            if (oc == ObjectClass.GROUP)
-            {
-                // get the group attribute infos and operations
-                ICollection<ConnectorAttributeInfo> groupAttributeInfos =
-                    GetGroupAttributeInfos(_ADSchema);
-                var ociBuilder = new ObjectClassInfoBuilder {ObjectType = ObjectClass.GROUP_NAME, IsContainer = false};
-                ociBuilder.AddAllAttributeInfo(groupAttributeInfos);     
-                ObjectClassInfo groupInfo = ociBuilder.Build();
-                return groupInfo;
-            }
-            
-            if (oc == ouObjectClass)
-            {
-                // get the organizationalUnit attribute infos and operations
-                ICollection<ConnectorAttributeInfo> ouAttributeInfos =
-                    GetOuAttributeInfos(_ADSchema);
-                var ociBuilder = new ObjectClassInfoBuilder {ObjectType = OBJECTCLASS_OU, IsContainer = true};
-                ociBuilder.AddAllAttributeInfo(ouAttributeInfos);
-                ObjectClassInfo ouInfo = ociBuilder.Build();
-                return ouInfo;
-            }
+            IDictionary<ObjectClass, ObjectClassInfo> objectClassInfos = 
+                    CommonUtils.GetOCInfo("Org.IdentityConnectors.ActiveDirectory.ObjectClasses.xml");
 
-            return null;
+            return objectClassInfos[oc];
         }
 
         /// <summary>
@@ -456,7 +359,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// <returns></returns>
         protected virtual IList<SafeType<SPIOperation>> GetUnSupportedOperations(ObjectClass oc)
         {
-            if (oc == ObjectClass.GROUP || oc == ouObjectClass)
+            if (oc.Equals(ObjectClass.GROUP) || oc.Equals(ouObjectClass))
             {
                 return new List<SafeType<SPIOperation>> {
                     SafeType<SPIOperation>.Get<AuthenticateOp>(),
@@ -495,290 +398,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             ActiveDirectorySchema ADSchema = forest.Schema;
             return ADSchema;
-        }
-
-        public ICollection<ConnectorAttributeInfo> GetUserAttributeInfos(
-            ActiveDirectorySchema ADSchema)
-        {
-            ICollection<ConnectorAttributeInfo> attributeInfos = new Collection<ConnectorAttributeInfo>();
-            // put in operational attributes
-            attributeInfos.Add(OperationalAttributeInfos.ENABLE);
-            /*
-            attributeInfos.Add(OperationalAttributeInfos.ENABLE_DATE);
-            attributeInfos.Add(OperationalAttributeInfos.DISABLE_DATE);
-             */
-            attributeInfos.Add(OperationalAttributeInfos.LOCK_OUT);
-
-            attributeInfos.Add(OperationalAttributeInfos.PASSWORD_EXPIRATION_DATE);
-            attributeInfos.Add(OperationalAttributeInfos.PASSWORD_EXPIRED);
-            attributeInfos.Add(OperationalAttributeInfos.CURRENT_PASSWORD);
-            // dont think I need this
-            // attributeInfos.Add(OperationalAttributeInfos.RESET_PASSWORD);
-            attributeInfos.Add(PredefinedAttributeInfos.GROUPS);
-            attributeInfos.Add(OperationalAttributeInfos.PASSWORD);
-
-            ConnectorAttributeInfoBuilder descriptionBuilder = new ConnectorAttributeInfoBuilder();
-            descriptionBuilder.Name = PredefinedAttributeInfos.DESCRIPTION.Name;
-            descriptionBuilder.ValueType = PredefinedAttributeInfos.DESCRIPTION.ValueType;
-            descriptionBuilder.Readable = true;
-            descriptionBuilder.Creatable = false;
-            descriptionBuilder.Updateable = false;
-            descriptionBuilder.Required = false;
-            descriptionBuilder.ReturnedByDefault = true;
-            attributeInfos.Add(descriptionBuilder.Build());
-
-            ConnectorAttributeInfoBuilder shortNameBuilder = new ConnectorAttributeInfoBuilder();
-            shortNameBuilder.Name = PredefinedAttributeInfos.SHORT_NAME.Name;
-            shortNameBuilder.ValueType = PredefinedAttributeInfos.SHORT_NAME.ValueType;
-            shortNameBuilder.Readable = true;
-            shortNameBuilder.Creatable = false;
-            shortNameBuilder.Updateable = false;
-            shortNameBuilder.Required = false;
-            shortNameBuilder.ReturnedByDefault = true;
-            attributeInfos.Add(shortNameBuilder.Build());
-
-            ICollection<String> attributesToIgnore = new List<String>();
-
-            attributesToIgnore.Add("CN");
-            attributesToIgnore.Add(ATT_USER_PASSWORD);
-
-            // get everything else from the schema
-            PopulateSchemaFromAD(_configuration.ObjectClass, ADSchema, attributeInfos, 
-                attributesToIgnore, ObjectClass.ACCOUNT);
-
-            // now add in container ... 
-            attributeInfos.Add(GetConnectorAttributeInfo(ATT_CONTAINER, 
-                typeof(string), true, true, false, false, ObjectClass.ACCOUNT));
-
-            // add in the userPassword
-            // attributeInfos.Add(GetConnectorAttributeInfo(ATT_USER_PASSWORD,
-            // typeof(string), false, true, true, false, ObjectClass.ACCOUNT));
-
-            // add in terminal services attributes
-            attributeInfos.Add(GetConnectorAttributeInfo(
-                TerminalServicesUtils.TS_INITIAL_PROGRAM, typeof(string), 
-                false, true, false, false, ObjectClass.ACCOUNT));
-            attributeInfos.Add(GetConnectorAttributeInfo(
-                TerminalServicesUtils.TS_INITIAL_PROGRAM_DIR, typeof(string), 
-                false, true, false, false, ObjectClass.ACCOUNT));
-            attributeInfos.Add(GetConnectorAttributeInfo(
-                TerminalServicesUtils.TS_ALLOW_LOGON, typeof(int),
-                false, true, false, false, ObjectClass.ACCOUNT));
-            attributeInfos.Add(GetConnectorAttributeInfo(
-                TerminalServicesUtils.TS_MAX_CONNECTION_TIME, typeof(int), 
-                false, true, false, false, ObjectClass.ACCOUNT));
-            attributeInfos.Add(GetConnectorAttributeInfo(
-                TerminalServicesUtils.TS_MAX_DISCONNECTION_TIME, typeof(int),
-                false, true, false, false, ObjectClass.ACCOUNT));
-            attributeInfos.Add(GetConnectorAttributeInfo(
-                TerminalServicesUtils.TS_MAX_IDLE_TIME, typeof(int),
-                false, true, false, false, ObjectClass.ACCOUNT));
-            attributeInfos.Add(GetConnectorAttributeInfo(
-                TerminalServicesUtils.TS_CONNECT_CLIENT_DRIVES_AT_LOGON, typeof(int),
-                false, true, false, false, ObjectClass.ACCOUNT));
-            attributeInfos.Add(GetConnectorAttributeInfo(
-                TerminalServicesUtils.TS_CONNECT_CLIENT_PRINTERS_AT_LOGON, typeof(int),
-                false, true, false, false, ObjectClass.ACCOUNT));
-            attributeInfos.Add(GetConnectorAttributeInfo(
-                TerminalServicesUtils.TS_DEFAULT_TO_MAIN_PRINTER, typeof(int),
-                false, true, false, false, ObjectClass.ACCOUNT));
-            attributeInfos.Add(GetConnectorAttributeInfo(
-                TerminalServicesUtils.TS_BROKEN_CONNECTION_ACTION, typeof(int),
-                false, true, false, false, ObjectClass.ACCOUNT));
-            attributeInfos.Add(GetConnectorAttributeInfo(
-                TerminalServicesUtils.TS_RECONNECTION_ACTION, typeof(int),
-                false, true, false, false, ObjectClass.ACCOUNT));
-            attributeInfos.Add(GetConnectorAttributeInfo(
-                TerminalServicesUtils.TS_ENABLE_REMOTE_CONTROL, typeof(int),
-                false, true, false, false, ObjectClass.ACCOUNT));
-            attributeInfos.Add(GetConnectorAttributeInfo(
-                TerminalServicesUtils.TS_PROFILE_PATH, typeof(string),
-                false, true, false, false, ObjectClass.ACCOUNT));
-            attributeInfos.Add(GetConnectorAttributeInfo(
-                TerminalServicesUtils.TS_HOME_DIRECTORY, typeof(string),
-                false, true, false, false, ObjectClass.ACCOUNT));
-            attributeInfos.Add(GetConnectorAttributeInfo(
-                TerminalServicesUtils.TS_HOME_DRIVE, typeof(string),
-                false, true, false, false, ObjectClass.ACCOUNT));
-
-            return attributeInfos;
-        }
-
-        public ICollection<ConnectorAttributeInfo> GetGroupAttributeInfos(
-            ActiveDirectorySchema ADSchema)
-        {
-            ICollection<ConnectorAttributeInfo> attributeInfos = new Collection<ConnectorAttributeInfo>();
-
-            // now add in container ... 
-            attributeInfos.Add(GetConnectorAttributeInfo(ATT_CONTAINER,
-                typeof(string), true, true, false, false, ObjectClass.GROUP));
-
-            attributeInfos.Add(PredefinedAttributeInfos.ACCOUNTS);
-
-            ConnectorAttributeInfoBuilder descriptionBuilder = new ConnectorAttributeInfoBuilder();
-            descriptionBuilder.Name = PredefinedAttributeInfos.DESCRIPTION.Name;
-            descriptionBuilder.ValueType = PredefinedAttributeInfos.DESCRIPTION.ValueType;
-            descriptionBuilder.Readable = true;
-            descriptionBuilder.Creatable = false;
-            descriptionBuilder.Updateable = false;
-            descriptionBuilder.Required = false;
-            descriptionBuilder.ReturnedByDefault = true;
-            attributeInfos.Add(descriptionBuilder.Build());
-
-            ConnectorAttributeInfoBuilder shortNameBuilder = new ConnectorAttributeInfoBuilder();
-            shortNameBuilder.Name = PredefinedAttributeInfos.SHORT_NAME.Name;
-            shortNameBuilder.ValueType = PredefinedAttributeInfos.SHORT_NAME.ValueType;
-            shortNameBuilder.Readable = true;
-            shortNameBuilder.Creatable = false;
-            shortNameBuilder.Updateable = false;
-            shortNameBuilder.Required = false;
-            shortNameBuilder.ReturnedByDefault = true;
-            attributeInfos.Add(shortNameBuilder.Build());
-
-            attributeInfos.Add(ConnectorAttributeInfoBuilder.Build(Name.NAME, typeof(string),
-                true, true, true, false));
-
-            // get everything else from the schema
-            PopulateSchemaFromAD("Group", ADSchema, attributeInfos, null, ObjectClass.GROUP);
-            return attributeInfos;
-        }
-
-        public ICollection<ConnectorAttributeInfo> GetOuAttributeInfos(
-            ActiveDirectorySchema ADSchema)
-        {
-            ICollection<ConnectorAttributeInfo> attributeInfos = new Collection<ConnectorAttributeInfo>();
-
-            // add in container ... 
-            attributeInfos.Add(GetConnectorAttributeInfo(ATT_OU,
-                typeof(string), false, true, false, false, ouObjectClass));
-            attributeInfos.Add(GetConnectorAttributeInfo(ATT_DISPLAY_NAME,
-                typeof(string), false, true, false, false, ouObjectClass));
-            ConnectorAttributeInfoBuilder descriptionBuilder = new ConnectorAttributeInfoBuilder();
-            descriptionBuilder.Name = PredefinedAttributeInfos.DESCRIPTION.Name;
-            descriptionBuilder.ValueType = PredefinedAttributeInfos.DESCRIPTION.ValueType;
-            descriptionBuilder.Readable = true;
-            descriptionBuilder.Creatable = false;
-            descriptionBuilder.Updateable = false;
-            descriptionBuilder.Required = false;
-            descriptionBuilder.ReturnedByDefault = true;
-            attributeInfos.Add(descriptionBuilder.Build());
-
-            ConnectorAttributeInfoBuilder shortNameBuilder = new ConnectorAttributeInfoBuilder();
-            shortNameBuilder.Name = PredefinedAttributeInfos.SHORT_NAME.Name;
-            shortNameBuilder.ValueType = PredefinedAttributeInfos.SHORT_NAME.ValueType;
-            shortNameBuilder.Readable = true;
-            shortNameBuilder.Creatable = false;
-            shortNameBuilder.Updateable = false;
-            shortNameBuilder.Required = false;
-            shortNameBuilder.ReturnedByDefault = true;
-            attributeInfos.Add(shortNameBuilder.Build());
-
-            // add in name ... 
-            attributeInfos.Add(
-                ConnectorAttributeInfoBuilder.Build(Name.NAME, typeof(string),
-                true, true, true, false));
-
-            return attributeInfos;
-        }
-
-        protected void PopulateSchemaFromAD(String className, 
-            ActiveDirectorySchema ADSchema,
-            ICollection<ConnectorAttributeInfo> attributeInfos,
-            ICollection<String> attributesToIgnore, ObjectClass oclass)
-        {
-            if(attributesToIgnore == null) {
-                attributesToIgnore = new List<String>();
-            }
-            ActiveDirectorySchemaClass schemaClass = ADSchema.FindClass(className);
-            AddPropertyCollectionToSchema(schemaClass.MandatoryProperties,
-                attributeInfos, false, oclass);
-
-            AddPropertyCollectionToSchema(schemaClass.OptionalProperties,
-                attributeInfos, false, oclass);
-        }
-
-        protected void AddPropertyCollectionToSchema(
-            ActiveDirectorySchemaPropertyCollection schemaProperties,
-            ICollection<ConnectorAttributeInfo> attributeInfos,
-            Boolean required, ObjectClass oclass)
-        {
-            foreach (ActiveDirectorySchemaProperty schemaProperty in
-                                schemaProperties)
-            {
-                DirectoryEntry sde = schemaProperty.GetDirectoryEntry();
-                PropertyValueCollection systemOnlyPvc = sde.Properties["systemOnly"];
-                Boolean writable = true;
-                if (systemOnlyPvc != null)
-                {
-                    Object value = systemOnlyPvc.Value;
-                    if ((value != null) && (value.Equals(true)))
-                    {
-                        writable = false;
-                    }
-                }
-
-                String syntax = schemaProperty.Syntax.ToString();
-                syntax = syntax.ToUpper();
-                Type connectorType = typeof(string);
-
-                // if this gets larger, break it out
-                // into a special method.
-                if ("BOOLEAN".Equals(syntax, StringComparison.CurrentCultureIgnoreCase))
-                {
-                    connectorType = typeof(bool);
-                }
-                else if ("INTEGER".Equals(syntax, StringComparison.CurrentCultureIgnoreCase) || "INT".Equals(syntax, StringComparison.CurrentCultureIgnoreCase))
-                {
-                    connectorType = typeof(int);
-                }
-                else if ("INT64".Equals(
-                    syntax, StringComparison.CurrentCultureIgnoreCase))
-                {
-                    connectorType = typeof(long);
-                }
-                
-                attributeInfos.Add(GetConnectorAttributeInfo(schemaProperty.Name,
-                    connectorType, writable, true, required, 
-                    schemaProperty.IsSingleValued ? false : true, oclass));
-
-/*
-                Console.WriteLine("***->" + schemaProperty.Name + "<-***");
-                foreach (String pName in sde.Properties.PropertyNames)
-                {
-                    Console.WriteLine("***->" + pName + " = " + sde.Properties[pName].Value);
-                }
-*/
-            }
-        }
-
-        private ConnectorAttributeInfo GetConnectorAttributeInfo(string name,
-            Type type, bool writable, bool readable, bool required,
-            bool multivalue, ObjectClass oclass)
-        {
-            ConnectorAttributeInfoBuilder builder = new ConnectorAttributeInfoBuilder();
-            builder.Name = name;
-            builder.ValueType = type;
-            builder.Creatable = writable;
-            builder.Updateable = writable;
-            builder.Readable = readable;
-            builder.Required = required;
-            builder.MultiValue = multivalue;
-
-            // if there is a set of attributes to return by default
-            // for this object class use it.  If not, just use the
-            // the builder's default value
-            if(RegularAttributesReturnedByDefault.Keys.Contains(oclass)) {               
-                if (RegularAttributesReturnedByDefault[oclass].Contains(name))
-                {
-                    builder.ReturnedByDefault = true;
-                }
-                else
-                {
-                    builder.ReturnedByDefault = false;
-                }
-            }
-
-            return builder.Build();
         }
 
         #endregion
@@ -1023,7 +642,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                             _utils.GetConnectorAttributeFromADEntry(
                             oclass, ATT_USN_CHANGED, result));
 
-                        // add isDeleted
+                        // add isDeleted 
                         builder.AddAttribute(ATT_IS_DELETED, true);
                     }
 
@@ -1045,57 +664,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         private ICollection<string> GetAttributesToReturn(ObjectClass oclass, OperationOptions options)
         {
-            ICollection<string> attributeNames = new HashSet<string>();
+            ICollection<string> attributeNames = null;
 
             if ((options.AttributesToGet != null) && (options.AttributesToGet.Length > 0))
             {
-                foreach (string name in options.AttributesToGet)
-                {
-                    attributeNames.Add(name);
-                }
-                // now add in operational attributes ... they are always returned
-                ICollection<string> specialAttributes = null;
-                if (SpecialAttributesReturnedByDefault.Keys.Contains(oclass))
-                {
-                    specialAttributes = SpecialAttributesReturnedByDefault[oclass];
-                }
-
-                if (specialAttributes == null)
-                {
-                    specialAttributes = new List<string>();
-                    ObjectClassInfo ocInfo = Schema().FindObjectClassInfo(oclass.GetObjectClassValue());
-                    foreach (ConnectorAttributeInfo info in ocInfo.ConnectorAttributeInfos)
-                    {
-                        Trace.TraceInformation(String.Format(
-                            "Adding {0} to list of returned attributes", info.Name));
-                        if ((info.IsReturnedByDefault) && (ConnectorAttributeUtil.IsSpecial(info)))
-                        {
-                            specialAttributes.Add(info.Name);
-                        }
-                    }
-                    SpecialAttributesReturnedByDefault.Add(oclass, specialAttributes);
-                }
-                
-                foreach (string specialAttributeName in specialAttributes)
-                {
-                    if (!attributeNames.Contains(specialAttributeName))
-                    {
-                        attributeNames.Add(specialAttributeName);
-                    }
-                }
+                attributeNames = new HashSet<string>(options.AttributesToGet);
             }
             else
             {
-                ObjectClassInfo ocInfo = Schema().FindObjectClassInfo(oclass.GetObjectClassValue());
-                foreach (ConnectorAttributeInfo info in ocInfo.ConnectorAttributeInfos)
-                {
-                    Trace.TraceInformation(String.Format(
-                        "Adding {0} to list of returned attributes", info.Name));
-                    if (info.IsReturnedByDefault)
-                    {
-                        attributeNames.Add(info.Name);
-                    }
-                }
+                attributeNames = AttributesReturnedByDefault[oclass];
             }
 
             // Uid is always returned
@@ -1293,7 +870,22 @@ namespace Org.IdentityConnectors.ActiveDirectory
             public bool SyncHandler(ConnectorObject obj)
             {
                 SyncDeltaBuilder builder = new SyncDeltaBuilder();
-                builder.Object = obj;
+                ICollection<ConnectorAttribute> attrs = new HashSet<ConnectorAttribute>();
+                foreach(ConnectorAttribute attribute in obj.GetAttributes()) {
+                    // add all attributes to the object except the
+                    // one used to flag deletes.
+                    if (!attribute.Name.Equals(ATT_IS_DELETED))
+                    {                       
+                        attrs.Add(attribute);
+                    }
+                }
+
+                ConnectorObjectBuilder coBuilder = new ConnectorObjectBuilder();
+                coBuilder.SetName(obj.Name);
+                coBuilder.SetUid(obj.Uid);
+                coBuilder.AddAttributes(attrs);
+                builder.Object = coBuilder.Build();
+
                 ConnectorAttribute tokenAttr = 
                     ConnectorAttributeUtil.Find(ATT_USN_CHANGED, obj.GetAttributes());
                 if(tokenAttr == null) {
@@ -1311,7 +903,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 if (isDeletedAttr != null)
                 {
                     isDeleted = (bool?)ConnectorAttributeUtil.GetSingleValue(isDeletedAttr);
-                    _adSyncToken.LastDeleteUsn = tokenUsnValue;
+                    _adSyncToken.LastDeleteUsn = tokenUsnValue;                    
                 }
                 else
                 {

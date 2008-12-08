@@ -92,6 +92,7 @@
     <Compile Include="ActiveDirectorySyncToken.cs" />
     <Compile Include="ActiveDirectoryUtils.cs" />
     <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="CommonUtils.cs" />
     <Compile Include="CustomAttributeHandlers.cs" />
     <Compile Include="PasswordChangeHandler.cs" />
     <Compile Include="TerminalServicesUtils.cs" />
@@ -127,5 +128,8 @@
     <EmbeddedResource Include="Messages.resx">
       <SubType>Designer</SubType>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ObjectClasses.xml" />
   </ItemGroup>
 </Project>
