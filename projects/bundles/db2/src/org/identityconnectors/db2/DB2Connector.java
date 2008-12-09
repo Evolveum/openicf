@@ -50,7 +50,6 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	 * Authenticates user in DB2 database. Here we create new SQL connection with passed credentials to authenticate user. 
 	 * We check SQL state and return code to verify that possibly thrown exception really means user/password is invalid.
 	 * When we are able to get connection using passed credentials, we consider that authenticate passed.
-	 * @see {@link AuthenticateOp#authenticate(String, GuardedString, OperationOptions)}
 	 */
     public Uid authenticate(String username, GuardedString password,OperationOptions options) {
 		log.info("authenticate user: {0}", username);

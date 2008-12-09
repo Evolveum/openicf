@@ -10,7 +10,7 @@ import java.util.*;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.*;
-import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
+import org.identityconnectors.framework.common.exceptions.*;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.common.objects.filter.*;
 import org.identityconnectors.framework.test.TestHelpers;
@@ -133,10 +133,14 @@ public class DB2ConnectorTest {
 	}
 	
 	private Uid createTestUser(){
-		String username = getTestRequiredProperty("testUser");
+		String userName = getTestRequiredProperty("testUser");
+		return createTestUser(userName);
+	}
+	
+	private Uid createTestUser(String userName){
 		Map<String, Object> emptyMap = Collections.emptyMap();
 		Set<Attribute> attributes = new HashSet<Attribute>();
-		attributes.add(new Name(username));
+		attributes.add(new Name(userName));
 		attributes.add(AttributeBuilder.buildPassword(new char[]{'a','b','c'}));
 		attributes.add(AttributeBuilder.build("grants","CONNECT ON DATABASE"));
 		Uid uid = null;
@@ -146,9 +150,8 @@ public class DB2ConnectorTest {
 			return uid;
 		}
 		catch(AlreadyExistsException e){
-			return new Uid(username);
+			return new Uid(userName);
 		}
-		
 	}
 	
 	/**
@@ -416,6 +419,24 @@ public class DB2ConnectorTest {
 			return uids;
 		}
     }
+    
+    /**
+     * Tests deleting user that does not exist
+     */
+    @Test(expected=UnknownUidException.class)
+    public void testDeleteUnexisting() {
+        assertNotNull(facade);
+        String userName = "delUser";
+        Uid uid = createTestUser(userName);
+        uid = findUser(userName);
+        assertNotNull(uid);
+        facade.delete(ObjectClass.ACCOUNT, uid, null);
+        uid = findUser(userName);
+        assertNull(uid);
+        facade.delete(ObjectClass.ACCOUNT, new Uid("UNKNOWN"), null);
+        fail("Delete of not existing user should fail");
+    }    
+
     
     
     

@@ -43,6 +43,8 @@ class DB2ConfigurationValidator {
 		public ConnectionType getType() {
 			return ConnectionType.DATASOURCE;
 		}
+		
+		DataSourceChecker(){}
 	}
 	
 	private class Type4DriverChecker implements ConfigChecker{

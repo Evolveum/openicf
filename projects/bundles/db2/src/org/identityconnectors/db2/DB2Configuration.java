@@ -99,7 +99,7 @@ import org.identityconnectors.framework.spi.*;
 public class DB2Configuration extends AbstractConfiguration {
 	
 	/** Type of connection we will use to connect to DB2 */
-	public static enum ConnectionType{
+	static enum ConnectionType{
 		/** Connecting using datasource */
 		DATASOURCE,
 		/** Connecting using type 4 driver (host,port,databasename)*/
@@ -312,7 +312,7 @@ public class DB2Configuration extends AbstractConfiguration {
 	/**
 	 * @return the connType
 	 */
-	public ConnectionType getConnType() {
+	ConnectionType getConnType() {
 		return connType;
 	}
 
