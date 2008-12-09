@@ -124,10 +124,10 @@
     <value>Create Home Directory</value>
   </data>
   <data name="display_DirectoryAdminName" xml:space="preserve">
-    <value>Directory Adminstrator's Account</value>
+    <value>Directory Adminstrator&amp;apos;s Account</value>
   </data>
   <data name="display_DirectoryAdminPassword" xml:space="preserve">
-    <value>Directory Administrator's Password</value>
+    <value>Directory Administrator&amp;apos;s Password</value>
   </data>
   <data name="display_domainName" xml:space="preserve">
     <value>Domain Name</value>
@@ -136,7 +136,7 @@
     <value>Active Directory Domain Controller Hostname</value>
   </data>
   <data name="display_ObjectClass" xml:space="preserve">
-    <value>Object class for User Objects</value>
+    <value>Object Class for User Objects</value>
   </data>
   <data name="display_SearchChildDomains" xml:space="preserve">
     <value>Search Child Domains</value>

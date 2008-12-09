@@ -65,7 +65,7 @@
       <AttributeInfo name="TerminalServicesInitialProgram" type="String" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
       <AttributeInfo name="TerminalServicesWorkDirectory" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
       <AttributeInfo name="AllowLogon" type="Integer" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
-      <AttributeInfo name="MaxConnectionTime" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>      
+      <AttributeInfo name="MaxConnectionTime" type="Integer" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>      
       <AttributeInfo name="MaxDisconnectionTime" type="Integer" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
       <AttributeInfo name="MaxIdleTime" type="Integer" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>
       <AttributeInfo name="ConnectClientDrivesAtLogon" type="Integer" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
@@ -73,7 +73,7 @@
       <AttributeInfo name="DefaultToMainPrinter" type="Integer" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
       <AttributeInfo name="BrokenConnectionAction" type="Integer" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
       <AttributeInfo name="ReconnectionAction" type="Integer" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
-      <AttributeInfo name="EnableRemoteControl" type="String" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="EnableRemoteControl" type="Integer" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
       <AttributeInfo name="TerminalServicesProfilePath" type="String" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
       <AttributeInfo name="TerminalServicesHomeDirectory" type="String" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
       <AttributeInfo name="TerminalServicesHomeDrive" type="String" creatable="false" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>

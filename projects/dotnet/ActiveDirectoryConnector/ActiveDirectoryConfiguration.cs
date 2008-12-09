@@ -49,55 +49,55 @@ namespace Org.IdentityConnectors.ActiveDirectory
 {
     public class ActiveDirectoryConfiguration : Org.IdentityConnectors.Framework.Spi.AbstractConfiguration
     {
-        [ConfigurationProperty(OperationTypes=new Type[]{typeof(SyncOp)}, Confidential = false, DisplayMessageKey = "display_SyncGlobalCatalogServer", HelpMessageKey = "help_SyncGlobalCatalogServer", Order=8)]
-        public String SyncGlobalCatalogServer
-        { get; set; }
-
-        [ConfigurationProperty(OperationTypes = new Type[] { typeof(SyncOp) }, Confidential = false, DisplayMessageKey = "display_SyncDomainController", HelpMessageKey = "help_SyncDomainController", Order=7)]
-        public String SyncDomainController
-        { get; set; }
-
-        [ConfigurationProperty(OperationTypes = new Type[] { typeof(SyncOp) }, Confidential = false, DisplayMessageKey = "display_SyncSearchContext", HelpMessageKey = "help_SyncSearchContext", Order=9)]
-        public String SyncSearchContext
-        { get; set; }
-
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_domainName", HelpMessageKey = "help_domainName", Order=1)]
-        public String DomainName
-        { get; set; }
-
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_DirectoryAdminName", HelpMessageKey = "help_DirectoryAdminName", Order=3)]
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_DirectoryAdminName", HelpMessageKey = "help_DirectoryAdminName", Order = 1)]
         public String DirectoryAdminName
         { get; set; }
 
-        [ConfigurationProperty(Confidential = true, DisplayMessageKey = "display_DirectoryAdminPassword", HelpMessageKey = "help_DirectoryAdminPassword", Order=4)]
+        [ConfigurationProperty(Confidential = true, DisplayMessageKey = "display_DirectoryAdminPassword", HelpMessageKey = "help_DirectoryAdminPassword", Order = 2)]
         public String DirectoryAdminPassword
         { get; set; }
 
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_ObjectClass", HelpMessageKey = "help_ObjectClass", Order=10)]
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_ObjectClass", HelpMessageKey = "help_ObjectClass", Order = 3)]
         public String ObjectClass
         { get; set; }
 
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_CreateHomeDirectory", HelpMessageKey = "help_CreateHomeDirectory", Order=11)]
-        public bool CreateHomeDirectory { get; set; }
-
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_SearchContainer", HelpMessageKey = "help_SearchContainer", Order=2)]
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_SearchContainer", HelpMessageKey = "help_SearchContainer", Order = 4)]
         public String SearchContainer
         { get; set; }
 
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_SearchChildDomains", HelpMessageKey = "help_SearchChildDomains", Order=6)]
-        public bool SearchChildDomains {get;set;}
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_CreateHomeDirectory", HelpMessageKey = "help_CreateHomeDirectory", Order = 5)]
+        public bool CreateHomeDirectory { get; set; }
 
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_LDAPHostName", HelpMessageKey = "help_LDAPHostName", Order=5)]
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_LDAPHostName", HelpMessageKey = "help_LDAPHostName", Order = 6)]
         public String LDAPHostName
+        { get; set; }
+
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_SearchChildDomains", HelpMessageKey = "help_SearchChildDomains", Order = 7)]
+        public bool SearchChildDomains { get; set; }
+
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_domainName", HelpMessageKey = "help_domainName", Order = 8)]
+        public String DomainName
+        { get; set; }
+
+        [ConfigurationProperty(OperationTypes = new Type[] { typeof(SyncOp) }, Confidential = false, DisplayMessageKey = "display_SyncGlobalCatalogServer", HelpMessageKey = "help_SyncGlobalCatalogServer", Order = 9)]
+        public String SyncGlobalCatalogServer
+        { get; set; }
+
+        [ConfigurationProperty(OperationTypes = new Type[] { typeof(SyncOp) }, Confidential = false, DisplayMessageKey = "display_SyncDomainController", HelpMessageKey = "help_SyncDomainController", Order=10)]
+        public String SyncDomainController
+        { get; set; }
+
+        [ConfigurationProperty(OperationTypes = new Type[] { typeof(SyncOp) }, Confidential = false, DisplayMessageKey = "display_SyncSearchContext", HelpMessageKey = "help_SyncSearchContext", Order=11)]
+        public String SyncSearchContext
         { get; set; }
 
         public ActiveDirectoryConfiguration()
         {
             DomainName = "";
             SearchContainer = "";
-            DirectoryAdminName = "cn=DirectoryAdmin";
+            DirectoryAdminName = "administrator";
             ObjectClass = "User";
-            CreateHomeDirectory = false;
+            CreateHomeDirectory = true;
             SearchChildDomains = false;
             LDAPHostName = "";
         }
