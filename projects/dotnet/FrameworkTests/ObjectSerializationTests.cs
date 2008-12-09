@@ -566,6 +566,23 @@ namespace FrameworkTests
             Assert.IsTrue(v2.IsUpdateable);
             Assert.IsTrue(v2.IsCreatable);
             Assert.IsFalse(v2.IsReturnedByDefault);
+            
+            builder.InfoFlags = AllFlags();
+            v1 = builder.Build();
+            v2 = (ConnectorAttributeInfo)CloneObject(v1);
+            Assert.AreEqual(v1,v2);
+        }
+        
+        private ConnectorAttributeInfo.Flags AllFlags()
+        {
+            ConnectorAttributeInfo.Flags flags =
+                ConnectorAttributeInfo.Flags.NONE;
+            foreach (Enum e in Enum.GetValues(typeof(ConnectorAttributeInfo.Flags))) {  
+                ConnectorAttributeInfo.Flags f = 
+                    (ConnectorAttributeInfo.Flags)e;
+                flags |= f;
+            }
+            return flags;
         }
         
         [Test]

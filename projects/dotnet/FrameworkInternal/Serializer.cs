@@ -88,7 +88,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
         
         
         public override object Deserialize(ObjectDecoder decoder) {
-            String val = decoder.ReadStringContents();
+            String val = decoder.ReadStringField("value",null);
             Type enumClass = HandledObjectType;
             Object rv = Enum.Parse(enumClass, val);
             return rv;
@@ -97,7 +97,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
         public override void Serialize(object obj, ObjectEncoder encoder)
         {
             Enum e = (Enum)obj;
-            encoder.WriteStringContents(Enum.GetName(e.GetType(),e));
+            encoder.WriteStringField("value",Enum.GetName(e.GetType(),e));
         }
     
     }
@@ -1451,6 +1451,8 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
             HANDLERS.Add( new ScriptContextHandler() );
             HANDLERS.Add( new OperationOptionsHandler() );
             HANDLERS.Add( new OperationOptionInfoHandler() );
+            HANDLERS.Add( new EnumSerializationHandler(typeof(ConnectorAttributeInfo.Flags),
+                                                       "AttributeInfoFlag"));
             HANDLERS.Add( new EnumSerializationHandler(typeof(SyncDeltaType),
                                                        "SyncDeltaType") );
             HANDLERS.Add( new SyncTokenHandler() );
@@ -1671,18 +1673,17 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                               decoder.ReadStringField("name",null));
                 builder.ValueType=(
                                    decoder.ReadClassField("type",null));
-                builder.Required=(
-                        decoder.ReadBooleanField("required",false));
-                builder.Readable=(
-                        decoder.ReadBooleanField("readable",false));
-                builder.Creatable=(
-                        decoder.ReadBooleanField("creatable",false));
-                builder.Updateable=(
-                        decoder.ReadBooleanField("updateable",false));
-                builder.MultiValued=(
-                        decoder.ReadBooleanField("multivalue",false));
-                builder.ReturnedByDefault=(
-                        decoder.ReadBooleanField("returnedbydefault",true));
+                ConnectorAttributeInfo.Flags flags = ConnectorAttributeInfo.Flags.NONE;
+                int count = decoder.GetNumSubObjects();
+                for ( int i = 0; i < count; i++ ) {
+                    object o = decoder.ReadObjectContents(i);
+                    if ( o is ConnectorAttributeInfo.Flags ) {
+                        ConnectorAttributeInfo.Flags f = 
+                            (ConnectorAttributeInfo.Flags)o;
+                        flags |= f;
+                    }
+                }
+                builder.InfoFlags = flags;
                 return builder.Build();
             }
         
@@ -1690,12 +1691,14 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                 ConnectorAttributeInfo val = (ConnectorAttributeInfo)obj;
                 encoder.WriteStringField("name", val.Name);
                 encoder.WriteClassField("type", val.ValueType);
-                encoder.WriteBooleanField("required", val.IsRequired);
-                encoder.WriteBooleanField("readable", val.IsReadable);
-                encoder.WriteBooleanField("creatable", val.IsCreatable);
-                encoder.WriteBooleanField("updateable", val.IsUpdateable);
-                encoder.WriteBooleanField("multivalue", val.IsMultiValued);
-                encoder.WriteBooleanField("returnedbydefault", val.IsReturnedByDefault);
+                ConnectorAttributeInfo.Flags flags = val.InfoFlags;
+                foreach (Enum e in Enum.GetValues(typeof(ConnectorAttributeInfo.Flags))) {
+                    ConnectorAttributeInfo.Flags flag = 
+                        (ConnectorAttributeInfo.Flags)e;
+                    if ( (flags & flag) != 0 ) {
+                        encoder.WriteObjectContents(flag);
+                    }
+                }
             }
         }
         
