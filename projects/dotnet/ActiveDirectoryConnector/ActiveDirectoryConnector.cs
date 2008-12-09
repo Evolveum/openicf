@@ -1094,7 +1094,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         #region AttributeNormalizer Members
 
-        public ConnectorAttribute NormalizeAttribute(ObjectClass oclass, ConnectorAttribute attribute)
+        public virtual ConnectorAttribute NormalizeAttribute(ObjectClass oclass, ConnectorAttribute attribute)
         {
             // if this gets big, use deleagates, but for now, just
             // handle individual attirbutes;
