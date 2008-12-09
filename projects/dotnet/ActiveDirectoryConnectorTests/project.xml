@@ -4,9 +4,9 @@
   <property name="config_host" value="localhost"/>
   <property name="config_port" value="389"/>
   <property name="config_ldap_hostname" value="idmvm1128.central.sun.com"/>
-  <property name="config_search_context" value="dc=adconnector,dc=central,dc=sun,dc=com"/>
+  <property name="config_search_context" value="ou=NunitOu, dc=adconnector,dc=central,dc=sun,dc=com"/>
   <property name="config_sync_search_context_root" value="dc=adconnector,dc=central,dc=sun,dc=com"/>
-  <property name="config_sync_search_context_child" value="ou=NunitOU,dc=adconnector,dc=central,dc=sun,dc=com"/>
+  <property name="config_container" value="ou=NunitOU,dc=adconnector,dc=central,dc=sun,dc=com"/>
   <property name="config_domain_name" value="adconnector.central.sun.com"/>
   <property name="config_sync_domain_controller" value="idmvm1128.central.sun.com"/>
   <property name="config_sync_gc_domain_controller" value="idmvm1128.central.sun.com"/>
