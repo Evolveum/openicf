@@ -118,16 +118,16 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="connector_displayName" xml:space="preserve">
-    <value>Windows Active Directory Connector.  </value>
+    <value>Windows Active Directory Connector</value>
   </data>
   <data name="display_CreateHomeDirectory" xml:space="preserve">
     <value>Create Home Directory</value>
   </data>
   <data name="display_DirectoryAdminName" xml:space="preserve">
-    <value>Directory Adminstrator&amp;apos;s Account</value>
+    <value>Directory Adminstrator''s Account</value>
   </data>
   <data name="display_DirectoryAdminPassword" xml:space="preserve">
-    <value>Directory Administrator&amp;apos;s Password</value>
+    <value>Directory Administrator''s Password</value>
   </data>
   <data name="display_domainName" xml:space="preserve">
     <value>Domain Name</value>
@@ -145,19 +145,19 @@
     <value>Search Container</value>
   </data>
   <data name="display_SyncDomainController" xml:space="preserve">
-    <value>ActiveSync Domain Controller</value>
+    <value>Sync Domain Controller</value>
   </data>
   <data name="display_SyncGlobalCatalogServer" xml:space="preserve">
-    <value>ActiveSync Global Catalog Server</value>
+    <value>Sync Global Catalog Server</value>
   </data>
   <data name="display_SyncSearchContext" xml:space="preserve">
-    <value>ActiveSync Search Context</value>
+    <value>Sync Search Context</value>
   </data>
   <data name="help_CreateHomeDirectory" xml:space="preserve">
     <value>Specify whether or not the home directory for the user will be created. </value>
   </data>
   <data name="help_DirectoryAdminName" xml:space="preserve">
-    <value>Enter the administrator user name with which the system should authenticate. The setting should be in the form 'domainname'\'username'.</value>
+    <value>Enter the administrator user name with which the system should authenticate. The setting can be either be a username or 'domainname'\'username'.</value>
   </data>
   <data name="help_DirectoryAdminPassword" xml:space="preserve">
     <value>Enter the password that should be used when authenticating.</value>
@@ -169,22 +169,22 @@
     <value>For cross-domain administration, enter the hostname, IP address, or domain name of the LDAP server.</value>
   </data>
   <data name="help_ObjectClass" xml:space="preserve">
-    <value>Specify the class of object that will be managed on this resource.</value>
+    <value>Specify the Active Directory object class for user objects that will be managed on this resource.  The default is User, and for most situations, this should be fine.</value>
   </data>
   <data name="help_SearchChildDomains" xml:space="preserve">
-    <value>Select if you want searches of Active Directory to include child domains. In addition, the Search Container and Sync Search Context attributes must be set to the top of the parent domain, e.g. DC=mydomain,DC=com.</value>
+    <value>Select if you want searches of Active Directory to include child domains. In addition, the Search Container and Sync Search Context (see sync settings) attributes must be set to the top of the parent domain, e.g. DC=mydomain,DC=com.</value>
   </data>
   <data name="help_SearchContainer" xml:space="preserve">
-    <value>Specify the container object from which users should be retrieved when loading from the resource.  For example, if you want to retrieve users from the Users container, enter CN=Users,DC=MYDOMAIN,DC=COM.</value>
+    <value>Specify a container object which will be the default root of all searches.  Unless a search explicitly passes in other criteria, only objects under this container will be searched.  For example, if you want to retrieve users from the Users container, enter CN=Users,DC=MYDOMAIN,DC=COM.</value>
   </data>
   <data name="help_SyncDomainController" xml:space="preserve">
     <value>Domain controller to use during active sync.  Only used if not searching child domains.</value>
   </data>
   <data name="help_SyncGlobalCatalogServer" xml:space="preserve">
-    <value>Name of the global catalog server.  This is needed only if searching child domains</value>
+    <value>Name of the global catalog server.  This is needed only if searching child domains.</value>
   </data>
   <data name="help_SyncSearchContext" xml:space="preserve">
-    <value>Distinguished name of the object under which to search for changes during ActiveSync</value>
+    <value>Distinguished name of the object under which to search for changes during sync operation.</value>
   </data>
   <data name="ex_ConnectorNotConfigured" xml:space="preserve">
     <value>Connector has not been configured</value>
