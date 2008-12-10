@@ -1925,7 +1925,6 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         public static readonly ConnectorAttributeInfo PASSWORD = 
             ConnectorAttributeInfoBuilder.Build(
                 OperationalAttributes.PASSWORD_NAME, typeof(GuardedString), 
-                ConnectorAttributeInfo.Flags.REQUIRED |
                 ConnectorAttributeInfo.Flags.NOT_READABLE |
                 ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT);
     
@@ -2169,7 +2168,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          * values are the UID value of each organization that an account or person is
          * a member of.
          */
-        public static readonly ConnectorAttributeInfo ORGANIZATIONS =
+        public static readonly ConnectorAttributeInfo ORGANIZATION =
             ConnectorAttributeInfoBuilder.Build(PredefinedAttributes.ORGANIZATION_NAME,
                                        typeof(String),
                     ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT);
