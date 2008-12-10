@@ -53,7 +53,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// reads the object class info definitions from xml
         ///</summary>
         ///<returns>Dictionary of object classes</returns>
-        protected static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfo(string name)
+        protected internal static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfo(string name)
         {
             Assembly assembly = Assembly.GetExecutingAssembly();
             Stream stream = assembly.GetManifestResourceStream(name);
