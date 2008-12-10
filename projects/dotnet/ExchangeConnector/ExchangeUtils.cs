@@ -42,27 +42,25 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Management.Automation.Runspaces;
 using System.Reflection;
 
 using Microsoft.Win32;
 using System.Xml.Serialization;
+using Org.IdentityConnectors.ActiveDirectory;
 using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Framework.Common.Objects;
-using Org.IdentityConnectors.Framework.Common.Objects.Filters;
-using Org.IdentityConnectors.Framework.Common.Serializer;
-using Org.IdentityConnectors.Framework.Spi.Operations;
 
 namespace Org.IdentityConnectors.Exchange
 {
     /// <summary>
     /// Description of ExchangeUtils.
     /// </summary>
-    public class ExchangeUtils
+    public class ExchangeUtils : CommonUtils
     {
         private static readonly string CLASS = typeof(ExchangeUtils).ToString();
 
+        private const string OC_DEF_FILE = "Org.IdentityConnectors.Exchange.ObjectClasses.xml";
         private const string EXCHANGE_REG_KEY = "Software\\Microsoft\\Exchange\\v8.0\\Setup\\";
         private const string EXCHANGE_REG_VALUE = "MsiInstallPath";
 
@@ -137,29 +135,7 @@ namespace Org.IdentityConnectors.Exchange
         ///<returns>Dictionary of object classes</returns>
         internal static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfo()
         {
-            Assembly assembly = Assembly.GetExecutingAssembly();
-            Stream stream = assembly.GetManifestResourceStream("Org.IdentityConnectors.Exchange.ObjectClasses.xml");
-
-            Assertions.NullCheck(stream, "stream");
-
-            //we just read
-            TextReader streamReader = new StreamReader(stream);
-            String xml = streamReader.ReadToEnd();
-            streamReader.Close();
-
-            //read from xml
-            var ret = (ICollection<object>)SerializerUtil.DeserializeXmlObject(xml, true);
-
-            Assertions.NullCheck(ret, "ret");
-
-            //create map of object infos
-            var map = new Dictionary<ObjectClass, ObjectClassInfo>(ret.Count);
-            foreach (ObjectClassInfo o in ret)
-            {
-                map.Add(new ObjectClass(o.ObjectType.ToString()), o);
-            }
-            
-            return map;
+            return GetOCInfo(OC_DEF_FILE);
         }
 
         ///<summary>

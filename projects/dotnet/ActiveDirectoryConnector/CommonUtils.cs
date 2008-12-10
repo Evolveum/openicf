@@ -39,29 +39,21 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Reflection;
-
-using System.Diagnostics;
 using System.IO;
-using Microsoft.Win32;
-using System.Xml.Serialization;
 using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Framework.Common.Objects;
-using Org.IdentityConnectors.Framework.Common.Objects.Filters;
 using Org.IdentityConnectors.Framework.Common.Serializer;
-using Org.IdentityConnectors.Framework.Spi.Operations;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
-    class CommonUtils
+    public class CommonUtils
     {
         ///<summary>
         /// reads the object class info definitions from xml
         ///</summary>
         ///<returns>Dictionary of object classes</returns>
-        internal static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfo(string name)
+        protected static IDictionary<ObjectClass, ObjectClassInfo> GetOCInfo(string name)
         {
             Assembly assembly = Assembly.GetExecutingAssembly();
             Stream stream = assembly.GetManifestResourceStream(name);
@@ -70,8 +62,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             //we just read
             TextReader streamReader = new StreamReader(stream);
-            String xml = streamReader.ReadToEnd();
-            streamReader.Close();
+            String xml;
+            try
+            {
+                xml = streamReader.ReadToEnd();
+            }
+            finally
+            {
+                streamReader.Close();
+            }
 
             //read from xml
             var ret = (ICollection<object>)SerializerUtil.DeserializeXmlObject(xml, true);
