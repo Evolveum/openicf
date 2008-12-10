@@ -230,14 +230,14 @@ public class DummyConnector
             AttributeInfo info = builder.build();
             // Exclude attributes marked required, but not creatable
             //
-            boolean ignore = !info.isCreateable() && info.isRequired();
-            if (!ignore) {
-            	if (!(info.isRequired() && clazz.equals(byte[].class))) {
-	                list.add(info);
-	                typeIndex[0]++;
-	                if(typeIndex[0] == supportedTypes.length)
-	                    typeIndex[0] = 0;
-	            }
+            boolean ignore1 = !info.isCreateable() && info.isRequired();
+            boolean ignore2 = !info.isReadable() && info.isReturnedByDefault();
+            boolean ignore3 = info.isRequired() && clazz.equals(byte[].class);
+            if (!(ignore1 || ignore2 || ignore3)) {
+                list.add(info);
+                typeIndex[0]++;
+                if(typeIndex[0] == supportedTypes.length)
+                    typeIndex[0] = 0;
             }
         }
     }
@@ -253,6 +253,9 @@ public class DummyConnector
         }
         Method[] methodArray = (Method[])setters.toArray(new Method[0]);
         Arrays.sort(methodArray, new MethodComparator());
+        System.out.println("Order of setters is:");
+        for (Method method : methodArray)
+            System.out.println("    "+method.getName());
         return methodArray;
     }
     
