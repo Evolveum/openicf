@@ -158,7 +158,6 @@ public class DummyConnector
         } else {
             Name name = (Name)attrMap.remove(Name.NAME);
             Attribute currentPassword = (Attribute)attrMap.remove(OperationalAttributeInfos.CURRENT_PASSWORD);
-            Attribute resetPassword = (Attribute)attrMap.remove(OperationalAttributeInfos.RESET_PASSWORD);
             Set<Attribute> object = _map.get(uid);
             validateAttributes(objclass, attrs, false);
             object.addAll(attrMap.values());
@@ -183,7 +182,6 @@ public class DummyConnector
             attributes.add(OperationalAttributeInfos.LOCK_OUT);
             attributes.add(OperationalAttributeInfos.PASSWORD);
             attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRATION_DATE);
-            attributes.add(OperationalAttributeInfos.RESET_PASSWORD);
             Method setters[] = getAttributeInfoBuilderSetters();
             AttributeInfoBuilder builder = new AttributeInfoBuilder();
             attributes.addAll(buildAttributeInfo(builder, setters));

@@ -376,20 +376,6 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             ConnectorAttribute pwd = Find(OperationalAttributes.PASSWORD_NAME, attrs);
             return (pwd == null) ? null : GetGuardedStringValue(pwd);
         }
-        /**
-         * Get the reset password value from the provided set of {@link Attribute}s.
-         * 
-         * @param attrs
-         *            Set of {@link Attribute}s that may contain the reset password
-         *            {@link OperationalAttributes#RESET_PASSWORD_NAME}
-         *            {@link Attribute}.
-         * @return <code>null</code> if it does not exist in the {@link Set} else
-         *         the value.
-         */
-        public static GuardedString GetResetPasswordValue(ICollection<ConnectorAttribute> attrs) {
-            ConnectorAttribute pwd = Find(OperationalAttributes.RESET_PASSWORD_NAME, attrs);
-            return (pwd == null) ? null : GetGuardedStringValue(pwd);
-        }
     
         /**
          * Get the current password value from the provided set of {@link Attribute}s.
@@ -651,8 +637,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                 throw new ArgumentException("Name must not be blank!");
             }
             if (OperationalAttributes.PASSWORD_NAME.Equals(name) ||
-                OperationalAttributes.CURRENT_PASSWORD_NAME.Equals(name) ||
-                OperationalAttributes.RESET_PASSWORD_NAME.Equals(name)) {
+                OperationalAttributes.CURRENT_PASSWORD_NAME.Equals(name)) {
                 // check the value..
                 if (val == null || val.Count != 1) {
                     String MSG = "Must be a single value.";
@@ -876,25 +861,12 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         public static ConnectorAttribute BuildCurrentPassword(GuardedString password) {
             return Build(OperationalAttributes.CURRENT_PASSWORD_NAME, password);
         }
-        /**
-         * Builds the operational attribute reset password.
-         * 
-         * @param password
-         *            the string that represents a password.
-         * @return an attribute that represents a reset password operation.
-         */
-        public static ConnectorAttribute BuildResetPassword(GuardedString password) {
-            return Build(OperationalAttributes.RESET_PASSWORD_NAME, password);
-        }
         
         public static ConnectorAttribute BuildPassword(SecureString password) {
             return Build(OperationalAttributes.PASSWORD_NAME, new GuardedString(password));
         }
         public static ConnectorAttribute BuildCurrentPassword(SecureString password) {
             return Build(OperationalAttributes.CURRENT_PASSWORD_NAME, new GuardedString(password));
-        }
-        public static ConnectorAttribute BuildResetPassword(SecureString password) {
-            return Build(OperationalAttributes.RESET_PASSWORD_NAME, new GuardedString(password));
         }
         /**
          * Builds ant operational attribute that either represents the object is
@@ -1253,7 +1225,6 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                 throw new ArgumentException("Name must not be blank!");
             }
             if ((OperationalAttributes.PASSWORD_NAME.Equals(name) ||
-                    OperationalAttributes.RESET_PASSWORD_NAME.Equals(name) ||
                     OperationalAttributes.CURRENT_PASSWORD_NAME.Equals(name)) &&
                     !typeof(GuardedString).Equals(type)) {
                 String MSG = "Password based attributes must be of type GuardedString.";
@@ -1938,17 +1909,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                 OperationalAttributes.CURRENT_PASSWORD_NAME, typeof(GuardedString),                 
                 ConnectorAttributeInfo.Flags.NOT_READABLE |
                 ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT);
-    
-        /**
-         * Used to do an administrator reset of the password. The value is the reset
-         * password value.
-         */
-        public static readonly ConnectorAttributeInfo RESET_PASSWORD = 
-            ConnectorAttributeInfoBuilder.Build(
-                OperationalAttributes.RESET_PASSWORD_NAME, typeof(GuardedString),
-                ConnectorAttributeInfo.Flags.NOT_READABLE |
-                ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT);
-        
+            
         /**
          * Used to determine if a password is expired or to expire a password.
          */
@@ -2007,11 +1968,6 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          * requires the current password.
          */
         public static readonly string CURRENT_PASSWORD_NAME = ConnectorAttributeUtil.CreateSpecialName("CURRENT_PASSWORD");
-        /**
-         * Used to do an administrator reset of the password. The value is the reset
-         * password value.
-         */
-        public static readonly string RESET_PASSWORD_NAME = ConnectorAttributeUtil.CreateSpecialName("RESET_PASSWORD");
 
 	    // =======================================================================
 	    // Helper Methods..
@@ -2025,7 +1981,6 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                 PASSWORD_EXPIRATION_DATE_NAME,
                 PASSWORD_NAME,
                 CURRENT_PASSWORD_NAME,
-                RESET_PASSWORD_NAME,
                 PASSWORD_EXPIRED_NAME
             );
 	
