@@ -549,7 +549,7 @@ public class MySQLUserConnectorTests {
         // test user created
         testUserFound(userName, true);
         
-        final Uid uid = facade.authenticate(userName, testPassword, null);
+        final Uid uid = facade.authenticate(ObjectClass.ACCOUNT, userName, testPassword, null);
         assertEquals(userName, uid.getUidValue());
         quitellyDeleteUser(userName); 
     }
@@ -569,7 +569,7 @@ public class MySQLUserConnectorTests {
         // retrieve the object
         testUserFound(userName, true);
         try {
-            facade.authenticate(userName, new GuardedString("blaf".toCharArray()), null);
+            facade.authenticate(ObjectClass.ACCOUNT, userName, new GuardedString("blaf".toCharArray()), null);
         } finally {
             quitellyDeleteUser(userName);
         }
@@ -604,7 +604,7 @@ public class MySQLUserConnectorTests {
         // uids should be the same
         assertEquals(userName, uidUpdate.getUidValue());
         
-        facade.authenticate(userName, new GuardedString(NEWPWD.toCharArray()), null);
+        facade.authenticate(ObjectClass.ACCOUNT, userName, new GuardedString(NEWPWD.toCharArray()), null);
         
         quitellyDeleteUser(TST_USER1);   
     }

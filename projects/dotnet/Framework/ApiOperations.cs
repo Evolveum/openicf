@@ -67,7 +67,7 @@ namespace Org.IdentityConnectors.Framework.Api.Operations
          *             iff the credentials do not pass authentication otherwise
          *             nothing.
          */
-        Uid Authenticate(string username, GuardedString password, OperationOptions options);
+        Uid Authenticate(ObjectClass objectClass, string username, GuardedString password, OperationOptions options);
     }
 
     /// <summary>
@@ -259,7 +259,7 @@ namespace Org.IdentityConnectors.Framework.Api.Operations
          * "now". 
          * @return The latest token or null if there is no sync data.
          */
-        SyncToken GetLatestSyncToken();
+        SyncToken GetLatestSyncToken(ObjectClass objectClass);
     }
     
     /**

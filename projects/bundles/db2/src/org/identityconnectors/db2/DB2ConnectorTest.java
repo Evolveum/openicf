@@ -79,7 +79,7 @@ public class DB2ConnectorTest {
 		String username = getTestRequiredProperty("testUser");
 		String password = getTestRequiredProperty("testPassword");
 		Map<String, Object> emptyMap = Collections.emptyMap();
-		facade.authenticate(username, new GuardedString(password.toCharArray()),new OperationOptions(emptyMap));
+		facade.authenticate(ObjectClass.ACCOUNT, username, new GuardedString(password.toCharArray()),new OperationOptions(emptyMap));
 	}
 	
 	/**
@@ -90,7 +90,7 @@ public class DB2ConnectorTest {
 		String username = "undefined";
 		String password = "testPassword";
 		Map<String, Object> emptyMap = Collections.emptyMap();
-		facade.authenticate(username, new GuardedString(password.toCharArray()),new OperationOptions(emptyMap));
+		facade.authenticate(ObjectClass.ACCOUNT, username, new GuardedString(password.toCharArray()),new OperationOptions(emptyMap));
 	}
 
 	static Connection createTestConnection() throws Exception{

@@ -211,7 +211,7 @@ namespace org.identityconnectors.testconnector
             }
         }
         
-        public SyncToken GetLatestSyncToken() 
+        public SyncToken GetLatestSyncToken(ObjectClass objectClass) 
         {
             return new SyncToken("mylatest");
         }

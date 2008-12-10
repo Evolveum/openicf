@@ -972,7 +972,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         }
 
-        public virtual SyncToken GetLatestSyncToken()
+        public virtual SyncToken GetLatestSyncToken(ObjectClass objectClass)
         {
             string serverName = GetSyncServerName();
             long highestCommittedUsn = 0;
@@ -1082,7 +1082,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         #region AuthenticateOp Members
 
-        public Uid Authenticate(string username, 
+        public Uid Authenticate(ObjectClass objectClass, string username, 
             Org.IdentityConnectors.Common.Security.GuardedString password, 
             OperationOptions options)
         {
@@ -1094,7 +1094,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         #region AttributeNormalizer Members
 
-        public virtual ConnectorAttribute NormalizeAttribute(ObjectClass oclass, ConnectorAttribute attribute)
+        public ConnectorAttribute NormalizeAttribute(ObjectClass oclass, ConnectorAttribute attribute)
         {
             // if this gets big, use deleagates, but for now, just
             // handle individual attirbutes;

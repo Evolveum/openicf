@@ -1298,7 +1298,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     ObjectClass.ACCOUNT, createAttributes);
 
                 // make sure authenticate works here                
-                connector.Authenticate(
+                connector.Authenticate(ObjectClass.ACCOUNT,
                     ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                     gsCurrentPassword, null);
 
@@ -1311,7 +1311,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     createUid, updateReplaceAttributes);
 
                 // make sure authenticate works here
-                connector.Authenticate(
+                connector.Authenticate(ObjectClass.ACCOUNT,
                     ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                     gsNewPassword, null);
 
@@ -1319,7 +1319,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 try
                 {
                     // make sure authenticate doesnt work with original password
-                    connector.Authenticate(
+                    connector.Authenticate(ObjectClass.ACCOUNT,
                         ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                         gsCurrentPassword, null);
                 }
@@ -1386,7 +1386,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     ObjectClass.ACCOUNT, createAttributes);
 
                 // make sure authenticate works here                
-                Uid authUid = connector.Authenticate(
+                Uid authUid = connector.Authenticate(ObjectClass.ACCOUNT,
                     ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                     gsCurrentPassword, null);
                 
@@ -1396,7 +1396,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 bool caughtException = false;
                 try
                 {
-                    connector.Authenticate(
+                    connector.Authenticate(ObjectClass.ACCOUNT,
                         ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                         GetGuardedString("boguspassword"), null);
 
@@ -1417,14 +1417,14 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     createUid, updateReplaceAttributes);
 
                 // make sure authenticate works here - new password    
-                connector.Authenticate(
+                connector.Authenticate(ObjectClass.ACCOUNT,
                     ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                     gsNewPassword, null);
 
                 // make sure it fails with the wrong password
                 caughtException = false;
                 try {
-                connector.Authenticate(
+                connector.Authenticate(ObjectClass.ACCOUNT,
                     ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                     GetGuardedString("bogusPassword"), null);
                 }
@@ -1446,7 +1446,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 try
                 {
                     // make sure authenticate fails with correct password
-                    connector.Authenticate(
+                    connector.Authenticate(ObjectClass.ACCOUNT,
                         ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                         gsNewPassword, null);
                 }
@@ -1462,7 +1462,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 try
                 {
                     // make sure authenticate fails with wrong password (invalid credentials exception)
-                    connector.Authenticate(
+                    connector.Authenticate(ObjectClass.ACCOUNT,
                         ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                         GetGuardedString("bogusPassword"), null);
                 }
@@ -1634,7 +1634,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     ObjectClass.ACCOUNT, createAttributes);
 
                 // make sure authenticate works here                
-                connector.Authenticate(
+                connector.Authenticate(ObjectClass.ACCOUNT,
                     ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                     gsCurrentPassword, null);
 
@@ -1656,7 +1656,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 try
                 {
                     // make sure authenticate fails with correct password
-                    connector.Authenticate(
+                    connector.Authenticate(ObjectClass.ACCOUNT,
                         ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                         gsCurrentPassword, null);
                 }
@@ -1676,7 +1676,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     createUid, expirePasswordTomorrowAttrs);
 
                 // make sure succeeds
-                connector.Authenticate(
+                connector.Authenticate(ObjectClass.ACCOUNT,
                     ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                     gsCurrentPassword, null);
 
@@ -1713,7 +1713,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     ObjectClass.ACCOUNT, createAttributes);
 
                 // make sure authenticate works here                
-                connector.Authenticate(
+                connector.Authenticate(ObjectClass.ACCOUNT,
                     ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                     gsCurrentPassword, null);
 
@@ -1723,7 +1723,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 // lock out by having unsucessful attempts.
                 try
                 {
-                    connector.Authenticate(
+                    connector.Authenticate(ObjectClass.ACCOUNT,
                         ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                         GetGuardedString("bogusPassword"), null);
                 }
@@ -1733,7 +1733,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                 try
                 {
-                    connector.Authenticate(
+                    connector.Authenticate(ObjectClass.ACCOUNT,
                         ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                         GetGuardedString("bogusPassword"), null);
                 }
@@ -1743,7 +1743,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                 try
                 {
-                    connector.Authenticate(
+                    connector.Authenticate(ObjectClass.ACCOUNT,
                         ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                         GetGuardedString("bogusPassword"), null);
                 }
@@ -1754,7 +1754,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 bool exceptionCaught = false;
                 try
                 {
-                    connector.Authenticate(
+                    connector.Authenticate(ObjectClass.ACCOUNT,
                         ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                         gsCurrentPassword, null);
                 }
@@ -1772,7 +1772,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     createUid, unlockAttrs);
 
                 // make sure succeeds
-                connector.Authenticate(
+                connector.Authenticate(ObjectClass.ACCOUNT,
                     ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                     gsCurrentPassword, null);
 
@@ -1826,7 +1826,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 // do the first sync
                 //connector.Sync(ObjectClass.ACCOUNT, syncHelper.Token, syncHelper.SyncHandler_Initial, null);
 
-                syncHelper.Init(connector.GetLatestSyncToken());
+                syncHelper.Init(connector.GetLatestSyncToken(ObjectClass.ACCOUNT));
                 ICollection<ConnectorAttribute> attributes = null;
 
                 // create some users
@@ -1844,7 +1844,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 syncHelper.CheckAllSyncsProcessed();
 
                 // reset everything
-                syncHelper.Init(connector.GetLatestSyncToken());
+                syncHelper.Init(connector.GetLatestSyncToken(ObjectClass.ACCOUNT));
 
                 // modify a user, then add some users, then modify one of the added users
                 attributes = new List<ConnectorAttribute>();
@@ -1872,7 +1872,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 connector.Sync(ObjectClass.ACCOUNT, syncHelper._token, syncHelper.SyncHandler_ModifiedAccounts, null);
                 syncHelper.CheckAllSyncsProcessed();
 
-                syncHelper.Init(connector.GetLatestSyncToken());
+                syncHelper.Init(connector.GetLatestSyncToken(ObjectClass.ACCOUNT));
                 // delete the user
                 foreach (Uid uid in createdUids)
                 {
@@ -1891,7 +1891,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                 // now get the latest sync token, and it
                 // should be greater or equal to the last one we saw
-                SyncToken latestToken = connector.GetLatestSyncToken();
+                SyncToken latestToken = connector.GetLatestSyncToken(ObjectClass.ACCOUNT);
                 Assert.Greater(GetUpdateUsnFromToken(latestToken), GetUpdateUsnFromToken(syncHelper._token));
                 Assert.GreaterOrEqual(GetDeleteUsnFromToken(latestToken), GetDeleteUsnFromToken(syncHelper._token));
             }
@@ -1914,11 +1914,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 (ActiveDirectoryConfiguration)GetConfiguration();
             configuration.SearchChildDomains = false;
             connector.Init(configuration);
-            SyncToken noGCToken = connector.GetLatestSyncToken();
+            SyncToken noGCToken = connector.GetLatestSyncToken(ObjectClass.ACCOUNT);
 
             configuration.SearchChildDomains = true;
             connector.Init(configuration);
-            SyncToken GCToken = connector.GetLatestSyncToken();
+            SyncToken GCToken = connector.GetLatestSyncToken(ObjectClass.ACCOUNT);
         }
 
         public long GetUpdateUsnFromToken(SyncToken token)

@@ -597,10 +597,10 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
         /**
          * {@inheritDoc}
          */
-        public Uid Authenticate(String username, GuardedString password, OperationOptions options) {
+        public Uid Authenticate(ObjectClass objectClass,String username, GuardedString password, OperationOptions options) {
             return ((AuthenticationApiOp) this
              .GetOperationCheckSupported(SafeType<APIOperation>.Get<AuthenticationApiOp>())).Authenticate(
-                    username, password, options);
+                    objectClass,username, password, options);
         }
 
         /**
@@ -651,9 +651,9 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
             .Sync(objClass, token, handler, options);
         }
         
-        public SyncToken GetLatestSyncToken() {
+        public SyncToken GetLatestSyncToken(ObjectClass objectClass) {
             return ((SyncApiOp)this.GetOperationCheckSupported(SafeType<APIOperation>.Get<SyncApiOp>()))
-            .GetLatestSyncToken();
+            .GetLatestSyncToken(objectClass);
         }
         
         private APIOperation GetOperationCheckSupported(SafeType<APIOperation> api) {

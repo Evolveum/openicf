@@ -285,7 +285,7 @@ namespace FrameworkTests
             ConnectorFacadeFactory facf = ConnectorFacadeFactory.GetInstance();
             ConnectorFacade facade = facf.NewInstance(api);
     
-            SyncToken latest = facade.GetLatestSyncToken();
+            SyncToken latest = facade.GetLatestSyncToken(ObjectClass.ACCOUNT);
             Assert.AreEqual("mylatest",latest.Value);
             IList<SyncDelta> results = new List<SyncDelta>();
             

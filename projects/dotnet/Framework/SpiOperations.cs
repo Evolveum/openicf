@@ -77,7 +77,7 @@ namespace Org.IdentityConnectors.Framework.Spi.Operations
          *             iff native authentication fails. If a native exception if
          *             available attempt to throw it.
          */
-        Uid Authenticate(String username, GuardedString password, OperationOptions options);
+        Uid Authenticate(ObjectClass objectClass, String username, GuardedString password, OperationOptions options);
     }
     
     /**
@@ -268,7 +268,7 @@ namespace Org.IdentityConnectors.Framework.Spi.Operations
          * "now". 
          * @return The latest token or null if there is no sync data.
          */
-        SyncToken GetLatestSyncToken();
+        SyncToken GetLatestSyncToken(ObjectClass objectClass);
     }
     
     /**

@@ -279,14 +279,15 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
          * 
          * @see Authentication#authenticate(String, String)
          */
-        public Uid Authenticate(String username, GuardedString password, OperationOptions options) {
+        public Uid Authenticate(ObjectClass objectClass, String username, GuardedString password, OperationOptions options) {
+            Assertions.NullCheck(objectClass,"objectClass");
             Assertions.NullCheck(username, "username");
             Assertions.NullCheck(password, "password");
             //convert null into empty
             if ( options == null ) {
                 options = new OperationOptionsBuilder().Build();
             }
-            return ((AuthenticateOp) GetConnector()).Authenticate(username, password,options);
+            return ((AuthenticateOp) GetConnector()).Authenticate(objectClass,username, password,options);
         }
     }
     #endregion
@@ -1140,9 +1141,9 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
             handler = new NormalizingSyncResultsHandler(handler,normalizer).Handle;
             ((SyncOp)GetConnector()).Sync(objClass, token, handler, options);
         }
-        public SyncToken GetLatestSyncToken() 
+        public SyncToken GetLatestSyncToken(ObjectClass objectClass) 
         {
-            return ((SyncOp) GetConnector()).GetLatestSyncToken();        
+            return ((SyncOp) GetConnector()).GetLatestSyncToken(objectClass);        
         }    
     }
     #endregion
