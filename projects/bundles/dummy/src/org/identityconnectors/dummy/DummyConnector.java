@@ -225,17 +225,21 @@ public class DummyConnector
                 prefix = (new StringBuilder()).append(clazz.getComponentType().getSimpleName()).append("Array").toString();
             builder.setName((new StringBuilder()).append(prefix).append(name).toString().toUpperCase());
             builder.setType(clazz);
-            AttributeInfo info = builder.build();
-            // Exclude attributes marked required, but not creatable
-            //
-            boolean ignore1 = !info.isCreateable() && info.isRequired();
-            boolean ignore2 = !info.isReadable() && info.isReturnedByDefault();
-            boolean ignore3 = info.isRequired() && clazz.equals(byte[].class);
-            if (!(ignore1 || ignore2 || ignore3)) {
-                list.add(info);
-                typeIndex[0]++;
-                if(typeIndex[0] == supportedTypes.length)
-                    typeIndex[0] = 0;
+            try {
+                AttributeInfo info = builder.build();
+                // Exclude attributes marked required, but not creatable
+                //
+                boolean ignore1 = !info.isCreateable() && info.isRequired();
+                boolean ignore2 = !info.isReadable() && info.isReturnedByDefault();
+                boolean ignore3 = info.isRequired() && clazz.equals(byte[].class);
+                if (!(ignore1 || ignore2 || ignore3)) {
+                    list.add(info);
+                    typeIndex[0]++;
+                    if(typeIndex[0] == supportedTypes.length)
+                        typeIndex[0] = 0;
+                }
+            } catch (IllegalArgumentException iae) {
+                // If it was an illegal cobo, we can't use it.
             }
         }
     }
