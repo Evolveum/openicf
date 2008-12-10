@@ -45,18 +45,14 @@ using Org.IdentityConnectors.ActiveDirectory;
 using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Framework.Common.Objects;
 using Org.IdentityConnectors.Framework.Spi;
-using Org.IdentityConnectors.Framework.Spi.Operations;
 
 namespace Org.IdentityConnectors.Exchange
 {
     /// <summary>
-    /// MS Exchange extension of Active Directory connector
-    /// </summary>
-    //TODO:  what about MessageCatalogPath inheritance?
-    [ConnectorClass("connector_displayName",
-                    typeof(ExchangeConfiguration),
-                    MessageCatalogPath = "Org.IdentityConnectors.Exchange.Messages"
-                   )]    
+    /// MS Exchange extension of Active Directory connector.
+    /// Full featured connector, see LegacyExchangeConnector for limited functionality connector.
+    /// LegacyExchangeConnector will be extension of this class, once ready.
+    /// </summary>        
     public class ExchangeConnector : ActiveDirectoryConnector
     {
         private static readonly string CLASS = typeof(ExchangeConnector).ToString();
@@ -240,9 +236,9 @@ namespace Org.IdentityConnectors.Exchange
         /// Defines the supported object classes by the connector, used for schema building
         /// </summary>
         /// <returns>List of supported object classes</returns>
-        protected override IList<ObjectClass> GetSupportedObjectClasses()
+        protected override ICollection<ObjectClass> GetSupportedObjectClasses()
         {
-            IList<ObjectClass> ocList =  base.GetSupportedObjectClasses();
+            ICollection<ObjectClass> ocList =  base.GetSupportedObjectClasses();
             Assertions.NullCheck(ocList, "ocList");
             ocList.Add(MAILBOX);
             ocList.Add(MAILUSER);

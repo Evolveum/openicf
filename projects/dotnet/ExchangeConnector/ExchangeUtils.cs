@@ -42,6 +42,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Management.Automation.Runspaces;
 using System.Reflection;
 
@@ -274,7 +275,84 @@ namespace Org.IdentityConnectors.Exchange
             return filtered;
         }
 
-        
+        /// <summary>
+        /// Helper method - Replaces specified collection Items
+        /// </summary>        
+        /// <param name="col"></param>
+        /// <param name="replace"></param>
+        /// <returns></returns>
+        internal static ArrayList FilterReplace(ArrayList col, string[,] replace)
+        {
+            Assertions.NullCheck(col, "col");
+            Assertions.NullCheck(replace, "replace");
+
+            ArrayList newcol = (ArrayList) col.Clone();
+            for (int i = 0; i < replace.GetLength(0); i++)
+            {
+                if (newcol.Contains(replace[i,0]))
+                {                    
+                    newcol.Remove(replace[i, 0]);
+                    newcol.Add(replace[i,1]);
+                }
+            }
+            return newcol;
+        }
+
+        /// <summary>
+        /// finds the attributes in connector object and rename it according to input array of names, but only
+        /// if the aatribute name is in attributes to get
+        /// </summary>
+        /// <param name="cobject"></param>
+        /// <param name="attsToGet"></param>
+        /// <param name="replace"></param>
+        /// <returns></returns>
+        internal static ConnectorObject ReplaceAttributes(ConnectorObject cobject, IList attsToGet, string[,] replace)
+        {
+            Assertions.NullCheck(cobject, "cobject");
+            Assertions.NullCheck(attsToGet, "attsToGet");
+            Assertions.NullCheck(replace, "replace");
+
+            var attributes = cobject.GetAttributes();
+            var builder = new ConnectorObjectBuilder();
+            foreach (ConnectorAttribute attribute in attributes)
+            {
+                for (int i = 0; i < replace.GetLength(0); i++)
+                {
+                    string oldName = replace[i, 1];
+                    string newName = replace[i, 0];
+                    if (attsToGet.Contains(newName) && attribute.Name == oldName)
+                    {
+                        var newAttribute = RenameAttribute(attribute, replace[i, 0]);
+                        builder.AddAttribute(newAttribute);
+                        break;
+                    }
+                }
+
+                builder.AddAttribute(attribute);
+            }
+            builder.AddAttributes(attributes);
+            builder.ObjectClass = cobject.ObjectClass;
+            builder.SetName(cobject.Name);
+            builder.SetUid(cobject.Uid);
+            return builder.Build();
+        }
+
+        /// <summary>
+        /// Renames the connector attribute to new name
+        /// </summary>
+        /// <param name="cattribute"></param>
+        /// <param name="newName"></param>
+        /// <returns></returns>
+        internal static ConnectorAttribute RenameAttribute(ConnectorAttribute cattribute, string newName)
+        {
+            Assertions.NullCheck(cattribute, "cattribute");
+            Assertions.NullCheck(newName, "newName");
+
+            var caBuilder = new ConnectorAttributeBuilder();
+            caBuilder.AddValue(cattribute.Value);
+            caBuilder.Name = newName;
+            return caBuilder.Build();
+        }
             
 
     }

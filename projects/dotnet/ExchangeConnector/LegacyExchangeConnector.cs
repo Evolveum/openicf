@@ -46,7 +46,7 @@ using Org.IdentityConnectors.Framework.Common.Exceptions;
 using Org.IdentityConnectors.Framework.Common.Objects;
 using Org.IdentityConnectors.Framework.Common.Objects.Filters;
 using Org.IdentityConnectors.Framework.Spi;
-using Org.IdentityConnectors.Framework.Spi.Operations;
+using System.Collections;
 
 namespace Org.IdentityConnectors.Exchange
 {
@@ -54,7 +54,6 @@ namespace Org.IdentityConnectors.Exchange
     /// MS Exchange connector - build to have the same functionality as Exchange resource adapter
     /// 
     /// </summary>
-    //TODO:  what about MessageCatalogPath inheritance?
     [ConnectorClass("connector_displayName",
                     typeof(ExchangeConfiguration),
                     MessageCatalogPath = "Org.IdentityConnectors.ActiveDirectory.Messages"
@@ -67,6 +66,15 @@ namespace Org.IdentityConnectors.Exchange
         internal const string ATT_RECIPIENT_TYPE = "RecipientType";
         internal const string ATT_EXTERNAL_MAIL = "ExternalEmailAddress";
         internal const string ATT_DATABASE = "Database";
+
+        internal const string ATT_EXTERNAL_MAIL_AD_NAME = "targetAddress";
+        internal const string ATT_DATABASE_AD_NAME = "homeMDB";
+
+        internal static readonly string[,] ATT_MAPPING = new[,]
+                                                             {
+                                                                 {ATT_DATABASE, ATT_DATABASE_AD_NAME},
+                                                                 {ATT_EXTERNAL_MAIL, ATT_EXTERNAL_MAIL_AD_NAME}
+                                                             };
 
         private static readonly ConnectorAttributeInfo ATTINFO_RECIPIENT_TYPE =
             ConnectorAttributeInfoBuilder.Build(ATT_RECIPIENT_TYPE, typeof(string), true, true, true, false);
@@ -111,7 +119,7 @@ namespace Org.IdentityConnectors.Exchange
             }
 
             //first create the object in AD
-            Uid uid = base.Create(oclass, filterOut(attributes), options);
+            Uid uid = base.Create(oclass, FilterOut(attributes), options);
 
             //prepare the command
             CommandInfo cmdInfo = rcptType == RCPT_TYPE_MAIL_BOX ? CommandInfo.ENABLE_MAILBOX : CommandInfo.ENABLE_MAILUSER;
@@ -121,14 +129,16 @@ namespace Org.IdentityConnectors.Exchange
             {
                 //execute the command
                 _runspace.InvokePipeline(cmd);
-            } catch
+            }
+            catch
             {
                 Trace.TraceWarning("Rolling back AD create for UID: " + uid.GetUidValue());
                 //rollback AD create
                 try
                 {
                     base.Delete(oclass, uid, options);
-                } catch
+                }
+                catch
                 {
                     //ignore delete error
                     Trace.TraceWarning("Not able to rollback AD create for UID: " + uid.GetUidValue());
@@ -139,7 +149,7 @@ namespace Org.IdentityConnectors.Exchange
 
             Debug.WriteLine(METHOD + ":exit", CLASS);
             return uid;
-        } 
+        }
         #endregion
 
         /// <summary>
@@ -161,7 +171,7 @@ namespace Org.IdentityConnectors.Exchange
             Assertions.NullCheck(attributes, "attributes");
 
             //update in AD first
-            Uid uid = base.Update(type, oclass, filterOut(attributes), options);
+            Uid uid = base.Update(type, oclass, FilterOut(attributes), options);
             //get recipient type
             string rcptType = ExchangeUtils.GetAttValue(ATT_RECIPIENT_TYPE, attributes) as string;
 
@@ -175,19 +185,19 @@ namespace Org.IdentityConnectors.Exchange
                     if (name == null)
                     {
                         //we don't know name, but we need it - NOTE: searching for all the default attributes, we need only Name here, it can be improved
-                        ConnectorObject co = ADSearchByUid(uid, oclass, options);
+                        ConnectorObject co = ADSearchByUid(uid, oclass, null);
                         Assertions.NullCheck(co, "co");
                         //add to attributes
                         attributes.Add(co.Name);
                     }
-                    
+
                     Command cmd = ExchangeUtils.GetCommand(CommandInfo.SET_MAILUSER, attributes);
                     _runspace.InvokePipeline(cmd);
-                } 
+                }
                 else
                 {
                     throw new ConnectorException(string.Format("Update type [{0}] not supported", type));
-                }                
+                }
             }
 
             Debug.WriteLine(METHOD + ":exit", CLASS);
@@ -241,10 +251,38 @@ namespace Org.IdentityConnectors.Exchange
         public override void ExecuteQuery(ObjectClass oclass, string query,
                                           ResultsHandler handler, OperationOptions options)
         {
-            //TODO: Implement ExecuteQuery
-            base.ExecuteQuery(oclass, query, handler, options);
-        }
+            ArrayList attsToGet = null;
+            if (options != null && options.AttributesToGet != null)
+            {
+                attsToGet = new ArrayList(options.AttributesToGet);
+            }
+            //delegate to get the exchange attributes if requested            
+            ResultsHandler filter = delegate(ConnectorObject cobject)
+                {
+                    ConnectorObject filtered = ExchangeUtils.ReplaceAttributes(cobject, attsToGet, ATT_MAPPING);
+                    return handler(filtered);
+                };
 
+            ResultsHandler handler2use = handler;
+            OperationOptions options2use = options;
+            if (options != null && options.AttributesToGet != null)
+            {
+                if (attsToGet.Contains(ATT_DATABASE) || attsToGet.Contains(ATT_EXTERNAL_MAIL) ||
+                    attsToGet.Contains(ATT_RECIPIENT_TYPE))
+                {
+                    //replace Exchange attributes with AD names
+                    var newAttsToGet = ExchangeUtils.FilterReplace(attsToGet, ATT_MAPPING);
+                    //we have to remove recipient type, as it is unknown to AD
+                    newAttsToGet.Remove(ATT_RECIPIENT_TYPE);
+                    //build new op options
+                    var builder = new OperationOptionsBuilder(options);
+                    builder.AttributesToGet = (string[]) newAttsToGet.ToArray(typeof(string));
+                    options2use = builder.Build();
+                    handler2use = filter;
+                }
+            }
+            base.ExecuteQuery(oclass, query, handler2use, options2use);
+        }
 
         /// <summary>
         /// Implementation of SearchOp.CreateFilterTranslator
@@ -252,8 +290,8 @@ namespace Org.IdentityConnectors.Exchange
         /// <param name="oclass"></param>
         /// <param name="options"></param>
         /// <returns></returns>
-        public override Org.IdentityConnectors.Framework.Common.Objects.Filters.FilterTranslator<string> CreateFilterTranslator(ObjectClass oclass, OperationOptions options)
-        {            
+        public override FilterTranslator<string> CreateFilterTranslator(ObjectClass oclass, OperationOptions options)
+        {
             return new LegacyExchangeConnectorFilterTranslator();
         }
 
@@ -321,11 +359,56 @@ namespace Org.IdentityConnectors.Exchange
         }
 
         /// <summary>
+        /// Attribute normalizer
+        /// </summary>
+        /// <param name="oclass">Object class</param>
+        /// <param name="attribute">Attribute to be normalized</param>
+        /// <returns>normalized attribute</returns>
+        public override ConnectorAttribute NormalizeAttribute(ObjectClass oclass, ConnectorAttribute attribute)
+        {
+            //normalize the attribute using AD connector first
+            attribute = base.NormalizeAttribute(oclass, attribute);
+            //normalize external mail value
+            if (attribute.Name == ATT_EXTERNAL_MAIL && attribute.Value != null)
+            {
+                IList<object> normAttributes = new List<object>();
+                bool normalized = false;
+                foreach (object val in attribute.Value)
+                {
+                    string strVal = val as string;
+                    if (strVal != null)
+                    {
+                        string[] split = strVal.Split(':');
+                        if (split.Length == 2)
+                        {
+                            //it contains delimiter, use the second part
+                            normAttributes.Add(split[1]);
+                            normalized = true;
+                        } else
+                        {
+                            //put the original value
+                            normAttributes.Add(val);
+                        }
+                    }
+                }
+                if (normalized)
+                {
+                    //build the attribute again
+                    return ConnectorAttributeBuilder.Build(attribute.Name, normAttributes);                    
+                }
+                
+            }
+            //return the original attribute
+            return attribute;            
+        }
+
+        
+        /// <summary>
         /// helper method to filter out all attributes used in LegacyExchangeConnector only
         /// </summary>
         /// <param name="attributes"></param>
         /// <returns></returns>
-        private static ICollection<ConnectorAttribute> filterOut(ICollection<ConnectorAttribute> attributes)
+        private static ICollection<ConnectorAttribute> FilterOut(ICollection<ConnectorAttribute> attributes)
         {
             return ExchangeUtils.FilterOut(attributes, ATT_RECIPIENT_TYPE, ATT_DATABASE, ATT_EXTERNAL_MAIL);
         }
@@ -351,32 +434,21 @@ namespace Org.IdentityConnectors.Exchange
             var translator =
                 base.CreateFilterTranslator(oclass, options);
             IList<string> queries = translator.Translate(filter);
-            
+
             if (queries.Count == 1)
             {
-                var result = new SingleResultHandler();
-                base.ExecuteQuery(oclass, queries[0], result.Handle, options);
-                ret = result.CObject;
+                ResultsHandler handler = delegate(ConnectorObject cobject)
+                {
+                    ret = cobject;
+                    return false;
+                };
+                base.ExecuteQuery(oclass, queries[0], handler, options);
             }
 
 
             return ret;
         }
 
-        /// <summary>
-        /// simple single result handler
-        /// </summary>
-        private sealed class SingleResultHandler
-        {
-            public ConnectorObject CObject { get; set; }
-            public bool Handle(ConnectorObject co)
-            {
-                CObject = co;
-                return false;
-            }
-        }
-
-        
     }
 
     ///<summary>
@@ -386,14 +458,14 @@ namespace Org.IdentityConnectors.Exchange
     {
         protected override string[] GetLdapNamesForAttribute(ConnectorAttribute attr)
         {
-            
+
             if (attr.Is(LegacyExchangeConnector.ATT_DATABASE))
             {
-                return new string[] { "objectGUID" };
+                return new string[] { LegacyExchangeConnector.ATT_DATABASE_AD_NAME };
             }
             if (attr.Is(LegacyExchangeConnector.ATT_EXTERNAL_MAIL))
             {
-                return new string[] { "homeMDB" };
+                return new string[] { LegacyExchangeConnector.ATT_EXTERNAL_MAIL_AD_NAME };
             }
             return base.GetLdapNamesForAttribute(attr);
         }
