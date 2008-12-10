@@ -189,6 +189,7 @@ public class DummyConnector
             _schema = schemaBuilder.build();
             return _schema;
         } catch(Exception e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
