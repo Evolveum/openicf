@@ -878,7 +878,7 @@ public class SpmlConnectorTests {
         buffer.append("}\n");
         buffer.append("private org.identityconnectors.framework.common.objects.AttributeInfo asWriteOnly(org.identityconnectors.framework.common.objects.AttributeInfo original) {\n");
         buffer.append("    org.identityconnectors.framework.common.objects.AttributeInfoBuilder builder = new org.identityconnectors.framework.common.objects.AttributeInfoBuilder();\n");
-        buffer.append("    builder.setMultiValue(original.isMultiValue());\n");
+        buffer.append("    builder.setMultiValued(original.isMultiValued());\n");
         buffer.append("    builder.setName(original.getName());\n");
         buffer.append("    builder.setReadable(original.isReadable());\n");
         buffer.append("    builder.setRequired(original.isRequired());\n");
@@ -891,7 +891,7 @@ public class SpmlConnectorTests {
         buffer.append("\n");
         buffer.append("private org.identityconnectors.framework.common.objects.AttributeInfo asNotByDefault(org.identityconnectors.framework.common.objects.AttributeInfo original) {\n");
         buffer.append("    org.identityconnectors.framework.common.objects.AttributeInfoBuilder builder = new org.identityconnectors.framework.common.objects.AttributeInfoBuilder();\n");
-        buffer.append("    builder.setMultiValue(original.isMultiValue());\n");
+        buffer.append("    builder.setMultiValued(original.isMultiValued());\n");
         buffer.append("    builder.setName(original.getName());\n");
         buffer.append("    builder.setReadable(original.isReadable());\n");
         buffer.append("    builder.setRequired(original.isRequired());\n");
