@@ -142,7 +142,7 @@ import org.openspml.v2.util.xml.ObjectFactory;
         displayNameKey="SPMLConnector",
         configurationClass= SpmlConfiguration.class)
 public class SpmlConnector implements PoolableConnector, CreateOp,
-DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
+        DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
     private Log log = Log.getLog(SpmlConnector.class);
     private ScriptExecutorFactory _factory;
     private static final ObjectFactory.ProfileRegistrar mDSMLRegistrar = new DSMLProfileRegistrar();
@@ -151,7 +151,7 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
 
     protected SpmlConnection                _connection;
     protected SpmlConfiguration             _configuration;
-    
+
     private ScriptExecutor                  _mapAttributeExecutor;
     private ScriptExecutor                  _mapSetNameExecutor;
     private ScriptExecutor                  _schemaExecutor;
@@ -181,7 +181,7 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
     public Configuration getConfiguration() {
         return _configuration;
     }
-    
+
     public void checkAlive() {
         _connection.test();
     }
@@ -197,22 +197,22 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
         String mapSetNameCommand = _configuration.getMapSetNameCommand();
         String schemaCommand = _configuration.getSchemaCommand();
         try {
-	        if (mapAttributeCommand!=null && mapAttributeCommand.length()>0)
-	            _mapAttributeExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), mapAttributeCommand, true);
+            if (mapAttributeCommand!=null && mapAttributeCommand.length()>0)
+                _mapAttributeExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), mapAttributeCommand, true);
         } catch (Exception e) {
-        	throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPATTRIBUTE_SCRIPT_ERROR), e);
+            throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPATTRIBUTE_SCRIPT_ERROR), e);
         }
         try {
-	        if (mapSetNameCommand!=null && mapSetNameCommand.length()>0)
-	            _mapSetNameExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), mapSetNameCommand, true);
+            if (mapSetNameCommand!=null && mapSetNameCommand.length()>0)
+                _mapSetNameExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), mapSetNameCommand, true);
         } catch (Exception e) {
-        	throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPSETNAME_SCRIPT_ERROR), e);
+            throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPSETNAME_SCRIPT_ERROR), e);
         }
         try {
-	        if (schemaCommand!=null && schemaCommand.length()>0)
-	            _schemaExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), schemaCommand, true);
+            if (schemaCommand!=null && schemaCommand.length()>0)
+                _schemaExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), schemaCommand, true);
         } catch (Exception e) {
-        	throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPSCHEMA_SCRIPT_ERROR), e);
+            throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPSCHEMA_SCRIPT_ERROR), e);
         }
         _objectClassMap = new HashMap<String, String>();
         _targetMap = new HashMap<String, String>();
@@ -229,23 +229,23 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
             }
         }
     }
-    
+
     /**
      * {@inheritDoc}
      */
     public Uid create(ObjectClass objectClass, Set<Attribute> attributes, OperationOptions options) {
         try {
             Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attributes));
-        	//TODO: need to discuss how to handle group membership
-        	// (there may be nothing here, other than remapping name, 
-        	// which is handled by scripts, but want to be sure).
+            //TODO: need to discuss how to handle group membership
+            // (there may be nothing here, other than remapping name, 
+            // which is handled by scripts, but want to be sure).
             AddRequest request = new AddRequest();
             Name name = AttributeUtil.getNameFromAttributes(attributes);
             log.info("create(''{0}'')", name.getNameValue());
             request.setTargetId(getTargetForObjectClass(objectClass));
             request.setRequestID(objectClassAsString(objectClass.getObjectClassValue())+":"+name.getNameValue());
             request.setExecutionMode(ExecutionMode.SYNCHRONOUS);
-            
+
             // If we are enabling/disabling, that is a separate request
             //
             Attribute enable = attrMap.remove(OperationalAttributes.ENABLE_NAME);
@@ -290,18 +290,18 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
     protected Extensible getCreateAttributes(ObjectClass objectClass, Map<String, Attribute> attrMap) throws Exception {
         Extensible extensible = new Extensible();
         for (Attribute attribute : attrMap.values()) {
-        	String name = attribute.getName();
-        	// validate that attribute is modifiable in schema
-        	//
-        	if (_oci!=null) {
-	        	Map<String, AttributeInfo> info = _oci.get(objectClass.getObjectClassValue());
-	        	if (info!=null) {
-	        		AttributeInfo attributeInfo = info.get(name);
-	        		if (attributeInfo!=null)
-	        			if (!attributeInfo.isCreateable())
-	        				throw new IllegalArgumentException(_configuration.getMessage(SpmlMessages.ILLEGAL_MODIFICATION, name));
-	        	}
-        	}
+            String name = attribute.getName();
+            // validate that attribute is modifiable in schema
+            //
+            if (_oci!=null) {
+                Map<String, AttributeInfo> info = _oci.get(objectClass.getObjectClassValue());
+                if (info!=null) {
+                    AttributeInfo attributeInfo = info.get(name);
+                    if (attributeInfo!=null)
+                        if (!attributeInfo.isCreateable())
+                            throw new IllegalArgumentException(_configuration.getMessage(SpmlMessages.ILLEGAL_MODIFICATION, name));
+                }
+            }
             extensible.addOpenContentElement(new DSMLAttr(mapSetName(name, objectClass.getObjectClassValue()), asDSMLValueArray(attribute)));
         }
         extensible.addOpenContentElement(new DSMLAttr("objectclass", _objectClassMap.get(objectClass.getObjectClassValue())));
@@ -441,9 +441,9 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
     SpmlConnection getConnection() {
         return _connection;
     }
-    
+
     private String getTargetForObjectClass(ObjectClass objectClass) {
-    	String key = objectClass.getObjectClassValue();
+        String key = objectClass.getObjectClassValue();
         if (_targetMap.containsKey(key)) {
             return _targetMap.get(key);
         } else {
@@ -452,7 +452,7 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
     }
 
     private void closeIterator(ResultsIterator iterator)
-            throws Spml2ExceptionWithResponse, Spml2Exception {
+    throws Spml2ExceptionWithResponse, Spml2Exception {
         CloseIteratorRequest ciRequest = new CloseIteratorRequest();
         ciRequest.setIterator(iterator);
         ciRequest.setExecutionMode(ExecutionMode.SYNCHRONOUS);
@@ -486,7 +486,7 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
             throw ConnectorException.wrap(e);
         }
     }
-    
+
     private Attribute getActiveStatus(Uid uid, String targetId) {
         try {
             ActiveRequest request = new ActiveRequest();
@@ -529,7 +529,7 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
             }
         }
         builder.setObjectClass(objectClass);
-        
+
         boolean getEnable = false;
         if (attributesToGet!=null)
             getEnable = attributesToGet.contains(OperationalAttributes.ENABLE_NAME);
@@ -541,22 +541,22 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
                     getEnable = enableInfo.isReturnedByDefault();
             }
         }
-        
+
         if (getEnable) {
             builder.addAttribute(getActiveStatus(uid, getTargetforObjectClass(objectClass)));
         }
         builder.setName(name);
         return builder.build();
     }
-    
+
     private String getTargetforObjectClass(ObjectClass objectClass) {
-    	String[] classNames = _configuration.getObjectClassNames();
-    	String[] targetNames = _configuration.getTargetNames();
-    	for (int i=0; i<classNames.length; i++) {
-    		if (classNames[i].equals(objectClass.getObjectClassValue()))
-    			return targetNames[i];
-    	}
-    	return null;
+        String[] classNames = _configuration.getObjectClassNames();
+        String[] targetNames = _configuration.getTargetNames();
+        for (int i=0; i<classNames.length; i++) {
+            if (classNames[i].equals(objectClass.getObjectClassValue()))
+                return targetNames[i];
+        }
+        return null;
     }
 
     private PSOIdentifier getPsoIdentifier(Uid uid, ObjectClass objectClass) {
@@ -565,7 +565,7 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
         pso.setTargetID(getTargetForObjectClass(objectClass));
         return pso;
     }
-    
+
     public Uid update(ObjectClass obj, Uid uid, Set<Attribute> attrs, OperationOptions options) {
         return update(obj, AttributeUtil.addUid(attrs, uid), options);
     }
@@ -584,7 +584,7 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
             Attribute disableDate = attrMap.remove(OperationalAttributes.DISABLE_DATE_NAME);
             Attribute enableDate = attrMap.remove(OperationalAttributes.ENABLE_DATE_NAME);
             processEnable(objectClass, uid, enable, disableDate, enableDate);
-            
+
             // If we are changing password, that is a separate request
             //
             Attribute password = attrMap.remove(OperationalAttributes.PASSWORD_NAME);
@@ -610,7 +610,7 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
                     log.error("update failed:''{0}''", response.getError());
                     throw exceptionForId(response);
                 }
-             }
+            }
             return uid;
         } catch (Spml2ExceptionWithResponse e) {
             log.error(e, "update failed:''{0}''", e.getResponse().getError());
@@ -621,109 +621,109 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
         }
     }
 
-	private void processPassword(ObjectClass objectClass, Uid uid,
-			Attribute password) throws Spml2ExceptionWithResponse,
-			Spml2Exception {
-		if (password!=null) {
-		    SetPasswordRequest request = new SetPasswordRequest();
-		    GuardedString passwordGS = AttributeUtil.getGuardedStringValue(password);
-		    GuardedStringAccessor accessor = new GuardedStringAccessor();
-		    passwordGS.access(accessor);
-		    String passwordString = new String(accessor.getArray());
-		    accessor.clear();
-		    request.setPassword(passwordString);
-		    request.setPsoID(getPsoIdentifier(uid, objectClass));
-		    request.setRequestID(uid.getUidValue());
-		    request.setExecutionMode(ExecutionMode.SYNCHRONOUS);
-		    log.info("change password(''{0}'')", uid.getUidValue());
-		    SetPasswordResponse response = (SetPasswordResponse)_connection.send(request);
-		    if (!response.getStatus().equals(StatusCode.SUCCESS)) {
-		        log.error("change password failed:''{0}''", response.getError());
-		        throw exceptionForId(response);
-		    }
-		 }
-	}
+    private void processPassword(ObjectClass objectClass, Uid uid,
+            Attribute password) throws Spml2ExceptionWithResponse,
+            Spml2Exception {
+        if (password!=null) {
+            SetPasswordRequest request = new SetPasswordRequest();
+            GuardedString passwordGS = AttributeUtil.getGuardedStringValue(password);
+            GuardedStringAccessor accessor = new GuardedStringAccessor();
+            passwordGS.access(accessor);
+            String passwordString = new String(accessor.getArray());
+            accessor.clear();
+            request.setPassword(passwordString);
+            request.setPsoID(getPsoIdentifier(uid, objectClass));
+            request.setRequestID(uid.getUidValue());
+            request.setExecutionMode(ExecutionMode.SYNCHRONOUS);
+            log.info("change password(''{0}'')", uid.getUidValue());
+            SetPasswordResponse response = (SetPasswordResponse)_connection.send(request);
+            if (!response.getStatus().equals(StatusCode.SUCCESS)) {
+                log.error("change password failed:''{0}''", response.getError());
+                throw exceptionForId(response);
+            }
+        }
+    }
 
-	private void processExpirePassword(ObjectClass objectClass, Uid uid,
-			Attribute expirePassword) throws Spml2ExceptionWithResponse,
-			Spml2Exception {
-		if (expirePassword!=null) {
-		    ExpirePasswordRequest request = new ExpirePasswordRequest();
-		    request.setRemainingLogins(0);
-		    request.setPsoID(getPsoIdentifier(uid, objectClass));
-		    request.setRequestID(uid.getUidValue());
-		    request.setExecutionMode(ExecutionMode.SYNCHRONOUS);
-		    log.info("expire password(''{0}''", uid.getUidValue());
-		    ExpirePasswordResponse response = (ExpirePasswordResponse)_connection.send(request);
-		    if (!response.getStatus().equals(StatusCode.SUCCESS)) {
-		        log.error("expire password failed:''{0}''", response.getError());
-		        throw exceptionForId(response);
-		    }
-		}
-	}
+    private void processExpirePassword(ObjectClass objectClass, Uid uid,
+            Attribute expirePassword) throws Spml2ExceptionWithResponse,
+            Spml2Exception {
+        if (expirePassword!=null) {
+            ExpirePasswordRequest request = new ExpirePasswordRequest();
+            request.setRemainingLogins(0);
+            request.setPsoID(getPsoIdentifier(uid, objectClass));
+            request.setRequestID(uid.getUidValue());
+            request.setExecutionMode(ExecutionMode.SYNCHRONOUS);
+            log.info("expire password(''{0}''", uid.getUidValue());
+            ExpirePasswordResponse response = (ExpirePasswordResponse)_connection.send(request);
+            if (!response.getStatus().equals(StatusCode.SUCCESS)) {
+                log.error("expire password failed:''{0}''", response.getError());
+                throw exceptionForId(response);
+            }
+        }
+    }
 
-	private void processEnable(ObjectClass objectClass, Uid uid,
-			Attribute enable, Attribute disableDate, Attribute enableDate)
-			throws Spml2ExceptionWithResponse, Spml2Exception {
-		if (enable!=null) {
-		    boolean isEnable = AttributeUtil.getBooleanValue(enable);
-		    if (isEnable) {
-		        ResumeRequest request = new ResumeRequest();
-		        Long date = enableDate!=null?AttributeUtil.getLongValue(enableDate):null;
-		        if (date!=null) {
-		            // Date must be specified as UTC date with no Time Zone component
-		            //
-		            Date effectiveDate = new Date(date);
-		            String dateString = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSS").format(effectiveDate);
-		            request.setEffectiveDate(dateString);
-		        }
-		        request.setPsoID(getPsoIdentifier(uid, objectClass));
-		        request.setRequestID(uid.getUidValue());
-		        request.setExecutionMode(ExecutionMode.SYNCHRONOUS);
-		        log.info("enable(''{0}'')", uid.getUidValue());
-		        Response response = _connection.send(request);
-		        if (!response.getStatus().equals(StatusCode.SUCCESS)) {
-		            log.error("enable failed:''{0}''", response.getError());
-		            throw exceptionForId(response);
-		        }
-		    } else {
-		        SuspendRequest request = new SuspendRequest();
-		        Long date = disableDate!=null?AttributeUtil.getLongValue(disableDate):null;
-		        if (date!=null) {
-		            // Date must be specified as UTC date with no Time Zone component
-		            //
-		            Date effectiveDate = new Date(date);
-		            String dateString = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSS").format(effectiveDate);
-		            request.setEffectiveDate(dateString);
-		        }
-		        request.setPsoID(getPsoIdentifier(uid, objectClass));
-		        request.setRequestID(uid.getUidValue());
-		        request.setExecutionMode(ExecutionMode.SYNCHRONOUS);
-		        log.info("disable(''{0}'')", uid.getUidValue());
-		        Response response = _connection.send(request);
-		        if (!response.getStatus().equals(StatusCode.SUCCESS)) {
-		            log.error("disable failed:''{0}''", response.getError());
-		            throw exceptionForId(response);
-		        }
-		    }
-		}
-	}
+    private void processEnable(ObjectClass objectClass, Uid uid,
+            Attribute enable, Attribute disableDate, Attribute enableDate)
+    throws Spml2ExceptionWithResponse, Spml2Exception {
+        if (enable!=null) {
+            boolean isEnable = AttributeUtil.getBooleanValue(enable);
+            if (isEnable) {
+                ResumeRequest request = new ResumeRequest();
+                Long date = enableDate!=null?AttributeUtil.getLongValue(enableDate):null;
+                if (date!=null) {
+                    // Date must be specified as UTC date with no Time Zone component
+                    //
+                    Date effectiveDate = new Date(date);
+                    String dateString = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSS").format(effectiveDate);
+                    request.setEffectiveDate(dateString);
+                }
+                request.setPsoID(getPsoIdentifier(uid, objectClass));
+                request.setRequestID(uid.getUidValue());
+                request.setExecutionMode(ExecutionMode.SYNCHRONOUS);
+                log.info("enable(''{0}'')", uid.getUidValue());
+                Response response = _connection.send(request);
+                if (!response.getStatus().equals(StatusCode.SUCCESS)) {
+                    log.error("enable failed:''{0}''", response.getError());
+                    throw exceptionForId(response);
+                }
+            } else {
+                SuspendRequest request = new SuspendRequest();
+                Long date = disableDate!=null?AttributeUtil.getLongValue(disableDate):null;
+                if (date!=null) {
+                    // Date must be specified as UTC date with no Time Zone component
+                    //
+                    Date effectiveDate = new Date(date);
+                    String dateString = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSS").format(effectiveDate);
+                    request.setEffectiveDate(dateString);
+                }
+                request.setPsoID(getPsoIdentifier(uid, objectClass));
+                request.setRequestID(uid.getUidValue());
+                request.setExecutionMode(ExecutionMode.SYNCHRONOUS);
+                log.info("disable(''{0}'')", uid.getUidValue());
+                Response response = _connection.send(request);
+                if (!response.getStatus().equals(StatusCode.SUCCESS)) {
+                    log.error("disable failed:''{0}''", response.getError());
+                    throw exceptionForId(response);
+                }
+            }
+        }
+    }
 
     protected void setModifications(ModifyRequest modifyRequest, ObjectClass objectClass, Map<String, Attribute> attributes) throws Exception {
         for (Attribute attribute : attributes.values()) {
-        	String name = attribute.getName();
-        	
-        	// validate that attribute is modifiable in schema
-        	//
-        	if (_oci!=null) {
-	        	Map<String, AttributeInfo> info = _oci.get(objectClass.getObjectClassValue());
-	        	if (info!=null) {
-	        		AttributeInfo attributeInfo = info.get(name);
-	        		if (attributeInfo!=null)
-	        			if (!attributeInfo.isUpdateable())
-	        				throw new IllegalArgumentException(_configuration.getMessage(SpmlMessages.ILLEGAL_MODIFICATION, name));
-	        	}
-        	}
+            String name = attribute.getName();
+
+            // validate that attribute is modifiable in schema
+            //
+            if (_oci!=null) {
+                Map<String, AttributeInfo> info = _oci.get(objectClass.getObjectClassValue());
+                if (info!=null) {
+                    AttributeInfo attributeInfo = info.get(name);
+                    if (attributeInfo!=null)
+                        if (!attributeInfo.isUpdateable())
+                            throw new IllegalArgumentException(_configuration.getMessage(SpmlMessages.ILLEGAL_MODIFICATION, name));
+                }
+            }
             Modification modification = new Modification();
             modification.addOpenContentElement(new DSMLModification(mapSetName(name, objectClass.getObjectClassValue()), asDSMLValueArray(attribute), ModificationMode.REPLACE));
             modifyRequest.addModification(modification);
@@ -749,7 +749,7 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
             String[] spmlClassNames = _configuration.getSpmlClassNames();
             String[] objectClassNames = _configuration.getObjectClassNames();
             int length = spmlClassNames==null?0:spmlClassNames.length;
-            
+
             for (Target target : targets) {
                 org.openspml.v2.msg.spml.Schema[] schemas = target.getSchemas();
                 for (org.openspml.v2.msg.spml.Schema schema : schemas) {
@@ -781,11 +781,11 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
         _schema = schemaBuilder.build();
         _oci = new HashMap<String, Map<String, AttributeInfo>>();
         for (ObjectClassInfo info : _schema.getObjectClassInfo()) {
-        	_oci.put(info.getType(), AttributeInfoUtil.toMap(info.getAttributeInfo()));
+            _oci.put(info.getType(), AttributeInfoUtil.toMap(info.getAttributeInfo()));
         }
         return _schema;
     }
-    
+
     private void fillInSchemaForObjectClass(final SchemaBuilder schemaBuilder,
             String objectClass, AttributeDefinitionReferences refs, 
             Set<AttributeInfo> attributes) throws Exception {
@@ -800,49 +800,49 @@ DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
     }
 
     private String mapSetName(String name, String objectClass) throws Exception {
-    	try {
-	        if (_mapSetNameExecutor!=null) {
-	            Map<String, Object> arguments = new HashMap<String, Object>();
-	            arguments.put("name", name);
-	            arguments.put("objectClass", objectClass);
-	            arguments.put("configuration", _configuration);
-	            arguments.put("memory", _connection.getMemory());
-	            return (String)_mapSetNameExecutor.execute(arguments);
-	        }
-	        return name;
-    	} catch (Exception e) {
+        try {
+            if (_mapSetNameExecutor!=null) {
+                Map<String, Object> arguments = new HashMap<String, Object>();
+                arguments.put("name", name);
+                arguments.put("objectClass", objectClass);
+                arguments.put("configuration", _configuration);
+                arguments.put("memory", _connection.getMemory());
+                return (String)_mapSetNameExecutor.execute(arguments);
+            }
+            return name;
+        } catch (Exception e) {
             throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPSETNAME_SCRIPT_ERROR), e);
-    	}
+        }
     }
 
     private void updateSchema(String objectClass, Set<AttributeInfo> attributeInfos) throws Exception {
-    	try {
-	        if (_schemaExecutor!=null) {
-	            Map<String, Object> arguments = new HashMap<String, Object>();
-	            arguments.put("objectClass", objectClass);
-	            arguments.put("attributeInfos", attributeInfos);
-	            arguments.put("memory", _connection.getMemory());
-	            _schemaExecutor.execute(arguments);
-	        }
-    	} catch (Exception e) {
+        try {
+            if (_schemaExecutor!=null) {
+                Map<String, Object> arguments = new HashMap<String, Object>();
+                arguments.put("objectClass", objectClass);
+                arguments.put("attributeInfos", attributeInfos);
+                arguments.put("memory", _connection.getMemory());
+                _schemaExecutor.execute(arguments);
+            }
+        } catch (Exception e) {
             throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPSCHEMA_SCRIPT_ERROR), e);
-    	}
+        }
     }
 
     private Attribute mapAttribute(Attribute attribute, String objectClass) throws Exception {
-    	try {
-	        if (_mapAttributeExecutor!=null) {
-	            Map<String, Object> arguments = new HashMap<String, Object>();
-	            arguments.put("attribute", attribute);
-	            arguments.put("objectClass", objectClass);
-	            arguments.put("configuration", _configuration);
-	            arguments.put("memory", _connection.getMemory());
-	            return (Attribute)_mapAttributeExecutor.execute(arguments);
-	        }
-	        return attribute;
-    	} catch (Exception e) {
+        try {
+            if (_mapAttributeExecutor!=null) {
+                Map<String, Object> arguments = new HashMap<String, Object>();
+                arguments.put("attribute", attribute);
+                arguments.put("objectClass", objectClass);
+                arguments.put("configuration", _configuration);
+                arguments.put("memory", _connection.getMemory());
+                return (Attribute)_mapAttributeExecutor.execute(arguments);
+            }
+            return attribute;
+        } catch (Exception e) {
             throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPATTRIBUTE_SCRIPT_ERROR), e);
-    	}
+        }
     }
 
     private ConnectorException exceptionForId(Response response) {

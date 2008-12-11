@@ -77,12 +77,12 @@ public class SpmlFilterTranslator extends AbstractFilterTranslator<FilterItem>{
         _connection = connection;
         _configuration = configuration;
         try {
-	        String mapQueryNameCommand = _configuration.getMapQueryNameCommand();
-	        if (mapQueryNameCommand!=null && mapQueryNameCommand.length()>0)
-	            _mapQueryNameExecutor = factory.newScriptExecutor(getClass().getClassLoader(), mapQueryNameCommand, true);
-	    } catch (Exception e) {
-	    	throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPQUERYNAME_SCRIPT_ERROR), e);
-	    }
+            String mapQueryNameCommand = _configuration.getMapQueryNameCommand();
+            if (mapQueryNameCommand!=null && mapQueryNameCommand.length()>0)
+                _mapQueryNameExecutor = factory.newScriptExecutor(getClass().getClassLoader(), mapQueryNameCommand, true);
+        } catch (Exception e) {
+            throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPQUERYNAME_SCRIPT_ERROR), e);
+        }
     }
 
     @Override
@@ -108,7 +108,7 @@ public class SpmlFilterTranslator extends AbstractFilterTranslator<FilterItem>{
             return super.createOrExpression(leftExpression, rightExpression);
         }
     }
-    
+
     @Override
     protected FilterItem createStartsWithExpression(StartsWithFilter filter, boolean not) {
         Attribute attribute = filter.getAttribute();
@@ -138,7 +138,7 @@ public class SpmlFilterTranslator extends AbstractFilterTranslator<FilterItem>{
             throw ConnectorException.wrap(e);
         }
     }
-    
+
     @Override
     protected FilterItem createEndsWithExpression(EndsWithFilter filter, boolean not) {
         Attribute attribute = filter.getAttribute();
@@ -217,12 +217,12 @@ public class SpmlFilterTranslator extends AbstractFilterTranslator<FilterItem>{
                 arguments.put("memory", _connection.getMemory());
                 return (String)_mapQueryNameExecutor.execute(arguments);
             }
-	    } catch (Exception e) {
-	    	throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPQUERYNAME_SCRIPT_ERROR), e);
-	    }
+        } catch (Exception e) {
+            throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPQUERYNAME_SCRIPT_ERROR), e);
+        }
         return name;
     }
-    
+
     private boolean isSingleString(List<Object> value) {
         return value!=null && value.size()==1 && value.get(0) instanceof String;
     }

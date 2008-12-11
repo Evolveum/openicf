@@ -82,26 +82,26 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _targetNames = arrayCopy(targetClass);
     }
     public String getMessage(String key) {
-    	return getConnectorMessages().format(key, key);
+        return getConnectorMessages().format(key, key);
     }
 
     public String getMessage(String key, Object... objects) {
-    	return getConnectorMessages().format(key, key, objects);
+        return getConnectorMessages().format(key, key, objects);
     }
-    
+
     private boolean isNull(String string) {
-    	return string==null || string.length()==0;
+        return string==null || string.length()==0;
     }
 
     private boolean isNull(GuardedString string) {
-    	if (string==null)
-    		return true;
-    	GuardedStringAccessor accessor = new GuardedStringAccessor();
-    	string.access(accessor);
-    	char[] password = accessor.getArray();
-    	boolean isNull = password.length==0;
-    	Arrays.fill(password, ' ');
-    	return isNull;
+        if (string==null)
+            return true;
+        GuardedStringAccessor accessor = new GuardedStringAccessor();
+        string.access(accessor);
+        char[] password = accessor.getArray();
+        boolean isNull = password.length==0;
+        Arrays.fill(password, ' ');
+        return isNull;
     }
 
     public void validate() {
@@ -232,15 +232,15 @@ public class SpmlConfiguration extends AbstractConfiguration {
     public void setSchemaCommand(String schemaCommand) {
         _schemaCommand = schemaCommand;
     }
-    
-    @ConfigurationProperty(order=17)
-     public String[] getNameAttributes() {
-         return arrayCopy(_nameAttributes);
-     }
 
-     public void setNameAttributes(String[] attribute) {
-         _nameAttributes = arrayCopy(attribute);
-     }
+    @ConfigurationProperty(order=17)
+    public String[] getNameAttributes() {
+        return arrayCopy(_nameAttributes);
+    }
+
+    public void setNameAttributes(String[] attribute) {
+        _nameAttributes = arrayCopy(attribute);
+    }
 
     @ConfigurationProperty(order=18)
     public String[] getObjectClassNames() {
@@ -268,7 +268,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
     public void setTargetNames(String[] targetNames) {
         _targetNames = arrayCopy(targetNames);
     }
-    
+
     String[] arrayCopy(String[] array) {
         if (array==null)
             return null;

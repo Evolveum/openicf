@@ -95,16 +95,16 @@ public class SpmlConnection  {
         String preCommand = _configuration.getPreSendCommand();
         String postCommand = _configuration.getPostReceiveCommand();
         try {
-	            if (preCommand!=null && preCommand.length()>0)
-	                _preSendExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), preCommand, true);
+            if (preCommand!=null && preCommand.length()>0)
+                _preSendExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), preCommand, true);
         } catch (Exception e) {
-        	throw new ConnectorException(_configuration.getMessage(SpmlMessages.PRESEND_SCRIPT_ERROR), e);
+            throw new ConnectorException(_configuration.getMessage(SpmlMessages.PRESEND_SCRIPT_ERROR), e);
         }
         try {
-	        if (postCommand!=null && postCommand.length()>0)
-	            _postReceiveExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), postCommand, true);
+            if (postCommand!=null && postCommand.length()>0)
+                _postReceiveExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), postCommand, true);
         } catch (Exception e) {
-        	throw new ConnectorException(_configuration.getMessage(SpmlMessages.POSTRECEIVE_SCRIPT_ERROR), e);
+            throw new ConnectorException(_configuration.getMessage(SpmlMessages.POSTRECEIVE_SCRIPT_ERROR), e);
         }
         _memory = new HashMap<Object, Object>();
         String postConnectCommand = _configuration.getPostConnectCommand();
@@ -223,7 +223,7 @@ public class SpmlConnection  {
             throw ConnectorException.wrap(e);
         }
     }
-    
+
     private void get(String uid, String targetId) {
         try {
             LookupRequest request = new LookupRequest();
@@ -249,7 +249,7 @@ public class SpmlConnection  {
             throw ConnectorException.wrap(e);
         }
     }
-    
+
     protected String asString(String[] strings) {
         if (strings.length==0)
             return "";

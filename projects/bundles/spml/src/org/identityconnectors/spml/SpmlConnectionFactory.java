@@ -49,7 +49,7 @@ import org.openspml.v2.client.Spml2Client;
 public class SpmlConnectionFactory {
 
     private static final Log log = Log.getLog(SpmlConnectionFactory.class);
-    
+
 
     public static SpmlConnection newConnection(SpmlConfiguration configuration) {
         Spml2Client client = null;
