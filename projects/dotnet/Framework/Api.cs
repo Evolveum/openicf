@@ -228,6 +228,8 @@ namespace Org.IdentityConnectors.Framework.Api
          */
         string GetConnectorDisplayName(); 
         
+        ConnectorMessages Messages { get; }
+        
         ConnectorKey ConnectorKey { get; }
 
         /**

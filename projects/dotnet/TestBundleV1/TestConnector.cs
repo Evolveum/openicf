@@ -110,7 +110,7 @@ namespace org.identityconnectors.testconnector
     
     [ConnectorClass("TestConnector",
                     typeof(TstConnectorConfig),
-                      MessageCatalogPath="TestBundleV1.Messages"
+                    MessageCatalogPaths= new String[]{"TestBundleV1.Messages"}
                         )]
     public class TstConnector : CreateOp, PoolableConnector, SchemaOp, SearchOp<String>, SyncOp
     {

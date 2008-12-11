@@ -54,7 +54,7 @@ namespace org.identityconnectors.testconnector
     
     [ConnectorClass("TestConnector",
                       typeof(TstConnectorConfig),
-                      MessageCatalogPath="TestBundleV2.Messages"
+                      MessageCatalogPaths=new String[]{"TestBundleV2.Messages"}
                         )]
     public class TstConnector : CreateOp, Connector, SchemaOp
     {

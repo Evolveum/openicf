@@ -415,7 +415,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
             rv.ConnectorDisplayNameKey = connectorDisplayNameKey;
             rv.ConnectorKey = key;
             rv.DefaultAPIConfiguration = CreateDefaultAPIConfiguration(rv);
-            rv.Messages = LoadMessages(assembly,rv,attribute.MessageCatalogPath);
+            rv.Messages = LoadMessages(assembly,rv,attribute.MessageCatalogPaths);
             return rv;
         }
         
@@ -478,28 +478,34 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
         
         private ConnectorMessagesImpl LoadMessages(Assembly assembly,
                                                    LocalConnectorInfoImpl info,
-                                                   String nameBase) {
-            if ( StringUtil.IsBlank(nameBase) ) {
+                                                   String [] nameBases) {
+            if ( nameBases == null || nameBases.Length == 0 ) {
                 String pkage =
                     info.ConnectorClass.RawType.Namespace;
-                nameBase = pkage+".Messages";
+                nameBases = new String[]{pkage+".Messages"};
             }
             ConnectorMessagesImpl rv = new ConnectorMessagesImpl();
             CultureInfo [] cultures = GetLocalizedCultures(assembly);
-            ResourceManager manager = new ResourceManager(nameBase,assembly);
-            foreach (CultureInfo culture in cultures) {
-                ResourceSet resourceSet = manager.GetResourceSet(culture,true,false);
-                if ( resourceSet != null ) {
-                    IDictionary<string, string> temp = new
-                        Dictionary<string, string>();
-                    foreach (System.Collections.DictionaryEntry entry in resourceSet) {
-                        String key = ""+entry.Key;
-                        String val = ""+entry.Value;
-                        temp[key] = val;
-                    }
-                    rv.Catalogs[culture] = temp;
-                }                
-            }            
+            for ( int i = nameBases.Length - 1; i >= 0; i-- ) {
+                String nameBase = nameBases[i];
+                ResourceManager manager = new ResourceManager(nameBase,assembly);
+                foreach (CultureInfo culture in cultures) {
+                    ResourceSet resourceSet = manager.GetResourceSet(culture,true,false);
+                    if ( resourceSet != null ) {
+                        IDictionary<string, string> temp = 
+                            CollectionUtil.GetValue(rv.Catalogs,culture,null);
+                        if ( temp == null ) {
+                            temp = new Dictionary<string, string>();
+                            rv.Catalogs[culture] = temp;
+                        }
+                        foreach (System.Collections.DictionaryEntry entry in resourceSet) {
+                            String key = ""+entry.Key;
+                            String val = ""+entry.Value;
+                            temp[key] = val;
+                        }
+                    }                
+                }
+            }
             
             return rv;
         }

@@ -69,7 +69,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
     /// </summary>
     [ConnectorClass("connector_displayName",
                       typeof(ActiveDirectoryConfiguration),
-                      MessageCatalogPath = "Org.IdentityConnectors.ActiveDirectory.Messages"
+                      MessageCatalogPaths = new String[]{"Org.IdentityConnectors.ActiveDirectory.Messages"}
                       )]    
     public class ActiveDirectoryConnector : CreateOp, Connector, SchemaOp, DeleteOp,
         SearchOp<String>, TestOp, UpdateAttributeValuesOp, ScriptOnResourceOp, SyncOp, 

@@ -473,4 +473,7 @@ OperationOptionInfo | SyncDeltaType | SyncToken | SyncDelta | QualifiedUid
 &lt;!ELEMENT EchoMessage (value,objectXml?)&gt;
 &lt;!ELEMENT objectXml (#PCDATA)&gt;</value>
   </data>
+  <data name="TEST_FRAMEWORK_KEY" xml:space="preserve">
+    <value>Test Framework Value</value>
+  </data>
 </root>

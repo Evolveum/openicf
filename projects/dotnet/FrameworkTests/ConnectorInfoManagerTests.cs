@@ -131,6 +131,8 @@ namespace FrameworkTests
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en");
             Assert.AreEqual("Help for test field.",property.GetHelpMessage(null));
             Assert.AreEqual("Display for test field.",property.GetDisplayName(null));
+            Assert.AreEqual("Test Framework Value",
+                info.Messages.Format("TEST_FRAMEWORK_KEY", "empty"));
     
             CultureInfo eslocale = new CultureInfo("es");
             Thread.CurrentThread.CurrentUICulture = eslocale;

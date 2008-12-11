@@ -55,6 +55,7 @@ using Org.IdentityConnectors.Common.Security;
 using System.Linq;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Resources;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Diagnostics;
@@ -374,6 +375,9 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
                 message = CollectionUtil.GetValue(catalog,key,null);
             }
             if ( message == null ) {
+                message = GetFrameworkMessage(locale,key);
+            }
+            if ( message == null ) {
                 return dflt;
             }
             else {
@@ -381,6 +385,15 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
                 //is slightly different than Java
                 return String.Format(foundCulture,message,args);
             }
+        }
+        
+        private String GetFrameworkMessage(CultureInfo culture, String key)
+        {
+            ResourceManager manager =
+                new ResourceManager("Org.IdentityConnectors.Resources",
+                                    typeof(ConnectorMessagesImpl).Assembly);
+            String contents = (String)manager.GetObject(key,culture);
+            return contents;
         }
         
         public IDictionary<CultureInfo,IDictionary<string,string>> Catalogs {

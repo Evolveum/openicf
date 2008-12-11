@@ -124,7 +124,7 @@ namespace Org.IdentityConnectors.Framework.Spi
             }
         }
                 
-        public string MessageCatalogPath {get;set;}
+        public string [] MessageCatalogPaths {get;set;}
         
     }
     #endregion
