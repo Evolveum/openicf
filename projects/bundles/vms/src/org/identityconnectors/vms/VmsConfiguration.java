@@ -65,12 +65,7 @@ public class VmsConfiguration extends AbstractConfiguration {
     private String         _vmsTimeZone;
     private Boolean        _isSSH;
 
-    private ResourceBundle _bundle = null; 
-    private Locale         _lastLocale = null; 
-
     private String         _localHostShellPrompt = "BOOMBOOM";
-    
-    private static final String CATALOG = "org.identityconnectors.vms.VmsMessages";
     
     public VmsConfiguration() {
         _vmsLocale = Locale.getDefault().toString();
