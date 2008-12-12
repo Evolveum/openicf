@@ -52,7 +52,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	 * When we are able to get connection using passed credentials, we consider that authenticate passed.
 	 */
     public Uid authenticate(ObjectClass objectClass, String username, GuardedString password,OperationOptions options) {
-		log.info("authenticate user: {0}", username);
+		log.info("Authenticate user: {0}", username);
 		//just try to create connection with passed credentials
 		Connection conn = null;
 		try{
@@ -72,7 +72,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 		finally{
 			SQLUtil.closeQuietly(conn);
 		}
-		log.info("User {0} authenticated",username);
+		log.info("User authenticated : {0}",username);
 		return new Uid(username.toUpperCase());
 	}
 	
@@ -167,6 +167,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
         final DatabaseQueryBuilder query = new DatabaseQueryBuilder(ALL_USER_QUERY);
         query.setWhere(where);
         final String sql = query.getSQL();
+        log.info("Executing search query : {0}", sql);
         ResultSet result = null;
         PreparedStatement statement = null;
         try {
@@ -215,19 +216,22 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
                     "Create operation requires an 'ObjectClass' attribute of type 'Account'.");
         }
         Name user = AttributeUtil.getNameFromAttributes(attrs);
-        if (user == null || StringUtil.isBlank(user.getNameValue())) {
+		if (user == null || StringUtil.isBlank(user.getNameValue())) {
             throw new IllegalArgumentException("The Name attribute cannot be null or empty.");
         }
-        checkUserNotExist(user.getNameValue());
-        checkDB2Validity(user.getNameValue());
+        final String userName = user.getNameValue();
+		log.info("Creating user : {0}", userName);
+        checkUserNotExist(userName);
+        checkDB2Validity(userName);
         try{
-        	updateAuthority(user.getNameValue(),attrs,UpdateType.ADD);
+        	updateAuthority(userName,attrs,UpdateType.ADD);
         	adminConn.commit();
+        	log.info("User created : {0}", userName);
         }
         catch(SQLException e){
-        	throw new ConnectorException("cannot commit create",e);
+        	throw new ConnectorException("Cannot commit create",e);
         }
-		return new Uid(user.getNameValue());
+		return new Uid(userName);
 	}
 	
 	
@@ -421,9 +425,11 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
                     "Create operation requires an 'ObjectClass' attribute of type 'Account'.");
         }
 		checkUserExist(uid.getUidValue());
+		log.info("Deleting user : {0}", uid.getUidValue());
         try {
 			revokeAllGrants(uid.getUidValue());
 			adminConn.commit();
+			log.info("User deleted : {0}", uid.getUidValue());
 		} catch (SQLException e) {
 		    SQLUtil.rollbackQuietly(adminConn);
 			throw new ConnectorException("Error revoking user grants",e);
@@ -481,8 +487,10 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
         }
         try{
             final String uidValue = uid.getUidValue();
+    		log.info("Update user : {0}", uidValue);
         	updateAuthority(uidValue, attrs, type);
         	adminConn.commit();
+        	log.info("User updated : {0}", uidValue);
         }
         catch(SQLException e){
         	throw new ConnectorException("Cannot commit update",e);
