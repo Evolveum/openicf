@@ -39,16 +39,14 @@
  */
 package org.identityconnectors.vms;
 
-import java.util.ListResourceBundle;
-
-public class VmsMessages extends ListResourceBundle {
+public interface VmsMessages {
     public static final String INVALID_ATTR_MULTIPLICITY     = "INVALID_ATTR_MULTIPLICITY";
     public static final String INVALID_ATTR_VALUE            = "INVALID_ATTR_VALUE";
     public static final String UNKNOWN_ATTR_NAME             = "UNKNOWN_ATTR_NAME";
     public static final String EXCEPTION_IN_ATTR             = "EXCEPTION_IN_ATTR";
     public static final String ERROR_IN_CREATE               = "ERROR_IN_CREATE";
     public static final String ERROR_IN_MODIFY               = "ERROR_IN_MODIFY";
-    public static final String ERROR_IN_GETDATE               = "ERROR_IN_GETDATE";
+    public static final String ERROR_IN_GETDATE              = "ERROR_IN_GETDATE";
     public static final String ERROR_IN_DELETE               = "ERROR_IN_DELETE";
     public static final String ERROR_IN_SCRIPT               = "ERROR_IN_SCRIPT";
     public static final String BAD_SCRIPT_LANGUAGE           = "BAD_SCRIPT_LANGUAGE";
@@ -73,44 +71,5 @@ public class VmsMessages extends ListResourceBundle {
     public static final String TIMEOUT_IN_MATCH              = "TIMEOUT_IN_MATCH";
     public static final String UNSUPPORTED_OBJECT_CLASS		 = "UNSUPPORTED_OBJECT_CLASS";
     public static final String TEST_FAILED					 = "TEST_FAILED";
-
-    private static final String[][] _contents = {
-        { INVALID_ATTR_MULTIPLICITY,     "Invalid multiplicity for Attribute ''{0}''" },
-        { INVALID_ATTR_VALUE,            "Invalid value ''{0}'' for Attribute ''{1}''" },
-        { UNKNOWN_ATTR_NAME,             "Unknown Attribute name ''{0}''" },
-        { EXCEPTION_IN_ATTR,             "Exception checking Attribute ''{0}''" },
-        { ERROR_IN_CREATE,               "Unexpected error performing Create" },
-        { ERROR_IN_MODIFY,               "Unexpected error performing Modify" },
-        { ERROR_IN_GETDATE,              "Unexpected error performing GetVmsDate" },
-        { ERROR_IN_DELETE,               "Unexpected error performing Delete" },
-        { ERROR_IN_SEARCH,               "Unexpected error performing Search" },
-        { ERROR_IN_SCRIPT,               "Unexpected error running script" },
-        { BAD_SCRIPT_LANGUAGE,           "{0} is not a supported scripting language, only DCO is supported" },
-        { ERROR_IN_CREATE2,              "Unexpected error performing Create:{0}" },
-        { ERROR_IN_MODIFY2,              "Unexpected error performing Modify:{0}" },
-        { ERROR_IN_DELETE2,              "Unexpected error performing Delete:{0}" },
-        { PROTOCOL_NULL,                 "protocol may not be null" },
-        { PORT_NULL,                     "port may not be null" },
-        { HOST_NULL,                     "host name may not be null" },
-        { PORT_RANGE_ERROR,              "host port ''{0,number,#########}'' must be between 1 and 65535" },
-        { LOCALE_NULL,               	 "VMS locale may not be null" },
-        { TERMINATOR_NULL,               "line terminator may not be null" },
-        { SHELL_PROMPT_NULL,             "shell prompt may not be null" },
-        { SSH_NULL,                      "SSH may not be null" },
-        { CONN_SCRIPT_NULL,              "connect script may not be null" },
-        { USERNAME_NULL,                 "user name may not be null" },
-        { PASSWORD_NULL,                 "password may not be null" },
-        { TIMEZONE_NULL,                 "Vms timezone may not be null" },
-        { DATEFORMAT1_NULL,              "Vms DateFormat without seconds may not be null" },
-        { DATEFORMAT2_NULL,              "Vms DateFormat with seconds may not be null" },
-        { TIMEOUT_IN_MATCH,              "timeout waiting for pattern ''{0}''" },
-        { UNSUPPORTED_OBJECT_CLASS,		 "Object Class ''{0}'' is not supported" },
-        { TEST_FAILED,					 "Test failed" },
-    };
-
-    @Override
-    protected Object[][] getContents() {
-        return _contents;
-    }
 
 }

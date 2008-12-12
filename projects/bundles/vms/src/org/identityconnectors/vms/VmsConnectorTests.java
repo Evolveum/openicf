@@ -41,24 +41,30 @@ package org.identityconnectors.vms;
 
 import static org.identityconnectors.vms.VmsConstants.*;
 
+import java.text.MessageFormat;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 import junit.framework.Assert;
 
+import org.identityconnectors.common.l10n.CurrentLocale;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
@@ -1033,6 +1039,20 @@ public class VmsConnectorTests {
         config.setVmsDateFormatWithoutSecs("dd-MMM-yyyy HH:mm");
         config.setVmsDateFormatWithSecs("dd-MMM-yyyy HH:mm:ss");
         config.setVmsTimeZone("GMT-06:00");
+        
+        OurConnectorMessages messages = new OurConnectorMessages();
+        Map<Locale, Map<String, String>> catalogs = new HashMap<Locale, Map<String,String>>();
+        Map<String, String> foo = new HashMap<String, String>();
+        ResourceBundle messagesBundle = ResourceBundle.getBundle("org.identityconnectors.vms.Messages");
+        Enumeration<String> enumeration = messagesBundle.getKeys();
+        while (enumeration.hasMoreElements()) {
+            String key = enumeration.nextElement();
+            foo.put(key, messagesBundle.getString(key));
+        }
+        catalogs.put(Locale.getDefault(), foo);
+        messages.setCatalogs(catalogs);
+        config.setConnectorMessages(messages);
+        
         return config;
     }
 
@@ -1048,4 +1068,21 @@ public class VmsConnectorTests {
             return objects.iterator();
         }
     }
+
+    public class OurConnectorMessages implements ConnectorMessages {
+        private Map<Locale, Map<String, String>> _catalogs = new HashMap<Locale, Map<String, String>>();
+
+        public String format(String key, String defaultValue, Object... args) {
+            Locale locale = CurrentLocale.isSet()?CurrentLocale.get():Locale.getDefault();
+            Map<String,String> catalog = _catalogs.get(locale);
+            String message = catalog.get(key);
+            MessageFormat formatter = new MessageFormat(message,locale);
+            return formatter.format(args, new StringBuffer(), null).toString();
+        }
+
+        public void setCatalogs(Map<Locale,Map<String,String>> catalogs) {
+            _catalogs = catalogs;
+        }
+    }
+
 }

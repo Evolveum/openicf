@@ -118,23 +118,12 @@ public class VmsConfiguration extends AbstractConfiguration {
     	return string==null || string.equals(_nullGuardedString);
     }
 
-    //TODO: use ConnectorMessages instead
-    private ResourceBundle getBundle() {
-        if (_bundle==null || CurrentLocale.get()!=_lastLocale) {
-            _lastLocale = CurrentLocale.get();
-            if (_lastLocale==null)
-                _lastLocale = Locale.getDefault();
-            _bundle = ResourceBundle.getBundle(CATALOG, _lastLocale); 
-        }
-        return _bundle;
-    }
-
     public String getMessage(String key) {
-        return getBundle().getString(key);
+        return getConnectorMessages().format(key, key);
     }
 
     public String getMessage(String key, Object... objects) {
-        return MessageFormat.format(getBundle().getString(key), objects);
+        return getConnectorMessages().format(key, key, objects);
     }
 
     @ConfigurationProperty(order=1)
