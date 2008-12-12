@@ -71,9 +71,9 @@
         </scriptdef>
         <!-- Update the license on all the files -->
         <tool license="license.txt">
-            <!-- fileset dir="bundles"/ -->
-            <fileset dir="gateway"/>
-            <!-- fileset dir="framework"/ -->
+            <fileset dir="bundles"/>
+            <fileset dir="dotnet"/>
+            <fileset dir="framework"/>
         </tool>
     </target>
 </project>
