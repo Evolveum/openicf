@@ -476,4 +476,16 @@ OperationOptionInfo | SyncDeltaType | SyncToken | SyncDelta | QualifiedUid
   <data name="TEST_FRAMEWORK_KEY" xml:space="preserve">
     <value>Test Framework Value</value>
   </data>
+  <data name="MESSAGE_OBJECT_CLASS_ACCOUNT" xml:space="preserve">
+    <value>Account</value>
+  </data>
+  <data name="MESSAGE_OBJECT_CLASS_PERSON" xml:space="preserve">
+    <value>Person</value>
+  </data>
+  <data name="MESSAGE_OBJECT_CLASS_GROUP" xml:space="preserve">
+    <value>Group</value>
+  </data>
+  <data name="MESSAGE_OBJECT_CLASS_ORGANIZATION" xml:space="preserve">
+    <value>Organization</value>
+  </data>
 </root>

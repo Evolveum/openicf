@@ -1692,6 +1692,16 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             return _type;
         }
         
+        /**
+         * Convenience method to build the display name key for
+         * an object class.  
+         * 
+         * @return The display name key.
+         */
+        public String GetDisplayNameKey() {
+            return "MESSAGE_OBJECT_CLASS_"+_type.ToUpper();
+        }
+        
         public override int GetHashCode() {
             return _type.GetHashCode();
         }
