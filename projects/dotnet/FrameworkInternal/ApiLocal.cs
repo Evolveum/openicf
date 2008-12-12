@@ -188,6 +188,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                 String helpKey = name + ".help";
                 String displKey = name + ".display";
                 bool confidential = false;
+                bool required = false;
                 if (options != null) {
                     // determine the display and help keys..
                     if (!StringUtil.IsBlank(options.HelpMessageKey)) {
@@ -198,7 +199,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                     }
                     // determine the order..
                     order = options.Order;
-                    
+                    required = options.Required;
                     confidential = options.Confidential;
                 }
                 Type type = desc.PropertyType;
@@ -211,6 +212,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                 
                 ConfigurationPropertyImpl prop = new ConfigurationPropertyImpl();
                 prop.IsConfidential=confidential;
+                prop.IsRequired=required;
                 prop.DisplayMessageKey=displKey;
                 prop.HelpMessageKey=helpKey;
                 prop.Name=name;

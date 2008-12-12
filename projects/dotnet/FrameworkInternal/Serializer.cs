@@ -1098,6 +1098,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                 ConfigurationPropertyImpl rv = new ConfigurationPropertyImpl();
                 rv.Order=(decoder.ReadIntField("order",0));
                 rv.IsConfidential=(decoder.ReadBooleanField("confidential",false));
+                rv.IsRequired=decoder.ReadBooleanField("required",false);
                 rv.Name=(decoder.ReadStringField("name",null));
                 rv.HelpMessageKey=(
                     decoder.ReadStringField("helpMessageKey",null));
@@ -1127,6 +1128,8 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                         val.Order);
                 encoder.WriteBooleanField("confidential", 
                         val.IsConfidential);
+                encoder.WriteBooleanField("required",
+                        val.IsRequired);
                 encoder.WriteStringField("name", 
                         val.Name);
                 encoder.WriteStringField("helpMessageKey",

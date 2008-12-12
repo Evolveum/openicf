@@ -139,6 +139,10 @@ namespace Org.IdentityConnectors.Framework.Spi
         /// </summary>
         public bool Confidential {get;set;}
         /// <summary>
+        /// Is this a required property?
+        /// </summary>
+        public bool Required {get;set;}
+        /// <summary>
         /// Change the default help message key.
         /// </summary>
         public string HelpMessageKey {get;set;}
@@ -182,6 +186,7 @@ namespace Org.IdentityConnectors.Framework.Spi
         public ConfigurationPropertyAttribute() {
             Order = 1;
             Confidential = false;
+            Required = false;
             HelpMessageKey = null;
             DisplayMessageKey = null;
             OperationTypes = new Type[0];

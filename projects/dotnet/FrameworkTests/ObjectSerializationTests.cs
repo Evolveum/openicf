@@ -392,6 +392,7 @@ namespace FrameworkTests
             ConfigurationPropertyImpl v1 = new ConfigurationPropertyImpl();
             v1.Order = (1);
             v1.IsConfidential=(true);
+            v1.IsRequired=true;
             v1.Name=("foo");
             v1.HelpMessageKey=("help key");
             v1.DisplayMessageKey=("display key");
@@ -403,6 +404,7 @@ namespace FrameworkTests
                 CloneObject(v1);
             Assert.AreEqual(1, v2.Order);
             Assert.IsTrue(v2.IsConfidential);
+            Assert.IsTrue(v2.IsRequired);
             Assert.AreEqual("foo", v2.Name);
             Assert.AreEqual("help key", v2.HelpMessageKey);
             Assert.AreEqual("display key", v2.DisplayMessageKey);

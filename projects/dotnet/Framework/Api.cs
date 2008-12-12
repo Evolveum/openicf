@@ -128,6 +128,12 @@ namespace Org.IdentityConnectors.Framework.Api
         bool IsConfidential { get; }
         
         /**
+         * Is this a required property
+         * @return True if the property is required
+         */
+        bool IsRequired { get; }
+        
+        /**
          * Set of operations for which this property must be specified.
          * This is used for the case where a connector may or may not
          * implement certain operations depending in the configuration.

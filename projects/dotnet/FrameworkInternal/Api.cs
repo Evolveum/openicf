@@ -86,6 +86,8 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
         public Type ValueType { get; set; }
         
         public bool IsConfidential { get; set; }
+        
+        public bool IsRequired { get; set; }
 
         public override int GetHashCode()
         {
@@ -111,6 +113,9 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
                     return false;
                 }
                 if (IsConfidential != other.IsConfidential) {
+                    return false;
+                }
+                if (IsRequired != other.IsRequired) {
                     return false;
                 }
                 if (!CollectionUtil.Equals(ValueType,other.ValueType)) {
