@@ -108,7 +108,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
             throw new ConnectorException(getMessage(SpmlMessages.SPML_CLASS_LENGTH));
     }
 
-    @ConfigurationProperty(order=1)
+    @ConfigurationProperty(order=1, required=true)
     public String getUserName() {
         return _userName;
     }
@@ -117,7 +117,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _userName = userName;
     }
 
-    @ConfigurationProperty(order=2, confidential=true)
+    @ConfigurationProperty(order=2, confidential=true, required=true)
     public GuardedString getPassword() {
         return _password;
     }
@@ -126,7 +126,7 @@ public class SpmlConfiguration extends AbstractConfiguration {
         _password = password;
     }
 
-    @ConfigurationProperty(order=3)
+    @ConfigurationProperty(order=3, required=true)
     public String getUrl() {
         return _url;
     }
