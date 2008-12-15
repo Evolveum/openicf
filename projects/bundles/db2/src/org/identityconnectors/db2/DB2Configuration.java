@@ -75,6 +75,7 @@ import org.identityconnectors.framework.spi.*;
  * 		<li> adminAccount : Administrative account when connecting to DB2 in non user contexts. E.g listing of users. </li>
  * 		<li> adminPassword : Password for admin account. </li>
  * </ul>
+ * <!-- -->
  * 
  * @author kitko
  *
