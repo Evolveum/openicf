@@ -13,11 +13,11 @@ var regions = [
   	href:  "#",
   	match: [],
   	children: [
-  		makeProjectLink("Dummy Link1"),
-  		makeProjectLink("Dummy Link2"),
-  		makeProjectLink("Dummy Link3"),
-  		makeProjectLink("Dummy Link4"),
-  		makeProjectLink("Dummy Link5"),
+  		makeProjectLink("TestLink1"),
+  		makeProjectLink("TestLink2"),
+  		makeProjectLink("TestLink3"),
+  		makeProjectLink("TestLink4"),
+  		makeProjectLink("TestLink5")
   	]
   },
   {
@@ -117,8 +117,6 @@ function addLoadEvent(func) {
 function createRegions() {
 	var rdiv = document.getElementById("regions");	// On Wiki 'regions' div already exists.
 	
-	if(rdiv != null) return; //should never happen
-	
 	var html=[];
 	html.push("<div id=regions align=right>");
 	html.push("<table cellspacing=0 cellpadding=0><tbody><tr><td style=width:100%; >");
@@ -127,34 +125,14 @@ function createRegions() {
 	for( var i=0; i < regions.length; i++ ) {
 		var r = regions[i];
 		
-		// is this the current region?
-		var hit = false;
-		for( var j=0; j<r.match.length; j++ ) {
-			if(new String(window.location.href).match(new RegExp(r.match[j]))) {
-				hit = true;
-				break;
-			}
-		}
-		if(r.children) {
-			for( var j=0; j<r.children.length; j++ ) {
-				if(new String(window.location.href).indexOf(r.children[j].href)==0) {
-					hit = true;
-					break;
-				}
-			}
-		}
-		
-		if(hit)
-			html.push("<li id=current-region><a class=qmparent href=");
-		else
-			html.push("<li><a class=qmparent href=");
+		html.push("<li><a class=qmparent href=");
 		html.push(r.href);
 		html.push(">");
 		html.push(r.title);
 		html.push("</a>");
-		if(r.children!=null && !document.all) {
+		if(r.children != null) {
 			html.push("<ul>");
-			for( var j=0; j<r.children.length; j++ ) {
+			for( var j=0; j < r.children.length; j++ ) {
 				var c = r.children[j];
 				html.push("<li><a href=");
 				html.push(c.href);
@@ -179,7 +157,6 @@ function createRegions() {
 		box.innerHTML = html.join('');
 	} else {
 		rdiv.innerHTML = html.join('');
-		alert("This happened.");
 	}
 	
 	// attach event handler, since IE can't handle :hover
