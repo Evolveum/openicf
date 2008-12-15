@@ -47,7 +47,6 @@ import org.identityconnectors.framework.common.exceptions.InvalidCredentialExcep
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
-import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
@@ -243,10 +242,6 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         log.ok("Deleted user uid: {0}", uid.getName());
     }
     
-    public Uid update(ObjectClass obj, Uid uid, Set<Attribute> attrs, OperationOptions options) {
-        return update(obj, AttributeUtil.addUid(attrs, uid), options);
-    }
-    
     /**
      * Update the database row w/ the data provided.
      * @param objClass the {@link ObjectClass} type (must be ACCOUNT )
@@ -255,7 +250,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      * 
      * @see UpdateOp#update(ConnectorObject, Set, OperationOptions )
      */
-    private Uid update(final ObjectClass objClass, final Set<Attribute> attrs, final OperationOptions options) {
+    public Uid update(final ObjectClass objClass, Uid oldUid, final Set<Attribute> attrs, final OperationOptions options) {
         final String SQL_UPDATE = "UPDATE mysql.user SET {0} WHERE user=?";
         final String SQL_SET_USER = "user = ?";
         final String SQL_SET_PASSWORD = "password = password(?)";
@@ -268,7 +263,6 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             throw new IllegalArgumentException("Invalid attributes provided to a update operation.");
         }                
 
-        Uid oldUid = AttributeUtil.getUidAttribute(attrs);
         // init the return value for old Uid
         Uid ret = oldUid;
         String updateSet = "";
@@ -422,6 +416,11 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         
         log.info("authenticate user: {0}", username);
 
+        // Get the needed attributes
+        if ( objectClass == null || !objectClass.equals(ObjectClass.ACCOUNT)) {
+            throw new IllegalArgumentException(
+                    "Create operation requires an 'ObjectClass' attribute of type 'Account'.");
+        }
         Assertions.blankCheck(username, "username");
         Assertions.nullCheck(password, "password");
         

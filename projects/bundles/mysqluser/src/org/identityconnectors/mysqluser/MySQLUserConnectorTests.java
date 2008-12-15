@@ -22,7 +22,10 @@
  */
 package org.identityconnectors.mysqluser;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -40,7 +43,6 @@ import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.api.ConnectorFacadeFactory;
-import org.identityconnectors.framework.api.operations.UpdateApiOp;
 import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
