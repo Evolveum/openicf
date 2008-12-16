@@ -65,6 +65,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public static readonly string CONFIG_PROPERTY_GC_DOMAIN_CONTROLLER = "config_sync_gc_domain_controller";
         public static readonly string TEST_PARAM_SHARED_HOME_FOLDER = "test_param_shared_home_folder";
         
+        // having troubles with duplicate random numbers
+        public static List<int> randomList = new List<int>();
+
         [Test]
         public void TestConfiguration() {
             ActiveDirectoryConfiguration config = new ActiveDirectoryConfiguration();
@@ -2711,14 +2714,26 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         int GetRandomNumber()
         {
-            const int randomRange = 100000;
-            int number = _rand.Next(randomRange);
+            const int randomRange = 10000000;
+            
+            int number = 0;
+
+            // having trouble with duplicate random numbers, so try a few hundred
+            // times to get a unique one before giving up.
+            for(int i=0;i<500;i++) {
+                number = _rand.Next(randomRange);
 #if DEBUG
             // make sure the debug numbers are in a different
             // range than release ones to eliminate conflicts during
             // the build where both configurations are run concurrently
-            number += randomRange;              
+                number += randomRange;              
 #endif
+                if(!(randomList.Contains(number))) {
+                    randomList.Add(number);
+                    break;
+                }
+            }
+
             return number;
         }
 

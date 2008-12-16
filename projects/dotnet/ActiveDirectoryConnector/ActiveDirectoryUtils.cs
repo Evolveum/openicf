@@ -238,6 +238,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
                             gsCurrentPassword, gsNewPassword);
                     }
 
+
+                UserAccountControl.Set(directoryEntry.Properties[ActiveDirectoryConnector.ATT_USER_ACOUNT_CONTROL], 
+                    UserAccountControl.PASSWD_NOTREQD, false);
                     directoryEntry.CommitChanges();
                 }
 
@@ -252,6 +255,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     directoryEntry.CommitChanges();
                 }
 
+                UserAccountControl.Set(directoryEntry.Properties[ActiveDirectoryConnector.ATT_USER_ACOUNT_CONTROL],
+                    UserAccountControl.PASSWD_NOTREQD, false);
+
+                directoryEntry.CommitChanges();
 
                 HandleNameChange(type, directoryEntry, attributes);
                 HandleContainerChange(type, directoryEntry, attributes, config);

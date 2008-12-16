@@ -104,7 +104,7 @@
       <AttributeInfo name="displayName" type="String" creatable="false" readable="true" required="false" updatable="false" returned-by-default="true" multivalue="false"/>
       <AttributeInfo name="managedby" type="String" creatable="true" readable="true" required="false" updatable="true" returned-by-default="true" multivalue="false"/>
       <AttributeInfo name="mail" type="String" creatable="true" readable="true" required="false" updatable="true" returned-by-default="true" multivalue="false"/>
-      <AttributeInfo name="groupType" type="String" creatable="true" readable="true" required="false" updatable="true" returned-by-default="true" multivalue="false"/>
+      <AttributeInfo name="groupType" type="int" creatable="true" readable="true" required="false" updatable="true" returned-by-default="true" multivalue="false"/>
       <AttributeInfo name="objectClass" type="String" creatable="false" readable="true" required="false" updatable="false" returned-by-default="true" multivalue="false"/>
       <AttributeInfo name="member" type="String" creatable="true" readable="true" required="false" updatable="false" returned-by-default="true" multivalue="true"/>
       <AttributeInfo name="ad_container" type="String" creatable="true" readable="true" required="false" updatable="true" returnedbydefault="true" multivalue="false"/>

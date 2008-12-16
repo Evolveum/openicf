@@ -81,8 +81,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public static readonly string ATT_DESCRIPTION = "description";
         public static readonly string ATT_SHORT_NAME = "name";
         public static readonly string ATT_DISPLAY_NAME = "displayName";
+        public static readonly string ATT_USER_ACOUNT_CONTROL = "userAccountControl";
         public static readonly string OBJECTCLASS_OU = "Organizational Unit";
+
         public static readonly ObjectClass ouObjectClass = new ObjectClass(OBJECTCLASS_OU);
+        private static readonly string OLD_SEARCH_FILTER_STRING = "Search Filter String";
+        private static readonly string OLD_SEARCH_FILTER = "searchFilter";
 
         ActiveDirectoryConfiguration _configuration = null;
         ActiveDirectoryUtils _utils = null;
@@ -398,7 +402,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             ResultsHandler handler, OperationOptions options)
         {
             try
-            {
+            {                
                 bool useGC = false;
                 if (_configuration.SearchChildDomains)
                 {
@@ -409,6 +413,31 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                 SearchScope searchScope = GetADSearchScopeFromOptions(options);
                 string searchContext = GetADSearchContextFromOptions(options);
+
+                // for backward compatibility, support old query style from resource adapters
+                // but log a warning
+                if((query == null) || (query.Length == 0)) {
+                    if ((options != null) && (options.Options != null))
+                    {
+                        Object oldStyleQuery = null;
+                        if (options.Options.Keys.Contains(OLD_SEARCH_FILTER_STRING))
+                        {
+                            oldStyleQuery = options.Options[OLD_SEARCH_FILTER_STRING];
+                        }
+                        else if (options.Options.Keys.Contains(OLD_SEARCH_FILTER))
+                        {
+                            oldStyleQuery = options.Options[OLD_SEARCH_FILTER];
+                        }
+                        if ((oldStyleQuery != null) && (oldStyleQuery is string))
+                        {
+                            query = (string)oldStyleQuery;
+                            Trace.TraceWarning(_configuration.ConnectorMessages.Format(
+                                "warn_CompatibilityModeQuery",
+                                "Using Identity Manger Resource Adapter style query ''{0}''.  This should be updated to use the new connector query syntax.",
+                                ((query != null) && (query.Length > 0)) ? query : ""));
+                        }
+                    }
+                }
 
                 ExecuteQuery(oclass, query, handler, options,
                     false, null, _configuration.LDAPHostName, useGC, searchContext, searchScope);
@@ -658,8 +687,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 attributeNames = AttributesReturnedByDefault[oclass];
             }
 
-            // Uid is always returned
+            // Uid and name are always returned
             attributeNames.Add(Uid.NAME);
+            attributeNames.Add(Name.NAME);
             return attributeNames;
         }
 

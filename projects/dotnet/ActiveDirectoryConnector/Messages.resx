@@ -255,4 +255,7 @@
   <data name="confReqParam_searchContainer" xml:space="preserve">
     <value>Search Container was not supplied.  </value>
   </data>
+  <data name="warn_CompatibilityModeQuery" xml:space="preserve">
+    <value>Using Identity Manger Resource Adapter style query '{0}'.  This should be updated to use the new connector query syntax.</value>
+  </data>
 </root>
