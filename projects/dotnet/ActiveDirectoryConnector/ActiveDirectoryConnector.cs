@@ -529,15 +529,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
 
             string path;
-
-            if (useGlobalCatalog)
-            {
-                path = ActiveDirectoryUtils.GetGCPath(serverName, searchRoot);
-            }
-            else
-            {
-                path = ActiveDirectoryUtils.GetLDAPPath(serverName, searchRoot);
-            }
+            path = GetSearchContainerPath(useGlobalCatalog, serverName, searchRoot);
 
             Trace.TraceInformation("Search: Getting root node for search");
             DirectoryEntry searchRootEntry = new DirectoryEntry(path,
@@ -674,6 +666,27 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
 
+        private string GetSearchContainerPath()
+        {
+            return GetSearchContainerPath(UseGlobalCatalog(), _configuration.LDAPHostName, _configuration.SearchContainer);
+        }
+
+        private string GetSearchContainerPath(bool useGC, string hostname, string searchContainer)
+        {
+            String path; 
+
+            if (useGC)
+            {
+                path = ActiveDirectoryUtils.GetGCPath(hostname, searchContainer);
+            }
+            else
+            {
+                path = ActiveDirectoryUtils.GetLDAPPath(hostname, searchContainer);
+            }
+
+            return path;
+        }
+
         private ICollection<string> GetAttributesToReturn(ObjectClass oclass, OperationOptions options)
         {
             ICollection<string> attributeNames = null;
@@ -730,6 +743,16 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     "ex_InvalidObjectClassInConfiguration",
                     "Invalid Object Class was specified in the connector configuration.  Object Class \'{0}\' was not found in Active Directory",
                     _configuration.ObjectClass));
+            }
+
+            // see if search container is valid
+            if (!DirectoryEntry.Exists(GetSearchContainerPath()))
+            {
+                throw new ConnectorException(
+                    _configuration.ConnectorMessages.Format(
+                    "ex_InvalidSearchContainerInConfiguration",
+                    "An invalid search container was supplied:  {0}",
+                    _configuration.SearchContainer));
             }
         }
 
