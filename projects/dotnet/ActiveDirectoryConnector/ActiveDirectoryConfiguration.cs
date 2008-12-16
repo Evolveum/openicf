@@ -32,11 +32,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
 {
     public class ActiveDirectoryConfiguration : Org.IdentityConnectors.Framework.Spi.AbstractConfiguration
     {
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_DirectoryAdminName", HelpMessageKey = "help_DirectoryAdminName", Order = 1)]
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_DirectoryAdminName",
+            Required = true, HelpMessageKey = "help_DirectoryAdminName", Order = 1)]
         public String DirectoryAdminName
         { get; set; }
 
-        [ConfigurationProperty(Confidential = true, DisplayMessageKey = "display_DirectoryAdminPassword", HelpMessageKey = "help_DirectoryAdminPassword", Order = 2)]
+        [ConfigurationProperty(Confidential = true, DisplayMessageKey = "display_DirectoryAdminPassword",
+            Required = true, HelpMessageKey = "help_DirectoryAdminPassword", Order = 2)]
         public String DirectoryAdminPassword
         { get; set; }
 
@@ -44,7 +46,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public String ObjectClass
         { get; set; }
 
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_SearchContainer", HelpMessageKey = "help_SearchContainer", Order = 4)]
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_SearchContainer", 
+            Required=true, HelpMessageKey = "help_SearchContainer", Order = 4)]
         public String SearchContainer
         { get; set; }
 
@@ -58,7 +61,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_SearchChildDomains", HelpMessageKey = "help_SearchChildDomains", Order = 7)]
         public bool SearchChildDomains { get; set; }
 
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_domainName", HelpMessageKey = "help_domainName", Order = 8)]
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_domainName",
+            Required = true, HelpMessageKey = "help_domainName", Order = 8)]
         public String DomainName
         { get; set; }
 
