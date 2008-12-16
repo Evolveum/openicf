@@ -1109,29 +1109,41 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         public ConnectorAttribute NormalizeAttribute(ObjectClass oclass, ConnectorAttribute attribute)
         {
-            // if this gets big, use deleagates, but for now, just
-            // handle individual attirbutes;
+            // if this gets big, use delegates, but for now, just
+            // handle individual attributes;
             if (attribute is Uid)
             {
-                StringBuilder normalizedUidValue = new StringBuilder();
                 String uidValue = ((Uid)attribute).GetUidValue();
                 // convert to upper case
                 if (uidValue != null)
                 {
-                    uidValue = uidValue.ToUpper();
-                    
-                    // now remove spaces
-                    foreach(Char nextChar in uidValue) {
-                        if(!nextChar.Equals(" ")) {
-                            normalizedUidValue.Append(nextChar);
-                        }
-                    }
+                    StringBuilder normalizedUidValue = new StringBuilder();
 
-                    return new Uid(normalizedUidValue.ToString());
+                    if (oclass.Equals(ObjectClass.ACCOUNT))
+                    {
+                        // convert to upper case
+                        uidValue = uidValue.ToUpper();
+
+                        // now remove spaces
+                        foreach (Char nextChar in uidValue)
+                        {
+                            if (!nextChar.Equals(" "))
+                            {
+                                normalizedUidValue.Append(nextChar);
+                            }
+                        }
+
+                        return new Uid(normalizedUidValue.ToString());
+                    }
+                    else
+                    {
+                        // the uid is a dn
+                        return new Uid(ActiveDirectoryUtils.NormalizeLdapString(uidValue));
+                    }
                 }
-                else 
-                { 
-                    return attribute;               
+                else
+                {
+                    return attribute;
                 }
             }
             else if (attribute is Name)
