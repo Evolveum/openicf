@@ -197,9 +197,9 @@ public class SpmlConnector implements PoolableConnector, CreateOp,
         } catch (Exception e) {
             throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPSCHEMA_SCRIPT_ERROR), e);
         }
-        _objectClassMap = new HashMap<String, String>();
-        _targetMap = new HashMap<String, String>();
-        _nameAttributeMap = new HashMap<String, String>();
+        _objectClassMap = CollectionUtil.newCaseInsensitiveMap();
+        _targetMap = CollectionUtil.newCaseInsensitiveMap();
+        _nameAttributeMap = CollectionUtil.newCaseInsensitiveMap();
         if (_configuration.getObjectClassNames()!=null) {
             String[] objectClassNames = _configuration.getObjectClassNames();
             String[] spmlClassNames = _configuration.getSpmlClassNames();
@@ -536,7 +536,7 @@ public class SpmlConnector implements PoolableConnector, CreateOp,
         String[] classNames = _configuration.getObjectClassNames();
         String[] targetNames = _configuration.getTargetNames();
         for (int i=0; i<classNames.length; i++) {
-            if (classNames[i].equals(objectClass.getObjectClassValue()))
+            if (classNames[i].equalsIgnoreCase(objectClass.getObjectClassValue()))
                 return targetNames[i];
         }
         return null;
@@ -762,7 +762,7 @@ public class SpmlConnector implements PoolableConnector, CreateOp,
         }
 
         _schema = schemaBuilder.build();
-        _oci = new HashMap<String, Map<String, AttributeInfo>>();
+        _oci = CollectionUtil.newCaseInsensitiveMap();
         for (ObjectClassInfo info : _schema.getObjectClassInfo()) {
             _oci.put(info.getType(), AttributeInfoUtil.toMap(info.getAttributeInfo()));
         }
