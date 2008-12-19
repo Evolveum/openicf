@@ -794,7 +794,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 throw new ConnectorException("There should be exactly one value for the name attribute");
             }          
 
-            return ConnectorAttributeBuilder.Build(Name.NAME, /*ActiveDirectoryUtils.NormalizeLdapString(*/value/*)*/);
+            return ConnectorAttributeBuilder.Build(Name.NAME, ActiveDirectoryUtils.NormalizeLdapString(value));
         }
 
         private ConnectorAttribute GetCaFromDe_OpAtt_Uid(
