@@ -93,7 +93,6 @@ class DB2ConfigurationValidator {
 			//Asserts.isNullMsg(cfg.getAdminPassword(), "AdminPassword cannot be set");
 			Asserts.isBlankMsg(cfg.getHost(),"Host property cannot be set.");
 			Asserts.isBlankMsg(cfg.getPort(),"Port property cannot be set.");
-			Asserts.isBlankMsg(cfg.getDatabaseName(),"DatabaseName property cannot be set.");
 		}
 		public ConnectionType getType() {
 			return ConnectionType.TYPE4;
@@ -102,7 +101,7 @@ class DB2ConfigurationValidator {
 	
 	private class Type2DriverChecker implements ConfigChecker{
 		public void checkRequired() {
-			Assertions.blankCheck(cfg.getAliasName(), "aliasName");
+			Assertions.blankCheck(cfg.getDatabaseName(), "databaseName");
 			Assertions.blankCheck(cfg.getAdminAccount(), "adminAccount");
 			Assertions.nullCheck(cfg.getAdminPassword(), "adminPassword");
 			Assertions.blankCheck(cfg.getJdbcDriver(),"jdbcDriver");
@@ -117,7 +116,6 @@ class DB2ConfigurationValidator {
 			if(!(reqChecker instanceof Type4DriverChecker)){
 				Asserts.isBlankMsg(cfg.getJdbcDriver(),"JdbcDriver property cannot be set.");
 			}
-			Asserts.isBlankMsg(cfg.getAliasName(),"AliasName property cannot be set.");
 		}
 		public ConnectionType getType() {
 			return ConnectionType.TYPE2;

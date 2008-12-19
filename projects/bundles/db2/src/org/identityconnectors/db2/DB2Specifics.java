@@ -36,10 +36,10 @@ import org.identityconnectors.dbcommon.SQLUtil;
  */
 class DB2Specifics {
 	
-	/** Classname of DB2 jcc driver , type 4 driver*/
+	/** Classname of DB2 jcc driver , type 4 or type2 driver*/
 	final static String JCC_DRIVER = "com.ibm.db2.jcc.DB2Driver";
 	/** Old driver that uses local db2 client with stored aliases , type 2 driver */
-	final static String APP_DRIVER = "COM.ibm.db2.jdbc.app.DB2Driver";
+	final static String CLI_LEGACY_DRIVER = "COM.ibm.db2.jdbc.app.DB2Driver";
 	final static String DEFAULT_TYPE4_PORT = "50000";
 	
 	

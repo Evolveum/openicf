@@ -64,7 +64,7 @@ public class DB2ConfigurationTest {
 			conf = createTestType4Configuration();
 		}
 		else if("type2".equals(connType)){
-			conf = createTestType2Configuration();
+			conf = createTestType2Configuration(DB2Specifics.JCC_DRIVER);
 		}
 		else{
 			throw new IllegalArgumentException("Ilegall connType " + connType);
@@ -103,47 +103,43 @@ public class DB2ConfigurationTest {
 		conf.validate();
 		Connection conn = conf.createAdminConnection();
 		assertNotNull(conn);
-		conf.setAliasName("sample");
-		try{
-			conf.validate();
-			fail("Cannot set alias , when having enough info to connect using type4 driver");
-		}
-		catch(Exception e){}
 	}
 	
 	
-	private static DB2Configuration createTestType2Configuration(){
-		Properties properties = TestHelpers.getProperties();
-		properties = PropertiesResolver.resolveProperties(properties);
-		String alias = properties.getProperty("type2.alias");
-		if(alias == null){
-			return null;
-		}
-		DB2Configuration conf = new DB2Configuration();
-		String adminAccount = properties.getProperty("type2.adminAccount");
-		String adminPassword = properties.getProperty("type2.adminPassword");
-		conf.setAliasName(alias);
-		conf.setAdminAccount(adminAccount);
-		conf.setAdminPassword(new GuardedString(adminPassword.toCharArray()));
-		conf.setJdbcDriver(DB2Specifics.APP_DRIVER);
-		conf.setPort(null);
-		return conf;
-	}
+    private static DB2Configuration createTestType2Configuration(String driver){
+        Properties properties = TestHelpers.getProperties();
+        properties = PropertiesResolver.resolveProperties(properties);
+        String alias = properties.getProperty("type2.alias");
+        if(alias == null){
+            return null;
+        }
+        DB2Configuration conf = new DB2Configuration();
+        String adminAccount = properties.getProperty("type2.adminAccount");
+        String adminPassword = properties.getProperty("type2.adminPassword");
+        conf.setDatabaseName(alias);
+        conf.setAdminAccount(adminAccount);
+        conf.setAdminPassword(new GuardedString(adminPassword.toCharArray()));
+        conf.setJdbcDriver(driver);
+        conf.setPort(null);
+        return conf;
+    }
+	
+	
 
 	
 	/**
-	 * Validates and create connection using type2 driver
+	 * Validates and creates connection using type2 driver
 	 */
 	@Test
 	public void testType2Configuration(){
-		DB2Configuration conf = createTestType2Configuration();
+		DB2Configuration conf = createTestType2Configuration(DB2Specifics.JCC_DRIVER);
 		//we need having alias on local machine, so we will test only when type2.alias property is set
 		if(conf == null){
 			conf = new DB2Configuration();
-			conf.setAliasName("myDBAlias");
+			conf.setDatabaseName("myDBAlias");
 			conf.setAdminAccount("dummy");
 			conf.setAdminPassword(new GuardedString());
-			conf.setJdbcDriver(DB2Specifics.APP_DRIVER);
+			conf.setJdbcDriver(DB2Specifics.JCC_DRIVER);
 			conf.setPort(null);
 			try{
 				conf.validate();
@@ -163,6 +159,41 @@ public class DB2ConfigurationTest {
 			}
 		}
 	}
+	
+    /**
+     * Validates and create connection using type2 driver
+     */
+    @Test
+    public void testType2LegacyConfiguration(){
+        DB2Configuration conf = createTestType2Configuration(DB2Specifics.CLI_LEGACY_DRIVER);
+        //we need having alias on local machine, so we will test only when type2.alias property is set
+        if(conf == null){
+            conf = new DB2Configuration();
+            conf.setDatabaseName("myDBAlias");
+            conf.setAdminAccount("dummy");
+            conf.setAdminPassword(new GuardedString());
+            conf.setJdbcDriver(DB2Specifics.CLI_LEGACY_DRIVER);
+            conf.setPort(null);
+            try{
+                conf.validate();
+            }
+            catch(Exception e){
+                handleType2Exception(e);
+            }
+        }
+        else{
+            try{
+                conf.validate();
+                final Connection conn = conf.createAdminConnection();
+                assertNotNull(conn);
+            }
+            catch(Exception e){
+                handleType2Exception(e);
+            }
+        }
+    }
+	
+	
 	
 	private void handleType2Exception(Exception e){
 		boolean rethrow = true;

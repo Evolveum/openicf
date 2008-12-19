@@ -37,14 +37,15 @@ import org.identityconnectors.framework.spi.*;
  * 		<li>Using type 2 driver, when using local alias, see <a href="#aliasName">aliasName properties</a></li>
  * </ol>
  * 
+ * 
  * The above specified order is critical. This means, we will not use any combination, just one of the case in specified order.
  *   
  * 
- *  <h4><a name="dataSource"/>Getting connection from DataSource. Used when <code>dsName</code> property is set</h4>
+ *  <h4><a name="dataSource"/>Getting connection from DataSource. Used when <code>dataSource</code> property is set</h4>
  *   We will support these properties when connecting to DB2 using dataSource
  *   <ul>
- *   	<li>dsName : Name of jndi name of dataSource : required. It must be logical or absolute name of dataSource.
- *   		No prefix will be added when trying to lookup
+ *   	<li>dataSource : Name of jndi name of dataSource : required. It must be logical or absolute name of dataSource.
+ *   		No prefix will be added when trying to do lookup
  *   	</li>
  *   	<li>
  *   		dsJNDIEnv : JNDI environment entries needed to lookup datasource. In most cases should be empty, needed only when lookuping datasource
@@ -54,7 +55,7 @@ import org.identityconnectors.framework.spi.*;
  *   	<li>adminPassword : Administrative password : optional, default we will get connection from DS without user/password parameters</li></li>
  *   </ul>	
  *   
- * <h4><a name="databaseName"/>Getting connection from DriverManager using Type 4 driver. Used when <code>databaseName</code> property is set</h4>
+ * <h4><a name="databaseName"/>Getting connection from DriverManager using Type 4 driver. Used when <code>host,port,databaseName</code> property are set</h4>
  * We will support/require these properties when connecting to db2 :
  * <ul>
  * 		<li> host : Name or IP of DB2 instance host. This is required property</li>
@@ -66,16 +67,25 @@ import org.identityconnectors.framework.spi.*;
  * 		<li> adminPassword : Password for admin account. </li>
  * </ul>
  * 
- * <h4><a name="aliasName"/>Getting connection from DriverManager using Type 2 driver.  Used when <code>aliasName</code> property is set</h4>
+ * <h4><a name="aliasName"/>Getting connection from DriverManager using Type 2 driver.  Used when <code>databaseName - local alias</code> property is set</h4>
  * We will require these properties when connecting to db2 using local alias
  * <ul>
- * 		<li> aliasName : Name of local alias created using <code>"db2 catalag database command"</code></li>
+ * 		<li> databaseName : Name of local alias created using <code>"db2 catalag database command"</code></li>
  * 		<li> jdbcDriver  : Classname of jdbc driver, default to COM.ibm.db2.jdbc.app.DB2Driver</li>
  * 		<li> subprotocol : db2,db2iSeries. Default to db2 </li>
  * 		<li> adminAccount : Administrative account when connecting to DB2 in non user contexts. E.g listing of users. </li>
  * 		<li> adminPassword : Password for admin account. </li>
  * </ul>
- * <!-- -->
+ * 
+ * Note that IBM ships two drivers for DB2. We have tested only this two drivers, no other driver was tested.
+ * <ul>
+ *      <li> IBM DB2 Driver for JDBC and SQLJ</li>
+ *      This driver can be used as type4 and type2 driver. In this way driver classname is same, we just need specify different properties.
+ *      DatabaseName property is used like remote database in case of type4 and like local alias in case of type2.
+ *      <li>Legacy based cli driver</li>
+ *      This driver is deprecated now, although it is still included in DB2 9x version. DB2 does not develop this driver any more and it seems
+ *      it will be removed in next major version release. However this driver was recommended driver for Websphere.
+ * </ul>
  * 
  * @author kitko
  *
@@ -86,7 +96,7 @@ public class DB2Configuration extends AbstractConfiguration {
 	static enum ConnectionType{
 		/** Connecting using datasource */
 		DATASOURCE,
-		/** Connecting using type 4 driver (host,port,databasename)*/
+		/** Connecting using type 4 driver (host,port,databaseName)*/
 		TYPE4,
 		/** Connecting using type 2 driver (local alias) */
 		TYPE2;
@@ -107,11 +117,6 @@ public class DB2Configuration extends AbstractConfiguration {
 	 *  This is the name of local/remote database, not name of local alias. 
 	 */
 	private String databaseName;
-	/**
-	 * Name of local alias when using app type 2 driver.
-	 * Customers use db2 catalog database command to create such alias on client machine
-	 */
-	private String aliasName;
 	/**
 	 * Full jndi name of datasource
 	 */
@@ -236,22 +241,6 @@ public class DB2Configuration extends AbstractConfiguration {
 	public void setPort(String port) {
 		this.port = port;
 	}
-	
-	/**
-	 * @return the aliasName
-	 */
-	@ConfigurationProperty(order=7,displayMessageKey="db2.aliasName.display",helpMessageKey="db2.aliasName.help")
-	public String getAliasName() {
-		return aliasName;
-	}
-
-	/**
-	 * @param aliasName the aliasName to set
-	 */
-	public void setAliasName(String aliasName) {
-		this.aliasName = aliasName;
-	}
-
 	/**
 	 * @return the dataSource
 	 */
@@ -333,7 +322,7 @@ public class DB2Configuration extends AbstractConfiguration {
 			return DB2Specifics.createType4Connection(jdbcDriver, host, port, jdbcSubProtocol,databaseName, user, password);
 		}
 		else if(ConnectionType.TYPE2.equals(connType)){
-			return DB2Specifics.createType2Connection(jdbcDriver, aliasName, jdbcSubProtocol, user, password);
+			return DB2Specifics.createType2Connection(jdbcDriver, databaseName, jdbcSubProtocol, user, password);
 		}
 		throw new IllegalStateException("Invalid state of DB2Configuration");
 	}
