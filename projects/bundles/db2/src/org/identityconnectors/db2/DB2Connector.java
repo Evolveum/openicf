@@ -23,6 +23,7 @@
 package org.identityconnectors.db2;
 
 import java.sql.*;
+import java.text.MessageFormat;
 import java.util.*;
 
 import org.identityconnectors.common.StringUtil;
@@ -250,8 +251,9 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
         	adminConn.commit();
         	log.info("User created : {0}", userName);
         }
-        catch(SQLException e){
-        	throw new ConnectorException("Cannot commit create",e);
+        catch(Exception e){
+            SQLUtil.rollbackQuietly(adminConn);
+        	throw new ConnectorException(MessageFormat.format("Create of user {0} failed", userName),e);
         }
 		return new Uid(userName);
 	}
@@ -446,15 +448,16 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
             throw new IllegalArgumentException(
                     "Create operation requires an 'ObjectClass' attribute of type 'Account'.");
         }
-		checkUserExist(uid.getUidValue());
-		log.info("Deleting user : {0}", uid.getUidValue());
+		final String uidValue = uid.getUidValue();
+        checkUserExist(uidValue);
+		log.info("Deleting user : {0}", uidValue);
         try {
-			revokeAllGrants(uid.getUidValue());
+			revokeAllGrants(uidValue);
 			adminConn.commit();
-			log.info("User deleted : {0}", uid.getUidValue());
-		} catch (SQLException e) {
+			log.info("User deleted : {0}", uidValue);
+		} catch (Exception e) {
 		    SQLUtil.rollbackQuietly(adminConn);
-			throw new ConnectorException("Error revoking user grants",e);
+			throw new ConnectorException(MessageFormat.format("Error removing user {0}",uidValue),e);
 		}
 	}
 	
@@ -507,15 +510,16 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 		if (uid == null || StringUtil.isBlank(uid.getUidValue())){
             throw new IllegalArgumentException("The uid attribute cannot be null or empty.");
         }
+		final String uidValue = uid.getUidValue();
         try{
-            final String uidValue = uid.getUidValue();
     		log.info("Update user : {0}", uidValue);
         	updateAuthority(uidValue, attrs, type);
         	adminConn.commit();
         	log.info("User updated : {0}", uidValue);
         }
-        catch(SQLException e){
-        	throw new ConnectorException("Cannot commit update",e);
+        catch(Exception e){
+            SQLUtil.rollbackQuietly(adminConn);
+        	throw new ConnectorException(MessageFormat.format("Update of user {0} failed",uidValue),e);
         }
 		return uid;
 	}
