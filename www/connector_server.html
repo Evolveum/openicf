@@ -1,0 +1,65 @@
+<html>
+<head>
+<title>Connector Servers</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+</head>
+<div id="projecthome" class="app">
+ <h1>Connector Servers</h1>
+ <p>A connector server is required when a connector bundle is not directly executed within your 
+ application.  By using one or more connector servers, the connector architecture thus permits your application to communicate with
+ externally deployed bundles.<p>
+ The use of connector servers is especially useful when an application
+ is written in Java, but a connector bundle is written using C#.  Since a Java application
+ (e.g. J2EE application) cannot load C# classes, it is necessary to instead deploy the C# bundles 
+ under a C# connector server.  The Java application can communicate with the C# connector server
+ over the network, and the C# connector server serves a proxy to provide to any authenticated application access to the C# bundles deployed
+ within the C# connector server.
+ <h2>Using SSL to communicate with connector servers</h2>
+ The following steps are necessary to successfully communicate with a connector server using SSL:
+ <ul>
+   <li><a href="#deploy_cert">Deploy an SSL certificate </a>to connector server's system</li>
+   <li><a href="#cs_ssl">Configure your connector server</a> to provide SSL sockets</li>
+   <li><a href="#app_ssl">Configure your application </a>to communicate with the communicate with
+       the connector server via SSL.</li>
+</ul>
+
+<h3><a name="deploy_cert">Deploying an SSL certificate</a></h3>
+<ul>
+<li>Windows .NET connector server</li>
+<li>Java connector server</li>
+</ul>
+
+<h3><a name="cs_ssl">Configure your connector server to provide SSL sockets</a></h3>
+<ul>
+<li>Windows .NET connector server</li>
+<p>Edit the configuration file (ConnectorServer.exe.config) of your .NET connector server, changing:</p>
+&nbsp;&lt;add key="connectorserver.usessl" value=<b>"false"</b>/><<br>
+to this:<br>
+&nbsp;&lt;add key="connectorserver.usessl" value=<b>"true"</b>/><<br>
+<p>
+<li>Java connector server</li>
+<p>Edit the configuration file (e.g. connectorserver.properties) of your Java connector server, changing:</p>
+&nbsp;connectorserver.usessl=<b>false</b><br>
+to this:<br>
+&nbsp;connectorserver.usessl=<b>true</b><br>
+</ul>
+
+<h3><a name="app_ssl">Configure your application to use SSL</a></h3>
+Refer to your application manual for specific notes on how to configure connections to connector servers.
+You will need to indicate to your application that an SSL connection is required when establishing a connection for each SSL-enabled connector server.<p>
+
+Additionally, if any of the SSL certificates used by your connector servers is issued by a 
+non-standard certificate authority, your application must be configured to respect the additional authorities.  Refer
+to your application manual for notes regarding certificate authorities.<p>
+
+Java applications may solve the non-standard certificate authority issue by expecting that the following
+Java system properties are passed when launching the application:<br>
+<ul>
+<li>javax.net.ssl.trustStorePassword</li>
+For example, <b>-Djavax.net.ssl.trustStorePassword=changeit</b><br><br>
+<li>javax.net.ssl.trustStore</li>
+For example, <b>-Djavax.net.ssl.trustStore=/usr/myApp_cacerts</b><br><br>
+</ul>
+<p>
+Or, instead, the non-standard certificate authorities may be imported to the standard $JAVA_HOME/lib/security/cacerts.
+
