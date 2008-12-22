@@ -44,7 +44,7 @@
   			Lines="@(AllFiles->'&lt;File Source=&quot;%(Fullpath)&quot; Name=&quot;%(Filename)%(Extension)&quot; /&gt;')"/>
 		<WriteLinesToFile File="Files.wxs" Lines="@(FileBottomLines)" />
 		<!-- Write out the Service Executable (should only be one) -->
-		<CreateItem Include="..\Service\bin\$(Configuration)\*.exe">
+		<CreateItem Include="..\Service\bin\$(Configuration)\ConnectorServer.exe">
  			<Output TaskParameter="Include" ItemName="EXEFiles"/>
  		</CreateItem>
  		<WriteLinesToFile File="Files.wxs" 

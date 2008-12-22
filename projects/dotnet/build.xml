@@ -20,7 +20,7 @@
   "Portions Copyrighted [year] [name of copyright owner]"
   ====================
 -->
-<project name="connectors-dotnet" default="dist-debug">    
+<project name="connectors-dotnet" default="dist-release">    
     <property name="server.exe" value="ConnectorServer.exe"/>
     <property name="server.service" value="Connector Server"/>
     <property name="framework.dir" value="../framework"/>
@@ -45,6 +45,16 @@
                 <include name="**/Debug/*.dll"/>
                 <include name="**/Debug/*.pdb"/>
                 <include name="**/Debug/ConnectorServer*"/>
+            </fileset>
+        </copy>
+    </target>	
+    <target name="dist-release">
+        <mkdir dir="${dist.dotnet}" />
+        <copy todir="${dist.dotnet}" flatten="true">
+            <fileset dir="${dotnet.dir}">
+                <include name="**/Release/*.dll"/>
+                <include name="**/Release/*.pdb"/>
+                <include name="**/Release/ConnectorServer*"/>
             </fileset>
         </copy>
     </target>
@@ -74,7 +84,7 @@
             <arg value="/uninstall"/>
        </exec>
     </target>
-    <target name="run-contract-tests" depends="dist-debug, stop-server, run-server, run-cs-contract-tests, report-junits "/>            
+    <target name="run-contract-tests" depends="dist-release, stop-server, run-server, run-cs-contract-tests, report-junits "/>            
     <target name="run-contract-tests-debug" depends="dist-debug, run-cs-contract-tests, report-junits"/>    
     <target name="clean">
         <delete dir="${dist.dotnet}" />
