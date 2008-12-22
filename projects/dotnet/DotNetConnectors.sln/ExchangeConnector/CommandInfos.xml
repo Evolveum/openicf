@@ -1,0 +1,257 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright 2008 Sun Microsystems, Inc. All rights reserved.
+  
+  U.S. Government Rights - Commercial software. Government users 
+  are subject to the Sun Microsystems, Inc. standard license agreement
+  and applicable provisions of the FAR and its supplements.
+  
+  Use is subject to license terms.
+  
+  This distribution may include materials developed by third parties.
+  Sun, Sun Microsystems, the Sun logo, Java and Project Identity 
+  Connectors are trademarks or registered trademarks of Sun 
+  Microsystems, Inc. or its subsidiaries in the U.S. and other
+  countries.
+  
+  UNIX is a registered trademark in the U.S. and other countries,
+  exclusively licensed through X/Open Company, Ltd. 
+  
+  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+  
+  Copyright 2008 Sun Microsystems, Inc. All rights reserved. 
+  
+  The contents of this file are subject to the terms of the Common Development
+  and Distribution License(CDDL) (the License).  You may not use this file
+  except in  compliance with the License. 
+  
+  You can obtain a copy of the License at
+  http://identityconnectors.dev.java.net/CDDLv1.0.html
+  See the License for the specific language governing permissions and 
+  limitations under the License.  
+  
+  When distributing the Covered Code, include this CDDL Header Notice in each
+  file and include the License file at identityconnectors/legal/license.txt.
+  If applicable, add the following below this CDDL Header, with the fields 
+  enclosed by brackets [] replaced by your own identifying information: 
+  "Portions Copyrighted [year] [name of copyright owner]"
+-->
+<CommandInfos xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <!-- ************ MAIL USER ************ -->
+  <CommandInfo>
+    <Name>New-MailUser</Name>
+    <NameParameter>Name</NameParameter>
+    <Parameter>
+      <string>ExternalEmailAddress</string>
+      <string>OrganizationalUnit</string>
+      <string>Password</string>
+      <string>UserPrincipalName</string>
+      <string>Alias</string>
+      <string>DisplayName</string>
+      <strign>DomainController</strign>
+      <string>FirstName</string>
+      <strign>Initials</strign>
+      <string>LastName</string>
+      <string>MacAttachmentFormat</string>
+      <string>MessageBodyFormat</string>
+      <string>MessageFormat</string>
+      <string>ResetPasswordOnNextLogon</string>
+      <string>SamAccountName</string>
+      <string>TemplateInstance</string>
+      <string>UsePreferMessageFormat</string>
+    </Parameter>
+  </CommandInfo>
+  <CommandInfo>
+    <Name>Set-MailUser</Name>
+    <NameParameter>Identity</NameParameter>
+    <Parameter>
+      <string>AcceptMessagesOnlyFrom</string>
+      <string>AcceptMessagesOnlyFromDLMembers</string>
+      <string>Alias</string>
+      <string>CreateDTMFMap</string>
+      <string>CustomAttribute1</string>
+      <string>CustomAttribute2</string>
+      <string>CustomAttribute3</string>
+      <string>CustomAttribute4</string>
+      <string>CustomAttribute5</string>
+      <string>CustomAttribute6</string>
+      <string>CustomAttribute7</string>
+      <string>CustomAttribute8</string>
+      <string>CustomAttribute9</string>
+      <string>CustomAttribute10</string>
+      <string>CustomAttribute11</string>
+      <string>CustomAttribute12</string>
+      <string>CustomAttribute13</string>
+      <string>CustomAttribute14</string>
+      <string>CustomAttribute15</string>
+      <string>DisplayName</string>
+      <string>DomainController</string>
+      <string>EmailAddresses</string>
+      <string>EmailAddressPolicyEnabled</string>
+      <string>Extensions</string>
+      <string>ExternalEmailAddress</string>
+      <string>GrantSendOnBehalfTo</string>
+      <string>HiddenFromAddressListsEnabled</string>
+      <string>Instance</string>
+      <string>MacAttachmentFormat</string>
+      <string>MessageBodyFormat</string>
+      <string>MessageFormat</string>
+      <string>Name</string>
+      <string>PrimarySmtpAddress</string>
+      <string>RecipientLimits</string>
+      <string>RejectMessagesFrom</string>
+      <string>RejectMessagesFromDLMembers</string>
+      <string>RequireSenderAuthenticationEnabled</string>
+      <string>SamAccountName</string>
+      <string>SecondaryAddress</string>
+      <string>SecondaryDialPlan</string>
+      <string>SimpleDisplayName</string>
+      <string>UMDtmfMap</string>
+      <string>UseMapiRichTextFormat</string>
+      <string>UsePreferMessageFormat</string>
+      <string>UserPrincipalName</string>
+      <string>WindowsEmailAddress</string>
+      <string>MaxReceiveSize</string>
+      <string>MaxSendSize</string>
+    </Parameter>    
+  </CommandInfo>
+  <CommandInfo>
+    <Name>Get-MailUser</Name>
+    <Parameter>
+      <string>Identity</string>
+      <string>OrganizationalUnit</string>
+      <string>ReadFromDomainController</string>
+      <string></string>
+    </Parameter>
+    <FilterName>Filter</FilterName>
+    <FilterParameter>
+      <string>AcceptMessagesOnlyFrom</string>
+      <string>AcceptMessagesOnlyFromDLMembers</string>
+      <string>Alias</string>
+      <string>CustomAttribute1</string>
+      <string>CustomAttribute2</string>
+      <string>CustomAttribute3</string>
+      <string>CustomAttribute4</string>
+      <string>CustomAttribute5</string>
+      <string>CustomAttribute6</string>
+      <string>CustomAttribute7</string>
+      <string>CustomAttribute8</string>
+      <string>CustomAttribute9</string>
+      <string>CustomAttribute10</string>
+      <string>CustomAttribute11</string>
+      <string>CustomAttribute12</string>
+      <string>CustomAttribute13</string>
+      <string>CustomAttribute14</string>
+      <string>CustomAttribute15</string>
+      <string>DisplayName</string>
+      <string>DistinguishedName</string>
+      <string>EmailAddresses</string>
+      <string>EmailAddressPolicyEnabled</string>
+      <string>ExchangeVersion</string>
+      <string>ExternalEmailAddress</string>
+      <string>GrantSendOnBehalfTo</string>
+      <string>Guid</string>
+      <string>HiddenFromAddressListsEnabled</string>
+      <string>MaxReceiveSize</string>
+      <string>MaxSendSize</string>
+      <string>Name</string>
+      <string>PrimarySmtpAddress</string>
+      <string>RecipientLimits</string>
+      <string>RecipientType</string>
+      <string>RecipientTypeDetails</string>
+      <string>RejectMessagesFrom</string>
+      <string>RejectMessagesFromDLMembers</string>
+      <string>SamAccountName</string>
+      <string>SimpleDisplayName</string>
+      <string>UMDtmfMap</string>
+      <string>UserPrincipalName</string>
+      <string>WhenChanged</string>
+      <string>WhenCreated</string>
+      <string>WindowsEmailAddress</string>
+    </FilterParameter>
+  </CommandInfo>
+  <CommandInfo>
+    <Name>Enable-MailUser</Name>
+    <NameParameter>Identity</NameParameter>
+    <Parameter>
+      <string>ExternalEmailAddress</string>
+      <string>Alias</string>
+      <string>DomainController</string>
+      <string>MacAttachmentFormat</string>
+      <string>MessageBodyFormat</string>
+      <string>MessageFormat</string>
+      <string>UsePreferMessageFormat</string>
+    </Parameter>
+  </CommandInfo>
+  <!-- ************ MAIL USER END ************ -->
+  <!-- ************ USER ************ -->
+  <CommandInfo>
+    <Name>Get-User</Name>
+    <NameParameter>Identity</NameParameter>
+  </CommandInfo>
+  <CommandInfo>
+    <Name>Set-User</Name>
+    <NameParameter>Identity</NameParameter>
+    <Parameter>
+      <string>AssistantName</string>
+      <string>City</string>
+      <string>Company</string>
+      <string>CountryOrRegion</string>
+      <string>CreateDTMFMap</string>
+      <string>Department</string>
+      <string>DisplayName</string>
+      <string>DomainController</string>
+      <string>Fax</string>
+      <string>FirstName</string>
+      <string>HomePhone</string>
+      <string>Initials</string>
+      <string>Instance</string>
+      <string>LastName</string>
+      <string>Manager</string>
+      <string>MobilePhone</string>
+      <string>Name</string>
+      <string>Notes</string>
+      <string>Office</string>
+      <string>OtherFax</string>
+      <string>OtherHomePhone</string>
+      <string>OtherTelephone</string>
+      <string>Pager</string>
+      <string>Phone</string>
+      <string>PhoneticDisplayName</string>
+      <string>PostalCode</string>
+      <string>PostOfficeBox</string>
+      <string>ResetPasswordOnNextLogon</string>
+      <string>SamAccountName</string>
+      <string>SimpleDisplayName</string>
+      <string>StateOrProvince</string>
+      <string>StreetAddress</string>
+      <string>Title</string>
+      <string>UMDialPlan</string>
+      <string>UMDtmfMap</string>
+      <string>UserPrincipalName</string>
+      <string>WebPage</string>
+      <string>WindowsEmailAddress</string>
+    </Parameter>
+  </CommandInfo>
+  <!-- ************ USER END ******** -->
+  <!-- ************ MAILBOX ************ -->
+  <CommandInfo>
+    <Name>Enable-Mailbox</Name>
+    <NameParameter>Identity</NameParameter>
+    <Parameter>
+      <string>Database</string>
+      <string>Equipment</string>
+      <string>Alias</string>
+      <string>LinkedDomainController</string>
+      <string>LinkedMasterAccount</string>
+      <string>Room</string>
+      <string>Shared</string>
+      <string>ActiveSyncMailboxPolicy</string>
+      <string>DomainController</string>
+      <string>LinkedCredential</string>
+      <string>ManagedFolderMailboxPolicy</string>
+      <string>ManagedFolderMailboxPolicyAllowed</string>      
+    </Parameter>
+  </CommandInfo>
+  <!-- ************ MAILBOX END ************ -->
+</CommandInfos>
