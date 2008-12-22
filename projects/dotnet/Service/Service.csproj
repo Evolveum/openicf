@@ -100,7 +100,7 @@
   </ItemGroup>
   <Target Name="AfterBuild">
     <MakeDir Directories="$(OutputPath)/../dist" />
-    <Zip Files="@(ZipFiles)" WorkingDirectory="$(OutputPath)" ZipFileName="$(OutputPath)/../dist/ConnectorServer-$(Version)-$(BUILD_NUMBER).zip" />
+    <Zip Files="@(ZipFiles)" WorkingDirectory="$(OutputPath)" ZipFileName="$(OutputPath)/../dist/ConnectorServer-$(Version)-$(SVN_REVISION).zip" />
   </Target>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj">
