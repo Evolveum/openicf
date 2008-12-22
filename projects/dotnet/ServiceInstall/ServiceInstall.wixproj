@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ====================
   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
   
@@ -58,7 +58,9 @@
   </PropertyGroup>
   <Import Project="$(WixToolPath)\wix.targets" />
   <ItemGroup>
-    <WixExtension Include="$(WixToolPath)\WixUIExtension.dll" />
+    <WixExtension Include="WixUIExtension">
+      <HintPath>c:\Program Files\Windows Installer XML v3\bin\WixUIExtension.dll</HintPath>
+    </WixExtension>
     <Compile Include="Files.wxs" />
     <Compile Include="Setup.wxs" />
     <None Include="license.rtf" />
