@@ -66,6 +66,7 @@
     <FileAlignment>4096</FileAlignment>
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
+  <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets"/>
   <ItemGroup>
     <Reference Include="System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
     <Reference Include="System.Configuration" />
@@ -91,6 +92,14 @@
   <Target Name="Clean">
     <RemoveDir Directories="bin;obj">
     </RemoveDir>
+  </Target>
+  <ItemGroup>
+    <ZipFiles Include="$(OutputPath)/*.dll" Exclude="$(OutputPath)/*.zip" />
+    <ZipFiles Include="$(OutputPath)/*.pdb" Exclude="$(OutputPath)/*.zip" />
+    <ZipFiles Include="$(OutputPath)/*.exe" Exclude="$(OutputPath)/*.zip" />
+  </ItemGroup>
+  <Target Name="AfterBuild">
+    <Zip Files="@(ZipFiles)" WorkingDirectory="$(OutputPath)" ZipFileName="$(OutputPath)\ConnectorServer-$(Version)-$(BUILD_NUMBER).zip" />
   </Target>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj">
