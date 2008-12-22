@@ -94,13 +94,13 @@
     </RemoveDir>
   </Target>
   <ItemGroup>
-    <ZipFiles Include="$(OutputPath)/*.dll" Exclude="$(OutputPath)/*.zip" />
-    <ZipFiles Include="$(OutputPath)/*.pdb" Exclude="$(OutputPath)/*.zip" />
-    <ZipFiles Include="$(OutputPath)/*.exe" Exclude="$(OutputPath)/*.zip" />
+    <ZipFiles Include="$(OutputPath)/*.dll" />
+    <ZipFiles Include="$(OutputPath)/*.pdb" />
+    <ZipFiles Include="$(OutputPath)/*.exe" />
   </ItemGroup>
   <Target Name="AfterBuild">
-    <MakeDir Directories="$(OutputPath)/../dist" />
-    <Zip Files="@(ZipFiles)" WorkingDirectory="$(OutputPath)" ZipFileName="$(OutputPath)/../dist/ConnectorServer-$(Version)-$(SVN_REVISION).zip" />
+    <MakeDir Directories="$(OutputPath)../dist" />
+    <Zip Files="@(ZipFiles)" WorkingDirectory="$(OutputPath)" ZipFileName="$(OutputPath)../dist/ConnectorServer-$(Version)-$(SVN_REVISION).zip" />
   </Target>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj">
