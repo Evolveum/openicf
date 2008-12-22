@@ -147,10 +147,10 @@ namespace Org.IdentityConnectors.Exchange
         /// Implementation of SynOp.GetLatestSyncToken
         /// </summary>
         /// <returns></returns>
-        public override SyncToken GetLatestSyncToken()
+        public override SyncToken GetLatestSyncToken(ObjectClass oclass)
         {
             //TODO: Implement GetLatestSyncToken
-            return base.GetLatestSyncToken();
+            return base.GetLatestSyncToken(oclass);
         }
         
         /// <summary>

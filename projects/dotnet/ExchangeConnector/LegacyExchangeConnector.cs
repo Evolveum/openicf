@@ -39,7 +39,8 @@ namespace Org.IdentityConnectors.Exchange
     /// </summary>
     [ConnectorClass("connector_displayName",
                     typeof(ExchangeConfiguration),
-                    MessageCatalogPath = "Org.IdentityConnectors.ActiveDirectory.Messages"
+                    MessageCatalogPaths = new[] { "Org.IdentityConnectors.Exchange.Messages", 
+                        "Org.IdentityConnectors.ActiveDirectory.Messages" }
                    )]
     public class LegacyExchangeConnector : ActiveDirectoryConnector
     {
@@ -60,13 +61,17 @@ namespace Org.IdentityConnectors.Exchange
                                                              };
 
         private static readonly ConnectorAttributeInfo ATTINFO_RECIPIENT_TYPE =
-            ConnectorAttributeInfoBuilder.Build(ATT_RECIPIENT_TYPE, typeof(string), true, true, true, false);
+            ConnectorAttributeInfoBuilder.Build(ATT_RECIPIENT_TYPE, typeof(string), ConnectorAttributeInfo.Flags.REQUIRED |
+            ConnectorAttributeInfo.Flags.NOT_UPDATEABLE | ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT);
+
+        
 
         private static readonly ConnectorAttributeInfo ATTINFO_EXTERNAL_MAIL =
-            ConnectorAttributeInfoBuilder.Build(ATT_EXTERNAL_MAIL, typeof(string), false);
+            ConnectorAttributeInfoBuilder.Build(ATT_EXTERNAL_MAIL, typeof(string), ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT |
+            ConnectorAttributeInfo.Flags.MULTIVALUED);
 
         private static readonly ConnectorAttributeInfo ATTINFO_DATABASE =
-            ConnectorAttributeInfoBuilder.Build(ATT_DATABASE, typeof(string), false, true, true, false);
+            ConnectorAttributeInfoBuilder.Build(ATT_DATABASE, typeof(string), ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT);
 
         private const string RCPT_TYPE_MAIL_BOX = "mailbox";
         private const string RCPT_TYPE_MAIL_USER = "mailuser";
@@ -218,10 +223,10 @@ namespace Org.IdentityConnectors.Exchange
         /// Implementation of SynOp.GetLatestSyncToken
         /// </summary>
         /// <returns></returns>
-        public override SyncToken GetLatestSyncToken()
+        public override SyncToken GetLatestSyncToken(ObjectClass oclass)
         {
             //TODO: Implement GetLatestSyncToken
-            return base.GetLatestSyncToken();
+            return base.GetLatestSyncToken(oclass);
         }
 
         /// <summary>
