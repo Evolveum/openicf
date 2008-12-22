@@ -55,10 +55,7 @@
 		</ReadLinesFromFile>
 		<WriteLinesToFile File="Files.wxs" Lines="@(FileBottomLines)" />
 	</Target>
-  <Target Name="AfterBuild">
-    <Copy SourceFiles="bin\$(Configuration)\ServiceInstall.msi"  DestinationFiles="bin\$(Configuration)\ServiceInstall-$(SVN_REVISION).msi" />
 
-  </Target>
   <Target Name="Clean">
 		<MSBuild Projects="..\Service\Service.csproj" Targets="Clean" />
 		<RemoveDir Directories="obj;bin" />
