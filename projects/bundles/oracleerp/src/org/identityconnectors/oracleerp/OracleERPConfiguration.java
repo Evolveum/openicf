@@ -27,6 +27,7 @@ import java.text.MessageFormat;
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.dbcommon.JNDIUtil;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
@@ -42,9 +43,6 @@ public class OracleERPConfiguration extends AbstractConfiguration {
 
     /** */
     private static final String DEFAULT_DATA_SOURCE = "jdbc/SampleDataSourceName";
-    /*
-     * Set up base configuration elements
-     */
 
     /**
      * Datasource attributed
@@ -54,26 +52,48 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * name="dataSource" type="string" multi="false" value="jdbc/SampleDataSourceName"
      * displayName="DATA_SOURCE_NAME" description="HELP_393"
      */
-    String dataSource=DEFAULT_DATA_SOURCE;
+    String dataSource="";
 
     /**
      * Getter for the driver dataSource.
      * @return dataSource
-     * TODO add support for dataSource in the future
+     * add support for dataSource in the future
      */
-//    @ConfigurationProperty(displayMessageKey="DATA_SOURCE_DISPLAY", helpMessageKey="DATA_SOURCE_DISPLAY",  order=1)
-//    public String getDataSource() {
-//        return dataSource;
-//    }
+    public String getDataSource() {
+        return dataSource;
+    }
 
     /**
      * Setter for the dataSource attribute.
      * @param dataSource 
      */
-//    public void setDataSource(String dataSource) {
-//        this.dataSource = dataSource;
-//    }    
+    @ConfigurationProperty(order=1 ,displayMessageKey="DATA_SOURCE_DISPLAY", helpMessageKey="DATA_SOURCE_DISPLAY")
+    public void setDataSource(String dataSource) {
+        this.dataSource = dataSource;
+    }    
 
+    
+    /**
+     * The jndiFactory name is used to connect to database.
+     */
+    private String[] jndiProperties;
+
+    /**
+     * Return the jndiFactory 
+     * @return jndiFactory value
+     */
+    public String[] getJndiProperties() {
+        return jndiProperties;
+    }
+
+    /**
+     * @param value
+     */
+    @ConfigurationProperty(order = 2,displayMessageKey="JNDI_PROPERTIES_DISPLAY", helpMessageKey="JNDI_PROPERTIES_DISPLAY")
+    public void setJndiProperties(String[] value) {
+        this.jndiProperties = value;
+    }
+    
     /** */
     private static final String DEFAULT_DRIVER = "oracle.jdbc.driver.OracleDriver";
 
@@ -91,7 +111,6 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Getter for the driver attribute.
      * @return driver
      */
-    @ConfigurationProperty(displayMessageKey="DRIVER_DISPLAY", helpMessageKey="DRIVER_HELP",  order=1)
     public String getDriver() {
         return driver;
     }
@@ -100,6 +119,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Setter for the driver attribute.
      * @param driver 
      */
+    @ConfigurationProperty(order=3 ,displayMessageKey="DRIVER_DISPLAY", helpMessageKey="DRIVER_HELP")
     public void setDriver(String driver) {
         this.driver = driver;
     }    
@@ -125,7 +145,6 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Getter for the connUrl attribute. 
      * @return connUrl
      */
-    @ConfigurationProperty(displayMessageKey="CONN_URL_DISPLAY", helpMessageKey="CONN_URL_HELP",  order=2)
     public String getConnUrl() {
         return connUrl;
     }
@@ -134,6 +153,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Setter for the connUrl attribute.
      * @param connUrl 
      */
+    @ConfigurationProperty(order=4 ,displayMessageKey="CONN_URL_DISPLAY", helpMessageKey="CONN_URL_HELP")
     public void setConnUrl(String connUrl) {
         this.connUrl = connUrl;
     }
@@ -152,7 +172,6 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Getter for the connUrl attribute. 
      * @return connUrl
      */
-    @ConfigurationProperty(displayMessageKey="HOST_NAME_DISPLAY", helpMessageKey="HOST_NAME_HELP",  order=3)
     public String getHostName() {
         return hostName;
     }
@@ -161,6 +180,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Setter for the hostName attribute.
      * @param hostName attribute.
      */
+    @ConfigurationProperty(order=5 ,displayMessageKey="HOST_NAME_DISPLAY", helpMessageKey="HOST_NAME_HELP")
     public void setHostName(String hostName) {
         this.hostName = hostName;
     }
@@ -182,8 +202,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Getter for the port attribute. 
      * @return port
      */
-    @ConfigurationProperty(displayMessageKey="PORT_DISPLAY", helpMessageKey="PORT_HELP",  order=4)
-    public String getPort() {
+     public String getPort() {
         return port;
     }
 
@@ -191,6 +210,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Setter for the port attribute.
      * @param port attribute.
      */
+    @ConfigurationProperty(order=6 ,displayMessageKey="PORT_DISPLAY", helpMessageKey="PORT_HELP")
     public void setPort(String port) {
         this.port = port;
     }
@@ -209,7 +229,6 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Getter for the databaseName attribute. 
      * @return databaseName
      */
-    @ConfigurationProperty(displayMessageKey="DATABASE_NAME_DISPLAY", helpMessageKey="DATABASE_NAME_HELP",  order=5)
     public String getDatabaseName() {
         return databaseName;
     }
@@ -218,12 +237,13 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Setter for the databaseName attribute.
      * @param databaseName attribute.
      */
+    @ConfigurationProperty(order=7 ,displayMessageKey="DATABASE_NAME_DISPLAY", helpMessageKey="DATABASE_NAME_HELP")
     public void setDatabaseName(String databaseName) {
         this.databaseName = databaseName;
     }
     
     /** */
-    private static final String DEFAULT_USER = "APPL";
+    private static final String DEFAULT_USER = "APPS";
     
     /**
      * User attribute
@@ -238,7 +258,6 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Getter for the user attribute. 
      * @return user
      */
-    @ConfigurationProperty(displayMessageKey="USER_DISPLAY", helpMessageKey="USER_HELP",  order=6)
     public String getUser() {
         return user;
     }
@@ -247,6 +266,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Setter for the user attribute.
      * @param user attribute.
      */
+    @ConfigurationProperty(order=8 ,displayMessageKey="USER_DISPLAY", helpMessageKey="USER_HELP")
     public void setUser(String user) {
         this.user = user;
     }
@@ -264,7 +284,6 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Getter for the user attribute. 
      * @return user
      */
-    @ConfigurationProperty(displayMessageKey="PASSWORD_DISPLAY", helpMessageKey="PASSWORD_HELP",  order=7, confidential=true)
     public GuardedString getPassword() {
         return password;
     }
@@ -273,6 +292,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Setter for the password attribute.
      * @param password attribute.
      */
+    @ConfigurationProperty(order=9 ,displayMessageKey="PASSWORD_DISPLAY", helpMessageKey="PASSWORD_HELP", confidential=true)
     public void setPassword(GuardedString password) {
         this.password = password;
     }    
@@ -314,7 +334,6 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Getter for the user attribute. 
      * @return user
      */
-    @ConfigurationProperty(displayMessageKey="AUDIT_RESPONSIBILITY_DISPLAY", helpMessageKey="AUDIT_RESPONSIBILITY_HELP",  order=8)
     public String getAuditResponsibility() {
         return auditResponsibility;
     }
@@ -323,6 +342,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Setter for the auditResponsibility attribute.
      * @param auditResponsibility attribute.
      */
+    @ConfigurationProperty(order=10 ,displayMessageKey="AUDIT_RESPONSIBILITY_DISPLAY", helpMessageKey="AUDIT_RESPONSIBILITY_HELP")
     public void setAuditResponsibility(String auditResponsibility) {
         this.auditResponsibility = auditResponsibility;
     }    
@@ -341,7 +361,6 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Getter for the manageSecuringAttrs attribute.
      * @return manageSecuringAttrs attribute
      */
-    @ConfigurationProperty(displayMessageKey="MANAGE_SECURING_ATTRS_DISPLAY", helpMessageKey="MANAGE_SECURING_ATTRS_HELP",  order=9)
     public boolean isManageSecuringAttrs() {
         return manageSecuringAttrs;
     }
@@ -350,6 +369,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Setter for the manageSecuringAttrs attribute.
      * @param manageSecuringAttrs attribute.
      */
+    @ConfigurationProperty(order=11 ,displayMessageKey="MANAGE_SECURING_ATTRS_DISPLAY", helpMessageKey="MANAGE_SECURING_ATTRS_HELP")
     public void setManageSecuringAttrs(boolean manageSecuringAttrs) {
         this.manageSecuringAttrs = manageSecuringAttrs;
     }    
@@ -368,7 +388,6 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Getter for the returnSobOrgAttrs attribute.
      * @return returnSobOrgAttrs attribute
      */
-    @ConfigurationProperty(displayMessageKey="RETURN_SOB_AND_ORG_DISPLAY", helpMessageKey="RETURN_SOB_AND_ORG_HELP",  order=10)
     public boolean isReturnSobOrgAttrs() {
         return returnSobOrgAttrs;
     }
@@ -377,6 +396,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Setter for the returnSobOrgAttrs attribute.
      * @param returnSobOrgAttrs attribute.
      */
+    @ConfigurationProperty(order=12 ,displayMessageKey="RETURN_SOB_AND_ORG_DISPLAY", helpMessageKey="RETURN_SOB_AND_ORG_HELP")
     public void setReturnSobOrgAttrs(boolean returnSobOrgAttrs) {
         this.returnSobOrgAttrs = returnSobOrgAttrs;
     }    
@@ -396,7 +416,6 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Getter for the activeAccountsOnly attribute.
      * @return activeAccountsOnly attribute
      */
-    @ConfigurationProperty(displayMessageKey="ACTIVE_ACCOUNTS_ONLY_DISPLAY", helpMessageKey="ACTIVE_ACCOUNTS_ONLY_HELP",  order=11)
     public boolean isActiveAccountsOnly() {
         return activeAccountsOnly;
     }
@@ -405,6 +424,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Setter for the activeAccountsOnly attribute.
      * @param activeAccountsOnly attribute.
      */
+    @ConfigurationProperty(order=13 ,displayMessageKey="ACTIVE_ACCOUNTS_ONLY_DISPLAY", helpMessageKey="ACTIVE_ACCOUNTS_ONLY_HELP")
     public void setActiveAccountsOnly(boolean activeAccountsOnly) {
         this.activeAccountsOnly = activeAccountsOnly;
     }    
@@ -412,7 +432,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
     /**
      * Parameter indicate to limit which accounts to be managed by IDM. 
      * The limitation is by adding WHERE clause
-     * If enabled, 'Active Accounts Only' parameter is ignored.
+     * If enabled, 'Active Accounts Only' parameterName is ignored.
      * Default value is false
      * 
      * imported adapter attribute
@@ -425,7 +445,6 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Getter for the accountsIncluded attribute.
      * @return accountsIncluded attribute
      */
-    @ConfigurationProperty(displayMessageKey="ACCOUNTS_INCLUDED_DISPLAY", helpMessageKey="ACCOUNTS_INCLUDED_HELP",  order=12)
     public boolean isAccountsIncluded() {
         return accountsIncluded;
     }
@@ -434,6 +453,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Setter for the accountsIncluded attribute.
      * @param accountsIncluded attribute.
      */
+    @ConfigurationProperty(order=14 ,displayMessageKey="ACCOUNTS_INCLUDED_DISPLAY", helpMessageKey="ACCOUNTS_INCLUDED_HELP")
     public void setAccountsIncluded(boolean accountsIncluded) {
         this.accountsIncluded = accountsIncluded;
     }    
@@ -453,7 +473,6 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Getter for the userActions attribute.
      * @return userActions attribute
      */
-    @ConfigurationProperty(displayMessageKey="AFTER_ACTION_DISPLAY", helpMessageKey="AFTER_ACTION_HELP",  order=13)
     public String getUserActions() {
         return userActions;
     }
@@ -462,6 +481,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Setter for the userActions attribute.
      * @param userActions attribute.
      */
+    @ConfigurationProperty(order=15 ,displayMessageKey="AFTER_ACTION_DISPLAY", helpMessageKey="AFTER_ACTION_HELP")
     public void setUserActions(String userActions) {
         this.userActions = userActions;
     }    
@@ -482,7 +502,6 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Getter for the noSchemaId attribute.
      * @return the noSchemaId value
      */
-    @ConfigurationProperty(displayMessageKey="NO_SCHEMA_ID_DISPLAY", helpMessageKey="NO_SCHEMA_ID_HELP",  order=14)
     public boolean isNoSchemaId() {
         return noSchemaId;
     }
@@ -491,6 +510,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Setter for the noSchemaId attribute.
      * @param noSchemaId
      */
+    @ConfigurationProperty(order=16 ,displayMessageKey="NO_SCHEMA_ID_DISPLAY", helpMessageKey="NO_SCHEMA_ID_HELP")
     public void setNoSchemaId(boolean noSchemaId) {
         this.noSchemaId = noSchemaId;
     }
@@ -509,14 +529,16 @@ public class OracleERPConfiguration extends AbstractConfiguration {
     public void validate() {
         Assertions.blankCheck(user, "user");
         Assertions.nullCheck(password, "password");
- // TODO DataSource
- //       if (StringUtil.isBlank(dataSource)) {
+        if (StringUtil.isBlank(dataSource)) {
             if(StringUtil.isBlank(connUrl)) {
                 Assertions.blankCheck(hostName, "databaseName"); 
                 Assertions.blankCheck(port, "databaseName"); 
                 Assertions.blankCheck(databaseName, "databaseName"); 
             }
-//        }
+        } else {
+            //Validate the JNDI properties
+            JNDIUtil.arrayToHashtable(getJndiProperties(), getConnectorMessages());           
+        }
     }
 
     /**
@@ -535,8 +557,10 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * @return The user and dot et the end.
      */
     public String getConnectionUrl() {
-        if (StringUtil.isBlank(connUrl)) {
-            return MessageFormat.format(ORACLE_THIN_CONN_URL, getHostName(), getPort(), getDatabaseName());
+        if (StringUtil.isBlank(connUrl) || DEFAULT_CONN_URL.equals(connUrl)) {
+            if(StringUtil.isNotBlank(getHostName()) && StringUtil.isNotBlank(getPort()) && StringUtil.isNotBlank(getDatabaseName()) ) {
+                connUrl = MessageFormat.format(ORACLE_THIN_CONN_URL, getHostName(), getPort(), getDatabaseName());
+            }
         }
         return connUrl;
     }

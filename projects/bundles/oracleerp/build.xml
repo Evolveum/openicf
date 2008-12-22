@@ -21,6 +21,19 @@
   ====================
 -->
 <project name="connector-oracleerp" default="all"> 
-    <property name="framework.dir" value="C:\Users\petr\java\idm\framework\toolkit"/>
+    <property name="framework.dir" value="../../framework"/>
+    <property name="bundles.dir" value="../"/>
     <import file="${framework.dir}/connector_build.xml"/>
+    <property name="databasecommon.dir" value="../dbcommon"/>
+    <target name="-pre-clean-extra">
+        <delete>
+            <fileset dir="${lib}" includes="*jar"/>
+        </delete>
+    </target>
+    <target name="-pre-compile-extra">
+        <copy todir="${lib}">
+            <fileset dir="${databasecommon.dir}/dist" includes="*.jar"/>
+        </copy>
+    </target>   
 </project>
+

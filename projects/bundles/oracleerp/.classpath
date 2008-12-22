@@ -6,6 +6,9 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorDatabaseCommon"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-HEAD"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-Internal-HEAD"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-Test-HEAD"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorContractTests"/>
+	<classpathentry kind="var" path="USER_HOME/.connectors/connector-oracleerp/lib/ojdbc14.jar"/>
+	<classpathentry exported="true" kind="con" path="GROOVY_SUPPORT"/>
+	<classpathentry kind="lib" path="/ConnectorContractTests/src"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>

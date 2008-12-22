@@ -45,12 +45,15 @@ import org.identityconnectors.dbcommon.DatabaseFilterTranslator;
  */
 public class OracleERPFilterTranslator extends DatabaseFilterTranslator {
 
+    OracleERPColumnNameResolver cnr = null;
     /**
      * @param oclass
      * @param options
+     * @param cnr 
      */
-    public OracleERPFilterTranslator(ObjectClass oclass, OperationOptions options) {
+    public OracleERPFilterTranslator(ObjectClass oclass, OperationOptions options, OracleERPColumnNameResolver cnr) {
         super(oclass, options);
+        this.cnr = cnr;
     }
 
     /* (non-Javadoc)
@@ -58,7 +61,7 @@ public class OracleERPFilterTranslator extends DatabaseFilterTranslator {
      */
     @Override
     protected String getDatabaseColumnName(Attribute attribute, ObjectClass oclass, OperationOptions options) {
-        return attribute.getName().toUpperCase();
+        return cnr.accountAttributeToColumnName(attribute.getName());
     }
 
  
