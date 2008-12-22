@@ -99,7 +99,8 @@
     <ZipFiles Include="$(OutputPath)/*.exe" Exclude="$(OutputPath)/*.zip" />
   </ItemGroup>
   <Target Name="AfterBuild">
-    <Zip Files="@(ZipFiles)" WorkingDirectory="$(OutputPath)" ZipFileName="$(OutputPath)\ConnectorServer-$(Version)-$(BUILD_NUMBER).zip" />
+    <MakeDir Directories="$(OutputPath)/../dist" />
+    <Zip Files="@(ZipFiles)" WorkingDirectory="$(OutputPath)" ZipFileName="$(OutputPath)/../dist/ConnectorServer-$(Version)-$(BUILD_NUMBER).zip" />
   </Target>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj">
