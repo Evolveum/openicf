@@ -20,7 +20,7 @@
   "Portions Copyrighted [year] [name of copyright owner]"
   ====================
 -->
-<project name="connector-ActiveDirectory" default="run-contract-tests">
+<project name="connector-ad" default="run-contract-tests">
     <property name="contracts.run" value="true"/>
     <property name="framework.dir" value="../../framework"/>
     <property name="dotnet.dir" value="../"/>
