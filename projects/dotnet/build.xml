@@ -84,8 +84,8 @@
             <arg value="/uninstall"/>
        </exec>
     </target>
-    <target name="run-contract-tests" depends="stop-server, dist-release, run-server, run-cs-contract-tests, report-junits "/>            
-    <target name="run-contract-tests-debug" depends="stop-server, dist-debug, run-server, run-cs-contract-tests, report-junits"/>    
+    <target name="run-contract-tests" depends="stop-server, dist-release, run-server, run-cs-contract-tests, report-junits, stop-server "/>            
+    <target name="run-contract-tests-debug" depends="stop-server, dist-debug, run-server, run-cs-contract-tests, report-junits, stop-server"/>    
     <target name="clean">
         <delete dir="${dist.dotnet}" />
     </target>

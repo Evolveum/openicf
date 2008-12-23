@@ -98,7 +98,7 @@
     <ZipFiles Include="$(OutputPath)/*.pdb" />
     <ZipFiles Include="$(OutputPath)/*.exe" />
   </ItemGroup>
-  <Target Name="AfterBuild">
+  <Target Name="ConnectorServerZip">
     <MakeDir Directories="$(OutputPath)../dist" />
     <Zip Files="@(ZipFiles)" WorkingDirectory="$(OutputPath)" ZipFileName="$(OutputPath)../dist/ConnectorServer-$(Version)-$(SVN_REVISION).zip" />
   </Target>
