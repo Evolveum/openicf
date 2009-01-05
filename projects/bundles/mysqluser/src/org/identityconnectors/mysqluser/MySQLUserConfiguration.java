@@ -148,24 +148,24 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
     }    
 
     /**
-     * login
+     * user
      */
-    private String login = ""; // Login
+    private String user = ""; // Login
 
     /**
      * The setter method 
-     * @return login value
+     * @return user value
      */
     @ConfigurationProperty(order = 6, helpMessageKey = "mysqluser.login.help", displayMessageKey = "mysqluser.login.display")
-    public String getLogin() {
-        return this.login;
+    public String getUser() {
+        return this.user;
     }
 
     /**
      * @param value
      */
-    public void setLogin(final String value) {
-        this.login = value;
+    public void setUser(final String value) {
+        this.user = value;
     }
 
     /**
@@ -220,7 +220,7 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
     /**
      * @return the usermodel
      */
-    @ConfigurationProperty(order = 9, helpMessageKey = "mysqluser.model.help", displayMessageKey = "mysqluser.model.display")
+    @ConfigurationProperty(order = 9, required = true, helpMessageKey = "mysqluser.model.help", displayMessageKey = "mysqluser.model.display")
     public String getUsermodel() {
         return usermodel;
     }
@@ -246,7 +246,7 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
         // check that there is not a datasource
         if(StringUtil.isBlank(getDatasource())){ 
             // determine if you can get a connection to the database..
-            Assertions.blankCheck(getLogin(), "login");
+            Assertions.blankCheck(getUser(), "user");
             // check that there is a table to query..
             Assertions.nullCheck(getPassword(), "password");
 

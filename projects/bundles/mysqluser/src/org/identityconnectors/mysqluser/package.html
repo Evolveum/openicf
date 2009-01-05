@@ -1,0 +1,84 @@
+<!--
+  ====================
+  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+  
+  Copyright 2007-2008 Sun Microsystems, Inc. All rights reserved.     
+  
+  The contents of this file are subject to the terms of the Common Development 
+  and Distribution License("CDDL") (the "License").  You may not use this file 
+  except in compliance with the License.
+  
+  You can obtain a copy of the License at 
+  http://IdentityConnectors.dev.java.net/legal/license.txt
+  See the License for the specific language governing permissions and limitations 
+  under the License. 
+  
+  When distributing the Covered Code, include this CDDL Header Notice in each file
+  and include the License file at identityconnectors/legal/license.txt.
+  If applicable, add the following below this CDDL Header, with the fields 
+  enclosed by brackets [] replaced by your own identifying information: 
+  "Portions Copyrighted [year] [name of copyright owner]"
+  ====================
+-->
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Open Connectors (Common)</title>
+</head>
+<body>
+ <P2>The MySQLUser connector specification</P2> 
+    The connector capabilities are pretty limited. The connector support just a user creation from modeluser template
+    The update is possible just for a user name and password. No other attributes are currently supported.
+    The delete and search of user is also supported. 
+    <BR>
+    The MySQLUSer connector use the template user called the "modeluser".
+    Model user and its rights are taken taken as a template for creating every new user on the MySQL resource.
+
+ <P2>What kind of operations are supported by MySQLUser connector</P2> 
+    The MySQLUser connector supports create, update, delete operation for the IdM account. Also search by user name are supported.
+    To search by SQL user rights currently is not supported.       
+ 
+ <P2>What kind of features are supported by MySQLUser connector</P2> 
+    The MySQLUser does not support any of the special features except to set a new password. No enable/disable nor password expiration are supported.
+    The connector does not support any scripting.
+      
+ <P2>Which version of framework?</P2> 
+    The framework version 1.0 and above
+
+ <P2>Backward compatible with adaptor</P2>
+    The connector is backward compatible with adaptor. 
+    All features from the adapter has been implemented exept the "JDBC URL Template" property.
+    The JDBC URL Template configuration property is not required, because all versions of MySQL 
+    supports the same URL schema.     
+
+ <P2>What is the migration path from adapter to connecto</P2>
+    Please see the migration separate page.
+
+ <P2>Native resource types the connector can manage</P2>
+    The connector was tested against the mysql Upcoming Releases
+    <ul>
+     <li>MySQL 6.0 — Alpha</li>
+     <li>MySQL 5.0 — Previous GA release</li>
+     <li>MySQL 4.1 — Previous GA release</li>
+    </ul>
+
+ <P2>The MySQL resource description</P2>
+    Provides implementation of connector to MySQL database resource. 
+    MySQL Connector uses MySQL database mysql.user table to manage users. There could be a multiple records for particular
+    user. The unique key of the record is a sequence of host, user, schema, table. The rest of the record consist of 
+    encoded user password and SQL user rights.<br> 
+    The MySQL resource accepts the % wildcard. This wildcard can be used for specifying any host, any user, any schema, any table.
+
+ <P2>The MySQL resource restrictions</P2>
+    The user account must have rights to read, create, update and delete the users from any hosts and for any schema and table. 
+    The modeluser can have any rights. To use the same account for user and modeluser is not recommended and can leads to problems.
+    <BR>
+    The MySQL connector does not difference between the hosts. Every access rights is considered as valid from any hosts.
+    It must imply the default wildcard "%" for hosts. It is not recommended to set up the model user with different 
+    SQL access rights which differs for hosts.
+ 
+ 
+     See {@link org.identityconnectors.mysqluser.MySQLUserConfiguration} and  {@link org.identityconnectors.mysqluser.MySQLUserConnector} for more information about DB2 connector.
+</body>
+</html>

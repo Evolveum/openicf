@@ -84,7 +84,7 @@ public class MySQLUserConnectorTests {
     private static String idmDriver = null;
     private static String idmHost = null;
 
-    private static String idmLogin = null;
+    private static String idmUser = null;
     private static GuardedString testPassword = null;
     private static String idmModelUser = null;
     private static GuardedString idmPassword = null;
@@ -106,9 +106,9 @@ public class MySQLUserConnectorTests {
         idmHost = TestHelpers.getProperty(HOST, null);
         assertNotNull(HOST + MSG, idmHost);
 
-        final String LOGIN = "connector.login";
-        idmLogin = TestHelpers.getProperty(LOGIN, null);
-        assertNotNull(LOGIN + MSG, idmLogin);
+        final String USER = "connector.user";
+        idmUser = TestHelpers.getProperty(USER, null);
+        assertNotNull(USER + MSG, idmUser);
 
         final String PASSWD = "connector.password";
         idmPassword = new GuardedString(TestHelpers.getProperty(PASSWD, null).toCharArray());
@@ -149,7 +149,7 @@ public class MySQLUserConnectorTests {
         MySQLUserConfiguration config = new MySQLUserConfiguration();
         config.setDriver(idmDriver);
         config.setHost(idmHost);
-        config.setLogin(idmLogin);
+        config.setUser(idmUser);
         config.setPassword(idmPassword);
         config.setPort(idmPort);
         config.setUsermodel(idmModelUser);
@@ -190,14 +190,14 @@ public class MySQLUserConnectorTests {
 
         assertNotNull("tstDriver", config.getDriver());
         assertNotNull("tstHost", config.getHost());
-        assertNotNull("tstLogin", config.getLogin());
+        assertNotNull("tstLogin", config.getUser());
         assertNotNull("tstPassword", config.getPassword());
         assertNotNull("tstPort", config.getPort());
         assertNotNull("usermodel", config.getUsermodel());
 
         assertEquals("tstDriver", idmDriver, config.getDriver());
         assertEquals("tstHost", idmHost, config.getHost());
-        assertEquals("tstLogin", idmLogin, config.getLogin());
+        assertEquals("tstLogin", idmUser, config.getUser());
         assertEquals("tstPassword", idmPassword, config.getPassword());
         assertEquals("tstPort", idmPort, config.getPort());
         assertEquals("usermodel", idmModelUser, config.getUsermodel());
@@ -465,7 +465,7 @@ public class MySQLUserConnectorTests {
      */
     @Test(expected = IllegalArgumentException.class)
     public void testInvalidConfigurationLogin() throws Exception {
-        config.setLogin("");
+        config.setUser("");
         config.validate();
     }
     

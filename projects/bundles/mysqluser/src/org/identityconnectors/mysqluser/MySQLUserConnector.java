@@ -631,7 +631,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      */
     static MySQLUserConnection newConnection(MySQLUserConfiguration config) {
         java.sql.Connection connection;
-        final String login = config.getLogin();
+        final String login = config.getUser();
         final GuardedString password = config.getPassword();
         final String datasource = config.getDatasource();
         final String[] jndiProperties = config.getJndiProperties();
@@ -647,7 +647,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             connection = SQLUtil.getDriverMangerConnection(
                     config.getDriver(), 
                     config.getUrlString(), 
-                    config.getLogin(), 
+                    config.getUser(), 
                     config.getPassword());
         }
         return new MySQLUserConnection(connection);
