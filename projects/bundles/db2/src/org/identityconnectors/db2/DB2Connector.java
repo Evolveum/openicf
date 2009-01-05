@@ -124,7 +124,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 		SQLUtil.closeQuietly(adminConn);
 	}
 
-	public Configuration getConfiguration() {
+	public DB2Configuration getConfiguration() {
 		return cfg;
 	}
 
@@ -474,7 +474,12 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
      * Replaces value of grants attribute. 
      */
 	public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
-        return update(UpdateType.REPLACE,objclass,AttributeUtil.addUid(attrs,uid),options);
+	    if(cfg.isReplaceAllGrantsOnUpdate()){
+	        return update(UpdateType.REPLACE,objclass,AttributeUtil.addUid(attrs,uid),options);
+	    }
+	    else{
+	        return update(UpdateType.ADD,objclass,AttributeUtil.addUid(attrs,uid),options); 
+	    }
     }
     
     /**

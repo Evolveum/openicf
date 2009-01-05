@@ -77,7 +77,7 @@ import org.identityconnectors.framework.spi.*;
  * 		<li> adminPassword : Password for admin account. </li>
  * </ul>
  * 
- * Note that IBM ships two drivers for DB2. We have tested only this two drivers, no other driver was tested.
+ * Note that IBM ships two drivers for DB2. We have tested only these two drivers, no other driver was tested.
  * <ul>
  *      <li> IBM DB2 Driver for JDBC and SQLJ</li>
  *      This driver can be used as type4 and type2 driver. In this way driver classname is same, we just need specify different properties.
@@ -86,6 +86,7 @@ import org.identityconnectors.framework.spi.*;
  *      This driver is deprecated now, although it is still included in DB2 9x version. DB2 does not develop this driver any more and it seems
  *      it will be removed in next major version release. However this driver was recommended driver for Websphere.
  * </ul>
+ * IBM Net Driver was deprecated in version 8, is not included in version 9. This driver is not supported. 
  * 
  * @author kitko
  *
@@ -131,6 +132,16 @@ public class DB2Configuration extends AbstractConfiguration {
 	private ConnectionType connType;
 	/** JNDI environment entries for lookuping DS */
 	private String[] dsJNDIEnv;
+	/**
+	 * Replace all grants on update.
+	 * Current version of IDM does not support UpdateAttributeValuesOp operations, just update.
+	 * This switch is only for backward compatibility and can be removed when IDM will properly call
+	 * UpdateAttributeValuesOp operations.
+	 * <br/>
+	 * When set to true, we will remove all grants and set new passed grants on update. <br/>
+	 * When set to false we will do add.
+	 */
+	private boolean replaceAllGrantsOnUpdate = true;
 	
 	/**
 	 * @return admin account
@@ -281,8 +292,32 @@ public class DB2Configuration extends AbstractConfiguration {
 			System.arraycopy(dsJNDIEnv,0,this.dsJNDIEnv,0,dsJNDIEnv.length);
 		}
 	}
+	
 
 	/**
+     * Replace all grants on update switch
+     * Current version of IDM does not support UpdateAttributeValuesOp operations, just update.
+     * This switch is only for backward compatibility and can be removed when IDM will properly call
+     * UpdateAttributeValuesOp operations.
+     * <br/>
+     * When set to true, we will remove all grants and set new passed grants on update. <br/>
+     * When set to false we will do add.
+	 * @return replaceAllGrantsOnUpdate
+     * 
+     **/
+     @ConfigurationProperty(order=10,displayMessageKey="db2.replaceAllGrantsOnUpdate.display",helpMessageKey="db2.replaceAllGrantsOnUpdate.help")
+	public boolean isReplaceAllGrantsOnUpdate() {
+        return replaceAllGrantsOnUpdate;
+    }
+
+    /**
+     * @param replaceAllGrantsOnUpdate the replaceAllGrantsOnUpdate to set
+     */
+    public void setReplaceAllGrantsOnUpdate(boolean replaceAllGrantsOnUpdate) {
+        this.replaceAllGrantsOnUpdate = replaceAllGrantsOnUpdate;
+    }
+
+    /**
 	 * @return the connType
 	 */
 	ConnectionType getConnType() {

@@ -67,7 +67,7 @@ public class DB2ConfigurationTest {
 			conf = createTestType2Configuration(DB2Specifics.JCC_DRIVER);
 		}
 		else{
-			throw new IllegalArgumentException("Ilegall connType " + connType);
+			throw new IllegalArgumentException("Illegal connType " + connType);
 		}
 		if(conf == null){
 			throw new IllegalStateException("Configuration not created");

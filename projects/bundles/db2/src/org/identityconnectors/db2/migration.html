@@ -6,13 +6,13 @@
 		<h1>Differences between DB2ResourceAdapter and DB2Connector</h1>
 		<h2>Configuration properties</h2>
 		<ul> 
-			<li>Resource adapter supported type2 CLI legacy driver connection properties.
+			<li>Resource adapter supported type2 CLI legacy driver or Net type 3 driver connection properties.
 				<ol>
 					<li>adminAcct : Admin user account</li>
 					<li>password : Admin user password</li>
-					<li>dbName : Local alias name</li>
+					<li>dbName : Local alias name in case of app driver or remote/local database in case of net driver</li>
 					<li>jdbcDriver : Classname of type2 driver</li>
-					<li>jdbcSubprotocol : protocol used to communicate with db2, default to db2</li>
+					<li>jdbcSubprotocol : protocol used to communicate with db2, default to db2, or full instance address : db2:hotst:port </li>
 					<li>removeForeignGrants : Whether we replace all grants on update</li>
 				</ol>
 			</li>
@@ -55,11 +55,13 @@
 		</ul>
 		
 		<h3>Configuration properties differences summary</h3>
-		ResourceAdapter supported only type2 connection type, tested with DB2 CLI legacy driver. This driver is now deprecated by IBM, however still 
-		included in DB2 9x. This driver can be removed in future DB2 release.
-		
+		ResourceAdapter supported type2 app driver and type3 net driver. Net driver is removed from DB2 9x and app driver is deprecated.  App driver can be removed in future DB2 release.
 		Connector supports datasource,type4,type2 connection type. IBM DB2 Driver for JDBC and SQLJ and CLI legacy driver were tested. There are small changes 
 		in names of connector configuration properties.
+		Connector does not support <code>removeForeignGrants</code> property. Connector treats grants as multivalue attribute and always does replace for update operation.
+		
+		<h3>Attributes differences summary</h3>
+		Attributes for adapter and connector are same.
 		 
 	</body>
 	
