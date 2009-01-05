@@ -27,7 +27,11 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp, Sche
     /**
      * Setup logging for the {@link DatabaseTableConnector}.
      */
-    Log log = Log.getLog(SolarisConnector.class);
+    private Log log = Log.getLog(SolarisConnector.class);
+    
+    private SolarisConnection _connection;
+
+    private SolarisConfiguration _configuration; 
     
     /**
      * 
@@ -40,8 +44,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp, Sche
      * @see org.identityconnectors.framework.spi.PoolableConnector#checkAlive()
      */
     public void checkAlive() {
-        // TODO Auto-generated method stub
-
+        _connection.test();
     }
 
     /* (non-Javadoc)
@@ -64,8 +67,8 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp, Sche
      * @see org.identityconnectors.framework.spi.Connector#init(org.identityconnectors.framework.spi.Configuration)
      */
     public void init(Configuration cfg) {
-        // TODO Auto-generated method stub
-
+        _configuration = (SolarisConfiguration) cfg;
+        _connection = new SolarisConnection(_configuration);
     }
 
     /* (non-Javadoc)

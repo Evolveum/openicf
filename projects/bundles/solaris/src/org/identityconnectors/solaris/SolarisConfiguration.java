@@ -5,37 +5,46 @@ import org.identityconnectors.framework.spi.AbstractConfiguration;
 
 public class SolarisConfiguration extends AbstractConfiguration {
 
-    private String _userName;
-    private GuardedString _password;
-    private String _hostNameOrIpAddr;
+    private String userName;
+    private GuardedString password;
+    private String hostNameOrIpAddr;
+    private String port;
 
-    public String get_userName() {
-        return _userName;
+    public String getUserName() {
+        return userName;
     }
 
-    public void set_userName(String name) {
-        _userName = name;
+    public void setUserName(String name) {
+        userName = name;
     }
 
-    public GuardedString get_password() {
-        return _password;
+    public GuardedString getPassword() {
+        return password;
     }
 
-    public void set_password(GuardedString _password) {
-        this._password = _password;
+    public void setPassword(GuardedString _password) {
+        this.password = _password;
     }
 
-    public String get_hostNameOrIpAddr() {
-        return _hostNameOrIpAddr;
+    public String getHostNameOrIpAddr() {
+        return hostNameOrIpAddr;
     }
 
-    public void set_hostNameOrIpAddr(String nameOrIpAddr) {
-        _hostNameOrIpAddr = nameOrIpAddr;
+    public void setHostNameOrIpAddr(String nameOrIpAddr) {
+        hostNameOrIpAddr = nameOrIpAddr;
+    }
+
+    public String getPort() {
+        return port;
+    }
+
+    public void setPort(String _port) {
+        this.port = _port;
     }
 
     public SolarisConfiguration() {
     }
-    
+
     @Override
     public void validate() {
         // TODO Auto-generated method stub
