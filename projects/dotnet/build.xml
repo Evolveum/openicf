@@ -29,7 +29,7 @@
         <isset property="testname"/>
     </condition>
     <property name="dist.dotnet" value="./dist"/>
-    <import file="../framework/connector_build.xml"/>
+    <import file="${framework.dir}/connector_build.xml"/>
     <target name="msbuild">
        <exec executable="cmd" osfamily="Windows">
             <arg value="/c"/>
