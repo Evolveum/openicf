@@ -4,5 +4,8 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-HEAD"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-Internal-HEAD"/>
+	<classpathentry kind="lib" path="lib/jsch-0.1.41.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorVMS"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>
