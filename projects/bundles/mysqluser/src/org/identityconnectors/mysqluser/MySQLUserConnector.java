@@ -22,14 +22,12 @@
  */
 package org.identityconnectors.mysqluser;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
 
@@ -39,7 +37,6 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.DatabaseQueryBuilder;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
-import org.identityconnectors.dbcommon.JNDIUtil;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
@@ -48,7 +45,6 @@ import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
@@ -73,20 +69,20 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
 
 
 /**
- * The mysql {@link MySQLUserConnector} connector works with accounts in a mysql database.
+ * The MySQLUser connector works with accounts in a mysql database.
  * <p>
  * It supports create, update, search, and delete operations, authentication. 
  * </p>
  * <p>
  * This connector assumes that all account data is stored default in MySQL database. The create,update,delete actions
- * are implemented to call appropriate methods on the database.
+ * are implemented to call appropriate SQL statements on the database.
  * </p>
  * 
  * @version $Revision $
  * @since 1.0
  */
 @ConnectorClass(
-        displayNameKey = "mysqluser.connector.display",
+        displayNameKey = "MYSQL_CONNECTOR_DISPLAY",
         configurationClass = MySQLUserConfiguration.class) 
 public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp<FilterWhereBuilder>, DeleteOp, UpdateOp,
         SchemaOp, TestOp, AuthenticateOp {
@@ -103,8 +99,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
     private MySQLUserConfiguration config;
 
     /**
-     * Place holder for the {@link Connection} passed into the callback
-     * {@link ConnectionFactory#setConnection(Connection)}.
+     * Place holder for the Connection
      */
     private MySQLUserConnection conn;
     
@@ -126,7 +121,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      */
     public void init(Configuration cfg) {
         this.config = (MySQLUserConfiguration) cfg;
-        this.conn = MySQLUserConnector.newConnection(this.config);
+        this.conn = MySQLUserConnection.getConnection(this.config);
     }
 
     
@@ -622,34 +617,5 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      */
     private Uid newUid(String userName) {
         return new Uid(userName);
-    }
-
-    /**
-     * Test enabled create connection function
-     * @param config The configuration
-     * @return The connection
-     */
-    static MySQLUserConnection newConnection(MySQLUserConfiguration config) {
-        java.sql.Connection connection;
-        final String login = config.getUser();
-        final GuardedString password = config.getPassword();
-        final String datasource = config.getDatasource();
-        final String[] jndiProperties = config.getJndiProperties();
-        final ConnectorMessages connectorMessages = config.getConnectorMessages();
-        if (StringUtil.isNotBlank(datasource)) {
-            Hashtable<String, String> prop = JNDIUtil.arrayToHashtable(jndiProperties, connectorMessages);                
-            if(StringUtil.isNotBlank(login) && password != null) {
-                connection = SQLUtil.getDatasourceConnection(datasource, login, password, prop);
-            } else {
-                connection = SQLUtil.getDatasourceConnection(datasource, prop);
-            } 
-        } else {
-            connection = SQLUtil.getDriverMangerConnection(
-                    config.getDriver(), 
-                    config.getUrlString(), 
-                    config.getUser(), 
-                    config.getPassword());
-        }
-        return new MySQLUserConnection(connection);
     }    
 }

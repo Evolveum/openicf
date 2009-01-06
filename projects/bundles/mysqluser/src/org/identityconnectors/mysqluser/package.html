@@ -35,12 +35,13 @@
     The MySQLUSer connector uses the template user called the "modeluser".
     Model user and its rights are taken as a template for creating every new user on the MySQL resource.
 
- <h3>What kind of operations are supported by MySQLUser connector</h3> 
+ <h3>Operations are supported by MySQLUser connector</h3> 
     The MySQLUser connector supports create, update, delete operation for the IdM account. Also search by user name are supported.
     The search by SQL user rights is currently not supported.       
  
- <h3>What kind of features are supported by MySQLUser connector</h3> 
-    The MySQLUser does not support any of the special features except to set a new password. No enable/disable nor password expiration are supported.
+ <h3>Features supported by MySQLUser connector</h3> 
+    The MySQLUser does not support any of the special features except to set a new password. 
+    No enable/disable nor password expiration are supported.
     The connector does not support any scripting.
       
  <h3>Which version of framework?</h3> 
@@ -50,17 +51,18 @@
     The connector is backward compatible with adapter. 
     All features from the adapter have been implemented except the "JDBC URL Template" property.
     The JDBC URL Template configuration property is not required, because all versions of MySQL 
-    support the same URL schema.     
+    support the same URL schema. There is no need to change the "JDBC URL Template".
+    <BR>
+    The <B>Datasouce</B> property and <B>JndiProperties</B> has been added to support the server side defined resources.     
 
  <h3>What is the migration path from adapter to connector</h3>
     Please see the migration separate page.
 
  <h3>Native resource types the connector can manage</h3>
-    The connector was tested against the mysql Upcoming Releases
+    The connector was tested against the mysql Releases
     <ul>
-     <li>MySQL 6.0 — Alpha</li>
-     <li>MySQL 5.0 — Previous GA release</li>
-     <li>MySQL 4.1 — Previous GA release</li>
+     <li>MySQL 6.0 - Alpha</li>
+     <li>MySQL 5.0 - GA release</li>
     </ul>
 
  <h3>The MySQL resource description</h3>

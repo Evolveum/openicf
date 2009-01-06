@@ -44,128 +44,133 @@ import org.identityconnectors.framework.spi.ConfigurationProperty;
 public class MySQLUserConfiguration extends AbstractConfiguration {
    
     /**
-     * User, Id, Key field
+     * Default user column name 
      */
     public static final String MYSQL_USER = "User";
     
     /**
-     * table name
+     * Default user table name
      */
     public static final String MYSQL_USER_TABLE = "mysql.user";
     
     
     
     /**
-     * The datasource name is used to connect to database.
+     * The datasource name is used to connect to database in server environment.
      */
     private String datasource;
 
     /**
-     * Return the datasource 
-     * @return datasource value
+     * Return the datasource name
+     * @return datasource name value
      */
-    @ConfigurationProperty(order = 1, helpMessageKey = "mysqluser.datasource.help", displayMessageKey = "mysqluser.datasource.display")
+    @ConfigurationProperty(order = 1, helpMessageKey = "MYSQL_DATASOURCE_HELP", displayMessageKey = "MYSQL_USERMODEL_DISPLAY")
     public String getDatasource() {
         return datasource;
     }
 
     /**
-     * @param value
+     * Set the datasource name
+     * @param datasource name value
      */
-    public void setDatasource(String value) {
-        this.datasource = value;
+    public void setDatasource(String datasource) {
+        this.datasource = datasource;
     }
     
     
     /**
-     * The jndiFactory name is used to connect to database.
+     * The jndiFactory array of properties setting is used to connect to database in server environment.
      */
     private String[] jndiProperties;
 
     /**
-     * Return the jndiFactory 
-     * @return jndiFactory value
+     * Return the jndiFactoryProperties settings array
+     * @return The array of the jndiFactoryProperties values
      */
-    @ConfigurationProperty(order = 2, helpMessageKey = "mysqluser.jndiProperties.help", displayMessageKey = "mysqluser.jndiProperties.display")
+    @ConfigurationProperty(order = 2, helpMessageKey = "MYSQL_JNDI_PROPERTIES_HELP", displayMessageKey = "MYSQL_JNDI_PROPERTIES_DISPLAY")
     public String[] getJndiProperties() {
         return jndiProperties;
     }
 
     /**
-     * @param value
+     * Set the factory settings array
+     * @param jndiProperties an array of <CODE>String</CODE>'s JndiProperties values
      */
-    public void setJndiProperties(String[] value) {
-        this.jndiProperties = value;
+    public void setJndiProperties(String[] jndiProperties) {
+        this.jndiProperties = jndiProperties;
     }
 
     /**
-     * Host
+     * Host where the mysql database is running
      */
     public static final String HOST = "Host";
 
 
 
     /**
-     * driver
+     * the jdbc driver class name
      */
     private String driver = "com.mysql.jdbc.Driver"; // Driver
 
     /**
-     * The setter method 
-     * @return a driver value
+     * The getter for jdbc driver class name 
+     * @return the  <CODE>String</CODE> jdbc driver class name value
      */
-    @ConfigurationProperty(order = 4, helpMessageKey = "mysqluser.driver.help", displayMessageKey = "mysqluser.driver.display")
+    @ConfigurationProperty(order = 4, helpMessageKey = "MYSQL_DRIVER_HELP", displayMessageKey = "MYSQL_DRIVER_DISPLAY")
     public String getDriver() {
         return this.driver;
     }
         
     /**
-     * @param value
+     * Sets the jdbc driver class name
+     * @param driver the <CODE>String</CODE> jdbc class name value
      */
-    public void setDriver(final String value) {
-        this.driver = value;
+    public void setDriver(final String driver) {
+        this.driver = driver;
     }
 
     /**
-     * host
+     * MySQL database host name
      */
     private String host = ""; // Host
     
     /**
-     * @return the host
+     * Getter for MySQL database host name
+     * @return the  <CODE>String</CODE> host name value
      */
-    @ConfigurationProperty(order = 5, helpMessageKey = "mysqluser.host.help", displayMessageKey = "mysqluser.host.display")
+    @ConfigurationProperty(order = 5, helpMessageKey = "MYSQL_HOST_HELP", displayMessageKey = "MYSQL_HOST_DISPLAY")
     public String getHost() {
         return host;
     }    
 
     /**
-     * @param host
-     *            the host to set
+     * Setter for Mysql database host name
+     * @param host name a <CODE>String</CODE> value
      */
     public void setHost(String host) {
         this.host = host;
     }    
 
     /**
-     * user
+     * MySQL user (admin user) name able to manage users
      */
     private String user = ""; // Login
 
     /**
-     * The setter method 
-     * @return user value
+     * The user name getter method 
+     * @return The  <CODE>String</CODE> user name value
      */
-    @ConfigurationProperty(order = 6, helpMessageKey = "mysqluser.login.help", displayMessageKey = "mysqluser.login.display")
+    @ConfigurationProperty(order = 6, helpMessageKey = "MYSQL_USER_HELP", displayMessageKey = "MYSQL_USER_DISPLAY")
     public String getUser() {
         return this.user;
     }
 
     /**
-     * @param value
+     * Setter for user name 
+     * @param user name value
      */
-    public void setUser(final String value) {
-        this.user = value;
+    public void setUser(final String user) {
+        this.user = user;
     }
 
     /**
@@ -175,59 +180,62 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
 
 
     /**
-     * The setter method 
-     * @return passport value
+     * The getter method 
+     * @return The <CODE>GuardedString</CODE> passport object
      */
-    @ConfigurationProperty(order = 7, helpMessageKey = "mysqluser.pwd.help", displayMessageKey = "mysqluser.pwd.display", confidential = true)
+    @ConfigurationProperty(order = 7, helpMessageKey = "MYSQL_PWD_HELP", displayMessageKey = "MYSQL_PWD_DISPLAY", confidential = true)
     public GuardedString getPassword() {
         return this.password;
     }
 
     /**
-     * @param value
+     * Setter for password
+     * @param password a <CODE>GuardedString</CODE> passport object
      */
-    public void setPassword(final GuardedString value) {
-        this.password = value;
+    public void setPassword(final GuardedString password) {
+        this.password = password;
     }
     
     /**
-     * port
+     * port on witch the MySQL database is listenning
      */
     private String port = "3306"; // Port
 
     /**
-     * @return the port
+     * The getter  
+     * @return the database port number value
      */
-    @ConfigurationProperty(order = 8, helpMessageKey = "mysqluser.port.help", displayMessageKey = "mysqluser.port.display")
+    @ConfigurationProperty(order = 8, helpMessageKey = "MYSQL_PORT_HELP", displayMessageKey = "MYSQL_PORT_DISPLAY")
     public String getPort() {
         return port;
     }
 
     /**
-     * @param port
-     *            the port to set
+     * The port setter 
+     * @param port value 
      */
     public void setPort(String port) {
         this.port = port;
     }    
     
     /**
-     * user model
+     * user model, from with the new user are duplicated
      */
     private String usermodel = "idm"; // Default User
 
 
     /**
-     * @return the usermodel
+     * Getter the usermodel 
+     * @return the usermodel name
      */
-    @ConfigurationProperty(order = 9, required = true, helpMessageKey = "mysqluser.model.help", displayMessageKey = "mysqluser.model.display")
+    @ConfigurationProperty(order = 9, required = true, helpMessageKey = "MYSQL_USERMODEL_HELP", displayMessageKey = "MYSQL_USERMODEL_DISPLAY")
     public String getUsermodel() {
         return usermodel;
     }
 
     /**
-     * @param usermodel
-     *            the usermodel to set
+     * Setter for usermodel
+     * @param usermodel name valueS
      */
     public void setUsermodel(String usermodel) {
         this.usermodel = usermodel;

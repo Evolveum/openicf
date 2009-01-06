@@ -338,7 +338,7 @@ public class MySQLUserConnectorTests {
     }    
     
     /**
-     * Test method for {@link MySQLUserConnector#newConnection()}.
+     * Test method for {@link MySQLUserConnection#newConnection()}.
      * @throws Exception
      */
     @Test()
@@ -620,7 +620,7 @@ public class MySQLUserConnectorTests {
         final String SQL_CREATE_TEMPLATE = "CREATE USER ? IDENTIFIED BY ?";
         log.info("quitelly Create User {0}", userName);
         try {
-            conn = MySQLUserConnector.newConnection(newConfiguration());
+            conn = MySQLUserConnection.getConnection(newConfiguration());
             ps = conn.prepareStatement(SQL_CREATE_TEMPLATE, values);
             ps.execute();
             conn.commit();
@@ -647,7 +647,7 @@ public class MySQLUserConnectorTests {
         final String SQL_DELETE_TEMPLATE = "DROP USER ?";
         log.info("quitelly Delete User {0}", userName);
         try {
-            conn = MySQLUserConnector.newConnection(newConfiguration());
+            conn = MySQLUserConnection.getConnection(newConfiguration());
             ps = conn.prepareStatement(SQL_DELETE_TEMPLATE, values);
             ps.execute();
             conn.commit();
@@ -708,7 +708,7 @@ public class MySQLUserConnectorTests {
         final String SQL_SELECT = "SELECT user FROM mysql.user WHERE user = ?";               
         log.info("test User {0} found {1} ", userName, found);   
         try {
-            conn  =  MySQLUserConnector.newConnection(newConfiguration());
+            conn  =  MySQLUserConnection.getConnection(newConfiguration());
             ps = conn.prepareStatement(SQL_SELECT, values);
             result = ps.executeQuery();
             if(result.next()) {
