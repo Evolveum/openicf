@@ -1,3 +1,25 @@
+/*
+ * ====================
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ * 
+ * Copyright 2007-2008 Sun Microsystems, Inc. All rights reserved.     
+ * 
+ * The contents of this file are subject to the terms of the Common Development 
+ * and Distribution License("CDDL") (the "License").  You may not use this file 
+ * except in compliance with the License.
+ * 
+ * You can obtain a copy of the License at 
+ * http://IdentityConnectors.dev.java.net/legal/license.txt
+ * See the License for the specific language governing permissions and limitations 
+ * under the License. 
+ * 
+ * When distributing the Covered Code, include this CDDL Header Notice in each file
+ * and include the License file at identityconnectors/legal/license.txt.
+ * If applicable, add the following below this CDDL Header, with the fields 
+ * enclosed by brackets [] replaced by your own identifying information: 
+ * "Portions Copyrighted [year] [name of copyright owner]"
+ * ====================
+ */
 package org.identityconnectors.solaris;
 
 
@@ -11,10 +33,10 @@ import org.junit.Test;
 
 public class SolarisConnectorTest {
 
-    private static String HOST_NAME = null;
-    private static String SYSTEM_PASSWORD = null;
-    private static String SYSTEM_USER = null;
-    private static String HOST_PORT = null;
+    private static String HOST_NAME;
+    private static String SYSTEM_PASSWORD;
+    private static String SYSTEM_USER;
+    private static String HOST_PORT;
     
     @Before
     public void setUp() throws Exception {
@@ -34,20 +56,71 @@ public class SolarisConnectorTest {
     public void tearDown() throws Exception {
     }
     
+    /* ************ TEST CONNECTOR ************ */
+    
     @Test
-    public void testConnection() {
+    public void testGoodConnection() {
         SolarisConfiguration config = createConfig();
-        SolarisConnector info = createConnector(config);
+        SolarisConnector connector = createConnector(config);
         try {
-            info.checkAlive();
+            connector.checkAlive();
         } finally {
-            info.dispose();
+            connector.dispose();
         }
     }
     
+    /* ************* TEST CONFIGURATION *********** */
+    
+    @Test
+    public void testGoodConfiguration() {
+        try {
+            SolarisConfiguration config = createConfig();
+            // no IllegalArgumentException should be thrown
+            config.validate();
+        } catch (IllegalArgumentException ex) {
+            Assert
+                    .fail("no IllegalArgumentException should be thrown for valid configuration.");
+        }
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testMissingUsername() {
+        SolarisConfiguration config = createConfig();
+        config.setUserName(null);
+        config.validate();
+        Assert.fail("Configuration allowed a null admin username.");
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testPassword() {
+        SolarisConfiguration config = createConfig();
+        config.setPassword(null);
+        config.validate();
+        Assert.fail("Configuration allowed a null password.");
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testMissingHostname() {
+        SolarisConfiguration config = createConfig();
+        config.setHostNameOrIpAddr(null);
+        config.validate();
+        Assert.fail("Configuration allowed a null hostname.");
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void testMissingPort() {
+        SolarisConfiguration config = createConfig();
+        config.setPort(null);
+        config.validate();
+        Assert.fail("Configuration allowed a null port.");
+    }
+    
+    /* ************* AUXILIARY METHODS *********** */
     private SolarisConnector createConnector(SolarisConfiguration config) {
         SolarisConnector conn = new SolarisConnector();
         conn.init(config);
+        conn.test();
+        
         return conn;
     }
 
