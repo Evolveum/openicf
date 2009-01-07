@@ -22,11 +22,17 @@
  */
 package org.identityconnectors.solaris;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Schema;
+import org.identityconnectors.framework.common.objects.SchemaBuilder;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.ConnectorClass;
@@ -34,6 +40,8 @@ import org.identityconnectors.framework.spi.PoolableConnector;
 import org.identityconnectors.framework.spi.operations.AuthenticateOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
+
+import com.jcraft.jsch.JSchException;
 
 /**
  * @author david
@@ -51,6 +59,8 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     private SolarisConnection _connection;
 
     private SolarisConfiguration _configuration;
+
+    private Schema _schema;
 
     /*
      * (non-Javadoc)
@@ -92,30 +102,46 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     public void dispose() {
         _configuration = null;
         if (_connection != null) {
-            _connection.dispose();
+            _connection.endConnection();
             _connection = null;
         }
     }
 
     /* *********************** OPERATIONS ************************** */
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.identityconnectors.framework.spi.operations.AuthenticateOp#authenticate
-     * (org.identityconnectors.framework.common.objects.ObjectClass,
-     * java.lang.String, org.identityconnectors.common.security.GuardedString,
-     * org.identityconnectors.framework.common.objects.OperationOptions)
-     */
+    /** attempts to authenticate the given user / password on configured Solaris resource */
     public Uid authenticate(ObjectClass objectClass, String username,
             GuardedString password, OperationOptions options) {
-        // TODO Auto-generated method stub
-        return null;
+        SolarisConfiguration userConfig = new SolarisConfiguration(getConfiguration());
+        userConfig.setUserName(username);
+        userConfig.setPassword(password);
+        try {
+            SolarisConnection.openSession(userConfig, true);
+        } catch (JSchException e) {
+            log.error(e, "user: {0} authentication failed ", username);
+            throw ConnectorException.wrap(e);
+        }
+        return new Uid(username);
     }
 
     public Schema schema() {
-        // TODO Auto-generated method stub
-        return null;
+        if (_schema != null) {
+            return _schema;
+        }
+        
+        final SchemaBuilder schemaBuilder = new SchemaBuilder(getClass());
+        
+        // GROUPS
+        Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
+        // to adjust the schema: 
+        //attributes.add(AttributeInfoBuilder.build(STRING_CONSTANT));
+        schemaBuilder.defineObjectClass(ObjectClass.GROUP_NAME, attributes);
+        
+        // USERS
+        attributes = new HashSet<AttributeInfo>();
+        schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
+        
+        _schema = schemaBuilder.build();
+        return _schema;
     }
 
     public void test() {

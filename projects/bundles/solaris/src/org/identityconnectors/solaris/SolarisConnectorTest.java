@@ -26,6 +26,8 @@ package org.identityconnectors.solaris;
 import junit.framework.Assert;
 
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.test.TestHelpers;
 import org.junit.After;
 import org.junit.Before;
@@ -33,23 +35,38 @@ import org.junit.Test;
 
 public class SolarisConnectorTest {
 
-    private static String HOST_NAME;
-    private static String SYSTEM_PASSWORD;
-    private static String SYSTEM_USER;
-    private static String HOST_PORT;
+    private static SolarisConfiguration config;
     
+    /**
+     * set valid credentials based on build.groovy property file
+     * @throws Exception
+     */
     @Before
     public void setUp() throws Exception {
-        HOST_NAME = TestHelpers.getProperty("host", null);
-        SYSTEM_PASSWORD = TestHelpers.getProperty("pass", null);
-        SYSTEM_USER = TestHelpers.getProperty("user", null);
-        HOST_PORT = TestHelpers.getProperty("port", null);
+        // names of properties in the property file (build.groovy)
+        final String PROP_HOST = "host";
+        final String PROP_NAME = "pass";
+        final String PROP_USER = "user";
+        final String PROP_PORT = "port";
+        
+        // set the credentials
+        final String HOST_NAME = TestHelpers.getProperty(PROP_HOST, null);
+        final String SYSTEM_PASSWORD = TestHelpers.getProperty(PROP_NAME, null);
+        final String SYSTEM_USER = TestHelpers.getProperty(PROP_USER, null);
+        final String HOST_PORT = TestHelpers.getProperty(PROP_PORT, null);
         
         String msg = "%s must be provided in build.groovy";
         Assert.assertNotNull(String.format(msg, "HOST_NAME"), HOST_NAME);
         Assert.assertNotNull(String.format(msg, "SYSTEM_PASSWORD"), SYSTEM_PASSWORD);
         Assert.assertNotNull(String.format(msg, "SYSTEM_USER"), SYSTEM_USER);
         Assert.assertNotNull(String.format(msg, "HOST_PORT"), HOST_PORT);
+        
+        // save configuration
+        config = new SolarisConfiguration();
+        config.setHostNameOrIpAddr(HOST_NAME);
+        config.setPort(HOST_PORT);
+        config.setUserName(SYSTEM_USER);
+        config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
     }
 
     @After
@@ -58,9 +75,10 @@ public class SolarisConnectorTest {
     
     /* ************ TEST CONNECTOR ************ */
     
+    /** test connection to the configuration given by default credentials (build.groovy) */
     @Test
     public void testGoodConnection() {
-        SolarisConfiguration config = createConfig();
+        SolarisConfiguration config = getConfig();
         SolarisConnector connector = createConnector(config);
         try {
             connector.checkAlive();
@@ -69,12 +87,36 @@ public class SolarisConnectorTest {
         }
     }
     
+    /** elementary schema test */
+    @Test
+    public void basicSchemaTest() {
+        SolarisConnector connector = createConnector(getConfig());
+        Schema schema = connector.schema();
+        Assert.assertNotNull(schema);
+    }
+    
+    @Test
+    public void testValidAuthenticate() {
+        SolarisConnector connector = createConnector(getConfig());
+        GuardedString password = new GuardedString(SolarisHelper.getPassword(getConfig()).toCharArray());
+        String username = getConfig().getUserName();
+        connector.authenticate(null, username, password, null);
+    }
+    
+    @Test(expected = ConnectorException.class)
+    public void testInvalidAuthenticate() {
+        SolarisConnector connector = createConnector(getConfig());
+        GuardedString password = new GuardedString("WRONG_PASSWORD_FOOBAR2135465".toCharArray());
+        String username = getConfig().getUserName();
+        connector.authenticate(null, username, password, null);
+    }
+    
     /* ************* TEST CONFIGURATION *********** */
     
     @Test
     public void testGoodConfiguration() {
         try {
-            SolarisConfiguration config = createConfig();
+            SolarisConfiguration config = getConfig();
             // no IllegalArgumentException should be thrown
             config.validate();
         } catch (IllegalArgumentException ex) {
@@ -85,7 +127,7 @@ public class SolarisConnectorTest {
     
     @Test(expected = IllegalArgumentException.class)
     public void testMissingUsername() {
-        SolarisConfiguration config = createConfig();
+        SolarisConfiguration config = getConfig();
         config.setUserName(null);
         config.validate();
         Assert.fail("Configuration allowed a null admin username.");
@@ -93,7 +135,7 @@ public class SolarisConnectorTest {
     
     @Test(expected = IllegalArgumentException.class)
     public void testPassword() {
-        SolarisConfiguration config = createConfig();
+        SolarisConfiguration config = getConfig();
         config.setPassword(null);
         config.validate();
         Assert.fail("Configuration allowed a null password.");
@@ -101,7 +143,7 @@ public class SolarisConnectorTest {
     
     @Test(expected = IllegalArgumentException.class)
     public void testMissingHostname() {
-        SolarisConfiguration config = createConfig();
+        SolarisConfiguration config = getConfig();
         config.setHostNameOrIpAddr(null);
         config.validate();
         Assert.fail("Configuration allowed a null hostname.");
@@ -109,7 +151,7 @@ public class SolarisConnectorTest {
     
     @Test(expected = IllegalArgumentException.class)
     public void testMissingPort() {
-        SolarisConfiguration config = createConfig();
+        SolarisConfiguration config = getConfig();
         config.setPort(null);
         config.validate();
         Assert.fail("Configuration allowed a null port.");
@@ -119,18 +161,15 @@ public class SolarisConnectorTest {
     private SolarisConnector createConnector(SolarisConfiguration config) {
         SolarisConnector conn = new SolarisConnector();
         conn.init(config);
-        conn.test();
         
         return conn;
     }
 
-    private SolarisConfiguration createConfig() {
-        SolarisConfiguration config = new SolarisConfiguration();
-        config.setHostNameOrIpAddr(HOST_NAME);
-        config.setPort(HOST_PORT);
-        config.setUserName(SYSTEM_USER);
-        config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
-        
+    /**
+     * create configuration based on Unit test account
+     * @return
+     */
+    private SolarisConfiguration getConfig() {
         return config;
     }
 }

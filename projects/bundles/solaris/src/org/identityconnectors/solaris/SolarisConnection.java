@@ -27,9 +27,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.common.security.SecurityUtil;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.vms.GuardedStringAccessor;
+
+import sun.misc.Cleaner;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.JSch;
@@ -37,11 +40,12 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
 /**
- * 
+ * maps functionality of SSHConnection.java
  * @author David Adam
  *
  */
 public class SolarisConnection {
+
     /**
      * properties of SSH channel
      */
@@ -59,9 +63,6 @@ public class SolarisConnection {
      * the configuration object from which this connection is created.
      */
     private SolarisConfiguration config;
-    
-    private InputStream _in;
-    private OutputStream _out;
 
     /* *************** CONSTRUCTOR ****************** */
     public SolarisConnection(SolarisConfiguration config) {
@@ -84,8 +85,8 @@ public class SolarisConnection {
             try {
                 _session = openSession();
                 _channel = _session.openChannel("shell");
-                _in = _channel.getInputStream();
-                _out = _channel.getOutputStream();
+                //_in = _channel.getInputStream();
+                //_out = _channel.getOutputStream();
                 _channel.connect();
                 setConnected(true);
             } catch (Throwable e) {
@@ -100,13 +101,13 @@ public class SolarisConnection {
      */
     public void test() {
         startConnection();
-        dispose();
+        endConnection();
     }
 
     /**
      * Disconnect from SSH server. Just closes the streams and resets them to null.
      */
-    public void dispose() {
+    public void endConnection() {
         if (_channel != null) {
             _channel.disconnect();
         }
@@ -114,35 +115,48 @@ public class SolarisConnection {
             _session.disconnect();
         }
         
-        _in = null;
-        _out = null;
         _session = null;
         _channel = null;
     }
 
-    /* ************ AUXILIARY METHODS *************** */
-    
-    private Session openSession() throws JSchException, ConnectorException,
-            IOException {
-
+    /**
+     * 
+     * @param config1
+     * @return
+     * @throws JSchException
+     */
+    public static Session openSession(SolarisConfiguration config1,
+            boolean disconnect) throws JSchException {
         // TODO this line makes the connection ignore the fingerprint
         // in production version fingerprint should be considered
         JSch.setConfig("StrictHostKeyChecking", "no");
 
         JSch jsch = new JSch();
-        Session session = jsch.getSession(config.getUserName(), config
-                .getHostNameOrIpAddr(), Integer.parseInt(config.getPort()));
-        session.setPassword(getPassword(config));
+
+        // get connection data
+        String userName = config1.getUserName();
+        String host = config1.getHostNameOrIpAddr();
+        int port = Integer.parseInt(config1.getPort());
+
+        // make connection
+        Session session = jsch.getSession(userName, host, port);
+        session.setPassword(getPassword(config1));
         session.connect();
+        if (disconnect) {
+            session.disconnect();
+        }
         return session;
     }
+    
+    /* ************ AUXILIARY METHODS *************** */
+    
+    
+    private Session openSession() throws JSchException {
+        return openSession(this.config, false);
+    }
 
-    private String getPassword(SolarisConfiguration config2) {
-        GuardedString pass = config2.getPassword();
-        GuardedStringAccessor gsa = new GuardedStringAccessor();
-        pass.access(gsa);
-        char[] cleanPasswd = gsa.getArray();
-        return new String(cleanPasswd);
+    private static String getPassword(SolarisConfiguration config2) {
+        return SolarisHelper.getPassword(config2);
     }
 
     /* ***************** GET/SET *********************** */

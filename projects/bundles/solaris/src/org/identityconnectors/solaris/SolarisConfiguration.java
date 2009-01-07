@@ -25,6 +25,7 @@ package org.identityconnectors.solaris;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
+import org.identityconnectors.framework.spi.Configuration;
 
 public class SolarisConfiguration extends AbstractConfiguration {
 
@@ -38,6 +39,20 @@ public class SolarisConfiguration extends AbstractConfiguration {
 
     /* ********** CONSTRUCTOR ************ */
     public SolarisConfiguration() {
+    }
+    /** 
+     * cloning constructor, deep copy 
+     */
+    public SolarisConfiguration(Configuration config) {
+        if (config instanceof SolarisConfiguration) {
+            final SolarisConfiguration cfg = (SolarisConfiguration) config;
+            this.userName = cfg.getUserName();
+            this.password = cfg.getPassword();
+            this.hostNameOrIpAddr = cfg.getHostNameOrIpAddr();
+            this.port = cfg.getPort();
+        } else {
+            throw new RuntimeException("cannot clone other than SolarisConfiguration");
+        }
     }
     
     /* ********** GET / SET ************ */
