@@ -42,7 +42,7 @@ import org.identityconnectors.framework.spi.operations.*;
  * DB2Connector is main class of connector contract when DB2 database is target resource. DB2 uses external authentication provider and internal
  * authorization service. DB2 stores authorization for users of DB2 objects : database,schema,table,index,procedure,package,server,tablespace.
  * It supports just one ObjectClass : ObjectClass.ACCOUNT.
- * DB2 connector is case insensitive, DB2 stores uppercase value in system tables.
+ * DB2 connector is case insensitive, DB2 stores uppercase values in system tables.
  * <br/>
  * 
  * DB2 connector uses following attributes :
@@ -73,7 +73,7 @@ import org.identityconnectors.framework.spi.operations.*;
  * 
  * DB2 connector implements AttributeNormalizer to uppercase passed user name, uid,grants, because DB2 stores users and grants in uppercase. 
  * 
- * {@link DB2Configuration}
+ * Look at {@link DB2Configuration} for more information about configuration properties.
  * 
  * 
  * @author kitko
