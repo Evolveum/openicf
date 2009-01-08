@@ -36,6 +36,7 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.script.ScriptExecutor;
 import org.identityconnectors.common.script.ScriptExecutorFactory;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.api.operations.SearchApiOp;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
@@ -50,7 +51,9 @@ import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
+import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Schema;
@@ -72,6 +75,7 @@ import org.openspml.v2.msg.pass.SetPasswordRequest;
 import org.openspml.v2.msg.pass.SetPasswordResponse;
 import org.openspml.v2.msg.spml.AddRequest;
 import org.openspml.v2.msg.spml.AddResponse;
+import org.openspml.v2.msg.spml.Capability;
 import org.openspml.v2.msg.spml.DeleteRequest;
 import org.openspml.v2.msg.spml.DeleteResponse;
 import org.openspml.v2.msg.spml.ErrorCode;
@@ -744,8 +748,9 @@ public class SpmlConnector implements PoolableConnector, CreateOp,
                                     if (spmlClassNames[i].equals(ocd.getName())) {
                                         Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
                                         AttributeDefinitionReferences refs = ocd.getMemberAttributes();
+                                        Capability[] capabilities = target.getCapabilities().getCapabilities();
                                         fillInSchemaForObjectClass(schemaBuilder, objectClassNames[i],
-                                                refs, attributes);
+                                                refs, attributes, capabilities);
                                     }
                                 }
                             }
@@ -771,15 +776,30 @@ public class SpmlConnector implements PoolableConnector, CreateOp,
 
     private void fillInSchemaForObjectClass(final SchemaBuilder schemaBuilder,
             String objectClass, AttributeDefinitionReferences refs, 
-            Set<AttributeInfo> attributes) throws Exception {
+            Set<AttributeInfo> attributes, Capability[] capabilities) throws Exception {
         for (AttributeDefinitionReference ref : refs.getAttributeDefinitionReferences()) {
             boolean required = false;
             if (ref.getRequired()!=null)
                 required = ref.getRequired();
             attributes.add(new AttributeInfoBuilder(ref.getName()).setRequired(required).build());
         }
+        boolean searchFound = false;
+        for (Capability capability : capabilities) {
+            if (capability.getNamespaceURI().toASCIIString().equals("urn:oasis:names:tc:SPML:2:0:password"))
+                attributes.add(OperationalAttributeInfos.PASSWORD);
+            if (capability.getNamespaceURI().toASCIIString().equals("urn:oasis:names:tc:SPML:2:0:suspend"))
+                attributes.add(OperationalAttributeInfos.ENABLE);
+            if (capability.getNamespaceURI().toASCIIString().equals("urn:oasis:names:tc:SPML:2:0:search"))
+                searchFound = true;
+        }
         updateSchema(objectClass, attributes);
-        schemaBuilder.defineObjectClass(objectClass, attributes);
+        ObjectClassInfoBuilder bld = new ObjectClassInfoBuilder();
+        bld.setType(objectClass);
+        bld.addAllAttributeInfo(attributes);
+        ObjectClassInfo objectClassInfo = bld.build();
+        schemaBuilder.defineObjectClass(objectClassInfo);
+        if (!searchFound)
+            schemaBuilder.removeSupportedObjectClass(SearchOp.class, objectClassInfo);
     }
 
     private String mapSetName(String name, String objectClass) throws Exception {
