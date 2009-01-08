@@ -132,9 +132,6 @@ public class MySQLUserConnectorTests {
         assertNotNull(TEST_PASSWD + MSG, passwd);
         testPassword = new GuardedString(passwd.toCharArray());
         
-        //Delete the model user
-        quitellyDeleteUser(idmModelUser); 
-        
         //Create model test user
         createTestModelUser(idmModelUser);
     }
