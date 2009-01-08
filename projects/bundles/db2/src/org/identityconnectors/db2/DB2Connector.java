@@ -43,11 +43,35 @@ import org.identityconnectors.framework.spi.operations.*;
  * authorization service. DB2 stores authorization for users of DB2 objects : database,schema,table,index,procedure,package,server,tablespace.
  * It supports just one ObjectClass : ObjectClass.ACCOUNT.
  * DB2 connector is case insensitive, DB2 stores uppercase value in system tables.
+ * <br/>
+ * 
  * DB2 connector uses following attributes :
  * <ol>
  * 	<li>Name : is name of user</li>
  * 	<li>grants : is multivalue attribute that means list of grants user has</li>
  * </ol>
+ * 
+ * DB2 connector supports following operations : 
+ * <ol>
+ *      <li>AuthenticateOp : We try to create JDBC connection to authenticate</li>
+ *      <li>CreateOp : We store passed user's grants in DB2 system tables, actually we perform 'execute' on passed grants.
+ *          At least user is granted 'CONNECT ON DATABASE'.  
+ *      </li>
+ *      <li>SearchOp : Natively we support search by user name. Search by grants is also supported, but in this case we
+ *          return all users with grants and framework does the filtering.
+ *      </li>
+ *      <li>DeleteOp : We delete all users's grants</li>
+ *      <li>UpdateAttributeValuesOp : We update user grants
+ *          <ul>
+ *              <li>For update we replace exesting grants with passed ones</li>
+ *              <li>For addAttributeValues we add passed grants to existing grants</li>
+ *              <li>For removeAttributeValues we revoke passed grants</li>
+ *          </ul>
+ *      </li>
+ *      <li>TestOp : We test whether connection to DB2 is still alive</li>
+ * </ol>
+ * 
+ * DB2 connector implements AttributeNormalizer to uppercase passed user name, uid,grants, because DB2 stores users and grants in uppercase. 
  * 
  * {@link DB2Configuration}
  * 
@@ -63,8 +87,6 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	private final static Log log = Log.getLog(DB2Connector.class);
 	private Connection adminConn;
 	private DB2Configuration cfg;
-    // DB2 limitation on account id size
-    private static final int maxNameSize = 30;
     static final String USER_AUTH_GRANTS = "grants";
 
     
@@ -363,14 +385,14 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
      *  keywords.  Throws and exception if the name or password are invalid.
      */
     private void checkDB2Validity(String accountID)  {
-        if (accountID.length() > maxNameSize) {
-        	throw new IllegalArgumentException("Name to short");
+        if (accountID.length() > DB2Specifics.MAX_NAME_SIZE) {
+        	throw new IllegalArgumentException(MessageFormat.format("User name is longer than {0} characters.", DB2Specifics.MAX_NAME_SIZE));
         }
         if (DB2Specifics.containsIllegalDB2Chars(accountID.toCharArray())) {
-        	throw new IllegalArgumentException("Name contains illegal characters");
+        	throw new IllegalArgumentException("User name contains illegal characters");
         }
         if (!DB2Specifics.isValidName(accountID.toUpperCase())) {
-            throw new IllegalArgumentException("Name is reserved keyword or its substring");
+            throw new IllegalArgumentException("User name is reserved keyword or its substring");
         }
     }
     
@@ -537,6 +559,14 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 		else if(attribute.is(Uid.NAME)){
 			String value = (String) attribute.getValue().get(0);
 			return new Uid(value.trim().toUpperCase());
+		}
+		else if(attribute.is(USER_AUTH_GRANTS)){
+		    List<Object> grants = attribute.getValue();
+		    List<String> upGrants = new ArrayList<String>(grants.size());
+		    for(Object grant : grants){
+		        upGrants.add(grant.toString().toUpperCase());
+		    }
+		    return AttributeBuilder.build(USER_AUTH_GRANTS, upGrants);
 		}
 		return attribute;
 	}

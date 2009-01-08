@@ -47,6 +47,13 @@ import org.junit.*;
 public class DB2ConfigurationTest {
 	private static ThreadLocal<DB2Configuration> cfg = new ThreadLocal<DB2Configuration>();
 	private final static Log log = Log.getLog(DB2ConfigurationTest.class);
+	private final static String WRONG_ADMIN = "wrongAdmin";
+	private final static GuardedString WRONG_PASSWORD = new GuardedString(new char[]{'w','r','o','n','g','P','a','s','s','w','o','r','d'});
+	private final static String WRONG_DATABASE = "wrongDatabase";
+	private final static String WRONG_HOST = "wrongHost";
+	private final static String WRONG_PORT = "666";
+	private final static String WRONG_ALIAS = "wrgAls";
+    private final static String WRONG_DATASOURCE = "wrongDatasource";
 	
 	/**
 	 * Test validation
@@ -99,10 +106,64 @@ public class DB2ConfigurationTest {
 	 */
 	@Test
 	public void testType4Configuration(){
-		DB2Configuration conf = createTestType4Configuration();
-		conf.validate();
-		Connection conn = conf.createAdminConnection();
+		DB2Configuration okConf = createTestType4Configuration();
+		okConf.validate();
+		Connection conn = okConf.createAdminConnection();
 		assertNotNull(conn);
+		DB2Configuration failConf = null;
+		
+		//test fail with wrong admin account
+		failConf = okConf.clone();
+		failConf.setAdminAccount(null);
+		assertValidateFail(failConf,"Validate should fail with null admin account");
+		failConf.setAdminAccount(WRONG_ADMIN);
+		assertCreateAdminConnFail(failConf, "CreateAdminConnection should fail on wrong admin account");
+		
+		//test fail with wrong admin password
+		failConf = okConf.clone();
+		failConf.setAdminPassword(null);
+        assertValidateFail(failConf,"Validate should fail with null admin password");
+        failConf.setAdminPassword(WRONG_PASSWORD);
+		assertCreateAdminConnFail(failConf, "CreateAdminConnection should fail on wrong admin password");
+		
+        //test fail with wrong database
+		failConf = okConf.clone();
+		failConf.setDatabaseName(null);
+        assertValidateFail(failConf,"Validate should fail with null database");
+        failConf.setDatabaseName(WRONG_DATABASE);
+        assertCreateAdminConnFail(failConf, "CreateAdminConnection should fail on wrong database");
+        
+        //test fail with wrong host
+        failConf = okConf.clone();
+        failConf.setHost(null);
+        assertValidateFail(failConf, "Validate should fail with null host");
+        failConf.setHost(WRONG_HOST);
+        assertCreateAdminConnFail(failConf, "CreateAdminConnection should fail on wrong host");
+        
+        //test fail with wrong port
+        failConf = okConf.clone();
+        failConf.setPort(null);
+        assertValidateFail(failConf, "Validate should fail with null port");
+        failConf.setPort(WRONG_PORT);
+        assertCreateAdminConnFail(failConf, "CreateAdminConnection should fail on wrong port");
+		
+	}
+	
+	private void assertValidateFail(DB2Configuration conf,String failMsg){
+        try{
+            conf.validate();
+            fail(failMsg);
+        }
+        catch(RuntimeException e){}
+	}
+	
+	private void assertCreateAdminConnFail(DB2Configuration conf,String failMsg){
+        conf.validate();
+        try{
+            conf.createAdminConnection();
+            fail(failMsg);
+        }
+        catch(RuntimeException e){}
 	}
 	
 	
@@ -158,10 +219,33 @@ public class DB2ConfigurationTest {
 				handleType2Exception(e);
 			}
 		}
+		DB2Configuration failConf = conf.clone();
+		
+		//Test wrong user name
+        failConf = conf.clone();
+        failConf.setAdminAccount(null);
+        assertValidateFail(failConf,"Validate should fail with null admin account");
+        failConf.setAdminAccount(WRONG_ADMIN);
+        assertCreateAdminConnFail(failConf, "CreateAdminConnection should fail on wrong admin account");
+        
+        //test fail with wrong admin password
+        failConf = conf.clone();
+        failConf.setAdminPassword(null);
+        assertValidateFail(failConf,"Validate should fail with null admin password");
+        failConf.setAdminPassword(WRONG_PASSWORD);
+        assertCreateAdminConnFail(failConf, "CreateAdminConnection should fail on wrong admin password");
+        
+        //Test wrong alias name
+        failConf = conf.clone();
+        failConf.setDatabaseName(null);
+        assertValidateFail(failConf,"Validate should fail with null aliasname");
+        failConf.setDatabaseName(WRONG_ALIAS);
+        assertCreateAdminConnFail(failConf, "CreateAdminConnection should fail on wrong alias name");
+		
 	}
 	
     /**
-     * Validates and create connection using type2 driver
+     * Validates and create connection using type2 legacy driver
      */
     @Test
     public void testType2LegacyConfiguration(){
@@ -191,6 +275,29 @@ public class DB2ConfigurationTest {
                 handleType2Exception(e);
             }
         }
+        DB2Configuration failConf = conf.clone();
+        
+        //Test wrong user name
+        failConf = conf.clone();
+        failConf.setAdminAccount(null);
+        assertValidateFail(failConf,"Validate should fail with null admin account");
+        failConf.setAdminAccount(WRONG_ADMIN);
+        assertCreateAdminConnFail(failConf, "CreateAdminConnection should fail on wrong admin account");
+        
+        //test fail with wrong admin password
+        failConf = conf.clone();
+        failConf.setAdminPassword(null);
+        assertValidateFail(failConf,"Validate should fail with null admin password");
+        failConf.setAdminPassword(WRONG_PASSWORD);
+        assertCreateAdminConnFail(failConf, "CreateAdminConnection should fail on wrong admin password");
+        
+        //Test wrong alias name
+        failConf = conf.clone();
+        failConf.setDatabaseName(null);
+        assertValidateFail(failConf,"Validate should fail with null aliasname");
+        failConf.setDatabaseName(WRONG_ALIAS);
+        assertCreateAdminConnFail(failConf, "CreateAdminConnection should fail on wrong alias name");
+        
     }
 	
 	
@@ -243,6 +350,12 @@ public class DB2ConfigurationTest {
 		conf.validate();
 		conn = conf.createAdminConnection();
 		assertNotNull(conn);
+		
+		DB2Configuration failConf = conf.clone();
+		failConf.setDataSource(null);
+		assertValidateFail(failConf, "Validate should fail for null datasource");
+		failConf.setDataSource(WRONG_DATASOURCE);
+		assertCreateAdminConnFail(failConf, "CreateAdminConnection with wrong datasource should fail");
 	}
 	
 	
@@ -265,6 +378,9 @@ public class DB2ConfigurationTest {
 
 		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 			if(method.getName().equals("lookup")){
+			    if(WRONG_DATASOURCE.equals(args[0])){
+			        throw new NamingException("Cannot lookup wrong datasource");
+			    }
 				return Proxy.newProxyInstance(getClass().getClassLoader(),new Class[]{DataSource.class}, new DataSourceIH());
 			}
 			return null;

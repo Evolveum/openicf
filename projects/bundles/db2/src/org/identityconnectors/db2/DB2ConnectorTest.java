@@ -60,9 +60,6 @@ public class DB2ConnectorTest {
         return factory.newInstance(apiCfg);
     }
     
-    
-    
-    
     /**
      * Just call test
      */
@@ -137,7 +134,7 @@ public class DB2ConnectorTest {
 		Set<Attribute> attributes = new HashSet<Attribute>();
 		attributes.add(new Name(username));
 		attributes.add(AttributeBuilder.buildPassword(new char[]{'a','b','c'}));
-		attributes.add(AttributeBuilder.build("grants","CONNECT ON DATABASE"));
+		attributes.add(AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"CONNECT ON DATABASE"));
 		Uid uid = null;
 		try{
 			uid = facade.create(ObjectClass.ACCOUNT, attributes, new OperationOptions(emptyMap));
@@ -163,7 +160,7 @@ public class DB2ConnectorTest {
 		Set<Attribute> attributes = new HashSet<Attribute>();
 		attributes.add(new Name(userName));
 		attributes.add(AttributeBuilder.buildPassword(new char[]{'a','b','c'}));
-		attributes.add(AttributeBuilder.build("grants","CONNECT ON DATABASE"));
+		attributes.add(AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"CONNECT ON DATABASE"));
 		Uid uid = null;
 		try{
 			uid = facade.create(ObjectClass.ACCOUNT, attributes, new OperationOptions(emptyMap));
@@ -482,16 +479,93 @@ public class DB2ConnectorTest {
         assertNull(uid);
         facade.delete(ObjectClass.ACCOUNT, new Uid("UNKNOWN"), null);
         fail("Delete of not existing user should fail");
-    }    
-
+    }
+    
+    /**
+     * Tests more creates
+     */
+    @Test
+    public void testMultiCreate(){
+        for(int i = 0;i < 10;i++){
+            String userName = "testUser" + i;
+            Uid uid = new Uid(userName);
+            try{
+                facade.delete(ObjectClass.ACCOUNT, uid, null);
+            }
+            catch(UnknownUidException e){}
+            Set<Attribute> attributes = new HashSet<Attribute>();
+            attributes.add(new Name(userName));
+            attributes.add(AttributeBuilder.buildPassword(new char[]{'a','b','c'}));
+            attributes.add(AttributeBuilder.build("grants","CONNECT ON DATABASE"));
+            facade.create(ObjectClass.ACCOUNT, attributes, null);
+            FindUidObjectHandler handler = new FindUidObjectHandler(uid);
+            // attempt to find the newly created object..
+            try{
+                facade.search(ObjectClass.ACCOUNT, new EqualsFilter(uid), handler, null);
+                assertTrue("The testuser was not found", handler.found);
+            }
+            finally{
+                facade.delete(ObjectClass.ACCOUNT, uid, null);
+            }
+        }
+    }
+    
+    /**
+     * Test validity of names
+     */
+    @Test
+    public void testValidNames(){
+        //too long name
+        char[] goodName = new char[DB2Specifics.MAX_NAME_SIZE];
+        char[] tooLongName = new char[DB2Specifics.MAX_NAME_SIZE + 1];
+        for(int i = 0; i < tooLongName.length;i++){
+            tooLongName[i] = (char)('a');
+        }
+        System.arraycopy(tooLongName, 0, goodName, 0, goodName.length);
+        String invalid1 = "%";
+        String invalid2 = "SQL";
+        String invalid3 = "DATABASE";
+        
+        Set<Attribute> attributes = new HashSet<Attribute>();
+        attributes.add(new Name(new String(tooLongName)));
+        attributes.add(AttributeBuilder.buildPassword(new char[]{'a','b','c'}));
+        attributes.add(AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"CONNECT ON DATABASE"));
+        try{
+            facade.create(ObjectClass.ACCOUNT, attributes, null);
+            fail("Validate should fail : too long user name");
+        }
+        catch(IllegalArgumentException e){}
+        
+        attributes.remove(new Name(new String(tooLongName)));
+        attributes.add(new Name(new String(goodName)));
+        Uid uid = facade.create(ObjectClass.ACCOUNT, attributes, null);
+        facade.delete(ObjectClass.ACCOUNT, uid, null);
+        
+        attributes.remove(new Name(new String(goodName)));
+        attributes.add(new Name(new String(invalid1)));
+        try{
+            facade.create(ObjectClass.ACCOUNT, attributes, null);
+            fail("Validate should fail : Invalid character name");
+        }
+        catch(IllegalArgumentException e){}
+        
+        attributes.remove(new Name(invalid1));
+        attributes.add(new Name(new String(invalid2)));
+        try{
+            facade.create(ObjectClass.ACCOUNT, attributes, null);
+            fail("Validate should fail : Invalid prefix");
+        }
+        catch(IllegalArgumentException e){}
+        
+        attributes.remove(new Name(invalid2));
+        attributes.add(new Name(new String(invalid3)));
+        try{
+            facade.create(ObjectClass.ACCOUNT, attributes, null);
+            fail("Validate should fail : Reserved keyword");
+        }
+        catch(IllegalArgumentException e){}
+        
+    }
     
     
-    
-    
-    
-    
-	
-	
-
-	
 }

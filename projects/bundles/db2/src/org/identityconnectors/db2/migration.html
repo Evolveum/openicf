@@ -7,6 +7,7 @@
 		<h2>Configuration properties</h2>
 		<ul> 
 			<li>Resource adapter supported type2 CLI legacy driver or Net type 3 driver connection properties.
+				These properties were supported by adapter.
 				<ol>
 					<li>adminAcct : Admin user account</li>
 					<li>password : Admin user password</li>
@@ -17,7 +18,7 @@
 				</ol>
 			</li>
 			<br/>
-			<li>Connector supports datasource,type4 and type2 connection type
+			<li>Connector supports datasource,type4 and type2 connection type. Connector supports these properties.
 				<ul>
 					<li>
 						Datasource connection type properties
@@ -50,6 +51,11 @@
 							<li>subprotocol : db2,db2iSeries. Default to db2 </li>
 						</ol>
 					</li>
+					<li>replaceAllGrantsOnUpdate : Kept for backward compatibility instead of removeForeignGrants.
+						When set to true(default) , we replace value of passed grants on update. Otherwise we do addition of passwd grants
+						with grants use already has. 
+						This property can be removed in future version, when IDM will properly call UpdateAttributeValuesOp operations.
+					</li>
 				</ul>
 			</li>
 		</ul>
@@ -58,7 +64,7 @@
 		ResourceAdapter supported type2 app driver and type3 net driver. Net driver is removed from DB2 9x and app driver is deprecated.  App driver can be removed in future DB2 release.
 		Connector supports datasource,type4,type2 connection type. IBM DB2 Driver for JDBC and SQLJ and CLI legacy driver were tested. There are small changes 
 		in names of connector configuration properties.
-		Connector does not support <code>removeForeignGrants</code> property. Connector treats grants as multivalue attribute and always does replace for update operation.
+		Connector still supports <code>removeForeignGrants</code> property. Connector treats grants as multivalue attribute and always does replace for update operation.
 		
 		<h3>Attributes differences summary</h3>
 		Attributes for adapter and connector are same.

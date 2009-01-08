@@ -26,6 +26,7 @@ import java.sql.Connection;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.JNDIUtil;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.spi.*;
 
 /**
@@ -91,7 +92,27 @@ import org.identityconnectors.framework.spi.*;
  * @author kitko
  *
  */
-public class DB2Configuration extends AbstractConfiguration {
+public class DB2Configuration extends AbstractConfiguration implements Cloneable{
+    
+    /**
+     * Constructor needed for connector framework.
+     * Will initialize fields to default values
+     */
+    public DB2Configuration(){
+    }
+    
+    /**
+     * Default clone implementation.
+     * @throws ConnectorException when super.clone fails
+     */
+    public DB2Configuration clone() throws ConnectorException{
+        try {
+            return (DB2Configuration) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new ConnectorException("Clone of DB2Configuration super class failed",e);
+        }
+    }
+    
 	
 	/** Type of connection we will use to connect to DB2 */
 	static enum ConnectionType{

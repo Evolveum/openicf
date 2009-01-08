@@ -41,6 +41,9 @@ class DB2Specifics {
 	/** Old driver that uses local db2 client with stored aliases , type 2 driver */
 	final static String CLI_LEGACY_DRIVER = "COM.ibm.db2.jdbc.app.DB2Driver";
 	final static String DEFAULT_TYPE4_PORT = "50000";
+	/** DB2 limitation on accountId size */
+    final static int MAX_NAME_SIZE = 30;
+
 	
 	
     // These names come from the DB2 SQL Reference manual.
@@ -140,13 +143,14 @@ class DB2Specifics {
             // this hard coded rule is fast and simple for now.
             // if the complexity of the criteria ever increases,
             // it would be better to check in a Set or some such.
-            if (!((c >= 'a' && c <= 'z')
+            boolean charOk = 
+                       (c >= 'a' && c <= 'z')
                     || (c >= 'A' && c <= 'Z')
                     || (c >= '0' && c <= '9')
-                    || c == '@'
-                    || c == '#'
-                    || c == '$'))
-            {
+                    || (c == '@')
+                    || (c == '#')
+                    || (c == '$');
+            if(!charOk){
                 return true;
             }
         }
@@ -203,6 +207,8 @@ class DB2Specifics {
 	static Connection createDataSourceConnection(String dsName,String user,GuardedString password,Hashtable<?,?> env){
 		return SQLUtil.getDatasourceConnection(dsName,user,password,env);
 	}
+
+
 	
     
 }
