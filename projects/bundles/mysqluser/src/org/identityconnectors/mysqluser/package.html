@@ -35,7 +35,7 @@
     The MySQLUSer connector uses the template user called the "modeluser".
     Model user and its rights are taken as a template for creating every new user on the MySQL resource.
 
- <h3>Operations are supported by MySQLUser connector</h3> 
+ <h3>Operations supported by MySQLUser connector</h3> 
     The MySQLUser connector supports create, update, delete operation for the IdM account. Also search by user name are supported.
     The search by SQL user rights is currently not supported.       
  
@@ -62,7 +62,9 @@
     The connector was tested against the mysql Releases
     <ul>
      <li>MySQL 6.0 - Alpha</li>
+     <li>MySQL 5.1 - GA release</li>
      <li>MySQL 5.0 - GA release</li>
+     <li>MySQL 4.1 - GA release</li>
     </ul>
 
  <h3>The MySQL resource description</h3>
@@ -79,7 +81,27 @@
     The MySQL connector does not difference between the hosts. Every access right is considered valid from any host.
     It must imply the default wildcard "%" for hosts. It is not recommended to set up the model user with different 
     SQL access rights which differs just in host.
- 
+    
+ <h3>The MySQLUser connector new features</h3>
+        Newly supported are DataSource name and jndiProperties configuration properties. 
+        If your server environment supports datasources,
+        you can set up the datasource name, e.g: <code>java:comp/env/jdbc/mysql</code>
+        which in case of tomcat corespond to following application context descriptor.  
+        
+        <code>
+        <Context docBase="${catalina.home}/webapps/waveset"
+         path="idm" 
+         privileged="true" antiResourceLocking="false" antiJARLocking="false">
+
+            <Resource name="jdbc/mysql" auth="Container" type="javax.sql.DataSource"
+                           maxActive="100" maxIdle="30" maxWait="10000"
+                           username="root" password="..." driverClassName="com.mysql.jdbc.Driver"
+                           url="jdbc:mysql://localhost:3306/mysql"/>
+
+        </Context>
+        </code>
+        <br>        
+        When new datasource is configured, the user, host, password and port could  be left empty.  
  
      See {@link org.identityconnectors.mysqluser.MySQLUserConfiguration} and  {@link org.identityconnectors.mysqluser.MySQLUserConnector} for more information about MySQLUser connector.
 </body>

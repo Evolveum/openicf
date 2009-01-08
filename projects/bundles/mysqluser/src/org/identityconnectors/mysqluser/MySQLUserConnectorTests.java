@@ -26,6 +26,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -130,6 +131,12 @@ public class MySQLUserConnectorTests {
         final String passwd = TestHelpers.getProperty(TEST_PASSWD, null);
         assertNotNull(TEST_PASSWD + MSG, passwd);
         testPassword = new GuardedString(passwd.toCharArray());
+        
+        //Delete the model user
+        quitellyDeleteUser(idmModelUser); 
+        
+        //Create model test user
+        createTestModelUser(idmModelUser);
     }
 
     /**
@@ -327,14 +334,8 @@ public class MySQLUserConnectorTests {
      */
     @Test(expected=UnknownUidException.class)
     public void testDeleteUnexisting() {
-        assertNotNull(facade);
-        String userName = TST_USER2;
-        //To be sure it is created
-        quitellyCreateUser(userName);
-        // retrieve the object
-        testUserFound(userName, true);  
-        
-        facade.delete(ObjectClass.ACCOUNT, new Uid("UNKNOWN"), null);  
+        assertNotNull(facade);  
+        facade.delete(ObjectClass.ACCOUNT, new Uid("UNKNOWN"), null); 
     }    
     
     /**
@@ -593,24 +594,34 @@ public class MySQLUserConnectorTests {
         
         quitellyDeleteUser(TST_USER1);   
     }
-   
-    private Uid createUser(String user, GuardedString password, String host) {
-        Set<Attribute> tuas = getUserAttributeSet(user, password, host);
-        assertNotNull(tuas);
-        return facade.create(ObjectClass.ACCOUNT, tuas, null);
-    }      
     
-    private ConnectorFacade getFacade() {
-        ConnectorFacadeFactory factory = ConnectorFacadeFactory.getInstance();
-        // **test only**
-        APIConfiguration impl = TestHelpers.createTestConfiguration(MySQLUserConnector.class, config);
-        return factory.newInstance(impl);
+    
+    /**
+     * Test method for {@link MySQLUserConnector#schema()}.
+     */
+    @Test
+    public void testSchemaApi() {
+        Schema schema = facade.schema();
+        // Schema should not be null
+        assertNotNull(schema);
+        Set<ObjectClassInfo> objectInfos = schema.getObjectClassInfo();
+        assertNotNull(objectInfos);
+        assertEquals(1, objectInfos.size());
+        ObjectClassInfo objectInfo = (ObjectClassInfo) objectInfos.toArray()[0];
+        assertNotNull(objectInfo);
+        // the object class has to ACCOUNT_NAME
+        assertEquals(ObjectClass.ACCOUNT_NAME, objectInfo.getType());
+        // iterate through AttributeInfo Set
+        Set<AttributeInfo> attInfos = objectInfo.getAttributeInfo();
+        
+        assertNotNull(AttributeInfoUtil.find(Name.NAME, attInfos));
+        assertNotNull(AttributeInfoUtil.find(OperationalAttributes.PASSWORD_NAME, attInfos));
     }
-    
+
     /**
      * Create not created user and test it was created
      */
-    private void quitellyCreateUser(String userName) {
+    private static void quitellyCreateUser(String userName) {
         PreparedStatement ps = null;
         MySQLUserConnection conn = null;
         ResultSet result = null;
@@ -634,58 +645,95 @@ public class MySQLUserConnectorTests {
         testUserFound(userName, true);
         log.ok("quitelly Create User {0}", userName);
     }
+    
+    
 
     /**
      * Delete not deleted User and test it was deleted
      */
-    private void quitellyDeleteUser(String userName) {
-        PreparedStatement ps = null;
+    private static void quitellyDeleteUser(String userName) {
+        PreparedStatement ps1 = null;
+        PreparedStatement ps2 = null;
         MySQLUserConnection conn = null;
-        ResultSet result = null;
         final List<Object> values = new ArrayList<Object>();
         values.add(userName);
         final String SQL_DELETE_TEMPLATE = "DROP USER ?";
+        final String SQL_DELETE_TEMPLATE_LOCAL = "DROP USER ?@'localhost'";
         log.info("quitelly Delete User {0}", userName);
+        conn = MySQLUserConnection.getConnection(newConfiguration());
         try {
-            conn = MySQLUserConnection.getConnection(newConfiguration());
-            ps = conn.prepareStatement(SQL_DELETE_TEMPLATE, values);
-            ps.execute();
+            ps1 = conn.prepareStatement(SQL_DELETE_TEMPLATE, values);
+            ps1.execute();
             conn.commit();
         } catch (SQLException ex) {
             log.info("quitelly Delete User {0} has expected exception {1}", userName, ex.getMessage());
         } finally {
-            SQLUtil.closeQuietly(result);
-            SQLUtil.closeQuietly(ps);
-            SQLUtil.closeQuietly(conn);
+            SQLUtil.closeQuietly(ps1);
         }
+        try {
+            ps2 = conn.prepareStatement(SQL_DELETE_TEMPLATE_LOCAL, values);
+            ps2.execute();
+            conn.commit();
+        } catch (SQLException ex) {
+            log.info("quitelly Delete User {0} has expected exception {1}", userName, ex.getMessage());
+        } finally {
+            SQLUtil.closeQuietly(ps2);
+            SQLUtil.closeQuietly(conn);
+        }        
         testUserFound(userName, false);
         log.ok("quitelly Delete User {0}", userName);
     }
     
+
     /**
-     * Test method for {@link MySQLUserConnector#schema()}.
+     * 
      */
-    @Test
-    public void testSchemaApi() {
-        Schema schema = facade.schema();
-        // Schema should not be null
-        assertNotNull(schema);
-        Set<ObjectClassInfo> objectInfos = schema.getObjectClassInfo();
-        assertNotNull(objectInfos);
-        assertEquals(1, objectInfos.size());
-        ObjectClassInfo objectInfo = (ObjectClassInfo) objectInfos.toArray()[0];
-        assertNotNull(objectInfo);
-        // the object class has to ACCOUNT_NAME
-        assertEquals(ObjectClass.ACCOUNT_NAME, objectInfo.getType());
-        // iterate through AttributeInfo Set
-        Set<AttributeInfo> attInfos = objectInfo.getAttributeInfo();
-        
-        assertNotNull(AttributeInfoUtil.find(Name.NAME, attInfos));
-        assertNotNull(AttributeInfoUtil.find(OperationalAttributes.PASSWORD_NAME, attInfos));
-    }
-    
+    private static void createTestModelUser(final String modelUser) {
+        quitellyCreateUser(modelUser);
+        createUserGrants(modelUser);
+    }     
+
+    /**
+     * 
+     */
+    private static void createUserGrants(final String userName) {
+        final String SQL1 = "GRANT SELECT, INSERT, UPDATE, DELETE ON *.* TO ?@'%' IDENTIFIED BY ?";
+        final String SQL2 = "GRANT SELECT, INSERT, UPDATE, DELETE ON *.* TO ?@'localhost' IDENTIFIED BY ?";
+        final String SQL3 = "GRANT CREATE, DROP ON `mysql`.* TO ?@'%'";
+        final String SQL4 = "GRANT ALL PRIVILEGES ON `test`.* TO ?@'%'";
+        final String SQL5 = "GRANT CREATE, DROP ON `mysql`.* TO ?@'localhost'";
+        final String SQL6 = "GRANT ALL PRIVILEGES ON `test`.* TO ?@'localhost'";
+        final String[] stmts = { SQL1, SQL2, SQL3, SQL4, SQL5, SQL6 };
+        log.info("Creating the Test Model User {0}", userName);
+        PreparedStatement ps = null;
+        MySQLUserConnection conn = null;
+        String sql = null;    
+        try {
+            for (int i = 0; i < stmts.length; i++) {                
+                sql = stmts[i];
+                final List<Object> values = new ArrayList<Object>();
+                values.add(userName);
+                if(i<2) {
+                    values.add(testPassword);
+                }
+                log.info("Create User {0} Grants , statement:{1}", userName, sql);
+                conn = MySQLUserConnection.getConnection(newConfiguration());
+                ps = conn.prepareStatement(sql,values);
+                ps.execute();
+            }
+            conn.commit();
+        } catch (SQLException ex) {
+            log.error(ex, "Fail to create User {0} Grants , statement:{1}", userName, sql);
+            fail(ex.getMessage());
+        } finally {
+            SQLUtil.closeQuietly(ps);
+            SQLUtil.closeQuietly(conn);
+        }
+        testUserFound(userName, true);
+        log.ok("The User {0} Grants created", userName);
+    }    
    
-    private Set<Attribute> getUserAttributeSet(String tstUser, GuardedString tstPassword, String tstHost) {
+    private static Set<Attribute> getUserAttributeSet(String tstUser, GuardedString tstPassword, String tstHost) {
         Set<Attribute> ret = new HashSet<Attribute>();
         ret.add(AttributeBuilder.build(Name.NAME, tstUser));
         ret.add(AttributeBuilder.buildPassword(tstPassword));
@@ -696,7 +744,7 @@ public class MySQLUserConnectorTests {
     /**
      * @param userName
      */
-    private String testUserFound(String userName, boolean found) {
+    private static String testUserFound(String userName, boolean found) {
         String ret = null;
 
         // update the last change
@@ -731,6 +779,21 @@ public class MySQLUserConnectorTests {
         return ret;
     }  
 
+    
+    private Uid createUser(String user, GuardedString password, String host) {
+        Set<Attribute> tuas = getUserAttributeSet(user, password, host);
+        assertNotNull(tuas);
+        return facade.create(ObjectClass.ACCOUNT, tuas, null);
+    }      
+    
+    private ConnectorFacade getFacade() {
+        ConnectorFacadeFactory factory = ConnectorFacadeFactory.getInstance();
+        // **test only**
+        APIConfiguration impl = TestHelpers.createTestConfiguration(MySQLUserConnector.class, config);
+        return factory.newInstance(impl);
+    }
+        
+    
     /**
      * Test internal implementation for finding the objects
      * @author Petr Jung

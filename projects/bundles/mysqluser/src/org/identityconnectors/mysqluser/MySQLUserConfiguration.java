@@ -64,7 +64,7 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
      * Return the datasource name
      * @return datasource name value
      */
-    @ConfigurationProperty(order = 1, helpMessageKey = "MYSQL_DATASOURCE_HELP", displayMessageKey = "MYSQL_USERMODEL_DISPLAY")
+    @ConfigurationProperty(order = 1, helpMessageKey = "MYSQL_DATASOURCE_HELP", displayMessageKey = "MYSQL_DATASOURCE_DISLPAY")
     public String getDatasource() {
         return datasource;
     }

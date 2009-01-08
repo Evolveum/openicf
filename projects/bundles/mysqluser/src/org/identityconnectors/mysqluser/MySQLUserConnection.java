@@ -91,15 +91,15 @@ public class MySQLUserConnection extends DatabaseConnection {
      */
     static MySQLUserConnection getConnection(MySQLUserConfiguration config) {
         java.sql.Connection connection;
-        final String login = config.getUser();
+        final String user = config.getUser();
         final GuardedString password = config.getPassword();
         final String datasource = config.getDatasource();
-        final String[] jndiProperties = config.getJndiProperties();
-        final ConnectorMessages connectorMessages = config.getConnectorMessages();
         if (StringUtil.isNotBlank(datasource)) {
-            Hashtable<String, String> prop = JNDIUtil.arrayToHashtable(jndiProperties, connectorMessages);                
-            if(StringUtil.isNotBlank(login) && password != null) {
-                connection = SQLUtil.getDatasourceConnection(datasource, login, password, prop);
+            final String[] jndiProperties = config.getJndiProperties();
+            final ConnectorMessages connectorMessages = config.getConnectorMessages();
+            final Hashtable<String, String> prop = JNDIUtil.arrayToHashtable(jndiProperties, connectorMessages);                
+            if(StringUtil.isNotBlank(user) && password != null) {
+                connection = SQLUtil.getDatasourceConnection(datasource, user, password, prop);
             } else {
                 connection = SQLUtil.getDatasourceConnection(datasource, prop);
             } 

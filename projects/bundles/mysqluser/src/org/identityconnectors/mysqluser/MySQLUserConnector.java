@@ -200,7 +200,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
 
         // Granting rights for the new user
         log.info("Granting rights for user: {0}", user.getNameValue());
-        grantingRights(newGrants, user.getNameValue());
+        grantingRights(newGrants, user.getNameValue(), password);
 
         // commit all
         conn.commit();
@@ -467,31 +467,50 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             SQLUtil.closeQuietly(c1);
         }
     }
-
+  
     /**
      * Read the rights for the user model of mysql
      * @param modelUser name
      * @return list of the rights
      */
     private List<String> readGrantsForModelUser(String modelUser) {
+        final String SQL_SHOW_MODEL_USERS="SELECT host FROM mysql.user WHERE user = ?";
         final String SQL_SHOW_GRANTS = "SHOW GRANTS FOR ?";
+        PreparedStatement c1 = null;
         PreparedStatement c2 = null;
+        ResultSet rs1 = null;
+        ResultSet rs2 = null;
         List<String> grants = new ArrayList<String>();
         try {
             // created, read the model user grants
-            c2 = conn.getConnection().prepareStatement(SQL_SHOW_GRANTS);
-            c2.setString(1, modelUser);
-            ResultSet grantRs = c2.executeQuery();
-            while (grantRs.next()) {
-                String grant = grantRs.getString(1);
-                grants.add(grant);
-            }
+            c1 = conn.getConnection().prepareStatement(SQL_SHOW_MODEL_USERS);
+            c1.setString(1, modelUser);
+            rs1 = c1.executeQuery();
+            while (rs1.next()) {
+                final StringBuilder query = new StringBuilder(SQL_SHOW_GRANTS);
+                final String host = rs1.getString(1);
+                log.ok("readGrantsFor host:{0}, user:{1}", host, modelUser);
+                //The host specification must be added when defined
+                if ((host != null) && !host.equals("") && !host.equals("%")) {
+                    query.append("@"+host);
+                }             
+                c2 = conn.getConnection().prepareStatement(query.toString());
+                c2.setString(1, modelUser);
+                rs2 = c2.executeQuery();
+                while (rs2.next()) {
+                    String grant = rs2.getString(1);
+                    grants.add(grant);
+                }
+            }                     
         } catch (SQLException e) {
             log.error(e, "Error read GRANTS for model user {0}", modelUser);
             //No error when the modelUser does not exist
             //SQLUtil.rollbackQuietly(getConnection());
             //throw ConnectorException.wrap(e);
         } finally {
+            SQLUtil.closeQuietly(rs1);
+            SQLUtil.closeQuietly(rs2);
+            SQLUtil.closeQuietly(c1);
             SQLUtil.closeQuietly(c2);
         }
         return grants;
@@ -510,7 +529,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         for (String grant : grants) {
             String newGrant = grant.replaceAll("'" + modelUser + "'", "'" + userName + "'");
             // Remove password key is if present
-            newGrant = newGrant.replaceAll("IDENTIFIED.*", "");
+            newGrant = newGrant.replaceAll("IDENTIFIED BY PASSWORD '.*'", "IDENTIFIED BY ?");
             newGrants.add(newGrant);
         }
         return newGrants;
@@ -521,19 +540,32 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      * @param grants rights for the new user
      * @param userName ID of the new user
      */
-    private void grantingRights(List<String> grants, String userName) {
+    private void grantingRights(List<String> grants, String userName, GuardedString password) {
         for (String grant : grants) {
-            PreparedStatement c3 = null;
+            final PreparedStatement[] psa = new PreparedStatement[1];
             try {
-                c3 = conn.getConnection().prepareStatement(grant);
+                psa[0] = conn.getConnection().prepareStatement(grant);
                 log.info("Granting rights {0} for user: {1}", userName, grant);
-                c3.execute();
+                if(grant.indexOf("IDENTIFIED BY ?")>0) {
+                    password.access(new GuardedString.Accessor() {
+                        public void access(char[] clearChars) {
+                            try {
+                                psa[0].setObject(1, new String(clearChars));
+                            } catch (SQLException e) {
+                                // checked exception are not allowed in the access method 
+                                // Lets use the exception softening pattern
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    });
+                }
+                psa[0].execute();
             } catch (SQLException e) {
                 log.error(e, "Error granting rights {0} for user: {1}", userName, grant);
                 SQLUtil.rollbackQuietly(conn);
                 throw ConnectorException.wrap(e);
             } finally {
-                SQLUtil.closeQuietly(c3);
+                SQLUtil.closeQuietly(psa[0]);
             }
         }
     }
@@ -546,26 +578,48 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      * @param connection
      */
     private void deleteUser(final Uid uid) {
+        final String SQL_SHOW_MODEL_USERS="SELECT host FROM mysql.user WHERE user = ?";
         final String SQL_DELETE_TEMPLATE = "DROP USER ?";
 
-        PreparedStatement stmt = null;
+        PreparedStatement ps1 = null;
+        PreparedStatement ps2 = null;
+        ResultSet rs1 = null;
         try {
-            // create a prepared call..
-            stmt = conn.getConnection().prepareStatement(SQL_DELETE_TEMPLATE);
-            // set object to delete..
-            stmt.setString(1, uid.getUidValue());
-            // uid to delete..
-            log.info("Deleting Uid: {0}", uid.getUidValue());
-            stmt.execute();
-            log.ok("Deleted Uid: {0}", uid.getUidValue());
+            // created, read the model user grants
+            ps1 = conn.getConnection().prepareStatement(SQL_SHOW_MODEL_USERS);
+            ps1.setString(1, uid.getUidValue());
+            rs1 = ps1.executeQuery();
+            boolean unknown = true;
+            while (rs1.next()) {
+                unknown  = false;
+                final StringBuilder query = new StringBuilder(SQL_DELETE_TEMPLATE);
+                final String host = rs1.getString(1);
+                //The host specification must be added when defined
+                if ((host != null) && !host.equals("") && !host.equals("%")) {
+                    query.append("@"+host);
+                }
+                // create a prepared call..
+                ps2 = conn.getConnection().prepareStatement(query.toString());                                
+                // set object to delete..
+                ps2.setString(1, uid.getUidValue());
+                // uid to delete..
+                log.info("Deleting Uid: {0}, host:{1}", uid.getUidValue(), host);
+                ps2.execute();
+            }
+            if( unknown ) {
+               throw new UnknownUidException(uid, ObjectClass.ACCOUNT);
+            }
         } catch (SQLException e) {
             SQLUtil.rollbackQuietly(conn);
             log.error(e, "SQL: " + SQL_DELETE_TEMPLATE);
-            throw new UnknownUidException(e);
+            throw new IllegalStateException(e); 
         } finally {
             // clean up..
-            SQLUtil.closeQuietly(stmt);
+            SQLUtil.closeQuietly(rs1);
+            SQLUtil.closeQuietly(ps1);
+            SQLUtil.closeQuietly(ps2);
         }
+        log.ok("Deleted Uid: {0}", uid.getUidValue());
     }
 
 
