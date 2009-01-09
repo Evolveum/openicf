@@ -1703,13 +1703,13 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
         
         public override int GetHashCode() {
-            return _type.GetHashCode();
+            return _type.ToUpper().GetHashCode();
         }
     
         public override bool Equals(object o) {
             if ( o is ObjectClass ) {
                 ObjectClass other = (ObjectClass)o;
-                return _type.Equals(other._type);
+                return _type.Equals(other._type, StringComparison.CurrentCultureIgnoreCase);
             }
             return false;
         }
@@ -1731,6 +1731,10 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         public ObjectClassInfo(String type, 
                                ICollection<ConnectorAttributeInfo> attrInfo,
                                bool isContainer) {
+            if ( type == null ) {
+                throw new ArgumentException("Type cannot be null.");
+            }
+
             _type = type;
             _info = CollectionUtil.NewReadOnlySet(attrInfo);
             _isContainer = isContainer;
@@ -1762,13 +1766,13 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
         
         public override int GetHashCode() {
-            return _type.GetHashCode();
+            return _type.ToUpper().GetHashCode();
         }
         
         public override bool Equals(Object o) {
             ObjectClassInfo other = o as ObjectClassInfo;
             if ( other != null ) {
-                if (!ObjectType.Equals(other.ObjectType)) {
+                if (!ObjectType.Equals(other.ObjectType, StringComparison.CurrentCultureIgnoreCase)) {
                     return false;
                 }
                 if (!CollectionUtil.Equals(ConnectorAttributeInfos,
@@ -2677,7 +2681,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          */
         public ObjectClassInfo FindObjectClassInfo(String type) {
             foreach (ObjectClassInfo info in _declaredObjectClasses) {
-                if ( info.ObjectType.Equals(type) ) {
+                if ( info.ObjectType.Equals(type, StringComparison.CurrentCultureIgnoreCase) ) {
                     return info;
                 }
             }
