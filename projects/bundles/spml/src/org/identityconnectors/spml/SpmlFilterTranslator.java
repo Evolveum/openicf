@@ -50,8 +50,7 @@ import org.openspml.v2.profiles.dsml.Substrings;
 
 
 public class SpmlFilterTranslator extends AbstractFilterTranslator<FilterItem>{
-    private static final ScriptExecutorFactory factory = ScriptExecutorFactory.newInstance("GROOVY");
-
+    private ScriptExecutorFactory _factory;
     private SpmlConnection _connection;
     private SpmlConfiguration _configuration;
     private ScriptExecutor _mapQueryNameExecutor;
@@ -59,10 +58,11 @@ public class SpmlFilterTranslator extends AbstractFilterTranslator<FilterItem>{
     public SpmlFilterTranslator(SpmlConfiguration configuration, SpmlConnection connection) {
         _connection = connection;
         _configuration = configuration;
+        _factory = ScriptExecutorFactory.newInstance(configuration.getScriptingLanguage());
         try {
             String mapQueryNameCommand = _configuration.getMapQueryNameCommand();
             if (mapQueryNameCommand!=null && mapQueryNameCommand.length()>0)
-                _mapQueryNameExecutor = factory.newScriptExecutor(getClass().getClassLoader(), mapQueryNameCommand, true);
+                _mapQueryNameExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), mapQueryNameCommand, true);
         } catch (Exception e) {
             throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPQUERYNAME_SCRIPT_ERROR), e);
         }
