@@ -25,6 +25,8 @@ package org.identityconnectors.db2;
 import java.sql.Connection;
 
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.db2.Type2ConnectionInfo.Type2ConnectionInfoBuilder;
+import org.identityconnectors.db2.Type4ConnectionInfo.Type4ConnectionInfoBuilder;
 import org.identityconnectors.dbcommon.JNDIUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.spi.*;
@@ -375,10 +377,15 @@ public class DB2Configuration extends AbstractConfiguration implements Cloneable
 			}
 		}
 		else if(ConnectionType.TYPE4.equals(connType)){
-			return DB2Specifics.createType4Connection(jdbcDriver, host, port, jdbcSubProtocol,databaseName, user, password);
+			return DB2Specifics.createType4Connection(
+			        new Type4ConnectionInfoBuilder().setDriver(jdbcDriver).
+			        setHost(host).setPort(port).setSubprotocol(jdbcSubProtocol).
+			        setDatabase(databaseName).setUser(user).setPassword(password).build());
 		}
 		else if(ConnectionType.TYPE2.equals(connType)){
-			return DB2Specifics.createType2Connection(jdbcDriver, databaseName, jdbcSubProtocol, user, password);
+			return DB2Specifics.createType2Connection(new Type2ConnectionInfoBuilder().setDriver(jdbcDriver).
+			        setAliasName(databaseName).setSubprotocol(jdbcSubProtocol).
+			        setUser(user).setPassword(password).build());
 		}
 		throw new IllegalStateException("Invalid state of DB2Configuration");
 	}

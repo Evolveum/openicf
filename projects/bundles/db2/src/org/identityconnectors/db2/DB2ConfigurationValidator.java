@@ -198,6 +198,9 @@ class DB2ConfigurationValidator {
 			final ConnectorException connectorException = new ConnectorException("Validate of DB2Configuration failed : " + msgBuilder,new Exception(stackBuilder.toString()));
 			throw connectorException;
 		}
+		if(cfg.getPort() != null){
+		    Integer.parseInt(cfg.getPort());
+		}
 	}
 	
 	

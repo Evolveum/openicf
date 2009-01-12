@@ -34,8 +34,8 @@ import org.identityconnectors.dbcommon.SQLUtil;
  * @author kitko
  *
  */
-class DB2Specifics {
-	
+abstract class DB2Specifics {
+	private DB2Specifics(){}
 	/** Classname of DB2 jcc driver , type 4 or type2 driver*/
 	final static String JCC_DRIVER = "com.ibm.db2.jcc.DB2Driver";
 	/** Old driver that uses local db2 client with stored aliases , type 2 driver */
@@ -180,24 +180,24 @@ class DB2Specifics {
 		}
 	}
 	
-	static Connection createType4Connection(String driver,String host,String port,String subprotocol,String database,String user,GuardedString password){
+	static Connection createType4Connection(Type4ConnectionInfo info){
 		StringBuilder urlBuilder = new StringBuilder();
-		urlBuilder.append("jdbc:").append(subprotocol);
-		if(host != null && host.length() > 0){
-			urlBuilder.append("://").append(host);
+		urlBuilder.append("jdbc:").append(info.getSubprotocol());
+		if(info.getHost() != null && info.getHost().length() > 0){
+			urlBuilder.append("://").append(info.getHost());
 		}
-		if(port != null){
-			urlBuilder.append(":").append(port);
+		if(info.getPort() != null){
+			urlBuilder.append(":").append(info.getPort());
 		}
-		urlBuilder.append("/").append(database);
-		return SQLUtil.getDriverMangerConnection(driver, urlBuilder.toString(), user, password);
+		urlBuilder.append("/").append(info.getDatabase());
+		return SQLUtil.getDriverMangerConnection(info.getDriver(), urlBuilder.toString(), info.getUser(), info.getPassword());
 	}
 	
-	static Connection createType2Connection(String driver,String aliasName,String subprotocol,String user,GuardedString password){
+	static Connection createType2Connection(Type2ConnectionInfo info){
 		StringBuilder urlBuilder = new StringBuilder();
-		urlBuilder.append("jdbc:").append(subprotocol).append(':');
-		urlBuilder.append(aliasName);
-		return SQLUtil.getDriverMangerConnection(driver, urlBuilder.toString(), user, password);
+		urlBuilder.append("jdbc:").append(info.getSubprotocol()).append(':');
+		urlBuilder.append(info.getAliasName());
+		return SQLUtil.getDriverMangerConnection(info.getDriver(), urlBuilder.toString(), info.getUser(), info.getPassword());
 	}
 	
 	static Connection createDataSourceConnection(String dsName,Hashtable<?,?> env){
