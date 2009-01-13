@@ -22,17 +22,7 @@
  */
 package org.identityconnectors.solaris;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
-import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.common.security.SecurityUtil;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.vms.GuardedStringAccessor;
-
-import sun.misc.Cleaner;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.JSch;

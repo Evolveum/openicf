@@ -2,7 +2,6 @@ package org.identityconnectors.solaris;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.common.security.SecurityUtil;
-import org.identityconnectors.vms.GuardedStringAccessor;
 
 public class SolarisHelper {
 
