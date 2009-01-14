@@ -45,6 +45,7 @@ import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
@@ -325,7 +326,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
          * The Password <> '' mean we want to avoid reading duplicates
          * Every base user has password set up
          */
-        final String ALL_USER_QUERY = "SELECT User FROM mysql.user WHERE Password <> ''";
+        final String ALL_USER_QUERY = "SELECT DISTINCT User FROM mysql.user";
 
         if (oclass == null || !ObjectClass.ACCOUNT.equals(oclass)) {
             throw new IllegalArgumentException("Unsupported objectclass '" + oclass + "'");
@@ -393,7 +394,12 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      */
     public void test() {
         config.validate();
-        conn.test();        
+        conn.test();
+        final String USER_MODEL_NOT_FOUND="user.model.not.found";
+        if( !findUser(config.getUsermodel())) {
+            final ConnectorMessages msgs = config.getConnectorMessages();
+            throw new IllegalArgumentException(msgs.format(USER_MODEL_NOT_FOUND, null, config.getUsermodel()));
+        }
     }
     
 
@@ -407,7 +413,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      * @see org.identityconnectors.framework.spi.operations.AuthenticateOp#authenticate(java.lang.String, java.lang.String, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public Uid authenticate(ObjectClass objectClass, String username, GuardedString password, OperationOptions options) {
-        final String AUTH_SELECT="SELECT user FROM mysql.user WHERE user = ? AND password = password(?)";
+        final String AUTH_SELECT="SELECT DISTINCT user FROM mysql.user WHERE user = ? AND password = password(?)";
         
         log.info("authenticate user: {0}", username);
 
@@ -460,13 +466,68 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             c1 = conn.prepareStatement(SQL_CREATE_TEMPLATE, values);
             c1.execute();
         } catch (SQLException e) {
-            log.error(e, "Create user {0} error", name);
-            SQLUtil.rollbackQuietly(conn);
-            throw new AlreadyExistsException(e);
+            if(findUser(name)) {
+                log.error(e, "Already Exists user {0}", name);
+                SQLUtil.rollbackQuietly(conn);
+                throw new AlreadyExistsException(e);
+            } else {
+                grantUssage(name, password);
+            }
         } finally {
             SQLUtil.closeQuietly(c1);
         }
     }
+    
+    /**
+     * creates a new user for MySQL4.1 resource
+     * @param name
+     * @param password
+     */
+    private void grantUssage(String name, GuardedString password) {
+        final String SQL_GRANT_TEMPLATE = "GRANT USAGE ON *.* TO ?@'localhost' IDENTIFIED BY ?";
+        PreparedStatement c1 = null;
+        try {
+            // Create the user
+            List<Object> values = new ArrayList<Object>();
+            values.add(name);
+            values.add(password);
+            c1 = conn.prepareStatement(SQL_GRANT_TEMPLATE, values);
+            c1.execute();
+        } catch (SQLException e) {
+            log.error(e, "Grant user {0} exception", name);
+            SQLUtil.rollbackQuietly(conn);
+            throw new IllegalStateException(e);
+        } finally {
+            SQLUtil.closeQuietly(c1);
+        }
+    }    
+    
+    /**
+     * Find the user
+     * @param userName
+     */
+    private boolean findUser(String userName) {
+        PreparedStatement ps = null;
+        ResultSet result = null;
+        final List<Object> values = new ArrayList<Object>();
+        values.add(userName);
+        final String SQL_SELECT = "SELECT DISTINCT user FROM mysql.user WHERE user = ?";
+        log.info("findt User {0}", userName);
+        try {
+            ps = conn.prepareStatement(SQL_SELECT, values);
+            result = ps.executeQuery();
+            if(result.next()) {
+                return true;
+            }
+        } catch (SQLException ex) {
+            log.error(ex,"find User {0} ", userName);
+            throw new IllegalStateException(ex);
+        } finally {
+            SQLUtil.closeQuietly(result);
+            SQLUtil.closeQuietly(ps);
+        }
+        return false;
+    }      
   
     /**
      * Read the rights for the user model of mysql
@@ -610,9 +671,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
                throw new UnknownUidException(uid, ObjectClass.ACCOUNT);
             }
         } catch (SQLException e) {
-            SQLUtil.rollbackQuietly(conn);
-            log.error(e, "SQL: " + SQL_DELETE_TEMPLATE);
-            throw new IllegalStateException(e); 
+            deleteUser41(uid);
         } finally {
             // clean up..
             SQLUtil.closeQuietly(rs1);
@@ -622,6 +681,52 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         log.ok("Deleted Uid: {0}", uid.getUidValue());
     }
 
+    /**
+     * Delete The User on 41 resource
+     * 
+     * @param uid
+     *            the uid of the user
+     * @param connection
+     */
+    private void deleteUser41(final Uid uid) {
+        final String SQL_DELETE_USERS="DELETE FROM user WHERE User=?";
+        final String SQL_DELETE_DB="DELETE FROM db WHERE User=?";
+        final String SQL_DELETE_TABLES="DELETE FROM tables_priv WHERE User=?";
+        final String SQL_DELETE_COLUMNS="DELETE FROM columns_priv WHERE User=?";
+
+
+        PreparedStatement ps1 = null;
+        PreparedStatement ps2 = null;
+        PreparedStatement ps3 = null;
+        PreparedStatement ps4 = null;
+        try {
+            // created, read the model user grants
+            ps1 = conn.getConnection().prepareStatement(SQL_DELETE_USERS);
+            ps1.setString(1, uid.getUidValue());
+            ps1.execute();
+            ps2 = conn.getConnection().prepareStatement(SQL_DELETE_DB);
+            ps2.setString(1, uid.getUidValue());
+            ps2.execute();
+            ps3 = conn.getConnection().prepareStatement(SQL_DELETE_TABLES);
+            ps3.setString(1, uid.getUidValue());
+            ps3.execute();
+            ps4 = conn.getConnection().prepareStatement(SQL_DELETE_COLUMNS);
+            ps4.setString(1, uid.getUidValue());
+            ps4.execute();
+        } catch (SQLException e) {
+            SQLUtil.rollbackQuietly(conn);
+            log.error(e, "delete user 41");
+            throw new IllegalStateException(e); 
+        } finally {
+            // clean up..
+            SQLUtil.closeQuietly(ps1);
+            SQLUtil.closeQuietly(ps2);
+            SQLUtil.closeQuietly(ps3);
+            SQLUtil.closeQuietly(ps4);
+        }
+        log.ok("Deleted Uid: {0}", uid.getUidValue());
+    }    
+    
 
     /**
      * Update the user identified by uid using the update string and list of bind values

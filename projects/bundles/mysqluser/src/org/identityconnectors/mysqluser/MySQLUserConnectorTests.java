@@ -22,11 +22,7 @@
  */
 package org.identityconnectors.mysqluser;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -132,8 +128,9 @@ public class MySQLUserConnectorTests {
         assertNotNull(TEST_PASSWD + MSG, passwd);
         testPassword = new GuardedString(passwd.toCharArray());
         
+        //quitellyDeleteUser(idmModelUser);
         //Create model test user
-        createTestModelUser(idmModelUser);
+        createTestModelUser(idmModelUser, testPassword);
     }
 
     /**
@@ -250,7 +247,7 @@ public class MySQLUserConnectorTests {
         String newName = TST_USER3;
         assertNotNull(facade);
         //To be sure it is created
-        quitellyCreateUser(userName);    
+        quitellyCreateUser(userName, testPassword);    
         quitellyDeleteUser(newName);    
         
         // retrieve the object      
@@ -289,7 +286,7 @@ public class MySQLUserConnectorTests {
         String userName = TST_USER1;
         assertNotNull(facade);
         //To be sure it is created
-        quitellyCreateUser(userName);    
+        quitellyCreateUser(userName, testPassword);    
         // retrieve the object      
         Uid uid = new Uid(testUserFound(userName, true)); 
         // create updated connector object
@@ -314,7 +311,7 @@ public class MySQLUserConnectorTests {
         assertNotNull(facade);
         String userName = TST_USER2;
         //To be sure it is created
-        quitellyCreateUser(userName);
+        quitellyCreateUser(userName, testPassword);
         // retrieve the object
         testUserFound(userName, true);  
         
@@ -527,7 +524,7 @@ public class MySQLUserConnectorTests {
         String userName = TST_USER1;
         assertNotNull(facade);
         //To be sure it is created
-        quitellyCreateUser(userName);    
+        quitellyCreateUser(userName, testPassword);    
         
         // test user created
         testUserFound(userName, true);
@@ -547,7 +544,7 @@ public class MySQLUserConnectorTests {
         String userName = TST_USER1;
         assertNotNull(facade);
         //To be sure it is created
-        quitellyCreateUser(userName);    
+        quitellyCreateUser(userName, testPassword);
         
         // retrieve the object
         testUserFound(userName, true);
@@ -568,7 +565,7 @@ public class MySQLUserConnectorTests {
         String userName = TST_USER1;
         assertNotNull(facade);
         //To be sure it is created
-        quitellyCreateUser(userName);    
+        quitellyCreateUser(userName, testPassword);
         
         // retrieve the object      
         Uid uid = new Uid(testUserFound(userName, true)); 
@@ -618,7 +615,7 @@ public class MySQLUserConnectorTests {
     /**
      * Create not created user and test it was created
      */
-    private static void quitellyCreateUser(String userName) {
+    private static void quitellyCreateUser(String userName, GuardedString testPassword) {
         PreparedStatement ps = null;
         MySQLUserConnection conn = null;
         ResultSet result = null;
@@ -634,6 +631,7 @@ public class MySQLUserConnectorTests {
             conn.commit();
         } catch (SQLException ex) {
             log.info("quitelly Create User {0} has expected exception {1}", userName, ex.getMessage());
+            quitellyGrantUssage(userName, testPassword);
         } finally {
             SQLUtil.closeQuietly(result);
             SQLUtil.closeQuietly(ps);
@@ -643,7 +641,34 @@ public class MySQLUserConnectorTests {
         log.ok("quitelly Create User {0}", userName);
     }
     
-    
+    /**
+     * Create not created user and test it was created
+     */
+    private static void quitellyGrantUssage(String userName, GuardedString testPassword) {
+        PreparedStatement ps = null;
+        MySQLUserConnection conn = null;
+        ResultSet result = null;
+        final List<Object> values = new ArrayList<Object>();
+        values.add(userName);
+        values.add(testPassword);
+        final String SQL_GRANT_USSAGE = "GRANT USAGE ON *.* TO ?@'localhost' IDENTIFIED BY ?";
+        log.info("quitelly Grant Ussage to {0}", userName);
+        try {
+            conn = MySQLUserConnection.getConnection(newConfiguration());
+            ps = conn.prepareStatement(SQL_GRANT_USSAGE, values);
+            ps.execute();
+            conn.commit();
+        } catch (SQLException ex) {
+            log.info("quitelly Grant Ussage to {0} has expected exception {1}", userName, ex.getMessage());
+            
+        } finally {
+            SQLUtil.closeQuietly(result);
+            SQLUtil.closeQuietly(ps);
+            SQLUtil.closeQuietly(conn);
+        }
+        testUserFound(userName, true);
+        log.ok("quitelly Grant Ussage to {0}", userName);
+    }
 
     /**
      * Delete not deleted User and test it was deleted
@@ -664,6 +689,7 @@ public class MySQLUserConnectorTests {
             conn.commit();
         } catch (SQLException ex) {
             log.info("quitelly Delete User {0} has expected exception {1}", userName, ex.getMessage());
+            quitellyDeleteUser41(userName);
         } finally {
             SQLUtil.closeQuietly(ps1);
         }
@@ -681,19 +707,61 @@ public class MySQLUserConnectorTests {
         log.ok("quitelly Delete User {0}", userName);
     }
     
+    /**
+     * Delete user on MySQL41 resource
+     */
+    private static void quitellyDeleteUser41(final String userName) {
+        final String SQL_DELETE_USERS="DELETE FROM user WHERE User=?";
+        final String SQL_DELETE_DB="DELETE FROM db WHERE User=?";
+        final String SQL_DELETE_TABLES="DELETE FROM tables_priv WHERE User=?";
+        final String SQL_DELETE_COLUMNS="DELETE FROM columns_priv WHERE User=?";
+
+        MySQLUserConnection conn = MySQLUserConnection.getConnection(newConfiguration());
+
+        PreparedStatement ps1 = null;
+        PreparedStatement ps2 = null;
+        PreparedStatement ps3 = null;
+        PreparedStatement ps4 = null;
+        try {
+            // created, read the model user grants
+            ps1 = conn.getConnection().prepareStatement(SQL_DELETE_USERS);
+            ps1.setString(1, userName);
+            ps1.execute();
+            ps2 = conn.getConnection().prepareStatement(SQL_DELETE_DB);
+            ps2.setString(1, userName);
+            ps2.execute();
+            ps3 = conn.getConnection().prepareStatement(SQL_DELETE_TABLES);
+            ps3.setString(1, userName);
+            ps3.execute();
+            ps4 = conn.getConnection().prepareStatement(SQL_DELETE_COLUMNS);
+            ps4.setString(1, userName);
+            ps4.execute();
+        } catch (SQLException e) {
+            SQLUtil.rollbackQuietly(conn);
+            log.error(e, "delete user 41");
+            throw new IllegalStateException(e); 
+        } finally {
+            // clean up..
+            SQLUtil.closeQuietly(ps1);
+            SQLUtil.closeQuietly(ps2);
+            SQLUtil.closeQuietly(ps3);
+            SQLUtil.closeQuietly(ps4);
+        }
+        log.ok("Deleted Uid: {0}", userName);
+    }        
 
     /**
      * 
      */
-    private static void createTestModelUser(final String modelUser) {
-        quitellyCreateUser(modelUser);
-        createUserGrants(modelUser);
+    private static void createTestModelUser(final String modelUser, GuardedString testPassword) {
+        quitellyCreateUser(modelUser, testPassword);
+        createUserGrants(modelUser, testPassword);
     }     
 
     /**
      * 
      */
-    private static void createUserGrants(final String userName) {
+    private static void createUserGrants(final String userName, GuardedString testPassword) {
         final String SQL1 = "GRANT SELECT, INSERT, UPDATE, DELETE ON *.* TO ?@'%' IDENTIFIED BY ?";
         final String SQL2 = "GRANT SELECT, INSERT, UPDATE, DELETE ON *.* TO ?@'localhost' IDENTIFIED BY ?";
         final String SQL3 = "GRANT CREATE, DROP ON `mysql`.* TO ?@'%'";
@@ -710,7 +778,7 @@ public class MySQLUserConnectorTests {
                 sql = stmts[i];
                 final List<Object> values = new ArrayList<Object>();
                 values.add(userName);
-                if(i<2) {
+                if(sql.contains("IDENTIFIED BY ?")) {
                     values.add(testPassword);
                 }
                 log.info("Create User {0} Grants , statement:{1}", userName, sql);
@@ -750,7 +818,7 @@ public class MySQLUserConnectorTests {
         ResultSet result = null;
         final List<Object> values = new ArrayList<Object>();
         values.add(userName);
-        final String SQL_SELECT = "SELECT user FROM mysql.user WHERE user = ?";               
+        final String SQL_SELECT = "SELECT DISTINCT user FROM mysql.user WHERE user = ?";               
         log.info("test User {0} found {1} ", userName, found);   
         try {
             conn  =  MySQLUserConnection.getConnection(newConfiguration());
@@ -828,9 +896,11 @@ public class MySQLUserConnectorTests {
         public boolean handle(ConnectorObject obj) {
             System.out.println("Object: " + obj);
             if (obj.getUid().equals(uid)) {
+                if(found) {
+                    throw new IllegalStateException("Duplicate object found");
+                }
                 found = true;
                 this.connectorObject = obj;
-                return false;
             }
             return true;
         }
