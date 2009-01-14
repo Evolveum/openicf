@@ -1126,6 +1126,33 @@ directory using command:
 
 <code>ant run-cs-contract-tests </code><br />or with additional connector server properties which will override those specified in configuration file <code>ant -DserverHost=host -DserverPort=8759 -DserverKey=changeit run-cs-contract-tests</code></li>
 
+
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <td><span style="font-weight: bold;">Running tests on Connector Server inside Eclipse</span>
+        <ul>
+           <li>add these properties as <strong>VM arguments</strong> in the running configuration:
+                <pre>-Dproject.name=connector-ad
+-DuseConnectorServer=true
+                </pre>
+            </li>
+            <li> 
+                 the rest of the settings remains as shown in section <a href="#eclipse">Running Contract Tests in Eclipse</a>.
+            </li>
+        </ul>
+      </td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+
+
 <hr>
 <h2><a name="lazys"></a>1.6 Lazy evaluation
 helper methods</h2>
