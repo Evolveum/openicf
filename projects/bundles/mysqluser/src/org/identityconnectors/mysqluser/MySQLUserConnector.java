@@ -713,6 +713,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             ps4 = conn.getConnection().prepareStatement(SQL_DELETE_COLUMNS);
             ps4.setString(1, uid.getUidValue());
             ps4.execute();
+            flushPriviledges();
         } catch (SQLException e) {
             SQLUtil.rollbackQuietly(conn);
             log.error(e, "delete user 41");
@@ -738,7 +739,6 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      */
     private void updateUser(String updstr, List<Object> values) {
         // create the sql statement..
-        final String FLUSH_PRIVILEGES = "FLUSH PRIVILEGES";
         PreparedStatement stmt = null;
         try {
             // create the prepared statement..
@@ -753,7 +753,16 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             // clean up..
             SQLUtil.closeQuietly(stmt);
         }
+        flushPriviledges();
+    }
+
+
+    /**
+     * Make all privilege changes the most actual on resource
+     */
+    private void flushPriviledges() {
         // Flush privileges
+        final String FLUSH_PRIVILEGES = "FLUSH PRIVILEGES";
         PreparedStatement cstmt = null;
         try {
             // create the prepared statement..
