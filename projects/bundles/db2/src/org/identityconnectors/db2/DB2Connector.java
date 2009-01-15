@@ -160,7 +160,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	}
 	
 	private Connection createConnection(String user,GuardedString password){
-		final Connection conn = cfg.createUserConnection(user, password);
+		final Connection conn = cfg.createConnection(user, password);
 		//switch off auto commit, but not when connecting using datasource.
 		//Probably connection from DS would throw exception  when trying to change autocommit
 		if(!DB2Configuration.ConnectionType.DATASOURCE.equals(cfg.getConnType())){

@@ -362,11 +362,7 @@ public class DB2Configuration extends AbstractConfiguration implements Cloneable
 		return createConnection(adminAccount,adminPassword);
 	}
 	
-	Connection createUserConnection(String user,GuardedString password){
-		return createConnection(user,password);
-	}
-	
-	private Connection createConnection(String user,GuardedString password){
+	Connection createConnection(String user,GuardedString password){
 		validate();
 		if(ConnectionType.DATASOURCE.equals(connType)){
 			if(user != null){
