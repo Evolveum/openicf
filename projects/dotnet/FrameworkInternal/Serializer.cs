@@ -1423,6 +1423,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
             HANDLERS.Add( new ConnectorSecurityExceptionHandler() );
             HANDLERS.Add( new OperationTimeoutExceptionHandler() );
             HANDLERS.Add( new ConnectorExceptionHandler() );
+            HANDLERS.Add( new ArgumentExceptionHandler());
             HANDLERS.Add( new RuntimeExceptionHandler() );
             HANDLERS.Add( new ExceptionHandler() );
             HANDLERS.Add( new ThrowableHandler() );
@@ -1592,6 +1593,17 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                 return new Exception(msg);
             }
         }
+
+        private class ArgumentExceptionHandler : AbstractExceptionHandler<ArgumentException> {
+            public ArgumentExceptionHandler()
+                : base("IllegalArgumentException") {
+                
+            }
+            protected override ArgumentException CreateException(string msg) {
+                return new ArgumentException(msg);
+            }
+        }
+
         private class ExceptionHandler : AbstractExceptionHandler<Exception> {
             public ExceptionHandler() 
                 : base("Exception") {

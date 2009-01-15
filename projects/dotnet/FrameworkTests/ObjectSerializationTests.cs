@@ -836,9 +836,15 @@ namespace FrameworkTests
             
             {
                 ArgumentException v1 = new ArgumentException("my msg");
-                Exception v2 = (Exception)CloneObject(v1);
+                ArgumentException v2 = (ArgumentException)CloneObject(v1);
                 Assert.AreEqual("my msg", v2.Message);
             }
+
+            {
+                ArgumentNullException v1 = new ArgumentNullException(null, "my msg 1");
+                ArgumentException v2 = (ArgumentException)CloneObject(v1);
+                Assert.AreEqual("my msg 1", v2.Message);
+            }            
             
             {
                 Exception v1 = new Exception("my msg2");

@@ -138,7 +138,7 @@
   | ConnectionFailedException | ConnectorIOException | InvalidPasswordException 
   | UnknownUidException | InvalidCredentialException | PermissionDeniedException
   | ConnectorSecurityException | OperationTimeoutException | ConnectorException
-  | RuntimeException | Exception | Throwable | PasswordExpiredException
+  | RuntimeException | Exception | Throwable | PasswordExpiredException | IllegalArgumentException
   "&gt;
   
 &lt;!ENTITY % messageTypes
@@ -223,7 +223,8 @@ OperationOptionInfo | SyncDeltaType | SyncToken | SyncDelta | QualifiedUid
 &lt;!ELEMENT BigInteger (#PCDATA)&gt;
 &lt;!ELEMENT ByteArray (#PCDATA)&gt;
 &lt;!ELEMENT Class (#PCDATA)&gt;
-&lt;!ELEMENT Map ((MapEntry)*)&gt;
+&lt;!ELEMENT Map ((MapEntry)*)&gt;
+
 &lt;!ATTLIST Map
     caseInsensitive CDATA #IMPLIED
 &gt;
@@ -298,7 +299,8 @@ OperationOptionInfo | SyncDeltaType | SyncToken | SyncDelta | QualifiedUid
 &lt;!--=                                                     =--&gt;
 &lt;!--=======================================================--&gt;
 &lt;!ELEMENT Attribute (Values)?&gt; 
-&lt;!ELEMENT Values ((%xmlObject;)*)&gt;
+&lt;!ELEMENT Values ((%xmlObject;)*)&gt;
+
 &lt;!ATTLIST Attribute
     name CDATA #REQUIRED
 &gt;
@@ -361,6 +363,10 @@ OperationOptionInfo | SyncDeltaType | SyncToken | SyncDelta | QualifiedUid
 &gt;
 &lt;!ELEMENT ConnectorException EMPTY&gt; 
 &lt;!ATTLIST ConnectorException
+   message CDATA #IMPLIED
+&gt;
+&lt;!ELEMENT IllegalArgumentException EMPTY&gt; 
+&lt;!ATTLIST IllegalArgumentException
    message CDATA #IMPLIED
 &gt;
 &lt;!ELEMENT RuntimeException EMPTY&gt; 
