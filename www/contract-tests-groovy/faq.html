@@ -37,6 +37,7 @@ tests' errors</a></li>
 
   <ul>
 
+    <li><a href="#bootstrap">Missing bootstrap file</a></li>
     <li><a href="#SearchApiOpTests_case_insensitive">[SearchApiOpTests]
 &nbsp;case insensitive tests fail</a></li>
 
@@ -51,6 +52,20 @@ tests' errors</a></li>
 tests' errors<br>
 
 </h2>
+
+<a name="bootstrap"></a>
+<h3>Missing bootstrap.groovy file</h3>
+<p>When running Contract tests from 
+<acronym title="Integrated Development Environment">IDE</acronym> you might experience this error message:
+<pre>
+java.lang.AssertionError: Missing bootstrap file: bootstrap.groovy. (Hint: copy framework/test-contract/src/bootstrap.groovy to folder framework/test-contract/build)
+	at org.junit.Assert.fail(Assert.java:71)
+	at org.junit.Assert.assertTrue(Assert.java:34)
+...
+</pre>
+It is caused by missing boostrap.groovy file in directory <code>SVNROOT/projects/framework/test-contract/build/</code>. Please copy it from: <code>SVNROOT/projects/framework/test-contract/src/bootstrap.groovy</code>.
+</p>
+
 
 <h3><a name="SearchApiOpTests_case_insensitive"></a>[SearchApiOpTests]
 &nbsp;case insensitive tests fail</h3>
