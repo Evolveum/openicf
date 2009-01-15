@@ -254,10 +254,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         directoryEntry, expirePasswordAttribute, type);
                     directoryEntry.CommitChanges();
                 }
-
+                /*
                 UserAccountControl.Set(directoryEntry.Properties[ActiveDirectoryConnector.ATT_USER_ACOUNT_CONTROL],
                     UserAccountControl.PASSWD_NOTREQD, false);
-
+                */
                 directoryEntry.CommitChanges();
 
                 HandleNameChange(type, directoryEntry, attributes);

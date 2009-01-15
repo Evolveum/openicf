@@ -90,8 +90,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // boolean false (null is same as false)
             if ((isSet == null) || (isSet.Value.Equals(false)))
             {
-                int clearMask = 0xFFFF ^ flag;
-                uac &= clearMask;
+                uac &= (~flag);
             }
             else
             {
