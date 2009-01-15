@@ -296,6 +296,8 @@ public class SpmlConnector implements PoolableConnector, CreateOp,
 
     private DSMLValue[] asDSMLValueArray(Attribute attribute) {
         List<Object> values = attribute.getValue();
+        if (values==null)
+            throw new IllegalArgumentException(_configuration.getMessage(SpmlMessages.NULL_VALUE, attribute.getName()));
         DSMLValue[] array = new DSMLValue[values.size()];
         for (int i=0; i<values.size(); i++) {
             Object value = values.get(i);
