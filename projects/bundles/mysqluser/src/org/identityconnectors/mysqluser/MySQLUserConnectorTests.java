@@ -233,7 +233,7 @@ public class MySQLUserConnectorTests {
         final Uid uid = createUser(userName, testPassword, TST_HOST);
         assertNotNull(uid);
         assertEquals(userName, uid.getUidValue());
-        //dupicate
+        //duplicate
         try {
             createUser(userName, testPassword, TST_HOST);
             fail("Duplicate user created");
