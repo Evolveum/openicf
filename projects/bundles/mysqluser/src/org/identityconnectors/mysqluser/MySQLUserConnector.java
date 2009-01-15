@@ -345,7 +345,13 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
                 ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
                 
                 //To be sure that uid and name are present for mysql
-                final String userName = result.getObject(MySQLUserConfiguration.MYSQL_USER).toString();                
+                final String userName = result.getString(1);
+                //ISSUE, cloud be en empty string for anonymous public user
+                if(userName == null || userName.length()==0) {
+                    //Skip this line
+                    continue;
+                }
+                
                 bld.setUid(newUid(userName));
                 bld.setName(userName);
                 //No other attributes are now supported.
