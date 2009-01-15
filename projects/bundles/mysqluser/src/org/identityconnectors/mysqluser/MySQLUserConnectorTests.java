@@ -40,6 +40,7 @@ import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.api.ConnectorFacadeFactory;
+import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -220,6 +221,28 @@ public class MySQLUserConnectorTests {
         quitellyDeleteUser(userName);
     }
     
+
+    /**
+     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     */
+    @Test(expected=AlreadyExistsException.class)
+    public void testCreateDuplicate() {
+        assertNotNull(facade);
+        String userName=TST_USER1;
+        quitellyDeleteUser(userName);
+        final Uid uid = createUser(userName, testPassword, TST_HOST);
+        assertNotNull(uid);
+        assertEquals(userName, uid.getUidValue());
+        //dupicate
+        try {
+            createUser(userName, testPassword, TST_HOST);
+            fail("Duplicate user created");
+        } finally {
+            //Delete it at the end        
+            quitellyDeleteUser(userName);
+        }
+    }    
+    
     /**
      * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
      */
@@ -275,6 +298,8 @@ public class MySQLUserConnectorTests {
         quitellyDeleteUser(TST_USER1); 
         quitellyDeleteUser(TST_USER3);   
     }
+    
+
 
     
     /**
