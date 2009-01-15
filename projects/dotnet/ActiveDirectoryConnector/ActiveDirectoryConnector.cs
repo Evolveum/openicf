@@ -84,8 +84,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public static readonly string ATT_USER_ACOUNT_CONTROL = "userAccountControl";
         public static readonly string ATT_PASSWORD_NEVER_EXPIRES = "PasswordNeverExpires";
         public static readonly string OBJECTCLASS_OU = "Organizational Unit";
+        public static readonly string OBJECTCLASS_GROUP = "Group";
 
         public static readonly ObjectClass ouObjectClass = new ObjectClass(OBJECTCLASS_OU);
+        public static readonly ObjectClass groupObjectClass = new ObjectClass(OBJECTCLASS_GROUP);
+
         private static readonly string OLD_SEARCH_FILTER_STRING = "Search Filter String";
         private static readonly string OLD_SEARCH_FILTER = "searchFilter";
 
@@ -148,7 +151,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     ActiveDirectoryUtils.GetRelativeName(nameAttribute),
                     _utils.GetADObjectClass(oclass));
 
-                if (oclass.Equals(ObjectClass.GROUP))
+                if (oclass.Equals(ActiveDirectoryConnector.groupObjectClass))
                 {
                     ConnectorAttribute groupAttribute = 
                         ConnectorAttributeUtil.Find(ActiveDirectoryConnector.ATT_GROUP_TYPE, attributes);
@@ -347,7 +350,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// <returns></returns>
         protected virtual IList<SafeType<SPIOperation>> GetUnSupportedOperations(ObjectClass oc)
         {
-            if (oc.Equals(ObjectClass.GROUP) || oc.Equals(ouObjectClass))
+            if (oc.Equals(ActiveDirectoryConnector.groupObjectClass) || oc.Equals(ouObjectClass))
             {
                 return new List<SafeType<SPIOperation>> {
                     SafeType<SPIOperation>.Get<AuthenticateOp>(),
@@ -842,7 +845,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 DirectoryEntry parent = de.Parent;
                 parent.Children.Remove(de);
             }
-            else if (objClass.Equals(ObjectClass.GROUP) || objClass.Equals(ouObjectClass))
+            else if (objClass.Equals(ActiveDirectoryConnector.groupObjectClass) || objClass.Equals(ouObjectClass))
             {
                 // if it's a group or ou (container), delete this
                 // entry and all it's children

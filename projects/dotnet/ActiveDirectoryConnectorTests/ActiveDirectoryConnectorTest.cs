@@ -118,7 +118,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             foreach(ObjectClassInfo ocInfo in schema.ObjectClassInfo) {
                 Assert.IsNotNull(ocInfo);
                 Assert.That((ocInfo.ObjectType == ObjectClass.ACCOUNT.GetObjectClassValue())
-                    || (ocInfo.ObjectType == ObjectClass.GROUP.GetObjectClassValue()) 
+                    || (ocInfo.ObjectType == ActiveDirectoryConnector.OBJECTCLASS_GROUP) 
                     || (ocInfo.ObjectType == ActiveDirectoryConnector.OBJECTCLASS_OU));
                 Trace.WriteLine("****** " + ocInfo.ObjectType);
 
@@ -207,18 +207,18 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     CreateGroupMember(connector)));
 
                 // create object
-                uidToDelete = connector.Create(ObjectClass.GROUP, createAttributes, null);
+                uidToDelete = connector.Create(ActiveDirectoryConnector.groupObjectClass, createAttributes, null);
                 Uid createUid = uidToDelete;
                 Assert.IsNotNull(createUid);
 
                 // find new object ... have to add groups to list of things to return
                 OperationOptionsBuilder optionsBuilder = new OperationOptionsBuilder();
-                ICollection<String> attributesToGet = GetDefaultAttributesToGet(ObjectClass.GROUP);
+                ICollection<String> attributesToGet = GetDefaultAttributesToGet(ActiveDirectoryConnector.groupObjectClass);
                 attributesToGet.Add(PredefinedAttributes.ACCOUNTS_NAME);
                 optionsBuilder.AttributesToGet = attributesToGet.ToArray();
 
                 ConnectorObject newObject = GetConnectorObjectFromUid(connector,
-                    ObjectClass.GROUP, createUid, optionsBuilder.Build());
+                    ActiveDirectoryConnector.groupObjectClass, createUid, optionsBuilder.Build());
                 VerifyObject(createAttributes, newObject);
                 // update the group - replace
                 ICollection<ConnectorAttribute> updateReplaceAttrs =
@@ -233,7 +233,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 updateReplaceAttrs.Add(ConnectorAttributeBuilder.Build(
                     "description", "New description"));
                 uidToDelete = UpdateReplaceAndVerifyObject(connector,
-                    ObjectClass.GROUP, createUid, updateReplaceAttrs);
+                    ActiveDirectoryConnector.groupObjectClass, createUid, updateReplaceAttrs);
                 Uid updateReplaceUid = uidToDelete;
 
                 // update the group - add
@@ -243,14 +243,14 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     CreateGroupMember(connector), CreateGroupMember(connector)));
 
                 uidToDelete = UpdateAddAndVerifyUser(connector,
-                    ObjectClass.GROUP, updateReplaceUid, updateAddAttrs, optionsBuilder.Build());
+                    ActiveDirectoryConnector.groupObjectClass, updateReplaceUid, updateAddAttrs, optionsBuilder.Build());
             }
             finally
             {
                 if (uidToDelete != null)
                 {
                     // delete user
-                    DeleteAndVerifyObject(connector, ObjectClass.GROUP, uidToDelete, true, true);
+                    DeleteAndVerifyObject(connector, ActiveDirectoryConnector.groupObjectClass, uidToDelete, true, true);
                 }
             }
         }
@@ -288,14 +288,14 @@ namespace Org.IdentityConnectors.ActiveDirectory
             try
             {
                 ICollection<ConnectorAttribute> createAttributes = GetNormalAttributes_Group();
-                createUid = CreateAndVerifyObject(connector, ObjectClass.GROUP, createAttributes);
+                createUid = CreateAndVerifyObject(connector, ActiveDirectoryConnector.groupObjectClass, createAttributes);
             }
             finally
             {
                 if (createUid != null)
                 {
                     //remove the one we created
-                    DeleteAndVerifyObject(connector, ObjectClass.GROUP,
+                    DeleteAndVerifyObject(connector, ActiveDirectoryConnector.groupObjectClass,
                         createUid, false, true);
                 }
             }
@@ -539,12 +539,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 int numCreated = 0;
                 for (numCreated = 0; numCreated < 5; numCreated++)
                 {
-                    createdUids.Add(CreateAndVerifyObject(connector, 
-                        ObjectClass.GROUP, GetNormalAttributes_Group()));
+                    createdUids.Add(CreateAndVerifyObject(connector,
+                        ActiveDirectoryConnector.groupObjectClass, GetNormalAttributes_Group()));
                 }
 
                 ICollection<ConnectorObject> results = TestHelpers.SearchToList(connector,
-                    ObjectClass.GROUP, null);
+                    ActiveDirectoryConnector.groupObjectClass, null);
 
                 // not sure how many should be found ... it should find everything
                 // it's hard to say how many that is, but it should at least find the
@@ -562,7 +562,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         if ((o is String) && (o != null))
                         {
                             String stringValue = (String)o;
-                            if (stringValue.ToUpper().Trim().Equals("GROUP"))
+                            if (stringValue.ToUpper().Trim().Equals(
+                                ActiveDirectoryConnector.OBJECTCLASS_GROUP, StringComparison.CurrentCultureIgnoreCase))
                             {
                                 foundCorrectObjectClass = true;
                             }
@@ -577,7 +578,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 {
                     if (uid != null)
                     {
-                        DeleteAndVerifyObject(connector, ObjectClass.GROUP, uid, false, true);
+                        DeleteAndVerifyObject(connector, ActiveDirectoryConnector.groupObjectClass, uid, false, true);
                     }
                 }
             }
@@ -664,18 +665,18 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             try
             {
-                createUid = CreateAndVerifyObject(connector, ObjectClass.GROUP,
+                createUid = CreateAndVerifyObject(connector, ActiveDirectoryConnector.groupObjectClass,
                     GetNormalAttributes_Group());
 
                 // find out what the name was
                 ConnectorObject newObject = GetConnectorObjectFromUid(connector,
-                    ObjectClass.GROUP, createUid);
+                    ActiveDirectoryConnector.groupObjectClass, createUid);
                 Name nameAttr = newObject.Name;
                 Assert.IsNotNull(nameAttr);
 
                 //search normally
                 ICollection<ConnectorObject> results = TestHelpers.SearchToList(connector,
-                    ObjectClass.GROUP, FilterBuilder.EqualTo(nameAttr));
+                    ActiveDirectoryConnector.groupObjectClass, FilterBuilder.EqualTo(nameAttr));
 
                 // there really should only be one
                 Assert.AreEqual(results.Count, 1);
@@ -689,7 +690,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 ConnectorAttribute nameUpper = ConnectorAttributeBuilder.Build(
                     nameAttr.Name, nameAttr.GetNameValue().ToUpper());
                 results = TestHelpers.SearchToList(connector,
-                    ObjectClass.GROUP, FilterBuilder.EqualTo(nameUpper));
+                    ActiveDirectoryConnector.groupObjectClass, FilterBuilder.EqualTo(nameUpper));
 
                 // there really should only be one
                 Assert.AreEqual(results.Count, 1);
@@ -703,7 +704,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 ConnectorAttribute nameLower = ConnectorAttributeBuilder.Build(
                     nameAttr.Name, nameAttr.GetNameValue().ToLower());
                 results = TestHelpers.SearchToList(connector,
-                    ObjectClass.GROUP, FilterBuilder.EqualTo(nameLower));
+                    ActiveDirectoryConnector.groupObjectClass, FilterBuilder.EqualTo(nameLower));
 
                 // there really should only be one
                 Assert.AreEqual(results.Count, 1);
@@ -719,7 +720,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 if (createUid != null)
                 {
                     //remove the one we created
-                    DeleteAndVerifyObject(connector, ObjectClass.GROUP,
+                    DeleteAndVerifyObject(connector, ActiveDirectoryConnector.groupObjectClass,
                         createUid, false, true);
                 }
             }
@@ -1003,10 +1004,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 Assert.AreEqual(1, foundUserObjects.Count);
 
                 groupUid = CreateAndVerifyObject(connector, 
-                    ObjectClass.GROUP, GetNormalAttributes_Group());
+                    ActiveDirectoryConnector.groupObjectClass, GetNormalAttributes_Group());
                 Filter groupUidFilter = FilterBuilder.EqualTo(groupUid);
                 IList<ConnectorObject> foundGroupObjects =
-                    TestHelpers.SearchToList(connector, ObjectClass.GROUP, groupUidFilter);
+                    TestHelpers.SearchToList(connector, ActiveDirectoryConnector.groupObjectClass, groupUidFilter);
                 Assert.AreEqual(1, foundGroupObjects.Count);
                 String groupName = foundGroupObjects[0].Name.GetNameValue();
 
@@ -1021,7 +1022,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             } finally {
                 DeleteAndVerifyObject(connector, ObjectClass.ACCOUNT, userUid, false, false);
-                DeleteAndVerifyObject(connector, ObjectClass.GROUP, groupUid, false, false);
+                DeleteAndVerifyObject(connector, ActiveDirectoryConnector.groupObjectClass, groupUid, false, false);
             }
         }
 
@@ -1103,9 +1104,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 // create container for this test
                 ICollection<ConnectorAttribute> groupAttributes = GetNormalAttributes_Group();
                 createGroupUid = CreateAndVerifyObject(connector,
-                    ObjectClass.GROUP, groupAttributes);
+                    ActiveDirectoryConnector.groupObjectClass, groupAttributes);
                 ICollection<ConnectorObject> groupResults = TestHelpers.SearchToList(
-                    connector, ObjectClass.GROUP, FilterBuilder.EqualTo(createGroupUid));
+                    connector, ActiveDirectoryConnector.groupObjectClass, FilterBuilder.EqualTo(createGroupUid));
                 Assert.AreEqual(1, groupResults.Count);
                 Assert.AreEqual(createGroupUid, groupResults.ElementAt(0).Uid);
                 ConnectorAttribute groupDnAttr = 
@@ -1147,7 +1148,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 if (createGroupUid != null)
                 {
                     //remove the one we created
-                    DeleteAndVerifyObject(connector, ObjectClass.GROUP,
+                    DeleteAndVerifyObject(connector, ActiveDirectoryConnector.groupObjectClass,
                         createGroupUid, false, true);
                 }
             }
@@ -1523,10 +1524,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     "name", accountObject.GetAttributes()));
                 Assert.AreEqual(accountShortName, accountDisplayName);
 
-                uidGroup = CreateObject(connector, ObjectClass.GROUP, groupAttributes);
+                uidGroup = CreateObject(connector, ActiveDirectoryConnector.groupObjectClass, groupAttributes);
 
                 OperationOptionsBuilder groupOptionsBuilder = new OperationOptionsBuilder();
-                ICollection<String> groupAttributesToGet = GetDefaultAttributesToGet(ObjectClass.GROUP);
+                ICollection<String> groupAttributesToGet = GetDefaultAttributesToGet(ActiveDirectoryConnector.groupObjectClass);
                 groupAttributesToGet.Add(PredefinedAttributes.DESCRIPTION);
                 groupAttributesToGet.Add(PredefinedAttributes.SHORT_NAME);
                 groupAttributesToGet.Add("name");
@@ -1534,7 +1535,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 groupOptionsBuilder.AttributesToGet = groupAttributesToGet.ToArray();
 
                 ConnectorObject groupObject = GetConnectorObjectFromUid(connector,
-                    ObjectClass.GROUP, uidGroup, groupOptionsBuilder.Build());
+                    ActiveDirectoryConnector.groupObjectClass, uidGroup, groupOptionsBuilder.Build());
 
                 // compare description
                 string foundGroupDescription = ConnectorAttributeUtil.GetStringValue(
@@ -1587,7 +1588,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 if (uidGroup != null)
                 {
                     //remove the one we created
-                    DeleteAndVerifyObject(connector, ObjectClass.GROUP,
+                    DeleteAndVerifyObject(connector, ActiveDirectoryConnector.groupObjectClass,
                         uidGroup, false, true);
                 }
                 if (uidOu != null)

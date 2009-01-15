@@ -263,7 +263,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 HandleNameChange(type, directoryEntry, attributes);
                 HandleContainerChange(type, directoryEntry, attributes, config);
             }
-            else if (oclass.Equals(ObjectClass.GROUP))
+            else if (oclass.Equals(ActiveDirectoryConnector.groupObjectClass))
             {
                 // translate attribute passed in
                 foreach (ConnectorAttribute attribute in attributes)
@@ -473,13 +473,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             if (oclass.Equals(ObjectClass.ACCOUNT))
             {
-                return "User";
+                return _configuration.ObjectClass;
             }
-            else if (oclass.Equals(ObjectClass.GROUP))
+            else if (ActiveDirectoryConnector.groupObjectClass.Equals(oclass))
             {
                 return "Group";
             }
-            else if ("ORGANIZATIONAL UNIT".Equals(oclass.GetObjectClassValue(), StringComparison.CurrentCultureIgnoreCase))
+            else if (ActiveDirectoryConnector.ouObjectClass.Equals(oclass))
             {
                 return "organizationalUnit";
             }

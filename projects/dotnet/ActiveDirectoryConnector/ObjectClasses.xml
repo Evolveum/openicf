@@ -157,7 +157,7 @@
       </AttributeInfo>
     </AttributeInfos>
   </ObjectClassInfo>
-  <ObjectClassInfo container="false" type="group">
+  <ObjectClassInfo container="false" type="Group">
     <AttributeInfos>
       <AttributeInfo name="cn" type="String" >
         <AttributeInfoFlag value="NOT_CREATABLE"/>

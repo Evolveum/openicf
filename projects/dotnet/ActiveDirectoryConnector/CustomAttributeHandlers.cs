@@ -227,7 +227,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             if(oclass.Equals(ObjectClass.ACCOUNT)) {
                 ignoreList = IgnoreConnectorAttributeNames_account;
             }
-            else if (oclass.Equals(ObjectClass.GROUP))
+            else if (oclass.Equals(ActiveDirectoryConnector.groupObjectClass))
             {
                 ignoreList = IgnoreConnectorAttributeNames_group;
             }
@@ -393,7 +393,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             UpdateType type, DirectoryEntry directoryEntry, 
             ConnectorAttribute attribute) 
         {
-            if (ObjectClass.GROUP.Equals(oclass))
+            if (ActiveDirectoryConnector.groupObjectClass.Equals(oclass))
             {
                 // create an 'attribute' with the real name, and then call the 
                 // generic version
