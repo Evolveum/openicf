@@ -29,6 +29,7 @@
     <RootNamespace>Org.IdentityConnectors.ActiveDirectory</RootNamespace>
     <AssemblyName>ActiveDirectory.Connector</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <ZipRelease>true</ZipRelease>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <ErrorReport>prompt</ErrorReport>
@@ -52,7 +53,7 @@
     <Optimize>True</Optimize>
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
   </PropertyGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
+  <Import Project="$(MSBuildProjectDirectory)\..\DotNetCommonBuild.Targets" />
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core">
@@ -87,10 +88,12 @@
     <ProjectReference Include="..\Common\Common.csproj">
       <Project>{F140E8DA-52B4-4159-992A-9DA10EA8EEFB}</Project>
       <Name>Common</Name>
+      <Private>False</Private>
     </ProjectReference>
     <ProjectReference Include="..\Framework\Framework.csproj">
       <Project>{8B24461B-456A-4032-89A1-CD418F7B5B62}</Project>
       <Name>Framework</Name>
+      <Private>False</Private>
     </ProjectReference>
     <COMReference Include="ActiveDs">
       <Guid>{97d25db0-0363-11cf-abc4-02608c9e7553}</Guid>
@@ -116,5 +119,5 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="ObjectClasses.xml" />
-  </ItemGroup>
+  </ItemGroup>  
 </Project>

@@ -51,8 +51,7 @@
     <DebugSymbols>False</DebugSymbols>
     <Optimize>True</Optimize>
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
-  </PropertyGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
+  </PropertyGroup>  
   <ItemGroup>
     <Reference Include="Boo.Lang">
       <HintPath>lib\Boo.Lang.dll</HintPath>
@@ -88,6 +87,7 @@
       <Name>Common</Name>
     </ProjectReference>
   </ItemGroup>
+  <Import Project="$(MSBuildProjectDirectory)\..\DotNetCommonBuild.Targets" />
   <Target Name="Clean">
     <RemoveDir Directories="bin;obj">
     </RemoveDir>

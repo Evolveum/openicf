@@ -20,24 +20,15 @@
   "Portions Copyrighted [year] [name of copyright owner]"
   ====================
 -->
-<project name="connectors-dotnet" default="dist-release">    
-    <property name="server.exe" value="ConnectorServer.exe"/>
-    <property name="server.service" value="Connector Server"/>
+<project name="connectors-dotnet">    
+    <property name="server.exe" value="ConnectorServer.exe"/>    
     <property name="framework.dir" value="../framework"/>
     <property name="dotnet.dir" value="./"/>
     <condition property="contract.suite.classname" value="org.identityconnectors.contract.test.${testname}">
         <isset property="testname"/>
     </condition>
     <property name="dist.dotnet" value="./dist"/>
-    <import file="${framework.dir}/connector_build.xml"/>
-    <target name="msbuild">
-       <exec executable="cmd" osfamily="Windows">
-            <arg value="/c"/>
-            <arg value="msbuild.exe"/>
-            <arg value="${dotnet.dir}/MyDotNetConnectors.sln"/>
-       </exec>
-       
-    </target>
+    <import file="${framework.dir}/connector_build.xml"/>    
     <target name="dist-debug">
         <mkdir dir="${dist.dotnet}" />
         <copy todir="${dist.dotnet}" flatten="true">
@@ -59,34 +50,25 @@
         </copy>
     </target>
     <target name="run-server">
-       <exec dir="${dist.dotnet}" executable="cmd" osfamily="Windows">
-            <arg value="/c"/>
+	<exec dir="${dist.dotnet}" executable="cmd" osfamily="Windows" spawn="true">
+	    <arg value="/c"/>
+	    <arg value="start"/>
             <arg value="${server.exe}"/>
-            <arg value="/install"/>
-       </exec>
-       <exec dir="${dist.dotnet}" executable="cmd" osfamily="Windows">
-            <arg value="/c"/>
-            <arg value="net"/>
-            <arg value="start"/>
-            <arg value="${server.service}"/>            
-       </exec>       
+            <arg value="/run"/>
+       </exec>	   
     </target>
     <target name="stop-server">
        <exec dir="${dist.dotnet}" executable="cmd" osfamily="Windows">
             <arg value="/c"/>
-            <arg value="net"/>
-            <arg value="stop"/>
-            <arg value="${server.service}"/>            
-       </exec>
-       <exec dir="${dist.dotnet}" executable="cmd" osfamily="Windows">
-            <arg value="/c"/>
-            <arg value="${server.exe}"/>
-            <arg value="/uninstall"/>
-       </exec>
+            <arg value="taskkill.exe"/>
+	    <arg value="/IM"/>
+            <arg value="${server.exe}"/>            
+       </exec>	   
     </target>
-    <target name="run-contract-tests" depends="stop-server, dist-release, run-server, run-cs-contract-tests, report-junits, stop-server"/>            
-    <target name="run-contract-tests-debug" depends="stop-server, dist-debug, run-server, run-cs-contract-tests, report-junits, stop-server"/>    
+    <target name="run-contract-tests" depends="dist-release, run-server, run-cs-contract-tests, stop-server, report-junits"/>            
+    <target name="run-contract-tests-debug" depends="dist-debug, run-server, run-cs-contract-tests, stop-server, report-junits"/>    
     <target name="clean">
         <delete dir="${dist.dotnet}" />
     </target>
 </project>
+

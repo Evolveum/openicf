@@ -57,10 +57,10 @@
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
+  <Import Project="$(MSBuildProjectDirectory)\..\DotNetCommonBuild.Targets" />
   <ItemGroup>
     <Reference Include="Boo.Lang">
-      <HintPath>..\..\..\..\..\Program Files\SharpDevelop\3.0\AddIns\AddIns\BackendBindings\BooBinding\Boo.Lang.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\Program Files\SharpDevelop\3.0\AddIns\AddIns\BackendBindings\BooBinding\Boo.Lang.dll</HintPath>
     </Reference>
     <Reference Include="System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
     <Reference Include="System.Core">

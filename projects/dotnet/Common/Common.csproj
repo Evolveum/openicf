@@ -56,8 +56,8 @@
     <BaseAddress>4194304</BaseAddress>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <FileAlignment>4096</FileAlignment>
-  </PropertyGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
+  </PropertyGroup>  
+  <Import Project="$(MSBuildProjectDirectory)\..\DotNetCommonBuild.Targets" />
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core">

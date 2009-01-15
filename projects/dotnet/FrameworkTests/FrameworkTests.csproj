@@ -46,7 +46,7 @@
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
+  <Import Project="$(MSBuildProjectDirectory)\..\DotNetCommonBuild.Targets" />
   <ItemGroup>
     <Reference Include="nunit.framework" />
     <Reference Include="System" />
@@ -98,8 +98,7 @@
       <Project>{5B011775-B121-4EEE-A410-BA2D2F5BFB8B}</Project>
       <Name>FrameworkInternal</Name>
     </ProjectReference>
-  </ItemGroup>
-  <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" Condition=" !Exists('$(SharpDevelopBinPath)') " />
+  </ItemGroup>  
   <Target Name="BeforeBuild">
     <MakeDir Directories="$(OutputPath)" />
     <!-- Build TestBundle V1 -->

@@ -93,7 +93,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActiveDirectoryConnectorTest.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ActiveDirectoryConnector\ActiveDirectoryConnector.csproj">
@@ -122,19 +122,5 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" Condition=" !Exists('$(SharpDevelopBinPath)') " />
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-    <!-- Run the tests -->
-    <CreateItem Include="ActiveDirectoryConnectorTests.dll">
-      <Output TaskParameter="Include" ItemName="TestAssembly" />
-    </CreateItem>
-    <MSBuild.Community.Tasks.NUnit DisableShadowCopy="true" WorkingDirectory="bin\$(Configuration)" Assemblies="@(TestAssembly)" ContinueOnError="true" ToolPath="$(NUNIT_HOME)\bin" OutputXmlFile="TestResults_$(Configuration).xml" />
-  </Target>
-  <Target Name="Clean">
-    <RemoveDir Directories="bin;obj">
-    </RemoveDir>
-  </Target>
+  <Import Project="$(MSBuildProjectDirectory)\..\DotNetCommonBuild.Targets" />  
 </Project>

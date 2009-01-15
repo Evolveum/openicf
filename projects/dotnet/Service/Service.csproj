@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ====================
   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
   
@@ -31,6 +31,7 @@
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <NoStdLib>False</NoStdLib>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <ZipRelease>true</ZipRelease>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <ErrorReport>prompt</ErrorReport>
@@ -65,8 +66,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <FileAlignment>4096</FileAlignment>
   </PropertyGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
-  <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
+  <Import Project="$(MSBuildProjectDirectory)\..\DotNetCommonBuild.Targets" />
   <ItemGroup>
     <Reference Include="System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
     <Reference Include="System.Configuration" />
@@ -95,16 +95,7 @@
   <Target Name="Clean">
     <RemoveDir Directories="bin;obj">
     </RemoveDir>
-  </Target>
-  <ItemGroup>
-    <ZipFiles Include="$(OutputPath)/*.dll" />
-    <ZipFiles Include="$(OutputPath)/*.pdb" />
-    <ZipFiles Include="$(OutputPath)/*.exe" />
-  </ItemGroup>
-  <Target Name="ConnectorServerZip">
-    <MakeDir Directories="$(OutputPath)../dist" />
-    <Zip Files="@(ZipFiles)" WorkingDirectory="$(OutputPath)" ZipFileName="$(OutputPath)../dist/ConnectorServer-$(Version)-$(SVN_REVISION).zip" />
-  </Target>
+  </Target>   
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj">
       <Project>{F140E8DA-52B4-4159-992A-9DA10EA8EEFB}</Project>

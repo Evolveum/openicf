@@ -1,0 +1,60 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
+    <!-- DotNet Common build targets -->
+    <PropertyGroup>                
+        <SVN_Revision Condition="'$(SVN_REVISION)' == ''">0</SVN_Revision>
+        <VersionFile>$(MSBuildProjectDirectory)\version.txt</VersionFile>
+        <Company>Sun Microsystems, Inc.</Company>
+        <Copyright>Copyright 2007-2008 Sun Microsystems, Inc. All rights reserved.</Copyright>
+        <CommonBuildDir>$(MSBuildProjectDirectory)\..\Build</CommonBuildDir>
+    </PropertyGroup>
+
+    <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />   
+    <Target Name="SetVersion">
+        <Version VersionFile="$(VersionFile)">
+                <Output TaskParameter="Major" PropertyName="Major" />
+                <Output TaskParameter="Minor" PropertyName="Minor" />
+                <Output TaskParameter="Build" PropertyName="Build" />
+                <!-- Output TaskParameter="Revision" PropertyName="Revision" / -->
+       </Version>
+       <Message Text="$(MSBuildProjectName) Version: $(Major).$(Minor).$(Build).$(SVN_Revision)"/>
+       <AssemblyInfo CodeLanguage="CS"  
+                OutputFile="AssemblyInfo.cs"    
+                AssemblyCopyright="$(Copyright)"
+                AssemblyCompany="$(Company)"             
+                AssemblyVersion="$(Major).$(Minor).$(Build).$(SVN_Revision)" 
+                AssemblyFileVersion="$(Major).$(Minor).$(Build).$(SVN_Revision)" />
+    </Target>
+    <Target Name="BuildZip">
+        <ItemGroup>        
+            <ZipFiles Include="$(OutputPath)/*.*" Exclude="*.zip" />
+        </ItemGroup>
+        <MakeDir Directories="$(CommonBuildDir)" Condition="!Exists('$(CommonBuildDir)')" />
+         <Zip Files="@(ZipFiles)"
+           WorkingDirectory="$(OutputPath)" 
+           ZipFileName="$(CommonBuildDir)\$(AssemblyName)-$(Major).$(Minor).$(Build).$(SVN_Revision).zip"
+           ZipLevel="9" /> 
+    </Target>
+        
+    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />    
+    <PropertyGroup>
+        <BuildDependsOn>
+            CommonBeforeBuild;
+            $(BuildDependsOn);
+            CommonAfterBuild
+        </BuildDependsOn>
+        <CleanDependsOn>            
+            $(CleanDependsOn);
+            CommonClean
+        </CleanDependsOn>
+    </PropertyGroup>    
+    <Target Name="CommonBeforeBuild">
+        <CallTarget Targets="SetVersion" />
+    </Target>
+    <Target Name="CommonAfterBuild">
+        <CallTarget Condition=" '$(Configuration)'=='Release' And '$(ZipRelease)'=='true' " Targets="BuildZip" />            
+    </Target>
+    <Target Name="CommonClean">
+        <RemoveDir Directories="$(CommonBuildDir)"/>
+    </Target>
+    
+</Project>
