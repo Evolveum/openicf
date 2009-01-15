@@ -28,6 +28,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Org.IdentityConnectors.Common</RootNamespace>
     <AssemblyName>Common</AssemblyName>
+    <ProductName>Open Connectors Common</ProductName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <NoStdLib>False</NoStdLib>

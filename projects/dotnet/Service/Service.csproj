@@ -28,6 +28,7 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>Sun.OpenConnectors.Framework.Service</RootNamespace>
     <AssemblyName>ConnectorServer</AssemblyName>
+    <ProductName>Service</ProductName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <NoStdLib>False</NoStdLib>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>

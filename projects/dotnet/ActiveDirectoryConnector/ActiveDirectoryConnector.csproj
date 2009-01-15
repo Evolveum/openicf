@@ -28,6 +28,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Org.IdentityConnectors.ActiveDirectory</RootNamespace>
     <AssemblyName>ActiveDirectory.Connector</AssemblyName>
+    <ProductName>ActiveDirectoryConnector</ProductName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <ZipRelease>true</ZipRelease>
   </PropertyGroup>

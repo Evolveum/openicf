@@ -18,7 +18,9 @@
        </Version>
        <Message Text="$(MSBuildProjectName) Version: $(Major).$(Minor).$(Build).$(SVN_Revision)"/>
        <AssemblyInfo CodeLanguage="CS"  
-                OutputFile="AssemblyInfo.cs"    
+                OutputFile="AssemblyInfo.cs"
+                AssemblyTitle="$(ProductName)"
+                AssemblyProduct="$(ProductName)"
                 AssemblyCopyright="$(Copyright)"
                 AssemblyCompany="$(Company)"             
                 AssemblyVersion="$(Major).$(Minor).$(Build).$(SVN_Revision)" 

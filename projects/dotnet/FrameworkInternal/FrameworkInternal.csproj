@@ -28,6 +28,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Org.IdentityConnectors</RootNamespace>
     <AssemblyName>FrameworkInternal</AssemblyName>
+    <ProductName>FrameworkInternal</ProductName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <NoStdLib>False</NoStdLib>

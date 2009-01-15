@@ -28,6 +28,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Sun.OpenConnectors.Common.Script.Shell</RootNamespace>
     <AssemblyName>Shell.ScriptExecutorFactory</AssemblyName>
+    <ProductName>ShellScriptExecutorFactory</ProductName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

@@ -28,6 +28,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Org.IdentityConnectors.Common.Script.Boo</RootNamespace>
     <AssemblyName>Boo.ScriptExecutorFactory</AssemblyName>
+    <ProductName>BooScriptExecutorFactory</ProductName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
