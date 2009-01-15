@@ -42,67 +42,42 @@
       <AttributeInfo name="sAMAccountName" type="String">
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
-      <AttributeInfo name="givenName" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="sn" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="displayName" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="mail" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="telephoneNumber" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="employeeID" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="division" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="mobile" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="middleName" type="String">
-      </AttributeInfo>
+      <AttributeInfo name="givenName" type="String"/>
+      <AttributeInfo name="sn" type="String"/>
+      <AttributeInfo name="displayName" type="String"/>
+      <AttributeInfo name="mail" type="String"/>
+      <AttributeInfo name="telephoneNumber" type="String"/>
+      <AttributeInfo name="employeeID" type="String"/>
+      <AttributeInfo name="division" type="String"/>
+      <AttributeInfo name="mobile" type="String"/>
+      <AttributeInfo name="middleName" type="String"/>
       <AttributeInfo name="description" type="String">
         <AttributeInfoFlag value="MULTIVALUED"/>
       </AttributeInfo>
-      <AttributeInfo name="department" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="manager" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="title" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="initials" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="co" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="company" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="facsimileTelephoneNumber" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="homePhone" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="streetAddress" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="l" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="st" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="postalCode" type="String">
-      </AttributeInfo>
+      <AttributeInfo name="department" type="String"/>
+      <AttributeInfo name="manager" type="String"/>
+      <AttributeInfo name="title" type="String"/>
+      <AttributeInfo name="initials" type="String"/>
+      <AttributeInfo name="co" type="String"/>
+      <AttributeInfo name="company" type="String"/>
+      <AttributeInfo name="facsimileTelephoneNumber" type="String"/>
+      <AttributeInfo name="homePhone" type="String"/>
+      <AttributeInfo name="streetAddress" type="String"/>
+      <AttributeInfo name="l" type="String"/>
+      <AttributeInfo name="st" type="String"/>
+      <AttributeInfo name="postalCode" type="String"/>
       <AttributeInfo name="TerminalServicesInitialProgram" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
-      <AttributeInfo name="TerminalServicesWorkDirectory" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="AllowLogon" type="Integer">
-      </AttributeInfo>
-      <AttributeInfo name="MaxConnectionTime" type="Integer">
-      </AttributeInfo>
+      <AttributeInfo name="TerminalServicesWorkDirectory" type="String"/>
+      <AttributeInfo name="AllowLogon" type="Integer"/>
+      <AttributeInfo name="MaxConnectionTime" type="Integer"/>
       <AttributeInfo name="MaxDisconnectionTime" type="Integer">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
-      <AttributeInfo name="MaxIdleTime" type="Integer">
-      </AttributeInfo>
+      <AttributeInfo name="MaxIdleTime" type="Integer"/>
       <AttributeInfo name="ConnectClientDrivesAtLogon" type="Integer">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
@@ -143,8 +118,7 @@
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
-      <AttributeInfo name="ad_container" type="String">
-      </AttributeInfo>
+      <AttributeInfo name="ad_container" type="String"/>
       <AttributeInfo name="otherHomePhone" type="String">
         <AttributeInfoFlag value="MULTIVALUED"/>
       </AttributeInfo>
@@ -156,27 +130,20 @@
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
-      <AttributeInfo name="homeDirectory" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="@@ENABLE@@" type="Boolean">
-      </AttributeInfo>
-      <AttributeInfo name="@@ENABLE_DATE@@" type="long">
-      </AttributeInfo>
-      <AttributeInfo name="@@LOCK_OUT@@" type="Boolean">
-      </AttributeInfo>
-      <AttributeInfo name="@@PASSWORD_EXPIRATION_DATE@@" type="long">
-      </AttributeInfo>
-      <AttributeInfo name="@@PASSWORD_EXPIRED@@" type="Boolean">
-      </AttributeInfo>
-      <AttributeInfo name="@@CURRENT_PASSWORD@@" type="GuardedString">
-      </AttributeInfo>
+      <AttributeInfo name="homeDirectory" type="String"/>
+      <AttributeInfo name="PasswordNeverExpires" type="Boolean"/>
+      <AttributeInfo name="@@ENABLE@@" type="Boolean"/>
+      <AttributeInfo name="@@ENABLE_DATE@@" type="long"/>
+      <AttributeInfo name="@@LOCK_OUT@@" type="Boolean"/>
+      <AttributeInfo name="@@PASSWORD_EXPIRATION_DATE@@" type="long"/>
+      <AttributeInfo name="@@PASSWORD_EXPIRED@@" type="Boolean"/>
+      <AttributeInfo name="@@CURRENT_PASSWORD@@" type="GuardedString"/>
       <AttributeInfo name="@@PASSWORD@@" type="GuardedString">
         <AttributeInfoFlag value="MULTIVALUED"/>
         <AttributeInfoFlag value="NOT_READABLE"/>
         <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
-      <AttributeInfo name="@@GROUPS@@" type="String">
-      </AttributeInfo>
+      <AttributeInfo name="@@GROUPS@@" type="String"/>
       <AttributeInfo name="@@DESCRIPTION@@" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
@@ -196,20 +163,15 @@
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
-      <AttributeInfo name="samAccountName" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="description" type="String">
-      </AttributeInfo>
+      <AttributeInfo name="samAccountName" type="String"/>
+      <AttributeInfo name="description" type="String"/>
       <AttributeInfo name="displayName" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
-      <AttributeInfo name="managedby" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="mail" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="groupType" type="int">
-      </AttributeInfo>
+      <AttributeInfo name="managedby" type="String"/>
+      <AttributeInfo name="mail" type="String"/>
+      <AttributeInfo name="groupType" type="int"/>
       <AttributeInfo name="objectClass" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
@@ -219,10 +181,8 @@
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
         <AttributeInfoFlag value="MULTIVALUED"/>
       </AttributeInfo>
-      <AttributeInfo name="ad_container" type="String">
-      </AttributeInfo>
-      <AttributeInfo name="@@ACCOUNTS@@" type="String">
-      </AttributeInfo>
+      <AttributeInfo name="ad_container" type="String"/>
+      <AttributeInfo name="@@ACCOUNTS@@" type="String"/>
       <AttributeInfo name="@@DESCRIPTION@@" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
@@ -234,7 +194,7 @@
       <AttributeInfo name="@@NAME@@" type="String">
         <AttributeInfoFlag value="REQUIRED"/>
       </AttributeInfo>
-      </AttributeInfos>
+    </AttributeInfos>
   </ObjectClassInfo>
   <ObjectClassInfo container="true" type="Organizational Unit">
     <AttributeInfos>

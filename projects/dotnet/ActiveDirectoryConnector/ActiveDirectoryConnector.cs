@@ -82,6 +82,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public static readonly string ATT_SHORT_NAME = "name";
         public static readonly string ATT_DISPLAY_NAME = "displayName";
         public static readonly string ATT_USER_ACOUNT_CONTROL = "userAccountControl";
+        public static readonly string ATT_PASSWORD_NEVER_EXPIRES = "PasswordNeverExpires";
         public static readonly string OBJECTCLASS_OU = "Organizational Unit";
 
         public static readonly ObjectClass ouObjectClass = new ObjectClass(OBJECTCLASS_OU);

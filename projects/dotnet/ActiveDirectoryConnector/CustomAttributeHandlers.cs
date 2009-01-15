@@ -115,6 +115,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 UpdateDeFromCa_OpAtt_PasswordExpireDate);
             UpdateDeFromCaDelegates.Add(OperationalAttributes.LOCK_OUT_NAME,
                 UpdateDeFromCa_OpAtt_Lockout);
+            UpdateDeFromCaDelegates.Add(ActiveDirectoryConnector.ATT_PASSWORD_NEVER_EXPIRES,
+                UpdateDeFromCa_PasswordNeverExpires);
+            
             // supporting class not implemented in the framework
             /*
             UpdateDeFromCaDelegates.Add(OperationalAttributes.ENABLE_DATE_NAME,
@@ -174,6 +177,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 GetCaFromDe_OpAtt_Lockout);
             GetCaFromDeDelegates.Add(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,
                 GetCaFromDe_OpAtt_PasswordExpireDate);
+            GetCaFromDeDelegates.Add(ActiveDirectoryConnector.ATT_PASSWORD_NEVER_EXPIRES,
+                GetCaFromDe_PasswordNeverExpires);
             // supporting class not implemented in the framework
             /*
             GetCaFromDeDelegates.Add(OperationalAttributes.ENABLE_DATE_NAME,
@@ -488,13 +493,21 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 directoryEntry.Properties[ActiveDirectoryConnector.ATT_PWD_LAST_SET].Value = GetLargeIntegerFromLong(0);
             }
             else
-            { 
+            {
+                directoryEntry.Properties[ActiveDirectoryConnector.ATT_PWD_LAST_SET].Clear();
+                Int64 int64Value = -1;
+                LargeInteger li = new LargeIntegerClass();
+                li.HighPart = (int)(int64Value >> 32);
+                li.LowPart = (int)(int64Value & 0xFFFFFFFF);
+                directoryEntry.Properties[ActiveDirectoryConnector.ATT_PWD_LAST_SET].Value = li;
+                /*
                 // this value can't be set (other than to zero) I'm throwing my own exception
                 // here, because if not, AD thows this (at least on my machine):
                 //      System.DirectoryServices.DirectoryServicesCOMException : A device attached to the system is not functioning. (Exception from HRESULT: 0x8007001F)
                 throw new ConnectorException(_configuration.ConnectorMessages.Format(
                     "ex_PasswordMustBeReset",
                     "Password expiration can only be reset by reseting the password"));
+                 */
             }
         }
 
@@ -505,7 +518,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             DateTime? expireDate = ConnectorAttributeUtil.GetDateTimeValue(attribute);
             if(expireDate.HasValue) {
                 directoryEntry.Properties[ActiveDirectoryConnector.ATT_ACCOUNT_EXPIRES].Value =
-                    GetLargeIntegerFromLong((ulong)expireDate.Value.ToFileTime());
+                    GetLargeIntegerFromLong(expireDate.Value.ToFileTime());
             }
         }
 
@@ -523,10 +536,23 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         "ex_LockAccountNotAllowed", "Active Directory does not support locking users.  User may be unlocked only"));
                 }
                 directoryEntry.Properties[ActiveDirectoryConnector.ATT_LOCKOUT_TIME].Value = 
-                    GetLargeIntegerFromLong((ulong)lockoutTime);
+                    GetLargeIntegerFromLong(lockoutTime);
             }
         }
-
+        internal void UpdateDeFromCa_PasswordNeverExpires(ObjectClass oclass,
+            UpdateType type, DirectoryEntry directoryEntry,
+            ConnectorAttribute attribute)
+        {
+            bool? passwordNeverExpires = ConnectorAttributeUtil.GetBooleanValue(attribute);
+            if (passwordNeverExpires.HasValue)
+            {
+                PropertyValueCollection pvc = 
+                    directoryEntry.Properties[ActiveDirectoryConnector.ATT_USER_ACOUNT_CONTROL];
+                UserAccountControl.Set(pvc,
+                    UserAccountControl.DONT_EXPIRE_PASSWORD, 
+                    passwordNeverExpires);
+            }
+        }
         // supporting class not implemented in the framework
 /*
         internal void UpdateDeFromCa_OpAtt_EnableDate(ObjectClass oclass,
@@ -988,6 +1014,24 @@ namespace Org.IdentityConnectors.ActiveDirectory
             return ConnectorAttributeBuilder.BuildLockOut(locked);
         }
 
+        private ConnectorAttribute GetCaFromDe_PasswordNeverExpires(
+            ObjectClass oclass, string attributeName, SearchResult searchResult)
+        {
+            ConnectorAttribute ca = null;
+            DirectoryEntry de = searchResult.GetDirectoryEntry();
+            if(de != null) {
+                PropertyValueCollection pvc = 
+                    de.Properties[ActiveDirectoryConnector.ATT_USER_ACOUNT_CONTROL];
+                if (pvc != null)
+                {
+                    bool pne = UserAccountControl.IsSet(pvc, 
+                        UserAccountControl.DONT_EXPIRE_PASSWORD);
+                    ca = ConnectorAttributeBuilder.Build(attributeName, pne);
+                }
+            }
+            return ca;
+        }
+
         // supporting class not implemented in the framework
 /*
         private ConnectorAttribute GetCaFromDe_OpAtt_EnableDate(
@@ -1155,11 +1199,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         // sets a LargeInteger (COM object) from a long
-        LargeInteger GetLargeIntegerFromLong(ulong longValue)
+        LargeInteger GetLargeIntegerFromLong(Int64 int64Value)
         {
             LargeInteger largeInteger = new LargeIntegerClass();
-            largeInteger.HighPart = (int)((longValue & 0xFFFFFFFF00000000) >> 32);
-            largeInteger.LowPart = (int)(longValue & 0x00000000FFFFFFFF);
+            largeInteger.HighPart = (int)(int64Value >> 32); ;
+            largeInteger.LowPart = largeInteger.LowPart = (int)(int64Value & 0xFFFFFFFF);
             return largeInteger;
         }
     }
