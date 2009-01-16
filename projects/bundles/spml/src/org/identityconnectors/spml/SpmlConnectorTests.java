@@ -244,7 +244,7 @@ public class SpmlConnectorTests {
             boolean personFound = false;
             boolean firstnameFound = false;
             for (ObjectClassInfo ocInfo : schema.getObjectClassInfo()) {
-                if (ocInfo.getType().equals(ObjectClass.ACCOUNT_NAME)) {
+                if (ocInfo.is(ObjectClass.ACCOUNT_NAME)) {
                     System.out.println("Schema for "+ocInfo.getType());
                     personFound = true;
                     for (AttributeInfo attr : ocInfo.getAttributeInfo()) {

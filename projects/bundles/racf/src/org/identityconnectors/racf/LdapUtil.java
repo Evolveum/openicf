@@ -250,7 +250,7 @@ class LdapUtil {
         Set<ObjectClassInfo> objectClassInfos = _schema.getObjectClassInfo();
         ObjectClassInfo accountInfo = null;
         for (ObjectClassInfo objectClassInfo : objectClassInfos) {
-            if (objectClassInfo.getType().equals(objectClass.getObjectClassValue()))
+            if (objectClassInfo.is(objectClass.getObjectClassValue()))
                 accountInfo = objectClassInfo;
         }
         Set<AttributeInfo> attributeInfos = accountInfo.getAttributeInfo();

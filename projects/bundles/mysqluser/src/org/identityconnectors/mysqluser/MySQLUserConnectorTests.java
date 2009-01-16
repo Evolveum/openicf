@@ -629,7 +629,7 @@ public class MySQLUserConnectorTests {
         ObjectClassInfo objectInfo = (ObjectClassInfo) objectInfos.toArray()[0];
         assertNotNull(objectInfo);
         // the object class has to ACCOUNT_NAME
-        assertEquals(ObjectClass.ACCOUNT_NAME, objectInfo.getType());
+        assertTrue(objectInfo.is(ObjectClass.ACCOUNT_NAME));
         // iterate through AttributeInfo Set
         Set<AttributeInfo> attInfos = objectInfo.getAttributeInfo();
         

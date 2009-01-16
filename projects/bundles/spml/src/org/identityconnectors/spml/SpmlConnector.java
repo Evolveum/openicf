@@ -541,7 +541,7 @@ public class SpmlConnector implements PoolableConnector, CreateOp,
         String[] classNames = _configuration.getObjectClassNames();
         String[] targetNames = _configuration.getTargetNames();
         for (int i=0; i<classNames.length; i++) {
-            if (classNames[i].equalsIgnoreCase(objectClass.getObjectClassValue()))
+            if (objectClass.is(classNames[i]))
                 return targetNames[i];
         }
         return null;

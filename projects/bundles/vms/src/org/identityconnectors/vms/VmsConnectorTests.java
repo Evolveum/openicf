@@ -863,7 +863,7 @@ public class VmsConnectorTests {
         boolean accountSeen = false;
         Set<ObjectClassInfo> ocInfos = schema.getObjectClassInfo();
         for (ObjectClassInfo ocInfo : ocInfos) {
-            if (ocInfo.getType().equals(ObjectClass.ACCOUNT_NAME)) {
+            if (ocInfo.is(ObjectClass.ACCOUNT_NAME)) {
                 accountSeen = true;
             }
         }
