@@ -1712,7 +1712,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          *         that of the one in this {@link ObjectClass}.
          */
         public bool Is(String name) {
-            return this._type.equalsIgnoreCase(name);    
+            return this._type.Equals(name, StringComparison.CurrentCultureIgnoreCase);    
         }    
         
         public override int GetHashCode() {
@@ -1824,7 +1824,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                 return false;
             }
 
-            if (obj.GetType().Equals(this.GetType()))
+            if (!obj.GetType().Equals(this.GetType()))
             {
                 return false;
             }
