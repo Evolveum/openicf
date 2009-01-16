@@ -22,7 +22,7 @@
 -->
 <project name="connector-ad" default="run-contract-tests">
     <property name="contracts.run" value="true"/>
-    <property name="framework.dir" value="../../framework"/>
+    <property name="framework.dir" value="${basedir}/../../framework"/>
     <property name="dotnet.dir" value="../"/>
     <import file="../build.xml"/>    
 </project>

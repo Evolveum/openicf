@@ -20,14 +20,15 @@
   "Portions Copyrighted [year] [name of copyright owner]"
   ====================
 -->
-<project name="connectors-dotnet">    
+<project name="connectors-dotnet">
+    <loadfile property="ConnectorBundle-Version" srcfile="version.txt"/>    
     <property name="server.exe" value="ConnectorServer.exe"/>    
     <property name="framework.dir" value="../framework"/>
     <property name="dotnet.dir" value="./"/>
     <condition property="contract.suite.classname" value="org.identityconnectors.contract.test.${testname}">
         <isset property="testname"/>
     </condition>
-    <property name="dist.dotnet" value="./dist"/>
+    <property name="dist.dotnet" value="dist"/>
     <import file="${framework.dir}/connector_build.xml"/>    
     <target name="dist-debug">
         <mkdir dir="${dist.dotnet}" />
@@ -50,9 +51,9 @@
         </copy>
     </target>
     <target name="run-server">
-	<exec dir="${dist.dotnet}" executable="cmd" osfamily="Windows" spawn="true">
-	    <arg value="/c"/>
-	    <arg value="start"/>
+	      <exec dir="${dist.dotnet}" executable="cmd" osfamily="Windows" spawn="true">
+	          <arg value="/c"/>
+	          <arg value="start"/>
             <arg value="${server.exe}"/>
             <arg value="/run"/>
        </exec>	   
@@ -61,7 +62,7 @@
        <exec dir="${dist.dotnet}" executable="cmd" osfamily="Windows">
             <arg value="/c"/>
             <arg value="taskkill.exe"/>
-	    <arg value="/IM"/>
+	          <arg value="/IM"/>
             <arg value="${server.exe}"/>            
        </exec>	   
     </target>
