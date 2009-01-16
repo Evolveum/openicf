@@ -1701,17 +1701,50 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         public String GetDisplayNameKey() {
             return "MESSAGE_OBJECT_CLASS_"+_type.ToUpper();
         }
+
+        /**
+         * Determines if the 'name' matches this {@link ObjectClass}.
+         * 
+         * @param name
+         *            case-insensitive string representation of the ObjectClass's
+         *            type.
+         * @return <code>true</code> if the case-insensitive name is equal to
+         *         that of the one in this {@link ObjectClass}.
+         */
+        public bool Is(String name) {
+            return this._type.equalsIgnoreCase(name);    
+        }    
         
         public override int GetHashCode() {
             return _type.ToUpper().GetHashCode();
         }
     
-        public override bool Equals(object o) {
-            if ( o is ObjectClass ) {
-                ObjectClass other = (ObjectClass)o;
-                return _type.Equals(other._type, StringComparison.CurrentCultureIgnoreCase);
+        public override bool Equals(object obj) {
+            // test identity
+            if(this == obj)
+            {
+                return true;
             }
-            return false;
+
+            // test for null..
+            if(obj == null)
+            {
+                return false;
+            }
+
+            // test that the exact class matches
+            if(!(GetType().Equals(obj.GetType())))
+            {
+                return false;
+            }
+
+            ObjectClass other = (ObjectClass) obj;
+
+            if(!Is(other._type)) {
+                return false;
+            }
+
+            return true;
         }
         
         public override string ToString()
@@ -1731,10 +1764,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         public ObjectClassInfo(String type, 
                                ICollection<ConnectorAttributeInfo> attrInfo,
                                bool isContainer) {
-            if ( type == null ) {
-                throw new ArgumentException("Type cannot be null.");
-            }
-
+            Assertions.NullCheck(type, "type");
             _type = type;
             _info = CollectionUtil.NewReadOnlySet(attrInfo);
             _isContainer = isContainer;
@@ -1758,6 +1788,19 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                 return this._type;
             }
         }
+
+        /**
+        * Determines if the 'name' matches this {@link ObjectClassInfo}.
+        * 
+        * @param name
+        *            case-insensitive string representation of the ObjectClassInfo's
+        *            type.
+        * @return <code>true</code> if the case insensitive type is equal to
+        *         that of the one in this {@link ObjectClassInfo}.
+        */
+        public bool Is(String name) {
+            return this._type.Equals(name, StringComparison.CurrentCultureIgnoreCase);
+        }
         
         public bool IsContainer {
             get {
@@ -1769,22 +1812,39 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             return _type.ToUpper().GetHashCode();
         }
         
-        public override bool Equals(Object o) {
-            ObjectClassInfo other = o as ObjectClassInfo;
-            if ( other != null ) {
-                if (!ObjectType.Equals(other.ObjectType, StringComparison.CurrentCultureIgnoreCase)) {
-                    return false;
-                }
-                if (!CollectionUtil.Equals(ConnectorAttributeInfos,
-                                           other.ConnectorAttributeInfos)) {
-                    return false;
-                }
-                if (_isContainer != other._isContainer) {
-                    return false;
-                }
+        public override bool Equals(Object obj) {
+            // test identity
+            if (this == obj) {
                 return true;
             }
-            return false;
+
+            // test for null..
+            if(obj == null)
+            {
+                return false;
+            }
+
+            if (obj.GetType().Equals(this.GetType()))
+            {
+                return false;
+            }
+
+            ObjectClassInfo other = obj as ObjectClassInfo;
+
+            if (!ObjectType.Equals(other.ObjectType, StringComparison.CurrentCultureIgnoreCase)) {
+                return false;
+            }
+
+            if (!CollectionUtil.Equals(ConnectorAttributeInfos,
+                                       other.ConnectorAttributeInfos)) {
+                return false;
+            }
+
+            if (_isContainer != other._isContainer) {
+                return false;
+            }
+
+            return true;
         }
         
         public override string ToString()
@@ -2681,7 +2741,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          */
         public ObjectClassInfo FindObjectClassInfo(String type) {
             foreach (ObjectClassInfo info in _declaredObjectClasses) {
-                if ( info.ObjectType.Equals(type, StringComparison.CurrentCultureIgnoreCase) ) {
+                if ( info.Is(type) ) {
                     return info;
                 }
             }
