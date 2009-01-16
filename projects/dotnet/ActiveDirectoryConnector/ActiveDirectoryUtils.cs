@@ -628,7 +628,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
 
             return secure;
-        }
+        } 
 
         internal static string GetDnFromPath(string fullPath)
         {
