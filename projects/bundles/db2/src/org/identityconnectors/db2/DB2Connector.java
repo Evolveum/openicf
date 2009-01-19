@@ -156,20 +156,21 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	}
 	
 	private Connection createAdminConnection(){
-		return createConnection(cfg.getAdminAccount(),cfg.getAdminPassword());
+	    final Connection conn =  cfg.createAdminConnection();
+        //switch off auto commit, but not when connecting using datasource.
+        //Probably connection from DS would throw exception  when trying to change autocommit
+	    if(!DB2Configuration.ConnectionType.DATASOURCE.equals(cfg.getConnType())){
+            try {
+                conn.setAutoCommit(false);
+            } catch (SQLException e) {
+                throw new ConnectorException("Cannot switch off autocommit",e);
+            }
+        }
+        return conn;
 	}
 	
 	private Connection createConnection(String user,GuardedString password){
 		final Connection conn = cfg.createConnection(user, password);
-		//switch off auto commit, but not when connecting using datasource.
-		//Probably connection from DS would throw exception  when trying to change autocommit
-		if(!DB2Configuration.ConnectionType.DATASOURCE.equals(cfg.getConnType())){
-			try {
-				conn.setAutoCommit(false);
-			} catch (SQLException e) {
-				throw new ConnectorException("Cannot switch off autocommit",e);
-			}
-		}
 		return conn;
 	}
     

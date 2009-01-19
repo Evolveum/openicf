@@ -358,6 +358,17 @@ public class DB2ConfigurationTest {
 		assertCreateAdminConnFail(failConf, "CreateAdminConnection with wrong datasource should fail");
 	}
 	
+	/**
+	 * Simple test of clone 
+	 */
+	@Test
+	public void testClone(){
+	    DB2Configuration cfg = createTestType4Configuration();
+	    DB2Configuration clone = cfg.clone();
+	    assertNotSame(cfg,clone);
+	    assertEquals(cfg.getAdminAccount(), clone.getAdminAccount());
+	}
+	
 	
 	
 	
@@ -407,14 +418,6 @@ public class DB2ConfigurationTest {
 			return null;
 		}
 	}
-	
-	
-	
-	
-	
-	
-	
-	
 	
 	
 }
