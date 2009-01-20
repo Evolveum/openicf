@@ -107,6 +107,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             ICollection<ConnectorAttribute> attributes, OperationOptions options)
         {
             Uid uid = null;
+            bool created = false;
+            DirectoryEntry newDe = null;
 
             // I had lots of problems here.  Here are the things
             // that seemed to make everything work:
@@ -147,7 +149,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 // Get the correct container, and put the new user in it
                 DirectoryEntry containerDe = new DirectoryEntry(ldapContainerPath,
                     _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
-                DirectoryEntry newDe = containerDe.Children.Add(
+                newDe = containerDe.Children.Add(
                     ActiveDirectoryUtils.GetRelativeName(nameAttribute),
                     _utils.GetADObjectClass(oclass));
 
@@ -166,7 +168,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
 
                 newDe.CommitChanges();
-
+                created = true;
                 // default to creating users enabled
                 if ((ObjectClass.ACCOUNT.Equals(oclass)) && 
                     (ConnectorAttributeUtil.Find(OperationalAttributes.ENABLE_NAME, attributes) == null))
@@ -199,6 +201,24 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 // the case of error
                 Console.WriteLine("caught exception:" + exception);
                 Trace.TraceError(exception.Message);
+                if (created)
+                {
+                    // In the case of an exception, make sure we
+                    // don't leave any partial objects around
+                    newDe.DeleteTree();
+                }
+                throw;
+            }
+            catch(Exception exception)
+            {
+                Console.WriteLine("caught exception:" + exception);
+                Trace.TraceError(exception.Message);
+                if (created)
+                {
+                    // In the case of an exception, make sure we
+                    // don't leave any partial objects around
+                    newDe.DeleteTree();
+                }
                 throw;
             }
 
