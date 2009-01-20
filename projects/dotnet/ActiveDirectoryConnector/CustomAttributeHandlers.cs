@@ -982,9 +982,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
             if (accountExpireAttribute != null)
             {
                 long? expireValue = ConnectorAttributeUtil.GetLongValue(accountExpireAttribute);
-                if (expireValue != null)
+                // if value present and not set to never expires
+                if ((expireValue != null) && (!expireValue.Value.Equals(9223372036854775807)))
                 {
-                    return ConnectorAttributeBuilder.BuildPasswordExpirationDate(expireValue.Value);
+                    DateTime expireDate = DateTime.FromFileTime(expireValue.Value);
+                    return ConnectorAttributeBuilder.BuildPasswordExpirationDate(expireDate);
                 }
                 else
                 {

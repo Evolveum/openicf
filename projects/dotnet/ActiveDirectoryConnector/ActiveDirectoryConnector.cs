@@ -1179,6 +1179,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 return ConnectorAttributeBuilder.Build(attribute.Name,
                     ActiveDirectoryUtils.NormalizeLdapString(nameValue));
             }
+            else if (attribute.Name.Equals(PredefinedAttributes.GROUPS_NAME))
+            {
+                IList<object> groupValues = new List<object>();
+                foreach(String groupname in attribute.Value)
+                {
+                    groupValues.Add(ActiveDirectoryUtils.NormalizeLdapString(groupname));
+                }
+                return ConnectorAttributeBuilder.Build(attribute.Name, groupValues);
+            }
 
             return attribute;
         }
