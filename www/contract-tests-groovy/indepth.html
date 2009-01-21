@@ -141,6 +141,7 @@ properties</a></li>
 
       <li><a href="#UpdateApiOpTests">UpdateApiOpTests</a></li>
       <li><a href="#SearchApiOpTests">SearchApiOpTests#testCaseInsensitiveSearch</a></li>
+      <li><a href="#MultiOpTests">MultiOpTests#testLockOutOpAttribute()</a></li>
 
     </ul>
 
@@ -586,6 +587,12 @@ testsuite.Search.disable.caseinsensitive = true // connector is case sensitive
 testsuite.Search.disable.caseinsensitive = false // otherwise
 </pre>
 
+
+<h4><a name="MultiOpTests"></a>MultiOpTests#testLockOutOpAttribute()</h4>
+To turn off <code>testLockOutOpAttribute</code> test add this line into <code>build.groovy</code>:
+<pre>
+testsuite.Multi.skip.lockout=true 
+</pre>
 <!-- -------------========== -->
 </div>
 
