@@ -87,8 +87,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
         internal static void Set(PropertyValueCollection pvc, int flag, bool? isSet)
         {           
             int uac = GetUAC(pvc);
-            // boolean false (null is same as false)
-            if ((isSet == null) || (isSet.Value.Equals(false)))
+            if(isSet == null)
+            {
+                throw new ArgumentException();
+            }
+            // boolean false
+            if (isSet.Value.Equals(false))
             {
                 uac &= (~flag);
             }

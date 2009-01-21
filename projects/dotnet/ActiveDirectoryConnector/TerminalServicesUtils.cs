@@ -115,8 +115,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             if (value == null)
             {
-                // just ignore a null
-                return;
+                throw new ArgumentException();
             }
 
             // invoke set on 'name' with 'value'

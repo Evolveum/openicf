@@ -118,7 +118,10 @@
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
-      <AttributeInfo name="ad_container" type="String"/>
+      <AttributeInfo name="ad_container" type="String">
+        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>/>
       <AttributeInfo name="otherHomePhone" type="String">
         <AttributeInfoFlag value="MULTIVALUED"/>
       </AttributeInfo>
