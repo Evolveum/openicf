@@ -544,14 +544,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
             ConnectorAttribute attribute)
         {
             bool? passwordNeverExpires = ConnectorAttributeUtil.GetBooleanValue(attribute);
-            if (passwordNeverExpires.HasValue)
-            {
-                PropertyValueCollection pvc = 
-                    directoryEntry.Properties[ActiveDirectoryConnector.ATT_USER_ACOUNT_CONTROL];
-                UserAccountControl.Set(pvc,
-                    UserAccountControl.DONT_EXPIRE_PASSWORD, 
-                    passwordNeverExpires);
-            }
+
+            PropertyValueCollection pvc = 
+                directoryEntry.Properties[ActiveDirectoryConnector.ATT_USER_ACOUNT_CONTROL];
+            UserAccountControl.Set(pvc,
+                UserAccountControl.DONT_EXPIRE_PASSWORD, 
+                passwordNeverExpires);
         }
         // supporting class not implemented in the framework
 /*

@@ -184,7 +184,10 @@
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
         <AttributeInfoFlag value="MULTIVALUED"/>
       </AttributeInfo>
-      <AttributeInfo name="ad_container" type="String"/>
+      <AttributeInfo name="ad_container" type="String">
+        <AttributeInfoFlag value="NOT_CREATABLE"/>
+        <AttributeInfoFlag value="NOT_UPDATEABLE"/>
+      </AttributeInfo>/>
       <!---AttributeInfo name="@@ACCOUNTS@@" type="String"/-->
       <AttributeInfo name="@@DESCRIPTION@@" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
