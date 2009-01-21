@@ -118,19 +118,20 @@ function createRegions() {
 	var rdiv = document.getElementById("regions");	// On Wiki 'regions' div already exists.
 	
 	var html=[];
-	html.push("<div id=regions align=right>");
-	html.push("<table cellspacing=0 cellpadding=0><tbody><tr><td style=width:100%; >");
-	html.push("<ul id=qm0 class=qmmc><li id=regions-leadin><a>&nbsp;</a></li>");
-	
-	for( var i=0; i < regions.length; i++ ) {
+    if(rdiv == null) {
+        html.push("<div align=right>");
+    }
+	html.push("<ul id=regions>");
+
+	for( var i= regions.length - 1; i >= 0; i-- ) {
 		var r = regions[i];
 		
-		html.push("<li><a class=qmparent href=");
+		html.push("<li><a href=");
 		html.push(r.href);
 		html.push(">");
 		html.push(r.title);
 		html.push("</a>");
-		if(r.children != null) {
+		if(r.children != null && !document.all) {
 			html.push("<ul>");
 			for( var j=0; j < r.children.length; j++ ) {
 				var c = r.children[j];
@@ -145,8 +146,10 @@ function createRegions() {
 		html.push("</li>");
 	}
 	
-	html.push("<li class=qmclear></li></ul>");
-	html.push("</td></tr></tbody></table></div>");
+	html.push("<li id=regions-leadin><a>&nbsp;</a></li></ul>");
+	if(rdiv == null) {
+        html.push("</div>");
+    }
 	
 	// inject HTML
 	if(rdiv==null) {
