@@ -649,7 +649,8 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
         
         public bool Is(string name) {
-            return Name.ToUpper().Equals(name.ToUpper());
+            return Name.ToUpper(CultureInfoCache.Instance).Equals(
+                name.ToUpper(CultureInfoCache.Instance));
         }
         
         public sealed override bool Equals(Object obj) {
@@ -667,7 +668,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             }
             // test name field..
             ConnectorAttribute other = (ConnectorAttribute) obj;
-            if (!_name.ToUpper().Equals(other._name.ToUpper())) {
+            if (!Is(other._name)) {
                 return false;
             }
             
@@ -678,7 +679,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
         
         public sealed override int GetHashCode() {
-            return _name.ToUpper().GetHashCode();
+            return _name.ToUpper(CultureInfoCache.Instance).GetHashCode();
         }
         
         
@@ -1259,7 +1260,8 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         
 
         public bool Is(string name) {
-            return Name.ToUpper().Equals(name.ToUpper());
+            return Name.ToUpper(CultureInfoCache.Instance).Equals(
+                name.ToUpper(CultureInfoCache.Instance));
         }
 
         /**
@@ -1336,7 +1338,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         public override bool Equals(Object o) {
             ConnectorAttributeInfo other = o as ConnectorAttributeInfo;
             if ( other != null ) {
-                if (!Name.ToUpper().Equals(other.Name.ToUpper())) {
+                if (!Is(other.Name)) {
                     return false;
                 }
                 if (!ValueType.Equals(other.ValueType)) {
@@ -1351,7 +1353,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
         
         public override int GetHashCode() {
-            return _name.ToUpper().GetHashCode();
+            return _name.ToUpper(CultureInfoCache.Instance).GetHashCode();
         }
        
         public override string ToString() {
@@ -1699,7 +1701,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          * @return The display name key.
          */
         public String GetDisplayNameKey() {
-            return "MESSAGE_OBJECT_CLASS_"+_type.ToUpper();
+            return "MESSAGE_OBJECT_CLASS_"+_type.ToUpper(CultureInfo.GetCultureInfo("en-US"));
         }
 
         /**
@@ -1712,11 +1714,12 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          *         that of the one in this {@link ObjectClass}.
          */
         public bool Is(String name) {
-            return this._type.Equals(name, StringComparison.CurrentCultureIgnoreCase);    
+            return this._type.ToUpper(CultureInfoCache.Instance).Equals(
+                name.ToUpper(CultureInfoCache.Instance));
         }    
         
         public override int GetHashCode() {
-            return _type.ToUpper().GetHashCode();
+            return _type.ToUpper(CultureInfoCache.Instance).GetHashCode();
         }
     
         public override bool Equals(object obj) {
@@ -1799,7 +1802,8 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         *         that of the one in this {@link ObjectClassInfo}.
         */
         public bool Is(String name) {
-            return this._type.Equals(name, StringComparison.CurrentCultureIgnoreCase);
+            return this._type.ToUpper(CultureInfoCache.Instance).Equals(
+                name.ToUpper(CultureInfoCache.Instance));
         }
         
         public bool IsContainer {
@@ -1809,7 +1813,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
         
         public override int GetHashCode() {
-            return _type.ToUpper().GetHashCode();
+            return _type.ToUpper(CultureInfoCache.Instance).GetHashCode();
         }
         
         public override bool Equals(Object obj) {
@@ -1831,7 +1835,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
 
             ObjectClassInfo other = obj as ObjectClassInfo;
 
-            if (!ObjectType.Equals(other.ObjectType, StringComparison.CurrentCultureIgnoreCase)) {
+            if (!Is(other.ObjectType)) {
                 return false;
             }
 
@@ -3952,6 +3956,28 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
 	        ConnectorAttribute a = Find(name);
 	        return a == null ? null : ConnectorAttributeUtil.GetBooleanValue(a);
 	    }
+	}
+	#endregion
+
+	#region CultureInfoCache
+	internal static class CultureInfoCache {
+    	
+		private static readonly object LOCK = new Object();
+		private static CultureInfo _instance;
+		
+		public static CultureInfo Instance {
+			get	{
+				lock (LOCK) {
+					if (_instance == null) {
+						_instance = CultureInfo.CurrentCulture;
+						if (_instance == null) {
+							_instance = CultureInfo.InstalledUICulture;
+						}
+					}
+					return _instance;
+				}
+			}
+		}
 	}
 	#endregion
 }
