@@ -3,7 +3,7 @@
     <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=iso-8859-1">
     <TITLE>Developing Connectors with the Java Toolkit</TITLE>
 </HEAD>
-<DIV ID="projecthome" CLASS="app">
+<DIV>
     <H1>Developing Connector Bundles with the Java Toolkit</H1>
     <P>This document describes the build environment and usage instructions
     for the Java Toolkit for Connectors.
@@ -164,6 +164,8 @@ at the command line.</P>
     from the console's graphical menu. More information on the Groovy console can be found <a href="http://groovy.codehaus.org/Groovy+Console">here</a>.</P>
     
     <H3><A NAME="IDE">IDE Integration</A></H3>
+    <p><b>*Notice:</b> Most IDE's use their own (built-in) copy of Ant, so if you intend to use an IDE to build and test your connectors, you need to copy <i>junit4.jar</i> to
+    the IDE's Ant/lib directory as well. For example, in Netbeans, the Ant distro is found at <b>${netbeans-home}/java2/ant</b>. See <a href="#Building">Building a Connector</a> for more information.</p>
     <H4>Netbeans</H4>
     <p>This toolkit includes a Netbeans Plugin which you can use to further automate the connector construction process if you are a Netbeans user. The plugin is a visual 
     wrapper for the Ant-based Connector Creation Wizard that is provided with the toolkit. It will create and integrate skeleton connectors into the Netbeans environment
