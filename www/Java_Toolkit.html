@@ -3,7 +3,7 @@
     <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=iso-8859-1">
     <TITLE>Developing Connectors with the Java Toolkit</TITLE>
 </HEAD>
-<DIV>
+<DIV id="projecthome" class="app">
     <H1>Developing Connector Bundles with the Java Toolkit</H1>
     <P>This document describes the build environment and usage instructions
     for the Java Toolkit for Connectors.
@@ -172,7 +172,7 @@ at the command line.</P>
     based on your input. To install in Netbeans, simply choose <b>Tools -> Plugins</b>
     and switch to the "<b>Downloaded</b>" tab (since this is a downloaded plugin). Then just add the plugin from your toolkit directory (it is a ".nbm" file) and you're all set.</p>
     <p>To build a new connector you can now choose <b>Tools -> Connectors Toolkit</b>. Usage is simple:</p>
-      <h5>Step 1: Set Properties</h4>
+      <h5>Step 1: Set Properties</h5>
       <p>
         <ol>
         <li>Tell Netbeans where you extracted the Connectors Toolkit.</li>
@@ -181,7 +181,7 @@ at the command line.</P>
         <li>Enter a package name for the generated classes (or use the default).</li>
     </ol>
     </p>
-      <h5>Step 2: Choose SPI Operations</h4>
+      <h5>Step 2: Choose SPI Operations</h5>
     <p>All the SPI operations (authenticate, create, delete, etc.) are opt-in, so you may choose
       whichever ones your resource supports. When finished, click "Finish", and Netbeans will generate
       a skeleton connector implementing the interfaces you selected. It will also set up the necessary

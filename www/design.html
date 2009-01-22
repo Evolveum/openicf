@@ -6,16 +6,22 @@
 </head>
 <body>
 <div id="projecthome" class="app">
- <h1>Design Overview</h1>
+<h1>Design Overview</h1>
 <p>IdentityConnectors is designed to separate the implementation of an
 application from the dependencies of the application or system it is
 attempting to connect to. The IdentityConnectors framework provides a
 container to separate the Connector bundle from the application. The
-framework as provides many common features that developers would need to
+framework provides many common features that developers would otherwise need to
 implement on their own. For instance the framework can provide
 connection pooling, buffering, timeouts, and filtering. IdentityConnectors
-is separated into two parts the API for which developers can call
-Connectors and the SPI for which developers can create Connectors.
+is separated into two parts: the API, from which applications can call
+Connectors, and the SPI, from which developers can create Connectors.
+
+<img src="./images/architecture.png" alt="Architecture"/> <br>
+  
+<!-- <img src="/images/compatibility.png"/>
+-->
+
 <h3>Connector SPI</h3>
 <p>The Connector SPI is decomposed into several interfaces so that
 the Connector developer only has to implement the interfaces that the
@@ -23,44 +29,47 @@ target application or system supports. The Connector API will still
 provide a consistent view regardless of the interfaces the Connector
 developer chooses to implement. The SPI is broken up into operations
 (create, update, delete, search, etc.), features, and requirements. The
-required interfaces include the 'Connector' interface and the
-'Configuration' interface. These interfaces must be implemented in order
+required interfaces include the <i>Connector</i> interface and the
+<i>Configuration</i> interface. These interfaces must be implemented in order
 for the API to understand which class contains the implementation of the
 configuration and which contains the implementation of the operations.
-The feature based interfaces at this time are the 'ConnectionFactory'
-and 'Connection' interfaces which are the minimum requirements for the
-framework to implement connection pooling. The operation interfaces
-determine the features the connector supports for instance create or
-simply search. Please see the Javadoc for more details.
+The feature based interfaces at this time are the 'AttributeNormalizer'
+and 'PoolableConnector' interfaces. The operation interfaces
+determine the features the connector supports (such as <i>Create</i>, <i>Delete</i>, or
+simply <i>Search</i>). Please see the Javadoc for more details.
 <h3>Connector API</h3>
 <p>The Connector API is responsible for presenting a consistent view
 of a Connector regardless of the operations it has implemented. For the
 convenience of the SPI developer there are several common features that
-a provided without the knowledge of the Connector developer. For most of
-these features there is no need for the API developer to handle them
-either only configure them. Below is a list of features and their
+are provided right out of the box. For most of
+these features there is no need for the API developer to handle them,
+only configure them. Below is a list of features and their
 explanation. The main features/concepts of the API are as follows:
 <ul>
-	<li>Provide 'Connection Pooling' to those Connectors that require
+	<li>Provide <b>Connection Pooling</b> to those Connectors that require
 	it and avoid the API from seeing it, since not all Connectors have
-	connections. In addition if the Connector uses 'Connection Pooling' its
+	connections. In addition if the Connector uses Connection Pooling, it's
 	not the responsibility of the API developer to handle the connections,
 	nor dispose of them during error conditions.</li>
-	<li>Provide 'Timeouts' to all operations. The API consumer should
+	<li>Provide <b>Timeouts</b> to all operations. The API consumer should
 	only configure the appropriate timeout if the default is unacceptable.
 	Each SPI developer should not have to implement such a common service
 	and so it is implemented in the framework.</li>
-	<li>The SPI developer has the ability to choose different
-	implementations of an operation. For instance there are two types of
+	<li>Provide <b>Search Filtering</b> via a simple interface that accepts
+	a large variety of filters. The Connector developer only needs to implement
+	whichever filters the resource natively supports; the rest is handled by the framework.</li>
+	<li>Provide <b>Search/Sync Buffering</b>, allowing queries and updates to be handled in chunks
+	if need be. The application need not worry about this, as it is handled within the framework. </li>
+	<li>Provide <b>Scripting</b> via Groovy and Boo .NET for Connectors. This will allow for great
+	flexibility within a Connector, because the framework can execute scripts both on the connector
+	and on the target resource (if supported).</li>
+	<li>The SPI developer has the ability to choose <b>different
+	implementations</b> of an operation. For instance there are two types of
 	updates. This is hidden from the API consumer because there is no need
-	for the API developer to have to call two different operation that
-	essentially do the same thing. Two operations that fit this example are
-	SearchOp and UpdateOp.</li>
+	for the API developer to have to call two different operations that
+	essentially do the same thing. Instead the framework will figure which one (if either)
+	the Connector supports and make the appropriate calls.</li>
 </ul>
-
-<!-- TODO: add diagrams
-  <img src="/images/architecture.png"/>  <img src="/images/compatibility.png"/>
--->
 
 <h3>Error Handling</h3>
 <p>There are no declared exceptions on any of the interfaces for either
