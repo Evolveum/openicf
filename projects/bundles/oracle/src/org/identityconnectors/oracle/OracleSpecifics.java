@@ -46,35 +46,39 @@ abstract class OracleSpecifics {
     static Connection createThinDriverConnection(OracleDriverConnectionInfo connInfo){
         String url = connInfo.getUrl();
         if(url == null){
+            //Build this syntax : jdbc:oracle:thin:scott/tiger@//myhost:1521/orcl
+            //We will pass user and password in properties
             StringBuilder urlBuilder = new StringBuilder();
-            urlBuilder.append("jdbc:oracle:thin");
+            urlBuilder.append("jdbc:oracle:thin:@");
+            
             if(connInfo.getHost() != null){
-                urlBuilder.append(":@").append(connInfo.getHost());
+                urlBuilder.append("//").append(connInfo.getHost());
+                if(connInfo.getPort() != null){
+                    urlBuilder.append(":").append(connInfo.getPort());
+                }
             }
-            if(connInfo.getPort() != null){
-                urlBuilder.append(":").append(connInfo.getPort());
-            }
-            if(connInfo.getDatabase() != null){
-                urlBuilder.append(":").append(connInfo.getDatabase());
-            }
+            urlBuilder.append("/").append(connInfo.getDatabase());
             url = urlBuilder.toString();
         }
         return SQLUtil.getDriverMangerConnection(THIN_AND_OCI_DRIVER_CLASSNAME, url, connInfo.getUser(), connInfo.getPassword());
     }
     
+    
+    
     static Connection createOciDriverConnection(OracleDriverConnectionInfo connInfo){
         String url = connInfo.getUrl();
         if(url == null){
             StringBuilder urlBuilder = new StringBuilder();
-            urlBuilder.append("jdbc:oracle:oci");
+            urlBuilder.append("jdbc:oracle:oci:@");
             if(connInfo.getHost() != null){
-                urlBuilder.append(":@").append(connInfo.getHost());
+                urlBuilder.append("//").append(connInfo.getHost());
                 if(connInfo.getPort() != null){
                     urlBuilder.append(":").append(connInfo.getPort());
                 }
+                urlBuilder.append("/").append(connInfo.getDatabase());
             }
-            if(connInfo.getDatabase() != null){
-                urlBuilder.append(":").append(connInfo.getDatabase());
+            else{
+                urlBuilder.append(connInfo.getDatabase());
             }
             url = urlBuilder.toString();
         }

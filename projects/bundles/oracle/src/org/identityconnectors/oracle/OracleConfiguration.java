@@ -196,47 +196,51 @@ public class OracleConfiguration extends AbstractConfiguration implements Clonea
             connType = ConnectionType.DATASOURCE;
             //just datasource is required
         }
-        else if(OracleSpecifics.THIN_DRIVER.equals(driver)){
-            Assertions.blankCheck(host,"host");
-            Assertions.blankCheck(port,"port");
-            Assertions.blankCheck(user,"user");
-            Assertions.nullCheck(password, "password");
-            Assertions.blankCheck(database,"database");
-            driverClassName = OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME;
-            try {
-                Class.forName(driverClassName);
-            } catch (ClassNotFoundException e) {
-                throw new IllegalArgumentException("Cannot load driver class : + " + driverClassName,e);
-            }
-            connType = ConnectionType.THIN;
-        }
-        else if(OracleSpecifics.OCI_DRIVER.equals(driver)){
-            Assertions.blankCheck(database,"database");
-            Assertions.blankCheck(user,"user");
-            Assertions.nullCheck(password, "password");
-            driverClassName = OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME;
-            try {
-                Class.forName(driverClassName);
-            } catch (ClassNotFoundException e) {
-                throw new IllegalArgumentException("Cannot load driver class : + " + driverClassName,e);
-            }
-            connType = ConnectionType.OCI;
-        }
         else{
-            //This should be custom driver class
-            Class<?> driverClass = null;
-            try {
-                driverClass = Class.forName(driver);
-            } catch (ClassNotFoundException e) {
-                throw new IllegalArgumentException("Cannot load driver class : + " + driver,e);
+            Assertions.blankCheck(driver, "driver");
+            if(OracleSpecifics.THIN_DRIVER.equals(driver)){
+                Assertions.blankCheck(host,"host");
+                Assertions.blankCheck(port,"port");
+                Assertions.blankCheck(user,"user");
+                Assertions.nullCheck(password, "password");
+                Assertions.blankCheck(database,"database");
+                driverClassName = OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME;
+                try {
+                    Class.forName(driverClassName);
+                } catch (ClassNotFoundException e) {
+                    throw new IllegalArgumentException("Cannot load driver class : + " + driverClassName,e);
+                }
+                connType = ConnectionType.THIN;
             }
-            if(!Driver.class.isAssignableFrom(driverClass)){
-                throw new IllegalArgumentException("Specified driver class is not java.sql.Driver");
+            else if(OracleSpecifics.OCI_DRIVER.equals(driver)){
+                Assertions.blankCheck(database,"database");
+                Assertions.blankCheck(user,"user");
+                Assertions.nullCheck(password, "password");
+                driverClassName = OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME;
+                try {
+                    Class.forName(driverClassName);
+                } catch (ClassNotFoundException e) {
+                    throw new IllegalArgumentException("Cannot load driver class : + " + driverClassName,e);
+                }
+                connType = ConnectionType.OCI;
             }
-            Assertions.blankCheck(url,"url");
-            Assertions.blankCheck(user,"user");
-            Assertions.nullCheck(password, "password");
-            connType = ConnectionType.CUSTOM_DRIVER;    
+            else{
+                //This should be custom driver class
+                Class<?> driverClass = null;
+                try {
+                    driverClass = Class.forName(driver);
+                } catch (ClassNotFoundException e) {
+                    throw new IllegalArgumentException("Cannot load driver class : + " + driver,e);
+                }
+                if(!Driver.class.isAssignableFrom(driverClass)){
+                    throw new IllegalArgumentException("Specified driver class is not java.sql.Driver");
+                }
+                driverClassName = driverClass.getName();
+                Assertions.blankCheck(url,"url");
+                Assertions.blankCheck(user,"user");
+                Assertions.nullCheck(password, "password");
+                connType = ConnectionType.CUSTOM_DRIVER;    
+            }
         }
         
     }

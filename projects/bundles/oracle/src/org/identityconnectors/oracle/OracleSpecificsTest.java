@@ -1,6 +1,6 @@
 package org.identityconnectors.oracle;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.sql.*;
 import java.text.MessageFormat;
@@ -33,15 +33,13 @@ public class OracleSpecificsTest {
     private Connection createTestThinDriverConnection(){
         String user = TestHelpers.getProperty("thin.user",null);
         String passwordString = TestHelpers.getProperty("thin.password", null);
-        GuardedString password = new GuardedString(passwordString.toCharArray());
-        return createThinDriverConnection(user, password);
+        return createThinDriverConnection(user, new GuardedString(passwordString.toCharArray()));
     }
     
     private Connection createSystemThinDriverConnection(){
         String user = TestHelpers.getProperty("thin.systemUser",null);
         String passwordString = TestHelpers.getProperty("thin.systemPassword", null);
-        GuardedString password = new GuardedString(passwordString.toCharArray());
-        return createThinDriverConnection(user, password);
+        return createThinDriverConnection(user, new GuardedString(passwordString.toCharArray()));
     }
     
     private Connection createOciDriverConnection(String user,GuardedString password){
@@ -51,7 +49,7 @@ public class OracleSpecificsTest {
         Connection conn = 
             OracleSpecifics.createOciDriverConnection(new OracleDriverConnectionInfoBuilder().
                     setUser(user).setPassword(password).
-                    setHost(null).setPort(null).setDatabase(database).
+                    setHost(host).setPort(port).setDatabase(database).
                     build());
         return conn;
     }
@@ -99,6 +97,16 @@ public class OracleSpecificsTest {
         Assert.assertNotNull(conn);
         OracleSpecifics.testConnection(conn);
         SQLUtil.closeQuietly(conn);
+        
+        //try connection without host 
+        String database = TestHelpers.getProperty("thin.database",null);
+        String user = TestHelpers.getProperty("thin.user",null);
+        String password = TestHelpers.getProperty("thin.password", null);
+        conn = OracleSpecifics
+                .createThinDriverConnection(new OracleDriverConnectionInfoBuilder()
+                        .setDatabase(database).setUser(user).setPassword(new GuardedString(password.toCharArray())).build());
+        Assert.assertNotNull(conn);
+        SQLUtil.closeQuietly(conn);
     }
     
     /** Test create of oci connection */
@@ -111,6 +119,32 @@ public class OracleSpecificsTest {
         conn = createSystemOciDriverConnection();
         Assert.assertNotNull(conn);
         OracleSpecifics.testConnection(conn);
+        SQLUtil.closeQuietly(conn);
+        
+        //try connection without host 
+        String database = TestHelpers.getProperty("oci.database",null);
+        String user = TestHelpers.getProperty("oci.user",null);
+        String password = TestHelpers.getProperty("oci.password", null);
+        conn = OracleSpecifics
+                .createOciDriverConnection(new OracleDriverConnectionInfoBuilder()
+                        .setDatabase(database).setUser(user).setPassword(new GuardedString(password.toCharArray())).build());
+        Assert.assertNotNull(conn);
+        SQLUtil.closeQuietly(conn);
+    }
+    
+    /** Test creation of connection from custom driver */
+    @Test
+    public void testCustomDriverConnection(){
+        String user = TestHelpers.getProperty("customDriver.user", null);
+        String password = TestHelpers.getProperty("customDriver.password", null);
+        String url = TestHelpers.getProperty("customDriver.url", null);
+        String driver = TestHelpers.getProperty("customDriver.driverClassName", null);
+        Connection conn = OracleSpecifics
+                .createDriverConnection(new OracleDriverConnectionInfoBuilder()
+                        .setUser(user).setPassword(
+                                new GuardedString(password.toCharArray()))
+                        .setUrl(url).setDriver(driver).build());
+        Assert.assertNotNull(conn);
         SQLUtil.closeQuietly(conn);
     }
     

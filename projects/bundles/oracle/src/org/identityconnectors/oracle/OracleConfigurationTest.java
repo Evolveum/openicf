@@ -2,12 +2,18 @@ package org.identityconnectors.oracle;
 
 import static org.junit.Assert.*;
 
+import java.lang.reflect.*;
 import java.sql.*;
+import java.util.Hashtable;
+
+import javax.naming.*;
+import javax.naming.spi.InitialContextFactory;
+import javax.sql.DataSource;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.test.TestHelpers;
-import org.junit.Test;
+import org.junit.*;
 
 /**
  * Tests for {@link OracleConfiguration}
@@ -15,6 +21,9 @@ import org.junit.Test;
  *
  */
 public class OracleConfigurationTest {
+    private final static String WRONG_DATASOURCE = "wrongDatasource";
+    private static ThreadLocal<OracleConfiguration> dsCfg = new ThreadLocal<OracleConfiguration>();
+
 
     /** Test validation of cfg */
     @Test
@@ -133,8 +142,29 @@ public class OracleConfigurationTest {
         failCfg = cfg.clone();
         failCfg.setHost(null);
         failCfg.validate();
-        SQLUtil.closeQuietly(failCfg.createAdminConnection());
-        
+        conn = failCfg.createAdminConnection();
+        assertNotNull(conn);
+        SQLUtil.closeQuietly(conn);
+    }
+    
+    /**
+     * Test cfg with custom driver and url
+     */
+    @Test
+    public void testCustomDriverConfiguration(){
+        String user = TestHelpers.getProperty("customDriver.user", null);
+        String password = TestHelpers.getProperty("customDriver.user", null);
+        String url = TestHelpers.getProperty("customDriver.url", null);
+        String driver = TestHelpers.getProperty("customDriver.driverClassName", null);
+        OracleConfiguration cfg = new OracleConfiguration();
+        cfg.setUser(user);
+        cfg.setPassword(new GuardedString(password.toCharArray()));
+        cfg.setUrl(url);
+        cfg.setDriver(driver);
+        cfg.validate();
+        final Connection conn = cfg.createAdminConnection();
+        assertNotNull(conn);
+        SQLUtil.closeQuietly(conn);
     }
     
     
@@ -147,7 +177,7 @@ public class OracleConfigurationTest {
         assertEquals(cfg.getUser(), cfg.getUser());
     }
     
-    private OracleConfiguration createThinConfiguration(){
+    static OracleConfiguration createThinConfiguration(){
         String user = TestHelpers.getProperty("thin.user",null);
         String passwordString = TestHelpers.getProperty("thin.password", null);
         GuardedString password = new GuardedString(passwordString.toCharArray());
@@ -165,7 +195,7 @@ public class OracleConfigurationTest {
         return  cfg;
     }
     
-    private OracleConfiguration createOciConfiguration(){
+    static OracleConfiguration createOciConfiguration(){
         String user = TestHelpers.getProperty("oci.user", null);
         String passwordString = TestHelpers.getProperty("oci.password", null);
         GuardedString password = new GuardedString(passwordString.toCharArray());
@@ -181,7 +211,111 @@ public class OracleConfigurationTest {
         cfg.setPassword(password);
         cfg.setPort(port);
         return  cfg;
-        
     }
+    
+    static OracleConfiguration createSystemConfiguration(){
+        String user = TestHelpers.getProperty("thin.systemUser", null);
+        String passwordString = TestHelpers.getProperty("thin.systemPassword", null);
+        GuardedString password = new GuardedString(passwordString.toCharArray());
+        String database = TestHelpers.getProperty("thin.database", null);
+        String driver = OracleSpecifics.OCI_DRIVER;
+        String host = TestHelpers.getProperty("thin.host",null);
+        String port = TestHelpers.getProperty("thin.port",OracleSpecifics.LISTENER_DEFAULT_PORT);
+        OracleConfiguration cfg = new OracleConfiguration();
+        cfg.setUser(user);
+        cfg.setPassword(password);
+        cfg.setDatabase(database);
+        cfg.setDriver(driver);
+        cfg.setHost(host);
+        cfg.setPort(port);
+        return cfg;
+    }
+    
+    private static final String[] dsJNDIEnv = new String[]{"java.naming.factory.initial=" + MockContextFactory.class.getName()};
+    
+    private static OracleConfiguration createDataSourceConfiguration(){
+        OracleConfiguration conf = new OracleConfiguration();
+        conf.setDataSource("testDS");
+        conf.setUser("user");
+        conf.setPassword(new GuardedString(new char[]{'t'}));
+        conf.setDsJNDIEnv(dsJNDIEnv);
+        conf.setPort(null);
+        conf.setDriver(null);
+        return conf;
+    }
+    
+    
+    /**
+     * Test getting Connection from DS
+     */
+    @Test
+    public void testDataSourceConfiguration(){
+        OracleConfiguration conf = createDataSourceConfiguration();
+        //set to thread local
+        dsCfg.set(conf);
+        assertArrayEquals(conf.getDsJNDIEnv(), dsJNDIEnv);
+        conf.validate();
+        Connection conn = conf.createAdminConnection();
+        conf.setUser(null);
+        conf.setPassword(null);
+        conf.validate();
+        conn = conf.createAdminConnection();
+        assertNotNull(conn);
+        
+        OracleConfiguration failConf = conf.clone();
+        failConf.setDataSource(null);
+        assertValidateFail(failConf, "Validate should fail for null datasource");
+        failConf.setDataSource(WRONG_DATASOURCE);
+        assertCreateAdminConnectionFail(failConf, "CreateAdminConnection with wrong datasource should fail");
+    }
+    
+    
+    /**
+     * Mock for {@link InitialContextFactory}
+     * @author kitko
+     *
+     */
+    public static class MockContextFactory implements InitialContextFactory{
+        
+        public Context getInitialContext(Hashtable<?, ?> environment) throws NamingException {
+            Context context = (Context)Proxy.newProxyInstance(getClass().getClassLoader(),new Class[]{Context.class}, new ContextIH());
+            return context;
+        }
+    }
+    
+    private static class ContextIH implements InvocationHandler{
+
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if(method.getName().equals("lookup")){
+                if(WRONG_DATASOURCE.equals(args[0])){
+                    throw new NamingException("Cannot lookup wrong datasource");
+                }
+                return Proxy.newProxyInstance(getClass().getClassLoader(),new Class[]{DataSource.class}, new DataSourceIH());
+            }
+            return null;
+        }
+    }
+    
+    private static class DataSourceIH implements InvocationHandler{
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if(method.getName().equals("getConnection")){
+                if(dsCfg.get().getUser() == null){
+                    Assert.assertEquals("getConnection must be called without user and password",0,method.getParameterTypes().length);
+                }
+                else{
+                    Assert.assertEquals("getConnection must be called with user and password",2,method.getParameterTypes().length);
+                }
+                return Proxy.newProxyInstance(getClass().getClassLoader(),new Class[]{Connection.class}, new ConnectionIH());
+            }
+            throw new IllegalArgumentException("Invalid method");
+        }
+    }
+    
+    private static  class ConnectionIH implements InvocationHandler{
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            return null;
+        }
+    }
+    
 
 }
