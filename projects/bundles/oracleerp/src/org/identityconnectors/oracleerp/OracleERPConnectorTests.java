@@ -81,7 +81,9 @@ public class OracleERPConnectorTests {
     static final String ACCOUNT_REQUIRED_ATTRS = "account.required";
     static final String ACCOUNT_MODIFY_ATTRS = "account.modify";
     static final String NEW_USER_ATTRS = "account.required";
-
+    
+    static  DataProvider dataProvider = null; 
+    
 
     // Test facade
     private ConnectorFacade facade = null;
@@ -102,8 +104,12 @@ public class OracleERPConnectorTests {
 
 
     
+    /**
+     * The class load method
+     */
     @BeforeClass
     public static void setUpClass() { 
+        dataProvider = ConnectorHelper.createDataProvider();
     }
 
 
@@ -114,8 +120,8 @@ public class OracleERPConnectorTests {
     @Before
     public void setup() throws Exception {
         // attempt to create the database in the directory..
-        config = new OracleERPConfiguration();
-        loadConfiguration(DEFAULT_CONFIGURATINON, config); 
+        config = new OracleERPConfiguration();        
+        dataProvider.loadConfiguration(DEFAULT_CONFIGURATINON, config); 
         assertNotNull(config);
         facade = getFacade(config);
         assertNotNull(facade);
@@ -357,7 +363,7 @@ public class OracleERPConnectorTests {
      * @return
      */
     private Set<Attribute> createAllAccountAttributes() {
-        final Set<Attribute> attrs = getAttributeSet(ACCOUNT_ALL_ATTRS);       
+        final Set<Attribute> attrs = dataProvider.getAttributeSet(ACCOUNT_ALL_ATTRS);       
         attrs.add(AttributeBuilder.build(OracleERPConnector.Account.START_DATE, (new Timestamp(System.currentTimeMillis()-10*24*3600000)).toString()));
         attrs.add(AttributeBuilder.build(OracleERPConnector.Account.END_DATE, (new Timestamp(System.currentTimeMillis()+10*24*3600000)).toString()));        
         
@@ -399,7 +405,7 @@ public class OracleERPConnectorTests {
      * @return
      */
     private Set<Attribute> createRequiredAccountAttributes() {
-        final Set<Attribute> attrs = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);       
+        final Set<Attribute> attrs = dataProvider.getAttributeSet(ACCOUNT_REQUIRED_ATTRS);       
         return attrs;
     }
     
@@ -410,48 +416,10 @@ public class OracleERPConnectorTests {
      * @return
      */
     private Uid createUser() {
-        Set<Attribute> tuas = getAttributeSet(NEW_USER_ATTRS);
+        Set<Attribute> tuas = dataProvider.getAttributeSet(NEW_USER_ATTRS);
         assertNotNull(tuas);
         return facade.create(ObjectClass.ACCOUNT, tuas, null);
     }     
-    
-
-    /**
-     * @param  propertySetName
-     * @return The set <CODE>Set<Attribute></CODE> of attributes 
-     */
-    private Set<Attribute> getAttributeSet(final String propertySetName) {
-        Map<String, Object> propMap = getPropertyMap(propertySetName);   
-        assertNotNull(propMap);
-        Set<Attribute> attrSet = new  LinkedHashSet<Attribute>();
-        for (Entry<String, Object> entry : propMap.entrySet()) {
-            final String key = entry.getKey();
-            final Object value = entry.getValue();
-            
-            if(Uid.NAME.equals(key)) {
-                attrSet.add(new Uid(value.toString()));
-            } else if (OperationalAttributes.PASSWORD_NAME.equals(key)) {
-                attrSet.add(AttributeBuilder.buildPassword(value.toString().toCharArray()));
-            } else if (OperationalAttributes.CURRENT_PASSWORD_NAME.equals(key)) {
-                attrSet.add(AttributeBuilder.buildCurrentPassword(value.toString().toCharArray()));
-            } else if (OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME.equals(key)) {
-                attrSet.add(AttributeBuilder.buildPasswordExpirationDate((Long) value));
-            } else if (OperationalAttributes.PASSWORD_EXPIRED_NAME.equals(key)) {
-                attrSet.add(AttributeBuilder.buildPasswordExpired((Boolean) value));
-            } else if (OperationalAttributes.DISABLE_DATE_NAME.equals(key)) {
-                attrSet.add(AttributeBuilder.buildDisableDate((Long) value));
-            } else if (OperationalAttributes.ENABLE_DATE_NAME.equals(key)) {
-                attrSet.add(AttributeBuilder.buildEnableDate((Long) value));
-            } else if (OperationalAttributes.ENABLE_NAME.equals(key)) {
-                attrSet.add(AttributeBuilder.buildEnabled((Boolean) value));
-            } else if (OperationalAttributes.LOCK_OUT_NAME.equals(key)) {
-                attrSet.add(AttributeBuilder.buildLockOut((Boolean) value));
-            } else {
-                attrSet.add(AttributeBuilder.build(key, value));
-            }
-        }
-        return attrSet;
-    }    
     
     
     /**
@@ -462,41 +430,6 @@ public class OracleERPConnectorTests {
         // **test only**
         APIConfiguration impl = TestHelpers.createTestConfiguration(OracleERPConnector.class, config);
         return factory.newInstance(impl);
-    }
-
-
-    /**
-     * @param setName
-     * @return
-     */
-    @SuppressWarnings("unchecked")
-    private Map<String, Object> getPropertyMap(final String setName) {
-        DataProvider dataProvider = ConnectorHelper.createDataProvider();        
-        Map<String, Object> propMap = (Map<String, Object>) dataProvider.get(setName);
-        return propMap;
-    }    
-    
-    /**
-     * @param configName
-     * @throws NoSuchFieldException
-     * @throws IllegalAccessException
-     */
-    private void loadConfiguration(final String configName, Configuration cfg)    
-            throws NoSuchFieldException, IllegalAccessException {
-        Map<String, Object> propMap = getPropertyMap(configName);   
-        assertNotNull(propMap);       
-        for (Entry<String, Object> entry : propMap.entrySet()) {
-            final String key = entry.getKey();
-            final Field fld = cfg.getClass().getDeclaredField(key);
-            final Object value = entry.getValue();
-            fld.setAccessible(true);
-            final Class<?> type = fld.getType();
-            if(type.isAssignableFrom(GuardedString.class)) {
-                fld.set(cfg, new GuardedString(value.toString().toCharArray()));
-            } else {
-                fld.set(cfg, value);
-            }
-        }
     }
 
     /**

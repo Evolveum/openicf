@@ -22,6 +22,8 @@
  */
 package org.identityconnectors.mysqluser;
 
+import java.sql.Types;
+
 import org.identityconnectors.dbcommon.DatabaseFilterTranslator;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.Name;
@@ -57,6 +59,14 @@ public class MySQLUserFilterTranslator extends DatabaseFilterTranslator {
         //Password or other are invalid columns for query, 
         //There could be an exception,but null value would disable this filter 
         return null;
+    }
+
+    /* (non-Javadoc)
+     * @see org.identityconnectors.dbcommon.DatabaseFilterTranslator#getDatabaseColumnType(org.identityconnectors.framework.common.objects.Attribute, org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.OperationOptions)
+     */
+    @Override
+    protected Integer getDatabaseColumnType(Attribute attribute, ObjectClass oclass, OperationOptions options) {
+        return Types.NULL;
     }
 
 }

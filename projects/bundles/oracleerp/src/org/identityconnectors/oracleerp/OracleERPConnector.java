@@ -36,7 +36,6 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,7 +47,6 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.DatabaseQueryBuilder;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
-import org.identityconnectors.dbcommon.JNDIUtil;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
@@ -140,7 +138,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      */
     public void init(Configuration cfg) {
         this.config = (OracleERPConfiguration) cfg;
-        this.conn = OracleERPConnector.newConnection(this.config);
+        this.conn = OracleERPConnection.getConnection(this.config);
         Assertions.nullCheck(this.conn, "connection");
         this.newResponsibilityViews = getNewResponsibilityViews();
         if(this.newResponsibilityViews) {
@@ -662,7 +660,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
             st.setQueryTimeout(ORACLE_TIMEOUT);
             st.registerOutParameter(1, Types.BOOLEAN);
             st.setString(2, username.toUpperCase());
-            SQLUtil.setParam(st, 3, password); //Guarded String unwrapping 
+            SQLUtil.setGuardedStringParam(st, 3, password); //Guarded String unwrapping 
             st.execute();
             final boolean valid = st.getBoolean(1);
             if (!valid) {
@@ -937,46 +935,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         return schemaBld.build();
     }
 
-
-    /**
-     * Test enabled create conn method
-     * @param configuration
-     * @return
-     */
-    static OracleERPConnection newConnectiond( OracleERPConfiguration config) {
-        final java.sql.Connection connection = SQLUtil.getDriverMangerConnection(config.getDriver(), config
-                .getConnUrl(), config.getUser(), config.getPassword());
-        return new OracleERPConnection(connection);
-    }
     
-    /**
-     * Test enabled create connection function
-     * 
-     * @param config
-     * @return a new {@link DatabaseTableConnection} connection
-     */
-    static OracleERPConnection newConnection(OracleERPConfiguration config) {
-        java.sql.Connection connection;
-        final String login = config.getUser();
-        final GuardedString password = config.getPassword();
-        final String datasource = config.getDataSource();
-        final String[] jndiProperties = config.getJndiProperties();
-        final ConnectorMessages connectorMessages = config.getConnectorMessages();
-        if (StringUtil.isNotBlank(datasource)) {
-            Hashtable<String, String> prop = JNDIUtil.arrayToHashtable(jndiProperties, connectorMessages);                
-            if(StringUtil.isNotBlank(login) && password != null) {
-                connection = SQLUtil.getDatasourceConnection(datasource, login, password, prop);
-            } else {
-                connection = SQLUtil.getDatasourceConnection(datasource, prop);
-            } 
-        } else {
-            final String driver = config.getDriver();
-            final String connectionUrl = config.getConnectionUrl();
-            connection = SQLUtil.getDriverMangerConnection(driver, connectionUrl, login, password);
-        }
-        return new OracleERPConnection(connection);
-    }    
-
     /**
      */
     public static class Account {

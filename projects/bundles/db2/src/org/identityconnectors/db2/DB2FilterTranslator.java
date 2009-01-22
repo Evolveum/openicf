@@ -22,6 +22,8 @@
  */
 package org.identityconnectors.db2;
 
+import java.sql.Types;
+
 import org.identityconnectors.dbcommon.*;
 import org.identityconnectors.framework.common.objects.*;
 
@@ -62,6 +64,14 @@ class DB2FilterTranslator extends DatabaseFilterTranslator {
 		}
 		return super.validateSearchAttribute(attribute);
 	}
+
+    /* (non-Javadoc)
+     * @see org.identityconnectors.dbcommon.DatabaseFilterTranslator#getDatabaseColumnType(org.identityconnectors.framework.common.objects.Attribute, org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.OperationOptions)
+     */
+    @Override
+    protected Integer getDatabaseColumnType(Attribute attribute, ObjectClass oclass, OperationOptions options) {
+        return Types.NULL;
+    }
 	
 	
     

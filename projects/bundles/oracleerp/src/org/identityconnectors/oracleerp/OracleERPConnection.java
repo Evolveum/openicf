@@ -23,8 +23,14 @@
 package org.identityconnectors.oracleerp;
 
 import java.sql.Connection;
+import java.util.Hashtable;
 
+import org.identityconnectors.common.StringUtil;
+import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.DatabaseConnection;
+import org.identityconnectors.dbcommon.JNDIUtil;
+import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.spi.Configuration;
 
 /**
@@ -46,6 +52,34 @@ public class OracleERPConnection extends DatabaseConnection {
      */
     public OracleERPConnection(Connection conn) {
         super(conn);
+    }
+
+    /**
+     * Test enabled create connection function
+     * 
+     * @param config
+     * @return a new {@link DatabaseTableConnection} connection
+     */
+    static OracleERPConnection getConnection(OracleERPConfiguration config) {
+        java.sql.Connection connection;
+        final String user = config.getUser();
+        final GuardedString password = config.getPassword();
+        final String datasource = config.getDataSource();
+        if (StringUtil.isNotBlank(datasource)) {
+            final String[] jndiProperties = config.getJndiProperties();
+            final ConnectorMessages connectorMessages = config.getConnectorMessages();
+            final Hashtable<String, String> prop = JNDIUtil.arrayToHashtable(jndiProperties, connectorMessages);                
+            if(StringUtil.isNotBlank(user) && password != null) {
+                connection = SQLUtil.getDatasourceConnection(datasource, user, password, prop);
+            } else {
+                connection = SQLUtil.getDatasourceConnection(datasource, prop);
+            } 
+        } else {
+            final String driver = config.getDriver();
+            final String connectionUrl = config.getConnectionUrl();
+            connection = SQLUtil.getDriverMangerConnection(driver, connectionUrl, user, password);
+        }
+        return new OracleERPConnection(connection);
     }
 
 }
