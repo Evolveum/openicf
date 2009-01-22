@@ -32,6 +32,7 @@ Contents<br>
 
 <ul>
 
+  <li><a href="#cmdcontract">Running a single contract test from command line</a></li>
   <li><a href="#Troubleshooting_tests_errors_">Troubleshooting
 tests' errors</a></li>
 
@@ -48,6 +49,15 @@ tests' errors</a></li>
 </ul>
 
 <hr style="width: 100%; height: 2px;">
+<h2><a name = "cmdcontract"></a>Running a single contract test from command line </h2>
+<p>
+To run just a single contract test from the command line use the following ant call:
+<pre>
+//run just CreateApiOpTests:
+ant run-contract-tests -Dcontract.suite.classname=org.identityconnectors.contract.test.CreateApiOpTests
+</pre>
+</p>
+
 <h2><a name="Troubleshooting_tests_errors_"></a>Troubleshooting
 tests' errors<br>
 
