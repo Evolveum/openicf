@@ -22,10 +22,10 @@
  */
 package org.identityconnectors.mysqluser;
 
-import java.sql.Types;
-
 import org.identityconnectors.dbcommon.DatabaseFilterTranslator;
+import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
@@ -65,8 +65,8 @@ public class MySQLUserFilterTranslator extends DatabaseFilterTranslator {
      * @see org.identityconnectors.dbcommon.DatabaseFilterTranslator#getDatabaseColumnType(org.identityconnectors.framework.common.objects.Attribute, org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     @Override
-    protected Integer getDatabaseColumnType(Attribute attribute, ObjectClass oclass, OperationOptions options) {
-        return Types.NULL;
+    protected SQLParam getSQLParam(Attribute attribute, ObjectClass oclass, OperationOptions options) {
+        return new SQLParam(AttributeUtil.getSingleValue(attribute));
     }
 
 }

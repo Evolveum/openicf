@@ -27,6 +27,7 @@ import static org.junit.Assert.*;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -36,6 +37,7 @@ import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.DatabaseConnection;
+import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;
@@ -644,9 +646,9 @@ public class MySQLUserConnectorTests {
         PreparedStatement ps = null;
         MySQLUserConnection conn = null;
         ResultSet result = null;
-        final List<Object> values = new ArrayList<Object>();
-        values.add(userName);
-        values.add(testPassword);
+        final List<SQLParam> values = new ArrayList<SQLParam>();
+        values.add(new SQLParam(userName, Types.VARCHAR));
+        values.add(new SQLParam(testPassword));
         final String SQL_CREATE_TEMPLATE = "CREATE USER ? IDENTIFIED BY ?";
         log.info("quitelly Create User {0}", userName);
         try {
@@ -673,9 +675,9 @@ public class MySQLUserConnectorTests {
         PreparedStatement ps = null;
         MySQLUserConnection conn = null;
         ResultSet result = null;
-        final List<Object> values = new ArrayList<Object>();
-        values.add(userName);
-        values.add(testPassword);
+        final List<SQLParam> values = new ArrayList<SQLParam>();
+        values.add(new SQLParam(userName, Types.VARCHAR));
+        values.add(new SQLParam(testPassword));
         final String SQL_GRANT_USSAGE = "GRANT USAGE ON *.* TO ?@'localhost' IDENTIFIED BY ?";
         log.info("quitelly Grant Ussage to {0}", userName);
         try {
@@ -702,8 +704,8 @@ public class MySQLUserConnectorTests {
         PreparedStatement ps1 = null;
         PreparedStatement ps2 = null;
         MySQLUserConnection conn = null;
-        final List<Object> values = new ArrayList<Object>();
-        values.add(userName);
+        final List<SQLParam> values = new ArrayList<SQLParam>();
+        values.add(new SQLParam(userName, Types.VARCHAR));
         final String SQL_DELETE_TEMPLATE = "DROP USER ?";
         final String SQL_DELETE_TEMPLATE_LOCAL = "DROP USER ?@'localhost'";
         log.info("quitelly Delete User {0}", userName);
@@ -799,10 +801,10 @@ public class MySQLUserConnectorTests {
         try {
             for (int i = 0; i < stmts.length; i++) {                
                 sql = stmts[i];
-                final List<Object> values = new ArrayList<Object>();
-                values.add(userName);
+                final List<SQLParam> values = new ArrayList<SQLParam>();
+                values.add(new SQLParam(userName, Types.VARCHAR));
                 if(sql.contains("IDENTIFIED BY ?")) {
-                    values.add(testPassword);
+                    values.add(new SQLParam(testPassword));
                 }
                 log.info("Create User {0} Grants , statement:{1}", userName, sql);
                 conn = MySQLUserConnection.getConnection(newConfiguration());
@@ -839,8 +841,8 @@ public class MySQLUserConnectorTests {
         PreparedStatement ps = null;
         MySQLUserConnection conn = null;
         ResultSet result = null;
-        final List<Object> values = new ArrayList<Object>();
-        values.add(userName);
+        final List<SQLParam> values = new ArrayList<SQLParam>();
+        values.add(new SQLParam(userName, Types.VARCHAR));
         final String SQL_SELECT = "SELECT DISTINCT user FROM mysql.user WHERE user = ?";               
         log.info("test User {0} found {1} ", userName, found);   
         try {

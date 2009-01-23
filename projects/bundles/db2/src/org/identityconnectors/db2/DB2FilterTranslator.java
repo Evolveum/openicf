@@ -22,10 +22,15 @@
  */
 package org.identityconnectors.db2;
 
-import java.sql.Types;
-
-import org.identityconnectors.dbcommon.*;
-import org.identityconnectors.framework.common.objects.*;
+import org.identityconnectors.dbcommon.DatabaseFilterTranslator;
+import org.identityconnectors.dbcommon.FilterWhereBuilder;
+import org.identityconnectors.dbcommon.SQLParam;
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.Uid;
 
 /**
  * DB2 filter translator
@@ -53,28 +58,23 @@ class DB2FilterTranslator extends DatabaseFilterTranslator {
     }
     
 	@Override
-	protected FilterWhereBuilder createBuilder() {
-		return new FilterWhereBuilder();
-	}
+    protected FilterWhereBuilder createBuilder() {
+        return new FilterWhereBuilder();
+    }
 
-	@Override
-	protected boolean validateSearchAttribute(Attribute attribute) {
-		if(DB2Connector.USER_AUTH_GRANTS.equals(attribute.getName())){
-			return false;
-		}
-		return super.validateSearchAttribute(attribute);
-	}
+    @Override
+    protected boolean validateSearchAttribute(Attribute attribute) {
+        if (DB2Connector.USER_AUTH_GRANTS.equals(attribute.getName())) {
+            return false;
+        }
+        return super.validateSearchAttribute(attribute);
+    }
 
     /* (non-Javadoc)
      * @see org.identityconnectors.dbcommon.DatabaseFilterTranslator#getDatabaseColumnType(org.identityconnectors.framework.common.objects.Attribute, org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     @Override
-    protected Integer getDatabaseColumnType(Attribute attribute, ObjectClass oclass, OperationOptions options) {
-        return Types.NULL;
+    protected SQLParam getSQLParam(Attribute attribute, ObjectClass oclass, OperationOptions options) {
+        return new SQLParam(AttributeUtil.getSingleValue(attribute));
     }
-	
-	
-    
-    
- 
 }
