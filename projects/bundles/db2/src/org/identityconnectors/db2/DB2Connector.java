@@ -89,8 +89,6 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	private DB2Configuration cfg;
     static final String USER_AUTH_GRANTS = "grants";
 
-    
-
 	/**
 	 * Authenticates user in DB2 database. Here we create new SQL connection with passed credentials to authenticate user. 
 	 * We check SQL state and return code to verify that possibly thrown exception really means user/password is invalid.
@@ -469,7 +467,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
         if ( objClass == null || !objClass.equals(ObjectClass.ACCOUNT)) {
             throw new IllegalArgumentException(
-                    "Create operation requires an 'ObjectClass' attribute of type 'Account'.");
+                    "Delete operation requires an 'ObjectClass' attribute of type 'Account'.");
         }
 		final String uidValue = uid.getUidValue();
         checkUserExist(uidValue);
@@ -480,7 +478,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 			log.info("User deleted : {0}", uidValue);
 		} catch (Exception e) {
 		    SQLUtil.rollbackQuietly(adminConn);
-			throw new ConnectorException(MessageFormat.format("Error removing user {0}",uidValue),e);
+			throw new ConnectorException(MessageFormat.format("Error deleting user {0}",uidValue),e);
 		}
 	}
 	
