@@ -56,7 +56,13 @@
 	          <arg value="start"/>
             <arg value="${server.exe}"/>
             <arg value="/run"/>
-       </exec>	   
+       </exec>
+       <echo message="waiting for connector server to come up on ${serverHost}:${serverPort}"/>
+       <waitfor maxwait="30" maxwaitunit="second" timeoutproperty="wait.timeout">
+            <socket server="${serverHost}" port="${serverPort}"/>
+       </waitfor>
+       <fail if="wait.timeout" message="not able to startup connector server"/>          
+       <echo message="connectort server is up"/>
     </target>
     <target name="stop-server">
        <exec dir="${dist.dotnet}" executable="cmd" osfamily="Windows">
