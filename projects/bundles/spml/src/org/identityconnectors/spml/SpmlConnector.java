@@ -66,6 +66,7 @@ import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
+import org.identityconnectors.framework.spi.operations.TestOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
 import org.openspml.v2.msg.OpenContentElement;
 import org.openspml.v2.msg.pass.ExpirePasswordRequest;
@@ -128,7 +129,7 @@ import org.openspml.v2.util.xml.ObjectFactory;
         displayNameKey="SPMLConnector",
         configurationClass= SpmlConfiguration.class)
 public class SpmlConnector implements PoolableConnector, CreateOp,
-        DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp {
+        DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp, TestOp {
     private Log log = Log.getLog(SpmlConnector.class);
     private ScriptExecutorFactory _factory;
     private static final ObjectFactory.ProfileRegistrar mDSMLRegistrar = new DSMLProfileRegistrar();
@@ -715,6 +716,18 @@ public class SpmlConnector implements PoolableConnector, CreateOp,
             Modification modification = new Modification();
             modification.addOpenContentElement(new DSMLModification(mapSetName(name, objectClass.getObjectClassValue()), asDSMLValueArray(attribute), ModificationMode.REPLACE));
             modifyRequest.addModification(modification);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void test() {
+        SpmlConnection connection = SpmlConnectionFactory.newConnection(_configuration);
+        try {
+            connection.test();
+        } finally {
+            connection.dispose();
         }
     }
 
