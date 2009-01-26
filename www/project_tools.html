@@ -132,14 +132,12 @@ var zones = [ {
 <!-- Main theme engine -->
 <script src="/theme.js"></script>
 
-<!--
-  If your project uses a site traffic tracker like Google Analytics, this is where
-  to inject it.
-
-<script src="https://ssl.google-analytics.com/urchin.js" type="text/javascript"></script>
 <script type="text/javascript">
-_uacct = "UA-1273798-1";
-urchinTracker();
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
 </script>
-
--->
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-7176965-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
