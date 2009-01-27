@@ -145,7 +145,7 @@ public class SpmlConnector implements PoolableConnector, CreateOp,
     private Map<String, String>             _objectClassMap;
     private Map<String, String>             _targetMap;
     private Map<String, String>             _nameAttributeMap;
-    private Schema							_schema;
+    private Schema                          _schema;
     private Map<String, Map<String, AttributeInfo>> _oci;
 
     public SpmlConnector() {
