@@ -83,7 +83,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public static readonly string ATT_DISPLAY_NAME = "displayName";
         public static readonly string ATT_USER_ACOUNT_CONTROL = "userAccountControl";
         public static readonly string ATT_PASSWORD_NEVER_EXPIRES = "PasswordNeverExpires";
-        public static readonly string OBJECTCLASS_OU = "Organizational Unit";
+        public static readonly string OBJECTCLASS_OU = "organizationalUnit";
         public static readonly string OBJECTCLASS_GROUP = "Group";
 
         public static readonly ObjectClass ouObjectClass = new ObjectClass(OBJECTCLASS_OU);
@@ -378,37 +378,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
 
             return null;
-        }
-
-
-        private ActiveDirectorySchema GetADSchema()
-        {
-            String serverName = _configuration.LDAPHostName;
-            Forest forest = null;
-
-            if ((serverName == null) || (serverName.Length == 0))
-            {
-                // get the active directory schema
-                DirectoryContext context = new DirectoryContext(
-                        DirectoryContextType.Domain,
-                        _configuration.DomainName,
-                        _configuration.DirectoryAdminName,
-                        _configuration.DirectoryAdminPassword);
-                DomainController dc = DomainController.FindOne(context);
-                forest = dc.Forest;
-            }
-            else
-            {
-                DirectoryContext context = new DirectoryContext(
-                        DirectoryContextType.DirectoryServer,
-                        _configuration.LDAPHostName,
-                        _configuration.DirectoryAdminName,
-                        _configuration.DirectoryAdminPassword);
-                forest = Forest.GetForest(context);
-            }
-
-            ActiveDirectorySchema ADSchema = forest.Schema;
-            return ADSchema;
         }
 
         #endregion
@@ -749,7 +718,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             bool objectFound = true;
             // now make sure they specified a valid value for the User Object Class
-            ActiveDirectorySchema ADSchema = GetADSchema();
+            ActiveDirectorySchema ADSchema = _utils.GetADSchema();
             ActiveDirectorySchemaClass ADSchemaClass = null;
             try
             {

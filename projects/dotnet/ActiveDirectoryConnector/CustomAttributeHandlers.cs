@@ -64,6 +64,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         IList<string> IgnoreConnectorAttributeNames_account = new List<string>();
         IList<string> IgnoreConnectorAttributeNames_group = new List<string>();
         IList<string> IgnoreConnectorAttributeNames_ou = new List<string>();
+        IList<string> IgnoreConnectorAttributeNames_generic = new List<string>();
 
         // method to update a directory entry from a connector attribute
         Dictionary<string, UpdateDeFromCa_delegate> 
@@ -99,6 +100,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // Connector attributes names to ignore for ous
             IgnoreConnectorAttributeNames_ou.Add(Name.NAME);
             IgnoreConnectorAttributeNames_ou.Add(Uid.NAME);
+
+            // Connector attributes names to ignore for everything else
+            IgnoreConnectorAttributeNames_generic.Add(Name.NAME);
+            IgnoreConnectorAttributeNames_generic.Add(Uid.NAME);
 
             // methods to update a directory entry from a connectorattribute
             UpdateDeFromCaDelegates.Add(PredefinedAttributes.ACCOUNTS_NAME,
@@ -234,6 +239,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
             else if (oclass.Equals(ActiveDirectoryConnector.ouObjectClass))
             {
                 ignoreList = IgnoreConnectorAttributeNames_ou;
+            }
+            else
+            {
+                ignoreList = IgnoreConnectorAttributeNames_generic;
             }
 
             // if it's an ignored attribute, we're done
@@ -717,6 +726,45 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // null out the values if we are replacing attributes.
             if (type.Equals(UpdateType.REPLACE))
             {
+                // There is a problem where some attributes cant be set
+                // even if the value is just being set to the same as
+                // before.  This especially comes up for RDN (such as 
+                // cn and ou).  As a workaround, and for backward compatibility
+                // with IDM, if the value is the same, just ignore it.
+
+                // check equality
+                IList<Object> attributeValue = attribute.Value;
+                PropertyValueCollection pvc = directoryEntry.Properties[attribute.Name];
+                if(attributeValue.Count == pvc.Count)
+                {
+                    Boolean valueEqual = true;
+
+                    if (attributeValue != null)
+                    {
+
+                        foreach (Object attValueObj in attributeValue)
+                        {
+                            if (pvc == null)
+                            {
+                                if (attValueObj != null)
+                                {
+                                    valueEqual = false;
+                                    break;
+                                }
+                            }
+                            if (!pvc.Contains(attValueObj))
+                            {
+                                valueEqual = false;
+                                break;
+                            }
+                        }
+                        if (valueEqual)
+                        {
+                            // the value is already set, so just return without doing anything
+                            return;
+                        }
+                    }
+                }
                 directoryEntry.Properties[attribute.Name].Value = null;
             }
 

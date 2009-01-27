@@ -202,7 +202,7 @@
       </AttributeInfo>
     </AttributeInfos>
   </ObjectClassInfo>
-  <ObjectClassInfo container="true" type="Organizational Unit">
+  <ObjectClassInfo container="true" type="organizationalUnit">
     <AttributeInfos>
       <AttributeInfo name="ou" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>

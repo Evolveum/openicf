@@ -45,6 +45,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
     {
         ActiveDirectoryConfiguration _configuration = null;
         private CustomAttributeHandlers _customHandlers = null;
+        private ICollection<String> _knownObjectClasses = new HashSet<String>(StringComparer.CurrentCultureIgnoreCase);
 
         /// <summary>
         /// Constructor
@@ -275,7 +276,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         directoryEntry, attribute, type);
                     //                  Uncommenting the next line is very helpful in
                     //                  finding mysterious errors.
-                                     directoryEntry.CommitChanges();
+                    //                 directoryEntry.CommitChanges();
                 }
 
                 directoryEntry.CommitChanges();
@@ -294,7 +295,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         directoryEntry, attribute, type);
                     //                  Uncommenting the next line is very helpful in
                     //                  finding mysterious errors.
-                    directoryEntry.CommitChanges();
+                    // directoryEntry.CommitChanges();
                 }
 
                 directoryEntry.CommitChanges();
@@ -303,10 +304,24 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             else
             {
-                throw new ConnectorException(
-                    _configuration.ConnectorMessages.Format("ex_InvalidObjectClass", 
-                    "Invalid object class: {0}", oclass.GetObjectClassValue()));
-            }            
+                String objectClassName = GetADObjectClass(oclass);
+                // translate attribute passed in
+                foreach (ConnectorAttribute attribute in attributes)
+                {
+                    // Temporary
+                    // Trace.TraceInformation(String.Format("Setting attribute {0} to {1}",
+                    //    attribute.Name, attribute.Value));
+                    AddConnectorAttributeToADProperties(oclass,
+                        directoryEntry, attribute, type);
+                    //                  Uncommenting the next line is very helpful in
+                    //                  finding mysterious errors.
+                    // directoryEntry.CommitChanges();
+                }
+
+                directoryEntry.CommitChanges();
+                HandleNameChange(type, directoryEntry, attributes);
+                HandleContainerChange(type, directoryEntry, attributes, config);
+            }
         }
 
         internal ConnectorAttribute GetConnectorAttributeFromADEntry(ObjectClass oclass,
@@ -484,12 +499,35 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 return "organizationalUnit";
             }
             else
-            { 
-                String msg = _configuration.ConnectorMessages.Format(
-                    "ex_ObjectClassInvalidForConnector",
-                    "ObjectClass \'{0}\' is not valid for this connector",
-                    oclass.GetObjectClassValue());
-                throw new ConnectorException(msg);
+            {
+                // It's not something I know about, so I'll consult the AD schema.
+                // if it's there, fine, but if not throw an exception.
+
+                //first check to see if we have seen it before.
+                String objectClassName = oclass.GetObjectClassValue();
+                if(_knownObjectClasses.Contains(objectClassName))
+                {
+                    return objectClassName;
+                }
+
+                // if we havent seen it before, consult AD's schema
+                ActiveDirectorySchema ADSchema = GetADSchema();
+                ActiveDirectorySchemaClass ADSchemaClass = null;
+                try
+                {
+                    ADSchemaClass = ADSchema.FindClass(objectClassName);
+                    _knownObjectClasses.Add(objectClassName);
+                    return objectClassName;
+                }
+                catch (ActiveDirectoryObjectNotFoundException exception)
+                {
+                    String msg = _configuration.ConnectorMessages.Format(
+                        "ex_ObjectClassInvalidForConnector",
+                        "ObjectClass \'{0}\' is not valid for this connector",
+                        objectClassName);
+                    throw new ConnectorException(msg);
+                }
+
             }
         }
 
@@ -664,6 +702,37 @@ namespace Org.IdentityConnectors.ActiveDirectory
             
             return controller;
         }
+
+        internal ActiveDirectorySchema GetADSchema()
+        {
+            String serverName = _configuration.LDAPHostName;
+            Forest forest = null;
+
+            if ((serverName == null) || (serverName.Length == 0))
+            {
+                // get the active directory schema
+                DirectoryContext context = new DirectoryContext(
+                        DirectoryContextType.Domain,
+                        _configuration.DomainName,
+                        _configuration.DirectoryAdminName,
+                        _configuration.DirectoryAdminPassword);
+                DomainController dc = DomainController.FindOne(context);
+                forest = dc.Forest;
+            }
+            else
+            {
+                DirectoryContext context = new DirectoryContext(
+                        DirectoryContextType.DirectoryServer,
+                        _configuration.LDAPHostName,
+                        _configuration.DirectoryAdminName,
+                        _configuration.DirectoryAdminPassword);
+                forest = Forest.GetForest(context);
+            }
+
+            ActiveDirectorySchema ADSchema = forest.Schema;
+            return ADSchema;
+        }
+
     }
 
 }
