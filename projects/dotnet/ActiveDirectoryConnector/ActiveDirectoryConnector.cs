@@ -864,6 +864,20 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // replace embedded string constant if one turns up.
             if (request.ScriptLanguage.Equals("Shell", StringComparison.CurrentCultureIgnoreCase))
             {
+                IDictionary<string, object> shellArguments = new Dictionary<string, object>();
+                String shellPrefix = "";
+                if(options.Options.ContainsKey("variablePrefix"))
+                {
+                    shellPrefix = (string)options.Options["variablePrefix"];
+                }
+
+                foreach (String argumentName in arguments.Keys)
+                {
+                    shellArguments.Add((shellPrefix + argumentName), arguments[argumentName]);    
+                }
+
+                arguments = shellArguments;
+
                 if (options.RunAsUser != null)
                 {
                     arguments.Add("USERNAME", options.RunAsUser);

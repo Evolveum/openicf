@@ -261,4 +261,10 @@
   <data name="ex_InvalidSearchContainerInConfiguration" xml:space="preserve">
     <value>An invalid search container was supplied:  {0}</value>
   </data>
+  <data name="display_ShellScriptVariablePrefix" xml:space="preserve">
+    <value>Shell Script Variable Prefix</value>
+  </data>
+  <data name="help_ShellScriptVariablePrefix" xml:space="preserve">
+    <value>Prefix that will be added to all shell script argument names.  For example, if the prefix is set to "Connector_" an argument called "User" would become "Connector_User"</value>
+  </data>
 </root>
