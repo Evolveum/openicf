@@ -56,6 +56,10 @@
             SourceFiles="$(MSBuildProjectDirectory)\..\LICENSE.txt"
             DestinationFolder="$(OutputPath)"
         />        
+        <Copy
+            SourceFiles="$(MSBuildProjectDirectory)\..\THIRDPARTYREADME.txt"
+            DestinationFolder="$(OutputPath)"
+        />        
         <ItemGroup>        
             <ZipFiles Include="$(OutputPath)/*.*" Exclude="*.zip" />
         </ItemGroup>
