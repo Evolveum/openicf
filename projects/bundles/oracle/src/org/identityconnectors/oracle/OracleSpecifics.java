@@ -6,6 +6,7 @@ import java.util.Hashtable;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
 
+/** Oracle specifics related to JDBC, error codes, constants */
 abstract class OracleSpecifics {
     static final String THIN_AND_OCI_DRIVER_CLASSNAME = "oracle.jdbc.driver.OracleDriver";
     static final String OCI_DRIVER = "oci";
@@ -88,8 +89,6 @@ abstract class OracleSpecifics {
     static Connection createDriverConnection(OracleDriverConnectionInfo connInfo){
         return SQLUtil.getDriverMangerConnection(connInfo.getDriver(), connInfo.getUrl(), connInfo.getUser(), connInfo.getPassword());
     }
-    
-    
     
     
     static Connection createDataSourceConnection(String dsName,Hashtable<?,?> env){

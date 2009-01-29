@@ -8,7 +8,7 @@ class UserRecord {
     String defaultTableSpace;
     String temporaryTableSpace;
     String externalName;
-    long userId;
+    Long userId;
     String status;
     Date createdDate;
     Date lockDate;

@@ -4,9 +4,8 @@
 package org.identityconnectors.oracle;
 
 import java.sql.*;
-import java.util.*;
+import java.util.Set;
 
-import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
@@ -31,10 +30,15 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,Create
     static final String ORACLE_AUTH_GLOBAL = "GLOBAL";
     static final String NO_CASCADE = "noCascade";
     static final String ORACLE_GLOBAL_ATTR_NAME = "oracleGlobalName";
-    static final String ORACLE_EXPIRE_PASSWORD = "expirePassword";
-
-
-
+    static final String ORACLE_ROLES_ATTR_NAME = "oracleRoles";
+    static final String ORACLE_PRIVS_ATTR_NAME = "oraclePrivs";
+    static final String ORACLE_PROFILE_ATTR_NAME = "oracleProfile";
+    static final String ORACLE_DEF_TS_ATTR_NAME = "oracleDefaultTS";
+    static final String ORACLE_TEMP_TS_ATTR_NAME = "oracleTempTS";
+    static final String ORACLE_DEF_TS_QUOTA_ATTR_NAME = "oracleDefaultTSQuota";
+    static final String ORACLE_TEMP_TS_QUOTA_ATTR_NAME = "oracleTempTSQuota";
+    
+    
     
     public void checkAlive() {
         OracleSpecifics.testConnection(adminConn);
@@ -89,133 +93,91 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,Create
         return cfg.createConnection(user, password);
     }
     
-    private String getRequiredStringValue(Set<Attribute> attrs, String name){
-        Attribute attr = AttributeUtil.find(name, attrs);
-        if(attr == null){
-            throw new IllegalArgumentException("No attribute with name  [" + name + "] found in set");
-        }
-        return AttributeUtil.getStringValue(attr);
-    }
-    
-    
-    private String getNotEmptyStringValue(Set<Attribute> attrs, String name){
-        String value = getRequiredStringValue(attrs, name);
-        if(StringUtil.isEmpty(value)){
-            throw new IllegalArgumentException("Attribute with name [" + name + "] is empty");
-        }
-        return value;
-         
-    }
-    
-    private String getStringValue(Set<Attribute> attrs, String name){
-        Attribute attr = AttributeUtil.find(name, attrs);
-        return attr != null ? AttributeUtil.getStringValue(attr) : null;
-    }
-    
-
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
         if ( oclass == null || !oclass.equals(ObjectClass.ACCOUNT)) {
             throw new IllegalArgumentException(
                     "Create operation requires an 'ObjectClass' attribute of type 'Account'.");
         }
-        String userName = getNotEmptyStringValue(attrs, Name.NAME);
+        String userName = OracleConnectorHelper.getNotEmptyStringValue(attrs, Name.NAME);
         checkUserNotExist(userName);
-        String authentication =  getStringValue(attrs, ORACLE_AUTHENTICATION_ATTR_NAME);
-        if(authentication == null){
-            authentication = ORACLE_AUTH_LOCAL; 
-        }
-        final StringBuilder builder = new StringBuilder();
-        builder.append("create user \"").append(userName).append("\" identified");
-        if(ORACLE_AUTH_LOCAL.equals(authentication)){
-            builder.append(" by ");
-            GuardedString password = AttributeUtil.getPasswordValue(attrs);
-            if(password == null){
-                password = new GuardedString(userName.toCharArray());
-            }
-            password.access(new GuardedString.Accessor(){
-                public void access(char[] clearChars) {
-                    builder.append("\"").append(clearChars).append("\"");
-                }
-            });
-            Attribute expirePassword = AttributeUtil.find(ORACLE_EXPIRE_PASSWORD, attrs);
-            if(expirePassword != null && AttributeUtil.getBooleanValue(expirePassword)){
-                builder.append(" password expire");
-            }
-        }
-        else if(ORACLE_AUTH_EXTERNAL.equals(authentication)){
-            builder.append(" externally ");
-        }
-        else if(ORACLE_AUTH_GLOBAL.equals(authentication)){
-            builder.append(" globally as ");
-            String globalName = getNotEmptyStringValue(attrs, ORACLE_GLOBAL_ATTR_NAME); 
-            builder.append('\'').append(globalName).append('\'');
-        }
-        else{
-            throw new IllegalArgumentException("Invalid value of [" + ORACLE_AUTHENTICATION_ATTR_NAME + "] = " + authentication);
-        }
+        CreateAlterAttributes caAttributes = new CreateAlterAttributes();
+        caAttributes.userName = userName;
+        setCreateAuthAttributes(attrs, caAttributes);
+        setCreateRestAttributes(attrs, caAttributes);
         try {
-            SQLUtil.executeUpdateStatement(adminConn, builder.toString());
+            String createSQL = new OracleCreateOrAlterStBuilder().buildCreateUserSt(caAttributes).toString();
+            Attribute roles = AttributeUtil.find(ORACLE_ROLES_ATTR_NAME, attrs);
+            Attribute privileges = AttributeUtil.find(ORACLE_PRIVS_ATTR_NAME, attrs);
+            String privAndRolesSQL = new OracleRolesAndPrivsBuilder()
+                    .buildCreate(userName, OracleConnectorHelper.castList(
+                            roles, String.class), OracleConnectorHelper
+                            .castList(privileges, String.class)); 
+            //Now execute create and grant statements
+            SQLUtil.executeUpdateStatement(adminConn, createSQL);
+            if(privAndRolesSQL != null && privAndRolesSQL.length() > 0){
+                SQLUtil.executeUpdateStatement(adminConn, privAndRolesSQL);
+            }
             adminConn.commit();
             log.info("User created : {0}", userName);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             SQLUtil.rollbackQuietly(adminConn);
             throw ConnectorException.wrap(e);
         }
         return new Uid(userName);
     }
+
+    private void setCreateRestAttributes(Set<Attribute> attrs, CreateAlterAttributes caAttributes) {
+        caAttributes.expirePassword = OracleConnectorHelper.getBooleanValue(attrs, OperationalAttributes.PASSWORD_EXPIRED_NAME);
+        caAttributes.defaultTableSpace = OracleConnectorHelper.getStringValue(attrs, ORACLE_DEF_TS_ATTR_NAME);
+        caAttributes.tempTableSpace = OracleConnectorHelper.getStringValue(attrs, ORACLE_TEMP_TS_ATTR_NAME);
+        caAttributes.enable = OracleConnectorHelper.getBooleanValue(attrs, OperationalAttributes.ENABLE_NAME);
+        caAttributes.profile = OracleConnectorHelper.getStringValue(attrs, ORACLE_PROFILE_ATTR_NAME);
+        Attribute defaultTSQuota = AttributeUtil.find(ORACLE_DEF_TS_QUOTA_ATTR_NAME, attrs);
+        if(defaultTSQuota != null){
+            caAttributes.defaultTSQuota = new Quota(AttributeUtil.getStringValue(defaultTSQuota));
+        }
+        Attribute tempTSQuota = AttributeUtil.find(ORACLE_TEMP_TS_QUOTA_ATTR_NAME, attrs);
+        if(tempTSQuota != null){
+            caAttributes.tempTSQuota = new Quota(AttributeUtil.getStringValue(tempTSQuota));
+        }
+    }
+
+    private void setCreateAuthAttributes(Set<Attribute> attrs, CreateAlterAttributes caAttributes) {
+        String authentication =  OracleConnectorHelper.getStringValue(attrs, ORACLE_AUTHENTICATION_ATTR_NAME);
+        if(authentication == null){
+            authentication = ORACLE_AUTH_LOCAL; 
+        }
+        if(ORACLE_AUTH_LOCAL.equals(authentication)){
+            caAttributes.auth = OracleAuthentication.LOCAL;
+            GuardedString password = AttributeUtil.getPasswordValue(attrs);
+            if(password == null){
+                password = new GuardedString(caAttributes.userName.toCharArray());
+            }
+            caAttributes.password = password;
+        }
+        else if(ORACLE_AUTH_EXTERNAL.equals(authentication)){
+            caAttributes.auth = OracleAuthentication.EXTERNAL;
+        }
+        else if(ORACLE_AUTH_GLOBAL.equals(authentication)){
+            caAttributes.auth = OracleAuthentication.GLOBAL;
+            caAttributes.globalName = OracleConnectorHelper.getNotEmptyStringValue(attrs, ORACLE_GLOBAL_ATTR_NAME);
+        }
+        else{
+            throw new IllegalArgumentException("Invalid value of [" + ORACLE_AUTHENTICATION_ATTR_NAME + "] = " + authentication);
+        }
+    }
     
     private void checkUserNotExist(String user) {
-        boolean userExist = userExist(user);
+        boolean userExist = new OracleUserReader(adminConn).userExist(user);
         if(userExist){
             throw new AlreadyExistsException("User " + user + " already exists");
-        }
-    }
-    
-    private boolean userExist(String user){
-        //Cannot user PreparedStatement, JVM is crashing !
-        StringBuilder query = new StringBuilder("select USERNAME from DBA_USERS where USERNAME = ");
-        query.append('\'').append(user).append('\'');
-        Statement st = null;
-        ResultSet rs = null;
-        try{
-            st = adminConn.createStatement();
-            rs = st.executeQuery(query.toString());
-            return rs.next(); 
-        }
-        catch(SQLException e){
-            throw new ConnectorException("Cannot test whether user exist",e);
-        }
-        finally{
-            SQLUtil.closeQuietly(rs);
-            SQLUtil.closeQuietly(st);
-        }
-    }
-    
-    List<UserRecord> readUserRecords(List<String> userNames){
-        StringBuilder query = new StringBuilder("select * from DBA_USERS where USERNAME in(");
-        for(String userName : userNames){
-            query.append("\"").append(userName).append("\"");
-        }
-        query.append(')');
-        ResultSet rs = null;
-        Statement st = null;
-        try{
-            st = adminConn.createStatement();
-            rs = st.executeQuery(query.toString());
-            return null;
-        }
-        catch(SQLException e){
-            throw ConnectorException.wrap(e);
-        }
-        finally{
-            SQLUtil.closeQuietly(rs);
-            SQLUtil.closeQuietly(st);
         }
     }
 
     
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
-        //TODO add cascade option
+        //Currently IDM pass null for options parameter. So there is no way how to decide
+        //whether we will do cascade or noCascade delete
         String userName = uid.getUidValue();
         String sql = "drop user \"" + userName + "\"";
         Statement st = null;
@@ -235,6 +197,9 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,Create
         }
     }
     
+    Connection getAdminConnection(){
+        return adminConn;
+    }
     
     
 

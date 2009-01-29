@@ -5,8 +5,12 @@ package org.identityconnectors.oracle;
 
 import static org.junit.Assert.*;
 
+import java.sql.*;
+import java.util.*;
+
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.api.*;
 import org.identityconnectors.framework.common.exceptions.*;
 import org.identityconnectors.framework.common.objects.*;
@@ -21,8 +25,9 @@ public class OracleConnectorTest {
     
     private static OracleConfiguration testConf;
     private static ConnectorFacade facade;
+    private static OracleConnector connector;
     
-    private OracleConnector createTestConnector(){
+    private static OracleConnector createTestConnector(){
         OracleConnector oc = new OracleConnector();
         oc.init(testConf);
         return oc;
@@ -36,6 +41,7 @@ public class OracleConnectorTest {
     public static void setupClass(){
         testConf = OracleConfigurationTest.createSystemConfiguration();
         facade = createFacade(testConf);
+        connector = createTestConnector();
     }
     
     private static ConnectorFacade createFacade(OracleConfiguration conf) {
@@ -86,7 +92,8 @@ public class OracleConnectorTest {
 
     /**
      * Test method for {@link org.identityconnectors.oracle.OracleConnector#test()}.
-     */
+    
+    
     @Test
     public void testTest() {
         OracleConnector oc = createTestConnector();
@@ -111,25 +118,171 @@ public class OracleConnectorTest {
         
     }
     
+    /** Test fail of create groups */
+    @Test
+    public void testCreateGroups(){
+        //test for fail when using groups
+        try{
+            connector.create(ObjectClass.GROUP, Collections.<Attribute>emptySet(), null);
+            fail("Create must fail for group");
+        }
+        catch(IllegalArgumentException e){}
+    }
+    
     /**
-     * Test method for {@link org.identityconnectors.oracle.OracleConnector#create(ObjectClass, java.util.Set, OperationOptions)}
+     * Test method for local create
      */
     @Test
-    public void testCreate(){
+    public void testCreateLocal(){
         String newUser = "newUser";
-        try{
-            facade.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
-            fail("Delete should fail for unexistent user");
+        if(new OracleUserReader(connector.getAdminConnection()).userExist(newUser)){
+              connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
         }
-        catch(UnknownUidException e){}
         //Test local authentication
         Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
         Attribute name = new Name(newUser);
-        Attribute password = AttributeBuilder.buildPassword("password".toCharArray());
-        Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,password), null);
+        GuardedString password = new GuardedString("hello".toCharArray());
+        Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
+        Uid uid = connector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,passwordAttribute), null);
+        assertNotNull(uid);
+        assertEquals(newUser, uid.getUidValue());
+        UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(newUser);
+        assertNotNull(record);
+        assertEquals(newUser, record.userName);
+        assertNull(record.expireDate);
+        assertNull(record.externalName);
+        assertEquals("OPEN",record.status);
         
+        try {
+            SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "grant connect to \"" + newUser + "\"");
+        } catch (SQLException e) {
+            fail(e.getMessage());
+        }
+        connector.authenticate( ObjectClass.ACCOUNT, "\"" + newUser + "\"", password, null);
+        connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
+        uid = connector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,passwordAttribute), null);
+        record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(newUser);
+        assertNotNull(record);
+        assertEquals(newUser, record.userName);
+        assertEquals("OPEN",record.status);
+        connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
+    }
+    
+    /** Test create of user with external authentication */
+    @Test
+    public void testCreateExternal(){
+        //Test external authentication
+        String newUser = "newUser";
+        if(new OracleUserReader(connector.getAdminConnection()).userExist(newUser)){
+            connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
+        }
+        Attribute name = new Name(newUser);
+        GuardedString password = new GuardedString("hello".toCharArray());
+        Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_EXTERNAL);
+        Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
+        Uid uid = connector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,passwordAttribute), null);
+        assertNotNull(uid);
+        assertEquals(newUser, uid.getUidValue());
+        UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(newUser);
+        assertNotNull(record);
+        assertEquals(newUser, record.userName);
+        assertNull(record.expireDate);
+        assertNull(record.externalName);
+        assertEquals("OPEN",record.status);
+        connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
+    }
+    
+    /** Test create global user   */
+    @Test
+    public void testCreateGlobal(){
+        String newUser = "newUser";
+        if(new OracleUserReader(connector.getAdminConnection()).userExist(newUser)){
+            connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
+        }
+        Attribute name = new Name(newUser);
+        GuardedString password = new GuardedString("hello".toCharArray());
+        Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_GLOBAL);
+        Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
+        Attribute globalName = AttributeBuilder.build(OracleConnector.ORACLE_GLOBAL_ATTR_NAME, "global");
+        Uid uid = null;
+        try{
+            uid = connector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,passwordAttribute,globalName), null);
+        }
+        catch(ConnectorException e){
+            if(e.getCause() instanceof SQLException){
+                if("67000".equals(((SQLException)e.getCause()).getSQLState()) && 439 == ((SQLException)e.getCause()).getErrorCode()){
+                }
+                else{
+                    fail(e.getMessage());
+                }
+            }
+            else{
+                fail(e.getMessage());
+            }
+        }
+        if(uid != null){
+            assertEquals(newUser, uid.getUidValue());
+            UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(newUser);
+            assertNotNull(record);
+            assertEquals(newUser, record.userName);
+            assertNull(record.expireDate);
+            assertNull(record.externalName);
+            assertEquals("OPEN",record.status);
+            connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
+        }
+    }
+    
+    /** Test with all possible attributes for create */
+    @Test
+    public void testCreateTableSpaces(){
+        String newUser = "newUser";
+        if(new OracleUserReader(connector.getAdminConnection()).userExist(newUser)){
+              connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
+        }
+        Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
+        Attribute name = new Name(newUser);
+        GuardedString password = new GuardedString("hello".toCharArray());
+        Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
+        Attribute passwordExpire = AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME,Boolean.TRUE);
+        Attribute defaultTs =  AttributeBuilder.build(OracleConnector.ORACLE_DEF_TS_ATTR_NAME,findDefaultTS(connector.getAdminConnection()));
+        Attribute tempTs =  AttributeBuilder.build(OracleConnector.ORACLE_TEMP_TS_ATTR_NAME,findTempTS(connector.getAdminConnection()));
+        Set<Attribute> attributes = new HashSet<Attribute>();
+        attributes.add(authentication);
+        attributes.add(name);
+        attributes.add(passwordAttribute);
+        attributes.add(passwordExpire);
+        attributes.add(defaultTs);
+        attributes.add(tempTs);
+        
+        Uid uid = connector.create(ObjectClass.ACCOUNT,attributes, null);
+        assertNotNull(uid);
+        assertEquals(newUser, uid.getUidValue());
+        UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(newUser);
+        assertNotNull(record);
+        assertEquals(newUser, record.userName);
+        assertNull(record.expireDate);
+        assertNull(record.externalName);
+        assertEquals("EXPIRED",record.status);
+        assertEquals(AttributeUtil.getStringValue(defaultTs), record.defaultTableSpace);
+        assertEquals(AttributeUtil.getStringValue(tempTs), record.temporaryTableSpace);
+        connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
+    }
+    
+    @Test
+    public void testCreateProfile(){
         
     }
+    
+    @Test
+    public void testCreateExpire(){
+        
+    }
+    
+    @Test
+    public void testCreateLock(){
+        
+    }
+    
     
     /** 
      * Test method for {@link org.identityconnectors.oracle.OracleConnector#delete(ObjectClass, Uid, OperationOptions)}
@@ -157,5 +310,29 @@ public class OracleConnectorTest {
         }
         catch(UnknownUidException e){}
     }
+    
+    
+    private String findDefaultTS(Connection conn){
+        return getTestuser(conn).defaultTableSpace;
+    }
+    
+    private String findTempTS(Connection conn){
+        return getTestuser(conn).temporaryTableSpace;
+    }
+    
+    private UserRecord getTestuser(Connection conn){
+        String newUser = "testTS";
+        if(!new OracleUserReader(conn).userExist("testUser")){
+            Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
+            Attribute name = new Name(newUser);
+            GuardedString password = new GuardedString("hello".toCharArray());
+            Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
+            connector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,passwordAttribute), null);
+        }
+        UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(newUser);
+        connector.delete(ObjectClass.ACCOUNT, new Uid(newUser),null);
+        return record;
+    }
+    
 
 }
