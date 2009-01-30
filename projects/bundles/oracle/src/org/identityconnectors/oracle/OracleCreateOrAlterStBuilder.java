@@ -62,9 +62,6 @@ class OracleCreateOrAlterStBuilder {
         if(userAttributes.profile != null){
             appendProfile(builder,userAttributes);
         }
-        
-        
-        
     }
 
     private void appendProfile(StringBuilder builder,CreateAlterAttributes userAttributes) {

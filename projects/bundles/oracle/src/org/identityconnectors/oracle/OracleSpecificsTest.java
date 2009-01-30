@@ -70,11 +70,13 @@ public class OracleSpecificsTest {
     }
     
     private void testStaleConnection(Connection systemConn,Connection testConn) throws SQLException{
+        //Here connection should be ok
+        OracleSpecifics.testConnection(testConn);
         Object sid = SQLUtil.selectFirstRowFirstValue(testConn, "SELECT USERENV('SID') FROM DUAL");
         Object serialNumber = SQLUtil.selectFirstRowFirstValue(systemConn, "select serial# from v$session where SID  = " +  sid);
         String killSql = MessageFormat.format("ALTER SYSTEM KILL SESSION {0} ", "'" + sid + "," + serialNumber + "'");
         SQLUtil.executeUpdateStatement(systemConn, killSql);
-        //Now testConn is staled
+        //Here testConn is staled
         try{
             OracleSpecifics.testConnection(testConn);
             fail("Session is killed, test should fail");

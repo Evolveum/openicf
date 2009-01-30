@@ -4,7 +4,7 @@
 package org.identityconnectors.oracle;
 
 import java.sql.*;
-import java.util.Set;
+import java.util.*;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
@@ -108,14 +108,14 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,Create
             String createSQL = new OracleCreateOrAlterStBuilder().buildCreateUserSt(caAttributes).toString();
             Attribute roles = AttributeUtil.find(ORACLE_ROLES_ATTR_NAME, attrs);
             Attribute privileges = AttributeUtil.find(ORACLE_PRIVS_ATTR_NAME, attrs);
-            String privAndRolesSQL = new OracleRolesAndPrivsBuilder()
+            List<String> privAndRolesSQL = new OracleRolesAndPrivsBuilder()
                     .buildCreate(userName, OracleConnectorHelper.castList(
                             roles, String.class), OracleConnectorHelper
                             .castList(privileges, String.class)); 
             //Now execute create and grant statements
             SQLUtil.executeUpdateStatement(adminConn, createSQL);
-            if(privAndRolesSQL != null && privAndRolesSQL.length() > 0){
-                SQLUtil.executeUpdateStatement(adminConn, privAndRolesSQL);
+            for(String privSQL : privAndRolesSQL){
+                SQLUtil.executeUpdateStatement(adminConn, privSQL);
             }
             adminConn.commit();
             log.info("User created : {0}", userName);

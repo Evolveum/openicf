@@ -5,12 +5,10 @@ package org.identityconnectors.oracle;
 
 import static org.junit.Assert.*;
 
-import java.sql.Connection;
+import java.sql.*;
 import java.util.*;
 
-import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.dbcommon.SQLUtil;
-import org.identityconnectors.framework.common.objects.*;
 import org.junit.*;
 
 /**
@@ -19,7 +17,6 @@ import org.junit.*;
  */
 public class OracleUserReaderTest {
     private static Connection conn;
-    private static OracleConnector connector;
     private static OracleUserReader userReader;
     
     /**
@@ -29,9 +26,7 @@ public class OracleUserReaderTest {
     public static void beforeClass(){
         final OracleConfiguration cfg = OracleConfigurationTest.createSystemConfiguration();
         conn = cfg.createAdminConnection();
-        connector = new OracleConnector();
         userReader = new OracleUserReader(conn);
-        connector.init(cfg);
     }
     
     /**
@@ -44,38 +39,35 @@ public class OracleUserReaderTest {
     
     /**
      * Test method for {@link org.identityconnectors.oracle.OracleConnectorHelper#userExist(java.sql.Connection, java.lang.String)}.
+     * @throws SQLException 
      */
     @Test
-    public void testUserExist() {
+    public void testUserExist() throws SQLException {
         String user = "testUser";
         boolean userExist = userReader.userExist(user);
         if(userExist){
-            connector.delete(ObjectClass.ACCOUNT, new Uid(user), new OperationOptionsBuilder().build());
+            SQLUtil.executeUpdateStatement(conn, "drop user \"" + user + "\" cascade");
             assertFalse("User should not exist after delete", userReader.userExist(user));
         }
         else{
-            Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
-            Attribute name = new Name(user);
-            Attribute password = AttributeBuilder.buildPassword("password".toCharArray());
-            connector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,password), new OperationOptionsBuilder().build());
+            SQLUtil.executeUpdateStatement(conn,"create user \"" + user + "\" identified by password");
             assertTrue("User should exist after create", userReader.userExist(user));
-            connector.delete(ObjectClass.ACCOUNT, new Uid(user), new OperationOptionsBuilder().build());
+            SQLUtil.executeUpdateStatement(conn, "drop user \"" + user + "\" cascade");
             assertFalse("User should not exist after delete", userReader.userExist(user));
         }
     }
 
     /**
      * Test method for {@link org.identityconnectors.oracle.OracleConnectorHelper#readUserRecords(java.sql.Connection, java.util.List)}.
+     * @throws SQLException 
      */
     @Test
-    public void testReadUserRecords() {
-        Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
-        Attribute password = AttributeBuilder.buildPassword("password".toCharArray());
+    public void testReadUserRecords() throws SQLException {
         if(!userReader.userExist("user1")){
-            connector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,new Name("user1"),password), new OperationOptionsBuilder().build());
+            SQLUtil.executeUpdateStatement(conn,"create user \"user1\" identified by password");
         }
         if(!userReader.userExist("user2")){
-            connector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,new Name("user2"),password), new OperationOptionsBuilder().build());
+            SQLUtil.executeUpdateStatement(conn,"create user \"user2\" identified by password");
         }
         final Collection<UserRecord> records = userReader.readUserRecords(Arrays.asList("user1","user2","user3"));
         assertEquals("Read should return 2 users",2,records.size());
@@ -107,8 +99,7 @@ public class OracleUserReaderTest {
         assertNotNull(record1.createdDate);
         assertEquals("OPEN",record1.status);
         
-        connector.delete(ObjectClass.ACCOUNT, new Uid("user1"), null);
-        connector.delete(ObjectClass.ACCOUNT, new Uid("user2"), null);
+        SQLUtil.rollbackQuietly(conn);
         
         
     }
