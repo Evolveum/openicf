@@ -499,7 +499,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             if ((passwordExpired.HasValue) && (passwordExpired.Value == true))
             {
                 directoryEntry.Properties[ActiveDirectoryConnector.ATT_PWD_LAST_SET].Clear();
-                directoryEntry.Properties[ActiveDirectoryConnector.ATT_PWD_LAST_SET].Value = GetLargeIntegerFromLong(0);
+                directoryEntry.Properties[ActiveDirectoryConnector.ATT_PWD_LAST_SET].Value = ActiveDirectoryUtils.GetLargeIntegerFromLong(0);
             }
             else
             {
@@ -527,7 +527,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             DateTime? expireDate = ConnectorAttributeUtil.GetDateTimeValue(attribute);
             if(expireDate.HasValue) {
                 directoryEntry.Properties[ActiveDirectoryConnector.ATT_ACCOUNT_EXPIRES].Value =
-                    GetLargeIntegerFromLong(expireDate.Value.ToFileTime());
+                    ActiveDirectoryUtils.GetLargeIntegerFromLong(expireDate.Value.ToFileTime());
             }
         }
 
@@ -544,8 +544,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     throw new ConnectorException(_configuration.ConnectorMessages.Format(
                         "ex_LockAccountNotAllowed", "Active Directory does not support locking users.  User may be unlocked only"));
                 }
-                directoryEntry.Properties[ActiveDirectoryConnector.ATT_LOCKOUT_TIME].Value = 
-                    GetLargeIntegerFromLong(lockoutTime);
+                directoryEntry.Properties[ActiveDirectoryConnector.ATT_LOCKOUT_TIME].Value =
+                    ActiveDirectoryUtils.GetLargeIntegerFromLong(lockoutTime);
             }
         }
         internal void UpdateDeFromCa_PasswordNeverExpires(ObjectClass oclass,
@@ -1120,8 +1120,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         private ConnectorAttribute GetCaFromDe_Att_TSInitialProgram(
             ObjectClass oclass, string attributeName, SearchResult searchResult)
         {
-            return ReturnConnectorAttribute(TerminalServicesUtils.TS_INITIAL_PROGRAM, 
-                TerminalServicesUtils.GetInitialProgram(searchResult));
+           return ReturnConnectorAttribute(TerminalServicesUtils.TS_INITIAL_PROGRAM,
+                                            TerminalServicesUtils.GetInitialProgram(searchResult));
         }
 
         private ConnectorAttribute GetCaFromDe_Att_TSInitalProgramDir(
@@ -1236,23 +1236,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     name, value);
             }
             return newAttribute;
-        }
-
-        // gets a long from a LargeInteger (COM object)
-        ulong GetLongFromLargeInteger(LargeInteger largeInteger)
-        {
-            ulong longValue = ((ulong)largeInteger.HighPart) << 32;
-            longValue += (ulong)largeInteger.LowPart;
-            return longValue;
-        }
-
-        // sets a LargeInteger (COM object) from a long
-        LargeInteger GetLargeIntegerFromLong(Int64 int64Value)
-        {
-            LargeInteger largeInteger = new LargeIntegerClass();
-            largeInteger.HighPart = (int)(int64Value >> 32); ;
-            largeInteger.LowPart = largeInteger.LowPart = (int)(int64Value & 0xFFFFFFFF);
-            return largeInteger;
         }
     }
     

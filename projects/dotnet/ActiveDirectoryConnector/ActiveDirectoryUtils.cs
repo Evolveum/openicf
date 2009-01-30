@@ -711,13 +711,20 @@ namespace Org.IdentityConnectors.ActiveDirectory
             if ((serverName == null) || (serverName.Length == 0))
             {
                 // get the active directory schema
+                Trace.TraceInformation("Trying to lookup Domain controller for domain {0}", 
+                    _configuration.DomainName);
+
                 DirectoryContext context = new DirectoryContext(
                         DirectoryContextType.Domain,
                         _configuration.DomainName,
                         _configuration.DirectoryAdminName,
                         _configuration.DirectoryAdminPassword);
+                
                 DomainController dc = DomainController.FindOne(context);
-                forest = dc.Forest;
+                Trace.TraceInformation("Found Domain controller named {0} with ipAddress {1} for domain {2}",
+                    dc.Name, dc.IPAddress, _configuration.DomainName);
+                forest = dc.Forest;                 
+                Trace.TraceInformation("Found forest");
             }
             else
             {
@@ -729,10 +736,38 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 forest = Forest.GetForest(context);
             }
 
+            Trace.TraceInformation("Getting schema");
             ActiveDirectorySchema ADSchema = forest.Schema;
+            Trace.TraceInformation("Got schema");
+
             return ADSchema;
         }
 
+        // gets a long from a LargeInteger (COM object)
+        static internal ulong GetLongFromLargeInteger(LargeInteger largeInteger)
+        {
+            ulong lHigh = 0;
+            ulong lLow = 0;
+            unchecked
+            {
+                lHigh = (uint)largeInteger.HighPart;
+                lLow = (uint)largeInteger.LowPart;
+            }
+
+            ulong retVal = (ulong) lHigh;
+            retVal = (retVal << 32);
+            retVal = retVal + (ulong)lLow;
+            return retVal;
+        }
+
+        // sets a LargeInteger (COM object) from a long
+        static internal LargeInteger GetLargeIntegerFromLong(Int64 int64Value)
+        {
+            LargeInteger largeInteger = new LargeIntegerClass();
+            largeInteger.HighPart = (int)(int64Value >> 32); ;
+            largeInteger.LowPart = (int)(int64Value & 0xFFFFFFFF);
+            return largeInteger;
+        }
     }
 
 }

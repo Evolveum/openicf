@@ -22,7 +22,9 @@
  */
 using System;
 using System.Collections.Generic;
+using System.DirectoryServices.Protocols;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.DirectoryServices;
 using Org.IdentityConnectors.Common.Security;
@@ -141,6 +143,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             string serverName = _configuration.LDAPHostName;
             PrincipalContext context = null;
             UserPrincipal userPrincipal = null;
+            Uid uid = null;
             try
             {
                 // according to microsoft docs:
@@ -153,15 +156,15 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     // in the connector configuration
                     DomainController domainController = ActiveDirectoryUtils.GetDomainController(_configuration);
                     context = new PrincipalContext(ContextType.Domain,
-                        domainController.Domain.Name, _configuration.DirectoryAdminName,
-                        _configuration.DirectoryAdminPassword);
+                                                   domainController.Domain.Name, _configuration.DirectoryAdminName,
+                                                   _configuration.DirectoryAdminPassword);
                 }
                 else
                 {
                     // if the specified an ldap host, use it.
                     context = new PrincipalContext(ContextType.Machine,
-                        _configuration.LDAPHostName, _configuration.DirectoryAdminName,
-                        _configuration.DirectoryAdminPassword);
+                                                   _configuration.LDAPHostName, _configuration.DirectoryAdminName,
+                                                   _configuration.DirectoryAdminPassword);
                 }
 
                 if (context == null)
@@ -169,25 +172,54 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     throw new ConnectorException("Unable to get PrincipalContext");
                 }
 
-                if (!context.ValidateCredentials(username, _currentPassword))
-                {
-                    throw new InvalidCredentialException(_configuration.ConnectorMessages.Format(
-                    "ex_InvalidCredentials", "Invalid credentials supplied for user {0}",
-                    username));
-                }
+                uid = GetUidFromSamAccountName(context, username);
+                System.Net.NetworkCredential cred = new NetworkCredential(username, _currentPassword);
+                System.DirectoryServices.Protocols.LdapConnection ldapConnection = 
+                    new LdapConnection(_configuration.LDAPHostName);
+                ldapConnection.Bind(cred);
+
                 return GetUidFromSamAccountName(context, username);
             }
-            catch (PrincipalOperationException e)
+            catch (Exception e)
             {
-                if ((e.ErrorCode.Equals(ERR_PASSWORD_MUST_BE_CHANGED)) || 
-                    (e.ErrorCode.Equals(ERR_PASSWORD_EXPIRED)))
+                if (uid != null)
                 {
-                    Uid uid = GetUidFromSamAccountName(context, username);
-                    PasswordExpiredException exception = new PasswordExpiredException(e.Message);
-                    exception.Uid = uid;
-                    throw exception;
-                }
 
+
+                    DirectoryEntry de = ActiveDirectoryUtils.GetDirectoryEntryFromUid(
+                        _configuration.LDAPHostName, uid,
+                        _configuration.DirectoryAdminName,
+                        _configuration.DirectoryAdminPassword);
+                    if (DirectoryEntry.Exists(de.Path))
+                    {
+                        if (!UserAccountControl.IsSet(
+                                 de.Properties[ActiveDirectoryConnector.ATT_USER_ACOUNT_CONTROL],
+                                 UserAccountControl.DONT_EXPIRE_PASSWORD))
+                        {
+                            /*
+                             * 
+                             *Pwd-Last-Set Attribute
+                             *
+                             *The date and time that the password for this account was last changed. 
+                             * This value is stored as a large integer that represents the number of 100 
+                             * nanosecond intervals since January 1, 1601 (UTC). If this value is set to 
+                             * 0 and the User-Account-Control attribute does not contain the 
+                             * UF_DONT_EXPIRE_PASSWD flag, then the user must set the password at the next logon.
+                             */
+                            PropertyValueCollection pvc = de.Properties["pwdLastSet"];
+                            if (pvc.Value is LargeInteger)
+                            {
+                                if (ActiveDirectoryUtils.GetLongFromLargeInteger((LargeInteger) pvc.Value) == 0)
+                                {
+                                    PasswordExpiredException exception =
+                                        new PasswordExpiredException(e.Message);
+                                    exception.Uid = uid;
+                                    throw exception;
+                                }
+                            }
+                        }
+                    }
+                }
                 throw;
             }
             finally

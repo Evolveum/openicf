@@ -22,6 +22,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.DirectoryServices;
@@ -92,11 +93,18 @@ namespace Org.IdentityConnectors.ActiveDirectory
             DirectoryEntry directoryEntry = searchResult.GetDirectoryEntry();
 
             // get 'name' from the directory entry, and return it if it exists
-            object result = directoryEntry.InvokeGet(name);
-            if (result != null)
+            try
             {
-                T value = (T)result;
-                return value;
+                object result = directoryEntry.InvokeGet(name);
+                if (result != null)
+                {
+                    T value = (T)result;
+                    return value;
+                }                
+            }catch (Exception e)
+            {
+                Trace.TraceWarning("Unable to retrieve property called {0}", name);
+                Trace.TraceWarning(e.Message);
             }
 
             // if the name didn't exist, return 'defaultValue'
