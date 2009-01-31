@@ -9,72 +9,32 @@ var regions = [
   	match: []
   },
   {
-  	title: "Core",
-  	href:  "#",
+  	title: "Community",
+  	href:  "http://identitymanagement.dev.java.net",
+  	match: []
+  },
+  {
+  	title: "Wiki",
+  	href:  "http://wikis.sun.com/display/IdentityConnectors/Home",
+  	match: [],
+  	children: []
+  },
+  {
+  	title: "Sun Docs",
+  	href:  "http://docs.sun.com",
   	match: [],
   	children: [
-  		makeProjectLink("TestLink1"),
-  		makeProjectLink("TestLink2"),
-  		makeProjectLink("TestLink3"),
-  		makeProjectLink("TestLink4"),
-  		makeProjectLink("TestLink5")
+  		{ title: "IDM", href: "http://docs.sun.com/app/docs/prod/ident.mgr" },
+  		{ title: "Access Manager", href: "http://docs.sun.com/app/docs/prod/access.mgr" },
+  		{ title: "Role Manager", href: "http://docs.sun.com/app/docs/prod/sun.rolemgr" },
+  		{ title: "OpenSSO", href: "http://docs.sun.com/app/docs/prod/fed.accmgr" },
   	]
   },
   {
-  	title: "Webtier",
-  	href:  "https://glassfish.dev.java.net/javaee5/webtier/webtierhome.html",
-  	match: [
-  	  "https://jsf.+"
-  	],
-  	children: [
-  		makeProjectLink("JSP"),
-  		{ title: "EL", href: "https://uel.dev.java.net/" },
-  		makeProjectLink("JSTL"),
-  		{ title: "JSF", href: "https://javaserverfaces.dev.java.net/" },
-  		makeProjectLink("JSFTemplating"),
-  		makeProjectLink("Woodstock"),
-  		makeProjectLink("Jersey"),
-  		makeProjectLink("Phobos"),
-  		makeProjectLink("WADL"),
-  		makeProjectLink("LRWPinJava")
-  	]
-  },
-  {
-  	title: "Web.Next",
-  	href:  "https://socialsite.dev.java.net/",
-  	match: [
-  		"https://socialsite.+",
-  		"https://portal.+",
-  		"https://ajax.+",
-  		"https://slynkr.+"
-  	],
-  	children: [
-  		makeProjectLink("SocialSite"),
-  		{ title: "WebSynergy", href: "https://portal.dev.java.net/" },
-  		{ title: "jMaki", href: "https://ajax.dev.java.net/" },
-  		makeProjectLink("Slynkr"),
-  		{ title: "OpenSocial", href: "http://opensocial.org" }
-  	]
-  },
-  {
-  	title: "WS/XML",
-  	href:  "https://metro.dev.java.net/",
-  	match: [
-  		"https://jax-ws.+",
-  		"https://wsit.+",
-  		"https://wiseman.+",
-  		"https://jaxb.+",
-  		"https://policy.+",
-  		"https://xsom.+"
-  	],
-  	children: [
-  		makeProjectLink("Metro"),
-  		makeProjectLink("JAX-WS"),
-  		makeProjectLink("WSIT"),
-  		makeProjectLink("JAXB"),
-  		makeProjectLink("JAXP"),
-  		makeProjectLink("Wiseman")
-  	]
+  	title: "SDN",
+  	href:  "http://developers.sun.com",
+  	match: [],
+  	children: []
   },
   {
 	title: "Tools",
@@ -478,7 +438,7 @@ else {
 	var link = document.createElement('link');
 	link.setAttribute("rel","stylesheet");
 	link.setAttribute("type","text/css");
-	link.setAttribute("href","https://glassfish-theme.dev.java.net/theme.css");
+	link.setAttribute("href","/theme.css");
 	head.appendChild(link);
 	addLoadEvent(djnInit);
 }
