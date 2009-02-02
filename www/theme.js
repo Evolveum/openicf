@@ -10,7 +10,7 @@ var regions = [
   },
   {
   	title: "Community",
-  	href:  "http://identitymanagement.dev.java.net",
+  	href:  "http://developers.sun.com/identity",
   	match: []
   },
   {

@@ -20,12 +20,10 @@
       he/she is. This is primarily done by the exact match between "window.location.href"
       and the link target, but the A tag can also have the optional "match" attribute,
       whose value is regular expression that indicates what pages the link should highlight.
-      
-      For example, the following match attribute says "overview" should be the current
-      page even if you are in sub.html. This is useful for grouping a large number of pages
-      under a single navigation item.
     -->
   <li><a href="/">Project Home</a>
+  
+  <li><a href="/idm_info.html>IDM Info</a>
   
   <!--
     If the parent LI of a submenu doesn't have a dedicated page like this,
@@ -38,18 +36,39 @@
 	  <li><a href="/connector_server.html">Connector Servers</a>
 	</ul>
   
-  <li><a href="/servlets/ProjectDocumentList">Downloads</a>
+  <li><a href="#">Downloads</a>
+  	<ul>
+  	  <li><a href="/servlets/ProjectDocumentList?folderID=10491&expandFolder=10491&folderID=10335">Connector Framework</a>
+  	  <li><a href="/servlets/ProjectDocumentList?collapseFolder=10486&folderID=10608">Connector Server</a>
+  	  <li><a href="#">Bundles</a>
+  	  	<ul>
+  	  	  <li><a href="/servlets/ProjectDocumentList?folderID=10492&expandFolder=10492&folderID=10486">Active Directory Connector</a>
+  	  	  <li>< href="/servlets/ProjectDocumentList?folderID=10493&expandFolder=10493&folderID=10489">SPMLv2 Connector</a>
+  	  	</ul>
+  	</ul>
 
   <li><a href="#">Developers</a>
     <ul>
-      <li><a href="/Java_Toolkit.html">Java Connectors</a>
-      <li><a href="/dotnet_development.html">.NET Connectors</a>
-      <li><a href="/development.html">Manual Development</a>
-      <li><a href="/commit_rules.html">Commit Rules</a>
+      <li><a href="#">Creating Connectors</a>
+        <ul>
+          <li><a href="/Java_Toolkit.html">Java Connectors</a>
+          <li><a href="/dotnet_development.html">.NET Connectors</a>
+          <li><a href="/development.html">Manual Development</a>
+          <li><a href="/commit_rules.html">Commit Rules</a>
+          <li><a href="/contract-tests-groovy/index.html">Contract Tests</a>
+        </ul>
+      <li><a href="#">Consuming Connectors</a>
+        <ul>
+          <a href="/api_info.html">API Information</a>
+        </ul>
     </ul>
-    
-  <li><a href="/contract-tests-groovy/index.html">Contract Tests</a>
   
+  <li><a href="#">Bundle Info</a>
+    <ul>
+      <li><a href="/bundles/ActiveDirectory.html">Active Directory Connector</a>
+      <li><a href="/bundles/SPMLv2.html">SPMLv2 Connector</a>
+    </ul>
+       
   <li><a href="http://idmvm120.central.sun.com/hudson/job/framework/javadoc/">Javadoc</a>
   
   <li><a href="/source/browse/identityconnectors">Subversion</a>
