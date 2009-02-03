@@ -735,34 +735,22 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 // check equality
                 IList<Object> attributeValue = attribute.Value;
                 PropertyValueCollection pvc = directoryEntry.Properties[attribute.Name];
-                if(attributeValue.Count == pvc.Count)
+                if((attributeValue != null) && (pvc != null) && (attributeValue.Count == pvc.Count))
                 {
                     Boolean valueEqual = true;
 
-                    if (attributeValue != null)
+                    foreach (Object attValueObj in attributeValue)
                     {
-
-                        foreach (Object attValueObj in attributeValue)
+                        if (!pvc.Contains(attValueObj))
                         {
-                            if (pvc == null)
-                            {
-                                if (attValueObj != null)
-                                {
-                                    valueEqual = false;
-                                    break;
-                                }
-                            }
-                            if (!pvc.Contains(attValueObj))
-                            {
-                                valueEqual = false;
-                                break;
-                            }
+                            valueEqual = false;
+                            break;
                         }
-                        if (valueEqual)
-                        {
-                            // the value is already set, so just return without doing anything
-                            return;
-                        }
+                    }
+                    if (valueEqual)
+                    {
+                        // the value is already set, so just return without doing anything
+                        return;
                     }
                 }
                 directoryEntry.Properties[attribute.Name].Value = null;

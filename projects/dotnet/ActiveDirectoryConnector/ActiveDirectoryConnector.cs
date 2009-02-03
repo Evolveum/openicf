@@ -594,14 +594,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
                             savedDcResult = dcSearcher.FindOne();
                             if (savedDcResult == null)
                             {
-                                // in this case, we found it in the gc, but not in the
-                                // domain controller.  We cant return a result.  The could
-                                // be a case where the account was deleted, but the global
-                                // catalog doesn't know it yet
-                                Trace.TraceWarning(String.Format("Found result in global catalog " +
-                                    "for ''{0}'', but could not retrieve the entry from the domain " +
-                                    "controller", savedGcResult.Path));
-                                continue;
+                                // in this case, there is no choice, but to use
+                                // what is in the global catalog.  We would have 
+                                //liked to have read from the regular ldap, but there
+                                // is not one.  This is the case for domainDNS objects
+                                // (at least for child domains in certain or maybe all
+                                // circumstances).
+                                savedDcResult = savedGcResult;
                             }
                         }
 
@@ -834,17 +833,14 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 DirectoryEntry parent = de.Parent;
                 parent.Children.Remove(de);
             }
-            else if (objClass.Equals(ActiveDirectoryConnector.groupObjectClass) || objClass.Equals(ouObjectClass))
-            {
-                // if it's a group or ou (container), delete this
-                // entry and all it's children
-                de.DeleteTree();
-            }
             else
             {
-                throw new ConnectorException(_configuration.ConnectorMessages.Format(
-                    "ex_DeleteNotSupported", "Delete is not supported for ObjectClass {0}", 
-                    objClass.GetObjectClassValue()));
+                // translate the object class.  We dont care what
+                // it is, but this will throw the correct exception
+                // if it's an invalid one.
+                _utils.GetADObjectClass(objClass);
+                // delete this entry and all it's children
+                de.DeleteTree();
             }
         }
 

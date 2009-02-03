@@ -962,18 +962,25 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             try
             {
-                RunScript(connector, "", "");
+                RunScript(connector, "", "", "");
                 RunScript(connector, GetProperty(CONFIG_PROPERTY_SCRIPT_USER_LOCAL),
-                    GetProperty(CONFIG_PROPERTY_SCRIPT_PASSWORD_LOCAL));
+                    GetProperty(CONFIG_PROPERTY_SCRIPT_PASSWORD_LOCAL), "");
                 RunScript(connector, GetProperty(CONFIG_PROPERTY_SCRIPT_USER_DOMAIN),
-                    GetProperty(CONFIG_PROPERTY_SCRIPT_PASSWORD_DOMAIN));
+                    GetProperty(CONFIG_PROPERTY_SCRIPT_PASSWORD_DOMAIN), "");
+
+                // now try one with the prefix set
+                ActiveDirectoryConfiguration prefixConfig = (ActiveDirectoryConfiguration)GetConfiguration();
+                string prefix = "UnitTest_";
+                connector.Dispose();
+                connector.Init(prefixConfig);
+                RunScript(connector, "", "", prefix);
 
 
                 // try with invalid credentials
                 bool scriptFailed = false;
                 try
                 {
-                    RunScript(connector, GetProperty(CONFIG_PROPERTY_USER), "bogus");
+                    RunScript(connector, GetProperty(CONFIG_PROPERTY_USER), "bogus", "");
                 }
                 catch (Exception e)
                 {
@@ -1391,7 +1398,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 catch (InvalidCredentialException e)
                 {
                     caughtException = true;
-                }                
+                } 
                 Assert.IsTrue(caughtException, "Negative test case should throw InvalidCredentialsException");
 
                 // change password
@@ -1647,11 +1654,14 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         ConnectorAttributeUtil.GetAsStringValue(ConnectorAttributeUtil.Find("sAMAccountName", createAttributes)),
                         gsCurrentPassword, null);
                 }
-                catch (PasswordExpiredException e)
+                catch (InvalidCredentialException e)
                 {
-                    caughtException = true;
-                    Assert.AreEqual(createUid, e.Uid);
+                    if (e.Message.Contains("ex_AccountExpired"))
+                    {
+                        caughtException = true;
+                    }
                 }
+
                 Assert.IsTrue(caughtException, "Negative test case should throw an exception");
 
                 // set expiration to tommorrow
@@ -1994,17 +2004,21 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         public void RunScript(ActiveDirectoryConnector connector, String user, 
-            string password)
+            string password, string prefix)
         {
             string tempFileName = Path.GetTempFileName();
+            String arg0Name = "ARG0";
+            String arg1Name = "ARG1";
+
             string scriptText = String.Format(
-                "echo %ARG0%:%ARG1%:%USERNAME%:%PASSWORD% > \"{0}\"", tempFileName);
+                "echo %{0}%:%{1}%:%USERNAME%:%PASSWORD% > \"{2}\"", prefix + arg0Name, 
+                prefix + arg1Name, tempFileName);
            
             IDictionary<string, object> arguments = new Dictionary<string, object>();
             string arg0 = "argument_zero";
             string arg1 = "argument one";
-            arguments.Add("ARG0", arg0);
-            arguments.Add("ARG1", arg1);
+            arguments.Add(arg0Name, arg0);
+            arguments.Add(arg1Name, arg1);
 
             OperationOptionsBuilder builder = new OperationOptionsBuilder();
             if (user.Length > 0)
@@ -2015,6 +2029,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             {
                 builder.RunWithPassword = GetGuardedString(password);
             }
+            builder.Options["variablePrefix"] = prefix;
 
             ScriptContext context = new ScriptContext("Shell", scriptText, arguments);
             object resultObject = connector.RunScriptOnResource(context, builder.Build());
@@ -2027,8 +2042,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             string output = outputReader.ReadLine();
             string[] returnedArray = output.Split(':');
             Assert.AreEqual(4, returnedArray.Length);
-            Assert.AreEqual(arg0, returnedArray[0]);
-            Assert.AreEqual(arg1, returnedArray[1]);
+            Assert.AreEqual((arg0), returnedArray[0]);
+            Assert.AreEqual((arg1), returnedArray[1]);
         }
 /*
         [Test]
