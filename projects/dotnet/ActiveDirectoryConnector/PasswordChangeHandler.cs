@@ -22,9 +22,11 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.DirectoryServices.Protocols;
 using System.Linq;
 using System.Net;
+using System.Security.Permissions;
 using System.Text;
 using System.DirectoryServices;
 using Org.IdentityConnectors.Common.Security;
@@ -35,9 +37,142 @@ using System.DirectoryServices.ActiveDirectory;
 using System.Threading;
 using Org.IdentityConnectors.Framework.Common.Objects;
 using System.Security.Principal;
+using System.Runtime.InteropServices;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
+    internal class AuthenticationHelper
+    {
+        // errors are documented in winerror.h
+        internal static readonly int ERROR_PASSWORD_MUST_CHANGE = 1907;
+        internal static readonly int ERROR_LOGON_FAILURE = 1326;
+        internal static readonly int ERROR_ACCOUNT_LOCKED_OUT = 1909;
+        internal static readonly int ERROR_ACCOUNT_EXPIRED = 1793;
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern bool LogonUser(String lpszUsername, String lpszDomain, String lpszPassword,
+            int dwLogonType, int dwLogonProvider, ref IntPtr phToken);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+        public extern static bool CloseHandle(IntPtr handle);
+
+        private ActiveDirectoryConfiguration _configuration = null;
+
+        internal AuthenticationHelper(ActiveDirectoryConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+
+        // Advice from Microsoft - If you incorporate this code into a DLL, be sure to 
+        // demand FullTrust.  See full article in WindowsIdentity.Impersonate() documentation:  
+        // http://msdn.microsoft.com/en-us/library/chf6fbt4.aspx
+        [PermissionSet(SecurityAction.Demand, Name = "FullTrust")]
+        internal Uid ValidateUserCredentials(string username, string password)
+        {
+            IntPtr tokenHandle = new IntPtr(0);
+            try
+            {
+                const int LOGON32_PROVIDER_DEFAULT = 0;
+                const int LOGON32_LOGON_INTERACTIVE = 2;
+                const int LOGON32_LOGON_NETWORK = 3;
+
+                tokenHandle = IntPtr.Zero;
+                bool success = LogonUser(username, null, password, LOGON32_LOGON_NETWORK,
+                                         LOGON32_PROVIDER_DEFAULT, ref tokenHandle);
+                if(!success)
+                {
+                    int lastWindowsError = Marshal.GetLastWin32Error(); 
+                    if(lastWindowsError == ERROR_PASSWORD_MUST_CHANGE)
+                    {
+                        string message = _configuration.ConnectorMessages.Format("ex_PasswordMustChange",
+                                                         "User password must be changed");
+
+                        PasswordExpiredException pweException = new PasswordExpiredException(message);
+                        pweException.Uid = GetUidFromSamAccountName(username);
+
+                        throw pweException;
+                    }
+                    else if(lastWindowsError == ERROR_LOGON_FAILURE)
+                    {
+                        string message = _configuration.ConnectorMessages.Format(
+                            "ex_InvalidCredentials", "Invalid credentials supplied for user {0}", username);
+                        
+                        throw new InvalidCredentialException(message);
+                    }
+                    else if (lastWindowsError == ERROR_ACCOUNT_LOCKED_OUT)
+                    {
+                        string message = _configuration.ConnectorMessages.Format("ex_AccountLocked",
+                                                                                 "User's account has been locked");
+                        throw new InvalidCredentialException(message);
+                    }
+                    else if (lastWindowsError == ERROR_ACCOUNT_EXPIRED)
+                    {
+                        string message = _configuration.ConnectorMessages.Format("ex_AccountExpired",
+                                                                                 "User account expired for user {0}", username);
+                        throw new InvalidCredentialException(message);
+                    }
+                    else
+                    {
+                        // no idea what could have gone wrong, so log it and throw connector error
+                        string errorMessage = string.Format(
+                            "Windows returned error number {0} from LogonUser call", lastWindowsError);
+                        Trace.TraceError(errorMessage);
+                        //TODO: Add localization
+                        throw new ConnectorException(errorMessage);
+                    }
+                }
+                WindowsIdentity windowsId = new WindowsIdentity(tokenHandle);
+                Uid uid = GetUidFromSid(windowsId.User);
+                return uid;
+            }
+            catch(Exception e)
+            {
+                Trace.TraceError(e.Message);
+                throw;
+            }
+            finally
+            {
+                if(tokenHandle != IntPtr.Zero)
+                {
+                    CloseHandle(tokenHandle);
+                }                
+            }
+        }
+
+        internal Uid GetUidFromSid(SecurityIdentifier accountSid)
+        {
+            string sidString = "<SID=" + accountSid.Value + ">";
+            DirectoryEntry userDe = new DirectoryEntry(
+                ActiveDirectoryUtils.GetLDAPPath(_configuration.LDAPHostName, sidString),
+                _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
+
+            return new Uid(ActiveDirectoryUtils.ConvertUIDBytesToGUIDString(userDe.Guid.ToByteArray()));
+        }
+
+        internal Uid GetUidFromSamAccountName(String sAMAccountName)
+        {
+            WindowsIdentity windowsId = new WindowsIdentity(sAMAccountName);
+
+            try
+            {
+                if (windowsId.User == null)
+                {
+                    throw new ConnectorException(_configuration.ConnectorMessages.Format(
+                    "ex_SIDLookup", "An execption occurred during validation of user {0}.  The user's sid could not be determined.",
+                    sAMAccountName));
+                }
+                return GetUidFromSid(windowsId.User);
+            }
+            finally
+            {
+                if (windowsId != null)
+                {
+                    windowsId.Dispose();
+                    windowsId = null;
+                }
+            }
+        }
+    } 
 
     /** 
      * This class will decrypt passwords, and handle
@@ -137,133 +272,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
         internal Uid Authenticate(/*DirectoryEntry directoryEntry,*/ string username,
             Org.IdentityConnectors.Common.Security.GuardedString password)
         {
+            AuthenticationHelper authHelper = new AuthenticationHelper(_configuration);
             password.Access(setCurrentPassword);
-
-            // create principle context for authentication
-            string serverName = _configuration.LDAPHostName;
-            PrincipalContext context = null;
-            UserPrincipal userPrincipal = null;
-            Uid uid = null;
-            try
-            {
-                // according to microsoft docs:
-                // Wait on return - true if the current instance receives a signal. If the current instance is never signaled, WaitOne never returns. 
-                // no need to check return, since it will not return false;
-                authenticationSem.WaitOne();
-                if ((serverName == null) || (serverName.Length == 0))
-                {
-                    // if they haven't specified an ldap host, use the domain that is
-                    // in the connector configuration
-                    DomainController domainController = ActiveDirectoryUtils.GetDomainController(_configuration);
-                    context = new PrincipalContext(ContextType.Domain,
-                                                   domainController.Domain.Name, _configuration.DirectoryAdminName,
-                                                   _configuration.DirectoryAdminPassword);
-                }
-                else
-                {
-                    // if the specified an ldap host, use it.
-                    context = new PrincipalContext(ContextType.Machine,
-                                                   _configuration.LDAPHostName, _configuration.DirectoryAdminName,
-                                                   _configuration.DirectoryAdminPassword);
-                }
-
-                if (context == null)
-                {
-                    throw new ConnectorException("Unable to get PrincipalContext");
-                }
-
-                uid = GetUidFromSamAccountName(context, username);
-                System.Net.NetworkCredential cred = new NetworkCredential(username, _currentPassword);
-                System.DirectoryServices.Protocols.LdapConnection ldapConnection = 
-                    new LdapConnection(_configuration.LDAPHostName);
-                ldapConnection.Bind(cred);
-
-                return GetUidFromSamAccountName(context, username);
-            }
-            catch (Exception e)
-            {
-                if (uid != null)
-                {
-
-
-                    DirectoryEntry de = ActiveDirectoryUtils.GetDirectoryEntryFromUid(
-                        _configuration.LDAPHostName, uid,
-                        _configuration.DirectoryAdminName,
-                        _configuration.DirectoryAdminPassword);
-                    if (DirectoryEntry.Exists(de.Path))
-                    {
-                        if (!UserAccountControl.IsSet(
-                                 de.Properties[ActiveDirectoryConnector.ATT_USER_ACOUNT_CONTROL],
-                                 UserAccountControl.DONT_EXPIRE_PASSWORD))
-                        {
-                            /*
-                             * 
-                             *Pwd-Last-Set Attribute
-                             *
-                             *The date and time that the password for this account was last changed. 
-                             * This value is stored as a large integer that represents the number of 100 
-                             * nanosecond intervals since January 1, 1601 (UTC). If this value is set to 
-                             * 0 and the User-Account-Control attribute does not contain the 
-                             * UF_DONT_EXPIRE_PASSWD flag, then the user must set the password at the next logon.
-                             */
-                            PropertyValueCollection pvc = de.Properties["pwdLastSet"];
-                            if (pvc.Value is LargeInteger)
-                            {
-                                if (ActiveDirectoryUtils.GetLongFromLargeInteger((LargeInteger) pvc.Value) == 0)
-                                {
-                                    PasswordExpiredException exception =
-                                        new PasswordExpiredException(e.Message);
-                                    exception.Uid = uid;
-                                    throw exception;
-                                }
-                            }
-                        }
-                    }
-                }
-                throw;
-            }
-            finally
-            {
-                if (context != null)
-                {
-                    context.Dispose();
-                    context = null;
-                }
-                authenticationSem.Release();
-            }
-        }
-
-        public Uid GetUidFromSamAccountName(PrincipalContext context, String sAMAccountName)
-        {
-            UserPrincipal userPrincipal = null;
-
-            try
-            {
-                userPrincipal = UserPrincipal.FindByIdentity(context,
-                    IdentityType.SamAccountName, sAMAccountName);
-
-                if (userPrincipal.Sid == null)
-                {
-                    throw new ConnectorException(_configuration.ConnectorMessages.Format(
-                    "ex_SIDLookup", "An execption occurred during validation of user {0}.  The user was successfully authenticated, but the user's sid could not be determined.",
-                    sAMAccountName));
-                }
-
-                string sidString = "<SID=" + userPrincipal.Sid.Value + ">";
-                DirectoryEntry userDe = new DirectoryEntry(
-                    ActiveDirectoryUtils.GetLDAPPath(_configuration.LDAPHostName, sidString),
-                    _configuration.DirectoryAdminName, _configuration.DirectoryAdminPassword);
-
-                return new Uid(ActiveDirectoryUtils.ConvertUIDBytesToGUIDString(userDe.Guid.ToByteArray()));
-            }
-            finally
-            {
-                if (userPrincipal != null)
-                {
-                    userPrincipal.Dispose();
-                    userPrincipal = null;
-                }
-            }
+            return authHelper.ValidateUserCredentials(username, _currentPassword);
         }
     }
 }
