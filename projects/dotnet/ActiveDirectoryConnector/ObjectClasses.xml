@@ -138,7 +138,6 @@
       <AttributeInfo name="@@ENABLE@@" type="Boolean"/>
       <!---->AttributeInfo name="@@ENABLE_DATE@@" type="long"/-->
       <AttributeInfo name="@@LOCK_OUT@@" type="Boolean"/>
-      <AttributeInfo name="@@PASSWORD_EXPIRATION_DATE@@" type="long"/>
       <AttributeInfo name="@@PASSWORD_EXPIRED@@" type="Boolean"/>
       <AttributeInfo name="@@CURRENT_PASSWORD@@" type="GuardedString"/>
       <AttributeInfo name="@@PASSWORD@@" type="GuardedString">
