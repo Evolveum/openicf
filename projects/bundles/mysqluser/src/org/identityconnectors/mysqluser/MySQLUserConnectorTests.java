@@ -89,7 +89,6 @@ public class MySQLUserConnectorTests {
     private static String idmModelUser = null;
     private static GuardedString idmPassword = null;
     private static String idmPort = null;
-    private static final String TST_HOST = "%";
     private static final String TST_USER1 = "test1";
 
     private static final String TST_USER2 = "test2";
@@ -216,7 +215,7 @@ public class MySQLUserConnectorTests {
         assertNotNull(facade);
         String userName=TST_USER1;
         quitellyDeleteUser(userName);
-        final Uid uid = createUser(userName, testPassword, TST_HOST);
+        final Uid uid = createUser(userName, testPassword);
         assertNotNull(uid);
         assertEquals(userName, uid.getUidValue());
         //Delete it at the end
@@ -232,12 +231,12 @@ public class MySQLUserConnectorTests {
         assertNotNull(facade);
         String userName=TST_USER1;
         quitellyDeleteUser(userName);
-        final Uid uid = createUser(userName, testPassword, TST_HOST);
+        final Uid uid = createUser(userName, testPassword);
         assertNotNull(uid);
         assertEquals(userName, uid.getUidValue());
         //duplicate
         try {
-            createUser(userName, testPassword, TST_HOST);
+            createUser(userName, testPassword);
             fail("Duplicate user created");
         } finally {
             //Delete it at the end        
@@ -254,7 +253,7 @@ public class MySQLUserConnectorTests {
         String userName=TST_USER1;
         quitellyDeleteUser(userName);
         
-        Set<Attribute> tuas = getUserAttributeSet(TST_USER1, testPassword , TST_USER1);
+        Set<Attribute> tuas = getUserAttributeSet(TST_USER1, testPassword);
         assertNotNull(tuas);
         ObjectClass oc = new ObjectClass("UNSUPPORTED");
         facade.create(oc, tuas, null);   
@@ -530,7 +529,7 @@ public class MySQLUserConnectorTests {
     public void testValidateConfigurationDatasource() throws Exception {
         config.setPort("");
         config.setDriver("");
-        config.setDatasource(TST_HOST);
+        config.setDatasource("java:");
         config.validate();
 
         final String[] tstProp = {"a=a","b=b"};
@@ -823,11 +822,10 @@ public class MySQLUserConnectorTests {
         log.ok("The User {0} Grants created", userName);
     }    
    
-    private static Set<Attribute> getUserAttributeSet(String tstUser, GuardedString tstPassword, String tstHost) {
+    private static Set<Attribute> getUserAttributeSet(String tstUser, GuardedString tstPassword) {
         Set<Attribute> ret = new HashSet<Attribute>();
         ret.add(AttributeBuilder.build(Name.NAME, tstUser));
         ret.add(AttributeBuilder.buildPassword(tstPassword));
-        ret.add(AttributeBuilder.build(MySQLUserConfiguration.HOST, tstHost));
         return ret;
     }
     
@@ -870,8 +868,8 @@ public class MySQLUserConnectorTests {
     }  
 
     
-    private Uid createUser(String user, GuardedString password, String host) {
-        Set<Attribute> tuas = getUserAttributeSet(user, password, host);
+    private Uid createUser(String user, GuardedString password) {
+        Set<Attribute> tuas = getUserAttributeSet(user, password);
         assertNotNull(tuas);
         return facade.create(ObjectClass.ACCOUNT, tuas, null);
     }      

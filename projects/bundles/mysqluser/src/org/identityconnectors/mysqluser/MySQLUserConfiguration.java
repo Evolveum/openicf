@@ -101,13 +101,6 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
     }
 
     /**
-     * Host where the mysql database is running
-     */
-    public static final String HOST = "Host";
-
-
-
-    /**
      * the jdbc driver class name
      */
     private String driver = "com.mysql.jdbc.Driver"; // Driver
