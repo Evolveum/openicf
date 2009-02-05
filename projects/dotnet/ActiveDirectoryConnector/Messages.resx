@@ -142,7 +142,7 @@
     <value>Search Child Domains</value>
   </data>
   <data name="display_SearchContainer" xml:space="preserve">
-    <value>Search Container</value>
+    <value>Base Container</value>
   </data>
   <data name="display_SyncDomainController" xml:space="preserve">
     <value>Sync Domain Controller</value>
@@ -150,8 +150,8 @@
   <data name="display_SyncGlobalCatalogServer" xml:space="preserve">
     <value>Sync Global Catalog Server</value>
   </data>
-  <data name="display_SyncSearchContext" xml:space="preserve">
-    <value>Sync Search Context</value>
+  <data name="display_SearchContext" xml:space="preserve">
+    <value>Search Context</value>
   </data>
   <data name="help_CreateHomeDirectory" xml:space="preserve">
     <value>Specify whether or not the home directory for the user will be created. </value>
@@ -175,7 +175,7 @@
     <value>Select if you want searches of Active Directory to include child domains. In addition, the Search Container and Sync Search Context (see sync settings) attributes must be set to the top of the parent domain, e.g. DC=mydomain,DC=com.</value>
   </data>
   <data name="help_SearchContainer" xml:space="preserve">
-    <value>Specify a container object which will be the default root of all searches.  Unless a search explicitly passes in other criteria, only objects under this container will be searched.  For example, if you want to retrieve users from the Users container, enter CN=Users,DC=MYDOMAIN,DC=COM.</value>
+    <value>Distinguished name of the base context object.  This is used as the parent when creating new resource objects.</value>
   </data>
   <data name="help_SyncDomainController" xml:space="preserve">
     <value>Domain controller to use during active sync.  Only used if not searching child domains.</value>
@@ -183,8 +183,8 @@
   <data name="help_SyncGlobalCatalogServer" xml:space="preserve">
     <value>Name of the global catalog server.  This is needed only if searching child domains.</value>
   </data>
-  <data name="help_SyncSearchContext" xml:space="preserve">
-    <value>Distinguished name of the object under which to search for changes during sync operation.</value>
+  <data name="help_SearchContext" xml:space="preserve">
+    <value>Specify a container object which will be the default root of all searches.  Unless a search explicitly passes in other criteria, only objects under this container will be searched.  For example, if you want to retrieve users from the Users container, enter CN=Users,DC=MYDOMAIN,DC=COM.  If no value is specified, the value of the 'Base Container' attribute is used.</value>
   </data>
   <data name="ex_ConnectorNotConfigured" xml:space="preserve">
     <value>Connector has not been configured</value>
@@ -275,5 +275,8 @@
   </data>
   <data name="ex_AccountExpired" xml:space="preserve">
     <value>User account expired for user {0}</value>
+  </data>
+  <data name="ex_InvalidSearchContextInConfiguration" xml:space="preserve">
+    <value>An invalid search context was supplied:  {0}</value>
   </data>
 </root>
