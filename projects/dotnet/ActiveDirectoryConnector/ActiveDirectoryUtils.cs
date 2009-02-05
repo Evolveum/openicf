@@ -89,9 +89,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
             return ConvertBytesToADSpecialString("GUID", guidBytes);
         }
 
-        internal static String ConvertSIDBytesToGUIDString(Byte[] guidBytes)
+        internal static String ConvertSIDBytesToGUIDString(Byte[] sidBytes)
         {
-            return ConvertBytesToADSpecialString("SID", guidBytes);
+            return ConvertBytesToADSpecialString("SID", sidBytes);
         }
 
         internal static String ConvertBytesToADSpecialString(string attribute, Byte[] bytes)

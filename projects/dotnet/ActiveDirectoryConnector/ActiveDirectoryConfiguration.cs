@@ -46,9 +46,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public String ObjectClass
         { get; set; }
 
-        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_SearchContainer", 
-            Required=true, HelpMessageKey = "help_SearchContainer", Order = 4)]
-        public String SearchContainer
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_Container", 
+            Required=true, HelpMessageKey = "help_Container", Order = 4)]
+        public String Container
         { get; set; }
 
         [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_CreateHomeDirectory", HelpMessageKey = "help_CreateHomeDirectory", Order = 5)]
@@ -74,14 +74,29 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public String SyncDomainController
         { get; set; }
 
-        [ConfigurationProperty(OperationTypes = new Type[] { typeof(SyncOp) }, Confidential = false, DisplayMessageKey = "display_SyncSearchContext", HelpMessageKey = "help_SyncSearchContext", Order=11)]
-        public String SyncSearchContext
-        { get; set; }
+        private string _searchContext = string.Empty;    
+        [ConfigurationProperty(Confidential = false, DisplayMessageKey = "display_SearchContext", HelpMessageKey = "help_SearchContext", Order=11)]
+        public String SearchContext
+        {
+            get
+            {
+                if((_searchContext == null) || (_searchContext.Length == 0))
+                {
+                    return Container;
+                }
+                return _searchContext;
+            } 
+            
+            set
+            {
+                _searchContext = value;
+            }
+        }
 
         public ActiveDirectoryConfiguration()
         {
             DomainName = "";
-            SearchContainer = "";
+            Container = "";
             DirectoryAdminName = "administrator";
             ObjectClass = "User";
             CreateHomeDirectory = true;
@@ -123,10 +138,10 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 foundError = true;
             }
 
-            if ((SearchContainer == null) || (SearchContainer.Length == 0))
+            if ((Container == null) || (Container.Length == 0))
             {
                 message += ConnectorMessages.Format(
-                            "confReqParam_searchContainer", "Search Container was not supplied  ");
+                            "confReqParam_Container", "Container was not supplied  ");
                 foundError = true;
             }
 

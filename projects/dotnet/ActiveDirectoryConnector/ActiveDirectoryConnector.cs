@@ -85,6 +85,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public static readonly string ATT_PASSWORD_NEVER_EXPIRES = "PasswordNeverExpires";
         public static readonly string OBJECTCLASS_OU = "organizationalUnit";
         public static readonly string OBJECTCLASS_GROUP = "Group";
+        public static readonly string OPTION_DOMAIN = "w2k_domain";
+        public static readonly string OPTION_RETURN_UID_ONLY = "returnUidOnly";
 
         public static readonly ObjectClass ouObjectClass = new ObjectClass(OBJECTCLASS_OU);
         public static readonly ObjectClass groupObjectClass = new ObjectClass(OBJECTCLASS_GROUP);
@@ -453,7 +455,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
             }
 
-            return _configuration.SearchContainer;
+            return _configuration.SearchContext;
         }
 
         public SearchScope GetADSearchScopeFromOptions(OperationOptions options)
@@ -658,11 +660,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
 
-        private string GetSearchContainerPath()
+        // this is the path that all searches come from unless otherwise directed
+        private string GetSearchContextPath()
         {
-            return GetSearchContainerPath(UseGlobalCatalog(), _configuration.LDAPHostName, _configuration.SearchContainer);
+            return GetSearchContainerPath(UseGlobalCatalog(), _configuration.LDAPHostName, _configuration.SearchContext);
         }
-
+      
         private string GetSearchContainerPath(bool useGC, string hostname, string searchContainer)
         {
             String path; 
@@ -737,14 +740,26 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     _configuration.ObjectClass));
             }
 
-            // see if search container is valid
-            if (!DirectoryEntry.Exists(GetSearchContainerPath()))
+            // see if SearchContext is valid
+            if (!DirectoryEntry.Exists(GetSearchContextPath()))
             {
                 throw new ConnectorException(
                     _configuration.ConnectorMessages.Format(
-                    "ex_InvalidSearchContainerInConfiguration",
-                    "An invalid search container was supplied:  {0}",
-                    _configuration.SearchContainer));
+                    "ex_InvalidSearchContextInConfiguration",
+                    "An invalid search context was supplied:  {0}",
+                    _configuration.SearchContext));
+            }
+
+            // see if the Container exists 
+            
+            if (!DirectoryEntry.Exists(GetSearchContainerPath(UseGlobalCatalog(), 
+                _configuration.LDAPHostName, _configuration.Container)))
+            {
+                throw new ConnectorException(
+                    _configuration.ConnectorMessages.Format(
+                    "ex_InvalidContainerInConfiguration",
+                    "An invalid container was supplied:  {0}",
+                    _configuration.Container));
             }
         }
 
@@ -991,7 +1006,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // find modified usn's
             ExecuteQuery(objClass, modifiedQuery, syncResults.SyncHandler, builder.Build(),
                 false, new SortOption(ATT_USN_CHANGED, SortDirection.Ascending),
-                serverName, UseGlobalCatalog(), _configuration.SyncSearchContext, SearchScope.Subtree);
+                serverName, UseGlobalCatalog(), GetADSearchContextFromOptions(null), SearchScope.Subtree);
 
             // find deleted usn's
             DirectoryContext domainContext = new DirectoryContext(DirectoryContextType.DirectoryServer, 
@@ -1125,8 +1140,26 @@ namespace Org.IdentityConnectors.ActiveDirectory
             Org.IdentityConnectors.Common.Security.GuardedString password, 
             OperationOptions options)
         {
+            bool returnUidOnly = false;
+
+            if (options != null)
+            {
+                if (options.Options.ContainsKey(OPTION_DOMAIN))
+                {
+                    string domainName = options.Options[OPTION_DOMAIN].ToString();
+                    if ((domainName != null) && (domainName.Length > 0))
+                    {
+                        username = string.Format("{0}@{1}", username, options.Options["w2k_domain"]);
+                    }
+                }
+                else if (options.Options.ContainsKey(OPTION_RETURN_UID_ONLY))
+                {
+                    returnUidOnly = true;
+                }
+            }
+
             PasswordChangeHandler handler = new PasswordChangeHandler(_configuration);
-            return handler.Authenticate(username, password);
+            return handler.Authenticate(username, password, returnUidOnly);
         }
 
         #endregion
