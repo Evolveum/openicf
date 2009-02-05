@@ -7,5 +7,84 @@
     <H1>Using IdentityConnectors with Sun Identity Manager</H1>
     <P><i>This section is under construction.</i>
     </P>
+    <P>
+    	IdM 8.1 contains support for using Identity Connectors to manage resources. Identity Connectors are a new open-source equivalent of IDM resource adapters which provide much better 
+    	<a href="/design.html">separation</a> of between the app and its resources. Identity Connectors are available for download in both source code and binary formats (a <i>.jar</i> file referred to as a bundle) from the <a href="/servlets/ProjectDocumentList?folderID=10488&expandFolder=10488">downloads section</a>.</P>
+
+	<H3>Why would I want to use Identity Connectors?</H3>
+		<ul>
+			<li>Open-source
+			<li>Improved upgrade support (vs. resource adapters)
+			  <ul> 
+			    <li>No IDM upgrade necessary to use newer versions of Identity Connectors
+			  </ul>
+			<li>Classpath isolation allows support for using multiple versions of a resource's API from a single IDM instance
+		</ul>
+<H3>IDM Supported Connectors</H3>
+<P>The following table summarizes which Identity Connectors are officially supported by Identity Manager.</P>
+<table border="1">
+<tr><th>IDM Release</th><th>Connector Framework Version</th><th>Supported Connector Bundles</th></tr>
+<tr>
+	<td>8.1 GA</td>
+	<td><a href="/files/documents/9014/125023/connector_toolkit-1.0.2901.zip">1.0.2901</a></td>
+	<td><ul>
+			<li><a href="/files/documents/9014/125033/ActiveDirectory.Connector-1.0.0.2953.zip">Active Directory 1.0.2953</a> 
+			<li><a href="/files/documents/9014/125032/org.identityconnectors.spml-1.0.2947.zip">SPMLv2 1.0.2947</a>
+		</ul>
+	</td>
+</tr>
+</table>
+
+<H3>Integration with existing Resource Adapters</H3>
+<P>IDM 8.1 can simultaneously support both resource adapters and Identity Connectors. Your existing resource adapters will continue to work in IDM 8.1 the same as in previous releases.
+Once an Identity Connector is properly installed, you will create Resources using them just as you do currently with resource adapters. All other IDM tools (forms/workflows) are based upon Resources, and thus are not affected by the choice of an underlying Identity Connector versus resource adapter.
+</P>
+
+<H3>How to Install a Connector</H3>
+<P>
+IDM searches for local Identity Connector bundle files with <i>.jar</i> suffix in the <b>WEB-INF/bundles</b> directory within your web app.
+First, make sure that this folder is present in your IDM deployment. If it doesn't exist, create it.</P>
+<P>
+Next, before deploying any identity connectors, shutdown your IDM web app. If the instructions for your bundle indicate that there are no 3rd-party dependencies required, then all you need to do is to place the bundle file into the <B>WEB-INF/bundles</B> folder.
+If the instructions for your bundle indicate that there are one or more 3rd-party dependencies, then it will be necessary to first download the 3rd-party jars as directed by the bundle's instructions. Once you have downloaded the required jars, you then need to add them to the <b>lib</b> directory <b>within the bundle</b>. 
+You can use the <a href="http://java.sun.com/j2se/1.5.0/docs/tooldocs/windows/jar.html"><i>jar</i></a> command to update your bundle. Once you have updated your bundle with the necessary 3rd-party jar(s), then place the updated bundle jar into the <b>WEB-INF/bundles</b> folder of your IDM web app.
+</P>
+<P>
+Restart your IDM web app. The connector bundle will now be recognized by IDM and can be used for provisioning.
+</P>
+
+<H3>Which Connectors are currently deployed?</H3>
+<p>To see which Identity Connectors your IDM instance currently recognizes, follow these steps:</p>
+<ul>
+<li>Login to the IDM Administrative UI.
+<li>Select <b><i>Resources->Resource Type Actions->Configure Managed Resources</i></b> 
+<li>The section labeled <b><i>Resource Connectors</i></b> will list all of the Identity Connectors visible to your IDM web app.
+</ul>
+
+<H3>Provisioning to an Identity Connector</H3>
+<p>After you have a connector successfully deployed, you can create Resources that use the connector as follows:</p>
+<ul>
+<li>Login to the IDM Administrative UI.
+<li>Select <b><i>Resources->Resource Type Actions->New Resource</i></b>
+<li>Select the name of the desired connector from the <b><i>Resource Adapter Type</i></b> dropdown.
+<li>If there is more than one version of the connector, you will need to select the desired version using the <b><i>Version</i></b> pulldown. If only one version is available, that Version will be pre-selected.
+<li>If more than one connector host has that version of the connector, you will need to select the desired connector host ("LOCAL" refers to the locally deployed Identity Connectors). If the connector/version is only supported on a single connector host, that Connector Host will be pre-selected.
+<li>Click the <b><i>New</i></b> button.
+<li>You are now in the standard wizard used to create Resources.
+</ul>
+<p>
+Once you have saved your new Resource, you can use it just like a Resource that was created using a resource adapter.</p>
+
+<H3>Using Connectors in an External Gateway</H3>
+<p>First, be sure that you have started a .NET connector host on your desired machine. Write down the port and authKey that you have configured the remote connector host to use.</p>
+<p>
+Then, using IDM Admin UI, define a corresponding Connector Server entry using the page at <b><i>Configure->Connector Servers</i></b>.
+
+If IDM can successfully communicate with your connector host, the <b><i>Status</i></b> column will show "Available". You can now use connectors that are deployed under that remote connector host.
+</p><p>
+NOTE: You must login as an administrator with "Resource Administrator" capability in order to see the <b><i>Configure->Connector Servers</i></b> page. More information on Connector Servers can be found
+<a href="/connector_server.html">here</a>.
+</p>
+    
 </DIV>
 </HTML>
