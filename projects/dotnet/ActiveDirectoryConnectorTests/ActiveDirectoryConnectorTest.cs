@@ -58,8 +58,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public static readonly string CONFIG_PROPERTY_SCRIPT_PASSWORD_DOMAIN = "config_script_password_domain";
         public static readonly string CONFIG_PROPERTY_LDAPHOSTNAME = "config_ldap_hostname";
         public static readonly string CONFIG_PROPERTY_SEARCH_CONTEXT = "config_search_context";
-        public static readonly string CONFIG_PROPERTY_SYNC_SEARCH_CONTEXT_ROOT = "config_sync_search_context_root";
-        public static readonly string CONFIG_PROPERTY_SYNC_SEARCH_CONTEXT_CHILD = "config_sync_search_context_child";
+        public static readonly string config_PROPERTY_SYNC_CONTAINER_ROOT = "config_sync_container_root";
+        public static readonly string config_PROPERTY_SYNC_CONTAINER_CHILD = "config_sync_container_child";
         public static readonly string CONFIG_PROPERTY_DOMAIN_NAME = "config_domain_name";
         public static readonly string CONFIG_PROPERTY_SYNC_DOMAIN_CONTROLLER = "config_sync_domain_controller";
         public static readonly string CONFIG_PROPERTY_GC_DOMAIN_CONTROLLER = "config_sync_gc_domain_controller";
@@ -1258,8 +1258,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void TestSyncGC()
         {
             // test with searchChildDomain (uses GC)
-            TestSync(true, GetProperty(CONFIG_PROPERTY_SYNC_SEARCH_CONTEXT_ROOT));
-            TestSync(true, GetProperty(CONFIG_PROPERTY_SYNC_SEARCH_CONTEXT_CHILD));
+            TestSync(true, GetProperty(config_PROPERTY_SYNC_CONTAINER_ROOT));
+            TestSync(true, GetProperty(config_PROPERTY_SYNC_CONTAINER_CHILD));
         }
 
         // test sync
@@ -1267,8 +1267,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void TestSyncDC()
         {
             // test withouth searchChildDomains (uses DC)
-            TestSync(false, GetProperty(CONFIG_PROPERTY_SYNC_SEARCH_CONTEXT_ROOT));
-            TestSync(false, GetProperty(CONFIG_PROPERTY_SYNC_SEARCH_CONTEXT_CHILD));
+            TestSync(false, GetProperty(config_PROPERTY_SYNC_CONTAINER_ROOT));
+            TestSync(false, GetProperty(config_PROPERTY_SYNC_CONTAINER_CHILD));
         }
 
         [Test]
@@ -1803,13 +1803,13 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
 
-        public void TestSync(bool searchChildDomains, String syncSearchContext)
+        public void TestSync(bool searchChildDomains, String container)
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
             ActiveDirectoryConfiguration configuration = 
                 (ActiveDirectoryConfiguration)GetConfiguration();
-            configuration.SyncSearchContext = syncSearchContext;
+            configuration.SearchContext = container;
             configuration.SearchChildDomains = searchChildDomains;
             connector.Init(configuration);
 
@@ -2319,7 +2319,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
             config.LDAPHostName = GetProperty(CONFIG_PROPERTY_LDAPHOSTNAME);
             config.DirectoryAdminName = GetProperty(CONFIG_PROPERTY_USER);
             config.DirectoryAdminPassword = GetProperty(CONFIG_PROPERTY_PASSWORD);
-            config.SearchContainer = GetProperty(CONFIG_PROPERTY_SEARCH_CONTEXT);
+            config.Container = GetProperty(CONFIG_PROPERTY_CONTAINER);
+            config.SearchContext = GetProperty(CONFIG_PROPERTY_SEARCH_CONTEXT);
             config.SyncDomainController = GetProperty(CONFIG_PROPERTY_SYNC_DOMAIN_CONTROLLER);
             config.SyncGlobalCatalogServer = GetProperty(CONFIG_PROPERTY_GC_DOMAIN_CONTROLLER);
             config.ConnectorMessages = TestHelpers.CreateDummyMessages();

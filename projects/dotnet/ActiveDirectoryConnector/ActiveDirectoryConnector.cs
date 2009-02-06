@@ -407,7 +407,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 IDictionary<string, object>searchOptions = options.Options;
 
                 SearchScope searchScope = GetADSearchScopeFromOptions(options);
-                string searchContext = GetADSearchContextFromOptions(options);
+                string searchContainer = GetADSearchContainerFromOptions(options);
 
                 // for backward compatibility, support old query style from resource adapters
                 // but log a warning
@@ -435,7 +435,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
 
                 ExecuteQuery(oclass, query, handler, options,
-                    false, null, _configuration.LDAPHostName, useGC, searchContext, searchScope);
+                    false, null, _configuration.LDAPHostName, useGC, searchContainer, searchScope);
             }
             catch (Exception e)
             {
@@ -444,7 +444,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
 
-        public string GetADSearchContextFromOptions(OperationOptions options)
+        public string GetADSearchContainerFromOptions(OperationOptions options)
         {
             if (options != null)
             {
@@ -455,7 +455,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
             }
 
-            return _configuration.SearchContext;
+            return _configuration.Container;
         }
 
         public SearchScope GetADSearchScopeFromOptions(OperationOptions options)
@@ -661,9 +661,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
         }
 
         // this is the path that all searches come from unless otherwise directed
-        private string GetSearchContextPath()
+        private string GetSearchContainerPath()
         {
-            return GetSearchContainerPath(UseGlobalCatalog(), _configuration.LDAPHostName, _configuration.SearchContext);
+            return GetSearchContainerPath(UseGlobalCatalog(), _configuration.LDAPHostName, _configuration.Container);
         }
       
         private string GetSearchContainerPath(bool useGC, string hostname, string searchContainer)
@@ -740,17 +740,17 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     _configuration.ObjectClass));
             }
 
-            // see if SearchContext is valid
-            if (!DirectoryEntry.Exists(GetSearchContextPath()))
+            // see if SearchContainer is valid
+            if (!DirectoryEntry.Exists(GetSearchContainerPath()))
             {
                 throw new ConnectorException(
                     _configuration.ConnectorMessages.Format(
-                    "ex_InvalidSearchContextInConfiguration",
-                    "An invalid search context was supplied:  {0}",
-                    _configuration.SearchContext));
+                    "ex_InvalidSearchContainerInConfiguration",
+                    "An invalid search container was supplied:  {0}",
+                    _configuration.Container));
             }
 
-            // see if the Container exists 
+            // see if the Context exists 
             
             if (!DirectoryEntry.Exists(GetSearchContainerPath(UseGlobalCatalog(), 
                 _configuration.LDAPHostName, _configuration.Container)))
@@ -1006,7 +1006,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // find modified usn's
             ExecuteQuery(objClass, modifiedQuery, syncResults.SyncHandler, builder.Build(),
                 false, new SortOption(ATT_USN_CHANGED, SortDirection.Ascending),
-                serverName, UseGlobalCatalog(), GetADSearchContextFromOptions(null), SearchScope.Subtree);
+                serverName, UseGlobalCatalog(), GetADSearchContainerFromOptions(null), SearchScope.Subtree);
 
             // find deleted usn's
             DirectoryContext domainContext = new DirectoryContext(DirectoryContextType.DirectoryServer, 
