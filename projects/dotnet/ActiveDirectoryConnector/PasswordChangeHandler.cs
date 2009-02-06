@@ -270,11 +270,16 @@ namespace Org.IdentityConnectors.ActiveDirectory
         /// <param name="username"></param>
         /// <param name="password"></param>
         internal Uid Authenticate(/*DirectoryEntry directoryEntry,*/ string username,
-            Org.IdentityConnectors.Common.Security.GuardedString password)
+            Org.IdentityConnectors.Common.Security.GuardedString password, bool returnUidOnly)
         {
             AuthenticationHelper authHelper = new AuthenticationHelper(_configuration);
+            if(returnUidOnly)
+            {
+                return authHelper.GetUidFromSamAccountName(username);
+            }
             password.Access(setCurrentPassword);
             return authHelper.ValidateUserCredentials(username, _currentPassword);
         }
+
     }
 }
