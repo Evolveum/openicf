@@ -3,7 +3,8 @@
 	<Fragment>
 		<DirectoryRef Id="TARGETDIR">
 			<Directory Id="ProgramFilesFolder" Name="PFiles">
-				<Directory Id="INSTALLDIR" Name="Sun Connector Server">
+				<Directory Id="INSTALLDIR" Name="Identity Connectors">
+                                  <Directory id="ServerDir" Name="Connector Server" >
 					<Component Id="ConnectorServerService" Guid="8B1F7E82-46D7-4F88-A1FA-44FCBF7E684F" DiskId="1">
 						<ServiceInstall
 							Id="ConnectorServerServiceInstall"
