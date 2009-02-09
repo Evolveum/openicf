@@ -106,7 +106,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             IgnoreConnectorAttributeNames_generic.Add(Uid.NAME);
 
             // methods to update a directory entry from a connectorattribute
-            UpdateDeFromCaDelegates.Add(PredefinedAttributes.ACCOUNTS_NAME,
+            UpdateDeFromCaDelegates.Add(ActiveDirectoryConnector.ATT_ACCOUNTS,
                 UpdateDeFromCa_OpAtt_Accounts);
             UpdateDeFromCaDelegates.Add(PredefinedAttributes.GROUPS_NAME,
                 UpdateDeFromCa_OpAtt_Groups);
@@ -166,7 +166,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             GetCaFromDeDelegates.Add(Uid.NAME, GetCaFromDe_OpAtt_Uid);
             GetCaFromDeDelegates.Add(ActiveDirectoryConnector.ATT_CONTAINER,
                 GetCaFromDe_Att_Container);
-            GetCaFromDeDelegates.Add(PredefinedAttributes.ACCOUNTS_NAME,
+            GetCaFromDeDelegates.Add(ActiveDirectoryConnector.ATT_ACCOUNTS,
                 GetCaFromDe_OpAtt_Accounts);
             GetCaFromDeDelegates.Add(PredefinedAttributes.GROUPS_NAME,
                 GetCaFromDe_OpAtt_Groups);
@@ -414,7 +414,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             {
                 throw new ConnectorException(
                     String.Format("'{0}' is an invalid attribute for object class '{1}'",
-                        PredefinedAttributeInfos.ACCOUNTS, oclass.GetObjectClassValue()));
+                        ActiveDirectoryConnector.ATT_ACCOUNTS, oclass.GetObjectClassValue()));
             }
         }
 
@@ -935,7 +935,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
             else
             {
-                return ConnectorAttributeBuilder.Build(PredefinedAttributes.ACCOUNTS_NAME,
+                return ConnectorAttributeBuilder.Build(ActiveDirectoryConnector.ATT_ACCOUNTS,
                     realAttribute.Value);
             }
         }

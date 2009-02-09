@@ -37,6 +37,23 @@ using Org.IdentityConnectors.Framework.Common.Serializer;
 using Org.IdentityConnectors.Framework.Common.Objects.Filters;
 namespace Org.IdentityConnectors.Framework.Common.Objects
 {
+    #region NameUtil
+    internal static class NameUtil {
+
+        public static bool IsSpecialName(String name) {
+           return (name.StartsWith("@@") && name.EndsWith("@@"));
+        }
+
+        public static string CreateSpecialName(string name) {
+            if (StringUtil.IsBlank(name)) {
+                const string ERR = "Name parameter must not be blank!";
+                throw new ArgumentException(ERR);
+            }
+            return "@@" + name + "@@";
+        }
+    }
+    #endregion
+
     #region ConnectorAttributeUtil
     public static class ConnectorAttributeUtil {
 
@@ -298,16 +315,12 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          *             iff the attribute parameter is null.
          */
         public static bool IsSpecial(ConnectorAttributeInfo attr) {
-            // note this is dangerous because we need to be consistent
-            // in the naming of special attributes.
             String name = attr.Name;
             return IsSpecialName(name);
         }
         
         private static bool IsSpecialName(String name) {
-            // note this is dangerous because we need to be consistent
-            // in the naming of special attributes.
-            return (name.StartsWith("@@") && name.EndsWith("@@"));        
+            return NameUtil.IsSpecialName(name);
         }
         
         /// <summary>
@@ -316,11 +329,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         /// <param name="name">string to make special</param>
         /// <returns>name constructed for use as an operational attribute.</returns>
     	public static string CreateSpecialName(string name) {
-        	if (StringUtil.IsBlank(name)) {
-            	const string ERR = "Name parameter must not be blank!";
-            	throw new ArgumentException(ERR);
-        	}
-        	return "@@" + name + "@@";
+            return NameUtil.CreateSpecialName(name);
     	}
     
 	    /// <summary>
@@ -1659,28 +1668,51 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
     }
     #endregion
     
+    #region ObjectClassUtil
+    public static class ObjectClassUtil {
+
+        /// <summary>
+        /// Determines if this object class is a special object class.
+        /// Special object classes include the predefined ones, such as
+        /// <see cref="ObjectClass.ACCOUNT"/> and <see cref="ObjectClass.GROUP"/>.
+        /// </summary>
+        /// <param name="oclass">the object class to test</param>
+        /// <returns>true iff the object class is special</returns>
+        /// <exception cref="NullReferenceException">if the object class parameter is null</exception>
+        public static bool IsSpecial(ObjectClass oclass) {
+            String name = oclass.GetObjectClassValue();
+            return IsSpecialName(name);
+        }
+
+        private static bool IsSpecialName(String name) {
+            return NameUtil.IsSpecialName(name);
+        }
+
+        /// <summary>
+        /// Create a special name from the specified name. Add the <code>@@</code>
+        /// string as both prefix and suffix. This indicates that a name
+        /// identifies a special object class such as a predefined one.
+        /// </summary>
+        /// <param name="name">object class name to make special</param>
+        /// <returns>name constructed for use as a special name</returns>
+        public static string CreateSpecialName(string name) {
+            return NameUtil.CreateSpecialName(name);
+        }
+    }
+    #endregion
+
     #region ObjectClass
     public sealed class ObjectClass {
-        public const String ACCOUNT_NAME = "account";
-        public const String PERSON_NAME = "person";
-        public const String GROUP_NAME = "group";
-        public const String ORGANIZATION_NAME = "organization";
+        public static readonly String ACCOUNT_NAME = ObjectClassUtil.CreateSpecialName("account");
+        public static readonly String GROUP_NAME = ObjectClassUtil.CreateSpecialName("group");
         /**
          * Denotes an account based object.
          */
         public static readonly ObjectClass ACCOUNT = new ObjectClass(ACCOUNT_NAME); 
         /**
-         * Denotes a person based object.
-         */
-        public static readonly ObjectClass PERSON = new ObjectClass(PERSON_NAME);
-        /**
          * Denotes a group based object.
          */
         public static readonly ObjectClass GROUP = new ObjectClass(GROUP_NAME); 
-        /**
-         * Denotes a organization based object.
-         */
-        public static readonly ObjectClass ORGANIZATION = new ObjectClass(ORGANIZATION_NAME); 
         
         private readonly String _type;
         
@@ -2096,16 +2128,6 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          * Groups an account object belongs to.
          */
         public static readonly string GROUPS_NAME = ConnectorAttributeUtil.CreateSpecialName("GROUPS");
-        
-        /**
-         * Accounts that belong to a group or organization.
-         */
-        public static readonly string ACCOUNTS_NAME = ConnectorAttributeUtil.CreateSpecialName("ACCOUNTS");
-    
-        /**
-         * An organization that that an account/person belongs to.
-         */
-        public static readonly string ORGANIZATION_NAME = ConnectorAttributeUtil.CreateSpecialName("ORGANIZATION");
     }
     #endregion
 
@@ -2164,29 +2186,6 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             ConnectorAttributeInfoBuilder.Build(PredefinedAttributes.GROUPS_NAME,
                     typeof(String),
                     ConnectorAttributeInfo.Flags.MULTIVALUED |
-                    ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT);
-            
-    
-        /**
-         * Accounts that are members of a group or organization. The Attribute
-         * values are the UID value of each account the has a group or organization
-         * membership.
-         */
-        public static readonly ConnectorAttributeInfo ACCOUNTS =
-            ConnectorAttributeInfoBuilder.Build(PredefinedAttributes.ACCOUNTS_NAME,
-                    typeof(String),
-                    ConnectorAttributeInfo.Flags.MULTIVALUED|
-                    ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT);
-            
-    
-        /**
-         * Organizations that an account or person is a member of. The Attribute
-         * values are the UID value of each organization that an account or person is
-         * a member of.
-         */
-        public static readonly ConnectorAttributeInfo ORGANIZATION =
-            ConnectorAttributeInfoBuilder.Build(PredefinedAttributes.ORGANIZATION_NAME,
-                                       typeof(String),
                     ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT);
     }
     #endregion

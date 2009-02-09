@@ -203,7 +203,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             {
                 // create group
                 ICollection<ConnectorAttribute> createAttributes = GetNormalAttributes_Group();
-                createAttributes.Add(ConnectorAttributeBuilder.Build(PredefinedAttributes.ACCOUNTS_NAME,
+                createAttributes.Add(ConnectorAttributeBuilder.Build(ActiveDirectoryConnector.ATT_ACCOUNTS,
                     CreateGroupMember(connector)));
 
                 // create object
@@ -214,7 +214,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 // find new object ... have to add groups to list of things to return
                 OperationOptionsBuilder optionsBuilder = new OperationOptionsBuilder();
                 ICollection<String> attributesToGet = GetDefaultAttributesToGet(ActiveDirectoryConnector.groupObjectClass);
-                attributesToGet.Add(PredefinedAttributes.ACCOUNTS_NAME);
+                attributesToGet.Add(ActiveDirectoryConnector.ATT_ACCOUNTS);
                 optionsBuilder.AttributesToGet = attributesToGet.ToArray();
 
                 ConnectorObject newObject = GetConnectorObjectFromUid(connector,
@@ -239,7 +239,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 // update the group - add
                 ICollection<ConnectorAttribute> updateAddAttrs =
                     new List<ConnectorAttribute>();
-                updateAddAttrs.Add(ConnectorAttributeBuilder.Build(PredefinedAttributes.ACCOUNTS_NAME,
+                updateAddAttrs.Add(ConnectorAttributeBuilder.Build(ActiveDirectoryConnector.ATT_ACCOUNTS,
                     CreateGroupMember(connector), CreateGroupMember(connector)));
 
                 uidToDelete = UpdateAddAndVerifyUser(connector,
@@ -2592,7 +2592,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             ldapStringAttributes.Add("AD_CONTAINER");
             ldapStringAttributes.Add(Name.NAME);
             ldapStringAttributes.Add(PredefinedAttributes.GROUPS_NAME);
-            ldapStringAttributes.Add(PredefinedAttributes.ACCOUNTS_NAME);
+            ldapStringAttributes.Add(ActiveDirectoryConnector.ATT_ACCOUNTS);
 
             // for each attribute in the connector object ...
             foreach (ConnectorAttribute attribute in requestedAttributes)

@@ -83,6 +83,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public static readonly string ATT_DISPLAY_NAME = "displayName";
         public static readonly string ATT_USER_ACOUNT_CONTROL = "userAccountControl";
         public static readonly string ATT_PASSWORD_NEVER_EXPIRES = "PasswordNeverExpires";
+        public static readonly string ATT_ACCOUNTS = ConnectorAttributeUtil.CreateSpecialName("ACCOUNTS");
         public static readonly string OBJECTCLASS_OU = "organizationalUnit";
         public static readonly string OBJECTCLASS_GROUP = "Group";
         public static readonly string OPTION_DOMAIN = "w2k_domain";

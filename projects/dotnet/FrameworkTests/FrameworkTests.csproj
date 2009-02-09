@@ -66,6 +66,7 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="CollectionUtilTests.cs" />
+    <Compile Include="ObjectClassUtilTests.cs" />
     <Compile Include="ObjectPoolTests.cs" />
     <Compile Include="ConnectorInfoManagerTests.cs" />
     <Compile Include="FilterTranslatorTests.cs" />
@@ -99,7 +100,7 @@
       <Project>{5B011775-B121-4EEE-A410-BA2D2F5BFB8B}</Project>
       <Name>FrameworkInternal</Name>
     </ProjectReference>
-  </ItemGroup>  
+  </ItemGroup>
   <Target Name="BeforeBuild">
     <MakeDir Directories="$(OutputPath)" />
     <!-- Build TestBundle V1 -->

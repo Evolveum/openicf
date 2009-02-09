@@ -606,7 +606,7 @@ namespace FrameworkTests
             builder.Updateable=(true);
             builder.MultiValued=(true);
             ObjectClassInfoBuilder obld = new ObjectClassInfoBuilder();
-            obld.ObjectType = ObjectClass.ORGANIZATION_NAME;
+            obld.ObjectType = ObjectClass.ACCOUNT_NAME;
             obld.IsContainer = true;
             obld.AddAttributeInfo(builder.Build());
             ObjectClassInfo v1 = obld.Build();
@@ -636,7 +636,7 @@ namespace FrameworkTests
             OperationOptionInfo opInfo =
                 new OperationOptionInfo("name",typeof(int?));
             ObjectClassInfoBuilder bld = new ObjectClassInfoBuilder();
-            bld.ObjectType = ObjectClass.ORGANIZATION_NAME;
+            bld.ObjectType = ObjectClass.ACCOUNT_NAME;
             ObjectClassInfo info = bld.Build();
             ICollection<ObjectClassInfo> temp = CollectionUtil.NewSet(info);
             IDictionary<SafeType<APIOperation>,ICollection<ObjectClassInfo>> map = 
