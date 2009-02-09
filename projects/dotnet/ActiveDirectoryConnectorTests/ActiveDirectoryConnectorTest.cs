@@ -2329,8 +2329,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
         /**
          * NOTES:
-         * - cn and @@NAME@@ should be the same.  Test if they are not
-         * test for proper behavior if @@name@@ is not supplied
+         * - cn and __NAME__ should be the same.  Test if they are not
+         * test for proper behavior if __name__ is not supplied
          * - test bogus attributes to like attribut named BogusAttr = hello 
          * or something
          * - test writing to a read only attribute

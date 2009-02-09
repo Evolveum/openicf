@@ -336,8 +336,8 @@ identifiers), such as <span style="font-family: monospace;">
 -</span>, and so on, should be escaped. <br>
 
 For example,
-      <span style="font-family: monospace;">testsuite.Schema."@@NAME@@".attribute.account.oclasses</span>.
-Property names, however, cannot start with the escaped part (<span style="font-family: monospace;">@@NAME@@</span> in
+      <span style="font-family: monospace;">testsuite.Schema."__NAME__".attribute.account.oclasses</span>.
+Property names, however, cannot start with the escaped part (<span style="font-family: monospace;">__NAME__</span> in
 this
 case).<br>
 
@@ -417,8 +417,8 @@ supported object class:<br>
 list of ALL
 attributes of object class 'account' for database table connector</span><br>
 
-testsuite.Schema.attributes.account.oclasses=['@@NAME@@',
-'@@PASSWORD@@', 'MANAGER', 'MIDDLENAME', (continued next
+testsuite.Schema.attributes.account.oclasses=['__NAME__',
+'__PASSWORD__', 'MANAGER', 'MIDDLENAME', (continued next
 line)<br>
 
 &nbsp;&nbsp;
@@ -433,9 +433,9 @@ object class:<br>
 
 <code><span class="codeComment">//
 definition of
-attribute @@NAME@@ of object class 'account' for databse table connector</span><br>
+attribute __NAME__ of object class 'account' for databse table connector</span><br>
 
-testsuite.Schema."@@NAME@@".attribute.account.oclasses=[<br>
+testsuite.Schema."__NAME__".attribute.account.oclasses=[<br>
 
 &nbsp;&nbsp;
 type:
@@ -572,7 +572,7 @@ the <code>UpdateApiOpTests</code>
 is created identity
 updated with new values. The following properties are used
 for&nbsp;those new values:
-<pre>${attribute.name}=${value} <span class="codeComment">// old value</span><br>modified.${attribute.name}=${value} <span class="codeComment">// new value</span><br>added.${attribute.name}=${value} <span class="codeComment">// new value added to a multivalue property (for example: list)</span><br><br class="codeComment"><span class="codeComment">// Example update LASTNAME attribute with value "sellers":</span><br>modified.LASTNAME="sellers"<br><br><span class="codeComment">// if you don't want to supply a new value for update, set it to the ObjectNotFoundException exception</span><br>modified."@@NAME@@"= <span style="font-family: monospace;">ObjectNotFoundException() <span class="codeComment">// means that value is not supplied</span></span><br></pre>
+<pre>${attribute.name}=${value} <span class="codeComment">// old value</span><br>modified.${attribute.name}=${value} <span class="codeComment">// new value</span><br>added.${attribute.name}=${value} <span class="codeComment">// new value added to a multivalue property (for example: list)</span><br><br class="codeComment"><span class="codeComment">// Example update LASTNAME attribute with value "sellers":</span><br>modified.LASTNAME="sellers"<br><br><span class="codeComment">// if you don't want to supply a new value for update, set it to the ObjectNotFoundException exception</span><br>modified."__NAME__"= <span style="font-family: monospace;">ObjectNotFoundException() <span class="codeComment">// means that value is not supplied</span></span><br></pre>
 
 <h4><a name="SearchApiOpTests"></a>SearchApiOpTests#testCaseInsensitiveSearch</h4>
 <p>

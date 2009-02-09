@@ -135,26 +135,26 @@
       </AttributeInfo>
       <AttributeInfo name="homeDirectory" type="String"/>
       <AttributeInfo name="PasswordNeverExpires" type="Boolean"/>
-      <AttributeInfo name="@@ENABLE@@" type="Boolean"/>
-      <!---->AttributeInfo name="@@ENABLE_DATE@@" type="long"/-->
-      <AttributeInfo name="@@LOCK_OUT@@" type="Boolean"/>
-      <AttributeInfo name="@@PASSWORD_EXPIRED@@" type="Boolean"/>
-      <AttributeInfo name="@@CURRENT_PASSWORD@@" type="GuardedString"/>
-      <AttributeInfo name="@@PASSWORD@@" type="GuardedString">
+      <AttributeInfo name="__ENABLE__" type="Boolean"/>
+      <!---->AttributeInfo name="__ENABLE_DATE__" type="long"/-->
+      <AttributeInfo name="__LOCK_OUT__" type="Boolean"/>
+      <AttributeInfo name="__PASSWORD_EXPIRED__" type="Boolean"/>
+      <AttributeInfo name="__CURRENT_PASSWORD__" type="GuardedString"/>
+      <AttributeInfo name="__PASSWORD__" type="GuardedString">
         <AttributeInfoFlag value="MULTIVALUED"/>
         <AttributeInfoFlag value="NOT_READABLE"/>
         <AttributeInfoFlag value="NOT_RETURNED_BY_DEFAULT"/>
       </AttributeInfo>
-      <AttributeInfo name="@@GROUPS@@" type="String"/>
-      <AttributeInfo name="@@DESCRIPTION@@" type="String">
+      <AttributeInfo name="__GROUPS__" type="String"/>
+      <AttributeInfo name="__DESCRIPTION__" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
-      <AttributeInfo name="@@SHORT_NAME@@" type="String">
+      <AttributeInfo name="__SHORT_NAME__" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
-      <AttributeInfo name="@@NAME@@" type="String">
+      <AttributeInfo name="__NAME__" type="String">
         <AttributeInfoFlag value="REQUIRED"/>
       </AttributeInfo>
     </AttributeInfos>
@@ -187,16 +187,16 @@
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>/>
-      <!---AttributeInfo name="@@ACCOUNTS@@" type="String"/-->
-      <AttributeInfo name="@@DESCRIPTION@@" type="String">
+      <!---AttributeInfo name="__ACCOUNTS__" type="String"/-->
+      <AttributeInfo name="__DESCRIPTION__" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
-      <AttributeInfo name="@@SHORT_NAME@@" type="String">
+      <AttributeInfo name="__SHORT_NAME__" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
-      <AttributeInfo name="@@NAME@@" type="String">
+      <AttributeInfo name="__NAME__" type="String">
         <AttributeInfoFlag value="REQUIRED"/>
       </AttributeInfo>
     </AttributeInfos>
@@ -211,15 +211,15 @@
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
-      <AttributeInfo name="@@DESCRIPTION@@" type="String">
+      <AttributeInfo name="__DESCRIPTION__" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
-      <AttributeInfo name="@@SHORT_NAME@@" type="String">
+      <AttributeInfo name="__SHORT_NAME__" type="String">
         <AttributeInfoFlag value="NOT_CREATABLE"/>
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
       </AttributeInfo>
-      <AttributeInfo name="@@NAME@@" type="String">
+      <AttributeInfo name="__NAME__" type="String">
         <AttributeInfoFlag value="REQUIRED"/>
       </AttributeInfo>
     </AttributeInfos>

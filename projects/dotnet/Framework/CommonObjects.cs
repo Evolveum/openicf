@@ -41,7 +41,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
     internal static class NameUtil {
 
         public static bool IsSpecialName(String name) {
-           return (name.StartsWith("@@") && name.EndsWith("@@"));
+           return (name.StartsWith("__") && name.EndsWith("__"));
         }
 
         public static string CreateSpecialName(string name) {
@@ -49,7 +49,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                 const string ERR = "Name parameter must not be blank!";
                 throw new ArgumentException(ERR);
             }
-            return "@@" + name + "@@";
+            return "__" + name + "__";
         }
     }
     #endregion
@@ -1689,7 +1689,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
 
         /// <summary>
-        /// Create a special name from the specified name. Add the <code>@@</code>
+        /// Create a special name from the specified name. Add the <code>__</code>
         /// string as both prefix and suffix. This indicates that a name
         /// identifies a special object class such as a predefined one.
         /// </summary>

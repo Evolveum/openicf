@@ -55,7 +55,7 @@ public interface VmsConstants {
     public static final String ATTR_MODIFY_IDENTIFIER   = "MODIFY_IDENTIFIER";
     public static final String ATTR_NETWORK             = "NETWORK";
     public static final String ATTR_OWNER               = "OWNER";
-    public static final String ATTR_PASSWORD            = "@@PASSWORD@@";
+    public static final String ATTR_PASSWORD            = "__PASSWORD__";
     public static final String ATTR_PBYTLM              = "PBYTLM";
     public static final String ATTR_PGFLQUOTA           = "PGFLQUOTA";
     public static final String ATTR_PRCLM               = "PRCLM";

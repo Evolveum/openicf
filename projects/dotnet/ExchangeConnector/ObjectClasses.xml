@@ -39,7 +39,7 @@
 <List>
   <ObjectClassInfo container="false" type="mailuser">
     <AttributeInfos>
-      <AttributeInfo name="@@NAME@@" type="String" creatable="true" readable="true" required="true" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="__NAME__" type="String" creatable="true" readable="true" required="true" updatable="true" returnedbydefault="true" multivalue="false"/>
       <AttributeInfo name="ExchangeUserAccountControl" type="String" creatable="true" readable="false" required="true" updatable="false" returnedbydefault="true" multivalue="false"/>
       <AttributeInfo name="ExternalEmailAddress" type="String" creatable="true" readable="true" required="true" updatable="false" returnedbydefault="true" multivalue="true"/>
       <AttributeInfo name="UsePreferMessageFormat" type="Boolean" creatable="true" readable="true" required="false" updatable="false" returnedbydefault="true" multivalue="false"/>
@@ -107,7 +107,7 @@
   </ObjectClassInfo>
   <ObjectClassInfo container="false" name="mailbox">
     <AttributeInfos>
-      <AttributeInfo name="@@NAME@@" type="String" creatable="true" readable="true" required="true" updatable="true" returnedbydefault="true" multivalue="false"/>
+      <AttributeInfo name="__NAME__" type="String" creatable="true" readable="true" required="true" updatable="true" returnedbydefault="true" multivalue="false"/>
       <AttributeInfo name="Database" type="String" creatable="true" readable="true" required="true" updatable="false" returned-by-default="true" multivalue="false"/>
     </AttributeInfos>
   </ObjectClassInfo>

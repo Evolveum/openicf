@@ -857,7 +857,7 @@ public class SpmlConnectorTests {
         buffer.append("        }\n");
         buffer.append("    }\n");
         buffer.append("    for (org.identityconnectors.framework.common.objects.AttributeInfo info : attributeInfos) {\n");
-        buffer.append("        if (info.getName().equals(\"@@ENABLE@@\")) {\n");
+        buffer.append("        if (info.getName().equals(\"__ENABLE__\")) {\n");
         buffer.append("            attributeInfos.remove(info);\n");
         buffer.append("            break;\n");
         buffer.append("        }\n");

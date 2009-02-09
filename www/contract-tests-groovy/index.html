@@ -625,8 +625,8 @@ supported object class:<br>
 List of ALL
 attributes of object class 'account' for database table connector</span><br>
 
-testsuite.Schema.attributes.account.oclasses=['@@NAME@@',
-'@@PASSWORD@@', 'MANAGER', 'MIDDLENAME', <span style="font-style: italic;" class="0">(continued
+testsuite.Schema.attributes.account.oclasses=['__NAME__',
+'__PASSWORD__', 'MANAGER', 'MIDDLENAME', <span style="font-style: italic;" class="0">(continued
 on
 next
 line)</span><br>
@@ -647,11 +647,11 @@ object class:</li>
 
       <span class="codeComment">// definition
 of
-attribute @@NAME@@ of object class 'account' for database table
+attribute __NAME__ of object class 'account' for database table
 connector</span><br>
 
       <div ="code">
-testsuite.Schema."@@NAME@@".attribute.account.oclasses=[<br>
+testsuite.Schema."__NAME__".attribute.account.oclasses=[<br>
 
 &nbsp;&nbsp;
 type:
@@ -829,14 +829,14 @@ of property name should be escaped, for example:<br>
 
 &nbsp;-- WRONG:<br>
 
-&nbsp;<span class="literal">&nbsp;testsuite.Schema.</span><span class="literal" style="color: rgb(51, 51, 255); font-style: italic;">@@NAME@@</span><span class="literal">.attribute.account.oclasses</span>
-or <span class="literal" style=""><span style="font-style: italic; color: rgb(51, 51, 255);">"@@NAME@@"</span>.attribute.account.oclasses<br>
+&nbsp;<span class="literal">&nbsp;testsuite.Schema.</span><span class="literal" style="color: rgb(51, 51, 255); font-style: italic;">__NAME__</span><span class="literal">.attribute.account.oclasses</span>
+or <span class="literal" style=""><span style="font-style: italic; color: rgb(51, 51, 255);">"__NAME__"</span>.attribute.account.oclasses<br>
 
             </span><br>
 
 &nbsp;-- CORRECT:<br>
 
-&nbsp;&nbsp;<span class="literal">testsuite.Schema.<span style="color: rgb(204, 0, 0);">"</span>@@NAME@@<span style="color: rgb(204, 0, 0);">"</span>.attribute.account.oclasses</span><br>
+&nbsp;&nbsp;<span class="literal">testsuite.Schema.<span style="color: rgb(204, 0, 0);">"</span>__NAME__<span style="color: rgb(204, 0, 0);">"</span>.attribute.account.oclasses</span><br>
 
             <br>
 
