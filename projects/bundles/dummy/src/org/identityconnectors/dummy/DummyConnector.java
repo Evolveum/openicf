@@ -168,7 +168,7 @@ public class DummyConnector
             Method setters[] = getAttributeInfoBuilderSetters();
             AttributeInfoBuilder builder = new AttributeInfoBuilder();
             attributes.addAll(buildAttributeInfo(builder, setters));
-            schemaBuilder.defineObjectClass("account", attributes);
+            schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT, attributes);
             _schema = schemaBuilder.build();
             return _schema;
         } catch(Exception e) {

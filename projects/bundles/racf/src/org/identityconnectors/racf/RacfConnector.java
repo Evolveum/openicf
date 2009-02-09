@@ -22,9 +22,11 @@
  */
 package org.identityconnectors.racf;
 
+import static org.identityconnectors.framework.common.objects.AttributeUtil.createSpecialName;
 import static org.identityconnectors.racf.RacfConstants.*;
 
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -61,6 +63,7 @@ import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
 import org.identityconnectors.framework.common.objects.ScriptContext;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.Connector;
@@ -79,6 +82,10 @@ public class RacfConnector implements Connector, CreateOp, PoolableConnector,
 DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
     
     public static final ObjectClass    RACF_CONNECTION     = new ObjectClass("RacfConnection");
+    public static final String         ACCOUNTS_NAME       = createSpecialName("ACCOUNTS");
+    public static final AttributeInfo  ACCOUNTS            = AttributeInfoBuilder.build(ACCOUNTS_NAME,
+            String.class, EnumSet.of(Flags.MULTIVALUED, Flags.NOT_RETURNED_BY_DEFAULT));
+
 
     private RacfConnection              _connection;
     private RacfConfiguration           _configuration;
@@ -586,7 +593,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         groupAttributes.add(buildMVROAttribute(ATTR_SUB_GROUP,                  String.class, false));
         groupAttributes.add(buildMVROAttribute(ATTR_GROUP_USERIDS,              String.class, false));
 
-        attributes.add(PredefinedAttributeInfos.ACCOUNTS);
+        attributes.add(ACCOUNTS);
 
         schemaBuilder.defineObjectClass(ObjectClass.GROUP_NAME, groupAttributes);
 

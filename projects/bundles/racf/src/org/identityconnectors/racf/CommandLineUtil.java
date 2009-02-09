@@ -390,7 +390,7 @@ class CommandLineUtil {
         } else if (objectClass.equals(ObjectClass.GROUP)) {
             Set<Attribute> attributes = new HashSet<Attribute>(attrs); 
             String name = AttributeUtil.getNameFromAttributes(attrs).getNameValue();
-            Attribute accounts = AttributeUtil.find(PredefinedAttributes.ACCOUNTS_NAME, attrs);
+            Attribute accounts = AttributeUtil.find(RacfConnector.ACCOUNTS_NAME, attrs);
             attributes.remove(accounts);
             if (groupExists(name))
                 throw new AlreadyExistsException();
@@ -595,7 +595,7 @@ class CommandLineUtil {
             CharArrayBuffer buffer = new CharArrayBuffer();
             buffer.append("ALTUSER ");
             buffer.append(name);
-            Attribute groupMembership = AttributeUtil.find(PredefinedAttributes.ACCOUNTS_NAME, attrs);
+            Attribute groupMembership = AttributeUtil.find(RacfConnector.ACCOUNTS_NAME, attrs);
             try {
                 if (groupMembership!=null)
                     _connector.setGroupMembershipsForGroups(name, groupMembership);
