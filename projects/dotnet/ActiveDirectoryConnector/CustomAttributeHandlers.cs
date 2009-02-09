@@ -960,13 +960,19 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             ConnectorAttribute realAttribute = GetCaFromDe_Att_Generic(
                 oclass, ActiveDirectoryConnector.ATT_PWD_LAST_SET, searchResult);
-            long? lastSetDate = ConnectorAttributeUtil.GetLongValue(realAttribute);
-            if ((lastSetDate.HasValue) && (lastSetDate.Value != 0))
+            if (realAttribute != null)
             {
-                return ConnectorAttributeBuilder.BuildPasswordExpired(false);
+                long? lastSetDate = ConnectorAttributeUtil.GetLongValue(realAttribute);
+                if ((lastSetDate.HasValue) && (lastSetDate.Value != 0))
+                {
+                    return ConnectorAttributeBuilder.BuildPasswordExpired(false);
+                }
+                else
+                {
+                    return ConnectorAttributeBuilder.BuildPasswordExpired(true);
+                }
             }
-
-            return ConnectorAttributeBuilder.BuildPasswordExpired(true);
+            return null;
         }
 
         private ConnectorAttribute GetCaFromDe_OpAtt_Description(

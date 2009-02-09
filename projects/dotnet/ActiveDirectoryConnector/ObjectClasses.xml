@@ -37,7 +37,7 @@
   "Portions Copyrighted [year] [name of copyright owner]"
 -->
 <List>
-  <ObjectClassInfo container="false" type="account">
+  <ObjectClassInfo container="false" type="__ACCOUNT__">
     <AttributeInfos>
       <AttributeInfo name="sAMAccountName" type="String">
         <AttributeInfoFlag value="NOT_UPDATEABLE"/>
