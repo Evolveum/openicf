@@ -1703,8 +1703,8 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
 
     #region ObjectClass
     public sealed class ObjectClass {
-        public static readonly String ACCOUNT_NAME = ObjectClassUtil.CreateSpecialName("account");
-        public static readonly String GROUP_NAME = ObjectClassUtil.CreateSpecialName("group");
+        public static readonly String ACCOUNT_NAME = ObjectClassUtil.CreateSpecialName("ACCOUNT");
+        public static readonly String GROUP_NAME = ObjectClassUtil.CreateSpecialName("GROUP");
         /**
          * Denotes an account based object.
          */
