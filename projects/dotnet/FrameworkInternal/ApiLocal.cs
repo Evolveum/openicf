@@ -334,6 +334,14 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                    Assembly.LoadFrom(file.ToString());
                CollectionUtil.AddAll(_connectorInfo,
                                      ProcessAssembly(lib));
+            } 
+            // also handle connector DLL file names with a version 
+            FileInfo[] versionedFiles = directory.GetFiles("*.Connector-*.dll");
+            foreach (FileInfo versionedFile in versionedFiles) {
+               Assembly lib =
+                   Assembly.LoadFrom(versionedFile.ToString());
+               CollectionUtil.AddAll(_connectorInfo,
+                                     ProcessAssembly(lib));
            } 
         }
         
