@@ -657,6 +657,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
                 TcpListener socket) {
             _server = server;
             _socket = socket;
+            _thisThread = new Thread(Run) {Name = "ConnectionListener", IsBackground = false};
             //TODO: thread pool
 /*            _threadPool = 
                 new ThreadPoolExecutor
@@ -669,11 +670,12 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
                          true)); //fair*/
         }
         
+        public void Start() {
+            _thisThread.Start();
+        }
         
-        
-        public void Run(Object o) {
-            Trace.TraceInformation("Server started on port: "+_server.Port);
-            _thisThread = (Thread)o;
+        public void Run() {
+            Trace.TraceInformation("Server started on port: "+_server.Port);            
             while (!IsStopped()) {
                 try {
                     TcpClient connection = null;
@@ -866,10 +868,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
             TcpListener socket =
                 CreateServerSocket();
             ConnectionListener listener = new ConnectionListener(this,socket);
-            Thread thread = new Thread(listener.Run);
-            thread.Name="ConnectionListener";
-            thread.Start(thread);
-            thread.IsBackground = false;
+            listener.Start();            
             _listener = listener;
         }
         

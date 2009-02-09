@@ -98,9 +98,14 @@ namespace FrameworkTests
                     int numIterations) {
                 _pool = pool;
                 _numIterations = numIterations;
+                _thisThread = new Thread(Run);
             }
-            public void Run(object o) {
-                _thisThread = (Thread)o;
+
+            public void Start() {
+                _thisThread.Start();
+            }
+            
+            public void Run() {                
                 try {
                     for ( int i = 0; i < _numIterations; i++ ) {
                         MyTestConnection con =
@@ -141,8 +146,7 @@ namespace FrameworkTests
             MyTestThread [] threads = new MyTestThread[NUM_THREADS];
             for (int i = 0; i < threads.Length; i++) {
                 threads[i] = new MyTestThread(pool,NUM_ITERATIONS);
-                Thread thread = new Thread(threads[i].Run);
-                thread.Start(thread);
+                threads[i].Start();
             }
                     
             foreach (MyTestThread thread in threads) {
