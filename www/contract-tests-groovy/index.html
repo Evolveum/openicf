@@ -608,9 +608,9 @@ types.):<br>
         <br>
 
         <div class="literal" style=""><span class="codeComment">// Database
-table connector supports only object class 'account'</span><br>
+table connector supports only object class ACCOUNT</span><br>
 
-testsuite.Schema.oclasses=['account']</div>
+testsuite.Schema.oclasses=['__ACCOUNT__']</div>
 
       </li>
 
@@ -623,9 +623,9 @@ supported object class:<br>
 
         <div class="literal"><span class="codeComment">//
 List of ALL
-attributes of object class 'account' for database table connector</span><br>
+attributes of object class ACCOUNT for database table connector</span><br>
 
-testsuite.Schema.attributes.account.oclasses=['__NAME__',
+testsuite.Schema.attributes.__ACCOUNT__.oclasses=['__NAME__',
 '__PASSWORD__', 'MANAGER', 'MIDDLENAME', <span style="font-style: italic;" class="0">(continued
 on
 next
@@ -647,11 +647,11 @@ object class:</li>
 
       <span class="codeComment">// definition
 of
-attribute __NAME__ of object class 'account' for database table
+attribute __NAME__ of object class ACCOUNT for database table
 connector</span><br>
 
       <div ="code">
-testsuite.Schema."__NAME__".attribute.account.oclasses=[<br>
+testsuite.Schema.__NAME__.attribute.__ACCOUNT__.oclasses=[<br>
 
 &nbsp;&nbsp;
 type:
@@ -697,34 +697,34 @@ classes supported by operations for database table connector</span><br>
 Schema.operations=[<br>
 
 &nbsp;&nbsp;
-GetApiOp: ['account'],<br>
+GetApiOp: ['__ACCOUNT__'],<br>
 
 &nbsp;&nbsp;
-SchemaApiOp: ['account'],<br>
+SchemaApiOp: ['__ACCOUNT__'],<br>
 
 &nbsp;&nbsp;
-ValidateApiOp: ['account'],<br>
+ValidateApiOp: ['__ACCOUNT__'],<br>
 
 &nbsp;&nbsp;
-CreateApiOp: ['account'],<br>
+CreateApiOp: ['__ACCOUNT__'],<br>
 
 &nbsp;&nbsp;
-SearchApiOp: ['account'],<br>
+SearchApiOp: ['__ACCOUNT__'],<br>
 
 &nbsp;&nbsp;
-DeleteApiOp: ['account'],<br>
+DeleteApiOp: ['__ACCOUNT__'],<br>
 
 &nbsp;&nbsp;
-ScriptOnConnectorApiOp: ['account'],<br>
+ScriptOnConnectorApiOp: ['__ACCOUNT__'],<br>
 
 &nbsp;&nbsp;
-UpdateApiOp: ['account'],<br>
+UpdateApiOp: ['__ACCOUNT__'],<br>
 
 &nbsp;&nbsp;
-AuthenticationApiOp: ['account'],<br>
+AuthenticationApiOp: ['__ACCOUNT__'],<br>
 
 &nbsp;&nbsp;
-TestApiOp: ['account'],<br>
+TestApiOp: ['__ACCOUNT__'],<br>
 
 &nbsp;&nbsp;
 SyncApiOp: []<br>
@@ -819,28 +819,7 @@ remember the following:</li>
 names are case sensitive</li>
 
           <li>Contract test property
-names must be valid Java identifiers. <br>
-
-            <br>
-
-Invalid
-parts
-of property name should be escaped, for example:<br>
-
-&nbsp;-- WRONG:<br>
-
-&nbsp;<span class="literal">&nbsp;testsuite.Schema.</span><span class="literal" style="color: rgb(51, 51, 255); font-style: italic;">__NAME__</span><span class="literal">.attribute.account.oclasses</span>
-or <span class="literal" style=""><span style="font-style: italic; color: rgb(51, 51, 255);">"__NAME__"</span>.attribute.account.oclasses<br>
-
-            </span><br>
-
-&nbsp;-- CORRECT:<br>
-
-&nbsp;&nbsp;<span class="literal">testsuite.Schema.<span style="color: rgb(204, 0, 0);">"</span>__NAME__<span style="color: rgb(204, 0, 0);">"</span>.attribute.account.oclasses</span><br>
-
-            <br>
-
-          </li>
+names must be valid Java identifiers.</li>
 
         </ul>
 

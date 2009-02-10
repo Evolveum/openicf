@@ -158,7 +158,7 @@ properties</a></li>
 
 <p>Test properties follows these patterns:</p>
 
-<pre><span class="codeComment">// connector configuration</span><br>connector.{$property.name}="some value"<br>connector.connectionUrl="jdbc:mysql://localhost/database"<br><br><span class="codeComment">// testsuite configuration</span><br>testsuite.{$property.name}="some value"<br>testsuite.bundleJar=System.getProperty("bundleJar")<br><br><span class="codeComment">// DataProvider configuration</span><br>i{$iteration}.{$test.name}.{$oclass.name}.${attribute.name}="some value"<br>i0.Create.account.DEPARTMENT="some value"<br></pre>
+<pre><span class="codeComment">// connector configuration</span><br>connector.{$property.name}="some value"<br>connector.connectionUrl="jdbc:mysql://localhost/database"<br><br><span class="codeComment">// testsuite configuration</span><br>testsuite.{$property.name}="some value"<br>testsuite.bundleJar=System.getProperty("bundleJar")<br><br><span class="codeComment">// DataProvider configuration</span><br>i{$iteration}.{$test.name}.{$oclass.name}.${attribute.name}="some value"<br>i0.Create.__ACCOUNT__.DEPARTMENT="some value"<br></pre>
 
 <br>
 
@@ -236,7 +236,7 @@ Default value definitions</span> for property types are:
 <p>Properties that have not been defined are
 assigned&nbsp;default
 values by GroovyDataProvider. For example, the test looks
-for the&nbsp;undefined property <code>i0.Create.account.DEPARTMENT</code>
+for the&nbsp;undefined property <code>i0.Create.__ACCOUNT__.DEPARTMENT</code>
 as follows:</p>
 
 <ol>
@@ -245,7 +245,7 @@ as follows:</p>
 there
 is no such&nbsp;property&nbsp;</li>
 
-  <li>Because&nbsp;<code>i0.Create.account.DEPARTMENT</code>
+  <li>Because&nbsp;<code>i0.Create.__ACCOUNT__.DEPARTMENT</code>
 is a String,
 we return the default value <span style="font-family: monospace;">Tstring
 =
@@ -305,8 +305,7 @@ the configuration bean, and <code>${value}</code> can be a
 value
 (any Java object).
 <p>The following table represents two equivalent forms of
-defining connector properties. In most cases <a href="#note1"><span style="color: rgb(51, 51, 255);">(see note)</span></a>
-the option on the
+defining connector properties. In most cases the option on the
 right is favored.
 <table style="text-align: left; width: 100%;" border="1" cellpadding="2" cellspacing="2">
 
@@ -328,21 +327,7 @@ right is favored.
 
     <tr>
 
-      <td colspan="2" rowspan="2"><a name="note1"></a>
-Note 1: Property names containing
-special characters (invalid Java
-identifiers), such as <span style="font-family: monospace;">
-@</span>, <span style="font-family: monospace;">
--</span>, and so on, should be escaped. <br>
-
-For example,
-      <span style="font-family: monospace;">testsuite.Schema."__NAME__".attribute.account.oclasses</span>.
-Property names, however, cannot start with the escaped part (<span style="font-family: monospace;">__NAME__</span> in
-this
-case).<br>
-
-      <br>
-
+      <td colspan="2" rowspan="2">
 Note 2: The prefix tree should be <span style="font-style: italic;">unique</span>
 in the whole configuration
 file (in this case <span style="font-family: monospace;">
@@ -401,9 +386,9 @@ types):<br>
 
 <code><span class="codeComment">//
 database
-table connector supports only object class 'account'</span><br>
+table connector supports only object class ACCOUNT</span><br>
 
-testsuite.Schema.oclasses=['account']
+testsuite.Schema.oclasses=['__ACCOUNT__']
 </code><br>
 
 <br>
@@ -415,9 +400,9 @@ supported object class:<br>
 
 <code><span class="codeComment">//
 list of ALL
-attributes of object class 'account' for database table connector</span><br>
+attributes of object class ACCOUNT for database table connector</span><br>
 
-testsuite.Schema.attributes.account.oclasses=['__NAME__',
+testsuite.Schema.attributes.__ACCOUNT__.oclasses=['__NAME__',
 '__PASSWORD__', 'MANAGER', 'MIDDLENAME', (continued next
 line)<br>
 
@@ -433,9 +418,9 @@ object class:<br>
 
 <code><span class="codeComment">//
 definition of
-attribute __NAME__ of object class 'account' for databse table connector</span><br>
+attribute __NAME__ of object class ACCOUNT for databse table connector</span><br>
 
-testsuite.Schema."__NAME__".attribute.account.oclasses=[<br>
+testsuite.Schema.__NAME__.attribute.__ACCOUNT__.oclasses=[<br>
 
 &nbsp;&nbsp;
 type:
@@ -481,34 +466,34 @@ classes supported by operations for database table connector</span><br>
 testsuite.Schema.operations=[<br>
 
 &nbsp;&nbsp;
-GetApiOp: ['account'],<br>
+GetApiOp: ['__ACCOUNT__'],<br>
 
 &nbsp;&nbsp;
-SchemaApiOp: ['account'],<br>
+SchemaApiOp: ['__ACCOUNT__'],<br>
 
 &nbsp;&nbsp;
-ValidateApiOp: ['account'],<br>
+ValidateApiOp: ['__ACCOUNT__'],<br>
 
 &nbsp;&nbsp;
-CreateApiOp: ['account'],<br>
+CreateApiOp: ['__ACCOUNT__'],<br>
 
 &nbsp;&nbsp;
-SearchApiOp: ['account'],<br>
+SearchApiOp: ['__ACCOUNT__'],<br>
 
 &nbsp;&nbsp;
-DeleteApiOp: ['account'],<br>
+DeleteApiOp: ['__ACCOUNT__'],<br>
 
 &nbsp;&nbsp;
-ScriptOnConnectorApiOp: ['account'],<br>
+ScriptOnConnectorApiOp: ['__ACCOUNT__'],<br>
 
 &nbsp;&nbsp;
-UpdateApiOp: ['account'],<br>
+UpdateApiOp: ['__ACCOUNT__'],<br>
 
 &nbsp;&nbsp;
-AuthenticationApiOp: ['account'],<br>
+AuthenticationApiOp: ['__ACCOUNT__'],<br>
 
 &nbsp;&nbsp;
-TestApiOp: ['account'],<br>
+TestApiOp: ['__ACCOUNT__'],<br>
 
 &nbsp;&nbsp;
 SyncApiOp: []<br>
@@ -563,7 +548,7 @@ is name of an attribute of an object class</li>
 <br>
 
 Examples:
-<pre><span class="codeComment">// First created account by CreateApiOpTests will have FIRSTNAME attribute equal to FOO</span><br><span style="color: rgb(51, 102, 255);">i</span>0.Create.account.FIRSTNAME="FOO"<br><br><span class="codeComment">// All accounts in SearchApiOpTests will have a LASTNAME attribute equal to BAR</span><br>Search.account.LASTNAME="BAR"<br><br><span class="codeComment">// All accounts in all tests will have PHONE attribute equal to 5-digit random values</span><br>account.PHONE=Lazy.random("######") <br></pre>
+<pre><span class="codeComment">// First created account by CreateApiOpTests will have FIRSTNAME attribute equal to FOO</span><br><span style="color: rgb(51, 102, 255);">i</span>0.Create.__ACCOUNT__.FIRSTNAME="FOO"<br><br><span class="codeComment">// All accounts in SearchApiOpTests will have a LASTNAME attribute equal to BAR</span><br>Search.__ACCOUNT__.LASTNAME="BAR"<br><br><span class="codeComment">// All accounts in all tests will have PHONE attribute equal to 5-digit random values</span><br>__ACCOUNT__.PHONE=Lazy.random("######") <br></pre>
 
 <h4><a name="UpdateApiOpTests"></a>UpdateApiOpTests</h4>
 
@@ -572,7 +557,7 @@ the <code>UpdateApiOpTests</code>
 is created identity
 updated with new values. The following properties are used
 for&nbsp;those new values:
-<pre>${attribute.name}=${value} <span class="codeComment">// old value</span><br>modified.${attribute.name}=${value} <span class="codeComment">// new value</span><br>added.${attribute.name}=${value} <span class="codeComment">// new value added to a multivalue property (for example: list)</span><br><br class="codeComment"><span class="codeComment">// Example update LASTNAME attribute with value "sellers":</span><br>modified.LASTNAME="sellers"<br><br><span class="codeComment">// if you don't want to supply a new value for update, set it to the ObjectNotFoundException exception</span><br>modified."__NAME__"= <span style="font-family: monospace;">ObjectNotFoundException() <span class="codeComment">// means that value is not supplied</span></span><br></pre>
+<pre>${attribute.name}=${value} <span class="codeComment">// old value</span><br>modified.${attribute.name}=${value} <span class="codeComment">// new value</span><br>added.${attribute.name}=${value} <span class="codeComment">// new value added to a multivalue property (for example: list)</span><br><br class="codeComment"><span class="codeComment">// Example update LASTNAME attribute with value "sellers":</span><br>modified.LASTNAME="sellers"<br><br><span class="codeComment">// if you don't want to supply a new value for update, set it to the ObjectNotFoundException exception</span><br>modified.__NAME__= <span style="font-family: monospace;">ObjectNotFoundException() <span class="codeComment">// means that value is not supplied</span></span><br></pre>
 
 <h4><a name="SearchApiOpTests"></a>SearchApiOpTests#testCaseInsensitiveSearch</h4>
 <p>
