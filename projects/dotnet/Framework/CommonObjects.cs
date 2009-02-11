@@ -328,7 +328,13 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             return IsSpecialName(name);
         }
         
-        private static bool IsSpecialName(String name) {
+        /// <summary>
+        /// Determines whether the specified attribute name is special in the
+        /// sense of <see cref="ConnectorAttributeUtil.CreateSpecialName"/>.
+        /// </summary>
+        /// <param name="name">the name of the attribute to test</param>
+        /// <returns>true iff the attribute name is special</returns>
+        public static bool IsSpecialName(String name) {
             return NameUtil.IsSpecialName(name);
         }
         
@@ -1701,7 +1707,13 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             return IsSpecialName(name);
         }
 
-        private static bool IsSpecialName(String name) {
+        /// <summary>
+        /// Determines whether the specified object class name is special in the
+        /// sense of <see cref="ObjectClassUtil.CreateSpecialName"/>.
+        /// </summary>
+        /// <param name="name">the name of the object class to test</param>
+        /// <returns>true iff the object class name is special</returns>
+        public static bool IsSpecialName(String name) {
             return NameUtil.IsSpecialName(name);
         }
 
