@@ -1,47 +1,32 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
-  Copyright 2008 Sun Microsystems, Inc. All rights reserved.
-  
-  U.S. Government Rights - Commercial software. Government users 
-  are subject to the Sun Microsystems, Inc. standard license agreement
-  and applicable provisions of the FAR and its supplements.
-  
-  Use is subject to license terms.
-  
-  This distribution may include materials developed by third parties.
-  Sun, Sun Microsystems, the Sun logo, Java and Project Identity 
-  Connectors are trademarks or registered trademarks of Sun 
-  Microsystems, Inc. or its subsidiaries in the U.S. and other
-  countries.
-  
-  UNIX is a registered trademark in the U.S. and other countries,
-  exclusively licensed through X/Open Company, Ltd. 
-  
-  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-  
-  Copyright 2008 Sun Microsystems, Inc. All rights reserved. 
-  
-  The contents of this file are subject to the terms of the Common Development
-  and Distribution License(CDDL) (the License).  You may not use this file
-  except in  compliance with the License. 
-  
-  You can obtain a copy of the License at
-  http://identityconnectors.dev.java.net/CDDLv1.0.html
-  See the License for the specific language governing permissions and 
-  limitations under the License.  
-  
-  When distributing the Covered Code, include this CDDL Header Notice in each
-  file and include the License file at identityconnectors/legal/license.txt.
-  If applicable, add the following below this CDDL Header, with the fields 
-  enclosed by brackets [] replaced by your own identifying information: 
-  "Portions Copyrighted [year] [name of copyright owner]"
+// ====================
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+// 
+// Copyright 2007-2008 Sun Microsystems, Inc. All rights reserved.     
+// 
+// The contents of this file are subject to the terms of the Common Development 
+// and Distribution License("CDDL") (the "License").  You may not use this file 
+// except in compliance with the License.
+// 
+// You can obtain a copy of the License at 
+// http://IdentityConnectors.dev.java.net/legal/license.txt
+// See the License for the specific language governing permissions and limitations 
+// under the License. 
+// 
+// When distributing the Covered Code, include this CDDL Header Notice in each file
+// and include the License file at identityconnectors/legal/license.txt.
+// If applicable, add the following below this CDDL Header, with the fields 
+// enclosed by brackets [] replaced by your own identifying information: 
+// "Portions Copyrighted [year] [name of copyright owner]"
+// ====================
 -->
-<CommandInfos xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<ArrayOfSerializableCommandInfo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <!-- ************ MAIL USER ************ -->
-  <CommandInfo>
+  <SerializableCommandInfo>
     <Name>New-MailUser</Name>
     <NameParameter>Name</NameParameter>
-    <Parameter>
+    <Parameters>
       <string>ExternalEmailAddress</string>
       <string>OrganizationalUnit</string>
       <string>Password</string>
@@ -59,12 +44,12 @@
       <string>SamAccountName</string>
       <string>TemplateInstance</string>
       <string>UsePreferMessageFormat</string>
-    </Parameter>
-  </CommandInfo>
-  <CommandInfo>
+    </Parameters>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
     <Name>Set-MailUser</Name>
     <NameParameter>Identity</NameParameter>
-    <Parameter>
+    <Parameters>
       <string>AcceptMessagesOnlyFrom</string>
       <string>AcceptMessagesOnlyFromDLMembers</string>
       <string>Alias</string>
@@ -113,16 +98,16 @@
       <string>WindowsEmailAddress</string>
       <string>MaxReceiveSize</string>
       <string>MaxSendSize</string>
-    </Parameter>    
-  </CommandInfo>
-  <CommandInfo>
+    </Parameters>    
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
     <Name>Get-MailUser</Name>
-    <Parameter>
+    <Parameters>
       <string>Identity</string>
       <string>OrganizationalUnit</string>
       <string>ReadFromDomainController</string>
       <string></string>
-    </Parameter>
+    </Parameters>
     <FilterName>Filter</FilterName>
     <FilterParameter>
       <string>AcceptMessagesOnlyFrom</string>
@@ -169,11 +154,11 @@
       <string>WhenCreated</string>
       <string>WindowsEmailAddress</string>
     </FilterParameter>
-  </CommandInfo>
-  <CommandInfo>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
     <Name>Enable-MailUser</Name>
     <NameParameter>Identity</NameParameter>
-    <Parameter>
+    <Parameters>
       <string>ExternalEmailAddress</string>
       <string>Alias</string>
       <string>DomainController</string>
@@ -181,18 +166,18 @@
       <string>MessageBodyFormat</string>
       <string>MessageFormat</string>
       <string>UsePreferMessageFormat</string>
-    </Parameter>
-  </CommandInfo>
+    </Parameters>
+  </SerializableCommandInfo>
   <!-- ************ MAIL USER END ************ -->
   <!-- ************ USER ************ -->
-  <CommandInfo>
+  <SerializableCommandInfo>
     <Name>Get-User</Name>
     <NameParameter>Identity</NameParameter>
-  </CommandInfo>
-  <CommandInfo>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
     <Name>Set-User</Name>
     <NameParameter>Identity</NameParameter>
-    <Parameter>
+    <Parameters>
       <string>AssistantName</string>
       <string>City</string>
       <string>Company</string>
@@ -231,14 +216,14 @@
       <string>UserPrincipalName</string>
       <string>WebPage</string>
       <string>WindowsEmailAddress</string>
-    </Parameter>
-  </CommandInfo>
+    </Parameters>
+  </SerializableCommandInfo>
   <!-- ************ USER END ******** -->
   <!-- ************ MAILBOX ************ -->
-  <CommandInfo>
+  <SerializableCommandInfo>
     <Name>Enable-Mailbox</Name>
     <NameParameter>Identity</NameParameter>
-    <Parameter>
+    <Parameters>
       <string>Database</string>
       <string>Equipment</string>
       <string>Alias</string>
@@ -251,7 +236,7 @@
       <string>LinkedCredential</string>
       <string>ManagedFolderMailboxPolicy</string>
       <string>ManagedFolderMailboxPolicyAllowed</string>      
-    </Parameter>
-  </CommandInfo>
+    </Parameters>
+  </SerializableCommandInfo>
   <!-- ************ MAILBOX END ************ -->
-</CommandInfos>
+</ArrayOfSerializableCommandInfo>

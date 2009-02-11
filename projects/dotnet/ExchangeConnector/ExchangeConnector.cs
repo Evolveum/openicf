@@ -1,100 +1,128 @@
-/*
- * ====================
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2007-2008 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
- * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
- * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
- * When distributing the Covered Code, include this CDDL Header Notice in each file
- * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
- * "Portions Copyrighted [year] [name of copyright owner]"
- * ====================
- */
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Management.Automation.Runspaces;
-using Org.IdentityConnectors.ActiveDirectory;
-using Org.IdentityConnectors.Common;
-using Org.IdentityConnectors.Framework.Common.Objects;
-using Org.IdentityConnectors.Framework.Spi;
+// <copyright file="ExchangeConnector.cs" company="Sun Microsystems, Inc.">
+// ====================
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+// 
+// Copyright 2007-2008 Sun Microsystems, Inc. All rights reserved.     
+// 
+// The contents of this file are subject to the terms of the Common Development 
+// and Distribution License("CDDL") (the "License").  You may not use this file 
+// except in compliance with the License.
+// 
+// You can obtain a copy of the License at 
+// http://IdentityConnectors.dev.java.net/legal/license.txt
+// See the License for the specific language governing permissions and limitations 
+// under the License. 
+// 
+// When distributing the Covered Code, include this CDDL Header Notice in each file
+// and include the License file at identityconnectors/legal/license.txt.
+// If applicable, add the following below this CDDL Header, with the fields 
+// enclosed by brackets [] replaced by your own identifying information: 
+// "Portions Copyrighted [year] [name of copyright owner]"
+// ====================
+// </copyright>
+// <author>Tomas Knappek</author>
 
 namespace Org.IdentityConnectors.Exchange
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.Management.Automation.Runspaces;
+
+    using Data;
+
+    using Org.IdentityConnectors.ActiveDirectory;
+    using Org.IdentityConnectors.Common;
+    using Org.IdentityConnectors.Framework.Common.Objects;
+    using Org.IdentityConnectors.Framework.Spi;
+
     /// <summary>
     /// MS Exchange extension of Active Directory connector.
-    /// Full featured connector, see LegacyExchangeConnector for limited functionality connector.
+    /// Full featured connector, <see cref="LegacyExchangeConnector"/> for limited functionality connector.
     /// LegacyExchangeConnector will be extension of this class, once ready.
-    /// </summary>        
+    /// </summary>    
     public class ExchangeConnector : ActiveDirectoryConnector
-    {
-        private static readonly string CLASS = typeof(ExchangeConnector).ToString();
+    {        
+        /// <summary>
+        /// MailBox object class name
+        /// </summary>
+        public const string MailboxName = "mailbox";
 
-        //object class names
-        public const string MAILBOX_NAME = "mailbox";
-        public const string MAILUSER_NAME = "mailuser";
+        /// <summary>
+        /// MailUser object class name
+        /// </summary>
+        public const string MailUserName = "mailuser";
         
-        //object classes
-        public static readonly ObjectClass MAILBOX = new ObjectClass(MAILBOX_NAME);
-        public static readonly ObjectClass MAILUSER = new ObjectClass(MAILUSER_NAME);
+        /// <summary>
+        /// MailBox object class, based on <see cref="MailboxName"/>
+        /// </summary>
+        public static readonly ObjectClass Mailbox = new ObjectClass(MailboxName);
 
-        //local vars
-        private ExchangeConfiguration _configuration = null;
-        private RunSpaceInstance _runspace = null;
-        private bool _disposed = false;
-        private IDictionary<ObjectClass, ObjectClassInfo> _mapOcInfo = null;
+        /// <summary>
+        /// MailUser object class, based on <see cref="MailUserName"/>
+        /// </summary>
+        public static readonly ObjectClass MailUser = new ObjectClass(MailUserName);
 
+        /// <summary>
+        /// This Class name - used for logging purposes
+        /// </summary>
+        private static readonly string ClassName = typeof(ExchangeConnector).ToString();
+        
+        /// <summary>
+        /// Configuration instance variable, <see cref="Init"/> method for assignment
+        /// </summary>
+        private ExchangeConfiguration configuration;
+
+        /// <summary>
+        /// Runspace instance variable, it is managed resource - has to be released
+        /// </summary>
+        private RunSpaceInstance runspace;
+
+        /// <summary>
+        /// Map of object class infos, used for <see cref="Schema"/> generating
+        /// </summary>
+        private IDictionary<ObjectClass, ObjectClassInfo> mapOcInfo;
         
         /// <summary>
         /// Implementation of CreateOp.Create
         /// </summary>
-        /// <param name="oclass"></param>(oc
-        /// <param name="attributes"></param>
-        /// <param name="options"></param>
-        /// <returns></returns>
-        public override Uid Create(ObjectClass oclass,
-                                   ICollection<ConnectorAttribute> attributes, OperationOptions options)
+        /// <param name="oclass">Object class</param>(oc
+        /// <param name="attributes">Object attributes</param>
+        /// <param name="options">Operation options</param>
+        /// <returns><see cref="Uid"/> of the created object</returns>
+        public override Uid Create(
+            ObjectClass oclass,
+            ICollection<ConnectorAttribute> attributes,
+            OperationOptions options)
         {
             const string METHOD = "Create";
-
-            Debug.WriteLine(METHOD + ":entry", CLASS);
-
+            Debug.WriteLine(METHOD + ":entry", ClassName);
             
-            //first create the object in AD
+            // first create the object in AD
             Uid uid = base.Create(oclass, attributes, options);
             
             try
-            {
-                if (oclass.Equals(MAILBOX))
+            {                
+                if (oclass.Is(MailboxName))
                 {
-                    //enable mailbox for person
-                    Command cmd = ExchangeUtils.GetCommand(CommandInfo.ENABLE_MAILBOX, attributes);
-                    _runspace.InvokePipeline(cmd);
-                } else if (oclass.Equals(MAILUSER))
+                    // enable mailbox for person
+                    Command cmd = ExchangeUtility.GetCommand(CommandInfo.EnableMailbox, attributes);
+                    this.runspace.InvokePipeline(cmd);
+                }
+                else if (oclass.Is(MailUserName))
                 {
-                    //enable mailuser
-                    Command cmd = ExchangeUtils.GetCommand(CommandInfo.ENABLE_MAILUSER, attributes);
-                    _runspace.InvokePipeline(cmd);
-                    
+                    // enable mailuser
+                    Command cmd = ExchangeUtility.GetCommand(CommandInfo.EnableMailUser, attributes);
+                    this.runspace.InvokePipeline(cmd);                    
                 }
 
-                Debug.WriteLine(METHOD + ":exit", CLASS);
-
+                Debug.WriteLine(METHOD + ":exit", ClassName);
             }
-            catch (Exception)
+            catch
             {
-                //do the rollback - delete the uid
-                base.Delete(oclass, uid, options);
+                // do the rollback - delete the object by uid
+                // no need to check the uid is null, ensured by the create contract
+                this.Delete(oclass, uid, options);
                 throw;
             }
             
@@ -104,15 +132,18 @@ namespace Org.IdentityConnectors.Exchange
         /// <summary>
         /// Implementation of UpdateOp.Update
         /// </summary>
-        /// <param name="type"></param>
-        /// <param name="oclass"></param>
-        /// <param name="attributes"></param>
-        /// <param name="options"></param>
-        /// <returns></returns>
-        public override Uid Update(UpdateType type, ObjectClass oclass,
-                                   ICollection<ConnectorAttribute> attributes, OperationOptions options)
+        /// <param name="type">Update type</param>
+        /// <param name="oclass">Object class</param>
+        /// <param name="attributes">Object attributes</param>
+        /// <param name="options">Operation options</param>
+        /// <returns><see cref="Uid"/> of the updated object</returns>
+        public override Uid Update(
+            UpdateType type,
+            ObjectClass oclass,
+            ICollection<ConnectorAttribute> attributes,
+            OperationOptions options)
         {
-            //TODO: Implement Update
+            // TODO: Implement Update
             return base.Update(type, oclass, attributes, options);
         }
 
@@ -121,98 +152,115 @@ namespace Org.IdentityConnectors.Exchange
         /// </summary>
         public override void Test()
         {
-            //validate the configuration first, this will check AD configuration too
-            _configuration.Validate();
-            //AD validation (includes configuration validation too)
+            // validate the configuration first, this will check AD configuration too
+            this.configuration.Validate();
+
+            // AD validation (includes configuration validation too)
             base.Test();
-            //runspace check
-            _runspace.Test();
+
+            // runspace check
+            this.runspace.Test();
         }
         
         /// <summary>
         /// Implementation of SynOp.Sync
         /// </summary>
-        /// <param name="objClass"></param>
-        /// <param name="token"></param>
-        /// <param name="handler"></param>
-        /// <param name="options"></param>
-        public override void Sync(ObjectClass objClass, SyncToken token,
-                                  SyncResultsHandler handler, OperationOptions options)
+        /// <param name="objClass">Object class</param>
+        /// <param name="token">Syncronization token</param>
+        /// <param name="handler">Handler for syncronization results</param>
+        /// <param name="options">Operation options, can be null</param>
+        public override void Sync(
+            ObjectClass objClass,
+            SyncToken token,
+            SyncResultsHandler handler,
+            OperationOptions options)
         {
-            //TODO: implement Sync
+            // TODO: implement Sync
             base.Sync(objClass, token, handler, options);
         }
         
         /// <summary>
         /// Implementation of SynOp.GetLatestSyncToken
         /// </summary>
-        /// <returns></returns>
-        public override SyncToken GetLatestSyncToken(ObjectClass oclass)
+        /// <param name="objectClass">Object class</param>
+        /// <returns><see cref="SyncToken" /> of the last sync</returns>
+        public override SyncToken GetLatestSyncToken(ObjectClass objectClass)
         {
-            //TODO: Implement GetLatestSyncToken
-            return base.GetLatestSyncToken(oclass);
+            // TODO: Implement GetLatestSyncToken
+            return base.GetLatestSyncToken(objectClass);
         }
         
         /// <summary>
         /// Implementation of SearchOp.ExecuteQuery
         /// </summary>
-        /// <param name="oclass"></param>
-        /// <param name="query"></param>
-        /// <param name="handler"></param>
-        /// <param name="options"></param>
-        public override void ExecuteQuery(ObjectClass oclass, string query,
-                                          ResultsHandler handler, OperationOptions options)
+        /// <param name="oclass">Object class</param>
+        /// <param name="query">Query to execute</param>
+        /// <param name="handler">Result handler</param>
+        /// <param name="options">Operation options</param>
+        public override void ExecuteQuery(
+            ObjectClass oclass,
+            string query,
+            ResultsHandler handler,
+            OperationOptions options)
         {
-            //TODO: Implement ExecuteQuery
+            // TODO: Implement ExecuteQuery
             base.ExecuteQuery(oclass, query, handler, options);
         }
-        
         
         /// <summary>
         /// Implementation of SearchOp.CreateFilterTranslator
         /// </summary>
-        /// <param name="oclass"></param>
-        /// <param name="options"></param>
-        /// <returns></returns>
-        public override Org.IdentityConnectors.Framework.Common.Objects.Filters.FilterTranslator<string> CreateFilterTranslator(ObjectClass oclass, OperationOptions options)
+        /// <param name="oclass">Object class</param>
+        /// <param name="options">Operation options</param>
+        /// <returns>Exchange specific Filter translator</returns>
+        public override Org.IdentityConnectors.Framework.Common.Objects.Filters.FilterTranslator<string> CreateFilterTranslator(
+            ObjectClass oclass,
+            OperationOptions options)
         {
-            //TODO: Implement CreateFilterTranslator
+            // TODO: Implement CreateFilterTranslator
             return base.CreateFilterTranslator(oclass, options);
         }
 
         /// <summary>
         /// Inits the connector with configuration injected
         /// </summary>
-        /// <param name="configuration"></param>
+        /// <param name="configuration">Initialized Exchange configuration</param>
         public override void Init(Configuration configuration)
         {
             base.Init(configuration);
-            _configuration = (ExchangeConfiguration)configuration;
-            _runspace = new RunSpaceInstance(RunSpaceInstance.SnapIn.Exchange);
-            _mapOcInfo = ExchangeUtils.GetOCInfo();
+            this.configuration = (ExchangeConfiguration)configuration;
+
+            // create runspace instance, will be alive as long as the connector instance is alive
+            this.runspace = new RunSpaceInstance(RunSpaceInstance.SnapIn.Exchange);
+
+            // read the object class info definitions
+            this.mapOcInfo = ExchangeUtility.GetOCInfo();
         }
-        
-        
+                
         /// <summary>
-        /// Dispose resources
+        /// Dispose resources, <see cref="IDisposable"/>
         /// </summary>
-        public override void Dispose()
+        public sealed override void Dispose()
         {
-            //lock is probably not necessary
-            lock (this)
+            this.Dispose(true);
+            GC.SuppressFinalize(this);                        
+        }
+
+        /// <summary>
+        /// Dispose the resources we use
+        /// </summary>
+        /// <param name="disposing">true if called from <see cref="ExchangeConnector.Dispose()"/></param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
             {
-                if (_disposed)
+                // free managed resources
+                if (this.runspace != null)
                 {
-                    return;
+                    this.runspace.Dispose();
+                    this.runspace = null;
                 }
-                if (_runspace != null)
-                {
-                    _runspace.Dispose();
-                }
-                base.Dispose();
-                _disposed = true;
-            }
-            
+            }            
         }
 
         /// <summary>
@@ -221,11 +269,15 @@ namespace Org.IdentityConnectors.Exchange
         /// <returns>List of supported object classes</returns>
         protected override ICollection<ObjectClass> GetSupportedObjectClasses()
         {
-            ICollection<ObjectClass> ocList =  base.GetSupportedObjectClasses();
-            Assertions.NullCheck(ocList, "ocList");
-            ocList.Add(MAILBOX);
-            ocList.Add(MAILUSER);
-            return ocList;
+            ICollection<ObjectClass> objectClasses = base.GetSupportedObjectClasses();
+            Assertions.NullCheck(objectClasses, "ocList");
+
+            ICollection<ObjectClass> ourObjectClass = new List<ObjectClass>(objectClasses);
+
+            // add our object classes
+            ourObjectClass.Add(Mailbox);
+            ourObjectClass.Add(MailUser);
+            return ourObjectClass;
         }
 
         /// <summary>
@@ -235,68 +287,108 @@ namespace Org.IdentityConnectors.Exchange
         /// <returns>ObjectClass' ObjectClassInfo</returns>
         protected override ObjectClassInfo GetObjectClassInfo(ObjectClass oc)
         {
-            ObjectClassInfo ret = CollectionUtil.GetValue(_mapOcInfo, oc, null) ?? base.GetObjectClassInfo(oc);
+            ObjectClassInfo ret = CollectionUtil.GetValue(this.mapOcInfo, oc, null) ?? base.GetObjectClassInfo(oc);
             Assertions.NullCheck(ret, "ret");
             return ret;  
         }
 
-    }
-
-
-    /// <summary>
-    /// Command definition object
-    /// </summary>
-    internal sealed class CommandInfo
-    {
-        private static IDictionary<string, XCommandInfo> cinfos = null;
-
-        internal static readonly CommandInfo ENABLE_MAILBOX = new CommandInfo("Enable-Mailbox");
-        internal static readonly CommandInfo ENABLE_MAILUSER = new CommandInfo("Enable-MailUser");
-        internal static readonly CommandInfo SET_MAILUSER = new CommandInfo("Set-MailUser");
-
-
-        private CommandInfo(string name)
+        /// <summary>
+        /// Command definition object, uses internally <see cref="SerializableCommandInfo"/>,
+        /// intended to be one place for all the PowerShell commands definition
+        /// </summary>
+        internal sealed class CommandInfo
         {
-            Name = name;
-            if (cinfos == null)
+            /// <summary>
+            /// Enable-Mailbox command meta info
+            /// </summary>
+            internal static readonly CommandInfo EnableMailbox = new CommandInfo("Enable-Mailbox");
+
+            /// <summary>
+            /// Enable-MailUser command meta info
+            /// </summary>
+            internal static readonly CommandInfo EnableMailUser = new CommandInfo("Enable-MailUser");
+
+            /// <summary>
+            /// Set-MailUser command meta info
+            /// </summary>
+            internal static readonly CommandInfo SetMailUser = new CommandInfo("Set-MailUser");
+
+            /// <summary>
+            /// List of SerializableCommandInfo object - will be read from persistence
+            /// </summary>
+            private static IList<SerializableCommandInfo> serCmdInfos;
+
+            /// <summary>
+            /// Private placeholder for concrete <see cref="SerializableCommandInfo"/>
+            /// </summary>
+            private SerializableCommandInfo serCmdInfo;
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="CommandInfo" /> class. 
+            /// , made private to be immutable
+            /// </summary>
+            /// <param name="name">Command name</param>
+            private CommandInfo(string name)
             {
-                cinfos = ExchangeUtils.GetCommandInfo();
+                this.Name = name;                
             }
 
-        }
+            /// <summary>
+            /// Gets Comamnd Name
+            /// </summary>
+            internal string Name { get; private set; }
 
-        /// <summary>
-        /// Comamnd Name
-        /// </summary>
-        internal string Name { get; private set; }
-
-        /// <summary>
-        /// Comand Parameters
-        /// </summary>
-        internal string[] Parameters
-        {
-            get
+            /// <summary>
+            /// Gets Comand Parameters
+            /// </summary>
+            internal IList<string> Parameters
             {
-                var ret = CollectionUtil.GetValue(cinfos, Name, null);
-                Assertions.NullCheck(ret, "ret");
-
-                return ret.Parameter;  
+                get
+                {
+                    return this.SerCmdInfo.Parameters;
+                }
             }
-        }
 
-        /// <summary>
-        /// Name parameter
-        /// </summary>
-        internal string NameParameter
-        {
-            get
+            /// <summary>
+            /// Gets Name parameter
+            /// </summary>
+            internal string NameParameter
             {
-                var ret = CollectionUtil.GetValue(cinfos, Name, null);
-                Assertions.NullCheck(ret, "ret");
-
-                return ret.NameParameter;
+                get
+                {
+                    return this.SerCmdInfo.NameParameter;
+                }
             }
+
+            /// <summary>
+            /// Gets SerCmdInfo.
+            /// </summary>
+            private SerializableCommandInfo SerCmdInfo
+            {
+                get
+                {
+                    // lazy init
+                    if (serCmdInfos == null)
+                    {
+                        serCmdInfos = PersistenceUtility.ReadCommandInfo();
+                    }
+
+                    if (this.serCmdInfo == null)
+                    {
+                        foreach (SerializableCommandInfo info in serCmdInfos)
+                        {
+                            if (info.Name.Equals(this.Name))
+                            {
+                                this.serCmdInfo = info;
+                                break;
+                            }
+                        }
+                    }
+
+                    return this.serCmdInfo;
+                }
+            }            
         }
-    }
+    } 
 }
  

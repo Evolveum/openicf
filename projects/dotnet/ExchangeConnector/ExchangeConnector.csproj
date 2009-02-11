@@ -31,9 +31,12 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Org.IdentityConnectors.Exchange</RootNamespace>
     <AssemblyName>Exchange.Connector</AssemblyName>
+    <ProductName>Exchange</ProductName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ZipRelease>true</ZipRelease>
+    <SignAssembly>false</SignAssembly>
+    <InternalsVisibleTo>ExchangeConnectorTests</InternalsVisibleTo>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -58,6 +61,7 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Data" />
     <Reference Include="System.Management.Automation, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\Program Files\Reference Assemblies\Microsoft\WindowsPowerShell\v1.0\System.Management.Automation.dll</HintPath>
@@ -65,10 +69,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Data\SerializableCommandInfo.cs" />
+    <Compile Include="Data\PersistenceUtility.cs" />
     <Compile Include="LegacyExchangeConnector.cs" />
     <Compile Include="ExchangeConfiguration.cs" />
     <Compile Include="ExchangeConnector.cs" />
-    <Compile Include="ExchangeUtils.cs" />
+    <Compile Include="ExchangeUtility.cs" />
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="RunSpaceInstance.cs" />
   </ItemGroup>
@@ -93,7 +99,7 @@
     <EmbeddedResource Include="ObjectClasses.xml" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="CommandInfos.xml" />
+    <EmbeddedResource Include="Data\CommandInfos.xml" />
     <EmbeddedResource Include="Messages.resx">
       <SubType>Designer</SubType>
     </EmbeddedResource>
