@@ -68,6 +68,13 @@
            WorkingDirectory="$(OutputPath)" 
            ZipFileName="$(CommonBuildDir)\$(AssemblyName)-$(Major).$(Minor).$(Build).$(SVN_Revision).zip"
            ZipLevel="9" /> 
+    </Target>    
+    <Target Name="NUnit" DependsOnTargets="Build">
+        <!-- Run the tests -->
+        <CreateItem Include="$(OutputPath)\*Tests.dll">
+            <Output TaskParameter="Include" ItemName="TestAssembly" />
+        </CreateItem>
+        <MSBuild.Community.Tasks.NUnit DisableShadowCopy="true" Assemblies="@(TestAssembly)" ContinueOnError="true" ToolPath="$(NUNIT_HOME)\bin" OutputXmlFile="$(OutputPath)\NUnitResults_$(Configuration).xml" />
     </Target>
         
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />    
