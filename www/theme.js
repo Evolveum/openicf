@@ -358,10 +358,6 @@ function djnInit() {
 		
 		if(info.noGF) {
 			addLogo();
-		} else {
-			html.push("<a href=https://glassfish.dev.java.net/><img src=https://glassfish-theme.dev.java.net/logo.gif></a>");
-			html.push("<a href=https://glassfish.dev.java.net/>GlassFish</a>");
-			hadToken=true;
 		}
 		
 		function append(url,title) {

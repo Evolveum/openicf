@@ -1,0 +1,103 @@
+<html>
+<head>
+  <meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+  <title>Identity Connectors: Contribute</title>
+</head>
+<DIV id="projecthome" class="app">
+<h3>Contributing Code</h3>
+<p>Contributing to project Identity Connectors can be done in various
+ways: bug fixes, enhancements, new features for existing connectors, or
+a brand new connector.</p>
+<ul>
+	<li>All contributors must sign and return a <a
+ href="https://identityconnectors.dev.java.net/GovernancePolicy.html#SCA_Policy">Contributor
+Agreement</a>
+	<li>See the <a href="https://identityconnectors.dev.java.net/GovernancePolicy.html">governance
+policy</a> for more information on roles and responsibilities.
+	<li>To have commit privileges, you must first be
+granted the Developer role. To get started, submit some patches via
+email, and then ask the owner/maintainer of the connector for commit
+access. The maintainer will seek consensus before granting the role,
+but their decision is final. In case of dispute, the community
+leader is responsible to resolve conflicts and to bring conclusion to
+the issue.
+	<li>All code checked into the workspace must follow
+the <a href="/conventions.html">coding conventions</a>.
+	<li>If you don't yet have the Developer role, see the
+process for providing a patch, below.
+	<li>Developers must follow commit procedures when
+updating the workspace.
+</ul>
+
+<h3>Providing a Patch</h3>
+<p>Well-described, easy-to-apply patches are a pleasure for other
+developers to encounter and go a long way towards making the connectors
+more stable and powerful. The first step to submitting a patch is
+to sign and return <a href="https://identityconnectors.dev.java.net/GovernancePolicy.html#SCA_Policy">Sun's
+Contributor Agreement</a>. Please print this form out, fill in
+all the necessary detail, and return it <a href="mailto:sun_ca@sun.com">here</a>.</p>
+
+<ul> 
+	<li>If you are not yet a member of project Identity
+Connector but you have mailing list access, you can post a message
+about your proposed patch to the project's developer <a href="/servlets/ProjectMailingListList">mailing list</a>.
+    <li>If you are a project Identity Connector member,
+first conduct a query of the connector issue database to determine
+whether this patch is associated with an already reported defect.
+	<li>If your patch pertains to an existing issue, you should use the <I>Create
+a New Attachment</i> link in the issue edit screen to submit your patch and
+the <i>Add Comment</i> section to post an explanatory message. (Remember that
+changes to issues generate automatic email messages to the issue's
+owner and anyone on the cc list. All those people will receive your
+message and a link to your patch.)
+</ul>
+<p>
+If an issue does not exist, submit your patch as a new issue, using the
+Patch link in the <i>Enter An Issue</i> section of the Issue Tracking
+page. Note that you will need to update your workspace to use the
+latest sources, rebuild the connector and we strongly encourage you to
+run the contract tests to check that nothing is broken. Then create and
+attach your patch file to the new issue as described here:</p>
+
+<ol>
+	<li>First, make sure you are making changes in the
+most recent version of the source files -- for this, it is best to use
+SVN to check out the source (on the SVN trunk), make your modifications
+(but do not check them in), and then run the command:
+  <PRE>svn diff -x -u &#62; myPatch.diff</PRE> to get a context-format patch for the
+sources. This gives you a patch file which includes information about
+the version you are patching, the filenames, and the contents of the
+change. This is the preferred way to keep track of patches and makes it
+easier for others to find and test your patch.
+<li>To apply a patch, go to the proper directory and
+run:
+<PRE>patch &#60; myPatch.diff</PRE>
+<li>Always include a message with your patch with the
+following information:
+<ul>
+	<li>A description of what problem or defect you are attempting to fix, and the steps to
+reproduce it, if possible.
+	<li>A description of what the behavior should be with the patch in place.
+	<li>A description of how the patch works, if reasonable. If a significant amount of code
+is involved, include within the message that you agree to let the patch
+be used under the applicable project license as part of the Identity Connectors project code.
+	<li>A testcase including the jave source, scripts and documentation so we may include
+this test in the connector testsuite.
+</ul>
+</ol>
+<p>
+The developer responsible for the section of code affected should
+either apply the patch and mark the defect (if there is one registered)
+as fixed, or reply with an objection if it does not seem safe, does not
+appear to fix the problem, or there is not really a problem to begin
+with. Notifications of any changes to the issues database, as well as
+SVN check-ins, are automatically sent to the appropriate issue assignee
+and cc'd to the SVN mailing lists, so you can monitor whether the patch
+has been applied. Be sure to subscribe to at least the issue mailing
+lists.</p><p>
+If you do not know exactly how to fix a problem, but have an idea about
+what is causing it, you can post a message about this on the developer
+discussion list for other project members' suggestions or to find
+someone who knows how to fix it.</p>
+</div>
+</html>
