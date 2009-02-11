@@ -22,15 +22,12 @@
  */
 package org.identityconnectors.oracleerp;
 
-import java.sql.Types;
-
+import org.identityconnectors.dbcommon.DatabaseFilterTranslator;
+import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.filter.*;
-import org.identityconnectors.common.StringUtil;
-import org.identityconnectors.dbcommon.DatabaseFilterTranslator;
 
 /**
  * This is an implementation of AbstractFilterTranslator that gives a concrete representation
@@ -70,9 +67,7 @@ public class OracleERPFilterTranslator extends DatabaseFilterTranslator {
      * @see org.identityconnectors.dbcommon.DatabaseFilterTranslator#getDatabaseColumnType(org.identityconnectors.framework.common.objects.Attribute, org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     @Override
-    protected Integer getDatabaseColumnType(Attribute attribute, ObjectClass oclass, OperationOptions options) {
-        return Types.NULL;
+    protected SQLParam getSQLParam(Attribute attribute, ObjectClass oclass, OperationOptions options) {
+        return new SQLParam(AttributeUtil.getSingleValue(attribute));
     }
-
- 
 }

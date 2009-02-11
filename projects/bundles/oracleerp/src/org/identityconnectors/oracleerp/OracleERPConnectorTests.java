@@ -41,6 +41,7 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.contract.data.DataProvider;
 import org.identityconnectors.contract.test.ConnectorHelper;
+import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.api.ConnectorFacadeFactory;
@@ -283,7 +284,7 @@ public class OracleERPConnectorTests {
     public void testUserCallSQL() {
         final Set<Attribute> attrs = createAllAccountAttributes();
         OracleERPConnector cn = new OracleERPConnector();
-        final Map<String, Object> userValues =  cn.getUserValuesMap(ObjectClass.ACCOUNT, attrs, null, true);
+        final Map<String, SQLParam> userValues =  cn.getUserValuesMap(ObjectClass.ACCOUNT, attrs, null, true);
 
         //test sql
         Assert.assertEquals("Invalid SQL",
@@ -312,7 +313,7 @@ public class OracleERPConnectorTests {
     public void testUserCallSQLNulls() {
         final Set<Attribute> attrs = createNullAccountAttributes();
         OracleERPConnector cn = new OracleERPConnector();
-        final Map<String, Object> userValues =  cn.getUserValuesMap(ObjectClass.ACCOUNT, attrs, null, true);
+        final Map<String, SQLParam> userValues =  cn.getUserValuesMap(ObjectClass.ACCOUNT, attrs, null, true);
         //test sql
         Assert.assertEquals("Invalid SQL",
                 "{ call APPS.fnd_user_pkg.CreateUser ( x_user_name => ?, x_owner => upper(?), "+
