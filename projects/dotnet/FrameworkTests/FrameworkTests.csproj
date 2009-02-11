@@ -66,6 +66,7 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="CollectionUtilTests.cs" />
+    <Compile Include="ConnectorAttributeUtilTests.cs" />
     <Compile Include="ObjectClassUtilTests.cs" />
     <Compile Include="ObjectPoolTests.cs" />
     <Compile Include="ConnectorInfoManagerTests.cs" />

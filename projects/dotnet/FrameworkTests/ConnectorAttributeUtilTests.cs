@@ -26,20 +26,13 @@ using Org.IdentityConnectors.Framework.Common.Objects;
 namespace FrameworkTests
 {
     [TestFixture]
-    public class ObjectClassUtilTests
+    public class ConnectorAttributeUtilTests
     {
-
-        [Test]
-        public void TestIsSpecial()
-        {
-            Assert.IsTrue(ObjectClassUtil.IsSpecial(ObjectClass.ACCOUNT));
-            Assert.IsFalse(ObjectClassUtil.IsSpecial(new ObjectClass("o")));
-        }
 
         [Test]
         public void TestNamesEqual()
         {
-            Assert.IsTrue(ObjectClassUtil.NamesEqual("ACCOUNT", "account"));
+            Assert.IsTrue(ConnectorAttributeUtil.NamesEqual("givenName", "givenname"));
         }
     }
 }

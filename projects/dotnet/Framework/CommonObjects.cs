@@ -51,6 +51,15 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             }
             return "__" + name + "__";
         }
+
+        public static bool NamesEqual(string name1, string name2) {
+            return name1.ToUpper(CultureInfoCache.Instance).Equals(
+                name2.ToUpper(CultureInfoCache.Instance));
+        }
+
+        public static int GetNameHashCode(string name) {
+            return name.ToUpper(CultureInfoCache.Instance).GetHashCode();
+        }
     }
     #endregion
 
@@ -331,7 +340,17 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
     	public static string CreateSpecialName(string name) {
             return NameUtil.CreateSpecialName(name);
     	}
-    
+
+        /// <summary>
+        /// Compares two attribute names for equality.
+        /// </summary>
+        /// <param name="name1">the first attribute name</param>
+        /// <param name="name2">the second attribute name</param>
+        /// <returns>true iff the two attribute names are equal</returns>
+        public static bool NamesEqual(string name1, string name2) {
+            return NameUtil.NamesEqual(name2, name2);
+        }
+
 	    /// <summary>
 	    /// Gets the 'Name' attribute from a set of ConnectorAttributes.
 	    /// </summary>
@@ -658,8 +677,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
         
         public bool Is(string name) {
-            return Name.ToUpper(CultureInfoCache.Instance).Equals(
-                name.ToUpper(CultureInfoCache.Instance));
+            return NameUtil.NamesEqual(_name, name);
         }
         
         public sealed override bool Equals(Object obj) {
@@ -688,7 +706,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
         
         public sealed override int GetHashCode() {
-            return _name.ToUpper(CultureInfoCache.Instance).GetHashCode();
+            return NameUtil.GetNameHashCode(_name);
         }
         
         
@@ -1269,8 +1287,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         
 
         public bool Is(string name) {
-            return Name.ToUpper(CultureInfoCache.Instance).Equals(
-                name.ToUpper(CultureInfoCache.Instance));
+            return NameUtil.NamesEqual(_name, name);
         }
 
         /**
@@ -1362,7 +1379,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
         
         public override int GetHashCode() {
-            return _name.ToUpper(CultureInfoCache.Instance).GetHashCode();
+            return NameUtil.GetNameHashCode(_name);
         }
        
         public override string ToString() {
@@ -1698,6 +1715,16 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         public static string CreateSpecialName(string name) {
             return NameUtil.CreateSpecialName(name);
         }
+
+        /// <summary>
+        /// Compares two object class names for equality.
+        /// </summary>
+        /// <param name="name1">the first object class name</param>
+        /// <param name="name2">the second object class name</param>
+        /// <returns>true iff the two object class names are equal</returns>
+        public static bool NamesEqual(string name1, string name2) {
+            return NameUtil.NamesEqual(name2, name2);
+        }
     }
     #endregion
 
@@ -1746,12 +1773,11 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          *         that of the one in this {@link ObjectClass}.
          */
         public bool Is(String name) {
-            return this._type.ToUpper(CultureInfoCache.Instance).Equals(
-                name.ToUpper(CultureInfoCache.Instance));
+            return NameUtil.NamesEqual(_type, name);
         }    
         
         public override int GetHashCode() {
-            return _type.ToUpper(CultureInfoCache.Instance).GetHashCode();
+            return NameUtil.GetNameHashCode(_type);
         }
     
         public override bool Equals(object obj) {
@@ -1834,8 +1860,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         *         that of the one in this {@link ObjectClassInfo}.
         */
         public bool Is(String name) {
-            return this._type.ToUpper(CultureInfoCache.Instance).Equals(
-                name.ToUpper(CultureInfoCache.Instance));
+            return NameUtil.NamesEqual(_type, name);
         }
         
         public bool IsContainer {
@@ -1845,7 +1870,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
         
         public override int GetHashCode() {
-            return _type.ToUpper(CultureInfoCache.Instance).GetHashCode();
+            return NameUtil.GetNameHashCode(_type);
         }
         
         public override bool Equals(Object obj) {
