@@ -21,13 +21,13 @@
  * ====================
  */
 using System;
-
-using System.IO;
-using System.Xml;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Xml;
 using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Framework.Api;
 using Org.IdentityConnectors.Framework.Api.Operations;
@@ -203,7 +203,7 @@ namespace Org.IdentityConnectors.Framework.Test
         }
         
         private static IDictionary<string, string> LoadProperties(Assembly asm) {
-            const string ERR = "Unable to load optional XML properties file: ";            
+            const string ERR = "TestHelpers: Unable to load optional XML properties file \"{0}\"";            
             string fn = null;
             IDictionary<string, string> props = null;
             IDictionary<string, string> ret = new Dictionary<string, string>();
@@ -212,9 +212,9 @@ namespace Org.IdentityConnectors.Framework.Test
             try {
             	fn = Path.Combine(PREFIX, GLOBAL_PROPS);
             	props = LoadPropertiesFile(fn);
-            	CollectionUtil.AddAll(ret, props);
-            } catch (Exception e) {
-            	TraceUtil.TraceException(ERR + fn, e);        	
+            	CollectionUtil.AddOrReplaceAll(ret, props);
+            } catch (Exception) {
+            	Trace.TraceInformation(ERR, fn);        	
             }       
             
             // load the project properties file
@@ -222,8 +222,8 @@ namespace Org.IdentityConnectors.Framework.Test
                 fn = Path.Combine(Environment.CurrentDirectory, "project.xml");
                 props = LoadPropertiesFile(fn);
                 CollectionUtil.AddAll(ret, props);
-            } catch (Exception e) {
-                TraceUtil.TraceException(ERR + fn, e);
+            } catch (Exception) {
+                Trace.TraceInformation(ERR, fn);
             }
             
             // private settings are in the "assembly name" folder, as defined in the assembly
@@ -233,9 +233,9 @@ namespace Org.IdentityConnectors.Framework.Test
                 try {
 					fn = Path.Combine(PREFIX, prjName + "/project.xml");
                     props = LoadPropertiesFile(fn);
-                    CollectionUtil.AddAll(ret, props);
-                } catch (IOException e) {
-                    TraceUtil.TraceException(ERR + fn, e);
+                    CollectionUtil.AddOrReplaceAll(ret, props);
+                } catch (IOException) {
+                    Trace.TraceInformation(ERR, fn);
                 }
 				
                	string cfg = Environment.GetEnvironmentVariable("configuration");
@@ -244,9 +244,9 @@ namespace Org.IdentityConnectors.Framework.Test
                         // load a config-specific properties file
                         fn = Path.Combine(PREFIX, prjName + "/" + cfg + "/project.xml");
                         props = LoadPropertiesFile(fn);
-                        CollectionUtil.AddAll(ret, props);
-                    } catch (IOException e) {
-                        TraceUtil.TraceException(ERR + fn, e);
+                        CollectionUtil.AddOrReplaceAll(ret, props);
+                    } catch (IOException) {
+                        Trace.TraceInformation(ERR, fn);
                     }
                	}           
             } else {

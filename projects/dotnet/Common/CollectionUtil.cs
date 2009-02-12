@@ -327,6 +327,28 @@ namespace Org.IdentityConnectors.Common
                 }
             }
         }
+        
+        /// <summary>
+        /// Adds all the elements from the given enumerable to the given collection.
+        /// Replace the element value if already stored in the collection.
+        /// </summary>
+        /// <typeparam name="TKey">IDictionary key type</typeparam>
+        /// <typeparam name="TValue">IDictionary value type</typeparam>
+        /// <typeparam name="UKey">Enumeration key type, has to extend IDictionary key type</typeparam>
+        /// <typeparam name="UValue">Enumeration value type, has to extend IDictionary value type</typeparam>
+        /// <param name="collection">The collection to add to</param>
+        /// <param name="enumerable">The enumerable to get from</param>
+        public static void AddOrReplaceAll<TKey, TValue, UKey, UValue>(IDictionary<TKey, TValue> collection,
+                                       IEnumerable<KeyValuePair<UKey,UValue>> enumerable) 
+            where UKey : TKey
+            where UValue : TValue {
+            if (enumerable != null) {
+                foreach (KeyValuePair<UKey, UValue> obj in enumerable) {
+                    collection[obj.Key] = obj.Value;                    
+                }
+            }
+        }
+
         /// <summary>
         /// Adds all the elements from the given enumerable to the given collection.
         /// </summary>
