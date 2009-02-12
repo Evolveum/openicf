@@ -53,11 +53,11 @@
     </Target>
     <Target Name="BuildZip">
         <Copy
-            SourceFiles="$(MSBuildProjectDirectory)\..\LICENSE.txt"
+            SourceFiles="$(MSBuildProjectDirectory)\..\legal\license.txt"
             DestinationFolder="$(OutputPath)"
         />        
         <Copy
-            SourceFiles="$(MSBuildProjectDirectory)\..\THIRDPARTYREADME.txt"
+            SourceFiles="$(MSBuildProjectDirectory)\..\legal\THIRDPARTYREADME.txt"
             DestinationFolder="$(OutputPath)"
         />        
         <ItemGroup>        
