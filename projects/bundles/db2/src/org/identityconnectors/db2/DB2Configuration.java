@@ -41,7 +41,7 @@ import org.identityconnectors.framework.spi.*;
  * </ol>
  * 
  * 
- * The above specified order is critical. This means, we will not use any combination, just one of the case in specified order.
+ * The above specified order is critical. This means, we will not use any combination, just one of the case in the specified order.
  *   
  * 
  *  <h4><a name="dataSource"/>Getting connection from DataSource. Used when <code>dataSource</code> property is set</h4>
@@ -74,7 +74,7 @@ import org.identityconnectors.framework.spi.*;
  * We will require these properties when connecting to db2 using local alias
  * <ul>
  * 		<li> databaseName : Name of local alias created using <code>"db2 catalag database command"</code></li>
- * 		<li> jdbcDriver  : Classname of jdbc driver, default to COM.ibm.db2.jdbc.app.DB2Driver</li>
+ * 		<li> jdbcDriver  : Classname of jdbc driver, default to com.ibm.db2.jcc.DB2Driver</li>
  * 		<li> subprotocol : db2,db2iSeries. Default to db2 </li>
  * 		<li> adminAccount : Administrative account when connecting to DB2 in non user contexts. E.g listing of users. </li>
  * 		<li> adminPassword : Password for admin account. </li>

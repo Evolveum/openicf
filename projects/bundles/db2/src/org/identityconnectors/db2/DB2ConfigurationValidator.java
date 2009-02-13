@@ -27,6 +27,7 @@ import java.util.*;
 import org.identityconnectors.common.*;
 import org.identityconnectors.db2.DB2Configuration.ConnectionType;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import static org.identityconnectors.db2.DB2Messages.*;
 
 /** Validator of DB2Configuration.
  *  It validates DB2Configuration  as specified in DB2Configuration javadoc.
@@ -35,13 +36,16 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
  *
  */
 class DB2ConfigurationValidator {
-	DB2Configuration cfg;
+	private DB2Configuration cfg;
+	private Asserts asserts;
+	
 	
 	private final static String LINE_SEPARATOR = System.getProperty("line.separator");
 	
 	DB2ConfigurationValidator(DB2Configuration cfg) {
 		super();
 		this.cfg = cfg;
+		this.asserts = new Asserts(cfg.getConnectorMessages());
 	}
 
 	private interface ConfigChecker{
@@ -52,15 +56,15 @@ class DB2ConfigurationValidator {
 	
 	private class DataSourceChecker implements ConfigChecker{
 		public void checkRequired() {
-			Assertions.blankCheck(cfg.getDataSource(),"dataSource");
-			//User and password can be specified, then they will be use instead of stored user/password in AS ds configuration.
+		    asserts.notBlank(cfg.getDataSource(),"dataSource");
+			//User and password can be specified, then they will be used instead of stored user/password in AS ds configuration.
 			//User and password must be specified always together
 			if(StringUtil.isNotEmpty(cfg.getAdminAccount())){
-				Assertions.nullCheck(cfg.getAdminPassword(),"adminPassword");
+			    asserts.notNull(cfg.getAdminPassword(),"adminPassword");
 			}
 		}
 		public void checkEmpty(ConfigChecker reqChecker) {
-			Asserts.isBlankMsg(cfg.getDataSource(),"DataSource property cannot be set");
+			asserts.blank(cfg.getDataSource(),"dataSource");
 		}
 		public ConnectionType getType() {
 			return ConnectionType.DATASOURCE;
@@ -71,28 +75,29 @@ class DB2ConfigurationValidator {
 	
 	private class Type4DriverChecker implements ConfigChecker{
 		public void checkRequired() {
-			Assertions.blankCheck(cfg.getHost(), "host");
-			Assertions.blankCheck(cfg.getPort(), "port");
-			Assertions.blankCheck(cfg.getAdminAccount(), "adminAccount");
-			Assertions.nullCheck(cfg.getAdminPassword(), "adminPassword");
-			Assertions.blankCheck(cfg.getJdbcDriver(),"jdbcDriver");
-			Assertions.blankCheck(cfg.getDatabaseName(),"databaseName");
-			Assertions.blankCheck(cfg.getJdbcSubProtocol(),"jdbcSubProtocol");
+		    asserts.notBlank(cfg.getHost(), "host");
+		    asserts.notBlank(cfg.getPort(), "port");
+		    asserts.notBlank(cfg.getAdminAccount(), "adminAccount");
+		    asserts.notNull(cfg.getAdminPassword(), "adminPassword");
+		    asserts.notBlank(cfg.getJdbcDriver(),"jdbcDriver");
+		    asserts.notBlank(cfg.getDatabaseName(),"databaseName");
+		    asserts.notBlank(cfg.getJdbcSubProtocol(),"jdbcSubProtocol");
 			try {
 				Class.forName(cfg.getJdbcDriver());
 			} catch (ClassNotFoundException e) {
-				throw new ConnectorException("Cannot load jdbc driver class " + cfg.getJdbcDriver() + ".",e);
+				throw new ConnectorException(cfg.getConnectorMessages().format(JDBC_DRIVER_CLASS_NOT_FOUND,null,cfg.getJdbcDriver()),e);
 			}
 		}
 		public void checkEmpty(ConfigChecker reqChecker) {
 			if(!(reqChecker instanceof Type2DriverChecker)){
-				Asserts.isBlankMsg(cfg.getJdbcDriver(),"JdbcDriver property cannot be set.");
+			    asserts.blank(cfg.getJdbcDriver(),"jdbcDriver");
+			    asserts.blank(cfg.getDatabaseName(),"database");
 			}
 			//User and password can be set for all types of connections
 			//Asserts.isBlankMsg(cfg.getAdminAccount(), "AdminAccount cannot be set");
 			//Asserts.isNullMsg(cfg.getAdminPassword(), "AdminPassword cannot be set");
-			Asserts.isBlankMsg(cfg.getHost(),"Host property cannot be set.");
-			Asserts.isBlankMsg(cfg.getPort(),"Port property cannot be set.");
+			asserts.blank(cfg.getHost(),"host");
+			asserts.blank(cfg.getPort(),"port");
 		}
 		public ConnectionType getType() {
 			return ConnectionType.TYPE4;
@@ -101,58 +106,26 @@ class DB2ConfigurationValidator {
 	
 	private class Type2DriverChecker implements ConfigChecker{
 		public void checkRequired() {
-			Assertions.blankCheck(cfg.getDatabaseName(), "databaseName");
-			Assertions.blankCheck(cfg.getAdminAccount(), "adminAccount");
-			Assertions.nullCheck(cfg.getAdminPassword(), "adminPassword");
-			Assertions.blankCheck(cfg.getJdbcDriver(),"jdbcDriver");
-			Assertions.blankCheck(cfg.getJdbcSubProtocol(),"jdbcSubProtocol");
+		    asserts.notBlank(cfg.getDatabaseName(), "databaseName");
+		    asserts.notBlank(cfg.getAdminAccount(), "adminAccount");
+		    asserts.notNull(cfg.getAdminPassword(), "adminPassword");
+		    asserts.notBlank(cfg.getJdbcDriver(),"jdbcDriver");
+		    asserts.notBlank(cfg.getJdbcSubProtocol(),"jdbcSubProtocol");
 			try {
 				Class.forName(cfg.getJdbcDriver());
 			} catch (ClassNotFoundException e) {
-				throw new ConnectorException("Cannot load jdbc driver class : " + cfg.getJdbcDriver() + ".",e);
+                throw new ConnectorException(cfg.getConnectorMessages().format(JDBC_DRIVER_CLASS_NOT_FOUND,null,cfg.getJdbcDriver()),e);
 			}
 		}
 		public void checkEmpty(ConfigChecker reqChecker) {
 			if(!(reqChecker instanceof Type4DriverChecker)){
-				Asserts.isBlankMsg(cfg.getJdbcDriver(),"JdbcDriver property cannot be set.");
+			    asserts.blank(cfg.getJdbcDriver(),"jdbcDriver");
+                asserts.blank(cfg.getDatabaseName(),"database");
 			}
 		}
 		public ConnectionType getType() {
 			return ConnectionType.TYPE2;
 		}
-	}
-	
-	private static class Asserts{
-		
-		static String isBlankArgument(String s,String argument){
-			if(s != null && s.length() > 0){
-				throw new IllegalArgumentException("Passed argument [" + argument + "] is not blank");
-			}
-			return s;
-		}
-		
-		static String isBlankMsg(String s,String msg){
-			if(s != null && s.length() > 0){
-				throw new IllegalArgumentException(msg);
-			}
-			return s;
-		}
-		
-		static <T> T isNullArgument(T o,String argument){
-			if(o != null){
-				throw new IllegalArgumentException("Passed argument [" + argument + "] is not null");
-			}
-			return o;
-		}
-		
-		static <T> T isNullMsg(T o,String msg){
-			if(o != null){
-				throw new IllegalArgumentException(msg);
-			}
-			return o;
-		}
-		
-		
 	}
 	
 	private void runCheck(List<RuntimeException> reqEx,ConfigChecker reqChecker,ConfigChecker ...emptyCheckers){
@@ -188,14 +161,19 @@ class DB2ConfigurationValidator {
 				stackBuilder.append(LINE_SEPARATOR);
 				stackBuilder.append(ex.getMessage());
 				stackBuilder.append(LINE_SEPARATOR);
+				if(msgBuilder.length() > 0){
+	                msgBuilder.append(" | ");
+				}
 				msgBuilder.append(ex.getMessage());
-				msgBuilder.append(" | ");
 				for(StackTraceElement el : ex.getStackTrace()){
 					stackBuilder.append(el);
 					stackBuilder.append(LINE_SEPARATOR);
 				}
 			}
-			final ConnectorException connectorException = new ConnectorException("Validate of DB2Configuration failed : " + msgBuilder,new Exception(stackBuilder.toString()));
+            final ConnectorException connectorException = new ConnectorException(
+                    cfg.getConnectorMessages().format(VALIDATE_FAIL,
+                            null, msgBuilder), new Exception(stackBuilder
+                            .toString()));
 			throw connectorException;
 		}
 		if(cfg.getPort() != null){

@@ -63,7 +63,7 @@ import org.identityconnectors.framework.spi.operations.*;
  *      <li>DeleteOp : We delete all users's grants</li>
  *      <li>UpdateAttributeValuesOp : We update user grants
  *          <ul>
- *              <li>For update we replace exesting grants with passed ones</li>
+ *              <li>For update we replace existing grants with passed ones</li>
  *              <li>For addAttributeValues we add passed grants to existing grants</li>
  *              <li>For removeAttributeValues we revoke passed grants</li>
  *          </ul>
@@ -88,6 +88,12 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	private Connection adminConn;
 	private DB2Configuration cfg;
     static final String USER_AUTH_GRANTS = "grants";
+    
+    /**
+     * Default constructor called using reflection from framework
+     */
+    public DB2Connector(){
+    }
 
 	/**
 	 * Authenticates user in DB2 database. Here we create new SQL connection with passed credentials to authenticate user. 
@@ -385,13 +391,13 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
      */
     private void checkDB2Validity(String accountID)  {
         if (accountID.length() > DB2Specifics.MAX_NAME_SIZE) {
-        	throw new IllegalArgumentException(MessageFormat.format("User name is longer than {0} characters.", DB2Specifics.MAX_NAME_SIZE));
+        	throw new IllegalArgumentException(cfg.getConnectorMessages().format(DB2Messages.USERNAME_LONG, null, DB2Specifics.MAX_NAME_SIZE));
         }
         if (DB2Specifics.containsIllegalDB2Chars(accountID.toCharArray())) {
-        	throw new IllegalArgumentException("User name contains illegal characters");
+            throw new IllegalArgumentException(cfg.getConnectorMessages().format(DB2Messages.USERNAME_CONTAINS_ILLEGAL_CHARACTERS, null));
         }
         if (!DB2Specifics.isValidName(accountID.toUpperCase())) {
-            throw new IllegalArgumentException("User name is reserved keyword or its substring");
+            throw new IllegalArgumentException(cfg.getConnectorMessages().format(DB2Messages.USERNAME_IS_RESERVED_WORD, null));
         }
     }
     

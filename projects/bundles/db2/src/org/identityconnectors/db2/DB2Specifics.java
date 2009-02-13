@@ -171,7 +171,7 @@ abstract class DB2Specifics {
 				throw new IllegalStateException("DB2 connection is stale",e);
 			}
 			else{
-				throw new IllegalStateException("Unknown DB2 error while testing connection",e); 
+				throw new IllegalStateException("Unknown DB2 error while testing connection " + e.getMessage(),e); 
 			}
 		}
 		finally{

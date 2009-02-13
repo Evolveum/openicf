@@ -84,7 +84,7 @@ public class DB2ConfigurationTest {
 	}
 	
 	private static DB2Configuration createTestType4Configuration(){
-		DB2Configuration conf = new DB2Configuration();
+		DB2Configuration conf = createDB2Configuration();
 		Properties properties = TestHelpers.getProperties();
 		properties = PropertiesResolver.resolveProperties(properties);
 		String databaseName = properties.getProperty("type4.databaseName",null);
@@ -154,7 +154,8 @@ public class DB2ConfigurationTest {
             conf.validate();
             fail(failMsg);
         }
-        catch(RuntimeException e){}
+        catch(RuntimeException e){
+        }
 	}
 	
 	private void assertCreateAdminConnFail(DB2Configuration conf,String failMsg){
@@ -163,7 +164,8 @@ public class DB2ConfigurationTest {
             conf.createAdminConnection();
             fail(failMsg);
         }
-        catch(RuntimeException e){}
+        catch(RuntimeException e){
+        }
 	}
 	
 	
@@ -174,7 +176,7 @@ public class DB2ConfigurationTest {
         if(alias == null){
             return null;
         }
-        DB2Configuration conf = new DB2Configuration();
+        DB2Configuration conf = createDB2Configuration();
         String adminAccount = properties.getProperty("type2.adminAccount");
         String adminPassword = properties.getProperty("type2.adminPassword");
         conf.setDatabaseName(alias);
@@ -196,7 +198,7 @@ public class DB2ConfigurationTest {
 		DB2Configuration conf = createTestType2Configuration(DB2Specifics.JCC_DRIVER);
 		//we need having alias on local machine, so we will test only when type2.alias property is set
 		if(conf == null){
-			conf = new DB2Configuration();
+			conf = createDB2Configuration();
 			conf.setDatabaseName("myDBAlias");
 			conf.setAdminAccount("dummy");
 			conf.setAdminPassword(new GuardedString());
@@ -252,7 +254,7 @@ public class DB2ConfigurationTest {
         DB2Configuration conf = createTestType2Configuration(DB2Specifics.CLI_LEGACY_DRIVER);
         //we need having alias on local machine, so we will test only when type2.alias property is set
         if(conf == null){
-            conf = new DB2Configuration();
+            conf = createDB2Configuration();
             conf.setDatabaseName("myDBAlias");
             conf.setAdminAccount("dummy");
             conf.setAdminPassword(new GuardedString());
@@ -323,7 +325,7 @@ public class DB2ConfigurationTest {
 	private final String[] dsJNDIEnv = new String[]{"java.naming.factory.initial=" + MockContextFactory.class.getName()};
 	
 	private DB2Configuration createDataSourceConfiguration(){
-		DB2Configuration conf = new DB2Configuration();
+		DB2Configuration conf = createDB2Configuration();
 		conf.setDataSource("testDS");
 		conf.setAdminAccount("user");
 		conf.setAdminPassword(new GuardedString(new char[]{'t'}));
@@ -367,6 +369,12 @@ public class DB2ConfigurationTest {
 	    DB2Configuration clone = cfg.clone();
 	    assertNotSame(cfg,clone);
 	    assertEquals(cfg.getAdminAccount(), clone.getAdminAccount());
+	}
+	
+	private static DB2Configuration createDB2Configuration(){
+	    DB2Configuration cfg = new DB2Configuration();
+	    cfg.setConnectorMessages(TestHelpers.createDummyMessages());
+	    return cfg;
 	}
 	
 	
