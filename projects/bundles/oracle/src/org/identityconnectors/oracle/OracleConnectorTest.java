@@ -326,7 +326,7 @@ public class OracleConnectorTest {
         connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
     }
     
-    /** Test Creaate user locked/unlocked */
+    /** Test Create user locked/unlocked */
     @Test
     public void testCreateUserLocked(){
         String newUser = "newUser";
@@ -353,6 +353,11 @@ public class OracleConnectorTest {
         assertEquals("LOCKED",record.status);
         assertNotNull(record.lockDate);
         connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
+    }
+    
+    @Test
+    public void testCreateWithRoles(){
+        //TODO
     }
     
     
@@ -382,7 +387,6 @@ public class OracleConnectorTest {
         }
         catch(UnknownUidException e){}
     }
-    
     
     private String findDefaultTS(Connection conn){
         return getTestuser(conn).defaultTableSpace;

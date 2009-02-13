@@ -109,7 +109,7 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,Create
             Attribute roles = AttributeUtil.find(ORACLE_ROLES_ATTR_NAME, attrs);
             Attribute privileges = AttributeUtil.find(ORACLE_PRIVS_ATTR_NAME, attrs);
             List<String> privAndRolesSQL = new OracleRolesAndPrivsBuilder()
-                    .buildCreate(userName, OracleConnectorHelper.castList(
+                    .buildCreateSQL(userName, OracleConnectorHelper.castList(
                             roles, String.class), OracleConnectorHelper
                             .castList(privileges, String.class)); 
             //Now execute create and grant statements

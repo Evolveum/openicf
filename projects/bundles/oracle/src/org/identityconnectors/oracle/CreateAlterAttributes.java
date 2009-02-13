@@ -3,6 +3,11 @@ package org.identityconnectors.oracle;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 
+/**
+ * Helper structure for creating/altering user
+ * @author kitko
+ *
+ */
 class CreateAlterAttributes implements Cloneable{
     Operation operation;
     String userName;

@@ -6,7 +6,10 @@ import java.util.Hashtable;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
 
-/** Oracle specifics related to JDBC, error codes, constants */
+/** Oracle specifics related to JDBC, error codes, constants 
+ *  More info on syntax of url can be find at :
+ *  <a href="http://www.oracle.com/technology/tech/java/sqlj_jdbc/htdocs/jdbc_faq.html#05_03">URL syntax</a>
+ * */
 abstract class OracleSpecifics {
     static final String THIN_AND_OCI_DRIVER_CLASSNAME = "oracle.jdbc.driver.OracleDriver";
     static final String OCI_DRIVER = "oci";
@@ -17,6 +20,10 @@ abstract class OracleSpecifics {
     private OracleSpecifics() {
     }
     
+    /** Tests whether connection is still valid.
+     *  It tries to execute <code>select 1 from dual</code> and checks possible error codes on exception
+     *  @param connection
+     */
     static void testConnection(Connection connection){
         //We will execute very simple " select 1 from dual "
         PreparedStatement st = null;
@@ -39,19 +46,18 @@ abstract class OracleSpecifics {
         }
     }
     
-    /** See following link for more info about url syntax
-     * <a href="http://www.oracle.com/technology/tech/java/sqlj_jdbc/htdocs/jdbc_faq.html#05_03">URL syntax</a>
+    /** 
+     * Creates Connection using thin driver url syntax and its propertie
      * @param connInfo
      * @return
      */
     static Connection createThinDriverConnection(OracleDriverConnectionInfo connInfo){
         String url = connInfo.getUrl();
         if(url == null){
-            //Build this syntax : jdbc:oracle:thin:scott/tiger@//myhost:1521/orcl
+            //Build this syntax : jdbc:oracle:thin:@//myhost:1521/orcl
             //We will pass user and password in properties
             StringBuilder urlBuilder = new StringBuilder();
             urlBuilder.append("jdbc:oracle:thin:@");
-            
             if(connInfo.getHost() != null){
                 urlBuilder.append("//").append(connInfo.getHost());
                 if(connInfo.getPort() != null){
@@ -65,7 +71,11 @@ abstract class OracleSpecifics {
     }
     
     
-    
+    /**
+     * Creates Connection using oci driver syntax
+     * @param connInfo
+     * @return
+     */
     static Connection createOciDriverConnection(OracleDriverConnectionInfo connInfo){
         String url = connInfo.getUrl();
         if(url == null){
@@ -86,11 +96,22 @@ abstract class OracleSpecifics {
         return SQLUtil.getDriverMangerConnection(THIN_AND_OCI_DRIVER_CLASSNAME, url, connInfo.getUser(), connInfo.getPassword());
     }
     
-    static Connection createDriverConnection(OracleDriverConnectionInfo connInfo){
+    /**
+     * Creates connection using custom driver and url 
+     * @param connInfo
+     * @return
+     */
+    static Connection createCustomDriverConnection(OracleDriverConnectionInfo connInfo){
         return SQLUtil.getDriverMangerConnection(connInfo.getDriver(), connInfo.getUrl(), connInfo.getUser(), connInfo.getPassword());
     }
     
-    
+    /**
+     * Creates connection using datasource retrieved from JNDI.
+     * Environment entries are used to create initial context.
+     * @param dsName
+     * @param env
+     * @return
+     */
     static Connection createDataSourceConnection(String dsName,Hashtable<?,?> env){
         return SQLUtil.getDatasourceConnection(dsName,env);
     }

@@ -12,6 +12,7 @@ import org.identityconnectors.dbcommon.SQLUtil;
 import org.junit.*;
 
 /**
+ * Tests related to OracleUserReader
  * @author kitko
  *
  */

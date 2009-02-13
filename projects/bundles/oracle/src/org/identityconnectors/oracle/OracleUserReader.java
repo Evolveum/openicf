@@ -6,7 +6,7 @@ import java.util.*;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 
-/** Reads record from DBA_USERS table */
+/** Reads records from DBA_USERS table */
 class OracleUserReader {
     private Connection adminConn;
     
@@ -14,9 +14,9 @@ class OracleUserReader {
         this.adminConn = adminConn;
     }
     
-    
+    /** Test whether user exists, looking at DBA_USERS table */
     boolean userExist(String user){
-        //Cannot user PreparedStatement, JVM is crashing !
+        //Cannot use PreparedStatement, JVM is crashing !
         StringBuilder query = new StringBuilder("select USERNAME from DBA_USERS where USERNAME = ");
         query.append('\'').append(user).append('\'');
         Statement st = null;
@@ -35,6 +35,11 @@ class OracleUserReader {
         }
     }
     
+    /**
+     * Reads records from DBA_USERS matching usernames
+     * @param userNames
+     * @return collection of {@link UserRecord} records
+     */
     Collection<UserRecord> readUserRecords(Collection<String> userNames){
         StringBuilder query = new StringBuilder("select * from DBA_USERS where USERNAME in(");
         int i = 0, length = userNames.size();
@@ -67,6 +72,11 @@ class OracleUserReader {
         }
     }
     
+    /**
+     * Transform collection of {@link UserRecord} to map with username as keye
+     * @param records
+     * @return
+     */
     static Map<String,UserRecord> createUserRecordMap(Collection<UserRecord> records){
         Map<String,UserRecord> map = new HashMap<String, UserRecord>(records.size());
         for(UserRecord record : records){
@@ -75,6 +85,11 @@ class OracleUserReader {
         return map;
     }
     
+    /**
+     * Reads one {@link UserRecord} record for user
+     * @param username
+     * @return user record or null if no user with username exists
+     */
     UserRecord readUserRecord(String username){
         Collection<UserRecord> records = readUserRecords(Collections.singletonList(username));
         if(!records.isEmpty()){

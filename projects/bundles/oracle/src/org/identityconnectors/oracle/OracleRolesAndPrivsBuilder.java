@@ -12,7 +12,14 @@ import java.util.*;
  */
 class OracleRolesAndPrivsBuilder {
     
-    List<String> buildCreate(String userName,List<String> roles,List<String> privileges){
+    /**
+     * Builds statements that grants roles and privilehes to user
+     * @param userName
+     * @param roles
+     * @param privileges
+     * @return list of sql statements
+     */
+    List<String> buildCreateSQL(String userName,List<String> roles,List<String> privileges){
         List<String> statements = new ArrayList<String>();
         StringBuilder builder = new StringBuilder(30);
         for(String grant : roles){

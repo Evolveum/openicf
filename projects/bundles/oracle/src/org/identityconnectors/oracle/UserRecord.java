@@ -2,6 +2,7 @@ package org.identityconnectors.oracle;
 
 import java.sql.Date;
 
+/** User record represents one record from DBA_USERS table */
 class UserRecord {
     String userName;
     String profile;

@@ -142,7 +142,7 @@ public class OracleSpecificsTest {
         String url = TestHelpers.getProperty("customDriver.url", null);
         String driver = TestHelpers.getProperty("customDriver.driverClassName", null);
         Connection conn = OracleSpecifics
-                .createDriverConnection(new OracleDriverConnectionInfoBuilder()
+                .createCustomDriverConnection(new OracleDriverConnectionInfoBuilder()
                         .setUser(user).setPassword(
                                 new GuardedString(password.toCharArray()))
                         .setUrl(url).setDriver(driver).build());

@@ -6,6 +6,7 @@ import java.util.*;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 
+/** Reads roles and privileges for user */
 class OracleRolePrivReader {
     
     private Connection conn;
@@ -14,6 +15,11 @@ class OracleRolePrivReader {
         this.conn = conn;
     }
     
+    /**
+     * Reads roles for user using DBA_ROLE_PRIVS table
+     * @param userName
+     * @return list of associated user roles, not recursive
+     */
     List<String> readRoles(String userName){
         List<String> roles = new ArrayList<String>();
         try {
@@ -27,14 +33,19 @@ class OracleRolePrivReader {
         }
     }
     
+    /**
+     * Reads system and table privileges for user
+     * @param userName
+     * @return
+     */
     List<String> readPrivileges(String userName){
         List<String> privileges = new ArrayList<String>();
         try {
-            List<Object[]> selectRows = SQLUtil.selectRows(conn, "select PRIVILEGE from DBA_SYS_PRIVS where Grantee = \"" + userName + "\"");
+            List<Object[]> selectRows = SQLUtil.selectRows(conn, "select PRIVILEGE from DBA_SYS_PRIVS where Grantee = '" + userName + "'");
             for(Object[] row : selectRows){
                 privileges.add((String) row[0]);
             }
-            selectRows = SQLUtil.selectRows(conn, "select PRIVILEGE,TABLE_NAME from USER_TAB_PRIVS where Grantee = \"" + userName + "\"");
+            selectRows = SQLUtil.selectRows(conn, "select PRIVILEGE,TABLE_NAME from USER_TAB_PRIVS where Grantee = '" + userName + "'");
             for(Object[] row : selectRows){
                 String privilege = row[0] + " ON " + row[1];
                 privileges.add(privilege);

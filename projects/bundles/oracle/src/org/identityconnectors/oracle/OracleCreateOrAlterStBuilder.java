@@ -12,6 +12,11 @@ import org.identityconnectors.common.security.GuardedString;
  */
 class OracleCreateOrAlterStBuilder {
     
+    /**
+     * Builds create user sql statement
+     * @param userAttributes
+     * @return
+     */
     String buildCreateUserSt(CreateAlterAttributes userAttributes){
         StringBuilder builder = new StringBuilder();
         userAttributes.operation = Operation.CREATE;

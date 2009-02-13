@@ -273,7 +273,7 @@ public class OracleConfiguration extends AbstractConfiguration implements Clonea
                     );
         }
         else if(ConnectionType.CUSTOM_DRIVER.equals(connType)){
-            return OracleSpecifics.createDriverConnection(new OracleDriverConnectionInfoBuilder().
+            return OracleSpecifics.createCustomDriverConnection(new OracleDriverConnectionInfoBuilder().
                     setUrl(url).setDriver(driverClassName).setUser(user).setPassword(password).build()
             );
         }
