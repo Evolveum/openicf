@@ -41,10 +41,14 @@
 	the "bundles" directory. 
 	</P>
 	<H3>Step 1: Checkout the code</H3>
-	<P><B>(Entire Project):</B>  <PRE>svn checkout https://identityconnectors.dev.java.net/svn/identityconnectors/trunk/projects /your/sandbox</PRE>
-    <B>(Framework Only):</B>  <PRE>svn checkout https://identityconnectors.dev.java.net/svn/identityconnectors/trunk/projects/framework /your/sandbox</PRE>
-     
-    <B>(Specific Connector):</B>  <PRE>svn checkout https://identityconnectors.dev.java.net/svn/identityconnectors/trunk/projects/bundles/database /your/sandbox</PRE></P>
+	<P><B>(Entire Project):</B> </P> <P><PRE>svn checkout https://identityconnectors.dev.java.net/svn/identityconnectors/trunk/projects 
+      /your/sandbox</PRE></P>
+  <P><B>(Framework Only):</B> </P> <P>  <CODE>svn checkout https://identityconnectors.dev.java.net/svn/identityconnectors/trunk/projects/framework 
+      /your/sandbox/<STRONG>framework</STRONG></CODE></P>     
+  <P><B>(Specific Connector):</B>  </P> <P> 
+      <code>svn checkout https://identityconnectors.dev.java.net/svn/identityconnectors/trunk/projects/bundles/<STRONG>specific-connector</STRONG> 
+         /your/sandbox/<STRONG>bundles/specific-connector</STRONG>
+      </CODE></P>
     <H3>Step 2: Before you build</H3>
 	<P>Each connector, along with the framework, has its own <I>build.xml</I>
 	file used to define the build rules. For the connectors, the build
