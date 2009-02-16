@@ -11,7 +11,7 @@
 	This bundle contains general utilities for provisioning to database tables and is meant to be included in other bundles as a base.
     <h3>Bundle Information</h3>
     <ul>  
-       <li><b>Latest stable release:</b> <a href="/downloads.html#Bundles">1.0.3334</a>
+       <li><b>Latest stable release:</b> <a href="https://identityconnectors.dev.java.net/downloads.html#Bundles">1.0.3334</a>
 	   <li><b>Platform:</b> Java
        <li><b>3rd-party libraries required:</b> None
        <li><b>Release notes:</b>
@@ -21,8 +21,8 @@
      <table border="1">
      	<tr><th>Connector Version</th><th>Framework Version</th><th>Supported Resource Version(s)</th></tr>
      	<tr>
-     	    <td><a href="/downloads.html#Bundles">1.0</a></td>
-     	    <td><a href="/downloads.html#Framework">1.0</a></td>
+     	    <td><a href="https://identityconnectors.dev.java.net/downloads.html#Bundles">1.0</a></td>
+     	    <td><a href="https://identityconnectors.dev.java.net/downloads.html#Framework">1.0</a></td>
      	    <td><ul><li></ul></td>
      	</tr>
      	<!-- add later versions here -->
@@ -31,32 +31,39 @@
     the connector. Newer framework versions are backwards compatible and will support previous connectors.</p>
 <h3>Configuration Properties</h3>
 <p>
+These are the properties that can be specified on the Configuration object when setting up the Connector.
 	<ul>
 		<li>Required:
 			<ul>
-				<li><b>Property 1</b>
-				<li><b>Property 2</b>
+				<li><b>property A</b> (String): <description>
+				<li><b>property B</b> (String): <description>
+				<li><b>property C</b> (String): <description>			
 			</ul>
 		<li>Optional:
+			<ul>
+				<li><b>property D</b> (boolean): <description>
+			</ul>
 	</ul>
 </p>
 <h3>Schema and Supported Features</h3>
 <p>
+This Connector supports the ACCOUNT object class. The attributes supported are: <attr_1>, <attr_2>... Furthermore, the ACCOUNT object class
+supports the following special attributes:
+<ul>
+	<li>OperationalAttributeInfos.<b>PASSWORD</b>
+	<li>OperationalAttributeInfos.<b>PASSWORD_EXPIRED</b>
+	<li>PredefinedAttributeInfos.<b>LAST_PASSWORD_CHANGE_DATE</b>
+	<li>PredefinedAttributeInfos.<b>LAST_LOGIN_DATE</b>
+</ul>
+The Database Table Connector supports the following operations:
 	<ul>
-		<li>Object Classes supported:
-			<ul>
-				<li><b>Account</b>
-			</ul>
-		<li>Operations supported:
-			<ul>
+				<li><b>Authenticate</b>
 				<li><b>Create</b>
 				<li><b>Delete</b>
-				<li><b>Update</b>
-			</ul>
 	</ul>
 </p>
 <h3>Documentation and Source Code</h3>
-<p>The javadoc for this bundle is included in the zip file when you download the connector. The source code can be found under the <a href="/source/browse/identityconnectors/">Subversion</a>
-section of this website.</p>
+<p>The javadoc for this bundle is included in the zip file when you download the connector. The source code can be found under the <a href="https://identityconnectors.dev.java.net/source/browse/identityconnectors/">Subversion</a>
+section of the IdentityConnectors website.</p>
 </DIV>
 </HTML>
