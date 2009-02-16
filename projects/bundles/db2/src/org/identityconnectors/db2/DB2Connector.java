@@ -23,7 +23,6 @@
 package org.identityconnectors.db2;
 
 import java.sql.*;
-import java.text.MessageFormat;
 import java.util.*;
 
 import org.identityconnectors.common.StringUtil;
@@ -113,7 +112,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 				if("28000".equals(sqlE.getSQLState()) && -4214 ==sqlE.getErrorCode()){
 					//Wrong user or password, log it here and rethrow
 					log.info(e,"DB2.authenticate : Invalid user/passord for user: {0}",username);
-					throw new InvalidCredentialException("DB2.authenticate :  Invalid user/password",e.getCause());
+					throw new InvalidCredentialException(cfg.getConnectorMessages().format(DB2Messages.AUTHENTICATE_INVALID_CREDENTIALS,null),e.getCause());
 				}
 			}
 			throw e;
@@ -205,13 +204,10 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
      * Then when searching by grants, we will return now all users and framework will filter users that have filtered grants. 
      */
 	public void executeQuery(ObjectClass oclass, FilterWhereBuilder where,ResultsHandler handler, OperationOptions options) {
+        checkObjectClass(oclass);
 		//Read users from SYSIBM.SYSDBAUTH table
 		//DB2 stores users in UPPERCASE , we must do UPPER(TRIM(GRANTEE)) = upper('john')
         final String ALL_USER_QUERY = "SELECT GRANTEE FROM SYSIBM.SYSDBAUTH WHERE GRANTEETYPE = 'U' AND CONNECTAUTH = 'Y'";
-
-        if (oclass == null || !ObjectClass.ACCOUNT.equals(oclass)) {
-            throw new IllegalArgumentException("Unsupported objectclass '" + oclass + "'");
-        }
         // Database query builder will create SQL query.
         // if where == null then all users are returned
         final DatabaseQueryBuilder query = new DatabaseQueryBuilder(ALL_USER_QUERY);
@@ -254,6 +250,12 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
             SQLUtil.closeQuietly(statement);
         }
 	}
+
+    private void checkObjectClass(ObjectClass oclass) {
+        if (!ObjectClass.ACCOUNT.equals(oclass)) {
+            throw new IllegalArgumentException(cfg.getConnectorMessages().format(DB2Messages.UNSUPPORTED_OBJECT_CLASS,null,oclass));
+        }
+    }
 	
 	/**
 	 * Create user in case of DB2 means only storing passed grants. We will actually not create any new user, DB2 uses externally authentication
@@ -261,13 +263,10 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	 * in DB2 system tables. Then we store passed user grants using grant statement. 
 	 */
 	public Uid create(ObjectClass oclass, Set<Attribute> attrs,OperationOptions options) {
-        if ( oclass == null || !oclass.equals(ObjectClass.ACCOUNT)) {
-            throw new IllegalArgumentException(
-                    "Create operation requires an 'ObjectClass' attribute of type 'Account'.");
-        }
+	    checkObjectClass(oclass);
         Name user = AttributeUtil.getNameFromAttributes(attrs);
 		if (user == null || StringUtil.isBlank(user.getNameValue())) {
-            throw new IllegalArgumentException("The Name attribute cannot be null or empty.");
+            throw new IllegalArgumentException(cfg.getConnectorMessages().format(DB2Messages.NAME_IS_NULL_OR_EMPTY,null));
         }
         final String userName = user.getNameValue();
 		log.info("Creating user : {0}", userName);
@@ -280,7 +279,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
         }
         catch(Exception e){
             SQLUtil.rollbackQuietly(adminConn);
-        	throw new ConnectorException(MessageFormat.format("Create of user {0} failed", userName),e);
+        	throw new ConnectorException(cfg.getConnectorMessages().format(DB2Messages.CREATE_OF_USER_FAILED, null, userName),e);
         }
 		return new Uid(userName);
 	}
@@ -289,7 +288,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	private void checkUserNotExist(String user) {
 		boolean userExist = userExist(user);
 		if(userExist){
-			throw new AlreadyExistsException("User " + user + " already exists");
+			throw new AlreadyExistsException(cfg.getConnectorMessages().format(DB2Messages.USER_ALREADY_EXISTS, null, user));
 		}
 	}
 	
@@ -433,7 +432,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
             statement.execute(sql);
         }
         catch(SQLException e){
-        	log.error(e,"Error executing query {0}", sql);
+        	log.error(e,"Error executing sql {0}", sql);
         	throw e;
         }
         finally {
@@ -471,10 +470,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	 * Removes all associated grants from user, so do all revoke statement.
 	 */
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
-        if ( objClass == null || !objClass.equals(ObjectClass.ACCOUNT)) {
-            throw new IllegalArgumentException(
-                    "Delete operation requires an 'ObjectClass' attribute of type 'Account'.");
-        }
+        checkObjectClass(objClass);
 		final String uidValue = uid.getUidValue();
         checkUserExist(uidValue);
 		log.info("Deleting user : {0}", uidValue);
@@ -484,7 +480,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 			log.info("User deleted : {0}", uidValue);
 		} catch (Exception e) {
 		    SQLUtil.rollbackQuietly(adminConn);
-			throw new ConnectorException(MessageFormat.format("Error deleting user {0}",uidValue),e);
+			throw new ConnectorException(cfg.getConnectorMessages().format(DB2Messages.DELETE_OF_USER_FAILED, null, uidValue),e);
 		}
 	}
 	
@@ -530,17 +526,14 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
     }
 	
 	private Uid update(UpdateType type, ObjectClass objclass, Set<Attribute> attrs,OperationOptions options) {
-        if ( objclass == null || !objclass.equals(ObjectClass.ACCOUNT)) {
-            throw new IllegalArgumentException(
-                    "Update operation requires an 'ObjectClass' attribute of type 'Account'.");
-        }
+	    checkObjectClass(objclass);
         Name name = AttributeUtil.getNameFromAttributes(attrs);
         if(name != null){
-        	throw new IllegalArgumentException("Name attribute is nonUpdatable, cannot appear in update operation");
+        	throw new IllegalArgumentException(cfg.getConnectorMessages().format(DB2Messages.NAME_IS_NOT_UPDATABLE,null));
         }
         Uid uid = AttributeUtil.getUidAttribute(attrs);
 		if (uid == null || StringUtil.isBlank(uid.getUidValue())){
-            throw new IllegalArgumentException("The uid attribute cannot be null or empty.");
+            throw new IllegalArgumentException(cfg.getConnectorMessages().format(DB2Messages.UPDATE_UID_CANNOT_BE_NULL_OR_EMPTY, null));
         }
 		final String uidValue = uid.getUidValue();
         try{
@@ -551,7 +544,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
         }
         catch(Exception e){
             SQLUtil.rollbackQuietly(adminConn);
-        	throw new ConnectorException(MessageFormat.format("Update of user {0} failed",uidValue),e);
+        	throw new ConnectorException(cfg.getConnectorMessages().format(DB2Messages.UPDATE_OF_USER_FAILED,null,uidValue),e);
         }
 		return uid;
 	}

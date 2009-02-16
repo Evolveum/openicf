@@ -34,7 +34,6 @@ import javax.sql.DataSource;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.dbcommon.PropertiesResolver;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.test.TestHelpers;
 import org.junit.*;
@@ -86,7 +85,6 @@ public class DB2ConfigurationTest {
 	private static DB2Configuration createTestType4Configuration(){
 		DB2Configuration conf = createDB2Configuration();
 		Properties properties = TestHelpers.getProperties();
-		properties = PropertiesResolver.resolveProperties(properties);
 		String databaseName = properties.getProperty("type4.databaseName",null);
 		String adminAcoount = properties.getProperty("type4.adminAccount",null);
 		String adminPassword = properties.getProperty("type4.adminPassword",null);
@@ -171,7 +169,6 @@ public class DB2ConfigurationTest {
 	
     private static DB2Configuration createTestType2Configuration(String driver){
         Properties properties = TestHelpers.getProperties();
-        properties = PropertiesResolver.resolveProperties(properties);
         String alias = properties.getProperty("type2.alias");
         if(alias == null){
             return null;
