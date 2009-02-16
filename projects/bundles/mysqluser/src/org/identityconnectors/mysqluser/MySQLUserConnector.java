@@ -22,6 +22,8 @@
  */
 package org.identityconnectors.mysqluser;
 
+import static org.identityconnectors.mysqluser.MySQLUserConstants.*;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -32,7 +34,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
@@ -47,7 +48,6 @@ import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
@@ -174,18 +174,22 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      */
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
         // Get the needed attributes
-        if ( oclass == null || !oclass.equals(ObjectClass.ACCOUNT)) {
-            throw new IllegalArgumentException(
-                    "Create operation requires an 'ObjectClass' attribute of type 'Account'.");
+        if(oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
+            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED)); 
         }
+        
+        if(attrs == null || attrs.size() == 0) {
+            throw new IllegalArgumentException(config.getMessage(MSG_INVALID_ATTRIBUTE_SET)); 
+        }        
+
         Name user = AttributeUtil.getNameFromAttributes(attrs);
         if (user == null || StringUtil.isBlank(user.getNameValue())) {
-            throw new IllegalArgumentException("The Name attribute cannot be null or empty.");
+            throw new IllegalArgumentException(config.getMessage(MSG_NAME_BLANK));
         }
         // Password is Operational
         GuardedString password = AttributeUtil.getPasswordValue(attrs);
         if (password == null) {
-            throw new IllegalArgumentException("The Password attribute cannot be null.");
+            throw new IllegalArgumentException(config.getMessage(MSG_PWD_BLANK));
         }
         // Create the user
         log.info("Creating user: {0}", user.getNameValue());
@@ -214,7 +218,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
     
     /**
      * Deletes a mysql user using drop statement
-     * @param objClass the type of object to delete. Only ACCOUNT is supported.
+     * @param oclass the type of object to delete. Only ACCOUNT is supported.
      * @param uid the {@link Uid} of the user to delete
      * @param options additional options. Additional options are not supported in this operation. 
      * 
@@ -223,13 +227,13 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      * 
      * @see DeleteOp#delete(ObjectClass, Uid, OperationOptions)
      */
-    public void delete(final ObjectClass objClass, final Uid uid, final OperationOptions options) {
-        if (objClass == null || (!objClass.equals(ObjectClass.ACCOUNT))) {
-            throw new IllegalArgumentException("Delete operation received a wrong ObjectClass.");
+    public void delete(final ObjectClass oclass, final Uid uid, final OperationOptions options) {
+        if(oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
+            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED)); 
         }
 
         if (uid == null || (uid.getUidValue() == null)) {
-            throw new IllegalArgumentException("Delete operation received a null ObjectClass.");
+            throw new IllegalArgumentException(config.getMessage(MSG_UID_BLANK));
         }
         
         log.info("Delete user uid: {0}", uid.getName());
@@ -242,24 +246,25 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
     
     /**
      * Update the database row w/ the data provided.
-     * @param objClass the {@link ObjectClass} type (must be ACCOUNT )
+     * @param oclass the {@link ObjectClass} type (must be ACCOUNT )
      * @param attrs attributes. Required attributes are name and password
      * @param options additional options. Additional options are not supported in this operation.  
      * 
      * @see UpdateOp#update(ConnectorObject, Set, OperationOptions )
      */
-    public Uid update(final ObjectClass objClass, Uid oldUid, final Set<Attribute> attrs, final OperationOptions options) {
+    public Uid update(final ObjectClass oclass, Uid oldUid, final Set<Attribute> attrs, final OperationOptions options) {
         final String SQL_UPDATE = "UPDATE mysql.user SET {0} WHERE user=?";
         final String SQL_SET_USER = "user = ?";
         final String SQL_SET_PASSWORD = "password = password(?)";
-
-        if (objClass == null || (!ObjectClass.ACCOUNT.equals(objClass))) {
-            throw new IllegalArgumentException("Invalid objectclass '" + objClass + "'");
+              
+        // Get the needed attributes
+        if(oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
+            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED)); 
         }
         
         if(attrs == null || attrs.size() == 0) {
-            throw new IllegalArgumentException("Invalid attributes provided to a update operation.");
-        }                
+            throw new IllegalArgumentException(config.getMessage(MSG_INVALID_ATTRIBUTE_SET)); 
+        }               
 
         // init the return value for old Uid
         Uid ret = oldUid;
@@ -330,9 +335,11 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
          */
         final String ALL_USER_QUERY = "SELECT DISTINCT User FROM mysql.user";
 
-        if (oclass == null || !ObjectClass.ACCOUNT.equals(oclass)) {
-            throw new IllegalArgumentException("Unsupported objectclass '" + oclass + "'");
+        // Get the needed attributes
+        if(oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
+            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED)); 
         }
+        
         // Database query builder will create SQL query.
         // if where == null then all users are returned
         final DatabaseQueryBuilder query = new DatabaseQueryBuilder(ALL_USER_QUERY);
@@ -403,10 +410,8 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
     public void test() {
         config.validate();
         conn.test();
-        final String USER_MODEL_NOT_FOUND="user.model.not.found";
         if( !findUser(config.getUsermodel())) {
-            final ConnectorMessages msgs = config.getConnectorMessages();
-            throw new IllegalArgumentException(msgs.format(USER_MODEL_NOT_FOUND, null, config.getUsermodel()));
+            throw new IllegalArgumentException(config.getMessage(MSG_USER_MODEL_NOT_FOUND, config.getUsermodel()));
         }
     }
     
@@ -414,27 +419,32 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
     /** 
      * Attempts to authenticate the given user/password combination.
      * 
-     * @param username the username of the user
+     * @param user the username of the user
      * @param password the user's password
      * @throws InvalidCredentialException if the user is not authenticated
      *  
      * @see org.identityconnectors.framework.spi.operations.AuthenticateOp#authenticate(java.lang.String, java.lang.String, org.identityconnectors.framework.common.objects.OperationOptions)
      */
-    public Uid authenticate(ObjectClass objectClass, String username, GuardedString password, OperationOptions options) {
+    public Uid authenticate(ObjectClass oclass, String user, GuardedString password, OperationOptions options) {
         final String AUTH_SELECT="SELECT DISTINCT user FROM mysql.user WHERE user = ? AND password = password(?)";
         
-        log.info("authenticate user: {0}", username);
+        log.info("authenticate user: {0}", user);
 
         // Get the needed attributes
-        if ( objectClass == null || !objectClass.equals(ObjectClass.ACCOUNT)) {
-            throw new IllegalArgumentException(
-                    "Create operation requires an 'ObjectClass' attribute of type 'Account'.");
+        if(oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
+            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED)); 
+        }         
+
+        if (user == null || StringUtil.isBlank(user)) {
+            throw new IllegalArgumentException(config.getMessage(MSG_NAME_BLANK));
         }
-        Assertions.blankCheck(username, "username");
-        Assertions.nullCheck(password, "password");
+
+        if (password == null) {
+            throw new IllegalArgumentException(config.getMessage(MSG_PWD_BLANK));
+        }
         
         List<SQLParam> values = new ArrayList<SQLParam>();
-        values.add(new SQLParam(username, Types.VARCHAR));
+        values.add(new SQLParam(user, Types.VARCHAR));
         values.add(new SQLParam(password));
         
         PreparedStatement stmt = null;
@@ -444,13 +454,13 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             result = stmt.executeQuery();
             //No PasswordExpired capability
             if (!result.next()) {
-                throw new InvalidCredentialException("user: "+username+" authentication failed");
+                throw new InvalidCredentialException(config.getMessage(MSG_AUTH_FAILED, user));
             }            
             final Uid uid = new Uid( result.getString(1));
-            log.info("user: {0} authenticated ", username);
+            log.info("user: {0} authenticated ", user);
             return uid;
         } catch (SQLException e) {
-            log.error(e, "user: {0} authentication failed ", username);
+            log.error(e, "user: {0} authentication failed ", user);
             throw ConnectorException.wrap(e);
         } finally {
             SQLUtil.closeQuietly(result);

@@ -22,6 +22,7 @@
  */
 package org.identityconnectors.mysqluser;
 
+import static org.identityconnectors.mysqluser.MySQLUserConstants.*;
 import org.identityconnectors.dbcommon.DatabaseFilterTranslator;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -54,7 +55,7 @@ public class MySQLUserFilterTranslator extends DatabaseFilterTranslator {
     protected String getDatabaseColumnName(Attribute attribute, ObjectClass oclass, OperationOptions options) {
         //MySQLUser filter a name or uid attribute
         if(attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
-            return MySQLUserConfiguration.MYSQL_USER;
+            return MYSQL_USER;
         }
         //Password or other are invalid columns for query, 
         //There could be an exception,but null value would disable this filter 

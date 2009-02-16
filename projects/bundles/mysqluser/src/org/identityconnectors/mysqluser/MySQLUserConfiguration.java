@@ -22,8 +22,8 @@
  */
 package org.identityconnectors.mysqluser;
 
+import static org.identityconnectors.mysqluser.MySQLUserConstants.*;
 import java.text.MessageFormat;
-
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
@@ -42,23 +42,11 @@ import org.identityconnectors.framework.spi.ConfigurationProperty;
  * @since 1.0
  */
 public class MySQLUserConfiguration extends AbstractConfiguration {
-   
-    /**
-     * Default user column name 
-     */
-    public static final String MYSQL_USER = "User";
-    
-    /**
-     * Default user table name
-     */
-    public static final String MYSQL_USER_TABLE = "mysql.user";
-    
-    
-    
+
     /**
      * The datasource name is used to connect to database in server environment.
      */
-    private String datasource;
+    private String datasource = EMPTY_STR;
 
     /**
      * Return the datasource name
@@ -103,7 +91,7 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
     /**
      * the jdbc driver class name
      */
-    private String driver = "com.mysql.jdbc.Driver"; // Driver
+    private String driver = DEFAULT_DRIVER; // Driver
 
     /**
      * The getter for jdbc driver class name 
@@ -125,7 +113,7 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
     /**
      * MySQL database host name
      */
-    private String host = ""; // Host
+    private String host = EMPTY_STR; // Host
     
     /**
      * Getter for MySQL database host name
@@ -147,7 +135,7 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
     /**
      * MySQL user (admin user) name able to manage users
      */
-    private String user = ""; // Login
+    private String user = EMPTY_STR; // Login
 
     /**
      * The user name getter method 
@@ -192,7 +180,7 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
     /**
      * port on witch the MySQL database is listenning
      */
-    private String port = "3306"; // Port
+    private String port = DEFAULT_PORT; // Port
 
     /**
      * The getter  
@@ -214,7 +202,7 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
     /**
      * user model, from with the new user are duplicated
      */
-    private String usermodel = "idm"; // Default User
+    private String usermodel = DEFAULT_USER_MODEL; // Default User
 
 
     /**
@@ -243,27 +231,41 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
     public void validate() {
 
         Assertions.blankCheck(getUsermodel(), "usermodel");        
+        if (StringUtil.isBlank(getUsermodel())) {
+            throw new IllegalArgumentException(getMessage( MSG_USER_MODEL_BLANK));
+         }
         
         // check that there is not a datasource
         if(StringUtil.isBlank(getDatasource())){ 
             // determine if you can get a connection to the database..
-            Assertions.blankCheck(getUser(), "user");
-            // check that there is a table to query..
-            Assertions.nullCheck(getPassword(), "password");
+            if (StringUtil.isBlank(getUser())) {
+                throw new IllegalArgumentException(getMessage(MSG_USER_BLANK));
+             }
+            // check that there is a pwd to query..
+            if (getPassword() == null) {
+                throw new IllegalArgumentException(getMessage(MSG_PASSWORD_BLANK));
+             }
+
+            if (StringUtil.isBlank(getHost())) {
+                throw new IllegalArgumentException(getMessage(MSG_HOST_BLANK));
+            }
+
+            // port required
+            if (StringUtil.isBlank(getPort())) {
+                throw new IllegalArgumentException(getMessage(MSG_PORT_BLANK));
+            }           
 
             // check that there is a driver..
-            Assertions.blankCheck(getDriver(), "driver");
-
-            Assertions.blankCheck(getHost(), "host");
-
-            Assertions.blankCheck(getPort(), "port");
-
+            if (StringUtil.isBlank(getDriver())) {
+                throw new IllegalArgumentException(getMessage(MSG_JDBC_DRIVER_BLANK));
+            }   
             // make sure the driver is in the class path..
             try {
                 Class.forName(getDriver());
-            } catch (final ClassNotFoundException e) {
-                throw new IllegalArgumentException(e);
-            }
+            } catch (ClassNotFoundException e) {
+                throw new IllegalArgumentException(getMessage(MSG_JDBC_DRIVER_NOT_FOUND));
+            }            
+            
         } else {
             //Validate the JNDI properties
             JNDIUtil.arrayToHashtable(getJndiProperties(), getConnectorMessages());
@@ -271,16 +273,35 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
     }
     
     /**
+     * Format the connector message
+     * @param key key of the message
+     * @return return the formated message
+     */
+    public String getMessage(String key) {
+        return getConnectorMessages().format(key, key);
+    }
+    
+    /**
+     * Format message with arguments 
+     * @param key key of the message
+     * @param objects arguments
+     * @return the localized message string
+     */
+    public String getMessage(String key, Object... objects) {
+        return getConnectorMessages().format(key, key, objects);
+    }        
+    
+    /**
      * The url string
      * @return the url string of the database
      */
     public String getUrlString() {
-        final String URL_MASK = "jdbc:mysql://{0}:{1}/mysql";
+        final String URL_TEMPLATE = "jdbc:mysql://{0}:{1}/mysql";
         // create the connection base on the configuration..
         String url = null;
         try {
             // get the database URL..
-            url = MessageFormat.format(URL_MASK, getHost(), getPort());
+            url = MessageFormat.format(URL_TEMPLATE, getHost(), getPort());
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }

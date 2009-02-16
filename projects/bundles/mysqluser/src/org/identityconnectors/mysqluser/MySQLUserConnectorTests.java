@@ -156,6 +156,7 @@ public class MySQLUserConnectorTests {
         config.setPassword(idmPassword);
         config.setPort(idmPort);
         config.setUsermodel(idmModelUser);
+        config.setConnectorMessages(TestHelpers.createDummyMessages());
         return config;
     }
     
