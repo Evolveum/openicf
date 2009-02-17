@@ -1,7 +1,21 @@
 
 
-This is Connector for Google Apps for your Domain. The connector allows you to
-create and manage Google Apps accounts.
+This is Connector for Google Apps.
+
+Google Apps is a software-as-a-service platform
+(SAAS) that provides email, calendar, documents and other services. This 
+connector uses the Google Apps provisioning APIs to create, add, delete and modify user
+accounts and email aliases. Note that the provisioning APIs are not available
+for the free version of the Google Apps platform (the exception is for
+educational and non profit groups where Google makes this available for at no
+cost) . Please make sure you are using a
+google apps platform that supports these APIs.
+
+
+For more information on Google Apps see:
+
+http://www.google.com/apps/intl/en/business/index.html
+
 
 This is a Netbeans project.
 
@@ -37,7 +51,6 @@ The build.groovy will look something like this:
 connector.connectionUrl="https://www.google.com/a/feeds/foobar.org/"
 connector.login="admin@foobar.org"
 connector.password="Password"
-
 
 
 
