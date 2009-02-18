@@ -46,7 +46,7 @@ public class VmsFilterTranslator extends AbstractFilterTranslator<String> {
         else if (rightExpression!=null)
             return rightExpression;
         else
-            return super.createAndExpression(leftExpression, rightExpression);
+            return null;
     }
 
     @Override

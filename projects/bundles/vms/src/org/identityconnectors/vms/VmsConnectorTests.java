@@ -1052,7 +1052,7 @@ public class VmsConnectorTests {
         }
     }
 
-    public class OurConnectorMessages implements ConnectorMessages {
+    public static class OurConnectorMessages implements ConnectorMessages {
         private Map<Locale, Map<String, String>> _catalogs = new HashMap<Locale, Map<String, String>>();
 
         public String format(String key, String defaultValue, Object... args) {
