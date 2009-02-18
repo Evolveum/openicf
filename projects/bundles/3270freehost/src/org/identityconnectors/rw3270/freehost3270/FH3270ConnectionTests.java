@@ -57,7 +57,6 @@ import org.xml.sax.InputSource;
 
 
 public class FH3270ConnectionTests {
-
     // Connector Configuration information
     //
     private static String HOST_NAME;
