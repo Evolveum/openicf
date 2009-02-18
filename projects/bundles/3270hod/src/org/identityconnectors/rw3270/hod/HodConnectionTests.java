@@ -57,7 +57,6 @@ import org.xml.sax.InputSource;
 
 
 public class HodConnectionTests {
-
     // Connector Configuration information
     //
     private static String           HOST_NAME;
