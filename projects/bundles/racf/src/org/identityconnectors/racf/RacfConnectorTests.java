@@ -62,7 +62,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 public class RacfConnectorTests {
-
     // Connector Configuration information
     //
     private static String       HOST_NAME;
