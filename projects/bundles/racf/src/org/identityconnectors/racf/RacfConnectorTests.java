@@ -81,9 +81,9 @@ public class RacfConnectorTests {
     private static final int     HOST_PORT           = 389;
     private static final int     HOST_TELNET_PORT    = 23;
     private static final Boolean USE_SSL             = Boolean.FALSE;
-    private static final int     SHORT_WAIT          = 60000;
-    private static final String  READY               = "\\sREADY\\s{74}";
-    private static final String  CONTINUE            = "\\s\\*\\*\\*\\s{76}";
+    //private static final int     SHORT_WAIT          = 60000;
+    //private static final String  READY               = "\\sREADY\\s{74}";
+    //private static final String  CONTINUE            = "\\s\\*\\*\\*\\s{76}";
 
     private static final String  RACF_PARSER =
         "<MapTransform>\n" +
@@ -524,7 +524,7 @@ public class RacfConnectorTests {
         }
     }
 
-    public class OurConnectorMessages implements ConnectorMessages {
+    public static class OurConnectorMessages implements ConnectorMessages {
         private Map<Locale, Map<String, String>> _catalogs = new HashMap<Locale, Map<String, String>>();
 
         public String format(String key, String defaultValue, Object... args) {

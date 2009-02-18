@@ -47,7 +47,7 @@ public class RacfCommandLineFilterTranslator extends AbstractFilterTranslator<St
         else if (rightExpression!=null)
             return rightExpression;
         else
-            return super.createAndExpression(leftExpression, rightExpression);
+            return null;
     }
     @Override
     protected String createStartsWithExpression(StartsWithFilter filter,

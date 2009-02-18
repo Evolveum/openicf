@@ -69,7 +69,7 @@ public class RacfUserFilterTranslator extends AbstractFilterTranslator<String> {
         else if (rightExpression!=null)
             return rightExpression;
         else
-            return super.createAndExpression(leftExpression, rightExpression);
+            return null;
     }
     @Override
     protected String createStartsWithExpression(StartsWithFilter filter,

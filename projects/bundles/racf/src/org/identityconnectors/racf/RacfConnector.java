@@ -208,7 +208,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
      * {@inheritDoc}
      */
     public void executeQuery(ObjectClass objectClass, String query, ResultsHandler handler, OperationOptions options) {
-        List<String> names = null;
+        List<String> names = new LinkedList<String>();
 
         if (objectClass.equals(ObjectClass.ACCOUNT))
             names = getUsers(query);

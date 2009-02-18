@@ -65,7 +65,7 @@ public class RacfGroupFilterTranslator extends AbstractFilterTranslator<String> 
         else if (rightExpression!=null)
             return rightExpression;
         else
-            return super.createAndExpression(leftExpression, rightExpression);
+            return null;
     }
     
     /**
