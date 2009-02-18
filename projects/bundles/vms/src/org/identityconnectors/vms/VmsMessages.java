@@ -41,7 +41,7 @@ public interface VmsMessages {
     public static final String HOST_NULL                     = "HOST_NULL";
     public static final String PORT_NULL                     = "PORT_NULL";
     public static final String PORT_RANGE_ERROR              = "PORT_RANGE_ERROR";
-    public static final String LOCALE_NULL               	 = "LOCALE_NULL";
+    public static final String LOCALE_NULL                   = "LOCALE_NULL";
     public static final String TERMINATOR_NULL               = "TERMINATOR_NULL";
     public static final String SHELL_PROMPT_NULL             = "SHELL_PROMPT_NULL";
     public static final String SSH_NULL                      = "SSH_NULL";
@@ -52,7 +52,8 @@ public interface VmsMessages {
     public static final String DATEFORMAT1_NULL              = "DATEFORMAT1_NULL";
     public static final String DATEFORMAT2_NULL              = "DATEFORMAT2_NULL";
     public static final String TIMEOUT_IN_MATCH              = "TIMEOUT_IN_MATCH";
-    public static final String UNSUPPORTED_OBJECT_CLASS		 = "UNSUPPORTED_OBJECT_CLASS";
-    public static final String TEST_FAILED					 = "TEST_FAILED";
+    public static final String UNSUPPORTED_OBJECT_CLASS      = "UNSUPPORTED_OBJECT_CLASS";
+    public static final String TEST_FAILED                   = "TEST_FAILED";
+    public static final String NULL_ATTRIBUTE_VALUE          = "NULL_ATTRIBUTE_VALUE";
 
 }

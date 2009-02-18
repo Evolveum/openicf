@@ -42,7 +42,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
@@ -53,7 +52,6 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.script.ScriptExecutor;
 import org.identityconnectors.common.script.ScriptExecutorFactory;
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.framework.api.operations.ValidateApiOp;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
@@ -67,9 +65,6 @@ import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.ObjectClassInfo;
-import org.identityconnectors.framework.common.objects.OperationOptionInfo;
-import org.identityconnectors.framework.common.objects.OperationOptionInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
@@ -84,7 +79,6 @@ import org.identityconnectors.framework.spi.AttributeNormalizer;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.ConnectorClass;
 import org.identityconnectors.framework.spi.PoolableConnector;
-import org.identityconnectors.framework.spi.operations.AuthenticateOp;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
@@ -94,10 +88,10 @@ import org.identityconnectors.patternparser.MapTransform;
 import org.identityconnectors.patternparser.Transform;
 
 @ConnectorClass(
-    displayNameKey="VMSConnector",
-    configurationClass= VmsConfiguration.class)
-public class VmsConnector implements PoolableConnector, CreateOp,
-DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
+        displayNameKey="VMSConnector",
+        configurationClass= VmsConfiguration.class)
+        public class VmsConnector implements PoolableConnector, CreateOp,
+        DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
     private Log                         _log = Log.getLog(VmsConnector.class);
     private DateFormat                  _vmsDateFormatWithSecs;
     private DateFormat                  _vmsDateFormatWithoutSecs;
@@ -126,7 +120,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
     public static final int    LONG_WAIT       = 60000;
     public static final int    SHORT_WAIT      = 5000;
     private static final int   SEGMENT_MAX       = 500;    
-    
+
 
     // VMS messages we search for
     //
@@ -209,7 +203,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
             System.arraycopy(unquoted, 0, result, 0, result.length);
             return result;
         }
-        
+
         CharArrayBuffer buffer = new CharArrayBuffer();
         buffer.append("\"");
         for (char character : unquoted) {
@@ -223,7 +217,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
         buffer.clear();
         return result;
     }
-    
+
     protected char[] asCharArray(Object object) {
         if (object instanceof GuardedString) {
             GuardedString guarded = (GuardedString)object;
@@ -283,7 +277,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
             command.append("ADD ");
         command.append(prefix);
         commandList.add(command);
-        
+
         Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
 
         // Enable/disable is handled by FLAGS=([NO]DISUSER)
@@ -300,11 +294,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
                 flagsValue.add(VmsConstants.FLAG_DISUSER);
             attrMap.put(VmsConstants.ATTR_FLAGS, AttributeBuilder.build(VmsConstants.ATTR_FLAGS, flagsValue));
         }
-        
+
         // Administrative user doesn't need current password
         //
         Attribute currentPassword = attrMap.remove(OperationalAttributes.CURRENT_PASSWORD_NAME);
-        
+
         // Password expiration date is handled by the /PWDEXPIRED qualifier
         //
         Attribute expiration = attrMap.remove(OperationalAttributes.PASSWORD_EXPIRED_NAME);
@@ -347,7 +341,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
                 }
             }
         }
-        
+
         // Password change interval is handled by the /PWDLIFETIME qualifier
         //
         Attribute changeInterval = attrMap.remove(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME);
@@ -362,7 +356,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
                 command = appendToCommand(commandList, command, value);
             }
         }
-        
+
         for (Attribute attribute : attrMap.values()) {
             String name = attribute.getName();
             List<Object> values = new LinkedList<Object>(attribute.getValue());
@@ -420,7 +414,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
         command.append(value);
         return command;
     }
-    
+
     /** 
      * The values list is updated to hold negated values for every possibility that
      * is not in the list
@@ -441,17 +435,17 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
         commandList.add(command);
         return command;
     }
-    
+
     private boolean isDateTimeAttribute(String attributeName) {
         return false;
     }
-    
+
     private boolean isDeltaAttribute(String attributeName) {
         if (PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME.equals(attributeName))
             return true;
         return false;
     }
-    
+
     private void remapToDateTime(List<Object> values) {
         for (int i=0; i<values.size(); i++) {
             Object value = values.get(i);
@@ -478,7 +472,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
             String minutesS      = matcher.group(3);
             String secondsS      = matcher.group(4);
             String centisecondsS = matcher.group(5);
-            
+
             long days = daysS==null?0:Long.parseLong(daysS);
             long hours = Long.parseLong(hoursS);
             long minutes = Long.parseLong(minutesS);
@@ -489,7 +483,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
         }
         return 0;
     }
-    
+
     private static String remapToDelta(Long longValue) {
         // Convert to hundredths of a second
         longValue /= 10;
@@ -539,6 +533,19 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
     public Uid create(ObjectClass objectClass, final Set<Attribute> attrs, final OperationOptions options) {
         if (!objectClass.equals(ObjectClass.ACCOUNT))
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
+
+        // Check for null values
+        //
+        for (Attribute attribute : attrs) {
+            List<Object> values = attribute.getValue();
+            if (values==null)
+                throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.NULL_ATTRIBUTE_VALUE, attribute.getName()));
+            for (Object value : values) {
+                if (value==null)
+                    throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.NULL_ATTRIBUTE_VALUE, attribute.getName()));
+            }
+        }
+
         Name name = AttributeUtil.getNameFromAttributes(attrs);
         String accountId = name.getNameValue();
         _log.info("create(''{0}'')", accountId);
@@ -605,7 +612,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
     VmsConnection getConnection() {
         return _connection;
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -708,7 +715,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
                         builder.addAttribute(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, lifetimeLong);
                     }
                 }
-                
+
                 // PASSWORD_EXPIRATION_DATE is handled by seeing if there is an expiration
                 // date, and if so, converting it to milliseconds
                 //
@@ -724,7 +731,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
                         builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, expiredDate.getTime());
                     }
                 }
-                
+
                 // All other attributes are handled normally
                 //
                 for (Map.Entry<String, Object> entry : attributes.entrySet()) {
@@ -745,7 +752,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
             }
         }
     }
-    
+
     private Date getVmsDate() {
         Map<String, Object> variables = new HashMap<String, Object>();
         variables.put("connection", _connection);
@@ -762,7 +769,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
             _log.error(e, "error in getVmsDate");
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_GETDATE), e);
         }
-        
+
     }
 
     private Date getPasswordExpirationDate(Map<String, Object> attributes) throws ParseException {
@@ -775,7 +782,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
         Date expiredDate = new Date(lastChangeDate+lifetimeLong);
         return expiredDate;
     }
-    
+
     private boolean includeInAttributes(String attribute, List<String> attributesToGet) {
         if (attribute.equalsIgnoreCase(Name.NAME))
             return true;
@@ -800,7 +807,19 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
         if (!objectClass.equals(ObjectClass.ACCOUNT))
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
         Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attributes));
-        
+
+        // Check for null values
+        //
+        for (Attribute attribute : attributes) {
+            List<Object> values = attribute.getValue();
+            if (values==null)
+                throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.NULL_ATTRIBUTE_VALUE, attribute.getName()));
+            for (Object value : values) {
+                if (value==null)
+                    throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.NULL_ATTRIBUTE_VALUE, attribute.getName()));
+            }
+        }
+
         // Operational Attributes are handled specially
         //
         Uid uid = (Uid)attrMap.remove(Uid.NAME);
@@ -835,7 +854,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
                 _log.error(e, "error in rename");
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY), e);
             }
-            
+
             if (isPresent(result, USER_RENAMED)) {
                 uid = new Uid(name.getNameValue());
             } else if (isPresent(result, BAD_SPEC)) {
@@ -844,7 +863,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
             }
         }
-        
+
         // If Password and CurrentPassword
         // are specified, we change password via SET PASSWORD, rather than AUTHORIIZE
         //
@@ -886,7 +905,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
             //
             attrMap.put(OperationalAttributes.PASSWORD_NAME, newPassword);
         }
-        
+
         // If we have any remaining attributes, process them
         //
         if (attrMap.size()>0) {
@@ -905,7 +924,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
                 _log.error(e, "error in create");
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY), e);
             }
-            
+
             if (isPresent(result, USER_UPDATED)) {
                 return uid;
             } else if (isPresent(result, BAD_SPEC)) {
@@ -916,7 +935,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
         }
         return uid;
     }
-    
+
     private void fillInCommand(List<CharArrayBuffer> command, Map<String, Object> variables) {
         List<CharArrayBuffer> localCommand = new LinkedList<CharArrayBuffer>(command);
         CharArrayBuffer lastPart = localCommand.remove(command.size()-1);
@@ -936,7 +955,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
         variables.put("UAF_PROMPT_CONTINUE", UAF_PROMPT_CONTINUE);
         variables.put("connection", _connection);
     }
-    
+
     private void clearArrays(Map<String, Object> variables) {
         char[] commandContents = (char[])variables.get("COMMAND");
         Arrays.fill(commandContents, 0, commandContents.length, ' ');
@@ -954,7 +973,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
     public Schema schema() {
         if (_schema!=null)
             return _schema;
-        
+
         final SchemaBuilder schemaBuilder = new SchemaBuilder(getClass());
         Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
 
@@ -1013,7 +1032,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
         attributes.add(OperationalAttributeInfos.ENABLE);
         attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
         //attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRATION_DATE);
-        
+
         // Predefined Attributes
         //
         attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
@@ -1024,7 +1043,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
         schemaBuilder.removeSupportedOperationOption(
             AuthenticateOp.class, 
             OperationOptionInfoBuilder.build(ObjectClass.ACCOUNT_NAME));
-        */
+         */
         schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
         _schema = schemaBuilder.build();
         _attributeMap = AttributeInfoUtil.toMap(attributes);
@@ -1083,7 +1102,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
             _connection = null;
         }
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -1114,24 +1133,24 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
             throw ConnectorException.wrap(e);
         }
     }
-    
+
     private static class CharArrayBuffer {
         private char[]  _array;
         private int     _position;
-        
+
         public CharArrayBuffer() {
             _array = new char[1024];
             _position = 0;
         }
-        
+
         public void append(String string ) {
             append(string.toCharArray());
         }
-        
+
         public void append(char character) {
             append(new char[] { character });
         }
-        
+
         public void append(char[] string) {
             if (_position+string.length> _array.length) {
                 char[] oldArray = _array;
@@ -1142,17 +1161,17 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
             System.arraycopy(string, 0, _array, _position, string.length);
             _position += string.length;
         }
-        
+
         public void clear() {
             Arrays.fill(_array, 0, _array.length, ' ');
         }
-        
+
         public char[] getArray() {
             char[] result = new char[_position];
             System.arraycopy(_array, 0, result, 0, _position);
             return result;
         }
-        
+
         public int length() {
             return _position;
         }
