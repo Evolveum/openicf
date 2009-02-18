@@ -22,13 +22,10 @@
  */
 package org.identityconnectors.vms;
 
-import java.text.MessageFormat;
 import java.util.Locale;
-import java.util.ResourceBundle;
 import java.util.TimeZone;
 
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.common.l10n.CurrentLocale;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
 
@@ -104,7 +101,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         return getConnectorMessages().format(key, key, objects);
     }
 
-    @ConfigurationProperty(order=1)
+    @ConfigurationProperty(order=1, required=true)
     public String getUserName() {
         return _userName;
     }
@@ -113,7 +110,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         _userName = userName;
     }
 
-    @ConfigurationProperty(confidential=true, order=2)
+    @ConfigurationProperty(confidential=true, order=2, required=true)
     public GuardedString getPassword() {
         return _password;
     }
@@ -122,7 +119,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         _password = password;
     }
 
-    @ConfigurationProperty(order=3)
+    @ConfigurationProperty(order=3, required=true)
     public String getHostNameOrIpAddr() {
         return _hostNameOrIpAddr;
     }
@@ -131,7 +128,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         _hostNameOrIpAddr = hostNameOrIpAddr;
     }
 
-    @ConfigurationProperty(order=4)
+    @ConfigurationProperty(order=4, required=true)
     public Integer getHostPortNumber() {
         return _hostPortNumber;
     }
@@ -140,7 +137,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         _hostPortNumber = hostPortNumber;
     }
 
-    @ConfigurationProperty(displayMessageKey="SSH.display", helpMessageKey="SSH.help", order=5)
+    @ConfigurationProperty(displayMessageKey="SSH.display", helpMessageKey="SSH.help", order=5, required=true)
     public Boolean getSSH() {
         return _isSSH;
     }
@@ -148,7 +145,7 @@ public class VmsConfiguration extends AbstractConfiguration {
     public void setSSH(Boolean isSSH) {
         _isSSH = isSSH;
     }
-    @ConfigurationProperty(order=6)
+    @ConfigurationProperty(order=6, required=true)
     public String getHostLineTerminator() {
     	if (_hostLineTerminator!=null)
             return _hostLineTerminator.replaceAll("\n", "\\n").replaceAll("\r", "\\r");
@@ -167,7 +164,7 @@ public class VmsConfiguration extends AbstractConfiguration {
             _hostLineTerminator = null;
     }
 
-    @ConfigurationProperty(order=7)
+    @ConfigurationProperty(order=7, required=true)
     public String getHostShellPrompt() {
     	return _hostShellPrompt;
     }
@@ -180,7 +177,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         _hostShellPrompt = hostShellPrompt;
     }
 
-    @ConfigurationProperty(order=8)
+    @ConfigurationProperty(order=8, required=true)
     public String getConnectScript() {
         return _connectScript;
     }
@@ -189,7 +186,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         _connectScript = connectScript;
     }
 
-    @ConfigurationProperty(order=9)
+    @ConfigurationProperty(order=9, required=true)
     public String getVmsLocale() {
         return _vmsLocale;
     }
@@ -198,7 +195,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         _vmsLocale = vmsLocale;
     }
 
-    @ConfigurationProperty(order=10)
+    @ConfigurationProperty(order=10, required=true)
     public String getVmsTimeZone() {
         return _vmsTimeZone;
     }
@@ -207,7 +204,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         _vmsTimeZone = vmsTimeZone;
     }
 
-    @ConfigurationProperty(order=11)
+    @ConfigurationProperty(order=11, required=true)
     public String getVmsDateFormatWithSecs() {
         return _vmsDateFormatWithSecs;
     }
@@ -216,7 +213,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         _vmsDateFormatWithSecs = vmsDateFormatWithSecs;
     }
 
-    @ConfigurationProperty(order=12)
+    @ConfigurationProperty(order=12, required=true)
     public String getVmsDateFormatWithoutSecs() {
         return _vmsDateFormatWithoutSecs;
     }
