@@ -57,7 +57,7 @@ a class conflict increases as well. </p></li>
       <ul>
         <li><p><b>MAJOR=1</b>  The major release version.</p>
         <li><p><b>MINOR=0</b>  The minor release version.</p>
-        <li><p><b>ConnectorBundle-FrameworkVersion=1.0</b>  The <i><b>minimum</b></i> required framework version for this connector. Newer framework versions will be backwards compatible.</p>
+        <li><p><b>ConnectorBundle-FrameworkVersion=1.0</b>  The <i><b>minimum</b></i> required framework version for this connector. Newer framework versions will be <a href="/design.html#compatibility">backwards compatible</a>.</p>
         <li><p><b>ConnectorBundle-Name=org.identityconnectors.foo</b>  The unique name for this Connector Bundle (usually its package name).</p>
       </ul>
     <li><b>build.xml</b><p>The build file for the Connector. This file references <i>connector_build.xml</i> in the framework.</p>   
@@ -103,7 +103,7 @@ a class conflict increases as well. </p></li>
   is controlled via Java annotations defined by the Connectors Framework. 
   In order to register a connector, its class must be present in a 
   connector bundle and must have the annotation
-  <code>com.sun.identityconnectors.framework.spi.ConnectorClass</code>.
+  <code>org.identityconnectors.framework.spi.ConnectorClass</code>.
   As an implementation note, the Connector Framework scans the top level <i>.class</i>
   files in a connector bundle, looking for classes that have the <code>@ConnectorClass</code>
   annotation, thus auto-discovering connectors which are defined in the bundle.
@@ -266,7 +266,7 @@ they should be able to do this. In this case, you can see it
 is critical that bundles are self contained.</p>
 
 <h3>Build Notes</h3>
-<p>From a build standpoint, one thing have done is structure our bundle
+<p>From a build standpoint, one thing we have done is structure our bundle
 manifests so that the version is automatically populated. For each
 bundle, there is a bundle.properties (see <A HREF="#Structure">Bundle Structure</A>). 
 The attribute <i>ConnectorBundle-Version</i> will be left out since it will be

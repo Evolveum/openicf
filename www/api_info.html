@@ -1,7 +1,7 @@
 <HTML>
 <HEAD>
     <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=iso-8859-1">
-    <TITLE>IdentityConnectors: Info for Application Developers</TITLE>
+    <TITLE>API Information</TITLE>
 </HEAD>
 <DIV id="projecthome" class="app">
     <H2>Using Connectors in an Application</H2>
@@ -26,7 +26,7 @@ Here is an example:
     File bundleDirectory = new File("/connectorDir/bundles/as400");       
     URL url = IOUtil.makeURL(bundleDirectory, "/dist/org.identityconnectors.as400-1.0.jar");        
     ConnectorInfoManager manager = fact.getLocalManager(url);
-    ConnectorKey key = new ConnectorKey("org.identityconnectors.as400", "1.0", "AS400Connector");       
+    ConnectorKey key = new ConnectorKey("org.identityconnectors.foobar", "1.0", "FooBarConnector");       
     ConnectorInfo info = manager.findConnectorInfo(key);
 
     // From the ConnectorInfo object, create the default APIConfiguration.
@@ -43,9 +43,9 @@ Here is an example:
     }
 
     // Set all of the ConfigurationProperties needed by the connector.
-    properties.setPropertyValue("host", AS400_HOST);
-    properties.setPropertyValue("adminName", AS400_ADMIN);
-    properties.setPropertyValue("adminPassword", AS400_PASSWORD);
+    properties.setPropertyValue("host", FOOBAR_HOST);
+    properties.setPropertyValue("adminName", FOOBAR_ADMIN);
+    properties.setPropertyValue("adminPassword", FOOBAR_PASSWORD);
     properties.setPropertyValue("useSSL", false);
 
     // Use the ConnectorFacadeFactory's newInstance() method to get a new connector.

@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Connectors: Design Overview</title>
+<title>Architecture</title>
 </head>
 <body>
 <div id="projecthome" class="app">
@@ -15,12 +15,17 @@ framework provides many common features that developers would otherwise need to
 implement on their own. For instance the framework can provide
 connection pooling, buffering, timeouts, and filtering. IdentityConnectors
 is separated into two parts: the API, from which applications can call
-Connectors, and the SPI, from which developers can create Connectors.
+Connectors, and the SPI, from which developers can create Connectors. The
+figures below show how the Identity Connectors framework decouples Sun&trade; Identity Manager (IDM)
+and other apps from their underlying data resources. The framework is also backwards-compatible, so that
+newer bundles may be deployed without affecting existing ones.
 
-<table><tr>
+<a name="compatibility"></a>
+<table cellspacing="20"><tr>
 <td><img src="./images/architecture.png" alt="Architecture" align="left"/></td>
-<!-- <td><img src="./images/compatibility.png" alt="Compatibility" alight="left"/></td> -->
-</tr></table>
+<td><img src="./images/compatibility.png" alt="Compatibility" alight="left"/></td>
+</tr>
+</table>
 
 <h3>Connector SPI</h3>
 <p>The Connector SPI is decomposed into several interfaces so that
@@ -79,7 +84,7 @@ throw a RuntimeException intentionally or not. Also we'd like to encourage the
 use of standard Java exceptions like IllegalArgumentException and 
 IllegalStateException.  Also for the benefit of the debugging and logging we
 like to encourage Connector developers to wrap their native exceptions in
-a RuntimeException so exception data is not lost.
+a RuntimeException so that the underlying exception data is not lost.
 <p>Please see the Javadoc for more information.
 </div>
 </body>
