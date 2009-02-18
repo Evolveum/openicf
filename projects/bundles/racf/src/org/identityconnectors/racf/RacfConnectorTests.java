@@ -501,10 +501,10 @@ public class RacfConnectorTests {
     }
 
     private String getLogoffScript() {
-        String script =
-            "connection.send(\"LOGOFF[enter]\");\n" +
-            "connection.waitFor(\"=====>\", SHORT_WAIT);\n" +
-            "connection.dispose();\n";
+        String script = "connection.send(\"LOGOFF[enter]\");\n";
+//            "connection.send(\"LOGOFF[enter]\");\n" +
+//            "connection.waitFor(\"=====>\", SHORT_WAIT);\n" +
+//            "connection.dispose();\n";
         return script;
     }
 
@@ -547,12 +547,11 @@ public class RacfConnectorTests {
         config.setHostTelnetPortNumber(HOST_TELNET_PORT);
         config.setConnectScript(getLoginScript());
         config.setDisconnectScript(getLogoffScript());
-        config.setUserNames(new String[] { SYSTEM_USER });
-        config.setPasswords(new GuardedString[] { new GuardedString(SYSTEM_PASSWORD.toCharArray()) });
-        config.setPoolNames(new String[] { "XYZZY" });
+        config.setUserName(SYSTEM_USER );
+        config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
+        config.setScriptingLanguage("GROOVY");
         config.setSegmentNames(new String[] { "RACF", "TSO" });
         config.setSegmentParsers(new String[] { RACF_PARSER, tsoParserString() });
-        config.setEvictionInterval(60000);
         //config.setConnectionClassName(WrqConnection.class.getName());
         config.setConnectionClassName("org.identityconnectors.rw3270.hod.HodConnection");
         //config.setConnectionClassName(FH3270Connection.class.getName());

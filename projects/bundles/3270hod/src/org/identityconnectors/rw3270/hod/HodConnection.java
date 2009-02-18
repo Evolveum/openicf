@@ -27,7 +27,7 @@ import java.util.Properties;
 import javax.naming.NamingException;
 
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.rw3270.PoolableConnectionConfiguration;
+import org.identityconnectors.rw3270.RW3270Configuration;
 import org.identityconnectors.rw3270.RW3270BaseConnection;
 
 import com.ibm.eNetwork.ECL.ECLErr;
@@ -42,8 +42,9 @@ public class HodConnection extends RW3270BaseConnection implements ECLPSListener
     private ECLSession                _session;
     private ECLOIA                    _oia;
 
-    public HodConnection(PoolableConnectionConfiguration config) throws NamingException {
+    public HodConnection(RW3270Configuration config) throws NamingException {
         super(config);
+        loginUser();
     }
 
     @Override
@@ -144,6 +145,11 @@ public class HodConnection extends RW3270BaseConnection implements ECLPSListener
     public void dispose() {
         if (_session==null)
             return;
+        try {
+            logoutUser();
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }
         _session.dispose();
         _session = null;
     }

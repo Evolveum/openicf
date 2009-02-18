@@ -32,8 +32,8 @@ import net.sf.freehost3270.client.RW3270;
 import net.sf.freehost3270.client.RWTnAction;
 
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.rw3270.PoolableConnectionConfiguration;
 import org.identityconnectors.rw3270.RW3270BaseConnection;
+import org.identityconnectors.rw3270.RW3270Configuration;
 
 
 public class FH3270Connection extends RW3270BaseConnection {
@@ -49,7 +49,7 @@ public class FH3270Connection extends RW3270BaseConnection {
         0,          RW3270.PA1, RW3270.PA2, RW3270.PA3, 
     };
     
-    public FH3270Connection(PoolableConnectionConfiguration config) throws NamingException {
+    public FH3270Connection(RW3270Configuration config) throws NamingException {
         super(config);
         _rw3270 = new RW3270(_model, new RWTnAction() {
             public void beep() { }
@@ -62,6 +62,7 @@ public class FH3270Connection extends RW3270BaseConnection {
                 _semaphore.release();
             }
         });
+        loginUser();
     }
 
     @Override
@@ -126,6 +127,11 @@ public class FH3270Connection extends RW3270BaseConnection {
     public void dispose() {
         if (_rw3270==null)
             return;
+        try {
+            logoutUser();
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }
         _rw3270.disconnect();
         _rw3270 = null;
     }

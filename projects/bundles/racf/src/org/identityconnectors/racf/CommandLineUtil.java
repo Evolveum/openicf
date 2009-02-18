@@ -53,16 +53,13 @@ import org.identityconnectors.framework.common.objects.ScriptContext;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.patternparser.MapTransform;
 import org.identityconnectors.patternparser.Transform;
-import org.identityconnectors.rw3270.ConnectionPool;
 import org.identityconnectors.rw3270.RW3270Connection;
-import org.identityconnectors.rw3270.PoolableConnectionFactory.ConnectionInfo;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 class CommandLineUtil {
-    private static ConnectionPool       _pool;
     private static final String         OUTPUT_COMPLETE_PATTERN = "\\sREADY\\s{74}";
     private static final String         OUTPUT_COMPLETE         = " READY";
     private static final String         DEFAULT_GROUP_NAME      = "DFLTGRP";
@@ -101,26 +98,12 @@ class CommandLineUtil {
                     MapTransform transform = asMapTransform(segmentParsers[i]);
                     _segmentParsers.put(name, transform);
                 }
-            
-            // Allocate a connection pool
-            //TODO: make sure static stuff works [(pool key, username); password is replaced]
-            synchronized(RacfConnector.class) {
-                _pool = new ConnectionPool(((RacfConfiguration)_connector.getConfiguration()));
-            }
             _membersOfGroupTransform = (MapTransform)Transform.newTransform(_membersOfGroup);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
     }
     
-    public void dispose() {
-        try {
-            _pool.close();
-        } catch (Exception e) {
-            throw ConnectorException.wrap(e);
-        }
-    }
-
     private static MapTransform asMapTransform(String xml) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setValidating(false);
@@ -187,11 +170,9 @@ class CommandLineUtil {
     }
     
     public String getCommandOutput(CharArrayBuffer buffer) {
-        ConnectionInfo info = null;
         char[] command = buffer.getArray();
         try {
-            info = (ConnectionInfo)_pool.borrowObject(getAffinity());
-            RW3270Connection connection = info.getConnection();
+            RW3270Connection connection = _connector.getConnection().getRacfConnection();
             connection.resetStandardOutput();
             connection.send("[clear]");
             connection.send(command);
@@ -212,11 +193,9 @@ class CommandLineUtil {
                 output = output.substring(index);
             }
             output = output.replaceAll("(.{"+connection.getWidth()+"})", "$1\n");
-            _pool.returnObject(getAffinity(), info);
             return output;
         } catch (Exception e) {
             e.printStackTrace();
-            resetAndReturnConnection(info);
             throw ConnectorException.wrap(e);
         } finally {
             Arrays.fill(command, 0, command.length, ' ');
@@ -244,22 +223,6 @@ class CommandLineUtil {
         return true;
     }
 
-    public void resetAndReturnConnection(ConnectionInfo info) {
-        // See if we can reset the connection
-        //
-        if (info!=null) {
-            RW3270Connection connection = info.getConnection();
-            // This may throw an exception; if so, we don't return
-            // the connection to the pool
-            //
-            connection.reset();
-            try {
-                _pool.returnObject(getAffinity(), info);
-            } catch (Exception e1) {
-                // We'll rethrow the original exception, anyway
-            }
-        }
-    }
     
     /**
      * Given a set of Attributes, produce a partial TSO command line
@@ -625,33 +588,18 @@ class CommandLineUtil {
      * connection. If the reset fails, the connection is not returned to the pool.
      */
     public Object runScriptOnConnector(ScriptContext request, OperationOptions options) {
-        ConnectionInfo info = null;
         if (!"groovy".equalsIgnoreCase(request.getScriptLanguage()))
             throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNSUPPORTED_SCRIPTING_LANGUAGE, request.getScriptLanguage()));
         ScriptExecutor executor = _groovyFactory.newScriptExecutor(getClass().getClassLoader(), request.getScriptText(), false);
         Map<String, Object> arguments = new HashMap<String, Object>(request.getScriptArguments());
         try {
-            info = (ConnectionInfo)_pool.borrowObject(getAffinity());
-            arguments.put("rw3270Connection", info.getConnection());
+            RW3270Connection connection = _connector.getConnection().getRacfConnection();
+            arguments.put("rw3270Connection", connection);
             Object result = executor.execute(arguments);
-            _pool.returnObject(getAffinity(), info);
             return result;
         } catch (Exception e) {
             e.printStackTrace();
-            resetAndReturnConnection(info);
             throw ConnectorException.wrap(e);
-        } finally {
-            try {
-                // If we can successfully reset the connection, we can try
-                // reusing it
-                //
-                if (info!=null) {
-                    info.getConnection().reset();
-                    _pool.returnObject(getAffinity(), info);
-                }
-            } catch (Exception e) {
-                // Since we are already throwing an exception, ignore this one.
-            }
         }
     }
     
@@ -686,12 +634,11 @@ class CommandLineUtil {
         // If we are asking for segment information, ensure that command-line login
         // information was specified
         //
-        if (segmentsNeeded.size()>0 && ((RacfConfiguration)_connector.getConfiguration()).getUserNames().length==0)
+        if (segmentsNeeded.size()>0 && ((RacfConfiguration)_connector.getConfiguration()).getUserName()==null)
             throw new ConnectorException("Segment attributes requested, but no login information given");
         
         Map<String, Object> attributesFromCommandLine = new HashMap<String, Object>();
-        if (segmentsNeeded.size()>0 ||  ((RacfConfiguration)_connector.getConfiguration()).getUserNames().length==0) {
-            ConnectionInfo info = null;
+        if (segmentsNeeded.size()>0 || ((RacfConfiguration)_connector.getConfiguration()).getUserName()==null) {
             try {
                 StringBuffer buffer = new StringBuffer();
                 buffer.append("LISTUSER ");
@@ -710,7 +657,6 @@ class CommandLineUtil {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                resetAndReturnConnection(info);
                 throw ConnectorException.wrap(e);
             }
         }

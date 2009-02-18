@@ -24,17 +24,20 @@ package org.identityconnectors.rw3270;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.naming.NamingException;
 
+import org.identityconnectors.common.script.ScriptExecutor;
+import org.identityconnectors.common.script.ScriptExecutorFactory;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.rw3270.RW3270Connection;
 
 import expect4j.Closure;
 import expect4j.Expect4j;
@@ -48,7 +51,7 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
     protected int                       _model;
     protected Semaphore                 _semaphore;
     protected StringBuffer              _buffer;
-    protected PoolableConnectionConfiguration _config;
+    protected RW3270Configuration       _config;
     protected Expect4j                  _expect4j;
     protected RW3270IOPair              _ioPair;
     protected Pattern                   _commandPattern = Pattern.compile("(?<!\\[)\\[([^]]*)\\]");
@@ -57,13 +60,19 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
     protected Pattern                   _cursorPattern  = Pattern.compile("cursor\\s*\\(\\s*(\\d+)\\s*\\)", Pattern.CASE_INSENSITIVE);
     protected static final String       CLEAR            = "CLEAR";
     protected static final String       ENTER            = "ENTER";
+    protected ScriptExecutorFactory     _factory;
+    protected ScriptExecutor            _connectScriptExecutor;
+    protected ScriptExecutor            _disconnectScriptExecutor;
 
-    public RW3270BaseConnection(PoolableConnectionConfiguration config) throws NamingException {
+    public RW3270BaseConnection(RW3270Configuration config) throws NamingException {
         _config = config;
         _buffer = new StringBuffer();
         _model = 2;
         _semaphore = new Semaphore(0);
         _expect4j = new Expect4j(_ioPair = new RW3270IOPair(this));
+        _factory = ScriptExecutorFactory.newInstance(config.getScriptingLanguage());
+        _connectScriptExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), config.getConnectScript(), true);
+        _disconnectScriptExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), config.getDisconnectScript(), true);
     }
 
     protected abstract void sendKeys(String keys);
@@ -80,6 +89,32 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
         connect();
     }
     
+    public void loginUser() {
+        try {
+            Map<String, Object> arguments = new HashMap<String, Object>();
+            arguments.put("SHORT_WAIT", 15000);
+            arguments.put("USERNAME", _config.getUserName());
+            arguments.put("PASSWORD", _config.getPassword());
+            arguments.put("connection", this);
+            _connectScriptExecutor.execute(arguments);
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }
+    }
+    
+    public void logoutUser() {
+        try {
+            Map<String, Object> arguments = new HashMap<String, Object>();
+            arguments.put("SHORT_WAIT", 5000);
+            arguments.put("USERNAME", _config.getUserName());
+            arguments.put("PASSWORD", _config.getPassword());
+            arguments.put("connection", this);
+            _disconnectScriptExecutor.execute(arguments);
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }
+    }
+
     public int getWidth() {
         switch (_model) {
         case 1 :

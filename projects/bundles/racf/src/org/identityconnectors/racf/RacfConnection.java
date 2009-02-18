@@ -30,16 +30,28 @@ import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.rw3270.RW3270Connection;
+import org.identityconnectors.rw3270.RW3270ConnectionFactory;
+
 public class RacfConnection {
     private InitialContext            _context;
     private DirContext                _dirContext;
     private RacfConfiguration         _configuration;
+    private RW3270Connection          _racfConnection;
 
     public RacfConnection(RacfConfiguration configuration) throws NamingException {
         _configuration = configuration;
-        if (_configuration.getUserName()!=null) {
+        if (_configuration.getLdapUserName()!=null) {
             _context = new InitialContext(createCommonContextProperties());
             _dirContext = new InitialDirContext(createCommonContextProperties());
+        }
+        if (_configuration.getUserName()!=null) {
+            try {
+                _racfConnection = new RW3270ConnectionFactory(configuration).newConnection();
+            } catch (Exception e) {
+                throw ConnectorException.wrap(e);
+            }
         }
     }
 
@@ -52,8 +64,8 @@ public class RacfConnection {
 
         env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
         env.put(Context.PROVIDER_URL, url);
-        env.put(Context.SECURITY_PRINCIPAL, _configuration.getUserName());
-        env.put(Context.SECURITY_CREDENTIALS, _configuration.getPassword());
+        env.put(Context.SECURITY_PRINCIPAL, _configuration.getLdapUserName());
+        env.put(Context.SECURITY_CREDENTIALS, _configuration.getLdapPassword());
 
         if (_configuration.getUseSsl()) {
             env.put(Context.SECURITY_PROTOCOL, "ssl");
@@ -71,11 +83,16 @@ public class RacfConnection {
     }
 
     public void dispose() {
-        // TODO Auto-generated method stub
+        if (_racfConnection!=null)
+            _racfConnection.dispose();
     }
 
     public void test() {
         // TODO Auto-generated method stub
+    }
+    
+    public RW3270Connection getRacfConnection() {
+        return _racfConnection;
     }
 
 }

@@ -42,12 +42,11 @@ import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
-import org.identityconnectors.rw3270.PoolableConnectionFactory.ConnectionInfo;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 
-public class RW3270ConnectionPoolTests {
+public class RW3270ConnectionTests {
 
     // Connector Configuration information
     //
@@ -70,18 +69,16 @@ public class RW3270ConnectionPoolTests {
     public void testNegativePath() {
         OurConfiguration configuration = createConfiguration();
         try {
-            ConnectionPool pool = new ConnectionPool(configuration);
-            ConnectionInfo info = (ConnectionInfo)pool.borrowObject("XYZZY");
-            final DummyConnection connection = (DummyConnection)info.getConnection();
+            final DummyConnection connection = new DummyConnection(configuration);
             connection.setDisplay("Nothing");
             
             try {
-                info.getConnection().waitFor("USER=", 100);
+                connection.waitFor("USER=", 100);
                 Assert.fail("exception expected");
             } catch (RuntimeException e) {
             }
             try {
-                info.getConnection().waitFor("USER=", "C", 100);
+                connection.waitFor("USER=", "C", 100);
                 Assert.fail("exception expected");
             } catch (RuntimeException e) {
             }
@@ -110,7 +107,6 @@ public class RW3270ConnectionPoolTests {
             thread2.start();
             thread2.join(5000);
             Assert.assertTrue(thread2.isAlive());
-            pool.clear();
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail(e.toString());
@@ -121,26 +117,23 @@ public class RW3270ConnectionPoolTests {
     public void testTelnetConnectionViaPool() {
         OurConfiguration configuration = createConfiguration();
         try {
-            ConnectionPool pool = new ConnectionPool(configuration);
-            ConnectionInfo info = (ConnectionInfo)pool.borrowObject("XYZZY");
-            info.getConnection().send("Login[enter]");
-            info.getConnection().send("[clear]");
-            info.getConnection().send("[cursor (256)]");
+            DummyConnection connection = new DummyConnection(configuration);
+            connection.send("Login[enter]");
+            connection.send("[clear]");
+            connection.send("[cursor (256)]");
             try {
-                info.getConnection().send("[bogus]");
+                connection.send("[bogus]");
                 Assert.fail("no error thrown");
             } catch (IllegalArgumentException e) {
             }
-            sendRelease((DummyConnection)info.getConnection(), "USER=IDM03");
-            info.getConnection().waitFor("USER=IDM03");
-            sendRelease((DummyConnection)info.getConnection(), "USER=", "IDM03");
-            info.getConnection().waitFor("USER=", "IDM03");
-            sendRelease((DummyConnection)info.getConnection(), "USER=IDM03");
-            info.getConnection().waitFor("USER=IDM03", 3000);
-            sendRelease((DummyConnection)info.getConnection(), "USER=", "IDM03");
-            info.getConnection().waitFor("USER=", "IDM03", 3000);
-            pool.returnObject("XYZZY", info);
-            pool.clear();
+            sendRelease((DummyConnection)connection, "USER=IDM03");
+            connection.waitFor("USER=IDM03");
+            sendRelease((DummyConnection)connection, "USER=", "IDM03");
+            connection.waitFor("USER=", "IDM03");
+            sendRelease((DummyConnection)connection, "USER=IDM03");
+            connection.waitFor("USER=IDM03", 3000);
+            sendRelease((DummyConnection)connection, "USER=", "IDM03");
+            connection.waitFor("USER=", "IDM03", 3000);
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail(e.toString());
@@ -151,17 +144,16 @@ public class RW3270ConnectionPoolTests {
     public void testPaKeys() {
         OurConfiguration configuration = createConfiguration();
         try {
-            ConnectionPool pool = new ConnectionPool(configuration);
-            ConnectionInfo info = (ConnectionInfo)pool.borrowObject("XYZZY");
+            DummyConnection connection = new DummyConnection(configuration);
             for (int i=1; i<4; i++)
-                info.getConnection().send("[pa"+i+"]");
+                connection.send("[pa"+i+"]");
             try {
-                info.getConnection().send("[pa0]");
+                connection.send("[pa0]");
                 Assert.fail("bad PA Key not caught");
             } catch (RuntimeException e) {
             }
             try {
-                info.getConnection().send("[pa5]");
+                connection.send("[pa5]");
                 Assert.fail("bad PA Key not caught");
             } catch (RuntimeException e) {
             }
@@ -174,17 +166,16 @@ public class RW3270ConnectionPoolTests {
     public void testPfKeys() {
         OurConfiguration configuration = createConfiguration();
         try {
-            ConnectionPool pool = new ConnectionPool(configuration);
-            ConnectionInfo info = (ConnectionInfo)pool.borrowObject("XYZZY");
+            DummyConnection connection = new DummyConnection(configuration);
             for (int i=1; i<25; i++)
-                info.getConnection().send("[pf"+i+"]");
+                connection.send("[pf"+i+"]");
             try {
-                info.getConnection().send("[pf0]");
+                connection.send("[pf0]");
                 Assert.fail("bad PFA Key not caught");
             } catch (RuntimeException e) {
             }
             try {
-                info.getConnection().send("[pf25]");
+                connection.send("[pf25]");
                 Assert.fail("bad PF Key not caught");
             } catch (RuntimeException e) {
             }
@@ -217,9 +208,9 @@ public class RW3270ConnectionPoolTests {
         config.setUseSsl(USE_SSL);
         config.setConnectScript(getLoginScript());
         config.setDisconnectScript(getLogoffScript());
-        config.setUserNames(new String[] { SYSTEM_USER });
-        config.setPasswords(new GuardedString[] { new GuardedString(SYSTEM_PASSWORD.toCharArray()) });
-        config.setPoolNames(new String[] { "XYZZY" });
+        config.setUserName(SYSTEM_USER);
+        config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
+        config.setScriptingLanguage("GROOVY");
         config.setEvictionInterval(60000);
         config.setConnectionClassName(DummyConnection.class.getName());
 
@@ -254,7 +245,7 @@ public class RW3270ConnectionPoolTests {
         private StringBuffer sentData = new StringBuffer();
         private String display;
         
-        public DummyConnection(PoolableConnectionConfiguration config) throws NamingException {
+        public DummyConnection(RW3270Configuration config) throws NamingException {
             super(config);
         }
         
@@ -334,14 +325,14 @@ public class RW3270ConnectionPoolTests {
         }
     }
     
-    public static class OurConfiguration extends AbstractConfiguration implements PoolableConnectionConfiguration {
+    public static class OurConfiguration extends AbstractConfiguration implements RW3270Configuration {
         private String _connectScript;
         private String _disconnectScript;
         private String _host;
         private Integer _port;
-        private GuardedString[] _passwords;
-        private String[] _poolNames;
-        private String[] _userNames;
+        private GuardedString _password;
+        private String _language;
+        private String _userName;
         private Integer _evictionInterval;
         private String _connectClass;
         private Boolean _useSsl ;
@@ -366,20 +357,20 @@ public class RW3270ConnectionPoolTests {
             return _port;
         }
 
-        public GuardedString[] getPasswords() {
-            return _passwords;
+        public GuardedString getPassword() {
+            return _password;
         }
 
-        public String[] getPoolNames() {
-            return _poolNames;
+        public String getScriptingLanguage() {
+            return _language;
         }
 
         public Boolean getUseSsl() {
             return _useSsl;
         }
 
-        public String[] getUserNames() {
-            return _userNames;
+        public String getUserName() {
+            return _userName;
         }
 
         public void setConnectScript(String script) {
@@ -402,20 +393,20 @@ public class RW3270ConnectionPoolTests {
             _port = port;
         }
 
-        public void setPasswords(GuardedString[] passwords) {
-            _passwords = passwords;
+        public void setPassword(GuardedString password) {
+            _password = password;
         }
 
-        public void setPoolNames(String[] poolNames) {
-            _poolNames = poolNames;
+        public void setScriptingLanguage(String language) {
+            _language = language;
         }
 
         public void setUseSsl(Boolean useSsl) {
             _useSsl = useSsl;
         }
 
-        public void setUserNames(String[] userNames) {
-            _userNames = userNames;
+        public void setUserName(String userName) {
+            _userName = userName;
         }
         
         public Integer getEvictionInterval() {

@@ -3,7 +3,6 @@
 	<classpathentry excluding="org/identityconnectors/rw3270/wrq/RacfWrqConnection.java" kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry kind="lib" path="/3270ConnectionPool/lib/commons-pool-1.4.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/3270ConnectionPool"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-HEAD"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-Internal-HEAD"/>

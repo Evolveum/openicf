@@ -34,6 +34,7 @@
                 <exclude name="commons-pool*.jar"/>
                 <exclude name="habeans2.jar"/>
                 <exclude name="expect4j*.jar"/>
+                <exclude name="test/jakarta-oro-2.0.8.jar"/>
             </fileset>
         </delete>
     </target>

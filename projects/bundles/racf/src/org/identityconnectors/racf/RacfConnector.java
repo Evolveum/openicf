@@ -55,7 +55,6 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
-import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.PredefinedAttributeInfos;
 import org.identityconnectors.framework.common.objects.PredefinedAttributes;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
@@ -100,8 +99,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
      */
     public void dispose() {
         _connection.dispose();
-        if (_clUtil!=null)
-            _clUtil.dispose();
     }
 
     /**
@@ -139,7 +136,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         if (isLdapConnectionAvailable()) {
             Uid uid = _ldapUtil.createViaLdap(objectClass, ldapAttrs, options);
             if (hasNonSpecialAttributes(commandLineAttrs)) {
-                if (_configuration.getUserNames().length==0)
+                if (_configuration.getUserName()==null)
                     throw new ConnectorException(_configuration.getMessage(RacfMessages.NEED_COMMAND_LINE));
                 _clUtil.updateViaCommandLine(objectClass, commandLineAttrs, options);
             }
@@ -438,7 +435,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         if (isLdapConnectionAvailable()) {
             Uid uid = _ldapUtil.updateViaLdap(objectClass, ldapAttrs);
             if (hasNonSpecialAttributes(commandLineAttrs)) {
-                if (_configuration.getUserNames().length==0)
+                if (_configuration.getUserName()==null)
                     throw new ConnectorException(_configuration.getMessage(RacfMessages.NEED_COMMAND_LINE));
                 _clUtil.updateViaCommandLine(objectClass, commandLineAttrs, options);
             }
@@ -651,7 +648,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
     }
 
     private boolean isLdapConnectionAvailable() {
-        return _configuration.getUserName()!=null;
+        return _configuration.getLdapUserName()!=null;
     }
 
     /**

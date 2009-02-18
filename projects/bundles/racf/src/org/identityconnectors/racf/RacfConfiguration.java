@@ -31,11 +31,11 @@ import org.identityconnectors.common.l10n.CurrentLocale;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
-import org.identityconnectors.rw3270.PoolableConnectionConfiguration;
+import org.identityconnectors.rw3270.RW3270Configuration;
 
-public class RacfConfiguration extends AbstractConfiguration implements PoolableConnectionConfiguration {
-    private String         _userName;
-    private GuardedString  _password;
+public class RacfConfiguration extends AbstractConfiguration implements RW3270Configuration {
+    private String         _ldapUserName;
+    private GuardedString  _ldapPassword;
     private String         _suffix;
 
     private Boolean        _isUseSsl;
@@ -48,17 +48,13 @@ public class RacfConfiguration extends AbstractConfiguration implements Poolable
     
     private String[]       _segmentNames;
     private String[]       _segmentParsers;
-    private String[]       _userNames;
-    private GuardedString[] _passwords;
-    private String[]       _poolNames;
-    private Integer        _evictionInterval;
+    private String         _userName;
+    private GuardedString  _password;
+
+    private String         _scriptingLanguage;
     private String         _connectScript;
     private String         _disconnectScript;
     private String         _connectionClassName;
-    
-    private String         _affinityList;
-    private String         _segmentParserList;
-    
     
     private static final String CATALOG = "org.identityconnectors.racf.RacfMessages";
 
@@ -87,20 +83,15 @@ public class RacfConfiguration extends AbstractConfiguration implements Poolable
             throw new IllegalArgumentException(getMessage(RacfMessages.HOST_NULL));
         if (_hostLdapPortNumber==null)
             throw new IllegalArgumentException(getMessage(RacfMessages.PORT_NULL));
-        if (_userName==null)
+        if (_ldapUserName==null)
             throw new IllegalArgumentException(getMessage(RacfMessages.USERNAME_NULL));
-        if (_password==null)
+        if (_ldapPassword==null)
             throw new IllegalArgumentException(getMessage(RacfMessages.PASSWORD_NULL));
-        if (_userNames==null)
+        if (_userName==null)
             throw new IllegalArgumentException(getMessage(RacfMessages.USERNAMES_NULL));
-        if (_passwords==null)
+        if (_password==null)
             throw new IllegalArgumentException(getMessage(RacfMessages.PASSWORDS_NULL));
-        if (_poolNames==null)
-            throw new IllegalArgumentException(getMessage(RacfMessages.POOLNAMES_NULL));
-        if (_evictionInterval==null)
-            throw new IllegalArgumentException(getMessage(RacfMessages.INTERVAL_NULL));
-        if (_userNames.length!=_passwords.length || _userNames.length!=_poolNames.length)
-            throw new IllegalArgumentException(getMessage(RacfMessages.PASSWORDS_LENGTH));
+        //TODO: make sure username/password paired, and at lest one set specified
     }
 
     /**
@@ -140,8 +131,8 @@ public class RacfConfiguration extends AbstractConfiguration implements Poolable
      * @return LDAP user name
      */
     @ConfigurationProperty(order=4, displayMessageKey="UserName", helpMessageKey="UserNameHelp")
-    public String getUserName() {
-        return _userName;
+    public String getLdapUserName() {
+        return _ldapUserName;
     }
 
     /**
@@ -154,8 +145,8 @@ public class RacfConfiguration extends AbstractConfiguration implements Poolable
      * 
      * @param userName -- user name
      */
-    public void setUserName(String userName) {
-        _userName = userName;
+    public void setLdapUserName(String userName) {
+        _ldapUserName = userName;
     }
 
     /**
@@ -163,16 +154,16 @@ public class RacfConfiguration extends AbstractConfiguration implements Poolable
      * @return LDAP password
      */
     @ConfigurationProperty(order=5, displayMessageKey="Password", helpMessageKey="PasswordHelp", confidential=true)
-    public GuardedString getPassword() {
-        return _password;
+    public GuardedString getLdapPassword() {
+        return _ldapPassword;
     }
 
     /**
      * Set the password for the LDAP connection
      * @param password -- LDAP password
      */
-    public void setPassword(GuardedString password) {
-        _password = password;
+    public void setLdapPassword(GuardedString password) {
+        _ldapPassword = password;
     }
 
     /**
@@ -227,30 +218,21 @@ public class RacfConfiguration extends AbstractConfiguration implements Poolable
     }
 
     @ConfigurationProperty(order=8)
-    public String[] getUserNames() {
-        return arrayCopy(_userNames);
+    public String getUserName() {
+        return _userName;
     }
 
-    public void setUserNames(String[] names) {
-        _userNames = arrayCopy(names);
+    public void setUserName(String name) {
+        _userName = name;
     }
 
     @ConfigurationProperty(order=9, confidential=true)
-    public GuardedString[] getPasswords() {
-        return arrayCopy(_passwords);
+    public GuardedString getPassword() {
+        return _password;
     }
 
-    public void setPasswords(GuardedString[] passwords) {
-        _passwords = arrayCopy(passwords);
-    }
-
-    @ConfigurationProperty(order=10)
-    public String[] getPoolNames() {
-        return arrayCopy(_poolNames);
-    }
-
-    public void setPoolNames(String[] poolNames) {
-        _poolNames = arrayCopy(poolNames);
+    public void setPassword(GuardedString password) {
+        _password = password;
     }
 
     @ConfigurationProperty(order=11)
@@ -315,42 +297,20 @@ public class RacfConfiguration extends AbstractConfiguration implements Poolable
     public void setConnectionClassName(String className) {
         _connectionClassName = className;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    public Integer getEvictionInterval() {
-        return _evictionInterval;
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public void setEvictionInterval(Integer evictionInterval) {
-        _evictionInterval = evictionInterval;
-    }
-
-    public String getSegmentParserList() {
-        return _segmentParserList;
-    }
-
-    public void setSegmentParserList(String parserList) {
-        _segmentParserList = parserList;
-    }
-
-    public String getAffinityList() {
-        return _affinityList;
-    }
-
-    public void setAffinityList(String affinityList) {
-        _affinityList = affinityList;
-    }
-    
     private <T> T[] arrayCopy(T[] array) {
         if (array==null)
             return null;
         T [] result = (T[])Array.newInstance(array.getClass().getComponentType(), array.length);
         System.arraycopy(array, 0, result, 0, result.length);
         return result;
+    }
+
+    public String getScriptingLanguage() {
+        return _scriptingLanguage;
+    }
+
+    public void setScriptingLanguage(String language) {
+        _scriptingLanguage = language;
     }
 }
