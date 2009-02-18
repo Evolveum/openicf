@@ -84,12 +84,11 @@ public class DB2ConfigurationTest {
 	
 	private static DB2Configuration createTestType4Configuration(){
 		DB2Configuration conf = createDB2Configuration();
-		Properties properties = TestHelpers.getProperties();
-		String databaseName = properties.getProperty("type4.databaseName",null);
-		String adminAcoount = properties.getProperty("type4.adminAccount",null);
-		String adminPassword = properties.getProperty("type4.adminPassword",null);
-		String host = properties.getProperty("type4.host");
-		String port = properties.getProperty("type4.port");
+		String databaseName = TestHelpers.getProperty("type4.databaseName",null);
+		String adminAcoount = TestHelpers.getProperty("type4.adminAccount",null);
+		String adminPassword = TestHelpers.getProperty("type4.adminPassword",null);
+		String host = TestHelpers.getProperty("type4.host",null);
+		String port = TestHelpers.getProperty("type4.port",null);
 		conf.setDatabaseName(databaseName);
 		conf.setAdminAccount(adminAcoount);
 		conf.setAdminPassword(new GuardedString(adminPassword.toCharArray()));
@@ -168,14 +167,13 @@ public class DB2ConfigurationTest {
 	
 	
     private static DB2Configuration createTestType2Configuration(String driver){
-        Properties properties = TestHelpers.getProperties();
-        String alias = properties.getProperty("type2.alias");
+        String alias = TestHelpers.getProperty("type2.alias",null);
         if(alias == null){
             return null;
         }
         DB2Configuration conf = createDB2Configuration();
-        String adminAccount = properties.getProperty("type2.adminAccount");
-        String adminPassword = properties.getProperty("type2.adminPassword");
+        String adminAccount = TestHelpers.getProperty("type2.adminAccount",null);
+        String adminPassword = TestHelpers.getProperty("type2.adminPassword",null);
         conf.setDatabaseName(alias);
         conf.setAdminAccount(adminAccount);
         conf.setAdminPassword(new GuardedString(adminPassword.toCharArray()));
