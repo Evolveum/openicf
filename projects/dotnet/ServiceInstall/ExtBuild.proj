@@ -28,6 +28,7 @@
 		<!-- Make sure the Service and all its deps are built -->
 		<MSBuild Projects="..\Common\Common.csproj" />
 		<MSBuild Projects="..\Framework\Framework.csproj" />
+		<MSBuild Projects="..\TestCommon\TestCommon.csproj" />
 		<MSBuild Projects="..\FrameworkInternal\FrameworkInternal.csproj" />
 		<MSBuild Projects="..\Service\Service.csproj" />
 		<!-- write out the top of the file.. -->

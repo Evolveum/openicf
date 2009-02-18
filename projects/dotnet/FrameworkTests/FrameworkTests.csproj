@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ====================
   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
   
@@ -100,6 +100,10 @@
     <ProjectReference Include="..\FrameworkInternal\FrameworkInternal.csproj">
       <Project>{5B011775-B121-4EEE-A410-BA2D2F5BFB8B}</Project>
       <Name>FrameworkInternal</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TestCommon\TestCommon.csproj">
+      <Project>{E6A207D2-E083-41BF-B522-D9D3EC09323E}</Project>
+      <Name>TestCommon</Name>
     </ProjectReference>
   </ItemGroup>
   <Target Name="BeforeBuild">

@@ -28,10 +28,10 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using NUnit.Framework.SyntaxHelpers;
 
-using Org.IdentityConnectors.Framework.Test;
+using Org.IdentityConnectors.Test.Common;
 
 namespace FrameworkTests
-{
+{    
     /// <summary>
     /// Description of TestHelperTests.
     /// </summary>

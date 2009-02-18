@@ -84,8 +84,7 @@
     <Compile Include="CommonObjectsFilter.cs" />
     <Compile Include="CommonSerializer.cs" />
     <Compile Include="Spi.cs" />
-    <Compile Include="SpiOperations.cs" />
-    <Compile Include="Test.cs" />
+    <Compile Include="SpiOperations.cs" />    
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj">

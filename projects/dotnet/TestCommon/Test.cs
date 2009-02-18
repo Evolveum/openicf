@@ -31,14 +31,18 @@ using System.Xml;
 using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Framework.Api;
 using Org.IdentityConnectors.Framework.Api.Operations;
-using Org.IdentityConnectors.Framework.Common;
 using Org.IdentityConnectors.Framework.Common.Objects;
 using Org.IdentityConnectors.Framework.Common.Objects.Filters;
 using Org.IdentityConnectors.Framework.Spi;
 using Org.IdentityConnectors.Framework.Spi.Operations;
+using Org.IdentityConnectors.Test.Common.Spi;
 
-namespace Org.IdentityConnectors.Framework.Test
-{
+namespace Org.IdentityConnectors.Test.Common
+{    
+    /// <summary>    
+    /// <see cref="ResultsHandler"/> which stores all connector objects into
+    /// list retrievable with <see cref="Objects"/>.
+    /// </summary>
     public sealed class ToListResultsHandler {
         private IList<ConnectorObject> _objects 
             = new List<ConnectorObject>();
@@ -53,14 +57,21 @@ namespace Org.IdentityConnectors.Framework.Test
             }
         }
     }
-    public abstract class TestHelpers {
+
+    /// <summary>
+    /// Bag of utility methods useful to connector tests.
+    /// </summary>
+    public sealed class TestHelpers {
+        
+        private TestHelpers() {
+        }
         
         /**
          * Method for convenient testing of local connectors. 
          */
         public static APIConfiguration CreateTestConfiguration(SafeType<Connector> clazz,
                 Configuration config) {
-            return GetInstance().CreateTestConfigurationImpl(clazz, config);
+            return GetSpi().CreateTestConfiguration(clazz, config);
         }
         
         /**
@@ -71,7 +82,7 @@ namespace Org.IdentityConnectors.Framework.Test
          * @return A dummy message catalog.
          */
         public static ConnectorMessages CreateDummyMessages() {
-            return GetInstance().CreateDummyMessagesImpl();
+            return GetSpi().CreateDummyMessages();
         }
             
         public static IList<ConnectorObject> SearchToList(SearchApiOp search, 
@@ -148,40 +159,29 @@ namespace Org.IdentityConnectors.Framework.Test
                 Filter filter, 
                 ResultsHandler handler,
                 OperationOptions options) where T : class {
-            GetInstance().SearchImpl(search, oclass, filter, handler, options);
+            GetSpi().Search(search, oclass, filter, handler, options);
         }
-        
-        
+                
         //At some point we might make this pluggable, but for now, hard-code
         private const String IMPL_NAME =
             "Org.IdentityConnectors.Framework.Impl.Test.TestHelpersImpl";
         private static readonly object LOCK = new object();
-        private static TestHelpers _instance;
+        private static TestHelpersSpi _instance;
         
         /**
          * Returns the instance of this factory.
          * @return The instance of this factory
          */
-        private static TestHelpers GetInstance() {
+        private static TestHelpersSpi GetSpi() {
             lock(LOCK) {
                 if (_instance == null) {
-                    SafeType<TestHelpers> type = FrameworkInternalBridge.LoadType<TestHelpers>(IMPL_NAME);
+                    SafeType<TestHelpersSpi> type = FrameworkInternalBridge.LoadType<TestHelpersSpi>(IMPL_NAME);
                     _instance = type.CreateInstance();
                 }
                 return _instance;
             }
         }
     
-        
-        abstract protected APIConfiguration CreateTestConfigurationImpl(SafeType<Connector> clazz,
-                Configuration config);
-        abstract protected void SearchImpl<T>(SearchOp<T> search,
-                ObjectClass oclass, 
-                Filter filter, 
-                ResultsHandler handler,
-                OperationOptions options) where T : class;
- 
-
         private static IDictionary<string, string> _properties = null;
         private static readonly string PREFIX = Environment.GetEnvironmentVariable("USERPROFILE") + "/.connectors/";
         public static readonly string GLOBAL_PROPS = "connectors.xml";
@@ -289,8 +289,6 @@ namespace Org.IdentityConnectors.Framework.Test
                   reader.Close();
             }
             return ret;
-        }
-        
-        abstract protected ConnectorMessages CreateDummyMessagesImpl();
+        }                
     }
 }

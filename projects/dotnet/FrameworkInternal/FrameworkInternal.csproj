@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ====================
   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
   
@@ -99,6 +99,10 @@
     <ProjectReference Include="..\Framework\Framework.csproj">
       <Project>{8B24461B-456A-4032-89A1-CD418F7B5B62}</Project>
       <Name>Framework</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TestCommon\TestCommon.csproj">
+      <Project>{E6A207D2-E083-41BF-B522-D9D3EC09323E}</Project>
+      <Name>TestCommon</Name>
     </ProjectReference>
   </ItemGroup>
 </Project>

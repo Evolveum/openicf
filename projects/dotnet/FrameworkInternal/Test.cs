@@ -33,16 +33,16 @@ using Org.IdentityConnectors.Framework.Common.Objects;
 using Org.IdentityConnectors.Framework.Common.Objects.Filters;
 using Org.IdentityConnectors.Framework.Spi;
 using Org.IdentityConnectors.Framework.Spi.Operations;
-using Org.IdentityConnectors.Framework.Test;
+using Org.IdentityConnectors.Test.Common.Spi;
 
 namespace Org.IdentityConnectors.Framework.Impl.Test
-{
-    public class TestHelpersImpl : TestHelpers {
+{    
+    public class TestHelpersImpl : TestHelpersSpi {
         
         /**
          * Method for convenient testing of local connectors. 
          */
-        protected override APIConfiguration CreateTestConfigurationImpl(SafeType<Connector> clazz,
+        public APIConfiguration CreateTestConfiguration(SafeType<Connector> clazz,
                 Configuration config) {
             LocalConnectorInfoImpl info = new LocalConnectorInfoImpl();
             info.ConnectorConfigurationClass=SafeType<Configuration>.Get(config);
@@ -52,7 +52,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Test
                    new ConnectorKey(clazz.RawType.Name+".bundle",
                     "1.0",
                     clazz.RawType.Name));
-            info.Messages=(CreateDummyMessages());
+            info.Messages=(this.CreateDummyMessages());
             APIConfigurationImpl rv = new APIConfigurationImpl();
             rv.IsConnectorPoolingSupported=(
                     IsConnectorPoolingSupported(clazz));
@@ -66,8 +66,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Test
                     rv);
             return rv;
         }
-        
-        
+                
         private static bool IsConnectorPoolingSupported(SafeType<Connector> clazz) {
             return ReflectionUtil.IsParentTypeOf(typeof(PoolableConnector),clazz.RawType);
         }
@@ -85,11 +84,12 @@ namespace Org.IdentityConnectors.Framework.Impl.Test
          * @param options The options - may be null - will
          *  be cast to an empty OperationOptions
          */
-        protected override void SearchImpl<T>(SearchOp<T> search,
+        public void Search<T>(SearchOp<T> search,
                 ObjectClass oclass, 
                 Filter filter, 
                 ResultsHandler handler,
-                OperationOptions options) {
+                OperationOptions options) where T : class
+        {
             if ( options == null ) {
                 options = new OperationOptionsBuilder().Build();
             }
@@ -97,7 +97,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Test
                  search, oclass, filter, handler, options);
         }
         
-        protected override ConnectorMessages CreateDummyMessagesImpl() {
+        public ConnectorMessages CreateDummyMessages() {
             return new DummyConnectorMessages();
         }
         
@@ -114,8 +114,6 @@ namespace Org.IdentityConnectors.Framework.Impl.Test
                 }
                 return builder.ToString();
             }
-        }
-    
+        }    
     }
-
 }

@@ -22,24 +22,20 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using NUnit.Framework;
-using Org.IdentityConnectors.Framework;
-using Org.IdentityConnectors.Framework.Spi;
-using Org.IdentityConnectors.Framework.Spi.Operations;
-using Org.IdentityConnectors.Framework.Common.Objects;
-using Org.IdentityConnectors.Framework.Common.Objects.Filters;
-using Org.IdentityConnectors.Framework.Test;
-using Org.IdentityConnectors.Common.Security;
 using System.Diagnostics;
-using System.Resources;
 using System.IO;
+using System.Linq;
 using System.Security.AccessControl;
 using System.Security.Principal;
-using Org.IdentityConnectors.Framework.Common.Exceptions;
-using Org.IdentityConnectors.Common;
+using System.Text;
 using System.Threading;
+using NUnit.Framework;
+using Org.IdentityConnectors.Common.Security;
+using Org.IdentityConnectors.Framework.Common.Exceptions;
+using Org.IdentityConnectors.Framework.Common.Objects;
+using Org.IdentityConnectors.Framework.Common.Objects.Filters;
+using Org.IdentityConnectors.Framework.Spi;
+using Org.IdentityConnectors.Test.Common;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
