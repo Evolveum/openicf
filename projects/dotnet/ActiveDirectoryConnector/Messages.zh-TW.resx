@@ -1,0 +1,282 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="connector_displayName" xml:space="preserve">
+    <value>Windows Active Directory Connector</value>
+  </data>
+  <data name="display_CreateHomeDirectory" xml:space="preserve">
+    <value>建立主目錄</value>
+  </data>
+  <data name="display_DirectoryAdminName" xml:space="preserve">
+    <value>目錄管理員的帳號</value>
+  </data>
+  <data name="display_DirectoryAdminPassword" xml:space="preserve">
+    <value>目錄管理員的密碼</value>
+  </data>
+  <data name="display_domainName" xml:space="preserve">
+    <value>網域名稱</value>
+  </data>
+  <data name="display_LDAPHostName" xml:space="preserve">
+    <value>Active Directory 網域控制器主機名稱</value>
+  </data>
+  <data name="display_ObjectClass" xml:space="preserve">
+    <value>使用者物件的物件類別</value>
+  </data>
+  <data name="display_SearchChildDomains" xml:space="preserve">
+    <value>搜尋子網域</value>
+  </data>
+  <data name="display_Container" xml:space="preserve">
+    <value>容器</value>
+  </data>
+  <data name="display_SyncDomainController" xml:space="preserve">
+    <value>同步化網域控制器</value>
+  </data>
+  <data name="display_SyncGlobalCatalogServer" xml:space="preserve">
+    <value>同步化全域目錄伺服器</value>
+  </data>
+  <data name="display_SearchContext" xml:space="preserve">
+    <value>搜尋上下文</value>
+  </data>
+  <data name="help_CreateHomeDirectory" xml:space="preserve">
+    <value>指定是否要建立使用者的主目錄。 </value>
+  </data>
+  <data name="help_DirectoryAdminName" xml:space="preserve">
+    <value>輸入系統進行認證時採用的管理員使用者名稱。此設定可以是「使用者名稱」或「網域名稱」\「使用者名稱」。</value>
+  </data>
+  <data name="help_DirectoryAdminPassword" xml:space="preserve">
+    <value>輸入進行認證時應使用的密碼。</value>
+  </data>
+  <data name="help_domainName" xml:space="preserve">
+    <value>Windows 網域的名稱 (例如 windowsdomain.mycompany.com)</value>
+  </data>
+  <data name="help_LDAPHostName" xml:space="preserve">
+    <value>若是跨網域進行管理，請輸入 LDAP 伺服器的主機名稱、IP 位址或網域名稱。</value>
+  </data>
+  <data name="help_ObjectClass" xml:space="preserve">
+    <value>針對要在此資源上管理的使用者物件，指定 Active Directory 物件類別。預設值為【User】，且在大部分情況下均適用。</value>
+  </data>
+  <data name="help_SearchChildDomains" xml:space="preserve">
+    <value>若要 Active Directory 的搜尋包含子網域，請選取此選項。此外此外您必須在父網域頂端設定【搜尋容器】及【同步化搜尋上下文】(請參閱同步化設定) 屬性 (例如 DC=mydomain,DC=com)。</value>
+  </data>
+  <data name="help_Container" xml:space="preserve">
+    <value>指定將成為所有搜尋之預設根目錄的容器物件。除非搜尋明確指定有其他條件，否則只會搜尋此容器中的物件。例如，若想要擷取【Users】容器中的使用者，請輸入 CN=Users,DC=MYDOMAIN,DC=COM。若未指定任何值，將使用「基底容器」屬性值。</value>
+  </data>
+  <data name="help_SyncDomainController" xml:space="preserve">
+    <value>Active Sync 期間要使用的網域控制器。只有在不搜尋子網域時才使用。</value>
+  </data>
+  <data name="help_SyncGlobalCatalogServer" xml:space="preserve">
+    <value>全域目錄伺服器的名稱。只有在搜尋子網域時才需要。</value>
+  </data>
+  <data name="help_SearchContext" xml:space="preserve">
+    <value>指定將 searchAttributes 所指定的屬性解析為本機 DN 格式時，要在何處查詢 ADSI 目錄。</value>
+  </data>
+  <data name="ex_ConnectorNotConfigured" xml:space="preserve">
+    <value>尚未配置連接器</value>
+  </data>
+  <data name="ex_DeleteNotSupported" xml:space="preserve">
+    <value>不支援刪除物件類別 {0}</value>
+  </data>
+  <data name="ex_InvalidObjectClass" xml:space="preserve">
+    <value>無效的物件類別: {0}</value>
+  </data>
+  <data name="ex_missingSyncAttribute" xml:space="preserve">
+    <value>連接器物件中沒有屬性 {0}。無法繼續同步化</value>
+  </data>
+  <data name="ex_OperationalAttributeNull" xml:space="preserve">
+    <value>名稱作業屬性不得為空</value>
+  </data>
+  <data name="ex_SyncNotAvailable" xml:space="preserve">
+    <value>同步化作業不適用於物件類別 {0}</value>
+  </data>
+  <data name="ex_UIDNotPresent" xml:space="preserve">
+    <value>uid 不存在</value>
+  </data>
+  <data name="ex_InvalidObjectClassInConfiguration" xml:space="preserve">
+    <value>連接器配置中指定了無效的物件類別。Active Directory 中找不到物件類別「{0}」</value>
+  </data>
+  <data name="ex_AttributeNull" xml:space="preserve">
+    <value>無法將連接器屬性增加至 &lt;null&gt; 搜尋結果</value>
+  </data>
+  <data name="ex_CouldNotAddNullAttributeToDe" xml:space="preserve">
+    <value>無法將連接器屬性增加至 &lt;null&gt; 目錄項目</value>
+  </data>
+  <data name="ex_ExpectingSingleValue" xml:space="preserve">
+    <value>屬性 {0} 應僅有單一值，但卻出現多個值</value>
+  </data>
+  <data name="ex_ObjectClassInvalidForConnector" xml:space="preserve">
+    <value>物件類別「{0}」對此連接器無效</value>
+  </data>
+  <data name="ex_InvalidCredentials" xml:space="preserve">
+    <value>為使用者 {0} 提供的憑證無效</value>
+  </data>
+  <data name="ex_PasswordMustBeReset" xml:space="preserve">
+    <value>必須重設密碼才可重設密碼過期功能</value>
+  </data>
+  <data name="ex_LockAccountNotAllowed" xml:space="preserve">
+    <value>Active Directory 不支援鎖定使用者。只能解除鎖定使用者</value>
+  </data>
+  <data name="ex_invalidSearchScope" xml:space="preserve">
+    <value>提供的搜尋範圍無效: {0}</value>
+  </data>
+  <data name="ex_GUIDLookup" xml:space="preserve">
+    <value>驗證使用者 {0} 期間發生異常。已成功認證使用者，但無法確定使用者的 GUID。</value>
+  </data>
+  <data name="ex_SIDLookup" xml:space="preserve">
+    <value>驗證使用者 {0} 期間發生異常。已成功認證使用者，但無法確定使用者的 SID。</value>
+  </data>
+  <data name="confReqParam_adminName" xml:space="preserve">
+    <value>未提供目錄管理員名稱。  </value>
+  </data>
+  <data name="confReqParam_adminPass" xml:space="preserve">
+    <value>未提供目錄管理員密碼。  </value>
+  </data>
+  <data name="confReqParam_domainName" xml:space="preserve">
+    <value>未提供網域名稱。  </value>
+  </data>
+  <data name="confReqParam_objClass" xml:space="preserve">
+    <value>未提供物件類別。  </value>
+  </data>
+  <data name="confReqParam_Container" xml:space="preserve">
+    <value>未提供搜尋容器。  </value>
+  </data>
+  <data name="warn_CompatibilityModeQuery" xml:space="preserve">
+    <value>使用 Identity Manger 資源配接卡樣式查詢「{0}」。應更新為使用新的連接器查詢語法。</value>
+  </data>
+  <data name="ex_InvalidContainerInConfiguration" xml:space="preserve">
+    <value>提供的容器無效: {0}</value>
+  </data>
+  <data name="display_ShellScriptVariablePrefix" xml:space="preserve">
+    <value>shell 程序檔變數前綴</value>
+  </data>
+  <data name="help_ShellScriptVariablePrefix" xml:space="preserve">
+    <value>將增加至所有 shell 程序檔引數名稱的前綴。例如，若將前綴設定為「Connector_」，則稱為「User」的引數會變成「Connector_User」</value>
+  </data>
+  <data name="ex_AccountLocked" xml:space="preserve">
+    <value>使用者的帳號已鎖定</value>
+  </data>
+  <data name="ex_PasswordMustChange" xml:space="preserve">
+    <value>必須變更使用者密碼</value>
+  </data>
+  <data name="ex_AccountExpired" xml:space="preserve">
+    <value>使用者 {0} 的使用者帳號已過期。</value>
+  </data>
+  <data name="ex_InvalidSearchContextInConfiguration" xml:space="preserve">
+    <value>提供的搜尋上下文無效: {0}</value>
+  </data>
+</root>

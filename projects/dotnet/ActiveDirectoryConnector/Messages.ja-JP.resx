@@ -1,0 +1,282 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="connector_displayName" xml:space="preserve">
+    <value>Windows Active Directory コネクタ</value>
+  </data>
+  <data name="display_CreateHomeDirectory" xml:space="preserve">
+    <value>ホームディレクトリの作成</value>
+  </data>
+  <data name="display_DirectoryAdminName" xml:space="preserve">
+    <value>ディレクトリ管理者のアカウント</value>
+  </data>
+  <data name="display_DirectoryAdminPassword" xml:space="preserve">
+    <value>ディレクトリ管理者のパスワード</value>
+  </data>
+  <data name="display_domainName" xml:space="preserve">
+    <value>ドメイン名</value>
+  </data>
+  <data name="display_LDAPHostName" xml:space="preserve">
+    <value>Active Directory ドメインコントローラのホスト名</value>
+  </data>
+  <data name="display_ObjectClass" xml:space="preserve">
+    <value>ユーザーオブジェクトのオブジェクトクラス</value>
+  </data>
+  <data name="display_SearchChildDomains" xml:space="preserve">
+    <value>子ドメインの検索</value>
+  </data>
+  <data name="display_Container" xml:space="preserve">
+    <value>コンテナ</value>
+  </data>
+  <data name="display_SyncDomainController" xml:space="preserve">
+    <value>ドメインコントローラの同期</value>
+  </data>
+  <data name="display_SyncGlobalCatalogServer" xml:space="preserve">
+    <value>グローバルカタログサーバーの同期</value>
+  </data>
+  <data name="display_SearchContext" xml:space="preserve">
+    <value>検索コンテキスト</value>
+  </data>
+  <data name="help_CreateHomeDirectory" xml:space="preserve">
+    <value>ユーザー用ホームディレクトリを作成するかどうかを指定します。 </value>
+  </data>
+  <data name="help_DirectoryAdminName" xml:space="preserve">
+    <value>システムが認証に使用する管理者のユーザー名を入力します。ユーザー名または &apos;ドメイン名&apos;\ユーザー名&apos; の形式で設定できます。</value>
+  </data>
+  <data name="help_DirectoryAdminPassword" xml:space="preserve">
+    <value>認証に使用するパスワードを入力します。</value>
+  </data>
+  <data name="help_domainName" xml:space="preserve">
+    <value>Windows のドメイン名 (例: windowsdomain.mycompany.com)</value>
+  </data>
+  <data name="help_LDAPHostName" xml:space="preserve">
+    <value>クロスドメイン管理を行う場合は、ホスト名、IP アドレス、または LDAP サーバーのドメイン名を入力します。</value>
+  </data>
+  <data name="help_ObjectClass" xml:space="preserve">
+    <value>このリソース上で管理するユーザーオブジェクトの Active Directory オブジェクトクラスを指定します。デフォルトは User で、多くの場合、この設定が適切です。</value>
+  </data>
+  <data name="help_SearchChildDomains" xml:space="preserve">
+    <value>Active Directory の検索に子ドメインを含めるかどうかを選択します。さらに、親ドメインの先頭に、DC=mydomain,DC=com のように、検索コンテナおよび検索コンテキスト (同期設定を参照) 属性を設定してください。</value>
+  </data>
+  <data name="help_Container" xml:space="preserve">
+    <value>すべての検索のデフォルトルートとなるコンテナオブジェクトを指定します。検索を明示的に他の条件に渡さない場合、このコンテナ内のオブジェクトのみが検索されます。たとえば、Users コンテナからユーザーを取得する場合は、CN=Users,DC=MYDOMAIN,DC=COM を入力します。値を指定しないと、&apos;Base Container&apos; 属性の値が使用されます。</value>
+  </data>
+  <data name="help_SyncDomainController" xml:space="preserve">
+    <value>アクティブ同期中に使用するドメインコントローラ。子ドメインを検索しない場合にのみ使用します。</value>
+  </data>
+  <data name="help_SyncGlobalCatalogServer" xml:space="preserve">
+    <value>グローバルカタログサーバーの名前。子ドメインを検索する場合にのみ必要です。</value>
+  </data>
+  <data name="help_SearchContext" xml:space="preserve">
+    <value>検索属性で指定された属性のネイティブ DN 形式への解決を試みる場合に、ADSI ディレクトリ中でどこを検索するかを指定します。</value>
+  </data>
+  <data name="ex_ConnectorNotConfigured" xml:space="preserve">
+    <value>コネクタが設定されていません</value>
+  </data>
+  <data name="ex_DeleteNotSupported" xml:space="preserve">
+    <value>オブジェクトクラス {0} では削除はサポートされていません</value>
+  </data>
+  <data name="ex_InvalidObjectClass" xml:space="preserve">
+    <value>無効なオブジェクトクラス: {0}</value>
+  </data>
+  <data name="ex_missingSyncAttribute" xml:space="preserve">
+    <value>コネクタオブジェクトに属性 {0} がありません。同期を続行できません</value>
+  </data>
+  <data name="ex_OperationalAttributeNull" xml:space="preserve">
+    <value>名前のオペレーショナル属性を null にすることはできません</value>
+  </data>
+  <data name="ex_SyncNotAvailable" xml:space="preserve">
+    <value>オブジェクトクラス {0} では同期動作はできません</value>
+  </data>
+  <data name="ex_UIDNotPresent" xml:space="preserve">
+    <value>UID がありません</value>
+  </data>
+  <data name="ex_InvalidObjectClassInConfiguration" xml:space="preserve">
+    <value>コネクタ設定に無効なオブジェクトクラスが指定されました。Active Directory からオブジェクトクラス \&apos;{0}\&apos; が見つかりませんでした</value>
+  </data>
+  <data name="ex_AttributeNull" xml:space="preserve">
+    <value>&lt;null&gt; の検索結果にコネクタ属性を追加できませんでした</value>
+  </data>
+  <data name="ex_CouldNotAddNullAttributeToDe" xml:space="preserve">
+    <value>&lt;null&gt; のディレクトリ入力にコネクタ属性を追加できませんでした</value>
+  </data>
+  <data name="ex_ExpectingSingleValue" xml:space="preserve">
+    <value>単一の値を要求しているときに、属性 {0} に対して複数の値が検索されました</value>
+  </data>
+  <data name="ex_ObjectClassInvalidForConnector" xml:space="preserve">
+    <value>オブジェクトクラス \&apos;{0}\&apos; はこのコネクタでは無効です</value>
+  </data>
+  <data name="ex_InvalidCredentials" xml:space="preserve">
+    <value>ユーザー {0} に無効な認証情報が指定されました</value>
+  </data>
+  <data name="ex_PasswordMustBeReset" xml:space="preserve">
+    <value>パスワードをリセットすることでのみパスワードを期限切れにすることができます</value>
+  </data>
+  <data name="ex_LockAccountNotAllowed" xml:space="preserve">
+    <value>Active Directory はユーザーのロックをサポートしません。ユーザーのロック解除のみができます</value>
+  </data>
+  <data name="ex_invalidSearchScope" xml:space="preserve">
+    <value>無効な検索範囲が指定されました:  {0}</value>
+  </data>
+  <data name="ex_GUIDLookup" xml:space="preserve">
+    <value>ユーザー {0} の検証時に例外が発生しました。ユーザーの認証は正常に実行されましたが、ユーザーの GUID を特定できませんでした。</value>
+  </data>
+  <data name="ex_SIDLookup" xml:space="preserve">
+    <value>ユーザー {0} の検証時に例外が発生しました。ユーザーの認証は正常に実行されましたが、ユーザーの SID を特定できませんでした。</value>
+  </data>
+  <data name="confReqParam_adminName" xml:space="preserve">
+    <value>ディレクトリ管理者の名前が指定されていません。  </value>
+  </data>
+  <data name="confReqParam_adminPass" xml:space="preserve">
+    <value>ディレクトリ管理者のパスワードが指定されていません。  </value>
+  </data>
+  <data name="confReqParam_domainName" xml:space="preserve">
+    <value>ドメイン名が指定されていません。  </value>
+  </data>
+  <data name="confReqParam_objClass" xml:space="preserve">
+    <value>オブジェクトクラスが指定されていません。  </value>
+  </data>
+  <data name="confReqParam_Container" xml:space="preserve">
+    <value>検索コンテナが指定されていません。  </value>
+  </data>
+  <data name="warn_CompatibilityModeQuery" xml:space="preserve">
+    <value>識別情報マネージャーリソースアダプタのスタイルクエリー &apos;{0}&apos; を使用しています。新規コネクタのクエリー構文を使用するには、このスタイルクエリーを更新してください。</value>
+  </data>
+  <data name="ex_InvalidContainerInConfiguration" xml:space="preserve">
+    <value>無効なコンテナが指定されました:  {0}</value>
+  </data>
+  <data name="display_ShellScriptVariablePrefix" xml:space="preserve">
+    <value>シェルスクリプトの変数のプレフィックス</value>
+  </data>
+  <data name="help_ShellScriptVariablePrefix" xml:space="preserve">
+    <value>シェルスクリプトのすべての引数名に追加されるプレフィックス。たとえば、プレフィックスを &quot;Connector_&quot; に設定すると、引数 &quot;User&quot; は &quot;Connector_User&quot; になります</value>
+  </data>
+  <data name="ex_AccountLocked" xml:space="preserve">
+    <value>ユーザーのアカウントがロックされています</value>
+  </data>
+  <data name="ex_PasswordMustChange" xml:space="preserve">
+    <value>ユーザーのパスワードを変更してください</value>
+  </data>
+  <data name="ex_AccountExpired" xml:space="preserve">
+    <value>ユーザー {0} のユーザーアカウントの期限が切れています</value>
+  </data>
+  <data name="ex_InvalidSearchContextInConfiguration" xml:space="preserve">
+    <value>無効な検索コンテキストが指定されました:  {0}</value>
+  </data>
+</root>

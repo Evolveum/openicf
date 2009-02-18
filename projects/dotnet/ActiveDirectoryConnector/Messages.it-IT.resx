@@ -1,0 +1,282 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="connector_displayName" xml:space="preserve">
+    <value>Connettore Windows Active Directory</value>
+  </data>
+  <data name="display_CreateHomeDirectory" xml:space="preserve">
+    <value>Crea directory home</value>
+  </data>
+  <data name="display_DirectoryAdminName" xml:space="preserve">
+    <value>Account amministratore directory</value>
+  </data>
+  <data name="display_DirectoryAdminPassword" xml:space="preserve">
+    <value>Password amministratore directory</value>
+  </data>
+  <data name="display_domainName" xml:space="preserve">
+    <value>Nome dominio</value>
+  </data>
+  <data name="display_LDAPHostName" xml:space="preserve">
+    <value>Nome host controller di dominio Active Directory </value>
+  </data>
+  <data name="display_ObjectClass" xml:space="preserve">
+    <value>Classe oggetto per oggetti utente</value>
+  </data>
+  <data name="display_SearchChildDomains" xml:space="preserve">
+    <value>Ricerca nei domini figli</value>
+  </data>
+  <data name="display_Container" xml:space="preserve">
+    <value>Contenitore</value>
+  </data>
+  <data name="display_SyncDomainController" xml:space="preserve">
+    <value>Sincronizza controller di dominio</value>
+  </data>
+  <data name="display_SyncGlobalCatalogServer" xml:space="preserve">
+    <value>Sincronizza server di catalogo globale</value>
+  </data>
+  <data name="display_SearchContext" xml:space="preserve">
+    <value>Contesto di ricerca</value>
+  </data>
+  <data name="help_CreateHomeDirectory" xml:space="preserve">
+    <value>Specificare se verrà creata la directory home dell’utente. </value>
+  </data>
+  <data name="help_DirectoryAdminName" xml:space="preserve">
+    <value>Immettere il nome utente dell’amministratore con cui il sistema deve eseguire l’autenticazione. È possibile inserire direttamente il nome utente o usare il formato ’nome_dominio\’nome_utente’.</value>
+  </data>
+  <data name="help_DirectoryAdminPassword" xml:space="preserve">
+    <value>Immettere la password da utilizzare per l’autenticazione.</value>
+  </data>
+  <data name="help_domainName" xml:space="preserve">
+    <value>Nome del dominio Windows (ad es. nomedominio.azienda.com)</value>
+  </data>
+  <data name="help_LDAPHostName" xml:space="preserve">
+    <value>Per l’amministrazione interdominio, immettere nome host, indirizzo IP o nome dominio del server LDAP.</value>
+  </data>
+  <data name="help_ObjectClass" xml:space="preserve">
+    <value>Specificare la classe oggetto di Active Directory per gli oggetti utente che verranno gestiti su questa risorsa.  L’impostazione predefinita, User, dovrebbe essere appropriata per la maggior parte delle situazioni.</value>
+  </data>
+  <data name="help_SearchChildDomains" xml:space="preserve">
+    <value>Selezionare questa opzione se le ricerche in Active Directory devono includere i domini figli. Inoltre, gli attributi Contenitore di ricerca e Sincronizza contesto di ricerca (vedere le impostazioni di sincronizzazione) devono essere impostati sul livello più elevato del dominio padre, es. DC=nomedominio,DC=com.</value>
+  </data>
+  <data name="help_Container" xml:space="preserve">
+    <value>Specificare un oggetto contenitore che fungerà da radice predefinita per tutte le ricerche. A meno che la ricerca non passi esplicitamente altri criteri, verranno ricercati solo gli oggetti inclusi in questo contenitore. Ad esempio, se si desidera richiamare gli utenti dal contenitore Users, immettere CN=Users,DC=NOMEDOMINIO,DC=COM  Se non si specifica un valore, viene usato quello dell’attributo ’Base Container’.</value>
+  </data>
+  <data name="help_SyncDomainController" xml:space="preserve">
+    <value>Il controller di dominio da usare durante Active Sync. Usato solo se non viene eseguita la ricerca nei domini figli.</value>
+  </data>
+  <data name="help_SyncGlobalCatalogServer" xml:space="preserve">
+    <value>Nome del server di catalogo globale. È richiesto solo se si esegue la ricerca nei domini figli.</value>
+  </data>
+  <data name="help_SearchContext" xml:space="preserve">
+    <value>Specificare dove cercare nella directory ADSI quando si cerca di risolvere l’attributo specificato da searchAttributes nel formato DN nativo.</value>
+  </data>
+  <data name="ex_ConnectorNotConfigured" xml:space="preserve">
+    <value>Il connettore non è stato configurato</value>
+  </data>
+  <data name="ex_DeleteNotSupported" xml:space="preserve">
+    <value>Eliminazione non supportata per la classe oggetto {0}</value>
+  </data>
+  <data name="ex_InvalidObjectClass" xml:space="preserve">
+    <value>Classe oggetto non valida: {0}</value>
+  </data>
+  <data name="ex_missingSyncAttribute" xml:space="preserve">
+    <value>L’attributo {0} non è presente nell’oggetto connettore. Impossibile procedere con la sincronizzazione</value>
+  </data>
+  <data name="ex_OperationalAttributeNull" xml:space="preserve">
+    <value>L’attributo operativo del nome non può essere nullo</value>
+  </data>
+  <data name="ex_SyncNotAvailable" xml:space="preserve">
+    <value>L’operazione di sincronizzazione non è disponibile per la classe oggetto {0}</value>
+  </data>
+  <data name="ex_UIDNotPresent" xml:space="preserve">
+    <value>UID non presente</value>
+  </data>
+  <data name="ex_InvalidObjectClassInConfiguration" xml:space="preserve">
+    <value>È stata specificata una classe oggetto non valida nella configurazione del connettore. Impossibile trovare la classe oggetto \’{0}\’ in Active Directory</value>
+  </data>
+  <data name="ex_AttributeNull" xml:space="preserve">
+    <value>Impossibile aggiungere l’attributo del connettore a risultati di ricerca nulli</value>
+  </data>
+  <data name="ex_CouldNotAddNullAttributeToDe" xml:space="preserve">
+    <value>Impossibile aggiungere l’attributo del connettore a una voce di directory nulla</value>
+  </data>
+  <data name="ex_ExpectingSingleValue" xml:space="preserve">
+    <value>Era atteso un valore singolo ma sono stati trovati più valori per l’attributo {0}</value>
+  </data>
+  <data name="ex_ObjectClassInvalidForConnector" xml:space="preserve">
+    <value>La classe oggetto \’{0}\’ non è valida per questo connettore</value>
+  </data>
+  <data name="ex_InvalidCredentials" xml:space="preserve">
+    <value>Le credenziali fornite per l’utente {0} non sono valide</value>
+  </data>
+  <data name="ex_PasswordMustBeReset" xml:space="preserve">
+    <value>La scadenza della password può essere modificata solo ripristinando la password</value>
+  </data>
+  <data name="ex_LockAccountNotAllowed" xml:space="preserve">
+    <value>Active Directory non supporta il blocco degli utenti. Gli utenti possono solo essere sbloccati</value>
+  </data>
+  <data name="ex_invalidSearchScope" xml:space="preserve">
+    <value>È stato fornito un ambito di ricerca non valido:  {0}</value>
+  </data>
+  <data name="ex_GUIDLookup" xml:space="preserve">
+    <value>Si è verificata un’eccezione nella convalida dell’utente {0}. L’utente è stato autenticato correttamente ma non è stato possibile determinare il relativo GUID.</value>
+  </data>
+  <data name="ex_SIDLookup" xml:space="preserve">
+    <value>Si è verificata un’eccezione nella convalida dell’utente {0}. L’utente è stato autenticato correttamente ma non è stato possibile determinare il relativo SID.</value>
+  </data>
+  <data name="confReqParam_adminName" xml:space="preserve">
+    <value>Non è stato fornito il nome dell’amministratore della directory.  </value>
+  </data>
+  <data name="confReqParam_adminPass" xml:space="preserve">
+    <value>Non è stata fornita la password dell’amministratore della directory.  </value>
+  </data>
+  <data name="confReqParam_domainName" xml:space="preserve">
+    <value>Non è stato fornito il nome del dominio.  </value>
+  </data>
+  <data name="confReqParam_objClass" xml:space="preserve">
+    <value>Non è stata fornita la classe oggetto.  </value>
+  </data>
+  <data name="confReqParam_Container" xml:space="preserve">
+    <value>Non è stato fornito il contenitore di ricerca.  </value>
+  </data>
+  <data name="warn_CompatibilityModeQuery" xml:space="preserve">
+    <value>La query utilizza lo stile dell’adattatore di risorsa di Identity Manager ’{0}’. Deve essere aggiornata in modo da utilizzare la nuova sintassi di query del connettore.</value>
+  </data>
+  <data name="ex_InvalidContainerInConfiguration" xml:space="preserve">
+    <value>È stato fornito un contenitore non valido: {0}</value>
+  </data>
+  <data name="display_ShellScriptVariablePrefix" xml:space="preserve">
+    <value>Prefisso variabili script della shell</value>
+  </data>
+  <data name="help_ShellScriptVariablePrefix" xml:space="preserve">
+    <value>Il prefisso che verrà aggiunto a tutti i nomi degli argomenti degli script della shell.  Ad esempio, se il prefisso è impostato su &quot;Connettore_&quot; un argomento di nome &quot;Utente&quot; verrà trasformato in &quot;Connettore_Utente&quot;</value>
+  </data>
+  <data name="ex_AccountLocked" xml:space="preserve">
+    <value>L’account utente è stato bloccato</value>
+  </data>
+  <data name="ex_PasswordMustChange" xml:space="preserve">
+    <value>La password deve essere modificata</value>
+  </data>
+  <data name="ex_AccountExpired" xml:space="preserve">
+    <value>Account utente scaduto per l’utente {0}</value>
+  </data>
+  <data name="ex_InvalidSearchContextInConfiguration" xml:space="preserve">
+    <value>È stato fornito un contesto di ricerca non valido: {0}</value>
+  </data>
+</root>
