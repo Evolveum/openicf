@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -118,6 +118,165 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="connector_displayName" xml:space="preserve">
-    <value>Active Direcory Connector</value>
+    <value>Conector de Windows Active Directory</value>
+  </data>
+  <data name="display_CreateHomeDirectory" xml:space="preserve">
+    <value>Crear directorio principal</value>
+  </data>
+  <data name="display_DirectoryAdminName" xml:space="preserve">
+    <value>Cuenta de administrador de Directory</value>
+  </data>
+  <data name="display_DirectoryAdminPassword" xml:space="preserve">
+    <value>Contraseña de administrador de Directory</value>
+  </data>
+  <data name="display_domainName" xml:space="preserve">
+    <value>Nombre de dominio</value>
+  </data>
+  <data name="display_LDAPHostName" xml:space="preserve">
+    <value>Nombre de host del controlador de dominio de Active Directory</value>
+  </data>
+  <data name="display_ObjectClass" xml:space="preserve">
+    <value>Clase de objeto para objetos de usuario</value>
+  </data>
+  <data name="display_SearchChildDomains" xml:space="preserve">
+    <value>Dominios secundarios de búsqueda</value>
+  </data>
+  <data name="display_Container" xml:space="preserve">
+    <value>Contenedor</value>
+  </data>
+  <data name="display_SyncDomainController" xml:space="preserve">
+    <value>Sincronizar controlador de dominio</value>
+  </data>
+  <data name="display_SyncGlobalCatalogServer" xml:space="preserve">
+    <value>Sincronizar servidor del catálogo global</value>
+  </data>
+  <data name="display_SearchContext" xml:space="preserve">
+    <value>Contexto de la búsqueda</value>
+  </data>
+  <data name="help_CreateHomeDirectory" xml:space="preserve">
+    <value>Especifique si se debe crear el directorio principal para el usuario. </value>
+  </data>
+  <data name="help_DirectoryAdminName" xml:space="preserve">
+    <value>Introduzca el nombre de usuario del administrador con el que debe autenticarse el sistema. El valor puede ser un nombre de usuario o &apos;nombredominio&apos;\&apos;nombreusuario&apos;.</value>
+  </data>
+  <data name="help_DirectoryAdminPassword" xml:space="preserve">
+    <value>Introduzca la contraseña que se debe usar al autenticar.</value>
+  </data>
+  <data name="help_domainName" xml:space="preserve">
+    <value>Nombre del dominio de Windows (ej. dominiowindows.miempresa.com)</value>
+  </data>
+  <data name="help_LDAPHostName" xml:space="preserve">
+    <value>En la administración de dominios cruzados, introduzca el nombre de host, la dirección IP o el nombre de dominio del servidor LDAP.</value>
+  </data>
+  <data name="help_ObjectClass" xml:space="preserve">
+    <value>Especifique la clase de objeto de Active Directory para los objetos de usuario que se administrarán en este recurso.  El valor predeterminado es User, que debe ser adecuado en la mayoría de los casos.</value>
+  </data>
+  <data name="help_SearchChildDomains" xml:space="preserve">
+    <value>Indique si quiere que las búsquedas de Active Directory incluyan dominios secundarios. Además, los atributos Contenedor de búsqueda y Sincronizar contexto de búsqueda (véase la configuración de sincronización) deben estar configurados en la parte superior del dominio principal; por ejemplo, DC=mydomain,DC=com.</value>
+  </data>
+  <data name="help_Container" xml:space="preserve">
+    <value>Especifique un objeto de contenedor que será el root predeterminado de todas la búsquedas.  A no ser que se produzca una búsqueda explícita con otros criterios, sólo se buscarán los objetos de este contenedor.  Por ejemplo, si desea recuperar usuarios del contenedor de usuarios, escriba CN=Users,DC=MYDOMAIN,DC=COM.  Si no se especifica ningún valor, se utiliza el valor del atributo &apos;Base Container&apos;.</value>
+  </data>
+  <data name="help_SyncDomainController" xml:space="preserve">
+    <value>Controlador de dominio que se debe usar al activar la sincronización.  Sólo se utiliza cuando no se busca en dominios secundarios.</value>
+  </data>
+  <data name="help_SyncGlobalCatalogServer" xml:space="preserve">
+    <value>Nombre del servidor del catálogo global.  Sólo es necesario cuando se busca en dominios secundarios.</value>
+  </data>
+  <data name="help_SearchContext" xml:space="preserve">
+    <value>Especifique dónde buscar en el directorio ADSI cuando se intente resolver el atributo especificado por Atributos de búsqueda al formato dn nativo.</value>
+  </data>
+  <data name="ex_ConnectorNotConfigured" xml:space="preserve">
+    <value>No se ha configurado el conector</value>
+  </data>
+  <data name="ex_DeleteNotSupported" xml:space="preserve">
+    <value>No se admite la eliminación para la clase de objeto {0}</value>
+  </data>
+  <data name="ex_InvalidObjectClass" xml:space="preserve">
+    <value>Clase de objeto no válida: {0}</value>
+  </data>
+  <data name="ex_missingSyncAttribute" xml:space="preserve">
+    <value>El atributo {0} no está presente en el objeto de conector.  No se puede proceder a la sincronización.</value>
+  </data>
+  <data name="ex_OperationalAttributeNull" xml:space="preserve">
+    <value>El atributo operativo de nombre no puede ser nulo</value>
+  </data>
+  <data name="ex_SyncNotAvailable" xml:space="preserve">
+    <value>La operación de sincronización no está disponible para la clase de objeto {0}</value>
+  </data>
+  <data name="ex_UIDNotPresent" xml:space="preserve">
+    <value>No había Uid</value>
+  </data>
+  <data name="ex_InvalidObjectClassInConfiguration" xml:space="preserve">
+    <value>Se había especificado una clase de objeto no válida en la configuración del conector.  La clase de objeto \&apos;{0}\&apos; no se ha encontrado en Active Directory</value>
+  </data>
+  <data name="ex_AttributeNull" xml:space="preserve">
+    <value>No se pudo agregar el atributo de conector al resultado de búsqueda &lt;null&gt;</value>
+  </data>
+  <data name="ex_CouldNotAddNullAttributeToDe" xml:space="preserve">
+    <value>No se pudo agregar el atributo de conector a la entrada de directorio &lt;null&gt;</value>
+  </data>
+  <data name="ex_ExpectingSingleValue" xml:space="preserve">
+    <value>Se esperaba un solo valor, pero se encontraron varios para el atributo {0}</value>
+  </data>
+  <data name="ex_ObjectClassInvalidForConnector" xml:space="preserve">
+    <value>La clase de objeto \&apos;{0}\&apos; no es válida para este conector</value>
+  </data>
+  <data name="ex_InvalidCredentials" xml:space="preserve">
+    <value>Credenciales suministradas para usuario {0} no válidas</value>
+  </data>
+  <data name="ex_PasswordMustBeReset" xml:space="preserve">
+    <value>La caducidad de la contraseña sólo puede restablecerse al restablecer la contraseña</value>
+  </data>
+  <data name="ex_LockAccountNotAllowed" xml:space="preserve">
+    <value>Active Directory no admite bloqueo de usuarios.  El usuario sólo se puede desbloquear</value>
+  </data>
+  <data name="ex_invalidSearchScope" xml:space="preserve">
+    <value>Se ha suministrado un ámbito de búsqueda no válido:  {0}</value>
+  </data>
+  <data name="ex_GUIDLookup" xml:space="preserve">
+    <value>Ha ocurrido una excepción durante la validación del usuario {0}.  El usuario se ha autenticado satisfactoriamente, pero no se ha podido determinar su guid.</value>
+  </data>
+  <data name="ex_SIDLookup" xml:space="preserve">
+    <value>Ha ocurrido una excepción durante la validación del usuario {0}.  El usuario se ha autenticado satisfactoriamente, pero no se ha podido determinar su sid.</value>
+  </data>
+  <data name="confReqParam_adminName" xml:space="preserve">
+    <value>No se ha suministrado el nombre del administrador de Directory.  </value>
+  </data>
+  <data name="confReqParam_adminPass" xml:space="preserve">
+    <value>No se ha suministrado la contraseña del administrador de Directory.  </value>
+  </data>
+  <data name="confReqParam_domainName" xml:space="preserve">
+    <value>No se ha suministrado el nombre de dominio.  </value>
+  </data>
+  <data name="confReqParam_objClass" xml:space="preserve">
+    <value>No se ha suministrado la clase de objeto.  </value>
+  </data>
+  <data name="confReqParam_Container" xml:space="preserve">
+    <value>No se ha suministrado el contenedor de búsqueda.  </value>
+  </data>
+  <data name="warn_CompatibilityModeQuery" xml:space="preserve">
+    <value>Se está usando el estilo de consulta del adaptador de recursos de Identity Manager &apos;{0}&apos;.  Debe actualizarse para utilizar la sintaxis de consulta del nuevo conector.</value>
+  </data>
+  <data name="ex_InvalidContainerInConfiguration" xml:space="preserve">
+    <value>Se ha suministrado un contenedor no válido:  {0}</value>
+  </data>
+  <data name="display_ShellScriptVariablePrefix" xml:space="preserve">
+    <value>Prefijo variable de secuencia de comandos shell</value>
+  </data>
+  <data name="help_ShellScriptVariablePrefix" xml:space="preserve">
+    <value>Prefijo que se añadirá a todos los nombres de argumento de secuencia de comandos shell.  Por ejemplo, si el prefijo se configura en &quot;Conector_&quot;, un argumento llamado &quot;Usuario&quot; se convertirá en &quot;Conector_Usuario&quot;</value>
+  </data>
+  <data name="ex_AccountLocked" xml:space="preserve">
+    <value>La cuenta del usuario ha sido bloqueada</value>
+  </data>
+  <data name="ex_PasswordMustChange" xml:space="preserve">
+    <value>La contraseña de usuario se debe cambiar</value>
+  </data>
+  <data name="ex_AccountExpired" xml:space="preserve">
+    <value>Ha caducado la cuenta de usuario del usuario {0}</value>
+  </data>
+  <data name="ex_InvalidSearchContextInConfiguration" xml:space="preserve">
+    <value>Se ha suministrado un contexto de búsqueda no válido:  {0}</value>
   </data>
 </root>
