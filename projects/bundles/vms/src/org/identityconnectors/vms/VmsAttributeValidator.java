@@ -24,7 +24,6 @@ package org.identityconnectors.vms;
 
 import static org.identityconnectors.vms.VmsConstants.*;
 
-import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -98,9 +97,9 @@ public class VmsAttributeValidator {
     private static final Pattern _uicPattern 			= Pattern.compile("\\[[0-3][0-7][0-7],[0-3][0-7][0-7]\\]"); 
 
     private static Map<String, ValidatorInfo> VALIDATOR_INFO = new HashMap<String, ValidatorInfo>();
-  
+
     public interface Validity {
-    	public boolean isValid(List<Object> dateList);
+        public boolean isValid(List<Object> dateList);
     };
 
     /**
@@ -109,16 +108,16 @@ public class VmsAttributeValidator {
      * @param date
      * @return
      */
-    
+
     public static class ValidOwner implements Validity {
-	    public boolean isValid(List<Object> ownerList) {
-	        if (ownerList.size()!=1)
-	            return false;
-	        String owner = (String)ownerList.get(0).toString();
-	        return (owner==null || owner.length()<32);
-	    }
+        public boolean isValid(List<Object> ownerList) {
+            if (ownerList.size()!=1)
+                return false;
+            String owner = (String)ownerList.get(0).toString();
+            return (owner==null || owner.length()<32);
+        }
     }
-    
+
     /**
      * Determine if the string represents a valid VMS date stamp
      * 
@@ -126,18 +125,18 @@ public class VmsAttributeValidator {
      * @return
      */
     public static class ValidDate implements Validity {
-	    public boolean isValid(List<Object> dateList) {
-	        if (dateList.size()!=1)
-	            return false;
-	        String date = (String)dateList.get(0).toString();
-	        DateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy", Locale.US);
-	        try {
-	            dateFormat.parse(date.trim());
-	            return true;
-	        } catch (ParseException e) {
-	            return false;
-	        }
-	    }
+        public boolean isValid(List<Object> dateList) {
+            if (dateList.size()!=1)
+                return false;
+            String date = (String)dateList.get(0).toString();
+            DateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy", Locale.US);
+            try {
+                dateFormat.parse(date.trim());
+                return true;
+            } catch (ParseException e) {
+                return false;
+            }
+        }
     }
 
     /**
@@ -147,12 +146,12 @@ public class VmsAttributeValidator {
      * @return
      */
     public static class ValidDateOrNone extends ValidDate {
-	    public boolean isValid(List<Object> dateList) {
-	        if (dateList.size()!=1)
-	            return false;
-	        String date = dateList.get(0).toString().trim().toUpperCase();
-	        return "NONE".equals(date) || super.isValid(dateList);
-	    }
+        public boolean isValid(List<Object> dateList) {
+            if (dateList.size()!=1)
+                return false;
+            String date = dateList.get(0).toString().trim().toUpperCase();
+            return "NONE".equals(date) || super.isValid(dateList);
+        }
     }
 
     /**
@@ -162,19 +161,19 @@ public class VmsAttributeValidator {
      * @return
      */
     public static class ValidNumberOrNone implements Validity {
-	    public boolean isValid(List<Object> numberList) {
-	        if (numberList.size()!=1)
-	            return false;
-	        Object object = numberList.get(0);
-	        if (object instanceof Number)
-	        	return true;
-	        try {
-	        	Integer.parseInt(object.toString());
-	        	return true;
-	        } catch (NumberFormatException nfe) {
-	        	return "NONE".equals(object.toString().trim().toUpperCase());
-	        }
-	    }
+        public boolean isValid(List<Object> numberList) {
+            if (numberList.size()!=1)
+                return false;
+            Object object = numberList.get(0);
+            if (object instanceof Number)
+                return true;
+            try {
+                Integer.parseInt(object.toString());
+                return true;
+            } catch (NumberFormatException nfe) {
+                return "NONE".equals(object.toString().trim().toUpperCase());
+            }
+        }
     }
 
     /**
@@ -230,22 +229,22 @@ public class VmsAttributeValidator {
      * @param algorithm
      */
     public static class ValidAccessList implements Validity {
-	    public boolean isValid(List<Object> accessList) {
-	        for (Object access : accessList) {
-	            String accessString = access.toString().trim().toUpperCase();
-	            if (ACCESS_PRIMARY.equals(accessString))
-	                return true;
-	            if (ACCESS_SECONDARY.equals(accessString))
-	                return true;
-	            try {
-	                int accessInt = Integer.parseInt(accessString);
-	                return (accessInt>=0 && accessInt<=23);
-	            } catch (NumberFormatException e) {
-	                return false;
-	            } 
-	        }
-	        return true;
-	    }
+        public boolean isValid(List<Object> accessList) {
+            for (Object access : accessList) {
+                String accessString = access.toString().trim().toUpperCase();
+                if (ACCESS_PRIMARY.equals(accessString))
+                    return true;
+                if (ACCESS_SECONDARY.equals(accessString))
+                    return true;
+                try {
+                    int accessInt = Integer.parseInt(accessString);
+                    return (accessInt>=0 && accessInt<=23);
+                } catch (NumberFormatException e) {
+                    return false;
+                } 
+            }
+            return true;
+        }
     }
 
     /**
@@ -302,33 +301,33 @@ public class VmsAttributeValidator {
      * @return
      */
     public static class ValidAlgorithm implements Validity {
-	    public boolean isValid(List<Object> algorithmList) {
-	        if (algorithmList.size()!=1)
-	            return false;
-	        String algorithm = algorithmList.get(0).toString().trim();
-	        Matcher matcher = _algorithmPattern.matcher(algorithm);
-	        if (matcher.matches()) {
-	            String keyword = matcher.group(1).trim().toUpperCase();
-	            String type    = matcher.group(2).trim().toUpperCase();
-	            String userval = null;
-	            if (matcher.group(3)!=null)
-	                userval = matcher.group(3).trim();
-	            else
-	                userval = "";
-	            if (ALGO_KEYS_LIST.contains(keyword)) {
-	                if (ALGO_TYPE_VMS.equals(type)) {
-	                    if (userval.length()==0)
-	                        return true;
-	                } else if (ALGO_TYPE_CUSTOMER.equals(type) && userval.length()>0) {
-	                    int value = Integer.parseInt(userval.substring(1));
-	                    if (value>=128 && value<=255)
-	                        return true;
-	                }
-	            }
-	
-	        }
-	        return false;
-	    }
+        public boolean isValid(List<Object> algorithmList) {
+            if (algorithmList.size()!=1)
+                return false;
+            String algorithm = algorithmList.get(0).toString().trim();
+            Matcher matcher = _algorithmPattern.matcher(algorithm);
+            if (matcher.matches()) {
+                String keyword = matcher.group(1).trim().toUpperCase();
+                String type    = matcher.group(2).trim().toUpperCase();
+                String userval = null;
+                if (matcher.group(3)!=null)
+                    userval = matcher.group(3).trim();
+                else
+                    userval = "";
+                if (ALGO_KEYS_LIST.contains(keyword)) {
+                    if (ALGO_TYPE_VMS.equals(type)) {
+                        if (userval.length()==0)
+                            return true;
+                    } else if (ALGO_TYPE_CUSTOMER.equals(type) && userval.length()>0) {
+                        int value = Integer.parseInt(userval.substring(1));
+                        if (value>=128 && value<=255)
+                            return true;
+                    }
+                }
+
+            }
+            return false;
+        }
     }
     private static final List<String> ALGO_KEYS_LIST = makeList(new String[] {ALGO_KEY_BOTH, ALGO_KEY_CURRENT, ALGO_KEY_PRIMARY, ALGO_KEY_SECONDARY });
 
@@ -509,9 +508,9 @@ public class VmsAttributeValidator {
      * @return
      */
     public static class ValidFlagList implements Validity {
-	    public boolean isValid(List<Object> flagList) {
-	        return isValidList(flagList, FLAGS_LIST);
-	    }
+        public boolean isValid(List<Object> flagList) {
+            return isValidList(flagList, FLAGS_LIST);
+        }
     }
     private static final String[] FLAGS_ARRAY = {
         FLAG_AUDIT, FLAG_AUTOLOGIN, FLAG_CAPTIVE, FLAG_DEFCLI, FLAG_DISCTLY,
@@ -554,12 +553,12 @@ public class VmsAttributeValidator {
      * @return
      */
     public static class ValidGeneratePassword implements Validity {
-	    public boolean isValid(List<Object> passwordTypeList) {
-	        if (passwordTypeList.size()!=1)
-	            return false;
-	        String passwordType = passwordTypeList.get(0).toString().trim().toUpperCase();
-	        return PWD_TYPE_LIST.contains(passwordType);
-	    }
+        public boolean isValid(List<Object> passwordTypeList) {
+            if (passwordTypeList.size()!=1)
+                return false;
+            String passwordType = passwordTypeList.get(0).toString().trim().toUpperCase();
+            return PWD_TYPE_LIST.contains(passwordType);
+        }
     }
     private static final String[] PWD_TYPE_ARRAY = {
         PWD_TYPE_BOTH, PWD_TYPE_CURRENT, PWD_TYPE_PRIMARY, PWD_TYPE_SECONDARY, 
@@ -572,11 +571,11 @@ public class VmsAttributeValidator {
      * @return
      */
     public static class ValidPrivList implements Validity {
-	    public boolean isValid(List<Object> privList) {
-	        return isValidList(privList, PRIVS_LIST);
-	    }
+        public boolean isValid(List<Object> privList) {
+            return isValidList(privList, PRIVS_LIST);
+        }
     }
-    
+
     private static final String[] PRIVS_ARRAY = {
         PRIV_ACNT, PRIV_ALLSPOOL, PRIV_ALTPRI, PRIV_AUDIT, PRIV_BUGCHK, 
         PRIV_BYPASS, PRIV_CMEXEC, PRIV_CMKRNL, PRIV_DIAGNOSE, PRIV_DOWNGRADE,
@@ -588,27 +587,27 @@ public class VmsAttributeValidator {
         PRIV_UPGRADE, PRIV_VOLPRO, PRIV_WORLD, PRIV_WORLD
     };
     public static final List<String> PRIVS_LIST = makeList(PRIVS_ARRAY);
-    
+
     public static class ValidIntegerRange implements Validity {
-    	private int _min;
-    	private int _max;
-    	
-    	public ValidIntegerRange(int min, int max) {
-    		_min = min;
-    		_max = max;
-    	}
-    	public boolean isValid(List<Object> integers) {
-	        if (integers.size()!=1)
-	            return false;
-	        if (!(integers.get(0) instanceof Integer))
-	        	return false;
-	        int value = ((Integer)integers.get(0)).intValue();
-	        if (value<_min)
-	        	return false;
-	        if (value>_max)
-	        	return false;
-    		return true;
-    	}
+        private int _min;
+        private int _max;
+
+        public ValidIntegerRange(int min, int max) {
+            _min = min;
+            _max = max;
+        }
+        public boolean isValid(List<Object> integers) {
+            if (integers.size()!=1)
+                return false;
+            if (!(integers.get(0) instanceof Integer))
+                return false;
+            int value = ((Integer)integers.get(0)).intValue();
+            if (value<_min)
+                return false;
+            if (value>_max)
+                return false;
+            return true;
+        }
     }
 
     /**
@@ -617,9 +616,9 @@ public class VmsAttributeValidator {
      * @return
      */
     public static class ValidPrimeDaysList implements Validity {
-	    public boolean isValid(List<Object> primeDaysList) {
-	        return isValidList(primeDaysList, PRIMEDAYS_LIST);
-	    }
+        public boolean isValid(List<Object> primeDaysList) {
+            return isValidList(primeDaysList, PRIMEDAYS_LIST);
+        }
     }
     private static final String[] PRIMEDAYS_ARRAY = {
         DAYS_SUN, DAYS_MON, DAYS_TUE, DAYS_WED, DAYS_THU, DAYS_FRI, DAYS_SAT
@@ -749,11 +748,11 @@ public class VmsAttributeValidator {
             break;
         case METHOD:
             try {
-            	Validity validity = validatorInfo.getValidity();
+                Validity validity = validatorInfo.getValidity();
                 if (!validity.isValid(values))
                     throw new IllegalArgumentException(vmsConfiguration.getMessage(VmsMessages.INVALID_ATTR_VALUE, values, name));
             } catch (IllegalArgumentException e) {
-            	throw e;
+                throw e;
             } catch (Exception e) {
                 throw new IllegalArgumentException(vmsConfiguration.getMessage(VmsMessages.EXCEPTION_IN_ATTR, name), e);
             }
