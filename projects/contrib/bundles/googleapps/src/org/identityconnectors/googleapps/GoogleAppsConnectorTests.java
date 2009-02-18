@@ -70,7 +70,7 @@ import org.identityconnectors.framework.common.objects.Uid;
 
 import org.identityconnectors.framework.common.objects.filter.Filter;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
-import org.identityconnectors.framework.test.TestHelpers;
+import org.identityconnectors.test.common.TestHelpers;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;

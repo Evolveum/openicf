@@ -35,7 +35,7 @@ import javax.sql.DataSource;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.test.TestHelpers;
+import org.identityconnectors.test.common.TestHelpers;
 import org.junit.*;
 
 /**

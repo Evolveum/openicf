@@ -60,7 +60,7 @@ import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.framework.spi.Configuration;
-import org.identityconnectors.framework.test.TestHelpers;
+import org.identityconnectors.test.common.TestHelpers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;

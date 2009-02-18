@@ -7,8 +7,8 @@ import java.text.MessageFormat;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
-import org.identityconnectors.framework.test.TestHelpers;
 import org.identityconnectors.oracle.OracleDriverConnectionInfo.OracleDriverConnectionInfoBuilder;
+import org.identityconnectors.test.common.TestHelpers;
 import org.junit.*;
 
 /**

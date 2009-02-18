@@ -8,5 +8,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/3270ConnectionPool"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-HEAD"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/3270hod"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorTestCommon-HEAD"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>

@@ -9,5 +9,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-Internal-HEAD"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/PatternParser"/>
 	<classpathentry kind="var" path="USER_HOME/.connectors/3270wrq/lib/RWebSDK.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorTestCommon-HEAD"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>

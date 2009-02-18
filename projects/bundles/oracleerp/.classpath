@@ -10,5 +10,6 @@
 	<classpathentry kind="var" path="USER_HOME/.connectors/connector-oracleerp/lib/ojdbc14.jar"/>
 	<classpathentry exported="true" kind="con" path="GROOVY_SUPPORT"/>
 	<classpathentry kind="lib" path="/ConnectorContractTests/src"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorTestCommon-HEAD"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>

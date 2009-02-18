@@ -14,7 +14,7 @@ import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.api.*;
 import org.identityconnectors.framework.common.exceptions.*;
 import org.identityconnectors.framework.common.objects.*;
-import org.identityconnectors.framework.test.TestHelpers;
+import org.identityconnectors.test.common.TestHelpers;
 import org.junit.*;
 
 /**

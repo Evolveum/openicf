@@ -25,7 +25,7 @@ package org.identityconnectors.db2;
 import java.sql.*;
 
 import org.identityconnectors.dbcommon.SQLUtil;
-import org.identityconnectors.framework.test.TestHelpers;
+import org.identityconnectors.test.common.TestHelpers;
 import org.junit.*;
 
 /** Test of DB2AuthorityReader 

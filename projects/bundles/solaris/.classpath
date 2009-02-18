@@ -6,5 +6,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-Internal-HEAD"/>
 	<classpathentry kind="lib" path="lib/jsch-0.1.41.jar" sourcepath="/home/david/workspace/identityconnectors/projects/bundles/solaris/lib-src/jsch-0.1.41.zip"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorTestCommon-HEAD"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>
