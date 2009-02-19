@@ -110,4 +110,7 @@
     </Content>
   </ItemGroup>
   <Import Project="$(MSBuildProjectDirectory)\..\DotNetCommonBuild.Targets" />
+  <PropertyGroup>
+    <PostBuildEvent>if EXIST "$(SolutionDir)\ShellScriptExecutorFactory\$(OutDir)\Shell.ScriptExecutorFactory.dll". (copy "$(SolutionDir)\ShellScriptExecutorFactory\$(OutDir)\Shell.ScriptExecutorFactory.dll" "$(TargetDir)") else (echo yuck &gt; .\delete.me.ad)</PostBuildEvent>
+  </PropertyGroup>
 </Project>
