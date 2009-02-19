@@ -1639,7 +1639,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
                 // sometimes expiring now, really means in a few milliseconds
                 // there is some rounding or something that happens.
-                Thread.Sleep(30000);
+                Thread.Sleep(120000);
 
                 // make sure authenticate fails - correct password, but expired
                 bool caughtException = false;
