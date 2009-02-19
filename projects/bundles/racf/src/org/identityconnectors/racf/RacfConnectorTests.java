@@ -552,8 +552,8 @@ public class RacfConnectorTests {
         config.setSegmentNames(new String[] { "RACF", "TSO" });
         config.setSegmentParsers(new String[] { RACF_PARSER, tsoParserString() });
         //config.setConnectionClassName(WrqConnection.class.getName());
-        config.setConnectionClassName("org.identityconnectors.rw3270.hod.HodConnection");
-        //config.setConnectionClassName(FH3270Connection.class.getName());
+        //config.setConnectionClassName("org.identityconnectors.rw3270.hod.HodConnection");
+        config.setConnectionClassName("org.identityconnectors.rw3270.freehost3270.FH3270Connection");
     }
     
     protected void initializeLdapConfiguration(RacfConfiguration config) {

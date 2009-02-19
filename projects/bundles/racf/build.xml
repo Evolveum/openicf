@@ -25,14 +25,11 @@
     <import file="${framework.dir}/connector_build.xml"/>
     <property name="patternparser.dir" value="../patternparser"/>
     <property name="3270common.dir" value="../3270common"/>
-    <property name="3270wrq.dir" value="../3270wrq"/>
-    <property name="3270hod.dir" value="../3270hod"/>
     <property name="3270freehost.dir" value="../3270freehost"/>
     <target name="-pre-clean-extra">
         <delete>
             <fileset dir="${lib}" includes="**/*.jar">
                 <exclude name="commons-pool*.jar"/>
-                <exclude name="habeans2.jar"/>
                 <exclude name="expect4j*.jar"/>
                 <exclude name="test/jakarta-oro-2.0.8.jar"/>
             </fileset>
@@ -40,11 +37,10 @@
     </target>
     <target name="-pre-compile-extra">
         <copy todir="${lib}">
-          <fileset dir="${patternparser.dir}/dist" includes="*.jar"/>
-          <fileset dir="${3270common.dir}/dist" includes="*.jar"/>
-          <fileset dir="${3270wrq.dir}/dist" includes="*.jar"/>
-          <fileset dir="${3270hod.dir}/dist" includes="*.jar"/>
-          <fileset dir="${3270freehost.dir}/dist" includes="*.jar"/>
+            <fileset dir="${patternparser.dir}/dist" includes="*.jar"/>
+            <fileset dir="${3270common.dir}/dist" includes="*.jar"/>
+            <fileset dir="${3270freehost.dir}/dist" includes="*.jar"/>
+            <fileset dir="${3270freehost.dir}/lib" includes="*.jar"/>
         </copy>
     </target>
 </project>
