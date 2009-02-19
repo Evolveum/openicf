@@ -48,6 +48,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.script.ScriptExecutor;
 import org.identityconnectors.common.script.ScriptExecutorFactory;
@@ -79,6 +80,7 @@ import org.identityconnectors.framework.spi.AttributeNormalizer;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.ConnectorClass;
 import org.identityconnectors.framework.spi.PoolableConnector;
+import org.identityconnectors.framework.spi.operations.AuthenticateOp;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
@@ -90,7 +92,7 @@ import org.identityconnectors.patternparser.Transform;
 @ConnectorClass(
         displayNameKey="VMSConnector",
         configurationClass= VmsConfiguration.class)
-        public class VmsConnector implements PoolableConnector, CreateOp,
+        public class VmsConnector implements PoolableConnector, AuthenticateOp, CreateOp,
         DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
     private Log                         _log = Log.getLog(VmsConnector.class);
     private DateFormat                  _vmsDateFormatWithSecs;
@@ -100,7 +102,7 @@ import org.identityconnectors.patternparser.Transform;
     private Schema                      _schema;
     private Map<String, AttributeInfo>  _attributeMap;
 
-    private ScriptExecutorFactory       _groovyFactory;
+    private ScriptExecutorFactory       _scriptFactory;
     private String                      _changeOwnPasswordCommandScript;
     private ScriptExecutor              _changeOwnPasswordCommandExecutor;
     private String                      _authorizeCommandScript;
@@ -138,19 +140,18 @@ import org.identityconnectors.patternparser.Transform;
             _authorizeCommandScript = readFileFromClassPath("org/identityconnectors/vms/AuthorizeCommandScript.txt");
             _listCommandScript = readFileFromClassPath("org/identityconnectors/vms/ListCommandScript.txt");
             _dateCommandScript = readFileFromClassPath("org/identityconnectors/vms/DateCommandScript.txt");
+            if (StringUtil.isEmpty(_changeOwnPasswordCommandScript))
+                throw new ConnectorException("empty");
         } catch (IOException ioe) {
             throw ConnectorException.wrap(ioe);
         }
-        _groovyFactory = ScriptExecutorFactory.newInstance("GROOVY");
-        _authorizeCommandExecutor = _groovyFactory.newScriptExecutor(getClass().getClassLoader(), _authorizeCommandScript, true);
-        _changeOwnPasswordCommandExecutor = _groovyFactory.newScriptExecutor(getClass().getClassLoader(), _changeOwnPasswordCommandScript, true);
-        _listCommandExecutor = _groovyFactory.newScriptExecutor(getClass().getClassLoader(), _listCommandScript, true);
-        _dateCommandExecutor = _groovyFactory.newScriptExecutor(getClass().getClassLoader(), _dateCommandScript, true);
     }
 
     private String readFileFromClassPath(String fileName) throws IOException {
         ClassLoader cl = null;
         InputStream is = null;
+        InputStreamReader isr = null;
+        BufferedReader br = null;
         StringBuffer buf = new StringBuffer();
 
         try {
@@ -158,8 +159,8 @@ import org.identityconnectors.patternparser.Transform;
             is = cl.getResourceAsStream(fileName);
 
             if (is != null) {
-                InputStreamReader isr = new InputStreamReader(is);
-                BufferedReader br = new BufferedReader(isr);
+                isr = new InputStreamReader(is);
+                br = new BufferedReader(isr);
                 String s = null;
                 while ((s = br.readLine()) != null) {
                     buf.append(s);
@@ -167,7 +168,17 @@ import org.identityconnectors.patternparser.Transform;
                 }
             }
         } finally {
-            if (is != null) {
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (Exception e) {
+                }
+            } else if (isr != null) {
+                try {
+                    isr.close();
+                } catch (Exception e) {
+                }
+            } else if (is != null) {
                 try {
                     is.close();
                 } catch (Exception e) {
@@ -868,7 +879,7 @@ import org.identityconnectors.patternparser.Transform;
         // are specified, we change password via SET PASSWORD, rather than AUTHORIIZE
         //
         if (currentPassword!=null && newPassword!=null) {
-            _log.info("update[changePassword](''{0}'')", _configuration.getUserName());
+            _log.info("update[changePassword](''{0}'')", uid.getUidValue());
             Map<String, Object> variables = new HashMap<String, Object>();
             variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
             variables.put("SHORT_WAIT", SHORT_WAIT);
@@ -880,8 +891,8 @@ import org.identityconnectors.patternparser.Transform;
             char[] currentArray = accessor.getArray();
             newGS.access(accessor);
             char[] newArray = accessor.getArray();
-            variables.put("CURRENT_PASSWORD", currentArray);
-            variables.put("NEW_PASSWORD", newArray);
+            variables.put("CURRENT_PASSWORD", new String(currentArray));
+            variables.put("NEW_PASSWORD", new String(newArray));
             variables.put("configuration", _configuration);
 
             String result = "";
@@ -1127,6 +1138,14 @@ import org.identityconnectors.patternparser.Transform;
         _vmsDateFormatWithSecs.setTimeZone(timeZone);
         _vmsDateFormatWithoutSecs = new SimpleDateFormat(_configuration.getVmsDateFormatWithoutSecs(), new Locale(_configuration.getVmsLocale()));
         _vmsDateFormatWithoutSecs.setTimeZone(timeZone);
+        _scriptFactory = ScriptExecutorFactory.newInstance(_configuration.getScriptingLanguage());
+        // Internal scripts are all in GROOVY for now
+        //
+        ScriptExecutorFactory scriptFactory = ScriptExecutorFactory.newInstance(_configuration.getScriptingLanguage());
+        _authorizeCommandExecutor = scriptFactory.newScriptExecutor(getClass().getClassLoader(), _authorizeCommandScript, true);
+        _changeOwnPasswordCommandExecutor = scriptFactory.newScriptExecutor(getClass().getClassLoader(), _changeOwnPasswordCommandScript, true);
+        _listCommandExecutor = scriptFactory.newScriptExecutor(getClass().getClassLoader(), _listCommandScript, true);
+        _dateCommandExecutor = scriptFactory.newScriptExecutor(getClass().getClassLoader(), _dateCommandScript, true);
         try {
             _connection = new VmsConnection(_configuration, VmsConnector.SHORT_WAIT);
         } catch (Exception e) {
@@ -1190,5 +1209,20 @@ import org.identityconnectors.patternparser.Transform;
             return new Uid(uid.getUidValue().toUpperCase());
         }
         return attribute;
+    }
+
+    public Uid authenticate(ObjectClass objectClass, String username,
+            GuardedString password, OperationOptions options) {
+        VmsConfiguration configuration = new VmsConfiguration(_configuration);
+        configuration.setUserName(username);
+        configuration.setPassword(password);
+        try {
+            VmsConnection connection = new VmsConnection(configuration, VmsConnector.SHORT_WAIT);
+            connection.dispose();
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }
+
+        return new Uid(username);
     }
 }

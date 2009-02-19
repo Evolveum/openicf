@@ -46,7 +46,7 @@ public class VmsConnection {
     private VmsConfiguration    _configuration;
     private int                 _wait;
     private StringBuffer        _buffer;
-    private ScriptExecutorFactory _groovyFactory;
+    private ScriptExecutorFactory _scriptFactory;
 
 
     public VmsConnection(VmsConfiguration configuration, int wait) throws Exception {
@@ -70,8 +70,8 @@ public class VmsConnection {
                 _expect4j = ExpectUtils.SSH(configuration.getHostNameOrIpAddr(), configuration.getUserName(), password, configuration.getHostPortNumber());
             else
                 _expect4j = ExpectUtils.telnet(configuration.getHostNameOrIpAddr(), configuration.getHostPortNumber());
-            _groovyFactory = ScriptExecutorFactory.newInstance("GROOVY");
-            ScriptExecutor executor = _groovyFactory.newScriptExecutor(getClass().getClassLoader(), configuration.getConnectScript(), false);
+            _scriptFactory = ScriptExecutorFactory.newInstance(configuration.getScriptingLanguage());
+            ScriptExecutor executor = _scriptFactory.newScriptExecutor(getClass().getClassLoader(), configuration.getConnectScript(), false);
             log.info("logging in connection, system:{0}, port {1}, user:{2}", configuration.getHostNameOrIpAddr(), configuration.getHostPortNumber(), configuration.getUserName());
             executor.execute(parameters);
             Arrays.fill(passwordArray, 0, passwordArray.length, ' ');
@@ -97,14 +97,14 @@ public class VmsConnection {
             waitFor(_configuration.getLocalHostShellPrompt(), _wait);
             String result = getStandardOutput();
             if (!result.contains("Hello, World"))
-            	throw new ConnectorException(_configuration.getMessage(VmsMessages.TEST_FAILED));
+                throw new ConnectorException(_configuration.getMessage(VmsMessages.TEST_FAILED));
         } catch (Exception e) {
             throw new ConnectorException(e);
         }
     }
-    
+
     public Expect4j getExpect() {
-    	return _expect4j;
+        return _expect4j;
     }
 
     public void send(String string) throws IOException {
@@ -117,7 +117,6 @@ public class VmsConnection {
         // so, we have to coerce back to a string, but, if this is updated
         // we'll be ready.
         log.info("send(encoded data)");
-        log.info("send(''{0}'')", new String(string));
         _expect4j.send(new String(string)+_configuration.getRealHostLineTerminator());
     }
 

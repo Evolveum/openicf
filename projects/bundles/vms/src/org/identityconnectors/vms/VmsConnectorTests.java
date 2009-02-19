@@ -43,6 +43,7 @@ import junit.framework.Assert;
 import org.identityconnectors.common.l10n.CurrentLocale;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
@@ -76,7 +77,7 @@ public class VmsConnectorTests {
     // Connector Configuration information
     //
     private static final String LINE_TERMINATOR     = "\\r\\n";
-    private static final String SHELL_PROMPT        = "$";
+    private static final String SHELL_PROMPT        = "[$]";
     private static String TEST_USER_START           = "TEST";
     private static String TEST_USER_MIDDLE          = "ST";
     private static String HOST_NAME;
@@ -95,9 +96,9 @@ public class VmsConnectorTests {
 
     @BeforeClass
     public static void before() {
-        HOST_NAME         = TestHelpers.getProperty("HOST_NAME", null);
-        SYSTEM_PASSWORD   = TestHelpers.getProperty("SYSTEM_PASSWORD", null);
-        SYSTEM_USER       = TestHelpers.getProperty("SYSTEM_USER", null);
+        HOST_NAME         = "idm090.central.sun.com";//TestHelpers.getProperty("HOST_NAME", null);
+        SYSTEM_PASSWORD   = "gough4130a";//TestHelpers.getProperty("SYSTEM_PASSWORD", null);
+        SYSTEM_USER       = "system";//TestHelpers.getProperty("SYSTEM_USER", null);
         Assert.assertNotNull("HOST_NAME must be specified", HOST_NAME);
         Assert.assertNotNull("SYSTEM_PASSWORD must be specified", SYSTEM_PASSWORD);
         Assert.assertNotNull("SYSTEM_USER must be specified", SYSTEM_USER);
@@ -367,6 +368,61 @@ public class VmsConnectorTests {
         }
         Assert.assertTrue(!exactlyOne || count==1);
         Assert.assertTrue(shouldFind==found);
+    }
+    
+    // We have an issue that VMS disables a terminal (remote or local)
+    // as a security issue if there are multiple logi failures, so
+    // this test should not be normally run
+    //
+    @Test@Ignore
+    public void testAuthenticate() throws Exception {
+        testAuthenticate(SYSTEM_USER, SYSTEM_PASSWORD);
+        // Ensure we have the test user
+        {
+            VmsConfiguration config = createConfiguration();
+            VmsConnector info = createConnector(config);
+
+            try {
+                Set<Attribute> attrs = fillInSampleUser(getTestUser());
+        
+                // Delete the account if it already exists
+                //
+                deleteUser(getTestUser(), info);
+        
+                // Create the account
+                //
+                Uid newUid = info.create(ObjectClass.ACCOUNT, attrs, null);
+                System.out.println(newUid.getValue()+" created");
+                // Create the account
+                //
+                try {
+                    info.create(ObjectClass.ACCOUNT, attrs, null);
+                    Assert.fail("Didn't catch create existing user");
+                } catch (AlreadyExistsException e) {
+                    // We expect this
+                }
+            } finally {
+                info.dispose();
+                info.dispose();
+            }
+        }
+
+        testAuthenticate(getTestUser(), "password");
+        try {
+            testAuthenticate(getTestUser(), "password123");
+            Assert.fail("authenticate should have failed");
+        } catch (ConnectorException e) {
+            Assert.assertTrue(e.toString().contains("timeout"));
+        }
+    }
+    
+    private void testAuthenticate(String userName, String passwordString) throws Exception {
+        VmsConfiguration config = createConfiguration();
+        config.setUserName(userName);
+        GuardedString password = new GuardedString(passwordString.toCharArray());
+        config.setPassword(password);
+        VmsConnector info = createConnector(config);
+        info.dispose();
     }
 
     @Test
@@ -809,6 +865,8 @@ public class VmsConnectorTests {
         String localUserName = getTestUser()+"X";
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
+        String oldPassword = "password";
+        String newPassword ="xyzzy123";
 
         try {
             // Since we will actually log in, make sure all days are primary days
@@ -823,25 +881,20 @@ public class VmsConnectorTests {
             //
             Uid newUid = info.create(ObjectClass.ACCOUNT, attrs, null);
             System.out.println(newUid.getValue()+" created");
-        } finally {
-            info.dispose();
-        }
+            testAuthenticate(localUserName, "password");
 
-        // Now, create a configuration for the user we created
-        // and change password
-        //
-        //VmsConfiguration userConfig = createUserConfiguration(localUserName);
-        //VmsConnector userInfo = createConnector(userConfig);
-        try {
+            // Now, change the password
+            //
             ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
             builder.setUid(localUserName);
             builder.setName(localUserName);
-            Attribute password = AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString("xyzzy123".toCharArray()));
+            Attribute password = AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString(newPassword.toCharArray()));
             Attribute current_password = AttributeBuilder.build(OperationalAttributes.CURRENT_PASSWORD_NAME, new GuardedString("password".toCharArray()));
             builder.addAttribute(current_password);
             builder.addAttribute(password);
             ConnectorObject newUser = builder.build();
             info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
+            testAuthenticate(localUserName, newPassword);
         } finally {
             info.dispose();
         }
@@ -999,11 +1052,11 @@ public class VmsConnectorTests {
 
     protected String getConnectScript() {
         String script =
-            "connection.waitFor(\"sername:\");\n" +
+            "connection.waitFor(\"sername:\", 5000);\n" +
             "connection.send(username);\n" +
-            "connection.waitFor(\"assword:\");\n" +
+            "connection.waitFor(\"assword:\", 5000);\n" +
             "connection.send(password);\n" +
-            "connection.waitFor(prompt);\n"
+            "connection.waitFor(prompt, 5000);\n"
             ;
         return script;
     }
@@ -1016,6 +1069,7 @@ public class VmsConnectorTests {
         config.setHostShellPrompt(SHELL_PROMPT);
         config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
         config.setUserName(SYSTEM_USER);
+        config.setScriptingLanguage("GROOVY");
         config.setConnectScript(getConnectScript());
         config.setSSH(isSSH());
         config.setVmsLocale("en_US");

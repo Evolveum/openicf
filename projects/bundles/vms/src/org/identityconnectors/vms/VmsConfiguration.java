@@ -38,6 +38,7 @@ public class VmsConfiguration extends AbstractConfiguration {
     private String         _hostLineTerminator;
     private String         _hostShellPrompt;
     private Integer        _hostPortNumber;
+    private String         _language;
     private String         _connectScript;
     private String         _vmsLocale;
     private String         _vmsDateFormatWithSecs;
@@ -46,7 +47,7 @@ public class VmsConfiguration extends AbstractConfiguration {
     private Boolean        _isSSH;
 
     private String         _localHostShellPrompt = "BOOMBOOM";
-    
+
     public VmsConfiguration() {
         _vmsLocale = Locale.getDefault().toString();
         _vmsTimeZone = TimeZone.getDefault().getID();
@@ -55,16 +56,32 @@ public class VmsConfiguration extends AbstractConfiguration {
         _hostShellPrompt = "$";
     }
 
+    public VmsConfiguration(VmsConfiguration other) {
+        _userName = other._userName;
+        _password = other._password;
+
+        _hostNameOrIpAddr = other._hostNameOrIpAddr;
+        _hostLineTerminator = other._hostLineTerminator;
+        _hostShellPrompt = other._hostShellPrompt;
+        _hostPortNumber = other._hostPortNumber;
+        _connectScript = other._connectScript;
+        _vmsLocale = other._vmsLocale;
+        _vmsDateFormatWithoutSecs = other._vmsDateFormatWithoutSecs;
+        _vmsDateFormatWithSecs = other._vmsDateFormatWithSecs;
+        _vmsTimeZone = other._vmsTimeZone;
+        _isSSH = other._isSSH;
+    }
+
     public void validate() {
-    	if (isNull(_vmsLocale))
+        if (isNull(_vmsLocale))
             throw new IllegalArgumentException(getMessage(VmsMessages.LOCALE_NULL));
-    	if (isNull(_vmsDateFormatWithSecs))
+        if (isNull(_vmsDateFormatWithSecs))
             throw new IllegalArgumentException(getMessage(VmsMessages.DATEFORMAT1_NULL));
-    	if (isNull(_vmsTimeZone))
+        if (isNull(_vmsTimeZone))
             throw new IllegalArgumentException(getMessage(VmsMessages.TIMEZONE_NULL));
-    	if (isNull(_vmsDateFormatWithoutSecs))
+        if (isNull(_vmsDateFormatWithoutSecs))
             throw new IllegalArgumentException(getMessage(VmsMessages.DATEFORMAT2_NULL));
-    	if (isNull(_hostLineTerminator))
+        if (isNull(_hostLineTerminator))
             throw new IllegalArgumentException(getMessage(VmsMessages.TERMINATOR_NULL));
         if (_isSSH==null)
             throw new IllegalArgumentException(getMessage(VmsMessages.SSH_NULL));
@@ -83,14 +100,14 @@ public class VmsConfiguration extends AbstractConfiguration {
         if (isNull(_password))
             throw new IllegalArgumentException(getMessage(VmsMessages.PASSWORD_NULL));
     }
-    
+
     private boolean isNull(String string) {
-    	return string==null || string.length()==0;
+        return string==null || string.length()==0;
     }
 
     private static GuardedString _nullGuardedString = new GuardedString(new char[0]);
     private boolean isNull(GuardedString string) {
-    	return string==null || string.equals(_nullGuardedString);
+        return string==null || string.equals(_nullGuardedString);
     }
 
     public String getMessage(String key) {
@@ -147,14 +164,14 @@ public class VmsConfiguration extends AbstractConfiguration {
     }
     @ConfigurationProperty(order=6, required=true)
     public String getHostLineTerminator() {
-    	if (_hostLineTerminator!=null)
+        if (_hostLineTerminator!=null)
             return _hostLineTerminator.replaceAll("\n", "\\n").replaceAll("\r", "\\r");
         else
             return null;
     }
 
     public String getRealHostLineTerminator() {
-    	return _hostLineTerminator;
+        return _hostLineTerminator;
     }
 
     public void setHostLineTerminator(String hostLineTerminator) {
@@ -166,11 +183,11 @@ public class VmsConfiguration extends AbstractConfiguration {
 
     @ConfigurationProperty(order=7, required=true)
     public String getHostShellPrompt() {
-    	return _hostShellPrompt;
+        return _hostShellPrompt;
     }
 
     String getLocalHostShellPrompt() {
-    	return _localHostShellPrompt;
+        return _localHostShellPrompt;
     }
 
     public void setHostShellPrompt(String hostShellPrompt) {
@@ -178,6 +195,15 @@ public class VmsConfiguration extends AbstractConfiguration {
     }
 
     @ConfigurationProperty(order=8, required=true)
+    public String getScriptingLanguage() {
+        return _language;
+    }
+
+    public void setScriptingLanguage(String scriptingLanguage) {
+        _language = scriptingLanguage;
+    }
+
+    @ConfigurationProperty(order=9, required=true)
     public String getConnectScript() {
         return _connectScript;
     }
@@ -186,7 +212,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         _connectScript = connectScript;
     }
 
-    @ConfigurationProperty(order=9, required=true)
+    @ConfigurationProperty(order=10, required=true)
     public String getVmsLocale() {
         return _vmsLocale;
     }
@@ -195,7 +221,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         _vmsLocale = vmsLocale;
     }
 
-    @ConfigurationProperty(order=10, required=true)
+    @ConfigurationProperty(order=11, required=true)
     public String getVmsTimeZone() {
         return _vmsTimeZone;
     }
@@ -204,7 +230,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         _vmsTimeZone = vmsTimeZone;
     }
 
-    @ConfigurationProperty(order=11, required=true)
+    @ConfigurationProperty(order=12, required=true)
     public String getVmsDateFormatWithSecs() {
         return _vmsDateFormatWithSecs;
     }
@@ -213,7 +239,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         _vmsDateFormatWithSecs = vmsDateFormatWithSecs;
     }
 
-    @ConfigurationProperty(order=12, required=true)
+    @ConfigurationProperty(order=13, required=true)
     public String getVmsDateFormatWithoutSecs() {
         return _vmsDateFormatWithoutSecs;
     }
@@ -221,6 +247,4 @@ public class VmsConfiguration extends AbstractConfiguration {
     public void setVmsDateFormatWithoutSecs(String vmsDateFormatWithoutSecs) {
         _vmsDateFormatWithoutSecs = vmsDateFormatWithoutSecs;
     }
-
-
 }
