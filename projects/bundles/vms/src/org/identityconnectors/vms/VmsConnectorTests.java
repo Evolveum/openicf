@@ -885,16 +885,34 @@ public class VmsConnectorTests {
 
             // Now, change the password
             //
-            ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
-            builder.setUid(localUserName);
-            builder.setName(localUserName);
-            Attribute password = AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString(newPassword.toCharArray()));
-            Attribute current_password = AttributeBuilder.build(OperationalAttributes.CURRENT_PASSWORD_NAME, new GuardedString("password".toCharArray()));
-            builder.addAttribute(current_password);
-            builder.addAttribute(password);
-            ConnectorObject newUser = builder.build();
-            info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
-            testAuthenticate(localUserName, newPassword);
+            {
+                ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+                builder.setUid(localUserName);
+                builder.setName(localUserName);
+                Attribute password = AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString(newPassword.toCharArray()));
+                Attribute current_password = AttributeBuilder.build(OperationalAttributes.CURRENT_PASSWORD_NAME, new GuardedString("password".toCharArray()));
+                builder.addAttribute(current_password);
+                builder.addAttribute(password);
+                ConnectorObject newUser = builder.build();
+                info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
+                testAuthenticate(localUserName, newPassword);
+            }
+            // try changing to an invalid password, and ensure it is caught
+            //
+            try {
+                ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+                builder.setUid(localUserName);
+                builder.setName(localUserName);
+                Attribute password = AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString("x".toCharArray()));
+                Attribute current_password = AttributeBuilder.build(OperationalAttributes.CURRENT_PASSWORD_NAME, new GuardedString("xyzzy123".toCharArray()));
+                builder.addAttribute(current_password);
+                builder.addAttribute(password);
+                ConnectorObject newUser = builder.build();
+                info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
+                Assert.fail("should have thrown exception");
+            } catch (ConnectorException ce) {
+                ce.printStackTrace();
+            }
         } finally {
             info.dispose();
         }
