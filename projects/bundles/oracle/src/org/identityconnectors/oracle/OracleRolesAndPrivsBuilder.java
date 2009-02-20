@@ -32,14 +32,15 @@ class OracleRolesAndPrivsBuilder {
             statements.add(builder.toString());
             builder.delete(0,builder.length());
         }
-        return Collections.emptyList();
+        return statements;
     }
     
     private void appendGrant(StringBuilder builder,String userName,String grant){
-        builder.append("grant ").append(grant).append(" to ").append('\"').append(userName).append('\"');
+        builder.append("grant ").append('\"').append(grant).append('\"').append(" to ").append('\"').append(userName).append('\"');
     }
     
     List<String> buildAlter(String userName,List<String> roles,List<String> privileges){
+        //TODO 
         return Collections.emptyList();
     }
 }

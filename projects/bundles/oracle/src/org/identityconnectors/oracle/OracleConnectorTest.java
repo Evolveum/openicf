@@ -16,6 +16,7 @@ import org.identityconnectors.framework.common.exceptions.*;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.*;
+import org.junit.matchers.JUnitMatchers;
 
 /**
  * @author kitko
@@ -355,9 +356,33 @@ public class OracleConnectorTest {
         connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
     }
     
+    /**
+     * Test create user with roles
+     * @throws SQLException
+     */
     @Test
-    public void testCreateWithRoles(){
-        //TODO
+    public void testCreateWithRoles() throws SQLException{
+        String newUser = "newUser";
+        if(new OracleUserReader(connector.getAdminConnection()).userExist(newUser)){
+              connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
+        }
+        Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
+        Attribute name = new Name(newUser);
+        GuardedString password = new GuardedString("hello".toCharArray());
+        Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
+        try{
+            SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "drop role \"testrole\"");
+        }catch(SQLException e){}
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "create role \"testrole\"");
+        Attribute roles = AttributeBuilder.build(OracleConnector.ORACLE_ROLES_ATTR_NAME, Arrays.asList("testrole"));
+        connector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute,roles), null);
+        UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(newUser);
+        assertNotNull(record);
+        assertEquals(newUser, record.userName);
+        OracleRolePrivReader roleReader = new OracleRolePrivReader(connector.getAdminConnection());
+        final List<String> rolesRead = roleReader.readRoles(newUser);
+        connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
+        Assert.assertThat(rolesRead, JUnitMatchers.hasItem("testrole"));
     }
     
     
