@@ -371,7 +371,7 @@ public class VmsConnectorTests {
     }
     
     // We have an issue that VMS disables a terminal (remote or local)
-    // as a security issue if there are multiple logi failures, so
+    // as a security issue if there are multiple login failures, so
     // this test should not be normally run
     //
     @Test@Ignore
@@ -899,6 +899,10 @@ public class VmsConnectorTests {
             }
             // try changing to an invalid password, and ensure it is caught
             //
+            // This can cause VMS to enter password evasion mode, so
+            // should only be run rarely
+            //
+            if (false)
             try {
                 ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
                 builder.setUid(localUserName);
