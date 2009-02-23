@@ -38,12 +38,15 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.TimeZone;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -68,7 +71,6 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
-import org.identityconnectors.framework.common.objects.OperationOptionInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
@@ -77,6 +79,7 @@ import org.identityconnectors.framework.common.objects.PredefinedAttributes;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
+import org.identityconnectors.framework.common.objects.ScriptContext;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.AttributeNormalizer;
@@ -87,16 +90,16 @@ import org.identityconnectors.framework.spi.operations.AuthenticateOp;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
+import org.identityconnectors.framework.spi.operations.ScriptOnResourceOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
 import org.identityconnectors.patternparser.MapTransform;
 import org.identityconnectors.patternparser.Transform;
 
-@ConnectorClass(
-        displayNameKey="VMSConnector",
-        configurationClass= VmsConfiguration.class)
-        public class VmsConnector implements PoolableConnector, AuthenticateOp, CreateOp,
-        DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer {
+
+@ConnectorClass(displayNameKey="VMSConnector", configurationClass= VmsConfiguration.class)
+public class VmsConnector implements PoolableConnector, AuthenticateOp, CreateOp,
+DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnResourceOp {
     private Log                         _log = Log.getLog(VmsConnector.class);
     private DateFormat                  _vmsDateFormatWithSecs;
     private DateFormat                  _vmsDateFormatWithoutSecs;
@@ -144,7 +147,7 @@ import org.identityconnectors.patternparser.Transform;
             _listCommandScript = readFileFromClassPath("org/identityconnectors/vms/ListCommandScript.txt");
             _dateCommandScript = readFileFromClassPath("org/identityconnectors/vms/DateCommandScript.txt");
             if (StringUtil.isEmpty(_changeOwnPasswordCommandScript))
-                throw new ConnectorException("empty");
+                throw new ConnectorException("Internal error locating command scripts");
         } catch (IOException ioe) {
             throw ConnectorException.wrap(ioe);
         }
@@ -204,6 +207,7 @@ import org.identityconnectors.patternparser.Transform;
     protected char[] quoteWhenNeeded(char[] unquoted) {
         return quoteWhenNeeded(unquoted, false);
     }
+    
     protected char[] quoteWhenNeeded(char[] unquoted, boolean needsQuote) {
         boolean quote = needsQuote;
         for (char character : unquoted) {
@@ -218,18 +222,23 @@ import org.identityconnectors.patternparser.Transform;
             return result;
         }
 
-        CharArrayBuffer buffer = new CharArrayBuffer();
-        buffer.append("\"");
-        for (char character : unquoted) {
-            if (character == '"')
-                buffer.append("\\\"");
-            else
-                buffer.append(character);
-        }
-        buffer.append("\"");
-        char[] result = buffer.getArray();
-        buffer.clear();
-        return result;
+        return quoteString(new String(unquoted)).toCharArray();
+    }
+    
+    /**
+     * VMS quoting rules:
+     * <ul>
+     * <li>replace a single quote with the sequence "+"'"+" 
+     * <br>- end the string, append a single quote, append the remainder
+     * <li>replace a double quote with the sequence ""
+     * </ul>
+     * Then add double quotes around the entire string
+     * 
+     * @param string
+     * @return
+     */
+    private String quoteString(String string) {
+        return "\"" + string.replaceAll("\"", "\"\"").replaceAll("'", "\"+\"'\"+\"") + "\"";
     }
 
     protected char[] asCharArray(Object object) {
@@ -1063,7 +1072,7 @@ import org.identityconnectors.patternparser.Transform;
         if (_configuration.getDisableUserLogins()) {
             schemaBuilder.removeSupportedObjectClass(AuthenticateOp.class, objectClassInfo);
         }
-        
+
         _schema = schemaBuilder.build();
         _attributeMap = AttributeInfoUtil.toMap(attributes);
         return _schema;
@@ -1161,6 +1170,112 @@ import org.identityconnectors.patternparser.Transform;
         }
     }
 
+    public Object runScriptOnResource(ScriptContext request, OperationOptions options) {
+        String user = options.getRunAsUser();
+        GuardedString password = options.getRunWithPassword();
+        
+        Map<String, Object> arguments = request.getScriptArguments();
+        String language = request.getScriptLanguage();
+        if (!"DCL".equalsIgnoreCase(language)) {
+            throw new ConnectorException(_configuration.getMessage(VmsMessages.UNSUPPORTED_SCRIPTING_LANGUAGE, language));
+        }
+    
+        String script = request.getScriptText();
+        try {
+            return executeScript(script, SHORT_WAIT, arguments);
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }
+    }
+
+    protected String executeCommand(String command) throws Exception {
+        _connection.resetStandardOutput();
+        _connection.send(command);
+        _connection.waitFor(_configuration.getLocalHostShellPrompt(), SHORT_WAIT);
+        String output = _connection.getStandardOutput();
+        int index = output.lastIndexOf(_configuration.getLocalHostShellPrompt());
+        if (index!=-1)
+            output = output.substring(0, index);
+        String terminator = null;
+        if (_configuration.getSSH())
+            terminator = "\r\n";
+        else
+            terminator = "\n\r";
+        // Strip trailing NULs (seen with SSH)
+        //
+        while (output.endsWith("\0"))
+            output = output.substring(0, output.length()-1);
+        // trim off starting or ending \n
+        //
+        if (output.startsWith(terminator))
+            output = output.substring(terminator.length());
+        if (output.endsWith(terminator))
+            output = output.substring(0, output.length()-terminator.length());
+        return output;
+    }
+
+    protected String[] executeScript(String action, int timeout, Map args) throws Exception {
+        // create a temp file
+        //
+        String tmpfile = UUID.randomUUID().toString();
+
+        // Create an empty error file, so that we can send it back if there are
+        // no errors
+        //
+        executeCommand("OPEN/WRITE OUTPUT_FILE " + tmpfile + ".ERROR");
+        executeCommand("CLOSE OUTPUT_FILE");
+
+        // create script and append actions
+        //
+        executeCommand("OPEN/WRITE OUTPUT_FILE " + tmpfile + ".COM");
+        executeCommand("WRITE OUTPUT_FILE \"$ DEFINE SYS$ERROR " + tmpfile + ".ERROR");
+        executeCommand("WRITE OUTPUT_FILE \"$ DEFINE SYS$OUTPUT " + tmpfile + ".OUTPUT");
+
+        setEnvironmentVariables(args);
+
+        StringTokenizer st = new StringTokenizer(action, "\r\n\f");
+        if (st.hasMoreTokens()) {
+            do {
+                String token = st.nextToken();
+                if (!StringUtil.isBlank(token)) {
+                    executeCommand("WRITE OUTPUT_FILE " + new String(quoteWhenNeeded(token.toCharArray(), true)));
+                }
+            } while (st.hasMoreTokens());
+        }
+
+        executeCommand("CLOSE OUTPUT_FILE");
+
+        executeCommand("@" + tmpfile);
+
+        executeCommand("DEAS SYS$ERROR");
+        executeCommand("DEAS SYS$OUTPUT");
+
+        // Capture the output
+        //
+        String status = executeCommand("WRITE SYS$OUTPUT $STATUS");
+        String output = executeCommand("TYPE " + tmpfile + ".OUTPUT");
+        String error  = executeCommand("TYPE " + tmpfile + ".ERROR");
+
+        executeCommand("DELETE " + tmpfile + ".OUTPUT;");
+        executeCommand("DELETE " + tmpfile + ".ERROR;*");
+        executeCommand("DELETE " + tmpfile + ".COM;");
+        
+        return new String[] { status, output, error };
+    }
+
+    private void setEnvironmentVariables(Map args) throws Exception {
+        Set keyset = args.keySet();
+        for (Iterator iter = keyset.iterator(); iter.hasNext();) {
+            String name = (String) iter.next();
+            String value = (String) args.get(name);
+            String dclAssignment = "$" + name + "=" + new String(quoteWhenNeeded(value.toCharArray(), true));
+            String line = "WRITE OUTPUT_FILE " + new String(quoteWhenNeeded(dclAssignment.toCharArray(), true));
+            if (line.length() < 255) {
+                executeCommand(line);
+            }
+        }
+    }
+
     private static class CharArrayBuffer {
         private char[]  _array;
         private int     _position;
@@ -1233,4 +1348,5 @@ import org.identityconnectors.patternparser.Transform;
 
         return new Uid(username);
     }
+
 }

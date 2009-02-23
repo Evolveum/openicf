@@ -58,6 +58,7 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Schema;
+import org.identityconnectors.framework.common.objects.ScriptContext;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.AndFilter;
 import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
@@ -96,12 +97,34 @@ public class VmsConnectorTests {
 
     @BeforeClass
     public static void before() {
-        HOST_NAME         = TestHelpers.getProperty("HOST_NAME", null);
-        SYSTEM_PASSWORD   = TestHelpers.getProperty("SYSTEM_PASSWORD", null);
-        SYSTEM_USER       = TestHelpers.getProperty("SYSTEM_USER", null);
+//        HOST_NAME         = TestHelpers.getProperty("HOST_NAME", null);
+//        SYSTEM_PASSWORD   = TestHelpers.getProperty("SYSTEM_PASSWORD", null);
+//        SYSTEM_USER       = TestHelpers.getProperty("SYSTEM_USER", null);
+        HOST_NAME         = "idm090.central.sun.com";//TestHelpers.getProperty("HOST_NAME", null);
+        SYSTEM_PASSWORD   = "gough4130a";//TestHelpers.getProperty("SYSTEM_PASSWORD", null);
+        SYSTEM_USER       = "system";//TestHelpers.getProperty("SYSTEM_USER", null);
         Assert.assertNotNull("HOST_NAME must be specified", HOST_NAME);
         Assert.assertNotNull("SYSTEM_PASSWORD must be specified", SYSTEM_PASSWORD);
         Assert.assertNotNull("SYSTEM_USER must be specified", SYSTEM_USER);
+    }
+
+    @Test
+    public void testScriptOnResource() throws Exception {
+        String script = "WRITE SYS$OUTPUT \"Hello ''NAME'\"";
+        HashMap<String, Object> map = new HashMap<String, Object>();
+        map.put("NAME", "World");
+        ScriptContext context = new ScriptContext("DCL", script, map);
+
+        VmsConfiguration config = createConfiguration();
+        VmsConnector info = createConnector(config);
+        try {
+            HashMap<String, Object> optionsMap = new HashMap<String, Object>();
+            OperationOptions options = new OperationOptions(optionsMap);
+            String[] results = (String[])info.runScriptOnResource(context, options);
+            Assert.assertEquals("Hello World", results[1]);
+        } finally {
+            info.dispose();
+        }
     }
 
     @Test

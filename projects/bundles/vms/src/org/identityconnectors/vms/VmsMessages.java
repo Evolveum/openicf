@@ -55,5 +55,6 @@ public interface VmsMessages {
     public static final String UNSUPPORTED_OBJECT_CLASS      = "UNSUPPORTED_OBJECT_CLASS";
     public static final String TEST_FAILED                   = "TEST_FAILED";
     public static final String NULL_ATTRIBUTE_VALUE          = "NULL_ATTRIBUTE_VALUE";
+    public static final String UNSUPPORTED_SCRIPTING_LANGUAGE= "UNSUPPORTED_SCRIPTING_LANGUAGE";
 
 }
