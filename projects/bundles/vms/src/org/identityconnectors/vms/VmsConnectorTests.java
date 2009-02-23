@@ -157,14 +157,6 @@ public class VmsConnectorTests {
         }
         try {
             VmsConfiguration config = createConfiguration();
-            config.setConnectScript(null);
-            config.validate();
-            Assert.fail("expected exception");
-        } catch (RuntimeException rte) {
-            // expected
-        }
-        try {
-            VmsConfiguration config = createConfiguration();
             config.setHostNameOrIpAddr(null);
             config.validate();
             Assert.fail("expected exception");
@@ -1072,17 +1064,6 @@ public class VmsConnectorTests {
         return LINE_TERMINATOR;
     }
 
-    protected String getConnectScript() {
-        String script =
-            "connection.waitFor(\"sername:\", 5000);\n" +
-            "connection.send(username);\n" +
-            "connection.waitFor(\"assword:\", 5000);\n" +
-            "connection.send(password);\n" +
-            "connection.waitFor(prompt, 5000);\n"
-            ;
-        return script;
-    }
-
     private VmsConfiguration createConfiguration() {
         VmsConfiguration config = new VmsConfiguration();
         config.setHostLineTerminator(getLineTerminator());
@@ -1092,7 +1073,6 @@ public class VmsConnectorTests {
         config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
         config.setUserName(SYSTEM_USER);
         config.setScriptingLanguage("GROOVY");
-        config.setConnectScript(getConnectScript());
         config.setSSH(isSSH());
         config.setVmsLocale("en_US");
         config.setVmsDateFormatWithoutSecs("dd-MMM-yyyy HH:mm");

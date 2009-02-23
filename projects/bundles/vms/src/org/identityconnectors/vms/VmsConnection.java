@@ -46,7 +46,6 @@ public class VmsConnection {
     private VmsConfiguration    _configuration;
     private int                 _wait;
     private StringBuffer        _buffer;
-    private ScriptExecutorFactory _scriptFactory;
 
 
     public VmsConnection(VmsConfiguration configuration, int wait) throws Exception {
@@ -54,26 +53,32 @@ public class VmsConnection {
         _configuration = configuration;
         _buffer = new StringBuffer();
         HashMap<String, Object> parameters = new HashMap<String, Object>();
-        parameters.put("connection", this);
-        parameters.put("prompt", configuration.getHostShellPrompt());
-        parameters.put("username", configuration.getUserName());
+        parameters.put("CONFIGURATION", _configuration);
+        parameters.put("CONNECTION", this);
+        parameters.put("SHORT_WAIT", VmsConnector.SHORT_WAIT);
+        parameters.put("PROMPT", configuration.getHostShellPrompt());
+        parameters.put("USERNAME", configuration.getUserName());
         GuardedStringAccessor accessor = new GuardedStringAccessor();
         configuration.getPassword().access(accessor);
         char[] passwordArray = accessor.getArray();
-        parameters.put("password", new String(passwordArray));
-        parameters.put("host", configuration.getHostNameOrIpAddr());
-        parameters.put("port", configuration.getHostPortNumber());
+        parameters.put("PASSWORD", new String(passwordArray));
+        parameters.put("HOST", configuration.getHostNameOrIpAddr());
+        parameters.put("PORT", configuration.getHostPortNumber());
         try {
             //TODO: ExpectUtils needs a clear text password
             String password = new String(passwordArray);
-            if (_configuration.getSSH())
+            if (_configuration.getSSH()) {
                 _expect4j = ExpectUtils.SSH(configuration.getHostNameOrIpAddr(), configuration.getUserName(), password, configuration.getHostPortNumber());
-            else
+            } else {
                 _expect4j = ExpectUtils.telnet(configuration.getHostNameOrIpAddr(), configuration.getHostPortNumber());
-            _scriptFactory = ScriptExecutorFactory.newInstance(configuration.getScriptingLanguage());
-            ScriptExecutor executor = _scriptFactory.newScriptExecutor(getClass().getClassLoader(), configuration.getConnectScript(), false);
-            log.info("logging in connection, system:{0}, port {1}, user:{2}", configuration.getHostNameOrIpAddr(), configuration.getHostPortNumber(), configuration.getUserName());
-            executor.execute(parameters);
+                String script = VmsUtilities.readFileFromClassPath("org/identityconnectors/vms/TelnetLoginScript.txt");
+                // Internal scripts are all in GROOVY for now
+                //
+                ScriptExecutorFactory scriptFactory = ScriptExecutorFactory.newInstance("GROOVY");
+                ScriptExecutor executor = scriptFactory.newScriptExecutor(getClass().getClassLoader(), script, false);
+                log.info("logging in connection, system:{0}, port {1}, user:{2}", configuration.getHostNameOrIpAddr(), configuration.getHostPortNumber(), configuration.getUserName());
+                executor.execute(parameters);
+            }
             Arrays.fill(passwordArray, 0, passwordArray.length, ' ');
         } catch (Exception e) {
             Arrays.fill(passwordArray, 0, passwordArray.length, ' ');

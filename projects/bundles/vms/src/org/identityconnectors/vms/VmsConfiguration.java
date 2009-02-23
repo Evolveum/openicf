@@ -39,7 +39,6 @@ public class VmsConfiguration extends AbstractConfiguration {
     private String         _hostShellPrompt;
     private Integer        _hostPortNumber;
     private String         _language;
-    private String         _connectScript;
     private String         _vmsLocale;
     private String         _vmsDateFormatWithSecs;
     private String         _vmsDateFormatWithoutSecs;
@@ -66,7 +65,6 @@ public class VmsConfiguration extends AbstractConfiguration {
         _hostLineTerminator = other._hostLineTerminator;
         _hostShellPrompt = other._hostShellPrompt;
         _hostPortNumber = other._hostPortNumber;
-        _connectScript = other._connectScript;
         _vmsLocale = other._vmsLocale;
         _vmsDateFormatWithoutSecs = other._vmsDateFormatWithoutSecs;
         _vmsDateFormatWithSecs = other._vmsDateFormatWithSecs;
@@ -89,8 +87,6 @@ public class VmsConfiguration extends AbstractConfiguration {
             throw new IllegalArgumentException(getMessage(VmsMessages.SSH_NULL));
         if (isNull(_hostShellPrompt))
             throw new IllegalArgumentException(getMessage(VmsMessages.SHELL_PROMPT_NULL));
-        if (isNull(_connectScript))
-            throw new IllegalArgumentException(getMessage(VmsMessages.CONN_SCRIPT_NULL));
         if (isNull(_hostNameOrIpAddr))
             throw new IllegalArgumentException(getMessage(VmsMessages.HOST_NULL));
         if (_hostPortNumber==null)
@@ -203,15 +199,6 @@ public class VmsConfiguration extends AbstractConfiguration {
 
     public void setScriptingLanguage(String scriptingLanguage) {
         _language = scriptingLanguage;
-    }
-
-    @ConfigurationProperty(order=9, required=true)
-    public String getConnectScript() {
-        return _connectScript;
-    }
-
-    public void setConnectScript(String connectScript) {
-        _connectScript = connectScript;
     }
 
     @ConfigurationProperty(order=10, required=true)
