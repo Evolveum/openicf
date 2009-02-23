@@ -954,6 +954,64 @@ public class VmsConnectorTests {
     }
 
     @Test
+    public void testValidators() throws Exception {
+        // Test date validator
+        //
+        {
+            List<Object> values = new LinkedList<Object>();
+            values.add("NONE");
+            Assert.assertFalse(new VmsAttributeValidator.ValidDate().isValid(values));
+        }
+        {
+            List<Object> values = new LinkedList<Object>();
+            values.add("01-Jan-2008");
+            Assert.assertTrue(new VmsAttributeValidator.ValidDate().isValid(values));
+        }
+        // Test dateOrNone validator
+        //
+        {
+            List<Object> values = new LinkedList<Object>();
+            values.add("ZOOM");
+            Assert.assertFalse(new VmsAttributeValidator.ValidDateOrNone().isValid(values));
+        }
+        {
+            List<Object> values = new LinkedList<Object>();
+            values.add("NONE");
+            Assert.assertTrue(new VmsAttributeValidator.ValidDateOrNone().isValid(values));
+        }
+        {
+            List<Object> values = new LinkedList<Object>();
+            values.add("01-Jan-2008");
+            Assert.assertTrue(new VmsAttributeValidator.ValidDateOrNone().isValid(values));
+        }
+        // Test Access list validator
+        //
+        {
+            List<Object> values = new LinkedList<Object>();
+            values.add("9-17");
+            Assert.assertTrue(new VmsAttributeValidator.ValidAccessList().isValid(values));
+        }
+        {
+            List<Object> values = new LinkedList<Object>();
+            values.add("25");
+            Assert.assertFalse(new VmsAttributeValidator.ValidAccessList().isValid(values));
+        }
+        {
+            List<Object> values = new LinkedList<Object>();
+            values.add("SECONDARY");
+            Assert.assertTrue(new VmsAttributeValidator.ValidAccessList().isValid(values));
+        }
+        {
+            List<Object> values = new LinkedList<Object>();
+            values.add("PRIMARY");
+            values.add("9-17");
+            values.add("SECONDARY");
+            values.add("18-8");
+            Assert.assertTrue(new VmsAttributeValidator.ValidAccessList().isValid(values));
+        }
+    }
+
+    @Test
     public void testDelete() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);

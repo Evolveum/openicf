@@ -240,7 +240,15 @@ public class VmsAttributeValidator {
                     int accessInt = Integer.parseInt(accessString);
                     return (accessInt>=0 && accessInt<=23);
                 } catch (NumberFormatException e) {
-                    return false;
+                    // Try as a range
+                    String[] accessStrings = accessString.split("\\-");
+                    if (accessStrings.length!=2)
+                        return false;
+                    int accessInt = Integer.parseInt(accessStrings[0]);
+                    if (!(accessInt>=0 && accessInt<=23))
+                        return false;
+                    accessInt = Integer.parseInt(accessStrings[1]);
+                    return (accessInt>=0 && accessInt<=23);
                 } 
             }
             return true;
