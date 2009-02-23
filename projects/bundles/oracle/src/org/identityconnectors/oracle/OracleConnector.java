@@ -3,13 +3,12 @@
  */
 package org.identityconnectors.oracle;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.util.Set;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
-import org.identityconnectors.framework.common.exceptions.*;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.spi.*;
 import org.identityconnectors.framework.spi.operations.*;
@@ -67,54 +66,16 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,Create
     
 
     public Uid authenticate(ObjectClass objectClass, String username, GuardedString password, OperationOptions options) {
-        try{
-            final Connection conn = createConnection(username, password);
-            SQLUtil.closeQuietly(conn);
-            return new Uid(username);
-        }
-        catch(RuntimeException e){
-            if(e.getCause() instanceof SQLException){
-                SQLException sqlE = (SQLException) e.getCause();
-                if("72000".equals(sqlE.getSQLState())){
-                    //Wrong user or password, log it here and rethrow
-                    log.info(e,"Oracle.authenticate : Invalid user/passord for user: {0}",username);
-                    throw new InvalidCredentialException("Oracle.authenticate :  Invalid user/password",e.getCause());
-                }
-            }
-            throw e;
-        }
+        return new OracleAuthenticateOperation(cfg, log).authenticate(objectClass, username, password, options);
     }
     
     private Connection createAdminConnection(){
-        return createConnection(cfg.getUser(),cfg.getPassword());
+        return cfg.createConnection(cfg.getUser(), cfg.getPassword());
     }
-
-    private Connection createConnection(String user, GuardedString password) {
-        return cfg.createConnection(user, password);
-    }
-    
 
     
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
-        //Currently IDM pass null for options parameter. So there is no way how to decide
-        //whether we will do cascade or noCascade delete
-        String userName = uid.getUidValue();
-        String sql = "drop user \"" + userName + "\"";
-        Statement st = null;
-        try{
-            st = adminConn.createStatement();
-            st.executeUpdate(sql);
-            adminConn.commit();
-        }
-        catch(SQLException e){
-            SQLUtil.rollbackQuietly(adminConn);
-            if("42000".equals(e.getSQLState())){
-                throw new UnknownUidException(uid,ObjectClass.ACCOUNT);
-            }
-        }
-        finally{
-            SQLUtil.closeQuietly(st);
-        }
+        new OracleDeleteOperation(cfg, adminConn, log).delete(objClass, uid, options);
     }
     
     Connection getAdminConnection(){
@@ -126,7 +87,13 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,Create
     }
 
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
-        return new OracleCreateOperation(adminConn, log).create(oclass, attrs, options);
+        return new OracleCreateOperation(cfg, adminConn, log).create(oclass, attrs, options);
+    }
+    
+    static void checkObjectClass(ObjectClass objectClass,ConnectorMessages messages){
+        if(!ObjectClass.ACCOUNT.equals(objectClass)){
+            throw new IllegalArgumentException("Invalid obejct class");
+        }
     }
     
     

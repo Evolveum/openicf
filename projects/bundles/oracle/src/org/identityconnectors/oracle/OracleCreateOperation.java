@@ -1,5 +1,7 @@
 package org.identityconnectors.oracle;
 
+import static org.identityconnectors.oracle.OracleConnector.*;
+
 import java.sql.Connection;
 import java.util.*;
 
@@ -9,32 +11,16 @@ import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.*;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.spi.operations.CreateOp;
-import static org.identityconnectors.oracle.OracleConnector.*;
 
-class OracleCreateOperation implements CreateOp{
-    
-    private Connection adminConn;
-    private Log log;
+class OracleCreateOperation extends AbstractOracleOperation implements CreateOp{
     
     
-
-    
-    OracleCreateOperation(Connection adminConn, Log log) {
-        super();
-        this.adminConn = adminConn;
-        this.log = log;
-    }
-    
-    OracleCreateOperation(OracleConnector connector){
-        this.adminConn = connector.getAdminConnection();
-        this.log = OracleConnector.getLog();
+    OracleCreateOperation(OracleConfiguration cfg,Connection adminConn, Log log) {
+        super(cfg, adminConn, log);
     }
 
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
-        if ( oclass == null || !oclass.equals(ObjectClass.ACCOUNT)) {
-            throw new IllegalArgumentException(
-                    "Create operation requires an 'ObjectClass' attribute of type 'Account'.");
-        }
+        OracleConnector.checkObjectClass(oclass, cfg.getConnectorMessages());
         String userName = OracleConnectorHelper.getNotEmptyStringValue(attrs, Name.NAME);
         checkUserNotExist(userName);
         CreateAlterAttributes caAttributes = new CreateAlterAttributes();
