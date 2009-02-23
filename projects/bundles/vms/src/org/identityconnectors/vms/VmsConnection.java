@@ -56,14 +56,9 @@ public class VmsConnection {
         parameters.put("CONFIGURATION", _configuration);
         parameters.put("CONNECTION", this);
         parameters.put("SHORT_WAIT", VmsConnector.SHORT_WAIT);
-        parameters.put("PROMPT", configuration.getHostShellPrompt());
-        parameters.put("USERNAME", configuration.getUserName());
         GuardedStringAccessor accessor = new GuardedStringAccessor();
         configuration.getPassword().access(accessor);
         char[] passwordArray = accessor.getArray();
-        parameters.put("PASSWORD", new String(passwordArray));
-        parameters.put("HOST", configuration.getHostNameOrIpAddr());
-        parameters.put("PORT", configuration.getHostPortNumber());
         try {
             //TODO: ExpectUtils needs a clear text password
             String password = new String(passwordArray);
