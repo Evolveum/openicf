@@ -1098,6 +1098,7 @@ public class VmsConnectorTests {
         config.setVmsDateFormatWithoutSecs("dd-MMM-yyyy HH:mm");
         config.setVmsDateFormatWithSecs("dd-MMM-yyyy HH:mm:ss");
         config.setVmsTimeZone("GMT-06:00");
+        config.setDisableUserLogins(false);
         
         OurConnectorMessages messages = new OurConnectorMessages();
         Map<Locale, Map<String, String>> catalogs = new HashMap<Locale, Map<String,String>>();

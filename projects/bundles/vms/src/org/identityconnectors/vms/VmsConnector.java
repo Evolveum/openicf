@@ -66,6 +66,9 @@ import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.ObjectClassInfo;
+import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
+import org.identityconnectors.framework.common.objects.OperationOptionInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
@@ -1039,7 +1042,8 @@ import org.identityconnectors.patternparser.Transform;
         // Operational Attributes
         //
         attributes.add(OperationalAttributeInfos.PASSWORD);
-        attributes.add(OperationalAttributeInfos.CURRENT_PASSWORD);
+        if (!_configuration.getDisableUserLogins())
+            attributes.add(OperationalAttributeInfos.CURRENT_PASSWORD);
         attributes.add(OperationalAttributeInfos.ENABLE);
         attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
         //attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRATION_DATE);
@@ -1048,14 +1052,18 @@ import org.identityconnectors.patternparser.Transform;
         //
         attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
 
+        ObjectClassInfoBuilder ociBuilder = new ObjectClassInfoBuilder();
+        ociBuilder.setType(ObjectClass.ACCOUNT_NAME);
+        ociBuilder.addAllAttributeInfo(attributes);
+        ObjectClassInfo objectClassInfo = ociBuilder.build();
+        schemaBuilder.defineObjectClass(objectClassInfo);
+
         // Remove unsupported operations
         //
-        /*
-        schemaBuilder.removeSupportedOperationOption(
-            AuthenticateOp.class, 
-            OperationOptionInfoBuilder.build(ObjectClass.ACCOUNT_NAME));
-         */
-        schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
+        if (_configuration.getDisableUserLogins()) {
+            schemaBuilder.removeSupportedObjectClass(AuthenticateOp.class, objectClassInfo);
+        }
+        
         _schema = schemaBuilder.build();
         _attributeMap = AttributeInfoUtil.toMap(attributes);
         return _schema;
@@ -1141,7 +1149,7 @@ import org.identityconnectors.patternparser.Transform;
         _scriptFactory = ScriptExecutorFactory.newInstance(_configuration.getScriptingLanguage());
         // Internal scripts are all in GROOVY for now
         //
-        ScriptExecutorFactory scriptFactory = ScriptExecutorFactory.newInstance(_configuration.getScriptingLanguage());
+        ScriptExecutorFactory scriptFactory = ScriptExecutorFactory.newInstance("GROOVY");
         _authorizeCommandExecutor = scriptFactory.newScriptExecutor(getClass().getClassLoader(), _authorizeCommandScript, true);
         _changeOwnPasswordCommandExecutor = scriptFactory.newScriptExecutor(getClass().getClassLoader(), _changeOwnPasswordCommandScript, true);
         _listCommandExecutor = scriptFactory.newScriptExecutor(getClass().getClassLoader(), _listCommandScript, true);

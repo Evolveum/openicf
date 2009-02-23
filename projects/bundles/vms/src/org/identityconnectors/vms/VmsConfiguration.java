@@ -45,6 +45,7 @@ public class VmsConfiguration extends AbstractConfiguration {
     private String         _vmsDateFormatWithoutSecs;
     private String         _vmsTimeZone;
     private Boolean        _isSSH;
+    private Boolean        _disableUserLogins;
 
     private String         _localHostShellPrompt = "BOOMBOOM";
 
@@ -54,6 +55,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         _vmsDateFormatWithoutSecs = "dd-MMM-yyyy HH:mm";
         _vmsDateFormatWithSecs = "dd-MMM-yyyy HH:mm:ss";
         _hostShellPrompt = "$";
+        _disableUserLogins = Boolean.TRUE;
     }
 
     public VmsConfiguration(VmsConfiguration other) {
@@ -246,5 +248,16 @@ public class VmsConfiguration extends AbstractConfiguration {
 
     public void setVmsDateFormatWithoutSecs(String vmsDateFormatWithoutSecs) {
         _vmsDateFormatWithoutSecs = vmsDateFormatWithoutSecs;
+    }
+    
+    @ConfigurationProperty(order=14)
+    public Boolean getDisableUserLogins() {
+        if (_disableUserLogins==null)
+            return Boolean.TRUE;
+        return _disableUserLogins;
+    }
+
+    public void setDisableUserLogins(Boolean disableUserLogins) {
+        _disableUserLogins = disableUserLogins;
     }
 }
