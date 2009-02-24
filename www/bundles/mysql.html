@@ -36,8 +36,10 @@
 			    <BR>
 			    The <B>Datasouce</B> property and <B>JndiProperties</B> has been added to support the server side defined resources.     
 			    </p>
-		    <li><b>What is the migration path from adapter to connector</b></li>
-		      <p>Please see the migration separate page located at the connector sources.</p>
+		    <li><b>Migration path from adapter to connector</b></li>
+		        <p>The new "MySQL Conversion Utility" server task will convert adapter to connector.</p> 
+                <p>All configuration properties are supported except the "JDBC URL Template".</p>    
+		        <p>For further information please see the migration page located at the connector sources.</p>
 		
 		    <li><b>The MySQL resource description</b></li>
 			    <p>Provides implementation of connector to MySQL database resource. 
@@ -96,14 +98,14 @@
                     <li><b>usermoel</b> The template user to create new users from.</li>
 				</ul>
 			</li>	
-            <li>Option driver:
+            <li>Option "jdbc driver":
                 <ul>
                     <li><b>driver</b> The driver class name</li>
                     <li><b>host</b> The databse host name</li>
                     <li><b>port</b> The datasource port</li>
                 </ul>
             </li>     
-            <li>Option datasource:
+            <li>Option "datasource":
                 <ul>
                     <li><b>datasource</b>Datasource for use in server environment</li>
                     <li><b>jndiProperties</b>The properties in server environment</li>
@@ -115,18 +117,18 @@
 	<ul>
 		<li>Object Classes supported:
 			<ul>
-				<li><b>Account</b>
+				<li><b>Account</b></li>
 			</ul>
 	    </li>
 		<li>Operations supported:
 			<ul>
-                <li><b>Authenticate</b>
-				<li><b>Create</b>
-				<li><b>Delete</b>
-                <li><b>Update</b>
-                <li><b>Search</b>
-                <li><b>Schema</b>
-                <li><b>Test</b>
+                <li><b>Authenticate</b>v
+				<li><b>Create</b></li>
+				<li><b>Delete</b></li>
+                <li><b>Update</b></li>
+                <li><b>Search</b></li>
+                <li><b>Schema</b></li>
+                <li><b>Test</b></li>
 			</ul>
 		</li>	
 	</ul>
