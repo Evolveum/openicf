@@ -21,88 +21,143 @@
   ====================
 -->
 
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Open Connectors (Common)</title>
-</head>
-<body>
- <h3>The MySQLUser connector specification</h3> 
-    The connector capabilities are pretty limited. The connector supports just a user creation from modeluser template.
-    The update is possible just for a user name and password. No other attributes are currently supported.
-    The delete and search of user are also supported. 
-    <br>
-    The MySQLUSer connector uses the template user called the "modeluser".
-    Model user and its rights are taken as a template for creating every new user on the MySQL resource.
-
- <h3>Operations supported by MySQLUser connector</h3> 
-    The MySQLUser connector supports create, update, delete operation for the IdM account. Also search by user name are supported.
-    The search by SQL user rights is currently not supported.       
- 
- <h3>Features supported by MySQLUser connector</h3> 
-    The MySQLUser does not support any of the special features except to set a new password. 
-    No enable/disable nor password expiration are supported.
-    The connector does not support any scripting.
-      
- <h3>Which version of framework?</h3> 
-    The framework version 1.0 and above
-
- <h3>Backward compatible with adapter</h3>
-    The connector is backward compatible with adapter. 
-    All features from the adapter have been implemented except the "JDBC URL Template" property.
-    The JDBC URL Template configuration property is not required, because all versions of MySQL 
-    support the same URL schema. There is no need to change the "JDBC URL Template".
-    <BR>
-    The <B>Datasouce</B> property and <B>JndiProperties</B> has been added to support the server side defined resources.     
-
- <h3>What is the migration path from adapter to connector</h3>
-    Please see the migration separate page.
-
- <h3>Native resource types the connector can manage</h3>
-    The connector was tested against the mysql Releases
-    <ul>
-     <li>MySQL 6.0 - Alpha</li>
-     <li>MySQL 5.1 - GA release</li>
-     <li>MySQL 5.0 - GA release</li>
-     <li>MySQL 4.1 - GA release</li>
-    </ul>
-
- <h3>The MySQL resource description</h3>
-    Provides implementation of connector to MySQL database resource. 
-    MySQL Connector uses MySQL database mysql.user table to manage users. There could be a multiple records for particular
-    user. The unique key of the record is a sequence of host, user, schema, table. The rest of the record consist of 
-    encoded user password and SQL user rights.<br> 
-    The MySQL resource accepts the % wildcard. This wildcard can be used for specifying any host, any user, any schema, any table.
-
- <h3>The MySQL resource restrictions</h3>
-    The user account must have right to read, create, update and delete the users from any hosts and for any schema and table. 
-    The modeluser can have any rights. Use of same account for user and modeluser is not recommended and can lead to problems.
-    <br>
-    The MySQL connector does not difference between the hosts. Every access right is considered valid from any host.
-    It must imply the default wildcard "%" for hosts. It is not recommended to set up the model user with different 
-    SQL access rights which differs just in host.
-    
- <h3>The MySQLUser connector new features</h3>
-        Newly supported are DataSource name and jndiProperties configuration properties. 
-        If your server environment supports datasources,
-        you can set up the datasource name, e.g: <code>java:comp/env/jdbc/mysql</code>
-        which in case of tomcat corespond to following application context descriptor.  
+<HTML>
+<HEAD>
+    <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=iso-8859-1">
+    <TITLE>MySQLUser Connector</TITLE>
+</HEAD>
+ <DIV id="projecthome" class="app">
+    <H1>MySQLUser Connector Overview</H1>
+    <h3>The MySQLUser connector specification</h3>
+    <p> 
+        The MySQLUser Connector capabilities are pretty limited. 
+        The connector supports just a user creation from "Modeluser" template.
+        The updates of the model user access rights are possible.
+        Updated can be the user name and password. 
+        The delete and search of user are also supported.
+    </p> 
+    <p>
+        The MySQLUSer connector uses the template user called the "Modeluser".
+        Model user and its rights are taken as a template for creating every new user on the MySQL resource.
+    </p> 
+    <p>
+        The MySQL Connector supports provisioning and authentication with MySQL databases.
+    </p>    
+    <h3>Bundle Information</h3>
+    <ul>  
+       <li><b>Latest stable release:</b> <a href="/downloads.html#Bundles">1.0.3230</a></li>
+       <li><b>Platform:</b> Java</li>
+       <li><b>3rd-party libraries required: mysql-connector-java-5.0.8-bin.jar, mysql-connector-java-3.1.14-bin.jar for mysql 4.1 and lower</b></li>        
+       <li><b>Other dependencies:</b></li>
+       <li><b>Release notes:</b>
+            <ul>
+            <li><b>Backward compatible with adapter</b></li>
+                <p>The connector is backward compatible with adapter. 
+                All features from the adapter have been implemented except the "JDBC URL Template" property.
+                The JDBC URL Template configuration property is not required, because all versions of MySQL 
+                support the same URL schema. There is no need to change the "JDBC URL Template".
+                <BR>
+                The <B>Datasouce</B> property and <B>JndiProperties</B> has been added to support the server side defined resources.     
+                </p>
+            <li><b>Migration path from adapter to connector</b></li>
+                <p>The new "MySQL Conversion Utility" server task will convert adapter to connector.</p> 
+                <p>All configuration properties are supported except the "JDBC URL Template".</p>    
+                <p>For further information please see the migration page located at the connector sources.</p>
         
-        <code>
-        <Context docBase="${catalina.home}/webapps/waveset"
-         path="idm" 
-         privileged="true" antiResourceLocking="false" antiJARLocking="false">
+            <li><b>The MySQL resource description</b></li>
+                <p>Provides implementation of connector to MySQL database resource. 
+                MySQL Connector uses MySQL database mysql.user table to manage users. There could be a multiple records for particular
+                user. The unique key of the record is a sequence of host, user, schema, table. The rest of the record consist of 
+                encoded user password and SQL user rights.<br> 
+                The MySQL resource accepts the % wildcard. This wildcard can be used for specifying any host, any user, any schema, any table.
+                </p>
+            <li><b>The MySQL resource restrictions</b></li>
+                <p>The user account must have right to read, create, update and delete the users from any hosts and for any schema and table. 
+                The modeluser can have any rights. Use of same account for user and modeluser is not recommended and can lead to problems.
+                <br>
+                The MySQL connector does not difference between the hosts. Every access right is considered valid from any host.
+                It must imply the default wildcard "%" for hosts. It is not recommended to set up the model user with different 
+                SQL access rights which differs just in host.
+                </p>
+            <li><b>The MySQLUser connector new features</b></li>
+            <p>Newly supported are DataSource name and jndiProperties configuration properties. 
+                If your server environment supports datasources,
+                you can set up the datasource name, e.g: <code>java:comp/env/jdbc/mysql</code>
+                which in case of tomcat corespond to following application context descriptor.  
+                <br />
+                When new datasource is configured, the user, host, password and port could  be left empty.  
+                <br /> 
+             See {@link org.identityconnectors.mysqluser.MySQLUserConfiguration} and  {@link org.identityconnectors.mysqluser.MySQLUserConnector} for more information about MySQLUser connector.
+            </p>
+         </ul>    
+       </li>        
+    </ul>
+    <h3>Version Information</h3>
+      <table border="1">
+        <tr><th>Connector Version</th><th>Framework Version</th><th>Supported Resource Version(s)</th></tr>
+        <tr>
+            <td><a href="/downloads.html#Bundles">1.0</a></td>
+            <td><a href="/downloads.html#Framework">1.0</a></td>
+            <td>    <ul>
+                     <li>MySQL 6.0 - Alpha</li>
+                     <li>MySQL 5.1 - GA release</li>
+                     <li>MySQL 5.0 - GA release</li>
+                     <li>MySQL 4.1 - GA release</li>
+                    </ul>
+            </td>
+        </tr>
+        <!-- add later versions here -->
+      </table>
+        <p><b>Note:</b> The "Framework Version" listed is the <b><i>minimum</i></b> required framework version for that version of
+        the connector. Newer framework versions are backwards compatible and will support previous connectors.
+        </p>
+      <h3>Configuration Properties</h3>
 
-            <Resource name="jdbc/mysql" auth="Container" type="javax.sql.DataSource"
-                           maxActive="100" maxIdle="30" maxWait="10000"
-                           username="root" password="..." driverClassName="com.mysql.jdbc.Driver"
-                           url="jdbc:mysql://localhost:3306/mysql"/>
+        <ul>
+            <li>Required:
+                <ul>
+                    <li><b>user</b> The user capable to do admin operations on the resource.</li>
+                    <li><b>password</b> The admin user password.</li>
+                    <li><b>usermoel</b> The template user to create new users from.</li>
+                </ul>
+            </li>   
+            <li>Option "jdbc driver":
+                <ul>
+                    <li><b>driver</b> The driver class name</li>
+                    <li><b>host</b> The databse host name</li>
+                    <li><b>port</b> The datasource port</li>
+                </ul>
+            </li>     
+            <li>Option "datasource":
+                <ul>
+                    <li><b>datasource</b>Datasource for use in server environment</li>
+                    <li><b>jndiProperties</b>The properties in server environment</li>
+                </ul>
+            </li>     
+        </ul>
 
-        </Context>
-        </code>
-        <br>        
-        When new datasource is configured, the user, host, password and port could  be left empty.  
- 
-     See {@link org.identityconnectors.mysqluser.MySQLUserConfiguration} and  {@link org.identityconnectors.mysqluser.MySQLUserConnector} for more information about MySQLUser connector.
-</body>
-</html>
+    <h3>Schema and Supported Features</h3>
+    <ul>
+        <li>Object Classes supported:
+            <ul>
+                <li><b>Account</b></li>
+            </ul>
+        </li>
+        <li>Operations supported:
+            <ul>
+                <li><b>Authenticate</b>v
+                <li><b>Create</b></li>
+                <li><b>Delete</b></li>
+                <li><b>Update</b></li>
+                <li><b>Search</b></li>
+                <li><b>Schema</b></li>
+                <li><b>Test</b></li>
+            </ul>
+        </li>   
+    </ul>
+    <h3>Documentation and Source Code</h3>
+    <p>The javadoc for this bundle is included in the zip file when you download the connector. 
+    The source code can be found under the <a href="https://identityconnectors.dev.java.net/source/browse/identityconnectors/">Subversion</a>
+    section of this website.</p>
+ </DIV>
+</HTML>
