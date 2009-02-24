@@ -277,7 +277,7 @@ namespace Org.IdentityConnectors.Exchange
 
             if (builder.Length > 0)
             {
-                throw new ConnectorException("Exception when executing PowerShell: " + builder);
+                throw new ConnectorException(builder.ToString());
             }
         }
 

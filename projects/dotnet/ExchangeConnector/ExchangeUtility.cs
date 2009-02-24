@@ -36,6 +36,7 @@ namespace Org.IdentityConnectors.Exchange
     using Org.IdentityConnectors.ActiveDirectory;
     using Org.IdentityConnectors.Common;
     using Org.IdentityConnectors.Framework.Common.Objects;
+using Org.IdentityConnectors.Framework.Spi;
 
     /// <summary>
     /// Description of ExchangeUtility.
@@ -257,27 +258,26 @@ namespace Org.IdentityConnectors.Exchange
         }
 
         /// <summary>
-        /// Helper method - Replaces specified collection Items
-        /// TODO: reimplement not using arrays!
+        /// Helper method - Replaces specified collection Items        
         /// </summary>        
         /// <param name="col">Input <see cref="ArrayList"/> to be searched for replacement</param>
-        /// <param name="replace">Replace mappings</param>
+        /// <param name="map">Replace mappings</param>
         /// <returns>Replaced <see cref="ArrayList"/></returns>        
         /// <exception cref="ArgumentNullException">If some of the params is null</exception>
-        internal static ArrayList FilterReplace(ArrayList col, string[,] replace)
+        internal static ArrayList FilterReplace(ArrayList col, IDictionary<string, string> map)
         {
             Assertions.NullCheck(col, "col");
-            Assertions.NullCheck(replace, "replace");
+            Assertions.NullCheck(map, "map");
 
             ArrayList newcol = (ArrayList) col.Clone();
-            for (int i = 0; i < replace.GetLength(0); i++)
+            foreach (KeyValuePair<string, string> pair in map)
             {
-                if (newcol.Contains(replace[i, 0]))
-                {                    
-                    newcol.Remove(replace[i, 0]);
-                    newcol.Add(replace[i, 1]);
+                if (newcol.Contains(pair.Key))
+                {
+                    newcol.Remove(pair.Key);
+                    newcol.Add(pair.Value);
                 }
-            }
+            }            
 
             return newcol;
         }
@@ -288,29 +288,25 @@ namespace Org.IdentityConnectors.Exchange
         /// </summary>
         /// <param name="cobject">ConnectorObject which attributes should be replaced</param>
         /// <param name="attsToGet">Attributes to get list</param>
-        /// <param name="replace">Replace mapping</param>
+        /// <param name="map">Replace mapping</param>
         /// <returns>ConnectorObject with replaced attributes</returns>        
         /// <exception cref="ArgumentNullException">If some of the params is null</exception>
-        internal static ConnectorObject ReplaceAttributes(ConnectorObject cobject, IList attsToGet, string[,] replace)
+        internal static ConnectorObject ReplaceAttributes(ConnectorObject cobject, IList attsToGet, IDictionary<string, string> map)
         {
             Assertions.NullCheck(cobject, "cobject");
             Assertions.NullCheck(attsToGet, "attsToGet");
-            Assertions.NullCheck(replace, "replace");
+            Assertions.NullCheck(map, "map");
 
             var attributes = cobject.GetAttributes();
             var builder = new ConnectorObjectBuilder();
             foreach (ConnectorAttribute attribute in attributes)
             {
-                for (int i = 0; i < replace.GetLength(0); i++)
+                string newName;
+                if (map.TryGetValue(attribute.Name, out newName) && attsToGet.Contains(newName))
                 {
-                    string oldName = replace[i, 1];
-                    string newName = replace[i, 0];
-                    if (attsToGet.Contains(newName) && attribute.Name == oldName)
-                    {
-                        var newAttribute = RenameAttribute(attribute, replace[i, 0]);
-                        builder.AddAttribute(newAttribute);
-                        break;
-                    }
+                    var newAttribute = RenameAttribute(attribute, newName);
+                    builder.AddAttribute(newAttribute);
+                    break;
                 }
 
                 builder.AddAttribute(attribute);
@@ -340,5 +336,21 @@ namespace Org.IdentityConnectors.Exchange
             attBuilder.Name = newName;
             return attBuilder.Build();
         }
+
+        /// <summary>
+        /// Localized null check
+        /// </summary>
+        /// <param name="obj">Object to be check for null</param>
+        /// <param name="param">Parameter name to be used in exception message</param>
+        /// <param name="config">Configuration used for localization purposes</param>
+        /// <exception cref="ArgumentNullException">If the passed object is null</exception>
+        internal static void NullCheck(object obj, string param, Configuration config)
+        {
+            if (obj == null)
+            {
+                throw new ArgumentNullException(config.ConnectorMessages.Format(
+                            "ex_argument_null", "The Argument [{0}] can't be null", param));
+            }
+        }    
     }
 }

@@ -120,4 +120,13 @@
   <data name="connector_displayName" xml:space="preserve">
     <value>Exchange Connector</value>
   </data>
+  <data name="ex_argument_null" xml:space="preserve">
+    <value>The Argument [{0}] can't be null</value>
+  </data>
+  <data name="ex_powershell_problem" xml:space="preserve">
+    <value>Problem while PowerShell execution {0}</value>
+  </data>
+  <data name="ex_wrong_update_type" xml:space="preserve">
+    <value>Update type [{0}] not supported</value>
+  </data>
 </root>

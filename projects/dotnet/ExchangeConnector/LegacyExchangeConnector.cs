@@ -28,10 +28,9 @@ namespace Org.IdentityConnectors.Exchange
     using System.Collections;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Globalization;
+    using System.Management.Automation;
     using System.Management.Automation.Runspaces;
     using Org.IdentityConnectors.ActiveDirectory;
-    using Org.IdentityConnectors.Common;
     using Org.IdentityConnectors.Framework.Common.Exceptions;
     using Org.IdentityConnectors.Framework.Common.Objects;
     using Org.IdentityConnectors.Framework.Common.Objects.Filters;
@@ -72,14 +71,23 @@ namespace Org.IdentityConnectors.Exchange
         /// Database attribute name as in AD
         /// </summary>
         internal const string AttDatabaseADName = "homeMDB";
+        
+        /// <summary>
+        /// Attribute mapping constant
+        /// </summary>
+        internal static readonly IDictionary<string, string> AttMap2AD = new Dictionary<string, string>() 
+        {
+        { AttDatabase, AttDatabaseADName },
+        { AttExternalMail, AttExternalMailADName }
+        };
 
         /// <summary>
         /// Attribute mapping constant
         /// </summary>
-        internal static readonly string[,] AttMapping = new[,] 
+        internal static readonly IDictionary<string, string> AttMapFromAD = new Dictionary<string, string>() 
         {
-        { AttDatabase, AttDatabaseADName },
-        { AttExternalMail, AttExternalMailADName }
+        { AttDatabaseADName, AttDatabase },
+        { AttExternalMailADName, AttExternalMail }
         };
 
         /// <summary>
@@ -172,7 +180,7 @@ namespace Org.IdentityConnectors.Exchange
             try
             {
                 // execute the command
-                this.runspace.InvokePipeline(cmd);
+                this.InvokePipeline(cmd);
             }
             catch
             {
@@ -186,6 +194,8 @@ namespace Org.IdentityConnectors.Exchange
                 catch
                 {
                     Trace.TraceWarning("Not able to rollback AD create for UID: " + uid.GetUidValue());
+
+                    // note: this is not perfect, we hide the original exception
                     throw;
                 }
 
@@ -216,9 +226,9 @@ namespace Org.IdentityConnectors.Exchange
             const string METHOD = "Update";
             Debug.WriteLine(METHOD + ":entry", ClassName);
 
-            Assertions.NullCheck(type, "updatetype");
-            Assertions.NullCheck(oclass, "oclass");
-            Assertions.NullCheck(attributes, "attributes");
+            ExchangeUtility.NullCheck(type, "updatetype", this.configuration);
+            ExchangeUtility.NullCheck(oclass, "oclass", this.configuration);
+            ExchangeUtility.NullCheck(attributes, "attributes", this.configuration);
 
             // update in AD first
             Uid uid = base.Update(type, oclass, FilterOut(attributes), options);
@@ -237,18 +247,19 @@ namespace Org.IdentityConnectors.Exchange
                     {
                         // we don't know name, but we need it - NOTE: searching for all the default attributes, we need only Name here, it can be improved
                         ConnectorObject co = this.ADSearchByUid(uid, oclass, null);
-                        Assertions.NullCheck(co, "co");
+                        ExchangeUtility.NullCheck(co, "co", this.configuration);
 
                         // add to attributes
                         attributes.Add(co.Name);
                     }
 
                     Command cmd = ExchangeUtility.GetCommand(ExchangeConnector.CommandInfo.SetMailUser, attributes);
-                    this.runspace.InvokePipeline(cmd);
+                    this.InvokePipeline(cmd);
                 }
                 else
                 {
-                    throw new ConnectorException(string.Format(CultureInfo.CurrentCulture, "Update type [{0}] not supported", type));
+                    throw new ConnectorException(this.configuration.ConnectorMessages.Format(
+                            "ex_wrong_update_type", "Update type [{0}] not supported", type));
                 }
             }
 
@@ -316,7 +327,7 @@ namespace Org.IdentityConnectors.Exchange
             ResultsHandler filter = delegate(ConnectorObject cobject)
                                     {
                                         ConnectorObject filtered = ExchangeUtility.ReplaceAttributes(
-                                                cobject, attsToGet, AttMapping);
+                                                cobject, attsToGet, AttMapFromAD);
                                         return handler(filtered);
                                     };
 
@@ -328,7 +339,7 @@ namespace Org.IdentityConnectors.Exchange
                     || attsToGet.Contains(AttRecipientType))
                 {
                     // replace Exchange attributes with AD names
-                    var newAttsToGet = ExchangeUtility.FilterReplace(attsToGet, AttMapping);
+                    var newAttsToGet = ExchangeUtility.FilterReplace(attsToGet, AttMap2AD);
 
                     // we have to remove recipient type, as it is unknown to AD
                     newAttsToGet.Remove(AttRecipientType);
@@ -474,6 +485,27 @@ namespace Org.IdentityConnectors.Exchange
         }
 
         /// <summary>
+        /// Invokes command in PowerShell runspace, this method is just helper
+        /// method to do the exception localization
+        /// </summary>
+        /// <param name="cmd">Command to execute</param>
+        /// <returns>Collection of <see cref="PSObject"/> returned from runspace</returns>
+        /// <exception cref="ConnectorException">If some troubles with command execution, 
+        /// the exception will be partially localized</exception>
+        private ICollection<PSObject> InvokePipeline(Command cmd)
+        {
+            try
+            {
+                return this.runspace.InvokePipeline(cmd);
+            }
+            catch (Exception e)
+            {
+                throw new ConnectorException(this.configuration.ConnectorMessages.Format(
+                            "ex_powershell_problem", "Problem while PowerShell execution {0}", e));
+            }            
+        }
+
+        /// <summary>
         /// helper method for searching object in AD by UID
         /// </summary>
         /// <param name="uid">Uid of the searched </param>
@@ -482,8 +514,8 @@ namespace Org.IdentityConnectors.Exchange
         /// <returns>Connector object found by the Uid</returns>
         private ConnectorObject ADSearchByUid(Uid uid, ObjectClass oclass, OperationOptions options)
         {
-            Assertions.NullCheck(uid, "uid");
-            Assertions.NullCheck(oclass, "oclass");
+            ExchangeUtility.NullCheck(uid, "uid", this.configuration);
+            ExchangeUtility.NullCheck(oclass, "oclass", this.configuration);
             if (options == null)
             {
                 options = new OperationOptionsBuilder().Build();
