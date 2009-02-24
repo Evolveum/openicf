@@ -25,6 +25,6 @@
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.identityconnectors.contract.test.ContractTestSuite"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="ConnectorContractTests"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dproject.name=connector-db2&#10;-Ddata-provider=org.identityconnectors.contract.data.GroovyDataProvider&#10;-DbundleJar=dist/org.identityconnectors.db2-1.0.x.jar&#10;-DbundleName=org.identityconnectors.db2&#10;-DbundleVersion=1.0.x"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dproject.name=connector-db2&#10;-Ddata-provider=org.identityconnectors.contract.data.GroovyDataProvider&#10;-DbundleJar=dist/org.identityconnectors.db2-1.0.0.jar&#10;-DbundleName=org.identityconnectors.db2&#10;-DbundleVersion=1.0.0"/>
 <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:ConnectorDB2}"/>
 </launchConfiguration>

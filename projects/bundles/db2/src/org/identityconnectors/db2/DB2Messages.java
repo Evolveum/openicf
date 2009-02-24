@@ -21,4 +21,5 @@ abstract class DB2Messages {
     static final String NAME_IS_NOT_UPDATABLE = "db2.name.is.not.updatable";
     static final String UPDATE_OF_USER_FAILED = "db2.update.of.user.failed";
     static final String UPDATE_UID_CANNOT_BE_NULL_OR_EMPTY = "db2.update.uid.cannot.be.null.or.empty";
+    static final String SEARCH_FAILED = "db2.search.failed";
 }

@@ -244,7 +244,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
                 }
             }
         } catch (SQLException e) {
-            throw ConnectorException.wrap(e);
+            throw new ConnectorException(cfg.getConnectorMessages().format(DB2Messages.SEARCH_FAILED, null),e);
         } finally {
             SQLUtil.closeQuietly(result);
             SQLUtil.closeQuietly(statement);
@@ -325,33 +325,27 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	 * @param password 
      */
     @SuppressWarnings("unchecked")
-	private void updateAuthority(String user,Set<Attribute> attrs,UpdateType type)   {
+	private void updateAuthority(String user,Set<Attribute> attrs,UpdateType type)  throws SQLException {
         checkAdminConnection();
         Attribute wsAttr = AttributeUtil.find(USER_AUTH_GRANTS, attrs);
         Collection<String> grants = (Collection<String>) (wsAttr != null ? new ArrayList<Object>(wsAttr.getValue()) : new ArrayList<String>(3)); 
-        try{
-	        switch(type){
-	        	case ADD : 		{
-	        					 addMandatoryConnect(grants);
-	        					 executeGrants(grants,user);
-	        					 break;
-	        	}
-	        	case REPLACE :  {
-	        					addMandatoryConnect(grants);
-	        					revokeAllGrants(user);
-	        					executeGrants(grants,user);
-	        					break;
-	        	}
-	        	case DELETE : 	{
-	        					removeMandatoryRevoke(grants);
-	        					executeRevokes(grants, user);
-	        					break;
-	        	}
-	        }
-        }
-        catch (Exception e) {
-        	SQLUtil.rollbackQuietly(adminConn);
-        	throw ConnectorException.wrap(e);
+        switch(type){
+        	case ADD : 		{
+        					 addMandatoryConnect(grants);
+        					 executeGrants(grants,user);
+        					 break;
+        	}
+        	case REPLACE :  {
+        					addMandatoryConnect(grants);
+        					revokeAllGrants(user);
+        					executeGrants(grants,user);
+        					break;
+        	}
+        	case DELETE : 	{
+        					removeMandatoryRevoke(grants);
+        					executeRevokes(grants, user);
+        					break;
+        	}
         }
     }
     
