@@ -126,7 +126,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     private static final Transform TRANSFORM    = new MapTransform(VmsAuthorizeInfo.getInfo());
 
     public static final int    LONG_WAIT       = 60000;
-    public static final int    SHORT_WAIT      = 5000;
+    public static final int    SHORT_WAIT      = 60000;
     private static final int   SEGMENT_MAX       = 500;    
 
 
@@ -661,6 +661,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 attributesToGet = CollectionUtil.newReadOnlySet(options.getAttributesToGet());
             filterUsers(handler, filterStrings, attributesToGet==null?null:CollectionUtil.newReadOnlySet(attributesToGet));
         } catch (Exception e) {
+            e.printStackTrace();
             _log.error(e, "error in executeQuery");
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_SEARCH), e);
         }
@@ -789,6 +790,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             Date date = _vmsDateFormatWithSecs.parse(result);
             return date;
         } catch (Exception e) {
+            e.printStackTrace();
             _log.error(e, "error in getVmsDate");
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_GETDATE), e);
         }
@@ -819,6 +821,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         }
         return false;
     }
+    
     public Uid update(ObjectClass obj, Uid uid, Set<Attribute> attrs, OperationOptions options) {
         return update(obj, AttributeUtil.addUid(attrs, uid), options);
     }

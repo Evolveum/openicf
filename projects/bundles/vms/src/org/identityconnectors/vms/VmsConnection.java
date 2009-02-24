@@ -139,6 +139,8 @@ public class VmsConnection {
                 }),
                 new TimeoutMatch(millis,  new Closure() {
                     public void run(ExpectState state) {
+                        System.out.println("timeout:"+state.getBuffer());
+                        System.out.println("timeout:"+_buffer);
                         ConnectorException e = new ConnectorException(_configuration.getMessage(VmsMessages.TIMEOUT_IN_MATCH, string));
                         log.error(e, "timeout in waitFor");
                         throw e;
