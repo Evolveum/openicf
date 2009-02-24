@@ -80,7 +80,8 @@ import org.identityconnectors.framework.spi.operations.*;
  */
 @ConnectorClass(
         displayNameKey = "db2.connector",
-        configurationClass = DB2Configuration.class)
+        configurationClass = DB2Configuration.class,
+        messageCatalogPaths={"org/identityconnectors/dbcommon/Messages","org/identityconnectors/db2/Messages"})
 public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<FilterWhereBuilder>,DeleteOp,UpdateAttributeValuesOp,TestOp,PoolableConnector,AttributeNormalizer {
 	
 	private final static Log log = Log.getLog(DB2Connector.class);
