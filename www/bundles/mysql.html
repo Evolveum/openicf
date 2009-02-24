@@ -34,7 +34,13 @@
      	<tr>
      	    <td><a href="/downloads.html#Bundles">1.0</a></td>
      	    <td><a href="/downloads.html#Framework">1.0</a></td>
-     	    <td><ul><li>???</ul></td>
+     	    <td>    <ul>
+				     <li>MySQL 6.0 - Alpha</li>
+				     <li>MySQL 5.1 - GA release</li>
+				     <li>MySQL 5.0 - GA release</li>
+				     <li>MySQL 4.1 - GA release</li>
+				    </ul>
+		    </td>
      	</tr>
      	<!-- add later versions here -->
       </table>
@@ -47,15 +53,15 @@
 			<li>Required:
 				<ul>
 					<li><b>user</b> The user capable to do admin operations on the resource.</li>
-                    <li><b>password</b>The admin user password.</li>
-                    <li><b>usermoel</b>The template user to create new users from.</li>
+                    <li><b>password</b> The admin user password.</li>
+                    <li><b>usermoel</b> The template user to create new users from.</li>
 				</ul>
 			</li>	
             <li>Option driver:
                 <ul>
-                    <li><b>driver</b>The driver class name</li>
-                    <li><b>host</b>The databse host name</li>
-                    <li><b>port</b>The datasource port</li>
+                    <li><b>driver</b> The driver class name</li>
+                    <li><b>host</b> The databse host name</li>
+                    <li><b>port</b> The datasource port</li>
                 </ul>
             </li>     
             <li>Option datasource:
@@ -97,16 +103,7 @@
     The <B>Datasouce</B> property and <B>JndiProperties</B> has been added to support the server side defined resources.     
     </p>
     <h3>What is the migration path from adapter to connector</h3>
-    <p>Please see the migration separate page.</p>
-
-    <h3>Native resource types the connector can manage</h3>
-    <p>The connector was tested against the mysql Releases    </p>
-    <ul>
-     <li>MySQL 6.0 - Alpha</li>
-     <li>MySQL 5.1 - GA release</li>
-     <li>MySQL 5.0 - GA release</li>
-     <li>MySQL 4.1 - GA release</li>
-    </ul>
+    <p>Please see the migration separate page located at the connector sources.</p>
 
     <h3>The MySQL resource description</h3>
     <p>Provides implementation of connector to MySQL database resource. 
