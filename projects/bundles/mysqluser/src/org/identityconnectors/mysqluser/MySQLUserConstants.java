@@ -24,7 +24,7 @@ package org.identityconnectors.mysqluser;
 
 
 /**
- * The mzsqluser constants
+ * The MySQL User Constants constants
  * 
  * @author Petr Jung
  * @since 1.0
