@@ -4,20 +4,22 @@ import java.sql.*;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.dbcommon.*;
 import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.spi.operations.AuthenticateOp;
 
-class OracleAuthenticateOperation extends AbstractOracleOperation implements AuthenticateOp{
+class OracleOperationAuthenticate extends AbstractOracleOperation implements AuthenticateOp{
     
     
-    OracleAuthenticateOperation(OracleConfiguration cfg, Log log) {
+    OracleOperationAuthenticate(OracleConfiguration cfg, Log log) {
         super(cfg, log);
     }
 
     public Uid authenticate(ObjectClass objectClass, String username, GuardedString password, OperationOptions options) {
         OracleConnector.checkObjectClass(objectClass, cfg.getConnectorMessages());
+        new LocalizedAssert(cfg.getConnectorMessages()).assertNotBlank(username, "username");
+        new LocalizedAssert(cfg.getConnectorMessages()).assertNotNull(password, "password");
         try{
             final Connection conn = cfg.createConnection(username, password);
             SQLUtil.closeQuietly(conn);

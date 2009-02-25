@@ -17,8 +17,10 @@ import org.identityconnectors.framework.spi.operations.*;
  * @author kitko
  *
  */
-@ConnectorClass(configurationClass=OracleConfiguration.class, displayNameKey = "oracle.connector")
-public class OracleConnector implements PoolableConnector, AuthenticateOp,CreateOp,DeleteOp {
+@ConnectorClass(configurationClass=OracleConfiguration.class,
+        displayNameKey = "oracle.connector",
+        messageCatalogPaths={"org/identityconnectors/dbcommon/Messages","org/identityconnectors/oracle/Messages"})
+public class OracleConnector implements PoolableConnector, AuthenticateOp,CreateOp,DeleteOp,UpdateOp {
     private Connection adminConn;
     private OracleConfiguration cfg;
     private final static Log log = Log.getLog(OracleConnector.class);
@@ -66,7 +68,7 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,Create
     
 
     public Uid authenticate(ObjectClass objectClass, String username, GuardedString password, OperationOptions options) {
-        return new OracleAuthenticateOperation(cfg, log).authenticate(objectClass, username, password, options);
+        return new OracleOperationAuthenticate(cfg, log).authenticate(objectClass, username, password, options);
     }
     
     private Connection createAdminConnection(){
@@ -75,7 +77,7 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,Create
 
     
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
-        new OracleDeleteOperation(cfg, adminConn, log).delete(objClass, uid, options);
+        new OracleOperationDelete(cfg, adminConn, log).delete(objClass, uid, options);
     }
     
     Connection getAdminConnection(){
@@ -87,13 +89,17 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,Create
     }
 
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
-        return new OracleCreateOperation(cfg, adminConn, log).create(oclass, attrs, options);
+        return new OracleOperationCreate(cfg, adminConn, log).create(oclass, attrs, options);
     }
     
     static void checkObjectClass(ObjectClass objectClass,ConnectorMessages messages){
         if(!ObjectClass.ACCOUNT.equals(objectClass)){
             throw new IllegalArgumentException("Invalid obejct class");
         }
+    }
+
+    public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
+        return new OracleOperationUpdate(cfg, adminConn, log).update(objclass, uid, attrs, options);
     }
     
     

@@ -34,9 +34,10 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
     
     /**
      * Test method for local create
+     * @throws SQLException 
      */
     @Test
-    public void testCreateUserLocal(){
+    public void testCreateUserLocal() throws SQLException{
         String newUser = "newUser";
         if(new OracleUserReader(connector.getAdminConnection()).userExist(newUser)){
               connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
@@ -71,9 +72,10 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
     }
     
-    /** Test create of user with external authentication */
+    /** Test create of user with external authentication 
+     * @throws SQLException */
     @Test
-    public void testCreateUserExternal(){
+    public void testCreateUserExternal() throws SQLException{
         //Test external authentication
         String newUser = "newUser";
         if(new OracleUserReader(connector.getAdminConnection()).userExist(newUser)){
@@ -95,9 +97,10 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
     }
     
-    /** Test create global user   */
+    /** Test create global user   
+     * @throws SQLException */
     @Test
-    public void testCreateUserGlobal(){
+    public void testCreateUserGlobal() throws SQLException{
         String newUser = "newUser";
         if(new OracleUserReader(connector.getAdminConnection()).userExist(newUser)){
             connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
@@ -135,9 +138,10 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         }
     }
     
-    /** Test with all possible attributes for create */
+    /** Test with all possible attributes for create 
+     * @throws SQLException */
     @Test
-    public void testCreateUserWithTableSpaces(){
+    public void testCreateUserWithTableSpaces() throws SQLException{
         String newUser = "newUser";
         if(new OracleUserReader(connector.getAdminConnection()).userExist(newUser)){
               connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
@@ -162,9 +166,10 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
     }
     
-    /** Test create with custom profile */
+    /** Test create with custom profile 
+     * @throws SQLException */
     @Test
-    public void testCreateUserWithProfile(){
+    public void testCreateUserWithProfile() throws SQLException{
         String profileName = "myprofile";
         try{
             SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "drop profile \"" + profileName + '\"');
@@ -205,9 +210,10 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         }
     }
     
-    /** Test create user with expired password */
+    /** Test create user with expired password 
+     * @throws SQLException */
     @Test
-    public void testCreateUsersExpired(){
+    public void testCreateUsersExpired() throws SQLException{
         String newUser = "newUser";
         if(new OracleUserReader(connector.getAdminConnection()).userExist(newUser)){
               connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
@@ -229,9 +235,10 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
     }
     
-    /** Test Create user locked/unlocked */
+    /** Test Create user locked/unlocked 
+     * @throws SQLException */
     @Test
-    public void testCreateUserLocked(){
+    public void testCreateUserLocked() throws SQLException{
         String newUser = "newUser";
         if(new OracleUserReader(connector.getAdminConnection()).userExist(newUser)){
               connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
@@ -287,15 +294,15 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         Assert.assertThat(rolesRead, JUnitMatchers.hasItem("testrole"));
     }
     
-    private String findDefaultTS(Connection conn){
+    private String findDefaultTS(Connection conn) throws SQLException{
         return getTestUserRecord(conn).defaultTableSpace;
     }
     
-    private String findTempTS(Connection conn){
+    private String findTempTS(Connection conn) throws SQLException{
         return getTestUserRecord(conn).temporaryTableSpace;
     }
     
-    private UserRecord getTestUserRecord(Connection conn){
+    private UserRecord getTestUserRecord(Connection conn) throws SQLException{
         String newUser = "testTS";
         if(!new OracleUserReader(conn).userExist("testUser")){
             Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);

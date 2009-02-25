@@ -40,7 +40,7 @@ class OracleUserReader {
      * @param userNames
      * @return collection of {@link UserRecord} records
      */
-    Collection<UserRecord> readUserRecords(Collection<String> userNames){
+    Collection<UserRecord> readUserRecords(Collection<String> userNames) throws SQLException{
         StringBuilder query = new StringBuilder("select * from DBA_USERS where USERNAME in(");
         int i = 0, length = userNames.size();
         for(String userName : userNames){
@@ -62,9 +62,6 @@ class OracleUserReader {
                 result.add(record);
             }
             return result;
-        }
-        catch(SQLException e){
-            throw ConnectorException.wrap(e);
         }
         finally{
             SQLUtil.closeQuietly(rs);
@@ -89,8 +86,9 @@ class OracleUserReader {
      * Reads one {@link UserRecord} record for user
      * @param username
      * @return user record or null if no user with username exists
+     * @throws SQLException 
      */
-    UserRecord readUserRecord(String username){
+    UserRecord readUserRecord(String username) throws SQLException{
         Collection<UserRecord> records = readUserRecords(Collections.singletonList(username));
         if(!records.isEmpty()){
             return records.iterator().next();

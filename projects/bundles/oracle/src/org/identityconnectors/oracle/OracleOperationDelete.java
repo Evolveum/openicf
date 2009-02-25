@@ -15,10 +15,10 @@ import org.identityconnectors.framework.spi.operations.DeleteOp;
  * @author kitko
  *
  */
-class OracleDeleteOperation extends AbstractOracleOperation implements DeleteOp{
+class OracleOperationDelete extends AbstractOracleOperation implements DeleteOp{
     
     
-    OracleDeleteOperation(OracleConfiguration cfg, Connection adminConn,Log log) {
+    OracleOperationDelete(OracleConfiguration cfg, Connection adminConn,Log log) {
         super(cfg, adminConn, log);
     }
 

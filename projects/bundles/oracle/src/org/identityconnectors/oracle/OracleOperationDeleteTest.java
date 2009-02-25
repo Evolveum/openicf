@@ -14,7 +14,7 @@ import org.junit.Test;
  * @author kitko
  *
  */
-public class OracleDeleteOperationTest extends OracleConnectorAbstractTest {
+public class OracleOperationDeleteTest extends OracleConnectorAbstractTest {
 
     /** 
      * Test method for {@link org.identityconnectors.oracle.OracleConnector#delete(ObjectClass, Uid, OperationOptions)}
@@ -47,8 +47,6 @@ public class OracleDeleteOperationTest extends OracleConnectorAbstractTest {
         }
         catch(IllegalArgumentException e){
         }
-        
-        
     }
 
 }

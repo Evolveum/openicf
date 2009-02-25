@@ -215,7 +215,7 @@ public class OracleConfigurationTest {
     
     static OracleConfiguration createSystemConfiguration(){
         String user = TestHelpers.getProperty("thin.systemUser", null);
-        String passwordString = TestHelpers.getProperty("thin.systemPassword", null);
+        String passwordString = TestHelpers.getProperty("thin.systemPassword", "missingPassword");
         GuardedString password = new GuardedString(passwordString.toCharArray());
         String database = TestHelpers.getProperty("thin.database", null);
         String driver = OracleSpecifics.OCI_DRIVER;
@@ -228,6 +228,7 @@ public class OracleConfigurationTest {
         cfg.setDriver(driver);
         cfg.setHost(host);
         cfg.setPort(port);
+        cfg.setConnectorMessages(TestHelpers.createDummyMessages());
         return cfg;
     }
     

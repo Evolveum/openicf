@@ -15,7 +15,7 @@ import org.junit.Test;
  * @author kitko
  *
  */
-public class OracleAuthenticateOperationTest extends OracleConnectorAbstractTest {
+public class OracleOperationAuthenticateTest extends OracleConnectorAbstractTest {
     
     /**
      * Test method for {@link org.identityconnectors.oracle.OracleConnector#authenticate(org.identityconnectors.framework.common.objects.ObjectClass, java.lang.String, org.identityconnectors.common.security.GuardedString, org.identityconnectors.framework.common.objects.OperationOptions)}.
@@ -38,6 +38,11 @@ public class OracleAuthenticateOperationTest extends OracleConnectorAbstractTest
         }
         catch(IllegalArgumentException e){
         }
+        try{
+            facade.authenticate(ObjectClass.ACCOUNT, null, new GuardedString(password.toCharArray()), null);
+            fail("Must fail for null password");
+        }
+        catch(Exception e){}
         
     }
     
