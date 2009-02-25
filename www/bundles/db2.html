@@ -1,30 +1,53 @@
+<!--
+  ====================
+  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+  
+  Copyright 2007-2008 Sun Microsystems, Inc. All rights reserved.     
+  
+  The contents of this file are subject to the terms of the Common Development 
+  and Distribution License("CDDL") (the "License").  You may not use this file 
+  except in compliance with the License.
+  
+  You can obtain a copy of the License at 
+  http://IdentityConnectors.dev.java.net/legal/license.txt
+  See the License for the specific language governing permissions and limitations 
+  under the License. 
+  
+  When distributing the Covered Code, include this CDDL Header Notice in each file
+  and include the License file at identityconnectors/legal/license.txt.
+  If applicable, add the following below this CDDL Header, with the fields 
+  enclosed by brackets [] replaced by your own identifying information: 
+  "Portions Copyrighted [year] [name of copyright owner]"
+  ====================
+-->
 <HTML>
 <HEAD>
     <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=iso-8859-1">
-    <TITLE>DB2 Connector</TITLE>
+    <TITLE>IdentityConnectors: DB2 Connector</TITLE>
 </HEAD>
+<BODY>
 <DIV id="projecthome" class="app">
     <H1>DB2 Connector Overview</H1>
-    <P><i>This page is currently under construction.</i>
-    </P>
 <p>
-	The DB2 Connector supports provisioning to the IBM DB2 database.
+A Connector implementation for an DB2 database. Uses plain JDBC calls to execute provisioning operations on DB2 resource. Tested with type4 and type2 JCC driver and with
+older type2 CLI driver.
+
     <h3>Bundle Information</h3>
     <ul>  
-       <li><b>Latest stable release:</b> <a href="https://identityconnectors.dev.java.net/downloads.html#Bundles">1.0.2930</a>
+       <li><b>Latest stable release:</b> <!-- <a href="https://identityconnectors.dev.java.net/downloads.html#Bundles">1.0.3230</a> --> Not yet available
 	   <li><b>Platform:</b> Java
-       <li><b>3rd-party libraries required:</b> None
-       <li><b>Other dependencies:</b>
-       <li><b>Release notes:</b>
-    </ul>
-</p>
+       <li><b>3rd-party libraries required:</b> <a href="http://www-01.ibm.com/software/data/db2/express/additional-downloads.html?S_TACT=none&S_CMP=none</a> DB2 JDBC driver
+       <li><b>Release notes:</b> <br><br>
 <h3>Version Information</h3>
      <table border="1">
      	<tr><th>Connector Version</th><th>Framework Version</th><th>Supported Resource Version(s)</th></tr>
      	<tr>
      	    <td><a href="https://identityconnectors.dev.java.net/downloads.html#Bundles">1.0</a></td>
      	    <td><a href="https://identityconnectors.dev.java.net/downloads.html#Framework">1.0</a></td>
-     	    <td><ul><li>???</ul></td>
+     	    <td><ul><li>DB2 9</li>
+     	    		<li>DB2 9.5</li>
+     	    	</ul>
+     	    </td>
      	</tr>
      	<!-- add later versions here -->
      </table>
@@ -32,43 +55,89 @@
     the connector. Newer framework versions are backwards compatible and will support previous connectors.</p>
 <h3>Configuration Properties</h3>
 <p>
-These are the properties that can be specified on the Configuration object when setting up the Connector.
-	<ul>
-		<li>Required:
-			<ul>
-				<li><b>property A</b> (String): <description>
-				<li><b>property B</b> (String): <description>
-				<li><b>property C</b> (String): <description>			
-			</ul>
-		<li>Optional:
-			<ul>
-				<li><b>property D</b> (boolean): <description>
-			</ul>
-	</ul>
+  Configuration to access DB2 database. We will support most consistent way how to connect to database.
+  We will support 3 ways how to connect to DB2.
+  <ol>
+  		<li>Using java.sql.DataSource when using dataSource jndi name, see <a href="#dataSource">dataSource properties</a></li>
+  		<li>Using type 4 driver, when using host,port and database name, see <a href="#databaseName">databaseName properties</a></li>
+  		<li>Using type 2 driver, when using local alias, see <a href="#aliasName">aliasName properties</a></li>
+  </ol>
+  
+  
+  The above specified order is critical. This means, we will not use any combination, just one of the case in the specified order.
+    
+  
+   <h4><a name="dataSource"/>Getting connection from DataSource. Used when <code>dataSource</code> property is set</h4>
+    We will support these properties when connecting to DB2 using dataSource
+    <ul>
+    	<li>dataSource : Name of jndi name of dataSource : required. It must be logical or absolute name of dataSource.
+    		No prefix will be added when trying to do lookup
+    	</li>
+    	<li>
+    		dsJNDIEnv : JNDI environment entries needed to lookup datasource. In most cases should be empty, needed only when lookuping datasource
+    		from different server as server where connectors are running.
+    	</li>
+    	<li>adminAccount : Administrative account : optional, default we will get connection from DS without user/password parameters</li>
+    	<li>adminPassword : Administrative password : optional, default we will get connection from DS without user/password parameters</li></li>
+    </ul>	
+    
+  <h4><a name="databaseName"/>Getting connection from DriverManager using Type 4 driver. Used when <code>host,port,databaseName</code> property are set</h4>
+  We will support/require these properties when connecting to db2 :
+  <ul>
+  		<li> host : Name or IP of DB2 instance host. This is required property</li>
+  		<li> port : Port db2 listener is listening to. Default to 50000 </li>
+  		<li> databaseName : Name of local/remote database</li>
+  		<li> subprotocol : db2,db2iSeries. Default to db2 </li>
+  		<li> jdbcDriver  : Classname of jdbc driver, default to com.ibm.db2.jcc.DB2Driver</li>
+  		<li> adminAccount : Administrative account when connecting to DB2 in non user contexts. E.g listing of users. </li>
+  		<li> adminPassword : Password for admin account. </li>
+  </ul>
+  
+  <h4><a name="aliasName"/>Getting connection from DriverManager using Type 2 driver.  Used when <code>databaseName - local alias</code> property is set</h4>
+  We will require these properties when connecting to db2 using local alias
+  <ul>
+  		<li> databaseName : Name of local alias created using <code>"db2 catalag database command"</code></li>
+  		<li> jdbcDriver  : Classname of jdbc driver, default to com.ibm.db2.jcc.DB2Driver</li>
+  		<li> subprotocol : db2,db2iSeries. Default to db2 </li>
+  		<li> adminAccount : Administrative account when connecting to DB2 in non user contexts. E.g listing of users. </li>
+  		<li> adminPassword : Password for admin account. </li>
+  </ul>
+  
+  Note that IBM ships two drivers for DB2. We have tested only these two drivers, no other driver was tested.
+  <ul>
+       <li> IBM DB2 Driver for JDBC and SQLJ</li>
+       This driver can be used as type4 and type2 driver. In this way driver classname is same, we just need specify different properties.
+       DatabaseName property is used like remote database in case of type4 and like local alias in case of type2.
+       <li>Legacy based cli driver</li>
+       This driver is deprecated now, although it is still included in DB2 9x version. DB2 does not develop this driver any more and it seems
+       it will be removed in next major version release. However this driver was recommended driver for Websphere.
+  </ul>
+  IBM Net Driver was deprecated in version 8, is not included in version 9. This driver is not supported. 
 </p>
 <h3>Schema and Supported Features</h3>
 <p>
-This Connector supports the ACCOUNT object class. The attributes supported are: <attr_1>, <attr_2>... Furthermore, the ACCOUNT object class
-supports the following special attributes:
+This Connector supports only ACCOUNT object class. It supports these attributes 
 <ul>
-	<li>OperationalAttributeInfos.<b>PASSWORD</b>
-	<li>OperationalAttributeInfos.<b>PASSWORD_EXPIRED</b>
-	<li>PredefinedAttributeInfos.<b>LAST_PASSWORD_CHANGE_DATE</b>
-	<li>PredefinedAttributeInfos.<b>LAST_LOGIN_DATE</b>
+	<li><b>NAME</b></li>
+	<li><b>PASSWORD</b></li>
+	<li><b>GRANTS</b></li>
 </ul>
-The DB2 Connector supports the following operations:
-	<ul>
-				<li><b>Authenticate</b>
-				<li><b>Create</b>
-				<li><b>Delete</b>
-				<li><b>Update</b>
-				<li><b>Search</b>
-				<li><b>Schema</b>
-				<li><b>Test</b>
-	</ul>
+<br/>
+The DB2 Connector supports the following operations: 
+<br/><br/>
+<ul>
+				<li><b>Authenticate</b></li>
+				<li><b>Create</b></li>
+				<li><b>Delete</b></li>
+				<li><b>Update</b></li>
+				<li><b>Search</b></li>
+				<li><b>Schema</b></li>
+				<li><b>Test</b></li>
+</ul>
 </p>
 <h3>Documentation and Source Code</h3>
 <p>The javadoc for this bundle is included in the zip file when you download the connector. The source code can be found under the <a href="https://identityconnectors.dev.java.net/source/browse/identityconnectors/">Subversion</a>
 section of the IdentityConnectors website.</p>
 </DIV>
+</BODY>
 </HTML>
