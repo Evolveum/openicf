@@ -108,7 +108,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     private Schema                      _schema;
     private Map<String, AttributeInfo>  _attributeMap;
 
-    private ScriptExecutorFactory       _scriptFactory;
     private String                      _changeOwnPasswordCommandScript;
     private ScriptExecutor              _changeOwnPasswordCommandExecutor;
     private String                      _authorizeCommandScript;
@@ -1054,7 +1053,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         // Operational Attributes
         //
         attributes.add(OperationalAttributeInfos.PASSWORD);
-        if (!_configuration.getDisableUserLogins())
+        boolean disableUserLogins = false;
+        if (_configuration.getDisableUserLogins()!=null)
+            disableUserLogins = _configuration.getDisableUserLogins();
+        if (!disableUserLogins)
             attributes.add(OperationalAttributeInfos.CURRENT_PASSWORD);
         attributes.add(OperationalAttributeInfos.ENABLE);
         attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
@@ -1072,7 +1074,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
 
         // Remove unsupported operations
         //
-        if (_configuration.getDisableUserLogins()) {
+        if (disableUserLogins) {
             schemaBuilder.removeSupportedObjectClass(AuthenticateOp.class, objectClassInfo);
         }
 
@@ -1158,7 +1160,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         _vmsDateFormatWithSecs.setTimeZone(timeZone);
         _vmsDateFormatWithoutSecs = new SimpleDateFormat(_configuration.getVmsDateFormatWithoutSecs(), new Locale(_configuration.getVmsLocale()));
         _vmsDateFormatWithoutSecs.setTimeZone(timeZone);
-        _scriptFactory = ScriptExecutorFactory.newInstance(_configuration.getScriptingLanguage());
+
         // Internal scripts are all in GROOVY for now
         //
         ScriptExecutorFactory scriptFactory = ScriptExecutorFactory.newInstance("GROOVY");
@@ -1176,6 +1178,13 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     public Object runScriptOnResource(ScriptContext request, OperationOptions options) {
         String user = options.getRunAsUser();
         GuardedString password = options.getRunWithPassword();
+        if (user!=null && password==null)
+            throw new ConnectorException(_configuration.getMessage(VmsMessages.PASSWORD_REQUIRED_FOR_RUN_AS));
+        boolean disableUserLogins = false;
+        if (_configuration.getDisableUserLogins()!=null)
+            disableUserLogins = _configuration.getDisableUserLogins();
+        if (user!=null && disableUserLogins)
+            throw new ConnectorException(_configuration.getMessage(VmsMessages.RUN_AS_WHEN_DISABLED));
         
         Map<String, Object> arguments = request.getScriptArguments();
         String language = request.getScriptLanguage();
@@ -1185,22 +1194,32 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     
         String script = request.getScriptText();
         try {
-            return executeScript(script, SHORT_WAIT, arguments);
+            VmsConnection connection = _connection;
+            if (user!=null) {
+                VmsConfiguration configuration = new VmsConfiguration(_configuration);
+                configuration.setUserName(user);
+                configuration.setPassword(password);
+                connection = new VmsConnection(configuration,VmsConnector.SHORT_WAIT);
+            }
+            return executeScript(connection, script, SHORT_WAIT, arguments);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
     }
 
-    protected String executeCommand(String command) throws Exception {
-        _connection.resetStandardOutput();
-        _connection.send(command);
-        _connection.waitFor(_configuration.getLocalHostShellPrompt(), SHORT_WAIT);
-        String output = _connection.getStandardOutput();
+    protected String executeCommand(VmsConnection connection, String command) throws Exception {
+        connection.resetStandardOutput();
+        connection.send(command);
+        connection.waitFor(_configuration.getLocalHostShellPrompt(), SHORT_WAIT);
+        String output = connection.getStandardOutput();
         int index = output.lastIndexOf(_configuration.getLocalHostShellPrompt());
         if (index!=-1)
             output = output.substring(0, index);
         String terminator = null;
-        if (_configuration.getSSH())
+        boolean isSSH = false;
+        if (_configuration.getSSH()!=null)
+            isSSH = _configuration.getSSH();
+        if (isSSH)
             terminator = "\r\n";
         else
             terminator = "\n\r";
@@ -1217,56 +1236,58 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         return output;
     }
 
-    protected String[] executeScript(String action, int timeout, Map args) throws Exception {
+    protected String[] executeScript(VmsConnection connection, String action, int timeout, Map args) throws Exception {
         // create a temp file
         //
         String tmpfile = UUID.randomUUID().toString();
+        
+        //TODO: allow optional used of F$UNIQUE
 
         // Create an empty error file, so that we can send it back if there are
         // no errors
         //
-        executeCommand("OPEN/WRITE OUTPUT_FILE " + tmpfile + ".ERROR");
-        executeCommand("CLOSE OUTPUT_FILE");
+        executeCommand(connection, "OPEN/WRITE OUTPUT_FILE " + tmpfile + ".ERROR");
+        executeCommand(connection, "CLOSE OUTPUT_FILE");
 
         // create script and append actions
         //
-        executeCommand("OPEN/WRITE OUTPUT_FILE " + tmpfile + ".COM");
-        executeCommand("WRITE OUTPUT_FILE \"$ DEFINE SYS$ERROR " + tmpfile + ".ERROR");
-        executeCommand("WRITE OUTPUT_FILE \"$ DEFINE SYS$OUTPUT " + tmpfile + ".OUTPUT");
+        executeCommand(connection, "OPEN/WRITE OUTPUT_FILE " + tmpfile + ".COM");
+        executeCommand(connection, "WRITE OUTPUT_FILE \"$ DEFINE SYS$ERROR " + tmpfile + ".ERROR");
+        executeCommand(connection, "WRITE OUTPUT_FILE \"$ DEFINE SYS$OUTPUT " + tmpfile + ".OUTPUT");
 
-        setEnvironmentVariables(args);
+        setEnvironmentVariables(connection, args);
 
         StringTokenizer st = new StringTokenizer(action, "\r\n\f");
         if (st.hasMoreTokens()) {
             do {
                 String token = st.nextToken();
                 if (!StringUtil.isBlank(token)) {
-                    executeCommand("WRITE OUTPUT_FILE " + new String(quoteWhenNeeded(token.toCharArray(), true)));
+                    executeCommand(connection, "WRITE OUTPUT_FILE " + new String(quoteWhenNeeded(token.toCharArray(), true)));
                 }
             } while (st.hasMoreTokens());
         }
 
-        executeCommand("CLOSE OUTPUT_FILE");
+        executeCommand(connection, "CLOSE OUTPUT_FILE");
 
-        executeCommand("@" + tmpfile);
+        executeCommand(connection, "@" + tmpfile);
 
-        executeCommand("DEAS SYS$ERROR");
-        executeCommand("DEAS SYS$OUTPUT");
+        executeCommand(connection, "DEAS SYS$ERROR");
+        executeCommand(connection, "DEAS SYS$OUTPUT");
 
         // Capture the output
         //
-        String status = executeCommand("WRITE SYS$OUTPUT $STATUS");
-        String output = executeCommand("TYPE " + tmpfile + ".OUTPUT");
-        String error  = executeCommand("TYPE " + tmpfile + ".ERROR");
+        String status = executeCommand(connection, "WRITE SYS$OUTPUT $STATUS");
+        String output = executeCommand(connection, "TYPE " + tmpfile + ".OUTPUT");
+        String error  = executeCommand(connection, "TYPE " + tmpfile + ".ERROR");
 
-        executeCommand("DELETE " + tmpfile + ".OUTPUT;");
-        executeCommand("DELETE " + tmpfile + ".ERROR;*");
-        executeCommand("DELETE " + tmpfile + ".COM;");
+        executeCommand(connection, "DELETE " + tmpfile + ".OUTPUT;");
+        executeCommand(connection, "DELETE " + tmpfile + ".ERROR;*");
+        executeCommand(connection, "DELETE " + tmpfile + ".COM;");
         
         return new String[] { status, output, error };
     }
 
-    private void setEnvironmentVariables(Map args) throws Exception {
+    private void setEnvironmentVariables(VmsConnection connection, Map args) throws Exception {
         Set keyset = args.keySet();
         for (Iterator iter = keyset.iterator(); iter.hasNext();) {
             String name = (String) iter.next();
@@ -1274,7 +1295,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             String dclAssignment = "$" + name + "=" + new String(quoteWhenNeeded(value.toCharArray(), true));
             String line = "WRITE OUTPUT_FILE " + new String(quoteWhenNeeded(dclAssignment.toCharArray(), true));
             if (line.length() < 255) {
-                executeCommand(line);
+                executeCommand(connection, line);
             }
         }
     }

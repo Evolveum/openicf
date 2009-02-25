@@ -110,18 +110,43 @@ public class VmsConnectorTests {
 
     @Test
     public void testScriptOnResource() throws Exception {
-        String script = "WRITE SYS$OUTPUT \"Hello ''NAME'\"";
+        String localUserName = "TEST106";
+        
+        String script = "WRITE SYS$OUTPUT \"Hello ''NAME'\"\nSHOW USERS";
         HashMap<String, Object> map = new HashMap<String, Object>();
         map.put("NAME", "World");
         ScriptContext context = new ScriptContext("DCL", script, map);
 
         VmsConfiguration config = createConfiguration();
+        testScriptOnResource(context, config);
+        // Since we will actually log in, make sure all days are primary days
+        //
+        Set<Attribute> attrs = fillInSampleUser(localUserName, true);
+
+        VmsConnector info = createConnector(config);
+
+        // Delete the account if it already exists
+        //
+        deleteUser(localUserName, info);
+
+        // Create the account
+        //
+        Uid newUid = info.create(ObjectClass.ACCOUNT, attrs, null);
+
+        config.setUserName(localUserName);
+        config.setPassword(new GuardedString("password".toCharArray()));
+        testScriptOnResource(context, config);
+    }
+
+    private void testScriptOnResource(ScriptContext context,
+            VmsConfiguration config) throws Exception {
         VmsConnector info = createConnector(config);
         try {
             HashMap<String, Object> optionsMap = new HashMap<String, Object>();
             OperationOptions options = new OperationOptions(optionsMap);
             String[] results = (String[])info.runScriptOnResource(context, options);
-            Assert.assertEquals("Hello World", results[1]);
+            Assert.assertTrue(results[1], results[1].contains(config.getUserName().toUpperCase()));
+            Assert.assertTrue(results[1], results[1].contains("Hello World"));
         } finally {
             info.dispose();
         }
@@ -1153,7 +1178,6 @@ public class VmsConnectorTests {
         config.setHostShellPrompt(SHELL_PROMPT);
         config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
         config.setUserName(SYSTEM_USER);
-        config.setScriptingLanguage("GROOVY");
         config.setSSH(isSSH());
         config.setVmsLocale("en_US");
         config.setVmsDateFormatWithoutSecs("dd-MMM-yyyy HH:mm");

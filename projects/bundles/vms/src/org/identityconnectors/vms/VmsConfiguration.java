@@ -38,7 +38,6 @@ public class VmsConfiguration extends AbstractConfiguration {
     private String         _hostLineTerminator;
     private String         _hostShellPrompt;
     private Integer        _hostPortNumber;
-    private String         _language;
     private String         _vmsLocale;
     private String         _vmsDateFormatWithSecs;
     private String         _vmsDateFormatWithoutSecs;
@@ -192,15 +191,6 @@ public class VmsConfiguration extends AbstractConfiguration {
         _hostShellPrompt = hostShellPrompt;
     }
 
-    @ConfigurationProperty(order=8, required=true)
-    public String getScriptingLanguage() {
-        return _language;
-    }
-
-    public void setScriptingLanguage(String scriptingLanguage) {
-        _language = scriptingLanguage;
-    }
-
     @ConfigurationProperty(order=10, required=true)
     public String getVmsLocale() {
         return _vmsLocale;
@@ -239,8 +229,6 @@ public class VmsConfiguration extends AbstractConfiguration {
     
     @ConfigurationProperty(order=14)
     public Boolean getDisableUserLogins() {
-        if (_disableUserLogins==null)
-            return Boolean.TRUE;
         return _disableUserLogins;
     }
 

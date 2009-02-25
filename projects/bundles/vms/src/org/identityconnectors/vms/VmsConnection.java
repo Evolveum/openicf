@@ -62,7 +62,10 @@ public class VmsConnection {
         try {
             //TODO: ExpectUtils needs a clear text password
             String password = new String(passwordArray);
-            if (_configuration.getSSH()) {
+            boolean isSSH = false;
+            if (_configuration.getSSH()!=null)
+                isSSH = _configuration.getSSH();
+            if (isSSH) {
                 _expect4j = ExpectUtils.SSH(configuration.getHostNameOrIpAddr(), configuration.getUserName(), password, configuration.getHostPortNumber());
             } else {
                 _expect4j = ExpectUtils.telnet(configuration.getHostNameOrIpAddr(), configuration.getHostPortNumber());

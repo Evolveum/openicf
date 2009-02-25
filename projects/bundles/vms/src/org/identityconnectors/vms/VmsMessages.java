@@ -56,5 +56,6 @@ public interface VmsMessages {
     public static final String TEST_FAILED                   = "TEST_FAILED";
     public static final String NULL_ATTRIBUTE_VALUE          = "NULL_ATTRIBUTE_VALUE";
     public static final String UNSUPPORTED_SCRIPTING_LANGUAGE= "UNSUPPORTED_SCRIPTING_LANGUAGE";
-
+    public static final String PASSWORD_REQUIRED_FOR_RUN_AS  = "PASSWORD_REQUIRED_FOR_RUN_AS";
+    public static final String RUN_AS_WHEN_DISABLED          = "RUN_AS_WHEN_DISABLED";
 }
