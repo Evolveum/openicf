@@ -531,6 +531,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
             throw new IllegalArgumentException(cfg.getConnectorMessages().format(DB2Messages.UPDATE_UID_CANNOT_BE_NULL_OR_EMPTY, null));
         }
 		final String uidValue = uid.getUidValue();
+		checkUserExist(uidValue);
         try{
     		log.info("Update user : {0}", uidValue);
         	updateAuthority(uidValue, attrs, type);
