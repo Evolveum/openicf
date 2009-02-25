@@ -90,8 +90,8 @@ public class VmsAttributeValidator {
     private static final Pattern _cliPattern 			= Pattern.compile("[a-zA-Z0-9$_:]{1,31}"); 
     private static final Pattern _cliTablesPattern 		= Pattern.compile("[a-zA-Z0-9$_:]{1,31}"); 
     private static final Pattern _deltaTimePattern 		= Pattern.compile("(\\d+-)?\\s*(\\d+(:\\d+){0,2})?(\\.\\d+)?"); 
-    private static final Pattern _devicePattern 		= Pattern.compile("[a-zA-Z0-9:]{1,31}"); 
-    private static final Pattern _directoryPattern 		= Pattern.compile("(\\[[a-zA-Z0-9:]{1,39}\\])|[a-zA-Z0-9:]{1,39}"); 
+    private static final Pattern _devicePattern 		= Pattern.compile(".{1,31}"); 
+    private static final Pattern _directoryPattern 		= Pattern.compile("(\\[[a-zA-Z$0-9:]{1,39}\\])|[a-zA-Z$0-9:]{1,39}"); 
     private static final Pattern _fileSpecPattern 		= Pattern.compile("[a-zA-Z0-9$_:]+"); 
     private static final Pattern _passwordPattern 		= null; 
     private static final Pattern _uicPattern 			= Pattern.compile("\\[[0-3][0-7][0-7],[0-3][0-7][0-7]\\]"); 

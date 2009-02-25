@@ -1134,6 +1134,8 @@ public class VmsConnectorTests {
         List<Object> expired = new LinkedList<Object>();
         expired.add(Boolean.FALSE);
         attrs.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME, expired));
+        attrs.add(AttributeBuilder.build(VmsConstants.ATTR_DEVICE, "SYS$SYSDISK:"));
+        attrs.add(AttributeBuilder.build(VmsConstants.ATTR_DIRECTORY, "[USER]"));
 
         Name name = new Name(testUser);
         attrs.add(name);
