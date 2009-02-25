@@ -1288,10 +1288,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     }
 
     private void setEnvironmentVariables(VmsConnection connection, Map args) throws Exception {
-        Set keyset = args.keySet();
-        for (Iterator iter = keyset.iterator(); iter.hasNext();) {
-            String name = (String) iter.next();
-            String value = (String) args.get(name);
+        Set<Map.Entry<String, String>> keyset = args.entrySet();
+        for (Map.Entry<String, String> entry : keyset) {
+            String name = entry.getKey();
+            String value = entry.getValue();
             String dclAssignment = "$" + name + "=" + new String(quoteWhenNeeded(value.toCharArray(), true));
             String line = "WRITE OUTPUT_FILE " + new String(quoteWhenNeeded(dclAssignment.toCharArray(), true));
             if (line.length() < 255) {
