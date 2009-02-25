@@ -22,6 +22,7 @@
  */
 package org.identityconnectors.solaris;
 
+import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 
 import com.jcraft.jsch.Channel;
@@ -129,8 +130,17 @@ public class SolarisConnection {
         int port = Integer.parseInt(config1.getPort());
 
         // make connection
-        Session session = jsch.getSession(userName, host, port);
-        session.setPassword(getPassword(config1));
+        final Session session = jsch.getSession(userName, host, port);
+        GuardedString password = config1.getPassword();
+        password.access(new GuardedString.Accessor() {
+
+            public void access(char[] clearChars) {
+                session.setPassword(new String(clearChars));
+            }
+
+        });
+        //session.setPassword(getPassword(config1));
+        
         session.connect();
         if (disconnect) {
             session.disconnect();
@@ -143,10 +153,6 @@ public class SolarisConnection {
     
     private Session openSession() throws JSchException {
         return openSession(this.config, false);
-    }
-
-    private static String getPassword(SolarisConfiguration config2) {
-        return SolarisHelper.getPassword(config2);
     }
 
     /* ***************** GET/SET *********************** */

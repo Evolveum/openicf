@@ -5,7 +5,11 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-HEAD"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-Internal-HEAD"/>
-	<classpathentry kind="lib" path="lib/jsch-0.1.41.jar" sourcepath="/home/david/workspace/identityconnectors/projects/bundles/solaris/lib-src/jsch-0.1.41.zip"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorTestCommon-HEAD"/>
+	<classpathentry kind="lib" path="lib/commons-net-1.4.1.jar"/>
+	<classpathentry kind="lib" path="lib/expect4j-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/jakarta-oro-2.0.8.jar"/>
+	<classpathentry kind="lib" path="lib/jsch-0.1.41.jar"/>
+	<classpathentry kind="lib" path="lib/patternparser-1.0.x.jar"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>

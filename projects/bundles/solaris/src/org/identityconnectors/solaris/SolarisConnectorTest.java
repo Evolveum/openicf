@@ -98,7 +98,7 @@ public class SolarisConnectorTest {
     @Test
     public void testValidAuthenticate() {
         SolarisConnector connector = createConnector(getConfig());
-        GuardedString password = new GuardedString(SolarisHelper.getPassword(getConfig()).toCharArray());
+        GuardedString password = getConfig().getPassword();
         String username = getConfig().getUserName();
         connector.authenticate(null, username, password, null);
     }
