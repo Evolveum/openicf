@@ -140,59 +140,16 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
 
     public VmsConnector() {
         try {
-            _changeOwnPasswordCommandScript = readFileFromClassPath("org/identityconnectors/vms/UserPasswordScript.txt");
-            _authorizeCommandScript = readFileFromClassPath("org/identityconnectors/vms/AuthorizeCommandScript.txt");
-            _listCommandScript = readFileFromClassPath("org/identityconnectors/vms/ListCommandScript.txt");
-            _dateCommandScript = readFileFromClassPath("org/identityconnectors/vms/DateCommandScript.txt");
+            _changeOwnPasswordCommandScript = VmsUtilities.readFileFromClassPath("org/identityconnectors/vms/UserPasswordScript.txt");
+            _authorizeCommandScript = VmsUtilities.readFileFromClassPath("org/identityconnectors/vms/AuthorizeCommandScript.txt");
+            _listCommandScript = VmsUtilities.readFileFromClassPath("org/identityconnectors/vms/ListCommandScript.txt");
+            _dateCommandScript = VmsUtilities.readFileFromClassPath("org/identityconnectors/vms/DateCommandScript.txt");
             if (StringUtil.isEmpty(_changeOwnPasswordCommandScript))
                 throw new ConnectorException("Internal error locating command scripts");
         } catch (IOException ioe) {
             throw ConnectorException.wrap(ioe);
         }
     }
-
-    private String readFileFromClassPath(String fileName) throws IOException {
-        ClassLoader cl = null;
-        InputStream is = null;
-        InputStreamReader isr = null;
-        BufferedReader br = null;
-        StringBuffer buf = new StringBuffer();
-
-        try {
-            cl = getClass().getClassLoader();
-            is = cl.getResourceAsStream(fileName);
-
-            if (is != null) {
-                isr = new InputStreamReader(is);
-                br = new BufferedReader(isr);
-                String s = null;
-                while ((s = br.readLine()) != null) {
-                    buf.append(s);
-                    buf.append("\n");
-                }
-            }
-        } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (Exception e) {
-                }
-            } else if (isr != null) {
-                try {
-                    isr.close();
-                } catch (Exception e) {
-                }
-            } else if (is != null) {
-                try {
-                    is.close();
-                } catch (Exception e) {
-                }
-            }
-        }
-
-        return buf.toString();
-    }
-
 
     /**
      * Since the exclamation point is a comment delimiter in DCL (and
