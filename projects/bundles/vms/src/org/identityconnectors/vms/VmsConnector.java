@@ -1145,14 +1145,18 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     
         String script = request.getScriptText();
         try {
-            VmsConnection connection = _connection;
+            
             if (user!=null) {
                 VmsConfiguration configuration = new VmsConfiguration(_configuration);
                 configuration.setUserName(user);
                 configuration.setPassword(password);
-                connection = new VmsConnection(configuration,VmsConnector.SHORT_WAIT);
+                VmsConnection connection = new VmsConnection(configuration,VmsConnector.SHORT_WAIT);
+                Object result = executeScript(_connection, script, SHORT_WAIT, arguments);
+                connection.dispose();
+                return result;
+            } else {
+                return executeScript(_connection, script, SHORT_WAIT, arguments);
             }
-            return executeScript(connection, script, SHORT_WAIT, arguments);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
@@ -1198,7 +1202,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         return output;
     }
 
-    protected String[] executeScript(VmsConnection connection, String action, int timeout, Map args) throws Exception {
+    protected String[] executeScript(VmsConnection connection, String action, int timeout, Map<String, Object> args) throws Exception {
         // create a temp file
         //
         String tmpfile = UUID.randomUUID().toString();
@@ -1249,12 +1253,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         return new String[] { status, output, error };
     }
 
-    private void setEnvironmentVariables(VmsConnection connection, Map args) throws Exception {
-        Set<Map.Entry<String, String>> keyset = args.entrySet();
-        for (Map.Entry<String, String> entry : keyset) {
+    private void setEnvironmentVariables(VmsConnection connection, Map<String, Object> args) throws Exception {
+        Set<Map.Entry<String, Object>> keyset = args.entrySet();
+        for (Map.Entry<String, Object> entry : keyset) {
             String name = entry.getKey();
-            String value = entry.getValue();
-            String dclAssignment = "$" + name + "=" + new String(quoteWhenNeeded(value.toCharArray(), true));
+            Object value = entry.getValue();
+            String dclAssignment = "$" + name + "=" + new String(quoteWhenNeeded(value.toString().toCharArray(), true));
             String line = "WRITE OUTPUT_FILE " + new String(quoteWhenNeeded(dclAssignment.toCharArray(), true));
             if (line.length() < 255) {
                 executeCommand(connection, line);
