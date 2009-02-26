@@ -1,4 +1,4 @@
-connection.resetStandardOutput();
-connection.send("SHOW TIME");
-connection.waitFor(SHELL_PROMPT, SHORT_WAIT);
-return connection.getStandardOutput();
+CONNECTION.resetStandardOutput();
+CONNECTION.send("SHOW TIME");
+CONNECTION.waitFor(SHELL_PROMPT, SHORT_WAIT);
+return CONNECTION.getStandardOutput();

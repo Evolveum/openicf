@@ -452,7 +452,7 @@ public class VmsConnectorTests {
             testAuthenticate(getTestUser(), "password123");
             Assert.fail("authenticate should have failed");
         } catch (ConnectorException e) {
-            Assert.assertTrue(e.toString().contains("timeout"));
+            Assert.assertTrue(e.toString().contains("User authorization failure"));
         }
     }
     

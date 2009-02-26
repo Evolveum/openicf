@@ -38,7 +38,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -611,7 +610,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         variables.put("UAF_PROMPT_CONTINUE", UAF_PROMPT_CONTINUE);
         variables.put("COMMAND", removeCommand);
         variables.put("COMMANDS", new LinkedList<CharArrayBuffer>());
-        variables.put("connection", _connection);
+        variables.put("CONNECTION", _connection);
 
         String result = "";
         try {
@@ -676,7 +675,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         variables.put("LONG_WAIT", LONG_WAIT);
         variables.put("UAF_PROMPT", UAF_PROMPT);
         variables.put("COMMANDS", commands);
-        variables.put("connection", _connection);
+        variables.put("CONNECTION", _connection);
 
         String users = (String)_listCommandExecutor.execute(variables);
 
@@ -778,7 +777,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
 
     private Date getVmsDate() {
         Map<String, Object> variables = new HashMap<String, Object>();
-        variables.put("connection", _connection);
+        variables.put("CONNECTION", _connection);
         variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
         variables.put("SHORT_WAIT", SHORT_WAIT);
 
@@ -868,7 +867,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             renameCommand.clear();
             variables.put("COMMAND", commandContents);
             variables.put("COMMANDS", new LinkedList<CharArrayBuffer>());
-            variables.put("connection", _connection);
+            variables.put("CONNECTION", _connection);
 
             String result = "";
             try {
@@ -907,7 +906,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             char[] newArray = accessor.getArray();
             variables.put("CURRENT_PASSWORD", new String(currentArray));
             variables.put("NEW_PASSWORD", new String(newArray));
-            variables.put("configuration", _configuration);
+            variables.put("CONFIGURATION", _configuration);
 
             String result = "";
             try {
@@ -978,7 +977,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         variables.put("SHORT_WAIT", SHORT_WAIT);
         variables.put("UAF_PROMPT", UAF_PROMPT);
         variables.put("UAF_PROMPT_CONTINUE", UAF_PROMPT_CONTINUE);
-        variables.put("connection", _connection);
+        variables.put("CONNECTION", _connection);
     }
 
     private void clearArrays(Map<String, Object> variables) {
@@ -1053,9 +1052,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         // Operational Attributes
         //
         attributes.add(OperationalAttributeInfos.PASSWORD);
-        boolean disableUserLogins = false;
-        if (_configuration.getDisableUserLogins()!=null)
-            disableUserLogins = _configuration.getDisableUserLogins();
+        boolean disableUserLogins = isDisableUserLogins(_configuration);
         if (!disableUserLogins)
             attributes.add(OperationalAttributeInfos.CURRENT_PASSWORD);
         attributes.add(OperationalAttributeInfos.ENABLE);
@@ -1180,10 +1177,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         GuardedString password = options.getRunWithPassword();
         if (user!=null && password==null)
             throw new ConnectorException(_configuration.getMessage(VmsMessages.PASSWORD_REQUIRED_FOR_RUN_AS));
-        boolean disableUserLogins = false;
-        if (_configuration.getDisableUserLogins()!=null)
-            disableUserLogins = _configuration.getDisableUserLogins();
-        if (user!=null && disableUserLogins)
+        if (user!=null && isDisableUserLogins(_configuration))
             throw new ConnectorException(_configuration.getMessage(VmsMessages.RUN_AS_WHEN_DISABLED));
         
         Map<String, Object> arguments = request.getScriptArguments();
@@ -1207,6 +1201,20 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         }
     }
 
+    private boolean isDisableUserLogins(VmsConfiguration configuration) {
+        boolean disableUserLogins = false;
+        if (configuration.getDisableUserLogins()!=null)
+            disableUserLogins = configuration.getDisableUserLogins();
+        return disableUserLogins;
+    }
+
+    private boolean isSSH(VmsConfiguration configuration) {
+        boolean isSSH = false;
+        if (configuration.getSSH()!=null)
+            isSSH = configuration.getSSH();
+        return isSSH;
+    }
+
     protected String executeCommand(VmsConnection connection, String command) throws Exception {
         connection.resetStandardOutput();
         connection.send(command);
@@ -1216,10 +1224,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         if (index!=-1)
             output = output.substring(0, index);
         String terminator = null;
-        boolean isSSH = false;
-        if (_configuration.getSSH()!=null)
-            isSSH = _configuration.getSSH();
-        if (isSSH)
+        if (isSSH(_configuration))
             terminator = "\r\n";
         else
             terminator = "\n\r";
