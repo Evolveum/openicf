@@ -45,8 +45,6 @@ import com.google.gdata.data.appsforyourdomain.provisioning.UserEntry;
 import com.google.gdata.util.ServiceException;
 import java.io.IOException;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 
@@ -83,7 +81,6 @@ import java.util.Set;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorIOException;
 import org.identityconnectors.framework.common.objects.AttributesAccessor;
-import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
 import org.identityconnectors.framework.spi.PoolableConnector;
 import org.identityconnectors.framework.spi.operations.TestOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;

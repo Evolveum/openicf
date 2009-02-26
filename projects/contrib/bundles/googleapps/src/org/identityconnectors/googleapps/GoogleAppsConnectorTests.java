@@ -70,13 +70,13 @@ import org.identityconnectors.framework.common.objects.Uid;
 
 import org.identityconnectors.framework.common.objects.filter.Filter;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
-import org.identityconnectors.test.common.TestHelpers;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.UUID;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
+import org.identityconnectors.framework.test.TestHelpers;
 import org.junit.After;
 import org.junit.Before;
 

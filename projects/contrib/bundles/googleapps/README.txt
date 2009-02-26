@@ -17,23 +17,38 @@ For more information on Google Apps see:
 http://www.google.com/apps/intl/en/business/index.html
 
 
-This is a Netbeans project.
+This is structured as a Netbeans project.
+
+TO DO: The dependencies are difficult to set up. Apologies in advance.
+This probably needs to be converted to maven...
 
 Compiling:
 
-1) edit build.xml to point to the connectors toolkit location. You will have to 
+0) If you are using Netbeans, you will have to add junit4.jar to
+the ant classpath. Preferences->Ant->Classpath
+
+1) edit build.xml to point to the connectors toolkit directory. You can
 download this from the identity connectors project
 
-2) Download the Google Apps for Your domain Java toolkit from:
-http://code.google.com/p/gdata-java-client/downloads/list
+2) You need to add the following libraries to the Netbeans project:
+GoogleApps
+Junit4.5
+groovy-all
+connector-framework.jar
+connector-framework-internal.jar
 
 
-3) Add the following jar files to a NetBeans Library called GoogleApps. Add
-the library to your project.
+The Google Apps jar files are in the lib directory. The following
+jars are needed:
 
 gdata-appsforyourdomain-1.0.jar
 gdata-client-1.0.jar
 gdata-core-1.0.jar
+
+
+The other libraries can be found in the connectors toolkit under the dist/
+directory
+
 
 
 Tests:
