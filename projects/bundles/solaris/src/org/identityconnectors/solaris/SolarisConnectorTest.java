@@ -64,57 +64,48 @@ public class SolarisConnectorTest {
         // save configuration
         config = new SolarisConfiguration();
         config.setHostNameOrIpAddr(HOST_NAME);
-        config.setPort(HOST_PORT);
+        config.setPort(Integer.parseInt(HOST_PORT));
         config.setUserName(SYSTEM_USER);
         config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
     }
 
     @After
     public void tearDown() throws Exception {
+        config = null;
     }
     
     /* ************ TEST CONNECTOR ************ */
     
-    /** test connection to the configuration given by default credentials (build.groovy) */
     @Test
-    public void testGoodConnection() {
-        SolarisConfiguration config = getConfig();
-        SolarisConnector connector = createConnector(config);
-        try {
-            connector.checkAlive();
-        } finally {
-            connector.dispose();
-        }
-    }
-    
-    /** elementary schema test */
-    @Test
-    public void basicSchemaTest() {
-        SolarisConnector connector = createConnector(getConfig());
-        Schema schema = connector.schema();
-        Assert.assertNotNull(schema);
+    public void basicConnectorTests() {
+        testGoodConnection();
+        basicSchemaTest();
+        testGoodConfiguration();
     }
     
     @Test
-    public void testValidAuthenticate() {
+    public void testAuthenticateApiOp() {
         SolarisConnector connector = createConnector(getConfig());
         GuardedString password = getConfig().getPassword();
         String username = getConfig().getUserName();
         connector.authenticate(null, username, password, null);
     }
     
-    @Test(expected = ConnectorException.class)
-    public void testInvalidAuthenticate() {
+    /**
+     * test to authenticate with invalid credentials.
+     */
+    @Test (expected=ConnectorException.class)
+    public void testAuthenticateApiOpInvalidCredentials() {
         SolarisConnector connector = createConnector(getConfig());
-        GuardedString password = new GuardedString("WRONG_PASSWORD_FOOBAR2135465".toCharArray());
+        GuardedString password = new GuardedString(
+                "WRONG_PASSWORD_FOOBAR2135465".toCharArray());
         String username = getConfig().getUserName();
         connector.authenticate(null, username, password, null);
     }
     
     /* ************* TEST CONFIGURATION *********** */
     
-    @Test
-    public void testGoodConfiguration() {
+    private void testGoodConfiguration() {
         try {
             SolarisConfiguration config = getConfig();
             // no IllegalArgumentException should be thrown
@@ -134,7 +125,7 @@ public class SolarisConnectorTest {
     }
     
     @Test(expected = IllegalArgumentException.class)
-    public void testPassword() {
+    public void testMissingPassword() {
         SolarisConfiguration config = getConfig();
         config.setPassword(null);
         config.validate();
@@ -158,6 +149,10 @@ public class SolarisConnectorTest {
     }
     
     /* ************* AUXILIARY METHODS *********** */
+    /**
+     * create a new solaris connector and initialize it with the given configuration
+     * @param config the configuration to be used.
+     */
     private SolarisConnector createConnector(SolarisConfiguration config) {
         SolarisConnector conn = new SolarisConnector();
         conn.init(config);
@@ -171,5 +166,23 @@ public class SolarisConnectorTest {
      */
     private SolarisConfiguration getConfig() {
         return config;
+    }
+    
+    /** test connection to the configuration given by default credentials (build.groovy) */
+    private void testGoodConnection() {
+        SolarisConfiguration config = getConfig();
+        SolarisConnector connector = createConnector(config);
+        try {
+            connector.checkAlive();
+        } finally {
+            connector.dispose();
+        }
+    }
+    
+    /** elementary schema test */
+    private void basicSchemaTest() {
+        SolarisConnector connector = createConnector(getConfig());
+        Schema schema = connector.schema();
+        Assert.assertNotNull(schema);
     }
 }

@@ -35,7 +35,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
     private String userName;
     private GuardedString password;
     private String hostNameOrIpAddr;
-    private String port;
+    private Integer _port;
 
     /* ********** CONSTRUCTOR ************ */
     public SolarisConfiguration() {
@@ -49,7 +49,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
             this.userName = cfg.getUserName();
             this.password = cfg.getPassword();
             this.hostNameOrIpAddr = cfg.getHostNameOrIpAddr();
-            this.port = cfg.getPort();
+            this._port = cfg.getPort();
         } else {
             throw new RuntimeException("cannot clone other than SolarisConfiguration");
         }
@@ -80,12 +80,12 @@ public class SolarisConfiguration extends AbstractConfiguration {
         hostNameOrIpAddr = nameOrIpAddr;
     }
 
-    public String getPort() {
-        return port;
+    public Integer getPort() {
+        return _port;
     }
 
-    public void setPort(String _port) {
-        this.port = _port;
+    public void setPort(Integer port) {
+        this._port = port;
     }
 
     /* *********** AUXILIARY METHODS ***************** */
@@ -104,7 +104,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
             throw new IllegalArgumentException(String.format(msg, "Hostname/IP address"));
         }
         
-        if (StringUtil.isBlank(getPort())) {
+        if (_port == null || _port < 0) {
             throw new IllegalArgumentException(String.format(msg, "Port"));
         }
     }

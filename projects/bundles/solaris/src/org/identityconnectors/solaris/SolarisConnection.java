@@ -22,145 +22,67 @@
  */
 package org.identityconnectors.solaris;
 
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
+
+import expect4j.Expect4j;
+import expect4j.ExpectUtils;
 
 /**
  * maps functionality of SSHConnection.java
  * @author David Adam
  *
  */
-public class SolarisConnection {
-
-    /**
-     * properties of SSH channel
-     */
-    private Session _session;
-    private Channel _channel;
-    private boolean connected = false;
-
-//    TODO
-//    /**
-//     * Setup logging for the {@link SolarisConnection}.
-//     */
-//    private static final Log log = Log.getLog(SolarisConnection.class);
-
+class SolarisConnection {
     /**
      * the configuration object from which this connection is created.
      */
-    private SolarisConfiguration config;
+    private SolarisConfiguration _configuration;
+    private final Log log = Log.getLog(SolarisConnection.class);
+    private Expect4j _expect4j;
 
     /* *************** CONSTRUCTOR ****************** */
-    public SolarisConnection(SolarisConfiguration config) {
-        if (config == null) {
+    public SolarisConnection(SolarisConfiguration configuration) {
+        if (configuration == null) {
             throw new ConfigurationException(
                     "Cannot create a SolarisConnection on a null configuration.");
         }
-        this.config = config;
-        startConnection();
+        _configuration = configuration;
+        
+        // initialize EXPECT4J
+        final GuardedString password = _configuration.getPassword();
+        password.access(new GuardedString.Accessor() {
+            public void access(char[] clearChars) {
+                try {
+                    _expect4j = ExpectUtils.SSH(_configuration.getHostNameOrIpAddr(), _configuration.getUserName(), new String(clearChars), _configuration.getPort());
+                } catch (Exception e) {
+                    log.warn("Starting connection: Exception thrown (cause: invalid configuration, etc.)");
+                    throw ConnectorException.wrap(e);
+                }
+            }
+        });
     }
 
     /* *************** METHODS ****************** */
-    
-    /**
-     * Opens the connection and authenticates the user specified
-     * in the {@link SolarisConfiguration}
-     */
-    private void startConnection() {
-        if (!isConnected()) {
-            try {
-                _session = openSession();
-                _channel = _session.openChannel("shell");
-                //_in = _channel.getInputStream();
-                //_out = _channel.getOutputStream();
-                _channel.connect();
-                setConnected(true);
-            } catch (Throwable e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+    /** once connection is disposed it won't be used at all. */
+    void dispose() {
+        log.info("dispose()");
+        if (_expect4j != null){
+            _expect4j.close();
         }
     }
     
     /**
-     * tests if connection exists.
+     * Try to authenticate with the given configuration
+     * If the test fails, an exception is thrown.
+     * @param configuration the configuration that should be tested.
+     * @throws Exception
      */
-    public void test() {
-        startConnection();
-        endConnection();
-    }
-
-    /**
-     * Disconnect from SSH server. Just closes the streams and resets them to null.
-     */
-    public void endConnection() {
-        if (_channel != null) {
-            _channel.disconnect();
-        }
-        if (_session != null) {
-            _session.disconnect();
-        }
-        
-        _session = null;
-        _channel = null;
-    }
-
-    /**
-     * 
-     * @param config1
-     * @return
-     * @throws JSchException
-     */
-    public static Session openSession(SolarisConfiguration config1,
-            boolean disconnect) throws JSchException {
-        // TODO this line makes the connection ignore the fingerprint
-        // in production version fingerprint should be considered
-        JSch.setConfig("StrictHostKeyChecking", "no");
-
-        JSch jsch = new JSch();
-
-        // get connection data
-        String userName = config1.getUserName();
-        String host = config1.getHostNameOrIpAddr();
-        int port = Integer.parseInt(config1.getPort());
-
-        // make connection
-        final Session session = jsch.getSession(userName, host, port);
-        GuardedString password = config1.getPassword();
-        password.access(new GuardedString.Accessor() {
-
-            public void access(char[] clearChars) {
-                session.setPassword(new String(clearChars));
-            }
-
-        });
-        //session.setPassword(getPassword(config1));
-        
-        session.connect();
-        if (disconnect) {
-            session.disconnect();
-        }
-        return session;
-    }
-    
-    /* ************ AUXILIARY METHODS *************** */
-    
-    
-    private Session openSession() throws JSchException {
-        return openSession(this.config, false);
-    }
-
-    /* ***************** GET/SET *********************** */
-    public boolean isConnected() {
-        return connected;
-    }
-
-    public void setConnected(boolean connected) {
-        this.connected = connected;
+    static void test(SolarisConfiguration configuration) throws Exception {
+        SolarisConnection connection = new SolarisConnection(configuration);
     }
 }

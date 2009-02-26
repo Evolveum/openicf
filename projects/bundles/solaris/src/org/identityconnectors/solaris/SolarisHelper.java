@@ -1,8 +1,8 @@
 package org.identityconnectors.solaris;
 
-import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.common.security.SecurityUtil;
+import org.identityconnectors.framework.common.FrameworkUtil;
 
-public class SolarisHelper {
+/** helper class for Solaris specific operations */
+class SolarisHelper {
 
 }
