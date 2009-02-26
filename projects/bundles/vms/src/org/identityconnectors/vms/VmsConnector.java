@@ -1151,7 +1151,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 configuration.setUserName(user);
                 configuration.setPassword(password);
                 VmsConnection connection = new VmsConnection(configuration,VmsConnector.SHORT_WAIT);
-                Object result = executeScript(_connection, script, SHORT_WAIT, arguments);
+                Object result = executeScript(connection, script, SHORT_WAIT, arguments);
                 connection.dispose();
                 return result;
             } else {
