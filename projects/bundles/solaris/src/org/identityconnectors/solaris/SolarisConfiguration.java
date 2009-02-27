@@ -35,10 +35,12 @@ public class SolarisConfiguration extends AbstractConfiguration {
     private String userName;
     private GuardedString password;
     private String hostNameOrIpAddr;
-    private Integer _port;
+    private Integer port;
+    private ConnectionType connectionType;
 
     /* ********** CONSTRUCTOR ************ */
     public SolarisConfiguration() {
+        // default constructor
     }
     /** 
      * cloning constructor, deep copy 
@@ -49,7 +51,8 @@ public class SolarisConfiguration extends AbstractConfiguration {
             this.userName = cfg.getUserName();
             this.password = cfg.getPassword();
             this.hostNameOrIpAddr = cfg.getHostNameOrIpAddr();
-            this._port = cfg.getPort();
+            this.port = cfg.getPort();
+            this.connectionType = cfg.getConnectionType();
         } else {
             throw new RuntimeException("cannot clone other than SolarisConfiguration");
         }
@@ -81,17 +84,35 @@ public class SolarisConfiguration extends AbstractConfiguration {
     }
 
     public Integer getPort() {
-        return _port;
+        return port;
     }
 
     public void setPort(Integer port) {
-        this._port = port;
+        this.port = port;
     }
 
+    public ConnectionType getConnectionType() {
+        return connectionType;
+    }
+
+    public void setConnectionType(ConnectionType connectionType) {
+        this.connectionType = connectionType;
+    }
+
+    public void setConnectionType(String connectionType) {
+        String connType = connectionType.toUpperCase();
+        if (connType.equals(ConnectionType.SSH.toString())) {
+            this.connectionType = ConnectionType.SSH;
+        } else if (connType.equals(ConnectionType.TELNET.toString())) {
+            this.connectionType = ConnectionType.TELNET;
+        }
+    }
+
+    
     /* *********** AUXILIARY METHODS ***************** */
     @Override
     public void validate() {
-        String msg = "%s cannot be null or empty.";
+        String msg = "'%s' cannot be null or empty.";
         if (StringUtil.isBlank(getUserName())) {
             throw new IllegalArgumentException(String.format(msg, "UserName"));
         }
@@ -104,8 +125,12 @@ public class SolarisConfiguration extends AbstractConfiguration {
             throw new IllegalArgumentException(String.format(msg, "Hostname/IP address"));
         }
         
-        if (_port == null || _port < 0) {
+        if (port == null || port < 0) {
             throw new IllegalArgumentException(String.format(msg, "Port"));
+        }
+        
+        if (connectionType == null) {
+            throw new IllegalArgumentException(String.format(msg, "Connection type"));
         }
     }
 }

@@ -45,28 +45,32 @@ public class SolarisConnectorTest {
     public void setUp() throws Exception {
         // names of properties in the property file (build.groovy)
         final String PROP_HOST = "host";
-        final String PROP_NAME = "pass";
-        final String PROP_USER = "user";
+        final String PROP_SYSTEM_PASSWORD = "pass";
+        final String PROP_SYSTEM_USER = "user";
         final String PROP_PORT = "port";
+        final String PROP_CONN_TYPE = "connectionType";
         
         // set the credentials
         final String HOST_NAME = TestHelpers.getProperty(PROP_HOST, null);
-        final String SYSTEM_PASSWORD = TestHelpers.getProperty(PROP_NAME, null);
-        final String SYSTEM_USER = TestHelpers.getProperty(PROP_USER, null);
-        final String HOST_PORT = TestHelpers.getProperty(PROP_PORT, null);
+        final String SYSTEM_PASSWORD = TestHelpers.getProperty(PROP_SYSTEM_PASSWORD, null);
+        final String SYSTEM_USER = TestHelpers.getProperty(PROP_SYSTEM_USER, null);
+        final String PORT = TestHelpers.getProperty(PROP_PORT, null);
+        final String CONN_TYPE = TestHelpers.getProperty(PROP_CONN_TYPE, null);
         
         String msg = "%s must be provided in build.groovy";
-        Assert.assertNotNull(String.format(msg, "HOST_NAME"), HOST_NAME);
-        Assert.assertNotNull(String.format(msg, "SYSTEM_PASSWORD"), SYSTEM_PASSWORD);
-        Assert.assertNotNull(String.format(msg, "SYSTEM_USER"), SYSTEM_USER);
-        Assert.assertNotNull(String.format(msg, "HOST_PORT"), HOST_PORT);
+        Assert.assertNotNull(String.format(msg, PROP_HOST), HOST_NAME);
+        Assert.assertNotNull(String.format(msg, PROP_SYSTEM_PASSWORD), SYSTEM_PASSWORD);
+        Assert.assertNotNull(String.format(msg, PROP_SYSTEM_USER), SYSTEM_USER);
+        Assert.assertNotNull(String.format(msg, PROP_PORT), PORT);
+        Assert.assertNotNull(String.format(msg, PROP_CONN_TYPE), CONN_TYPE);
         
         // save configuration
         config = new SolarisConfiguration();
         config.setHostNameOrIpAddr(HOST_NAME);
-        config.setPort(Integer.parseInt(HOST_PORT));
+        config.setPort(Integer.parseInt(PORT));
         config.setUserName(SYSTEM_USER);
         config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
+        config.setConnectionType(CONN_TYPE);
     }
 
     @After
@@ -112,7 +116,7 @@ public class SolarisConnectorTest {
             config.validate();
         } catch (IllegalArgumentException ex) {
             Assert
-                    .fail("no IllegalArgumentException should be thrown for valid configuration.");
+                    .fail("no IllegalArgumentException should be thrown for valid configuration.\n" + ex.getMessage());
         }
     }
     

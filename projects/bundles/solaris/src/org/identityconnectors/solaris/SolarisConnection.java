@@ -45,20 +45,32 @@ class SolarisConnection {
     private final Log log = Log.getLog(SolarisConnection.class);
     private Expect4j _expect4j;
 
-    /* *************** CONSTRUCTOR ****************** */
+    /*  CONSTRUCTOR */
     public SolarisConnection(SolarisConfiguration configuration) {
         if (configuration == null) {
             throw new ConfigurationException(
                     "Cannot create a SolarisConnection on a null configuration.");
         }
         _configuration = configuration;
-        
+
         // initialize EXPECT4J
         final GuardedString password = _configuration.getPassword();
         password.access(new GuardedString.Accessor() {
             public void access(char[] clearChars) {
                 try {
-                    _expect4j = ExpectUtils.SSH(_configuration.getHostNameOrIpAddr(), _configuration.getUserName(), new String(clearChars), _configuration.getPort());
+                    final ConnectionType connType = _configuration
+                            .getConnectionType();
+
+                    if (connType.equals(ConnectionType.SSH)) {
+                        _expect4j = ExpectUtils.SSH(_configuration
+                                .getHostNameOrIpAddr(), _configuration
+                                .getUserName(), new String(clearChars),
+                                _configuration.getPort());
+                    } else if (connType.equals(ConnectionType.TELNET)) {
+                        _expect4j = ExpectUtils.telnet(_configuration
+                                .getHostNameOrIpAddr(), _configuration
+                                .getPort());
+                    }
                 } catch (Exception e) {
                     log.warn("Starting connection: Exception thrown (cause: invalid configuration, etc.)");
                     throw ConnectorException.wrap(e);
