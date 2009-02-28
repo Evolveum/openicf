@@ -24,10 +24,7 @@ package org.identityconnectors.vms;
 
 import static org.identityconnectors.vms.VmsConstants.*;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.ParseException;
@@ -162,7 +159,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     protected char[] quoteWhenNeeded(char[] unquoted) {
         return quoteWhenNeeded(unquoted, false);
     }
-    
+
     protected char[] quoteWhenNeeded(char[] unquoted, boolean needsQuote) {
         boolean quote = needsQuote;
         for (char character : unquoted) {
@@ -179,7 +176,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
 
         return quoteString(new String(unquoted)).toCharArray();
     }
-    
+
     /**
      * VMS quoting rules:
      * <ul>
@@ -246,7 +243,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             return base.contains(subString);
     }
 
-    private List<CharArrayBuffer> appendAttributes(boolean modify, String prefix, Collection<? extends Attribute> attrs) {
+    private List<CharArrayBuffer> appendAttributes(boolean modify, String prefix, Map<String, Attribute> attrMap) {
         List<CharArrayBuffer> commandList = new LinkedList<CharArrayBuffer>();
         CharArrayBuffer command = new CharArrayBuffer();
         if (modify)
@@ -256,21 +253,19 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         command.append(prefix);
         commandList.add(command);
 
-        Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
-
         // Enable/disable is handled by FLAGS=([NO]DISUSER)
         //
         Attribute enable = attrMap.remove(OperationalAttributes.ENABLE_NAME);
         if (enable!=null) {
-            Attribute flags = attrMap.remove(VmsConstants.ATTR_FLAGS);
+            Attribute flags = attrMap.remove(ATTR_FLAGS);
             List<Object> flagsValue = new LinkedList<Object>();
             if (flags!= null)
                 flagsValue = new LinkedList<Object>(flags.getValue());
             if (AttributeUtil.getBooleanValue(enable))
                 flagsValue.add("NO"+FLAG_DISUSER);
             else
-                flagsValue.add(VmsConstants.FLAG_DISUSER);
-            attrMap.put(VmsConstants.ATTR_FLAGS, AttributeBuilder.build(VmsConstants.ATTR_FLAGS, flagsValue));
+                flagsValue.add(FLAG_DISUSER);
+            attrMap.put(ATTR_FLAGS, AttributeBuilder.build(ATTR_FLAGS, flagsValue));
         }
 
         // Administrative user doesn't need current password
@@ -282,10 +277,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         Attribute expiration = attrMap.remove(OperationalAttributes.PASSWORD_EXPIRED_NAME);
         if (expiration!=null) {
             if (AttributeUtil.getBooleanValue(expiration)) {
-                String value = "/"+VmsConstants.ATTR_PWDEXPIRED;
+                String value = "/"+ATTR_PWDEXPIRED;
                 command = appendToCommand(commandList, command, value);
             } else {
-                String value = "/"+"NO"+VmsConstants.ATTR_PWDEXPIRED;
+                String value = "/NO"+ATTR_PWDEXPIRED;
                 command = appendToCommand(commandList, command, value);
             }
         } else {
@@ -308,7 +303,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 try {
                     result = (String)_authorizeCommandExecutor.execute(variables);
                     if (!result.contains("(pre-expired)")) {
-                        String value = "/"+"NO"+VmsConstants.ATTR_PWDEXPIRED;
+                        String value = "/"+"NO"+ATTR_PWDEXPIRED;
                         command = appendToCommand(commandList, command, value);
                     }
                     clearArrays(variables);
@@ -326,11 +321,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         if (changeInterval!=null) {
             long expirationTime = AttributeUtil.getLongValue(changeInterval).longValue();
             if (expirationTime==0) {
-                String value = "/"+"NO"+ATTR_PWDLIFETIME;
+                String value = "/"+"NOPWDLIFETIME";
                 command = appendToCommand(commandList, command, value);
             } else {
                 String deltaValue = remapToDelta(expirationTime);
-                String value = "/"+VmsConstants.ATTR_PWDLIFETIME+"="+new String(quoteWhenNeeded(deltaValue.toCharArray(), true));
+                String value = "/PWDLIFETIME="+new String(quoteWhenNeeded(deltaValue.toCharArray(), true));
                 command = appendToCommand(commandList, command, value);
             }
         }
@@ -340,13 +335,13 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             List<Object> values = new LinkedList<Object>(attribute.getValue());
             // Need to update values for list-valued attributes to specify
             // negated values, as well as positive values
-            if (VmsConstants.ATTR_FLAGS.equalsIgnoreCase(name)) {
+            if (ATTR_FLAGS.equalsIgnoreCase(name)) {
                 updateValues(values, VmsAttributeValidator.FLAGS_LIST);
-            } else if (VmsConstants.ATTR_PRIVILEGES.equalsIgnoreCase(name)) {
+            } else if (ATTR_PRIVILEGES.equalsIgnoreCase(name)) {
                 updateValues(values, VmsAttributeValidator.PRIVS_LIST);
-            } else if (VmsConstants.ATTR_DEFPRIVILEGES.equalsIgnoreCase(name)) {
+            } else if (ATTR_DEFPRIVILEGES.equalsIgnoreCase(name)) {
                 updateValues(values, VmsAttributeValidator.PRIVS_LIST);
-            } else if (VmsConstants.ATTR_PRIMEDAYS.equalsIgnoreCase(name)) {
+            } else if (ATTR_PRIMEDAYS.equalsIgnoreCase(name)) {
                 updateValues(values, VmsAttributeValidator.PRIMEDAYS_LIST);
             }
             // We treat empty lists as list containing empty strong
@@ -421,6 +416,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     private boolean isDeltaAttribute(String attributeName) {
         if (PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME.equals(attributeName))
             return true;
+        if (ATTR_CPUTIME.equals(attributeName))
+            return true;
         return false;
     }
 
@@ -439,7 +436,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         }
     }
 
-    Pattern _deltaPattern = Pattern.compile("(?:(\\d+)\\s)?(\\d+):(\\d+)(?:(\\d+))?(?:.(\\d+))?");
+    Pattern _deltaPattern = Pattern.compile("(?:(\\d+)\\s)?(\\d+):(\\d+)(?::(\\d+))?(?:.(\\d+))?");
     private long remapFromDelta(String delta) {
         if (delta==null)
             System.out.println("oops");
@@ -489,8 +486,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     private String remapName(Attribute attribute) {
         if (attribute.is(OperationalAttributes.PASSWORD_NAME)) 
             return "PASSWORD";
-        if (attribute.is(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME)) 
-            return "EXPIRATION";
         if (attribute.is(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME)) 
             return "PWDLIFETIME";
         else
@@ -508,13 +503,15 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     /**
      * {@inheritDoc}
      */
-    public Uid create(ObjectClass objectClass, final Set<Attribute> attrs, final OperationOptions options) {
+    public Uid create(ObjectClass objectClass, final Set<Attribute> originalAttrs, final OperationOptions options) {
         if (!objectClass.equals(ObjectClass.ACCOUNT))
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
 
+        Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(originalAttrs));
+
         // Check for null values
         //
-        for (Attribute attribute : attrs) {
+        for (Attribute attribute : attrMap.values()) {
             List<Object> values = attribute.getValue();
             if (values==null)
                 throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.NULL_ATTRIBUTE_VALUE, attribute.getName()));
@@ -524,10 +521,19 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             }
         }
 
-        Name name = AttributeUtil.getNameFromAttributes(attrs);
+        // Extract action attributes
+        //
+        Attribute createDirectory = attrMap.remove(ATTR_CREATE_DIRECTORY);
+        Attribute copyLoginScript = attrMap.remove(ATTR_COPY_LOGIN_SCRIPT);
+        Attribute loginScriptSource = attrMap.remove(ATTR_LOGIN_SCRIPT_SOURCE);
+
+        validateCopyLogin(copyLoginScript, loginScriptSource);
+
+        Name name = (Name)attrMap.get(Name.NAME);
+
         String accountId = name.getNameValue();
         _log.info("create(''{0}'')", accountId);
-        List<CharArrayBuffer> addCommand = appendAttributes(false, accountId, attrs);
+        List<CharArrayBuffer> addCommand = appendAttributes(false, accountId, attrMap);
 
         Map<String, Object> variables = new HashMap<String, Object>();
         fillInCommand(addCommand, variables);
@@ -542,14 +548,39 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE), e);
         }
 
+        // Process action attributes
+        //
+        processActionAttributes(createDirectory, copyLoginScript, loginScriptSource);
+
         if (isPresent(result, USER_ADDED)) {
             _log.info("user created");
             return new Uid(accountId);
         } else if (isPresent(result, USER_EXISTS)) {
             throw new AlreadyExistsException();
         } else {
+            // If we can locate an error message, we use it
+            //
+            Pattern errorPattern = Pattern.compile("%\\w+-\\w-\\w+,[^\\n]*\\n");
+            Matcher matcher = errorPattern.matcher(result);
+            if (matcher.find())
+                result = matcher.group();
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE2, result));
         }
+    }
+
+    private void validateCopyLogin(Attribute copyLoginScript, Attribute loginScriptSource) {
+        boolean isCopy = false;
+        if (copyLoginScript!=null)
+            isCopy = AttributeUtil.getBooleanValue(copyLoginScript);
+        String loginScript = null;
+        if (loginScriptSource!=null)
+            loginScript = AttributeUtil.getStringValue(loginScriptSource);
+        if (isCopy && loginScript==null)
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.NULL_ATTRIBUTE_VALUE, ATTR_LOGIN_SCRIPT_SOURCE));
+    }
+
+    private void processActionAttributes(Attribute createDirectory, Attribute copyLoginScript, Attribute loginScriptSource) {
+        //TODO
     }
 
     /**
@@ -653,14 +684,19 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 Map<String, Object> attributes = (Map<String, Object>)TRANSFORM.transform(user);
                 ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
                 builder.setUid((String)attributes.get(Name.NAME));
+
+                String lastLogin = (String)attributes.remove(PredefinedAttributes.LAST_LOGIN_DATE_NAME);
+                String cputime = (String)attributes.remove(ATTR_CPUTIME);
+                String lifetime = (String)attributes.remove(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME);
+
                 // ENABLE is handled by checking to see if the DisUser Flag is
                 // present
                 //
                 @SuppressWarnings("unchecked")
-                List<String> flags = (List<String>)attributes.get(VmsConstants.ATTR_FLAGS);
+                List<String> flags = (List<String>)attributes.get(ATTR_FLAGS);
                 if (flags.size()>0) {
                     if (includeInAttributes(OperationalAttributes.ENABLE_NAME, attributesToGet)) {
-                        if (flags.contains(VmsConstants.FLAG_DISUSER))
+                        if (flags.contains(FLAG_DISUSER))
                             builder.addAttribute(OperationalAttributes.ENABLE_NAME, Boolean.FALSE);
                         else
                             builder.addAttribute(OperationalAttributes.ENABLE_NAME, Boolean.TRUE);
@@ -675,20 +711,113 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 // If the password is pre-expired, we always set this to TRUE 
                 //
                 if (includeInAttributes(OperationalAttributes.PASSWORD_EXPIRED_NAME, attributesToGet)) {
-                    String lastChange = (String)attributes.get(VmsConstants.ATTR_PWDCHANGE);
+                    String lastChange = (String)attributes.get(PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME);
                     if (lastChange.contains("(pre-expired)")) {
                         builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRED_NAME, Boolean.TRUE);
                     } else {
-                        Date expiredDate = getPasswordExpirationDate(attributes);
+                        Date expiredDate = getPasswordExpirationDate(lifetime, attributes);
                         Date vmsDate = getVmsDate();
                         builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRED_NAME, expiredDate.before(vmsDate));
+                    }
+                }
+
+                // ATTR_DEVICE is parsed out from ATTR_DEFAULT
+                //
+                if (includeInAttributes(ATTR_DEVICE, attributesToGet)) {
+                    String defaultString = (String)attributes.get(ATTR_DEFAULT);
+                    if (defaultString!=null) {
+                        String[] defaultInfo = defaultString.split(":");
+                        if (defaultInfo.length>1)
+                            builder.addAttribute(ATTR_DEVICE, defaultInfo[0]);
+                        else
+                            builder.addAttribute(ATTR_DEVICE, "");
+                    }
+                }
+
+                // ATTR_DIRECTORY is parsed out from ATTR_DEFAULT
+                //
+                if (includeInAttributes(ATTR_DIRECTORY, attributesToGet)) {
+                    String defaultString = (String)attributes.get(ATTR_DEFAULT);
+                    if (defaultString!=null) {
+                        String[] defaultInfo = defaultString.split(":");
+                        if (defaultInfo.length>1)
+                            builder.addAttribute(ATTR_DIRECTORY, defaultInfo[1]);
+                        else
+                            builder.addAttribute(ATTR_DIRECTORY, defaultInfo[0]);
+                    }
+                }
+
+                // LAST_LOGIN 
+                //
+                if (includeInAttributes(PredefinedAttributes.LAST_LOGIN_DATE_NAME, attributesToGet)) {
+                    if (lastLogin!=null) {
+                        // Split it out into two separate dates
+                        Pattern pattern = Pattern.compile("(.*)\\(interactive\\),(.*)\\(non-interactive\\)");
+                        Matcher matcher = pattern.matcher(lastLogin);
+                        Object value = null;
+                        if (matcher.matches()) {
+                            String interactive = matcher.group(1).trim();
+                            String noninteractive = matcher.group(2).trim();
+                            if (interactive.equals("(none)")) {
+                                if (noninteractive.equals("(none)")) {
+                                    // no date, so keep null
+                                } else {
+                                    Date date = _vmsDateFormatWithoutSecs.parse(noninteractive.trim());
+                                    value = date.getTime();
+                                }
+                            } else {
+                                if (noninteractive.equals("(none)")) {
+                                    Date date = _vmsDateFormatWithoutSecs.parse(interactive.trim());
+                                    value = date.getTime();
+                                } else {
+                                    Date interactiveDate = _vmsDateFormatWithoutSecs.parse(interactive.trim());
+                                    Date noninteractiveDate = _vmsDateFormatWithoutSecs.parse(noninteractive.trim());
+                                    if (interactiveDate.after(noninteractiveDate)) {
+                                        value = interactiveDate.getTime();
+                                    } else {
+                                        value = noninteractiveDate.getTime();
+                                    }
+                                }
+                            }
+                            List<Object> values = new LinkedList<Object>();
+                            values.add(value);
+                            builder.addAttribute(PredefinedAttributes.LAST_LOGIN_DATE_NAME, values);
+                        }
+
+                    }
+                }
+
+                // ATTR_EXPIRATION 
+                //
+                if (includeInAttributes(ATTR_EXPIRATION, attributesToGet)) {
+                    String expiration = (String)attributes.remove(ATTR_EXPIRATION);
+                    if (expiration!=null) {
+                        if (expiration.trim().equals("(none)")) {
+                            List<Object> values = new LinkedList<Object>();
+                            values.add(null);
+                            builder.addAttribute(ATTR_EXPIRATION, values);
+                        } else {
+                            Date date = _vmsDateFormatWithoutSecs.parse(expiration.trim());
+                            List<Object> value = new LinkedList<Object>();
+                            value.add(date.getTime());
+                            builder.addAttribute(ATTR_EXPIRATION, value);
+                        }
+                    }
+
+                }
+
+                // CPU 
+                //
+                if (includeInAttributes(ATTR_CPUTIME, attributesToGet)) {
+                    if (cputime!=null) {
+                        long cputimeLong = remapFromDelta(cputime);
+                        builder.addAttribute(ATTR_CPUTIME, cputimeLong);
                     }
                 }
 
                 // PASSWORD_CHANGE_INTERVAL_NAME 
                 //
                 if (includeInAttributes(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, attributesToGet)) {
-                    String lifetime = (String)attributes.remove(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME);
                     if (lifetime!=null) {
                         long lifetimeLong = remapFromDelta(lifetime);
                         builder.addAttribute(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, lifetimeLong);
@@ -698,15 +827,17 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 // PASSWORD_EXPIRATION_DATE is handled by seeing if there is an expiration
                 // date, and if so, converting it to milliseconds
                 //
+                //TODO: I believe we can't always compute this, since the case where the user has
+                //      never logged in, but there is a password lifetime is not computable.
+                //
                 if (includeInAttributes(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, attributesToGet)) {
-                    String lifetime = (String)attributes.get(VmsConstants.ATTR_PWDLIFETIME);
-                    String change = (String)attributes.get(VmsConstants.ATTR_PWDCHANGE);
+                    String change = (String)attributes.get(PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME);
                     if (lifetime.equalsIgnoreCase("(none)")) {
-                        builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, 0);
+                        builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, (Long)null);
                     } else if (change.contains("(pre-expired)")) {
-                        builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, new Date().getTime());
+                        builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, 0l);
                     } else {
-                        Date expiredDate = getPasswordExpirationDate(attributes); 
+                        Date expiredDate = getPasswordExpirationDate(lifetime, attributes); 
                         builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, expiredDate.getTime());
                     }
                 }
@@ -752,10 +883,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
 
     }
 
-    private Date getPasswordExpirationDate(Map<String, Object> attributes) throws ParseException {
-        String lastChange = (String)attributes.get(VmsConstants.ATTR_PWDCHANGE);
+    private Date getPasswordExpirationDate(String lifetime, Map<String, Object> attributes) throws ParseException {
+        String lastChange = (String)attributes.get(PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME);
         long lastChangeDate = _vmsDateFormatWithoutSecs.parse(lastChange).getTime();
-        String lifetime = (String)attributes.get(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME);
         if (lifetime==null)
             return null;
         long lifetimeLong = remapFromDelta(lifetime);
@@ -776,7 +906,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         }
         return false;
     }
-    
+
     public Uid update(ObjectClass obj, Uid uid, Set<Attribute> attrs, OperationOptions options) {
         return update(obj, AttributeUtil.addUid(attrs, uid), options);
     }
@@ -887,11 +1017,19 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             attrMap.put(OperationalAttributes.PASSWORD_NAME, newPassword);
         }
 
+        // Process action attributes
+        //
+        Attribute createDirectory = attrMap.remove(ATTR_CREATE_DIRECTORY);
+        Attribute copyLoginScript = attrMap.remove(ATTR_COPY_LOGIN_SCRIPT);
+        Attribute loginScriptSource = attrMap.remove(ATTR_LOGIN_SCRIPT_SOURCE);
+        validateCopyLogin(copyLoginScript, loginScriptSource);
+        processActionAttributes(createDirectory, copyLoginScript, loginScriptSource);
+
         // If we have any remaining attributes, process them
         //
         if (attrMap.size()>0) {
             String accountId = uid.getUidValue();
-            List<CharArrayBuffer> modifyCommand = appendAttributes(true, accountId, attrMap.values());
+            List<CharArrayBuffer> modifyCommand = appendAttributes(true, accountId, attrMap);
 
             Map<String, Object> variables = new HashMap<String, Object>();
             fillInCommand(modifyCommand, variables);
@@ -958,19 +1096,21 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         final SchemaBuilder schemaBuilder = new SchemaBuilder(getClass());
         Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
 
+        attributes.add(buildRequiredAttribute(Name.NAME,            String.class));
+
         // Required Attributes
         //
-        attributes.add(buildRequiredAttribute(Name.NAME,            String.class));
         attributes.add(buildRequiredAttribute(ATTR_UIC,             String.class));
 
         // Optional Attributes (have VMS default values)
         //
+        attributes.add(AttributeInfoBuilder.build(ATTR_DEVICE,      String.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_DIRECTORY,   String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_OWNER,       String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_ACCOUNT,     String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CLI,         String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CLITABLES,   String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_LGICMD,      String.class));
-        //attributes.add(AttributeInfoBuilder.build(ATTR_EXPIRATION,  String.class, false));
         attributes.add(AttributeInfoBuilder.build(ATTR_PWDMINIMUM,  Integer.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_MAXJOBS,     Integer.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_MAXACCTJOBS, Integer.class));
@@ -985,7 +1125,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         attributes.add(AttributeInfoBuilder.build(ATTR_WSQUOTA,     Integer.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_QUEPRIO,     Integer.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_WSEXTENT,    Integer.class));
-        //attributes.add(AttributeInfoBuilder.build(ATTR_CPUTIME,     String.class, false));
+        attributes.add(AttributeInfoBuilder.build(ATTR_CPUTIME,     Long.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_ENQLM,       Integer.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_PGFLQUOTA,   Integer.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_TQELM,       Integer.class));
@@ -1000,11 +1140,18 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         attributes.add(buildMultivaluedAttribute(ATTR_PRIMEDAYS,    String.class, false));
         attributes.add(buildMultivaluedAttribute(ATTR_PRIVILEGES,   String.class, false));
         attributes.add(buildMultivaluedAttribute(ATTR_DEFPRIVILEGES,String.class, false));
-        attributes.add(buildMultivaluedAttribute(ATTR_FLAGS,        String.class, false));
 
         // Write-only attributes
         //
         //attributes.add(buildWriteonlyAttribute(ATTR_ALGORITHM,      String.class, false, false));
+        attributes.add(buildWriteonlyAttribute(ATTR_LOGIN_SCRIPT_SOURCE, String.class, false));
+        attributes.add(buildWriteonlyAttribute(ATTR_COPY_LOGIN_SCRIPT, Boolean.class, false));
+        attributes.add(buildWriteonlyAttribute(ATTR_CREATE_DIRECTORY, Boolean.class, false));
+
+        // Read-only attributes
+        //
+        attributes.add(buildReadonlyAttribute(ATTR_LOGIN_FAILS, Integer.class, false));
+        attributes.add(buildReadonlyAttribute(ATTR_EXPIRATION,  Long.class, false));
 
         // Operational Attributes
         //
@@ -1013,11 +1160,18 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         if (!disableUserLogins)
             attributes.add(OperationalAttributeInfos.CURRENT_PASSWORD);
         attributes.add(OperationalAttributeInfos.ENABLE);
-        attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
-        //attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRATION_DATE);
+        //TODO:I'm not sure this is always conmputable
+        //attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
+        attributes.add(buildWriteonlyAttribute(OperationalAttributes.PASSWORD_EXPIRED_NAME, Boolean.class, false));
+        //TODO: I believe we can't always compute this, since the case where the user has
+        //      never logged in, but there is a password lifetime is not computable.
+        //
+        //attributes.add(buildReadonlyAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, Long.class, false));
 
         // Predefined Attributes
         //
+        attributes.add(PredefinedAttributeInfos.LAST_LOGIN_DATE);
+        attributes.add(PredefinedAttributeInfos.LAST_PASSWORD_CHANGE_DATE);
         attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
 
         ObjectClassInfoBuilder ociBuilder = new ObjectClassInfoBuilder();
@@ -1031,6 +1185,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         if (disableUserLogins) {
             schemaBuilder.removeSupportedObjectClass(AuthenticateOp.class, objectClassInfo);
         }
+
+        //TODO: can use VMS expiration attribute to do OperationalAttributes.DISABLE_DATE_NAME
 
         _schema = schemaBuilder.build();
         _attributeMap = AttributeInfoUtil.toMap(attributes);
@@ -1062,21 +1218,22 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         builder.setName(name);
         builder.setType(clazz);
         builder.setRequired(required);
-        builder.setMultiValued(true);
+        builder.setMultiValued(false);
         builder.setCreateable(false);
         builder.setUpdateable(false);
         return builder.build();
     }
 
-    private AttributeInfo buildWriteonlyAttribute(String name, Class<?> clazz, boolean required, boolean multi) {
+    private AttributeInfo buildWriteonlyAttribute(String name, Class<?> clazz, boolean required) {
         AttributeInfoBuilder builder = new AttributeInfoBuilder();
         builder.setName(name);
         builder.setType(clazz);
         builder.setRequired(required);
-        builder.setMultiValued(multi);
+        builder.setMultiValued(false);
         builder.setUpdateable(true);
         builder.setCreateable(true);
         builder.setReadable(false);
+        builder.setReturnedByDefault(false);
         return builder.build();
     }
 
@@ -1136,16 +1293,16 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             throw new ConnectorException(_configuration.getMessage(VmsMessages.PASSWORD_REQUIRED_FOR_RUN_AS));
         if (user!=null && isDisableUserLogins(_configuration))
             throw new ConnectorException(_configuration.getMessage(VmsMessages.RUN_AS_WHEN_DISABLED));
-        
+
         Map<String, Object> arguments = request.getScriptArguments();
         String language = request.getScriptLanguage();
         if (!"DCL".equalsIgnoreCase(language)) {
             throw new ConnectorException(_configuration.getMessage(VmsMessages.UNSUPPORTED_SCRIPTING_LANGUAGE, language));
         }
-    
+
         String script = request.getScriptText();
         try {
-            
+
             if (user!=null) {
                 VmsConfiguration configuration = new VmsConfiguration(_configuration);
                 configuration.setUserName(user);
@@ -1206,7 +1363,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         // create a temp file
         //
         String tmpfile = UUID.randomUUID().toString();
-        
+
         //TODO: allow optional used of F$UNIQUE
 
         // Create an empty error file, so that we can send it back if there are
@@ -1249,7 +1406,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         executeCommand(connection, "DELETE " + tmpfile + ".OUTPUT;");
         executeCommand(connection, "DELETE " + tmpfile + ".ERROR;*");
         executeCommand(connection, "DELETE " + tmpfile + ".COM;");
-        
+
         return new String[] { status, output, error };
     }
 

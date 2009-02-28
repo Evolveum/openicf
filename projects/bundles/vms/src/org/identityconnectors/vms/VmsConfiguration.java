@@ -52,7 +52,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         _vmsTimeZone = TimeZone.getDefault().getID();
         _vmsDateFormatWithoutSecs = "dd-MMM-yyyy HH:mm";
         _vmsDateFormatWithSecs = "dd-MMM-yyyy HH:mm:ss";
-        _hostShellPrompt = "$";
+        _hostShellPrompt = "[$] ";
         _disableUserLogins = Boolean.TRUE;
     }
 
@@ -69,6 +69,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         _vmsDateFormatWithSecs = other._vmsDateFormatWithSecs;
         _vmsTimeZone = other._vmsTimeZone;
         _isSSH = other._isSSH;
+        _disableUserLogins = other._disableUserLogins;
     }
 
     public void validate() {
@@ -229,6 +230,8 @@ public class VmsConfiguration extends AbstractConfiguration {
     
     @ConfigurationProperty(order=14)
     public Boolean getDisableUserLogins() {
+        if (_disableUserLogins==null)
+            return Boolean.TRUE;
         return _disableUserLogins;
     }
 

@@ -35,6 +35,10 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
+import org.identityconnectors.framework.common.objects.PredefinedAttributeInfos;
+import org.identityconnectors.framework.common.objects.PredefinedAttributes;
+
 public class VmsAttributeValidator {
     private static class ValidatorInfo {
         enum ValidatorType {
@@ -660,7 +664,7 @@ public class VmsAttributeValidator {
         VALIDATOR_INFO.put(ATTR_BYTLM, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_CLI, new ValidatorInfo(_cliPattern, 1));
         VALIDATOR_INFO.put(ATTR_CLITABLES, new ValidatorInfo(_cliTablesPattern, 1));
-        //VALIDATOR_INFO.put(ATTR_CPUTIME, new ValidatorInfo(_cliTablesPattern, 1));
+        VALIDATOR_INFO.put(ATTR_CPUTIME, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_DEFPRIVILEGES, new ValidatorInfo(new ValidPrivList()));
         VALIDATOR_INFO.put(ATTR_DEVICE, new ValidatorInfo(_devicePattern, 1));
         VALIDATOR_INFO.put(ATTR_DIALUP, new ValidatorInfo(new ValidAccessList()));
@@ -680,7 +684,7 @@ public class VmsAttributeValidator {
         VALIDATOR_INFO.put(ATTR_MAXJOBS, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_NETWORK, new ValidatorInfo(new ValidAccessList()));
         VALIDATOR_INFO.put(ATTR_OWNER, new ValidatorInfo(new ValidOwner()));
-        VALIDATOR_INFO.put(ATTR_PASSWORD, new ValidatorInfo(_passwordPattern, 1));
+        VALIDATOR_INFO.put(OperationalAttributes.PASSWORD_NAME, new ValidatorInfo(_passwordPattern, 1));
         VALIDATOR_INFO.put(ATTR_PBYTLM, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_PGFLQUOTA, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_PRCLM, new ValidatorInfo(1));
@@ -688,7 +692,7 @@ public class VmsAttributeValidator {
         VALIDATOR_INFO.put(ATTR_PRIORITY, new ValidatorInfo(new ValidIntegerRange(1, 16)));
         VALIDATOR_INFO.put(ATTR_PRIVILEGES, new ValidatorInfo(new ValidPrivList()));
         VALIDATOR_INFO.put(ATTR_PWDEXPIRED, new ValidatorInfo(0));
-        VALIDATOR_INFO.put(ATTR_PWDLIFETIME, new ValidatorInfo(_deltaTimePattern, 1));
+        VALIDATOR_INFO.put(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, new ValidatorInfo(_deltaTimePattern, 1));
         VALIDATOR_INFO.put(ATTR_PWDMINIMUM, new ValidatorInfo(new ValidIntegerRange(1, 32)));
         VALIDATOR_INFO.put(ATTR_QUEPRIO, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_REMOTE, new ValidatorInfo(new ValidAccessList()));

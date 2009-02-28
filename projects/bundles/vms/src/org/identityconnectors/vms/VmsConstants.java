@@ -36,6 +36,7 @@ public interface VmsConstants {
     public static final String ATTR_CLITABLES           = "CLITABLES";
     public static final String ATTR_CPUTIME             = "CPUTIME";
     public static final String ATTR_DEFPRIVILEGES       = "DEFPRIVILEGES";
+    public static final String ATTR_DEFAULT             = "DEFAULT";
     public static final String ATTR_DEVICE              = "DEVICE";
     public static final String ATTR_DIALUP              = "DIALUP";
     public static final String ATTR_DIOLM               = "DIOLM";
@@ -49,13 +50,13 @@ public interface VmsConstants {
     public static final String ATTR_JTQUOTA             = "JTQUOTA";
     public static final String ATTR_LGICMD              = "LGICMD";
     public static final String ATTR_LOCAL               = "LOCAL";
+    public static final String ATTR_LOGIN_FAILS         = "LoginFails";
     public static final String ATTR_MAXACCTJOBS         = "MAXACCTJOBS";
     public static final String ATTR_MAXDETACH           = "MAXDETACH";
     public static final String ATTR_MAXJOBS             = "MAXJOBS";
     public static final String ATTR_MODIFY_IDENTIFIER   = "MODIFY_IDENTIFIER";
     public static final String ATTR_NETWORK             = "NETWORK";
     public static final String ATTR_OWNER               = "OWNER";
-    public static final String ATTR_PASSWORD            = "__PASSWORD__";
     public static final String ATTR_PBYTLM              = "PBYTLM";
     public static final String ATTR_PGFLQUOTA           = "PGFLQUOTA";
     public static final String ATTR_PRCLM               = "PRCLM";
@@ -63,9 +64,7 @@ public interface VmsConstants {
     public static final String ATTR_PRIORITY            = "PRIORITY";
     public static final String ATTR_PRIVILEGES          = "PRIVILEGES";
     public static final String ATTR_PWDEXPIRED          = "PWDEXPIRED";
-    public static final String ATTR_PWDLIFETIME         = "PWDLIFETIME";
     public static final String ATTR_PWDMINIMUM          = "PWDMINIMUM";
-    public static final String ATTR_PWDCHANGE           = "PWDCHANGE";
     public static final String ATTR_QUEPRIO             = "QUEPRIO";
     public static final String ATTR_REMOTE              = "REMOTE";
     public static final String ATTR_SECDAYS             = "Secondary Days";
@@ -75,6 +74,10 @@ public interface VmsConstants {
     public static final String ATTR_WSDEFAULT           = "WSDEFAULT";
     public static final String ATTR_WSEXTENT            = "WSEXTENT";
     public static final String ATTR_WSQUOTA             = "WSQUOTA";
+
+    public static final String ATTR_COPY_LOGIN_SCRIPT   = "COPY_LOGIN_SCRIPT";
+    public static final String ATTR_CREATE_DIRECTORY    = "CREATE_DIRECTORY";
+    public static final String ATTR_LOGIN_SCRIPT_SOURCE = "LOGIN_SCRIPT_SOURCE";
 
     // VMS Flags
     //
