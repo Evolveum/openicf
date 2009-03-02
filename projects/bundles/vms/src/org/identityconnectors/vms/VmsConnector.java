@@ -1160,9 +1160,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         if (!disableUserLogins)
             attributes.add(OperationalAttributeInfos.CURRENT_PASSWORD);
         attributes.add(OperationalAttributeInfos.ENABLE);
-        //TODO:I'm not sure this is always conmputable
-        //attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
-        attributes.add(buildWriteonlyAttribute(OperationalAttributes.PASSWORD_EXPIRED_NAME, Boolean.class, false));
+        attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
+        //attributes.add(buildWriteonlyAttribute(OperationalAttributes.PASSWORD_EXPIRED_NAME, Boolean.class, false));
         //TODO: I believe we can't always compute this, since the case where the user has
         //      never logged in, but there is a password lifetime is not computable.
         //
