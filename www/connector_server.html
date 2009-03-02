@@ -13,7 +13,7 @@
  (e.g. J2EE application) cannot load C# classes, it is necessary to instead deploy the C# bundles 
  under a C# connector server.  The Java application can communicate with the C# connector server
  over the network, and the C# connector server serves a proxy to provide to any authenticated application access to the C# bundles deployed
- within the C# connector server.</p>
+ within the C# connector server.<BR></p>
  
 <h2>Installing the Connector Server</h2>
 <p>Minimum Requirements:
@@ -22,7 +22,7 @@
 		<li>Refer to your .NET connector to determine if there are any additional requirements
 	</ul>
 	Execute <b>ServiceInstall.msi</b>. Just follow the wizard. It will walk you through the whole process step by step.  Upon completion, the Connector Server will be installed as a windows service. 
-	</p>
+	<BR></p>
 <h2>Configuring the Connector Server</h3>
 <p>Start the Microsoft Services Console. Check to see if the Connector Server is currently running. If so, stop it.
 From a command prompt, set the key for the connector Server. This is done by changing to the directory where the connector server was installed 
@@ -31,7 +31,7 @@ where <i>&lt;newkey&gt;</i> is the value for the new key. This key is required b
 </p><p>Look through the configuration file and inspect all settings. The most common things to change would be the port, trace, and ssl settings.</p>
 <p>For more information about configuring the Connector Server with SSL, see <a href="#SSL">this section</a>.</p>
 
-<h3>Additional Notes about configuration</h3>
+<h4>Additional Notes about configuration</h4>
 <p>The port, address, and SSL settings are in the tag called AppSettings, and look like this:
  <PRE>&lt;add key="connectorserver.port" value="8759" /&gt;<BR>&lt;add key="connectorserver.usessl" value="false" /&gt;<BR>
  &lt;add key="connectorserver.certificatestorename" value="ConnectorServerSSLCertificate" /&gt;<BR>&lt;add key="connectorserver.ifaddress" value="0.0.0.0" /&gt;
@@ -64,7 +64,7 @@ where <i>&lt;newkey&gt;</i> is the value for the new key. This key is required b
   To run the Connector Server interactively, issue the command:<PRE>ConnectorServer /run</PRE>
   </p>
 
-<h3>Installing Connectors</h3>
+<h3>Installing Connectors on a Connector Server</h3>
    <p>To install new connectors, change to the directory where the Connector Server was installed, and unzip the zip file containing the connector there. Stop the Connector Server, and restart.</p>
  
 <h3>Running Multiple Connector Servers on the Same Machine</h3>
@@ -81,7 +81,7 @@ where <i>&lt;newkey&gt;</i> is the value for the new key. This key is required b
        the connector server via SSL.
 </ul>
 
-<h3><a name="app_ssl">Configure your application to use SSL</a></h3>
+<h4><a name="app_ssl">Configure your application to use SSL</a></h4>
 <p>Refer to your application manual for specific notes on how to configure connections to connector servers.
 You will need to indicate to your application that an SSL connection is required when establishing a connection for each SSL-enabled connector server.</p>
 
