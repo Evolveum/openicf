@@ -41,6 +41,7 @@ tests' errors</a></li>
     <li><a href="#bootstrap">Missing bootstrap file</a></li>
     <li><a href="#SearchApiOpTests_case_insensitive">[SearchApiOpTests]
 &nbsp;case insensitive tests fail</a></li>
+    <li><a href="#specEsc">How to escape special characters in test property names?</a></li>
 
   </ul>
   <li><a href="#confusion">Common confusions</a></li>
@@ -92,6 +93,14 @@ indicates that the tested connector does not fulfill test <code>SearchApiOpTests
 
 <p><span style="font-weight: bold;">Fix</span>
 &nbsp; &nbsp; see section <a href="indepth.html#SearchApiOpTests">SearchApiOpTests#testCaseInsensitiveSearch</a>.</p>
+
+<h3><a name="specEsc"/>How to escape special characters in test property names?</h3>
+<p>
+Property names containing special characters (invalid Java identifiers), such as <span style="font-family: monospace;">@</span>, 
+<span style="font-family: monospace;">-</span> etc. should be escaped. For example, 
+<span style="font-family:monospace;">testsuite.<strong>"</strong>name-with-dash<strong>"</strong></span>. Property names, however, cannot start with the escaped part
+(<span style="font-family: monospace;">name-with-dash</span> in this case).
+</p>
 
 <h2><a name="confusion"></a>Common confusions</h2>
 <p><strong>#1 the connector schema can be modified by <code>Schema.*</code> properties</strong> -- These lines of 
