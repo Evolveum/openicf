@@ -297,6 +297,33 @@ follows:</p>
 configuration file</td>
 
       <td>
+      <pre>{$project.home}/config/build.groovy</pre>
+
+      </td>
+
+    </tr>
+    
+    <tr>
+
+      <td width="200"><span style="color: rgb(51, 102, 102);">Optional</span>
+configuration file for
+resource specific
+configurations
+      </td>
+
+      <td>
+      <pre>{$project.home}/config/{$configuration}/build.groovy</pre>
+
+      </td>
+
+    </tr>    
+
+    <tr>
+
+      <td><span style="color: rgb(0, 153, 0);">Private Main</span>
+configuration file</td>
+
+      <td>
       <pre>{$user.home}/.connectors/bundle-name/build.groovy</pre>
 
       </td>
@@ -305,7 +332,7 @@ configuration file</td>
 
     <tr>
 
-      <td width="200"><span style="color: rgb(51, 102, 102);">Optional</span>
+      <td width="200"><span style="color: rgb(51, 102, 102);">Private Optional</span>
 configuration file for
 resource specific
 configurations
@@ -383,9 +410,9 @@ in configuration-specific folders:<br>
 
 <br>
 
-<div style="margin-left: 40px;"><span style="font-family: monospace;" class="literal">{$user-home}/.connectors/bundle-name/lib</span>
+<div style="margin-left: 40px;">
+<span style="font-family: monospace;" class="literal">{$user-home}/.connectors/bundle-name/lib</span>
 <span style="font-family: monospace;"></span><br>
-
 <span style="font-family: monospace;" class="literal">{$user-home}/.connectors/bundle-name/{$configuration}/lib</span></div>
 
 <br>
@@ -785,7 +812,7 @@ When you type <code>ant report-junits</code> a new <code>connector.jar</code>
 is created in a <code>${connector.dir}/reports</code>
 directory. This
 newly created JAR file contains
-all the connector classes (except JUnit tests), all JARs from the <code>${connector.dir}/lib</code>
+all the connector classes (except JUnit tests), all JARs from the <code>${bundle.dir}/lib</code>
 directory, and proprietary JARs from the&nbsp;<code>${user.home}/.connectors/bundle-name/lib</code><a href="#Proprietary_jars"><code></code></a>
 directory.
         </td>
@@ -893,10 +920,10 @@ Or, if the connector has more test configurations:<br>
 
 <pre style="margin-left: 40px;">ant -Dconfiguration=<span style="color: rgb(0, 102, 0);">conf1</span> run-contract-tests<br></pre>
 
-where <code>conf1</code> is the configuration name. In
-this
-case, tests will use the <code>{$user.home}/.connectors/bundle-name/<span style="color: rgb(0, 102, 0);">conf1</span>/build.groovy</code>
-file.
+where <code>conf1</code> is the configuration name. In this case, tests will use the 
+<code>{$bundle.dir}/config/<span style="color: rgb(0, 102, 0);">conf1</span>/build.groovy</code> for non confident configuration settings and
+<code>{$user.home}/.connectors/bundle-name/<span style="color: rgb(0, 102, 0);">conf1</span>/build.groovy</code> for confident (private) configuration settings 
+files.
 <p></p>
 
 <p><br>
@@ -1000,7 +1027,7 @@ on
       <ul>
 
         <li>Add <code>testsuite.serverHost,
-testsuite.serverPort, testsuite.serverKey</code> to the configuration &nbsp;(<code>${user.home}/.connectors/bundle-name/build.groovy</code>).
+testsuite.serverPort, testsuite.serverKey</code> to the private configuration &nbsp;(<code>${user.home}/.connectors/bundle-name/build.groovy</code>).
 The rest of configuration is the same as&nbsp; <a href="#A_Configuring_a_local_Connector">steps 2 through
 5 for local connectors</a>.</li>
 
@@ -1049,6 +1076,7 @@ for every project
 which has <code>build.xml</code> and imports <code>connector_build.xml</code>.)&nbsp;</p>
 
 <p>Set the following properties in
+<code>${bundle.dir}/config/build.groovy</code>: and the private part to <br />
 <code>${user.home}/.connectors/bundle-name/build.groovy</code>:</p>
 
 <ul>

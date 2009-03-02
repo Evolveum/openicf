@@ -26,10 +26,17 @@ RandomGenerator pattern</a></li>
   <ul>
 
     <li><a href="#A.2.1">A.2.1
-{$user.home}/.connectors/connector-databasetable/build.groovy</a></li>
+{$bundle.dir}/config/build.groovy</a></li>
 
     <li><a href="#A.2.2">A.2.2
+{$bundle.dir}/config/mysql/build.groovy</a></li>
+
+    <li><a href="#A.2.3">A.2.3
+{$user.home}/.connectors/connector-databasetable/build.groovy</a></li>
+
+    <li><a href="#A.2.4">A.2.4
 {$user.home}/.connectors/connector-databasetable/mysql/build.groovy</a></li>
+
 
 <!--<li><a href="#transtable">A.3 Table of
 translation from the old configuration files</a></li>-->
@@ -79,23 +86,43 @@ floating point random number <br>
 <h2><a name="attachdbtableconfig">A.2 Database table
 connector Groovy configuration files</a></h2>
 
-<p>We will observe two groovy scripts used in database table
+<p>We will observe four groovy scripts used in database table
 connector, one is generic, the second is specific for MySQL database,
+third is private generic and fourth is private for MySQL database
 contains connection username/password.</p>
 
 <h3><a name="A.2.1"></a>A.2.1
-{$user.home}/.connectors/connector-databasetable/build.groovy</h3>
+{$bundle.dir}/config/build.groovy</h3>
+
+<p>Contains the test public settings.</p>
 
 <pre>/*  +---------------------------------------------------+<br> *  ----------- Contract Tests configuration ------------<br> *  +---------------------------------------------------+ <br> */<br><br>import org.identityconnectors.contract.data.groovy.Lazy<br>import org.identityconnectors.contract.data.groovy.Random<br>import org.identityconnectors.contract.data.groovy.Get<br>import org.identityconnectors.contract.exceptions.ObjectNotFoundException;<br><br><br>// Connector WRONG configuration for ValidateApiOpTests<br>connector.i1.wrong.host=""<br>connector.i2.wrong.login=""<br>connector.i3.wrong.password=""<br><br><br>testsuite {<br>    // path to bundle jar - property is set by ant - leave it as it is<br>    bundleJar=System.getProperty("bundleJar")<br>    bundleName=System.getProperty("bundleName")<br>    bundleVersion=System.getProperty("bundleVersion")<br>    connectorName="org.identityconnectors.databasetable.DatabaseTableConnector"    <br><br>    // ValidateApiOpTests:<br>    Validate.iterations="3"<br><br>    // AuthenticationApiOpTests:<br>    Authentication.__ACCOUNT__.username=Lazy.get("i0.Authentication.__ACCOUNT__.__NAME__")<br>    Authentication.__ACCOUNT__.wrong.password="bogus"<br><br>    // SyncApiOpTests:<br>    Sync.disable.delete=true<br>    <br>    // SchemaApiOpTests:<br>    Schema.oclasses=['__ACCOUNT__']<br>    Schema.attributes.__ACCOUNT__.oclasses=['__NAME__', '__PASSWORD__', 'MANAGER', 'MIDDLENAME', 'FIRSTNAME', 'LASTNAME', 'EMAIL', 'DEPARTMENT', 'TITLE', 'AGE', 'SALARY', 'JPEGPHOTO']<br><br><br>    Schema.__NAME__.attribute.__ACCOUNT__.oclasses=[<br>                                                            type: java.lang.String.class,<br>                                                            readable: true,<br>                                                            createable: true,<br>                                                            updateable: true,<br>                                                            required: true,<br>                                                            multiValue: false,<br>                                                            returnedByDefault: true <br>                                              ]        <br><br>    Schema.__PASSWORD__.attribute.__ACCOUNT__.oclasses=[<br>                                                            type: "org.identityconnectors.common.security.GuardedString", <br>                                                            readable: false,<br>                                                            createable: true,<br>                                                            updateable: true, <br>                                                            required: true,<br>                                                            multiValue: false,<br>                                                            returnedByDefault: true<br>                                             ]                                                        <br>    // many attributes have similar values                                                <br>    Schema.common.attribute=[<br>                                            type: java.lang.String.class,<br>                                            readable: true,<br>                                            createable: true,<br>                                            updateable: true,<br>                                            required: false,<br>                                            multiValue: false,<br>                                            returnedByDefault: true<br>                    ]                                        <br>    Schema.MIDDLENAME.attribute.__ACCOUNT__.oclasses=Lazy.get("testsuite.Schema.common.attribute")                                                        <br>    Schema.FIRSTNAME.attribute.__ACCOUNT__.oclasses=Lazy.get("testsuite.Schema.common.attribute")<br>    Schema.MANAGER.attribute.__ACCOUNT__.oclasses=Lazy.get("testsuite.Schema.common.attribute")                                                        <br>    Schema.EMAIL.attribute.__ACCOUNT__.oclasses=Lazy.get("testsuite.Schema.common.attribute")                                                                                                                                                                                                                                                                                                                                                         <br>    Schema.DEPARTMENT.attribute.__ACCOUNT__.oclasses=Lazy.get("testsuite.Schema.common.attribute")<br>    Schema.TITLE.attribute.__ACCOUNT__.oclasses=Lazy.get("testsuite.Schema.common.attribute")                                                                                                                                                                        <br>    Schema.LASTNAME.attribute.__ACCOUNT__.oclasses=Lazy.get("testsuite.Schema.common.attribute")                                        <br><br>    Schema.AGE.attribute.__ACCOUNT__.oclasses=[<br>                                                        type: java.lang.Integer.class,<br>                                                        readable: true,<br>                                                        createable: true,<br>                                                        updateable: true,<br>                                                        required: false,<br>                                                        multiValue: false,<br>                                                        returnedByDefault: true<br>                                ]                                        <br>                                                                                                    <br>    Schema.SALARY.attribute.__ACCOUNT__.oclasses=[<br>                                                            type: "java.math.BigDecimal",<br>                                                            readable: true,<br>                                                            createable: true,<br>                                                            updateable: true,<br>                                                            required: false,<br>                                                            multiValue: false,<br>                                                            returnedByDefault: true<br>                                   ]                                         <br>                                                                                                                                                                                                                                                                                                                                                                        <br>    Schema.JPEGPHOTO.attribute.__ACCOUNT__.oclasses=[<br>                                                            type: "[B",<br>                                                            readable: true,<br>                                                            createable: true,<br>                                                            updateable: true,<br>                                                            required: false,<br>                                                            multiValue: false,<br>                                                            returnedByDefault: false<br>                                                        ]<br><br>    // object classes supported by operations                                                                                                              <br>    Schema.operations=[<br>                                    GetApiOp: ['__ACCOUNT__'],<br>                                    SchemaApiOp: ['__ACCOUNT__'],<br>                                    ValidateApiOp: ['__ACCOUNT__'],<br>                                    CreateApiOp: ['__ACCOUNT__'],<br>                                    SearchApiOp: ['__ACCOUNT__'],<br>                                    DeleteApiOp: ['__ACCOUNT__'],<br>                                    ScriptOnConnectorApiOp: ['__ACCOUNT__'],<br>                                    UpdateApiOp: ['__ACCOUNT__'],<br>                                    AuthenticationApiOp: ['__ACCOUNT__'],<br>                                    TestApiOp: ['__ACCOUNT__'],<br>                                    SyncApiOp: [] // sync column is missing in the tables.<br>                ]<br>  <br>} // testsuite<br><br><br>// ATTRIBUTES' VALUES:<br>// longer bytearray value<br>JPEGPHOTO=Lazy.random("????????????????????????????????????????", byte[].class)<br></pre>
 
 <br>
 
 <h3><a name="A.2.2"></a>A.2.2
+{$bundle.dir}/config/mysql/build.groovy</h3>
+
+<p>Contains the configuration specific public settings.</p>
+
+<pre>/*  +---------------------------------------------------+<br> *  ----------- Contract Tests configuration ------------<br> *  +---------------------------------------------------+ <br> */<br><br>import org.identityconnectors.contract.data.groovy.Lazy<br>import org.identityconnectors.contract.data.groovy.Random<br>import org.identityconnectors.contract.data.groovy.Get<br>import org.identityconnectors.contract.exceptions.ObjectNotFoundException;<br><br>// Connector configuration<br>connector{<br>    driver="com.mysql.jdbc.Driver"<br>    keyColumn="ACCOUNTID"<br>  DBTable="idm_sync"<br> }<br></pre>
+
+<h3><a name="A.2.3"></a>A.2.3
+{$user.home}/.connectors/connector-databasetable/build.groovy</h3>
+
+<p>Could contains the private settings.</p>
+
+<pre>/*  +---------------------------------------------------+<br> *  ----------- Contract Tests configuration ------------<br> *  +---------------------------------------------------+ <br> */<br><br></pre>
+
+<br>
+
+<h3><a name="A.2.4"></a>A.2.4
 {$user.home}/.connectors/connector-databasetable/mysql/build.groovy</h3>
 
-<p>Contains the database specific credentials.</p>
+<p>Contains the configuration private settings like a database url and private credentials.</p>
 
-<pre>/*  +---------------------------------------------------+<br> *  ----------- Contract Tests configuration ------------<br> *  +---------------------------------------------------+ <br> */<br><br>import org.identityconnectors.contract.data.groovy.Lazy<br>import org.identityconnectors.contract.data.groovy.Random<br>import org.identityconnectors.contract.data.groovy.Get<br>import org.identityconnectors.contract.exceptions.ObjectNotFoundException;<br><br>// Connector configuration<br>connector{<br>    driver="com.mysql.jdbc.Driver"<br>    keyColumn="ACCOUNTID"<br>    passwordColumn="PASSWORD"<br>    DBTable="idm_sync"<br>    connectionUrl="jdbc:mysql://localhost/database"<br>    login="loginname"<br>    password="password"<br>}<br></pre>
+<pre>/*  +---------------------------------------------------+<br> *  ----------- Contract Tests configuration ------------<br> *  +---------------------------------------------------+ <br> */<br><br>import org.identityconnectors.contract.data.groovy.Lazy<br>import org.identityconnectors.contract.data.groovy.Random<br>import org.identityconnectors.contract.data.groovy.Get<br> connectionUrl="jdbc:mysql://localhost/database"<br>    login="loginname"<br>    password="password"<br>}<br></pre>
+
 
 <!--<hr style="width: 100%; height: 2px;">
 <h2>&nbsp;<a name="transtable"></a>A.3
