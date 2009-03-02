@@ -7,51 +7,89 @@
  <h1>Connector Servers</h1>
  <p>A connector server is required when a connector bundle is not directly executed within your 
  application.  By using one or more connector servers, the connector architecture thus permits your application to communicate with
- externally deployed bundles.<p>
+ externally deployed bundles.</p><p>
  The use of connector servers is especially useful when an application
  is written in Java, but also when a connector bundle is written using C#.  Since a Java application
  (e.g. J2EE application) cannot load C# classes, it is necessary to instead deploy the C# bundles 
  under a C# connector server.  The Java application can communicate with the C# connector server
  over the network, and the C# connector server serves a proxy to provide to any authenticated application access to the C# bundles deployed
- within the C# connector server.
- <h2>Using SSL to communicate with connector servers</h2>
+ within the C# connector server.</p>
+ 
+<h2>Installing the Connector Server</h2>
+<p>Minimum Requirements:
+	<ul><li>Windows Server 2003 or 2008
+		<li>.NET Framework 3.5 or higher
+		<li>Refer to your .NET connector to determine if there are any additional requirements
+	</ul>
+	Execute <b>ServiceInstall.msi</b>. Just follow the wizard. It will walk you through the whole process step by step.  Upon completion, the Connector Server will be installed as a windows service. 
+	</p>
+<h2>Configuring the Connector Server</h3>
+<p>Start the Microsoft Services Console. Check to see if the Connector Server is currently running. If so, stop it.
+From a command prompt, set the key for the connector Server. This is done by changing to the directory where the connector server was installed 
+(by default: <i>\Program Files\Identity Connectors\Connector Server</i>) and executing the following command: <PRE>ConnectorServer /setkey &lt;newkey&gt;</PRE>
+where <i>&lt;newkey&gt;</i> is the value for the new key. This key is required by any client that connects to this Connector Server.
+</p><p>Look through the configuration file and inspect all settings. The most common things to change would be the port, trace, and ssl settings.</p>
+<p>For more information about configuring the Connector Server with SSL, see <a href="#SSL">this section</a>.</p>
+
+<h3>Additional Notes about configuration</h3>
+<p>The port, address, and SSL settings are in the tag called AppSettings, and look like this:
+ <PRE>&lt;add key="connectorserver.port" value="8759" /&gt;<BR>&lt;add key="connectorserver.usessl" value="false" /&gt;<BR>
+ &lt;add key="connectorserver.certificatestorename" value="ConnectorServerSSLCertificate" /&gt;<BR>&lt;add key="connectorserver.ifaddress" value="0.0.0.0" /&gt;
+ </PRE>
+ The port can be set by changing the value of <i>connectorserver.port</i>. The listening socket can be bound to a particular address, or can be left as 0.0.0.0. 
+ To setup to use SSL, you must set the value of <i>connectorserver.usessl</i> to true, and then set the value of <i>connectorserver.certifacatestorename</i> to your the certificate store name.
+ </p><p>You will need to record for use later the following information regarding your connector server installation:
+   <ul>
+      <li>Host name or IP address
+      <li>Connector server port
+      <li>Connector server key
+      <li>Whether SSL is enabled
+   </ul>
+   
+ <h3>Changing Trace Settings</h3>
+ <p>Trace settings are in the configuration file. The settings look like this:
+   <PRE>&lt;system.diagnostics&gt;<BR>  &lt;trace autoflush="true" indentsize="4"&gt;
+     &lt;listeners&gt;<BR>       &lt;remove name="Default" /&gt;<BR>       &lt;add name="myListener" type="System.Diagnostics.TextWriterTraceListener" initializeData="c:\connectorserver2.log" traceOutputOptions="DateTime"&gt;        
+         &lt;filter type="System.Diagnostics.EventTypeFilter" initializeData="Information" /&gt;<BR>       &lt;/add&gt;<BR>    &lt;/listeners&gt;<BR>  &lt;/trace&gt;<BR>&lt;/system.diagnostics&gt;
+   </PRE>
+   The Connector Server uses the the standard .NET trace mechanism. For more information about the tracing options, see Microsoft's .NET documentation for System.Diagnostics.</p>
+   <p>The default settings are a good starting point, but for less tracing, you can change the EventTypeFilter's <i>initializeData</i> to "Warning" or "Error". For very verbose logging you can set the value to "Verbose" or "All".
+   The amount of logging performed has a direct effect on the performance of the Connector Servers, so be careful of the setting.</p>
+   
+   <p>Any configuration changes will require the connector server to be stopped and restarted.</p>
+   
+<h3>Running the Connector Server</h3>
+  <p>The best way to run the Connector Server is as a Windows service. When installing, the Connector Server is installed as a Windows service. This should be fine for most installations.</p>
+  <p>If for some reason, this is not adequate, the connector server may be installed or uninstalled as a Windows service by using the <i>/install</i> or <i>/uninstall</i> arguments on the command line.
+  To run the Connector Server interactively, issue the command:<PRE>ConnectorServer /run</PRE>
+  </p>
+
+<h3>Installing Connectors</h3>
+   <p>To install new connectors, change to the directory where the Connector Server was installed, and unzip the zip file containing the connector there. Stop the Connector Server, and restart.</p>
+ 
+<h3>Running Multiple Connector Servers on the Same Machine</h3>
+  <p>To install additional Connector Servers on the same machine, download the Connector Server zip file from the <a href="/downloads.html">downloads</a> section. Create a directory to install to, and unzip the file there. 
+  Edit the configuration file as described above ensuring that you have a unique port. You may also want to make sure that the trace file is different as well. You can then run the additional Connector Server interactively or as a service.
+  </p>
+ 
+ <h2><a name="SSL">Using SSL to communicate with connector servers</a></h2>
  The following steps are necessary to successfully communicate with a connector server using SSL:
  <ul>
-   <li><a href="#deploy_cert">Deploy an SSL certificate </a>to connector server's system</li>
-   <li><a href="#cs_ssl">Configure your connector server</a> to provide SSL sockets</li>
-   <li><a href="#app_ssl">Configure your application </a>to communicate with the communicate with
-       the connector server via SSL.</li>
-</ul>
-
-<h3><a name="deploy_cert">Deploying an SSL certificate</a></h3>
-<ul>
-<li>Windows .NET connector server</li>
-<li>Java connector server</li>
-</ul>
-
-<h3><a name="cs_ssl">Configure your connector server to provide SSL sockets</a></h3>
-<ul>
-<li>Windows .NET connector server</li>
-<p>Edit the configuration file (ConnectorServer.exe.config) of your .NET connector server, changing:</p>
-&nbsp;&lt;add key="connectorserver.usessl" value=<b>"false"</b>/><<br>
-to this:<br>
-&nbsp;&lt;add key="connectorserver.usessl" value=<b>"true"</b>/><<br>
-<p>
-<li>Java connector server</li>
-<p>Edit the configuration file (e.g. connectorserver.properties) of your Java connector server, changing:</p>
-&nbsp;connectorserver.usessl=<b>false</b><br>
-to this:<br>
-&nbsp;connectorserver.usessl=<b>true</b><br>
+   <li>Deploy an SSL certificate to the connector server's system.
+   <li>Configure your connector server to provide SSL sockets.
+   <li>Configure your application to communicate with the communicate with
+       the connector server via SSL.
 </ul>
 
 <h3><a name="app_ssl">Configure your application to use SSL</a></h3>
-Refer to your application manual for specific notes on how to configure connections to connector servers.
-You will need to indicate to your application that an SSL connection is required when establishing a connection for each SSL-enabled connector server.<p>
+<p>Refer to your application manual for specific notes on how to configure connections to connector servers.
+You will need to indicate to your application that an SSL connection is required when establishing a connection for each SSL-enabled connector server.</p>
 
+<p>
 Additionally, if any of the SSL certificates used by your connector servers is issued by a 
 non-standard certificate authority, your application must be configured to respect the additional authorities.  Refer
-to your application manual for notes regarding certificate authorities.<p>
-
+to your application manual for notes regarding certificate authorities.</p>
+<p>
 Java applications may solve the non-standard certificate authority issue by expecting that the following
 Java system properties are passed when launching the application:<br>
 <ul>
@@ -60,6 +98,6 @@ For example, <b>-Djavax.net.ssl.trustStorePassword=changeit</b><br><br>
 <li>javax.net.ssl.trustStore</li>
 For example, <b>-Djavax.net.ssl.trustStore=/usr/myApp_cacerts</b><br><br>
 </ul>
-<p>
-Or, instead, the non-standard certificate authorities may be imported to the standard $JAVA_HOME/lib/security/cacerts.
-
+Or, instead, the non-standard certificate authorities may be imported to the standard <i>${JAVA_HOME}/lib/security/cacerts</i>.
+</p>
+</html>
