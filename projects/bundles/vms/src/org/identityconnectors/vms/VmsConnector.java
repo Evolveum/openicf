@@ -92,7 +92,6 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
 import org.identityconnectors.patternparser.MapTransform;
 import org.identityconnectors.patternparser.Transform;
 
-
 @ConnectorClass(displayNameKey="VMSConnector", configurationClass= VmsConfiguration.class)
 public class VmsConnector implements PoolableConnector, AuthenticateOp, CreateOp,
 DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnResourceOp {
@@ -113,16 +112,16 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     private String                      _dateCommandScript;
     private ScriptExecutor              _dateCommandExecutor;
 
-    private final static String VMS_DELTA_FORMAT = "{0,number,##}-{1,number,##}:{2,number,##}:{3,number,##}.{4,number,00}";
+    private final static String         VMS_DELTA_FORMAT    = "{0,number,##}-{1,number,##}:{2,number,##}:{3,number,##}.{4,number,00}";
 
-    private static final String SEPARATOR       = "Username: ";
-    private static final String UAF_PROMPT      = "UAF>";
-    private static final String UAF_PROMPT_CONTINUE      = "_UAF>";
-    private static final Transform TRANSFORM    = new MapTransform(VmsAuthorizeInfo.getInfo());
+    private static final String         SEPARATOR           = "Username: ";
+    private static final String         UAF_PROMPT          = "UAF>";
+    private static final String         UAF_PROMPT_CONTINUE = "_UAF>";
+    private static final Transform      TRANSFORM           = new MapTransform(VmsAuthorizeInfo.getInfo());
 
-    public static final int    LONG_WAIT       = 60000;
-    public static final int    SHORT_WAIT      = 60000;
-    private static final int   SEGMENT_MAX       = 500;    
+    public static final int             LONG_WAIT           = 60000;
+    public static final int             SHORT_WAIT          = 60000;
+    private static final int            SEGMENT_MAX         = 500;    
 
 
     // VMS messages we search for
@@ -344,15 +343,41 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             } else if (ATTR_PRIMEDAYS.equalsIgnoreCase(name)) {
                 updateValues(values, VmsAttributeValidator.PRIMEDAYS_LIST);
             }
-            // We treat empty lists as list containing empty strong
+            // We treat empty lists as value needed to clear the attribute
+            //  Dates are removed with NO prefix
+            //  Deltas are removed with NO prefix
+            //  Numbers get set to 0
+            //  Strings get set to empty string
             //
-            if (values.size()==0)
-                values.add("");
+            if (values.size()==0) {
+                schema();
+                AttributeInfo info = _attributeMap.get(name);
+                if (info!=null) {
+                    if (ATTR_EXPIRATION.equals(name)
+                            || ATTR_CPUTIME.equals(name)
+                            || PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME.equals(name)) {
+                        values.add(Boolean.FALSE);
+                    } else if (info.getClass().isInstance(Number.class)
+                            || info.getClass().isInstance(short.class)
+                            || info.getClass().isInstance(int.class)
+                            || info.getClass().isInstance(float.class)
+                            || info.getClass().isInstance(double.class)
+                            || info.getClass().isInstance(long.class)) {
+                        values.add(0);
+                    } else if (info.getClass().isInstance(Boolean.class)) {
+                        values.add(Boolean.FALSE);
+                    } else {
+                        values.add("");
+                    }
+                } else {
+                    values.add("");
+                }
+            }
             if (!name.equals(Name.NAME) && isNeedsValidation(attribute)) {
                 VmsAttributeValidator.validate(name, values, _configuration);
                 if (values.size()==1 && values.get(0) instanceof Boolean) {
                     // We use boolean value to indicate negatable, valueless
-                    // attributes
+                    // attributes, and to clear time-based attributes
                     //
                     String value = null;
                     if (((Boolean)values.get(0)).booleanValue())
@@ -523,11 +548,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
 
         // Extract action attributes
         //
+        String createDirCommand = getCreateDirCommand(attrMap);
+        String copyLoginCommand = getCopyLoginCommand(attrMap);
         Attribute createDirectory = attrMap.remove(ATTR_CREATE_DIRECTORY);
         Attribute copyLoginScript = attrMap.remove(ATTR_COPY_LOGIN_SCRIPT);
         Attribute loginScriptSource = attrMap.remove(ATTR_LOGIN_SCRIPT_SOURCE);
-
-        validateCopyLogin(copyLoginScript, loginScriptSource);
 
         Name name = (Name)attrMap.get(Name.NAME);
 
@@ -548,24 +573,41 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE), e);
         }
 
-        // Process action attributes
-        //
-        processActionAttributes(createDirectory, copyLoginScript, loginScriptSource);
-
+        Pattern errorPattern = Pattern.compile("%\\w+-\\w-\\w+,[^\\n]*\\n");
         if (isPresent(result, USER_ADDED)) {
             _log.info("user created");
-            return new Uid(accountId);
         } else if (isPresent(result, USER_EXISTS)) {
             throw new AlreadyExistsException();
         } else {
             // If we can locate an error message, we use it
             //
-            Pattern errorPattern = Pattern.compile("%\\w+-\\w-\\w+,[^\\n]*\\n");
+            
             Matcher matcher = errorPattern.matcher(result);
             if (matcher.find())
                 result = matcher.group();
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE2, result));
         }
+        
+        // Process action attributes
+        //
+        if (createDirCommand!=null) {
+            result = executeCommand(_connection, createDirCommand);
+            Matcher matcher = errorPattern.matcher(result);
+            if (matcher.find()) {
+                result = matcher.group();
+                throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE_DIRECTORY, result));
+            }
+        }
+        if (copyLoginCommand!=null) {
+            result = executeCommand(_connection, copyLoginCommand);
+            Matcher matcher = errorPattern.matcher(result);
+            if (matcher.find()) {
+                result = matcher.group();
+                throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_COPY_LOGIN, result));
+            }
+        }
+
+        return new Uid(accountId);
     }
 
     private void validateCopyLogin(Attribute copyLoginScript, Attribute loginScriptSource) {
@@ -930,6 +972,18 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                     throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.NULL_ATTRIBUTE_VALUE, attribute.getName()));
             }
         }
+        
+        // Create-only attributes may not be specified
+        //
+        Attribute createDirectory = attrMap.remove(ATTR_CREATE_DIRECTORY);
+        Attribute copyLogin = attrMap.remove(ATTR_COPY_LOGIN_SCRIPT);
+        Attribute loginScriptSource = attrMap.remove(ATTR_LOGIN_SCRIPT_SOURCE);
+        if (createDirectory!=null)
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UPDATE_ATTRIBUTE_VALUE, createDirectory.getName()));
+        if (copyLogin!=null)
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UPDATE_ATTRIBUTE_VALUE, copyLogin.getName()));
+        if (loginScriptSource!=null)
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UPDATE_ATTRIBUTE_VALUE, loginScriptSource.getName()));
 
         // Operational Attributes are handled specially
         //
@@ -1016,14 +1070,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             //
             attrMap.put(OperationalAttributes.PASSWORD_NAME, newPassword);
         }
-
-        // Process action attributes
-        //
-        Attribute createDirectory = attrMap.remove(ATTR_CREATE_DIRECTORY);
-        Attribute copyLoginScript = attrMap.remove(ATTR_COPY_LOGIN_SCRIPT);
-        Attribute loginScriptSource = attrMap.remove(ATTR_LOGIN_SCRIPT_SOURCE);
-        validateCopyLogin(copyLoginScript, loginScriptSource);
-        processActionAttributes(createDirectory, copyLoginScript, loginScriptSource);
 
         // If we have any remaining attributes, process them
         //
@@ -1144,9 +1190,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         // Write-only attributes
         //
         //attributes.add(buildWriteonlyAttribute(ATTR_ALGORITHM,      String.class, false, false));
-        attributes.add(buildWriteonlyAttribute(ATTR_LOGIN_SCRIPT_SOURCE, String.class, false));
-        attributes.add(buildWriteonlyAttribute(ATTR_COPY_LOGIN_SCRIPT, Boolean.class, false));
-        attributes.add(buildWriteonlyAttribute(ATTR_CREATE_DIRECTORY, Boolean.class, false));
+        attributes.add(buildCreateonlyAttribute(ATTR_LOGIN_SCRIPT_SOURCE, String.class, false));
+        attributes.add(buildCreateonlyAttribute(ATTR_COPY_LOGIN_SCRIPT, Boolean.class, false));
+        attributes.add(buildCreateonlyAttribute(ATTR_CREATE_DIRECTORY, Boolean.class, false));
 
         // Read-only attributes
         //
@@ -1161,7 +1207,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             attributes.add(OperationalAttributeInfos.CURRENT_PASSWORD);
         attributes.add(OperationalAttributeInfos.ENABLE);
         attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
-        //attributes.add(buildWriteonlyAttribute(OperationalAttributes.PASSWORD_EXPIRED_NAME, Boolean.class, false));
         //TODO: I believe we can't always compute this, since the case where the user has
         //      never logged in, but there is a password lifetime is not computable.
         //
@@ -1223,13 +1268,13 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         return builder.build();
     }
 
-    private AttributeInfo buildWriteonlyAttribute(String name, Class<?> clazz, boolean required) {
+    private AttributeInfo buildCreateonlyAttribute(String name, Class<?> clazz, boolean required) {
         AttributeInfoBuilder builder = new AttributeInfoBuilder();
         builder.setName(name);
         builder.setType(clazz);
         builder.setRequired(required);
         builder.setMultiValued(false);
-        builder.setUpdateable(true);
+        builder.setUpdateable(false);
         builder.setCreateable(true);
         builder.setReadable(false);
         builder.setReturnedByDefault(false);
@@ -1332,10 +1377,14 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         return isSSH;
     }
 
-    protected String executeCommand(VmsConnection connection, String command) throws Exception {
+    protected String executeCommand(VmsConnection connection, String command) {
         connection.resetStandardOutput();
-        connection.send(command);
-        connection.waitFor(_configuration.getLocalHostShellPrompt(), SHORT_WAIT);
+        try {
+            connection.send(command);
+            connection.waitFor(_configuration.getLocalHostShellPrompt(), SHORT_WAIT);
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }
         String output = connection.getStandardOutput();
         int index = output.lastIndexOf(_configuration.getLocalHostShellPrompt());
         if (index!=-1)
@@ -1358,7 +1407,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         return output;
     }
 
-    protected String[] executeScript(VmsConnection connection, String action, int timeout, Map<String, Object> args) throws Exception {
+    protected String[] executeScript(VmsConnection connection, String action, int timeout, Map<String, Object> args) {
         // create a temp file
         //
         String tmpfile = UUID.randomUUID().toString();
@@ -1409,7 +1458,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         return new String[] { status, output, error };
     }
 
-    private void setEnvironmentVariables(VmsConnection connection, Map<String, Object> args) throws Exception {
+    private void setEnvironmentVariables(VmsConnection connection, Map<String, Object> args) {
         Set<Map.Entry<String, Object>> keyset = args.entrySet();
         for (Map.Entry<String, Object> entry : keyset) {
             String name = entry.getKey();
@@ -1420,6 +1469,124 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 executeCommand(connection, line);
             }
         }
+    }
+
+    public Attribute normalizeAttribute(ObjectClass oclass, Attribute attribute) {
+        // Because VMS reports NAME (and UID) in upper case, they will not match
+        // against a lower case name unless the values are forced to upper case.
+        //
+        if (attribute instanceof Name) {
+            Name name = (Name)attribute;
+            return new Name(name.getNameValue().toUpperCase());
+        }
+        if (attribute instanceof Uid) {
+            Uid uid = (Uid)attribute;
+            return new Uid(uid.getUidValue().toUpperCase());
+        }
+        return attribute;
+    }
+
+    public Uid authenticate(ObjectClass objectClass, String username,
+            GuardedString password, OperationOptions options) {
+        VmsConfiguration configuration = new VmsConfiguration(_configuration);
+        configuration.setUserName(username);
+        configuration.setPassword(password);
+        try {
+            VmsConnection connection = new VmsConnection(configuration, VmsConnector.SHORT_WAIT);
+            connection.dispose();
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }
+
+        return new Uid(username);
+    }
+
+    private String getCreateDirCommand(Map<String, Attribute> attrMap) {
+        Attribute createDirectory = attrMap.get(ATTR_CREATE_DIRECTORY);
+        if (createDirectory==null || !AttributeUtil.getBooleanValue(createDirectory))
+            return null;
+        
+        Attribute uicAttr = attrMap.get(ATTR_UIC);
+        Attribute deviceAttr = attrMap.get(ATTR_DEVICE);
+        Attribute directoryAttr = attrMap.get(ATTR_DIRECTORY);
+        
+        if (uicAttr==null)
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_REQUIRED_ATTRIBUTE, ATTR_UIC));
+        if (deviceAttr==null)
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_REQUIRED_ATTRIBUTE, ATTR_DEVICE));
+        if (directoryAttr==null)
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_REQUIRED_ATTRIBUTE, ATTR_DIRECTORY));
+        
+        String uic = AttributeUtil.getStringValue(uicAttr);
+        String device = AttributeUtil.getStringValue(deviceAttr);
+        String directory = AttributeUtil.getStringValue(directoryAttr);
+        
+        if (StringUtil.isBlank(uic))
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_ATTRIBUTE_VALUE, ATTR_UIC));
+        if (StringUtil.isBlank(device))
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_ATTRIBUTE_VALUE, ATTR_DEVICE));
+        if (StringUtil.isBlank(directory))
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_ATTRIBUTE_VALUE, ATTR_DIRECTORY));
+
+        StringBuffer cmd = new StringBuffer();
+
+        cmd.append("CREATE/DIRECTORY/PROTECTION=SYSTEM:RWED/OWNER_UIC=");
+        cmd.append(uic);
+        cmd.append(" ");
+        if (!device.endsWith(":"))
+            device += ":";
+        cmd.append(device);
+        if (!directory.endsWith("]"))
+            directory = "["+directory+"]";
+        cmd.append(directory);
+        return cmd.toString();
+    }
+
+    private String getCopyLoginCommand(Map<String, Attribute> attrMap) {
+        Attribute copyLoginScript = attrMap.get(ATTR_COPY_LOGIN_SCRIPT);
+        if (copyLoginScript==null || !AttributeUtil.getBooleanValue(copyLoginScript))
+            return null;
+        
+        Attribute loginScriptSourceAttr = attrMap.get(ATTR_LOGIN_SCRIPT_SOURCE);
+        Attribute uicAttr = attrMap.get(ATTR_UIC);
+        Attribute deviceAttr = attrMap.get(ATTR_DEVICE);
+        Attribute directoryAttr = attrMap.get(ATTR_DIRECTORY);
+        
+        if (uicAttr==null)
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_REQUIRED_ATTRIBUTE, ATTR_UIC));
+        if (deviceAttr==null)
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_REQUIRED_ATTRIBUTE, ATTR_DEVICE));
+        if (directoryAttr==null)
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_REQUIRED_ATTRIBUTE, ATTR_DIRECTORY));
+        if (loginScriptSourceAttr==null)
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_REQUIRED_ATTRIBUTE, ATTR_LOGIN_SCRIPT_SOURCE));
+        
+        String uic = AttributeUtil.getStringValue(uicAttr);
+        String device = AttributeUtil.getStringValue(deviceAttr);
+        String directory = AttributeUtil.getStringValue(directoryAttr);
+        String loginScriptSource = AttributeUtil.getStringValue(loginScriptSourceAttr);
+        
+        if (StringUtil.isBlank(uic))
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_ATTRIBUTE_VALUE, ATTR_UIC));
+        if (StringUtil.isBlank(device))
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_ATTRIBUTE_VALUE, ATTR_DEVICE));
+        if (StringUtil.isBlank(directory))
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_ATTRIBUTE_VALUE, ATTR_DIRECTORY));
+        if (StringUtil.isBlank(loginScriptSource))
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_ATTRIBUTE_VALUE, ATTR_LOGIN_SCRIPT_SOURCE));
+        
+        StringBuffer cmd = new StringBuffer();
+
+        cmd.append("COPY ");
+        cmd.append(loginScriptSource);
+        cmd.append(" ");
+        if (!device.endsWith(":"))
+            device += ":";
+        cmd.append(device);
+        if (!directory.endsWith("]"))
+            directory = "["+directory+"]";
+        cmd.append(directory);
+        return cmd.toString();
     }
 
     private static class CharArrayBuffer {
@@ -1465,34 +1632,5 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         }
     }
 
-    public Attribute normalizeAttribute(ObjectClass oclass, Attribute attribute) {
-        // Because VMS reports NAME (and UID) in upper case, they will not match
-        // against a lower case name unless the values are forced to upper case.
-        //
-        if (attribute instanceof Name) {
-            Name name = (Name)attribute;
-            return new Name(name.getNameValue().toUpperCase());
-        }
-        if (attribute instanceof Uid) {
-            Uid uid = (Uid)attribute;
-            return new Uid(uid.getUidValue().toUpperCase());
-        }
-        return attribute;
-    }
-
-    public Uid authenticate(ObjectClass objectClass, String username,
-            GuardedString password, OperationOptions options) {
-        VmsConfiguration configuration = new VmsConfiguration(_configuration);
-        configuration.setUserName(username);
-        configuration.setPassword(password);
-        try {
-            VmsConnection connection = new VmsConnection(configuration, VmsConnector.SHORT_WAIT);
-            connection.dispose();
-        } catch (Exception e) {
-            throw ConnectorException.wrap(e);
-        }
-
-        return new Uid(username);
-    }
-
 }
+

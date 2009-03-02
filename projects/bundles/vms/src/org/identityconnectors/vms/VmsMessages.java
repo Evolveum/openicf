@@ -35,6 +35,8 @@ public interface VmsMessages {
     public static final String BAD_SCRIPT_LANGUAGE           = "BAD_SCRIPT_LANGUAGE";
     public static final String ERROR_IN_SEARCH               = "ERROR_IN_SEARCH";
     public static final String ERROR_IN_CREATE2              = "ERROR_IN_CREATE2";
+    public static final String ERROR_IN_COPY_LOGIN           = "ERROR_IN_COPY_LOGIN";
+    public static final String ERROR_IN_CREATE_DIRECTORY     = "ERROR_IN_CREATE_DIRECTORY";
     public static final String ERROR_IN_MODIFY2              = "ERROR_IN_MODIFY2";
     public static final String ERROR_IN_DELETE2              = "ERROR_IN_DELETE2";
     public static final String PROTOCOL_NULL                 = "PROTOCOL_NULL";
@@ -55,6 +57,9 @@ public interface VmsMessages {
     public static final String UNSUPPORTED_OBJECT_CLASS      = "UNSUPPORTED_OBJECT_CLASS";
     public static final String TEST_FAILED                   = "TEST_FAILED";
     public static final String NULL_ATTRIBUTE_VALUE          = "NULL_ATTRIBUTE_VALUE";
+    public static final String UPDATE_ATTRIBUTE_VALUE        = "UPDATE_ATTRIBUTE_VALUE";
+    public static final String MISSING_REQUIRED_ATTRIBUTE    = "MISSING_REQUIRED_ATTRIBUTE";
+    public static final String MISSING_ATTRIBUTE_VALUE       = "MISSING_ATTRIBUTE_VALUE";
     public static final String UNSUPPORTED_SCRIPTING_LANGUAGE= "UNSUPPORTED_SCRIPTING_LANGUAGE";
     public static final String PASSWORD_REQUIRED_FOR_RUN_AS  = "PASSWORD_REQUIRED_FOR_RUN_AS";
     public static final String RUN_AS_WHEN_DISABLED          = "RUN_AS_WHEN_DISABLED";
