@@ -56,8 +56,6 @@ RandomGenerator pattern</a></li>
 
 
 
-<!--<li><a href="#transtable">A.3 Table of
-translation from the old configuration files</a></li>-->
   
   </ul>
 
@@ -177,87 +175,6 @@ contains connection username/password.</p>
 
 
 
-<!--<hr style="width: 100%; height: 2px;">
-<h2>&nbsp;<a name="transtable"></a>A.3
-Table of translation from the old configuration
-files</h2>
-<br>
-
-<table style="text-align: left; width: 1000px;" border="1" cellpadding="2" cellspacing="2">
-<tbody>
-<tr>
-<td style="background-color: rgb(204, 204, 255);">DefaultDataProvider
--- using legacy macros</td>
-<td style="background-color: rgb(204, 204, 255);">GroovyDataProvider
--- simple way to achieve anything</td>
-</tr>
-<tr>
-<td>typenames such as: <span style="font-family: monospace;">string</span>, <span style="font-family: monospace;">integer</span>, <span style="font-family: monospace;">float,long</span>...</td>
-<td>@deprecated <br>
-They are no longer needed in Groovy (implicit typing given by
-expression on the right side of assignment).<br>
-Exceptionally, if it is needed to use these with prefix&nbsp;T,
-such as Tstring etc.</td>
-</tr>
-<tr>
-<td><span style="font-family: monospace;">${RANDOM,
-AAAAA##}</span></td>
-<td><span style="font-family: monospace;">Lazy.random("AAAAA##")</span></td>
-</tr>
-<tr>
-<td>
-<pre>${LONG, ${RANDOM, #####}}</pre>
-</td>
-<td>
-<pre>Lazy.random("#####", Long.class)</pre>
-</td>
-</tr>
-<tr>
-<td><span style="font-family: monospace;">foo=</span><span style="font-family: monospace;">${NOTSUPPLIED}</span></td>
-<td><span style="font-family: monospace;">foo=new
-ObjectNotFoundException()</span></td>
-</tr>
-<tr>
-<td><span style="font-family: monospace;">${FLOAT,
-${RANDOM, #####}${LITERAL, .}${RANDOM, ##}}</span></td>
-<td><span style="font-family: monospace;">Lazy.random("#####\\.##",
-Float.class)</span></td>
-</tr>
-<tr>
-<td><span style="font-family: monospace;">list=${LIST,
-item1, item2}</span></td>
-<td><span style="font-family: monospace;">list
-= ["item1", "item2"]</span></td>
-</tr>
-<tr>
-<td><span style="font-family: monospace;">multiString=${LIST,
-${RANDOM, AAAAA##}, ${RANDOM, AAAAA##}}</span></td>
-<td><span style="font-family: monospace;">multiString=[Lazy.random("AAAAA##")
-, Lazy.random("AAAAA##")]</span></td>
-</tr>
-<tr>
-<td><span style="font-family: monospace;">map=${MAP,
-<br>
-&nbsp; ${MAPENTRY, SchemaApiOp, ${LIST, __ACCOUNT__}}<br>
-}</span> </td>
-<td><span style="font-family: monospace;">map=[<br>
-&nbsp; SchemaApiOp : ['__ACCOUNT__']<br>
-]<br>
-</span> </td>
-</tr>
-<tr>
-<td>A string array:<span style="font-family: monospace;"> targetNames.connector.stringarray=${ARRAY, java.lang.String, spml2-DSML-Target}</span>
-</td>
-<td><span style="font-family: monospace;">connector.targetNames=new String[2]; connector.targetNames[0] = java.lang.String.class; connector.targetName[1] = "spml2-DSML-Target";</span>
-</td>
-</tr>
-<tr>
-<td>__ACCOUNT__.modified.string={$NOTSUPPLIED}</td>
-<td>modified.__ACCOUNT__=new ObjectNotFoundException()</td>
-</tr>
-</tbody>
-</table>
--->
 </div>
 
 
