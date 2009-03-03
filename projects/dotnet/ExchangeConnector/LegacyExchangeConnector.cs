@@ -125,12 +125,12 @@ namespace Org.IdentityConnectors.Exchange
         /// <summary>
         /// Recipient type attribute for Mailbox
         /// </summary>
-        private const string RcptTypeMailBox = "mailbox";
+        private const string RcptTypeMailBox = "UserMailbox";
 
         /// <summary>
         /// Recipient type attribute for MailUser
         /// </summary>
-        private const string RcptTypeMailUser = "mailuser";
+        private const string RcptTypeMailUser = "MailUser";
 
         /// <summary>
         /// Configuration instance
