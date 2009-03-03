@@ -65,7 +65,7 @@ class DB2ConfigurationValidator {
 			}
 		}
 		public void checkEmpty(ConfigChecker reqChecker) {
-			asserts.asserBlank(cfg.getDataSource(),"dataSource");
+			asserts.assertBlank(cfg.getDataSource(),"dataSource");
 		}
 		public ConnectionType getType() {
 			return ConnectionType.DATASOURCE;
@@ -91,14 +91,14 @@ class DB2ConfigurationValidator {
 		}
 		public void checkEmpty(ConfigChecker reqChecker) {
 			if(!(reqChecker instanceof Type2DriverChecker)){
-			    asserts.asserBlank(cfg.getJdbcDriver(),"jdbcDriver");
-			    asserts.asserBlank(cfg.getDatabaseName(),"database");
+			    asserts.assertBlank(cfg.getJdbcDriver(),"jdbcDriver");
+			    asserts.assertBlank(cfg.getDatabaseName(),"database");
 			}
 			//User and password can be set for all types of connections
 			//Asserts.isBlankMsg(cfg.getAdminAccount(), "AdminAccount cannot be set");
 			//Asserts.isNullMsg(cfg.getAdminPassword(), "AdminPassword cannot be set");
-			asserts.asserBlank(cfg.getHost(),"host");
-			asserts.asserBlank(cfg.getPort(),"port");
+			asserts.assertBlank(cfg.getHost(),"host");
+			asserts.assertBlank(cfg.getPort(),"port");
 		}
 		public ConnectionType getType() {
 			return ConnectionType.TYPE4;
@@ -120,8 +120,8 @@ class DB2ConfigurationValidator {
 		}
 		public void checkEmpty(ConfigChecker reqChecker) {
 			if(!(reqChecker instanceof Type4DriverChecker)){
-			    asserts.asserBlank(cfg.getJdbcDriver(),"jdbcDriver");
-                asserts.asserBlank(cfg.getDatabaseName(),"database");
+			    asserts.assertBlank(cfg.getJdbcDriver(),"jdbcDriver");
+                asserts.assertBlank(cfg.getDatabaseName(),"database");
 			}
 		}
 		public ConnectionType getType() {
