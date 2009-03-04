@@ -44,13 +44,108 @@ These are the properties that can be specified on the Configuration object when 
 		<li>Optional:
 			<ul>
 				<li><b>property D</b> (boolean): <description>
+				<li><b>CreateHomeDirectory</b> (boolean): Specify whether or not the home directory for the user will be created. 
+				<li><b>LDAPHostName</b> (String): To specify a particular domain controller, enter the hostname, IP address, or domain name of the LDAP server.  If not is supplied, serverless bind is used.
+				<li><b>ObjectClass</b> (String): Specify the Active Directory object class for user objects that will be managed on this resource.  The default is User, and for most situations, this should be fine.
+				<li><b>SearchChildDomains</b> (boolean): Select if you want searches of Active Directory to include child domains. In addition, the Search Container and Sync Search Context (see sync settings) attributes must be set to the top of the parent domain, e.g. DC=mydomain,DC=com.
+				<li><b>SearchContext</b> (String): Reserved for future use.
+				<li><b>SyncDomainController</b> (String): Domain controller to use during active sync.  Only used if not searching child domains.
+				<li><b>SyncGlobalCatalogServer</b> (String): Name of the global catalog server.  This is needed only if searching child domains.
 			</ul>
 	</ul>
 </p>
 <h3>Schema and Supported Features</h3>
 <p>
+
+The following lists all explicitly supported attributes in the schema.  Many attributes beyond these can be set as well.  Unless othewise noted, all attributes are Createable, Updateable, Readable, and Single Value
+
+For ObjectClass ACCOUNT, the following attributes are supported:
+<li><b>
+<li><b>sAMAccountName</b> (String) : NOT_UPDATEABLE
+<li><b>givenName</b> (String) : 
+<li><b>sn</b> (String) : 
+<li><b>displayName</b> (String) : 
+<li><b>mail</b> (String) : 
+<li><b>telephoneNumber</b> (String) : 
+<li><b>employeeID</b> (String) : 
+<li><b>division</b> (String) : 
+<li><b>mobile</b> (String) : 
+<li><b>middleName</b> (String) : 
+<li><b>description</b> (String) : MULTIVALUED 
+<li><b>department</b> (String) : 
+<li><b>manager</b> (String) : 
+<li><b>title</b> (String) : 
+<li><b>initials</b> (String) : 
+<li><b>co</b> (String) : 
+<li><b>company</b> (String) : 
+<li><b>facsimileTelephoneNumber</b> (String) : 
+<li><b>homePhone</b> (String) :  
+<li><b>streetAddress</b> (String) : 
+<li><b>l</b> (String) : 
+<li><b>st</b> (String) : 
+<li><b>postalCode</b> (String) : 
+<li><b>TerminalServicesInitialProgram</b> (String) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>TerminalServicesWorkDirectory</b> (String) : 
+<li><b>AllowLogon</b> (Integer) : 
+<li><b>MaxConnectionTime</b> (Integer) : 
+<li><b>MaxDisconnectionTime</b> (Integer) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>MaxIdleTime</b> (Integer) : 
+<li><b>ConnectClientDrivesAtLogon</b> (Integer) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>ConnectClientPrintersAtLogon</b> (Integer) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>DefaultToMainPrinter</b> (Integer) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>BrokenConnectionAction</b> (Integer) : NOT_CREATABLE  NOT_UPDATEABLE 
+<li><b>ReconnectionAction</b> (Integer) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>EnableRemoteControl</b> (Integer) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>TerminalServicesProfilePath</b> (String) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>TerminalServicesHomeDirectory</b> (String) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>TerminalServicesHomeDrive</b> (String) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>uSNChanged</b> (String) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>ad_container</b> (String) : NOT_CREATABLE  NOT_UPDATEABLE 
+<li><b>otherHomePhone</b> (String) : MULTIVALUED 
+<li><b>distinguishedName</b> (String) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>objectClass</b> (String) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>homeDirectory</b> (String) : 
+<li><b>PasswordNeverExpires</b> (Boolean) : 
+<li><b>__ENABLE__</b> (Boolean) : 
+<li><b>__LOCK_OUT__</b> (Boolean) : 
+<li><b>__PASSWORD_EXPIRED__</b> (Boolean) : 
+<li><b>__CURRENT_PASSWORD__</b> (GuardedString) :
+<li><b>__PASSWORD__</b> (GuardedString) : MULTIVALUED NOT_READABLE NOT_RETURNED_BY_DEFAULT 
+<li><b>__GROUPS__</b> (String) : 
+<li><b>__DESCRIPTION__</b> (String) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>__SHORT_NAME__</b> (String) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>__NAME__</b> (String) : REQUIRED 
+<li>
+<li>
+<li>For ObjectClass Group, the following attributes are supported:
+<li><b>cn</b> (String) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>samAccountName</b> (String) : 
+<li><b>description</b> (String) : 
+<li><b>displayName</b> (String) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>managedby</b> (String) : 
+<li><b>mail</b> (String) : 
+<li><b>groupType int 
+<li><b>objectClass</b> (String) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>member</b> (String) : NOT_CREATABLE NOT_UPDATEABLE MULTIVALUED 
+<li><b>ad_container</b> (String) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>__DESCRIPTION__</b> (String) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>__SHORT_NAME__</b> (String) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>__NAME__</b> (String) : REQUIRED 
+<li>
+<li>
+<li>For ObjectClass organizationalUnit, the following attributes are supported:
+<li><b>ou</b> (String) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>displayName</b> (String) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>__DESCRIPTION__</b> (String) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>__SHORT_NAME__</b> (String) : NOT_CREATABLE NOT_UPDATEABLE 
+<li><b>__NAME__</b> (String) : REQUIRED 
+
 This Connector supports the ACCOUNT object class. The attributes supported are: <attr_1>, <attr_2>... Furthermore, the ACCOUNT object class
 supports the following special attributes:
+
+
+
+
 <ul>
 	<li>OperationalAttributeInfos.<b>PASSWORD</b>
 	<li>OperationalAttributeInfos.<b>PASSWORD_EXPIRED</b>
