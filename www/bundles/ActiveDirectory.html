@@ -24,7 +24,7 @@
      	<tr>
      	    <td><a href="https://identityconnectors.dev.java.net/downloads.html#Bundles">1.0</a></td>
      	    <td><a href="https://identityconnectors.dev.java.net/downloads.html#Framework">1.0</a></td>
-     	    <td><ul><li>Windows Server 2003 (32-bit)<li>Windows Server 2008 (32-bit)</ul></td>
+     	    <td><ul><li>Windows Server 2003<li>Windows Server 2008</ul></td>
      	</tr>
      	<!-- Add later versions here -->
      </table>
@@ -36,20 +36,19 @@ These are the properties that can be specified on the Configuration object when 
 	<ul>
 		<li>Required:
 			<ul>
-				<li><b>DirectoryAdminName</b> (String): Enter the administrator user name with which the system should authenticate. The setting can be either be a username or 'domainname'\'username'.
-				<li><b>DirectoryAdminPassword</b> (String): Enter the password that should be used when authenticating.
-				<li><b>Container</b> (String): Specify a container object which will be the default root of all searches.  Unless a search explicitly passes in other criteria, only objects under this container will be searched.  For example, if you want to retrieve users from the Users container, enter CN=Users,DC=MYDOMAIN,DC=COM.  If no value is specified, the value of the 'Base Container' attribute is used.
+				<li><b>DirectoryAdminName</b> (String): The administrator user name with which the system should authenticate. The setting can be either be a username or 'domainname'\'username'.
+				<li><b>DirectoryAdminPassword</b> (String): The password that should be used when authenticating.
+				<li><b>Container</b> (String): A container object which will be the default root of all searches.  Unless a search explicitly passes in other criteria, only objects under this container will be searched.  For example, if you want to retrieve users from the Users container, enter CN=Users,DC=MYDOMAIN,DC=COM.  If no value is specified, the value of the 'Base Container' attribute is used.
 				<li><b>DomainName</b> (String): Name of the windows domain (e.g. windowsdomain.mycompany.com)
 			</ul>
 		<li>Optional:
 			<ul>
-				<li><b>property D</b> (boolean): <description>
-				<li><b>CreateHomeDirectory</b> (boolean): Specify whether or not the home directory for the user will be created. 
-				<li><b>LDAPHostName</b> (String): To specify a particular domain controller, enter the hostname, IP address, or domain name of the LDAP server.  If not is supplied, serverless bind is used.
-				<li><b>ObjectClass</b> (String): Specify the Active Directory object class for user objects that will be managed on this resource.  The default is User, and for most situations, this should be fine.
-				<li><b>SearchChildDomains</b> (boolean): Select if you want searches of Active Directory to include child domains. In addition, the Search Container and Sync Search Context (see sync settings) attributes must be set to the top of the parent domain, e.g. DC=mydomain,DC=com.
+				<li><b>CreateHomeDirectory</b> (boolean): Specifes whether or not the home directory for the user will be created. 
+				<li><b>LDAPHostName</b> (String): Specifies a particular domain controller, enter the hostname, IP address, or domain name of the LDAP server.  If not is supplied, serverless bind is used.
+				<li><b>ObjectClass</b> (String): The Active Directory object class for user objects that will be managed on this resource.  The default is User, and for most situations, this should be fine.
+				<li><b>SearchChildDomains</b> (boolean): Set if you want searches of Active Directory to include child domains. In addition, the Search Container and Sync Search Context (see sync settings) attributes must be set to the top of the parent domain, e.g. DC=mydomain,DC=com.
 				<li><b>SearchContext</b> (String): Reserved for future use.
-				<li><b>SyncDomainController</b> (String): Domain controller to use during active sync.  Only used if not searching child domains.
+				<li><b>SyncDomainController</b> (String): Domain controller to use during sync.  Only used if not searching child domains.
 				<li><b>SyncGlobalCatalogServer</b> (String): Name of the global catalog server.  This is needed only if searching child domains.
 			</ul>
 	</ul>
