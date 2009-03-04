@@ -36,9 +36,10 @@ These are the properties that can be specified on the Configuration object when 
 	<ul>
 		<li>Required:
 			<ul>
-				<li><b>property A</b> (String): <description>
-				<li><b>property B</b> (String): <description>
-				<li><b>property C</b> (String): <description>			
+				<li><b>DirectoryAdminName</b> (String): Enter the administrator user name with which the system should authenticate. The setting can be either be a username or 'domainname'\'username'.
+				<li><b>DirectoryAdminPassword</b> (String): Enter the password that should be used when authenticating.
+				<li><b>Container</b> (String): Specify a container object which will be the default root of all searches.  Unless a search explicitly passes in other criteria, only objects under this container will be searched.  For example, if you want to retrieve users from the Users container, enter CN=Users,DC=MYDOMAIN,DC=COM.  If no value is specified, the value of the 'Base Container' attribute is used.
+				<li><b>DomainName</b> (String): Name of the windows domain (e.g. windowsdomain.mycompany.com)
 			</ul>
 		<li>Optional:
 			<ul>
