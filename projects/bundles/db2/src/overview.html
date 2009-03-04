@@ -59,9 +59,10 @@ older type2 CLI driver.
   Configuration to access DB2 database. We will support most consistent way how to connect to database.
   We will support 3 ways how to connect to DB2.
   <ol>
-  		<li>Using java.sql.DataSource when using dataSource jndi name, see <a href="#dataSource">dataSource properties</a></li>
-  		<li>Using type 4 driver, when using host,port and database name, see <a href="#databaseName">databaseName properties</a></li>
-  		<li>Using type 2 driver, when using local alias, see <a href="#aliasName">aliasName properties</a></li>
+  		<li>Using java.sql.DataSource when using dataSource jndi name, see <a href="#dataSource">datasource properties</a></li>
+  		<li>Using type 4 driver, when using host,port and database name, see <a href="#databaseName">databasename properties</a></li>
+  		<li>Using type 2 driver, when using local alias, see <a href="#aliasName">aliasname properties</a></li>
+  		<li>See also <a href="#commonProperties"> common properties</a> for all drivers and <a href="#finalNotes"> final notes</a> for all IBM db2 drivers</li>
   </ol>
   
   
@@ -104,7 +105,16 @@ older type2 CLI driver.
   		<li> adminPassword : Password for admin account. </li>
   </ul>
   
-  Note that IBM ships two drivers for DB2. We have tested only these two drivers, no other driver was tested.
+ <h4><a name="commonProperties"/>Properties common to all connection options</h4>
+  <ul>
+      <li>replaceAllGrantsOnUpdate : Kept for backward compatibility instead of removeForeignGrants.
+          When set to true(default) , we replace value of passed grants on update. Otherwise we do addition of passed grants
+          to the grants user already has. 
+          This property can be removed in future version, when IDM will properly call UpdateAttributeValuesOp operations.
+      </li>
+  </ul>
+     
+  <h4><a name="finalNotes"/>Note that IBM ships two drivers for DB2. We have tested only these two drivers, no other driver was tested</h4>
   <ul>
        <li> IBM DB2 Driver for JDBC and SQLJ</li>
        This driver can be used as type4 and type2 driver. In this way driver classname is same, we just need specify different properties.
