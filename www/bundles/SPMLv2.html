@@ -1,74 +1,174 @@
 <HTML>
 <HEAD>
-    <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=iso-8859-1">
-    <TITLE>SPMLv2 Connector</TITLE>
+<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=iso-8859-1">
+<TITLE>SPMLv2 Connector</TITLE>
 </HEAD>
 <DIV id="projecthome" class="app">
-    <H1>SPMLv2 Connector Overview</H1>
-    <P><i>This page is currently under construction.</i>
-    </P>
+<H1>SPMLv2 Connector Overview</H1>
+<p>The SPML Connector supports provisioning to any SPML 2.0 server which supports DSML schemas.
 <p>
-	The SPML Connector supports provisioning to any SPML 2.0 server.
-    <h3>Bundle Information</h3>
-    <ul>  
-       <li><b>Latest stable release:</b> <a href="https://identityconnectors.dev.java.net/downloads.html#Bundles">1.0.3713</a>
-	   <li><b>Platform:</b> Java
-       <li><b>3rd-party libraries required:</b> None
-       <li><b>Other dependencies:</b>
-       <li><b>Release notes:</b>
-    </ul>
+Since SPML 2.0 does not specify how to establish and maintain a Session, the SPML 2.0
+Connector allows scripts to be performed at specified points in the execution,
+so that Session management can be performed.
+<p>
+These points are:
+<ul>
+<li>After a connection has been established. 
+<br>The following variables will be available to the script: 
+<ul> 
+<li>connection -- the com.sun.openconnectors.framework.spi.Connection just established</li> 
+<li>username -- the username specified for the connection</li> 
+<li>password -- the password specified for the connection</li> 
+<li>memory -- a java.util.Map persisted between script executions</li> 
+</ul>
+</li>
+<li>Before a Request is sent. 
+<br>The following variables will be available to the script: 
+<ul> 
+<li>request -- the org.openspml.v2.msg.Request about to be sent</li>
+<li>memory -- a java.util.Map persisted between script executions</li> 
+</ul>
+<li>After a Response is received. 
+<br>The following variables will be available to the script: 
+<ul> 
+<li>response -- the org.openspml.v2.msg.Response just received</li>
+<li>memory -- a java.util.Map persisted between script executions</li> 
+</ul>
+</li>
+<li>Before a connection is disposed. 
+<br>The following variables will be available to the script: 
+<ul> 
+<li>connection -- the com.sun.openconnectors.framework.spi.Connection about to be disposed</li> 
+<li>username -- the username specified for the connection</li> 
+<li>password -- the password specified for the connection</li> 
+<li>memory -- a java.util.Map persisted between script executions</li> 
+</ul>
+</ul>
+<p>
+Additionally, scripts can be executed to change the Attributes before they are 
+sent to the server, or after they are received back from the server. This can be necessary
+since the Connector Framework uses reserved names for some attributes (such as '__PASSWORD__'
+for password) that may not correspond to the names used by the server.
+<p>
+<ul>
+<li>A script can be executed to modify attribute names on Create and Modify. 
+<br>The script should return the name to be used. 
+The following variables will be available to the script:
+<ul> 
+<li>name -- the name of the attribute</li>
+<li>objectClass -- the name of the objectClass</li>
+<li>configuration -- the SPMLConfiguration object</li>
+<li>memory -- a java.util.Map persisted between script executions</li>
+</ul>
+<li>A script can be executed to modify Attributes returned by Search. 
+<br>The script should return the Attribute to be used. 
+The following variables will be available to the script:
+<ul>
+<li>attribute -- the com.sun.openconnectors.framework.common.objects.Attribute</li>
+<li>objectClass -- the name of the objectClass</li>
+<li>configuration -- the SPMLConfiguration object</li>
+<li>memory -- a java.util.Map persisted between script executions</li>
+</ul>
+</li>
+<li>A script can be executed to modify attribute names on Search. 
+<br>The script should return the name to be used. 
+The following variables will be available to the script :
+<ul>
+<li>name -- the name of the attribute</li>
+<li>configuration -- the SPMLConfiguration object</li>
+<li>memory -- a java.util.Map persisted between script executions</li>
+</ul>
+</li>
+</ul>
+<h3>Bundle Information</h3>
+<ul>
+    <li><b>Latest stable release:</b> <a
+        href="https://identityconnectors.dev.java.net/downloads.html#Bundles">1.0.3205</a>
+    <li><b>Platform:</b> Java
+    <li><b>3rd-party libraries required:</b> None
+    <li><b>Release notes:</b>
+</ul>
 </p>
 <h3>Version Information</h3>
-     <table border="1">
-     	<tr><th>Connector Version</th><th>Framework Version</th><th>Supported Resource Version(s)</th></tr>
-     	<tr>
-     	    <td><a href="https://identityconnectors.dev.java.net/downloads.html#Bundles">1.0</a></td>
-     	    <td><a href="https://identityconnectors.dev.java.net/downloads.html#Framework">1.0</a></td>
-     	    <td><ul><li>SPML v2.0 Server</ul></td>
-     	</tr>
-     	<!-- add later versions here -->
-     </table>
-    <p><b>Note:</b> The "Framework Version" listed is the <b><i>minimum</i></b> required framework version for that version of
-    the connector. Newer framework versions are backwards compatible and will support previous connectors.</p>
+<table border="1">
+    <tr>
+        <th>Connector Version</th>
+        <th>Framework Version</th>
+        <th>Supported Resource Version(s)</th>
+    </tr>
+    <tr>
+        <td><a
+            href="https://identityconnectors.dev.java.net/downloads.html#Bundles">1.0</a></td>
+        <td><a
+            href="https://identityconnectors.dev.java.net/downloads.html#Framework">1.0</a></td>
+        <td>
+        <ul>
+            <li>SPML v2.0 Server
+        </ul>
+        </td>
+    </tr>
+    <!-- add later versions here -->
+</table>
+<p><b>Note:</b> The "Framework Version" listed is the <b><i>minimum</i></b>
+required framework version for that version of the connector. Newer
+framework versions are backwards compatible and will support previous
+connectors.</p>
 <h3>Configuration Properties</h3>
-<p>
-These are the properties that can be specified on the Configuration object when setting up the Connector.
-	<ul>
-		<li>Required:
-			<ul>
-				<li><b>property A</b> (String): <description>
-				<li><b>property B</b> (String): <description>
-				<li><b>property C</b> (String): <description>			
-			</ul>
-		<li>Optional:
-			<ul>
-				<li><b>property D</b> (boolean): <description>
-			</ul>
-	</ul>
+<p>These are the properties that can be specified on the
+Configuration object when setting up the Connector.
+<ul>
+    <li>Required:
+    <ul>
+        <li><b>userName</b> (String): User Name for SPML Connection
+        <li><b>password</b> (String): Password for SPML Connection
+        <li><b>url</b> (String): URL for SPML Server
+        <li><b>scriptingLanguage</b> (String): The language in which to write the scripts 
+        <br>Object Mapping Properties (these 4 properties define a set of quadruples, each of which
+        defines a mapping between an IdentityConnector ObjectClass and a SPML object class; you must define at least one such mapping for the __ACCOUNT__ class):
+        <li><b>objectClassNames</b> (String): Names of Connector ObjectClasses
+        <li><b>spmlClassNames</b> (String): Names of SPML ObjectClasses
+        <li><b>targetNames</b> (String): Names of SPML Targets
+        <li><b>nameAttributes</b> (String): The attributes in the SPML objects which contain the identity; must be paired with Connector Class Names, Spml Class Names, and Target Names
+    </ul>
+    <li>Optional:
+    <ul>
+        <li><b>preSendCommand</b> (String): A script executed before a Request is sent. The following variables will be available to the script <ul> <li>request -- the org.openspml.v2.msg.Request about to be sent</li><li>memory -- a java.util.Map persisted between script executions</li> </ul>
+        <li><b>postReceiveCommand</b> (String): A script executed after a Response is received. The following variables will be available to the script <ul> <li>response -- the org.openspml.v2.msg.Response just received</li><li>memory -- a java.util.Map persisted between script executions</li> </ul>
+        <li><b>postConnectCommand</b> (String): A script executed after a connection has been established. The following variables will be available to the script <ul> <li>connection -- the com.sun.openconnectors.framework.spi.Connection just established</li> <li>username -- the username specified for the connection</li> <li>password -- the password specified for the connection</li> <li>memory -- a java.util.Map persisted between script executions</li> </ul>
+        <li><b>mapSetNameCommand</b> (String): A script executed to modify attribute names on Create and Modify. The script should return the name to be used. The following variables will be available to the script <ul> <li>name -- the name of the attribute</li><li>objectClass -- the name of the objectClass</li><li>configuration -- the SPMLConfiguration object</li><li>memory -- a java.util.Map persisted between script executions</li> </ul>
+        <li><b>mapQueryNameCommand</b> (String): A script executed to modify attribute names on Search. The script should return the name to be used. The following variables will be available to the script <ul> <li>name -- the name of the attribute</li><li>configuration -- the SPMLConfiguration object</li><li>memory -- a java.util.Map persisted between script executions</li> </ul>
+        <li><b>schemaCommand</b> (String): A script executed to modify the schema. The following variables will be available to the script <ul> <li>objectClass -- the name of the objectClass</li><li>attributeInfos -- a Set<AttributeInfo> that can be modified</li><li>memory -- a java.util.Map persisted between script executions</li> </ul>
+        <li><b>mapAttributeCommand</b> (String): A script executed to modify Attributes returned by Search. The script should return the Attribute to be used. The following variables will be available to the script <ul> <li>attribute -- the com.sun.openconnectors.framework.common.objects.Attribute</li><li>objectClass -- the name of the objectClass</li><li>configuration -- the SPMLConfiguration object</li><li>memory -- a java.util.Map persisted between script executions</li> </ul>
+        
+    </ul>
+</ul>
 </p>
 <h3>Schema and Supported Features</h3>
-<p>
-This Connector supports the ACCOUNT object class. The attributes supported are: <attr_1>, <attr_2>... Furthermore, the ACCOUNT object class
-supports the following special attributes:
+<p>This Connector supports the object classes defined in <b>objectClassNames</b>. The attributes
+supported are taken from the DSML schema defined in the <b>objectClassNames</b> configuration parameter.
+<p>Furthermore, an object class support the following special attributes:
 <ul>
-	<li>OperationalAttributeInfos.<b>PASSWORD</b>
-	<li>OperationalAttributeInfos.<b>PASSWORD_EXPIRED</b>
-	<li>PredefinedAttributeInfos.<b>LAST_PASSWORD_CHANGE_DATE</b>
-	<li>PredefinedAttributeInfos.<b>LAST_LOGIN_DATE</b>
+    <li>OperationalAttributeInfos.<b>PASSWORD</b> (if capability "urn:oasis:names:tc:SPML:2:0:password" is defined)
+    <li>OperationalAttributeInfos.<b>ENABLE</b> (if capability "urn:oasis:names:tc:SPML:2:0:suspend" is defined)
+    <li>OperationalAttributeInfos.<b>PASSWORD_EXPIRATION_DATE_NAME</b> (if the <b>schemaCommand</b> script adds it to the schema)
+    <li>OperationalAttributeInfos.<b>ENABLE_DATE_NAME</b> (if the <b>schemaCommand</b> script adds it to the schema)
+    <li>OperationalAttributeInfos.<b>DISABLE_DATE_NAME</b> (if the <b>schemaCommand</b> script adds it to the schema)
+    <li>OperationalAttributeInfos.<b>PASSWORD_EXPIRATION_DATE_NAME</b> (if the <b>schemaCommand</b> script adds it to the schema)
 </ul>
 The SPMLv2 Connector supports the following operations:
-	<ul>
-				<li><b>Authenticate</b>
-				<li><b>Create</b>
-				<li><b>Delete</b>
-				<li><b>Update</b>
-				<li><b>Search</b>
-				<li><b>Schema</b>
-				<li><b>Test</b>
-	</ul>
+<ul>
+    <li><b>Create</b>
+    <li><b>Delete</b>
+    <li><b>Update</b>
+    <li><b>Search</b>(if capability "urn:oasis:names:tc:SPML:2:0:search" is defined)
+    <li><b>Schema</b>
+    <li><b>Test</b>
+</ul>
 </p>
 <h3>Documentation and Source Code</h3>
-<p>The javadoc for this bundle is included in the zip file when you download the connector. The source code can be found under the <a href="https://identityconnectors.dev.java.net/source/browse/identityconnectors/">Subversion</a>
+<p>The javadoc for this bundle is included in the zip file when you
+download the connector. The source code can be found under the <a href="https://identityconnectors.dev.java.net/source/browse/identityconnectors/">Subversion</a>
 section of the IdentityConnectors website.</p>
+<p>The source code also includes a test program, which contains sample scripts to connect to the Sun Identity Manager SPML2 servlet.</p>
 </DIV>
 </HTML>
