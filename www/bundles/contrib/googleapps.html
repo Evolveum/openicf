@@ -1,17 +1,25 @@
 <HTML>
 <HEAD>
     <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=iso-8859-1">
-    <TITLE>SPMLv2 Connector</TITLE>
+    <TITLE>Google Apps Connector</TITLE>
 </HEAD>
 <DIV id="projecthome" class="app">
-    <H1>SPMLv2 Connector Overview</H1>
+    <H1>Google Apps Connector Overview</H1>
     <P><i>This page is currently under construction.</i>
     </P>
 <p>
-	The SPML Connector supports provisioning to any SPML 2.0 server.
+	Google Apps is a software-as-a-service platform
+(SAAS) that provides email, calendar, documents and other services. This 
+connector uses the Google Apps provisioning APIs to create, add, delete and modify user
+accounts and email aliases. Note that the provisioning APIs are not available
+for the free version of the Google Apps platform (the exception is for
+educational and non profit groups where Google makes this available for at no
+cost). Please make sure you are using a
+google apps platform that supports these APIs.
+</p>
     <h3>Bundle Information</h3>
     <ul>  
-       <li><b>Latest stable release:</b> <a href="https://identityconnectors.dev.java.net/downloads.html#Bundles">1.0.3713</a>
+       <li><b>Latest stable release:</b> <a href="https://identityconnectors.dev.java.net/downloads.html#Bundles">1.0.4062</a> (Not yet released)
 	   <li><b>Platform:</b> Java
        <li><b>3rd-party libraries required:</b> None
        <li><b>Other dependencies:</b>
@@ -24,7 +32,7 @@
      	<tr>
      	    <td><a href="https://identityconnectors.dev.java.net/downloads.html#Bundles">1.0</a></td>
      	    <td><a href="https://identityconnectors.dev.java.net/downloads.html#Framework">1.0</a></td>
-     	    <td><ul><li>SPML v2.0 Server</ul></td>
+     	    <td><ul><li>??</ul></td>
      	</tr>
      	<!-- add later versions here -->
      </table>
@@ -56,7 +64,7 @@ supports the following special attributes:
 	<li>PredefinedAttributeInfos.<b>LAST_PASSWORD_CHANGE_DATE</b>
 	<li>PredefinedAttributeInfos.<b>LAST_LOGIN_DATE</b>
 </ul>
-The SPMLv2 Connector supports the following operations:
+The Google Apps Connector supports the following operations:
 	<ul>
 				<li><b>Authenticate</b>
 				<li><b>Create</b>
