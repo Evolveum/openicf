@@ -112,6 +112,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     private String                      _dateCommandScript;
     private ScriptExecutor              _dateCommandExecutor;
 
+    private Pattern                     _errorPattern        = Pattern.compile("%\\w+-\\w-\\w+,[^\\n]*\\n");
+
     private final static String         VMS_DELTA_FORMAT    = "{0,number,##}-{1,number,##}:{2,number,##}:{3,number,##}.{4,number,00}";
 
     private static final String         SEPARATOR           = "Username: ";
@@ -122,7 +124,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     public static final int             LONG_WAIT           = 60000;
     public static final int             SHORT_WAIT          = 60000;
     private static final int            SEGMENT_MAX         = 500;    
-
 
     // VMS messages we search for
     //
@@ -331,7 +332,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
 
         for (Attribute attribute : attrMap.values()) {
             String name = attribute.getName();
-            List<Object> values = new LinkedList<Object>(attribute.getValue());
+            List<Object> values = new LinkedList<Object>();
+            if (attribute.getValue()!=null)
+                values.addAll(attribute.getValue());
             // Need to update values for list-valued attributes to specify
             // negated values, as well as positive values
             if (ATTR_FLAGS.equalsIgnoreCase(name)) {
@@ -435,6 +438,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     }
 
     private boolean isDateTimeAttribute(String attributeName) {
+        if (ATTR_EXPIRATION.equals(attributeName))
+            return true;
         return false;
     }
 
@@ -464,7 +469,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     Pattern _deltaPattern = Pattern.compile("(?:(\\d+)\\s)?(\\d+):(\\d+)(?::(\\d+))?(?:.(\\d+))?");
     private long remapFromDelta(String delta) {
         if (delta==null)
-            System.out.println("oops");
+            return 0;
         Matcher matcher = _deltaPattern.matcher(delta);
         if (matcher.matches()) {
             String daysS         = matcher.group(1);
@@ -504,10 +509,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         return value;
     }
 
-    private Date getDateValue(Attribute attribute) {
-        return new Date(AttributeUtil.getLongValue(attribute));
-    }
-
     private String remapName(Attribute attribute) {
         if (attribute.is(OperationalAttributes.PASSWORD_NAME)) 
             return "PASSWORD";
@@ -529,22 +530,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
      * {@inheritDoc}
      */
     public Uid create(ObjectClass objectClass, final Set<Attribute> originalAttrs, final OperationOptions options) {
-        if (!objectClass.equals(ObjectClass.ACCOUNT))
+        if (!objectClass.is(ObjectClass.ACCOUNT_NAME))
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
 
         Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(originalAttrs));
-
-        // Check for null values
-        //
-        for (Attribute attribute : attrMap.values()) {
-            List<Object> values = attribute.getValue();
-            if (values==null)
-                throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.NULL_ATTRIBUTE_VALUE, attribute.getName()));
-            for (Object value : values) {
-                if (value==null)
-                    throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.NULL_ATTRIBUTE_VALUE, attribute.getName()));
-            }
-        }
 
         // Extract action attributes
         //
@@ -573,7 +562,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE), e);
         }
 
-        Pattern errorPattern = Pattern.compile("%\\w+-\\w-\\w+,[^\\n]*\\n");
         if (isPresent(result, USER_ADDED)) {
             _log.info("user created");
         } else if (isPresent(result, USER_EXISTS)) {
@@ -581,18 +569,17 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         } else {
             // If we can locate an error message, we use it
             //
-            
-            Matcher matcher = errorPattern.matcher(result);
+            Matcher matcher = _errorPattern.matcher(result);
             if (matcher.find())
                 result = matcher.group();
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE2, result));
         }
-        
+
         // Process action attributes
         //
         if (createDirCommand!=null) {
             result = executeCommand(_connection, createDirCommand);
-            Matcher matcher = errorPattern.matcher(result);
+            Matcher matcher = _errorPattern.matcher(result);
             if (matcher.find()) {
                 result = matcher.group();
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE_DIRECTORY, result));
@@ -600,7 +587,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         }
         if (copyLoginCommand!=null) {
             result = executeCommand(_connection, copyLoginCommand);
-            Matcher matcher = errorPattern.matcher(result);
+            Matcher matcher = _errorPattern.matcher(result);
             if (matcher.find()) {
                 result = matcher.group();
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_COPY_LOGIN, result));
@@ -610,26 +597,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         return new Uid(accountId);
     }
 
-    private void validateCopyLogin(Attribute copyLoginScript, Attribute loginScriptSource) {
-        boolean isCopy = false;
-        if (copyLoginScript!=null)
-            isCopy = AttributeUtil.getBooleanValue(copyLoginScript);
-        String loginScript = null;
-        if (loginScriptSource!=null)
-            loginScript = AttributeUtil.getStringValue(loginScriptSource);
-        if (isCopy && loginScript==null)
-            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.NULL_ATTRIBUTE_VALUE, ATTR_LOGIN_SCRIPT_SOURCE));
-    }
-
-    private void processActionAttributes(Attribute createDirectory, Attribute copyLoginScript, Attribute loginScriptSource) {
-        //TODO
-    }
-
     /**
      * {@inheritDoc}
      */
     public void delete(ObjectClass objectClass, Uid uid, OperationOptions options) {
-        if (!objectClass.equals(ObjectClass.ACCOUNT))
+        if (!objectClass.is(ObjectClass.ACCOUNT_NAME))
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
         _log.info("delete(''{0}'')", uid.getUidValue());
         String removeCommand = "REMOVE "+uid.getUidValue();
@@ -675,7 +647,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
      * {@inheritDoc}
      */
     public void executeQuery(ObjectClass objectClass, String query, ResultsHandler handler, OperationOptions options) {
-        if (!objectClass.equals(ObjectClass.ACCOUNT))
+        if (!objectClass.is(ObjectClass.ACCOUNT_NAME))
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
         try {
             if ( query == null ) {
@@ -767,12 +739,14 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 //
                 if (includeInAttributes(ATTR_DEVICE, attributesToGet)) {
                     String defaultString = (String)attributes.get(ATTR_DEFAULT);
-                    if (defaultString!=null) {
+                    if (StringUtil.isNotBlank(defaultString)) {
                         String[] defaultInfo = defaultString.split(":");
                         if (defaultInfo.length>1)
                             builder.addAttribute(ATTR_DEVICE, defaultInfo[0]);
                         else
-                            builder.addAttribute(ATTR_DEVICE, "");
+                            builder.addAttribute(ATTR_DEVICE);
+                    } else {
+                        builder.addAttribute(ATTR_DEVICE);
                     }
                 }
 
@@ -780,19 +754,21 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 //
                 if (includeInAttributes(ATTR_DIRECTORY, attributesToGet)) {
                     String defaultString = (String)attributes.get(ATTR_DEFAULT);
-                    if (defaultString!=null) {
+                    if (StringUtil.isNotBlank(defaultString)) {
                         String[] defaultInfo = defaultString.split(":");
                         if (defaultInfo.length>1)
                             builder.addAttribute(ATTR_DIRECTORY, defaultInfo[1]);
                         else
                             builder.addAttribute(ATTR_DIRECTORY, defaultInfo[0]);
+                    } else {
+                        builder.addAttribute(ATTR_DIRECTORY);
                     }
                 }
 
                 // LAST_LOGIN 
                 //
                 if (includeInAttributes(PredefinedAttributes.LAST_LOGIN_DATE_NAME, attributesToGet)) {
-                    if (lastLogin!=null) {
+                    if (StringUtil.isNotBlank(lastLogin)) {
                         // Split it out into two separate dates
                         Pattern pattern = Pattern.compile("(.*)\\(interactive\\),(.*)\\(non-interactive\\)");
                         Matcher matcher = pattern.matcher(lastLogin);
@@ -821,9 +797,13 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                                     }
                                 }
                             }
-                            List<Object> values = new LinkedList<Object>();
-                            values.add(value);
-                            builder.addAttribute(PredefinedAttributes.LAST_LOGIN_DATE_NAME, values);
+                            if (value!=null) {
+                                List<Object> values = new LinkedList<Object>();
+                                values.add(value);
+                                builder.addAttribute(PredefinedAttributes.LAST_LOGIN_DATE_NAME, values);
+                            } else {
+                                builder.addAttribute(PredefinedAttributes.LAST_LOGIN_DATE_NAME);
+                            }
                         }
 
                     }
@@ -833,36 +813,39 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 //
                 if (includeInAttributes(ATTR_EXPIRATION, attributesToGet)) {
                     String expiration = (String)attributes.remove(ATTR_EXPIRATION);
-                    if (expiration!=null) {
+                    if (StringUtil.isNotBlank(expiration)) {
                         if (expiration.trim().equals("(none)")) {
-                            List<Object> values = new LinkedList<Object>();
-                            values.add(null);
-                            builder.addAttribute(ATTR_EXPIRATION, values);
+                            builder.addAttribute(ATTR_EXPIRATION);
                         } else {
                             Date date = _vmsDateFormatWithoutSecs.parse(expiration.trim());
                             List<Object> value = new LinkedList<Object>();
                             value.add(date.getTime());
                             builder.addAttribute(ATTR_EXPIRATION, value);
                         }
+                    } else {
+                        builder.addAttribute(ATTR_EXPIRATION);
                     }
-
                 }
 
                 // CPU 
                 //
                 if (includeInAttributes(ATTR_CPUTIME, attributesToGet)) {
-                    if (cputime!=null) {
+                    if (StringUtil.isNotBlank(cputime)) {
                         long cputimeLong = remapFromDelta(cputime);
                         builder.addAttribute(ATTR_CPUTIME, cputimeLong);
+                    } else {
+                        builder.addAttribute(ATTR_CPUTIME);
                     }
                 }
 
                 // PASSWORD_CHANGE_INTERVAL_NAME 
                 //
                 if (includeInAttributes(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, attributesToGet)) {
-                    if (lifetime!=null) {
+                    if (StringUtil.isNotBlank(lifetime)) {
                         long lifetimeLong = remapFromDelta(lifetime);
                         builder.addAttribute(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, lifetimeLong);
+                    } else {
+                        builder.addAttribute(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME);
                     }
                 }
 
@@ -874,13 +857,17 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 //
                 if (includeInAttributes(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, attributesToGet)) {
                     String change = (String)attributes.get(PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME);
-                    if (lifetime.equalsIgnoreCase("(none)")) {
-                        builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, (Long)null);
-                    } else if (change.contains("(pre-expired)")) {
-                        builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, 0l);
+                    if (StringUtil.isNotBlank(lifetime)) {
+                        if (lifetime.equalsIgnoreCase("(none)")) {
+                            builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME);
+                        } else if (change.contains("(pre-expired)")) {
+                            builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, 0l);
+                        } else {
+                            Date expiredDate = getPasswordExpirationDate(lifetime, attributes); 
+                            builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, expiredDate.getTime());
+                        }
                     } else {
-                        Date expiredDate = getPasswordExpirationDate(lifetime, attributes); 
-                        builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, expiredDate.getTime());
+                        builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME);
                     }
                 }
 
@@ -890,10 +877,13 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                     Object value = entry.getValue();
                     String key = entry.getKey();
                     if (includeInAttributes(key, attributesToGet)) {
-                        if (value instanceof Collection)
+                        if (value instanceof Collection) {
                             builder.addAttribute(key, (Collection<?>)value);
-                        else
+                        } else if (value!=null && StringUtil.isNotEmpty(value.toString())) {
                             builder.addAttribute(key, value);
+                        } else {
+                            builder.addAttribute(key);
+                        }
                     }
                 }
                 ConnectorObject next = builder.build();
@@ -918,7 +908,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             Date date = _vmsDateFormatWithSecs.parse(result);
             return date;
         } catch (Exception e) {
-            e.printStackTrace();
             _log.error(e, "error in getVmsDate");
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_GETDATE), e);
         }
@@ -927,9 +916,19 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
 
     private Date getPasswordExpirationDate(String lifetime, Map<String, Object> attributes) throws ParseException {
         String lastChange = (String)attributes.get(PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME);
-        long lastChangeDate = _vmsDateFormatWithoutSecs.parse(lastChange).getTime();
+        // If the password is pre-expired, we say it expired at time 0
+        //
+        if (lastChange.contains("(pre-expired)"))
+            return new Date(0);
+        
+        // If there is no lifetime, there is no expiration date
+        //
         if (lifetime==null)
             return null;
+        
+        // Otherwise, password expires 'lifetime' after 'lastChangeDate'
+        //
+        long lastChangeDate = _vmsDateFormatWithoutSecs.parse(lastChange).getTime();
         long lifetimeLong = remapFromDelta(lifetime);
         Date expiredDate = new Date(lastChangeDate+lifetimeLong);
         return expiredDate;
@@ -941,8 +940,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         if (attributesToGet!=null) {
             return attributesToGet.contains(attribute);
         } else {
-            if (_schema==null)
-                schema();
+            schema();
             if (_attributeMap.containsKey(attribute))
                 return _attributeMap.get(attribute).isReturnedByDefault();
         }
@@ -957,33 +955,20 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
      * {@inheritDoc}
      */
     Uid update(ObjectClass objectClass, Set<Attribute> attributes, OperationOptions options) {
-        if (!objectClass.equals(ObjectClass.ACCOUNT))
+        if (!objectClass.is(ObjectClass.ACCOUNT_NAME))
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
         Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attributes));
 
-        // Check for null values
-        //
-        for (Attribute attribute : attributes) {
-            List<Object> values = attribute.getValue();
-            if (values==null)
-                throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.NULL_ATTRIBUTE_VALUE, attribute.getName()));
-            for (Object value : values) {
-                if (value==null)
-                    throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.NULL_ATTRIBUTE_VALUE, attribute.getName()));
-            }
-        }
-        
         // Create-only attributes may not be specified
         //
         Attribute createDirectory = attrMap.remove(ATTR_CREATE_DIRECTORY);
         Attribute copyLogin = attrMap.remove(ATTR_COPY_LOGIN_SCRIPT);
         Attribute loginScriptSource = attrMap.remove(ATTR_LOGIN_SCRIPT_SOURCE);
-        if (createDirectory!=null)
+
+        if (isAttributeTrue(createDirectory))
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UPDATE_ATTRIBUTE_VALUE, createDirectory.getName()));
-        if (copyLogin!=null)
+        if (isAttributeTrue(copyLogin))
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UPDATE_ATTRIBUTE_VALUE, copyLogin.getName()));
-        if (loginScriptSource!=null)
-            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UPDATE_ATTRIBUTE_VALUE, loginScriptSource.getName()));
 
         // Operational Attributes are handled specially
         //
@@ -1346,7 +1331,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
 
         String script = request.getScriptText();
         try {
-
             if (user!=null) {
                 VmsConfiguration configuration = new VmsConfiguration(_configuration);
                 configuration.setUserName(user);
@@ -1375,6 +1359,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         if (configuration.getSSH()!=null)
             isSSH = configuration.getSSH();
         return isSSH;
+    }
+
+    private boolean isAttributeTrue(Attribute attribute) {
+        if (attribute==null)
+            return false;
+        return AttributeUtil.getBooleanValue(attribute);
     }
 
     protected String executeCommand(VmsConnection connection, String command) {
@@ -1411,12 +1401,13 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         // create a temp file
         //
         String tmpfile = UUID.randomUUID().toString();
-
+        
         //TODO: allow optional used of F$UNIQUE
 
         // Create an empty error file, so that we can send it back if there are
         // no errors
         //
+        executeCommand(connection, "SET DEFAULT SYS$LOGIN");
         executeCommand(connection, "OPEN/WRITE OUTPUT_FILE " + tmpfile + ".ERROR");
         executeCommand(connection, "CLOSE OUTPUT_FILE");
 
@@ -1442,6 +1433,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
 
         executeCommand(connection, "@" + tmpfile);
 
+        executeCommand(connection, "SET DEFAULT SYS$LOGIN");
         executeCommand(connection, "DEAS SYS$ERROR");
         executeCommand(connection, "DEAS SYS$OUTPUT");
 
@@ -1450,7 +1442,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         String status = executeCommand(connection, "WRITE SYS$OUTPUT $STATUS");
         String output = executeCommand(connection, "TYPE " + tmpfile + ".OUTPUT");
         String error  = executeCommand(connection, "TYPE " + tmpfile + ".ERROR");
-
         executeCommand(connection, "DELETE " + tmpfile + ".OUTPUT;");
         executeCommand(connection, "DELETE " + tmpfile + ".ERROR;*");
         executeCommand(connection, "DELETE " + tmpfile + ".COM;");
@@ -1505,22 +1496,22 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         Attribute createDirectory = attrMap.get(ATTR_CREATE_DIRECTORY);
         if (createDirectory==null || !AttributeUtil.getBooleanValue(createDirectory))
             return null;
-        
+
         Attribute uicAttr = attrMap.get(ATTR_UIC);
         Attribute deviceAttr = attrMap.get(ATTR_DEVICE);
         Attribute directoryAttr = attrMap.get(ATTR_DIRECTORY);
-        
+
         if (uicAttr==null)
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_REQUIRED_ATTRIBUTE, ATTR_UIC));
         if (deviceAttr==null)
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_REQUIRED_ATTRIBUTE, ATTR_DEVICE));
         if (directoryAttr==null)
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_REQUIRED_ATTRIBUTE, ATTR_DIRECTORY));
-        
+
         String uic = AttributeUtil.getStringValue(uicAttr);
         String device = AttributeUtil.getStringValue(deviceAttr);
         String directory = AttributeUtil.getStringValue(directoryAttr);
-        
+
         if (StringUtil.isBlank(uic))
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_ATTRIBUTE_VALUE, ATTR_UIC));
         if (StringUtil.isBlank(device))
@@ -1546,12 +1537,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         Attribute copyLoginScript = attrMap.get(ATTR_COPY_LOGIN_SCRIPT);
         if (copyLoginScript==null || !AttributeUtil.getBooleanValue(copyLoginScript))
             return null;
-        
+
         Attribute loginScriptSourceAttr = attrMap.get(ATTR_LOGIN_SCRIPT_SOURCE);
         Attribute uicAttr = attrMap.get(ATTR_UIC);
         Attribute deviceAttr = attrMap.get(ATTR_DEVICE);
         Attribute directoryAttr = attrMap.get(ATTR_DIRECTORY);
-        
+
         if (uicAttr==null)
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_REQUIRED_ATTRIBUTE, ATTR_UIC));
         if (deviceAttr==null)
@@ -1560,12 +1551,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_REQUIRED_ATTRIBUTE, ATTR_DIRECTORY));
         if (loginScriptSourceAttr==null)
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_REQUIRED_ATTRIBUTE, ATTR_LOGIN_SCRIPT_SOURCE));
-        
+
         String uic = AttributeUtil.getStringValue(uicAttr);
         String device = AttributeUtil.getStringValue(deviceAttr);
         String directory = AttributeUtil.getStringValue(directoryAttr);
         String loginScriptSource = AttributeUtil.getStringValue(loginScriptSourceAttr);
-        
+
         if (StringUtil.isBlank(uic))
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_ATTRIBUTE_VALUE, ATTR_UIC));
         if (StringUtil.isBlank(device))
@@ -1574,7 +1565,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_ATTRIBUTE_VALUE, ATTR_DIRECTORY));
         if (StringUtil.isBlank(loginScriptSource))
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.MISSING_ATTRIBUTE_VALUE, ATTR_LOGIN_SCRIPT_SOURCE));
-        
+
         StringBuffer cmd = new StringBuffer();
 
         cmd.append("COPY ");

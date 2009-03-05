@@ -582,7 +582,7 @@ public class VmsConnectorTests {
             deleteUser(getTestUser(), info);
             info.create(ObjectClass.ACCOUNT, attrs, null);
     
-            testModifyUserAttribute(info, AttributeBuilder.build(ATTR_OWNER, ""), true);
+            testModifyUserAttribute(info, AttributeBuilder.build(ATTR_OWNER, new Object[0]), true);
         } finally {
             info.dispose();
         }
