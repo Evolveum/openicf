@@ -72,7 +72,15 @@
 		<h2>Migrating resource adapter data</h2>
 		DB2 connector uses same DB2 system tables like DB2 resource adapter, so no migration of users or grants is needed. We just
 		need to create new Connector pointing to the same DB2 database.
-		 
+		
+		<h2>Final notes for migration</h2>
+		When migrating from adapter to connector, we set the same driver for connector that was used for adapter. Adapter used db2java.jar driver jar file
+		to load driver. This driver loads also db2 native libraries and when initialized jvm checks that these libraries are not already loaded. As consequence this means
+		we cannot have db2java.jar in WEB-INF/lib and in org.identityconnectors.db2-XXX.jar/lib both. So copy just jcc driver to org.identityconnectors.db2-XXX.jar/lib directory 
+		and do not copy db2java.jar. This problem is not specific for DB2, JVM just cannot load native library from two separate classloaders, otherwise you can
+		get exception like this :  java.sql.SQLException: java.lang.UnsatisfiedLinkError: Native Library /opt/ibm/db2/V9.5/lib32/libdb2jdbc.so.1 already loaded in another classloader. 
+		<br/>
+		It is much better to use new jcc driver, old CLI driver will be removed in next DB2 version. But for migration we keep settings from adapter. 
 	</body>
 	
 	
