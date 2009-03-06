@@ -422,9 +422,14 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
      * @param values
      * @param possibilities
      */
-    private void updateValues(List<Object> values, List<String> possibilities) {
+    private void updateValues(List<Object> values, Collection<String> possibilities) {
+        // Do case-insensitive value comparison
+        //
+        Collection<String> newValues = CollectionUtil.newCaseInsensitiveSet();
+        for (Object value : values) 
+            newValues.add(value.toString());
         for (String possibility : possibilities) {
-            if (!values.contains(possibility))
+            if (!newValues.contains(possibility))
                 values.add("NO"+possibility);
         }
     }

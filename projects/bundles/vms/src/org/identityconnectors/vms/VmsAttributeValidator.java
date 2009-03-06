@@ -27,6 +27,7 @@ import static org.identityconnectors.vms.VmsConstants.*;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,8 +36,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
-import org.identityconnectors.framework.common.objects.PredefinedAttributeInfos;
 import org.identityconnectors.framework.common.objects.PredefinedAttributes;
 
 public class VmsAttributeValidator {
@@ -341,7 +342,7 @@ public class VmsAttributeValidator {
             return false;
         }
     }
-    private static final List<String> ALGO_KEYS_LIST = makeList(new String[] {ALGO_KEY_BOTH, ALGO_KEY_CURRENT, ALGO_KEY_PRIMARY, ALGO_KEY_SECONDARY });
+    private static final Collection<String> ALGO_KEYS_LIST = makeList(new String[] {ALGO_KEY_BOTH, ALGO_KEY_CURRENT, ALGO_KEY_PRIMARY, ALGO_KEY_SECONDARY });
 
     /**
      *  Determine if the value for FLAG(s) is valid.
@@ -532,7 +533,7 @@ public class VmsAttributeValidator {
         FLAG_LOCKPWD, FLAG_PWD2_EXPIRED, FLAG_PWD_EXPIRED, FLAG_PWDMIX,
         FLAG_RESTRICTED, FLAG_VMSAUTH,
     };
-    public static final List<String> FLAGS_LIST = makeList(FLAGS_ARRAY);
+    public static final Collection<String> FLAGS_LIST = makeList(FLAGS_ARRAY);
 
     /**
      * <pre>
@@ -575,7 +576,7 @@ public class VmsAttributeValidator {
     private static final String[] PWD_TYPE_ARRAY = {
         PWD_TYPE_BOTH, PWD_TYPE_CURRENT, PWD_TYPE_PRIMARY, PWD_TYPE_SECONDARY, 
     };	
-    private static final List<String> PWD_TYPE_LIST = makeList(PWD_TYPE_ARRAY);
+    private static final Collection<String> PWD_TYPE_LIST = makeList(PWD_TYPE_ARRAY);
 
     /**
      * 
@@ -598,7 +599,7 @@ public class VmsAttributeValidator {
         PRIV_SYSGBL, PRIV_SYSLCK, PRIV_SYSNAM, PRIV_SYSPRV, PRIV_TMPMBX,
         PRIV_UPGRADE, PRIV_VOLPRO, PRIV_WORLD, PRIV_WORLD
     };
-    public static final List<String> PRIVS_LIST = makeList(PRIVS_ARRAY);
+    public static final Collection<String> PRIVS_LIST = makeList(PRIVS_ARRAY);
 
     public static class ValidIntegerRange implements Validity {
         private int _min;
@@ -635,11 +636,11 @@ public class VmsAttributeValidator {
     private static final String[] PRIMEDAYS_ARRAY = {
         DAYS_SUN, DAYS_MON, DAYS_TUE, DAYS_WED, DAYS_THU, DAYS_FRI, DAYS_SAT
     };
-    public static final List<String> PRIMEDAYS_LIST = makeList(PRIMEDAYS_ARRAY);
+    public static final Collection<String> PRIMEDAYS_LIST = makeList(PRIMEDAYS_ARRAY);
 
-    public static boolean isValidList(List<Object> valueList, List<String> validList) {
+    public static boolean isValidList(List<Object> valueList, Collection<String> validList) {
         for (Object value : valueList) {
-            String valueString  = value.toString().trim();
+            String valueString = value.toString().trim();
             if (!validList.contains(valueString))
                 if (!valueString.startsWith("NO") || !validList.contains(valueString.substring(2)))
                     return false;
@@ -647,8 +648,8 @@ public class VmsAttributeValidator {
         return true;
     }
 
-    private static LinkedList<String> makeList(String[] strings) {
-        LinkedList<String> list = new LinkedList<String>();
+    private static Collection<String> makeList(String[] strings) {
+        Collection<String> list = CollectionUtil.newCaseInsensitiveSet();
         for (String string : strings) 
             list.add(string);
         return list;
@@ -689,7 +690,7 @@ public class VmsAttributeValidator {
         VALIDATOR_INFO.put(ATTR_PGFLQUOTA, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_PRCLM, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_PRIMEDAYS, new ValidatorInfo(new ValidPrimeDaysList()));
-        VALIDATOR_INFO.put(ATTR_PRIORITY, new ValidatorInfo(new ValidIntegerRange(1, 16)));
+        VALIDATOR_INFO.put(ATTR_PRIORITY, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_PRIVILEGES, new ValidatorInfo(new ValidPrivList()));
         VALIDATOR_INFO.put(ATTR_PWDEXPIRED, new ValidatorInfo(0));
         VALIDATOR_INFO.put(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, new ValidatorInfo(_deltaTimePattern, 1));
