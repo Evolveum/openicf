@@ -1152,7 +1152,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         attributes.add(AttributeInfoBuilder.build(ATTR_MAXACCTJOBS, Integer.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_SHRFILLM,    Integer.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_PBYTLM,      Integer.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_MAXDETACH,   Integer.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_MAXDETACH,   String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_BIOLM,       Integer.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_JTQUOTA,     Integer.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_DIOLM,       Integer.class));

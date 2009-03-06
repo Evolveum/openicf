@@ -552,7 +552,8 @@ public class VmsConnectorTests {
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_MAXACCTJOBS, Integer.valueOf(12)));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_SHRFILLM, Integer.valueOf(12)));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_PBYTLM, Integer.valueOf(2)));
-            testModifyUserAttribute(info, AttributeBuilder.build(ATTR_MAXDETACH, Integer.valueOf(12)));
+            testModifyUserAttribute(info, AttributeBuilder.build(ATTR_MAXDETACH, "12"));
+            testModifyUserAttribute(info, AttributeBuilder.build(ATTR_MAXDETACH, "none"));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_BIOLM, Integer.valueOf(12)));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_JTQUOTA, Integer.valueOf(12)));
             testModifyUserAttribute(info, AttributeBuilder.build(ATTR_PRCLM, Integer.valueOf(12)));

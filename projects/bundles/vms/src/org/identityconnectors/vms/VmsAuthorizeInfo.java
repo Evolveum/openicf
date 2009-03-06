@@ -108,10 +108,7 @@ public class VmsAuthorizeInfo {
                 new Transform[] {
                     new ClassTransform(Integer.class)
             }));
-            _parser.add(new PatternNode(ATTR_MAXDETACH,          "Maxdetach:"+TO_NEXT+"(?=BIOlm)", false, false, 
-                new Transform[] {
-                    new ClassTransform(Integer.class)
-            }));
+            _parser.add(new PatternNode(ATTR_MAXDETACH,          "Maxdetach:"+TO_NEXT+"(?=BIOlm)"));
             _parser.add(new PatternNode(ATTR_BIOLM,              "BIOlm:"+TO_NEXT+"(?=JTquota)", false, false, 
                 new Transform[] {
                     new ClassTransform(Integer.class)
