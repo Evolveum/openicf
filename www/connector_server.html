@@ -13,20 +13,21 @@
  Since a Java application (e.g. J2EE application) cannot load C# classes, it is necessary to instead deploy the C# bundles under a C# connector server.
  The Java application can communicate with the C# connector server over the network, and the C# connector server serves a proxy to provide to any
  authenticated application access to the C# bundles deployed within the C# connector server.</p> 
-<BR>
+
 <h2>Installing the Connector Server</h2>
-<p>Minimum Requirements:
+<p>Minimum Requirements:</p>
 	<ul><li>Windows Server 2003 or 2008
 		<li>.NET Framework 3.5 or higher
 		<li>Refer to your .NET connector to determine if there are any additional requirements
 	</ul>
-	Execute <b>ServiceInstall.msi</b>. Just follow the wizard. It will walk you through the whole process step by step.  Upon completion, the Connector Server will be installed as a windows service.</p>
-	<BR>
+	<p>Execute <b>ServiceInstall.msi</b>. Just follow the wizard. It will walk you through the whole process step by step.  Upon completion, the Connector Server will be installed as a windows service.</p>
+
 <h2>Configuring the Connector Server</h2>
 <p>
 Start the Microsoft Services Console. Check to see if the Connector Server is currently running. If so, stop it. 
 From a command prompt, set the key for the connector Server. This is done by changing to the directory where the connector server was installed 
-(by default: <i>\Program Files\Identity Connectors\Connector Server</i>) and executing the following command: <PRE>ConnectorServer /setkey &lt;newkey&gt;</PRE>
+(by default: <i>\Program Files\Identity Connectors\Connector Server</i>) and executing the following command:</p> <PRE>ConnectorServer /setkey &lt;newkey&gt;</PRE>
+<p>
 where <i>&lt;newkey&gt;</i> is the value for the new key. This key is required by any client that connects to this Connector Server.
 </p>
 <p>
@@ -45,7 +46,7 @@ For more information about configuring the Connector Server with SSL, see <a hre
  To setup to use SSL, you must set the value of <i>connectorserver.usessl</i> to true, and then set the value of <i>connectorserver.certifacatestorename</i> to your the certificate store name.
  </p>
  <p>
- You will need to record for use later the following information regarding your connector server installation:
+ You will need to record for use later the following information regarding your connector server installation:</p>
    <ul>
       <li>Host name or IP address
       <li>Connector server port

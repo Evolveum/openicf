@@ -23,8 +23,8 @@ Here is an example:
 <PRE>
     // Use the ConnectorInfoManager to retrieve a ConnectorInfo object for the connector 
     ConnectorInfoManagerFactory fact = ConnectorInfoManagerFactory.getInstance();
-    File bundleDirectory = new File("/connectorDir/bundles/as400");       
-    URL url = IOUtil.makeURL(bundleDirectory, "/dist/org.identityconnectors.as400-1.0.jar");        
+    File bundleDirectory = new File("/connectorDir/bundles/foobar");       
+    URL url = IOUtil.makeURL(bundleDirectory, "/dist/org.identityconnectors.foobar-1.0.jar");        
     ConnectorInfoManager manager = fact.getLocalManager(url);
     ConnectorKey key = new ConnectorKey("org.identityconnectors.foobar", "1.0", "FooBarConnector");       
     ConnectorInfo info = manager.findConnectorInfo(key);
