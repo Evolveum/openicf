@@ -14,8 +14,8 @@ var regions = [
   	match: []
   },
   {
-  	title: "Wiki",
-  	href:  "http://wikis.sun.com/display/IdentityConnectors/Home",
+  	title: "FAQ",
+  	href:  "https://identityconnectors.dev.java.net/faq.html",
   	match: [],
   	children: []
   },
