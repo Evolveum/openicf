@@ -57,11 +57,19 @@ connector{
     usermodel="BasicModel"
     testpassword="testpwd"	
   
-    /* WRONG configuration for ValidateApiOpTests */  
-    i1.wrong.host=""
-    i2.wrong.user=""
-    i3.wrong.password=""
 }
+
+// Connector WRONG configuration for ValidateApiOpTests
+testsuite.Validate.invalidConfig = [
+  [ host : "" ],
+  [ login : "" ],
+  [ password : "" ]
+]
+
+// Connector WRONG configuration for TestApiOpTests
+testsuite.Test.invalidConfig = [
+  [ password : "NonExistingPassword_foo_bar_boo" ]
+]
 
 testsuite {
 
