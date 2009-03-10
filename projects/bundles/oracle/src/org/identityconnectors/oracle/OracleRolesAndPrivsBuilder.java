@@ -23,21 +23,26 @@ class OracleRolesAndPrivsBuilder {
         List<String> statements = new ArrayList<String>();
         StringBuilder builder = new StringBuilder(30);
         for(String grant : roles){
-            appendGrant(builder,userName,grant);
+            appendGrantRole(builder,userName,grant);
             statements.add(builder.toString());
             builder.delete(0,builder.length());
         }
         for(String grant : privileges){
-            appendGrant(builder,userName,grant);
+            appendGrantPrivilege(builder,userName,grant);
             statements.add(builder.toString());
             builder.delete(0,builder.length());
         }
         return statements;
     }
     
-    private void appendGrant(StringBuilder builder,String userName,String grant){
-        builder.append("grant ").append('\"').append(grant).append('\"').append(" to ").append('\"').append(userName).append('\"');
+    private void appendGrantRole(StringBuilder builder,String userName,String grant){
+        builder.append("grant ").append('"').append(grant).append('"').append(" to ").append('\"').append(userName).append('\"');
     }
+    
+    private void appendGrantPrivilege(StringBuilder builder,String userName,String grant){
+        builder.append("grant ").append(grant).append(" to ").append('\"').append(userName).append('\"');
+    }
+    
     
     List<String> buildAlter(String userName,List<String> roles,List<String> privileges){
         //TODO 

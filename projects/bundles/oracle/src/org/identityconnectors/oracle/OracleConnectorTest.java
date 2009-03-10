@@ -8,6 +8,7 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 /**
+ * Tests for OracleConnector except tests for concrete SPI operation
  * @author kitko
  *
  */

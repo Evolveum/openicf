@@ -23,8 +23,9 @@ class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp 
         new OracleCreateAttributesReader(cfg.getConnectorMessages()).readCreateRestAttributes(attrs, caAttributes);
         try{
             UserRecord userRecord = new OracleUserReader(adminConn).readUserRecord(caAttributes.userName);
-            String alterSQL = new OracleCreateOrAlterStBuilder().buildAlterUserSt(caAttributes, userRecord);
+            String alterSQL = new OracleCreateOrAlterStBuilder(cfg.getCaseSensitivity()).buildAlterUserSt(caAttributes, userRecord);
             SQLUtil.executeUpdateStatement(adminConn, alterSQL);
+            adminConn.commit();
             return uid;
         }catch(Exception e){
             SQLUtil.rollbackQuietly(adminConn);

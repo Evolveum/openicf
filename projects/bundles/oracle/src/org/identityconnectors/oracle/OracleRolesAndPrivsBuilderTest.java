@@ -27,8 +27,8 @@ public class OracleRolesAndPrivsBuilderTest {
         Assert.assertNotNull(sql);
         Assert.assertThat(sql, JUnitMatchers.hasItem("grant \"myRole1\" to \"testUser\""));
         Assert.assertThat(sql, JUnitMatchers.hasItem("grant \"myRole2\" to \"testUser\""));
-        Assert.assertThat(sql, JUnitMatchers.hasItem("grant \"CREATE SESSION\" to \"testUser\""));
-        Assert.assertThat(sql, JUnitMatchers.hasItem("grant \"SELECT ON MYTABLE\" to \"testUser\""));
+        Assert.assertThat(sql, JUnitMatchers.hasItem("grant CREATE SESSION to \"testUser\""));
+        Assert.assertThat(sql, JUnitMatchers.hasItem("grant SELECT ON MYTABLE to \"testUser\""));
         System.out.println(sql);
     }
 

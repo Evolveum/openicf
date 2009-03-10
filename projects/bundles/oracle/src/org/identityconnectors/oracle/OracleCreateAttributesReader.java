@@ -7,14 +7,12 @@ import java.util.Set;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.*;
 
+/** Transforms attributes from Set<Attribute> attrs to CreateAlterAttributes */
 class OracleCreateAttributesReader {
      ConnectorMessages messages;
      
      OracleCreateAttributesReader(ConnectorMessages messages){
-         if(messages == null){
-             throw new IllegalArgumentException("Messages argeument is null");
-         }
-         this.messages = messages;
+         this.messages = OracleConnectorHelper.assertNotNull(messages, "messages");
      }
     
      void readCreateRestAttributes(Set<Attribute> attrs, CreateAlterAttributes caAttributes) {

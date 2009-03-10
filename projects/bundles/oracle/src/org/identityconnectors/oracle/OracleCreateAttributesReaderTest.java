@@ -11,6 +11,7 @@ import org.identityconnectors.test.common.TestHelpers;
 import org.junit.*;
 
 /**
+ * Tests for OracleCreateAttributesReader
  * @author kitko
  *
  */

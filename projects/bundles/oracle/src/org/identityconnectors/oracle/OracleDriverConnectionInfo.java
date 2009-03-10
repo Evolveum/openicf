@@ -1,5 +1,7 @@
 package org.identityconnectors.oracle;
 
+import java.util.Arrays;
+
 import org.identityconnectors.common.security.GuardedString;
 
 /** Helper immutable holder of oracle connection information */
@@ -74,6 +76,11 @@ class OracleDriverConnectionInfo {
             return user;
         }
         OracleDriverConnectionInfoBuilder setUser(String user) {
+            if(user != null){
+                if(!user.startsWith("\"")){
+                    user = "\"" + user + "\"";
+                }
+            }
             this.user = user;
             return this;
         }
@@ -81,7 +88,28 @@ class OracleDriverConnectionInfo {
             return password;
         }
         OracleDriverConnectionInfoBuilder setPassword(GuardedString password) {
+            if(password != null){
+                final GuardedString[] newPa = new GuardedString[1];
+                password.access(new GuardedString.Accessor(){
+                    public void access(char[] clearChars) {
+                        if(clearChars.length > 0){
+                            if(clearChars[0] != '"'){
+                                char[] newChars = new char[clearChars.length + 2];
+                                newChars[0] = '"';
+                                System.arraycopy(clearChars, 0, newChars, 1, clearChars.length);
+                                newChars[clearChars.length + 1] = '"';
+                                newPa[0] = new GuardedString(newChars);
+                                Arrays.fill(newChars, (char)0);
+                            }
+                        }
+                    }
+                });
+                if(newPa[0] != null){
+                    password = newPa[0];
+                }
+            }
             this.password = password;
+            
             return this;
         }
         String getUrl(){

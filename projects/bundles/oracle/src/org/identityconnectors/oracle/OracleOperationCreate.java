@@ -28,7 +28,7 @@ class OracleOperationCreate extends AbstractOracleOperation implements CreateOp{
         new OracleCreateAttributesReader(cfg.getConnectorMessages()).readCreateAuthAttributes(attrs, caAttributes);
         new OracleCreateAttributesReader(cfg.getConnectorMessages()).readCreateRestAttributes(attrs, caAttributes);
         try {
-            String createSQL = new OracleCreateOrAlterStBuilder().buildCreateUserSt(caAttributes).toString();
+            String createSQL = new OracleCreateOrAlterStBuilder(cfg.getCaseSensitivity()).buildCreateUserSt(caAttributes).toString();
             Attribute roles = AttributeUtil.find(ORACLE_ROLES_ATTR_NAME, attrs);
             Attribute privileges = AttributeUtil.find(ORACLE_PRIVS_ATTR_NAME, attrs);
             List<String> privAndRolesSQL = new OracleRolesAndPrivsBuilder()

@@ -270,6 +270,16 @@ public class OracleConfigurationTest {
         assertCreateAdminConnectionFail(failConf, "CreateAdminConnection with wrong datasource should fail");
     }
     
+    /** Test settings of case sensitivity */
+    @Test
+    public void testSetCaseSensitivity(){
+        OracleConfiguration conf = new OracleConfiguration();
+        conf.setConnectorMessages(TestHelpers.createDummyMessages());
+        conf.setCaseSensitivityString("default");
+        assertNotNull("CaseSensitivity should not be null",conf.getCaseSensitivity());
+        assertTrue("Default formattting should be toupper",conf.getCaseSensitivity().getAttributeFormatter(OracleUserAttribute.USER_NAME).isToUpper());
+    }
+    
     
     /**
      * Mock for {@link InitialContextFactory}

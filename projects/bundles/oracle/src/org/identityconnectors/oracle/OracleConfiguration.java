@@ -7,7 +7,7 @@ import java.sql.*;
 
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.dbcommon.JNDIUtil;
+import org.identityconnectors.dbcommon.*;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.oracle.OracleDriverConnectionInfo.OracleDriverConnectionInfoBuilder;
@@ -29,6 +29,8 @@ public class OracleConfiguration extends AbstractConfiguration implements Clonea
     private String url;
     private String[] dsJNDIEnv;
     private ConnectionType connType;
+    private OracleCaseSensitivity cs;
+    private String caseSensitivityString;
     
     /** Type of connection we will use to connect to Oracle */
     static enum ConnectionType{
@@ -280,6 +282,26 @@ public class OracleConfiguration extends AbstractConfiguration implements Clonea
         throw new IllegalStateException("Invalid state of OracleConfiguration");
     }
     
+    OracleCaseSensitivity getCaseSensitivity(){
+        return cs;
+    }
     
+    void setCaseSensitivity(OracleCaseSensitivity cs){
+        this.cs = new LocalizedAssert(getConnectorMessages()).assertNotNull(cs, "cs");
+    }
+    /**
+     * @return caseSensitivityString
+     */
+    public String getCaseSensitivityString(){
+        return caseSensitivityString;
+    }
+    
+    /** Sets case sensitivity from string map 
+     * @param cs */
+    public void setCaseSensitivityString(String cs){
+        new LocalizedAssert(getConnectorMessages()).assertNotBlank(cs, "cs");
+        this.cs = new OracleCaseSensitivityBuilder().defineFormatters(cs).build();
+        this.caseSensitivityString = cs;
+    }
 
 }

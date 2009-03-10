@@ -11,7 +11,7 @@ class OracleUserReader {
     private Connection adminConn;
     
     OracleUserReader(Connection adminConn){
-        this.adminConn = adminConn;
+        this.adminConn = OracleConnectorHelper.assertNotNull(adminConn, "adminConn");
     }
     
     /** Test whether user exists, looking at DBA_USERS table */

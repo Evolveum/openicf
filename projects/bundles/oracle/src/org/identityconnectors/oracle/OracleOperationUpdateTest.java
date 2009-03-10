@@ -3,10 +3,13 @@
  */
 package org.identityconnectors.oracle;
 
+import java.sql.Connection;
 import java.util.Collections;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.*;
 import org.junit.*;
 
@@ -23,10 +26,16 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
      */
     @BeforeClass
     public static void createTestUser(){
+        uid = new Uid(TEST_USER);
+        try{
+            connector.delete(ObjectClass.ACCOUNT, uid, null);
+        }
+        catch(UnknownUidException e){}
         Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
         Attribute name = new Name(TEST_USER);
         Attribute passwordAttribute = AttributeBuilder.buildPassword(new GuardedString("hello".toCharArray()));
-        uid = connector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,passwordAttribute), null);
+        Attribute privileges = AttributeBuilder.build(OracleConnector.ORACLE_PRIVS_ATTR_NAME, "create session");
+        uid = connector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,passwordAttribute,privileges), null);
     }
     
     /**
@@ -44,7 +53,9 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
     public final void testUpdatePassword() {
         Attribute passwordAttribute = AttributeBuilder.buildPassword(new GuardedString("newPassword".toCharArray()));
         connector.update(ObjectClass.ACCOUNT, uid, Collections.singleton(passwordAttribute),null);
-        
+        //now try to create connection
+        final Connection conn = testConf.createConnection(TEST_USER, (GuardedString) AttributeUtil.getSingleValue(passwordAttribute));
+        SQLUtil.closeQuietly(conn);
         
     }
     

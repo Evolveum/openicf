@@ -11,6 +11,11 @@ import org.identityconnectors.common.security.GuardedString;
  *
  */
 class OracleCreateOrAlterStBuilder {
+    private OracleCaseSensitivity cs;
+    
+    public OracleCreateOrAlterStBuilder(OracleCaseSensitivity cs) {
+        this.cs = OracleConnectorHelper.assertNotNull(cs, "cs");
+    }
     
     /**
      * Builds create user sql statement
@@ -23,7 +28,7 @@ class OracleCreateOrAlterStBuilder {
         if(userAttributes.userName == null){
             throw new IllegalArgumentException("User not specified");
         }
-        builder.append("create user ").append("\"").append(userAttributes.userName).append("\"");
+        builder.append("create user ").append(cs.formatUserName(userAttributes.userName));
         if(userAttributes.auth == null){
             throw new IllegalArgumentException("Authentication not specified");
         }
@@ -37,7 +42,7 @@ class OracleCreateOrAlterStBuilder {
         if(userAttributes.userName == null){
             throw new IllegalArgumentException("User not specified");
         }
-        builder.append("alter user ").append("\"").append(userAttributes.userName).append("\"");
+        builder.append("alter user ").append(cs.formatUserName(userAttributes.userName));
         appendCreateOrAlterSt(builder,userAttributes,userRecord);
         return builder.toString();
     }
@@ -70,7 +75,7 @@ class OracleCreateOrAlterStBuilder {
     }
 
     private void appendProfile(StringBuilder builder,CreateAlterAttributes userAttributes) {
-        builder.append(" profile ").append('\"').append(userAttributes.profile).append('\"');
+        builder.append(" profile ").append(cs.formatProfile(userAttributes.profile));
         
     }
 
@@ -105,7 +110,7 @@ class OracleCreateOrAlterStBuilder {
             }
             defaultTableSpace = userRecord.defaultTableSpace;
         }
-        builder.append(' ').append('\"').append(defaultTableSpace).append('\"');
+        builder.append(' ').append(cs.formatDefaultTableSpace(defaultTableSpace));
     }
 
     private void appendTempTSQuota(StringBuilder builder, CreateAlterAttributes userAttributes, UserRecord userRecord) {
@@ -125,17 +130,17 @@ class OracleCreateOrAlterStBuilder {
             }
             tempTableSpace = userRecord.temporaryTableSpace;
         }
-        builder.append(' ').append('\"').append(tempTableSpace).append('\"');
+        builder.append(' ').append(cs.formatTempTableSpace(tempTableSpace));
 
     }
     
     private void appendTemporaryTableSpace(StringBuilder builder, CreateAlterAttributes userAttributes) {
-        builder.append(" temporary tablespace ").append('\"').append(userAttributes.tempTableSpace).append('\"');
+        builder.append(" temporary tablespace ").append(cs.formatTempTableSpace(userAttributes.tempTableSpace));
         
     }
 
     private void appendDefaultTableSpace(StringBuilder builder, CreateAlterAttributes userAttributes) {
-        builder.append(" default tablespace ").append('\"').append(userAttributes.defaultTableSpace).append('\"');
+        builder.append(" default tablespace ").append(cs.formatDefaultTableSpace(userAttributes.defaultTableSpace));
     }
 
     private void appendAuth(final StringBuilder builder, CreateAlterAttributes userAttributes) {
@@ -146,11 +151,7 @@ class OracleCreateOrAlterStBuilder {
             if(password == null){
                 password = new GuardedString(userAttributes.userName.toCharArray());
             }
-            password.access(new GuardedString.Accessor(){
-                public void access(char[] clearChars) {
-                    builder.append('\"').append(clearChars).append('\"');
-                }
-            });
+            builder.append(cs.formatPassword(password));
         }
         else if(OracleAuthentication.EXTERNAL.equals(userAttributes.auth)){
             builder.append(" externally");
@@ -160,7 +161,7 @@ class OracleCreateOrAlterStBuilder {
                 throw new IllegalArgumentException("GlobalName not specified for global authentication");
             }
             builder.append(" globally as ");
-            builder.append('\"').append(userAttributes.globalName).append('\"');
+            builder.append(cs.formatGlobalName(userAttributes.globalName));
         }
         
         

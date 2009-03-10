@@ -294,6 +294,37 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         Assert.assertThat(rolesRead, JUnitMatchers.hasItem("testrole"));
     }
     
+    /**
+     * Test create user with profiles
+     * @throws SQLException
+     */
+    @Test
+    public void testCreateWithPrivileges() throws SQLException{
+        String newUser = "newUser";
+        if(new OracleUserReader(connector.getAdminConnection()).userExist(newUser)){
+              connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
+        }
+        Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
+        Attribute name = new Name(newUser);
+        GuardedString password = new GuardedString("hello".toCharArray());
+        Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
+        try{
+            SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop table MYTABLE");
+        }
+        catch(SQLException e){}
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create table mytable(id number)");
+        Attribute privileges = AttributeBuilder.build(OracleConnector.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION","SELECT ON MYTABLE");
+        connector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute,privileges), null);
+        UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(newUser);
+        assertNotNull(record);
+        assertEquals(newUser, record.userName);
+        OracleRolePrivReader roleReader = new OracleRolePrivReader(connector.getAdminConnection());
+        final List<String> privRead = roleReader.readPrivileges(newUser);
+        connector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
+        Assert.assertThat(privRead, JUnitMatchers.hasItem("CREATE SESSION"));
+        Assert.assertThat(privRead, JUnitMatchers.hasItem("SELECT ON MYTABLE"));
+    }
+    
     private String findDefaultTS(Connection conn) throws SQLException{
         return getTestUserRecord(conn).defaultTableSpace;
     }

@@ -4,7 +4,12 @@ import java.sql.Connection;
 
 import org.identityconnectors.common.logging.Log;
 
-class AbstractOracleOperation {
+/** Abstract operation for OracleConnector like Create,Update.
+ *  We will keep operations in separate classes.
+ * @author kitko
+ *
+ */
+abstract class AbstractOracleOperation {
     protected Connection adminConn;
     protected Log log;
     protected OracleConfiguration cfg;

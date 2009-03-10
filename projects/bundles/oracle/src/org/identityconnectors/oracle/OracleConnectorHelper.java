@@ -65,6 +65,13 @@ abstract class OracleConnectorHelper {
         return null;
     }
     
+    static <T> T assertNotNull(T t,String argument){
+        if(t == null){
+            throw new IllegalArgumentException("Passed argument [" + argument + "] is null");
+        }
+        return t;
+    }
+    
     
 
 }

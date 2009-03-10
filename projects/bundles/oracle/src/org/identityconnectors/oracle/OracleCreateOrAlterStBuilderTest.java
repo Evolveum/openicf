@@ -20,19 +20,19 @@ public class OracleCreateOrAlterStBuilderTest {
     @Test
     public void testCreateLocalUserSt() {
         try{
-            new OracleCreateOrAlterStBuilder().buildCreateUserSt(new CreateAlterAttributes());
+            createSensitiveBuilder().buildCreateUserSt(new CreateAlterAttributes());
             fail("Not enough info, create must fail");
         }catch(Exception e){}
         CreateAlterAttributes local = new CreateAlterAttributes();
         local.userName = "user1";
         try{
-            new OracleCreateOrAlterStBuilder().buildCreateUserSt(local);
+            createSensitiveBuilder().buildCreateUserSt(local);
             fail("Not enough info, create must fail");
         }catch(Exception e){}
         local.auth = OracleAuthentication.LOCAL;        
-        assertEquals("create user \"user1\" identified by \"user1\"", new OracleCreateOrAlterStBuilder().buildCreateUserSt(local).toString());
+        assertEquals("create user \"user1\" identified by \"user1\"", createSensitiveBuilder().buildCreateUserSt(local).toString());
         local.password = new GuardedString("password".toCharArray());
-        assertEquals("create user \"user1\" identified by \"password\"", new OracleCreateOrAlterStBuilder().buildCreateUserSt(local).toString());
+        assertEquals("create user \"user1\" identified by \"password\"", createSensitiveBuilder().buildCreateUserSt(local).toString());
         
     }
     
@@ -45,9 +45,9 @@ public class OracleCreateOrAlterStBuilderTest {
         attributes.tempTableSpace = "temp";
         attributes.auth = OracleAuthentication.LOCAL;
         attributes.password = new GuardedString("password".toCharArray());
-        assertEquals("create user \"user1\" identified by \"password\" default tablespace \"users\" temporary tablespace \"temp\"", new OracleCreateOrAlterStBuilder().buildCreateUserSt(attributes).toString());
+        assertEquals("create user \"user1\" identified by \"password\" default tablespace \"users\" temporary tablespace \"temp\"", createSensitiveBuilder().buildCreateUserSt(attributes).toString());
         attributes.profile = "MyProfile";
-        assertEquals("create user \"user1\" identified by \"password\" default tablespace \"users\" temporary tablespace \"temp\" profile \"MyProfile\"", new OracleCreateOrAlterStBuilder().buildCreateUserSt(attributes).toString());
+        assertEquals("create user \"user1\" identified by \"password\" default tablespace \"users\" temporary tablespace \"temp\" profile \"MyProfile\"", createSensitiveBuilder().buildCreateUserSt(attributes).toString());
     }
     
     /** Test quotas */
@@ -62,21 +62,25 @@ public class OracleCreateOrAlterStBuilderTest {
         attributes.defaultTSQuota = new Quota();
         assertEquals(
                 "create user \"user1\" identified by \"password\" default tablespace \"users\" temporary tablespace \"temp\" quota unlimited on \"users\"",
-                new OracleCreateOrAlterStBuilder().buildCreateUserSt(attributes).toString());
+                createSensitiveBuilder().buildCreateUserSt(attributes).toString());
         attributes.defaultTSQuota = new Quota("32K");
         assertEquals(
                 "create user \"user1\" identified by \"password\" default tablespace \"users\" temporary tablespace \"temp\" quota 32K on \"users\"",
-                new OracleCreateOrAlterStBuilder().buildCreateUserSt(attributes).toString());
+                createSensitiveBuilder().buildCreateUserSt(attributes).toString());
         attributes.defaultTSQuota = null;
         attributes.tempTSQuota = new Quota();
         assertEquals(
                 "create user \"user1\" identified by \"password\" default tablespace \"users\" temporary tablespace \"temp\" quota unlimited on \"temp\"",
-                new OracleCreateOrAlterStBuilder().buildCreateUserSt(attributes).toString());
+                createSensitiveBuilder().buildCreateUserSt(attributes).toString());
         attributes.tempTSQuota = new Quota("32M");
         assertEquals(
                 "create user \"user1\" identified by \"password\" default tablespace \"users\" temporary tablespace \"temp\" quota 32M on \"temp\"",
-                new OracleCreateOrAlterStBuilder().buildCreateUserSt(attributes).toString());
+                createSensitiveBuilder().buildCreateUserSt(attributes).toString());
         
+    }
+
+    private OracleCreateOrAlterStBuilder createSensitiveBuilder() {
+        return new OracleCreateOrAlterStBuilder(new OracleCaseSensitivityBuilder().build());
     }
     
     /** Test create external */
@@ -85,7 +89,7 @@ public class OracleCreateOrAlterStBuilderTest {
         CreateAlterAttributes external = new CreateAlterAttributes();
         external.userName = "user1";
         external.auth = OracleAuthentication.EXTERNAL;
-        assertEquals("create user \"user1\" identified externally", new OracleCreateOrAlterStBuilder().buildCreateUserSt(external).toString());
+        assertEquals("create user \"user1\" identified externally", createSensitiveBuilder().buildCreateUserSt(external).toString());
     }
     
     /** Test create global */
@@ -95,11 +99,11 @@ public class OracleCreateOrAlterStBuilderTest {
         global.userName = "user1";
         global.auth = OracleAuthentication.GLOBAL;
         try{
-            new OracleCreateOrAlterStBuilder().buildCreateUserSt(global);
+            createSensitiveBuilder().buildCreateUserSt(global);
             fail("GlobalName should be missed");
         }catch(Exception e){}
         global.globalName = "global";
-        assertEquals("create user \"user1\" identified globally as \"global\"", new OracleCreateOrAlterStBuilder().buildCreateUserSt(global).toString());
+        assertEquals("create user \"user1\" identified globally as \"global\"", createSensitiveBuilder().buildCreateUserSt(global).toString());
     }
     
     /** Test expire and lock/unlock */
@@ -110,9 +114,9 @@ public class OracleCreateOrAlterStBuilderTest {
         attributes.userName = "user1";
         attributes.expirePassword = true;
         attributes.enable = true;
-        assertEquals("create user \"user1\" identified by \"user1\" password expire account unlock", new OracleCreateOrAlterStBuilder().buildCreateUserSt(attributes).toString());
+        assertEquals("create user \"user1\" identified by \"user1\" password expire account unlock", createSensitiveBuilder().buildCreateUserSt(attributes).toString());
         attributes.expirePassword = false;
-        assertEquals("create user \"user1\" identified by \"user1\" account unlock", new OracleCreateOrAlterStBuilder().buildCreateUserSt(attributes).toString());
+        assertEquals("create user \"user1\" identified by \"user1\" account unlock", createSensitiveBuilder().buildCreateUserSt(attributes).toString());
     }
     
     /** Test alter user */
@@ -126,7 +130,7 @@ public class OracleCreateOrAlterStBuilderTest {
         attributes.defaultTSQuota = new Quota();
         UserRecord record = new UserRecord();
         record.defaultTableSpace = "users";
-        assertEquals("alter user \"user1\" identified by \"user1\" quota unlimited on \"users\" password expire account unlock", new OracleCreateOrAlterStBuilder().buildAlterUserSt(attributes, record).toString());
+        assertEquals("alter user \"user1\" identified by \"user1\" quota unlimited on \"users\" password expire account unlock", createSensitiveBuilder().buildAlterUserSt(attributes, record).toString());
         
     }
     
