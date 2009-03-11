@@ -59,18 +59,6 @@ connector{
   
 }
 
-// Connector WRONG configuration for ValidateApiOpTests
-testsuite.Validate.invalidConfig = [
-  [ host : "" ],
-  [ login : "" ],
-  [ password : "" ]
-]
-
-// Connector WRONG configuration for TestApiOpTests
-testsuite.Test.invalidConfig = [
-  [ password : "NonExistingPassword_foo_bar_boo" ]
-]
-
 testsuite {
 
     /* path to bundle jar - property 'connector-jar' is set by ant */
@@ -87,6 +75,18 @@ testsuite {
     /* AuthenticationApiOpTests: */
     Authentication.__ACCOUNT__.username=Lazy.get("i0.Authentication.__ACCOUNT__.__NAME__")
     Authentication.__ACCOUNT__.wrong.password="bogus"
+    
+    // Connector WRONG configuration for ValidateApiOpTests    
+    Test.invalidConfig = [
+        [ password : "NonExistingPassword_foo_bar_boo" ]
+    ]
+
+    // Connector WRONG configuration for TestApiOpTests    
+    Validate.invalidConfig = [
+        [ host : "" ],
+        [ login : "" ],
+        [ password : "" ]
+    ]
   
     /* SchemaApiOpTests: */      
     /* declared object classes */
