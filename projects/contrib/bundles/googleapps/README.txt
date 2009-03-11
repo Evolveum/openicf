@@ -5,11 +5,10 @@ This is Connector for Google Apps.
 Google Apps is a software-as-a-service platform
 (SAAS) that provides email, calendar, documents and other services. This 
 connector uses the Google Apps provisioning APIs to create, add, delete and modify user
-accounts and email aliases. Note that the provisioning APIs are not available
-for the free version of the Google Apps platform (the exception is for
-educational and non profit groups where Google makes this available for at no
-cost) . Please make sure you are using a
-google apps platform that supports these APIs.
+accounts and email aliases. 
+
+Note: Only the Premium (paid) or Educational versions of Google Apps provide access to the provisioning APIs. This connector
+will not work on free Google Apps domains. 
 
 
 For more information on Google Apps see:
