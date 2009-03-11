@@ -22,6 +22,8 @@
  */
 package org.identityconnectors.oracleerp;
 
+import java.sql.Timestamp;
+
 import org.identityconnectors.framework.common.objects.ObjectClass;
 
 /**
@@ -32,6 +34,29 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 public class OracleERPUtil {
 
     static final String MSG = "Oracle ERP: ";    
+    
+    private OracleERPUtil() {
+        throw new AssertionError();
+    }
+
+    // Validate messages constants
+    static final String MSG_NAME_BLANK = "name.blank";
+    static final String MSG_PWD_BLANK = "pwd.blank";    
+    static final String MSG_USER_BLANK = "user.blank";
+    static final String MSG_USER_MODEL_BLANK = "user.model.blank";
+    static final String MSG_USER_MODEL_NOT_FOUND="user.model.not.found";
+    static final String MSG_PASSWORD_BLANK = "password.blank";
+    static final String MSG_HOST_BLANK = "host.blank";
+    static final String MSG_PORT_BLANK = "port.blank";
+    static final String MSG_DATABASE_BLANK = "database.blank";
+    static final String MSG_JDBC_DRIVER_BLANK = "jdbc.driver.blank";
+    static final String MSG_JDBC_DRIVER_NOT_FOUND = "jdbc.driver.not.found";
+    static final String MSG_ACCOUNT_OBJECT_CLASS_REQUIRED = "acount.object.class.required";
+    static final String MSG_AUTHENTICATE_OP_NOT_SUPPORTED = "auth.op.not.supported";
+    static final String MSG_AUTH_FAILED = "auth.op.failed";
+    static final String MSG_INVALID_ATTRIBUTE_SET = "invalid.attribute.set";
+    static final String MSG_UID_BLANK = "uid.blank";
+    static final String MSG_RESULT_HANDLER_NULL = "result.handler.null";    
     
     /**
      * object class name definitions
@@ -99,32 +124,6 @@ public class OracleERPUtil {
     public static final ObjectClass FUNCTION_OC =  new ObjectClass(FUNCTION);
     
     
-    
-    static final String MENU_IDS = "menuIds";
-
-    static final String APP_ID_FORM_IDS = "formIds";
-    static final String RO_APP_ID_FORM_IDS = "readOnlyFormIds";
-    static final String RW_APP_ID_FORM_IDS = "readWriteOnlyFormIds";
-
-    static final String FORM_NAMES = "formNames";
-    static final String RO_FORM_NAMES = "readOnlyFormNames";
-    static final String RW_FORM_NAMES = "readWriteOnlyFormNames";
-
-    static final String FUNCTION_IDS = "functionIds";
-    static final String RO_FUNCTION_IDS = "readOnlyFunctionIds";
-    static final String RW_FUNCTION_IDS = "readWriteOnlyFunctionIds";
-
-    static final String FUNCTION_NAMES = "fFunctionNames";
-    static final String RO_FUNCTION_NAMES = "readOnlyFunctionNames";
-    static final String RW_FUNCTION_NAMES = "readWriteOnlyFunctionNames";
-
-    static final String USER_MENU_NAMES = "userMenuNames";
-    static final String USER_FUNCTION_NAMES = "userFunctionNames";
-
-    static final String USER_FORM_NAMES = "userFormNames";
-    static final String RO_USER_FORM_NAMES = "readOnlyUserFormNames";
-    static final String RW_USER_FORM_NAMES = "readWriteOnlyUserFormNames";
-
     static final String ACTIVE_RESPS_ONLY = "activeRespsOnly";
     static final String SOB_NAME = "setOfBooksName";
     static final String SOB_ID = "setOfBooksId";
@@ -140,4 +139,27 @@ public class OracleERPUtil {
     static final String RESPS_DIRECT_VIEW = "fnd_user_resp_groups_direct";
     static final String RESPS_INDIRECT_VIEW = "fnd_user_resp_groups_indirect";
     static final String RESPS_ALL_VIEW = "fnd_user_resp_groups_all";    
+    
+
+    /**
+     * 
+     */
+    public static final int ORACLE_TIMEOUT = 1800;
+
+    static final String CURLY_BEGIN = "{ ";
+    static final String CURLY_END = " }";    
+
+    /**
+     * @param dateString
+     * @return the timestamp
+     */
+    public static Timestamp stringToTimestamp(final String dateString) {
+        Timestamp tms;
+        try {
+            tms = Timestamp.valueOf(dateString);
+        } catch (IllegalArgumentException expected) {
+            tms = new Timestamp(new Long(dateString));
+        }
+        return tms;
+    }
 }

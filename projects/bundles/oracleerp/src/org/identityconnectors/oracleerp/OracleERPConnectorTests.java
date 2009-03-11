@@ -27,18 +27,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.lang.reflect.Field;
 import java.sql.Timestamp;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 import junit.framework.Assert;
 
 import org.identityconnectors.common.logging.Log;
-import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.contract.data.DataProvider;
 import org.identityconnectors.contract.test.ConnectorHelper;
 import org.identityconnectors.dbcommon.SQLParam;
@@ -167,8 +163,8 @@ public class OracleERPConnectorTests {
     public void testConfigurationProperties() {
         assertNotNull(config.getDriver());
         assertNotNull(config.getPort());
-        assertNotNull(config.getDatabaseName());
-        assertNotNull(config.getHostName());
+        assertNotNull(config.getDatabase());
+        assertNotNull(config.getHost());
         assertNotNull(config.getUser());
         assertNotNull(config.getPassword());
         assertFalse(config.isAccountsIncluded());
@@ -266,8 +262,8 @@ public class OracleERPConnectorTests {
     public void testDefaultConfiguration() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
         assertNotNull(config.getDriver());
         assertNotNull(config.getPort());
-        assertNotNull(config.getDatabaseName());
-        assertNotNull(config.getHostName());
+        assertNotNull(config.getDatabase());
+        assertNotNull(config.getHost());
         assertNotNull(config.getUser());
         assertNotNull(config.getPassword());
         assertFalse(config.isAccountsIncluded());
@@ -283,8 +279,7 @@ public class OracleERPConnectorTests {
     @Test
     public void testUserCallSQL() {
         final Set<Attribute> attrs = createAllAccountAttributes();
-        OracleERPConnector cn = new OracleERPConnector();
-        final Map<String, SQLParam> userValues =  cn.getUserValuesMap(ObjectClass.ACCOUNT, attrs, null, true);
+        final Map<String, SQLParam> userValues =  Account.getUserValuesMap(ObjectClass.ACCOUNT, attrs, null, true);
 
         //test sql
         Assert.assertEquals("Invalid SQL",
@@ -294,26 +289,25 @@ public class OracleERPConnectorTests {
                         "x_password_accesses_left => ?, x_password_lifespan_accesses => ?, "+
                         "x_password_lifespan_days => ?, x_employee_id => ?, x_email_address => ?, "+
                         "x_fax => ?, x_customer_id => ?, x_supplier_id => ? ) }",
-                        cn.getUserCallSQL(userValues, true, config.getSchemaId()));
+                        Account.getUserCallSQL(userValues, true, config.getSchemaId()));
         //session is always null, so 16 params
-        Assert.assertEquals("Invalid number of  SQL Params", 16, cn.getUserSQLParams(userValues).size());
+        Assert.assertEquals("Invalid number of  SQL Params", 16, Account.getUserSQLParams(userValues).size());
         
         //Old style of creating user
         Assert.assertEquals("Invalid All SQL",
                 "{ call APPS.fnd_user_pkg.CreateUser ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ) }",
-                cn.getAllSQL(userValues, true, config.getSchemaId()));
+                Account.getAllSQL(userValues, true, config.getSchemaId()));
         
         //all 17 params
-        Assert.assertEquals("Invalid number of  SQL Params", 17, cn.getAllSQLParams(userValues).size());
+        Assert.assertEquals("Invalid number of  SQL Params", 17, Account.getAllSQLParams(userValues).size());
 
-        Assert.assertFalse("Is update needed", cn.isUpdateNeeded(userValues));
+        Assert.assertFalse("Is update needed", Account.isUpdateNeeded(userValues));
     }    
 
     @Test
     public void testUserCallSQLNulls() {
         final Set<Attribute> attrs = createNullAccountAttributes();
-        OracleERPConnector cn = new OracleERPConnector();
-        final Map<String, SQLParam> userValues =  cn.getUserValuesMap(ObjectClass.ACCOUNT, attrs, null, true);
+        final Map<String, SQLParam> userValues =  Account.getUserValuesMap(ObjectClass.ACCOUNT, attrs, null, true);
         //test sql
         Assert.assertEquals("Invalid SQL",
                 "{ call APPS.fnd_user_pkg.CreateUser ( x_user_name => ?, x_owner => upper(?), "+
@@ -324,19 +318,19 @@ public class OracleERPConnectorTests {
                 "x_password_lifespan_days => FND_USER_PKG.null_number, x_employee_id => FND_USER_PKG.null_number, "+
                 "x_email_address => FND_USER_PKG.null_char, x_fax => FND_USER_PKG.null_char, "+
                 "x_customer_id => FND_USER_PKG.null_number, x_supplier_id => FND_USER_PKG.null_number ) }",
-                cn.getUserCallSQL(userValues, true, config.getSchemaId()));
+                Account.getUserCallSQL(userValues, true, config.getSchemaId()));
         //session is always null, so 16 params
-        Assert.assertEquals("Invalid number of  SQL Params", 5, cn.getUserSQLParams(userValues).size());
+        Assert.assertEquals("Invalid number of  SQL Params", 5, Account.getUserSQLParams(userValues).size());
         
         //Test Old style of creating user
         Assert.assertEquals("Invalid All SQL",
                 "{ call APPS.fnd_user_pkg.CreateUser ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ) }",
-                cn.getAllSQL(userValues, true, config.getSchemaId()));
+                Account.getAllSQL(userValues, true, config.getSchemaId()));
         
         //all 17 params
-        Assert.assertEquals("Invalid number of  SQL Params", 17, cn.getAllSQLParams(userValues).size());
+        Assert.assertEquals("Invalid number of  SQL Params", 17, Account.getAllSQLParams(userValues).size());
 
-        Assert.assertTrue("Is update needed", cn.isUpdateNeeded(userValues));
+        Assert.assertTrue("Is update needed", Account.isUpdateNeeded(userValues));
 
         Assert.assertEquals("Invalid All SQL",
                 "{ call APPS.fnd_user_pkg.UpdateUser ( x_user_name => ?, x_owner => upper(?), "+
@@ -346,10 +340,10 @@ public class OracleERPConnectorTests {
                 "x_password_lifespan_days => FND_USER_PKG.null_number, x_employee_id => FND_USER_PKG.null_number, "+
                 "x_email_address => FND_USER_PKG.null_char, x_fax => FND_USER_PKG.null_char, "+
                 "x_customer_id => FND_USER_PKG.null_number, x_supplier_id => FND_USER_PKG.null_number ) }",
-                cn.getUserUpdateNullsSQL(userValues, config.getSchemaId()));
+                Account.getUserUpdateNullsSQL(userValues, config.getSchemaId()));
         
         //the required user name and owner
-        Assert.assertEquals("Invalid number of update SQL Params", 2, cn.getUserUpdateNullsParams(userValues).size());        
+        Assert.assertEquals("Invalid number of update SQL Params", 2, Account.getUserUpdateNullsParams(userValues).size());        
     }
 
     /**
@@ -365,19 +359,19 @@ public class OracleERPConnectorTests {
      */
     private Set<Attribute> createAllAccountAttributes() {
         final Set<Attribute> attrs = dataProvider.getAttributeSet(ACCOUNT_ALL_ATTRS);       
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.START_DATE, (new Timestamp(System.currentTimeMillis()-10*24*3600000)).toString()));
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.END_DATE, (new Timestamp(System.currentTimeMillis()+10*24*3600000)).toString()));        
+        attrs.add(AttributeBuilder.build(Account.START_DATE, (new Timestamp(System.currentTimeMillis()-10*24*3600000)).toString()));
+        attrs.add(AttributeBuilder.build(Account.END_DATE, (new Timestamp(System.currentTimeMillis()+10*24*3600000)).toString()));        
         
         /*        attrs.add(AttributeBuilder.buildPasswordExpired(false));                
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.DESCR, "descrip"));
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.PWD_ACCESSES_LEFT, 54));
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.PWD_LIFE_ACCESSES, 55));
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.PWD_LIFE_DAYS, 56));
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.EMP_ID, 101));
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.EMAIL, "test@google.com"));
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.FAX, "12456"));
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.CUST_ID, 120));
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.SUPP_ID, 130));*/
+        attrs.add(AttributeBuilder.build(Account.DESCR, "descrip"));
+        attrs.add(AttributeBuilder.build(Account.PWD_ACCESSES_LEFT, 54));
+        attrs.add(AttributeBuilder.build(Account.PWD_LIFE_ACCESSES, 55));
+        attrs.add(AttributeBuilder.build(Account.PWD_LIFE_DAYS, 56));
+        attrs.add(AttributeBuilder.build(Account.EMP_ID, 101));
+        attrs.add(AttributeBuilder.build(Account.EMAIL, "test@google.com"));
+        attrs.add(AttributeBuilder.build(Account.FAX, "12456"));
+        attrs.add(AttributeBuilder.build(Account.CUST_ID, 120));
+        attrs.add(AttributeBuilder.build(Account.SUPP_ID, 130));*/
         return attrs;
     }
     
@@ -387,17 +381,17 @@ public class OracleERPConnectorTests {
     private Set<Attribute> createNullAccountAttributes() {
         Set<Attribute> attrs = createRequiredAccountAttributes();
         attrs.add(AttributeBuilder.buildPasswordExpired(false));        
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.START_DATE, (String) null));
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.DESCR, (String) null));
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.END_DATE, (String) null));        
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.PWD_ACCESSES_LEFT, (String) null));
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.PWD_LIFE_ACCESSES, (String) null));
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.PWD_LIFE_DAYS, (String) null));
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.EMP_ID, (String) null));
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.EMAIL, (String) null));
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.FAX, (String) null));
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.CUST_ID, (String) null));
-        attrs.add(AttributeBuilder.build(OracleERPConnector.Account.SUPP_ID, (String) null));
+        attrs.add(AttributeBuilder.build(Account.START_DATE, (String) null));
+        attrs.add(AttributeBuilder.build(Account.DESCR, (String) null));
+        attrs.add(AttributeBuilder.build(Account.END_DATE, (String) null));        
+        attrs.add(AttributeBuilder.build(Account.PWD_ACCESSES_LEFT, (String) null));
+        attrs.add(AttributeBuilder.build(Account.PWD_LIFE_ACCESSES, (String) null));
+        attrs.add(AttributeBuilder.build(Account.PWD_LIFE_DAYS, (String) null));
+        attrs.add(AttributeBuilder.build(Account.EMP_ID, (String) null));
+        attrs.add(AttributeBuilder.build(Account.EMAIL, (String) null));
+        attrs.add(AttributeBuilder.build(Account.FAX, (String) null));
+        attrs.add(AttributeBuilder.build(Account.CUST_ID, (String) null));
+        attrs.add(AttributeBuilder.build(Account.SUPP_ID, (String) null));
         return attrs;
     }
 

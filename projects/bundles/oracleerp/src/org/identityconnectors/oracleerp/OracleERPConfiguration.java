@@ -41,12 +41,9 @@ import org.identityconnectors.framework.spi.ConfigurationProperty;
  */
 public class OracleERPConfiguration extends AbstractConfiguration {
 
-    /** */
-    private static final String DEFAULT_DATA_SOURCE = "jdbc/SampleDataSourceName";
-
     /**
      * Datasource attributed
-     * The attribute has precedence over other databaseName connection related attributes.
+     * The attribute has precedence over other database connection related attributes.
      * 
      * imported adapter attribute
      * name="dataSource" type="string" multi="false" value="jdbc/SampleDataSourceName"
@@ -99,7 +96,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
 
     /**
      * Driver attribute,
-     * Ignored if <b>dataSource</b> attribute or <b>connUrl</b> attribute is specified
+     * Ignored if <b>dataSource</b> attribute or <b>url</b> attribute is specified
      * 
      * imported adapter attribute
      * name="driver" type="string" multi="false" value="oracle.jdbc.driver.OracleDriver"
@@ -135,54 +132,54 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * Ignored if <b>dataSource</b> attribute is specified
      * 
      * imported adapter attribute
-     * name="connUrl" type="string" multi="false" value="java:oracle:thin:@HOSTNAME:PORT:DB" 
+     * name="url" type="string" multi="false" value="java:oracle:thin:@HOSTNAME:PORT:DB" 
      * displayName="CONN_URL" description="HELP_394"   
      */ 
-    private String connUrl = DEFAULT_CONN_URL;
+    private String url = DEFAULT_CONN_URL;
 
     
     /**
-     * Getter for the connUrl attribute. 
-     * @return connUrl
+     * Getter for the url attribute. 
+     * @return url
      */
-    public String getConnUrl() {
-        return connUrl;
+    public String getUrl() {
+        return url;
     }
     
     /**
-     * Setter for the connUrl attribute.
-     * @param connUrl 
+     * Setter for the url attribute.
+     * @param url 
      */
     @ConfigurationProperty(order=4 ,displayMessageKey="CONN_URL_DISPLAY", helpMessageKey="CONN_URL_HELP")
-    public void setConnUrl(String connUrl) {
-        this.connUrl = connUrl;
+    public void setUrl(String url) {
+        this.url = url;
     }
 
     /**
      * Host attribute
-     * Ignored if <b>dataSource</b> attribute or <b>connUrl</b> attribute is specified
+     * Ignored if <b>dataSource</b> attribute or <b>url</b> attribute is specified
      * 
      * imported adapter attribute
-     * name="hostName" type="string" multi="false"
+     * name="host" type="string" multi="false"
      * displayName="HOST"  description="HELP_239"
      */
-    private String hostName;
+    private String host;
 
     /**
-     * Getter for the connUrl attribute. 
-     * @return connUrl
+     * Getter for the url attribute. 
+     * @return url
      */
-    public String getHostName() {
-        return hostName;
+    public String getHost() {
+        return host;
     }
 
     /**
-     * Setter for the hostName attribute.
-     * @param hostName attribute.
+     * Setter for the host attribute.
+     * @param host attribute.
      */
     @ConfigurationProperty(order=5 ,displayMessageKey="HOST_NAME_DISPLAY", helpMessageKey="HOST_NAME_HELP")
-    public void setHostName(String hostName) {
-        this.hostName = hostName;
+    public void setHost(String host) {
+        this.host = host;
     }
 
     /** */
@@ -190,7 +187,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
 
     /**
      * Port attribute
-     * Ignored if <b>dataSource</b> attribute or <b>connUrl</b> attribute is specified
+     * Ignored if <b>dataSource</b> attribute or <b>url</b> attribute is specified
      * 
      * imported adapter attribute
      * name="port" type="string" multi="false" value="1521"
@@ -217,29 +214,29 @@ public class OracleERPConfiguration extends AbstractConfiguration {
 
     /**
      * Database attribute
-     * Ignored if <b>dataSource</b> attribute or <b>connUrl</b> attribute is specified
+     * Ignored if <b>dataSource</b> attribute or <b>url</b> attribute is specified
      * 
      * imported adapter attribute
-     * name="databaseName" type="string" multi="false"
+     * name="database" type="string" multi="false"
      * displayName="DATABASE" description="HELP_80"
      */
-    private String databaseName;
+    private String database;
 
     /**
-     * Getter for the databaseName attribute. 
-     * @return databaseName
+     * Getter for the database attribute. 
+     * @return database
      */
-    public String getDatabaseName() {
-        return databaseName;
+    public String getDatabase() {
+        return database;
     }
 
     /**
-     * Setter for the databaseName attribute.
-     * @param databaseName attribute.
+     * Setter for the database attribute.
+     * @param database attribute.
      */
     @ConfigurationProperty(order=7 ,displayMessageKey="DATABASE_NAME_DISPLAY", helpMessageKey="DATABASE_NAME_HELP")
-    public void setDatabaseName(String databaseName) {
-        this.databaseName = databaseName;
+    public void setDatabase(String database) {
+        this.database = database;
     }
     
     /** */
@@ -530,10 +527,10 @@ public class OracleERPConfiguration extends AbstractConfiguration {
         Assertions.blankCheck(user, "user");
         Assertions.nullCheck(password, "password");
         if (StringUtil.isBlank(dataSource)) {
-            if(StringUtil.isBlank(connUrl)) {
-                Assertions.blankCheck(hostName, "databaseName"); 
-                Assertions.blankCheck(port, "databaseName"); 
-                Assertions.blankCheck(databaseName, "databaseName"); 
+            if(StringUtil.isBlank(url)) {
+                Assertions.blankCheck(host, "database"); 
+                Assertions.blankCheck(port, "database"); 
+                Assertions.blankCheck(database, "database"); 
             }
         } else {
             //Validate the JNDI properties
@@ -557,12 +554,12 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * @return The user and dot et the end.
      */
     public String getConnectionUrl() {
-        if (StringUtil.isBlank(connUrl) || DEFAULT_CONN_URL.equals(connUrl)) {
-            if(StringUtil.isNotBlank(getHostName()) && StringUtil.isNotBlank(getPort()) && StringUtil.isNotBlank(getDatabaseName()) ) {
-                connUrl = MessageFormat.format(ORACLE_THIN_CONN_URL, getHostName(), getPort(), getDatabaseName());
+        if (StringUtil.isBlank(url) || DEFAULT_CONN_URL.equals(url)) {
+            if(StringUtil.isNotBlank(getHost()) && StringUtil.isNotBlank(getPort()) && StringUtil.isNotBlank(getDatabase()) ) {
+                url = MessageFormat.format(ORACLE_THIN_CONN_URL, getHost(), getPort(), getDatabase());
             }
         }
-        return connUrl;
+        return url;
     }
     
 }

@@ -47,8 +47,8 @@ package org.identityconnectors.oracleerp;
  */
 public interface OracleERPColumnNameResolver {
     /**
-     * @param options
-     * @return set of string
+     * @param attributeName name to translate to columnName
+     * @return the column Name
      */
     String accountAttributeToColumnName(String attributeName);
 }
