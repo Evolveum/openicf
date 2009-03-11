@@ -16,7 +16,7 @@
     Community Tasks</a></li>
     <li><a href="http://www.nunit.org/index.php?p=download">NUnit
     2.4.x for .NET 2.0</a></li>
-    <li><a href="http://wix.sourceforge.net/">Wix 2.x</a></li>
+    <li><a href="http://wix.sourceforge.net/">Wix 3.0</a></li>
     <li><a href="http://subversion.tigris.org/">Subversion 1.4.x</a></li>
     <li><a href="http://www.microsoft.com/downloads/details.aspx?FamilyId=F26B1AA4-741A-433A-9BE5-FA919850BDBF&displaylang=en">Windows SDK for Windows Server 2008 and .NET Framework 3.5</a></li>
 </ul>
@@ -53,7 +53,8 @@ complain because some of the projects are Wix based and not part of the
 standard set of MS projects).
 <p>The .NET side of the project uses MSBuild exclusively because its compatible with the two most popular .NET development IDEs.
 <p>To build simply install all the required software above.  If SharpDevelop is installed one should be able to just open the solution.  If Visual Studio is install it should work with the solution as well only it will complain about a few projects.  VS2008 will modify the solution and projects please *DO NOT* check them in unless you know exactly what your doing VS2008 tends to change it to whatever it wants with little regard to customization. The same can be said about SharpDevelop to some extent.
-<p>For a command line build one environment variable must be set.  This is the location for Wix.  The environment variable WIX_HOME must be set in order to build.
+<p>For a command line build one environment variable must be set.  This is the location for Wix.  The environment variable WIX_HOME must be set in order to build.  You may need to add %WIX_HOME% to your PATH as well.
+<div class="hint"><p><strong>Hint: </strong>msbuild.exe is located in your .NET Framework directory.  Most likely here: C:\WINDOWS\Microsoft.NET\Framework\v3.5</div>
 <pre>
 C:\build\identityconnectors\projects\dotnet&gt;msbuild "DotNetConnectors.sln"
 Microsoft (R) Build Engine Version 3.5.21022.8

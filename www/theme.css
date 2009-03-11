@@ -345,3 +345,8 @@ span.headline {
     font-size: 12px;
 }
 
+.hint {
+  border: 1px solid #212121;
+  padding: 5px 14px;
+  background-color: #83B2D1;
+}
