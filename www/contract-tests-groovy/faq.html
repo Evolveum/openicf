@@ -46,6 +46,7 @@ tests' errors</a></li>
   </ul>
   <li><a href="#confusion">Common confusions</a></li>
   <li><a href="#configs">Howto run tests with different configurations</a></li>
+  <li><a href="#jarreq">Howto list and control presence of required JAR files for the connector?</a></li>
 
 </ul>
 
@@ -152,6 +153,24 @@ we edit <code>${bundle-folder}/build.xml</code> the following way:
 &lt;/antcall&gt;<br>    &lt;/target&gt; 
 <br>&lt;/project&gt;<br>
 </div>
+
+<h2><a name="jarreq"></a>Howto list and control presence of required JAR files for the connector?</h2>
+<p>
+Contract tests can control the presence of required classes on Classpath. If the JAR is missing the error message will show
+the error message containing the name of missing JAR file. 
+</p>
+<p>
+Example:
+<pre>
+testsuite.requiredClasses = [ 
+    'com.mysql.jdbc.Driver' : 'Connector/J  5.0.8 (mysql-connector-java-5.0.8-bin.jar)', 
+    'com.foo.bar' : 'foo-bar-1.1.jar'
+    //...
+    // 'class name' : 'text description of JAR containing the class'
+]
+</pre>
+</p>
+
 </div>
 </body>
 </html>
