@@ -4,9 +4,50 @@
     <TITLE>Frequently Asked Questions</TITLE>
 </HEAD>
 <DIV id="projecthome" class="app">
-    <H2>Identity Connectors FAQ</H2>
-    <P><i>This page is currently being developed.</i>
-    </P>
-   <img src="./images/roadmap.jpeg" alt="FAQ" align="left"/>
+    <H2>Frequently Asked Questions</H2>
+    <P><i>This page is currently being developed.</i></P>
+   	<H3>What are Connectors?</H3>
+   	<P>Connectors provide applications with a way to decouple from the resources that they connect to. The Identity
+   	Connectors Framework is aimed at user provisioning and identity management, but is generalized enough to support
+   	several different kinds of applications. For example, in addition to basic CRUD operations, the API supports Search,
+   	Sync, Authenticate, and Scripting operations, as well as others.</P>
+   	<P>
+   	Connectors themselves are self-contained <a href="/connector_bundles.html">bundles</a> that ride on top of the Connectors Framework.
+   	Applications are completely separated from the bundles, so that different implementations can be swapped in and out without affecting
+   	the app or its dependencies. 
+   	</P>
+   	<H3>What are the goals of this project?</H3>
+   	<P>At a high level: Provide a generic layer between applications and target resources.</P>
+   	<P>At a lower level:</P>
+   	<ul>
+   		<li>Offer generic features that are less resource-specific
+   		<li>Extract common functionality out to the framework (reduce duplication in resource adapters)
+   		<li>Server independence
+   		<li>More frequent release cycle
+   		<li>Continuous testing and improvement
+   	</ul>
+   	<H3>What features does the Connectors Framework provide?</H3>
+   	<ul>
+   		<li>Connection pooling
+		<li>Timeouts on all operations
+		<li>Search filtering
+		<li>Search and sync buffering and streaming of results
+		<li>Scripting through Groovy and Boo .NET
+		<li>Classloader and JVM Isolation
+		<li>Independent logging API/SPI (much like Apache Commons logging)
+		<li>Support for two programming platforms (Java/.NET)
+		<li>Opt-in operations that support simple and advanced implementations on the same CRUD operation
+		<li>Logging proxy that captures all API calls
+		<li><a href="/Java_Toolkit.html">Toolkit</a> to create connectors with support for Ant, NetBeans and Eclipse
+   	</ul>
+   	<p>See the <a href="/design.html">design overview</a> for more information on the framework architecture.</p>
+	
+	<H3>How Do I Get Started Using Connectors?</H3>
+	
+	<H3>How Do I Write My Own Connector?</H3>
+	
+	<H3>How Do I Contribute Code and Bug Fixes?</H3>
+	
+	<H3>What is a Connector Server?</H3>
 </DIV>
 </HTML>
