@@ -91,7 +91,6 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
             throw new IllegalArgumentException(getMessage(RacfMessages.USERNAMES_NULL));
         if (_password==null)
             throw new IllegalArgumentException(getMessage(RacfMessages.PASSWORDS_NULL));
-        //TODO: make sure username/password paired, and at lest one set specified
     }
 
     /**

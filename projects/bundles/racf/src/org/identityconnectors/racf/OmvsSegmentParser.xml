@@ -1,0 +1,37 @@
+<!-- 
+    (from IBM documentation)
+    http://publib.boulder.ibm.com/infocenter/zos/v1r9/index.jsp?topic=/com.ibm.zos.r9.icha100/netinf.htm
+    
+    OMVS
+    Specifies that you want to list the information contained in the OMVS segment of the user's profile.
+    The details RACF lists from the OMVS segment are:
+    
+    The user identifier
+    The initial directory pathname
+    The program pathname
+    The CPU time, in seconds, the user's processes can use
+    The address space region size, in bytes, the user's processes can use
+    The maximum number of active or open files the user can have
+    The maximum number of active processes the user can have
+    The maximum number of threads the user can have
+    The maximum amount of space, in pages, the user can map in storage.
+    Note:
+    If CPUTIMEMAX, ASSIZEMAX, FILEPROCMAX, PROCUSERMAX, THREADSMAX, or MMAPAREAMAX is not specified, or is removed with the ALTUSER command, 
+    the word NONE appears in the listing. In such situations, z/OS UNIX uses its system level values for limit values.
+    If there is no HOME or PROGRAM information, the field name is not displayed. 
+    However, the word NONE appears in the listing if the UID was not specified, or if the UID was removed using the NOUID operand on the ALTUSER command.
+ -->
+ 
+ <!--  OMVS INFORMATION -->
+
+<MapTransform>
+  <PatternNode key='OMVS.UID'         pattern='UID=\s*([^\n]*)\n'         optional='false' reset='false'/>
+  <PatternNode key='OMVS.HOME'        pattern='HOME=\s*([^\n]*)\n'        optional='false' reset='false'/>
+  <PatternNode key='OMVS.PROGRAM'     pattern='PROGRAM=\s*([^\n]*)\n'     optional='false' reset='false'/>
+  <PatternNode key='OMVS.CPUTIMEMAX'  pattern='CPUTIMEMAX=\s*(NONE|\d+)'  optional='false' reset='false'/>
+  <PatternNode key='OMVS.ASSIZEMAX'   pattern='ASSIZEMAX=\s*(NONE|\d+)'   optional='false' reset='false'/>
+  <PatternNode key='OMVS.FILEPROCMAX' pattern='FILEPROCMAX=\s*(NONE|\d+)' optional='false' reset='false'/>
+  <PatternNode key='OMVS.PROCUSEMAX'  pattern='PROCUSEMAX=\s*(NONE|\d+)'  optional='false' reset='false'/>
+  <PatternNode key='OMVS.THREADSMAX'  pattern='THREADS=\s*(NONE|\d+)'     optional='false' reset='false'/>
+  <PatternNode key='OMVS.MMAPAREAMAX' pattern='MMAPAREAMAX=\s*(NONE|\d+)' optional='false' reset='false'/>
+</MapTransform>

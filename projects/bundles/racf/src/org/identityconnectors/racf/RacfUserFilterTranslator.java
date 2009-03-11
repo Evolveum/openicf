@@ -107,13 +107,13 @@ public class RacfUserFilterTranslator extends AbstractFilterTranslator<String> {
     private boolean isUserFilterAttribute(Attribute attribute) {
         if (attribute.is(Name.NAME))
             return true;
-        if (attribute.is(RacfConstants.ATTR_NDS_USER_NAME))
+        if (attribute.is(RacfConstants.ATTR_LDAP_NDS_USER_NAME))
             return true;
-        if (attribute.is(RacfConstants.ATTR_LN_SHORT_NAME))
+        if (attribute.is(RacfConstants.ATTR_LDAP_LN_SHORT_NAME))
             return true;
-        if (attribute.is(RacfConstants.ATTR_OMVS_UID))
+        if (attribute.is(RacfConstants.ATTR_LDAP_OMVS_UID))
             return true;
-        if (attribute.is(RacfConstants.ATTR_KERB_NAME))
+        if (attribute.is(RacfConstants.ATTR_LDAP_KERB_NAME))
             return true;
         return false;
     }

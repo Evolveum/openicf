@@ -22,6 +22,9 @@
  */
 package org.identityconnectors.racf;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.MessageFormat;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -55,6 +58,8 @@ import org.identityconnectors.framework.common.objects.PredefinedAttributes;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
+import org.identityconnectors.patternparser.MapTransform;
+import org.identityconnectors.patternparser.Transform;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -84,41 +89,12 @@ public class RacfConnectorTests {
     //private static final int     SHORT_WAIT          = 60000;
     //private static final String  READY               = "\\sREADY\\s{74}";
     //private static final String  CONTINUE            = "\\s\\*\\*\\*\\s{76}";
-
-    private static final String  RACF_PARSER =
-        "<MapTransform>\n" +
-        "  <PatternNode key='RACF.USERID' pattern='USER=(\\w{1,8})' optional='false' reset='false'/>\n" +
-        "  <PatternNode key='RACF.NAME' pattern='NAME=(.*?)\\s+(?=OWNER=)' optional='false' reset='false'/>\n" +
-        "  <PatternNode key='RACF.OWNER' pattern='OWNER=(\\w{1,8})' optional='false' reset='false'>\n" +
-        "    <SubstituteTransform pattern='^$' substitute='UNKNOWN'/>\n" +
-        "  </PatternNode>\n" +
-        "  <PatternNode key='RACF.DFLTGRP' pattern='DEFAULT-GROUP=(\\w{1,8})' optional='false' reset='false'/>\n" +
-        "  <PatternNode key='RACF.PASSDATE' pattern='PASSDATE=(\\S{0,6})' optional='false' reset='false'/>\n" +
-        "  <PatternNode key='RACF.PASSWORD INTERVAL' pattern='PASS-INTERVAL=(\\S*)' optional='false' reset='false'/>\n" +
-        "  <PatternNode key='RACF.PHRASEDATE' pattern='PHRASEDATE=(.*?)\\s+\\n' optional='true' reset='false'/>\n" +
-        "  <PatternNode key='RACF.ATTRIBUTES' pattern='((ATTRIBUTES=.*\\n\\s*)+)' optional='true' reset='false'>\n" +
-        "    <SubstituteTransform pattern='ATTRIBUTES=(\\S+)\\s+' substitute='$1 '/>\n" +
-        "    <SubstituteTransform pattern='(.*)\\s' substitute='$1'/>\n" +
-        "    <SubstituteTransform pattern='^$' substitute='NONE'/>\n" +
-        "    <SplitTransform splitPattern='\\s+'/>\n" +
-        "  </PatternNode>\n" +
-        //"  <PatternNode key='RACF.CLAUTH' pattern='CLASS AUTHORIZATIONS=([^\\n]*(\\s{23}.+\\n)*)' optional='true' reset='false'>\n" +
-        //"    <SubstituteTransform pattern='(.*)\\s' substitute='$1'/>\n" +
-        //"    <SplitTransform splitPattern='\\s+'/>\n" +
-        //"  </PatternNode>\n" +
-        "  <PatternNode key='RACF.DATA' pattern='INSTALLATION-DATA=([^\\n]*(\\s{20}.+\\n)*)' optional='true' reset='false'>\n" +
-        "    <SubstituteTransform pattern='^(.{50})[^\\n]+' substitute='$1'/>\n" +
-        "    <SubstituteTransform pattern='\\n\\s{20}(.{50})[^\\n]+' substitute='$1'/>\n" +
-        "    <SubstituteTransform pattern='\\n' substitute=''/>\n" +
-        "    <SubstituteTransform pattern='^$' substitute='NO-INSTALLATION-DATA'/>\n" +
-        "  </PatternNode>\n" +
-        "  <PatternNode key='RACF.GROUPS' pattern='((?:\\s+GROUP=\\w+\\s+AUTH=\\w*\\s+CONNECT-OWNER=(?:[^\\n]+\\n){4})+)' optional='true' reset='false'>\n" +
-        "    <SubstituteTransform pattern='.*?GROUP=(\\w+)\\s+AUTH=.+?CONNECT-OWNER=\\w+([^\\n]+\\n){4}' substitute='$1 '/>\n" +
-        "    <SubstituteTransform pattern='^\\s+(.*)' substitute='$1'/>\n" +
-        "    <SubstituteTransform pattern='(\\s+)$' substitute=''/>\n" +
-        "    <SplitTransform splitPattern='\\s+'/>\n" +
-        "  </PatternNode>\n" +
-        "</MapTransform>\n";
+    
+    private static final String RACF_PARSER = "org/identityconnectors/racf/RacfSegmentParser.xml";
+    private static final String CICS_PARSER = "org/identityconnectors/racf/CicsSegmentParser.xml";
+    private static final String OMVS_PARSER = "org/identityconnectors/racf/OmvsSegmentParser.xml";
+    private static final String TSO_PARSER  = "org/identityconnectors/racf/TsoSegmentParser.xml";
+    private static final String NETVIEW_PARSER  = "org/identityconnectors/racf/NetviewSegmentParser.xml";
 
     public static void main(String[] args) {
         RacfConnectorTests tests = new RacfConnectorTests();
@@ -224,6 +200,105 @@ public class RacfConnectorTests {
         } finally {
             connector.dispose();
         }
+    }
+    
+    private String makeLine(String string, int length) {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(string);
+        while (buffer.length()<length)
+            buffer.append(" ");
+        return buffer.toString()+"\n";
+    }
+    
+    @Test
+    public void testCicsParser() {
+        String cicsSegment =
+            makeLine(" OPCLASS= 024       023       022       021       020       019       018", 80) +
+            makeLine("          017       016       015       014       013       012       011", 80) +
+            makeLine("          010       009       008       007       006       005       004", 80) +
+            makeLine("          003       002       001", 80) +
+            makeLine(" OPIDENT=", 80) +
+            makeLine(" OPPRTY= 00255", 80) +
+            makeLine(" TIMEOUT= 00:00 (HH:MM)", 80) +
+            makeLine(" XRFSOFF= NOFORCE", 80);
+        
+        try {
+            String cicsParser = loadParserFromFile(CICS_PARSER);
+            MapTransform transform = (MapTransform)Transform.newTransform(cicsParser);
+            Map<String, Object> results = (Map<String, Object>)transform.transform(cicsSegment);
+            for (Map.Entry<String, Object> entry : results.entrySet()) {
+                System.out.println(entry.getKey()+"="+entry.getValue());
+            }
+        } catch (IOException e) {
+            Assert.fail(e.toString());
+        } catch (Exception e) {
+            Assert.fail(e.toString());
+        }
+    }
+    
+    @Test
+    public void testTsoParser() {
+        String tsoSegment =
+            makeLine(" ACCTNUM= ACCT#", 80) +
+            makeLine(" HOLDCLASS= X", 80) +
+            makeLine(" JOBCLASS= A", 80) +
+            makeLine(" MSGCLASS= X", 80) +
+            makeLine(" PROC= ISPFPROC", 80) +
+            makeLine(" SIZE= 00006133", 80) +
+            makeLine(" MAXSIZE= 00000000", 80) +
+            makeLine(" SYSOUTCLASS= X", 80) +
+            makeLine(" USERDATA= 0000", 80) +
+            makeLine(" COMMAND= ISPF PANEL(ISR@390)", 80);
+        
+        try {
+            String tsoParser = loadParserFromFile(TSO_PARSER);
+            MapTransform transform = (MapTransform)Transform.newTransform(tsoParser);
+            Map<String, Object> results = (Map<String, Object>)transform.transform(tsoSegment);
+            for (Map.Entry<String, Object> entry : results.entrySet()) {
+                System.out.println(entry.getKey()+"="+entry.getValue());
+            }
+        } catch (IOException e) {
+            Assert.fail(e.toString());
+        } catch (Exception e) {
+            Assert.fail(e.toString());
+        }
+    }
+    
+    @Test
+    public void testNetviewParser() {
+        String netviewSegment =
+            makeLine(" IC= START", 80) +
+            makeLine(" CONSNAME= DJONES1", 80) +
+            makeLine(" CTL= GLOBAL", 80) +
+            makeLine(" MSGRECVR= YES", 80) +
+            makeLine(" OPCLASS= 1,2", 80) +
+            makeLine(" DOMAINS= D1,D2", 80) +
+            makeLine(" MAXSIZE= 00000000", 80) +
+            makeLine(" NGMFADMN= YES", 80) +
+            makeLine(" NGMFVSPN= VNNN", 80);
+        
+        try {
+            String netviewParser = loadParserFromFile(NETVIEW_PARSER);
+            MapTransform transform = (MapTransform)Transform.newTransform(netviewParser);
+            Map<String, Object> results = (Map<String, Object>)transform.transform(netviewSegment);
+            for (Map.Entry<String, Object> entry : results.entrySet()) {
+                System.out.println(entry.getKey()+"="+entry.getValue());
+            }
+        } catch (IOException e) {
+            Assert.fail(e.toString());
+        } catch (Exception e) {
+            Assert.fail(e.toString());
+        }
+    }
+
+    private String loadParserFromFile(String fileName) throws IOException {
+        BufferedReader is = new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream(fileName)));
+        StringBuffer tsoParser = new StringBuffer();
+        String line = null;
+        while ((line=is.readLine())!=null) {
+            tsoParser.append(line+"\n");
+        }
+        return tsoParser.toString();
     }
 
     private void displayUser(ConnectorObject user) {
@@ -414,26 +489,6 @@ public class RacfConnectorTests {
         }
     }
 
-    private String tsoParserString() {
-        String tsoParser =
-            "<MapTransform>" +
-            "  <PatternNode key='TSO.ACCTNUM' pattern='ACCTNUM= (.*?)\\s*\\n' optional='true' reset='false'/>" +
-            "  <PatternNode key='TSO.HOLDCLASS' pattern='HOLDCLASS= (.*?)\\s*\\n' optional='true' reset='false'/>" +
-            "  <PatternNode key='TSO.JOBCLASS' pattern='JOBCLASS= (.*?)\\s*\\n' optional='true' reset='false'/>" +
-            "  <PatternNode key='TSO.MSGCLASS' pattern='MSGCLASS= (.*?)\\s*\\n' optional='true' reset='false'/>" +
-            "  <PatternNode key='TSO.PROC' pattern='PROC= (.*?)\\s*\\n' optional='true' reset='false'/>" +
-            "  <PatternNode key='TSO.SIZE' pattern='SIZE= (.*?)\\s*\\n' optional='true' reset='false'/>" +
-            "  <PatternNode key='TSO.MAXSIZE' pattern='MAXSIZE= (.*?)\\s*\\n' optional='true' reset='false'/>" +
-            "  <PatternNode key='TSO.SYSOUTCLASS' pattern='SYSOUTCLASS= (.*?)\\s*\\n' optional='true' reset='false'/>" +
-            "  <PatternNode key='TSO.PROC' pattern='PROC= (.*?)\\s*\\n' optional='true' reset='false'/>" +
-            "  <PatternNode key='TSO.UNIT' pattern='UNIT= (.*?)\\s*\\n' optional='true' reset='false'/>" +
-            "  <PatternNode key='TSO.USERDATA' pattern='USERDATA= (.*?)\\s*\\n' optional='true' reset='false'/>" +
-            "  <PatternNode key='TSO.COMMAND' pattern='COMMAND= (.*?)\\s*\\n' optional='true' reset='false'/>" +
-            "</MapTransform>";
-        
-        return tsoParser;
-    }
-
     private Set<Attribute> fillInSampleUser(final String testUser) {
         Set<Attribute> attrs = new HashSet<Attribute>();
         attrs.add(new Name(testUser));
@@ -450,7 +505,7 @@ public class RacfConnectorTests {
         return connector;
     }
 
-    private RacfConfiguration createConfiguration() {
+    private RacfConfiguration createConfiguration() throws IOException {
         RacfConfiguration config = new RacfConfiguration();
         config.setHostNameOrIpAddr(HOST_NAME);
         initializeLdapConfiguration(config);
@@ -474,7 +529,7 @@ public class RacfConnectorTests {
         return config;
     }
 
-    private RacfConfiguration createUserConfiguration() {
+    private RacfConfiguration createUserConfiguration() throws IOException {
         RacfConfiguration config = createConfiguration();
         config.setPassword(new GuardedString("password".toCharArray()));
         config.setUserName(TEST_USER);
@@ -542,7 +597,7 @@ public class RacfConnectorTests {
     
     // Override these to do Ldap tests
     //
-    protected void initializeCommandLineConfiguration(RacfConfiguration config) {
+    protected void initializeCommandLineConfiguration(RacfConfiguration config) throws IOException {
         config.setHostTelnetPortNumber(HOST_TELNET_PORT);
         config.setConnectScript(getLoginScript());
         config.setDisconnectScript(getLogoffScript());
@@ -550,7 +605,7 @@ public class RacfConnectorTests {
         config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
         config.setScriptingLanguage("GROOVY");
         config.setSegmentNames(new String[] { "RACF", "TSO" });
-        config.setSegmentParsers(new String[] { RACF_PARSER, tsoParserString() });
+        config.setSegmentParsers(new String[] { loadParserFromFile(RACF_PARSER), loadParserFromFile(TSO_PARSER) });
         //config.setConnectionClassName(WrqConnection.class.getName());
         //config.setConnectionClassName("org.identityconnectors.rw3270.hod.HodConnection");
         config.setConnectionClassName("org.identityconnectors.rw3270.freehost3270.FH3270Connection");

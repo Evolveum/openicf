@@ -1,0 +1,58 @@
+<!-- 
+    Sample output:
+    ACCTNUM= D5888P
+    DEST= LOCAL
+    HOLDCLASS= H
+    JOBCLASS= C
+    MSGCLASS= R
+    PROC= PROC01
+    SIZE= 0001024
+    MAXSIZE= 0004096
+    SYSOUTCLASS= J
+    UNIT= SYSDA
+    USERDATA= 1F09
+    SECLABEL= SYSLOW
+   
+    (from IBM documentation)
+    http://publib.boulder.ibm.com/infocenter/zos/v1r9/index.jsp?topic=/com.ibm.zos.r9.icha100/netinf.htm
+    
+    TSO
+    Specifies that you want to list the information contained in the TSO segment of the user's profile.
+    The details RACF lists from the TSO segment of the user's profile are:
+    
+    The user's default account number when logging on from the TSO/E logon panel
+    The destination ID for SYSOUT data sets
+    The user's default HOLDCLASS
+    The user's default JOBCLASS
+    The user's default MSGCLASS
+    The user's default SYS
+    The maximum region size
+    The default region size
+    The logon procedure name
+    The unit name
+    The optional user data
+    The user's security label
+    The default command to be run during the TSO/E logon.
+    If there is no information in the fields of the TSO segment, the field name is not displayed (with the exception of SIZE, MAXSIZE, and USERDATA).
+ -->
+ 
+ <!--  TSO INFORMATION -->
+
+<MapTransform>
+  <PatternNode key='TSO.ACCTNUM'     pattern='ACCTNUM=\s*([^\n]*)\n'  optional='true' reset='false'>
+    <SubstituteTransform pattern='\s*$' substitute=''/>
+  </PatternNode>
+  <PatternNode key='TSO.HOLDCLASS'   pattern='HOLDCLASS=\s*(\w)'      optional='true' reset='false'/>
+  <PatternNode key='TSO.JOBCLASS'    pattern='JOBCLASS=\s*(\w)'       optional='true' reset='false'/>
+  <PatternNode key='TSO.MSGCLASS'    pattern='MSGCLASS=\s*(\w)'       optional='true' reset='false'/>
+  <PatternNode key='TSO.PROC'        pattern='PROC=\s*(\w{1,8})'      optional='true' reset='false'/>
+  <PatternNode key='TSO.SIZE'        pattern='SIZE=\s*(\d+)'          optional='false' reset='false'/>
+  <PatternNode key='TSO.MAXSIZE'     pattern='MAXSIZE=\s*(\d+)'       optional='false' reset='false'/>
+  <PatternNode key='TSO.SYSOUTCLASS' pattern='SYSOUTCLASS=\s*(\w)'    optional='true' reset='false'/>
+  <PatternNode key='TSO.UNIT'        pattern='UNIT=\s*(\w{1,8})'      optional='true' reset='false'/>
+  <PatternNode key='TSO.USERDATA'    pattern='USERDATA=\s*(\w{1,4})'  optional='false' reset='false'/>
+  <PatternNode key='TSO.SECLABEL'    pattern='SECLABEL=\s*([^\n]*)\n' optional='true' reset='false'/>
+  <PatternNode key='TSO.COMMAND'     pattern='COMMAND=\s*([^\n]*)\n'  optional='true' reset='false'>
+    <SubstituteTransform pattern='\s*$' substitute=''/>
+  </PatternNode>
+</MapTransform>

@@ -1,0 +1,77 @@
+<!-- 
+    Sample output:
+    OPCLASS= 024       023       022       021       020       019       018
+             017       016       015       014       013       012       011
+             010       009       008       007       006       005       004
+             003       002       001
+    OPIDENT=
+    OPPRTY= 00255
+    TIMEOUT= 12:34
+    XRFSOFF= NOFORCE
+    RSLKEYS= 00001 00003
+    TSLKEYS= 00001 00003
+
+    (from IBM documentation)
+    http://publib.boulder.ibm.com/infocenter/zos/v1r9/index.jsp?topic=/com.ibm.zos.r9.icha100/netinf.htm
+    
+    CICS
+    Specifies that you want to list the information contained in the CICS segment of the user's profile.
+    The details RACF lists from the CICS segment of the user's profile are:
+    
+    The classes assigned to this operator to which BMS messages are sent
+      Note:
+      The values of the classes are listed in a three digit format, even though a maximum 
+      of two digits are used to define the value.
+    Whether the operator are forced off when an XRFSOFF takeover occurs
+    The operator identification
+    The priority of the operator
+    The time in hours and minutes that the operator is allowed to be idle before being signed off. 
+    For systems that are running levels of CICS prior to CICS 4.1, the time is reported in minutes.
+    Resource security level (RSL) keys, if any are assigned to the user. 
+        If 99 is displayed, this indicates that all RSL keys are assigned to the user (1 - 24, inclusive). 
+        If 0 is displayed, no RSL keys are assigned to the user.
+    Transaction security level (TSL) keys, if any are assigned to the user. 
+        If 99 is displayed, this indicates that all TSL keys are assigned to the user (1 - 64, inclusive). 
+        If 0 is displayed, no TSL keys are assigned to the user.
+        
+    
+    NOTE: We are not guessing at TSL keys and RSL keys (no AttrParse example to crib)
+ -->
+ 
+ <!--  CICS INFORMATION -->
+ 
+<MapTransform>
+  <PatternNode key='CICS.OPCLASS' pattern='OPCLASS=((\s+\d+)+((\s+\d+)+\n)*)'  optional='true' reset='false'>
+    <SubstituteTransform pattern='\n' substitute=' '/>
+    <SubstituteTransform pattern='\s+$' substitute=''/>
+    <SubstituteTransform pattern='^\s+' substitute=''/>
+    <SplitTransform      splitPattern='\s+'/>
+    <ListTransform>
+      <ClassTransform    transform='java.lang.Integer'/>
+    </ListTransform>
+  </PatternNode>
+  <PatternNode key='CICS.OPIDENT' pattern='OPIDENT=[ ]*(\w)'         optional='true' reset='false'/>
+  <PatternNode key='CICS.OPPRTY'  pattern='OPPRTY=[ ]*(\d+)'         optional='true' reset='false'/>
+  <PatternNode key='CICS.TIMEOUT' pattern='TIMEOUT=[ ]*([^\n]*)\n'   optional='true' reset='false'>
+    <SubstituteTransform pattern='\s*$' substitute=''/>
+  </PatternNode>
+  <PatternNode key='CICS.XRFSOFF' pattern='XRFSOFF=[ ]*(\w{1,10})'   optional='true' reset='false'/>
+  <PatternNode key='CICS.RSLKEY'  pattern='RSLKEY=((\s+\d+)+((\s+\d+)+\n)*)'  optional='true' reset='false'>
+    <SubstituteTransform pattern='\n' substitute=' '/>
+    <SubstituteTransform pattern='\s+$' substitute=''/>
+    <SubstituteTransform pattern='^\s+' substitute=''/>
+    <SplitTransform      splitPattern='\s+'/>
+    <ListTransform>
+      <ClassTransform    transform='java.lang.Integer'/>
+    </ListTransform>
+  </PatternNode>
+  <PatternNode key='CICS.TSLKEY' pattern='TSLKEY=((\s+\d+)+((\s+\d+)+\n)*)'  optional='true' reset='false'>
+    <SubstituteTransform pattern='\n' substitute=' '/>
+    <SubstituteTransform pattern='\s+$' substitute=''/>
+    <SubstituteTransform pattern='^\s+' substitute=''/>
+    <SplitTransform      splitPattern='\s+'/>
+    <ListTransform>
+      <ClassTransform    transform='java.lang.Integer'/>
+    </ListTransform>
+  </PatternNode>
+</MapTransform>

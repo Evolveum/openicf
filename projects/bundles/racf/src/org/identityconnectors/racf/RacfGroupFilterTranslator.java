@@ -119,7 +119,7 @@ public class RacfGroupFilterTranslator extends AbstractFilterTranslator<String> 
     private boolean isGroupFilterAttribute(Attribute attribute) {
         if (attribute.is(Name.NAME))
             return true;
-        if (attribute.is(RacfConstants.ATTR_OMVS_UID))
+        if (attribute.is(RacfConstants.ATTR_LDAP_OMVS_UID))
             return true;
         return false;
     }

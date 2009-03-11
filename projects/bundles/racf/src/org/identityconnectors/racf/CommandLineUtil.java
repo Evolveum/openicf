@@ -172,6 +172,14 @@ class CommandLineUtil {
     public String getCommandOutput(CharArrayBuffer buffer) {
         char[] command = buffer.getArray();
         try {
+            
+            // TODO: failure indication for DELGROUP
+            //      IKJ56700A ENTER GROUP NAME(S) -
+            //      (requires PA1 to recover)
+            //      IKJ56718A REENTER THIS OPERAND+ -
+            //      (requires PA1 to recover)
+            //  failure indication for LISTGRP
+            //      ICH51003I NAME NOT FOUND IN RACF DATA SET
             RW3270Connection connection = _connector.getConnection().getRacfConnection();
             connection.resetStandardOutput();
             connection.send("[clear]");

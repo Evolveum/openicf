@@ -22,7 +22,7 @@
  */
 package org.identityconnectors.racf;
 
-import static org.identityconnectors.racf.RacfConstants.ATTR_PASSWORD;
+import static org.identityconnectors.racf.RacfConstants.ATTR_LDAP_PASSWORD;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -265,16 +265,16 @@ class LdapUtil {
             } else if (attribute.is("objectclass")) {
                 // TODO: skip this for now
                 //
-            } else if (attribute.is(RacfConstants.ATTR_ATTRIBUTES)) {
+            } else if (attribute.is(RacfConstants.ATTR_LDAP_ATTRIBUTES)) {
                 // TODO: skip this for now
                 //
-            } else if (attribute.is(RacfConstants.ATTR_AUTHORIZATION_DATE) ||
-                    attribute.is(RacfConstants.ATTR_PASSWORD_INTERVAL) ||
-                    attribute.is(RacfConstants.RACF_ID) ||
-                    attribute.is(RacfConstants.ATTR_LAST_ACCESS) ||
-                    attribute.is(RacfConstants.ATTR_PASSWORD_CHANGE) ||
-                    attribute.is(RacfConstants.ATTR_SUB_GROUP) ||
-                    attribute.is(RacfConstants.ATTR_GROUP_USERIDS)) {
+            } else if (attribute.is(RacfConstants.ATTR_LDAP_AUTHORIZATION_DATE) ||
+                    attribute.is(RacfConstants.ATTR_LDAP_PASSWORD_INTERVAL) ||
+                    attribute.is(RacfConstants.ATTR_LDAP_RACF_ID) ||
+                    attribute.is(RacfConstants.ATTR_LDAP_LAST_ACCESS) ||
+                    attribute.is(RacfConstants.ATTR_LDAP_PASSWORD_CHANGE) ||
+                    attribute.is(RacfConstants.ATTR_LDAP_SUB_GROUP) ||
+                    attribute.is(RacfConstants.ATTR_LDAP_GROUP_USERIDS)) {
                 // Ignore read-only attrs
                 //
             } else if (attribute.is(PredefinedAttributes.GROUPS_NAME)) {
@@ -290,7 +290,7 @@ class LdapUtil {
                 if (value==null || value.size()!=1) {
                     throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.MUST_BE_SINGLE_VALUE));
                 }
-                basicAttributes.put(ATTR_PASSWORD, value.get(0));
+                basicAttributes.put(ATTR_LDAP_PASSWORD, value.get(0));
             } else {
                 AttributeInfo attributeInfo = getAttributeInfo(attributeInfos, attributeName);
                 if (attributeInfo==null)

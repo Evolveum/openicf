@@ -1,0 +1,63 @@
+<!-- 
+    Sample output:
+    IC= START
+    CONSNAME= DJONES1
+    CTL= GLOBAL
+    MSGRECVR= YES
+    OPCLASS= 1,2
+    DOMAINS= D1,D2
+    NGMFADMN= YES
+    NGMFVSPN= VNNN
+
+    (from IBM documentation)
+    http://publib.boulder.ibm.com/infocenter/zos/v1r9/index.jsp?topic=/com.ibm.zos.r9.icha100/netinf.htm
+    
+    NETVIEW
+    Specifies that you want to list the information contained in the NETVIEW segment of the user's profile.
+    The details RACF lists from the NETVIEW segment of the user's profile are:
+    
+    The command or command line to be processed by NetView® for this operator
+    The default MCS console identifier
+    Whether security checking should be done for this NetView operator
+    Whether this operator can receive unsolicited messages
+    The count of operator class values
+    The list of NetView scope classes for which this operator has authority
+    The number of domains this NetView operator controls
+    The list of identifiers of NetView programs in another NetView domain for which this operator has authority
+    Whether this operator has administrator authority to the NetView Graphic Monitor Facility (NGMF).
+-->
+ 
+ <!--  NETVIEW INFORMATION -->
+
+<MapTransform>
+  <PatternNode key='NETVIEW.IC'          pattern='IC=\s*([^\n]*)\n'         optional='true' reset='false'>
+    <SubstituteTransform pattern='\s+$' substitute=''/>
+  </PatternNode>
+  <PatternNode key='NETVIEW.CONSNAME'    pattern='CONSNAME=\s*(\w+)'        optional='true' reset='false'/>
+  <PatternNode key='NETVIEW.CTL'         pattern='CTL=\s*(\w+)'             optional='true' reset='false'/>
+  <PatternNode key='NETVIEW.MSGRECVR'    pattern='MSGRECVR=\s*(\w+)'        optional='true' reset='false'>
+    <SubstituteTransform pattern='YES' substitute='TRUE'/>
+    <SubstituteTransform pattern='NO'  substitute='FALSE'/>
+    <BooleanTransform/>
+  </PatternNode>
+  <PatternNode key='NETVIEW.OPCLASS'     pattern='OPCLASS=\s*([^\n]*)\n'    optional='true' reset='false'>
+    <SubstituteTransform pattern='\n'   substitute=' '/>
+    <SubstituteTransform pattern='\s+$' substitute=''/>
+    <SubstituteTransform pattern='^\s+' substitute=''/>
+    <SplitTransform      splitPattern=','/>
+  </PatternNode>
+  <PatternNode key='NETVIEW.DOMAINS'     pattern='DOMAINS=\s*([^\n]*)\n'    optional='true' reset='false'>
+    <SubstituteTransform pattern='\n' substitute=' '/>
+    <SubstituteTransform pattern='\s+$' substitute=''/>
+    <SubstituteTransform pattern='^\s+' substitute=''/>
+    <SplitTransform      splitPattern=','/>
+  </PatternNode>
+  <PatternNode key='NETVIEW.NGMFADMN'    pattern='NGMFADMN=\s*(\w+)'        optional='true' reset='false'>
+    <SubstituteTransform pattern='YES' substitute='TRUE'/>
+    <SubstituteTransform pattern='NO'  substitute='FALSE'/>
+    <BooleanTransform/>
+  </PatternNode>
+  <PatternNode key='NETVIEW.NGMFVSPN'    pattern='NGMFVSPN=\s*([^\n]*)\n'   optional='true' reset='false'>
+    <SubstituteTransform pattern='\s+$' substitute=''/>
+  </PatternNode>
+</MapTransform>

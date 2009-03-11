@@ -106,9 +106,9 @@ public class RacfConnectFilterTranslator extends AbstractFilterTranslator<String
     }
     
     private boolean isUserFilterAttribute(Attribute attribute) {
-        if (attribute.is(RacfConstants.RACF_USERID))
+        if (attribute.is(RacfConstants.ATTR_LDAP_RACF_USERID))
             return true;
-        if (attribute.is(RacfConstants.RACF_GROUPID))
+        if (attribute.is(RacfConstants.ATTR_LDAP_RACF_GROUPID))
             return true;
         return false;
     }
