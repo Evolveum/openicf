@@ -358,16 +358,6 @@ public class MySQLUserConnectorTests {
         assertNotNull(facade);  
         facade.delete(ObjectClass.ACCOUNT, new Uid("UNKNOWN"), null); 
     }    
-    
-    /**
-     * Test method for {@link MySQLUserConnection#newConnection()}.
-     * @throws Exception
-     */
-    @Test()
-    public void testFacade() throws Exception {
-        assertNotNull(facade);
-        //facade.test();
-    }
 
     /**
      * test method
@@ -918,7 +908,6 @@ public class MySQLUserConnectorTests {
         }
 
         public boolean handle(ConnectorObject obj) {
-            System.out.println("Object: " + obj);
             if (obj.getUid().equals(uid)) {
                 if(found) {
                     throw new IllegalStateException("Duplicate object found");
