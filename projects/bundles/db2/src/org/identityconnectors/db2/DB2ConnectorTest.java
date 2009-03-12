@@ -225,18 +225,19 @@ public class DB2ConnectorTest {
     	AllResultsHandler handler = new AllResultsHandler();
     	facade.search(ObjectClass.ACCOUNT, null,handler, null);
     	for(ConnectorObject object : handler.getResults()){
-    		if(!"db2inst1".equalsIgnoreCase(object.getUid().getUidValue()) && !"db2admin".equalsIgnoreCase(object.getUid().getUidValue())){
-    			facade.delete(ObjectClass.ACCOUNT, object.getUid(), null);
+    		final String uidValue = object.getUid().getUidValue().toUpperCase();
+    		if(!uidValue.startsWith("db2inst".toUpperCase()) && !uidValue.startsWith("db2admin".toUpperCase())){
+    		    facade.delete(ObjectClass.ACCOUNT, object.getUid(), null);
     		}
     	}
-    	Attribute grants1 = AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"LOAD ON DATABASE","SELECT ON SYSIBM.DUAL");
+    	Attribute grants1 = AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"LOAD ON DATABASE","SELECT ON SYSCAT.TABLES");
     	Set<Attribute> attributes1 = new HashSet<Attribute>();
     	attributes1.add(grants1);
     	attributes1.add(new Name("TEST1"));
     	Uid testUid1 = facade.create(ObjectClass.ACCOUNT,attributes1,null);
     	assertNotNull(testUid1);
     	
-    	Attribute grants2 = AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"LOAD ON DATABASE","SELECT ON SYSIBM.DUAL");
+    	Attribute grants2 = AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"LOAD ON DATABASE","SELECT ON SYSCAT.TABLES");
     	Set<Attribute> attributes2 = new HashSet<Attribute>();
     	attributes2.add(grants2);
     	attributes2.add(new Name("TEST2"));
@@ -331,7 +332,7 @@ public class DB2ConnectorTest {
         assertNotNull(actual);
         Attribute grants1 = actual.getAttributeByName(DB2Connector.USER_AUTH_GRANTS);
         Attribute oldGrants = grants1; 
-        grants1 = AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"LOAD ON DATABASE","SELECT ON SYSIBM.DUAL");
+        grants1 = AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"LOAD ON DATABASE","SELECT ON SYSCAT.TABLES");
         Set<Attribute> attributes = new HashSet<Attribute>();
         attributes.add(grants1);
         Map<String, Object> emptyMap = Collections.emptyMap();
@@ -343,19 +344,19 @@ public class DB2ConnectorTest {
         List<Object> newGrantsValue = actual.getAttributeByName(DB2Connector.USER_AUTH_GRANTS).getValue();
 		assertTrue(newGrantsValue.contains("LOAD ON DATABASE"));
         assertTrue(newGrantsValue.contains("CONNECT ON DATABASE"));
-        assertTrue(newGrantsValue.contains("SELECT ON SYSIBM.DUAL"));
+        assertTrue(newGrantsValue.contains("SELECT ON SYSCAT.TABLES"));
         
         //Test replace
         handler.clear();
         attributes.clear();
-        attributes.add(AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"SELECT ON SYSIBM.DUAL"));
+        attributes.add(AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"SELECT ON SYSCAT.TABLES"));
         facade.update(ObjectClass.ACCOUNT,uid, attributes, new OperationOptions(emptyMap));
         facade.search(ObjectClass.ACCOUNT, new EqualsFilter(uid), handler, options);
         actual = handler.getFoundObject();
         newGrantsValue = actual.getAttributeByName(DB2Connector.USER_AUTH_GRANTS).getValue();
 		assertFalse(newGrantsValue.contains("LOAD ON DATABASE"));
         assertTrue(newGrantsValue.contains("CONNECT ON DATABASE"));
-        assertTrue(newGrantsValue.contains("SELECT ON SYSIBM.DUAL"));
+        assertTrue(newGrantsValue.contains("SELECT ON SYSCAT.TABLES"));
         
         //Test delete
         handler.clear();
@@ -365,7 +366,7 @@ public class DB2ConnectorTest {
         newGrantsValue = actual.getAttributeByName(DB2Connector.USER_AUTH_GRANTS).getValue();
 		assertFalse(newGrantsValue.contains("LOAD ON DATABASE"));
         assertTrue(newGrantsValue.contains("CONNECT ON DATABASE"));
-        assertFalse(newGrantsValue.contains("SELECT ON SYSIBM.DUAL"));
+        assertFalse(newGrantsValue.contains("SELECT ON SYSCAT.TABLES"));
         
         //test replace/add using DB2Configuration.isReplaceAllGrantsOnUpdate switch
         //Test replace
@@ -373,14 +374,14 @@ public class DB2ConnectorTest {
         testConfiguration.setReplaceAllGrantsOnUpdate(true);
         ConnectorFacade testFacade = createFacade(testConfiguration);
         attributes.clear();
-        attributes.add(AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"SELECT ON SYSIBM.DUAL"));
+        attributes.add(AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"SELECT ON SYSCAT.TABLES"));
         testFacade.update(ObjectClass.ACCOUNT,uid, attributes, new OperationOptions(emptyMap));
         testFacade.search(ObjectClass.ACCOUNT, new EqualsFilter(uid), handler, options);
         actual = handler.getFoundObject();
         newGrantsValue = actual.getAttributeByName(DB2Connector.USER_AUTH_GRANTS).getValue();
         assertFalse(newGrantsValue.contains("LOAD ON DATABASE"));
         assertTrue(newGrantsValue.contains("CONNECT ON DATABASE"));
-        assertTrue(newGrantsValue.contains("SELECT ON SYSIBM.DUAL"));
+        assertTrue(newGrantsValue.contains("SELECT ON SYSCAT.TABLES"));
         
         //Test add
         testConfiguration.setReplaceAllGrantsOnUpdate(false);
@@ -393,7 +394,7 @@ public class DB2ConnectorTest {
         newGrantsValue = actual.getAttributeByName(DB2Connector.USER_AUTH_GRANTS).getValue();
         assertTrue(newGrantsValue.contains("LOAD ON DATABASE"));
         assertTrue(newGrantsValue.contains("CONNECT ON DATABASE"));
-        assertTrue(newGrantsValue.contains("SELECT ON SYSIBM.DUAL"));
+        assertTrue(newGrantsValue.contains("SELECT ON SYSCAT.TABLES"));
         
         
         //Reset to old value

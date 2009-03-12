@@ -28,6 +28,7 @@ import java.util.*;
 import org.identityconnectors.common.IOUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 
 /**
  * Here we hide DB2 specifics constants,mappings,restrictions ...
@@ -158,12 +159,11 @@ abstract class DB2Specifics {
     }
     
     
-	static void testConnection(Connection connection){
-		//We will execute very simple " select 1 from sysibm.dual "
+	static void testConnection(Connection connection,String testSQL){
 		PreparedStatement st = null;
 		ResultSet rs = null;
 		try{
-			st = connection.prepareStatement("select 1 from sysibm.dual");
+			st = connection.prepareStatement(testSQL);
 			rs = st.executeQuery();
 		}
 		catch(SQLException e){
@@ -175,9 +175,46 @@ abstract class DB2Specifics {
 			}
 		}
 		finally{
-			SQLUtil.closeQuietly(rs);
+		    SQLUtil.closeQuietly(rs);
 			SQLUtil.closeQuietly(st);
 		}
+	}
+	
+	static String findTestSQL(Connection connection){
+	    String[] testSQL = new String[]{"select 1 from sysibm.dual","select 1 from sysibm.SYSDUMMY1","select 1 from syscat.SCHEMATA where schemaname = 'DUMMY'"};
+        Statement st = null;
+        String sql = null;
+        try{
+            st = connection.createStatement();
+        }
+        catch(SQLException e){
+            throw new IllegalStateException("Cannot create statement",e);
+        }
+        for(String s : testSQL){
+            sql = testTestSQL(st,s);
+            if(sql != null){
+                break;
+            }
+        }
+        SQLUtil.closeQuietly(st);
+        if(sql == null){
+            throw new ConnectorException("Cannot find valid test SQL for DB2");
+        }
+        return  sql;
+	}
+	
+	private static String testTestSQL(Statement st,String sql){
+	    ResultSet rs = null;
+        try{
+            rs = st.executeQuery(sql);
+            return sql;
+        }
+        catch(SQLException e){
+            return null; 
+        }
+        finally{
+            SQLUtil.closeQuietly(rs);
+        }
 	}
 	
 	static Connection createType4Connection(Type4ConnectionInfo info){

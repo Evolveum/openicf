@@ -56,7 +56,7 @@ public class DB2SpecificsTest {
 	@Test
 	public void testStaleConnection() throws Exception{
 		Connection conn = DB2ConnectorTest.createTestConnection();
-		DB2Specifics.testConnection(conn);
+		DB2Specifics.testConnection(conn,DB2Specifics.findTestSQL(conn));
 		conn.commit();
 		conn.close();
 	}

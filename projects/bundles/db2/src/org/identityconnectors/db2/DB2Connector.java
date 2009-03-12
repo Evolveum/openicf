@@ -88,7 +88,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	private Connection adminConn;
 	private DB2Configuration cfg;
     static final String USER_AUTH_GRANTS = "grants";
-    
+    private String testSQL;
     /**
      * Default constructor called using reflection from framework
      */
@@ -140,10 +140,18 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
         SchemaBuilder schemaBld = new SchemaBuilder(getClass());
         schemaBld.defineObjectClass(ObjectClass.ACCOUNT_NAME, attrInfoSet);
         return schemaBld.build();
-    } 
+    }
+	
+	private String getTestSQL(){
+	    if(testSQL != null){
+	        return testSQL;
+	    }
+	    testSQL = DB2Specifics.findTestSQL(adminConn);
+	    return testSQL;
+	}
 
 	public void checkAlive() {
-		DB2Specifics.testConnection(adminConn);
+		DB2Specifics.testConnection(adminConn,getTestSQL());
 	}
 
 	public void dispose() {
@@ -485,7 +493,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
      */
 	public void test() {
 		cfg.validate();
-		DB2Specifics.testConnection(adminConn);
+		DB2Specifics.testConnection(adminConn,getTestSQL());
 	}
 
     /**
