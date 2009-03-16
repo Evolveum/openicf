@@ -26,16 +26,19 @@ import java.io.StringReader;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.script.ScriptExecutor;
 import org.identityconnectors.common.script.ScriptExecutorFactory;
 import org.identityconnectors.common.security.GuardedString;
@@ -610,15 +613,14 @@ class CommandLineUtil {
             throw ConnectorException.wrap(e);
         }
     }
-    
-    private String getAffinity() {
-        return "XYZZY";
-    }
 
-    public Map<String, Object> getAttributesFromCommandLine(String name, boolean ldapAvailable, Set<String> attributesToGet) {
+    //TODO: do separate commands / segment, and see if that works
+    
+    public Map<String, Object> XXXgetAttributesFromCommandLine(String name, boolean ldapAvailable, Set<String> attributesToGet) {
         // Determine the set of segment names, if any
+        // We use a TreeSet to force an ordering
         //
-        Set<String> segmentsNeeded = new HashSet<String>();
+        Set<String> segmentsNeeded = new TreeSet<String>();
         
         // If we have no LDAP, minimally, we need the RACF segment
         //
@@ -627,6 +629,9 @@ class CommandLineUtil {
         
         if (attributesToGet!=null) {
             for (String attributeToGet : attributesToGet) {
+                //TODO:
+                if (attributeToGet.startsWith("*"))
+                    continue;
                 int index = attributeToGet.indexOf('.');
                 if (index!=-1) {
                     String prefix = attributeToGet.substring(0, index);
@@ -638,7 +643,9 @@ class CommandLineUtil {
                 }
             }
         }
-
+        //TODO: somehow, adding the segments to the command line breaks the following
+        //  LISTUSER. I don't yet know why -- see all the "if (false)" markers
+        
         // If we are asking for segment information, ensure that command-line login
         // information was specified
         //
@@ -651,17 +658,123 @@ class CommandLineUtil {
                 StringBuffer buffer = new StringBuffer();
                 buffer.append("LISTUSER ");
                 buffer.append(_connector.extractRacfIdFromLdapId(name));
-                for (String segment : segmentsNeeded)
+                if (!false) for (String segment : segmentsNeeded)
                     if (!RACF.equals(segment))
                         buffer.append(" "+segment);
 
                 String output = getCommandOutput(buffer.toString());
-                // Parse each of the segments, and add the attributes to the set of
-                // attributes received
+                
+                // Split out the various segments
                 //
-                for (String segment : segmentsNeeded) {
-                    MapTransform transform = _segmentParsers.get(segment);
+                StringBuffer segmentPatternString = new StringBuffer();
+                if (segmentsNeeded.contains(RACF))
+                    segmentPatternString.append("(.+?)");
+                if (!false) for (String segment : segmentsNeeded) {
+                    if (!segment.equals(RACF)) {
+                        segmentPatternString.append("(NO )?"+segment.toUpperCase()+" INFORMATION (.+?)");
+                    }
+                }
+                Pattern segmentsPattern = Pattern.compile(segmentPatternString.toString()+"$", Pattern.DOTALL);
+                Matcher segmentsMatcher = segmentsPattern.matcher(output);
+                if (segmentsMatcher.matches()) {
+                    // Deal with RACF first
+                    //
+                    int offset = 0;
+                    if (segmentsNeeded.contains(RACF)) {
+                        MapTransform transform = _segmentParsers.get("RACF");
+                        attributesFromCommandLine.putAll((Map<String, Object>)transform.transform(segmentsMatcher.group(1)));
+                        offset = 1;
+                    }
+                    // Parse the other segments, and add the attributes to the set of
+                    // attributes received
+                    //
+                    int i=0;
+                    if (!false) for (String segment : segmentsNeeded) {
+                        if (!segment.equals(RACF)) {
+                            String noValue = segmentsMatcher.group(2*i+offset+1);
+                            String segmentValue = segmentsMatcher.group(2*i+offset+2);
+                            if (StringUtil.isBlank(noValue)) {
+                                MapTransform transform = _segmentParsers.get(segment);
+                                attributesFromCommandLine.putAll((Map<String, Object>)transform.transform(segmentValue));
+                            }
+                            i++;
+                        }
+                    }
+                } else {
+                    System.out.println("TODO");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw ConnectorException.wrap(e);
+            }
+        }
+        // Default group name must be a stringified Uid
+        //
+        if (attributesFromCommandLine.containsKey(LONG_DEFAULT_GROUP_NAME)) {
+            Object value = attributesFromCommandLine.get(LONG_DEFAULT_GROUP_NAME);
+            attributesFromCommandLine.put(LONG_DEFAULT_GROUP_NAME, _connector.createUidFromName(ObjectClass.GROUP, (String)value).getUidValue());
+        }
+        return attributesFromCommandLine;
+    }
+    
+    //TODO: there appears to be an issue when multiple output continuations are done
+    //      If all segments are output together, the 3rd of 4 segments disappears, and
+    //      I have not yet determined why.
+    //      Also, there appears to be a synch problem with freehost3270
+    //
+    public Map<String, Object> getAttributesFromCommandLine(String name, boolean ldapAvailable, Set<String> attributesToGet) {
+        // Determine the set of segment names, if any
+        // We use a TreeSet to force an ordering
+        //
+        Set<String> segmentsNeeded = new TreeSet<String>();
+        
+        // If we have no LDAP, minimally, we need the RACF segment
+        //
+        if (!ldapAvailable)
+            segmentsNeeded.add(RACF);
+        
+        if (attributesToGet!=null) {
+            for (String attributeToGet : attributesToGet) {
+                //TODO:
+                if (attributeToGet.startsWith("*"))
+                    continue;
+                int index = attributeToGet.indexOf('.');
+                if (index!=-1) {
+                    String prefix = attributeToGet.substring(0, index);
+                    segmentsNeeded.add(prefix);
+                    
+                    if (!_segmentParsers.containsKey(prefix)) {
+                        throw new ConnectorException("Bad Attribute name (no such segment):"+attributeToGet);
+                    }
+                }
+            }
+        }
+        // If we are asking for segment information, ensure that command-line login
+        // information was specified
+        //
+        if (segmentsNeeded.size()>0 && ((RacfConfiguration)_connector.getConfiguration()).getUserName()==null)
+            throw new ConnectorException("Segment attributes requested, but no login information given");
+        
+        Map<String, Object> attributesFromCommandLine = new HashMap<String, Object>();
+        if (segmentsNeeded.size()>0 || ((RacfConfiguration)_connector.getConfiguration()).getUserName()==null) {
+            try {
+                StringBuffer buffer = new StringBuffer();
+                buffer.append("LISTUSER ");
+                buffer.append(_connector.extractRacfIdFromLdapId(name));
+                boolean racfNeeded = segmentsNeeded.remove(RACF);
+                if (racfNeeded) {
+                    String command = buffer.toString();
+                    String output = getCommandOutput(command);
+                    MapTransform transform = _segmentParsers.get("RACF");
                     attributesFromCommandLine.putAll((Map<String, Object>)transform.transform(output));
+                }
+                for (String segment : segmentsNeeded) {
+                    String command = buffer.toString()+(segment.equals(RACF)?"": " NORACF "+segment);
+                    String output = getCommandOutput(command);
+                    if (!output.contains("\n NO "+segment+" INFORMATION"))  {
+                        MapTransform transform = _segmentParsers.get(segment);
+                        attributesFromCommandLine.putAll((Map<String, Object>)transform.transform(output));
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();

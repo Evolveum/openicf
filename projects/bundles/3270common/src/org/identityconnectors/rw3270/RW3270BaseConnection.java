@@ -34,6 +34,7 @@ import java.util.regex.Pattern;
 
 import javax.naming.NamingException;
 
+import org.apache.oro.text.regex.MalformedPatternException;
 import org.identityconnectors.common.script.ScriptExecutor;
 import org.identityconnectors.common.script.ScriptExecutorFactory;
 import org.identityconnectors.common.security.GuardedString;
@@ -241,43 +242,31 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
     }
 
     /* (non-Javadoc)
+     * @see org.identityconnectors.racf.RW3270Connection#waitFor(expect4j.matches.Match[])
+     */
+    public void waitFor(Match[] matches) {
+        try {
+            _expect4j.expect(matches);
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }
+    }
+
+
+    /* (non-Javadoc)
      * @see org.identityconnectors.racf.RW3270Connection#waitFor(java.lang.String)
      */
     public void waitFor(String expression) {
-        waitForLocal(expression, null);
+        waitForLocal(null, expression, null);
     }
 
     /* (non-Javadoc)
      * @see org.identityconnectors.racf.RW3270Connection#waitFor(java.lang.String, int)
      */
     public void waitFor(final String expression, int timeOut) {
-        waitForLocal(expression, new Integer(timeOut));
+        waitForLocal(null, expression, new Integer(timeOut));
     }
 
-    private void waitForLocal(String expression, Integer timeout) {
-        try {
-            List<Match> matches = new LinkedList<Match>();
-            matches.add(new RegExpMatch(expression, new Closure() {
-                public void run(ExpectState state) throws Exception {
-                    state.addVar("timeout", Boolean.FALSE);
-                }
-            }));
-            if (timeout != null)
-                matches.add(new TimeoutMatch(timeout, new Closure() {
-                    public void run(ExpectState state) throws Exception {
-                        _buffer.append(state.getBuffer());
-                        state.addVar("timeout", Boolean.TRUE);
-                    }
-                }));
-            _expect4j.expect(matches);
-        } catch (Exception e) {
-            throw ConnectorException.wrap(e);
-        }
-        Boolean isTimeout = (Boolean)_expect4j.getLastState().getVar("timeout");
-        if (isTimeout==null || isTimeout.booleanValue())
-            throw new ConnectorException(_config.getConnectorMessages().format("IsAlive", "timed out waiting for ''{0}'':''{1}''", expression, getStandardOutput()));
-    }
-    
     /* (non-Javadoc)
      * @see org.identityconnectors.racf.RW3270Connection#waitFor(java.lang.String, java.lang.String)
      */
@@ -292,13 +281,55 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
         waitForLocal(expression0, expression1, new Integer(timeOut));
     }
     
-    private void waitForLocal(final String expression0, final String expression1,
-            Integer timeout) {
+    private void waitForLocal(final String expression0, final String expression1, Integer timeout) {
         try {
             List<Match> matches = new LinkedList<Match>();
-            final Pattern pattern = Pattern.compile(expression0);
-            matches.add(new RegExpMatch(expression0, new Closure() {
+            
+            // Match the continue expression, so
+            //  save the partial output
+            //  ask for more output
+            //
+            if (expression0!=null) {
+                matches.add(new RegExpMatch(expression0, new Closure() {
+                    public void run(ExpectState state) throws Exception {
+                        // Need to strip off the match
+                        //
+                        String data = state.getBuffer();
+                        
+                        data = data.substring(0, state.getMatchedWhere());
+                        _buffer.append(data);
+                        clearAndUnlock();
+                        sendEnter();
+                        state.exp_continue();
+                    }
+                }));
+            }
+            
+            // Match the command complete expression, so
+            //  if there was an error,
+            //      throw exception
+            //  else
+            //      save the final output
+            matches.add(new RegExpMatch(expression1, new Closure() {
                 public void run(ExpectState state) throws Exception {
+                    String data = state.getBuffer();
+                    _buffer.append(data);
+                    Object errorDetected = state.getVar("errorDetected");
+                    state.addVar("timeout", Boolean.FALSE);
+                    state.addVar("errorDetected", null);
+                    //if (errorDetected!=null)
+                    //    throw new XXX();;
+                }
+            }));
+            
+            // Match the error expression, so
+            //  send the abort command
+            //  continue execution, to see if we can recover
+            //
+            /*
+            matches.add(new RegExpMatch(expression2, new Closure() {
+                public void run(ExpectState state) throws Exception {
+                    state.addVar("errorDetected", state.getBuffer());
                     // Need to strip off the match
                     //
                     String data = state.getBuffer();
@@ -308,17 +339,11 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
                     }
                     _buffer.append(data);
                     clearAndUnlock();
-                    sendEnter();
+                    sendPAKeys(1);
                     state.exp_continue();
                 }
             }));
-            matches.add(new RegExpMatch(expression1, new Closure() {
-                public void run(ExpectState state) throws Exception {
-                    String data = state.getBuffer();
-                    _buffer.append(data);
-                    state.addVar("timeout", Boolean.FALSE);
-                }
-            }));
+            */
             if (timeout != null)
                 matches.add(new TimeoutMatch(timeout, new Closure() {
                     public void run(ExpectState state) throws Exception {

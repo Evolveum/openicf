@@ -160,6 +160,7 @@ public interface RacfConstants {
 
     public static final String ATTR_CL_USERID                   = "RACF.USERID";
     
+    public static final String ATTR_CL_ATTRIBUTES               = "RACF.ATTRIBUTES";
     public static final String ATTR_CL_GROUPS                   = "RACF.GROUPS";
     public static final String ATTR_CL_GROUP_CONN_OWNERS        = "RACF.GROUP-CONN-OWNERS";
     public static final String ATTR_CL_MASTER_CATALOG           = "*.MASTER CATALOG";
@@ -181,6 +182,7 @@ public interface RacfConstants {
     public static final String ATTR_CL_TSO_MAXSIZE              = "TSO.MAXSIZE";
     public static final String ATTR_CL_TSO_SYSOUTCLASS          = "TSO.SYSOUTCLASS";
     public static final String ATTR_CL_TSO_UNIT                 = "TSO.UNIT";
+    public static final String ATTR_CL_TSO_SECLABEL             = "TSO.ECLABEL";
     public static final String ATTR_CL_TSO_USERDATA             = "TSO.USERDATA";
     public static final String ATTR_CL_TSO_COMMAND              = "TSO.COMMAND";
     public static final String ATTR_CL_OMVS_UID                 = "OMVS.UID";
@@ -197,6 +199,8 @@ public interface RacfConstants {
     public static final String ATTR_CL_CICS_OPIDENT             = "CICS.OPIDENT";
     public static final String ATTR_CL_CICS_OPCLASS             = "CICS.OPCLASS";
     public static final String ATTR_CL_CICS_XRFSOFF             = "CICS.XRFSOFF";
+    public static final String ATTR_CL_CICS_RLSKEY              = "CICS.RLSKEY";
+    public static final String ATTR_CL_CICS_TLSKEY              = "CICS.TLSKEY";
     public static final String ATTR_CL_NETVIEW_OPCLASS          = "NETVIEW.OPCLASS";
     public static final String ATTR_CL_NETVIEW_NGMFVSPN         = "NETVIEW.NGMFVSPN";
     public static final String ATTR_CL_NETVIEW_NGMFADMN         = "NETVIEW.NGMFADMN";

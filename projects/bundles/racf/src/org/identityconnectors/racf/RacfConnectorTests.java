@@ -179,6 +179,7 @@ public class RacfConnectorTests {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
         try {
+//            displayUser(getUser("CICSUSER", connector));
             // Delete the user
             deleteUser(TEST_USER_UID, connector);
     
@@ -604,11 +605,11 @@ public class RacfConnectorTests {
         config.setUserName(SYSTEM_USER );
         config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
         config.setScriptingLanguage("GROOVY");
-        config.setSegmentNames(new String[] { "RACF", "TSO" });
-        config.setSegmentParsers(new String[] { loadParserFromFile(RACF_PARSER), loadParserFromFile(TSO_PARSER) });
-        //config.setConnectionClassName(WrqConnection.class.getName());
-        //config.setConnectionClassName("org.identityconnectors.rw3270.hod.HodConnection");
-        config.setConnectionClassName("org.identityconnectors.rw3270.freehost3270.FH3270Connection");
+        config.setSegmentNames(new String[] { "RACF", "TSO", "NETVIEW", "CICS", "OMVS" });
+        config.setSegmentParsers(new String[] { loadParserFromFile(RACF_PARSER), loadParserFromFile(TSO_PARSER), loadParserFromFile(NETVIEW_PARSER), loadParserFromFile(CICS_PARSER), loadParserFromFile(OMVS_PARSER),  });
+        //config.setConnectionClassName("org.identityconnectors.rw3270.wrq.WrqConnection");
+        config.setConnectionClassName("org.identityconnectors.rw3270.hod.HodConnection");
+        //config.setConnectionClassName("org.identityconnectors.rw3270.freehost3270.FH3270Connection");
     }
     
     protected void initializeLdapConfiguration(RacfConfiguration config) {
