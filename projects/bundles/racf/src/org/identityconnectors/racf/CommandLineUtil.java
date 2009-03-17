@@ -204,27 +204,6 @@ class CommandLineUtil {
             // Strip command from start, if present
             //
             int index = indexOf(output,command);
-            //TODO: workaround for lost enter (will not work with freehost, since
-            // it hides the output)
-            //
-            if (index==-1) {
-                System.out.println("********** SYNCH LOST *********");
-                connection.send("[enter]");
-                connection.waitFor(OUTPUT_CONTINUING, OUTPUT_COMPLETE_PATTERN, COMMAND_TIMEOUT);
-                output = connection.getStandardOutput();
-                // Strip command from start, if present
-                //
-                index = indexOf(output,command);
-                // Regain sync
-                //
-                synchLost = true;
-                connection.send("[clear]");
-                connection.waitFor(OUTPUT_CONTINUING, OUTPUT_COMPLETE_PATTERN, COMMAND_TIMEOUT);
-            } 
-            else if (synchLost) {
-                synchLost = false;
-                System.out.println("********** SYNCH RECOVERED *********");
-            }
             if (index>-1) {
                 // Round up to line length
                 //

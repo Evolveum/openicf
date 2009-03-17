@@ -281,7 +281,8 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
         waitForLocal(expression0, expression1, new Integer(timeOut));
     }
     
-    private void waitForLocal(final String expression0, final String expression1, Integer timeout) {
+    private int count = 0;
+    private void waitForLocal(final String continue_regexp, final String complete_regexp, Integer timeout) {
         try {
             List<Match> matches = new LinkedList<Match>();
             
@@ -289,8 +290,8 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
             //  save the partial output
             //  ask for more output
             //
-            if (expression0!=null) {
-                matches.add(new RegExpMatch(expression0, new Closure() {
+            if (continue_regexp!=null) {
+                matches.add(new RegExpMatch(continue_regexp, new Closure() {
                     public void run(ExpectState state) throws Exception {
                         // Need to strip off the match
                         //
@@ -298,6 +299,7 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
                         
                         data = data.substring(0, state.getMatchedWhere());
                         _buffer.append(data);
+                        //System.out.println("+++continue("+count+++")\n:"+_buffer.toString().replaceAll("(.{80})", "$1\n"));
                         clearAndUnlock();
                         sendEnter();
                         state.exp_continue();
@@ -310,15 +312,38 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
             //      throw exception
             //  else
             //      save the final output
-            matches.add(new RegExpMatch(expression1, new Closure() {
+            matches.add(new RegExpMatch(complete_regexp, new Closure() {
                 public void run(ExpectState state) throws Exception {
                     String data = state.getBuffer();
-                    _buffer.append(data);
-                    Object errorDetected = state.getVar("errorDetected");
-                    state.addVar("timeout", Boolean.FALSE);
-                    state.addVar("errorDetected", null);
-                    //if (errorDetected!=null)
-                    //    throw new XXX();;
+                    Matcher matcher = Pattern.compile(complete_regexp).matcher(getDisplay());
+                    // This code will be exported to a script, but I want to get the tests back on-line
+                    //
+                    if (complete_regexp.contains("READY") && !getDisplay().trim().endsWith("READY")) {
+                        // This situation is a bit complicated. Here's what I think is happening:
+                        //  . the previous command ended with READY on the next-to-last
+                        //    line of the screen, so the last line was given the continue prompt
+                        //  . The matching for the previous command ended with the READY, leaving
+                        //    the continue prompt unconsumed
+                        //  . when the CLEAR was issued as part of the current command, the READY
+                        //    was sent out, and the screen was cleared
+                        //  . the initial Enter was consumed to complete the continue prompt
+                        //  . thus, the current command has not yet seen the enter
+                        // We've lost the READY, so retry
+                        //System.out.println("******* command complete lost");
+                        //System.out.println("+++complete("+count+++")\n:"+getDisplay().toString().replaceAll("(.{80})", "$1\n"));
+                        clearAndUnlock();
+                        sendEnter();
+                        state.exp_continue();
+                    } else {
+                        //System.out.println("******* READY found at "+getDisplay().lastIndexOf(" READY"));
+                        _buffer.append(data);
+                        //System.out.println("+++complete("+count+++")\n:"+_buffer.toString().replaceAll("(.{80})", "$1\n"));
+                        Object errorDetected = state.getVar("errorDetected");
+                        state.addVar("timeout", Boolean.FALSE);
+                        state.addVar("errorDetected", null);
+                        //if (errorDetected!=null)
+                        //    throw new XXX();;
+                    }
                 }
             }));
             
@@ -359,7 +384,7 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
         if (isTimeout==null || isTimeout.booleanValue())
             throw new ConnectorException(_config.getConnectorMessages().format(
                     "IsAlive", "timed out waiting for ''{0}'':''{1}''",
-                    expression1, getStandardOutput()));
+                    complete_regexp, getStandardOutput()));
     }
     
     private static class GuardedStringAccessor implements GuardedString.Accessor {
