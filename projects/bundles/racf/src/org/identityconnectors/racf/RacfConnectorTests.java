@@ -198,6 +198,8 @@ public class RacfConnectorTests {
             Attribute racfInstallationData = changedUser.getAttributeByName(getInstallationDataAttributeName());
             displayUser(changedUser);
             Assert.assertTrue(AttributeUtil.getStringValue(racfInstallationData).trim().equalsIgnoreCase("modified data"));
+            displayUser(getUser("IDM01", connector));
+            displayUser(getUser("IDM01", connector));
         } finally {
             connector.dispose();
         }
@@ -548,7 +550,7 @@ public class RacfConnectorTests {
             "connection.send(PASSWORD);\n" +
             "connection.send(\"[enter]\");\n" +
             "connection.waitFor(\" \\\\*\\\\*\\\\* \", SHORT_WAIT);\n" +
-            "connection.send(\"[pf3]\");\n" +
+            "connection.send(\"[enter]\");\n" +
             "connection.waitFor(\"Option ===>\", SHORT_WAIT);\n" +
             "connection.send(\"[pf3]\");\n" +
             "connection.waitFor(\"READY\\\\s{74}\", SHORT_WAIT);";
@@ -608,8 +610,8 @@ public class RacfConnectorTests {
         config.setSegmentNames(new String[] { "RACF", "TSO", "NETVIEW", "CICS", "OMVS" });
         config.setSegmentParsers(new String[] { loadParserFromFile(RACF_PARSER), loadParserFromFile(TSO_PARSER), loadParserFromFile(NETVIEW_PARSER), loadParserFromFile(CICS_PARSER), loadParserFromFile(OMVS_PARSER),  });
         //config.setConnectionClassName("org.identityconnectors.rw3270.wrq.WrqConnection");
-        config.setConnectionClassName("org.identityconnectors.rw3270.hod.HodConnection");
-        //config.setConnectionClassName("org.identityconnectors.rw3270.freehost3270.FH3270Connection");
+        //config.setConnectionClassName("org.identityconnectors.rw3270.hod.HodConnection");
+        config.setConnectionClassName("org.identityconnectors.rw3270.freehost3270.FH3270Connection");
     }
     
     protected void initializeLdapConfiguration(RacfConfiguration config) {
