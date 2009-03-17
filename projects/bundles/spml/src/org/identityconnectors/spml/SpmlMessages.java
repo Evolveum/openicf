@@ -45,5 +45,6 @@ public interface SpmlMessages {
     public static final String MAPSETNAME_SCRIPT_ERROR 		 = "MAPSETNAME_SCRIPT_ERROR";
     public static final String MAPSCHEMA_SCRIPT_ERROR 		 = "MAPSCHEMA_SCRIPT_ERROR";
     public static final String MAPATTRIBUTE_SCRIPT_ERROR	 = "MAPATTRIBUTE_SCRIPT_ERROR";
-    public static final String MAPQUERYNAME_SCRIPT_ERROR	 = "MAPQUERYNAME_SCRIPT_ERROR";    
+    public static final String MAPQUERYNAME_SCRIPT_ERROR     = "MAPQUERYNAME_SCRIPT_ERROR";
+    public static final String MAPPING_REQUIRED              = "MAPPING_REQUIRED";
 }

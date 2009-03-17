@@ -201,6 +201,10 @@ public class SpmlConnection  {
      */
     public void test() {
         try {
+            if (_configuration.getTargetNames()==null ||
+                _configuration.getTargetNames().length==0) {
+                throw new ConnectorException(_configuration.getMessage(SpmlMessages.MAPPING_REQUIRED));
+            }
             get("random name", _configuration.getTargetNames()[0]);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
