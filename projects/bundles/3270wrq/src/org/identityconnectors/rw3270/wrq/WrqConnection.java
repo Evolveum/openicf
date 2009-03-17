@@ -162,6 +162,7 @@ public class WrqConnection extends RW3270BaseConnection implements ECLPSListener
 
     public void resetStandardOutput() {
         _buffer.setLength(0);
+        _ioPair.reset();
     }
 
     public void test() {
@@ -174,7 +175,8 @@ public class WrqConnection extends RW3270BaseConnection implements ECLPSListener
 
     public void PSNotifyEvent(ECLPSEvent event) {
         if (event.GetType()==ECLPS.HOST_EVENTS)
-            _semaphore.release();
+            if (_semaphore.availablePermits()==0)
+                _semaphore.release();
     }
 
     public void PSNotifyStop(ECLPS event, int arg1) {
