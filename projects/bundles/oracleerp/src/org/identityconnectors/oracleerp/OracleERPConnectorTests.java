@@ -167,7 +167,7 @@ public class OracleERPConnectorTests {
         assertNotNull(config.getHost());
         assertNotNull(config.getUser());
         assertNotNull(config.getPassword());
-        assertFalse(config.isAccountsIncluded());
+        assertNotNull(config.getAccountsIncluded());
         assertFalse(config.isActiveAccountsOnly());
         assertNotNull(config.getAuditResponsibility());
         assertTrue(config.isManageSecuringAttrs());
@@ -266,7 +266,7 @@ public class OracleERPConnectorTests {
         assertNotNull(config.getHost());
         assertNotNull(config.getUser());
         assertNotNull(config.getPassword());
-        assertFalse(config.isAccountsIncluded());
+        assertNotNull(config.getAccountsIncluded());
         assertFalse(config.isActiveAccountsOnly());
         assertNotNull(config.getAuditResponsibility());
         assertTrue(config.isManageSecuringAttrs());

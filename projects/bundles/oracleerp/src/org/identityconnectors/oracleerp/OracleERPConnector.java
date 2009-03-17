@@ -30,6 +30,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,8 @@ import java.util.Set;
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.common.script.ScriptExecutor;
+import org.identityconnectors.common.script.ScriptExecutorFactory;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.DatabaseQueryBuilder;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
@@ -51,8 +54,10 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
+import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
@@ -69,6 +74,7 @@ import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
 import org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp;
+import org.identityconnectors.framework.spi.operations.ScriptOnResourceOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 import org.identityconnectors.framework.spi.operations.SyncOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
@@ -310,8 +316,10 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
             final Uid uid = createAccount(oclass, attrs, options);
             //doAfterCreateActionScripts(oclass, attrs, options);
             return uid;
-        } else if (oclass.equals(OracleERPUtil.RESP_OC)) {
+        } else if (oclass.equals(OracleERPUtil.RESP_OC)) {            
             // TODO add implementation
+        } else if (oclass.equals(OracleERPUtil.RESP_NAME_OC)) {
+            // TODO add implementation            
         } else if (oclass.equals(OracleERPUtil.DIRECT_RESP_OC)) {
          // TODO add implementation
         } else if (oclass.equals(OracleERPUtil.INDIRECT_RESP_OC)) {
@@ -325,8 +333,6 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         } else if (oclass.equals(OracleERPUtil.FUNCTION_OC)) {
          // TODO add implementation
         } else if (oclass.equals(OracleERPUtil.MENU_OC)) {
-         // TODO add implementation
-        } else if (oclass.equals(OracleERPUtil.RESP_NAME_OC)) {
          // TODO add implementation
         } else if (oclass.equals(OracleERPUtil.SEC_GROUP_OC)) {
          // TODO add implementation   
@@ -712,12 +718,20 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
             final Set<String> columnNamesToGet = accountAttributesToColumnNames(options);
             // For all user query there is no need to replace or quote anything
             final DatabaseQueryBuilder query = new DatabaseQueryBuilder(tblname, columnNamesToGet);
+            String sqlSelect = query.getSQL();
+            
+            if(StringUtil.isNotBlank(config.getAccountsIncluded())) {
+                sqlSelect += whereAnd(sqlSelect, config.getAccountsIncluded());
+            } else if( config.isActiveAccountsOnly()) {
+                sqlSelect += whereAnd(sqlSelect, OracleERPUtil.ACTIVE_ACCOUNTS_ONLY_WHERE_CLAUSE);
+            }
+            
             query.setWhere(where);
 
             ResultSet result = null;
             PreparedStatement statement = null;
             try {
-                statement = conn.prepareStatement(query);
+                statement = conn.prepareStatement(sqlSelect, query.getParams());
                 result = statement.executeQuery();
                 while (result.next()) {
                     final Set<Attribute> attributeSet = SQLUtil.getAttributeSet(result);
@@ -757,6 +771,16 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         }        
 
     }
+
+    /**
+     * @param sqlSelect 
+     * @param whereAnd
+     * @return
+     */
+    private String whereAnd(String sqlSelect, String whereAnd) {
+        int iofw = sqlSelect.indexOf("WHERE");
+        return (iofw == -1) ? sqlSelect + " WHERE " + whereAnd : sqlSelect.substring(0, iofw) + "WHERE ("+sqlSelect.substring(iofw + 5) +") AND ( " + whereAnd + " )";
+    }    
     
     /**
      * Construct a connector object
@@ -858,7 +882,48 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      * @see org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp#runScriptOnConnector(org.identityconnectors.framework.common.objects.ScriptContext, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public Object runScriptOnConnector(ScriptContext request, OperationOptions options) {
-        // TODO Auto-generated method stub
-        return null;
-    }     
+        final ClassLoader loader = getClass().getClassLoader();
+        
+        String scriptLanguage = request.getScriptLanguage();
+        if("JAVASCRIPT".equals(scriptLanguage) || StringUtil.isBlank(scriptLanguage)) {
+            scriptLanguage = "GROOVY"; // TODO javascript is handled by groovy, think about javascript executor
+        }
+        
+        /*
+         * Build the actionContext to pass to script
+         */        
+        final Map<String, Object> actionContext = new HashMap<String, Object>();
+        final Map<String, Object> scriptArguments = request.getScriptArguments();
+        final String nameValue = ((Name) scriptArguments.get(Name.NAME)).getNameValue();
+        final GuardedString password = ((GuardedString) scriptArguments.get(OperationalAttributes.PASSWORD_NAME));
+
+        actionContext.put("conn", conn.getConnection());  //The real connection
+        actionContext.put("action", scriptArguments.get("operation")); // The action is the operation name createUser/updateUser/deleteUser/disableUser/enableUser
+        actionContext.put("timing", scriptArguments.get("timing")); // The timming before / after
+        actionContext.put("attributes", scriptArguments.get("attributes"));  // The attributes
+        actionContext.put("id", nameValue); // The user name
+        if (password != null) {
+            password.access(new GuardedString.Accessor() {
+                public void access(char[] clearChars) {
+                    actionContext.put("password", new String(clearChars)); //The password
+                }
+            });
+        }
+        actionContext.put("trace", log); //The loging
+        List<String> errorList = new ArrayList<String>();
+        actionContext.put("errors", errorList); // The error list
+    
+
+        Map<String, Object> inputMap = new HashMap<String, Object>();
+        inputMap.put("actionContext", actionContext);        
+        
+        final ScriptExecutorFactory scriptExFact = ScriptExecutorFactory.newInstance(scriptLanguage);
+        final ScriptExecutor scripEx = scriptExFact.newScriptExecutor(loader, request.getScriptText(), true);
+        try {
+            return scripEx.execute(inputMap);
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }        
+    }
+
 }

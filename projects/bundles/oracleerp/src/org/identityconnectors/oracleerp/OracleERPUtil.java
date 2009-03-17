@@ -162,4 +162,20 @@ public class OracleERPUtil {
         }
         return tms;
     }
+    
+    /**
+     * @param sqlSelect 
+     * @param whereAnd
+     * @return
+     */
+    public static String whereAnd(String sqlSelect, String whereAnd) {
+        int iofw = sqlSelect.toUpperCase().indexOf("WHERE");
+        return (iofw == -1) ? sqlSelect + " WHERE " + whereAnd : sqlSelect.substring(0, iofw) + "WHERE ("+sqlSelect.substring(iofw + 5) +") AND ( " + whereAnd + " )";
+    }
+    
+    /**
+     * Only accounts where clause
+     */
+    public static final String ACTIVE_ACCOUNTS_ONLY_WHERE_CLAUSE =
+        "(START_DATE - SYSDATE <= 0) AND ((END_DATE IS NULL) OR (END_DATE - SYSDATE > 0))";
 }

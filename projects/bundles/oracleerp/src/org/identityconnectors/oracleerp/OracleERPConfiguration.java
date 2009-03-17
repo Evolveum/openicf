@@ -436,13 +436,13 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * name="ACCOUNTS_INCLUDED" type="string" multi="false"
      * displayName="ORACLE_ERP_ACCOUNTS_INCLUDED" description="ORACLE_ERP_ACCOUNTS_INCLUDED_HELP"
      */
-    private boolean accountsIncluded=false;
+    private String accountsIncluded="";
 
     /**
      * Getter for the accountsIncluded attribute.
      * @return accountsIncluded attribute
      */
-    public boolean isAccountsIncluded() {
+    public String getAccountsIncluded() {
         return accountsIncluded;
     }
 
@@ -451,7 +451,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * @param accountsIncluded attribute.
      */
     @ConfigurationProperty(order=14 ,displayMessageKey="ACCOUNTS_INCLUDED_DISPLAY", helpMessageKey="ACCOUNTS_INCLUDED_HELP")
-    public void setAccountsIncluded(boolean accountsIncluded) {
+    public void setAccountsIncluded(String accountsIncluded) {
         this.accountsIncluded = accountsIncluded;
     }    
         
