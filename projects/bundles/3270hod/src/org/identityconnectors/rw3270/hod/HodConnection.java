@@ -37,6 +37,7 @@ import com.ibm.eNetwork.ECL.ECLSession;
 import com.ibm.eNetwork.ECL.event.ECLPSEvent;
 import com.ibm.eNetwork.ECL.event.ECLPSListener;
 
+
 public class HodConnection extends RW3270BaseConnection implements ECLPSListener {
     private ECLPS                     _ps;
     private ECLSession                _session;
