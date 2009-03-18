@@ -29,9 +29,8 @@
     <target name="-pre-clean-extra">
         <delete>
             <fileset dir="${lib}" includes="**/*.jar">
-                <exclude name="commons-pool*.jar"/>
                 <exclude name="expect4j*.jar"/>
-                <exclude name="test/jakarta-oro-2.0.8.jar"/>
+                <exclude name="jakarta-oro-2.0.8.jar"/>
             </fileset>
         </delete>
     </target>

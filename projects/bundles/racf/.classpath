@@ -4,10 +4,13 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/PatternParser"/>
-	<classpathentry kind="lib" path="lib/commons-pool-1.4.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/3270ConnectionPool"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-HEAD"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/3270hod"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorTestCommon-HEAD"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/3270freehost"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/3270wrq"/>
+	<classpathentry kind="lib" path="lib/expect4j-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/jakarta-oro-2.0.8.jar"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>
