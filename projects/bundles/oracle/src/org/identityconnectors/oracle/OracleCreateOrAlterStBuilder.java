@@ -1,6 +1,8 @@
 package org.identityconnectors.oracle;
 
+import java.util.Arrays;
 import org.identityconnectors.common.security.GuardedString;
+import static org.identityconnectors.oracle.OracleUserAttribute.*;
 
 /**
  * Builds create or alter user sql statement.
@@ -11,9 +13,9 @@ import org.identityconnectors.common.security.GuardedString;
  *
  */
 class OracleCreateOrAlterStBuilder {
-    private OracleCaseSensitivity cs;
+    private OracleCaseSensitivitySetup cs;
     
-    public OracleCreateOrAlterStBuilder(OracleCaseSensitivity cs) {
+    public OracleCreateOrAlterStBuilder(OracleCaseSensitivitySetup cs) {
         this.cs = OracleConnectorHelper.assertNotNull(cs, "cs");
     }
     
@@ -22,13 +24,13 @@ class OracleCreateOrAlterStBuilder {
      * @param userAttributes
      * @return
      */
-    String buildCreateUserSt(CreateAlterAttributes userAttributes){
+    String buildCreateUserSt(OracleUserAttributes userAttributes){
         StringBuilder builder = new StringBuilder();
         userAttributes.operation = Operation.CREATE;
         if(userAttributes.userName == null){
             throw new IllegalArgumentException("User not specified");
         }
-        builder.append("create user ").append(cs.formatUserName(userAttributes.userName));
+        builder.append("create user ").append(cs.formatToken(USER_NAME, userAttributes.userName));
         if(userAttributes.auth == null){
             throw new IllegalArgumentException("Authentication not specified");
         }
@@ -36,18 +38,18 @@ class OracleCreateOrAlterStBuilder {
         return builder.toString();
     }
     
-    String buildAlterUserSt(CreateAlterAttributes userAttributes,UserRecord userRecord){
+    String buildAlterUserSt(OracleUserAttributes userAttributes,UserRecord userRecord){
         StringBuilder builder = new StringBuilder();
         userAttributes.operation = Operation.ALTER;
         if(userAttributes.userName == null){
             throw new IllegalArgumentException("User not specified");
         }
-        builder.append("alter user ").append(cs.formatUserName(userAttributes.userName));
+        builder.append("alter user ").append(cs.formatToken(USER_NAME, userAttributes.userName));
         appendCreateOrAlterSt(builder,userAttributes,userRecord);
         return builder.toString();
     }
 
-    private void appendCreateOrAlterSt(StringBuilder builder, CreateAlterAttributes userAttributes, UserRecord userRecord) {
+    private void appendCreateOrAlterSt(StringBuilder builder, OracleUserAttributes userAttributes, UserRecord userRecord) {
         if(userAttributes.auth != null){
             appendAuth(builder, userAttributes);
         }
@@ -74,12 +76,12 @@ class OracleCreateOrAlterStBuilder {
         }
     }
 
-    private void appendProfile(StringBuilder builder,CreateAlterAttributes userAttributes) {
-        builder.append(" profile ").append(cs.formatProfile(userAttributes.profile));
+    private void appendProfile(StringBuilder builder,OracleUserAttributes userAttributes) {
+        builder.append(" profile ").append(cs.formatToken(PROFILE,userAttributes.profile));
         
     }
 
-    private void appendEnabled(StringBuilder builder, CreateAlterAttributes userAttributes) {
+    private void appendEnabled(StringBuilder builder, OracleUserAttributes userAttributes) {
         if(userAttributes.enable){
             builder.append(" account unlock");
         }
@@ -89,11 +91,11 @@ class OracleCreateOrAlterStBuilder {
         
     }
 
-    private void appendExpirePassword(StringBuilder builder, CreateAlterAttributes userAttributes) {
+    private void appendExpirePassword(StringBuilder builder, OracleUserAttributes userAttributes) {
         builder.append(" password expire");
     }
 
-    private void appendDefaultTSQuota(StringBuilder builder, CreateAlterAttributes userAttributes, UserRecord userRecord) {
+    private void appendDefaultTSQuota(StringBuilder builder, OracleUserAttributes userAttributes, UserRecord userRecord) {
         builder.append(" quota");
         String size = userAttributes.defaultTSQuota.size;
         if(size == null){
@@ -110,10 +112,10 @@ class OracleCreateOrAlterStBuilder {
             }
             defaultTableSpace = userRecord.defaultTableSpace;
         }
-        builder.append(' ').append(cs.formatDefaultTableSpace(defaultTableSpace));
+        builder.append(' ').append(cs.formatToken(DEF_TABLESPACE, defaultTableSpace));
     }
 
-    private void appendTempTSQuota(StringBuilder builder, CreateAlterAttributes userAttributes, UserRecord userRecord) {
+    private void appendTempTSQuota(StringBuilder builder, OracleUserAttributes userAttributes, UserRecord userRecord) {
         builder.append(" quota");
         String size = userAttributes.tempTSQuota.size;
         if(size == null){
@@ -130,20 +132,20 @@ class OracleCreateOrAlterStBuilder {
             }
             tempTableSpace = userRecord.temporaryTableSpace;
         }
-        builder.append(' ').append(cs.formatTempTableSpace(tempTableSpace));
+        builder.append(' ').append(cs.formatToken(TEMP_TABLESPACE, tempTableSpace));
 
     }
     
-    private void appendTemporaryTableSpace(StringBuilder builder, CreateAlterAttributes userAttributes) {
-        builder.append(" temporary tablespace ").append(cs.formatTempTableSpace(userAttributes.tempTableSpace));
+    private void appendTemporaryTableSpace(StringBuilder builder, OracleUserAttributes userAttributes) {
+        builder.append(" temporary tablespace ").append(cs.formatToken(TEMP_TABLESPACE, userAttributes.tempTableSpace));
         
     }
 
-    private void appendDefaultTableSpace(StringBuilder builder, CreateAlterAttributes userAttributes) {
-        builder.append(" default tablespace ").append(cs.formatDefaultTableSpace(userAttributes.defaultTableSpace));
+    private void appendDefaultTableSpace(StringBuilder builder, OracleUserAttributes userAttributes) {
+        builder.append(" default tablespace ").append(cs.formatToken(DEF_TABLESPACE, userAttributes.defaultTableSpace));
     }
 
-    private void appendAuth(final StringBuilder builder, CreateAlterAttributes userAttributes) {
+    private void appendAuth(final StringBuilder builder, OracleUserAttributes userAttributes) {
         builder.append(" identified");
         if(OracleAuthentication.LOCAL.equals(userAttributes.auth)){
             builder.append(" by ");
@@ -151,7 +153,12 @@ class OracleCreateOrAlterStBuilder {
             if(password == null){
                 password = new GuardedString(userAttributes.userName.toCharArray());
             }
-            builder.append(cs.formatPassword(password));
+            password.access(new GuardedString.Accessor(){
+                public void access(char[] clearChars) {
+                    builder.append(cs.formatToken(PASSWORD, clearChars));
+                    Arrays.fill(clearChars, (char)0);
+                }
+            });
         }
         else if(OracleAuthentication.EXTERNAL.equals(userAttributes.auth)){
             builder.append(" externally");
@@ -161,7 +168,7 @@ class OracleCreateOrAlterStBuilder {
                 throw new IllegalArgumentException("GlobalName not specified for global authentication");
             }
             builder.append(" globally as ");
-            builder.append(cs.formatGlobalName(userAttributes.globalName));
+            builder.append(cs.formatToken(OracleUserAttribute.GLOBAL_NAME,userAttributes.globalName));
         }
         
         

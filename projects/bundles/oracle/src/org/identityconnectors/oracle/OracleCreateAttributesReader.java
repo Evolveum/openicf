@@ -7,7 +7,7 @@ import java.util.Set;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.*;
 
-/** Transforms attributes from Set<Attribute> attrs to CreateAlterAttributes */
+/** Transforms attributes from Set<Attribute> attrs to {@link OracleUserAttributes} */
 class OracleCreateAttributesReader {
      ConnectorMessages messages;
      
@@ -15,7 +15,7 @@ class OracleCreateAttributesReader {
          this.messages = OracleConnectorHelper.assertNotNull(messages, "messages");
      }
     
-     void readCreateRestAttributes(Set<Attribute> attrs, CreateAlterAttributes caAttributes) {
+     void readCreateRestAttributes(Set<Attribute> attrs, OracleUserAttributes caAttributes) {
         caAttributes.expirePassword = OracleConnectorHelper.getBooleanValue(attrs, OperationalAttributes.PASSWORD_EXPIRED_NAME);
         caAttributes.defaultTableSpace = OracleConnectorHelper.getStringValue(attrs, ORACLE_DEF_TS_ATTR_NAME);
         caAttributes.tempTableSpace = OracleConnectorHelper.getStringValue(attrs, ORACLE_TEMP_TS_ATTR_NAME);
@@ -31,7 +31,7 @@ class OracleCreateAttributesReader {
         }
     }
 
-    void readCreateAuthAttributes(Set<Attribute> attrs, CreateAlterAttributes caAttributes) {
+    void readCreateAuthAttributes(Set<Attribute> attrs, OracleUserAttributes caAttributes) {
         String authentication =  OracleConnectorHelper.getStringValue(attrs, ORACLE_AUTHENTICATION_ATTR_NAME);
         if(authentication == null){
             authentication = ORACLE_AUTH_LOCAL; 

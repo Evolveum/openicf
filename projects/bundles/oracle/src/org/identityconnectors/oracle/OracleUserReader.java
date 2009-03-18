@@ -70,7 +70,7 @@ class OracleUserReader {
     }
     
     /**
-     * Transform collection of {@link UserRecord} to map with username as keye
+     * Transform collection of {@link UserRecord} to map with username as key
      * @param records
      * @return
      */

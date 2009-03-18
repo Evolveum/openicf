@@ -20,7 +20,7 @@ public class OracleRolesAndPrivsBuilderTest {
      */
     @Test
     public void testBuildCreateSQL() {
-        OracleRolesAndPrivsBuilder builder = new OracleRolesAndPrivsBuilder();
+        OracleRolesAndPrivsBuilder builder = new OracleRolesAndPrivsBuilder(new OracleCaseSensitivityBuilder().build());
         List<String> roles = Arrays.asList("myRole1","myRole2");
         List<String> privileges = Arrays.asList("CREATE SESSION","SELECT ON MYTABLE");
         final List<String> sql = builder.buildCreateSQL("testUser", roles, privileges);

@@ -17,13 +17,13 @@ class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp 
 
     public Uid update(ObjectClass objclass, Uid uid,  Set<Attribute> attrs, OperationOptions options) {
         checkUserExist(uid.getUidValue());
-        CreateAlterAttributes caAttributes = new CreateAlterAttributes();
+        OracleUserAttributes caAttributes = new OracleUserAttributes();
         caAttributes.userName = uid.getUidValue();
         new OracleCreateAttributesReader(cfg.getConnectorMessages()).readCreateAuthAttributes(attrs, caAttributes);
         new OracleCreateAttributesReader(cfg.getConnectorMessages()).readCreateRestAttributes(attrs, caAttributes);
         try{
             UserRecord userRecord = new OracleUserReader(adminConn).readUserRecord(caAttributes.userName);
-            String alterSQL = new OracleCreateOrAlterStBuilder(cfg.getCaseSensitivity()).buildAlterUserSt(caAttributes, userRecord);
+            String alterSQL = new OracleCreateOrAlterStBuilder(new OracleCaseSensitivityBuilder().build()).buildAlterUserSt(caAttributes, userRecord);
             SQLUtil.executeUpdateStatement(adminConn, alterSQL);
             adminConn.commit();
             return uid;

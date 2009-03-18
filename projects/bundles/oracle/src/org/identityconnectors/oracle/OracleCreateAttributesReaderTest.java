@@ -18,12 +18,12 @@ import org.junit.*;
 public class OracleCreateAttributesReaderTest {
 
     /**
-     * Test method for {@link org.identityconnectors.oracle.OracleCreateAttributesReader#readCreateAuthAttributes(java.util.Set, org.identityconnectors.oracle.CreateAlterAttributes)}.
+     * Test method for {@link org.identityconnectors.oracle.OracleCreateAttributesReader#readCreateAuthAttributes(java.util.Set, org.identityconnectors.oracle.OracleUserAttributes)}.
      */
     @Test
     public final void testReadCreateAuthAttributes() {
         final OracleCreateAttributesReader reader = new OracleCreateAttributesReader(TestHelpers.createDummyMessages());
-        CreateAlterAttributes caAttributes = new CreateAlterAttributes();
+        OracleUserAttributes caAttributes = new OracleUserAttributes();
         caAttributes.userName = "testUser";
         Set<Attribute> attributes = new HashSet<Attribute>();
         attributes.add(AttributeBuilder.build(ORACLE_AUTHENTICATION_ATTR_NAME, ORACLE_AUTH_LOCAL));
@@ -35,12 +35,12 @@ public class OracleCreateAttributesReaderTest {
     
     
     /**
-     * Test method for {@link org.identityconnectors.oracle.OracleCreateAttributesReader#readCreateRestAttributes(java.util.Set, org.identityconnectors.oracle.CreateAlterAttributes)}.
+     * Test method for {@link org.identityconnectors.oracle.OracleCreateAttributesReader#readCreateRestAttributes(java.util.Set, org.identityconnectors.oracle.OracleUserAttributes)}.
      */
     @Test
     public final void testReadCreateRestAttributes() {
         final OracleCreateAttributesReader reader = new OracleCreateAttributesReader(TestHelpers.createDummyMessages());
-        CreateAlterAttributes caAttributes = new CreateAlterAttributes();
+        OracleUserAttributes caAttributes = new OracleUserAttributes();
         caAttributes.userName = "testUser";
         Set<Attribute> attributes = new HashSet<Attribute>();
         attributes.add(AttributeBuilder.buildPasswordExpired(true));

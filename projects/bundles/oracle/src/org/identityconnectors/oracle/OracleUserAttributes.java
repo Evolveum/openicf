@@ -8,7 +8,7 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
  * @author kitko
  *
  */
-class CreateAlterAttributes implements Cloneable{
+class OracleUserAttributes implements Cloneable{
     Operation operation;
     String userName;
     OracleAuthentication auth;
@@ -22,9 +22,9 @@ class CreateAlterAttributes implements Cloneable{
     Quota defaultTSQuota;
     Quota tempTSQuota;
     
-    protected CreateAlterAttributes clone(){
+    protected OracleUserAttributes clone(){
         try {
-            return (CreateAlterAttributes) super.clone();
+            return (OracleUserAttributes) super.clone();
         } catch (CloneNotSupportedException e) {
             throw new ConnectorException("Cannot clone CreateAlterAttributes",e);
         }

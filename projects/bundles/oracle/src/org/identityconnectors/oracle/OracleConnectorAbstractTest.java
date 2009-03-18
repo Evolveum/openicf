@@ -2,13 +2,14 @@ package org.identityconnectors.oracle;
 
 import org.identityconnectors.framework.api.*;
 import org.identityconnectors.test.common.TestHelpers;
-import org.junit.BeforeClass;
+import org.junit.*;
 
 /** Abstract test class for Oracle connector and its operations */
 public class OracleConnectorAbstractTest {
     protected static OracleConfiguration testConf;
     protected static ConnectorFacade facade;
     protected static OracleConnector connector;
+    protected static OracleUserReader userReader;
 
     /**
      * Setup for all tests
@@ -18,6 +19,7 @@ public class OracleConnectorAbstractTest {
         testConf = OracleConfigurationTest.createSystemConfiguration();
         facade = createFacade(testConf);
         connector = createTestConnector();
+        userReader = new OracleUserReader(connector.getAdminConnection());
     }
     
     private static ConnectorFacade createFacade(OracleConfiguration conf) {
@@ -30,6 +32,10 @@ public class OracleConnectorAbstractTest {
         OracleConnector oc = new OracleConnector();
         oc.init(testConf);
         return oc;
+    }
+    
+    protected static void assertEqualsIgnoreCase(String expected,String actual){
+        Assert.assertEquals(expected.toUpperCase(), actual.toUpperCase());
     }
     
 

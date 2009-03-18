@@ -29,8 +29,18 @@ public class OracleConfiguration extends AbstractConfiguration implements Clonea
     private String url;
     private String[] dsJNDIEnv;
     private ConnectionType connType;
-    private OracleCaseSensitivity cs;
+    private OracleCaseSensitivitySetup cs;
     private String caseSensitivityString;
+    
+    /**
+     * Creates configuration
+     */
+    public OracleConfiguration() {
+        //Set casesensitivity setup to default one
+        cs = new OracleCaseSensitivityBuilder().build();
+        caseSensitivityString = "default";
+    }
+    
     
     /** Type of connection we will use to connect to Oracle */
     static enum ConnectionType{
@@ -185,12 +195,6 @@ public class OracleConfiguration extends AbstractConfiguration implements Clonea
         this.url = url;
     }
 
-    /**
-     * 
-     */
-    public OracleConfiguration() {
-    }
-
     @Override
     public void validate() {
         if(dataSource != null){
@@ -282,25 +286,25 @@ public class OracleConfiguration extends AbstractConfiguration implements Clonea
         throw new IllegalStateException("Invalid state of OracleConfiguration");
     }
     
-    OracleCaseSensitivity getCaseSensitivity(){
+    OracleCaseSensitivitySetup getCSSetup(){
         return cs;
     }
     
-    void setCaseSensitivity(OracleCaseSensitivity cs){
+    void setCSSetup(OracleCaseSensitivitySetup cs){
         this.cs = new LocalizedAssert(getConnectorMessages()).assertNotNull(cs, "cs");
     }
     /**
      * @return caseSensitivityString
      */
-    public String getCaseSensitivityString(){
+    public String getCSSetupString(){
         return caseSensitivityString;
     }
     
     /** Sets case sensitivity from string map 
      * @param cs */
-    public void setCaseSensitivityString(String cs){
+    public void setCSSetupString(String cs){
         new LocalizedAssert(getConnectorMessages()).assertNotBlank(cs, "cs");
-        this.cs = new OracleCaseSensitivityBuilder().defineFormatters(cs).build();
+        this.cs = new OracleCaseSensitivityBuilder().parseMap(cs).build();
         this.caseSensitivityString = cs;
     }
 

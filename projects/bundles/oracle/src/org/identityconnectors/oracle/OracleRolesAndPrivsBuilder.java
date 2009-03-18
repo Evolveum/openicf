@@ -4,6 +4,7 @@
 package org.identityconnectors.oracle;
 
 import java.util.*;
+import static org.identityconnectors.oracle.OracleUserAttribute.*;
 
 /**
  * Builds grant and revoke sql
@@ -11,7 +12,12 @@ import java.util.*;
  *
  */
 class OracleRolesAndPrivsBuilder {
+    private OracleCaseSensitivitySetup cs;
     
+    OracleRolesAndPrivsBuilder(OracleCaseSensitivitySetup cs){
+        this.cs = OracleConnectorHelper.assertNotNull(cs, "cs");
+        
+    }
     /**
      * Builds statements that grants roles and privilehes to user
      * @param userName
@@ -35,12 +41,12 @@ class OracleRolesAndPrivsBuilder {
         return statements;
     }
     
-    private void appendGrantRole(StringBuilder builder,String userName,String grant){
-        builder.append("grant ").append('"').append(grant).append('"').append(" to ").append('\"').append(userName).append('\"');
+    private void appendGrantRole(StringBuilder builder,String userName,String role){
+        builder.append("grant ").append(cs.formatToken(ROLE, role)).append(" to ").append(cs.formatToken(USER_NAME, userName));
     }
     
-    private void appendGrantPrivilege(StringBuilder builder,String userName,String grant){
-        builder.append("grant ").append(grant).append(" to ").append('\"').append(userName).append('\"');
+    private void appendGrantPrivilege(StringBuilder builder,String userName,String privilege){
+        builder.append("grant ").append(cs.formatToken(PRIVILEGE, privilege)).append(" to ").append(cs.formatToken(USER_NAME, userName));
     }
     
     
