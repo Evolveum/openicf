@@ -66,23 +66,23 @@ public class FH3270Connection extends RW3270BaseConnection {
     }
 
     @Override
-    protected void clearAndUnlock() throws InterruptedException {
+    public void clearAndUnlock() throws InterruptedException {
         _rw3270.clear();
         waitForUnlock();
     }
 
     @Override
-    protected String getDisplay() {
+    public String getDisplay() {
         return new String(_rw3270.getDisplay());
     }
 
     @Override
-    protected void sendEnter() {
+    public void sendEnter() {
         _rw3270.enter();
     }
 
     @Override
-    protected void sendKeys(String keys) {
+    public void sendKeys(String keys) {
         try {
             for (int i=0; i<keys.length(); i++) {
                 _rw3270.type(keys.charAt(i));
@@ -93,22 +93,22 @@ public class FH3270Connection extends RW3270BaseConnection {
     }
 
     @Override
-    protected void sendPAKeys(int pa) {
+    public void sendPAKeys(int pa) {
         _rw3270.PA(_PAKEYS[pa]);
     }
 
     @Override
-    protected void sendPFKeys(int pf) {
+    public void sendPFKeys(int pf) {
         _rw3270.PF(_PFKEYS[pf]);
     }
 
     @Override
-    protected void setCursorPos(short pos) {
+    public void setCursorPos(short pos) {
         _rw3270.setCursorPosition(pos);
     }
 
     @Override
-    protected void waitForUnlock() throws InterruptedException {
+    public void waitForUnlock() throws InterruptedException {
         while (_rw3270.isKeyboardLocked()) {
             Thread.sleep(100);
         }
@@ -138,11 +138,6 @@ public class FH3270Connection extends RW3270BaseConnection {
 
     public String getStandardOutput() {
         return _buffer.toString();//+new String(_rw3270.getDisplay());
-    }
-
-    public void resetStandardOutput() {
-        _buffer.setLength(0);
-        _ioPair.reset();
     }
 
     public void test() {

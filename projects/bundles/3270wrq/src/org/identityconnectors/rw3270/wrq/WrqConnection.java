@@ -48,18 +48,18 @@ public class WrqConnection extends RW3270BaseConnection implements ECLPSListener
     }
 
     @Override
-    protected void clearAndUnlock() throws InterruptedException {
+    public void clearAndUnlock() throws InterruptedException {
         _session.transmitTerminalKey(33);
         waitForUnlock();
     }
 
     @Override
-    protected String getDisplay() {
+    public String getDisplay() {
         return _ps.GetString().getDataString();
     }
 
     @Override
-    protected void sendEnter() {
+    public void sendEnter() {
         try {
             _ps.SendKeys("[enter]");
         } catch (ECLErr e) {
@@ -68,7 +68,7 @@ public class WrqConnection extends RW3270BaseConnection implements ECLPSListener
     }
 
     @Override
-    protected void sendKeys(String keys) {
+    public void sendKeys(String keys) {
         try {
             _ps.SendKeys(keys);
         } catch (ECLErr e) {
@@ -77,7 +77,7 @@ public class WrqConnection extends RW3270BaseConnection implements ECLPSListener
     }
 
     @Override
-    protected void sendPAKeys(int pa) {
+    public void sendPAKeys(int pa) {
         try {
             _ps.SendKeys("[pa"+pa+"]");
         } catch (ECLErr e) {
@@ -86,7 +86,7 @@ public class WrqConnection extends RW3270BaseConnection implements ECLPSListener
     }
 
     @Override
-    protected void sendPFKeys(int pf) {
+    public void sendPFKeys(int pf) {
         try {
             _ps.SendKeys("[pf"+pf+"]");
         } catch (ECLErr e) {
@@ -95,7 +95,7 @@ public class WrqConnection extends RW3270BaseConnection implements ECLPSListener
     }
 
     @Override
-    protected void setCursorPos(short pos) {
+    public void setCursorPos(short pos) {
         try {
             _ps.SetCursorPos(pos);
         } catch (ECLErr e) {
@@ -104,7 +104,7 @@ public class WrqConnection extends RW3270BaseConnection implements ECLPSListener
     }
 
     @Override
-    protected void waitForUnlock() throws InterruptedException {
+    public void waitForUnlock() throws InterruptedException {
         while (_oia.InputInhibited()!=ECLOIA.INHIBIT_NOTINHIBITED) {
             Thread.sleep(100);
         }
@@ -158,11 +158,6 @@ public class WrqConnection extends RW3270BaseConnection implements ECLPSListener
 
     public String getStandardOutput() {
         return _buffer.toString();//+_ps.GetString().getDataString();
-    }
-
-    public void resetStandardOutput() {
-        _buffer.setLength(0);
-        _ioPair.reset();
     }
 
     public void test() {

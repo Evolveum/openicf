@@ -24,6 +24,8 @@ package org.identityconnectors.rw3270;
 
 import org.identityconnectors.common.security.GuardedString;
 
+import expect4j.matches.Match;
+
 public interface RW3270Connection {
 
     public void dispose();
@@ -49,6 +51,8 @@ public interface RW3270Connection {
 
     public String waitForInput();
 
+    public void waitFor(Match[] matches);
+    
     public void waitFor(String expression);
 
     public void waitFor(String part0, String part1);
@@ -57,5 +61,14 @@ public interface RW3270Connection {
 
     public void waitFor(final String expression0,
             final String expression1, int timeOut);
+
+    public void sendKeys(String keys);
+    public void sendEnter();
+    public void sendPAKeys(int pa);
+    public void sendPFKeys(int pf);
+    public void setCursorPos(short pos);
+    public void waitForUnlock() throws InterruptedException ;
+    public void clearAndUnlock() throws InterruptedException;
+    public String getDisplay();
 
 }

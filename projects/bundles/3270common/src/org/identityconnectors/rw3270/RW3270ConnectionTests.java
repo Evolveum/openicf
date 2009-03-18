@@ -253,37 +253,37 @@ public class RW3270ConnectionTests {
             _semaphore.release();
         }
 
-        protected void clearAndUnlock() throws InterruptedException {
+        public void clearAndUnlock() throws InterruptedException {
         }
         
-        protected void setDisplay(String display) {
+        public void setDisplay(String display) {
             this.display = display;
         }
 
-        protected String getDisplay() {
+        public String getDisplay() {
             return display;
         }
 
-        protected void sendEnter() {
+        public void sendEnter() {
             sentData.append("[enter]");
         }
 
-        protected void sendKeys(String keys) {
+        public void sendKeys(String keys) {
             sentData.append(keys);
         }
 
-        protected void sendPAKeys(int pa) {
+        public void sendPAKeys(int pa) {
             sentData.append("[pa"+pa+"]");
         }
 
-        protected void sendPFKeys(int pf) {
+        public void sendPFKeys(int pf) {
             sentData.append("[pf"+pf+"]");
         }
 
-        protected void setCursorPos(short pos) {
+        public void setCursorPos(short pos) {
         }
 
-        protected void waitForUnlock() throws InterruptedException {
+        public void waitForUnlock() throws InterruptedException {
         }
 
         public void connect() {

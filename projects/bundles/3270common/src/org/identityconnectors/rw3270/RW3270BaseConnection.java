@@ -76,20 +76,25 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
         _disconnectScriptExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), config.getDisconnectScript(), true);
     }
 
-    protected abstract void sendKeys(String keys);
-    protected abstract void sendEnter();
-    protected abstract void sendPAKeys(int pa);
-    protected abstract void sendPFKeys(int pf);
-    protected abstract void setCursorPos(short pos);
-    protected abstract void waitForUnlock() throws InterruptedException ;
-    protected abstract void clearAndUnlock() throws InterruptedException;
-    protected abstract String getDisplay();
+    public abstract void sendKeys(String keys);
+    public abstract void sendEnter();
+    public abstract void sendPAKeys(int pa);
+    public abstract void sendPFKeys(int pf);
+    public abstract void setCursorPos(short pos);
+    public abstract void waitForUnlock() throws InterruptedException ;
+    public abstract void clearAndUnlock() throws InterruptedException;
+    public abstract String getDisplay();
     
     public void reset() {
         dispose();
         connect();
     }
-    
+
+    public void resetStandardOutput() {
+        _buffer.setLength(0);
+        _ioPair.reset();
+    }
+
     public void loginUser() {
         try {
             Map<String, Object> arguments = new HashMap<String, Object>();
@@ -315,35 +320,13 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
             matches.add(new RegExpMatch(complete_regexp, new Closure() {
                 public void run(ExpectState state) throws Exception {
                     String data = state.getBuffer();
-                    Matcher matcher = Pattern.compile(complete_regexp).matcher(getDisplay());
-                    // This code will be exported to a script, but I want to get the tests back on-line
-                    //
-                    if (complete_regexp.contains("READY") && !getDisplay().trim().endsWith("READY")) {
-                        // This situation is a bit complicated. Here's what I think is happening:
-                        //  . the previous command ended with READY on the next-to-last
-                        //    line of the screen, so the last line was given the continue prompt
-                        //  . The matching for the previous command ended with the READY, leaving
-                        //    the continue prompt unconsumed
-                        //  . when the CLEAR was issued as part of the current command, the READY
-                        //    was sent out, and the screen was cleared
-                        //  . the initial Enter was consumed to complete the continue prompt
-                        //  . thus, the current command has not yet seen the enter
-                        // We've lost the READY, so retry
-                        //System.out.println("******* command complete lost");
-                        //System.out.println("+++complete("+count+++")\n:"+getDisplay().toString().replaceAll("(.{80})", "$1\n"));
-                        clearAndUnlock();
-                        sendEnter();
-                        state.exp_continue();
-                    } else {
-                        //System.out.println("******* READY found at "+getDisplay().lastIndexOf(" READY"));
-                        _buffer.append(data);
-                        //System.out.println("+++complete("+count+++")\n:"+_buffer.toString().replaceAll("(.{80})", "$1\n"));
-                        Object errorDetected = state.getVar("errorDetected");
-                        state.addVar("timeout", Boolean.FALSE);
-                        state.addVar("errorDetected", null);
-                        //if (errorDetected!=null)
-                        //    throw new XXX();;
-                    }
+                    _buffer.append(data);
+                    //System.out.println("+++complete("+count+++")\n:"+_buffer.toString().replaceAll("(.{80})", "$1\n"));
+                    Object errorDetected = state.getVar("errorDetected");
+                    state.addVar("timeout", Boolean.FALSE);
+                    state.addVar("errorDetected", null);
+                    //if (errorDetected!=null)
+                    //    throw new XXX();;
                 }
             }));
             

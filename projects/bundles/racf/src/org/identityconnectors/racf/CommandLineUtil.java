@@ -26,7 +26,6 @@ import java.io.StringReader;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -62,15 +61,21 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
+import expect4j.Closure;
+import expect4j.ExpectState;
+import expect4j.matches.Match;
+import expect4j.matches.RegExpMatch;
+import expect4j.matches.TimeoutMatch;
+
 class CommandLineUtil {
-    private static final String         OUTPUT_COMPLETE_PATTERN = "\\sREADY\\s{74}";
-    private static final String         OUTPUT_COMPLETE         = " READY";
-    private static final String         DEFAULT_GROUP_NAME      = "DFLTGRP";
-    private static final String         LONG_DEFAULT_GROUP_NAME = "RACF.DFLTGRP";
-    private static final String         OUTPUT_CONTINUING       = "\\s\\*\\*\\*\\s{76}";
-    private static final String         RACF                    = "RACF";
-    private static final String         DELETE_SEGMENT          = "Delete Segment";
-    private static final int            COMMAND_TIMEOUT         = 60000;
+    private static final String         OUTPUT_COMPLETE_PATTERN     = "\\sREADY\\s{74}";
+    private static final String         OUTPUT_COMPLETE             = " READY";
+    private static final String         DEFAULT_GROUP_NAME          = "DFLTGRP";
+    private static final String         LONG_DEFAULT_GROUP_NAME     = "RACF.DFLTGRP";
+    private static final String         OUTPUT_CONTINUING_PATTERN   = "\\s\\*\\*\\*\\s{76}";
+    private static final String         RACF                        = "RACF";
+    private static final String         DELETE_SEGMENT              = "Delete Segment";
+    private static final int            COMMAND_TIMEOUT             = 60000;
     
     private static final String                _membersOfGroup =
         "<MapTransform>" +
@@ -105,6 +110,10 @@ class CommandLineUtil {
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
+    }
+    
+    private RW3270Connection getRW3270Connection() {
+        return _connector.getConnection().getRacfConnection();
     }
     
     private static MapTransform asMapTransform(String xml) throws Exception {
@@ -199,8 +208,8 @@ class CommandLineUtil {
             connection.send(command);
             connection.send("[enter]");
             System.out.println("execute:'"+new String(command)+"'");
-            connection.waitFor(OUTPUT_CONTINUING, OUTPUT_COMPLETE_PATTERN, COMMAND_TIMEOUT);
-            String output = connection.getStandardOutput();
+            waitFor(COMMAND_TIMEOUT);
+            String output = _buffer.toString();
             // Strip command from start, if present
             //
             int index = indexOf(output,command);
@@ -627,8 +636,8 @@ class CommandLineUtil {
         }
     }
 
-    //TODO: do separate commands / segment, and see if that works
-    
+    //TODO: this version does a single LISTUSER command for all segments
+    //
     public Map<String, Object> XXXgetAttributesFromCommandLine(String name, boolean ldapAvailable, Set<String> attributesToGet) {
         // Determine the set of segment names, if any
         // We use a TreeSet to force an ordering
@@ -730,10 +739,8 @@ class CommandLineUtil {
         return attributesFromCommandLine;
     }
     
-    //TODO: there appears to be an issue when multiple output continuations are done
-    //      If all segments are output together, the 3rd of 4 segments disappears, and
-    //      I have not yet determined why.
-    //      Also, there appears to be a synch problem with freehost3270
+
+    //TODO: this version does a separate LISTUSER command for each segment
     //
     public Map<String, Object> getAttributesFromCommandLine(String name, boolean ldapAvailable, Set<String> attributesToGet) {
         // Determine the set of segment names, if any
@@ -802,6 +809,129 @@ class CommandLineUtil {
         }
         return attributesFromCommandLine;
     }
+    
+    private StringBuffer _buffer = new StringBuffer();
+    private boolean _timedOut = false;
+    
+    private void waitFor(Integer timeout) {
+        _buffer.setLength(0);
+        try {
+            _timedOut = false;
+            List<Match> matches = new LinkedList<Match>();
+            
+            // Match the continue expression, so
+            //  save the partial output
+            //  ask for more output
+            //
+            matches.add(new RegExpMatch(OUTPUT_CONTINUING_PATTERN, new Closure() {
+                public void run(ExpectState state) throws Exception {
+                    String data = state.getBuffer();
+                    
+                    // If it's not in column 0, it's not a real match, we we ignore it
+                    //
+                    if (state.getMatchedWhere()%80!=0) {
+                        _buffer.append(data);
+                        state.exp_continue();
+                        return;
+                    }
+                    // Need to strip off the match
+                    //
+                    data = data.substring(0, state.getMatchedWhere());
+                    _buffer.append(data);
+                    //System.out.println("+++continue("+count+++")\n:"+_buffer.toString().replaceAll("(.{80})", "$1\n"));
+                    getRW3270Connection().clearAndUnlock();
+                    getRW3270Connection().sendEnter();
+                    state.exp_continue();
+                }
+            }));
+            
+            // Match the command complete expression, so
+            //  if there was an error,
+            //      throw exception
+            //  else
+            //      save the final output
+            matches.add(new RegExpMatch(OUTPUT_COMPLETE_PATTERN, new Closure() {
+                public void run(ExpectState state) throws Exception {
+                    String data = state.getBuffer();
+
+                    // If it's not in column 0, it's not a real match, we we ignore it
+                    //
+                    if (state.getMatchedWhere()%80!=0) {
+                        _buffer.append(data);
+                        state.exp_continue();
+                        return;
+                    }
+                    Matcher matcher = Pattern.compile(OUTPUT_COMPLETE_PATTERN).matcher(getRW3270Connection().getDisplay());
+                    // This code will be exported to a script, but I want to get the tests back on-line
+                    //
+                    if (!getRW3270Connection().getDisplay().trim().endsWith(OUTPUT_COMPLETE.trim())) {
+                        // This situation is a bit complicated. Here's what I think is happening:
+                        //  . the previous command ended with READY on the next-to-last
+                        //    line of the screen, so the last line was given the continue prompt
+                        //  . The matching for the previous command ended with the READY, leaving
+                        //    the continue prompt unconsumed
+                        //  . when the CLEAR was issued as part of the current command, the READY
+                        //    was sent out, and the screen was cleared
+                        //  . the initial Enter was consumed to complete the continue prompt
+                        //  . thus, the current command has not yet seen the enter
+                        // We've lost the READY, so retry
+                        //System.out.println("******* command complete lost");
+                        //System.out.println("+++complete("+count+++")\n:"+getDisplay().toString().replaceAll("(.{80})", "$1\n"));
+                        getRW3270Connection().clearAndUnlock();
+                        getRW3270Connection().sendEnter();
+                        state.exp_continue();
+                    } else {
+                        //System.out.println("******* READY found at "+getDisplay().lastIndexOf(" READY"));
+                        _buffer.append(data);
+                        //System.out.println("+++complete("+count+++")\n:"+_buffer.toString().replaceAll("(.{80})", "$1\n"));
+                        Object errorDetected = state.getVar("errorDetected");
+                        state.addVar("timeout", Boolean.FALSE);
+                        state.addVar("errorDetected", null);
+                        //if (errorDetected!=null)
+                        //    throw new XXX();;
+                    }
+                }
+            }));
+            
+            // Match the error expression, so
+            //  send the abort command
+            //  continue execution, to see if we can recover
+            //
+            /*
+            matches.add(new RegExpMatch(expression2, new Closure() {
+                public void run(ExpectState state) throws Exception {
+                    state.addVar("errorDetected", state.getBuffer());
+                    // Need to strip off the match
+                    //
+                    String data = state.getBuffer();
+                    Matcher matcher = pattern.matcher(data);
+                    if (matcher.find()) {
+                        data = data.substring(0, matcher.start());
+                    }
+                    _buffer.append(data);
+                    clearAndUnlock();
+                    sendPAKeys(1);
+                    state.exp_continue();
+                }
+            }));
+            */
+            if (timeout != null)
+                matches.add(new TimeoutMatch(timeout, new Closure() {
+                    public void run(ExpectState state) throws Exception {
+                        _timedOut = true;
+                    }
+                }));
+            getRW3270Connection().waitFor(matches.toArray(new Match[0]));
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }
+        
+        if (_timedOut)
+            throw new ConnectorException(_connector.getConfiguration().getConnectorMessages().format(
+                    "IsAlive", "timed out waiting for ''{0}'':''{1}''",
+                    OUTPUT_COMPLETE, _buffer.toString()));
+    }
+    
     
     private static class CharArrayBuffer {
         private char[]  _array;
