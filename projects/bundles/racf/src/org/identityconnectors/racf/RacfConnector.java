@@ -86,7 +86,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
     public static final AttributeInfo  ACCOUNTS            = AttributeInfoBuilder.build(ACCOUNTS_NAME,
             String.class, EnumSet.of(Flags.MULTIVALUED, Flags.NOT_RETURNED_BY_DEFAULT));
 
-    private Schema                      _schema = null;
     private Map<String, AttributeInfo>  _accountAttributes = null;
     private Map<String, AttributeInfo>  _groupAttributes = null;
 
