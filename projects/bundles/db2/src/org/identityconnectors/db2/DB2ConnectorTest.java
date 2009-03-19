@@ -133,7 +133,7 @@ public class DB2ConnectorTest {
 		Map<String, Object> emptyMap = Collections.emptyMap();
 		Set<Attribute> attributes = new HashSet<Attribute>();
 		attributes.add(new Name(username));
-		attributes.add(AttributeBuilder.buildPassword(new char[]{'a','b','c'}));
+		//attributes.add(AttributeBuilder.buildPassword(new char[]{'a','b','c'}));
 		attributes.add(AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"CONNECT ON DATABASE"));
 		Uid uid = null;
 		try{
@@ -159,7 +159,7 @@ public class DB2ConnectorTest {
 		Map<String, Object> emptyMap = Collections.emptyMap();
 		Set<Attribute> attributes = new HashSet<Attribute>();
 		attributes.add(new Name(userName));
-		attributes.add(AttributeBuilder.buildPassword(new char[]{'a','b','c'}));
+		//attributes.add(AttributeBuilder.buildPassword(new char[]{'a','b','c'}));
 		attributes.add(AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"CONNECT ON DATABASE"));
 		Uid uid = null;
 		try{
@@ -496,7 +496,7 @@ public class DB2ConnectorTest {
             catch(UnknownUidException e){}
             Set<Attribute> attributes = new HashSet<Attribute>();
             attributes.add(new Name(userName));
-            attributes.add(AttributeBuilder.buildPassword(new char[]{'a','b','c'}));
+            //attributes.add(AttributeBuilder.buildPassword(new char[]{'a','b','c'}));
             attributes.add(AttributeBuilder.build("grants","CONNECT ON DATABASE"));
             facade.create(ObjectClass.ACCOUNT, attributes, null);
             FindUidObjectHandler handler = new FindUidObjectHandler(uid);
@@ -529,7 +529,7 @@ public class DB2ConnectorTest {
         
         Set<Attribute> attributes = new HashSet<Attribute>();
         attributes.add(new Name(new String(tooLongName)));
-        attributes.add(AttributeBuilder.buildPassword(new char[]{'a','b','c'}));
+        //attributes.add(AttributeBuilder.buildPassword(new char[]{'a','b','c'}));
         attributes.add(AttributeBuilder.build(DB2Connector.USER_AUTH_GRANTS,"CONNECT ON DATABASE"));
         try{
             facade.create(ObjectClass.ACCOUNT, attributes, null);

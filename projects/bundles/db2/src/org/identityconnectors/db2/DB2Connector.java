@@ -23,6 +23,7 @@
 package org.identityconnectors.db2;
 
 import java.sql.*;
+import java.text.MessageFormat;
 import java.util.*;
 
 import org.identityconnectors.common.StringUtil;
@@ -128,8 +129,13 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	public Schema schema() {
         //The Name is supported attribute
         Set<AttributeInfo> attrInfoSet = new HashSet<AttributeInfo>();
-        attrInfoSet.add(AttributeInfoBuilder.build(Name.NAME,String.class,
-                EnumSet.of(Flags.NOT_UPDATEABLE,Flags.REQUIRED)));
+        attrInfoSet.add(AttributeInfoBuilder.build(Name.NAME,String.class,EnumSet.of(Flags.NOT_UPDATEABLE,Flags.REQUIRED)));
+        /*
+        AttributeInfo password = AttributeInfoBuilder.build(
+                OperationalAttributes.PASSWORD_NAME, GuardedString.class,
+                EnumSet.of(Flags.NOT_READABLE,Flags.NOT_RETURNED_BY_DEFAULT,Flags.NOT_CREATABLE));
+        attrInfoSet.add(password);
+        */
         AttributeInfoBuilder grantsBuilder = new AttributeInfoBuilder();
         grantsBuilder.setName(USER_AUTH_GRANTS).setCreateable(true).
         setUpdateable(true).setRequired(true).setReadable(true).
@@ -273,6 +279,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	 */
 	public Uid create(ObjectClass oclass, Set<Attribute> attrs,OperationOptions options) {
 	    checkObjectClass(oclass);
+	    checkCreateAttributes(attrs);
         Name user = AttributeUtil.getNameFromAttributes(attrs);
 		if (user == null || StringUtil.isBlank(user.getNameValue())) {
             throw new IllegalArgumentException(cfg.getConnectorMessages().format(DB2Messages.NAME_IS_NULL_OR_EMPTY,null));
@@ -294,6 +301,31 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	}
 	
 	
+	private void checkCreateAttributes(Set<Attribute> attrs) {
+		for(Attribute attribute : attrs){
+			if(attribute.is(Name.NAME)){
+			}
+			else if(attribute.is(USER_AUTH_GRANTS)){
+			}
+			else{
+				throw new IllegalArgumentException(MessageFormat.format("Unrecognized argument [{0}] in DB2 create operation",attribute.getName()));
+			}
+		}
+	}
+	
+	private void checkUpdateAttributes(Set<Attribute> attrs) {
+		for(Attribute attribute : attrs){
+			if(attribute.is(Uid.NAME)){
+			}
+			else if(attribute.is(USER_AUTH_GRANTS)){
+			}
+			else{
+				throw new IllegalArgumentException(MessageFormat.format("Unrecognized argument [{0}] in DB2 update operation",attribute.getName()));
+			}
+		}
+	}
+	
+
 	private void checkUserNotExist(String user) {
 		boolean userExist = userExist(user);
 		if(userExist){
@@ -331,7 +363,6 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	/**
      *  Applies resources grants and revokes to the passed user.  Updates
      *  occurs in a transaction.  Assumes connection is already open.
-	 * @param password 
      */
     @SuppressWarnings("unchecked")
 	private void updateAuthority(String user,Set<Attribute> attrs,UpdateType type)  throws SQLException {
@@ -386,7 +417,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	}
 
 	/**
-     *  Checks a given account id and password to make sure they follow DB2
+     *  Checks a given account id to make sure they follow DB2
      *  rules for validity.  The rules are given in the DB2 SQL Reference
      *  Manual.  They include length limits, forbidden prefixes, and forbidden
      *  keywords.  Throws and exception if the name or password are invalid.
@@ -530,6 +561,7 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 	
 	private Uid update(UpdateType type, ObjectClass objclass, Set<Attribute> attrs,OperationOptions options) {
 	    checkObjectClass(objclass);
+	    checkUpdateAttributes(attrs);
         Name name = AttributeUtil.getNameFromAttributes(attrs);
         if(name != null){
         	throw new IllegalArgumentException(cfg.getConnectorMessages().format(DB2Messages.NAME_IS_NOT_UPDATABLE,null));
