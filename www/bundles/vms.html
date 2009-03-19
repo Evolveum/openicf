@@ -40,16 +40,16 @@ These are the properties that can be specified on the Configuration object when 
                 <li><b>password</b> (GuardedString): Password  of the management account
                 <li><b>hostPortNumber</b> (String): Port number used to connect to the VMS system being managed
                 <li><b>isSSH</b> (Boolean): Whether to use SSH to connect to the VMS system being managed
-                <li><b>hostLineTerminator</b> (String): A string indicating the line terminator:
+                <li><b>hostLineTerminator</b> (String): A string specifying the line terminator:
                   <ul>
-                    <li>\r\n is the normal line terminator for a Telnet connection</li>
-                    <li>\r is the normal line terminator for an SSH session</li>
+                    <li>"\r\n" is the normal line terminator for a Telnet connection</li>
+                    <li>"\r" is the normal line terminator for an SSH session</li>
                   </ul>
                 <li><b>hostShellPrompt</b> (String): An Expect4J regular expression to match the VMS prompt:
                     <ul><li>default is "[$] ", which is the VMS standard</li></ul>
                 <li><b>vmsTimeZone</b> (String): Time zone in which the VMS system is located (expressed as a valid Java TimeZone name)
                 <li><b>disableUserLogins</b> (Boolean): Whether to disable the connector from logging in on the VMS system being managed as the user being managed. 
-                    Setting this to false disables:
+                    <br>Setting this to false disables:
                     <ul>
                       <li>running scripts as user</li>
                       <li>changing password as user</li>
@@ -69,56 +69,53 @@ These are the properties that can be specified on the Configuration object when 
 <p>
 This Connector supports the ACCOUNT object class. The attributes supported are: 
 <ul>
-<li>ACCESS</li>
-<li>ACCOUNT</li>
-<li>ASTLM</li>
-<li>BATCH</li>
-<li>BIOLM</li>
-<li>BYTLM</li>
-<li>CLI</li>
-<li>CLITABLES</li>
-<li>CPUTIME</li>
-<li>DEFPRIVILEGES</li>
-<li>DEFAULT</li>
-<li>DEVICE</li>
-<li>DIALUP</li>
-<li>DIOLM</li>
-<li>DIRECTORY</li>
-<li>ENQLM</li>
-<li>EXPIRATION</li>
-<li>FILLM</li>
-<li>FLAGS</li>
-<li>GENERATE_PASSWORD</li>
-<li>INTERACTIVE</li>
-<li>JTQUOTA</li>
-<li>LGICMD</li>
-<li>LOCAL</li>
-<li>LoginFails</li>
-<li>MAXACCTJOBS</li>
-<li>MAXDETACH</li>
-<li>MAXJOBS</li>
-<li>MODIFY_IDENTIFIER</li>
-<li>NETWORK</li>
-<li>OWNER</li>
-<li>PBYTLM</li>
-<li>PGFLQUOTA</li>
-<li>PRCLM</li>
-<li>PRIMEDAYS</li>
-<li>PRIORITY</li>
-<li>PRIVILEGES</li>
-<li>PWDEXPIRED</li>
-<li>PWDMINIMUM</li>
-<li>QUEPRIO</li>
-<li>REMOTE</li>
-<li>SHRFILLM</li>
-<li>TQELM</li>
-<li>UIC</li>
-<li>WSDEFAULT</li>
-<li>WSEXTENT</li>
-<li>WSQUOTA</li>
-<li>COPY_LOGIN_SCRIPT</li>
-<li>CREATE_DIRECTORY</li>
-<li>LOGIN_SCRIPT_SOURCE</li>
+<li><b>ACCESS</b></li>
+<li><b>BATCH</b>&nbsp;(See ACCESS)</li>
+<li><b>DIALUP</b>&nbsp;(See ACCESS)</li>
+<li><b>INTERACTIVE</b>&nbsp;(See ACCESS)</li>
+<li><b>LOCAL</b>&nbsp;(See ACCESS)</li>
+<li><b>NETWORK</b>&nbsp;(See ACCESS)</li>
+<li><b>REMOTE</b>&nbsp;(See ACCESS)</li>
+<li><b>ACCOUNT</b> (String)</li>
+<li><b>ASTLM</b> (Integer)</li>
+<li><b>BIOLM</b> (Integer)</li>
+<li><b>BYTLM</b> (Integer)</li>
+<li><b>CLI</b> (String)</li>
+<li><b>CLITABLES</b> (String)</li>
+<li><b>CPUTIME</b> (Long): The maximum process CPU time in milliseconds.</li>
+<li><b>DEFPRIVILEGES</b> (List&lt;String&gt;)</li>
+<li><b>DEVICE</b> (String)</li>
+<li><b>DIOLM</b> (Integer)</li>
+<li><b>DIRECTORY</b> (String)</li>
+<li><b>ENQLM</b> (Integer)</li>
+<li><b>EXPIRATION</b> (String)</li>
+<li><b>FILLM</b> (Integer)</li>
+<li><b>FLAGS</b> (List&lt;String&gt;)</li>
+<li><b>GENERATE_PASSWORD</b> (Boolean)</li>
+<li><b>JTQUOTA</b> (Integer)</li>
+<li><b>LGICMD</b> (String)</li>
+<li><b>LoginFails</b> (Integer, Read-only)</li>
+<li><b>MAXACCTJOBS</b> (Integer)</li>
+<li><b>MAXDETACH</b> (String)</li>
+<li><b>MAXJOBS</b> (Integer)</li>
+<li><b>OWNER</b> (String)</li>
+<li><b>PBYTLM</b> (Integer)</li>
+<li><b>PGFLQUOTA</b> (Integer)</li>
+<li><b>PRCLM</b> (Integer)</li>
+<li><b>PRIMEDAYS</b> (List&lt;String&gt;)</li>
+<li><b>PRIORITY</b> (Integer)</li>
+<li><b>PRIVILEGES</b> (List&lt;String&gt;)</li>
+<li><b>PWDMINIMUM</b> (Integer)</li>
+<li><b>QUEPRIO</b> (Integer)</li>
+<li><b>SHRFILLM</b> (Integer)</li>
+<li><b>TQELM</b> (Integer)</li>
+<li><b>UIC</b> (String)</li>
+<li><b>WSDEFAULT</b> (Integer)</li>
+<li><b>WSEXTENT</b> (Integer)</li>
+<li><b>WSQUOTA</b> (Integer)</li>
+<li><b>COPY_LOGIN_SCRIPT</b>&nbsp;(Boolean, on Create only): Copy the LOGIN_SCRIPT_SOURCE to the user default directory</li>
+<li><b>CREATE_DIRECTORY</b>&nbsp;(Boolean, on Create only): Create the user default directory</li>
+<li><b>LOGIN_SCRIPT_SOURCE</b>&nbsp;(String, on Create only): Source of the user login script</li>
 </ul>
 Furthermore, the ACCOUNT object class
 supports the following special attributes:
