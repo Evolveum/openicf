@@ -89,7 +89,21 @@ public class OracleUserReaderTest {
         assertEquals("OPEN",record1.status);
         
         SQLUtil.rollbackQuietly(conn);
-        
+    }
+    
+    @Test
+    public void testReadUserQuota() throws SQLException{
+    	final OracleCaseSensitivitySetup cs = cfg.getCSSetup();
+    	String user = "user1";
+        if(!userReader.userExist(cs.normalizeToken(USER_NAME,user))){
+            SQLUtil.executeUpdateStatement(conn,"create user " + cs.normalizeAndFormatToken(USER_NAME,user) + " identified by password");
+        }
+        UserRecord readUserRecord = userReader.readUserRecord("user1");
+        SQLUtil.executeUpdateStatement(conn, "alter user " + cs.normalizeAndFormatToken(USER_NAME,user) + " quota 30k on " + readUserRecord.defaultTableSpace);
+        Long quota = userReader.readUserDefTSQuota(cs.normalizeToken(USER_NAME,user));
+        assertTrue("Quota must be set at least to 30k",new Long(30000).compareTo(quota) < 0);
+        //For 10.2 , not working
+        //quota = userReader.readUserTempTSQuota(cs.normalizeToken(USER_NAME,user));
         
     }
 

@@ -20,7 +20,7 @@ import org.identityconnectors.framework.spi.operations.*;
 @ConnectorClass(configurationClass=OracleConfiguration.class,
         displayNameKey = "oracle.connector",
         messageCatalogPaths={"org/identityconnectors/dbcommon/Messages","org/identityconnectors/oracle/Messages"})
-public class OracleConnector implements PoolableConnector, AuthenticateOp,CreateOp,DeleteOp,UpdateOp,AttributeNormalizer {
+public class OracleConnector implements PoolableConnector, AuthenticateOp,CreateOp,DeleteOp,UpdateOp,UpdateAttributeValuesOp,AttributeNormalizer {
     private Connection adminConn;
     private OracleConfiguration cfg;
     private final static Log log = Log.getLog(OracleConnector.class);
@@ -111,10 +111,6 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,Create
         }
     }
 
-    public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
-        return new OracleOperationUpdate(cfg, adminConn, log).update(objclass, uid, attrs, options);
-    }
-
     public Attribute normalizeAttribute(ObjectClass oclass, Attribute attribute) {
         String name = attribute.getName();
         final OracleUserAttribute oracleUserAttribute = attributeMapping.get(name);
@@ -129,6 +125,18 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,Create
             values.add(o);
         }
         return AttributeBuilder.build(name,values);
+    }
+    
+    public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
+        return new OracleOperationUpdate(cfg, adminConn, log).update(objclass, uid, attrs, options);
+    }
+
+    public Uid addAttributeValues(ObjectClass objclass, Uid uid, Set<Attribute> valuesToAdd, OperationOptions options) {
+        return new OracleOperationUpdate(cfg, adminConn, log).addAttributeValues(objclass, uid, valuesToAdd, options);
+    }
+
+    public Uid removeAttributeValues(ObjectClass objclass, Uid uid, Set<Attribute> valuesToRemove, OperationOptions options) {
+        return new OracleOperationUpdate(cfg, adminConn, log).removeAttributeValues(objclass, uid, valuesToRemove, options);
     }
     
     

@@ -1,6 +1,8 @@
 package org.identityconnectors.oracle;
 
+import java.math.BigDecimal;
 import java.sql.*;
+import java.text.MessageFormat;
 import java.util.*;
 
 import org.identityconnectors.dbcommon.SQLUtil;
@@ -110,6 +112,27 @@ class OracleUserReader {
         record.userId = rs.getLong("USER_ID");
         record.userName = rs.getString("USERNAME");
         return record;
+    }
+    
+    Long readUserTSQuota(String userName, String tableSpace) throws SQLException{
+    	BigDecimal bytes = (BigDecimal) SQLUtil.selectFirstRowFirstValue(adminConn, "select max_bytes from dba_ts_quotas where USERNAME = '" + userName + "'" + " AND TABLESPACE_NAME = '" + tableSpace + "'" );
+    	return bytes == null ? null : bytes.longValue();
+    }
+    
+    Long readUserDefTSQuota(String userName) throws SQLException{
+    	UserRecord record = readUserRecord(userName);
+    	if(record == null){
+    		throw new IllegalArgumentException(MessageFormat.format("No user record found for user [{0}]",userName));
+    	}
+    	return readUserTSQuota(userName, record.defaultTableSpace);
+    }
+    
+    Long readUserTempTSQuota(String userName) throws SQLException{
+    	UserRecord record = readUserRecord(userName);
+    	if(record == null){
+    		throw new IllegalArgumentException(MessageFormat.format("No user record found for user [{0}]",userName));
+    	}
+    	return readUserTSQuota(userName, record.temporaryTableSpace);
     }
 
 }

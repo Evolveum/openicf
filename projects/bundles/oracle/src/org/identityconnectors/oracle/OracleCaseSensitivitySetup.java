@@ -9,6 +9,7 @@ import java.util.*;
  * */
 interface OracleCaseSensitivitySetup {
     public String normalizeToken(OracleUserAttribute attr,String token);
+    public String normalizeAndFormatToken(OracleUserAttribute attr,String token);
     public String formatToken(OracleUserAttribute attr,String token);
     public char[] formatToken(OracleUserAttribute attr,char[] token);
     public CSTokenFormatter getAttributeFormatter(OracleUserAttribute attribute);
@@ -299,6 +300,11 @@ final class OracleCaseSensitivityImpl implements OracleCaseSensitivitySetup{
     }
     public char[] formatToken(OracleUserAttribute attr, char[] token) {
         return getAttributeFormatter(attr).formatToken(token);
+    }
+    public String normalizeAndFormatToken(OracleUserAttribute attr, String token) {
+        token = normalizeToken(attr, token);
+        token = formatToken(attr, token);
+        return token;
     }
     
 }
