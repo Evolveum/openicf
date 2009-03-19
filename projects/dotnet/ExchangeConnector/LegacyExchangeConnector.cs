@@ -298,19 +298,36 @@ namespace Org.IdentityConnectors.Exchange
         public override void Sync(
                 ObjectClass objClass, SyncToken token, SyncResultsHandler handler, OperationOptions options)
         {
-            // TODO: implement Sync
-            base.Sync(objClass, token, handler, options);
-        }
+            ArrayList attsToGet = null;
+            if (options != null && options.AttributesToGet != null)
+            {
+                attsToGet = new ArrayList(options.AttributesToGet);
+            }
 
-        /// <summary>
-        /// Implementation of SynOp.GetLatestSyncToken
-        /// </summary>
-        /// <param name="objectClass">Object class</param>
-        /// <returns>Last sync token</returns>
-        public override SyncToken GetLatestSyncToken(ObjectClass objectClass)
-        {
-            // TODO: Implement GetLatestSyncToken
-            return base.GetLatestSyncToken(objectClass);
+            // delegate to get the exchange attributes if requested            
+            SyncResultsHandler xchangeHandler = delegate(SyncDelta delta)
+            {
+                // replace the ad attributes with exchange one and add recipient type
+                ConnectorObject updated = ExchangeUtility.ReplaceAttributes(delta.Object, attsToGet, AttMapFromAD);
+                updated = this.AddRecipientType(objClass, updated, attsToGet);
+                if (updated != delta.Object)
+                {
+                    // build new sync delta, cause we changed the object
+                    SyncDeltaBuilder deltaBuilder = new SyncDeltaBuilder
+                                                        {
+                                                                DeltaType = delta.DeltaType,
+                                                                Token = delta.Token,
+                                                                Uid = delta.Uid,
+                                                                Object = updated
+                                                        };
+                    delta = deltaBuilder.Build();
+                }
+
+                return handler(delta);
+            };
+
+            // call AD sync, use xchangeHandler
+            base.Sync(objClass, token, xchangeHandler, options);
         }
 
         /// <summary>
@@ -475,6 +492,7 @@ namespace Org.IdentityConnectors.Exchange
                 classInfoBuilder.AddAttributeInfo(AttInfoDatabase);
                 classInfoBuilder.AddAttributeInfo(AttInfoRecipientType);
                 classInfoBuilder.AddAttributeInfo(AttInfoExternalMail);
+                oinfo = classInfoBuilder.Build();
             }
 
             // return
