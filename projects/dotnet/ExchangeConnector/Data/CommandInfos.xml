@@ -173,6 +173,18 @@
   <SerializableCommandInfo>
     <Name>Get-User</Name>
     <NameParameter>Identity</NameParameter>
+    <Parameters>
+      <string>Anr</string>
+      <string>Credential</string>
+      <string>DomainController</string>
+      <string>Filter</string>
+      <string>Identity</string>
+      <string>OrganizationalUnit</string>
+      <string>ReadFromDomainController</string>
+      <string>RecipientTypeDetails</string>
+      <string>ResultSize</string>
+      <string>Sortby</string>
+    </Parameters>
   </SerializableCommandInfo>
   <SerializableCommandInfo>
     <Name>Set-User</Name>

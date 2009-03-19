@@ -27,6 +27,7 @@ namespace Org.IdentityConnectors.Exchange
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Collections.ObjectModel;
     using System.Diagnostics;
     using System.Management.Automation;
     using System.Management.Automation.Runspaces;
@@ -131,6 +132,11 @@ namespace Org.IdentityConnectors.Exchange
         /// Recipient type attribute for MailUser
         /// </summary>
         private const string RcptTypeMailUser = "MailUser";
+
+        /// <summary>
+        /// Recipient type attribute for AD only User
+        /// </summary>
+        private const string RcptTypeUser = "User";
 
         /// <summary>
         /// Configuration instance
@@ -328,6 +334,7 @@ namespace Org.IdentityConnectors.Exchange
                                     {
                                         ConnectorObject filtered = ExchangeUtility.ReplaceAttributes(
                                                 cobject, attsToGet, AttMapFromAD);
+                                        filtered = this.AddRecipientType(oclass, filtered, attsToGet);
                                         return handler(filtered);
                                     };
 
@@ -461,7 +468,7 @@ namespace Org.IdentityConnectors.Exchange
             ObjectClassInfo oinfo = base.GetObjectClassInfo(oc);
 
             // add additional attributes for ACCOUNT
-            if (oc == ObjectClass.ACCOUNT)
+            if (oc.Is(ObjectClass.ACCOUNT_NAME))
             {
                 var classInfoBuilder = new ObjectClassInfoBuilder { IsContainer = oinfo.IsContainer, ObjectType = oinfo.ObjectType };
                 classInfoBuilder.AddAllAttributeInfo(oinfo.ConnectorAttributeInfos);
@@ -482,6 +489,56 @@ namespace Org.IdentityConnectors.Exchange
         private static ICollection<ConnectorAttribute> FilterOut(ICollection<ConnectorAttribute> attributes)
         {
             return ExchangeUtility.FilterOut(attributes, AttRecipientType, AttDatabase, AttExternalMail);
+        }
+
+        /// <summary>
+        /// Gets Recipient Type from Exchange database, this method can be more general, but it is ok
+        /// for out needs
+        /// </summary>
+        /// <param name="oc">object class, currently the moethod works for <see cref="ObjectClass.ACCOUNT"/> only</param>
+        /// <param name="cobject">connector object to get the recipient type for</param>
+        /// <param name="attToGet">attributes to get</param>
+        /// <returns>Connector Object with recipient type added</returns>
+        /// <exception cref="ConnectorException">In case of some troubles in powershell (if the 
+        /// user is not found we get this exception too)</exception>
+        private ConnectorObject AddRecipientType(ObjectClass oc, ConnectorObject cobject, ArrayList attToGet)
+        {            
+            ExchangeUtility.NullCheck(oc, "name", this.configuration);
+            ExchangeUtility.NullCheck(oc, "cobject", this.configuration);
+
+            // we support ACCOUNT only and if the recipient type is in att to get
+            if (!oc.Is(ObjectClass.ACCOUNT_NAME) || !attToGet.Contains(AttRecipientType))
+            {
+                return cobject;
+            }
+
+            ConnectorObject retCObject = cobject;
+            
+            // prepare the connector attribute list to get the command
+            ICollection<ConnectorAttribute> attributes = new Collection<ConnectorAttribute> { cobject.Name };
+
+            // get the command
+            Command cmd = ExchangeUtility.GetCommand(ExchangeConnector.CommandInfo.GetUser, attributes);
+
+            ICollection<PSObject> foundObjects = this.InvokePipeline(cmd);
+
+            // it has to be only one or zero objects in this case
+            if (foundObjects != null && foundObjects.Count == 1)
+            {
+                string rcptName = RcptTypeUser;
+                foreach (PSObject obj in foundObjects)
+                {
+                    rcptName = obj.Members[AttRecipientType].Value.ToString();
+                    break;
+                }
+
+                ConnectorObjectBuilder cobjBuilder = new ConnectorObjectBuilder();
+                cobjBuilder.AddAttributes(cobject.GetAttributes());
+                cobjBuilder.AddAttribute(ConnectorAttributeBuilder.Build(AttRecipientType, rcptName));
+                retCObject = cobjBuilder.Build();
+            }
+
+            return retCObject;
         }
 
         /// <summary>
