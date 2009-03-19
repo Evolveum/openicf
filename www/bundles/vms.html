@@ -12,7 +12,7 @@
     <ul>  
        <li><b>Latest stable release:</b> <a href="https://identityconnectors.dev.java.net/downloads.html#Bundles">1.0.3205</a>
 	   <li><b>Platform:</b> Java
-       <li><b>3rd-party libraries required:</b> ???
+       <li><b>3rd-party libraries required:</b> commons-net-1.4.1.jar, jsch-0.1.33.jar, expect4j-1.0.jar, jakarta-oro-2.0.8.jar (or later versions)
        <li><b>Other dependencies:</b>
        <li><b>Release notes:</b>
     </ul>
@@ -35,32 +35,111 @@ These are the properties that can be specified on the Configuration object when 
 	<ul>
 		<li>Required:
 			<ul>
-				<li><b>property A</b> (String): <description>
-				<li><b>property B</b> (String): <description>
-				<li><b>property C</b> (String): <description>			
+				<li><b>hostNameOrIpAddr</b> (String): Host address of the VMS system being managed
+				<li><b>userName</b> (String): User name of the management account
+                <li><b>password</b> (GuardedString): Password  of the management account
+                <li><b>hostPortNumber</b> (String): Port number used to connect to the VMS system being managed
+                <li><b>isSSH</b> (Boolean): Whether to use SSH to connect to the VMS system being managed
+                <li><b>hostLineTerminator</b> (String): A string indicating the line terminator:
+                  <ul>
+                    <li>\r\n is the normal line terminator for a Telnet connection</li>
+                    <li>\r is the normal line terminator for an SSH session</li>
+                  </ul>
+                <li><b>hostShellPrompt</b> (String): An Expect4J regular expression to match the VMS prompt:
+                    <ul><li>default is "[$] ", which is the VMS standard</li></ul>
+                <li><b>vmsTimeZone</b> (String): Time zone in which the VMS system is located (expressed as a valid Java TimeZone name)
+                <li><b>disableUserLogins</b> (Boolean): Whether to disable the connector from logging in on the VMS system being managed as the user being managed. 
+                    Setting this to false disables:
+                    <ul>
+                      <li>running scripts as user</li>
+                      <li>changing password as user</li>
+                      <li>authorize</li>
+                    </ul>
+                    However, if user logins are allowed, VMS breakin evasion may disable the connector, depending on the security settings on the VMS system being managed
 			</ul>
-		<li>Optional:
+		<li>Optional (these are used in not-yet-tested code to allow support for non-US locales):
 			<ul>
-				<li><b>property D</b> (boolean): <description>
+                <li><b>vmsLocale</b> (String): (defaults to en_US) The locale used on the VMS system.
+                <li><b>vmsDateFormatWithSecs</b> (String): (defaults to dd-MMM-yyyy HH:mm:ss) The format used for time-stamps with seconds on the VMS system.
+                <li><b>vmsDateFormatWithoutSecs</b> (String): (defaults to dd-MMM-yyyy HH:mm) The format used for time-stamps without seconds on the VMS system.
 			</ul>
 	</ul>
 </p>
 <h3>Schema and Supported Features</h3>
 <p>
-This Connector supports the ACCOUNT object class. The attributes supported are: <attr_1>, <attr_2>... Furthermore, the ACCOUNT object class
+This Connector supports the ACCOUNT object class. The attributes supported are: 
+<ul>
+<li>ACCESS</li>
+<li>ACCOUNT</li>
+<li>ASTLM</li>
+<li>BATCH</li>
+<li>BIOLM</li>
+<li>BYTLM</li>
+<li>CLI</li>
+<li>CLITABLES</li>
+<li>CPUTIME</li>
+<li>DEFPRIVILEGES</li>
+<li>DEFAULT</li>
+<li>DEVICE</li>
+<li>DIALUP</li>
+<li>DIOLM</li>
+<li>DIRECTORY</li>
+<li>ENQLM</li>
+<li>EXPIRATION</li>
+<li>FILLM</li>
+<li>FLAGS</li>
+<li>GENERATE_PASSWORD</li>
+<li>INTERACTIVE</li>
+<li>JTQUOTA</li>
+<li>LGICMD</li>
+<li>LOCAL</li>
+<li>LoginFails</li>
+<li>MAXACCTJOBS</li>
+<li>MAXDETACH</li>
+<li>MAXJOBS</li>
+<li>MODIFY_IDENTIFIER</li>
+<li>NETWORK</li>
+<li>OWNER</li>
+<li>PBYTLM</li>
+<li>PGFLQUOTA</li>
+<li>PRCLM</li>
+<li>PRIMEDAYS</li>
+<li>PRIORITY</li>
+<li>PRIVILEGES</li>
+<li>PWDEXPIRED</li>
+<li>PWDMINIMUM</li>
+<li>QUEPRIO</li>
+<li>REMOTE</li>
+<li>SHRFILLM</li>
+<li>TQELM</li>
+<li>UIC</li>
+<li>WSDEFAULT</li>
+<li>WSEXTENT</li>
+<li>WSQUOTA</li>
+<li>COPY_LOGIN_SCRIPT</li>
+<li>CREATE_DIRECTORY</li>
+<li>LOGIN_SCRIPT_SOURCE</li>
+</ul>
+Furthermore, the ACCOUNT object class
 supports the following special attributes:
 <ul>
 	<li>OperationalAttributeInfos.<b>PASSWORD</b>
-	<li>OperationalAttributeInfos.<b>PASSWORD_EXPIRED</b>
+    <li>OperationalAttributeInfos.<b>PASSWORD_EXPIRED</b>
+    <li>OperationalAttributeInfos.<b>CURRENT_PASSWORD</b>
+    <li>OperationalAttributeInfos.<b>ENABLE</b>
 	<li>PredefinedAttributeInfos.<b>LAST_PASSWORD_CHANGE_DATE</b>
-	<li>PredefinedAttributeInfos.<b>LAST_LOGIN_DATE</b>
+    <li>PredefinedAttributeInfos.<b>LAST_LOGIN_DATE</b>
+    <li>PredefinedAttributeInfos.<b>PASSWORD_CHANGE_INTERVAL</b>
 </ul>
 The VMS Connector supports the following operations:
 	<ul>
 				<li><b>Authenticate</b>
 				<li><b>Create</b>
 				<li><b>Delete</b>
-				<li><b>Update</b>
+                <li><b>Update</b>
+                <li><b>Search</b>
+                <li><b>Schema</b>
+                <li><b>ScriptOnResource</b>
 	</ul>
 </p>
 <h3>Documentation and Source Code</h3>
