@@ -319,6 +319,11 @@ namespace Org.IdentityConnectors.Exchange
             internal static readonly CommandInfo GetUser = new CommandInfo("Get-User");
 
             /// <summary>
+            /// Get-Mailbox command meta info
+            /// </summary>
+            internal static readonly CommandInfo GetMailbox = new CommandInfo("Get-Mailbox");
+
+            /// <summary>
             /// List of SerializableCommandInfo object - will be read from persistence
             /// </summary>
             private static IList<SerializableCommandInfo> serCmdInfos;

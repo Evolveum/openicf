@@ -309,7 +309,7 @@ namespace Org.IdentityConnectors.Exchange
             {
                 // replace the ad attributes with exchange one and add recipient type
                 ConnectorObject updated = ExchangeUtility.ReplaceAttributes(delta.Object, attsToGet, AttMapFromAD);
-                updated = this.AddRecipientType(objClass, updated, attsToGet);
+                updated = this.AddExchangeAttributes(objClass, updated, attsToGet);
                 if (updated != delta.Object)
                 {
                     // build new sync delta, cause we changed the object
@@ -351,7 +351,7 @@ namespace Org.IdentityConnectors.Exchange
                                     {
                                         ConnectorObject filtered = ExchangeUtility.ReplaceAttributes(
                                                 cobject, attsToGet, AttMapFromAD);
-                                        filtered = this.AddRecipientType(oclass, filtered, attsToGet);
+                                        filtered = this.AddExchangeAttributes(oclass, filtered, attsToGet);
                                         return handler(filtered);
                                     };
 
@@ -510,33 +510,43 @@ namespace Org.IdentityConnectors.Exchange
         }
 
         /// <summary>
-        /// Gets Recipient Type from Exchange database, this method can be more general, but it is ok
+        /// Gets Recipient Type/Database from Exchange database, this method can be more general, but it is ok
         /// for out needs
         /// </summary>
         /// <param name="oc">object class, currently the moethod works for <see cref="ObjectClass.ACCOUNT"/> only</param>
-        /// <param name="cobject">connector object to get the recipient type for</param>
+        /// <param name="cobject">connector object to get the recipient type/database for</param>
         /// <param name="attToGet">attributes to get</param>
         /// <returns>Connector Object with recipient type added</returns>
         /// <exception cref="ConnectorException">In case of some troubles in powershell (if the 
         /// user is not found we get this exception too)</exception>
-        private ConnectorObject AddRecipientType(ObjectClass oc, ConnectorObject cobject, ArrayList attToGet)
+        private ConnectorObject AddExchangeAttributes(ObjectClass oc, ConnectorObject cobject, IList attToGet)
         {            
             ExchangeUtility.NullCheck(oc, "name", this.configuration);
             ExchangeUtility.NullCheck(oc, "cobject", this.configuration);
 
-            // we support ACCOUNT only and if the recipient type is in att to get
-            if (!oc.Is(ObjectClass.ACCOUNT_NAME) || !attToGet.Contains(AttRecipientType))
+            // we support ACCOUNT only and if the recipient type and database is in att to get
+            if (!oc.Is(ObjectClass.ACCOUNT_NAME) ||
+                (!attToGet.Contains(AttRecipientType) && !attToGet.Contains(AttDatabase)))
             {
                 return cobject;
             }
 
+            bool getDatabase = false;
+            ExchangeConnector.CommandInfo cmdInfo = ExchangeConnector.CommandInfo.GetUser;
+            if (cobject.GetAttributeByName(AttDatabase) != null || cobject.GetAttributeByName(AttDatabaseADName) != null)
+            {
+                // we need to get database attribute, it is mailbox for sure
+                getDatabase = true;
+                cmdInfo = ExchangeConnector.CommandInfo.GetMailbox;
+            }
+            
             ConnectorObject retCObject = cobject;
             
             // prepare the connector attribute list to get the command
             ICollection<ConnectorAttribute> attributes = new Collection<ConnectorAttribute> { cobject.Name };
 
             // get the command
-            Command cmd = ExchangeUtility.GetCommand(ExchangeConnector.CommandInfo.GetUser, attributes);
+            Command cmd = ExchangeUtility.GetCommand(cmdInfo, attributes);
 
             ICollection<PSObject> foundObjects = this.InvokePipeline(cmd);
 
@@ -544,14 +554,34 @@ namespace Org.IdentityConnectors.Exchange
             if (foundObjects != null && foundObjects.Count == 1)
             {
                 string rcptName = RcptTypeUser;
+                string database = null;
                 foreach (PSObject obj in foundObjects)
                 {
                     rcptName = obj.Members[AttRecipientType].Value.ToString();
+                    database = obj.Members[AttDatabase] != null ? obj.Members[AttDatabase].Value.ToString() : null;
                     break;
                 }
 
                 ConnectorObjectBuilder cobjBuilder = new ConnectorObjectBuilder();
-                cobjBuilder.AddAttributes(cobject.GetAttributes());
+                if (getDatabase)
+                {
+                    foreach (ConnectorAttribute attribute in cobject.GetAttributes())
+                    {
+                        if ((attribute.Is(AttDatabase) || attribute.Is(AttDatabaseADName)) && database != null)
+                        {
+                            cobjBuilder.AddAttribute(ConnectorAttributeBuilder.Build(AttDatabase, database));
+                        }
+                        else
+                        {
+                            cobjBuilder.AddAttribute(attribute);
+                        }
+                    }
+                }
+                else
+                {
+                    cobjBuilder.AddAttributes(cobject.GetAttributes());
+                }
+
                 cobjBuilder.AddAttribute(ConnectorAttributeBuilder.Build(AttRecipientType, rcptName));
                 retCObject = cobjBuilder.Build();
             }

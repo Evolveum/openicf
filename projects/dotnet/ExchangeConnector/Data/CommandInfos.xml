@@ -250,5 +250,23 @@
       <string>ManagedFolderMailboxPolicyAllowed</string>      
     </Parameters>
   </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Get-Mailbox</Name>
+    <NameParameter>Identity</NameParameter>
+    <Parameters>
+      <string>Anr</string>
+      <string>Credential</string>
+      <string>Database</string>
+      <string>DomainController</string>
+      <string>Filter</string>
+      <string>IgnoreDefaultScope</string>
+      <string>OrganizationalUnit</string>
+      <string>ReadFromDomainController</string>
+      <string>RecipientTypeDetails</string>
+      <string>ResultSize</string>
+      <string>SortBy</string>
+    </Parameters>
+  </SerializableCommandInfo>
+
   <!-- ************ MAILBOX END ************ -->
 </ArrayOfSerializableCommandInfo>
