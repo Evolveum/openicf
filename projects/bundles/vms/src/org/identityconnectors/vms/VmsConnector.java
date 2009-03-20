@@ -1129,6 +1129,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 uid = new Uid(name.getNameValue());
             } else if (isPresent(result, BAD_SPEC)) {
                 throw new UnknownUidException();
+            } else if (isPresent(result, USER_EXISTS)) {
+                throw new AlreadyExistsException();
             } else {
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
             }
