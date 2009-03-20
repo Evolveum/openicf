@@ -1033,31 +1033,6 @@ public class VmsConnectorTests {
             values.add("01-Jan-2008");
             Assert.assertTrue(new VmsAttributeValidator.ValidDateOrNone().isValid(values));
         }
-        // Test Access list validator
-        //
-        {
-            List<Object> values = new LinkedList<Object>();
-            values.add("9-17");
-            Assert.assertTrue(new VmsAttributeValidator.ValidAccessList().isValid(values));
-        }
-        {
-            List<Object> values = new LinkedList<Object>();
-            values.add("25");
-            Assert.assertFalse(new VmsAttributeValidator.ValidAccessList().isValid(values));
-        }
-        {
-            List<Object> values = new LinkedList<Object>();
-            values.add("SECONDARY");
-            Assert.assertTrue(new VmsAttributeValidator.ValidAccessList().isValid(values));
-        }
-        {
-            List<Object> values = new LinkedList<Object>();
-            values.add("PRIMARY");
-            values.add("9-17");
-            values.add("SECONDARY");
-            values.add("18-8");
-            Assert.assertTrue(new VmsAttributeValidator.ValidAccessList().isValid(values));
-        }
     }
 
     @Test

@@ -25,7 +25,6 @@ package org.identityconnectors.vms;
 public interface VmsConstants {
     // Names of ATTRIBUTES
     //
-    public static final String ATTR_ACCESS              = "ACCESS";
     public static final String ATTR_ACCOUNT             = "ACCOUNT";
     public static final String ATTR_ALGORITHM           = "ALGORITHM";
     public static final String ATTR_ASTLM               = "ASTLM";
@@ -54,7 +53,6 @@ public interface VmsConstants {
     public static final String ATTR_MAXACCTJOBS         = "MAXACCTJOBS";
     public static final String ATTR_MAXDETACH           = "MAXDETACH";
     public static final String ATTR_MAXJOBS             = "MAXJOBS";
-    public static final String ATTR_MODIFY_IDENTIFIER   = "MODIFY_IDENTIFIER";
     public static final String ATTR_NETWORK             = "NETWORK";
     public static final String ATTR_OWNER               = "OWNER";
     public static final String ATTR_PBYTLM              = "PBYTLM";

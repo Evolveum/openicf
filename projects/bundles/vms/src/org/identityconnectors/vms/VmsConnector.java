@@ -329,6 +329,21 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 command = appendToCommand(commandList, command, value);
             }
         }
+        
+        // Various Access modifiers (e.g., BATCH=(PRIMARY, 12-7)) are handled by
+        //  NETWORK
+        //  BATCHS
+        //  LOCAL
+        //  DIALUP
+        //  REMOTE
+        //
+        for (String accessorName : ACCESSORS) {
+            Attribute accessor  = attrMap.remove(accessorName.toUpperCase());
+            if (accessor!=null) {
+                VmsAttributeValidator.validate(accessorName, accessor.getValue(), _configuration);
+                command = appendToCommand(commandList, command, appendAccessor(accessorName, accessor));
+            }
+        }
 
         for (Attribute attribute : attrMap.values()) {
             String name = attribute.getName();
@@ -405,6 +420,96 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             }
         }
         return commandList;
+    }
+    /**
+     * When an accessor is specified, both the PRIMARY and SECONDARY values are either
+     * present or defaulted. The default is no values, thus
+     *  ACCESS=(PRIMARY, 12)
+     * turns on PRIMARY access at 12, and turns OFF SECONDARY access for all 24 hours
+     *  NOACCESS=(PRIMARY, 12)
+     * turns off PRIMARY access at 12, and turns ON SECONDARY access for all 24 hours
+     * 
+     * @param accessorName
+     * @param accessor
+     * @return
+     */
+    private String appendAccessor(String accessorName, Attribute accessor) {
+        if (accessor==null)
+            return "";
+        List<Object> accessorValues = accessor.getValue();
+        
+        // Separate out primary and secondary hours
+        //
+        List<Boolean> primary = new ArrayList<Boolean>(24);
+        List<Boolean> secondary = new ArrayList<Boolean>(24);
+        for (int i=0; i<24; i++) {
+            primary.add((Boolean)accessorValues.get(i));
+            secondary.add((Boolean)accessorValues.get(i+24));
+        }
+        boolean noPrimary = isAllFalse(primary);
+        boolean noSecondary = isAllFalse(secondary);
+        boolean allSecondary = isAllTrue(secondary);
+        
+        // If either noPrimary, or noSecondary, we need to use the negative
+        // form, otherwise, the positive form
+        //
+        if (noPrimary) {
+            if (noSecondary) {
+                return "/NO"+accessorName.toUpperCase();
+            } else if (allSecondary) {
+                return "/NO"+accessorName.toUpperCase()+"=(PRIMARY)";
+            } else  {
+                return "/NO"+accessorName.toUpperCase()+"=(PRIMARY,0-23,SECONDARY"+convertBooleanListToString(secondary, false)+")";
+            }
+        } else if (noSecondary) {
+            return "/NO"+accessorName.toUpperCase()+"=(PRIMARY"+convertBooleanListToString(primary, false)+",SECONDARY)";
+        } else {
+            return "/"+accessorName.toUpperCase()+"=(PRIMARY"+convertBooleanListToString(primary, true)+",SECONDARY"+convertBooleanListToString(secondary, true)+")";
+        }
+    }
+    
+    private boolean isAllTrue(List<Boolean> values) {
+        for (Boolean value : values) 
+            if (!value)
+                return false;
+        return true;
+    }
+    
+    private boolean isAllFalse(List<Boolean> values) {
+        for (Boolean value : values) 
+            if (value)
+                return false;
+        return true;
+    }
+    
+    private String convertBooleanListToString(List<Boolean> list, boolean isPositive) {
+        int lastStart = -1;
+        int lastEnd = -1;
+        StringBuffer buffer = new StringBuffer();
+        for (int i=0; i<list.size(); i++) {
+            if (list.get(i)==isPositive) {
+                if (lastStart==-1)
+                    lastStart = i;
+                lastEnd = i;
+            } else {
+                if (lastStart!=-1) {
+                    if (lastEnd!=lastStart) {
+                        buffer.append(","+lastStart+"-"+lastEnd);
+                    } else {
+                        buffer.append(","+lastStart);
+                    }
+                }
+                lastStart = -1;
+            }
+        }
+        if (lastStart!=-1) {
+            if (lastEnd!=lastStart) {
+                buffer.append(","+lastStart+"-"+lastEnd);
+            } else {
+                buffer.append(","+lastStart);
+            }
+        }
+        return buffer.toString();
     }
 
     private CharArrayBuffer appendToCommand(List<CharArrayBuffer> commandList,
@@ -769,6 +874,16 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                         builder.addAttribute(ATTR_DIRECTORY);
                     }
                 }
+
+                // Parse out the various access restrictions:
+                //  NETWORK
+                //  BATCH
+                //  LOCAL
+                //  DIALUP
+                //  REMOTE
+                //
+                String accessRestrictions = (String)attributes.get("Access Restrictions");
+                parseAccessRestrictions(accessRestrictions, attributesToGet, builder);
 
                 // LAST_LOGIN 
                 //
@@ -1172,17 +1287,23 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
 
         // Multi-valued attributes
         //
-        attributes.add(buildMultivaluedAttribute(ATTR_FLAGS,        String.class, false));
-        attributes.add(buildMultivaluedAttribute(ATTR_PRIMEDAYS,    String.class, false));
-        attributes.add(buildMultivaluedAttribute(ATTR_PRIVILEGES,   String.class, false));
-        attributes.add(buildMultivaluedAttribute(ATTR_DEFPRIVILEGES,String.class, false));
+        attributes.add(buildMultivaluedAttribute(ATTR_FLAGS,          String.class, false));
+        attributes.add(buildMultivaluedAttribute(ATTR_PRIMEDAYS,      String.class, false));
+        attributes.add(buildMultivaluedAttribute(ATTR_PRIVILEGES,     String.class, false));
+        attributes.add(buildMultivaluedAttribute(ATTR_DEFPRIVILEGES,  String.class, false));
 
+        attributes.add(buildMultivaluedAttribute(ATTR_NETWORK,        Boolean.class, false));
+        attributes.add(buildMultivaluedAttribute(ATTR_BATCH,          Boolean.class, false));
+        attributes.add(buildMultivaluedAttribute(ATTR_LOCAL,          Boolean.class, false));
+        attributes.add(buildMultivaluedAttribute(ATTR_DIALUP,         Boolean.class, false));
+        attributes.add(buildMultivaluedAttribute(ATTR_REMOTE,         Boolean.class, false));
+        
         // Write-only attributes
         //
         //attributes.add(buildWriteonlyAttribute(ATTR_ALGORITHM,      String.class, false, false));
         attributes.add(buildCreateonlyAttribute(ATTR_LOGIN_SCRIPT_SOURCE, String.class, false));
-        attributes.add(buildCreateonlyAttribute(ATTR_COPY_LOGIN_SCRIPT, Boolean.class, false));
-        attributes.add(buildCreateonlyAttribute(ATTR_CREATE_DIRECTORY, Boolean.class, false));
+        attributes.add(buildCreateonlyAttribute(ATTR_COPY_LOGIN_SCRIPT,   Boolean.class, false));
+        attributes.add(buildCreateonlyAttribute(ATTR_CREATE_DIRECTORY,    Boolean.class, false));
 
         // Read-only attributes
         //
@@ -1226,6 +1347,74 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         _attributeMap = AttributeInfoUtil.toMap(attributes);
         return _schema;
     }
+    
+    /**
+     * No access pattern, plus partial access patter
+     *  Primary   000000000011111111112222  Secondary 000000000011111111112222
+     *  Day Hours 012345678901234567890123  Day Hours 012345678901234567890123
+     *  Network:  -----  No access  ------            -----#-###--------------
+     *  Batch:    -----  No access  ------            -----#-###--------------
+     *  Local:    -----  No access  ------            -----#-###--------------
+     *  Dialup:   -----  No access  ------            -----#-###--------------
+     *  Remote:   -----  No access  ------            -----#-###--------------
+     *  
+     * Full access pattern, plus No access pattern
+     *  Primary   000000000011111111112222  Secondary 000000000011111111112222
+     *  Day Hours 012345678901234567890123  Day Hours 012345678901234567890123
+     *  Network:  ##### Full access ######            -----  No access  ------
+     *  Batch:    ##### Full access ######            -----  No access  ------
+     *  Local:    ##### Full access ######            -----  No access  ------
+     *  Dialup:   ##### Full access ######            -----  No access  ------
+     *  Remote:   ##### Full access ######            -----  No access  ------
+     *  
+     * Full access to all pattern
+     *  No access restrictions
+     *  
+     */
+    private void parseAccessRestrictions(String access, List<String> attributesToGet, ConnectorObjectBuilder builder) {
+        if (access.trim().equals(FULL_ACCESS_FOR_ALL)) {
+            for (String accessor : ACCESSORS) {
+                if (includeInAttributes(accessor.toUpperCase(), attributesToGet))
+                    builder.addAttribute(AttributeBuilder.build(accessor.toUpperCase(), YES48_LIST));
+            }
+        } else {
+            for (String accessor: ACCESSORS) {
+                Pattern splitAccessPattern = Pattern.compile(accessor+":\\s+(.{24})\\s{12}(.{24})");
+                Matcher matcher = splitAccessPattern.matcher(access);
+                if (matcher.find()) {
+                    if (includeInAttributes(accessor.toUpperCase(), attributesToGet))
+                        builder.addAttribute(AttributeBuilder.build(accessor.toUpperCase(), convertAccessor(matcher.group(1), matcher.group(2))));
+                }
+                
+            }
+        }
+    }
+    private List<Boolean> convertAccessor(String primary, String secondary) {
+        List<Boolean> result = new ArrayList<Boolean>(48);
+        for (String value : new String[] {primary, secondary}) {
+            if (value.equals(FULL_ACCESS)) {
+                result.addAll(YES24_LIST);
+            } else if (value.equals(NO_ACCESS)) { 
+                result.addAll(NO24_LIST);
+            } else {
+                for (char character : value.toCharArray())
+                    result.add(character=='#');
+            }
+        }
+        return result;
+    }
+    private static final String[] ACCESSORS         = {"Network", "Batch", "Local", "Dialup", "Remote"};
+    private static final String FULL_ACCESS_FOR_ALL = "No access restrictions";
+    private static final String FULL_ACCESS         = "##### Full access ######";
+    private static final String NO_ACCESS           = "-----  No access  ------";
+    private static final Boolean[] YES24            = { true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true };
+    private static final Boolean[] NO24             = { false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false };
+    private static final List<Boolean> YES24_LIST   = Arrays.asList(YES24);
+    private static final List<Boolean> YES48_LIST   = new ArrayList<Boolean>(Arrays.asList(YES24));
+    static {
+        YES48_LIST.addAll(YES24_LIST);
+    }
+    private static final List<Boolean> NO24_LIST    = Arrays.asList(NO24);
 
     private AttributeInfo buildMultivaluedAttribute(String name, Class<?> clazz, boolean required) {
         AttributeInfoBuilder builder = new AttributeInfoBuilder();

@@ -72,6 +72,7 @@ public class VmsAuthorizeInfo {
                 new Transform[] {
                     new SplitTransform("[ \\t]+")
             }));
+            _parser.add(new PatternNode("Access Restrictions",   "(No\\saccess\\srestrictions|Primary([^\\n]*\\n){7})"));
             _parser.add(new PatternNode(ATTR_EXPIRATION,         "Expiration:"+TO_NEXT+"(?=Pwdminimum)"));
             _parser.add(new PatternNode(ATTR_PWDMINIMUM,         "Pwdminimum:"+TO_NEXT+"(?=Login Fails)", false, false, 
                 new Transform[] {

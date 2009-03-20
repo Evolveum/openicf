@@ -46,9 +46,9 @@ public class VmsAttributeValidator {
             PATTERN,
             METHOD
         };
-        private ValidatorType     _validatorType;
-        private Object           _value;
-        private int                _multiplicity;
+        private ValidatorType       _validatorType;
+        private Object              _value;
+        private int                 _multiplicity;
 
         public ValidatorInfo(int multiplicity) {
             _validatorType = ValidatorType.NUMERIC;
@@ -107,7 +107,7 @@ public class VmsAttributeValidator {
     };
 
     /**
-     * Determine if the string represents a valid VMS date stamp
+     * Determine if the string represents a valid VMS owner
      * 
      * @param date
      * @return
@@ -182,78 +182,16 @@ public class VmsAttributeValidator {
 
     /**
      * Determine if the value for ACCESS is valid.
-     * <pre>
-     *          /ACCESS[=(range[,...])]
-     *          /NOACCESS[=(range[,...])]
      *
-     *       Specifies hours of access for all modes of access. The syntax for
-     *       specifying the range is:
-     *
-     *    UAF> /[NO]ACCESS=([PRIMARY],[n-m],[n],[,...],[SECONDARY],[n-m],[n],[,...])
-     *
-     *       Specify hours as integers from 0 to 23, inclusive. You can
-     *       specify single hours (n)  or ranges of hours (n-m). If the ending
-     *       hour of a range is earlier than the starting hour, the range
-     *       extends from the starting hour through midnight to the ending
-     *       hour. The first set of hours after the keyword PRIMARY specifies
-     *       hours on primary days; the second set of hours after the keyword
-     *       SECONDARY specifies hours on secondary days. Note that hours
-     *       are inclusive; that is, if you grant access during a given hour,
-     *       access extends to the end of that hour.
-     *
-     *       By default, a user has full access every day. See the DCL command
-     *       SET DAY in the HP OpenVMS DCL Dictionary for information about
-     *       overriding the defaults for primary and secondary day types.
-     *
-     *       All the list elements are optional. Unless you specify hours for
-     *       a day type, access is permitted for the entire day. By specifying
-     *       an access time, you prevent access at all other times. Adding
-     *       NO to the qualifier denies the user access to the system for the
-     *       specified period of time. See the following examples.
-     *
-     *       /ACCESS                Allows unrestricted access
-     *
-     *       /NOACCESS=SECONDARY    Allows access on primary days only
-     *
-     *       /ACCESS=(9-17)         Allows access from 9 A.M. to 5:59 P.M. on
-     *                              all days
-     *
-     *       /NOACCESS=(PRIMARY,    Disallows access between 9 A.M. to 5:59
-     *       9-17, SECONDARY,       P.M. on primary days but allows access
-     *       18-8)                  during these hours on secondary days
-     *
-     *       To specify access hours for specific types of access, see the
-     *       /BATCH, /DIALUP, /INTERACTIVE, /LOCAL, /NETWORK, and /REMOTE
-     *       qualifiers.
-     *
-     *       Refer to HP OpenVMS Guide to System Security for information
-     *       about the effects of login class restrictions.
-     * </pre>
-     *
-     * @param algorithm
+     * Only a 48-element list of Booleans is a valid value
      */
     public static class ValidAccessList implements Validity {
         public boolean isValid(List<Object> accessList) {
+            if (accessList==null || accessList.size()!=48)
+                return false;
             for (Object access : accessList) {
-                String accessString = access.toString().trim().toUpperCase();
-                if (ACCESS_PRIMARY.equals(accessString))
-                    return true;
-                if (ACCESS_SECONDARY.equals(accessString))
-                    return true;
-                try {
-                    int accessInt = Integer.parseInt(accessString);
-                    return (accessInt>=0 && accessInt<=23);
-                } catch (NumberFormatException e) {
-                    // Try as a range
-                    String[] accessStrings = accessString.split("\\-");
-                    if (accessStrings.length!=2)
-                        return false;
-                    int accessInt = Integer.parseInt(accessStrings[0]);
-                    if (!(accessInt>=0 && accessInt<=23))
-                        return false;
-                    accessInt = Integer.parseInt(accessStrings[1]);
-                    return (accessInt>=0 && accessInt<=23);
-                } 
+                if (!(access instanceof Boolean))
+                    return false;
             }
             return true;
         }
@@ -655,7 +593,6 @@ public class VmsAttributeValidator {
     }
 
     static {
-        VALIDATOR_INFO.put(ATTR_ACCESS, new ValidatorInfo(new ValidAccessList()));
         VALIDATOR_INFO.put(ATTR_ALGORITHM, new ValidatorInfo(new ValidAlgorithm()));
         VALIDATOR_INFO.put(ATTR_ACCOUNT, new ValidatorInfo(_accountPattern, 1));
         VALIDATOR_INFO.put(ATTR_ASTLM, new ValidatorInfo(1));
