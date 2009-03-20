@@ -100,6 +100,17 @@ properties</a></li>
 
     <ul>
 
+      <li><a href="#testprop">TestApiOpTests
+properties</a></li>
+
+    </ul>
+
+  </ul>
+
+  <ul>
+
+    <ul>
+
       <li><a href="#schemaprop">SchemaApiOpTests
 properties</a></li>
 
@@ -295,9 +306,8 @@ system property that is set by <code>ant</code>.</p>
 <h4><a name="connconfprop">Connector Configuration
 Properties</a></h4>
 
-Properties declared in the connector configuration bean (see
-implementing <a href="http://idmvm120.central.sun.com/hudson/job/framework/javadoc/org/identityconnectors/framework/spi/Configuration.html"><code>Interface
-Configuration</code></a> ) use the following pattern:
+Properties declared in the connector configuration bean (Javadoc of <code>
+Configuration</code> interface) use the following pattern:
 <pre style="margin-left: 40px;">connector.${property.name}=${value}<br></pre>
 
 where <code>${property.name}</code> is a property of
@@ -369,17 +379,69 @@ are listed here (and in <code>bootstrap.groovy</code>):
 <h4><a name="validateprop">ValidateApiOpTests
 Properties</a></h4>
 
-It is necessary to define the following properties:
-<pre><span class="codeComment">// number of iterations ValidateApiOpTest will run</span><br>testsuite.Validate.iterations="2" <br><br><span class="codeComment">// 1 stands for iteration number, property value should contain wrong configuration of connector-test that validate() will throw.</span><br>connector.i<span style="color: rgb(51, 51, 255);">1</span>.wrong.${property.name}=${value} <br>connector.i<span style="color: rgb(51, 102, 255);">2</span>.wrong.${property.name}=${value} <span class="codeComment">//value used in the 2nd iteration</span><br></pre>
+For Validate tests, it is necessary to define a dedicated test property. The following example describes the layout of the property:
+<pre>
+<span class="codeComment">// Connector WRONG configuration for ValidateApiOpTests</span>
+testsuite.Validate.invalidConfig = [<br/>
+&nbsp;&nbsp;[ property1 : "invalidValue1" ], <br/>
+&nbsp;&nbsp;[ property2 : "invalidValue2" ],<br/>
+&nbsp;&nbsp;[ property3 : "invalidValue3", property4 : "invalidValue4" ] <span class="codeComment">// don't put more than 1 property per map</span><br/>
+]<br/>
+<br>
+</pre>
 
-There should be at least one incorrectly configured property
-per&nbsp;iteration, otherwise the test will fail.
+<p>
+<strong>Validate test property explained</strong> -- <code>testsuite.Validate.invalidConfig</code> contains a list of maps. The test procedure is the following:
+(1) choose a map from the list, (2) get the <a href="#connconfprop">default connector configuration</a> (defined by <code>connector.*</code>) and override 
+the attributes that are given on the list. (3) perform Validate operation on connector. (4) repeat from step 1. with the next map from the list.
+</p>
+<p>
+<strong>Best practice </strong> -- 
+<ul>
+<li>The test property enables to define multiple invalid properties, though best is to have once source of error (1 invalid property per map) at a time.
+</li>
+<li>Validate tests focus mainly on <strong>empty or NULL</strong> configuration properties, validate test doesn't check if it is possible to connect with given 
+configuration (source:   
+<code>ValidateApiOp Javadoc</code>).
+</li>
+</ul>
+</p>
+
+<h4><a name="testprop">TestApiOpTests
+Properties</a></h4>
+For <code>TestApiOpTests</code>, it is necessary to define a dedicated test property. The following example describes the layout of the property:
+<pre>
+<span class="codeComment">// Connector WRONG configuration for TestApiOpTests</span>
+testsuite.Test.invalidConfig = [<br/>
+&nbsp;&nbsp;[ attribute1 : "invalidValue1" ], <br/>
+&nbsp;&nbsp;[ attribute2 : "invalidValue2" ],<br/>
+&nbsp;&nbsp;[ attribute3 : "invalidValue3", attribute4 : "invalidValue4" ] <span class="codeComment">// don't put more than 1 property per map</span><br/>
+]<br/>
+<br>
+</pre>
+
+<p>
+The layout of <code>testsuite.Test.invalidConfig</code> property is the same as for <a href="#validateprop">ValidateApiOpTests</a>, however it has a different meaning.
+</p>
+<p>
+<strong>Best practice </strong> -- 
+<ul>
+<li>The test property enables to define multiple invalid properties, though best is to have once source of error (1 invalid property per map) at a time.
+</li>
+<li><code>TestApiOpTests</code> focus mainly on incorrect configuration properties that prevent to connect to the resource. 
+Candidates for wrong properties are non-existing host, port, username. For details see Javadoc of <code>TestApiOp</code>.
+</li>
+</ul>
+</p>
+
+
+
 <h4><a name="schemaprop">SchemaApiOpTests Properties</a></h4>
 
 <!-- note: this section is the same as in index.html / Quick start, point 4 -->
 Define the <span style="font-style: italic;">list</span>
-of supported object classes by connector (see <a href="http://idmvm120.central.sun.com/hudson/job/framework/javadoc/org/identityconnectors/framework/common/objects/ObjectClass.html"><span style="font-family: monospace;">
-ObjectClass.java</span></a> for up-to-date object class
+of supported object classes by connector (see <span style="font-family: monospace;">
+Javadoc of ObjectClass</span> for up-to-date object class
 types):<br>
 
 <br>
