@@ -256,7 +256,6 @@
     <Parameters>
       <string>Anr</string>
       <string>Credential</string>
-      <string>Database</string>
       <string>DomainController</string>
       <string>Filter</string>
       <string>IgnoreDefaultScope</string>

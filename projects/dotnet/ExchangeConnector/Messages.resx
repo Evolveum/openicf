@@ -123,6 +123,12 @@
   <data name="ex_argument_null" xml:space="preserve">
     <value>The Argument [{0}] can't be null</value>
   </data>
+  <data name="ex_bad_username" xml:space="preserve">
+    <value>Provided User name is not unique or not existing</value>
+  </data>
+  <data name="ex_not_updatable" xml:space="preserve">
+    <value>Update of [{0}] attribute is not supported</value>
+  </data>
   <data name="ex_powershell_problem" xml:space="preserve">
     <value>Problem while PowerShell execution {0}</value>
   </data>

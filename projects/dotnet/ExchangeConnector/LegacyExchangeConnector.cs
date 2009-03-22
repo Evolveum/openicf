@@ -76,7 +76,7 @@ namespace Org.IdentityConnectors.Exchange
         /// <summary>
         /// Attribute mapping constant
         /// </summary>
-        internal static readonly IDictionary<string, string> AttMap2AD = new Dictionary<string, string>() 
+        internal static readonly IDictionary<string, string> AttMap2AD = new Dictionary<string, string> 
         {
         { AttDatabase, AttDatabaseADName },
         { AttExternalMail, AttExternalMailADName }
@@ -85,7 +85,7 @@ namespace Org.IdentityConnectors.Exchange
         /// <summary>
         /// Attribute mapping constant
         /// </summary>
-        internal static readonly IDictionary<string, string> AttMapFromAD = new Dictionary<string, string>() 
+        internal static readonly IDictionary<string, string> AttMapFromAD = new Dictionary<string, string> 
         {
         { AttDatabaseADName, AttDatabase },
         { AttExternalMailADName, AttExternalMail }
@@ -103,7 +103,7 @@ namespace Org.IdentityConnectors.Exchange
                 ConnectorAttributeInfoBuilder.Build(
                         AttRecipientType,
                         typeof(string),
-                        ConnectorAttributeInfo.Flags.REQUIRED | ConnectorAttributeInfo.Flags.NOT_UPDATEABLE | ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT);
+                        ConnectorAttributeInfo.Flags.REQUIRED | ConnectorAttributeInfo.Flags.NOT_RETURNED_BY_DEFAULT);
 
         /// <summary>
         /// External Mail attribute info
@@ -185,7 +185,6 @@ namespace Org.IdentityConnectors.Exchange
 
             try
             {
-                // execute the command
                 this.InvokePipeline(cmd);
             }
             catch
@@ -239,33 +238,65 @@ namespace Org.IdentityConnectors.Exchange
             // update in AD first
             Uid uid = base.Update(type, oclass, FilterOut(attributes), options);
 
-            // get recipient type
+            // get recipient type and database
             string rcptType = ExchangeUtility.GetAttValue(AttRecipientType, attributes) as string;
+            string database = ExchangeUtility.GetAttValue(AttDatabase, attributes) as string;
 
-            // update is possible for mailuser's external email only
             if (rcptType == RcptTypeMailUser)
             {
                 if (type == UpdateType.REPLACE)
                 {
                     // get name attribute
-                    string name = ExchangeUtility.GetAttValue(Name.NAME, attributes) as string;
-                    if (name == null)
-                    {
-                        // we don't know name, but we need it - NOTE: searching for all the default attributes, we need only Name here, it can be improved
-                        ConnectorObject co = this.ADSearchByUid(uid, oclass, null);
-                        ExchangeUtility.NullCheck(co, "co", this.configuration);
+                    attributes = this.EnsureName(oclass, attributes, uid);
 
-                        // add to attributes
-                        attributes.Add(co.Name);
-                    }
-
-                    Command cmd = ExchangeUtility.GetCommand(ExchangeConnector.CommandInfo.SetMailUser, attributes);
+                    PSObject psuser = this.GetUser(ExchangeConnector.CommandInfo.GetUser, attributes);
+                    string origRcptType = psuser.Members[AttRecipientType].Value.ToString();
+                    Command cmd = origRcptType != rcptType ?
+                        ExchangeUtility.GetCommand(ExchangeConnector.CommandInfo.EnableMailUser, attributes)
+                        : ExchangeUtility.GetCommand(ExchangeConnector.CommandInfo.SetMailUser, attributes);
                     this.InvokePipeline(cmd);
                 }
                 else
                 {
                     throw new ConnectorException(this.configuration.ConnectorMessages.Format(
                             "ex_wrong_update_type", "Update type [{0}] not supported", type));
+                }
+            }
+            else if (rcptType == RcptTypeMailBox)
+            {
+                // we should execute something like this here:
+                // get-user -identity id|?{$_.RecipientType -eq "User"}|enable-mailbox -database "db"
+                // unfortunately I was not able to get it working with the pipeline... that's why there are two commands
+                // executed :-(
+                // alternatively there can be something like:
+                // get-user -identity id -RecipientTypeDetails User|enable-mailbox -database "db", but we have then trouble
+                // with detecting attempt to change the database attribute
+                ConnectorObject aduser = this.ADSearchByUid(uid, oclass, ExchangeUtility.AddAttributeToOptions(options, AttDatabaseADName));
+                attributes.Add(aduser.Name);
+                ExchangeConnector.CommandInfo cmdInfo = ExchangeConnector.CommandInfo.GetUser;
+                if (aduser.GetAttributeByName(AttDatabaseADName) != null)
+                {
+                    // we can be sure it is user mailbox type
+                    cmdInfo = ExchangeConnector.CommandInfo.GetMailbox;
+                }
+
+                PSObject psuser = this.GetUser(cmdInfo, attributes);
+                string origRcptType = psuser.Members[AttRecipientType].Value.ToString();
+                string origDatabase = psuser.Members[AttDatabase] != null ? psuser.Members[AttDatabase].Value.ToString() : null;
+                if (origRcptType != rcptType)
+                {
+                    Command cmd2 = ExchangeUtility.GetCommand(ExchangeConnector.CommandInfo.EnableMailbox, attributes);
+                    this.InvokePipeline(cmd2);
+                }
+                else
+                {
+                    // trying to update the database?
+                    if (database != null && database != origDatabase)
+                    {
+                        throw new ArgumentException(
+                            this.configuration.ConnectorMessages.Format(
+                            "ex_not_updatable", "Update of [{0}] attribute is not supported", AttDatabase));
+                    }
                 }
             }
 
@@ -643,6 +674,56 @@ namespace Org.IdentityConnectors.Exchange
 
             return ret;
         }
+
+        /// <summary>
+        /// Gets the Exchange user using powershell Get-User command
+        /// </summary>
+        /// <param name="cmdInfo">command info to get the user</param>
+        /// <param name="attributes">attributes containing the Name</param>
+        /// <returns><see cref="PSObject"/> with user info</returns>
+        private PSObject GetUser(ExchangeConnector.CommandInfo cmdInfo, ICollection<ConnectorAttribute> attributes)
+        {
+            // assert we have user name
+            string name = ExchangeUtility.GetAttValue(Name.NAME, attributes) as string;
+            ExchangeUtility.NullCheck(name, "User name", this.configuration);
+
+            Command cmdUser = ExchangeUtility.GetCommand(cmdInfo, attributes);
+            ICollection<PSObject> users = this.InvokePipeline(cmdUser);
+            if (users.Count == 1)
+            {
+                foreach (PSObject obj in users)
+                {
+                    return obj;
+                }
+            }
+
+            throw new ArgumentException(
+                this.configuration.ConnectorMessages.Format(
+                "ex_bad_username", "Provided User name is not unique or not existing"));
+        }
+
+        /// <summary>
+        /// Ensures we have Name attribute in attributes collection, if not present, it uses AD search to get it
+        /// </summary>
+        /// <param name="oclass">object class</param>
+        /// <param name="attributes">Collection of attributes</param>
+        /// <param name="uid">object Uid</param>
+        /// <returns>Collection of attributes conta</returns>
+        private ICollection<ConnectorAttribute> EnsureName(ObjectClass oclass, ICollection<ConnectorAttribute> attributes, Uid uid)
+        {
+            string name = ExchangeUtility.GetAttValue(Name.NAME, attributes) as string;
+            if (name == null)
+            {
+                // we don't know name, but we need it - NOTE: searching for all the default attributes, we need only Name here, it can be improved
+                ConnectorObject co = this.ADSearchByUid(uid, oclass, null);
+                ExchangeUtility.NullCheck(co, "co", this.configuration);
+
+                // add to attributes
+                attributes.Add(co.Name);
+            }
+            return attributes;
+        }
+
 
         /// <summary>
         /// Filter translator which does MS Exchange specific translation

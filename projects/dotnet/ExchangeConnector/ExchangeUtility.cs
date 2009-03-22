@@ -30,6 +30,7 @@ namespace Org.IdentityConnectors.Exchange
     using System.Diagnostics;
     using System.Globalization;
     using System.IO;
+    using System.Linq;
     using System.Management.Automation.Runspaces;
     using System.Reflection;
     using Microsoft.Win32;
@@ -351,6 +352,26 @@ using Org.IdentityConnectors.Framework.Spi;
                 throw new ArgumentNullException(config.ConnectorMessages.Format(
                             "ex_argument_null", "The Argument [{0}] can't be null", param));
             }
-        }    
+        }
+
+        /// <summary>
+        /// Builds new Operation options and add the specified attribute names as 
+        /// AttributesToGet (add to existing AttributesToGet)
+        /// </summary>
+        /// <param name="options">Existing Operation Options</param>
+        /// <param name="attNames">attribute names to be add to AttributeToGet</param>
+        /// <returns>New Operation Options</returns>
+        internal static OperationOptions AddAttributeToOptions(OperationOptions options, params string[] attNames)
+        {
+            OperationOptionsBuilder optionsBuilder = new OperationOptionsBuilder(options);
+            ICollection<string> attsToGet = new HashSet<string>(options.AttributesToGet);
+            foreach (string attName in attNames)
+            {
+                attsToGet.Add(attName);
+            }
+
+            optionsBuilder.AttributesToGet = attsToGet.ToArray();
+            return optionsBuilder.Build();
+        }
     }
 }
