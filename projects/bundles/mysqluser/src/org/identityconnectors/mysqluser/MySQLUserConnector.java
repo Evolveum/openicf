@@ -54,6 +54,7 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
@@ -173,14 +174,8 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      * @see org.identityconnectors.framework.spi.operations.CreateOp#create(ObjectClass, Set, OperationOptions)
      */
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
-        // Get the needed attributes
-        if(oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
-            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED)); 
-        }
-        
-        if(attrs == null || attrs.size() == 0) {
-            throw new IllegalArgumentException(config.getMessage(MSG_INVALID_ATTRIBUTE_SET)); 
-        }        
+
+        checkAttributes(oclass, attrs);  
 
         Name user = AttributeUtil.getNameFromAttributes(attrs);
         if (user == null || StringUtil.isBlank(user.getNameValue())) {
@@ -256,16 +251,9 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         final String SQL_UPDATE = "UPDATE mysql.user SET {0} WHERE user=?";
         final String SQL_SET_USER = "user = ?";
         final String SQL_SET_PASSWORD = "password = password(?)";
-              
-        // Get the needed attributes
-        if(oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
-            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED)); 
-        }
-        
-        if(attrs == null || attrs.size() == 0) {
-            throw new IllegalArgumentException(config.getMessage(MSG_INVALID_ATTRIBUTE_SET)); 
-        }               
 
+        checkAttributes(oclass, attrs);
+        
         // init the return value for old Uid
         Uid ret = oldUid;
         String updateSet = "";
@@ -304,8 +292,6 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         log.ok("User name: {0} updated", name);
         return ret;
     }
-    
-
 
     /**
      * Creates a MySQL filter translator.
@@ -466,6 +452,30 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             SQLUtil.closeQuietly(result);
             SQLUtil.closeQuietly(stmt);            
         }
+    }
+
+    /**
+     * Only supported attributes
+     * @param oclass the only one supported class
+     * @param attrs the set of attributes
+     */
+    private void checkAttributes(final ObjectClass oclass, final Set<Attribute> attrs) {
+        // Get the needed attributes
+        if(oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
+            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED)); 
+        }
+        
+        if(attrs == null || attrs.size() == 0) {
+            throw new IllegalArgumentException(config.getMessage(MSG_INVALID_ATTRIBUTE_SET)); 
+        }               
+        
+        // Check for known attributes
+        for (Attribute attribute : attrs) {
+            if(attribute.getName() == Name.NAME) continue;
+            if(attribute.getName() == Uid.NAME) continue;
+            if(attribute.getName() == OperationalAttributes.PASSWORD_NAME) continue;
+            throw new IllegalArgumentException(config.getMessage(MSG_INVALID_ATTRIBUTE_SET)); 
+        }        
     }
     
     /**
