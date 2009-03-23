@@ -1079,7 +1079,7 @@ public class VmsConnectorTests {
         return fillInSampleUser(testUser, false);
     }
 
-    private Set<Attribute> fillInSampleUser(final String testUser, boolean allDays) {
+    private Set<Attribute> fillInSampleUser(final String testUser, boolean runningScripts) {
         Set<Attribute> attrs = new HashSet<Attribute>();
         attrs.add(AttributeBuilder.build(Name.NAME, testUser));
         List<String> primary_days = new LinkedList<String>();
@@ -1087,10 +1087,16 @@ public class VmsConnectorTests {
         primary_days.add(DAYS_TUE);
         primary_days.add(DAYS_THU);
         primary_days.add(DAYS_FRI);
-        if (allDays) {
+        if (runningScripts) {
             primary_days.add(DAYS_WED);
             primary_days.add(DAYS_SAT);
             primary_days.add(DAYS_SUN);
+
+            attrs.add(AttributeBuilder.build(VmsConstants.ATTR_UIC, "[200,200]"));
+            attrs.add(AttributeBuilder.build(VmsConstants.ATTR_DIRECTORY, "[USER]"));
+        } else {
+            attrs.add(AttributeBuilder.build(VmsConstants.ATTR_DIRECTORY, "["+testUser+"]"));
+            attrs.add(AttributeBuilder.build(VmsConstants.ATTR_UIC, "[200,*]"));
         }
         attrs.add(AttributeBuilder.build(VmsConstants.ATTR_PRIMEDAYS, primary_days));
 
@@ -1111,7 +1117,6 @@ public class VmsConnectorTests {
         expired.add(Boolean.FALSE);
         attrs.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME, expired));
         attrs.add(AttributeBuilder.build(VmsConstants.ATTR_DEVICE, "SYS$SYSDISK:"));
-        attrs.add(AttributeBuilder.build(VmsConstants.ATTR_DIRECTORY, "[USER]"));
 
         Name name = new Name(testUser);
         attrs.add(name);

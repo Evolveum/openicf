@@ -98,7 +98,7 @@ public class VmsAttributeValidator {
     private static final Pattern _directoryPattern          = Pattern.compile("(\\[[a-zA-Z$0-9:]{1,39}\\])|[a-zA-Z$0-9:]{1,39}"); 
     private static final Pattern _fileSpecPattern           = Pattern.compile("[a-zA-Z0-9$_:]+"); 
     private static final Pattern _passwordPattern           = null; 
-    private static final Pattern _uicPattern                = Pattern.compile("\\[[0-3][0-7][0-7],[0-3][0-7][0-7]\\]"); 
+    private static final Pattern _uicPattern                = Pattern.compile("\\[[0-7]+,([0-7]+|\\*)\\]"); 
 
     private static Map<String, ValidatorInfo> VALIDATOR_INFO = new HashMap<String, ValidatorInfo>();
 

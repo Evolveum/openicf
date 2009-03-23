@@ -134,7 +134,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     private static final String USER_UPDATED     = "%UAF-I-MDFYMSG,";    // user record(s) updated
     private static final String BAD_USER         = "%UAF-W-BADUSR,";     // user name does not exist
     private static final String BAD_SPEC         = "%UAF-W-BADSPC,";     // no user matches specification
-
+    private static final String DUP_IDENT        = "-SYSTEM-F-DUPIDENT"; // duplicate identifier
+    private static final String DUPLNAM          = "-SYSTEM-F-DUPLNAM";  // duplicate name
+    
     public VmsConnector() {
         try {
             _changeOwnPasswordCommandScript = VmsUtilities.readFileFromClassPath("org/identityconnectors/vms/UserPasswordScript.txt");
@@ -332,7 +334,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         
         // Various Access modifiers (e.g., BATCH=(PRIMARY, 12-7)) are handled by
         //  NETWORK
-        //  BATCHS
+        //  BATCH
         //  LOCAL
         //  DIALUP
         //  REMOTE
@@ -647,13 +649,25 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
 
         // Extract action attributes
         //
-        String createDirCommand = getCreateDirCommand(attrMap);
-        String copyLoginCommand = getCopyLoginCommand(attrMap);
         Attribute createDirectory = attrMap.remove(ATTR_CREATE_DIRECTORY);
         Attribute copyLoginScript = attrMap.remove(ATTR_COPY_LOGIN_SCRIPT);
         Attribute loginScriptSource = attrMap.remove(ATTR_LOGIN_SCRIPT_SOURCE);
 
         Name name = (Name)attrMap.get(Name.NAME);
+        
+        // If UIC contains wildcard, compute an appropriate value
+        //
+        Attribute uic = attrMap.get(ATTR_UIC);
+        if (uic==null || StringUtil.isBlank(AttributeUtil.getStringValue(uic)))
+            throw new ConnectorException(_configuration.getMessage(VmsMessages.NULL_ATTRIBUTE_VALUE, ATTR_UIC));
+        String unusedUic = null;
+        boolean uniqueUicRequired = false;
+        String uicValue = AttributeUtil.getStringValue(uic);
+        if (uicValue.contains("*")) {
+            uniqueUicRequired = true;
+            unusedUic = getUnusedUicForGroup(uicValue);
+            attrMap.put(ATTR_UIC, AttributeBuilder.build(ATTR_UIC, unusedUic));
+        }
 
         String accountId = name.getNameValue();
         _log.info("create(''{0}'')", accountId);
@@ -685,8 +699,22 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE2, result));
         }
 
+        // It's possible another connector (or someone else) got in and took the UIC.
+        // If so, we retry with the next UIC
+        //
+        if (uniqueUicRequired && (isPresent(result, DUP_IDENT) || isPresent(result, DUPLNAM))) {
+            do {
+                unusedUic = getNextUicForGroup(unusedUic);
+                tryAnotherUic(unusedUic, accountId);
+                attrMap.put(ATTR_UIC, AttributeBuilder.build(ATTR_UIC, unusedUic));
+            } while (!isUnique(unusedUic));
+        }
+
         // Process action attributes
         //
+        String createDirCommand = getCreateDirCommand(attrMap);
+        String copyLoginCommand = getCopyLoginCommand(attrMap);
+
         if (createDirCommand!=null) {
             result = executeCommand(_connection, createDirCommand);
             Matcher matcher = _errorPattern.matcher(result);
@@ -705,6 +733,24 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         }
 
         return new Uid(accountId);
+    }
+
+    private void tryAnotherUic(String unusedUic, String accountId) {
+        Map<String, Attribute> uicAttrMap = new HashMap<String, Attribute>();
+        uicAttrMap.put(ATTR_UIC, AttributeBuilder.build(ATTR_UIC, unusedUic));
+        List<CharArrayBuffer> uicCommand = appendAttributes(true, accountId, uicAttrMap);
+
+        Map<String, Object> uicVariables = new HashMap<String, Object>();
+        fillInCommand(uicCommand, uicVariables);
+        String result = "";
+        try {
+            result = (String)_authorizeCommandExecutor.execute(uicVariables);
+            clearArrays(uicVariables);
+        } catch (Exception e) {
+            clearArrays(uicVariables);
+            _log.error(e, "error in tryAnotherUic");
+            throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY), e);
+        }
     }
 
     /**
@@ -771,7 +817,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 attributesToGet = CollectionUtil.newReadOnlySet(options.getAttributesToGet());
             filterUsers(handler, filterStrings, attributesToGet==null?null:CollectionUtil.newReadOnlySet(attributesToGet));
         } catch (Exception e) {
-            e.printStackTrace();
             _log.error(e, "error in executeQuery");
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_SEARCH), e);
         }
@@ -1089,6 +1134,20 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UPDATE_ATTRIBUTE_VALUE, createDirectory.getName()));
         if (isAttributeTrue(copyLogin))
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UPDATE_ATTRIBUTE_VALUE, copyLogin.getName()));
+        
+        // If UIC contains wildcard, compute an appropriate value
+        //
+        boolean uniqueUicRequired = false;
+        String unusedUic = null;
+        Attribute uic = attrMap.get(ATTR_UIC);
+        if (uic!=null && StringUtil.isBlank(AttributeUtil.getStringValue(uic))) {
+            String uicValue = AttributeUtil.getStringValue(uic);
+            if (uicValue.contains("*")) {
+                uniqueUicRequired = true;
+                unusedUic = getUnusedUicForGroup(uicValue);
+                attrMap.put(ATTR_UIC, AttributeBuilder.build(ATTR_UIC, unusedUic));
+            }
+        }
 
         // Operational Attributes are handled specially
         //
@@ -1134,6 +1193,17 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             } else {
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
             }
+
+            // It's possible another connector (or someone else) got in and took the UIC.
+            // If so, we retry with the next UIC
+            //
+            if (uniqueUicRequired && (isPresent(result, DUP_IDENT) || isPresent(result, DUPLNAM))) {
+                do {
+                    unusedUic = getNextUicForGroup(unusedUic);
+                    tryAnotherUic(unusedUic, uid.getUidValue());
+                } while (!isUnique(unusedUic));
+            }
+
         }
 
         // If Password and CurrentPassword
@@ -1776,6 +1846,79 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         return cmd.toString();
     }
 
+    /**
+     * Find an unused member in the group.
+     * 
+     * @param groupId
+     * @return
+     */
+    private String getUnusedUicForGroup(String uicWithWildCard) {
+        List<String> commands = new LinkedList<String>();
+        commands.add("SHOW/BRIEF "+uicWithWildCard+"\n");
+        Map<String, Object> variables = new HashMap<String, Object>();
+        variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
+        variables.put("SHORT_WAIT", SHORT_WAIT);
+        variables.put("LONG_WAIT", LONG_WAIT);
+        variables.put("UAF_PROMPT", UAF_PROMPT);
+        variables.put("COMMANDS", commands);
+        variables.put("CONNECTION", _connection);
+
+        try {
+            String output = (String)_listCommandExecutor.execute(variables);
+            Pattern uicPattern = Pattern.compile("\\[(\\d+),(\\d+)\\]");
+            Matcher matcher = uicPattern.matcher(output);
+            int offset = 0;
+            int max = 0;
+            String group = null;
+            while (matcher.find(offset)) {
+                group = matcher.group(1);
+                int value = Integer.valueOf(matcher.group(2), 8).intValue();
+                if (value>max)
+                    max = value;
+                offset = matcher.end(1);
+            }
+            return "["+group+","+Integer.toOctalString(max + 1)+"]";
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }
+    }
+    
+    private String getNextUicForGroup(String uic) {
+        Pattern uicPattern = Pattern.compile("\\[(\\d+),(\\d+)\\]");
+        Matcher matcher = uicPattern.matcher(uic);
+        if (matcher.matches()) {
+            int value = Integer.valueOf(matcher.group(2), 8).intValue();
+            return "["+matcher.group(1)+","+Integer.toOctalString(value + 1)+"]";
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Determine if the UIC is only assigned to a single user
+     * 
+     * @param groupId
+     * @return
+     */
+    private boolean isUnique(String uic) {
+        List<String> commands = new LinkedList<String>();
+        commands.add("SHOW/BRIEF "+uic+"\n");
+        Map<String, Object> variables = new HashMap<String, Object>();
+        variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
+        variables.put("SHORT_WAIT", SHORT_WAIT);
+        variables.put("LONG_WAIT", LONG_WAIT);
+        variables.put("UAF_PROMPT", UAF_PROMPT);
+        variables.put("COMMANDS", commands);
+        variables.put("CONNECTION", _connection);
+
+        try {
+            String output = (String)_listCommandExecutor.execute(variables);
+            return output.indexOf(uic)==output.lastIndexOf(uic);
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }
+    }
+    
     private static class CharArrayBuffer {
         private char[]  _array;
         private int     _position;
