@@ -364,7 +364,12 @@ using Org.IdentityConnectors.Framework.Spi;
         internal static OperationOptions AddAttributeToOptions(OperationOptions options, params string[] attNames)
         {
             OperationOptionsBuilder optionsBuilder = new OperationOptionsBuilder(options);
-            ICollection<string> attsToGet = new HashSet<string>(options.AttributesToGet);
+            List<string> attsToGet = new List<string>();
+            if (options.AttributesToGet != null)
+            {
+                attsToGet.AddRange(options.AttributesToGet);
+            }
+
             foreach (string attName in attNames)
             {
                 attsToGet.Add(attName);

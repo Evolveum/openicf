@@ -171,7 +171,7 @@ namespace Org.IdentityConnectors.Exchange
             if (rcptType != RcptTypeMailBox && rcptType != RcptTypeMailUser)
             {
                 // AD account only, we do nothing
-                return base.Create(oclass, attributes, options);
+                return base.Create(oclass, FilterOut(attributes), options);
             }
 
             // first create the object in AD
