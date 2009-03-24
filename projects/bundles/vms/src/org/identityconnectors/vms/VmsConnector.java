@@ -452,21 +452,21 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         boolean noSecondary = isAllFalse(secondary);
         boolean allSecondary = isAllTrue(secondary);
         
-        // If either noPrimary, or noSecondary, we need to use the negative
+        // If both noPrimary and noSecondary, we need to use the negative
         // form, otherwise, the positive form
         //
         if (noPrimary) {
             if (noSecondary) {
                 return "/NO"+accessorName.toUpperCase();
             } else if (allSecondary) {
-                return "/NO"+accessorName.toUpperCase()+"=(PRIMARY)";
+                return "/"+accessorName.toUpperCase()+"=(SECONDARY)";
             } else  {
-                return "/NO"+accessorName.toUpperCase()+"=(PRIMARY,0-23,SECONDARY"+convertBooleanListToString(secondary, false)+")";
+                return "/"+accessorName.toUpperCase()+"=(SECONDARY"+convertBooleanListToString(secondary)+")";
             }
         } else if (noSecondary) {
-            return "/NO"+accessorName.toUpperCase()+"=(PRIMARY"+convertBooleanListToString(primary, false)+",SECONDARY)";
+            return "/"+accessorName.toUpperCase()+"=(PRIMARY"+convertBooleanListToString(primary);
         } else {
-            return "/"+accessorName.toUpperCase()+"=(PRIMARY"+convertBooleanListToString(primary, true)+",SECONDARY"+convertBooleanListToString(secondary, true)+")";
+            return "/"+accessorName.toUpperCase()+"=(PRIMARY"+convertBooleanListToString(primary)+",SECONDARY"+convertBooleanListToString(secondary)+")";
         }
     }
     
@@ -484,12 +484,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         return true;
     }
     
-    private String convertBooleanListToString(List<Boolean> list, boolean isPositive) {
+    private String convertBooleanListToString(List<Boolean> list) {
         int lastStart = -1;
         int lastEnd = -1;
         StringBuffer buffer = new StringBuffer();
         for (int i=0; i<list.size(); i++) {
-            if (list.get(i)==isPositive) {
+            if (list.get(i)) {
                 if (lastStart==-1)
                     lastStart = i;
                 lastEnd = i;
@@ -1134,20 +1134,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UPDATE_ATTRIBUTE_VALUE, createDirectory.getName()));
         if (isAttributeTrue(copyLogin))
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UPDATE_ATTRIBUTE_VALUE, copyLogin.getName()));
-        
-        // If UIC contains wildcard, compute an appropriate value
-        //
-        boolean uniqueUicRequired = false;
-        String unusedUic = null;
-        Attribute uic = attrMap.get(ATTR_UIC);
-        if (uic!=null && StringUtil.isBlank(AttributeUtil.getStringValue(uic))) {
-            String uicValue = AttributeUtil.getStringValue(uic);
-            if (uicValue.contains("*")) {
-                uniqueUicRequired = true;
-                unusedUic = getUnusedUicForGroup(uicValue);
-                attrMap.put(ATTR_UIC, AttributeBuilder.build(ATTR_UIC, unusedUic));
-            }
-        }
 
         // Operational Attributes are handled specially
         //
@@ -1155,56 +1141,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         Name name = (Name)attrMap.remove(Name.NAME);
         Attribute currentPassword = attrMap.remove(OperationalAttributes.CURRENT_PASSWORD_NAME);
         Attribute newPassword = attrMap.remove(OperationalAttributes.PASSWORD_NAME);
-
-        // If name is different from Uid, we are performing a RENAME operation.
-        // Do this first, followed by the MODIFY
-        //
-        if (name!=null && uid!=null && !uid.getUidValue().equals(name.getNameValue())) {
-            CharArrayBuffer renameCommand = new CharArrayBuffer();
-            renameCommand.append("RENAME "+uid.getUidValue()+" "+name.getNameValue());
-
-            Map<String, Object> variables = new HashMap<String, Object>();
-            variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
-            variables.put("SHORT_WAIT", SHORT_WAIT);
-            variables.put("UAF_PROMPT", UAF_PROMPT);
-            variables.put("UAF_PROMPT_CONTINUE", UAF_PROMPT_CONTINUE);
-            char[] commandContents = renameCommand.getArray();
-            renameCommand.clear();
-            variables.put("COMMAND", commandContents);
-            variables.put("COMMANDS", new LinkedList<CharArrayBuffer>());
-            variables.put("CONNECTION", _connection);
-
-            String result = "";
-            try {
-                result = (String)_authorizeCommandExecutor.execute(variables);
-                Arrays.fill(commandContents, 0, commandContents.length, ' ');
-            } catch (Exception e) {
-                Arrays.fill(commandContents, 0, commandContents.length, ' ');
-                _log.error(e, "error in rename");
-                throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY), e);
-            }
-
-            if (isPresent(result, USER_RENAMED)) {
-                uid = new Uid(name.getNameValue());
-            } else if (isPresent(result, BAD_SPEC)) {
-                throw new UnknownUidException();
-            } else if (isPresent(result, USER_EXISTS)) {
-                throw new AlreadyExistsException();
-            } else {
-                throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
-            }
-
-            // It's possible another connector (or someone else) got in and took the UIC.
-            // If so, we retry with the next UIC
-            //
-            if (uniqueUicRequired && (isPresent(result, DUP_IDENT) || isPresent(result, DUPLNAM))) {
-                do {
-                    unusedUic = getNextUicForGroup(unusedUic);
-                    tryAnotherUic(unusedUic, uid.getUidValue());
-                } while (!isUnique(unusedUic));
-            }
-
-        }
 
         // If Password and CurrentPassword
         // are specified, we change password via SET PASSWORD, rather than AUTHORIIZE
@@ -1251,6 +1187,21 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         // If we have any remaining attributes, process them
         //
         if (attrMap.size()>0) {
+            
+            // If UIC contains wildcard, compute an appropriate value
+            //
+            boolean uniqueUicRequired = false;
+            String unusedUic = null;
+            Attribute uic = attrMap.get(ATTR_UIC);
+            if (uic!=null && StringUtil.isBlank(AttributeUtil.getStringValue(uic))) {
+                String uicValue = AttributeUtil.getStringValue(uic);
+                if (uicValue.contains("*")) {
+                    uniqueUicRequired = true;
+                    unusedUic = getUnusedUicForGroup(uicValue);
+                    attrMap.put(ATTR_UIC, AttributeBuilder.build(ATTR_UIC, unusedUic));
+                }
+            }
+            
             String accountId = uid.getUidValue();
             List<CharArrayBuffer> modifyCommand = appendAttributes(true, accountId, attrMap);
 
@@ -1268,13 +1219,63 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             }
 
             if (isPresent(result, USER_UPDATED)) {
-                return uid;
+                // OK, drop through and return uid
             } else if (isPresent(result, BAD_SPEC)) {
                 throw new UnknownUidException();
             } else {
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
             }
+
+            // It's possible another connector (or someone else) got in and took the UIC.
+            // If so, we retry with the next UIC
+            //
+            if (uniqueUicRequired && (isPresent(result, DUP_IDENT) || isPresent(result, DUPLNAM))) {
+                do {
+                    unusedUic = getNextUicForGroup(unusedUic);
+                    tryAnotherUic(unusedUic, uid.getUidValue());
+                } while (!isUnique(unusedUic));
+            }
         }
+
+        // If name is different from Uid, we are performing a RENAME operation.
+        // Do this last, so that we don't lose the Uid change on error.
+        //
+        if (name!=null && uid!=null && !uid.getUidValue().equals(name.getNameValue())) {
+            CharArrayBuffer renameCommand = new CharArrayBuffer();
+            renameCommand.append("RENAME "+uid.getUidValue()+" "+name.getNameValue());
+
+            Map<String, Object> variables = new HashMap<String, Object>();
+            variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
+            variables.put("SHORT_WAIT", SHORT_WAIT);
+            variables.put("UAF_PROMPT", UAF_PROMPT);
+            variables.put("UAF_PROMPT_CONTINUE", UAF_PROMPT_CONTINUE);
+            char[] commandContents = renameCommand.getArray();
+            renameCommand.clear();
+            variables.put("COMMAND", commandContents);
+            variables.put("COMMANDS", new LinkedList<CharArrayBuffer>());
+            variables.put("CONNECTION", _connection);
+
+            String result = "";
+            try {
+                result = (String)_authorizeCommandExecutor.execute(variables);
+                Arrays.fill(commandContents, 0, commandContents.length, ' ');
+            } catch (Exception e) {
+                Arrays.fill(commandContents, 0, commandContents.length, ' ');
+                _log.error(e, "error in rename");
+                throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY), e);
+            }
+
+            if (isPresent(result, USER_RENAMED)) {
+                uid = new Uid(name.getNameValue());
+            } else if (isPresent(result, BAD_SPEC)) {
+                throw new UnknownUidException();
+            } else if (isPresent(result, USER_EXISTS)) {
+                throw new AlreadyExistsException();
+            } else {
+                throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
+            }
+        }
+
         return uid;
     }
 
