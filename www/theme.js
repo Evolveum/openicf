@@ -9,8 +9,8 @@ var regions = [
   	match: []
   },
   {
-  	title: "Community",
-  	href:  "http://developers.sun.com/identity",
+  	title: "Blog",
+  	href:  "http://blogs.sun.com/identityconnectors",
   	match: []
   },
   {
