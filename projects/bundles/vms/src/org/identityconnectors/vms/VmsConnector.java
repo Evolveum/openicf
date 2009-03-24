@@ -442,96 +442,23 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         
         // Separate out primary and secondary hours
         //
-        List<Boolean> primary = new ArrayList<Boolean>(24);
-        List<Boolean> secondary = new ArrayList<Boolean>(24);
-        for (int i=0; i<24; i++) {
-            primary.add(Boolean.FALSE);
-            secondary.add(Boolean.FALSE);
-        }
-        setValues(primary, (String)accessorValues.get(0));
-        setValues(secondary, (String)accessorValues.get(1));
+        String primary   = (String)accessorValues.get(0);
+        String secondary = (String)accessorValues.get(1);
 
-        boolean noPrimary = isAllFalse(primary);
-        boolean noSecondary = isAllFalse(secondary);
-        boolean allSecondary = isAllTrue(secondary);
-        
         // If both noPrimary and noSecondary, we need to use the negative
         // form, otherwise, the positive form
         //
-        if (noPrimary) {
-            if (noSecondary) {
+        if (StringUtil.isBlank(primary)) {
+            if (StringUtil.isBlank(secondary)) {
                 return "/NO"+accessorName.toUpperCase();
-            } else if (allSecondary) {
-                return "/"+accessorName.toUpperCase()+"=(SECONDARY)";
-            } else  {
-                return "/"+accessorName.toUpperCase()+"=(SECONDARY"+convertBooleanListToString(secondary)+")";
+            } else {
+                return "/"+accessorName.toUpperCase()+"=(SECONDARY,"+secondary+")";
             }
-        } else if (noSecondary) {
-            return "/"+accessorName.toUpperCase()+"=(PRIMARY"+convertBooleanListToString(primary);
+        } else if (StringUtil.isBlank(secondary)) {
+            return "/"+accessorName.toUpperCase()+"=(PRIMARY,"+primary;
         } else {
-            return "/"+accessorName.toUpperCase()+"=(PRIMARY"+convertBooleanListToString(primary)+",SECONDARY"+convertBooleanListToString(secondary)+")";
+            return "/"+accessorName.toUpperCase()+"=(PRIMARY,"+primary+",SECONDARY,"+secondary+")";
         }
-    }
-    
-    private void setValues(List<Boolean> values, String value) {
-        if (value.length()==0)
-            return;
-        for (String pair : value.split(",")) {
-            String[] split = pair.split("-");
-            if (split.length==1) {
-                int lower = Integer.parseInt(split[0]);
-                values.set(lower, Boolean.TRUE);
-            } else {
-                int lower = Integer.parseInt(split[0]);
-                int upper = Integer.parseInt(split[1]);
-                for (int i=lower; i<=upper; i++)
-                    values.set(i, Boolean.TRUE);
-            }
-        }
-    }
-    
-    private boolean isAllTrue(List<Boolean> values) {
-        for (Boolean value : values) 
-            if (!value)
-                return false;
-        return true;
-    }
-    
-    private boolean isAllFalse(List<Boolean> values) {
-        for (Boolean value : values) 
-            if (value)
-                return false;
-        return true;
-    }
-    
-    private String convertBooleanListToString(List<Boolean> list) {
-        int lastStart = -1;
-        int lastEnd = -1;
-        StringBuffer buffer = new StringBuffer();
-        for (int i=0; i<list.size(); i++) {
-            if (list.get(i)) {
-                if (lastStart==-1)
-                    lastStart = i;
-                lastEnd = i;
-            } else {
-                if (lastStart!=-1) {
-                    if (lastEnd!=lastStart) {
-                        buffer.append(","+lastStart+"-"+lastEnd);
-                    } else {
-                        buffer.append(","+lastStart);
-                    }
-                }
-                lastStart = -1;
-            }
-        }
-        if (lastStart!=-1) {
-            if (lastEnd!=lastStart) {
-                buffer.append(","+lastStart+"-"+lastEnd);
-            } else {
-                buffer.append(","+lastStart);
-            }
-        }
-        return buffer.toString();
     }
 
     private CharArrayBuffer appendToCommand(List<CharArrayBuffer> commandList,
