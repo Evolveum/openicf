@@ -183,15 +183,37 @@ public class VmsAttributeValidator {
     /**
      * Determine if the value for ACCESS is valid.
      *
-     * Only a 48-element list of Booleans is a valid value
+     * Only a pair of Strings representing hours is valid
+     * The hour list is a comma-separated list of hours, and ranges.
+     * Hours are 0-origin, for example
+     *      0-8, 9
      */
     public static class ValidAccessList implements Validity {
         public boolean isValid(List<Object> accessList) {
-            if (accessList==null || accessList.size()!=48)
+            if (accessList==null || accessList.size()!=2)
                 return false;
             for (Object access : accessList) {
-                if (!(access instanceof Boolean))
+                if (!(access instanceof String))
                     return false;
+                if (((String)access).length()==0)
+                    return true;
+                for (String pair : ((String)access).split(",")) {
+                    String[] split = pair.split("-");
+                    if (split.length==1) {
+                        int lower = Integer.parseInt(split[0]);
+                        if (lower>23 || lower<0)
+                            return false;
+                    } else {
+                        int lower = Integer.parseInt(split[0]);
+                        int upper = Integer.parseInt(split[1]);
+                        if (lower>23 || lower<0)
+                            return false;
+                        if (upper>23 || upper<0)
+                            return false;
+                        if (lower>upper)
+                            return false;
+                    }
+                }
             }
             return true;
         }

@@ -445,9 +445,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         List<Boolean> primary = new ArrayList<Boolean>(24);
         List<Boolean> secondary = new ArrayList<Boolean>(24);
         for (int i=0; i<24; i++) {
-            primary.add((Boolean)accessorValues.get(i));
-            secondary.add((Boolean)accessorValues.get(i+24));
+            primary.add(Boolean.FALSE);
+            secondary.add(Boolean.FALSE);
         }
+        setValues(primary, (String)accessorValues.get(0));
+        setValues(secondary, (String)accessorValues.get(1));
+
         boolean noPrimary = isAllFalse(primary);
         boolean noSecondary = isAllFalse(secondary);
         boolean allSecondary = isAllTrue(secondary);
@@ -467,6 +470,23 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             return "/"+accessorName.toUpperCase()+"=(PRIMARY"+convertBooleanListToString(primary);
         } else {
             return "/"+accessorName.toUpperCase()+"=(PRIMARY"+convertBooleanListToString(primary)+",SECONDARY"+convertBooleanListToString(secondary)+")";
+        }
+    }
+    
+    private void setValues(List<Boolean> values, String value) {
+        if (value.length()==0)
+            return;
+        for (String pair : value.split(",")) {
+            String[] split = pair.split("-");
+            if (split.length==1) {
+                int lower = Integer.parseInt(split[0]);
+                values.set(lower, Boolean.TRUE);
+            } else {
+                int lower = Integer.parseInt(split[0]);
+                int upper = Integer.parseInt(split[1]);
+                for (int i=lower; i<=upper; i++)
+                    values.set(i, Boolean.TRUE);
+            }
         }
     }
     
@@ -1365,11 +1385,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         attributes.add(buildMultivaluedAttribute(ATTR_PRIVILEGES,     String.class, false));
         attributes.add(buildMultivaluedAttribute(ATTR_DEFPRIVILEGES,  String.class, false));
 
-        attributes.add(buildMultivaluedAttribute(ATTR_NETWORK,        Boolean.class, false));
-        attributes.add(buildMultivaluedAttribute(ATTR_BATCH,          Boolean.class, false));
-        attributes.add(buildMultivaluedAttribute(ATTR_LOCAL,          Boolean.class, false));
-        attributes.add(buildMultivaluedAttribute(ATTR_DIALUP,         Boolean.class, false));
-        attributes.add(buildMultivaluedAttribute(ATTR_REMOTE,         Boolean.class, false));
+        attributes.add(buildMultivaluedAttribute(ATTR_NETWORK,        String.class, false));
+        attributes.add(buildMultivaluedAttribute(ATTR_BATCH,          String.class, false));
+        attributes.add(buildMultivaluedAttribute(ATTR_LOCAL,          String.class, false));
+        attributes.add(buildMultivaluedAttribute(ATTR_DIALUP,         String.class, false));
+        attributes.add(buildMultivaluedAttribute(ATTR_REMOTE,         String.class, false));
         
         // Write-only attributes
         //
@@ -1448,7 +1468,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         if (access.trim().equals(FULL_ACCESS_FOR_ALL)) {
             for (String accessor : ACCESSORS) {
                 if (includeInAttributes(accessor.toUpperCase(), attributesToGet))
-                    builder.addAttribute(AttributeBuilder.build(accessor.toUpperCase(), YES48_LIST));
+                    builder.addAttribute(AttributeBuilder.build(accessor.toUpperCase(), new Object[] {"0-23", "0-23"}));
             }
         } else {
             for (String accessor: ACCESSORS) {
@@ -1462,18 +1482,45 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             }
         }
     }
-    private List<Boolean> convertAccessor(String primary, String secondary) {
-        List<Boolean> result = new ArrayList<Boolean>(48);
+    private List<String> convertAccessor(String primary, String secondary) {
+        List<String> result = new ArrayList<String>(2);
         for (String value : new String[] {primary, secondary}) {
             if (value.equals(FULL_ACCESS)) {
-                result.addAll(YES24_LIST);
+                result.add("0-23");
             } else if (value.equals(NO_ACCESS)) { 
-                result.addAll(NO24_LIST);
+                result.add("");
             } else {
-                for (char character : value.toCharArray())
-                    result.add(character=='#');
+                int lower = -1;
+                char previous = '-';
+                StringBuffer buffer = new StringBuffer();
+                for (int i=0; i<24; i++) {
+                    if (value.charAt(i)!=previous) {
+                        if (value.charAt(i)=='#') {
+                            // Starting new string of hours
+                            lower = i;
+                        } else {
+                            // ended previous string of hours
+                            if (lower>-1) {
+                                if ((i-1)>lower)
+                                    buffer.append(","+lower+"-"+(i-1));
+                                else
+                                    buffer.append(","+lower);
+                                lower = -1;
+                            }
+                        }
+                    }
+                    previous = value.charAt(i);
+                }
+                if (lower>-1) {
+                    if (lower<23)
+                        buffer.append(","+lower+"-23");
+                    else
+                        buffer.append(","+lower);
+                }
+                result.add(buffer.toString().substring(1));
             }
         }
+        
         return result;
     }
     private static final String[] ACCESSORS         = {"Network", "Batch", "Local", "Dialup", "Remote"};
