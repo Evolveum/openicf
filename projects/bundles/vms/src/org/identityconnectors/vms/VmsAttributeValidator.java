@@ -190,30 +190,34 @@ public class VmsAttributeValidator {
      */
     public static class ValidAccessList implements Validity {
         public boolean isValid(List<Object> accessList) {
-            if (accessList==null || accessList.size()!=2)
-                return false;
-            for (Object access : accessList) {
-                if (!(access instanceof String))
+            try {
+                if (accessList==null || accessList.size()!=2)
                     return false;
-                if (((String)access).length()==0)
-                    return true;
-                for (String pair : ((String)access).split(",")) {
-                    String[] split = pair.split("-");
-                    if (split.length==1) {
-                        int lower = Integer.parseInt(split[0]);
-                        if (lower>23 || lower<0)
-                            return false;
-                    } else {
-                        int lower = Integer.parseInt(split[0]);
-                        int upper = Integer.parseInt(split[1]);
-                        if (lower>23 || lower<0)
-                            return false;
-                        if (upper>23 || upper<0)
-                            return false;
-                        if (lower>upper)
-                            return false;
+                for (Object access : accessList) {
+                    if (!(access instanceof String))
+                        return false;
+                    if (((String)access).length()==0)
+                        return true;
+                    for (String pair : ((String)access).split(",")) {
+                        String[] split = pair.split("-");
+                        if (split.length==1) {
+                            int lower = Integer.parseInt(split[0]);
+                            if (lower>23 || lower<0)
+                                return false;
+                        } else {
+                            int lower = Integer.parseInt(split[0]);
+                            int upper = Integer.parseInt(split[1]);
+                            if (lower>23 || lower<0)
+                                return false;
+                            if (upper>23 || upper<0)
+                                return false;
+                            if (lower>upper)
+                                return false;
+                        }
                     }
                 }
+            } catch (NumberFormatException nfe) {
+                return false;
             }
             return true;
         }
