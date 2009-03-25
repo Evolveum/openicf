@@ -28,6 +28,7 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.db2.Type2ConnectionInfo.Type2ConnectionInfoBuilder;
 import org.identityconnectors.db2.Type4ConnectionInfo.Type4ConnectionInfoBuilder;
 import org.identityconnectors.dbcommon.JNDIUtil;
+import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.spi.*;
 
@@ -133,7 +134,10 @@ public class DB2Configuration extends AbstractConfiguration implements Cloneable
 		/** Connecting using type 4 driver (host,port,databaseName)*/
 		TYPE4,
 		/** Connecting using type 2 driver (local alias) */
-		TYPE2;
+		TYPE2,
+		/** Connecting using explicit url */
+		URL
+		;
 	}
 	
 	/** Name of admin user which will be used to connect to DB2 database.
@@ -175,6 +179,9 @@ public class DB2Configuration extends AbstractConfiguration implements Cloneable
 	 * When set to false we will do add.
 	 */
 	private boolean replaceAllGrantsOnUpdate = true;
+	
+	/** Full url for connecting to DB2 */
+	private String url;
 	
 	/**
 	 * @return admin account
@@ -285,6 +292,17 @@ public class DB2Configuration extends AbstractConfiguration implements Cloneable
 	public void setPort(String port) {
 		this.port = port;
 	}
+	
+	
+	@ConfigurationProperty(order=7,displayMessageKey="db2.url.display",helpMessageKey="db2.url.help")
+	public String getURL() {
+		return url;
+	}
+	
+	public void setURL(String url){
+		this.url = url;
+	}
+	
 	/**
 	 * @return the dataSource
 	 */
@@ -299,6 +317,8 @@ public class DB2Configuration extends AbstractConfiguration implements Cloneable
 	public void setDataSource(String dataSource) {
 		this.dataSource = dataSource;
 	}
+	
+	
 	
 	/**
 	 * @return the dsJNDIEnv
@@ -392,6 +412,9 @@ public class DB2Configuration extends AbstractConfiguration implements Cloneable
 			return DB2Specifics.createType2Connection(new Type2ConnectionInfoBuilder().setDriver(jdbcDriver).
 			        setAliasName(databaseName).setSubprotocol(jdbcSubProtocol).
 			        setUser(user).setPassword(password).build());
+		}
+		else if(ConnectionType.URL.equals(connType)){
+			return SQLUtil.getDriverMangerConnection(jdbcDriver,url,user,password);
 		}
 		throw new IllegalStateException("Invalid state of DB2Configuration");
 	}

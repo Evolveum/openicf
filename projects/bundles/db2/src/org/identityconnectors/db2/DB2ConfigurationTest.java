@@ -22,13 +22,21 @@
  */
 package org.identityconnectors.db2;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.fail;
 
-import java.lang.reflect.*;
-import java.sql.*;
-import java.util.*;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Hashtable;
 
-import javax.naming.*;
+import javax.naming.Context;
+import javax.naming.NamingException;
 import javax.naming.spi.InitialContextFactory;
 import javax.sql.DataSource;
 
@@ -36,7 +44,8 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.test.common.TestHelpers;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for {@link DB2Configuration}
@@ -73,7 +82,7 @@ public class DB2ConfigurationTest {
 			conf = createTestType2Configuration(DB2Specifics.JCC_DRIVER);
 		}
 		else{
-			throw new IllegalArgumentException("Illegal connType " + connType);
+			throw new IllegalArgumentException("Illegal connType : " + connType);
 		}
 		if(conf == null){
 			throw new IllegalStateException("Configuration not created");
@@ -97,6 +106,22 @@ public class DB2ConfigurationTest {
 		conf.setJdbcDriver(DB2Specifics.JCC_DRIVER);
 		return conf;
 	}
+	
+	private static DB2Configuration createTestTypeURLConfiguration(){
+		DB2Configuration conf = createDB2Configuration();
+		String url = TestHelpers.getProperty("typeURL.url",null);
+		String adminAcoount = TestHelpers.getProperty("typeURL.adminAccount",null);
+		String adminPassword = TestHelpers.getProperty("typeURL.adminPassword",null);
+		String jdbcDriver = TestHelpers.getProperty("typeURL.jdbcDriver",null);
+		conf.setURL(url);
+		conf.setAdminAccount(adminAcoount);
+		conf.setAdminPassword(new GuardedString(adminPassword.toCharArray()));
+		conf.setJdbcDriver(jdbcDriver);
+		conf.setPort(null);
+		conf.setJdbcSubProtocol(null);
+		return conf;
+	}
+	
 	
 	/**
 	 * Validates and create connection using type4 driver
@@ -145,6 +170,25 @@ public class DB2ConfigurationTest {
         assertCreateAdminConnFail(failConf, "CreateAdminConnection should fail on wrong port");
 		
 	}
+	
+	/**
+	 * Validates and create connection using concrete URL
+	 */
+	@Test
+	public void testTypeURLConfiguration(){
+		DB2Configuration okConf = createTestTypeURLConfiguration();
+		okConf.validate();
+		Connection conn = okConf.createAdminConnection();
+		assertNotNull(conn);
+		DB2Configuration failConf = okConf.clone();
+		failConf.setAdminAccount(null);
+		assertValidateFail(failConf,"Validate should fail with null admin account");
+		failConf = okConf.clone();
+		failConf.setDatabaseName("sample");
+		assertValidateFail(failConf,"Validate should fail with sample database");
+	}
+	
+	
 	
 	private void assertValidateFail(DB2Configuration conf,String failMsg){
         try{
@@ -327,6 +371,7 @@ public class DB2ConfigurationTest {
 		conf.setDsJNDIEnv(dsJNDIEnv);
 		conf.setPort(null);
 		conf.setJdbcDriver(null);
+		conf.setJdbcSubProtocol(null);
 		return conf;
 	}
 	
