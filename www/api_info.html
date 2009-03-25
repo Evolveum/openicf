@@ -61,27 +61,20 @@ Here is an example:
 <h3>How do I determine if the connector supports an operation?</h3>
 <p>Check the set returned by ConnectorFacade.getSupportedOperations(). For example:
 <PRE>
-    Set<Class<? extends APIOperation>> ops = conn.getSupportedOperations();
+    Set&lt;Class&lt; ? extends APIOperation&gt;&gt; ops = conn.getSupportedOperations();
     // check to see if the set contains the operation you care about (e.g. CreateApiOp)
     return ops.contains(CreateApiOp.class);
 </PRE>
 However, a connector may support an operation for only certain object classes. Therefore, it is more correct to check the schema to determine if the desired operation is supported for the specific ObjectClass you're specifying:
 <PRE>
     Schema schema = conn.schema();
-    Set<ObjectClassInfo> objectClasses = schema.getObjectClassInfo();      
-    for(ObjectClassInfo oci : objectClasses) {
-        // these are the supported operations for this specific ObjectClass:
-        Set<Class<? extends APIOperation>> ops = oci.getSupportedOperations();
+    Set&lt;ObjectClassInfo&gt; objectClasses = schema.getObjectClassInfo();      
+    Set&lt;ObjectClassInfo&gt; ocinfos = schema.getSupportedObjectClassesByOperation(CreateApiOp.class);
 
-        String type = oci.getType();
-        if(ObjectClass.ACCOUNT_NAME.equals(type)) {
-            allowCreateAccount = ops.contains(CreateApiOp.class);
-        } else if(ObjectClass.GROUP_NAME.equals(type)) {
-            allowCreateGroup = ops.contains(CreateApiOp.class);
-        } else if(ObjectClass.ORGANIZATION_NAME.equals(type)) {
-            allowCreateOrganization = ops.contains(CreateApiOp.class);
-        } else if(ObjectClass.PERSON_NAME.equals(type)) {
-            allowCreatePerson =  ops.contains(CreateApiOp.class);
+    for(ObjectClassInfo oci : objectClasses) {
+        // check the object class is supported for the operation
+        if (ocinfos.contains(ocinfo)) {
+            // object class is supported
         }
     }    
 </PRE>
