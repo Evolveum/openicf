@@ -60,7 +60,6 @@ public class VmsConnection {
         configuration.getPassword().access(accessor);
         char[] passwordArray = accessor.getArray();
         try {
-            //TODO: ExpectUtils needs a clear text password
             String password = new String(passwordArray);
             boolean isSSH = false;
             if (_configuration.getSSH()!=null)
@@ -116,7 +115,7 @@ public class VmsConnection {
     }
 
     public void send(char[] string) throws IOException {
-        //TODO: security -- Expect4J doesn't support send(char[])
+        // Security -- Expect4J doesn't support send(char[])
         // so, we have to coerce back to a string, but, if this is updated
         // we'll be ready.
         log.info("send(encoded data)");

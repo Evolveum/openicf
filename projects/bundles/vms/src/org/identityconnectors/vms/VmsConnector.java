@@ -1454,14 +1454,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     private static final String FULL_ACCESS_FOR_ALL = "No access restrictions";
     private static final String FULL_ACCESS         = "##### Full access ######";
     private static final String NO_ACCESS           = "-----  No access  ------";
-    private static final Boolean[] YES24            = { true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true };
-    private static final Boolean[] NO24             = { false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false };
-    private static final List<Boolean> YES24_LIST   = Arrays.asList(YES24);
-    private static final List<Boolean> YES48_LIST   = new ArrayList<Boolean>(Arrays.asList(YES24));
-    static {
-        YES48_LIST.addAll(YES24_LIST);
-    }
-    private static final List<Boolean> NO24_LIST    = Arrays.asList(NO24);
 
     private AttributeInfo buildMultivaluedAttribute(String name, Class<?> clazz, boolean required) {
         AttributeInfoBuilder builder = new AttributeInfoBuilder();
@@ -1643,8 +1635,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         //
         String tmpfile = UUID.randomUUID().toString();
         
-        //TODO: allow optional used of F$UNIQUE
-
         // Create an empty error file, so that we can send it back if there are
         // no errors
         //
