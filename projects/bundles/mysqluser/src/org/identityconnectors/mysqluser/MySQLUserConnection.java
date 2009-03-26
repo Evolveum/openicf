@@ -24,6 +24,7 @@ package org.identityconnectors.mysqluser;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.Hashtable;
 
 import org.identityconnectors.common.StringUtil;
@@ -109,7 +110,15 @@ public class MySQLUserConnection extends DatabaseConnection {
                     config.getUrlString(), 
                     config.getUser(), 
                     config.getPassword());
+        } 
+        
+        //Disable auto-commit mode
+        try {
+          connection.setAutoCommit(false);   
+        } catch (SQLException expected) {
+            //expected
         }
+        
         return new MySQLUserConnection(connection);
     }
 }
