@@ -295,11 +295,11 @@ public class DB2Configuration extends AbstractConfiguration implements Cloneable
 	
 	
 	@ConfigurationProperty(order=7,displayMessageKey="db2.url.display",helpMessageKey="db2.url.help")
-	public String getURL() {
+	public String getUrl() {
 		return url;
 	}
 	
-	public void setURL(String url){
+	public void setUrl(String url){
 		this.url = url;
 	}
 	

@@ -76,7 +76,7 @@ class DB2ConfigurationValidator {
 	
 	private class URLChecker implements ConfigChecker{
 		public void checkRequired() {
-			asserts.assertNotBlank(cfg.getURL(),"url");
+			asserts.assertNotBlank(cfg.getUrl(),"url");
 		    asserts.assertNotBlank(cfg.getAdminAccount(), "adminAccount");
 		    asserts.assertNotNull(cfg.getAdminPassword(), "adminPassword");
 		    asserts.assertNotBlank(cfg.getJdbcDriver(),"jdbcDriver");
@@ -87,7 +87,7 @@ class DB2ConfigurationValidator {
 			}
 		}
 		public void checkEmpty(ConfigChecker reqChecker) {
-			asserts.assertBlank(cfg.getURL(),"url");
+			asserts.assertBlank(cfg.getUrl(),"url");
 			if(!(reqChecker instanceof Type4DriverChecker) && !(reqChecker instanceof Type2DriverChecker)){
 			    asserts.assertBlank(cfg.getJdbcDriver(),"jdbcDriver");
 			}

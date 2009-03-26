@@ -113,7 +113,7 @@ public class DB2ConfigurationTest {
 		String adminAcoount = TestHelpers.getProperty("typeURL.adminAccount",null);
 		String adminPassword = TestHelpers.getProperty("typeURL.adminPassword",null);
 		String jdbcDriver = TestHelpers.getProperty("typeURL.jdbcDriver",null);
-		conf.setURL(url);
+		conf.setUrl(url);
 		conf.setAdminAccount(adminAcoount);
 		conf.setAdminPassword(new GuardedString(adminPassword.toCharArray()));
 		conf.setJdbcDriver(jdbcDriver);
