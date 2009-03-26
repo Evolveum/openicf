@@ -123,6 +123,9 @@
   <data name="ex_argument_null" xml:space="preserve">
     <value>The Argument [{0}] can't be null</value>
   </data>
+  <data name="ex_bad_rcpt" xml:space="preserve">
+    <value>Recipient type [{0}] is not supported</value>
+  </data>
   <data name="ex_bad_username" xml:space="preserve">
     <value>Provided User name is not unique or not existing</value>
   </data>
@@ -131,6 +134,9 @@
   </data>
   <data name="ex_powershell_problem" xml:space="preserve">
     <value>Problem while PowerShell execution {0}</value>
+  </data>
+  <data name="ex_update_notsupported" xml:space="preserve">
+    <value>Update of [{0}] to [{1}] is not supported</value>
   </data>
   <data name="ex_wrong_update_type" xml:space="preserve">
     <value>Update type [{0}] not supported</value>

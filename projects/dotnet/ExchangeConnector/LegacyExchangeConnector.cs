@@ -299,6 +299,27 @@ namespace Org.IdentityConnectors.Exchange
                     }
                 }
             }
+            else if (rcptType == RcptTypeUser)
+            {
+                // get name attribute
+                attributes = this.EnsureName(oclass, attributes, uid);
+
+                PSObject psuser = this.GetUser(ExchangeConnector.CommandInfo.GetUser, attributes);
+                string origRcptType = psuser.Members[AttRecipientType].Value.ToString();
+                if (origRcptType != rcptType)
+                {
+                    throw new ArgumentException(
+                            this.configuration.ConnectorMessages.Format(
+                            "ex_update_notsupported", "Update of [{0}] to [{1}] is not supported", AttRecipientType, rcptType));
+                }
+            }
+            else
+            {
+                // unsupported rcpt type
+                throw new ArgumentException(
+                            this.configuration.ConnectorMessages.Format(
+                            "ex_bad_rcpt", "Recipient type [{0}] is not supported", rcptType));
+            }
 
             Debug.WriteLine(METHOD + ":exit", ClassName);
             return uid;
@@ -723,7 +744,6 @@ namespace Org.IdentityConnectors.Exchange
             }
             return attributes;
         }
-
 
         /// <summary>
         /// Filter translator which does MS Exchange specific translation
