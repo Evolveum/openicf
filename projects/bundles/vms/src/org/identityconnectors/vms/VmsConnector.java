@@ -123,14 +123,16 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
 
     public static final int             LONG_WAIT           = 60000;
     public static final int             SHORT_WAIT          = 60000;
-    private static final int            SEGMENT_MAX         = 500;    
+    private static final int            SEGMENT_MAX         = 250;
 
     // VMS messages we search for
     //
+    private static final String CLI_WARNING      = "%CLI-W-";            // various CLI errors
     private static final String USER_ADDED       = "%UAF-I-ADDMSG,";     // user record successfully added
     private static final String USER_EXISTS      = "%UAF-E-UAEERR,";     // invalid user name, user name already exists
     private static final String USER_REMOVED     = "%UAF-I-REMMSG,";     // record removed from system authorization file
     private static final String USER_RENAMED     = "%UAF-I-RENMSG,";     // user record renamed
+    private static final String NO_MODS          = "%UAF-I-NOMODS,";     // no modifications made
     private static final String USER_UPDATED     = "%UAF-I-MDFYMSG,";    // user record(s) updated
     private static final String BAD_USER         = "%UAF-W-BADUSR,";     // user name does not exist
     private static final String BAD_SPEC         = "%UAF-W-BADSPC,";     // no user matches specification
@@ -158,25 +160,23 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
      * @param unquoted
      * @return
      */
-    protected char[] quoteWhenNeeded(char[] unquoted) {
+    protected String quoteWhenNeeded(String unquoted) {
         return quoteWhenNeeded(unquoted, false);
     }
 
-    protected char[] quoteWhenNeeded(char[] unquoted, boolean needsQuote) {
+    protected String quoteWhenNeeded(String unquoted, boolean needsQuote) {
         boolean quote = needsQuote;
-        for (char character : unquoted) {
+        for (char character : unquoted.toCharArray()) {
             if (character == '!' | character == ' ' | character == '\t')
                 quote = true;
         }
-        if (unquoted.length==0)
+        if (unquoted.length()==0)
             quote=true;
         if (!quote) {
-            char[] result = new char[unquoted.length];
-            System.arraycopy(unquoted, 0, result, 0, result.length);
-            return result;
+            return unquoted;
         }
 
-        return quoteString(new String(unquoted)).toCharArray();
+        return quoteString(unquoted);
     }
 
     /**
@@ -195,46 +195,41 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         return "\"" + string.replaceAll("\"", "\"\"").replaceAll("'", "\"+\"'\"+\"") + "\"";
     }
 
-    protected char[] asCharArray(Object object) {
+    protected String asString(Object object) {
         if (object instanceof GuardedString) {
             GuardedString guarded = (GuardedString)object;
             GuardedStringAccessor accessor = new GuardedStringAccessor();
             guarded.access(accessor);
             char[] result = accessor.getArray();
-            return result;
+            return new String(result);
         } else if (object!=null) {
-            return object.toString().toCharArray();
+            return object.toString();
         } else {
             return null;
         }
     }
 
-    protected char[] listToVmsValueList(List<Object> values) {
+    protected String listToVmsValueList(List<Object> values) {
         if (values.size()==1) {
             if (values.get(0)==null) {
                 return null;
             } else {
-                char[] valueArray = asCharArray(values.get(0));
-                char [] result = quoteWhenNeeded(valueArray);
-                Arrays.fill(valueArray, 0, valueArray.length, ' ');
+                String valueArray = asString(values.get(0));
+                String result = quoteWhenNeeded(valueArray);
                 return result;
             }
         } else {
-            CharArrayBuffer buffer = new CharArrayBuffer();
+            StringBuffer buffer = new StringBuffer();
             char separator = '(';
             for (Object value : values) {
                 buffer.append(separator);
-                char[] valueArray = asCharArray(value);
-                char [] result = quoteWhenNeeded(valueArray);
-                Arrays.fill(valueArray, 0, valueArray.length, ' ');
+                String valueArray = asString(value);
+                String result = quoteWhenNeeded(valueArray);
                 buffer.append(result);
-                Arrays.fill(result, 0, result.length, ' ');
                 separator = ',';
             }
             buffer.append(")");
-            char[] contents = buffer.getArray();
-            buffer.clear();
-            return contents;
+            return buffer.toString();
         }
     }
 
@@ -245,30 +240,58 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             return base.contains(subString);
     }
 
-    private List<CharArrayBuffer> appendAttributes(boolean modify, String prefix, Map<String, Attribute> attrMap) {
-        List<CharArrayBuffer> commandList = new LinkedList<CharArrayBuffer>();
-        CharArrayBuffer command = new CharArrayBuffer();
+    /**
+     * Split the privileges into two command segments, so that they fit even in
+     * old VMS.
+     * 
+     * @param prefix
+     * @param attribute
+     * @return
+     */
+    private List<StringBuffer> privsCommand(String prefix, List<Object> value) {
+        List<StringBuffer> commandList = new LinkedList<StringBuffer>();
+        StringBuffer command = new StringBuffer();
+        commandList.add(command);
+
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("MODIFY "+prefix+"=(");
+        String separator = "";
+        int i;
+        for (i=0; i<value.size(); i++) {
+            String string = value.get(i).toString();
+            if (buffer.length()+(string.length()+2)>250)
+                break;
+            buffer.append(separator+string);
+            separator = ",";
+        }
+        buffer.append("-");
+        command.append(buffer.toString());
+        
+        command = new StringBuffer();
+        commandList.add(command);
+
+        buffer = new StringBuffer();
+        for (; i<value.size(); i++) {
+            String string = value.get(i).toString();
+            if (buffer.length()+(string.length()+2)>250)
+                break;
+            buffer.append(separator+string);
+        }
+        buffer.append(")");
+        command.append(buffer.toString());
+
+        return commandList;
+    }
+
+    private List<StringBuffer> appendAttributes(boolean modify, String prefix, Map<String, Attribute> attrMap) {
+        List<StringBuffer> commandList = new LinkedList<StringBuffer>();
+        StringBuffer command = new StringBuffer();
         if (modify)
             command.append("MODIFY ");
         else
             command.append("ADD ");
         command.append(prefix);
         commandList.add(command);
-
-        // Enable/disable is handled by FLAGS=([NO]DISUSER)
-        //
-        Attribute enable = attrMap.remove(OperationalAttributes.ENABLE_NAME);
-        if (enable!=null) {
-            Attribute flags = attrMap.remove(ATTR_FLAGS);
-            List<Object> flagsValue = new LinkedList<Object>();
-            if (flags!= null)
-                flagsValue = new LinkedList<Object>(flags.getValue());
-            if (AttributeUtil.getBooleanValue(enable))
-                flagsValue.add("NO"+FLAG_DISUSER);
-            else
-                flagsValue.add(FLAG_DISUSER);
-            attrMap.put(ATTR_FLAGS, AttributeBuilder.build(ATTR_FLAGS, flagsValue));
-        }
 
         // Administrative user doesn't need current password
         //
@@ -293,8 +316,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             if (password!=null && modify) {
                 // Get the user and find if currently pre-expired
                 //
-                List<CharArrayBuffer> addCommand = new LinkedList<CharArrayBuffer>();
-                CharArrayBuffer buffer = new CharArrayBuffer();
+                List<StringBuffer> addCommand = new LinkedList<StringBuffer>();
+                StringBuffer buffer = new StringBuffer();
                 buffer.append("SHOW "+prefix);
                 addCommand.add(buffer);
 
@@ -308,12 +331,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                         String value = "/"+"NO"+ATTR_PWDEXPIRED;
                         command = appendToCommand(commandList, command, value);
                     }
-                    clearArrays(variables);
                 } catch (Exception e) {
-                    clearArrays(variables);
                     _log.error(e, "error in create");
-                    throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE), e);
+                    throw new ConnectorException(_configuration.getMessage(modify?VmsMessages.ERROR_IN_MODIFY:VmsMessages.ERROR_IN_CREATE), e);
                 }
+                if (result.contains(CLI_WARNING)) 
+                    throw new ConnectorException(_configuration.getMessage(modify?VmsMessages.ERROR_IN_MODIFY2:VmsMessages.ERROR_IN_CREATE2, result));
             }
         }
 
@@ -327,7 +350,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 command = appendToCommand(commandList, command, value);
             } else {
                 String deltaValue = remapToDelta(expirationTime);
-                String value = "/PWDLIFETIME="+new String(quoteWhenNeeded(deltaValue.toCharArray(), true));
+                String value = "/PWDLIFETIME="+quoteWhenNeeded(deltaValue, true);
                 command = appendToCommand(commandList, command, value);
             }
         }
@@ -410,14 +433,13 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                         remapToDateTime(values);
                     if (isDeltaAttribute(name))
                         remapToDelta(values);
-                    char[] value = listToVmsValueList(values);
+                    String value = listToVmsValueList(values);
                     String first = "/"+remapName(attribute)+"=";
-                    if (command.length()+first.length()+value.length>SEGMENT_MAX) {
+                    if (command.length()+first.length()+value.length()>SEGMENT_MAX) {
                         command = addNewCommandSegment(commandList, command);
                     }
                     command.append(first);
                     command.append(quoteWhenNeeded(value));
-                    Arrays.fill(value, 0, value.length, ' ');
                 }
             }
         }
@@ -461,10 +483,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         }
     }
 
-    private CharArrayBuffer appendToCommand(List<CharArrayBuffer> commandList,
-            CharArrayBuffer command, String value) {
+    private StringBuffer appendToCommand(List<StringBuffer> commandList,
+            StringBuffer command, String value) {
         if (command.length()+value.length()>SEGMENT_MAX) {
-            command = addNewCommandSegment(commandList, command);                    
+            command = addNewCommandSegment(commandList, command);
         }
         command.append(value);
         return command;
@@ -477,6 +499,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
      * @param possibilities
      */
     private void updateValues(List<Object> values, Collection<String> possibilities) {
+        
         // Do case-insensitive value comparison
         //
         Collection<String> newValues = CollectionUtil.newCaseInsensitiveSet();
@@ -488,10 +511,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         }
     }
 
-    private CharArrayBuffer addNewCommandSegment(
-            List<CharArrayBuffer> commandList, CharArrayBuffer command) {
+    private StringBuffer addNewCommandSegment(
+            List<StringBuffer> commandList, StringBuffer command) {
         command.append("-");
-        command = new CharArrayBuffer();
+        command = new StringBuffer();
         commandList.add(command);
         return command;
     }
@@ -618,7 +641,22 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
 
         String accountId = name.getNameValue();
         _log.info("create(''{0}'')", accountId);
-        List<CharArrayBuffer> addCommand = appendAttributes(false, accountId, attrMap);
+
+        // Enable/disable is handled by FLAGS=([NO]DISUSER)
+        // (since VMS defaults to disabled, we enable if not explicitly specified)
+        //
+        Attribute enable = attrMap.get(OperationalAttributes.ENABLE_NAME);
+        if (enable==null) {
+            attrMap.put(OperationalAttributes.ENABLE_NAME, 
+                    AttributeBuilder.build(OperationalAttributes.ENABLE_NAME,Boolean.TRUE));
+        }
+        updateEnableAttribute(attrMap);
+
+        Attribute privileges = attrMap.remove(ATTR_PRIVILEGES);
+        Attribute defPrivileges = attrMap.remove(ATTR_DEFPRIVILEGES);
+        Attribute flags = attrMap.remove(ATTR_FLAGS);
+
+        List<StringBuffer> addCommand = appendAttributes(false, accountId, attrMap);
 
         Map<String, Object> variables = new HashMap<String, Object>();
         fillInCommand(addCommand, variables);
@@ -626,12 +664,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         String result = "";
         try {
             result = (String)_authorizeCommandExecutor.execute(variables);
-            clearArrays(variables);
         } catch (Exception e) {
-            clearArrays(variables);
             _log.error(e, "error in create");
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE), e);
         }
+        if (result.contains(CLI_WARNING)) 
+            throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE2, result));
 
         if (isPresent(result, USER_ADDED)) {
             _log.info("user created");
@@ -644,6 +682,19 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             if (matcher.find())
                 result = matcher.group();
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE2, result));
+        }
+        
+
+        if (privileges!=null) {
+            updatePrivileges(accountId, privileges);
+        }
+
+        if (defPrivileges!=null) {
+            updateDefPrivileges(accountId, defPrivileges);
+        }
+
+        if (flags!=null) {
+            updateFlags(accountId, flags);
         }
 
         // It's possible another connector (or someone else) got in and took the UIC.
@@ -682,22 +733,94 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         return new Uid(accountId);
     }
 
+    private String updateListAttr(String accountId, Attribute attribute, String name, Collection<String> valueSet) {
+        Map<String, Object> variables;
+        String result;
+        if (attribute.getValue()==null)
+            throw new IllegalArgumentException();
+        List<Object> values = new ArrayList<Object>(attribute.getValue());
+        updateValues(values, valueSet);
+
+        List<StringBuffer> privCommand = privsCommand(accountId+"/"+name, values);
+
+        variables = new HashMap<String, Object>();
+        fillInCommand(privCommand, variables);
+
+        result = "";
+        try {
+            result = (String)_authorizeCommandExecutor.execute(variables);
+        } catch (Exception e) {
+            _log.error(e, "error in modify");
+            throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY), e);
+        }
+        if (result.contains(CLI_WARNING)) 
+            throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
+        return result;
+    }
+
+
+    private String updatePrivileges(String accountId, Attribute privileges) {
+        return updateListAttr(accountId, privileges, ATTR_PRIVILEGES, VmsAttributeValidator.PRIVS_LIST);
+    }
+
+    private String updateDefPrivileges(String accountId, Attribute defPrivileges) {
+        return updateListAttr(accountId, defPrivileges, ATTR_DEFPRIVILEGES, VmsAttributeValidator.PRIVS_LIST);
+    }
+
+    private String updateFlags(String accountId, Attribute flags) {
+        return updateListAttr(accountId, flags, ATTR_FLAGS, VmsAttributeValidator.FLAGS_LIST);
+    }
+
+    private void updateEnableAttribute(Map<String, Attribute> attrMap) {
+        Attribute enable = attrMap.remove(OperationalAttributes.ENABLE_NAME);
+        if (enable!=null) {
+            Attribute flags = attrMap.remove(ATTR_FLAGS);
+            List<Object> flagsValue = new LinkedList<Object>();
+            if (flags!= null)
+                flagsValue = new LinkedList<Object>(flags.getValue());
+            if (AttributeUtil.getBooleanValue(enable)) {
+                if (containsInsensitive(flagsValue, FLAG_DISUSER)) {
+                    throw new IllegalArgumentException("Can't specify FLAG=DISUSER and ENABLE=TRUE");
+                } else {
+                    if (!containsInsensitive(flagsValue, "NO"+FLAG_DISUSER))
+                        flagsValue.add("NO"+FLAG_DISUSER);
+                }
+            } else {
+                if (containsInsensitive(flagsValue, "NO"+FLAG_DISUSER)) {
+                    throw new IllegalArgumentException("Can't specify FLAG=NODISUSER and ENABLE=FALSE");
+                } else {
+                    if (!containsInsensitive(flagsValue, FLAG_DISUSER))
+                        flagsValue.add(FLAG_DISUSER);
+                }
+            }
+            attrMap.put(ATTR_FLAGS, AttributeBuilder.build(ATTR_FLAGS, flagsValue));
+        }
+    }
+    
+    private boolean containsInsensitive(List<Object> list, String string) {
+        for (Object object : list) {
+            if (string.equalsIgnoreCase(object.toString()))
+                return true;
+        }
+        return false;
+    }
+
     private void tryAnotherUic(String unusedUic, String accountId) {
         Map<String, Attribute> uicAttrMap = new HashMap<String, Attribute>();
         uicAttrMap.put(ATTR_UIC, AttributeBuilder.build(ATTR_UIC, unusedUic));
-        List<CharArrayBuffer> uicCommand = appendAttributes(true, accountId, uicAttrMap);
+        List<StringBuffer> uicCommand = appendAttributes(true, accountId, uicAttrMap);
 
         Map<String, Object> uicVariables = new HashMap<String, Object>();
         fillInCommand(uicCommand, uicVariables);
         String result = "";
         try {
             result = (String)_authorizeCommandExecutor.execute(uicVariables);
-            clearArrays(uicVariables);
         } catch (Exception e) {
-            clearArrays(uicVariables);
             _log.error(e, "error in tryAnotherUic");
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY), e);
         }
+        if (result.contains(CLI_WARNING)) 
+            throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
     }
 
     /**
@@ -714,7 +837,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         variables.put("UAF_PROMPT", UAF_PROMPT);
         variables.put("UAF_PROMPT_CONTINUE", UAF_PROMPT_CONTINUE);
         variables.put("COMMAND", removeCommand);
-        variables.put("COMMANDS", new LinkedList<CharArrayBuffer>());
+        variables.put("COMMANDS", new LinkedList<StringBuffer>());
         variables.put("CONNECTION", _connection);
 
         String result = "";
@@ -724,6 +847,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             _log.error(e, "error in delete");
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_DELETE), e);
         }
+        if (result.contains(CLI_WARNING)) 
+            throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_DELETE2, result));
 
         if (isPresent(result, USER_REMOVED)) {
             _log.info("user deleted");
@@ -812,10 +937,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 List<String> flags = (List<String>)attributes.get(ATTR_FLAGS);
                 if (flags.size()>0) {
                     if (includeInAttributes(OperationalAttributes.ENABLE_NAME, attributesToGet)) {
-                        if (flags.contains(FLAG_DISUSER))
+                        if (flags.contains(FLAG_DISUSER)) {
+                            flags.remove(FLAG_DISUSER);
                             builder.addAttribute(OperationalAttributes.ENABLE_NAME, Boolean.FALSE);
-                        else
+                        } else {
                             builder.addAttribute(OperationalAttributes.ENABLE_NAME, Boolean.TRUE);
+                        }
                     }
                 } else {
                     if (includeInAttributes(OperationalAttributes.ENABLE_NAME, attributesToGet))
@@ -1148,9 +1275,17 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                     attrMap.put(ATTR_UIC, AttributeBuilder.build(ATTR_UIC, unusedUic));
                 }
             }
-            
+
+            // Enable/disable is handled by FLAGS=([NO]DISUSER)
+            //
+            updateEnableAttribute(attrMap);
+
+            Attribute privileges = attrMap.remove(ATTR_PRIVILEGES);
+            Attribute defPrivileges = attrMap.remove(ATTR_DEFPRIVILEGES);
+            Attribute flags = attrMap.remove(ATTR_FLAGS);
+
             String accountId = uid.getUidValue();
-            List<CharArrayBuffer> modifyCommand = appendAttributes(true, accountId, attrMap);
+            List<StringBuffer> modifyCommand = appendAttributes(true, accountId, attrMap);
 
             Map<String, Object> variables = new HashMap<String, Object>();
             fillInCommand(modifyCommand, variables);
@@ -1158,19 +1293,31 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             String result = "";
             try {
                 result = (String)_authorizeCommandExecutor.execute(variables);
-                clearArrays(variables);
             } catch (Exception e) {
-                clearArrays(variables);
                 _log.error(e, "error in create");
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY), e);
             }
+            if (result.contains(CLI_WARNING)) 
+                throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
 
-            if (isPresent(result, USER_UPDATED)) {
+            if (isPresent(result, USER_UPDATED) ||isPresent(result, NO_MODS)) {
                 // OK, drop through and return uid
             } else if (isPresent(result, BAD_SPEC)) {
                 throw new UnknownUidException();
             } else {
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
+            }
+
+            if (privileges!=null) {
+                updatePrivileges(accountId, privileges);
+            }
+
+            if (defPrivileges!=null) {
+                updateDefPrivileges(accountId, defPrivileges);
+            }
+
+            if (flags!=null) {
+                updateFlags(accountId, flags);
             }
 
             // It's possible another connector (or someone else) got in and took the UIC.
@@ -1188,7 +1335,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         // Do this last, so that we don't lose the Uid change on error.
         //
         if (name!=null && uid!=null && !uid.getUidValue().equals(name.getNameValue())) {
-            CharArrayBuffer renameCommand = new CharArrayBuffer();
+            StringBuffer renameCommand = new StringBuffer();
             renameCommand.append("RENAME "+uid.getUidValue()+" "+name.getNameValue());
 
             Map<String, Object> variables = new HashMap<String, Object>();
@@ -1196,21 +1343,19 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             variables.put("SHORT_WAIT", SHORT_WAIT);
             variables.put("UAF_PROMPT", UAF_PROMPT);
             variables.put("UAF_PROMPT_CONTINUE", UAF_PROMPT_CONTINUE);
-            char[] commandContents = renameCommand.getArray();
-            renameCommand.clear();
-            variables.put("COMMAND", commandContents);
-            variables.put("COMMANDS", new LinkedList<CharArrayBuffer>());
+            variables.put("COMMAND", renameCommand);
+            variables.put("COMMANDS", new LinkedList<StringBuffer>());
             variables.put("CONNECTION", _connection);
 
             String result = "";
             try {
                 result = (String)_authorizeCommandExecutor.execute(variables);
-                Arrays.fill(commandContents, 0, commandContents.length, ' ');
             } catch (Exception e) {
-                Arrays.fill(commandContents, 0, commandContents.length, ' ');
                 _log.error(e, "error in rename");
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY), e);
             }
+            if (result.contains(CLI_WARNING)) 
+                throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE2, result));
 
             if (isPresent(result, USER_RENAMED)) {
                 uid = new Uid(name.getNameValue());
@@ -1226,35 +1371,20 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         return uid;
     }
 
-    private void fillInCommand(List<CharArrayBuffer> command, Map<String, Object> variables) {
-        List<CharArrayBuffer> localCommand = new LinkedList<CharArrayBuffer>(command);
-        CharArrayBuffer lastPart = localCommand.remove(command.size()-1);
-        char[] commandContents = lastPart.getArray();
-        lastPart.clear();
-        variables.put("COMMAND", commandContents);
-        List<char[]> firstContents = new LinkedList<char[]>();
-        for (CharArrayBuffer part : localCommand) {
-            commandContents = part.getArray();
-            part.clear();
-            firstContents.add(commandContents);
+    private void fillInCommand(List<StringBuffer> command, Map<String, Object> variables) {
+        List<StringBuffer> localCommand = new LinkedList<StringBuffer>(command);
+        StringBuffer lastPart = localCommand.remove(command.size()-1);
+        variables.put("COMMAND", lastPart);
+        List<StringBuffer> firstContents = new LinkedList<StringBuffer>();
+        for (StringBuffer part : localCommand) {
+            firstContents.add(part);
         }
-        variables.put("COMMANDS", firstContents);
+        variables.put("COMMANDS", localCommand);
         variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
         variables.put("SHORT_WAIT", SHORT_WAIT);
         variables.put("UAF_PROMPT", UAF_PROMPT);
         variables.put("UAF_PROMPT_CONTINUE", UAF_PROMPT_CONTINUE);
         variables.put("CONNECTION", _connection);
-    }
-
-    private void clearArrays(Map<String, Object> variables) {
-        char[] commandContents = (char[])variables.get("COMMAND");
-        Arrays.fill(commandContents, 0, commandContents.length, ' ');
-        @SuppressWarnings("unchecked")
-        List<char[]> commandPrefixContents = (List<char[]>)variables.get("COMMANDS");
-        if (commandPrefixContents!=null) {
-            for (char[] commandPrefix : commandPrefixContents)
-                Arrays.fill(commandPrefix, 0, commandPrefix.length, ' ');
-        }
     }
 
     /**
@@ -1655,7 +1785,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             do {
                 String token = st.nextToken();
                 if (!StringUtil.isBlank(token)) {
-                    executeCommand(connection, "WRITE OUTPUT_FILE " + new String(quoteWhenNeeded(token.toCharArray(), true)));
+                    executeCommand(connection, "WRITE OUTPUT_FILE " + quoteWhenNeeded(token, true));
                 }
             } while (st.hasMoreTokens());
         }
@@ -1685,8 +1815,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         for (Map.Entry<String, Object> entry : keyset) {
             String name = entry.getKey();
             Object value = entry.getValue();
-            String dclAssignment = "$" + name + "=" + new String(quoteWhenNeeded(value.toString().toCharArray(), true));
-            String line = "WRITE OUTPUT_FILE " + new String(quoteWhenNeeded(dclAssignment.toCharArray(), true));
+            String dclAssignment = "$" + name + "=" + quoteWhenNeeded(value.toString(), true);
+            String line = "WRITE OUTPUT_FILE " + quoteWhenNeeded(dclAssignment, true);
             if (line.length() < 255) {
                 executeCommand(connection, line);
             }
@@ -1884,48 +2014,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         }
     }
     
-    private static class CharArrayBuffer {
-        private char[]  _array;
-        private int     _position;
 
-        public CharArrayBuffer() {
-            _array = new char[1024];
-            _position = 0;
-        }
-
-        public void append(String string ) {
-            append(string.toCharArray());
-        }
-
-        public void append(char character) {
-            append(new char[] { character });
-        }
-
-        public void append(char[] string) {
-            if (_position+string.length> _array.length) {
-                char[] oldArray = _array;
-                _array = new char[_array.length+1024];
-                System.arraycopy(oldArray, 0, _array, 0, _position);
-                Arrays.fill(oldArray, 0, oldArray.length, ' ');
-            }
-            System.arraycopy(string, 0, _array, _position, string.length);
-            _position += string.length;
-        }
-
-        public void clear() {
-            Arrays.fill(_array, 0, _array.length, ' ');
-        }
-
-        public char[] getArray() {
-            char[] result = new char[_position];
-            System.arraycopy(_array, 0, result, 0, _position);
-            return result;
-        }
-
-        public int length() {
-            return _position;
-        }
-    }
 
 }
 

@@ -111,15 +111,12 @@ public class VmsConnection {
 
     public void send(String string) throws IOException {
         log.info("send(''{0}'')", string);
+        System.out.println("Send:"+new String(string)+_configuration.getRealHostLineTerminator());
         _expect4j.send(string+_configuration.getRealHostLineTerminator());
     }
-
-    public void send(char[] string) throws IOException {
-        // Security -- Expect4J doesn't support send(char[])
-        // so, we have to coerce back to a string, but, if this is updated
-        // we'll be ready.
-        log.info("send(encoded data)");
-        _expect4j.send(new String(string)+_configuration.getRealHostLineTerminator());
+    
+    public void send(StringBuffer string) throws IOException {
+        send(string.toString());
     }
 
     public void waitFor(String string) throws Exception{
@@ -141,7 +138,6 @@ public class VmsConnection {
                 }),
                 new TimeoutMatch(millis,  new Closure() {
                     public void run(ExpectState state) {
-                        System.out.println("timeout:"+state.getBuffer());
                         System.out.println("timeout:"+_buffer);
                         ConnectorException e = new ConnectorException(_configuration.getMessage(VmsMessages.TIMEOUT_IN_MATCH, string));
                         log.error(e, "timeout in waitFor");
