@@ -344,13 +344,32 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         //
         Attribute changeInterval = attrMap.remove(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME);
         if (changeInterval!=null) {
+            if (changeInterval.getValue()==null || changeInterval.getValue().size()==0)
+                throw new ConnectorException(_configuration.getMessage(VmsMessages.NULL_ATTRIBUTE_VALUE, PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME));
             long expirationTime = AttributeUtil.getLongValue(changeInterval).longValue();
             if (expirationTime==0) {
-                String value = "/"+"NOPWDLIFETIME";
+                String value = "/NOPWDLIFETIME";
                 command = appendToCommand(commandList, command, value);
             } else {
                 String deltaValue = remapToDelta(expirationTime);
                 String value = "/PWDLIFETIME="+quoteWhenNeeded(deltaValue, true);
+                command = appendToCommand(commandList, command, value);
+            }
+        }
+
+        // Disable Date is handled by the /EXPIRED qualifier
+        //
+        Attribute disableDate = attrMap.remove(OperationalAttributes.DISABLE_DATE_NAME);
+        if (disableDate!=null) {
+            if (disableDate.getValue()==null || disableDate.getValue().size()==0)
+                throw new ConnectorException(_configuration.getMessage(VmsMessages.NULL_ATTRIBUTE_VALUE, OperationalAttributes.DISABLE_DATE_NAME));
+            long disableTime = AttributeUtil.getLongValue(disableDate).longValue();
+            if (disableTime==0) {
+                String value = "/NOEXPIRED";
+                command = appendToCommand(commandList, command, value);
+            } else {
+                String deltaValue = _vmsDateFormatWithoutSecs.format(new Date(disableTime));
+                String value = "/EXPIRED="+quoteWhenNeeded(deltaValue, true);
                 command = appendToCommand(commandList, command, value);
             }
         }
@@ -396,7 +415,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 schema();
                 AttributeInfo info = _attributeMap.get(name);
                 if (info!=null) {
-                    if (ATTR_EXPIRATION.equals(name)
+                    if (OperationalAttributes.DISABLE_DATE_NAME.equals(name)
                             || ATTR_CPUTIME.equals(name)
                             || PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME.equals(name)) {
                         values.add(Boolean.FALSE);
@@ -520,7 +539,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     }
 
     private boolean isDateTimeAttribute(String attributeName) {
-        if (ATTR_EXPIRATION.equals(attributeName))
+        if (OperationalAttributes.DISABLE_DATE_NAME.equals(attributeName))
             return true;
         return false;
     }
@@ -949,6 +968,20 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                         builder.addAttribute(OperationalAttributes.ENABLE_NAME, Boolean.TRUE);
                 }
 
+                // DISABLE_DATE_NAME is handled by seeing the last password change plus
+                // the password lifetime is before the current time.
+                // If the password is pre-expired, we always set this to TRUE 
+                //
+                if (includeInAttributes(OperationalAttributes.DISABLE_DATE_NAME, attributesToGet)) {
+                    String expired = (String)attributes.get(OperationalAttributes.DISABLE_DATE_NAME);
+                    if (expired.contains("(none)")) {
+                        // No value to return
+                    } else {
+                        Date expiredDate = _vmsDateFormatWithoutSecs.parse(expired);
+                        builder.addAttribute(OperationalAttributes.DISABLE_DATE_NAME, expiredDate.getTime());
+                    }
+                }
+
                 // PASSWORD_EXPIRED is handled by seeing the last password change plus
                 // the password lifetime is before the current time.
                 // If the password is pre-expired, we always set this to TRUE 
@@ -1048,21 +1081,21 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                     }
                 }
 
-                // ATTR_EXPIRATION 
+                // OperationalAttributes.DISABLE_DATE_NAME 
                 //
-                if (includeInAttributes(ATTR_EXPIRATION, attributesToGet)) {
-                    String expiration = (String)attributes.remove(ATTR_EXPIRATION);
+                if (includeInAttributes(OperationalAttributes.DISABLE_DATE_NAME, attributesToGet)) {
+                    String expiration = (String)attributes.remove(OperationalAttributes.DISABLE_DATE_NAME);
                     if (StringUtil.isNotBlank(expiration)) {
                         if (expiration.trim().equals("(none)")) {
-                            builder.addAttribute(ATTR_EXPIRATION);
+                            builder.addAttribute(OperationalAttributes.DISABLE_DATE_NAME);
                         } else {
                             Date date = _vmsDateFormatWithoutSecs.parse(expiration.trim());
                             List<Object> value = new LinkedList<Object>();
                             value.add(date.getTime());
-                            builder.addAttribute(ATTR_EXPIRATION, value);
+                            builder.addAttribute(OperationalAttributes.DISABLE_DATE_NAME, value);
                         }
                     } else {
-                        builder.addAttribute(ATTR_EXPIRATION);
+                        builder.addAttribute(OperationalAttributes.DISABLE_DATE_NAME);
                     }
                 }
 
@@ -1088,6 +1121,22 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                     }
                 }
 
+                // LAST_PASSWORD_CHANGE_DATE_NAME
+                // If the password is pre-expired, we return no value 
+                //
+                String lastChange = (String)attributes.remove(PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME);
+                if (includeInAttributes(PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME, attributesToGet)) {
+                    if (lastChange.contains("(pre-expired)")) {
+                        // No value, so return nothing
+                    } else {
+                        Date date = _vmsDateFormatWithoutSecs.parse(lastChange.trim());
+                        Object value = date.getTime();
+                        List<Object> values = new LinkedList<Object>();
+                        values.add(value);
+                        builder.addAttribute(PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME, values);
+                    }
+                }
+                
                 // PASSWORD_EXPIRATION_DATE is handled by seeing if there is an expiration
                 // date, and if so, converting it to milliseconds
                 //
@@ -1095,11 +1144,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 //      never logged in, but there is a password lifetime is not computable.
                 //
                 if (includeInAttributes(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, attributesToGet)) {
-                    String change = (String)attributes.get(PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME);
                     if (StringUtil.isNotBlank(lifetime)) {
                         if (lifetime.equalsIgnoreCase("(none)")) {
                             builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME);
-                        } else if (change.contains("(pre-expired)")) {
+                        } else if (lastChange.contains("(pre-expired)")) {
                             builder.addAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, 0l);
                         } else {
                             Date expiredDate = getPasswordExpirationDate(lifetime, attributes); 
@@ -1458,7 +1506,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         // Read-only attributes
         //
         attributes.add(buildReadonlyAttribute(ATTR_LOGIN_FAILS, Integer.class, false));
-        attributes.add(buildReadonlyAttribute(ATTR_EXPIRATION,  Long.class, false));
 
         // Operational Attributes
         //
@@ -1468,6 +1515,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             attributes.add(OperationalAttributeInfos.CURRENT_PASSWORD);
         attributes.add(OperationalAttributeInfos.ENABLE);
         attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
+        attributes.add(OperationalAttributeInfos.DISABLE_DATE);
         //TODO: I believe we can't always compute this, since the case where the user has
         //      never logged in, but there is a password lifetime is not computable.
         //
@@ -1490,8 +1538,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         if (disableUserLogins) {
             schemaBuilder.removeSupportedObjectClass(AuthenticateOp.class, objectClassInfo);
         }
-
-        //TODO: can use VMS expiration attribute to do OperationalAttributes.DISABLE_DATE_NAME
 
         _schema = schemaBuilder.build();
         _attributeMap = AttributeInfoUtil.toMap(attributes);

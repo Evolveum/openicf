@@ -27,6 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.PredefinedAttributes;
 import org.identityconnectors.patternparser.ClassTransform;
 import org.identityconnectors.patternparser.GroupsTransform;
@@ -73,7 +74,8 @@ public class VmsAuthorizeInfo {
                     new SplitTransform("[ \\t]+")
             }));
             _parser.add(new PatternNode("Access Restrictions",   "(No\\saccess\\srestrictions|Primary([^\\n]*\\n){7})"));
-            _parser.add(new PatternNode(ATTR_EXPIRATION,         "Expiration:"+TO_NEXT+"(?=Pwdminimum)"));
+            _parser.add(new PatternNode(OperationalAttributes.DISABLE_DATE_NAME,
+                                                                 "Expiration:"+TO_NEXT+"(?=Pwdminimum)"));
             _parser.add(new PatternNode(ATTR_PWDMINIMUM,         "Pwdminimum:"+TO_NEXT+"(?=Login Fails)", false, false, 
                 new Transform[] {
                     new ClassTransform(Integer.class)
