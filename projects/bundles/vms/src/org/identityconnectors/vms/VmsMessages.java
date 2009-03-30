@@ -64,4 +64,7 @@ public interface VmsMessages {
     public static final String UNSUPPORTED_SCRIPTING_LANGUAGE= "UNSUPPORTED_SCRIPTING_LANGUAGE";
     public static final String PASSWORD_REQUIRED_FOR_RUN_AS  = "PASSWORD_REQUIRED_FOR_RUN_AS";
     public static final String RUN_AS_WHEN_DISABLED          = "RUN_AS_WHEN_DISABLED";
+    public static final String DISABLE_AND_ENABLE            = "DISABLE_AND_ENABLE";
+    public static final String DISUSER_ERROR_1               = "DISUSER_ERROR_1";
+    public static final String DISUSER_ERROR_2               = "DISUSER_ERROR_2";
 }

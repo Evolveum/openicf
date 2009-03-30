@@ -347,9 +347,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         //
         Attribute changeInterval = attrMap.remove(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME);
         if (changeInterval!=null) {
-            if (changeInterval.getValue()==null || changeInterval.getValue().size()==0)
-                throw new ConnectorException(_configuration.getMessage(VmsMessages.NULL_ATTRIBUTE_VALUE, PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME));
-            long expirationTime = AttributeUtil.getLongValue(changeInterval).longValue();
+            long expirationTime = 0;
+            if (!CollectionUtil.isEmpty(changeInterval.getValue()))
+                expirationTime = AttributeUtil.getLongValue(changeInterval).longValue();
             if (expirationTime==0) {
                 String value = "/NOPWDLIFETIME";
                 command = appendToCommand(commandList, command, value);
@@ -364,9 +364,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         //
         Attribute disableDate = attrMap.remove(OperationalAttributes.DISABLE_DATE_NAME);
         if (disableDate!=null) {
-            if (disableDate.getValue()==null || disableDate.getValue().size()==0)
-                throw new ConnectorException(_configuration.getMessage(VmsMessages.NULL_ATTRIBUTE_VALUE, OperationalAttributes.DISABLE_DATE_NAME));
-            long disableTime = AttributeUtil.getLongValue(disableDate).longValue();
+            long disableTime = 0;
+            if (!CollectionUtil.isEmpty(disableDate.getValue()))
+                disableTime = AttributeUtil.getLongValue(disableDate).longValue();
             if (disableTime==0) {
                 String value = "/NOEXPIRED";
                 command = appendToCommand(commandList, command, value);
@@ -780,20 +780,27 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     private void updateEnableAttribute(Map<String, Attribute> attrMap) {
         Attribute enable = attrMap.remove(OperationalAttributes.ENABLE_NAME);
         if (enable!=null) {
+            Boolean isEnable = AttributeUtil.getBooleanValue(enable);
             Attribute flags = attrMap.remove(ATTR_FLAGS);
             List<Object> flagsValue = new LinkedList<Object>();
             if (flags!= null)
                 flagsValue = new LinkedList<Object>(flags.getValue());
-            if (AttributeUtil.getBooleanValue(enable)) {
+            if (isEnable) {
                 if (containsInsensitive(flagsValue, FLAG_DISUSER)) {
-                    throw new IllegalArgumentException("Can't specify FLAG=DISUSER and ENABLE=TRUE");
+                    throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.DISUSER_ERROR_1));
                 } else {
                     if (!containsInsensitive(flagsValue, "NO"+FLAG_DISUSER))
                         flagsValue.add("NO"+FLAG_DISUSER);
                 }
+                Attribute disableDate = attrMap.get(OperationalAttributes.DISABLE_DATE_NAME);
+                if (disableDate!=null) {
+                    //throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.DISABLE_AND_ENABLE));
+                } else {
+                    attrMap.put(OperationalAttributes.DISABLE_DATE_NAME, AttributeBuilder.build(OperationalAttributes.DISABLE_DATE_NAME, new Long(0)));
+                }
             } else {
                 if (containsInsensitive(flagsValue, "NO"+FLAG_DISUSER)) {
-                    throw new IllegalArgumentException("Can't specify FLAG=NODISUSER and ENABLE=FALSE");
+                    throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.DISUSER_ERROR_1));
                 } else {
                     if (!containsInsensitive(flagsValue, FLAG_DISUSER))
                         flagsValue.add(FLAG_DISUSER);
