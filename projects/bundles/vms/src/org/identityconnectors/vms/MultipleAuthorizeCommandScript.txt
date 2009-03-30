@@ -1,0 +1,18 @@
+CONNECTION.resetStandardOutput();
+CONNECTION.send("SET DEFAULT SYS\$SYSTEM:");
+CONNECTION.waitFor(SHELL_PROMPT, SHORT_WAIT);
+CONNECTION.send("RUN AUTHORIZE");
+CONNECTION.waitFor(UAF_PROMPT, SHORT_WAIT);
+for (commandList in COMMANDLISTS) {
+    COMMANDS = commandList.get(0);
+    for (command in COMMANDS) {
+        CONNECTION.send(command);
+        CONNECTION.waitFor(UAF_PROMPT_CONTINUE, SHORT_WAIT);
+    }
+    COMMAND = commandList.get(1);
+    CONNECTION.send(COMMAND);
+    CONNECTION.waitFor(UAF_PROMPT, SHORT_WAIT);
+}
+CONNECTION.send("EXIT");
+CONNECTION.waitFor(SHELL_PROMPT, SHORT_WAIT);
+return CONNECTION.getStandardOutput();

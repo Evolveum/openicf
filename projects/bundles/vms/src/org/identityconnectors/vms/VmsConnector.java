@@ -107,6 +107,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     private ScriptExecutor              _changeOwnPasswordCommandExecutor;
     private String                      _authorizeCommandScript;
     private ScriptExecutor              _authorizeCommandExecutor;
+    private String                      _multipleAuthorizeCommandScript;
+    private ScriptExecutor              _multipleAuthorizeCommandExecutor;
     private String                      _listCommandScript;
     private ScriptExecutor              _listCommandExecutor;
     private String                      _dateCommandScript;
@@ -143,6 +145,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         try {
             _changeOwnPasswordCommandScript = VmsUtilities.readFileFromClassPath("org/identityconnectors/vms/UserPasswordScript.txt");
             _authorizeCommandScript = VmsUtilities.readFileFromClassPath("org/identityconnectors/vms/AuthorizeCommandScript.txt");
+            _multipleAuthorizeCommandScript = VmsUtilities.readFileFromClassPath("org/identityconnectors/vms/MultipleAuthorizeCommandScript.txt");
             _listCommandScript = VmsUtilities.readFileFromClassPath("org/identityconnectors/vms/ListCommandScript.txt");
             _dateCommandScript = VmsUtilities.readFileFromClassPath("org/identityconnectors/vms/DateCommandScript.txt");
             if (StringUtil.isEmpty(_changeOwnPasswordCommandScript))
@@ -678,11 +681,24 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         List<StringBuffer> addCommand = appendAttributes(false, accountId, attrMap);
 
         Map<String, Object> variables = new HashMap<String, Object>();
-        fillInCommand(addCommand, variables);
 
         String result = "";
+        List<List<StringBuffer>> commandList = new LinkedList<List<StringBuffer>>();
         try {
-            result = (String)_authorizeCommandExecutor.execute(variables);
+            commandList.add(addCommand);
+            if (privileges!=null) {
+                commandList.add(updatePrivileges(accountId, privileges));
+            }
+
+            if (defPrivileges!=null) {
+                commandList.add(updateDefPrivileges(accountId, defPrivileges));
+            }
+
+            if (flags!=null) {
+                commandList.add(updateFlags(accountId, flags));
+            }
+            fillInMultipleCommand(commandList, variables);
+            result = (String)_multipleAuthorizeCommandExecutor.execute(variables);
         } catch (Exception e) {
             _log.error(e, "error in create");
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE), e);
@@ -703,19 +719,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE2, result));
         }
         
-
-        if (privileges!=null) {
-            updatePrivileges(accountId, privileges);
-        }
-
-        if (defPrivileges!=null) {
-            updateDefPrivileges(accountId, defPrivileges);
-        }
-
-        if (flags!=null) {
-            updateFlags(accountId, flags);
-        }
-
         // It's possible another connector (or someone else) got in and took the UIC.
         // If so, we retry with the next UIC
         //
@@ -752,41 +755,25 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         return new Uid(accountId);
     }
 
-    private String updateListAttr(String accountId, Attribute attribute, String name, Collection<String> valueSet) {
-        Map<String, Object> variables;
-        String result;
+    private List<StringBuffer> updateListAttr(String accountId, Attribute attribute, String name, Collection<String> valueSet) {
         if (attribute.getValue()==null)
             throw new IllegalArgumentException();
         List<Object> values = new ArrayList<Object>(attribute.getValue());
         updateValues(values, valueSet);
 
-        List<StringBuffer> privCommand = privsCommand(accountId+"/"+name, values);
-
-        variables = new HashMap<String, Object>();
-        fillInCommand(privCommand, variables);
-
-        result = "";
-        try {
-            result = (String)_authorizeCommandExecutor.execute(variables);
-        } catch (Exception e) {
-            _log.error(e, "error in modify");
-            throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY), e);
-        }
-        if (result.contains(CLI_WARNING)) 
-            throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
-        return result;
+        return privsCommand(accountId+"/"+name, values);
     }
 
 
-    private String updatePrivileges(String accountId, Attribute privileges) {
+    private List<StringBuffer> updatePrivileges(String accountId, Attribute privileges) {
         return updateListAttr(accountId, privileges, ATTR_PRIVILEGES, VmsAttributeValidator.PRIVS_LIST);
     }
 
-    private String updateDefPrivileges(String accountId, Attribute defPrivileges) {
+    private List<StringBuffer> updateDefPrivileges(String accountId, Attribute defPrivileges) {
         return updateListAttr(accountId, defPrivileges, ATTR_DEFPRIVILEGES, VmsAttributeValidator.PRIVS_LIST);
     }
 
-    private String updateFlags(String accountId, Attribute flags) {
+    private List<StringBuffer> updateFlags(String accountId, Attribute flags) {
         return updateListAttr(accountId, flags, ATTR_FLAGS, VmsAttributeValidator.FLAGS_LIST);
     }
 
@@ -1336,11 +1323,24 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             List<StringBuffer> modifyCommand = appendAttributes(true, accountId, attrMap);
 
             Map<String, Object> variables = new HashMap<String, Object>();
-            fillInCommand(modifyCommand, variables);
 
             String result = "";
+            List<List<StringBuffer>> commandList = new LinkedList<List<StringBuffer>>();
             try {
-                result = (String)_authorizeCommandExecutor.execute(variables);
+                commandList.add(modifyCommand);
+                if (privileges!=null) {
+                    commandList.add(updatePrivileges(accountId, privileges));
+                }
+
+                if (defPrivileges!=null) {
+                    commandList.add(updateDefPrivileges(accountId, defPrivileges));
+                }
+
+                if (flags!=null) {
+                    commandList.add(updateFlags(accountId, flags));
+                }
+                fillInMultipleCommand(commandList, variables);
+                result = (String)_multipleAuthorizeCommandExecutor.execute(variables);
             } catch (Exception e) {
                 _log.error(e, "error in create");
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY), e);
@@ -1354,18 +1354,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 throw new UnknownUidException();
             } else {
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
-            }
-
-            if (privileges!=null) {
-                updatePrivileges(accountId, privileges);
-            }
-
-            if (defPrivileges!=null) {
-                updateDefPrivileges(accountId, defPrivileges);
-            }
-
-            if (flags!=null) {
-                updateFlags(accountId, flags);
             }
 
             // It's possible another connector (or someone else) got in and took the UIC.
@@ -1428,6 +1416,28 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             firstContents.add(part);
         }
         variables.put("COMMANDS", localCommand);
+        variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
+        variables.put("SHORT_WAIT", SHORT_WAIT);
+        variables.put("UAF_PROMPT", UAF_PROMPT);
+        variables.put("UAF_PROMPT_CONTINUE", UAF_PROMPT_CONTINUE);
+        variables.put("CONNECTION", _connection);
+    }
+
+    private void fillInMultipleCommand(List<List<StringBuffer>> commands, Map<String, Object> variables) {
+        List<Object> localCommandList = new LinkedList<Object>();
+        variables.put("COMMANDLISTS", localCommandList);
+        for (List<StringBuffer> localCommandOrig : commands) {
+            List<StringBuffer> localCommand = new LinkedList<StringBuffer>(localCommandOrig);
+            StringBuffer lastPart = localCommand.remove(localCommandOrig.size()-1);
+            List<StringBuffer> firstContents = new LinkedList<StringBuffer>();
+            for (StringBuffer part : localCommand) {
+                firstContents.add(part);
+            }
+            List<Object> commandValue = new LinkedList<Object>();
+            commandValue.add(localCommand);
+            commandValue.add(lastPart);
+            localCommandList.add(commandValue);
+        }
         variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
         variables.put("SHORT_WAIT", SHORT_WAIT);
         variables.put("UAF_PROMPT", UAF_PROMPT);
@@ -1714,6 +1724,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         //
         ScriptExecutorFactory scriptFactory = ScriptExecutorFactory.newInstance("GROOVY");
         _authorizeCommandExecutor = scriptFactory.newScriptExecutor(getClass().getClassLoader(), _authorizeCommandScript, true);
+        _multipleAuthorizeCommandExecutor = scriptFactory.newScriptExecutor(getClass().getClassLoader(), _multipleAuthorizeCommandScript, true);
         _changeOwnPasswordCommandExecutor = scriptFactory.newScriptExecutor(getClass().getClassLoader(), _changeOwnPasswordCommandScript, true);
         _listCommandExecutor = scriptFactory.newScriptExecutor(getClass().getClassLoader(), _listCommandScript, true);
         _dateCommandExecutor = scriptFactory.newScriptExecutor(getClass().getClassLoader(), _dateCommandScript, true);
