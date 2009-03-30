@@ -153,6 +153,7 @@ properties</a></li>
       <li><a href="#UpdateApiOpTests">UpdateApiOpTests</a></li>
       <li><a href="#SearchApiOpTests">SearchApiOpTests#testCaseInsensitiveSearch</a></li>
       <li><a href="#MultiOpTests">MultiOpTests#testLockOutOpAttribute()</a></li>
+      <li><a href="#MultiOpTests2">MultiOpTests#testDisableDateOpAttribute()</a></li>
 
     </ul>
 
@@ -640,6 +641,18 @@ To turn off <code>testLockOutOpAttribute</code> test add this line into <code>bu
 <pre>
 testsuite.Multi.skip.lockout=true 
 </pre>
+
+<h4><a name="MultiOpTests2"></a>MultiOpTests#testDisableDateOpAttribute()</h4>
+Test method <code>testDisableDateOpAttribute</code> uses two long date stamps for setting the <code>__DISABLE_DATE__</code> specifal attribute (javadoc <code>OperationalAttributes.DISABLE_DATE_NAME</code>) in <code>build.groovy</code>:
+<pre>
+// Long values
+testsuite.Multi.__DISABLE_DATE__ = 123L
+testsuite.Multi.modified.__DISABLE_DATE__ = 456L
+</pre>
+<p>
+In case of missing property definition default values are used (current timestamp, and 1/1/1970).
+</p>
+
 <!-- -------------========== -->
 </div>
 
