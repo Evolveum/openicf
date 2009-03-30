@@ -304,6 +304,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         //
         Attribute expiration = attrMap.remove(OperationalAttributes.PASSWORD_EXPIRED_NAME);
         if (expiration!=null) {
+            VmsAttributeValidator.validate(OperationalAttributes.PASSWORD_EXPIRED_NAME, expiration.getValue(), _configuration);
             if (AttributeUtil.getBooleanValue(expiration)) {
                 String value = "/"+ATTR_PWDEXPIRED;
                 command = appendToCommand(commandList, command, value);
@@ -347,6 +348,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         //
         Attribute changeInterval = attrMap.remove(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME);
         if (changeInterval!=null) {
+            VmsAttributeValidator.validate(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, changeInterval.getValue(), _configuration);
             long expirationTime = 0;
             if (!CollectionUtil.isEmpty(changeInterval.getValue()))
                 expirationTime = AttributeUtil.getLongValue(changeInterval).longValue();
@@ -364,6 +366,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         //
         Attribute disableDate = attrMap.remove(OperationalAttributes.DISABLE_DATE_NAME);
         if (disableDate!=null) {
+            VmsAttributeValidator.validate(OperationalAttributes.DISABLE_DATE_NAME, disableDate.getValue(), _configuration);
             long disableTime = 0;
             if (!CollectionUtil.isEmpty(disableDate.getValue()))
                 disableTime = AttributeUtil.getLongValue(disableDate).longValue();
@@ -652,6 +655,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         Attribute uic = attrMap.get(ATTR_UIC);
         if (uic==null || StringUtil.isBlank(AttributeUtil.getStringValue(uic)))
             throw new ConnectorException(_configuration.getMessage(VmsMessages.NULL_ATTRIBUTE_VALUE, ATTR_UIC));
+        VmsAttributeValidator.validate(ATTR_UIC, uic.getValue(), _configuration);
         String unusedUic = null;
         boolean uniqueUicRequired = false;
         String uicValue = AttributeUtil.getStringValue(uic);

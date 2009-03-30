@@ -93,7 +93,6 @@ public class VmsAttributeValidator {
     private static final Pattern _algorithmPattern          = Pattern.compile("(\\w+)=(\\w+)(=\\d+)?"); 
     private static final Pattern _cliPattern                = Pattern.compile("[a-zA-Z0-9$_:]{1,31}"); 
     private static final Pattern _cliTablesPattern          = Pattern.compile("[a-zA-Z0-9$_:]{1,31}"); 
-    private static final Pattern _deltaTimePattern          = Pattern.compile("(\\d+-)?\\s*(\\d+(:\\d+){0,2})?(\\.\\d+)?"); 
     private static final Pattern _devicePattern             = Pattern.compile(".{1,31}"); 
     private static final Pattern _directoryPattern          = Pattern.compile("(\\[[a-zA-Z$0-9:]{1,39}\\])|[a-zA-Z$0-9:]{1,39}"); 
     private static final Pattern _fileSpecPattern           = Pattern.compile("[a-zA-Z0-9$_:]+"); 
@@ -105,6 +104,21 @@ public class VmsAttributeValidator {
     public interface Validity {
         public boolean isValid(List<Object> dateList);
     };
+
+    /**
+     * Determine if the string represents a valid Boolean
+     * 
+     * @param date
+     * @return
+     */
+
+    public static class ValidBoolean implements Validity {
+        public boolean isValid(List<Object> booleanList) {
+            if (booleanList.size()!=1)
+                return false;
+            return (booleanList.get(0) instanceof Boolean);
+        }
+    }
 
     /**
      * Determine if the string represents a valid VMS owner
@@ -648,7 +662,6 @@ public class VmsAttributeValidator {
         VALIDATOR_INFO.put(ATTR_MAXJOBS, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_NETWORK, new ValidatorInfo(new ValidAccessList()));
         VALIDATOR_INFO.put(ATTR_OWNER, new ValidatorInfo(new ValidOwner()));
-        VALIDATOR_INFO.put(OperationalAttributes.PASSWORD_NAME, new ValidatorInfo(_passwordPattern, 1));
         VALIDATOR_INFO.put(ATTR_PBYTLM, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_PGFLQUOTA, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_PRCLM, new ValidatorInfo(1));
@@ -656,7 +669,6 @@ public class VmsAttributeValidator {
         VALIDATOR_INFO.put(ATTR_PRIORITY, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_PRIVILEGES, new ValidatorInfo(new ValidPrivList()));
         VALIDATOR_INFO.put(ATTR_PWDEXPIRED, new ValidatorInfo(0));
-        VALIDATOR_INFO.put(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, new ValidatorInfo(_deltaTimePattern, 1));
         VALIDATOR_INFO.put(ATTR_PWDMINIMUM, new ValidatorInfo(new ValidIntegerRange(1, 32)));
         VALIDATOR_INFO.put(ATTR_QUEPRIO, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_REMOTE, new ValidatorInfo(new ValidAccessList()));
@@ -666,6 +678,11 @@ public class VmsAttributeValidator {
         VALIDATOR_INFO.put(ATTR_WSDEFAULT, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_WSEXTENT, new ValidatorInfo(1));
         VALIDATOR_INFO.put(ATTR_WSQUOTA, new ValidatorInfo(1));
+
+        VALIDATOR_INFO.put(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, new ValidatorInfo(1));
+        VALIDATOR_INFO.put(OperationalAttributes.DISABLE_DATE_NAME, new ValidatorInfo(1));
+        VALIDATOR_INFO.put(OperationalAttributes.PASSWORD_EXPIRED_NAME, new ValidatorInfo(new ValidBoolean()));
+        VALIDATOR_INFO.put(OperationalAttributes.PASSWORD_NAME, new ValidatorInfo(_passwordPattern, 1));
     }
 
     /**
