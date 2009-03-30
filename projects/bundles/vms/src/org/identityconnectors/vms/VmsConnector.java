@@ -674,9 +674,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         }
         updateEnableAttribute(attrMap);
 
-        Attribute privileges = attrMap.remove(ATTR_PRIVILEGES);
-        Attribute defPrivileges = attrMap.remove(ATTR_DEFPRIVILEGES);
-        Attribute flags = attrMap.remove(ATTR_FLAGS);
+        Attribute privileges    = _configuration.getLongCommands()?null:attrMap.remove(ATTR_PRIVILEGES);
+        Attribute defPrivileges = _configuration.getLongCommands()?null:attrMap.remove(ATTR_DEFPRIVILEGES);
+        Attribute flags         = _configuration.getLongCommands()?null:attrMap.remove(ATTR_FLAGS);
 
         List<StringBuffer> addCommand = appendAttributes(false, accountId, attrMap);
 
@@ -1315,9 +1315,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             //
             updateEnableAttribute(attrMap);
 
-            Attribute privileges = attrMap.remove(ATTR_PRIVILEGES);
-            Attribute defPrivileges = attrMap.remove(ATTR_DEFPRIVILEGES);
-            Attribute flags = attrMap.remove(ATTR_FLAGS);
+            Attribute privileges    = _configuration.getLongCommands()?null:attrMap.remove(ATTR_PRIVILEGES);
+            Attribute defPrivileges = _configuration.getLongCommands()?null:attrMap.remove(ATTR_DEFPRIVILEGES);
+            Attribute flags         = _configuration.getLongCommands()?null:attrMap.remove(ATTR_FLAGS);
 
             String accountId = uid.getUidValue();
             List<StringBuffer> modifyCommand = appendAttributes(true, accountId, attrMap);

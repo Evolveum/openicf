@@ -43,6 +43,7 @@ public class VmsConfiguration extends AbstractConfiguration {
     private String         _vmsDateFormatWithoutSecs;
     private String         _vmsTimeZone;
     private Boolean        _isSSH;
+    private Boolean        _supportsLongCommands;
     private Boolean        _disableUserLogins;
 
     private String         _localHostShellPrompt = "BOOMBOOM";
@@ -69,6 +70,7 @@ public class VmsConfiguration extends AbstractConfiguration {
         _vmsDateFormatWithSecs = other._vmsDateFormatWithSecs;
         _vmsTimeZone = other._vmsTimeZone;
         _isSSH = other._isSSH;
+        _supportsLongCommands = other._supportsLongCommands;
         _disableUserLogins = other._disableUserLogins;
     }
 
@@ -85,6 +87,8 @@ public class VmsConfiguration extends AbstractConfiguration {
             throw new IllegalArgumentException(getMessage(VmsMessages.TERMINATOR_NULL));
         if (_isSSH==null)
             throw new IllegalArgumentException(getMessage(VmsMessages.SSH_NULL));
+        if (_supportsLongCommands==null)
+            throw new IllegalArgumentException(getMessage(VmsMessages.LONG_COMMANDS_NULL));
         if (isNull(_hostShellPrompt))
             throw new IllegalArgumentException(getMessage(VmsMessages.SHELL_PROMPT_NULL));
         if (isNull(_hostNameOrIpAddr))
@@ -237,5 +241,14 @@ public class VmsConfiguration extends AbstractConfiguration {
 
     public void setDisableUserLogins(Boolean disableUserLogins) {
         _disableUserLogins = disableUserLogins;
+    }
+    
+    @ConfigurationProperty(displayMessageKey="longCommands.display", helpMessageKey="longCommands.help", order=15, required=true)
+    public Boolean getLongCommands() {
+        return _supportsLongCommands;
+    }
+
+    public void setLongCommands(Boolean supportsLongCommands) {
+        _supportsLongCommands = supportsLongCommands;
     }
 }

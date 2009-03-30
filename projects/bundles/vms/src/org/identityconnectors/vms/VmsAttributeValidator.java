@@ -488,15 +488,14 @@ public class VmsAttributeValidator {
             return isValidList(flagList, FLAGS_LIST);
         }
     }
-    //TODO: FLAG_PWDMIX, not available in older VMS sytems
-    //      FLAG_DISUSER, removed (done by __ENABLE__)
+    //TODO: FLAG_PWDMIX, not available in older VMS systems
     private static final String[] FLAGS_ARRAY = {
         FLAG_AUDIT, FLAG_AUTOLOGIN, FLAG_CAPTIVE, FLAG_DEFCLI, FLAG_DISCTLY,
         FLAG_DISFORCE_PWD_CHANGE, FLAG_DISIMAGE, FLAG_DISMAIL, FLAG_DISNEWMAIL,
         FLAG_DISPWDDIC, FLAG_DISPWDHIS, FLAG_DISPWDSYNCH, FLAG_DISRECONNECT,
         FLAG_DISREPORT, FLAG_DISWELCOME, FLAG_EXTAUTH, FLAG_GENPWD,
         FLAG_LOCKPWD, FLAG_PWD2_EXPIRED, FLAG_PWD_EXPIRED, 
-        FLAG_RESTRICTED, FLAG_VMSAUTH,
+        FLAG_RESTRICTED, FLAG_VMSAUTH, FLAG_DISUSER,
     };
     public static final Collection<String> FLAGS_LIST = makeList(FLAGS_ARRAY);
 

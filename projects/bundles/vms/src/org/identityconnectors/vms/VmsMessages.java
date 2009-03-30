@@ -47,6 +47,7 @@ public interface VmsMessages {
     public static final String TERMINATOR_NULL               = "TERMINATOR_NULL";
     public static final String SHELL_PROMPT_NULL             = "SHELL_PROMPT_NULL";
     public static final String SSH_NULL                      = "SSH_NULL";
+    public static final String LONG_COMMANDS_NULL            = "LONG_COMMANDS_NULL";
     public static final String CONN_SCRIPT_NULL              = "CONN_SCRIPT_NULL";
     public static final String USERNAME_NULL                 = "USERNAME_NULL";
     public static final String PASSWORD_NULL                 = "PASSWORD_NULL";

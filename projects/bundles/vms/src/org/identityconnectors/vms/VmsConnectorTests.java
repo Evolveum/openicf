@@ -1161,6 +1161,7 @@ public class VmsConnectorTests {
         config.setHostShellPrompt(SHELL_PROMPT);
         config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
         config.setUserName(SYSTEM_USER);
+        config.setLongCommands(true);
         config.setSSH(isSSH());
         config.setVmsLocale("en_US");
         config.setVmsDateFormatWithoutSecs("dd-MMM-yyyy HH:mm");
