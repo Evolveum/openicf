@@ -37,6 +37,7 @@ import org.identityconnectors.framework.spi.*;
  * We will support 3 ways how to connect to DB2.
  * <ol>
  * 		<li>Using javax.sql.DataSource when using dataSource jndi name, see <a href="#dataSource">datasource properties</a></li>
+ * 		<li>Using concrete URL with any driver, see <a href="#url">url properties</a></li>
  * 		<li>Using type 4 driver, when using host,port and database name, see <a href="#databaseName">databasename properties</a></li>
  * 		<li>Using type 2 driver, when using local alias, see <a href="#aliasName">alias name properties</a></li>
  *      <li>See also <a href="#commonProperties"> common properties</a> for all drivers and <a href="#finalNotes"> final notes</a> for all IBM db2 drivers</li>    
@@ -59,6 +60,16 @@ import org.identityconnectors.framework.spi.*;
  *   	<li>adminAccount : Administrative account : optional, default we will get connection from DS without user/password parameters</li>
  *   	<li>adminPassword : Administrative password : optional, default we will get connection from DS without user/password parameters</li></li>
  *   </ul>	
+ *
+ * <h4><a name="url"/>Getting connection from DriverManager using full jdbc url. Used when <code>url</code> property is set</h4>
+ * We will support/require these properties when connecting to db2 with url:
+ * <ul>
+ * 		<li> url : Full jdbc url for connecting to db2</li>
+ * 		<li> jdbcDriver  : Classname of jdbc driver, default to com.ibm.db2.jcc.DB2Driver</li>
+ * 		<li> adminAccount : Administrative account when connecting to DB2 in non user contexts. E.g listing of users. </li>
+ * 		<li> adminPassword : Password for admin account. </li>
+ * </ul>
+ *
  *   
  * <h4><a name="databaseName"/>Getting connection from DriverManager using Type 4 driver. Used when <code>host,port,databaseName</code> property are set</h4>
  * We will support/require these properties when connecting to db2 :
