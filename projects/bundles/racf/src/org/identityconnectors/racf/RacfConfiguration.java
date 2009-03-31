@@ -48,6 +48,7 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     
     private String[]       _segmentNames;
     private String[]       _segmentParsers;
+    private String         _catalogParser;
     private String         _userName;
     private GuardedString  _password;
 
@@ -252,10 +253,19 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
         _segmentParsers = arrayCopy(segmentParsers);
     }
 
+    @ConfigurationProperty(order=15)
+    public String getCatalogParser() {
+        return _catalogParser;
+    }
+
+    public void setCatalogParser(String catalogParser) {
+        _catalogParser = catalogParser;
+    }
+
     /**
      * {@inheritDoc}
      */
-    @ConfigurationProperty(order=15)
+    @ConfigurationProperty(order=16)
     public String getConnectScript() {
         return _connectScript;
     }

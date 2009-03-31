@@ -26,6 +26,7 @@ import static org.identityconnectors.framework.common.objects.AttributeUtil.crea
 import static org.identityconnectors.racf.RacfConstants.*;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,6 +44,7 @@ import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
@@ -56,6 +58,7 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.PredefinedAttributeInfos;
 import org.identityconnectors.framework.common.objects.PredefinedAttributes;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
@@ -162,6 +165,31 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
 
     private void splitUpAttributes(Set<Attribute> attrs, Set<Attribute> ldapAttrs, Set<Attribute> commandLineAttrs) {
         for (Attribute attribute : attrs) {
+            // Remap special attributes as needed
+            //
+            if (attribute.is(OperationalAttributes.PASSWORD_NAME))  {
+                if (isLdapConnectionAvailable())
+                    attribute = AttributeBuilder.build(ATTR_LDAP_PASSWORD, attribute.getValue());
+                else
+                    attribute = AttributeBuilder.build(ATTR_CL_PASSWORD, attribute.getValue());
+            } else if (attribute.is(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME)) {
+                Long passwordChangeInterval = AttributeUtil.getLongValue(attribute);
+                // Password interval is in days
+                String value = Long.toString(passwordChangeInterval/(24*60*60*1000));
+                if (isLdapConnectionAvailable())
+                    attribute = AttributeBuilder.build(ATTR_LDAP_PASSWORD_INTERVAL, value);
+                else
+                    attribute = AttributeBuilder.build(ATTR_CL_PASSWORD_INTERVAL, value);
+            } else if (attribute.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)) {
+                // Can't see a way to do this via LDAP
+                //
+                attribute = AttributeBuilder.build(ATTR_CL_EXPIRED, attribute.getValue());
+            } else if (attribute.is(PredefinedAttributes.GROUPS_NAME)) {
+                if (isLdapConnectionAvailable())
+                    attribute = AttributeBuilder.build("TODO:", attribute.getValue());
+                else
+                    attribute = AttributeBuilder.build(ATTR_CL_GROUPS, attribute.getValue());
+            }
             if (AttributeUtil.isSpecial(attribute)) {
                 commandLineAttrs.add(attribute);
                 ldapAttrs.add(attribute);
@@ -223,6 +251,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             if (options!=null && options.getAttributesToGet()!=null) {
                 attributesToGet = CollectionUtil.newReadOnlySet(options.getAttributesToGet());
             } else {
+                schema();
                 if (objectClass.is(ObjectClass.ACCOUNT_NAME))
                     attributesToGet = getDefaultAttributes(_accountAttributes);
                 else if (objectClass.is(ObjectClass.GROUP_NAME))
@@ -468,7 +497,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             return _clUtil.updateViaCommandLine(objectClass, commandLineAttrs, options);
         }
     }
-
+    
     private Schema clSchema() {
         final SchemaBuilder schemaBuilder = new SchemaBuilder(getClass());
 
@@ -543,8 +572,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         // Operational Attributes
         //
         attributes.add(OperationalAttributeInfos.PASSWORD);
-        attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
         attributes.add(PredefinedAttributeInfos.GROUPS);
+        attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
         attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
 
         //TODO: need to make sure special attributes are supported
@@ -674,6 +703,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         //
         attributes.add(OperationalAttributeInfos.PASSWORD);
         attributes.add(PredefinedAttributeInfos.GROUPS);
+        attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
+        
+        // Must be done via command line
+        //
+        if (!StringUtil.isBlank(_configuration.getUserName()))
+            attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
 
         _accountAttributes = AttributeInfoUtil.toMap(attributes);
         schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
@@ -799,3 +834,22 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         _connection.test();
     }
 }
+/*
+private void processPasswordInterval(Map map) {
+String interval = (String)map.get(PASSWORD_INTERVAL);
+if ((interval != null) && interval.trim().equals("N/A")) {
+  map.put(PASSWORD_INTERVAL, "NOINTERVAL");
+}
+}
+
+private void addExpiredAttr(Map map) {
+String passdate = (String)map.get("PASSDATE");
+if ((passdate != null) && passdate.equals("00.000")) {
+  map.put(EXPIRED, Boolean.valueOf(true));
+} else {
+  map.put(EXPIRED, Boolean.valueOf(false));
+}
+}
+
+     
+*/

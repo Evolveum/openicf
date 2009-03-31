@@ -22,6 +22,10 @@
  */
 package org.identityconnectors.racf;
 
+import static org.identityconnectors.racf.RacfConstants.ATTR_CL_CATALOG_ALIAS;
+import static org.identityconnectors.racf.RacfConstants.ATTR_CL_MASTER_CATALOG;
+import static org.identityconnectors.racf.RacfConstants.ATTR_CL_USER_CATALOG;
+
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -37,6 +41,7 @@ import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.script.ScriptExecutor;
 import org.identityconnectors.common.script.ScriptExecutorFactory;
@@ -86,6 +91,7 @@ class CommandLineUtil {
         "</MapTransform>";
     private MapTransform                _membersOfGroupTransform;
     private Map<String, MapTransform>   _segmentParsers;
+    private MapTransform                _catalogParser;
     private final Pattern               _connectionPattern  = Pattern.compile("racfuserid=(.*)\\+racfgroupid=(.*),.*");
     private final ScriptExecutorFactory _groovyFactory;
     private RacfConnector               _connector;
@@ -107,6 +113,7 @@ class CommandLineUtil {
                     _segmentParsers.put(name, transform);
                 }
             _membersOfGroupTransform = (MapTransform)Transform.newTransform(_membersOfGroup);
+            _catalogParser = asMapTransform(((RacfConfiguration)_connector.getConfiguration()).getCatalogParser());
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
@@ -228,7 +235,6 @@ class CommandLineUtil {
             //System.out.println("output:'"+output+"'");
             return output;
         } catch (Exception e) {
-            e.printStackTrace();
             throw ConnectorException.wrap(e);
         } finally {
             Arrays.fill(command, 0, command.length, ' ');
@@ -264,8 +270,7 @@ class CommandLineUtil {
      * @param attrs
      * @return
      */
-    public char[] mapAttributesToString(Set<Attribute> attrs) {
-        Map<String, Attribute> attributes = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
+    public char[] mapAttributesToString(Map<String, Attribute> attributes) {
         Name name = (Name)attributes.remove(Name.NAME);
         Uid uid = (Uid)attributes.remove(Uid.NAME);
         
@@ -362,19 +367,21 @@ class CommandLineUtil {
     }
     
     public Uid createViaCommandLine(ObjectClass objectClass, Set<Attribute> attrs, OperationOptions options) {
+        Map<String, Attribute> attributes = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
+        String name = ((Name)attributes.get(Name.NAME)).getNameValue();
         if (objectClass.equals(ObjectClass.ACCOUNT)) {
-            Set<Attribute> attributes = new HashSet<Attribute>(attrs); 
-            String name = AttributeUtil.getNameFromAttributes(attrs).getNameValue();
-            Attribute groups = AttributeUtil.find(PredefinedAttributes.GROUPS_NAME, attrs);
+            Attribute groups = attributes.get(PredefinedAttributes.GROUPS_NAME);
             attributes.remove(groups);
             
             if (userExists(name))
                 throw new AlreadyExistsException();
+            validateCatalogAttributes(attributes);
             CharArrayBuffer buffer = new CharArrayBuffer();
             buffer.append("ADDUSER ");
             buffer.append(name);
             buffer.append(mapAttributesToString(attributes));
             Uid uid = createOrUpdateViaCommandLine(objectClass, name, buffer);
+            setCatalogAttributes(attributes);
             buffer.clear();
             if (groups!=null) {
                 for (Object groupName : groups.getValue()) {
@@ -384,16 +391,14 @@ class CommandLineUtil {
             }
             return uid;
         } else if (objectClass.equals(ObjectClass.GROUP)) {
-            Set<Attribute> attributes = new HashSet<Attribute>(attrs); 
-            String name = AttributeUtil.getNameFromAttributes(attrs).getNameValue();
-            Attribute accounts = AttributeUtil.find(RacfConnector.ACCOUNTS_NAME, attrs);
+            Attribute accounts = attributes.get(RacfConnector.ACCOUNTS_NAME);
             attributes.remove(accounts);
             if (groupExists(name))
                 throw new AlreadyExistsException();
             CharArrayBuffer buffer = new CharArrayBuffer();
             buffer.append("ADDGROUP ");
             buffer.append(name);
-            buffer.append(mapAttributesToString(attrs));
+            buffer.append(mapAttributesToString(attributes));
             Uid uid = createOrUpdateViaCommandLine(objectClass, name, buffer);
             buffer.clear();
             if (accounts!=null) {
@@ -404,11 +409,10 @@ class CommandLineUtil {
             }
             return uid;
         } else if (objectClass.equals(RacfConnector.RACF_CONNECTION)) {
-            Name name = AttributeUtil.getNameFromAttributes(attrs);
-            String[] info = extractRacfIdAndGroupIdFromLdapId(name.getNameValue());
+            String[] info = extractRacfIdAndGroupIdFromLdapId(name);
             String command = "CONNECT "+info[0]+" GROUP("+info[1]+")";
             checkCommand(command);
-            return new Uid(name.getNameValue());
+            return new Uid(name);
         } else {
             throw new IllegalArgumentException("TODO");
         }
@@ -568,15 +572,21 @@ class CommandLineUtil {
     }
     
     public Uid updateViaCommandLine(ObjectClass objectClass, Set<Attribute> attrs, OperationOptions options) {
+        Map<String, Attribute> attributes = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
+        String name = ((Name)attributes.get(Name.NAME)).getNameValue();
         if (objectClass.equals(ObjectClass.ACCOUNT)) {
-            String name = AttributeUtil.getNameFromAttributes(attrs).getNameValue();
             if (!userExists(name))
                 throw new UnknownUidException();
+
+            validateCatalogAttributes(attributes);
+            setCatalogAttributes(attributes);
+            
             CharArrayBuffer buffer = new CharArrayBuffer();
+            
             buffer.append("ALTUSER ");
             buffer.append(name);
-            buffer.append(mapAttributesToString(attrs));
-            Attribute groupMembership = AttributeUtil.find(PredefinedAttributes.GROUPS_NAME, attrs);
+            buffer.append(mapAttributesToString(attributes));
+            Attribute groupMembership = attributes.get(PredefinedAttributes.GROUPS_NAME);
             try {
                 if (groupMembership!=null)
                     _connector.setGroupMembershipsForUser(name, groupMembership);
@@ -585,13 +595,12 @@ class CommandLineUtil {
                 buffer.clear();
             }
         } else if (objectClass.equals(ObjectClass.GROUP)) {
-            String name = AttributeUtil.getNameFromAttributes(attrs).getNameValue();
             if (!groupExists(name))
                 throw new UnknownUidException();
             CharArrayBuffer buffer = new CharArrayBuffer();
             buffer.append("ALTUSER ");
             buffer.append(name);
-            Attribute groupMembership = AttributeUtil.find(RacfConnector.ACCOUNTS_NAME, attrs);
+            Attribute groupMembership = attributes.get(RacfConnector.ACCOUNTS_NAME);
             try {
                 if (groupMembership!=null)
                     _connector.setGroupMembershipsForGroups(name, groupMembership);
@@ -634,6 +643,50 @@ class CommandLineUtil {
             e.printStackTrace();
             throw ConnectorException.wrap(e);
         }
+    }
+
+    private void setCatalogAttributes(Map<String, Attribute> attributes) {
+        if (hasSingleStringValue(attributes.get(ATTR_CL_CATALOG_ALIAS))) {
+            String alias     = AttributeUtil.getStringValue(attributes.get(ATTR_CL_CATALOG_ALIAS));
+            String masterCat = AttributeUtil.getStringValue(attributes.get(ATTR_CL_MASTER_CATALOG));
+            String userCat   = AttributeUtil.getStringValue(attributes.get(ATTR_CL_USER_CATALOG));
+            
+            String command = "DEFINE ALIAS (NAME('"+alias+"') RELATE('"+userCat+"')) CATALOG('"+masterCat+"')";
+            checkCommand(getCommandOutput(command));
+        }
+    }
+
+    private void getCatalogAttributes(String identifier, Map<String, Object> attributesFromCommandLine) {
+        String command = "LISTC ENT('"+identifier+"') ALL";
+        String output = getCommandOutput(command);
+        MapTransform transform = _catalogParser;
+        try {
+            attributesFromCommandLine.putAll((Map<String, Object>)transform.transform(output));
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }
+    }
+    
+    private boolean hasSingleStringValue(Attribute attribute) {
+        if (attribute==null)
+            return false;
+        List<Object> values = attribute.getValue();
+        if (values==null || values.size()!=1)
+            return false;
+        return (values.get(0) instanceof String);
+    }
+    
+    private void validateCatalogAttributes(Map<String, Attribute> attributes) {
+        boolean alias     = hasSingleStringValue(attributes.get(ATTR_CL_CATALOG_ALIAS));
+        boolean masterCat = hasSingleStringValue(attributes.get(ATTR_CL_MASTER_CATALOG));
+        boolean userCat   = hasSingleStringValue(attributes.get(ATTR_CL_USER_CATALOG));
+        
+        // All must be either present or missing
+        //
+        if ((alias||masterCat||userCat)!=(alias&&masterCat&&userCat)) {
+            throw new IllegalArgumentException("TODO: catalog inconstent");
+        }
+
     }
 
     //TODO: this version does a single LISTUSER command for all segments
@@ -753,22 +806,24 @@ class CommandLineUtil {
         if (!ldapAvailable)
             segmentsNeeded.add(RACF);
         
-        if (attributesToGet!=null) {
-            for (String attributeToGet : attributesToGet) {
-                //TODO:
-                if (attributeToGet.startsWith("*"))
-                    continue;
-                int index = attributeToGet.indexOf('.');
-                if (index!=-1) {
-                    String prefix = attributeToGet.substring(0, index);
-                    segmentsNeeded.add(prefix);
-                    
-                    if (!_segmentParsers.containsKey(prefix)) {
-                        throw new ConnectorException("Bad Attribute name (no such segment):"+attributeToGet);
-                    }
+        String racfName = _connector.extractRacfIdFromLdapId(name);
+        
+        for (String attributeToGet : attributesToGet) {
+            // Ignore catalog attributes, we will handle them separately
+            //
+            if (attributeToGet.startsWith("*"))
+                continue;
+            int index = attributeToGet.indexOf('.');
+            if (index!=-1) {
+                String prefix = attributeToGet.substring(0, index);
+                segmentsNeeded.add(prefix);
+                
+                if (!_segmentParsers.containsKey(prefix)) {
+                    throw new ConnectorException("Bad Attribute name (no such segment):"+attributeToGet);
                 }
             }
         }
+
         // If we are asking for segment information, ensure that command-line login
         // information was specified
         //
@@ -780,7 +835,7 @@ class CommandLineUtil {
             try {
                 StringBuffer buffer = new StringBuffer();
                 buffer.append("LISTUSER ");
-                buffer.append(_connector.extractRacfIdFromLdapId(name));
+                buffer.append(racfName);
                 boolean racfNeeded = segmentsNeeded.remove(RACF);
                 if (racfNeeded) {
                     String command = buffer.toString();
@@ -801,12 +856,20 @@ class CommandLineUtil {
                 throw ConnectorException.wrap(e);
             }
         }
+        
+        if (attributesToGet.contains(ATTR_CL_CATALOG_ALIAS) ||
+                attributesToGet.contains(ATTR_CL_USER_CATALOG) ||
+                attributesToGet.contains(ATTR_CL_MASTER_CATALOG)) {
+            getCatalogAttributes(racfName, attributesFromCommandLine);
+        }
+            
         // Default group name must be a stringified Uid
         //
         if (attributesFromCommandLine.containsKey(LONG_DEFAULT_GROUP_NAME)) {
             Object value = attributesFromCommandLine.get(LONG_DEFAULT_GROUP_NAME);
             attributesFromCommandLine.put(LONG_DEFAULT_GROUP_NAME, _connector.createUidFromName(ObjectClass.GROUP, (String)value).getUidValue());
         }
+
         return attributesFromCommandLine;
     }
     

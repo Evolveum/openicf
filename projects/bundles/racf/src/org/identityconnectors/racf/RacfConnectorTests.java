@@ -95,6 +95,7 @@ public class RacfConnectorTests {
     private static final String OMVS_PARSER = "org/identityconnectors/racf/OmvsSegmentParser.xml";
     private static final String TSO_PARSER  = "org/identityconnectors/racf/TsoSegmentParser.xml";
     private static final String NETVIEW_PARSER  = "org/identityconnectors/racf/NetviewSegmentParser.xml";
+    private static final String CATALOG_PARSER  = "org/identityconnectors/racf/CatalogParser.xml";
 
     public static void main(String[] args) {
         RacfConnectorTests tests = new RacfConnectorTests();
@@ -134,9 +135,12 @@ public class RacfConnectorTests {
         try {
             TestHandler handler = new TestHandler();
             TestHelpers.search(connector,ObjectClass.ACCOUNT, null, handler, null);
+            int count = 0;
             for (ConnectorObject user : handler) {
+                count++;
                 System.out.println("Read User:"+user.getUid().getValue());
             }
+            System.out.println("saw "+count);
         } finally {
             connector.dispose();
         }
@@ -179,6 +183,7 @@ public class RacfConnectorTests {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
         try {
+            displayUser(getUser("IDM01", connector));
 //            displayUser(getUser("CICSUSER", connector));
             // Delete the user
             deleteUser(TEST_USER_UID, connector);
@@ -609,9 +614,10 @@ public class RacfConnectorTests {
         config.setScriptingLanguage("GROOVY");
         config.setSegmentNames(new String[] { "RACF", "TSO", "NETVIEW", "CICS", "OMVS" });
         config.setSegmentParsers(new String[] { loadParserFromFile(RACF_PARSER), loadParserFromFile(TSO_PARSER), loadParserFromFile(NETVIEW_PARSER), loadParserFromFile(CICS_PARSER), loadParserFromFile(OMVS_PARSER),  });
+        config.setCatalogParser(loadParserFromFile(CATALOG_PARSER));
         //config.setConnectionClassName("org.identityconnectors.rw3270.wrq.WrqConnection");
-        //config.setConnectionClassName("org.identityconnectors.rw3270.hod.HodConnection");
-        config.setConnectionClassName("org.identityconnectors.rw3270.freehost3270.FH3270Connection");
+        config.setConnectionClassName("org.identityconnectors.rw3270.hod.HodConnection");
+        //config.setConnectionClassName("org.identityconnectors.rw3270.freehost3270.FH3270Connection");
     }
     
     protected void initializeLdapConfiguration(RacfConfiguration config) {
