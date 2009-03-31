@@ -370,8 +370,7 @@ class CommandLineUtil {
         Map<String, Attribute> attributes = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
         String name = ((Name)attributes.get(Name.NAME)).getNameValue();
         if (objectClass.equals(ObjectClass.ACCOUNT)) {
-            Attribute groups = attributes.get(PredefinedAttributes.GROUPS_NAME);
-            attributes.remove(groups);
+            Attribute groups = attributes.remove(PredefinedAttributes.GROUPS_NAME);
             
             if (userExists(name))
                 throw new AlreadyExistsException();
@@ -391,8 +390,7 @@ class CommandLineUtil {
             }
             return uid;
         } else if (objectClass.equals(ObjectClass.GROUP)) {
-            Attribute accounts = attributes.get(RacfConnector.ACCOUNTS_NAME);
-            attributes.remove(accounts);
+            Attribute accounts = attributes.remove(RacfConnector.ACCOUNTS_NAME);
             if (groupExists(name))
                 throw new AlreadyExistsException();
             CharArrayBuffer buffer = new CharArrayBuffer();
