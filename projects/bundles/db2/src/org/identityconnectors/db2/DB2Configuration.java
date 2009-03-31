@@ -31,6 +31,7 @@ import org.identityconnectors.dbcommon.JNDIUtil;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.spi.*;
+import static org.identityconnectors.db2.DB2Messages.*;
 
 /**
  * Configuration to access DB2 database. We will support most consistent way how to connect to database.
@@ -197,7 +198,7 @@ public class DB2Configuration extends AbstractConfiguration implements Cloneable
 	/**
 	 * @return admin account
 	 */
-	@ConfigurationProperty(order = 0, helpMessageKey = "db2.adminAccount.help", displayMessageKey = "db2.adminAccount.display")
+	@ConfigurationProperty(order = 0, displayMessageKey = DB2_ADMINACCOUNT_DISPLAY, helpMessageKey = DB2_ADMINACCOUNT_HELP)
 	public String getAdminAccount(){
 		return adminAccount;
 	}
@@ -213,7 +214,7 @@ public class DB2Configuration extends AbstractConfiguration implements Cloneable
 	/**
 	 * @return admin password
 	 */
-	@ConfigurationProperty(order = 1, helpMessageKey = "db2.adminPassword.help", displayMessageKey = "db2.adminPassword.display", confidential=true)
+	@ConfigurationProperty(order = 1, displayMessageKey = DB2_ADMINPASSWORD_DISPLAY, helpMessageKey = DB2_ADMINPASSWORD_HELP, confidential=true)
 	public GuardedString getAdminPassword(){
 		return adminPassword;
 	}
@@ -229,7 +230,7 @@ public class DB2Configuration extends AbstractConfiguration implements Cloneable
 	/**
 	 * @return subprotocol when connecting using type 4 driver
 	 */
-	@ConfigurationProperty(order=2,displayMessageKey="db2.jdbcSubProtocol.display",helpMessageKey="db2.jdbcSubProtocol.help")
+	@ConfigurationProperty(order=2,displayMessageKey=DB2_JDBCSUBPROTOCOL_DISPLAY,helpMessageKey=DB2_JDBCSUBPROTOCOL_HELP)
 	public String getJdbcSubProtocol(){
 		return jdbcSubProtocol;
 	}
@@ -237,7 +238,7 @@ public class DB2Configuration extends AbstractConfiguration implements Cloneable
 	/**
 	 * @return databasename
 	 */
-	@ConfigurationProperty(order=3,displayMessageKey="db2.databaseName.display",helpMessageKey="db2.databaseName.help")
+	@ConfigurationProperty(order=3,displayMessageKey=DB2_DATABASENAME_DISPLAY,helpMessageKey=DB2_DATABASENAME_HELP)
 	public String getDatabaseName(){
 		return databaseName;
 	}
@@ -261,7 +262,7 @@ public class DB2Configuration extends AbstractConfiguration implements Cloneable
 	/**
 	 * @return classname of jdbc driver
 	 */
-	@ConfigurationProperty(order=4,displayMessageKey="db2.jdbcDriver.display",helpMessageKey="db2.jdbcDriver.help")
+	@ConfigurationProperty(order=4,displayMessageKey=DB2_JDBCDRIVER_DISPLAY,helpMessageKey=DB2_JDBCDRIVER_HELP)
 	public String getJdbcDriver() {
 		return jdbcDriver;
 	}
@@ -277,7 +278,7 @@ public class DB2Configuration extends AbstractConfiguration implements Cloneable
 	/**
 	 * @return the host
 	 */
-	@ConfigurationProperty(order=5,displayMessageKey="db2.host.display",helpMessageKey="db2.host.help")
+	@ConfigurationProperty(order=5,displayMessageKey=DB2_HOST_DISPLAY,helpMessageKey=DB2_HOST_HELP)
 	public String getHost() {
 		return host;
 	}
@@ -292,7 +293,7 @@ public class DB2Configuration extends AbstractConfiguration implements Cloneable
 	/**
 	 * @return the port
 	 */
-	@ConfigurationProperty(order=6,displayMessageKey="db2.port.display",helpMessageKey="db2.port.help")
+	@ConfigurationProperty(order=6,displayMessageKey=DB2_PORT_DISPLAY,helpMessageKey=DB2_PORT_HELP)
 	public String getPort() {
 		return port;
 	}
@@ -305,7 +306,7 @@ public class DB2Configuration extends AbstractConfiguration implements Cloneable
 	}
 	
 	
-	@ConfigurationProperty(order=7,displayMessageKey="db2.url.display",helpMessageKey="db2.url.help")
+	@ConfigurationProperty(order=7,displayMessageKey=DB2_URL_DISPLAY,helpMessageKey=DB2_URL_HELP)
 	public String getUrl() {
 		return url;
 	}
@@ -317,7 +318,7 @@ public class DB2Configuration extends AbstractConfiguration implements Cloneable
 	/**
 	 * @return the dataSource
 	 */
-	@ConfigurationProperty(order=8,displayMessageKey="db2.dataSource.display",helpMessageKey="db2.dataSource.help")
+	@ConfigurationProperty(order=8,displayMessageKey=DB2_DATASOURCE_DISPLAY,helpMessageKey=DB2_DATASOURCE_HELP)
 	public String getDataSource() {
 		return dataSource;
 	}
@@ -334,7 +335,7 @@ public class DB2Configuration extends AbstractConfiguration implements Cloneable
 	/**
 	 * @return the dsJNDIEnv
 	 */
-	@ConfigurationProperty(order=9,displayMessageKey="db2.dsJNDIEnv.display",helpMessageKey="db2.dsJNDIEnv.help")
+	@ConfigurationProperty(order=9,displayMessageKey=DB2_DSJNDIENV_DISPLAY,helpMessageKey=DB2_DSJNDIENV_HELP)
 	public String[] getDsJNDIEnv() {
 		if(dsJNDIEnv == null){
 			return new String[0];
@@ -369,7 +370,7 @@ public class DB2Configuration extends AbstractConfiguration implements Cloneable
 	 * @return replaceAllGrantsOnUpdate
      * 
      **/
-     @ConfigurationProperty(order=10,displayMessageKey="db2.replaceAllGrantsOnUpdate.display",helpMessageKey="db2.replaceAllGrantsOnUpdate.help")
+     @ConfigurationProperty(order=10,displayMessageKey=DB2_REPLACEALLGRANTSONUPDATE_DISPLAY,helpMessageKey=DB2_REPLACEALLGRANTSONUPDATE_HELP)
 	public boolean isReplaceAllGrantsOnUpdate() {
         return replaceAllGrantsOnUpdate;
     }

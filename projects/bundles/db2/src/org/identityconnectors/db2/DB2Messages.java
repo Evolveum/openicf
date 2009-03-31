@@ -18,4 +18,29 @@ abstract class DB2Messages {
     static final String UPDATE_OF_USER_FAILED = "db2.update.of.user.failed";
     static final String UPDATE_UID_CANNOT_BE_NULL_OR_EMPTY = "db2.update.uid.cannot.be.null.or.empty";
     static final String SEARCH_FAILED = "db2.search.failed";
+    
+    static final String DB2_ADMINACCOUNT_DISPLAY = "db2.adminAccount.display";
+    static final String DB2_ADMINACCOUNT_HELP = "db2.adminAccount.help";
+    static final String DB2_ADMINPASSWORD_DISPLAY = "db2.adminPassword.display";
+    static final String DB2_ADMINPASSWORD_HELP = "db2.adminPassword.help";
+    static final String DB2_JDBCSUBPROTOCOL_DISPLAY = "db2.jdbcSubProtocol.display";
+    static final String DB2_JDBCSUBPROTOCOL_HELP = "db2.jdbcSubProtocol.help";
+    static final String DB2_DATABASENAME_DISPLAY = "db2.databaseName.display";
+    static final String DB2_DATABASENAME_HELP = "db2.databaseName.help";
+    static final String DB2_JDBCDRIVER_DISPLAY = "db2.jdbcDriver.display";
+    static final String DB2_JDBCDRIVER_HELP = "db2.jdbcDriver.help";
+    static final String DB2_HOST_DISPLAY = "db2.host.display";
+    static final String DB2_HOST_HELP = "db2.host.help";
+    static final String DB2_PORT_DISPLAY = "db2.port.display";
+    static final String DB2_PORT_HELP = "db2.port.help";
+    static final String DB2_URL_DISPLAY = "db2.url.display";
+    static final String DB2_URL_HELP = "db2.url.help";
+    static final String DB2_DATASOURCE_DISPLAY = "db2.dataSource.display";
+    static final String DB2_DATASOURCE_HELP = "db2.dataSource.help";
+    static final String DB2_DSJNDIENV_DISPLAY = "db2.dsJNDIEnv.display";
+    static final String DB2_DSJNDIENV_HELP = "db2.dsJNDIEnv.help";
+    static final String DB2_REPLACEALLGRANTSONUPDATE_DISPLAY = "db2.replaceAllGrantsOnUpdate.display";
+    static final String DB2_REPLACEALLGRANTSONUPDATE_HELP = "db2.replaceAllGrantsOnUpdate.help";
+    
+    
 }

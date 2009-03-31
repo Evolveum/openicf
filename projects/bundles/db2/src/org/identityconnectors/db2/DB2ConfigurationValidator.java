@@ -30,6 +30,7 @@ import org.identityconnectors.dbcommon.LocalizedAssert;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import static org.identityconnectors.db2.DB2Messages.*;
 
+
 /** Validator of DB2Configuration.
  *  It validates DB2Configuration  as specified in DB2Configuration javadoc.
  *  It should be just private class of DB2Configuration, but it is too long.
@@ -46,7 +47,7 @@ class DB2ConfigurationValidator {
 	DB2ConfigurationValidator(DB2Configuration cfg) {
 		super();
 		this.cfg = cfg;
-		this.asserts = new LocalizedAssert(cfg.getConnectorMessages());
+		this.asserts = new LocalizedAssert(cfg.getConnectorMessages(),true);
 	}
 
 	private interface ConfigChecker{
@@ -57,15 +58,15 @@ class DB2ConfigurationValidator {
 	
 	private class DataSourceChecker implements ConfigChecker{
 		public void checkRequired() {
-		    asserts.assertNotBlank(cfg.getDataSource(),"dataSource");
+		    asserts.assertNotBlank(cfg.getDataSource(),DB2_DATASOURCE_DISPLAY);
 			//User and password can be specified, then they will be used instead of stored user/password in AS ds configuration.
 			//User and password must be specified always together
 			if(StringUtil.isNotEmpty(cfg.getAdminAccount())){
-			    asserts.assertNotNull(cfg.getAdminPassword(),"adminPassword");
+			    asserts.assertNotNull(cfg.getAdminPassword(),DB2_ADMINACCOUNT_DISPLAY);
 			}
 		}
 		public void checkEmpty(ConfigChecker reqChecker) {
-			asserts.assertBlank(cfg.getDataSource(),"dataSource");
+			asserts.assertBlank(cfg.getDataSource(),DB2_DATASOURCE_DISPLAY);
 		}
 		public ConnectionType getType() {
 			return ConnectionType.DATASOURCE;
@@ -76,10 +77,10 @@ class DB2ConfigurationValidator {
 	
 	private class URLChecker implements ConfigChecker{
 		public void checkRequired() {
-			asserts.assertNotBlank(cfg.getUrl(),"url");
-		    asserts.assertNotBlank(cfg.getAdminAccount(), "adminAccount");
-		    asserts.assertNotNull(cfg.getAdminPassword(), "adminPassword");
-		    asserts.assertNotBlank(cfg.getJdbcDriver(),"jdbcDriver");
+			asserts.assertNotBlank(cfg.getUrl(),DB2_URL_DISPLAY);
+		    asserts.assertNotBlank(cfg.getAdminAccount(), DB2_ADMINACCOUNT_DISPLAY);
+		    asserts.assertNotNull(cfg.getAdminPassword(), DB2_ADMINPASSWORD_DISPLAY);
+		    asserts.assertNotBlank(cfg.getJdbcDriver(),DB2_JDBCDRIVER_DISPLAY);
 			try {
 				Class.forName(cfg.getJdbcDriver());
 			} catch (ClassNotFoundException e) {
@@ -87,9 +88,9 @@ class DB2ConfigurationValidator {
 			}
 		}
 		public void checkEmpty(ConfigChecker reqChecker) {
-			asserts.assertBlank(cfg.getUrl(),"url");
+			asserts.assertBlank(cfg.getUrl(),DB2_URL_DISPLAY);
 			if(!(reqChecker instanceof Type4DriverChecker) && !(reqChecker instanceof Type2DriverChecker)){
-			    asserts.assertBlank(cfg.getJdbcDriver(),"jdbcDriver");
+			    asserts.assertBlank(cfg.getJdbcDriver(),DB2_JDBCDRIVER_DISPLAY);
 			}
 		}
 		public ConnectionType getType() {
@@ -99,13 +100,13 @@ class DB2ConfigurationValidator {
 	
 	private class Type4DriverChecker implements ConfigChecker{
 		public void checkRequired() {
-		    asserts.assertNotBlank(cfg.getHost(), "host");
-		    asserts.assertNotBlank(cfg.getPort(), "port");
-		    asserts.assertNotBlank(cfg.getAdminAccount(), "adminAccount");
-		    asserts.assertNotNull(cfg.getAdminPassword(), "adminPassword");
-		    asserts.assertNotBlank(cfg.getJdbcDriver(),"jdbcDriver");
-		    asserts.assertNotBlank(cfg.getDatabaseName(),"databaseName");
-		    asserts.assertNotBlank(cfg.getJdbcSubProtocol(),"jdbcSubProtocol");
+		    asserts.assertNotBlank(cfg.getHost(), DB2_HOST_DISPLAY);
+		    asserts.assertNotBlank(cfg.getPort(), DB2_PORT_DISPLAY);
+		    asserts.assertNotBlank(cfg.getAdminAccount(), DB2_ADMINACCOUNT_DISPLAY);
+		    asserts.assertNotNull(cfg.getAdminPassword(), DB2_ADMINPASSWORD_DISPLAY);
+		    asserts.assertNotBlank(cfg.getJdbcDriver(),DB2_JDBCDRIVER_DISPLAY);
+		    asserts.assertNotBlank(cfg.getDatabaseName(),DB2_DATABASENAME_DISPLAY);
+		    asserts.assertNotBlank(cfg.getJdbcSubProtocol(),DB2_JDBCSUBPROTOCOL_DISPLAY);
 			try {
 				Class.forName(cfg.getJdbcDriver());
 			} catch (ClassNotFoundException e) {
@@ -114,18 +115,18 @@ class DB2ConfigurationValidator {
 		}
 		public void checkEmpty(ConfigChecker reqChecker) {
 			if(!(reqChecker instanceof Type2DriverChecker)){
-			    asserts.assertBlank(cfg.getDatabaseName(),"database");
-			    asserts.assertBlank(cfg.getJdbcSubProtocol(),"jdbcSubProtocol");
+			    asserts.assertBlank(cfg.getDatabaseName(),DB2_DATABASENAME_DISPLAY);
+			    asserts.assertBlank(cfg.getJdbcSubProtocol(),DB2_JDBCSUBPROTOCOL_DISPLAY);
 			}
 			if(!(reqChecker instanceof Type2DriverChecker) && !(reqChecker instanceof URLChecker)){
-			    asserts.assertBlank(cfg.getJdbcDriver(),"jdbcDriver");
+			    asserts.assertBlank(cfg.getJdbcDriver(),DB2_JDBCDRIVER_DISPLAY);
 			}
 			
 			//User and password can be set for all types of connections
 			//Asserts.isBlankMsg(cfg.getAdminAccount(), "AdminAccount cannot be set");
 			//Asserts.isNullMsg(cfg.getAdminPassword(), "AdminPassword cannot be set");
-			asserts.assertBlank(cfg.getHost(),"host");
-			asserts.assertBlank(cfg.getPort(),"port");
+			asserts.assertBlank(cfg.getHost(),DB2_HOST_DISPLAY);
+			asserts.assertBlank(cfg.getPort(),DB2_PORT_DISPLAY);
 		}
 		public ConnectionType getType() {
 			return ConnectionType.TYPE4;
@@ -134,11 +135,11 @@ class DB2ConfigurationValidator {
 	
 	private class Type2DriverChecker implements ConfigChecker{
 		public void checkRequired() {
-		    asserts.assertNotBlank(cfg.getDatabaseName(), "databaseName");
-		    asserts.assertNotBlank(cfg.getAdminAccount(), "adminAccount");
-		    asserts.assertNotNull(cfg.getAdminPassword(), "adminPassword");
-		    asserts.assertNotBlank(cfg.getJdbcDriver(),"jdbcDriver");
-		    asserts.assertNotBlank(cfg.getJdbcSubProtocol(),"jdbcSubProtocol");
+		    asserts.assertNotBlank(cfg.getDatabaseName(), DB2_DATABASENAME_DISPLAY);
+		    asserts.assertNotBlank(cfg.getAdminAccount(), DB2_ADMINACCOUNT_DISPLAY);
+		    asserts.assertNotNull(cfg.getAdminPassword(), DB2_ADMINPASSWORD_DISPLAY);
+		    asserts.assertNotBlank(cfg.getJdbcDriver(),DB2_JDBCDRIVER_DISPLAY);
+		    asserts.assertNotBlank(cfg.getJdbcSubProtocol(),DB2_JDBCSUBPROTOCOL_DISPLAY);
 			try {
 				Class.forName(cfg.getJdbcDriver());
 			} catch (ClassNotFoundException e) {
@@ -147,11 +148,11 @@ class DB2ConfigurationValidator {
 		}
 		public void checkEmpty(ConfigChecker reqChecker) {
 			if(!(reqChecker instanceof Type4DriverChecker)){
-			    asserts.assertBlank(cfg.getDatabaseName(),"database");
-			    asserts.assertBlank(cfg.getJdbcSubProtocol(),"jdbcSubProtocol");
+			    asserts.assertBlank(cfg.getDatabaseName(),DB2_DATABASENAME_DISPLAY);
+			    asserts.assertBlank(cfg.getJdbcSubProtocol(),DB2_JDBCSUBPROTOCOL_DISPLAY);
 			}
 			if(!(reqChecker instanceof Type4DriverChecker) && !(reqChecker instanceof URLChecker)){
-			    asserts.assertBlank(cfg.getJdbcDriver(),"jdbcDriver");
+			    asserts.assertBlank(cfg.getJdbcDriver(),DB2_JDBCDRIVER_DISPLAY);
 			}
 		}
 		public ConnectionType getType() {
