@@ -304,6 +304,11 @@ namespace Org.IdentityConnectors.Exchange
             internal static readonly CommandInfo EnableMailbox = new CommandInfo("Enable-Mailbox");
 
             /// <summary>
+            /// Set-Mailbox command meta info
+            /// </summary>
+            internal static readonly CommandInfo SetMailbox = new CommandInfo("Set-Mailbox");
+
+            /// <summary>
             /// Enable-MailUser command meta info
             /// </summary>
             internal static readonly CommandInfo EnableMailUser = new CommandInfo("Enable-MailUser");
@@ -312,6 +317,11 @@ namespace Org.IdentityConnectors.Exchange
             /// Set-MailUser command meta info
             /// </summary>
             internal static readonly CommandInfo SetMailUser = new CommandInfo("Set-MailUser");
+
+            /// <summary>
+            /// Get-MailUser command meta info
+            /// </summary>
+            internal static readonly CommandInfo GetMailUser = new CommandInfo("Get-MailUser");
 
             /// <summary>
             /// Get-User command meta info

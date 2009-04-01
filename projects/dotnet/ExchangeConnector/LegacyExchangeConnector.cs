@@ -31,7 +31,9 @@ namespace Org.IdentityConnectors.Exchange
     using System.Diagnostics;
     using System.Management.Automation;
     using System.Management.Automation.Runspaces;
+
     using Org.IdentityConnectors.ActiveDirectory;
+    using Org.IdentityConnectors.Common;
     using Org.IdentityConnectors.Framework.Common.Exceptions;
     using Org.IdentityConnectors.Framework.Common.Objects;
     using Org.IdentityConnectors.Framework.Common.Objects.Filters;
@@ -168,24 +170,43 @@ namespace Org.IdentityConnectors.Exchange
             // get recipient type
             string rcptType = ExchangeUtility.GetAttValue(AttRecipientType, attributes) as string;
 
-            if (rcptType != RcptTypeMailBox && rcptType != RcptTypeMailUser)
+            ExchangeConnector.CommandInfo cmdInfoEnable = null;
+            ExchangeConnector.CommandInfo cmdInfoSet = null;
+            switch (rcptType)
             {
-                // AD account only, we do nothing
-                return base.Create(oclass, FilterOut(attributes), options);
+                case RcptTypeMailBox:
+                    cmdInfoEnable = ExchangeConnector.CommandInfo.EnableMailbox;
+                    cmdInfoSet = ExchangeConnector.CommandInfo.SetMailbox;
+                    break;
+                case RcptTypeMailUser:
+                    cmdInfoEnable = ExchangeConnector.CommandInfo.EnableMailUser;
+                    cmdInfoSet = ExchangeConnector.CommandInfo.SetMailUser;
+                    break;
+                case RcptTypeUser:
+                    break;
+                default:
+                    throw new ArgumentException(
+                              this.configuration.ConnectorMessages.Format(
+                              "ex_bad_rcpt", "Recipient type [{0}] is not supported", rcptType));
             }
 
             // first create the object in AD
-            Uid uid = base.Create(oclass, FilterOut(attributes), options);
+            Uid uid = base.Create(oclass, FilterOut(attributes, cmdInfoEnable, cmdInfoSet), options);
 
-            // prepare the command
-            ExchangeConnector.CommandInfo cmdInfo = rcptType == RcptTypeMailBox
-                                          ? ExchangeConnector.CommandInfo.EnableMailbox
-                                          : ExchangeConnector.CommandInfo.EnableMailUser;
-            Command cmd = ExchangeUtility.GetCommand(cmdInfo, attributes);
+            if (rcptType == RcptTypeUser)
+            {
+                // AD account only, we do nothing
+                return uid;
+            }
+
+            // prepare the command            
+            Command cmdEnable = ExchangeUtility.GetCommand(cmdInfoEnable, attributes);
+            Command cmdSet = ExchangeUtility.GetCommand(cmdInfoSet, attributes);
 
             try
             {
-                this.InvokePipeline(cmd);
+                this.InvokePipeline(cmdEnable);
+                this.InvokePipeline(cmdSet);
             }
             catch
             {
@@ -235,26 +256,48 @@ namespace Org.IdentityConnectors.Exchange
             ExchangeUtility.NullCheck(oclass, "oclass", this.configuration);
             ExchangeUtility.NullCheck(attributes, "attributes", this.configuration);
 
-            // update in AD first
-            Uid uid = base.Update(type, oclass, FilterOut(attributes), options);
-
             // get recipient type and database
             string rcptType = ExchangeUtility.GetAttValue(AttRecipientType, attributes) as string;
             string database = ExchangeUtility.GetAttValue(AttDatabase, attributes) as string;
 
+            // update in AD first
+            var filtered = FilterOut(
+                attributes,
+                ExchangeConnector.CommandInfo.EnableMailbox,
+                ExchangeConnector.CommandInfo.EnableMailUser,
+                ExchangeConnector.CommandInfo.SetMailbox,
+                ExchangeConnector.CommandInfo.SetMailUser);
+            Uid uid = base.Update(type, oclass, filtered, options);
+
+            ConnectorObject aduser = this.ADSearchByUid(uid, oclass, ExchangeUtility.AddAttributeToOptions(options, AttDatabaseADName));
+            attributes.Add(aduser.Name);
+            ExchangeConnector.CommandInfo cmdInfo = ExchangeConnector.CommandInfo.GetUser;
+            if (aduser.GetAttributeByName(AttDatabaseADName) != null)
+            {
+                // we can be sure it is user mailbox type
+                cmdInfo = ExchangeConnector.CommandInfo.GetMailbox;
+            }
+
+            PSObject psuser = this.GetUser(cmdInfo, attributes);
+            string origRcptType = psuser.Members[AttRecipientType].Value.ToString();
+            if (String.IsNullOrEmpty(rcptType))
+            {
+                rcptType = origRcptType;
+            }
+
             if (rcptType == RcptTypeMailUser)
             {
                 if (type == UpdateType.REPLACE)
-                {
-                    // get name attribute
-                    attributes = this.EnsureName(oclass, attributes, uid);
+                {                 
+                    if (origRcptType != rcptType)
+                    {
+                        Command cmdEnable = ExchangeUtility.GetCommand(
+                                ExchangeConnector.CommandInfo.EnableMailUser, attributes);
+                        this.InvokePipeline(cmdEnable);
+                    }
 
-                    PSObject psuser = this.GetUser(ExchangeConnector.CommandInfo.GetUser, attributes);
-                    string origRcptType = psuser.Members[AttRecipientType].Value.ToString();
-                    Command cmd = origRcptType != rcptType ?
-                        ExchangeUtility.GetCommand(ExchangeConnector.CommandInfo.EnableMailUser, attributes)
-                        : ExchangeUtility.GetCommand(ExchangeConnector.CommandInfo.SetMailUser, attributes);
-                    this.InvokePipeline(cmd);
+                    Command cmdSet = ExchangeUtility.GetCommand(ExchangeConnector.CommandInfo.SetMailUser, attributes);
+                    this.InvokePipeline(cmdSet);
                 }
                 else
                 {
@@ -270,23 +313,12 @@ namespace Org.IdentityConnectors.Exchange
                 // executed :-(
                 // alternatively there can be something like:
                 // get-user -identity id -RecipientTypeDetails User|enable-mailbox -database "db", but we have then trouble
-                // with detecting attempt to change the database attribute
-                ConnectorObject aduser = this.ADSearchByUid(uid, oclass, ExchangeUtility.AddAttributeToOptions(options, AttDatabaseADName));
-                attributes.Add(aduser.Name);
-                ExchangeConnector.CommandInfo cmdInfo = ExchangeConnector.CommandInfo.GetUser;
-                if (aduser.GetAttributeByName(AttDatabaseADName) != null)
-                {
-                    // we can be sure it is user mailbox type
-                    cmdInfo = ExchangeConnector.CommandInfo.GetMailbox;
-                }
-
-                PSObject psuser = this.GetUser(cmdInfo, attributes);
-                string origRcptType = psuser.Members[AttRecipientType].Value.ToString();
+                // with detecting attempt to change the database attribute               
                 string origDatabase = psuser.Members[AttDatabase] != null ? psuser.Members[AttDatabase].Value.ToString() : null;
                 if (origRcptType != rcptType)
                 {
-                    Command cmd2 = ExchangeUtility.GetCommand(ExchangeConnector.CommandInfo.EnableMailbox, attributes);
-                    this.InvokePipeline(cmd2);
+                    Command cmdEnable = ExchangeUtility.GetCommand(ExchangeConnector.CommandInfo.EnableMailbox, attributes);
+                    this.InvokePipeline(cmdEnable);
                 }
                 else
                 {
@@ -298,20 +330,15 @@ namespace Org.IdentityConnectors.Exchange
                             "ex_not_updatable", "Update of [{0}] attribute is not supported", AttDatabase));
                     }
                 }
-            }
-            else if (rcptType == RcptTypeUser)
-            {
-                // get name attribute
-                attributes = this.EnsureName(oclass, attributes, uid);
 
-                PSObject psuser = this.GetUser(ExchangeConnector.CommandInfo.GetUser, attributes);
-                string origRcptType = psuser.Members[AttRecipientType].Value.ToString();
-                if (origRcptType != rcptType)
-                {
-                    throw new ArgumentException(
-                            this.configuration.ConnectorMessages.Format(
-                            "ex_update_notsupported", "Update of [{0}] to [{1}] is not supported", AttRecipientType, rcptType));
-                }
+                Command cmdSet = ExchangeUtility.GetCommand(ExchangeConnector.CommandInfo.SetMailbox, attributes);
+                this.InvokePipeline(cmdSet);
+            }
+            else if (rcptType == RcptTypeUser && origRcptType != rcptType)
+            {
+                throw new ArgumentException(
+                        this.configuration.ConnectorMessages.Format(
+                        "ex_update_notsupported", "Update of [{0}] to [{1}] is not supported", AttRecipientType, rcptType));
             }
             else
             {
@@ -555,10 +582,45 @@ namespace Org.IdentityConnectors.Exchange
         /// helper method to filter out all attributes used in LegacyExchangeConnector only
         /// </summary>
         /// <param name="attributes">Connector attributes</param>
-        /// <returns>Filtered connector attributes</returns>
-        private static ICollection<ConnectorAttribute> FilterOut(ICollection<ConnectorAttribute> attributes)
+        /// <param name="cmdInfos">CommandInfo whose parameters will be used and filtered out from attributes</param>
+        /// <returns>
+        /// Filtered connector attributes
+        /// </returns>
+        private static ICollection<ConnectorAttribute> FilterOut(ICollection<ConnectorAttribute> attributes, params ExchangeConnector.CommandInfo[] cmdInfos)
         {
-            return ExchangeUtility.FilterOut(attributes, AttRecipientType, AttDatabase, AttExternalMail);
+            IList<string> attsToRemove = new List<string> { AttRecipientType, AttDatabase, AttExternalMail };
+            if (cmdInfos != null)
+            {
+                foreach (ExchangeConnector.CommandInfo cmdInfo in cmdInfos)
+                {
+                    CollectionUtil.AddAll(attsToRemove, cmdInfo.Parameters);
+                }
+            }
+
+            return ExchangeUtility.FilterOut(attributes, attsToRemove);
+        }
+
+        /// <summary>
+        /// This method tries to get name and value from <see cref="PSMemberInfo"/> and
+        /// creates <see cref="ConnectorAttribute"/> out of it
+        /// </summary>
+        /// <param name="info">PSMemberInfo to get the data from</param>
+        /// <returns>Created ConnectorAttribute or null if not possible to create it</returns>
+        private static ConnectorAttribute GetAsAttribute(PSMemberInfo info)
+        {
+            Assertions.NullCheck(info, "param");
+            if (info.Value != null)
+            {
+                string value = info.Value.ToString();
+
+                // TODO: add type recognition, currently only string is supported
+                if (value != info.Value.GetType().ToString() && !string.IsNullOrEmpty(value))
+                {
+                    return ConnectorAttributeBuilder.Build(info.Name, value);
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -576,69 +638,88 @@ namespace Org.IdentityConnectors.Exchange
             ExchangeUtility.NullCheck(oc, "name", this.configuration);
             ExchangeUtility.NullCheck(oc, "cobject", this.configuration);
 
-            // we support ACCOUNT only and if the recipient type and database is in att to get
-            if (!oc.Is(ObjectClass.ACCOUNT_NAME) ||
-                (!attToGet.Contains(AttRecipientType) && !attToGet.Contains(AttDatabase)))
+            // we support ACCOUNT only
+            if (!oc.Is(ObjectClass.ACCOUNT_NAME))
             {
                 return cobject;
             }
 
-            bool getDatabase = false;
+            ConnectorObjectBuilder cobjBuilder = new ConnectorObjectBuilder();
+            cobjBuilder.AddAttributes(cobject.GetAttributes());
+
             ExchangeConnector.CommandInfo cmdInfo = ExchangeConnector.CommandInfo.GetUser;
-            if (cobject.GetAttributeByName(AttDatabase) != null || cobject.GetAttributeByName(AttDatabaseADName) != null)
-            {
-                // we need to get database attribute, it is mailbox for sure
-                getDatabase = true;
-                cmdInfo = ExchangeConnector.CommandInfo.GetMailbox;
-            }
-            
-            ConnectorObject retCObject = cobject;
             
             // prepare the connector attribute list to get the command
             ICollection<ConnectorAttribute> attributes = new Collection<ConnectorAttribute> { cobject.Name };
 
             // get the command
             Command cmd = ExchangeUtility.GetCommand(cmdInfo, attributes);
-
             ICollection<PSObject> foundObjects = this.InvokePipeline(cmd);
-
-            // it has to be only one or zero objects in this case
+            PSObject user = null;
             if (foundObjects != null && foundObjects.Count == 1)
             {
-                string rcptName = RcptTypeUser;
-                string database = null;
-                foreach (PSObject obj in foundObjects)
+                user = GetFirstElement(foundObjects);
+                foreach (var info in user.Properties)
                 {
-                    rcptName = obj.Members[AttRecipientType].Value.ToString();
-                    database = obj.Members[AttDatabase] != null ? obj.Members[AttDatabase].Value.ToString() : null;
-                    break;
-                }
-
-                ConnectorObjectBuilder cobjBuilder = new ConnectorObjectBuilder();
-                if (getDatabase)
-                {
-                    foreach (ConnectorAttribute attribute in cobject.GetAttributes())
+                    ConnectorAttribute att = GetAsAttribute(info);                    
+                    if (att != null)
                     {
-                        if ((attribute.Is(AttDatabase) || attribute.Is(AttDatabaseADName)) && database != null)
-                        {
-                            cobjBuilder.AddAttribute(ConnectorAttributeBuilder.Build(AttDatabase, database));
-                        }
-                        else
-                        {
-                            cobjBuilder.AddAttribute(attribute);
-                        }
-                    }
+                        cobjBuilder.AddAttribute(att);
+                    }                    
                 }
-                else
-                {
-                    cobjBuilder.AddAttributes(cobject.GetAttributes());
-                }
+            } 
 
-                cobjBuilder.AddAttribute(ConnectorAttributeBuilder.Build(AttRecipientType, rcptName));
-                retCObject = cobjBuilder.Build();
+            if (user == null)
+            {
+                // nothing to do
+                return cobject;
             }
 
-            return retCObject;
+            string rcptType = user.Members[AttRecipientType].Value.ToString();
+            foundObjects = null;
+
+            // get detailed information
+            PSObject userDetails = null;
+            if (rcptType == RcptTypeMailBox)
+            {
+                foundObjects = this.InvokePipeline(ExchangeUtility.GetCommand(ExchangeConnector.CommandInfo.GetMailbox, attributes));
+            }
+            else if (rcptType == RcptTypeMailUser)
+            {
+                foundObjects = this.InvokePipeline(ExchangeUtility.GetCommand(ExchangeConnector.CommandInfo.GetMailUser, attributes));
+            }
+
+            if (foundObjects != null && foundObjects.Count == 1)
+            {
+                userDetails = GetFirstElement(foundObjects);
+                foreach (var info in userDetails.Properties)
+                {
+
+                    ConnectorAttribute att = GetAsAttribute(info);
+                    if (att != null)
+                    {
+                        cobjBuilder.AddAttribute(att);
+                    }
+                }
+            }            
+
+            return cobjBuilder.Build();
+        }
+
+        /// <summary>
+        /// Returns first element of the collection
+        /// </summary>
+        /// <typeparam name="T">Object Type stored in collection</typeparam>
+        /// <param name="collection">Collection to get the first element from</param>
+        /// <returns>First element in the collection, null if the collection is empty</returns>
+        private T GetFirstElement<T>(IEnumerable<T> collection) where T : class
+        {
+            foreach (T o in collection)
+            {
+                return o;
+            }
+
+            return null;
         }
 
         /// <summary>

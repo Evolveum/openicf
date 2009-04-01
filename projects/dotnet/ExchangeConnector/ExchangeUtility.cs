@@ -235,17 +235,16 @@ using Org.IdentityConnectors.Framework.Spi;
         /// Helper method for filtering the specified attributes from collection of attributes
         /// </summary>
         /// <param name="attributes">Collection of attributes</param>
-        /// <param name="attName">Attribute names to be filtered out</param>
+        /// <param name="names">Attribute names to be filtered out</param>
         /// <returns>Filtered collection of attributes</returns>
-        internal static ICollection<ConnectorAttribute> FilterOut(ICollection<ConnectorAttribute> attributes, params string[] attName)
+        internal static ICollection<ConnectorAttribute> FilterOut(ICollection<ConnectorAttribute> attributes, IList<string> names)
         {
             Assertions.NullCheck(attributes, "attributes");
-            if (attName == null || attName.Length == 0)
+            if (names == null || names.Count == 0)
             {
                 return attributes;
             }
-
-            IList names = new ArrayList(attName);            
+           
             ICollection<ConnectorAttribute> filtered = new List<ConnectorAttribute>();
             foreach (ConnectorAttribute attribute in attributes)
             {

@@ -102,58 +102,13 @@
   </SerializableCommandInfo>
   <SerializableCommandInfo>
     <Name>Get-MailUser</Name>
+    <NameParameter>Identity</NameParameter>
     <Parameters>
       <string>Identity</string>
       <string>OrganizationalUnit</string>
       <string>ReadFromDomainController</string>
       <string></string>
-    </Parameters>
-    <FilterName>Filter</FilterName>
-    <FilterParameter>
-      <string>AcceptMessagesOnlyFrom</string>
-      <string>AcceptMessagesOnlyFromDLMembers</string>
-      <string>Alias</string>
-      <string>CustomAttribute1</string>
-      <string>CustomAttribute2</string>
-      <string>CustomAttribute3</string>
-      <string>CustomAttribute4</string>
-      <string>CustomAttribute5</string>
-      <string>CustomAttribute6</string>
-      <string>CustomAttribute7</string>
-      <string>CustomAttribute8</string>
-      <string>CustomAttribute9</string>
-      <string>CustomAttribute10</string>
-      <string>CustomAttribute11</string>
-      <string>CustomAttribute12</string>
-      <string>CustomAttribute13</string>
-      <string>CustomAttribute14</string>
-      <string>CustomAttribute15</string>
-      <string>DisplayName</string>
-      <string>DistinguishedName</string>
-      <string>EmailAddresses</string>
-      <string>EmailAddressPolicyEnabled</string>
-      <string>ExchangeVersion</string>
-      <string>ExternalEmailAddress</string>
-      <string>GrantSendOnBehalfTo</string>
-      <string>Guid</string>
-      <string>HiddenFromAddressListsEnabled</string>
-      <string>MaxReceiveSize</string>
-      <string>MaxSendSize</string>
-      <string>Name</string>
-      <string>PrimarySmtpAddress</string>
-      <string>RecipientLimits</string>
-      <string>RecipientType</string>
-      <string>RecipientTypeDetails</string>
-      <string>RejectMessagesFrom</string>
-      <string>RejectMessagesFromDLMembers</string>
-      <string>SamAccountName</string>
-      <string>SimpleDisplayName</string>
-      <string>UMDtmfMap</string>
-      <string>UserPrincipalName</string>
-      <string>WhenChanged</string>
-      <string>WhenCreated</string>
-      <string>WindowsEmailAddress</string>
-    </FilterParameter>
+    </Parameters>    
   </SerializableCommandInfo>
   <SerializableCommandInfo>
     <Name>Enable-MailUser</Name>
@@ -264,6 +219,97 @@
       <string>RecipientTypeDetails</string>
       <string>ResultSize</string>
       <string>SortBy</string>
+    </Parameters>
+  </SerializableCommandInfo>
+  <SerializableCommandInfo>
+    <Name>Set-Mailbox</Name>
+    <NameParameter>Identity</NameParameter>
+    <Parameters>
+      <string>AcceptMessagesOnlyFrom</string>
+      <string>AcceptMessagesOnlyFromDLMembers</string>
+      <string>Alias</string>
+      <string>AntispamBypassEnabled</string>
+      <string>ApplyMandatoryProperties</string>
+      <string>Confirm</string>
+      <string>CreateDTMFMap</string>
+      <string>CustomAttribute1</string>
+      <string>CustomAttribute2</string>
+      <string>CustomAttribute3</string>
+      <string>CustomAttribute4</string>
+      <string>CustomAttribute5</string>
+      <string>CustomAttribute6</string>
+      <string>CustomAttribute7</string>
+      <string>CustomAttribute8</string>
+      <string>CustomAttribute9</string>
+      <string>CustomAttribute10</string>
+      <string>CustomAttribute11</string>
+      <string>CustomAttribute12</string>
+      <string>CustomAttribute13</string>
+      <string>CustomAttribute14</string>
+      <string>CustomAttribute15</string>
+      <string>DeliverToMailboxAndForward</string>
+      <string>DisplayName</string>
+      <string>DomainController</string>
+      <string>DowngradeHighPriorityMessagesEnabled</string>
+      <string>EmailAddresses</string>
+      <string>EmailAddressPolicyEnabled</string>
+      <string>EndDateForRetentionHold</string>
+      <string>Extensions</string>
+      <string>ExternalOofOptions</string>
+      <string>ForwardingAddress</string>
+      <string>GrantSendOnBehalfTo</string>
+      <string>HiddenFromAddressListsEnabled</string>
+      <string>IgnoreDefaultScope</string>
+      <string>Instance</string>
+      <string>IssueWarningQuota</string>
+      <string>Languages</string>
+      <string>LinkedCredential</string>
+      <string>LinkedDomainController</string>
+      <string>LinkedMasterAccount</string>
+      <string>ManagedFolderMailboxPolicy</string>
+      <string>ManagedFolderMailboxPolicyAllowed</string>
+      <string>MaxBlockedSenders</string>
+      <string>MaxReceiveSize</string>
+      <string>MaxSafeSenders</string>
+      <string>MaxSendSize</string>
+      <string>Name</string>
+      <string>Office</string>
+      <string>OfflineAddressBook</string>
+      <string>PrimarySmtpAddress</string>
+      <string>ProhibitSendQuota</string>
+      <string>ProhibitSendReceiveQuota</string>
+      <string>RecipientLimits</string>
+      <string>RejectMessagesFrom</string>
+      <string>RejectMessagesFromDLMembers</string>
+      <string>RemoveManagedFolderAndPolicy</string>
+      <string>RequireSenderAuthenticationEnabled</string>
+      <string>ResourceCapacity</string>
+      <string>ResourceCustom</string>
+      <string>RetainDeletedItemsFor</string>
+      <string>RetainDeletedItemsUntilBackup</string>
+      <string>RetentionHoldEnabled</string>
+      <string>RulesQuota</string>
+      <string>SamAccountName</string>
+      <string>SCLDeleteEnabled</string>
+      <string>SCLDeleteThreshold</string>
+      <string>SCLJunkEnabled</string>
+      <string>SCLJunkThreshold</string>
+      <string>SCLQuarantineEnabled</string>
+      <string>SCLQuarantineThreshold</string>
+      <string>SCLRejectEnabled</string>
+      <string>SCLRejectThreshold</string>
+      <string>SecondaryAddress</string>
+      <string>SecondaryDialPlan</string>
+      <string>SimpleDisplayName</string>
+      <string>StartDateForRetentionHold</string>
+      <string>Type</string>
+      <string>UMDtmfMap</string>
+      <string>UseDatabaseQuotaDefaults</string>
+      <string>UseDatabaseRetentionDefaults</string>
+      <string>UserPrincipalName</string>
+      <string>UseRusServer</string>
+      <string>WhatIf</string>
+      <string>WindowsEmailAddress</string>
     </Parameters>
   </SerializableCommandInfo>
 
