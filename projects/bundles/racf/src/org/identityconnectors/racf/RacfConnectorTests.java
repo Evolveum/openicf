@@ -128,7 +128,7 @@ public class RacfConnectorTests {
         System.out.println("------------ New Test ---------------");
     }
 
-    @Test@Ignore
+    @Test//@Ignore
     public void testListAllUsers() throws Exception {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);

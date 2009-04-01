@@ -26,7 +26,6 @@ import static org.identityconnectors.framework.common.objects.AttributeUtil.crea
 import static org.identityconnectors.racf.RacfConstants.*;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;

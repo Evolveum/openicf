@@ -78,6 +78,7 @@ class CommandLineUtil {
     private static final String         DEFAULT_GROUP_NAME          = "DFLTGRP";
     private static final String         LONG_DEFAULT_GROUP_NAME     = "RACF.DFLTGRP";
     private static final String         OUTPUT_CONTINUING_PATTERN   = "\\s\\*\\*\\*\\s{76}";
+    private static final String         OUTPUT_CONTINUING           = "***";
     private static final String         RACF                        = "RACF";
     private static final String         DELETE_SEGMENT              = "Delete Segment";
     private static final int            COMMAND_TIMEOUT             = 60000;
@@ -899,8 +900,6 @@ class CommandLineUtil {
                     //
                     data = data.substring(0, state.getMatchedWhere());
                     _buffer.append(data);
-                    //System.out.println("+++continue("+count+++")\n:"+_buffer.toString().replaceAll("(.{80})", "$1\n"));
-                    getRW3270Connection().clearAndUnlock();
                     getRW3270Connection().sendEnter();
                     state.exp_continue();
                 }
@@ -925,7 +924,17 @@ class CommandLineUtil {
                     Matcher matcher = Pattern.compile(OUTPUT_COMPLETE_PATTERN).matcher(getRW3270Connection().getDisplay());
                     // This code will be exported to a script, but I want to get the tests back on-line
                     //
-                    if (!getRW3270Connection().getDisplay().trim().endsWith(OUTPUT_COMPLETE.trim())) {
+                    boolean commandComplete = getRW3270Connection().getDisplay().trim().endsWith(OUTPUT_COMPLETE);
+                    boolean matched = false;
+                    if (data.length()>state.getMatchedWhere())
+                        matched = data.substring(state.getMatchedWhere()).startsWith(OUTPUT_COMPLETE);
+                    if (!commandComplete && matched) {
+                        data = data.substring(0, state.getMatchedWhere());
+                        _buffer.append(data);
+                        //System.out.println("Continuing but complete...");
+                        getRW3270Connection().sendEnter();
+                        state.exp_continue();
+                    } else if (!commandComplete) {
                         // This situation is a bit complicated. Here's what I think is happening:
                         //  . the previous command ended with READY on the next-to-last
                         //    line of the screen, so the last line was given the continue prompt
@@ -937,14 +946,10 @@ class CommandLineUtil {
                         //  . thus, the current command has not yet seen the enter
                         // We've lost the READY, so retry
                         //System.out.println("******* command complete lost");
-                        //System.out.println("+++complete("+count+++")\n:"+getDisplay().toString().replaceAll("(.{80})", "$1\n"));
-                        getRW3270Connection().clearAndUnlock();
                         getRW3270Connection().sendEnter();
                         state.exp_continue();
                     } else {
-                        //System.out.println("******* READY found at "+getDisplay().lastIndexOf(" READY"));
                         _buffer.append(data);
-                        //System.out.println("+++complete("+count+++")\n:"+_buffer.toString().replaceAll("(.{80})", "$1\n"));
                         Object errorDetected = state.getVar("errorDetected");
                         state.addVar("timeout", Boolean.FALSE);
                         state.addVar("errorDetected", null);
