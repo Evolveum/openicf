@@ -66,6 +66,11 @@ namespace Org.IdentityConnectors.Exchange
         internal const string AttDatabase = "Database";
 
         /// <summary>
+        /// Deleted atrribute name
+        /// </summary>
+        internal const string AttIsDeleted = "isDeleted";
+
+        /// <summary>
         /// External Mail attribute name as in AD
         /// </summary>
         internal const string AttExternalMailADName = "targetAddress";
@@ -624,6 +629,22 @@ namespace Org.IdentityConnectors.Exchange
         }
 
         /// <summary>
+        /// Returns first element of the collection
+        /// </summary>
+        /// <typeparam name="T">Object Type stored in collection</typeparam>
+        /// <param name="collection">Collection to get the first element from</param>
+        /// <returns>First element in the collection, null if the collection is empty</returns>
+        private static T GetFirstElement<T>(IEnumerable<T> collection) where T : class
+        {
+            foreach (T o in collection)
+            {
+                return o;
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Gets Recipient Type/Database from Exchange database, this method can be more general, but it is ok
         /// for out needs
         /// </summary>
@@ -641,6 +662,14 @@ namespace Org.IdentityConnectors.Exchange
             // we support ACCOUNT only
             if (!oc.Is(ObjectClass.ACCOUNT_NAME))
             {
+                return cobject;
+            }
+
+            // check it is not deleted object
+            bool? deleted = ExchangeUtility.GetAttValue(AttIsDeleted, cobject.GetAttributes()) as bool?;
+            if (deleted != null && deleted == true)
+            {
+                // do nothing, it is deleted object
                 return cobject;
             }
 
@@ -678,8 +707,7 @@ namespace Org.IdentityConnectors.Exchange
             string rcptType = user.Members[AttRecipientType].Value.ToString();
             foundObjects = null;
 
-            // get detailed information
-            PSObject userDetails = null;
+            // get detailed information            
             if (rcptType == RcptTypeMailBox)
             {
                 foundObjects = this.InvokePipeline(ExchangeUtility.GetCommand(ExchangeConnector.CommandInfo.GetMailbox, attributes));
@@ -691,10 +719,9 @@ namespace Org.IdentityConnectors.Exchange
 
             if (foundObjects != null && foundObjects.Count == 1)
             {
-                userDetails = GetFirstElement(foundObjects);
+                PSObject userDetails = GetFirstElement(foundObjects);
                 foreach (var info in userDetails.Properties)
                 {
-
                     ConnectorAttribute att = GetAsAttribute(info);
                     if (att != null)
                     {
@@ -704,23 +731,7 @@ namespace Org.IdentityConnectors.Exchange
             }            
 
             return cobjBuilder.Build();
-        }
-
-        /// <summary>
-        /// Returns first element of the collection
-        /// </summary>
-        /// <typeparam name="T">Object Type stored in collection</typeparam>
-        /// <param name="collection">Collection to get the first element from</param>
-        /// <returns>First element in the collection, null if the collection is empty</returns>
-        private T GetFirstElement<T>(IEnumerable<T> collection) where T : class
-        {
-            foreach (T o in collection)
-            {
-                return o;
-            }
-
-            return null;
-        }
+        }     
 
         /// <summary>
         /// Invokes command in PowerShell runspace, this method is just helper
@@ -802,29 +813,7 @@ namespace Org.IdentityConnectors.Exchange
             throw new ArgumentException(
                 this.configuration.ConnectorMessages.Format(
                 "ex_bad_username", "Provided User name is not unique or not existing"));
-        }
-
-        /// <summary>
-        /// Ensures we have Name attribute in attributes collection, if not present, it uses AD search to get it
-        /// </summary>
-        /// <param name="oclass">object class</param>
-        /// <param name="attributes">Collection of attributes</param>
-        /// <param name="uid">object Uid</param>
-        /// <returns>Collection of attributes conta</returns>
-        private ICollection<ConnectorAttribute> EnsureName(ObjectClass oclass, ICollection<ConnectorAttribute> attributes, Uid uid)
-        {
-            string name = ExchangeUtility.GetAttValue(Name.NAME, attributes) as string;
-            if (name == null)
-            {
-                // we don't know name, but we need it - NOTE: searching for all the default attributes, we need only Name here, it can be improved
-                ConnectorObject co = this.ADSearchByUid(uid, oclass, null);
-                ExchangeUtility.NullCheck(co, "co", this.configuration);
-
-                // add to attributes
-                attributes.Add(co.Name);
-            }
-            return attributes;
-        }
+        }        
 
         /// <summary>
         /// Filter translator which does MS Exchange specific translation
