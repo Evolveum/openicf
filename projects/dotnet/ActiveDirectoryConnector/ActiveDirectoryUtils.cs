@@ -579,57 +579,42 @@ namespace Org.IdentityConnectors.ActiveDirectory
             DirectoryEntry directoryEntry, ICollection<ConnectorAttribute> attributes, 
             ActiveDirectoryConfiguration config)
         {
-            // this return means that te connector attribute is ignored for
-            // the purpose of moving an object to a different container
-            return;
+            Name nameAttribute = ConnectorAttributeUtil.GetNameFromAttributes(attributes);
+            if(nameAttribute == null)
+            {
+                // no name, so must not be a container change
+                return;
+            }
 
-            // this code seems right, but doesnt work.  The DirectoryEntry.Move()
-            // method always throws an Exception with the text 'unspecified error'
-
-            ConnectorAttribute containerAttribute =
-                ConnectorAttributeUtil.Find(ActiveDirectoryConnector.ATT_CONTAINER, attributes);
-            if (containerAttribute != null)
+            if (!type.Equals(UpdateType.REPLACE))
             {
                 // this only make sense for replace.  you can't
                 // add a name or delete a name
-                if (type.Equals(UpdateType.REPLACE))
+                return;
+            }
+            
+            String oldContainer = GetParentDn(directoryEntry.Path);
+            String newContainer = GetParentDn(nameAttribute.GetNameValue());
+
+            if (!NormalizeLdapString(oldContainer).Equals(NormalizeLdapString(newContainer)))
+            {
+                if (newContainer != null)
                 {
-                    DirectoryEntry parent = directoryEntry.Parent;
-                    String oldContainer = null;
-                    if (parent != null)
+                    try
                     {
-                        PropertyValueCollection parentDNValues = 
-                            parent.Properties[ActiveDirectoryConnector.ATT_DISTINGUISHED_NAME];
-                        if ((parentDNValues.Count == 1) && (parentDNValues[0] is String))
+                        if (!NormalizeLdapString(oldContainer).Equals(
+                            NormalizeLdapString(newContainer)))
                         {
-                            oldContainer = (String)parentDNValues[0];
-                        }
-                        else
-                        {
-                            String msg = String.Format("Unable to retrieve the distinguished name for {0}.",
-                                parent.Path);
-                            throw new ConnectorException(msg);
+                            String newContainerLdapPath = ActiveDirectoryUtils.GetLDAPPath(
+                                config.LDAPHostName, newContainer);
+                            DirectoryEntry newContainerDe = new DirectoryEntry(newContainerLdapPath,
+                                config.DirectoryAdminName, config.DirectoryAdminPassword);
+                            directoryEntry.MoveTo(newContainerDe);
                         }
                     }
-
-                    String newContainer = ConnectorAttributeUtil.GetStringValue(containerAttribute);
-
-                    if (newContainer != null)
+                    catch (Exception e)
                     {
-                        try
-                        {
-                            if (!NormalizeLdapString(oldContainer).Equals(
-                                NormalizeLdapString(newContainer)))
-                            {
-                                DirectoryEntry newContainerDe = new DirectoryEntry(newContainer,
-                                    config.DirectoryAdminName, config.DirectoryAdminPassword);
-                                directoryEntry.MoveTo(newContainerDe);
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            throw e;
-                        }
+                        throw e;
                     }
                 }
             }

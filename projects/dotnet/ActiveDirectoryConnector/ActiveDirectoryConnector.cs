@@ -228,7 +228,12 @@ namespace Org.IdentityConnectors.ActiveDirectory
             if (!oclass.Equals(ObjectClass.ACCOUNT))
             {
                 // uid will be the dn for non account objects
-                return new Uid(nameAttribute.GetNameValue());
+                String dnUid = nameAttribute.GetNameValue();
+                if((dnUid != null) && (dnUid.Length > 0))
+                {
+                    dnUid = ActiveDirectoryUtils.NormalizeLdapString(dnUid);
+                }
+                return new Uid(dnUid);
             }
             return uid;
         }
@@ -827,7 +832,11 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             if(!ObjectClass.ACCOUNT.Equals(oclass)) {
                 // other objects use dn as guid for idm backward compatibility
-                updatedUid = new Uid((string)updateEntry.Properties["distinguishedName"][0]);
+                String dnUid = (string)updateEntry.Properties["distinguishedName"][0];
+                if ((dnUid != null) && (dnUid.Length > 0))
+                {
+                    updatedUid = new Uid(ActiveDirectoryUtils.NormalizeLdapString(dnUid));
+                }
             }
             return updatedUid;
         }

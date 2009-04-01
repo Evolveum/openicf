@@ -1092,38 +1092,39 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
 
-
-        [Ignore]
         [Test]
         public void TestContainerChange_account()
         {
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
             connector.Init(GetConfiguration());
 
-            Uid createGroupUid = null;
+            Uid createOuUid = null;
             Uid createUserUid = null;
 
             try {
                 // create container for this test
-                ICollection<ConnectorAttribute> groupAttributes = GetNormalAttributes_Group();
-                createGroupUid = CreateAndVerifyObject(connector,
-                    ActiveDirectoryConnector.groupObjectClass, groupAttributes);
-                ICollection<ConnectorObject> groupResults = TestHelpers.SearchToList(
-                    connector, ActiveDirectoryConnector.groupObjectClass, FilterBuilder.EqualTo(createGroupUid));
-                Assert.AreEqual(1, groupResults.Count);
-                Assert.AreEqual(createGroupUid, groupResults.ElementAt(0).Uid);
-                ConnectorAttribute groupDnAttr = 
-                    groupResults.ElementAt(0).GetAttributeByName("distinguishedName");
-                Assert.IsNotNull(groupDnAttr);
-                String groupPath = ConnectorAttributeUtil.GetStringValue(groupDnAttr);
+                ICollection<ConnectorAttribute> ouAttributes = GetNormalAttributes_OrganizationalUnit();
+                createOuUid = CreateAndVerifyObject(connector,
+                    ActiveDirectoryConnector.ouObjectClass, ouAttributes);
+                ICollection<ConnectorObject> ouResults = TestHelpers.SearchToList(
+                    connector, ActiveDirectoryConnector.ouObjectClass, FilterBuilder.EqualTo(createOuUid));
+                Assert.AreEqual(1, ouResults.Count);
+                Assert.AreEqual(createOuUid, ouResults.ElementAt(0).Uid);
+
+                // as a reminder, the uid is the dn for non account objects (idm backward compatiblity)
+                String ouPath = createOuUid.GetUidValue();
 
                 // create user
+                ICollection<ConnectorAttribute> userAttributes = GetNormalAttributes_Account();
                 createUserUid = CreateAndVerifyObject(connector,
-                    ObjectClass.ACCOUNT, GetNormalAttributes_Account());
+                    ObjectClass.ACCOUNT, userAttributes);
 
                 //now change user container to the newly created one
+                Name createdName = ConnectorAttributeUtil.GetNameFromAttributes(userAttributes);
+                String newName = ActiveDirectoryUtils.GetRelativeName(createdName);
+                newName += ", " + ouPath;
                 ICollection<ConnectorAttribute> updateAttrs = new HashSet<ConnectorAttribute>();
-                updateAttrs.Add(ConnectorAttributeBuilder.Build("ad_container", groupPath));
+                updateAttrs.Add(new Name(newName));
                 updateAttrs.Add(createUserUid);
 
                 connector.Update(UpdateType.REPLACE, ObjectClass.ACCOUNT, updateAttrs, null);
@@ -1135,7 +1136,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 ConnectorAttribute foundContainerAttr = results.ElementAt(0).GetAttributeByName("ad_container");
                 Assert.IsNotNull(foundContainerAttr);
 
-                String lhs = ActiveDirectoryUtils.NormalizeLdapString(groupPath);
+                String lhs = ActiveDirectoryUtils.NormalizeLdapString(ouPath);
                 String rhs = ActiveDirectoryUtils.NormalizeLdapString(ConnectorAttributeUtil.GetStringValue(foundContainerAttr));
                 Assert.AreEqual(lhs, rhs);
             } 
@@ -1148,31 +1149,86 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         createUserUid, false, true);
                 }
 
-                if (createGroupUid != null)
+                if (createOuUid != null)
                 {
                     //remove the one we created
-                    DeleteAndVerifyObject(connector, ActiveDirectoryConnector.groupObjectClass,
-                        createGroupUid, false, true);
+                    DeleteAndVerifyObject(connector, ActiveDirectoryConnector.ouObjectClass,
+                        createOuUid, false, true);
                 }
             }
         }
 
-        [Ignore]
         [Test]
         public void TestContainerChange_group()
         {
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
             connector.Init(GetConfiguration());
 
-            // create user
-            Uid createUid = CreateAndVerifyObject(connector,
-                ObjectClass.ACCOUNT, GetNormalAttributes_Account());
+            Uid createOuUid = null;
+            Uid createGroupUid = null;
+            Uid updateGroupUid = null;
 
-            // create container for this test
+            try {
+                // create container for this test
+                ICollection<ConnectorAttribute> ouAttributes = GetNormalAttributes_OrganizationalUnit();
+                createOuUid = CreateAndVerifyObject(connector,
+                    ActiveDirectoryConnector.ouObjectClass, ouAttributes);
+                ICollection<ConnectorObject> ouResults = TestHelpers.SearchToList(
+                    connector, ActiveDirectoryConnector.ouObjectClass, FilterBuilder.EqualTo(createOuUid));
+                Assert.AreEqual(1, ouResults.Count);
+                Assert.AreEqual(createOuUid, ouResults.ElementAt(0).Uid);
 
-            //now change user container to the newly created one
+                // as a reminder, the uid is the dn for non account objects (idm backward compatiblity)
+                String ouPath = createOuUid.GetUidValue();
 
-            throw new NotImplementedException();
+                // create group
+                ICollection<ConnectorAttribute> groupAttributes = GetNormalAttributes_Group();
+                createGroupUid = CreateAndVerifyObject(connector,
+                    ActiveDirectoryConnector.groupObjectClass, groupAttributes);
+
+                //now change group's container to the newly created one
+                Name createdName = ConnectorAttributeUtil.GetNameFromAttributes(groupAttributes);
+                String newName = ActiveDirectoryUtils.GetRelativeName(createdName);
+                newName += ", " + ouPath;
+                ICollection<ConnectorAttribute> updateAttrs = new HashSet<ConnectorAttribute>();
+                updateAttrs.Add(new Name(newName));
+                updateAttrs.Add(createGroupUid);
+
+                updateGroupUid = connector.Update(UpdateType.REPLACE, 
+                    ActiveDirectoryConnector.groupObjectClass, updateAttrs, null);
+
+                ICollection<ConnectorObject> results = TestHelpers.SearchToList(
+                    connector, ActiveDirectoryConnector.groupObjectClass, FilterBuilder.EqualTo(updateGroupUid));
+                Assert.AreEqual(1, results.Count);
+                Assert.AreEqual(updateGroupUid, results.ElementAt(0).Uid);
+                ConnectorAttribute foundContainerAttr = results.ElementAt(0).GetAttributeByName("ad_container");
+                Assert.IsNotNull(foundContainerAttr);
+
+                String lhs = ActiveDirectoryUtils.NormalizeLdapString(ouPath);
+                String rhs = ActiveDirectoryUtils.NormalizeLdapString(ConnectorAttributeUtil.GetStringValue(foundContainerAttr));
+                Assert.AreEqual(lhs, rhs);
+            } 
+            finally 
+            {
+                if(updateGroupUid != null)
+                {
+                    //remove the one. if we updated, this is the id
+                    DeleteAndVerifyObject(connector, ActiveDirectoryConnector.groupObjectClass,
+                        updateGroupUid, false, true);
+                } else if (createGroupUid != null)
+                {
+                    //remove the one.  if we didn't update, this is the id
+                    DeleteAndVerifyObject(connector, ActiveDirectoryConnector.groupObjectClass,
+                        createGroupUid, false, true);
+                }
+
+                if (createOuUid != null)
+                {
+                    //remove the one we created
+                    DeleteAndVerifyObject(connector, ActiveDirectoryConnector.ouObjectClass,
+                        createOuUid, false, true);
+                }
+            }
         }
 
         [Ignore]
