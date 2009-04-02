@@ -367,7 +367,7 @@ class CommandLineUtil {
         Map<String, Attribute> attributes = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
         String name = ((Name)attributes.get(Name.NAME)).getNameValue();
         if (objectClass.equals(ObjectClass.ACCOUNT)) {
-            Attribute groups = attributes.remove(PredefinedAttributes.GROUPS_NAME);
+            Attribute groups = attributes.remove(ATTR_CL_GROUPS);
             
             if (userExists(name))
                 throw new AlreadyExistsException();
@@ -788,31 +788,60 @@ class CommandLineUtil {
             }
         }
         
-        if (attributesToGet.contains(ATTR_CL_CATALOG_ALIAS) ||
-                attributesToGet.contains(ATTR_CL_USER_CATALOG) ||
-                attributesToGet.contains(ATTR_CL_MASTER_CATALOG)) {
-            getCatalogAttributes(racfName, attributesFromCommandLine);
-        }
-
-        // Default group name must be a stringified Uid
+        // Remap ACCOUNT attributes as needed
         //
-        if (attributesFromCommandLine.containsKey(LONG_DEFAULT_GROUP_NAME)) {
-            Object value = attributesFromCommandLine.get(LONG_DEFAULT_GROUP_NAME);
-            attributesFromCommandLine.put(LONG_DEFAULT_GROUP_NAME, _connector.createUidFromName(ObjectClass.GROUP, (String)value).getUidValue());
-        }
-        
-        // Group members must be Uids
-        //
-        if (attributesFromCommandLine.containsKey(ATTR_CL_MEMBERS)) {
-            List<Object> members = (List<Object>)attributesFromCommandLine.get(ATTR_CL_MEMBERS);
-            List<String> membersAsString = new LinkedList<String>();
-            if (members!=null) {
-                for (Object member : members)
-                    membersAsString.add(_connector.createUidFromName(ObjectClass.ACCOUNT, (String)member).getUidValue());
-                attributesFromCommandLine.put(ATTR_CL_MEMBERS, membersAsString);
+        if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
+            if (attributesToGet.contains(ATTR_CL_CATALOG_ALIAS) ||
+                    attributesToGet.contains(ATTR_CL_USER_CATALOG) ||
+                    attributesToGet.contains(ATTR_CL_MASTER_CATALOG)) {
+                getCatalogAttributes(racfName, attributesFromCommandLine);
+            }
+            // Default group name must be a stringified Uid
+            //
+            if (attributesFromCommandLine.containsKey(LONG_DEFAULT_GROUP_NAME)) {
+                Object value = attributesFromCommandLine.get(LONG_DEFAULT_GROUP_NAME);
+                attributesFromCommandLine.put(LONG_DEFAULT_GROUP_NAME, _connector.createUidFromName(ObjectClass.GROUP, (String)value).getUidValue());
+            }
+            // Groups must be Uids (and we rename form Command Line name to PredefinedAttribute)
+            //
+            if (attributesFromCommandLine.containsKey(ATTR_CL_GROUPS)) {
+                List<Object> members = (List<Object>)attributesFromCommandLine.remove(ATTR_CL_GROUPS);
+                List<String> membersAsString = new LinkedList<String>();
+                if (members!=null) {
+                    for (Object member : members)
+                        membersAsString.add(_connector.createUidFromName(ObjectClass.GROUP, (String)member).getUidValue());
+                    attributesFromCommandLine.put(PredefinedAttributes.GROUPS_NAME, membersAsString);
+                }
             }
         }
 
+        // Remap GROUP attributes as needed
+        //
+        if (objectClass.is(ObjectClass.GROUP_NAME)) {
+            // Owner must be a stringified Uid
+            //
+            if (attributesFromCommandLine.containsKey(ATTR_CL_OWNER)) {
+                Object value = attributesFromCommandLine.get(ATTR_CL_OWNER);
+                attributesFromCommandLine.put(ATTR_CL_OWNER, _connector.createUidFromName(ObjectClass.GROUP, (String)value).getUidValue());
+            }
+            // Superior group must be a stringified Uid
+            //
+            if (attributesFromCommandLine.containsKey(ATTR_CL_SUPGROUP)) {
+                Object value = attributesFromCommandLine.get(ATTR_CL_SUPGROUP);
+                attributesFromCommandLine.put(ATTR_CL_SUPGROUP, _connector.createUidFromName(ObjectClass.GROUP, (String)value).getUidValue());
+            }
+            // Group members must be Uids
+            //
+            if (attributesFromCommandLine.containsKey(ATTR_CL_MEMBERS)) {
+                List<Object> members = (List<Object>)attributesFromCommandLine.get(ATTR_CL_MEMBERS);
+                List<String> membersAsString = new LinkedList<String>();
+                if (members!=null) {
+                    for (Object member : members)
+                        membersAsString.add(_connector.createUidFromName(ObjectClass.ACCOUNT, (String)member).getUidValue());
+                    attributesFromCommandLine.put(ATTR_CL_MEMBERS, membersAsString);
+                }
+            }
+        }
         return attributesFromCommandLine;
     }
     

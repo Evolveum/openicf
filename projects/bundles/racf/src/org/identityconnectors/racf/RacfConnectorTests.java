@@ -256,7 +256,7 @@ public class RacfConnectorTests {
             OperationOptions options = new OperationOptions(optionsMap);
             TestHelpers.search(connector,ObjectClass.GROUP, new EqualsFilter(AttributeBuilder.build(Name.NAME, "ADA612")), handler, options);
             for (ConnectorObject group : handler) {
-                System.out.println(group);
+                displayConnectorObject(group);
                 if (new Uid("racfid=ADA612,profileType=group,"+SUFFIX).equals(group.getUid()))
                     found = true;
                 count++;
@@ -273,7 +273,7 @@ public class RacfConnectorTests {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
         try {
-            displayUser(getUser("IDM01", connector));
+            displayConnectorObject(getUser("IDM01", connector));
 //            displayUser(getUser("CICSUSER", connector));
             // Delete the user
             deleteUser(TEST_USER_UID, connector);
@@ -291,10 +291,10 @@ public class RacfConnectorTests {
             ConnectorObject changedUser = getUser(TEST_USER, connector);
             //Attribute racfInstallationData = changedUser.getAttributeByName("racfinstallationdata");
             Attribute racfInstallationData = changedUser.getAttributeByName(getInstallationDataAttributeName());
-            displayUser(changedUser);
+            displayConnectorObject(changedUser);
             Assert.assertTrue(AttributeUtil.getStringValue(racfInstallationData).trim().equalsIgnoreCase("modified data"));
-            displayUser(getUser("IDM01", connector));
-            displayUser(getUser("IDM01", connector));
+            displayConnectorObject(getUser("IDM01", connector));
+            displayConnectorObject(getUser("IDM01", connector));
         } finally {
             connector.dispose();
         }
@@ -450,7 +450,7 @@ public class RacfConnectorTests {
         return tsoParser.toString();
     }
 
-    private void displayUser(ConnectorObject user) {
+    private void displayConnectorObject(ConnectorObject user) {
         Set<Attribute> attributes = user.getAttributes();
         for (Attribute attribute : attributes) {
             System.out.println(attribute.getName());
@@ -545,10 +545,8 @@ public class RacfConnectorTests {
         }
     }
 
-    @Test@Ignore
+    @Test//@Ignore
     public void testGroups() throws Exception {
-        if (true)
-            return; // Groups are not all the way there yet
         
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);

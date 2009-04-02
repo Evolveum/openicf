@@ -324,21 +324,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                 String name = entry.getKey();
                 Object value = entry.getValue();
                 if (includeInAttributes(objectClass, name, attributesToGet)) {
-                    // Because naming has to follow <segment>.<attribute> for
-                    // command-line attributes, we need to look for predefined
-                    // attributes, and rename them.
-                    //
-                    if (name.equals(ATTR_CL_GROUPS)) {
-                        List<String> newValue = new LinkedList<String>();
-                        for (Object singleValue : (List<Object>)value) {
-                            // Convert from plain RACF group name, to UID form expected
-                            // by the code.
-                            //
-                            newValue.add(createUidFromName(ObjectClass.GROUP, (String)singleValue).getUidValue());
-                        }
-                        value = newValue;
-                        name = PredefinedAttributes.GROUPS_NAME;
-                    }
                     if (value instanceof Collection)
                         builder.addAttribute(name, (Collection<? extends Object>)value);
                     else
@@ -581,8 +566,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
 
         // Operational Attributes
         //
+        attributes.add(buildMultivaluedAttribute(PredefinedAttributes.GROUPS_NAME,  String.class, false));
         attributes.add(OperationalAttributeInfos.PASSWORD);
-        attributes.add(PredefinedAttributeInfos.GROUPS);
         attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
         attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
 
