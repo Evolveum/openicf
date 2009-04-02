@@ -61,8 +61,8 @@
             DestinationFolder="$(OutputPath)"
         />        
         <ItemGroup>        
-            <ZipFiles Include="$(OutputPath)/*.*" Exclude="*.zip" />
-            <ZipFiles Include="$(OutputPath)/??-??/*.*" Exclude="*.zip" />
+            <ZipFiles Include="$(OutputPath)\*.*" Exclude="*.zip" />
+            <ZipFiles Include="$(OutputPath)\??-??\*.*" Exclude="*.zip" />
         </ItemGroup>
         <MakeDir Directories="$(CommonBuildDir)" Condition="!Exists('$(CommonBuildDir)')" />
          <Zip Files="@(ZipFiles)"
