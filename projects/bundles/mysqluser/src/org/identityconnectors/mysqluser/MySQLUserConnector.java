@@ -394,7 +394,6 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      * @see org.identityconnectors.framework.spi.operations.TestOp#test()
      */
     public void test() {
-        config.validate();
         conn.test();
         if( !findUser(config.getUsermodel())) {
             throw new IllegalArgumentException(config.getMessage(MSG_USER_MODEL_NOT_FOUND, config.getUsermodel()));
@@ -493,6 +492,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             values.add(new SQLParam(password));
             c1 = conn.prepareStatement(SQL_CREATE_TEMPLATE, values);
             c1.execute();
+            log.ok("User {0} created", name);
         } catch (SQLException e) {
             if(findUser(name)) {
                 log.error(e, "Already Exists user {0}", name);

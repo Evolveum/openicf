@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import java.util.Hashtable;
 
 import org.identityconnectors.common.StringUtil;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.DatabaseConnection;
 import org.identityconnectors.dbcommon.JNDIUtil;
@@ -44,6 +45,11 @@ import org.identityconnectors.framework.spi.Configuration;
  * @since 1.0
  */
 public class MySQLUserConnection extends DatabaseConnection {
+
+    /**
+     * Setup logging for the {@link MySQLUserConnector}.
+     */
+    private Log log = Log.getLog(MySQLUserConnection.class);    
 
     /**
      * Use the {@link Configuration} passed in to immediately connect to a database. If the {@link Connection} fails a
@@ -72,12 +78,14 @@ public class MySQLUserConnection extends DatabaseConnection {
         // attempt through auto commit..
         PreparedStatement stmt = null;
         try {
+            log.info("Test connection using {0}", VALIDATE_CONNECTION);
             stmt = getConnection().prepareStatement(VALIDATE_CONNECTION);
             // valid queries will return a result set...
             stmt.execute();
         } catch (Exception ex) {
             // anything, not just SQLException
             // nothing to do, just invalidate the connection
+            log.error("Test connection fail with {0}", ex.getMessage());
             SQLUtil.rollbackQuietly(getConnection());
             throw ConnectorException.wrap(ex);
         } finally {
