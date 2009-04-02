@@ -456,7 +456,10 @@ public class RacfConnectorTests {
             System.out.println(attribute.getName());
             List<Object> values = attribute.getValue();
             for (Object value : values) {
-                System.out.println("    "+value.getClass().getName()+":"+value);
+                if (value==null)
+                    System.out.println("    <null>");
+                else
+                    System.out.println("    "+value.getClass().getName()+":"+value);
             }
         }
     }
