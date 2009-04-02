@@ -828,7 +828,10 @@ class CommandLineUtil {
             //
             if (attributesFromCommandLine.containsKey(ATTR_CL_SUPGROUP)) {
                 Object value = attributesFromCommandLine.get(ATTR_CL_SUPGROUP);
-                attributesFromCommandLine.put(ATTR_CL_SUPGROUP, _connector.createUidFromName(ObjectClass.GROUP, (String)value).getUidValue());
+                if ("NONE".equals(value))
+                    attributesFromCommandLine.put(ATTR_CL_SUPGROUP, null);
+                else
+                    attributesFromCommandLine.put(ATTR_CL_SUPGROUP, _connector.createUidFromName(ObjectClass.GROUP, (String)value).getUidValue());
             }
             // Group members must be Uids
             //
