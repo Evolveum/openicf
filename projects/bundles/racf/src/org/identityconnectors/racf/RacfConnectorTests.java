@@ -66,6 +66,8 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import static org.identityconnectors.racf.RacfConstants.*;
+
 public class RacfConnectorTests {
     // Connector Configuration information
     //
@@ -90,6 +92,7 @@ public class RacfConnectorTests {
     //private static final String  READY               = "\\sREADY\\s{74}";
     //private static final String  CONTINUE            = "\\s\\*\\*\\*\\s{76}";
     
+    private static final String GROUP_RACF_PARSER = "org/identityconnectors/racf/GroupRacfSegmentParser.xml";
     private static final String RACF_PARSER = "org/identityconnectors/racf/RacfSegmentParser.xml";
     private static final String CICS_PARSER = "org/identityconnectors/racf/CicsSegmentParser.xml";
     private static final String OMVS_PARSER = "org/identityconnectors/racf/OmvsSegmentParser.xml";
@@ -147,6 +150,68 @@ public class RacfConnectorTests {
     }
 
     @Test//@Ignore
+    public void testListAllGroups() throws Exception {
+        RacfConfiguration config = createConfiguration();
+        RacfConnector connector = createConnector(config);
+        try {
+            TestHandler handler = new TestHandler();
+            TestHelpers.search(connector,ObjectClass.GROUP, null, handler, null);
+            int count = 0;
+            for (ConnectorObject group : handler) {
+                count++;
+                System.out.println("Read Group:"+group.getUid().getValue());
+            }
+            System.out.println("saw "+count);
+        } finally {
+            connector.dispose();
+        }
+    }
+
+    @Test//@Ignore
+    public void testListAllUsersNameOnly() throws Exception {
+        RacfConfiguration config = createConfiguration();
+        RacfConnector connector = createConnector(config);
+        try {
+            TestHandler handler = new TestHandler();
+            Map map = new HashMap();
+            String[] attributesToGet = { Name.NAME };
+            map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, attributesToGet);
+            OperationOptions options = new OperationOptions(map);
+            TestHelpers.search(connector,ObjectClass.ACCOUNT, null, handler, options);
+            int count = 0;
+            for (ConnectorObject user : handler) {
+                count++;
+                System.out.println("Read User:"+user.getUid().getValue());
+            }
+            System.out.println("saw "+count);
+        } finally {
+            connector.dispose();
+        }
+    }
+
+    @Test//@Ignore
+    public void testListAllGroupsNameOnly() throws Exception {
+        RacfConfiguration config = createConfiguration();
+        RacfConnector connector = createConnector(config);
+        try {
+            TestHandler handler = new TestHandler();
+            Map map = new HashMap();
+            String[] attributesToGet = { Name.NAME };
+            map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, attributesToGet);
+            OperationOptions options = new OperationOptions(map);
+            TestHelpers.search(connector,ObjectClass.GROUP, null, handler, options);
+            int count = 0;
+            for (ConnectorObject group : handler) {
+                count++;
+                System.out.println("Read Group:"+group.getUid().getValue());
+            }
+            System.out.println("saw "+count);
+        } finally {
+            connector.dispose();
+        }
+    }
+
+    @Test//@Ignore
     public void testGetSpecifiedUser() throws Exception {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
@@ -168,6 +233,31 @@ public class RacfConnectorTests {
             for (ConnectorObject user : handler) {
                 System.out.println(user);
                 if (TEST_USER_UID.equals(user.getUid()))
+                    found = true;
+                count++;
+            }
+            Assert.assertTrue(found);
+            Assert.assertTrue(count==1);
+        } finally {
+            connector.dispose();
+        }
+    }
+    
+    @Test//@Ignore
+    public void testGetSpecifiedGroup() throws Exception {
+        RacfConfiguration config = createConfiguration();
+        RacfConnector connector = createConnector(config);
+        try {
+            boolean found = false;
+            int count = 0;
+            TestHandler handler = new TestHandler();
+            Map<String, Object> optionsMap = new HashMap<String, Object>();
+            optionsMap.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] {Name.NAME, ATTR_CL_MEMBERS, ATTR_CL_SUPGROUP, ATTR_CL_OWNER, ATTR_CL_DATA });
+            OperationOptions options = new OperationOptions(optionsMap);
+            TestHelpers.search(connector,ObjectClass.GROUP, new EqualsFilter(AttributeBuilder.build(Name.NAME, "ADA612")), handler, options);
+            for (ConnectorObject group : handler) {
+                System.out.println(group);
+                if (new Uid("racfid=ADA612,profileType=group,"+SUFFIX).equals(group.getUid()))
                     found = true;
                 count++;
             }
@@ -262,6 +352,57 @@ public class RacfConnectorTests {
             String tsoParser = loadParserFromFile(TSO_PARSER);
             MapTransform transform = (MapTransform)Transform.newTransform(tsoParser);
             Map<String, Object> results = (Map<String, Object>)transform.transform(tsoSegment);
+            for (Map.Entry<String, Object> entry : results.entrySet()) {
+                System.out.println(entry.getKey()+"="+entry.getValue());
+            }
+        } catch (IOException e) {
+            Assert.fail(e.toString());
+        } catch (Exception e) {
+            Assert.fail(e.toString());
+        }
+    }
+    
+    @Test
+    public void testGroupRacfParser() {
+        String racfSegment =
+            makeLine(" INFORMATION FOR GROUP DFPADMN", 80) +
+            makeLine("     SUPERIOR GROUP=SYSADMN      OWNER=SYSADMN   CREATED=06.123 ", 80) +
+            makeLine("     NO INSTALLATION DATA", 80) +
+            makeLine("     NO MODEL DATA SET", 80) +
+            makeLine("     TERMUACC", 80) +
+            makeLine("     SUBGROUP(S)= DFPGRP1, DFPGRP2", 80) +
+            makeLine("     USER(S)=      ACCESS=      ACCESS COUNT=     UNIVERSAL ACCESS=", 80) +
+            makeLine("       IBMUSER         JOIN          000000              ALTER", 80) +
+            makeLine("          CONNECT   ATTRIBUTES=NONE", 80) +
+            makeLine("          REVOKE DATE=NONE                 RESUME DATE=NONE", 80) +
+            makeLine("       DSMITH          JOIN          000002              READ", 80) +
+            makeLine("          CONNECT    ATTRIBUTES=NONE", 80) +
+            makeLine("          REVOKE DATE=NONE                  RESUME DATE=NONE", 80) +
+            makeLine("       HOTROD          CONNECT       000004              READ", 80) +
+            makeLine("          CONNECT    ATTRIBUTES=ADSP SPECIAL OPERATIONS", 80) +
+            makeLine("          REVOKE DATE=NONE                  RESUME DATE=NONE", 80) +
+            makeLine("       ESHAW           USE           000000              READ", 80) +
+            makeLine("          CONNECT    ATTRIBUTES=NONE", 80) +
+            makeLine("          REVOKE DATE=NONE                  RESUME DATE=NONE", 80) +
+            makeLine("       PROJECTB        USE           000000              READ", 80) +
+            makeLine("          CONNECT    ATTRIBUTES=NONE", 80) +
+            makeLine("          REVOKE DATE=NONE                  RESUME DATE=NONE", 80) +
+            makeLine("       ADM1            JOIN          000000              READ", 80) +
+            makeLine("          CONNECT    ATTRIBUTES=OPERATIONS", 80) +
+            makeLine("          REVOKE DATE=NONE                  RESUME DATE=NONE", 80) +
+            makeLine("       AEHALL          USE           000000              READ", 80) +
+            makeLine("          CONNECT    ATTRIBUTES=REVOKED", 80) +
+            makeLine("          REVOKE DATE=NONE                  RESUME DATE=NONE", 80) +
+            makeLine("  DFP INFORMATION", 80) +
+            makeLine("     MGMTCLAS= DFP2MGMT", 80) +
+            makeLine("     STORCLAS= DFP2STOR", 80) +
+            makeLine("     DATACLAS= DFP2DATA", 80) +
+            makeLine("     DATAAPPL= DFP2APPL", 80);
+            
+        try {
+            String tsoParser = loadParserFromFile(GROUP_RACF_PARSER);
+            MapTransform transform = (MapTransform)Transform.newTransform(tsoParser);
+            Map<String, Object> results = (Map<String, Object>)transform.transform(racfSegment);
             for (Map.Entry<String, Object> entry : results.entrySet()) {
                 System.out.println(entry.getKey()+"="+entry.getValue());
             }
@@ -612,8 +753,8 @@ public class RacfConnectorTests {
         config.setUserName(SYSTEM_USER );
         config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
         config.setScriptingLanguage("GROOVY");
-        config.setSegmentNames(new String[] { "RACF", "TSO", "NETVIEW", "CICS", "OMVS" });
-        config.setSegmentParsers(new String[] { loadParserFromFile(RACF_PARSER), loadParserFromFile(TSO_PARSER), loadParserFromFile(NETVIEW_PARSER), loadParserFromFile(CICS_PARSER), loadParserFromFile(OMVS_PARSER),  });
+        config.setSegmentNames(new String[] { "ACCOUNT.RACF", "ACCOUNT.TSO", "ACCOUNT.NETVIEW", "ACCOUNT.CICS", "ACCOUNT.OMVS", "GROUP.RACF" });
+        config.setSegmentParsers(new String[] { loadParserFromFile(RACF_PARSER), loadParserFromFile(TSO_PARSER), loadParserFromFile(NETVIEW_PARSER), loadParserFromFile(CICS_PARSER), loadParserFromFile(OMVS_PARSER),loadParserFromFile(GROUP_RACF_PARSER),  });
         config.setCatalogParser(loadParserFromFile(CATALOG_PARSER));
         //config.setConnectionClassName("org.identityconnectors.rw3270.wrq.WrqConnection");
         config.setConnectionClassName("org.identityconnectors.rw3270.hod.HodConnection");

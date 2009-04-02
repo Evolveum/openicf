@@ -22,14 +22,11 @@
  */
 package org.identityconnectors.racf;
 
-import static org.identityconnectors.racf.RacfConstants.ATTR_CL_CATALOG_ALIAS;
-import static org.identityconnectors.racf.RacfConstants.ATTR_CL_MASTER_CATALOG;
-import static org.identityconnectors.racf.RacfConstants.ATTR_CL_USER_CATALOG;
+import static org.identityconnectors.racf.RacfConstants.*;
 
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +38,6 @@ import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.script.ScriptExecutor;
 import org.identityconnectors.common.script.ScriptExecutorFactory;
@@ -691,7 +687,18 @@ class CommandLineUtil {
 
     //TODO: this version does a single LISTUSER command for all segments
     //
-    public Map<String, Object> getAttributesFromCommandLine(String name, boolean ldapAvailable, Set<String> attributesToGet) {
+    public Map<String, Object> getAttributesFromCommandLine(ObjectClass objectClass, String name, boolean ldapAvailable, Set<String> attributesToGet) {
+        String objectClassPrefix = null;
+        String listCommand = null;
+        if (objectClass.is(ObjectClass.GROUP_NAME)) {
+            objectClassPrefix = "GROUP.";
+            listCommand = "LISTGRP";
+        } else if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
+            objectClassPrefix = "ACCOUNT.";
+            listCommand = "LISTUSER";
+        } else {
+            throw new ConnectorException("Unsupported Object Class");
+        }
         // Determine the set of segment names, if any
         // We use a TreeSet to force an ordering
         //
@@ -715,7 +722,7 @@ class CommandLineUtil {
                     String prefix = attributeToGet.substring(0, index);
                     segmentsNeeded.add(prefix);
                     
-                    if (!_segmentParsers.containsKey(prefix)) {
+                    if (!_segmentParsers.containsKey(objectClassPrefix+prefix)) {
                         throw new ConnectorException("Bad Attribute name (no such segment):"+attributeToGet);
                     }
                 }
@@ -732,7 +739,7 @@ class CommandLineUtil {
             try {
                 boolean racfNeeded = segmentsNeeded.remove(RACF);
                 StringBuffer buffer = new StringBuffer();
-                buffer.append("LISTUSER "+racfName);
+                buffer.append(listCommand+" "+racfName);
                 if (!racfNeeded)
                     buffer.append(" NORACF");
                 for (String segment : segmentsNeeded)
@@ -755,7 +762,7 @@ class CommandLineUtil {
                     //
                     int offset = 0;
                     if (racfNeeded) {
-                        MapTransform transform = _segmentParsers.get("RACF");
+                        MapTransform transform = _segmentParsers.get(objectClassPrefix+"RACF");
                         attributesFromCommandLine.putAll((Map<String, Object>)transform.transform(segmentsMatcher.group(1)));
                         offset = 1;
                     }
@@ -767,7 +774,7 @@ class CommandLineUtil {
                         String noValue = segmentsMatcher.group(2*i+offset+1);
                         String segmentValue = segmentsMatcher.group(2*i+offset+2);
                         if (StringUtil.isBlank(noValue)) {
-                            MapTransform transform = _segmentParsers.get(segment);
+                            MapTransform transform = _segmentParsers.get(objectClassPrefix+segment);
                             attributesFromCommandLine.putAll((Map<String, Object>)transform.transform(segmentValue));
                         }
                         i++;
@@ -793,6 +800,19 @@ class CommandLineUtil {
             Object value = attributesFromCommandLine.get(LONG_DEFAULT_GROUP_NAME);
             attributesFromCommandLine.put(LONG_DEFAULT_GROUP_NAME, _connector.createUidFromName(ObjectClass.GROUP, (String)value).getUidValue());
         }
+        
+        // Group members must be Uids
+        //
+        if (attributesFromCommandLine.containsKey(ATTR_CL_MEMBERS)) {
+            List<Object> members = (List<Object>)attributesFromCommandLine.get(ATTR_CL_MEMBERS);
+            List<String> membersAsString = new LinkedList<String>();
+            if (members!=null) {
+                for (Object member : members)
+                    membersAsString.add(_connector.createUidFromName(ObjectClass.ACCOUNT, (String)member).getUidValue());
+                attributesFromCommandLine.put(ATTR_CL_MEMBERS, membersAsString);
+            }
+        }
+
         return attributesFromCommandLine;
     }
     

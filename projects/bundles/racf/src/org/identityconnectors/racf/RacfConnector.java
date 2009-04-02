@@ -256,15 +256,26 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                 else if (objectClass.is(ObjectClass.GROUP_NAME))
                     attributesToGet = getDefaultAttributes(_groupAttributes);
             }
+            boolean getNameOnly =  (attributesToGet!=null && attributesToGet.size()==1 && Name.NAME.equalsIgnoreCase((String)attributesToGet.toArray()[0]));
             SearchControls subTreeControls = new SearchControls(SearchControls.SUBTREE_SCOPE, 4095, 0, null, true, true);
             for (String name : names) {
-                SearchResult searchResult = null;
-                if (isLdapConnectionAvailable()) {
-                    NamingEnumeration<SearchResult> results = _connection.getDirContext().search(name, "(objectclass=*)", subTreeControls);
-                    searchResult = results.next();
+                // We can special case getting just name
+                //
+                ConnectorObject object = null;
+                if (getNameOnly) {
+                    ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+                    builder.setUid(name);
+                    builder.setName(name);
+                    object = builder.build();
+                } else {
+                    SearchResult searchResult = null;
+                    if (isLdapConnectionAvailable()) {
+                        NamingEnumeration<SearchResult> results = _connection.getDirContext().search(name, "(objectclass=*)", subTreeControls);
+                        searchResult = results.next();
+                    }
+                    //**
+                    object = buildObject(objectClass, searchResult, _clUtil.getAttributesFromCommandLine(objectClass, name, isLdapConnectionAvailable(), attributesToGet), attributesToGet);
                 }
-                //**
-                ConnectorObject object = buildObject(objectClass, searchResult, _clUtil.getAttributesFromCommandLine(name, isLdapConnectionAvailable(), attributesToGet), attributesToGet);
                 handler.handle(object);
             }
         } catch (NamingException e) {
@@ -580,8 +591,18 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         _accountAttributes = AttributeInfoUtil.toMap(attributes);
         schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
         
-        //TODO: add groups (need group parser)
-        //  Groups can have multiple segments, although we do not yet support that
+        //----------------------------------------------------------------------
+
+        // RACF Groups
+        //
+        Set<AttributeInfo> groupAttributes = new HashSet<AttributeInfo>();
+        attributes.add(AttributeInfoBuilder.build(ATTR_CL_SUPGROUP,                 String.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_CL_OWNER,                    String.class));
+        attributes.add(AttributeInfoBuilder.build(ATTR_CL_DATA,                     String.class));
+        attributes.add(buildMultivaluedAttribute(ATTR_CL_MEMBERS,                   String.class, false));
+
+        _groupAttributes = AttributeInfoUtil.toMap(groupAttributes);
+        schemaBuilder.defineObjectClass(ObjectClass.GROUP_NAME, attributes);
 
         return schemaBuilder.build();
     }

@@ -210,6 +210,8 @@ public interface RacfConstants {
     public static final String ATTR_CL_NETVIEW_DOMAINS          = "NETVIEW.DOMAINS";
     public static final String ATTR_CL_NETVIEW_CTL              = "NETVIEW.CTL";
     public static final String ATTR_CL_NETVIEW_CONSNAME         = "NETVIEW.CONSNAME";
-
     
+
+    public static final String ATTR_CL_MEMBERS                  = "RACF.MEMBERS";
+    public static final String ATTR_CL_SUPGROUP                 = "RACF.SUPGROUP";
 }
