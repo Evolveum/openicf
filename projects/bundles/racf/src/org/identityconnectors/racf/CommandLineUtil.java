@@ -720,9 +720,6 @@ class CommandLineUtil {
                 }
             }
         }
-        //TODO: somehow, adding the segments to the command line breaks the following
-        //  LISTUSER. I don't yet know why -- see all the "if (false)" markers
-        
         // If we are asking for segment information, ensure that command-line login
         // information was specified
         //
@@ -732,24 +729,23 @@ class CommandLineUtil {
         Map<String, Object> attributesFromCommandLine = new HashMap<String, Object>();
         if (segmentsNeeded.size()>0 || ((RacfConfiguration)_connector.getConfiguration()).getUserName()==null) {
             try {
+                boolean racfNeeded = segmentsNeeded.remove(RACF);
                 StringBuffer buffer = new StringBuffer();
-                buffer.append("LISTUSER ");
-                buffer.append(racfName);
-                if (!false) for (String segment : segmentsNeeded)
-                    if (!RACF.equals(segment))
-                        buffer.append(" "+segment);
+                buffer.append("LISTUSER "+racfName);
+                if (!racfNeeded)
+                    buffer.append(" NORACF");
+                for (String segment : segmentsNeeded)
+                    buffer.append(" "+segment);
 
                 String output = getCommandOutput(buffer.toString());
                 
                 // Split out the various segments
                 //
                 StringBuffer segmentPatternString = new StringBuffer();
-                if (segmentsNeeded.contains(RACF))
+                if (racfNeeded)
                     segmentPatternString.append("(.+?)");
-                if (!false) for (String segment : segmentsNeeded) {
-                    if (!segment.equals(RACF)) {
-                        segmentPatternString.append("(NO )?"+segment.toUpperCase()+" INFORMATION (.+?)");
-                    }
+                for (String segment : segmentsNeeded) {
+                    segmentPatternString.append("(NO )?"+segment.toUpperCase()+" INFORMATION (.+?)");
                 }
                 Pattern segmentsPattern = Pattern.compile(segmentPatternString.toString()+"$", Pattern.DOTALL);
                 Matcher segmentsMatcher = segmentsPattern.matcher(output);
@@ -757,7 +753,7 @@ class CommandLineUtil {
                     // Deal with RACF first
                     //
                     int offset = 0;
-                    if (segmentsNeeded.contains(RACF)) {
+                    if (racfNeeded) {
                         MapTransform transform = _segmentParsers.get("RACF");
                         attributesFromCommandLine.putAll((Map<String, Object>)transform.transform(segmentsMatcher.group(1)));
                         offset = 1;
@@ -766,19 +762,17 @@ class CommandLineUtil {
                     // attributes received
                     //
                     int i=0;
-                    if (!false) for (String segment : segmentsNeeded) {
-                        if (!segment.equals(RACF)) {
-                            String noValue = segmentsMatcher.group(2*i+offset+1);
-                            String segmentValue = segmentsMatcher.group(2*i+offset+2);
-                            if (StringUtil.isBlank(noValue)) {
-                                MapTransform transform = _segmentParsers.get(segment);
-                                attributesFromCommandLine.putAll((Map<String, Object>)transform.transform(segmentValue));
-                            }
-                            i++;
+                    for (String segment : segmentsNeeded) {
+                        String noValue = segmentsMatcher.group(2*i+offset+1);
+                        String segmentValue = segmentsMatcher.group(2*i+offset+2);
+                        if (StringUtil.isBlank(noValue)) {
+                            MapTransform transform = _segmentParsers.get(segment);
+                            attributesFromCommandLine.putAll((Map<String, Object>)transform.transform(segmentValue));
                         }
+                        i++;
                     }
                 } else {
-                    System.out.println("TODO");
+                    System.out.println("TODO: no match");
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -931,7 +925,7 @@ class CommandLineUtil {
                         state.exp_continue();
                         return;
                     }
-                    Matcher matcher = Pattern.compile(OUTPUT_COMPLETE_PATTERN).matcher(getRW3270Connection().getDisplay());
+
                     // This code will be exported to a script, but I want to get the tests back on-line
                     //
                     boolean commandComplete = getRW3270Connection().getDisplay().trim().endsWith(OUTPUT_COMPLETE);
@@ -945,16 +939,10 @@ class CommandLineUtil {
                         getRW3270Connection().sendEnter();
                         state.exp_continue();
                     } else if (!commandComplete) {
-                        // This situation is a bit complicated. Here's what I think is happening:
-                        //  . the previous command ended with READY on the next-to-last
-                        //    line of the screen, so the last line was given the continue prompt
-                        //  . The matching for the previous command ended with the READY, leaving
-                        //    the continue prompt unconsumed
-                        //  . when the CLEAR was issued as part of the current command, the READY
-                        //    was sent out, and the screen was cleared
-                        //  . the initial Enter was consumed to complete the continue prompt
-                        //  . thus, the current command has not yet seen the enter
-                        // We've lost the READY, so retry
+                        // I think we could wind up here via a race condition
+                        // if we had the "READY\n***" kind of command completion,
+                        // and there was a delay between seeing the READY and the ***.
+                        //
                         //System.out.println("******* command complete lost");
                         getRW3270Connection().sendEnter();
                         state.exp_continue();
