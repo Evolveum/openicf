@@ -252,12 +252,12 @@ public class RacfConnectorTests {
             int count = 0;
             TestHandler handler = new TestHandler();
             Map<String, Object> optionsMap = new HashMap<String, Object>();
-            optionsMap.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] {Name.NAME, ATTR_CL_MEMBERS, ATTR_CL_SUPGROUP, ATTR_CL_OWNER, ATTR_CL_DATA });
+            optionsMap.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] {Name.NAME, ATTR_CL_MEMBERS, ATTR_CL_SUPGROUP, ATTR_CL_OWNER, ATTR_CL_DATA, PredefinedAttributes.GROUPS_NAME });
             OperationOptions options = new OperationOptions(optionsMap);
-            TestHelpers.search(connector,ObjectClass.GROUP, new EqualsFilter(AttributeBuilder.build(Name.NAME, "ADA612")), handler, options);
+            TestHelpers.search(connector,ObjectClass.GROUP, new EqualsFilter(AttributeBuilder.build(Name.NAME, "SYS1")), handler, options);
             for (ConnectorObject group : handler) {
                 displayConnectorObject(group);
-                if (new Uid("racfid=ADA612,profileType=group,"+SUFFIX).equals(group.getUid()))
+                if (new Uid("racfid=SYS1,profileType=group,"+SUFFIX).equals(group.getUid()))
                     found = true;
                 count++;
             }

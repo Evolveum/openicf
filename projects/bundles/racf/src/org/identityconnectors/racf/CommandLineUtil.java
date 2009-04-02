@@ -841,6 +841,17 @@ class CommandLineUtil {
                     attributesFromCommandLine.put(ATTR_CL_MEMBERS, membersAsString);
                 }
             }
+            // Groups must be Uids (and we rename form Command Line name to PredefinedAttribute)
+            //
+            if (attributesFromCommandLine.containsKey(ATTR_CL_GROUPS)) {
+                List<Object> members = (List<Object>)attributesFromCommandLine.remove(ATTR_CL_GROUPS);
+                List<String> membersAsString = new LinkedList<String>();
+                if (members!=null) {
+                    for (Object member : members)
+                        membersAsString.add(_connector.createUidFromName(ObjectClass.GROUP, (String)member).getUidValue());
+                    attributesFromCommandLine.put(PredefinedAttributes.GROUPS_NAME, membersAsString);
+                }
+            }
         }
         return attributesFromCommandLine;
     }

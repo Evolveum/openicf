@@ -585,6 +585,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_OWNER,                    String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_DATA,                     String.class));
         attributes.add(buildMultivaluedAttribute(ATTR_CL_MEMBERS,                   String.class, false));
+        attributes.add(buildMultivaluedAttribute(PredefinedAttributes.GROUPS_NAME,  String.class, false));
 
         _groupAttributes = AttributeInfoUtil.toMap(groupAttributes);
         schemaBuilder.defineObjectClass(ObjectClass.GROUP_NAME, attributes);

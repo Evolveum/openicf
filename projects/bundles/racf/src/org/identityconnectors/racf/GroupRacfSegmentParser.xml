@@ -7,7 +7,13 @@
         NO INSTALLATION DATA
         NO MODEL DATA SET
         TERMUACC
-        SUBGROUP(S)= DFPGRP1, DFPGRP2
+        SUBGROUP(S)= SYSCTLG  VSAMDSET SYSTEM   BHDS     ISP      ISR
+                     IPO1     GIM      ICQ      MVSSMPE  PASSWORD CATALOG
+                     ISF      EMP      FDRABR   CPP      OS3901   SMPE
+                     CPAC     TEST1    CICSREG  CEE      TTY      CAI
+                     CICS410  DSN510   DSN610   IMS610   BH7A     OEGROUP
+                     ADA612   CICSTS13 CICSTS21 IESDIVI  AOPADMIN SYSIBM
+                     DSN710   CICSTS22 UUCPG    IMS810   DSN810   STCGRPS
         USER(S)=      ACCESS=      ACCESS COUNT=     UNIVERSAL ACCESS=
         IBMUSER         JOIN          000000              ALTER
            CONNECT   ATTRIBUTES=NONE
@@ -49,6 +55,13 @@
     <SubstituteTransform pattern='\n\s{20}(.{50})[^\n]+' substitute='$1'/>
     <SubstituteTransform pattern='\n' substitute=''/>
     <SubstituteTransform pattern='^$' substitute='NO-INSTALLATION-DATA'/>
+  </PatternNode>
+  <PatternNode key='RACF.GROUPS' pattern='SUBGROUP\(S\)=([^\n]*\n(\s{18}[^\n]+\n)*)' optional='true' reset='false'>
+     <SubstituteTransform pattern='([,\n])' substitute=' '/>
+     <SubstituteTransform pattern='(\w+)\s+' substitute='$1 '/>
+     <SubstituteTransform pattern='^\s+(\w+)' substitute='$1'/>
+     <SubstituteTransform pattern='(\w+)\s+$' substitute='$1'/>
+     <SplitTransform splitPattern='\s+'/>
   </PatternNode>
   <PatternNode key='RACF.MEMBERS' pattern='USER\(S\)=[^\n]*\n((\s{7}\w+([^\n]+\n){3})*)' optional='true' reset='false'>
      <SubstituteTransform pattern='\s{7}(\w+)(?:[^\n]+\n){3}' substitute='$1 '/>
