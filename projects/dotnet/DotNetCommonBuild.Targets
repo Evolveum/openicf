@@ -67,8 +67,7 @@
         <MakeDir Directories="$(CommonBuildDir)" Condition="!Exists('$(CommonBuildDir)')" />
          <Zip Files="@(ZipFiles)"
            WorkingDirectory="$(OutputPath)" 
-           ZipFileName="$(CommonBuildDir)\$(AssemblyName)-$(Major).$(Minor).$(Build).$(SVN_Revision).zip"
-           ZipLevel="9" /> 
+           ZipFileName="$(CommonBuildDir)\$(AssemblyName)-$(Major).$(Minor).$(Build).$(SVN_Revision).zip" /> 
     </Target>    
     <Target Name="NUnit" DependsOnTargets="Build">
         <!-- Run the tests -->
