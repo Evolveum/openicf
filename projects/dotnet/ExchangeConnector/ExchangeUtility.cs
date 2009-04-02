@@ -225,7 +225,7 @@ using Org.IdentityConnectors.Framework.Spi;
 
             if (attribute != null)
             {
-                value = ConnectorAttributeUtil.GetSingleValue(attribute);
+                value = ConnectorAttributeUtil.GetSingleValue(attribute) ?? string.Empty;
             }
 
             return value;

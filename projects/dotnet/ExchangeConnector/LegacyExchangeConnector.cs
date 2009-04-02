@@ -598,7 +598,10 @@ namespace Org.IdentityConnectors.Exchange
             {
                 foreach (ExchangeConnector.CommandInfo cmdInfo in cmdInfos)
                 {
-                    CollectionUtil.AddAll(attsToRemove, cmdInfo.Parameters);
+                    if (cmdInfo != null)
+                    {
+                        CollectionUtil.AddAll(attsToRemove, cmdInfo.Parameters);
+                    }
                 }
             }
 
