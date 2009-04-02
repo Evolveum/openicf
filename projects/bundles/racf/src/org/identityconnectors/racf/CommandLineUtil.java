@@ -597,8 +597,9 @@ class CommandLineUtil {
             if (!groupExists(name))
                 throw new UnknownUidException();
             CharArrayBuffer buffer = new CharArrayBuffer();
-            buffer.append("ALTUSER ");
+            buffer.append("ALTGROUP ");
             buffer.append(name);
+            buffer.append(mapAttributesToString(attributes));
             Attribute groupMembership = attributes.get(RacfConnector.ACCOUNTS_NAME);
             try {
                 if (groupMembership!=null)
@@ -837,8 +838,7 @@ class CommandLineUtil {
         if (segmentsNeeded.size()>0 || ((RacfConfiguration)_connector.getConfiguration()).getUserName()==null) {
             try {
                 StringBuffer buffer = new StringBuffer();
-                buffer.append("LISTUSER ");
-                buffer.append(racfName);
+                buffer.append("LISTUSER "+racfName);
                 boolean racfNeeded = segmentsNeeded.remove(RACF);
                 if (racfNeeded) {
                     String command = buffer.toString();
