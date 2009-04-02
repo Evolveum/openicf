@@ -690,7 +690,7 @@ class CommandLineUtil {
 
     //TODO: this version does a single LISTUSER command for all segments
     //
-    public Map<String, Object> XXXgetAttributesFromCommandLine(String name, boolean ldapAvailable, Set<String> attributesToGet) {
+    public Map<String, Object> getAttributesFromCommandLine(String name, boolean ldapAvailable, Set<String> attributesToGet) {
         // Determine the set of segment names, if any
         // We use a TreeSet to force an ordering
         //
@@ -701,9 +701,12 @@ class CommandLineUtil {
         if (!ldapAvailable)
             segmentsNeeded.add(RACF);
         
+        String racfName = _connector.extractRacfIdFromLdapId(name);
+        
         if (attributesToGet!=null) {
             for (String attributeToGet : attributesToGet) {
-                //TODO:
+                // Ignore catalog attributes, we will handle them separately
+                //
                 if (attributeToGet.startsWith("*"))
                     continue;
                 int index = attributeToGet.indexOf('.');
@@ -731,7 +734,7 @@ class CommandLineUtil {
             try {
                 StringBuffer buffer = new StringBuffer();
                 buffer.append("LISTUSER ");
-                buffer.append(_connector.extractRacfIdFromLdapId(name));
+                buffer.append(racfName);
                 if (!false) for (String segment : segmentsNeeded)
                     if (!RACF.equals(segment))
                         buffer.append(" "+segment);
@@ -782,6 +785,13 @@ class CommandLineUtil {
                 throw ConnectorException.wrap(e);
             }
         }
+        
+        if (attributesToGet.contains(ATTR_CL_CATALOG_ALIAS) ||
+                attributesToGet.contains(ATTR_CL_USER_CATALOG) ||
+                attributesToGet.contains(ATTR_CL_MASTER_CATALOG)) {
+            getCatalogAttributes(racfName, attributesFromCommandLine);
+        }
+
         // Default group name must be a stringified Uid
         //
         if (attributesFromCommandLine.containsKey(LONG_DEFAULT_GROUP_NAME)) {
@@ -794,7 +804,7 @@ class CommandLineUtil {
 
     //TODO: this version does a separate LISTUSER command for each segment
     //
-    public Map<String, Object> getAttributesFromCommandLine(String name, boolean ldapAvailable, Set<String> attributesToGet) {
+    public Map<String, Object> XXXgetAttributesFromCommandLine(String name, boolean ldapAvailable, Set<String> attributesToGet) {
         // Determine the set of segment names, if any
         // We use a TreeSet to force an ordering
         //
