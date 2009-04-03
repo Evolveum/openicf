@@ -83,7 +83,8 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
 public class RacfConnector implements Connector, CreateOp, PoolableConnector,
 DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
 
-    public static final ObjectClass    RACF_CONNECTION     = new ObjectClass("RacfConnection");
+    public static final String         RACF_CONNECTION_NAME ="RacfConnection";
+    public static final ObjectClass    RACF_CONNECTION     = new ObjectClass(RACF_CONNECTION_NAME);
     public static final String         ACCOUNTS_NAME       = createSpecialName("ACCOUNTS");
     public static final AttributeInfo  ACCOUNTS            = AttributeInfoBuilder.build(ACCOUNTS_NAME,
             String.class, EnumSet.of(Flags.MULTIVALUED, Flags.NOT_RETURNED_BY_DEFAULT));
@@ -103,6 +104,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
      * {@inheritDoc}
      */
     public void dispose() {
+        System.out.println("disposing connector");
         _connection.dispose();
     }
 
@@ -118,6 +120,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
      */
     public void init(Configuration configuration) {
         try {
+            System.out.println("initializing connector");
             _configuration = (RacfConfiguration)configuration;
             _clUtil = new CommandLineUtil(this);
             _ldapUtil = new LdapUtil(this);
@@ -216,18 +219,18 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
      */
     public FilterTranslator<String> createFilterTranslator(ObjectClass oclass, OperationOptions options) {
         if (isLdapConnectionAvailable()) {
-            if (oclass==ObjectClass.ACCOUNT)
+            if (oclass.is(ObjectClass.ACCOUNT_NAME))
                 return new RacfUserFilterTranslator();
-            if (oclass==ObjectClass.GROUP)
+            if (oclass.is(ObjectClass.GROUP_NAME))
                 return new RacfGroupFilterTranslator();
-            if (oclass==RACF_CONNECTION)
+            if (oclass.is(RACF_CONNECTION_NAME))
                 return new RacfConnectFilterTranslator();
             else
                 return null;
         } else {
-            if (oclass==ObjectClass.ACCOUNT)
+            if (oclass.is(ObjectClass.ACCOUNT_NAME))
                 return new RacfCommandLineFilterTranslator();
-            if (oclass==ObjectClass.GROUP)
+            if (oclass.is(ObjectClass.GROUP_NAME))
                 return new RacfCommandLineFilterTranslator();
             else
                 return null;
@@ -837,6 +840,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
      */
     public void checkAlive() {
         _connection.test();
+        if (false && !StringUtil.isBlank(_configuration.getUserName())) {
+            String output = _clUtil.getCommandOutput("TIME");
+            if (!output.contains("IJK"))
+                throw new ConnectorException("TODO: dead");
+        }
     }
 }
 /*

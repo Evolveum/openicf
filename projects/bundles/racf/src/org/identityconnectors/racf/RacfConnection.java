@@ -48,6 +48,7 @@ public class RacfConnection {
         }
         if (_configuration.getUserName()!=null) {
             try {
+                System.out.println("initializing command line");
                 _racfConnection = new RW3270ConnectionFactory(configuration).newConnection();
             } catch (Exception e) {
                 throw ConnectorException.wrap(e);
