@@ -88,17 +88,14 @@ public class RacfConnectorTests {
     private static final int     HOST_PORT           = 389;
     private static final int     HOST_TELNET_PORT    = 23;
     private static final Boolean USE_SSL             = Boolean.FALSE;
-    //private static final int     SHORT_WAIT          = 60000;
-    //private static final String  READY               = "\\sREADY\\s{74}";
-    //private static final String  CONTINUE            = "\\s\\*\\*\\*\\s{76}";
     
-    private static final String GROUP_RACF_PARSER = "org/identityconnectors/racf/GroupRacfSegmentParser.xml";
-    private static final String RACF_PARSER = "org/identityconnectors/racf/RacfSegmentParser.xml";
-    private static final String CICS_PARSER = "org/identityconnectors/racf/CicsSegmentParser.xml";
-    private static final String OMVS_PARSER = "org/identityconnectors/racf/OmvsSegmentParser.xml";
-    private static final String TSO_PARSER  = "org/identityconnectors/racf/TsoSegmentParser.xml";
-    private static final String NETVIEW_PARSER  = "org/identityconnectors/racf/NetviewSegmentParser.xml";
-    private static final String CATALOG_PARSER  = "org/identityconnectors/racf/CatalogParser.xml";
+    private static final String GROUP_RACF_PARSER   = "org/identityconnectors/racf/GroupRacfSegmentParser.xml";
+    private static final String RACF_PARSER         = "org/identityconnectors/racf/RacfSegmentParser.xml";
+    private static final String CICS_PARSER         = "org/identityconnectors/racf/CicsSegmentParser.xml";
+    private static final String OMVS_PARSER         = "org/identityconnectors/racf/OmvsSegmentParser.xml";
+    private static final String TSO_PARSER          = "org/identityconnectors/racf/TsoSegmentParser.xml";
+    private static final String NETVIEW_PARSER      = "org/identityconnectors/racf/NetviewSegmentParser.xml";
+    private static final String CATALOG_PARSER      = "org/identityconnectors/racf/CatalogParser.xml";
 
     public static void main(String[] args) {
         RacfConnectorTests tests = new RacfConnectorTests();
@@ -115,14 +112,16 @@ public class RacfConnectorTests {
         SYSTEM_PASSWORD   = TestHelpers.getProperty("SYSTEM_PASSWORD", null);
         SUFFIX            = TestHelpers.getProperty("SUFFIX", null);
         SYSTEM_USER       = TestHelpers.getProperty("SYSTEM_USER", null);
+        
         SYSTEM_USER_LDAP  = "racfid="+SYSTEM_USER+",profileType=user,"+SUFFIX;
         TEST_USER_UID     = new Uid("racfid="+TEST_USER+",profileType=user,"+SUFFIX);
-        TEST_USER_UID2     = new Uid("racfid="+TEST_USER2+",profileType=user,"+SUFFIX);
-        TEST_GROUP1_UID    = new Uid("racfid="+TEST_GROUP1.toUpperCase()+",profileType=group,"+SUFFIX);
-        TEST_GROUP2_UID    = new Uid("racfid="+TEST_GROUP2.toUpperCase()+",profileType=group,"+SUFFIX);
+        TEST_USER_UID2    = new Uid("racfid="+TEST_USER2+",profileType=user,"+SUFFIX);
+        TEST_GROUP1_UID   = new Uid("racfid="+TEST_GROUP1.toUpperCase()+",profileType=group,"+SUFFIX);
+        TEST_GROUP2_UID   = new Uid("racfid="+TEST_GROUP2.toUpperCase()+",profileType=group,"+SUFFIX);
+        
         Assert.assertNotNull("HOST_NAME must be specified", HOST_NAME);
         Assert.assertNotNull("SYSTEM_PASSWORD must be specified", SYSTEM_PASSWORD);
-        Assert.assertNotNull("SYSTEM_USER_LDAP must be specified", SYSTEM_USER_LDAP);
+        Assert.assertNotNull("SYSTEM_USER must be specified", SYSTEM_USER);
         Assert.assertNotNull("SUFFIX must be specified", SUFFIX);
     }
 
@@ -754,9 +753,14 @@ public class RacfConnectorTests {
         config.setUserName(SYSTEM_USER );
         config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
         config.setScriptingLanguage("GROOVY");
-        config.setSegmentNames(new String[] { "ACCOUNT.RACF", "ACCOUNT.TSO", "ACCOUNT.NETVIEW", "ACCOUNT.CICS", "ACCOUNT.OMVS", "GROUP.RACF" });
-        config.setSegmentParsers(new String[] { loadParserFromFile(RACF_PARSER), loadParserFromFile(TSO_PARSER), loadParserFromFile(NETVIEW_PARSER), loadParserFromFile(CICS_PARSER), loadParserFromFile(OMVS_PARSER),loadParserFromFile(GROUP_RACF_PARSER),  });
-        config.setCatalogParser(loadParserFromFile(CATALOG_PARSER));
+        config.setSegmentNames(new String[] { 
+                "ACCOUNT.RACF",                     "ACCOUNT.TSO",                  "ACCOUNT.NETVIEW",
+                "ACCOUNT.CICS",                     "ACCOUNT.OMVS",                 "ACCOUNT.CATALOG", 
+                "GROUP.RACF" });
+        config.setSegmentParsers(new String[] { 
+                loadParserFromFile(RACF_PARSER),    loadParserFromFile(TSO_PARSER), loadParserFromFile(NETVIEW_PARSER), 
+                loadParserFromFile(CICS_PARSER),    loadParserFromFile(OMVS_PARSER), loadParserFromFile(CATALOG_PARSER), 
+                loadParserFromFile(GROUP_RACF_PARSER) });
         //config.setConnectionClassName("org.identityconnectors.rw3270.wrq.WrqConnection");
         config.setConnectionClassName("org.identityconnectors.rw3270.hod.HodConnection");
         //config.setConnectionClassName("org.identityconnectors.rw3270.freehost3270.FH3270Connection");

@@ -76,6 +76,7 @@ class CommandLineUtil {
     private static final String         OUTPUT_CONTINUING_PATTERN   = "\\s\\*\\*\\*\\s{76}";
     private static final String         OUTPUT_CONTINUING           = "***";
     private static final String         RACF                        = "RACF";
+    private static final String         CATALOG                     = "CATALOG";
     private static final String         DELETE_SEGMENT              = "Delete Segment";
     private static final int            COMMAND_TIMEOUT             = 60000;
     
@@ -88,7 +89,6 @@ class CommandLineUtil {
         "</MapTransform>";
     private MapTransform                _membersOfGroupTransform;
     private Map<String, MapTransform>   _segmentParsers;
-    private MapTransform                _catalogParser;
     private final Pattern               _connectionPattern  = Pattern.compile("racfuserid=(.*)\\+racfgroupid=(.*),.*");
     private final ScriptExecutorFactory _groovyFactory;
     private RacfConnector               _connector;
@@ -110,7 +110,6 @@ class CommandLineUtil {
                     _segmentParsers.put(name, transform);
                 }
             _membersOfGroupTransform = (MapTransform)Transform.newTransform(_membersOfGroup);
-            _catalogParser = asMapTransform(((RacfConfiguration)_connector.getConfiguration()).getCatalogParser());
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
@@ -655,7 +654,7 @@ class CommandLineUtil {
     private void getCatalogAttributes(String identifier, Map<String, Object> attributesFromCommandLine) {
         String command = "LISTC ENT('"+identifier+"') ALL";
         String output = getCommandOutput(command);
-        MapTransform transform = _catalogParser;
+        MapTransform transform = _segmentParsers.get("ACCOUNT."+CATALOG);
         try {
             attributesFromCommandLine.putAll((Map<String, Object>)transform.transform(output));
         } catch (Exception e) {
@@ -713,10 +712,6 @@ class CommandLineUtil {
         
         if (attributesToGet!=null) {
             for (String attributeToGet : attributesToGet) {
-                // Ignore catalog attributes, we will handle them separately
-                //
-                if (attributeToGet.startsWith("*"))
-                    continue;
                 int index = attributeToGet.indexOf('.');
                 if (index!=-1) {
                     String prefix = attributeToGet.substring(0, index);
@@ -738,6 +733,7 @@ class CommandLineUtil {
         if (segmentsNeeded.size()>0 || ((RacfConfiguration)_connector.getConfiguration()).getUserName()==null) {
             try {
                 boolean racfNeeded = segmentsNeeded.remove(RACF);
+                boolean catalogNeeded = segmentsNeeded.remove(CATALOG);
                 StringBuffer buffer = new StringBuffer();
                 buffer.append(listCommand+" "+racfName);
                 if (!racfNeeded)
@@ -878,7 +874,7 @@ class CommandLineUtil {
         for (String attributeToGet : attributesToGet) {
             // Ignore catalog attributes, we will handle them separately
             //
-            if (attributeToGet.startsWith("*"))
+            if (attributeToGet.startsWith(CATALOG))
                 continue;
             int index = attributeToGet.indexOf('.');
             if (index!=-1) {
@@ -903,6 +899,7 @@ class CommandLineUtil {
                 StringBuffer buffer = new StringBuffer();
                 buffer.append("LISTUSER "+racfName);
                 boolean racfNeeded = segmentsNeeded.remove(RACF);
+                boolean catalogNeeded = segmentsNeeded.remove(CATALOG);
                 if (racfNeeded) {
                     String command = buffer.toString();
                     String output = getCommandOutput(command);

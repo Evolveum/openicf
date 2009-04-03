@@ -163,9 +163,9 @@ public interface RacfConstants {
     public static final String ATTR_CL_ATTRIBUTES               = "RACF.ATTRIBUTES";
     public static final String ATTR_CL_GROUPS                   = "RACF.GROUPS";
     public static final String ATTR_CL_GROUP_CONN_OWNERS        = "RACF.GROUP-CONN-OWNERS";
-    public static final String ATTR_CL_MASTER_CATALOG           = "*.MASTER CATALOG";
-    public static final String ATTR_CL_USER_CATALOG             = "*.USER CATALOG";
-    public static final String ATTR_CL_CATALOG_ALIAS            = "*.CATALOG ALIAS";
+    public static final String ATTR_CL_MASTER_CATALOG           = "CATALOG.MASTER CATALOG";
+    public static final String ATTR_CL_USER_CATALOG             = "CATALOG.USER CATALOG";
+    public static final String ATTR_CL_CATALOG_ALIAS            = "CATALOG.CATALOG ALIAS";
     public static final String ATTR_CL_OWNER                    = "RACF.OWNER";
     public static final String ATTR_CL_NAME                     = "RACF.NAME";
     public static final String ATTR_CL_DATA                     = "RACF.DATA";
