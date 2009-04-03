@@ -334,6 +334,33 @@ public class RacfConnectorTests {
     }
     
     @Test
+    public void testOmvsParser() {
+        String omvsSegment =
+            makeLine(" UID= NONE", 80) +
+            makeLine(" HOME= /u/bmurray", 80) +
+            makeLine(" PROGRAM= /bin/sh", 80) +
+            makeLine(" CPUTIMEMAX= NONE", 80) +
+            makeLine(" ASSIZEMAX= NONE", 80) +
+            makeLine(" FILEPROCMAX= NONE", 80) +
+            makeLine(" PROCUSERMAX= NONE", 80) +
+            makeLine(" THREADSMAX= NONE", 80) +
+            makeLine(" MMAPAREAMAX= NONE", 80);
+        
+        try {
+            String omvsParser = loadParserFromFile(OMVS_PARSER);
+            MapTransform transform = (MapTransform)Transform.newTransform(omvsParser);
+            Map<String, Object> results = (Map<String, Object>)transform.transform(omvsSegment);
+            for (Map.Entry<String, Object> entry : results.entrySet()) {
+                System.out.println(entry.getKey()+"="+entry.getValue());
+            }
+        } catch (IOException e) {
+            Assert.fail(e.toString());
+        } catch (Exception e) {
+            Assert.fail(e.toString());
+        }
+    }
+    
+    @Test
     public void testTsoParser() {
         String tsoSegment =
             makeLine(" ACCTNUM= ACCT#", 80) +
@@ -756,11 +783,11 @@ public class RacfConnectorTests {
         config.setSegmentNames(new String[] { 
                 "ACCOUNT.RACF",                     "ACCOUNT.TSO",                  "ACCOUNT.NETVIEW",
                 "ACCOUNT.CICS",                     "ACCOUNT.OMVS",                 "ACCOUNT.CATALOG", 
-                "GROUP.RACF" });
+                "ACCOUNT.OMVS",                     "GROUP.RACF" });
         config.setSegmentParsers(new String[] { 
                 loadParserFromFile(RACF_PARSER),    loadParserFromFile(TSO_PARSER), loadParserFromFile(NETVIEW_PARSER), 
                 loadParserFromFile(CICS_PARSER),    loadParserFromFile(OMVS_PARSER), loadParserFromFile(CATALOG_PARSER), 
-                loadParserFromFile(GROUP_RACF_PARSER) });
+                loadParserFromFile(OMVS_PARSER),    loadParserFromFile(GROUP_RACF_PARSER) });
         //config.setConnectionClassName("org.identityconnectors.rw3270.wrq.WrqConnection");
         config.setConnectionClassName("org.identityconnectors.rw3270.hod.HodConnection");
         //config.setConnectionClassName("org.identityconnectors.rw3270.freehost3270.FH3270Connection");

@@ -22,13 +22,19 @@
  */
 package org.identityconnectors.racf;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Array;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.l10n.CurrentLocale;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
 import org.identityconnectors.rw3270.RW3270Configuration;
@@ -75,24 +81,122 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     String getMessage(String key, Object... objects) {
         return MessageFormat.format(getBundle().getString(key), objects);
     }
+    
+    private static final String GROUP_RACF_PARSER   = "org/identityconnectors/racf/GroupRacfSegmentParser.xml";
+    private static final String RACF_PARSER         = "org/identityconnectors/racf/RacfSegmentParser.xml";
+    private static final String CICS_PARSER         = "org/identityconnectors/racf/CicsSegmentParser.xml";
+    private static final String OMVS_PARSER         = "org/identityconnectors/racf/OmvsSegmentParser.xml";
+    private static final String TSO_PARSER          = "org/identityconnectors/racf/TsoSegmentParser.xml";
+    private static final String NETVIEW_PARSER      = "org/identityconnectors/racf/NetviewSegmentParser.xml";
+    private static final String CATALOG_PARSER      = "org/identityconnectors/racf/CatalogParser.xml";
 
-    public void validate() {
-        if (_suffix==null)
-            throw new IllegalArgumentException(getMessage(RacfMessages.SUFFIX_NULL));
-        if (_hostNameOrIpAddr==null)
-            throw new IllegalArgumentException(getMessage(RacfMessages.HOST_NULL));
-        if (_hostLdapPortNumber==null)
-            throw new IllegalArgumentException(getMessage(RacfMessages.PORT_NULL));
-        if (_ldapUserName==null)
-            throw new IllegalArgumentException(getMessage(RacfMessages.USERNAME_NULL));
-        if (_ldapPassword==null)
-            throw new IllegalArgumentException(getMessage(RacfMessages.PASSWORD_NULL));
-        if (_userName==null)
-            throw new IllegalArgumentException(getMessage(RacfMessages.USERNAMES_NULL));
-        if (_password==null)
-            throw new IllegalArgumentException(getMessage(RacfMessages.PASSWORDS_NULL));
+    public RacfConfiguration() {
+        setConnectScript(getLoginScript());
+        setDisconnectScript(getLogoffScript());
+        setSegmentNames(new String[] { 
+                "ACCOUNT.RACF",                     "ACCOUNT.TSO",                  "ACCOUNT.NETVIEW",
+                "ACCOUNT.CICS",                     "ACCOUNT.OMVS",                 "ACCOUNT.CATALOG", 
+                "ACCOUNT.OMVS",                     "GROUP.RACF" });
+        try {
+        setSegmentParsers(new String[] { 
+                loadParserFromFile(RACF_PARSER),    loadParserFromFile(TSO_PARSER), loadParserFromFile(NETVIEW_PARSER), 
+                loadParserFromFile(CICS_PARSER),    loadParserFromFile(OMVS_PARSER), loadParserFromFile(CATALOG_PARSER), 
+                loadParserFromFile(OMVS_PARSER),    loadParserFromFile(GROUP_RACF_PARSER) });
+        } catch (IOException ioe) {
+            throw ConnectorException.wrap(ioe);
+        }
+    }
+    
+    private String loadParserFromFile(String fileName) throws IOException {
+        BufferedReader is = new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream(fileName)));
+        StringBuffer tsoParser = new StringBuffer();
+        String line = null;
+        while ((line=is.readLine())!=null) {
+            tsoParser.append(line);
+        }
+        return tsoParser.toString();
+    }
+    
+    private String getLoginScript() {
+        String script =
+            "connection.connect();\n" +
+            "connection.waitFor(\"=====>\", SHORT_WAIT);\n" +
+            "connection.send(\"TSO[enter]\");\n" +
+            "connection.waitFor(\"ENTER USERID -\", SHORT_WAIT);\n" +
+            "connection.send(USERNAME+\"[enter]\");\n" +
+            "connection.waitFor(\"Password  ===>\", SHORT_WAIT);\n" +
+            "connection.send(PASSWORD);\n" +
+            "connection.send(\"[enter]\");\n" +
+            "connection.waitFor(\" \\\\*\\\\*\\\\* \", SHORT_WAIT);\n" +
+            "connection.send(\"[enter]\");\n" +
+            "connection.waitFor(\"Option ===>\", SHORT_WAIT);\n" +
+            "connection.send(\"[pf3]\");\n" +
+            "connection.waitFor(\"READY\\\\s{74}\", SHORT_WAIT);";
+        return script;
     }
 
+    private String getLogoffScript() {
+        String script = "connection.send(\"LOGOFF[enter]\");\n";
+//            "connection.send(\"LOGOFF[enter]\");\n" +
+//            "connection.waitFor(\"=====>\", SHORT_WAIT);\n" +
+//            "connection.dispose();\n";
+        return script;
+    }
+
+    public void validate() {
+        // It's OK for all LDAP or all CommandLine connection info to be missing
+        // but not both
+        //
+        boolean noLdap = (StringUtil.isBlank(_suffix) && _hostLdapPortNumber==null && isBlank(_ldapPassword) && StringUtil.isBlank(_ldapUserName));
+        boolean noCommandLine = StringUtil.isBlank(_userName) && isBlank(_password);
+        
+        if (noLdap && noCommandLine)
+            throw new IllegalArgumentException(getMessage(RacfMessages.SUFFIX_NULL)); //TODO
+        
+        if (StringUtil.isBlank(_hostNameOrIpAddr))
+            throw new IllegalArgumentException(getMessage(RacfMessages.HOST_NULL));
+
+        if (!noLdap && StringUtil.isBlank(_suffix))
+            throw new IllegalArgumentException(getMessage(RacfMessages.SUFFIX_NULL));
+        if (!noLdap && _hostLdapPortNumber==null)
+            throw new IllegalArgumentException(getMessage(RacfMessages.PORT_NULL));
+        if (!noLdap && StringUtil.isBlank(_ldapUserName))
+            throw new IllegalArgumentException(getMessage(RacfMessages.USERNAME_NULL));
+        if (!noLdap && isBlank(_ldapPassword))
+            throw new IllegalArgumentException(getMessage(RacfMessages.PASSWORD_NULL));
+        
+        if (!noCommandLine && StringUtil.isBlank(_userName))
+            throw new IllegalArgumentException(getMessage(RacfMessages.USERNAMES_NULL));
+        if (!noCommandLine && isBlank(_password))
+            throw new IllegalArgumentException(getMessage(RacfMessages.PASSWORDS_NULL));
+    }
+    
+    boolean isBlank(GuardedString string) {
+        if (string==null)
+            return true;
+        GuardedStringAccessor accessor = new GuardedStringAccessor();
+        string.access(accessor);
+        boolean isBlank = accessor.getArray().length==0;
+        accessor.clear();
+        return isBlank;
+    }
+
+    private static class GuardedStringAccessor implements GuardedString.Accessor {
+        private char[] _array;
+        
+        public void access(char[] clearChars) {
+            _array = new char[clearChars.length];
+            System.arraycopy(clearChars, 0, _array, 0, _array.length);
+        }
+        
+        public char[] getArray() {
+            return _array;
+        }
+
+        public void clear() {
+            Arrays.fill(_array, 0, _array.length, ' ');
+        }
+    }
     /**
      * Return LDAP suffix, such as cn=foo
      * @return RACF suffix (such as sysplex)

@@ -24,6 +24,7 @@ package org.identityconnectors.racf;
 
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.AbstractFilterTranslator;
 import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
 import org.identityconnectors.framework.common.objects.filter.EndsWithFilter;
@@ -54,6 +55,8 @@ public class RacfCommandLineFilterTranslator extends AbstractFilterTranslator<St
             boolean not) {
         if (!not && filter.getAttribute().is(Name.NAME))
             return AttributeUtil.getAsStringValue(filter.getAttribute())+"*";
+        else if (!not && filter.getAttribute().is(Uid.NAME))
+            return getNameFromUid(AttributeUtil.getAsStringValue(filter.getAttribute()))+"*";
         else
             return super.createStartsWithExpression(filter, not);
     }
@@ -62,6 +65,8 @@ public class RacfCommandLineFilterTranslator extends AbstractFilterTranslator<St
     protected String createEqualsExpression(EqualsFilter filter, boolean not) {
         if (!not && filter.getAttribute().is(Name.NAME))
             return AttributeUtil.getAsStringValue(filter.getAttribute());
+        else if (!not && filter.getAttribute().is(Uid.NAME))
+            return getNameFromUid(AttributeUtil.getAsStringValue(filter.getAttribute()));
         else
             return super.createEqualsExpression(filter, not);
     }
@@ -70,6 +75,8 @@ public class RacfCommandLineFilterTranslator extends AbstractFilterTranslator<St
     protected String createEndsWithExpression(EndsWithFilter filter, boolean not) {
         if (!not && filter.getAttribute().is(Name.NAME))
             return "*"+AttributeUtil.getAsStringValue(filter.getAttribute());
+        else if (!not && filter.getAttribute().is(Uid.NAME))
+            return "*"+getNameFromUid(AttributeUtil.getAsStringValue(filter.getAttribute()));
         else
             return super.createEndsWithExpression(filter, not);
     }
@@ -78,8 +85,21 @@ public class RacfCommandLineFilterTranslator extends AbstractFilterTranslator<St
     protected String createContainsExpression(ContainsFilter filter, boolean not) {
         if (!not && filter.getAttribute().is(Name.NAME))
             return "*"+AttributeUtil.getAsStringValue(filter.getAttribute())+"*";
+        else if (!not && filter.getAttribute().is(Uid.NAME))
+            return "*"+getNameFromUid(AttributeUtil.getAsStringValue(filter.getAttribute()))+"*";
         else
             return super.createContainsExpression(filter, not);
+    }
+    
+    
+    private String getNameFromUid(String uid) {
+        String newUid = uid;
+        if (uid.startsWith("racfid="))
+            newUid = uid.substring("racfid=".length());
+        newUid = newUid.substring(0, newUid.indexOf(",profileType=user,"));
+        if (newUid.equals("IDM"))
+            System.out.println(">>>>>"+uid);
+        return newUid;
     }
 
 }

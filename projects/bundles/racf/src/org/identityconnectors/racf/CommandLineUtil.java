@@ -210,7 +210,8 @@ class CommandLineUtil {
             connection.send("[clear]");
             connection.send(command);
             connection.send("[enter]");
-            System.out.println("execute:'"+new String(command)+"'");
+            if (new String(command).contains("BADBAD3"))
+                System.out.println("execute:'"+new String(command)+"'");
             waitFor(COMMAND_TIMEOUT);
             String output = _buffer.toString();
             // Strip command from start, if present
@@ -1050,10 +1051,12 @@ class CommandLineUtil {
             throw ConnectorException.wrap(e);
         }
         
-        if (_timedOut)
+        if (_timedOut) {
+            System.out.println("CommandLineUtil:IsAlive:"+_buffer.toString());
             throw new ConnectorException(_connector.getConfiguration().getConnectorMessages().format(
                     "IsAlive", "timed out waiting for ''{0}'':''{1}''",
                     OUTPUT_COMPLETE, _buffer.toString()));
+        }
     }
     
     

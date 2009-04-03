@@ -33,9 +33,9 @@
   <PatternNode key='NETVIEW.IC'          pattern='IC=\s*([^\n]*)\n'         optional='true' reset='false'>
     <SubstituteTransform pattern='\s+$' substitute=''/>
   </PatternNode>
-  <PatternNode key='NETVIEW.CONSNAME'    pattern='CONSNAME=\s*(\w+)'        optional='true' reset='false'/>
-  <PatternNode key='NETVIEW.CTL'         pattern='CTL=\s*(\w+)'             optional='true' reset='false'/>
-  <PatternNode key='NETVIEW.MSGRECVR'    pattern='MSGRECVR=\s*(\w+)'        optional='true' reset='false'>
+  <PatternNode key='NETVIEW.CONSNAME'    pattern='CONSNAME=\s*(\S+)'        optional='true' reset='false'/>
+  <PatternNode key='NETVIEW.CTL'         pattern='CTL=\s*(\S+)'             optional='true' reset='false'/>
+  <PatternNode key='NETVIEW.MSGRECVR'    pattern='MSGRECVR=\s*(\S+)'        optional='true' reset='false'>
     <SubstituteTransform pattern='YES' substitute='TRUE'/>
     <SubstituteTransform pattern='NO'  substitute='FALSE'/>
     <BooleanTransform/>
@@ -52,7 +52,7 @@
     <SubstituteTransform pattern='^\s+' substitute=''/>
     <SplitTransform      splitPattern=','/>
   </PatternNode>
-  <PatternNode key='NETVIEW.NGMFADMN'    pattern='NGMFADMN=\s*(\w+)'        optional='true' reset='false'>
+  <PatternNode key='NETVIEW.NGMFADMN'    pattern='NGMFADMN=\s*(\S+)'        optional='true' reset='false'>
     <SubstituteTransform pattern='YES' substitute='TRUE'/>
     <SubstituteTransform pattern='NO'  substitute='FALSE'/>
     <BooleanTransform/>

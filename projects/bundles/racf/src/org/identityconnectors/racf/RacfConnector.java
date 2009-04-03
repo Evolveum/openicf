@@ -238,6 +238,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
      * {@inheritDoc}
      */
     public void executeQuery(ObjectClass objectClass, String query, ResultsHandler handler, OperationOptions options) {
+        System.out.println("executeQuery:"+query);
         List<String> names = new LinkedList<String>();
 
         if (objectClass.equals(ObjectClass.ACCOUNT))
@@ -507,16 +508,13 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
 
         // Optional Attributes (have RACF default values)
         //
-        //attributes.add(AttributeInfoBuilder.build(ATTR_CL_GROUPS,                   String.class));
-        //attributes.add(AttributeInfoBuilder.build(ATTR_CL_USERID,                   String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_MASTER_CATALOG,           String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_USER_CATALOG,             String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_CATALOG_ALIAS,            String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_OWNER,                    String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_NAME,                     String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_DATA,                     String.class));
-        //attributes.add(AttributeInfoBuilder.build(ATTR_CL_EXPIRED,                  String.class));
-        //attributes.add(AttributeInfoBuilder.build(ATTR_CL_PASSWORD_INTERVAL,        String.class));
+
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_ACCTNUM,              String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_HOLDCLASS,            String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_JOBCLASS,             String.class));
@@ -528,7 +526,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_UNIT,                 String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_USERDATA,             String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_COMMAND,              String.class));
-        if (false) {
+
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_UID,                 String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_HOME,                String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_PROGRAM,             String.class));
@@ -538,11 +536,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_PROCUSERMAX,         String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_THREADSMAX,          String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_MMAPAREAMAX,         String.class));
-        }
+
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_CICS_TIMEOUT,             String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_CICS_OPPRTY,              String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_CICS_OPIDENT,             String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_CICS_XRFSOFF,             String.class));
+       
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_NETVIEW_NGMFVSPN,         boolean.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_NETVIEW_NGMFADMN,         String.class));
         attributes.add(AttributeInfoBuilder.build(ATTR_CL_NETVIEW_MSGRECVR,         boolean.class));

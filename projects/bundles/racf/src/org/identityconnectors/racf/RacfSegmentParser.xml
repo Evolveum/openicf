@@ -1,10 +1,10 @@
 <MapTransform>
-  <PatternNode key='RACF.USERID'        pattern='USER=(\w{1,8})'            optional='false' reset='false'/>
+  <PatternNode key='RACF.USERID'        pattern='USER=(\S{1,8})'            optional='false' reset='false'/>
   <PatternNode key='RACF.NAME'          pattern='NAME=(.*?)\s+(?=OWNER=)'   optional='false' reset='false'/>
-  <PatternNode key='RACF.OWNER'         pattern='OWNER=(\w{1,8})'           optional='false' reset='false'>
+  <PatternNode key='RACF.OWNER'         pattern='OWNER=(\S{1,8})'           optional='false' reset='false'>
     <SubstituteTransform pattern='^$' substitute='UNKNOWN'/>
   </PatternNode>
-  <PatternNode key='RACF.DFLTGRP'       pattern='DEFAULT-GROUP=(\w{1,8})'   optional='false' reset='false'/>
+  <PatternNode key='RACF.DFLTGRP'       pattern='DEFAULT-GROUP=(\S{1,8})'   optional='false' reset='false'/>
   <PatternNode key='RACF.PASSDATE'      pattern='PASSDATE=(\S{0,6})'        optional='false' reset='false'/>
   <PatternNode key='RACF.PASSWORD INTERVAL' pattern='PASS-INTERVAL=(\S*)'   optional='false' reset='false'/>
   <PatternNode key='RACF.PHRASEDATE'    pattern='PHRASEDATE=(.*?)\s+\n'     optional='true' reset='false'/>
@@ -25,14 +25,14 @@
     <SubstituteTransform pattern='\n' substitute=''/>
     <SubstituteTransform pattern='^$' substitute='NO-INSTALLATION-DATA'/>
   </PatternNode>
-  <PatternNode key='RACF.GROUPS'        pattern='((?:\s+GROUP=\w+\s+AUTH=\w*\s+CONNECT-OWNER=(?:[^\n]+\n){4})+)' optional='true' reset='true'>
-    <SubstituteTransform pattern='.*?GROUP=(\w+)\s+AUTH=.+?CONNECT-OWNER=\w+([^\n]+\n){4}' substitute='$1 '/>
+  <PatternNode key='RACF.GROUPS'        pattern='((?:\s+GROUP=\S+\s+AUTH=\S*\s+CONNECT-OWNER=(?:[^\n]+\n){4})+)' optional='true' reset='true'>
+    <SubstituteTransform pattern='.*?GROUP=(\S+)\s+AUTH=.+?CONNECT-OWNER=\S+([^\n]+\n){4}' substitute='$1 '/>
     <SubstituteTransform pattern='^\s+(.*)' substitute='$1'/>
     <SubstituteTransform pattern='(\s+)$' substitute=''/>
     <SplitTransform splitPattern='\s+'/>
   </PatternNode>
-  <PatternNode key='RACF.CONNECT-OWNERS' pattern='((?:\s+GROUP=\w+\s+AUTH=\w*\s+CONNECT-OWNER=(?:[^\n]+\n){4})+)' optional='true' reset='false'>
-    <SubstituteTransform pattern='.*?GROUP=\w+\s+AUTH=.+?CONNECT-OWNER=(\w+)([^\n]+\n){4}' substitute='$1 '/>
+  <PatternNode key='RACF.CONNECT-OWNERS' pattern='((?:\s+GROUP=\S+\s+AUTH=\S*\s+CONNECT-OWNER=(?:[^\n]+\n){4})+)' optional='true' reset='false'>
+    <SubstituteTransform pattern='.*?GROUP=\S+\s+AUTH=.+?CONNECT-OWNER=(\S+)([^\n]+\n){4}' substitute='$1 '/>
     <SubstituteTransform pattern='^\s+(.*)' substitute='$1'/>
     <SubstituteTransform pattern='(\s+)$' substitute=''/>
     <SplitTransform splitPattern='\s+'/>
