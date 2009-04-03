@@ -114,7 +114,13 @@ public class OracleSpecificsTest {
     /** Test create of oci connection */
     @Test
     public void testCreateOciDriverConnection(){
-        Connection conn = createTestOciDriverConnection();
+    	Connection conn = null;
+        try{
+        	conn = createTestOciDriverConnection();
+        }
+        catch(UnsatisfiedLinkError e){
+        	return;
+        }
         Assert.assertNotNull(conn);
         OracleSpecifics.testConnection(conn);
         SQLUtil.closeQuietly(conn);
@@ -168,9 +174,13 @@ public class OracleSpecificsTest {
      */
     @Test
     public void testStaleOciConnection() throws SQLException{
-        Connection systemConn = createSystemOciDriverConnection();
-        Connection testConn = createTestOciDriverConnection();
-        testStaleConnection(systemConn, testConn);
+        try{
+	    	Connection systemConn = createSystemOciDriverConnection();
+	        Connection testConn = createTestOciDriverConnection();
+	        testStaleConnection(systemConn, testConn);
+        }
+        catch(UnsatisfiedLinkError e){
+        }
     }
     
     

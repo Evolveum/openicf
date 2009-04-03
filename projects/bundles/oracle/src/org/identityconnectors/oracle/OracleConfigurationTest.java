@@ -130,7 +130,13 @@ public class OracleConfigurationTest {
     public void testOciConfiguration(){
         OracleConfiguration cfg = createOciConfiguration();
         cfg.validate();
-        Connection conn = cfg.createAdminConnection();
+        Connection conn = null;
+        try{
+        	conn = cfg.createAdminConnection();
+        }
+        catch(UnsatisfiedLinkError e){
+        	return;
+        }
         assertNotNull(conn);
         SQLUtil.closeQuietly(conn);
         OracleConfiguration failCfg = cfg.clone();
@@ -218,7 +224,7 @@ public class OracleConfigurationTest {
         String passwordString = TestHelpers.getProperty("thin.systemPassword", "missingPassword");
         GuardedString password = new GuardedString(passwordString.toCharArray());
         String database = TestHelpers.getProperty("thin.database", null);
-        String driver = OracleSpecifics.OCI_DRIVER;
+        String driver = OracleSpecifics.THIN_DRIVER;
         String host = TestHelpers.getProperty("thin.host",null);
         String port = TestHelpers.getProperty("thin.port",OracleSpecifics.LISTENER_DEFAULT_PORT);
         OracleConfiguration cfg = new OracleConfiguration();

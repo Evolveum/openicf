@@ -3,8 +3,10 @@ package org.identityconnectors.oracle;
 import static org.junit.Assert.assertTrue;
 
 import java.sql.*;
+import java.util.Arrays;
 import java.util.List;
 
+import org.hamcrest.core.AllOf;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.junit.*;
 import org.junit.matchers.JUnitMatchers;
@@ -51,7 +53,7 @@ public class OracleRolePrivReaderTest {
 
     /** Test reading user privileges 
      * @throws SQLException */
-    @Test
+	@Test
     public void testReadPrivileges() throws SQLException {
         String user = "user1";
         if(userReader.userExist(user)){
@@ -68,7 +70,8 @@ public class OracleRolePrivReaderTest {
         SQLUtil.executeUpdateStatement(conn,"grant select on mytable to \"" + user + "\"");
         final List<String> readPrivileges = privReader.readPrivileges(user);
         Assert.assertThat(readPrivileges, JUnitMatchers.hasItem("CREATE SESSION"));
-        Assert.assertThat(readPrivileges, JUnitMatchers.hasItem("SELECT ON MYTABLE"));
+        Assert.assertThat(readPrivileges, JUnitMatchers.hasItem(new AllOf(Arrays
+				.asList(JUnitMatchers.containsString("SELECT ON"),JUnitMatchers.containsString("MYTABLE")))));
         SQLUtil.rollbackQuietly(conn);
         
     }

@@ -37,7 +37,7 @@ class OracleOperationDelete extends AbstractOracleOperation implements DeleteOp{
         }
         catch(SQLException e){
             SQLUtil.rollbackQuietly(adminConn);
-            if("42000".equals(e.getSQLState())){
+            if("42000".equals(e.getSQLState()) && 1918==e.getErrorCode()){
                 throw new UnknownUidException(uid,ObjectClass.ACCOUNT);
             }
         }

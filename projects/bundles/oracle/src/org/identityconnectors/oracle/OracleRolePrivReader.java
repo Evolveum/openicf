@@ -45,9 +45,9 @@ class OracleRolePrivReader {
             for(Object[] row : selectRows){
                 privileges.add((String) row[0]);
             }
-            selectRows = SQLUtil.selectRows(conn, "select PRIVILEGE,TABLE_NAME from USER_TAB_PRIVS where Grantee = '" + userName + "'");
+            selectRows = SQLUtil.selectRows(conn, "select PRIVILEGE,OWNER,TABLE_NAME from USER_TAB_PRIVS where Grantee = '" + userName + "'");
             for(Object[] row : selectRows){
-                String privilege = row[0] + " ON " + row[1];
+                String privilege = row[0] + " ON " + row[1] + "." + row[2];
                 privileges.add(privilege);
             }
             return privileges;

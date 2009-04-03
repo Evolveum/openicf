@@ -30,15 +30,20 @@ class OracleOperationCreate extends AbstractOracleOperation implements CreateOp{
         String createSQL = new OracleCreateOrAlterStBuilder(cfg.getCSSetup()).buildCreateUserSt(caAttributes).toString();
         Attribute roles = AttributeUtil.find(ORACLE_ROLES_ATTR_NAME, attrs);
         Attribute privileges = AttributeUtil.find(ORACLE_PRIVS_ATTR_NAME, attrs);
-        List<String> privAndRolesSQL = new OracleRolesAndPrivsBuilder(cfg.getCSSetup())
-                .buildCreateSQL(userName, OracleConnectorHelper.castList(
-                        roles, String.class), OracleConnectorHelper
-                        .castList(privileges, String.class)); 
+        List<String> rolesSQL = new OracleRolesAndPrivsBuilder(cfg.getCSSetup())
+                .buildGrantRolesSQL(userName, OracleConnectorHelper.castList(
+                        roles, String.class)); 
+        List<String> privilegesSQL = new OracleRolesAndPrivsBuilder(cfg.getCSSetup())
+        .buildGrantPrivilegesSQL(userName, OracleConnectorHelper.castList(
+                privileges, String.class)); 
         try {
             //Now execute create and grant statements
             SQLUtil.executeUpdateStatement(adminConn, createSQL);
-            for(String privSQL : privAndRolesSQL){
-                SQLUtil.executeUpdateStatement(adminConn, privSQL);
+            for(String sql : rolesSQL){
+                SQLUtil.executeUpdateStatement(adminConn, sql);
+            }
+            for(String sql : privilegesSQL){
+                SQLUtil.executeUpdateStatement(adminConn, sql);
             }
             adminConn.commit();
             log.info("User created : [{0}]", userName);

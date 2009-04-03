@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.hamcrest.core.AllOf;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
@@ -416,7 +417,8 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         OracleRolePrivReader roleReader = new OracleRolePrivReader(connector.getAdminConnection());
         final List<String> privRead = roleReader.readPrivileges(uid.getUidValue());
         Assert.assertThat(privRead, JUnitMatchers.hasItem("CREATE SESSION"));
-        Assert.assertThat(privRead, JUnitMatchers.hasItem("SELECT ON MYTABLE"));
+        Assert.assertThat(privRead, JUnitMatchers.hasItem(new AllOf(Arrays
+				.asList(JUnitMatchers.containsString("SELECT ON"),JUnitMatchers.containsString("MYTABLE")))));
     }
     
 
