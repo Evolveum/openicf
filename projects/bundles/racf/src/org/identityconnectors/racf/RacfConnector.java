@@ -33,6 +33,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -192,6 +193,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                 else
                     attribute = AttributeBuilder.build(ATTR_CL_GROUPS, attribute.getValue());
             }
+            //TODO: need to deal with MEMBERS/ACCOUNTS
             if (AttributeUtil.isSpecial(attribute)) {
                 commandLineAttrs.add(attribute);
                 ldapAttrs.add(attribute);
@@ -260,7 +262,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                 else if (objectClass.is(ObjectClass.GROUP_NAME))
                     attributesToGet = getDefaultAttributes(_groupAttributes);
             }
-            boolean getNameOnly =  (attributesToGet!=null && attributesToGet.size()==1 && Name.NAME.equalsIgnoreCase((String)attributesToGet.toArray()[0]));
+            if (attributesToGet!=null)
+                attributesToGet = new TreeSet<String>(attributesToGet);
+            boolean wantUid = (attributesToGet!=null && attributesToGet.remove(Uid.NAME));
+            boolean getNameOnly = (attributesToGet!=null && attributesToGet.size()==1 && Name.NAME.equalsIgnoreCase((String)attributesToGet.toArray()[0]));
             SearchControls subTreeControls = new SearchControls(SearchControls.SUBTREE_SCOPE, 4095, 0, null, true, true);
             for (String name : names) {
                 // We can special case getting just name
@@ -269,7 +274,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                 if (getNameOnly) {
                     ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
                     builder.setUid(name);
-                    builder.setName(name);
+                    builder.setName(extractRacfIdFromLdapId(name));
                     object = builder.build();
                 } else {
                     SearchResult searchResult = null;
@@ -278,7 +283,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                         searchResult = results.next();
                     }
                     //**
-                    object = buildObject(objectClass, searchResult, _clUtil.getAttributesFromCommandLine(objectClass, name, isLdapConnectionAvailable(), attributesToGet), attributesToGet);
+                    object = buildObject(objectClass, searchResult, _clUtil.getAttributesFromCommandLine(objectClass, name, isLdapConnectionAvailable(), attributesToGet), attributesToGet, wantUid);
                 }
                 handler.handle(object);
             }
@@ -296,10 +301,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         return results;
     }
 
-    private ConnectorObject buildObject(ObjectClass objectClass, SearchResult user, Map<String, Object> attributesFromCommandLine, Set<String> attributesToGet) throws NamingException {
+    private ConnectorObject buildObject(ObjectClass objectClass, SearchResult user, Map<String, Object> attributesFromCommandLine, Set<String> attributesToGet, boolean wantUid) throws NamingException {
         ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+        Uid uid = null;
         if (user!=null) {
-            builder.setUid(user.getNameInNamespace());
+            uid = new Uid(user.getNameInNamespace());
+            builder.setUid(uid);
             builder.setName(user.getNameInNamespace());
             Attributes attributes = user.getAttributes();
             NamingEnumeration<? extends javax.naming.directory.Attribute> attributeEnum = attributes.getAll();
@@ -320,7 +327,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         if (attributesFromCommandLine!=null) {
             if (user==null) {
                 String name = (String)attributesFromCommandLine.get(ATTR_CL_USERID);
-                Uid uid = createUidFromName(objectClass, name);
+                uid = createUidFromName(objectClass, name);
                 builder.setUid(uid);
                 builder.setName(name);
             }
@@ -335,6 +342,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                 }
             }
         }
+        if (wantUid)
+            builder.addAttribute(uid);
         ConnectorObject next = builder.build();
         return next;
     }
@@ -500,97 +509,103 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
     private Schema clSchema() {
         final SchemaBuilder schemaBuilder = new SchemaBuilder(getClass());
 
-        // RACF Users
-        //
-        Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
-
-        // Required Attributes
-        //
-        attributes.add(Name.INFO);
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_DFLTGRP,                  String.class));
-
-        // Optional Attributes (have RACF default values)
-        //
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_MASTER_CATALOG,           String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_USER_CATALOG,             String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_CATALOG_ALIAS,            String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_OWNER,                    String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_NAME,                     String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_DATA,                     String.class));
-
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_ACCTNUM,              String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_HOLDCLASS,            String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_JOBCLASS,             String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_MSGCLASS,             String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_PROC,                 String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_SIZE,                 String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_MAXSIZE,              String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_SYSOUTCLASS,          String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_UNIT,                 String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_USERDATA,             String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_COMMAND,              String.class));
-
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_UID,                 String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_HOME,                String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_PROGRAM,             String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_CPUTIMEMAX,          String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_ASSIZEMAX,           String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_FILEPROCMAX,         String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_PROCUSERMAX,         String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_THREADSMAX,          String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_MMAPAREAMAX,         String.class));
-
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_CICS_TIMEOUT,             String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_CICS_OPPRTY,              String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_CICS_OPIDENT,             String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_CICS_XRFSOFF,             String.class));
-       
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_NETVIEW_NGMFVSPN,         boolean.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_NETVIEW_NGMFADMN,         String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_NETVIEW_MSGRECVR,         boolean.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_NETVIEW_IC,               String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_NETVIEW_CTL,              String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_NETVIEW_CONSNAME,         String.class));
-
-        // Multi-valued attributes
-        //
-        attributes.add(buildMultivaluedAttribute(ATTR_CL_GROUP_CONN_OWNERS,         String.class, false));
-        attributes.add(buildMultivaluedAttribute(ATTR_CL_ATTRIBUTES,                String.class, false));
-        attributes.add(buildMultivaluedAttribute(ATTR_CL_NETVIEW_OPCLASS,           String.class, false));
-        attributes.add(buildMultivaluedAttribute(ATTR_CL_NETVIEW_DOMAINS,           String.class, false));
-        attributes.add(buildMultivaluedAttribute(ATTR_CL_CICS_OPCLASS,              Integer.class, false));
-        attributes.add(buildMultivaluedAttribute(ATTR_CL_CICS_RLSKEY,               Integer.class, false));
-        attributes.add(buildMultivaluedAttribute(ATTR_CL_CICS_TLSKEY,               Integer.class, false));
-
-        // Update-only attributes
-        //
-        attributes.add(buildUpdateonlyAttribute(ATTR_CL_TSO_DELETE_SEGMENT,         String.class, false));
-
-        // Operational Attributes
-        //
-        attributes.add(buildMultivaluedAttribute(PredefinedAttributes.GROUPS_NAME,  String.class, false));
-        attributes.add(OperationalAttributeInfos.PASSWORD);
-        attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
-        attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
-
-        //TODO: need to make sure special attributes are supported
-
-        _accountAttributes = AttributeInfoUtil.toMap(attributes);
-        schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
-        
+        {
+            // RACF Users
+            //
+            Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
+    
+            // Required Attributes
+            //
+            attributes.add(Name.INFO);
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_DFLTGRP,                  String.class));
+    
+            // Optional Attributes (have RACF default values)
+            //
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_OWNER,                    String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_NAME,                     String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_DATA,                     String.class));
+    
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_ACCTNUM,              String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_HOLDCLASS,            String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_JOBCLASS,             String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_MSGCLASS,             String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_PROC,                 String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_SIZE,                 String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_MAXSIZE,              String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_SYSOUTCLASS,          String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_UNIT,                 String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_USERDATA,             String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_COMMAND,              String.class));
+    
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_UID,                 String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_HOME,                String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_PROGRAM,             String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_CPUTIMEMAX,          String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_ASSIZEMAX,           String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_FILEPROCMAX,         String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_PROCUSERMAX,         String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_THREADSMAX,          String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_OMVS_MMAPAREAMAX,         String.class));
+    
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_CICS_TIMEOUT,             String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_CICS_OPPRTY,              String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_CICS_OPIDENT,             String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_CICS_XRFSOFF,             String.class));
+           
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_NETVIEW_NGMFVSPN,         boolean.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_NETVIEW_NGMFADMN,         String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_NETVIEW_MSGRECVR,         boolean.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_NETVIEW_IC,               String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_NETVIEW_CTL,              String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_NETVIEW_CONSNAME,         String.class));
+    
+            // Multi-valued attributes
+            //
+            attributes.add(buildMultivaluedAttribute(ATTR_CL_GROUP_CONN_OWNERS,         String.class, false));
+            attributes.add(buildMultivaluedAttribute(ATTR_CL_ATTRIBUTES,                String.class, false));
+            attributes.add(buildMultivaluedAttribute(ATTR_CL_NETVIEW_OPCLASS,           String.class, false));
+            attributes.add(buildMultivaluedAttribute(ATTR_CL_NETVIEW_DOMAINS,           String.class, false));
+            attributes.add(buildMultivaluedAttribute(ATTR_CL_CICS_OPCLASS,              Integer.class, false));
+            attributes.add(buildMultivaluedAttribute(ATTR_CL_CICS_RLSKEY,               Integer.class, false));
+            attributes.add(buildMultivaluedAttribute(ATTR_CL_CICS_TLSKEY,               Integer.class, false));
+    
+            // Catalog Attributes (make non-default)
+            //
+            attributes.add(buildNonDefaultAttribute(ATTR_CL_MASTER_CATALOG,             String.class));
+            attributes.add(buildNonDefaultAttribute(ATTR_CL_USER_CATALOG,               String.class));
+            attributes.add(buildNonDefaultAttribute(ATTR_CL_CATALOG_ALIAS,              String.class));
+    
+            // Update-only attributes
+            //
+            attributes.add(buildUpdateonlyAttribute(ATTR_CL_TSO_DELETE_SEGMENT,         String.class, false));
+    
+            // Operational Attributes
+            //
+            attributes.add(buildMultivaluedAttribute(PredefinedAttributes.GROUPS_NAME,  String.class, false));
+            attributes.add(OperationalAttributeInfos.PASSWORD);
+            attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
+            attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
+    
+            //TODO: need to make sure special attributes are supported
+    
+            _accountAttributes = AttributeInfoUtil.toMap(attributes);
+            schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
+        }
         //----------------------------------------------------------------------
 
         // RACF Groups
         //
-        Set<AttributeInfo> groupAttributes = new HashSet<AttributeInfo>();
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_SUPGROUP,                 String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_OWNER,                    String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_CL_DATA,                     String.class));
-        attributes.add(buildMultivaluedAttribute(ATTR_CL_MEMBERS,                   String.class, false));
-        attributes.add(buildMultivaluedAttribute(PredefinedAttributes.GROUPS_NAME,  String.class, false));
-
-        _groupAttributes = AttributeInfoUtil.toMap(groupAttributes);
-        schemaBuilder.defineObjectClass(ObjectClass.GROUP_NAME, attributes);
+        {
+            Set<AttributeInfo> groupAttributes = new HashSet<AttributeInfo>();
+            groupAttributes.add(AttributeInfoBuilder.build(ATTR_CL_SUPGROUP,                 String.class));
+            groupAttributes.add(AttributeInfoBuilder.build(ATTR_CL_OWNER,                    String.class));
+            groupAttributes.add(AttributeInfoBuilder.build(ATTR_CL_DATA,                     String.class));
+            groupAttributes.add(buildMultivaluedAttribute(ATTR_CL_MEMBERS,                   String.class, false));
+            groupAttributes.add(buildMultivaluedAttribute(PredefinedAttributes.GROUPS_NAME,  String.class, false));
+    
+            _groupAttributes = AttributeInfoUtil.toMap(groupAttributes);
+            schemaBuilder.defineObjectClass(ObjectClass.GROUP_NAME, groupAttributes);
+        }
 
         return schemaBuilder.build();
     }
@@ -600,152 +615,155 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
 
         // RACF Users
         //
-        Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
-
-        // Required Attributes
-        //
-        attributes.add(Name.INFO);
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DEFAULT_GROUP,           String.class));
-
-        // Optional Attributes (have RACF default values)
-        //
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DATA,                    String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_MODEL,                   String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OWNER,                   String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_PASSWORD,                String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_PROGRAMMER_NAME,         String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DEFAULT_GROUP,           String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SECURITY_LEVEL,          String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SECURITY_CAT_LIST,       String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_REVOKE_DATE,             String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_RESUME_DATE,             String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LOGON_DAYS,              String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LOGON_TIME,              String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CLASS_NAME,              String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CONNECT_GROUP,           String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SECURITY_LABEL,          String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_APP,            String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_CLASS,          String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_MGMT_CLASS,          String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_STORAGE_CLASS,       String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_ACCOUNT_NUMBER,      String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_DEFAULT_CMD,         String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_DESTINATION,         String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_MESSAGE_CLASS,       String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_DEFAULT_LOGIN,       String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_LOGIN_SIZE,          String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_MAX_REGION_SIZE,     String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_DEFAULT_SYSOUT,      String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_USERDATA,            String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_DEFAULT_UNIT,        String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_SECURITY_LABEL,      String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LANG_PRIMARY,            String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LANG_SECONDARY,          String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CICS_OPER_ID,            String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CICS_OPER_CLASS,         String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CICS_OPER_PRIORITY,      String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CICS_OPER_RESIGNON,      String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CICS_TERM_TIMEOUT,       String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_STORAGE,              String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_AUTH,                 String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_MFORM,                String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_LEVEL,                String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_MONITOR,              String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_ROUTCODE,             String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_LOG_CMD_RESPONSE,     String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_MGID,                 String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_DOM,                  String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_KEY,                  String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_CMDSYS,               String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_UD,                   String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_MSCOPE_SYSTEMS,       String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_ALTGROUP,             String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_AUTO,                 String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_USER_NAME,            String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_BUILDING,             String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_DEPARTMENT,           String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_ROOM,                 String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_ADDRESS_LINE1,        String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_ADDRESS_LINE2,        String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_ADDRESS_LINE3,        String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_ADDRESS_LINE4,        String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_ACCOUNT_NUMBER,       String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_UID,                String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_HOME,               String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_INIT_PROGRAM,       String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_MAX_CPUTIME,        String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_MAX_ADDR_SPACE,     String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_MAX_FILES,          String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_MAX_THREADS,        String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_MAX_MEMORY_MAP,     String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_NINITIALCMD,          String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_DEFAULT_CONSOLE,      String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_CTL,                  String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_MESSAGE_RECEIVER,     String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_OPERATOR_CLASS,       String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_DOMAINS,              String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_NGMFADM,              String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_DCE_UUID,             String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_DCE_PRINCIPAL,        String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_DCE_HOME_CELL,        String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_DCE_HOME_CELL_UUID,   String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_DCE_AUTOLOGIN,        String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OVM_UID,                 String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OVM_HOME,                String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OVM_INITIAL_PROGRAM,     String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OVM_FILESYSTEM_ROOT,     String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LN_SHORT_NAME,           String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NDS_USER_NAME,           String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_KERB_NAME,               String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_KERB_MAX_TICKET_LIFE,    String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_KERB_ENCRYPT,            String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_PROXY_BINDDN,            String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_PROXY_BINDPW,            String.class));
-        attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_PROXY_HOST,              String.class));
-
-        // Multi-valued attributes
-        //
-        attributes.add(buildMultivaluedAttribute(ATTR_LDAP_ATTRIBUTES,               String.class, false));
-
-        // Operational Attributes
-        //
-        attributes.add(OperationalAttributeInfos.PASSWORD);
-        attributes.add(PredefinedAttributeInfos.GROUPS);
-        attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
+        {
+            Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
+    
+            // Required Attributes
+            //
+            attributes.add(Name.INFO);
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DEFAULT_GROUP,           String.class));
+    
+            // Optional Attributes (have RACF default values)
+            //
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DATA,                    String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_MODEL,                   String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OWNER,                   String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_PASSWORD,                String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_PROGRAMMER_NAME,         String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DEFAULT_GROUP,           String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SECURITY_LEVEL,          String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SECURITY_CAT_LIST,       String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_REVOKE_DATE,             String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_RESUME_DATE,             String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LOGON_DAYS,              String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LOGON_TIME,              String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CLASS_NAME,              String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CONNECT_GROUP,           String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SECURITY_LABEL,          String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_APP,            String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_CLASS,          String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_MGMT_CLASS,          String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_STORAGE_CLASS,       String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_ACCOUNT_NUMBER,      String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_DEFAULT_CMD,         String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_DESTINATION,         String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_MESSAGE_CLASS,       String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_DEFAULT_LOGIN,       String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_LOGIN_SIZE,          String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_MAX_REGION_SIZE,     String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_DEFAULT_SYSOUT,      String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_USERDATA,            String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_DEFAULT_UNIT,        String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_SECURITY_LABEL,      String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LANG_PRIMARY,            String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LANG_SECONDARY,          String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CICS_OPER_ID,            String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CICS_OPER_CLASS,         String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CICS_OPER_PRIORITY,      String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CICS_OPER_RESIGNON,      String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CICS_TERM_TIMEOUT,       String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_STORAGE,              String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_AUTH,                 String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_MFORM,                String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_LEVEL,                String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_MONITOR,              String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_ROUTCODE,             String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_LOG_CMD_RESPONSE,     String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_MGID,                 String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_DOM,                  String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_KEY,                  String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_CMDSYS,               String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_UD,                   String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_MSCOPE_SYSTEMS,       String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_ALTGROUP,             String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_AUTO,                 String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_USER_NAME,            String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_BUILDING,             String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_DEPARTMENT,           String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_ROOM,                 String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_ADDRESS_LINE1,        String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_ADDRESS_LINE2,        String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_ADDRESS_LINE3,        String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_ADDRESS_LINE4,        String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_ACCOUNT_NUMBER,       String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_UID,                String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_HOME,               String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_INIT_PROGRAM,       String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_MAX_CPUTIME,        String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_MAX_ADDR_SPACE,     String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_MAX_FILES,          String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_MAX_THREADS,        String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_MAX_MEMORY_MAP,     String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_NINITIALCMD,          String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_DEFAULT_CONSOLE,      String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_CTL,                  String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_MESSAGE_RECEIVER,     String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_OPERATOR_CLASS,       String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_DOMAINS,              String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_NGMFADM,              String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_DCE_UUID,             String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_DCE_PRINCIPAL,        String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_DCE_HOME_CELL,        String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_DCE_HOME_CELL_UUID,   String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_DCE_AUTOLOGIN,        String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OVM_UID,                 String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OVM_HOME,                String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OVM_INITIAL_PROGRAM,     String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OVM_FILESYSTEM_ROOT,     String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LN_SHORT_NAME,           String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NDS_USER_NAME,           String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_KERB_NAME,               String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_KERB_MAX_TICKET_LIFE,    String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_KERB_ENCRYPT,            String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_PROXY_BINDDN,            String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_PROXY_BINDPW,            String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_PROXY_HOST,              String.class));
+    
+            // Multi-valued attributes
+            //
+            attributes.add(buildMultivaluedAttribute(ATTR_LDAP_ATTRIBUTES,               String.class, false));
+    
+            // Operational Attributes
+            //
+            attributes.add(OperationalAttributeInfos.PASSWORD);
+            attributes.add(PredefinedAttributeInfos.GROUPS);
+            attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
+            
+            // Must be done via command line
+            //
+            if (!StringUtil.isBlank(_configuration.getUserName()))
+                attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
+    
+            _accountAttributes = AttributeInfoUtil.toMap(attributes);
+            schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
+        }
         
-        // Must be done via command line
-        //
-        if (!StringUtil.isBlank(_configuration.getUserName()))
-            attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
-
-        _accountAttributes = AttributeInfoUtil.toMap(attributes);
-        schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
-
         //----------------------------------------------------------------------
 
         // RACF Groups
         //
-        Set<AttributeInfo> groupAttributes = new HashSet<AttributeInfo>();
-        groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DATA,               String.class));
-        groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_MODEL,              String.class));
-        groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OWNER,              String.class));
-        groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SUP_GROUP,          String.class));
-        groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TERM_UACC,          String.class));
-        groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_UNIVERSAL,          String.class));
-        groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_APP,       String.class));
-        groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_CLASS,     String.class));
-        groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_MGMT_CLASS,     String.class));
-        groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_STORAGE_CLASS,  String.class));
-
-        // Read-only Multi-valued Attributes
-        //
-        groupAttributes.add(buildMVROAttribute(ATTR_LDAP_SUB_GROUP,                  String.class, false));
-        groupAttributes.add(buildMVROAttribute(ATTR_LDAP_GROUP_USERIDS,              String.class, false));
-
-        attributes.add(ACCOUNTS);
-        _groupAttributes = AttributeInfoUtil.toMap(groupAttributes);
-        schemaBuilder.defineObjectClass(ObjectClass.GROUP_NAME, groupAttributes);
-
+        {
+            Set<AttributeInfo> groupAttributes = new HashSet<AttributeInfo>();
+            groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DATA,               String.class));
+            groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_MODEL,              String.class));
+            groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OWNER,              String.class));
+            groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SUP_GROUP,          String.class));
+            groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TERM_UACC,          String.class));
+            groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_UNIVERSAL,          String.class));
+            groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_APP,       String.class));
+            groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_CLASS,     String.class));
+            groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_MGMT_CLASS,     String.class));
+            groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_STORAGE_CLASS,  String.class));
+    
+            // Read-only Multi-valued Attributes
+            //
+            groupAttributes.add(buildMVROAttribute(ATTR_LDAP_SUB_GROUP,                  String.class, false));
+            groupAttributes.add(buildMVROAttribute(ATTR_LDAP_GROUP_USERIDS,              String.class, false));
+    
+            groupAttributes.add(ACCOUNTS);
+            _groupAttributes = AttributeInfoUtil.toMap(groupAttributes);
+            schemaBuilder.defineObjectClass(ObjectClass.GROUP_NAME, groupAttributes);
+        }
         return schemaBuilder.build();
     }
 
@@ -792,13 +810,14 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         return builder.build();
     }
 
-    private AttributeInfo buildReadonlyAttribute(String name, Class<?> clazz, boolean required) {
+    private AttributeInfo buildNonDefaultAttribute(String name, Class<?> clazz) {
         AttributeInfoBuilder builder = new AttributeInfoBuilder();
         builder.setName(name);
         builder.setType(clazz);
-        builder.setRequired(required);
-        builder.setCreateable(false);
-        builder.setUpdateable(false);
+        builder.setRequired(false);
+        builder.setReturnedByDefault(false);
+        builder.setCreateable(true);
+        builder.setUpdateable(true);
         return builder.build();
     }
     
