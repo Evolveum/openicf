@@ -73,7 +73,7 @@
     <Compile Include="Data\PersistenceUtility.cs" />
     <Compile Include="LegacyExchangeConnector.cs" />
     <Compile Include="ExchangeConfiguration.cs" />
-    <Compile Include="ExchangeConnector.cs" />
+    <Compile Include="PSExchangeConnector.cs" />
     <Compile Include="ExchangeUtility.cs" />
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="RunSpaceInstance.cs" />

@@ -178,7 +178,7 @@ using Org.IdentityConnectors.Framework.Spi;
         /// <param name="attributes">Attribute values</param>
         /// <returns>Ready to execute Command</returns>             
         /// <exception cref="ArgumentNullException">if some of the param is null</exception>
-        internal static Command GetCommand(ExchangeConnector.CommandInfo cmdInfo, ICollection<ConnectorAttribute> attributes)
+        internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, ICollection<ConnectorAttribute> attributes)
         {
             Assertions.NullCheck(cmdInfo, "cmdInfo");
             Assertions.NullCheck(attributes, "attributes");

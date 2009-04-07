@@ -41,7 +41,7 @@ namespace Org.IdentityConnectors.Exchange
     /// Full featured connector, <see cref="LegacyExchangeConnector"/> for limited functionality connector.
     /// LegacyExchangeConnector will be extension of this class, once ready.
     /// </summary>    
-    public class ExchangeConnector : ActiveDirectoryConnector
+    public class PSExchangeConnector : ActiveDirectoryConnector
     {        
         /// <summary>
         /// MailBox object class name
@@ -66,7 +66,7 @@ namespace Org.IdentityConnectors.Exchange
         /// <summary>
         /// This Class name - used for logging purposes
         /// </summary>
-        private static readonly string ClassName = typeof(ExchangeConnector).ToString();
+        private static readonly string ClassName = typeof(PSExchangeConnector).ToString();
         
         /// <summary>
         /// Configuration instance variable, <see cref="Init"/> method for assignment

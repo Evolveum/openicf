@@ -175,17 +175,17 @@ namespace Org.IdentityConnectors.Exchange
             // get recipient type
             string rcptType = ExchangeUtility.GetAttValue(AttRecipientType, attributes) as string;
 
-            ExchangeConnector.CommandInfo cmdInfoEnable = null;
-            ExchangeConnector.CommandInfo cmdInfoSet = null;
+            PSExchangeConnector.CommandInfo cmdInfoEnable = null;
+            PSExchangeConnector.CommandInfo cmdInfoSet = null;
             switch (rcptType)
             {
                 case RcptTypeMailBox:
-                    cmdInfoEnable = ExchangeConnector.CommandInfo.EnableMailbox;
-                    cmdInfoSet = ExchangeConnector.CommandInfo.SetMailbox;
+                    cmdInfoEnable = PSExchangeConnector.CommandInfo.EnableMailbox;
+                    cmdInfoSet = PSExchangeConnector.CommandInfo.SetMailbox;
                     break;
                 case RcptTypeMailUser:
-                    cmdInfoEnable = ExchangeConnector.CommandInfo.EnableMailUser;
-                    cmdInfoSet = ExchangeConnector.CommandInfo.SetMailUser;
+                    cmdInfoEnable = PSExchangeConnector.CommandInfo.EnableMailUser;
+                    cmdInfoSet = PSExchangeConnector.CommandInfo.SetMailUser;
                     break;
                 case RcptTypeUser:
                     break;
@@ -268,19 +268,19 @@ namespace Org.IdentityConnectors.Exchange
             // update in AD first
             var filtered = FilterOut(
                 attributes,
-                ExchangeConnector.CommandInfo.EnableMailbox,
-                ExchangeConnector.CommandInfo.EnableMailUser,
-                ExchangeConnector.CommandInfo.SetMailbox,
-                ExchangeConnector.CommandInfo.SetMailUser);
+                PSExchangeConnector.CommandInfo.EnableMailbox,
+                PSExchangeConnector.CommandInfo.EnableMailUser,
+                PSExchangeConnector.CommandInfo.SetMailbox,
+                PSExchangeConnector.CommandInfo.SetMailUser);
             Uid uid = base.Update(type, oclass, filtered, options);
 
             ConnectorObject aduser = this.ADSearchByUid(uid, oclass, ExchangeUtility.AddAttributeToOptions(options, AttDatabaseADName));
             attributes.Add(aduser.Name);
-            ExchangeConnector.CommandInfo cmdInfo = ExchangeConnector.CommandInfo.GetUser;
+            PSExchangeConnector.CommandInfo cmdInfo = PSExchangeConnector.CommandInfo.GetUser;
             if (aduser.GetAttributeByName(AttDatabaseADName) != null)
             {
                 // we can be sure it is user mailbox type
-                cmdInfo = ExchangeConnector.CommandInfo.GetMailbox;
+                cmdInfo = PSExchangeConnector.CommandInfo.GetMailbox;
             }
 
             PSObject psuser = this.GetUser(cmdInfo, attributes);
@@ -297,11 +297,11 @@ namespace Org.IdentityConnectors.Exchange
                     if (origRcptType != rcptType)
                     {
                         Command cmdEnable = ExchangeUtility.GetCommand(
-                                ExchangeConnector.CommandInfo.EnableMailUser, attributes);
+                                PSExchangeConnector.CommandInfo.EnableMailUser, attributes);
                         this.InvokePipeline(cmdEnable);
                     }
 
-                    Command cmdSet = ExchangeUtility.GetCommand(ExchangeConnector.CommandInfo.SetMailUser, attributes);
+                    Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetMailUser, attributes);
                     this.InvokePipeline(cmdSet);
                 }
                 else
@@ -322,7 +322,7 @@ namespace Org.IdentityConnectors.Exchange
                 string origDatabase = psuser.Members[AttDatabase] != null ? psuser.Members[AttDatabase].Value.ToString() : null;
                 if (origRcptType != rcptType)
                 {
-                    Command cmdEnable = ExchangeUtility.GetCommand(ExchangeConnector.CommandInfo.EnableMailbox, attributes);
+                    Command cmdEnable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.EnableMailbox, attributes);
                     this.InvokePipeline(cmdEnable);
                 }
                 else
@@ -336,7 +336,7 @@ namespace Org.IdentityConnectors.Exchange
                     }
                 }
 
-                Command cmdSet = ExchangeUtility.GetCommand(ExchangeConnector.CommandInfo.SetMailbox, attributes);
+                Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetMailbox, attributes);
                 this.InvokePipeline(cmdSet);
             }
             else if (rcptType == RcptTypeUser && origRcptType != rcptType)
@@ -544,7 +544,7 @@ namespace Org.IdentityConnectors.Exchange
         /// <summary>
         /// Dispose the resources we use
         /// </summary>
-        /// <param name="disposing">true if called from <see cref="ExchangeConnector.Dispose()"/></param>
+        /// <param name="disposing">true if called from <see cref="PSExchangeConnector.Dispose()"/></param>
         protected virtual void Dispose(bool disposing)
         {
             if (disposing)
@@ -591,12 +591,12 @@ namespace Org.IdentityConnectors.Exchange
         /// <returns>
         /// Filtered connector attributes
         /// </returns>
-        private static ICollection<ConnectorAttribute> FilterOut(ICollection<ConnectorAttribute> attributes, params ExchangeConnector.CommandInfo[] cmdInfos)
+        private static ICollection<ConnectorAttribute> FilterOut(ICollection<ConnectorAttribute> attributes, params PSExchangeConnector.CommandInfo[] cmdInfos)
         {
             IList<string> attsToRemove = new List<string> { AttRecipientType, AttDatabase, AttExternalMail };
             if (cmdInfos != null)
             {
-                foreach (ExchangeConnector.CommandInfo cmdInfo in cmdInfos)
+                foreach (PSExchangeConnector.CommandInfo cmdInfo in cmdInfos)
                 {
                     if (cmdInfo != null)
                     {
@@ -679,7 +679,7 @@ namespace Org.IdentityConnectors.Exchange
             ConnectorObjectBuilder cobjBuilder = new ConnectorObjectBuilder();
             cobjBuilder.AddAttributes(cobject.GetAttributes());
 
-            ExchangeConnector.CommandInfo cmdInfo = ExchangeConnector.CommandInfo.GetUser;
+            PSExchangeConnector.CommandInfo cmdInfo = PSExchangeConnector.CommandInfo.GetUser;
             
             // prepare the connector attribute list to get the command
             ICollection<ConnectorAttribute> attributes = new Collection<ConnectorAttribute> { cobject.Name };
@@ -713,11 +713,11 @@ namespace Org.IdentityConnectors.Exchange
             // get detailed information            
             if (rcptType == RcptTypeMailBox)
             {
-                foundObjects = this.InvokePipeline(ExchangeUtility.GetCommand(ExchangeConnector.CommandInfo.GetMailbox, attributes));
+                foundObjects = this.InvokePipeline(ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.GetMailbox, attributes));
             }
             else if (rcptType == RcptTypeMailUser)
             {
-                foundObjects = this.InvokePipeline(ExchangeUtility.GetCommand(ExchangeConnector.CommandInfo.GetMailUser, attributes));
+                foundObjects = this.InvokePipeline(ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.GetMailUser, attributes));
             }
 
             if (foundObjects != null && foundObjects.Count == 1)
@@ -797,7 +797,7 @@ namespace Org.IdentityConnectors.Exchange
         /// <param name="cmdInfo">command info to get the user</param>
         /// <param name="attributes">attributes containing the Name</param>
         /// <returns><see cref="PSObject"/> with user info</returns>
-        private PSObject GetUser(ExchangeConnector.CommandInfo cmdInfo, ICollection<ConnectorAttribute> attributes)
+        private PSObject GetUser(PSExchangeConnector.CommandInfo cmdInfo, ICollection<ConnectorAttribute> attributes)
         {
             // assert we have user name
             string name = ExchangeUtility.GetAttValue(Name.NAME, attributes) as string;
