@@ -30,14 +30,13 @@ namespace Org.IdentityConnectors.Exchange
     using System.Diagnostics;
     using System.Globalization;
     using System.IO;
-    using System.Linq;
     using System.Management.Automation.Runspaces;
     using System.Reflection;
     using Microsoft.Win32;
     using Org.IdentityConnectors.ActiveDirectory;
     using Org.IdentityConnectors.Common;
     using Org.IdentityConnectors.Framework.Common.Objects;
-using Org.IdentityConnectors.Framework.Spi;
+    using Org.IdentityConnectors.Framework.Spi;
 
     /// <summary>
     /// Description of ExchangeUtility.
