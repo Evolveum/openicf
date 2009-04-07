@@ -1,4 +1,4 @@
-// <copyright file="ExchangeConnector.cs" company="Sun Microsystems, Inc.">
+// <copyright file="PSExchangeConnector.cs" company="Sun Microsystems, Inc.">
 // ====================
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 // 
@@ -38,8 +38,8 @@ namespace Org.IdentityConnectors.Exchange
 
     /// <summary>
     /// MS Exchange extension of Active Directory connector.
-    /// Full featured connector, <see cref="LegacyExchangeConnector"/> for limited functionality connector.
-    /// LegacyExchangeConnector will be extension of this class, once ready.
+    /// Pure PowerShell connector. 
+    /// Note: Not Production quality yet, please do not use.
     /// </summary>    
     public class PSExchangeConnector : ActiveDirectoryConnector
     {        

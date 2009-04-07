@@ -1,4 +1,4 @@
-// <copyright file="LegacyExchangeConnector.cs" company="Sun Microsystems, Inc.">
+// <copyright file="ExchangeConnector.cs" company="Sun Microsystems, Inc.">
 // ====================
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 // 
@@ -46,7 +46,7 @@ namespace Org.IdentityConnectors.Exchange
         typeof(ExchangeConfiguration),
         MessageCatalogPaths = new[] { "Org.IdentityConnectors.Exchange.Messages",
                 "Org.IdentityConnectors.ActiveDirectory.Messages" })]
-    public class LegacyExchangeConnector : ActiveDirectoryConnector
+    public class ExchangeConnector : ActiveDirectoryConnector
     {
         #region Fields Definition
 
@@ -101,7 +101,7 @@ namespace Org.IdentityConnectors.Exchange
         /// <summary>
         /// ClassName - used for debugging purposes
         /// </summary>
-        private static readonly string ClassName = typeof(LegacyExchangeConnector).ToString();
+        private static readonly string ClassName = typeof(ExchangeConnector).ToString();
 
         /// <summary>
         /// Recipient type attribute info
@@ -584,7 +584,7 @@ namespace Org.IdentityConnectors.Exchange
         }
 
         /// <summary>
-        /// helper method to filter out all attributes used in LegacyExchangeConnector only
+        /// helper method to filter out all attributes used in ExchangeConnector only
         /// </summary>
         /// <param name="attributes">Connector attributes</param>
         /// <param name="cmdInfos">CommandInfo whose parameters will be used and filtered out from attributes</param>
