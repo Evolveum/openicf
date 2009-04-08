@@ -169,6 +169,15 @@ namespace Org.IdentityConnectors.Exchange
         public override Uid Create(
                 ObjectClass oclass, ICollection<ConnectorAttribute> attributes, OperationOptions options)
         {
+            ExchangeUtility.NullCheck(oclass, "oclass", this.configuration);
+            ExchangeUtility.NullCheck(attributes, "attributes", this.configuration);
+
+            // we handle accounts only
+            if (!oclass.Is(ObjectClass.ACCOUNT_NAME))
+            {
+                return base.Create(oclass, attributes, options);
+            }
+
             const string METHOD = "Create";
             Debug.WriteLine(METHOD + ":entry", ClassName);
 
@@ -260,6 +269,12 @@ namespace Org.IdentityConnectors.Exchange
             ExchangeUtility.NullCheck(type, "updatetype", this.configuration);
             ExchangeUtility.NullCheck(oclass, "oclass", this.configuration);
             ExchangeUtility.NullCheck(attributes, "attributes", this.configuration);
+
+            // we handle accounts only
+            if (!oclass.Is(ObjectClass.ACCOUNT_NAME))
+            {
+                return base.Update(type, oclass, attributes, options);
+            }
 
             // get recipient type and database
             string rcptType = ExchangeUtility.GetAttValue(AttRecipientType, attributes) as string;
@@ -382,6 +397,15 @@ namespace Org.IdentityConnectors.Exchange
         public override void Sync(
                 ObjectClass objClass, SyncToken token, SyncResultsHandler handler, OperationOptions options)
         {
+            ExchangeUtility.NullCheck(objClass, "oclass", this.configuration);         
+
+            // we handle accounts only
+            if (!objClass.Is(ObjectClass.ACCOUNT_NAME))
+            {
+                base.Sync(objClass, token, handler, options);
+                return;
+            }
+
             ArrayList attsToGet = null;
             if (options != null && options.AttributesToGet != null)
             {
@@ -424,6 +448,15 @@ namespace Org.IdentityConnectors.Exchange
         public override void ExecuteQuery(
                 ObjectClass oclass, string query, ResultsHandler handler, OperationOptions options)
         {
+            ExchangeUtility.NullCheck(oclass, "oclass", this.configuration);         
+
+            // we handle accounts only
+            if (!oclass.Is(ObjectClass.ACCOUNT_NAME))
+            {
+                base.ExecuteQuery(oclass, query, handler, options);
+                return;
+            }
+
             ArrayList attsToGet = null;
             if (options != null && options.AttributesToGet != null)
             {
