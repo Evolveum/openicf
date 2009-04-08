@@ -1,5 +1,5 @@
 <MapTransform>
-  <PatternNode key='*.CATALOG ALIAS'  pattern='ALIAS\s+[-]+\s+([^ ]+)'  optional='true' reset='false'/>
-  <PatternNode key='*.MASTER CATALOG' pattern='IN-CAT\s+[-]+\s+([^ ]+)' optional='true' reset='false'/>
-  <PatternNode key='*.USER CATALOG'   pattern='USERCAT[-]+([^ ]+)'      optional='true' reset='false'/>
+  <PatternNode key='CATALOG*CATALOG ALIAS'  pattern='ALIAS\s+[-]+\s+([^ ]+)'  optional='true' reset='false'/>
+  <PatternNode key='CATALOG*MASTER CATALOG' pattern='IN-CAT\s+[-]+\s+([^ ]+)' optional='true' reset='false'/>
+  <PatternNode key='CATALOG*USER CATALOG'   pattern='USERCAT[-]+([^ ]+)'      optional='true' reset='false'/>
 </MapTransform>

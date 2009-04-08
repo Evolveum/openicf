@@ -96,9 +96,7 @@ public class RacfCommandLineFilterTranslator extends AbstractFilterTranslator<St
         String newUid = uid;
         if (uid.startsWith("racfid="))
             newUid = uid.substring("racfid=".length());
-        newUid = newUid.substring(0, newUid.indexOf(",profileType=user,"));
-        if (newUid.equals("IDM"))
-            System.out.println(">>>>>"+uid);
+        newUid = newUid.substring(0, newUid.indexOf(",profileType="));
         return newUid;
     }
 

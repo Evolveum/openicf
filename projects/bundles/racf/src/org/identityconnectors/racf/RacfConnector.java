@@ -84,6 +84,10 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
 public class RacfConnector implements Connector, CreateOp, PoolableConnector,
 DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
 
+    public static final String         SEPARATOR           ="*";
+    public static final String         SEPARATOR_REGEX     ="\\*";
+    public static final String         RACF_GROUP_NAME     ="RacfGroup";
+    public static final ObjectClass    RACF_GROUP          = new ObjectClass(RACF_GROUP_NAME);
     public static final String         RACF_CONNECTION_NAME ="RacfConnection";
     public static final ObjectClass    RACF_CONNECTION     = new ObjectClass(RACF_CONNECTION_NAME);
     public static final String         ACCOUNTS_NAME       = createSpecialName("ACCOUNTS");
@@ -197,7 +201,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             if (AttributeUtil.isSpecial(attribute)) {
                 commandLineAttrs.add(attribute);
                 ldapAttrs.add(attribute);
-            } else if (attribute.getName().contains(".")) {
+            } else if (attribute.getName().contains(SEPARATOR)) {
                 commandLineAttrs.add(attribute);
             } else {
                 ldapAttrs.add(attribute);
@@ -223,7 +227,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         if (isLdapConnectionAvailable()) {
             if (oclass.is(ObjectClass.ACCOUNT_NAME))
                 return new RacfUserFilterTranslator();
-            if (oclass.is(ObjectClass.GROUP_NAME))
+            if (oclass.is(RACF_GROUP_NAME))
                 return new RacfGroupFilterTranslator();
             if (oclass.is(RACF_CONNECTION_NAME))
                 return new RacfConnectFilterTranslator();
@@ -232,7 +236,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         } else {
             if (oclass.is(ObjectClass.ACCOUNT_NAME))
                 return new RacfCommandLineFilterTranslator();
-            if (oclass.is(ObjectClass.GROUP_NAME))
+            if (oclass.is(RACF_GROUP_NAME))
                 return new RacfCommandLineFilterTranslator();
             else
                 return null;
@@ -246,24 +250,31 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         System.out.println("executeQuery:"+query);
         List<String> names = new LinkedList<String>();
 
-        if (objectClass.equals(ObjectClass.ACCOUNT))
+        if (objectClass.is(ObjectClass.ACCOUNT_NAME))
             names = getUsers(query);
-        else if (objectClass.equals(ObjectClass.GROUP))
+        else if (objectClass.is(RACF_GROUP_NAME))
             names = getGroups(query);
 
         try {
             Set<String> attributesToGet = null;
+            schema();
+
             if (options!=null && options.getAttributesToGet()!=null) {
-                attributesToGet = CollectionUtil.newReadOnlySet(options.getAttributesToGet());
+                attributesToGet = new TreeSet<String>();
+                for (String name : options.getAttributesToGet()) {
+                    // Ignore request for "description"
+                    //
+                    if (!name.equals("description"))
+                        attributesToGet.add(name);
+                }
             } else {
-                schema();
                 if (objectClass.is(ObjectClass.ACCOUNT_NAME))
                     attributesToGet = getDefaultAttributes(_accountAttributes);
-                else if (objectClass.is(ObjectClass.GROUP_NAME))
+                else if (objectClass.is(RACF_GROUP_NAME))
                     attributesToGet = getDefaultAttributes(_groupAttributes);
-            }
-            if (attributesToGet!=null)
                 attributesToGet = new TreeSet<String>(attributesToGet);
+            }
+            
             boolean wantUid = (attributesToGet!=null && attributesToGet.remove(Uid.NAME));
             boolean getNameOnly = (attributesToGet!=null && attributesToGet.size()==1 && Name.NAME.equalsIgnoreCase((String)attributesToGet.toArray()[0]));
             SearchControls subTreeControls = new SearchControls(SearchControls.SUBTREE_SCOPE, 4095, 0, null, true, true);
@@ -320,8 +331,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                         builder.addAttribute(attribute.getID(), value);
                 }
             }
-            if (includeInAttributes(objectClass, PredefinedAttributes.GROUPS_NAME, attributesToGet)) {
-                builder.addAttribute(PredefinedAttributes.GROUPS_NAME, getGroupsForUser(user.getNameInNamespace()));
+            if (includeInAttributes(objectClass, ATTR_CL_GROUPS, attributesToGet)) {
+                builder.addAttribute(ATTR_CL_GROUPS, getGroupsForUser(user.getNameInNamespace()));
             }
         }
         if (attributesFromCommandLine!=null) {
@@ -436,9 +447,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
      * @return
      */
     Uid createUidFromName(ObjectClass objectClass, String name) {
-        if (objectClass.equals(ObjectClass.ACCOUNT))
+        if (objectClass.is(ObjectClass.ACCOUNT_NAME))
             return new Uid("racfid="+name.toUpperCase()+",profileType=user,"+_configuration.getSuffix());
-        else if (objectClass.equals(ObjectClass.GROUP))
+        else if (objectClass.is(RACF_GROUP_NAME))
             return new Uid("racfid="+name.toUpperCase()+",profileType=group,"+_configuration.getSuffix());
         else 
             return null;
@@ -581,7 +592,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
     
             // Operational Attributes
             //
-            attributes.add(buildMultivaluedAttribute(PredefinedAttributes.GROUPS_NAME,  String.class, false));
+            attributes.add(buildMultivaluedAttribute(ATTR_CL_GROUPS,                    String.class, false));
             attributes.add(OperationalAttributeInfos.PASSWORD);
             attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
             attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
@@ -597,14 +608,15 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         //
         {
             Set<AttributeInfo> groupAttributes = new HashSet<AttributeInfo>();
+            groupAttributes.add(Name.INFO);
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_CL_SUPGROUP,                 String.class));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_CL_OWNER,                    String.class));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_CL_DATA,                     String.class));
             groupAttributes.add(buildMultivaluedAttribute(ATTR_CL_MEMBERS,                   String.class, false));
-            groupAttributes.add(buildMultivaluedAttribute(PredefinedAttributes.GROUPS_NAME,  String.class, false));
+            groupAttributes.add(buildMultivaluedAttribute(ATTR_CL_GROUPS,                    String.class, false));
     
             _groupAttributes = AttributeInfoUtil.toMap(groupAttributes);
-            schemaBuilder.defineObjectClass(ObjectClass.GROUP_NAME, groupAttributes);
+            schemaBuilder.defineObjectClass(RACF_GROUP_NAME, groupAttributes);
         }
 
         return schemaBuilder.build();
@@ -762,7 +774,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
     
             groupAttributes.add(ACCOUNTS);
             _groupAttributes = AttributeInfoUtil.toMap(groupAttributes);
-            schemaBuilder.defineObjectClass(ObjectClass.GROUP_NAME, groupAttributes);
+            schemaBuilder.defineObjectClass(RACF_GROUP_NAME, groupAttributes);
         }
         return schemaBuilder.build();
     }

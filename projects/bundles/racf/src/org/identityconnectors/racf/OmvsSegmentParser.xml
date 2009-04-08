@@ -25,13 +25,13 @@
  <!--  OMVS INFORMATION -->
 
 <MapTransform>
-  <PatternNode key='OMVS.UID'         pattern='UID=\s*([^\n]*)\n'         optional='false' reset='false'/>
-  <PatternNode key='OMVS.HOME'        pattern='HOME=\s*([^\n]*)\n'        optional='true' reset='false'/>
-  <PatternNode key='OMVS.PROGRAM'     pattern='PROGRAM=\s*([^\n]*)\n'     optional='true' reset='false'/>
-  <PatternNode key='OMVS.CPUTIMEMAX'  pattern='CPUTIMEMAX=\s*(NONE|\d+)'  optional='false' reset='false'/>
-  <PatternNode key='OMVS.ASSIZEMAX'   pattern='ASSIZEMAX=\s*(NONE|\d+)'   optional='false' reset='false'/>
-  <PatternNode key='OMVS.FILEPROCMAX' pattern='FILEPROCMAX=\s*(NONE|\d+)' optional='false' reset='false'/>
-  <PatternNode key='OMVS.PROCUSERMAX' pattern='PROCUSERMAX=\s*(NONE|\d+)' optional='false' reset='false'/>
-  <PatternNode key='OMVS.THREADSMAX'  pattern='THREADSMAX=\s*(NONE|\d+)'  optional='false' reset='false'/>
-  <PatternNode key='OMVS.MMAPAREAMAX' pattern='MMAPAREAMAX=\s*(NONE|\d+)' optional='false' reset='false'/>
+  <PatternNode key='OMVS*UID'         pattern='UID=\s*([^\n]*)\n'         optional='false' reset='false'/>
+  <PatternNode key='OMVS*HOME'        pattern='HOME=\s*([^\n]*)\n'        optional='true' reset='false'/>
+  <PatternNode key='OMVS*PROGRAM'     pattern='PROGRAM=\s*([^\n]*)\n'     optional='true' reset='false'/>
+  <PatternNode key='OMVS*CPUTIMEMAX'  pattern='CPUTIMEMAX=\s*(NONE|\d+)'  optional='false' reset='false'/>
+  <PatternNode key='OMVS*ASSIZEMAX'   pattern='ASSIZEMAX=\s*(NONE|\d+)'   optional='false' reset='false'/>
+  <PatternNode key='OMVS*FILEPROCMAX' pattern='FILEPROCMAX=\s*(NONE|\d+)' optional='false' reset='false'/>
+  <PatternNode key='OMVS*PROCUSERMAX' pattern='PROCUSERMAX=\s*(NONE|\d+)' optional='false' reset='false'/>
+  <PatternNode key='OMVS*THREADSMAX'  pattern='THREADSMAX=\s*(NONE|\d+)'  optional='false' reset='false'/>
+  <PatternNode key='OMVS*MMAPAREAMAX' pattern='MMAPAREAMAX=\s*(NONE|\d+)' optional='false' reset='false'/>
 </MapTransform>

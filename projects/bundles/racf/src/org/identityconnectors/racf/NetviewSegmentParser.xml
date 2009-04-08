@@ -30,34 +30,34 @@
  <!--  NETVIEW INFORMATION -->
 
 <MapTransform>
-  <PatternNode key='NETVIEW.IC'          pattern='IC=\s*([^\n]*)\n'         optional='true' reset='false'>
+  <PatternNode key='NETVIEW*IC'          pattern='IC=\s*([^\n]*)\n'         optional='true' reset='false'>
     <SubstituteTransform pattern='\s+$' substitute=''/>
   </PatternNode>
-  <PatternNode key='NETVIEW.CONSNAME'    pattern='CONSNAME=\s*(\S+)'        optional='true' reset='false'/>
-  <PatternNode key='NETVIEW.CTL'         pattern='CTL=\s*(\S+)'             optional='true' reset='false'/>
-  <PatternNode key='NETVIEW.MSGRECVR'    pattern='MSGRECVR=\s*(\S+)'        optional='true' reset='false'>
+  <PatternNode key='NETVIEW*CONSNAME'    pattern='CONSNAME=\s*(\S+)'        optional='true' reset='false'/>
+  <PatternNode key='NETVIEW*CTL'         pattern='CTL=\s*(\S+)'             optional='true' reset='false'/>
+  <PatternNode key='NETVIEW*MSGRECVR'    pattern='MSGRECVR=\s*(\S+)'        optional='true' reset='false'>
     <SubstituteTransform pattern='YES' substitute='TRUE'/>
     <SubstituteTransform pattern='NO'  substitute='FALSE'/>
     <BooleanTransform/>
   </PatternNode>
-  <PatternNode key='NETVIEW.OPCLASS'     pattern='OPCLASS=\s*([^\n]*)\n'    optional='true' reset='false'>
+  <PatternNode key='NETVIEW*OPCLASS'     pattern='OPCLASS=\s*([^\n]*)\n'    optional='true' reset='false'>
     <SubstituteTransform pattern='\n'   substitute=' '/>
     <SubstituteTransform pattern='\s+$' substitute=''/>
     <SubstituteTransform pattern='^\s+' substitute=''/>
     <SplitTransform      splitPattern=','/>
   </PatternNode>
-  <PatternNode key='NETVIEW.DOMAINS'     pattern='DOMAINS=\s*([^\n]*)\n'    optional='true' reset='false'>
+  <PatternNode key='NETVIEW*DOMAINS'     pattern='DOMAINS=\s*([^\n]*)\n'    optional='true' reset='false'>
     <SubstituteTransform pattern='\n' substitute=' '/>
     <SubstituteTransform pattern='\s+$' substitute=''/>
     <SubstituteTransform pattern='^\s+' substitute=''/>
     <SplitTransform      splitPattern=','/>
   </PatternNode>
-  <PatternNode key='NETVIEW.NGMFADMN'    pattern='NGMFADMN=\s*(\S+)'        optional='true' reset='false'>
+  <PatternNode key='NETVIEW*NGMFADMN'    pattern='NGMFADMN=\s*(\S+)'        optional='true' reset='false'>
     <SubstituteTransform pattern='YES' substitute='TRUE'/>
     <SubstituteTransform pattern='NO'  substitute='FALSE'/>
     <BooleanTransform/>
   </PatternNode>
-  <PatternNode key='NETVIEW.NGMFVSPN'    pattern='NGMFVSPN=\s*([^\n]*)\n'   optional='true' reset='false'>
+  <PatternNode key='NETVIEW*NGMFVSPN'    pattern='NGMFVSPN=\s*([^\n]*)\n'   optional='true' reset='false'>
     <SubstituteTransform pattern='\s+$' substitute=''/>
   </PatternNode>
 </MapTransform>

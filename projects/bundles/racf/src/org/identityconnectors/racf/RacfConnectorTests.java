@@ -154,7 +154,7 @@ public class RacfConnectorTests {
         RacfConnector connector = createConnector(config);
         try {
             TestHandler handler = new TestHandler();
-            TestHelpers.search(connector,ObjectClass.GROUP, null, handler, null);
+            TestHelpers.search(connector, RacfConnector.RACF_GROUP, null, handler, null);
             int count = 0;
             for (ConnectorObject group : handler) {
                 count++;
@@ -198,7 +198,7 @@ public class RacfConnectorTests {
             String[] attributesToGet = { Name.NAME };
             map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, attributesToGet);
             OperationOptions options = new OperationOptions(map);
-            TestHelpers.search(connector,ObjectClass.GROUP, null, handler, options);
+            TestHelpers.search(connector, RacfConnector.RACF_GROUP, null, handler, options);
             int count = 0;
             for (ConnectorObject group : handler) {
                 count++;
@@ -251,9 +251,9 @@ public class RacfConnectorTests {
             int count = 0;
             TestHandler handler = new TestHandler();
             Map<String, Object> optionsMap = new HashMap<String, Object>();
-            optionsMap.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] {Name.NAME, ATTR_CL_MEMBERS, ATTR_CL_SUPGROUP, ATTR_CL_OWNER, ATTR_CL_DATA, PredefinedAttributes.GROUPS_NAME });
+            optionsMap.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] {Name.NAME, ATTR_CL_MEMBERS, ATTR_CL_SUPGROUP, ATTR_CL_OWNER, ATTR_CL_DATA, ATTR_CL_MEMBERS });
             OperationOptions options = new OperationOptions(optionsMap);
-            TestHelpers.search(connector,ObjectClass.GROUP, new EqualsFilter(AttributeBuilder.build(Name.NAME, "SYS1")), handler, options);
+            TestHelpers.search(connector,RacfConnector.RACF_GROUP, new EqualsFilter(AttributeBuilder.build(Name.NAME, "SYS1")), handler, options);
             for (ConnectorObject group : handler) {
                 displayConnectorObject(group);
                 if (new Uid("racfid=SYS1,profileType=group,"+SUFFIX).equals(group.getUid()))
@@ -568,7 +568,7 @@ public class RacfConnectorTests {
 
     private void deleteGroup(final Uid group, RacfConnector connector) {
         try {
-            connector.delete(ObjectClass.GROUP, group, null);
+            connector.delete(RacfConnector.RACF_GROUP, group, null);
         } catch (UnknownUidException rte) {
             // Ignore
         }
@@ -589,13 +589,13 @@ public class RacfConnectorTests {
             {
                 Set<Attribute> groupAttrs = new HashSet<Attribute>();
                 groupAttrs.add(new Name(TEST_GROUP1));
-                Uid groupUid = connector.create(ObjectClass.GROUP, groupAttrs, options);
+                Uid groupUid = connector.create(RacfConnector.RACF_GROUP, groupAttrs, options);
                 Assert.assertNotNull(groupUid);
             }
             {
                 Set<Attribute> groupAttrs = new HashSet<Attribute>();
                 groupAttrs.add(new Name(TEST_GROUP2));
-                Uid groupUid = connector.create(ObjectClass.GROUP, groupAttrs, options);
+                Uid groupUid = connector.create(RacfConnector.RACF_GROUP, groupAttrs, options);
                 Assert.assertNotNull(groupUid);
             }
             {
@@ -614,11 +614,11 @@ public class RacfConnectorTests {
                 
                 // Groups should not include the default group
                 //
-                attrs.add(AttributeBuilder.build(PredefinedAttributes.GROUPS_NAME, groups));
+                attrs.add(AttributeBuilder.build(ATTR_CL_GROUPS, groups));
                 Uid userUid = connector.create(ObjectClass.ACCOUNT, attrs, options);
                 
                 ConnectorObject user = getUser(TEST_USER2, connector);
-                Attribute groupsAttr = user.getAttributeByName(PredefinedAttributes.GROUPS_NAME);
+                Attribute groupsAttr = user.getAttributeByName(ATTR_CL_GROUPS);
                 Assert.assertNotNull(groupsAttr);
                 List<Object> retrievedGroups = groupsAttr.getValue();
                 Assert.assertTrue(retrievedGroups.size()==2);
@@ -626,7 +626,7 @@ public class RacfConnectorTests {
                 Assert.assertTrue(allGroups.contains(((String)retrievedGroups.get(1))));
     
                 Attribute defaultGroupAttr = user.getAttributeByName(getDefaultGroupName());
-                Assert.assertNotNull(groupsAttr);
+                Assert.assertNotNull(defaultGroupAttr);
                 List<Object> defaultGroupAttrValue = defaultGroupAttr.getValue();
                 Assert.assertEquals(defaultGroupAttrValue.get(0), TEST_GROUP1_UID.getUidValue());
             }
@@ -800,10 +800,10 @@ public class RacfConnectorTests {
     }
 
     protected String getInstallationDataAttributeName() {
-        return "RACF.DATA";
+        return "RACF*DATA";
     }
 
     protected String getDefaultGroupName() {
-        return "RACF.DFLTGRP";
+        return "RACF*DFLTGRP";
     }
 }

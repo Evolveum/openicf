@@ -41,7 +41,7 @@
  <!--  CICS INFORMATION -->
  
 <MapTransform>
-  <PatternNode key='CICS.OPCLASS' pattern='OPCLASS=((\s+\d+)+((\s+\d+)+\n)*)'  optional='true' reset='false'>
+  <PatternNode key='CICS*OPCLASS' pattern='OPCLASS=((\s+\d+)+((\s+\d+)+\n)*)'  optional='true' reset='false'>
     <SubstituteTransform pattern='\n' substitute=' '/>
     <SubstituteTransform pattern='\s+$' substitute=''/>
     <SubstituteTransform pattern='^\s+' substitute=''/>
@@ -50,13 +50,13 @@
       <ClassTransform    transform='java.lang.Integer'/>
     </ListTransform>
   </PatternNode>
-  <PatternNode key='CICS.OPIDENT' pattern='OPIDENT=[ ]*(\S)'         optional='true' reset='false'/>
-  <PatternNode key='CICS.OPPRTY'  pattern='OPPRTY=[ ]*(\d+)'         optional='true' reset='false'/>
-  <PatternNode key='CICS.TIMEOUT' pattern='TIMEOUT=[ ]*([^\n]*)\n'   optional='true' reset='false'>
+  <PatternNode key='CICS*OPIDENT' pattern='OPIDENT=[ ]*(\S)'         optional='true' reset='false'/>
+  <PatternNode key='CICS*OPPRTY'  pattern='OPPRTY=[ ]*(\d+)'         optional='true' reset='false'/>
+  <PatternNode key='CICS*TIMEOUT' pattern='TIMEOUT=[ ]*([^\n]*)\n'   optional='true' reset='false'>
     <SubstituteTransform pattern='\s*$' substitute=''/>
   </PatternNode>
-  <PatternNode key='CICS.XRFSOFF' pattern='XRFSOFF=[ ]*(\S{1,10})'   optional='true' reset='false'/>
-  <PatternNode key='CICS.RSLKEY'  pattern='RSLKEY=((\s+\d+)+((\s+\d+)+\n)*)'  optional='true' reset='false'>
+  <PatternNode key='CICS*XRFSOFF' pattern='XRFSOFF=[ ]*(\S{1,10})'   optional='true' reset='false'/>
+  <PatternNode key='CICS*RSLKEY'  pattern='RSLKEY=((\s+\d+)+((\s+\d+)+\n)*)'  optional='true' reset='false'>
     <SubstituteTransform pattern='\n' substitute=' '/>
     <SubstituteTransform pattern='\s+$' substitute=''/>
     <SubstituteTransform pattern='^\s+' substitute=''/>
@@ -65,7 +65,7 @@
       <ClassTransform    transform='java.lang.Integer'/>
     </ListTransform>
   </PatternNode>
-  <PatternNode key='CICS.TSLKEY' pattern='TSLKEY=((\s+\d+)+((\s+\d+)+\n)*)'  optional='true' reset='false'>
+  <PatternNode key='CICS*TSLKEY' pattern='TSLKEY=((\s+\d+)+((\s+\d+)+\n)*)'  optional='true' reset='false'>
     <SubstituteTransform pattern='\n' substitute=' '/>
     <SubstituteTransform pattern='\s+$' substitute=''/>
     <SubstituteTransform pattern='^\s+' substitute=''/>
