@@ -43,7 +43,6 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 
-import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -145,7 +144,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
     public Uid create(ObjectClass objectClass, Set<Attribute> attrs, OperationOptions options) {
         Set<Attribute> ldapAttrs = new HashSet<Attribute>();
         Set<Attribute> commandLineAttrs = new HashSet<Attribute>();
-        splitUpAttributes(attrs, ldapAttrs, commandLineAttrs);
+        splitUpOutgoingAttributes(attrs, ldapAttrs, commandLineAttrs);
         if (isLdapConnectionAvailable()) {
             Uid uid = _ldapUtil.createViaLdap(objectClass, ldapAttrs, options);
             if (hasNonSpecialAttributes(commandLineAttrs)) {
@@ -170,7 +169,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         return false;
     }
 
-    private void splitUpAttributes(Set<Attribute> attrs, Set<Attribute> ldapAttrs, Set<Attribute> commandLineAttrs) {
+    private void splitUpOutgoingAttributes(Set<Attribute> attrs, Set<Attribute> ldapAttrs, Set<Attribute> commandLineAttrs) {
         for (Attribute attribute : attrs) {
             // Remap special attributes as needed
             //
@@ -191,17 +190,34 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                 // Can't see a way to do this via LDAP
                 //
                 attribute = AttributeBuilder.build(ATTR_CL_EXPIRED, attribute.getValue());
-            } else if (attribute.is(PredefinedAttributes.GROUPS_NAME)) {
-                if (isLdapConnectionAvailable())
-                    attribute = AttributeBuilder.build("TODO:", attribute.getValue());
-                else
-                    attribute = AttributeBuilder.build(ATTR_CL_GROUPS, attribute.getValue());
-            }
-            //TODO: need to deal with MEMBERS/ACCOUNTS
-            if (AttributeUtil.isSpecial(attribute)) {
+            } else if (attribute.is(Name.NAME)) {
                 commandLineAttrs.add(attribute);
                 ldapAttrs.add(attribute);
             } else if (attribute.getName().contains(SEPARATOR)) {
+                commandLineAttrs.add(attribute);
+            } else {
+                ldapAttrs.add(attribute);
+            }
+        }
+    }
+
+    private void splitUpIncomingAttributes(Set<String> attrs, Set<String> ldapAttrs, Set<String> commandLineAttrs) {
+        for (String attribute : attrs) {
+            // Remap special attributes as needed
+            //
+            if (attribute.equals(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME)) {
+                if (isLdapConnectionAvailable())
+                    ldapAttrs.add(ATTR_LDAP_PASSWORD_INTERVAL);
+                else
+                    commandLineAttrs.add(ATTR_CL_PASSWORD_INTERVAL);
+            } else if (attribute.equals(OperationalAttributes.PASSWORD_EXPIRED_NAME)) {
+                // Can't see a way to do this via LDAP
+                //
+                commandLineAttrs.add(ATTR_CL_EXPIRED);
+            } else if (attribute.equals(Name.NAME)) {
+                commandLineAttrs.add(attribute);
+                ldapAttrs.add(attribute);
+            } else if (attribute.contains(SEPARATOR)) {
                 commandLineAttrs.add(attribute);
             } else {
                 ldapAttrs.add(attribute);
@@ -256,7 +272,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             names = getGroups(query);
 
         try {
-            Set<String> attributesToGet = null;
+            TreeSet<String> attributesToGet = null;
             schema();
 
             if (options!=null && options.getAttributesToGet()!=null) {
@@ -272,12 +288,29 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                     attributesToGet = getDefaultAttributes(_accountAttributes);
                 else if (objectClass.is(RACF_GROUP_NAME))
                     attributesToGet = getDefaultAttributes(_groupAttributes);
-                attributesToGet = new TreeSet<String>(attributesToGet);
             }
             
             boolean wantUid = (attributesToGet!=null && attributesToGet.remove(Uid.NAME));
-            boolean getNameOnly = (attributesToGet!=null && attributesToGet.size()==1 && Name.NAME.equalsIgnoreCase((String)attributesToGet.toArray()[0]));
-            SearchControls subTreeControls = new SearchControls(SearchControls.SUBTREE_SCOPE, 4095, 0, null, true, true);
+            boolean getNameOnly = (attributesToGet!=null && attributesToGet.size()==1 && Name.NAME.equalsIgnoreCase(attributesToGet.first()));
+            
+            // It's an error to request attributes from a source we can't use
+            //
+            Set<String> ldapAttrs = new TreeSet<String>();
+            Set<String> commandLineAttrs = new TreeSet<String>();
+            splitUpIncomingAttributes(attributesToGet, ldapAttrs, commandLineAttrs);
+            int ldapSize = ldapAttrs.size();
+            if (ldapAttrs.contains(Name.NAME))
+                ldapSize--;
+            if (!isLdapConnectionAvailable() && ldapSize>0)
+                throw new IllegalArgumentException("TODO: ldap attrs requested, but no ldap connection");
+
+            int commandLineSize = commandLineAttrs.size();
+            if (commandLineAttrs.contains(Name.NAME))
+                commandLineSize--;
+            if (StringUtil.isBlank(_configuration.getUserName()) && commandLineSize>0)
+                throw new IllegalArgumentException("TODO: command line attrs requested, but no command line attrs connection");
+            
+            SearchControls subTreeControls = new SearchControls(SearchControls.SUBTREE_SCOPE, 4095, 0, ldapAttrs.toArray(new String[0]), true, true);
             for (String name : names) {
                 // We can special case getting just name
                 //
@@ -293,8 +326,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                         NamingEnumeration<SearchResult> results = _connection.getDirContext().search(name, "(objectclass=*)", subTreeControls);
                         searchResult = results.next();
                     }
-                    //**
-                    object = buildObject(objectClass, searchResult, _clUtil.getAttributesFromCommandLine(objectClass, name, isLdapConnectionAvailable(), attributesToGet), attributesToGet, wantUid);
+                    object = buildObject(objectClass, searchResult, _clUtil.getAttributesFromCommandLine(objectClass, name, isLdapConnectionAvailable(), commandLineAttrs), attributesToGet, wantUid);
                 }
                 handler.handle(object);
             }
@@ -303,8 +335,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         }
     }
     
-    private Set<String> getDefaultAttributes(Map<String, AttributeInfo> infos) {
-        Set<String> results = new HashSet<String>();
+    private TreeSet<String> getDefaultAttributes(Map<String, AttributeInfo> infos) {
+        TreeSet<String> results = new TreeSet<String>();
         for (Map.Entry<String, AttributeInfo> entry : infos.entrySet()) {
             if (entry.getValue().isReturnedByDefault())
                 results.add(entry.getKey());
@@ -501,7 +533,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
     Uid update(ObjectClass objectClass, Set<Attribute> attrs, OperationOptions options) {
         Set<Attribute> ldapAttrs = new HashSet<Attribute>();
         Set<Attribute> commandLineAttrs = new HashSet<Attribute>();
-        splitUpAttributes(attrs, ldapAttrs, commandLineAttrs);
+        splitUpOutgoingAttributes(attrs, ldapAttrs, commandLineAttrs);
         if (isLdapConnectionAvailable()) {
             Uid uid = _ldapUtil.updateViaLdap(objectClass, ldapAttrs);
             if (hasNonSpecialAttributes(commandLineAttrs)) {
