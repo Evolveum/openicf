@@ -24,6 +24,8 @@ package org.identityconnectors.racf;
 
 import java.util.ListResourceBundle;
 
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
+
 public class RacfMessages extends ListResourceBundle {
     public static final String SUFFIX_NULL                    = "SUFFIX_NULL";
     public static final String HOST_NULL                      = "HOST_NULL";
@@ -42,6 +44,18 @@ public class RacfMessages extends ListResourceBundle {
     public static final String UNSUPPORTED_SCRIPTING_LANGUAGE = "UNSUPPORTED_SCRIPTING_LANGUAGE";
     public static final String NEED_LDAP                      = "NEED_LDAP";
     public static final String NEED_COMMAND_LINE              = "NEED_COMMAND_LINE";
+    public static final String ATTRS_NO_LDAP                  = "ATTRS_NO_LDAP";
+    public static final String ATTRS_NO_CL                    = "ATTRS_NO_CL";
+    public static final String CONNECTION_DEAD                = "CONNECTION_DEAD";
+    public static final String ERROR_IN_COMMAND               = "ERROR_IN_COMMAND";
+    public static final String UNSUPPORTED_OBJECT_CLASS       = "UNSUPPORTED_OBJECT_CLASS";
+    public static final String GROUP_NOT_EMPTY                = "GROUP_NOT_EMPTY";
+    public static final String UNKNOWN_UID_TYPE               = "UNKNOWN_UID_TYPE";
+    public static final String ERROR_IN_GET_USERS             = "ERROR_IN_GET_USERS";
+    public static final String ERROR_IN_GET_GROUPS            = "ERROR_IN_GET_GROUPS";
+    public static final String INCONSISTENT_CATALOG_ARGS      = "INCONSISTENT_CATALOG_ARGS";
+    public static final String UNKNOWN_SEGMENT                = "UNKNOWN_SEGMENT";
+    public static final String UNPARSEABLE_RESPONSE           = "UNPARSEABLE_RESPONSE";
 
     private static final String[][] _contents = {
         { SUFFIX_NULL,             "suffix may not be null" },
@@ -61,7 +75,22 @@ public class RacfMessages extends ListResourceBundle {
         { UNSUPPORTED_SCRIPTING_LANGUAGE, "''{0}'' is not supported as a scripting langauge" },
         { NEED_LDAP,               "Must have LDAP connection for LDAP-style attributes" },
         { NEED_COMMAND_LINE,       "Must have command-line connection for command-line-style attributes" },
+        { ATTRS_NO_LDAP,           "Ldap attrs requested, but no ldap connection" },
+        { ATTRS_NO_CL,             "Command Line attrs requested, but no command line connection" },
+        { CONNECTION_DEAD,         "Connection dead" },
+        { ERROR_IN_COMMAND,        "Error in command ''{0}''\n''{1}''" },
+        { UNSUPPORTED_OBJECT_CLASS,"Unsupported ObjectClass:{0}" },
+        { GROUP_NOT_EMPTY,         "Cannot delete group with members" },
+        { UNKNOWN_UID_TYPE,        "Unknown type of Uid:{0}" },
+        { ERROR_IN_GET_USERS,      "Error in Get Users:''{0}''" },
+        { ERROR_IN_GET_GROUPS,     "Error in Get Groups:''{0}''" },
+        { UNKNOWN_SEGMENT,         "Unknown segment for attribute ''{0}''" },
+        { INCONSISTENT_CATALOG_ARGS, "Either all or none of the catalog arguments must be specified" },
+        { UNPARSEABLE_RESPONSE,    "Unable to parse response from ''{0}'':{''{1}''" },
+        
     };
+//                             throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.NEED_LDAP, new String(command.getArray()), output));
+
 
     @Override
     protected Object[][] getContents() {
