@@ -1204,7 +1204,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     if (oclass.Equals(ObjectClass.ACCOUNT))
                     {
                         // convert to upper case
-                        uidValue = uidValue.ToUpper();
+                        uidValue = uidValue.ToLower();
 
                         // now remove spaces
                         foreach (Char nextChar in uidValue)
@@ -1214,8 +1214,9 @@ namespace Org.IdentityConnectors.ActiveDirectory
                                 normalizedUidValue.Append(nextChar);
                             }
                         }
+                        String tempGuid = normalizedUidValue.ToString();
 
-                        return new Uid(normalizedUidValue.ToString());
+                        return new Uid(tempGuid.Replace("guid", "GUID"));
                     }
                     else
                     {

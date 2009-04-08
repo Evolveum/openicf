@@ -71,7 +71,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             for (int i = 0; i < guidBytes.Length; i++)
             {
-                searchGuid += String.Format("\\{0:X2}", guidBytes[i]);
+                searchGuid += String.Format("\\{0:x2}", guidBytes[i]);
             }
 
             return searchGuid;
@@ -100,7 +100,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             for (int i = 0; i < bytes.Length; i++)
             {
-                guidString += String.Format("{0:X2}", bytes[i]);
+                guidString += String.Format("{0:x2}", bytes[i]);
             }
             guidString += ">";
 
