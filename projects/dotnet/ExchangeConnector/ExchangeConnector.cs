@@ -360,7 +360,7 @@ namespace Org.IdentityConnectors.Exchange
                         this.configuration.ConnectorMessages.Format(
                         "ex_update_notsupported", "Update of [{0}] to [{1}] is not supported", AttRecipientType, rcptType));
             }
-            else
+            else if (rcptType != RcptTypeUser)
             {
                 // unsupported rcpt type
                 throw new ArgumentException(
