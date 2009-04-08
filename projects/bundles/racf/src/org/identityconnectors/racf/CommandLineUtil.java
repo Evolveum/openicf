@@ -168,7 +168,7 @@ class CommandLineUtil {
     public void checkCommand(CharArrayBuffer command) {
         String output = getCommandOutput(command);
         if (output.trim().length()>0) {
-            throw new ConnectorException("TODO: error in command "+new String(command.getArray())+"\n"+"\""+output+"\"");
+            throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.NEED_LDAP, new String(command.getArray()), output));
         }
     }
     
@@ -272,15 +272,6 @@ class CommandLineUtil {
         Map<String, Map<String, char[]>> attributeValues = new HashMap<String, Map<String,char[]>>();
         for (Map.Entry<String, Attribute> entry : attributes.entrySet()) {
             String[] attributeName = entry.getKey().split(RacfConnector.SEPARATOR_REGEX);
-            if (attributeName.length==1) {
-                // Should be an OperationalAttribute.
-                // Supported OperationalAttributes are:
-                //   Password
-                if (entry.getValue().is(OperationalAttributes.PASSWORD_NAME))
-                    attributeName = new String[] { RACF, "PASSWORD" };
-                else
-                    throw new IllegalArgumentException("TODO");
-            }
             
             if (!attributeValues.containsKey(attributeName[0])) {
                 attributeValues.put(attributeName[0], new HashMap<String, char[]>());
@@ -405,7 +396,7 @@ class CommandLineUtil {
             checkCommand(command);
             return new Uid(name);
         } else {
-            throw new IllegalArgumentException("TODO");
+            throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNSUPPORTED_OBJECT_CLASS, objectClass));
         }
     }
     
@@ -421,7 +412,7 @@ class CommandLineUtil {
             String name = _connector.extractRacfIdFromLdapId(uidString);
             int memberCount = memberCount(name);
             if (memberCount>0)
-                throw new ConnectorException("TODO: cannot delete grop with members");
+                throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.GROUP_NOT_EMPTY));
             String command = "DELGROUP "+name;
             checkCommand(command);
         } else if (isConnection(uidString)) {
@@ -429,7 +420,7 @@ class CommandLineUtil {
             String command = "REMOVE "+info[0]+" GROUP("+info[1]+")";
             checkCommand(command);
         } else {
-            throw new IllegalArgumentException("TODO");
+            throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNKNOWN_UID_TYPE, uidString));
         }
     }
 
@@ -523,7 +514,7 @@ class CommandLineUtil {
         Matcher matcher = _errorMessage.matcher(users); 
         if (matcher.find()) {
             String error = users.substring(matcher.start()).trim();
-            throw new ConnectorException("TODO error in getUsers:"+error);
+            throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.ERROR_IN_GET_USERS, error));
         } else {
             String[] usersArray = users.trim().split("\\s+");
             for (int i=0; i<usersArray.length; i++)
@@ -551,7 +542,7 @@ class CommandLineUtil {
         Matcher matcher = _errorMessage.matcher(groups); 
         if (matcher.find()) {
             String error = groups.substring(matcher.start()).trim();
-            throw new ConnectorException("TODO error in getGroups:"+error);
+            throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.ERROR_IN_GET_GROUPS, error));
         } else {
             String[] groupsArray = groups.trim().split("\\s+");
             for (int i=0; i<groupsArray.length; i++)
@@ -599,7 +590,7 @@ class CommandLineUtil {
                 buffer.clear();
             }
         } else {
-            throw new IllegalArgumentException("TODO");
+            throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNSUPPORTED_OBJECT_CLASS, objectClass));
         }
     }
     
@@ -674,7 +665,7 @@ class CommandLineUtil {
         // All must be either present or missing
         //
         if ((alias||masterCat||userCat)!=(alias&&masterCat&&userCat)) {
-            throw new IllegalArgumentException("TODO: catalog inconstent");
+            throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.INCONSISTENT_CATALOG_ARGS));
         }
 
     }
@@ -691,7 +682,7 @@ class CommandLineUtil {
             objectClassPrefix = "ACCOUNT.";
             listCommand = "LISTUSER";
         } else {
-            throw new ConnectorException("Unsupported Object Class");
+            throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNSUPPORTED_OBJECT_CLASS));
         }
         // Determine the set of segment names, if any
         // We use a TreeSet to force an ordering
@@ -713,7 +704,7 @@ class CommandLineUtil {
                     segmentsNeeded.add(prefix);
                     
                     if (!_segmentParsers.containsKey(objectClassPrefix+prefix)) {
-                        throw new ConnectorException("Bad Attribute name (no such segment):"+attributeToGet);
+                        throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNKNOWN_SEGMENT, attributeToGet));
                     }
                 }
             }
@@ -722,7 +713,7 @@ class CommandLineUtil {
         // information was specified
         //
         if (segmentsNeeded.size()>0 && ((RacfConfiguration)_connector.getConfiguration()).getUserName()==null)
-            throw new ConnectorException("Segment attributes requested, but no login information given");
+            throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.ATTRS_NO_CL));
         
         Map<String, Object> attributesFromCommandLine = new HashMap<String, Object>();
         if (segmentsNeeded.size()>0 || ((RacfConfiguration)_connector.getConfiguration()).getUserName()==null) {
@@ -770,8 +761,10 @@ class CommandLineUtil {
                         }
                         i++;
                     }
+                } else if (output.toUpperCase().contains("UNABLE TO LOCATE USER")) {
+                    throw new UnknownUidException();
                 } else {
-                    System.out.println("TODO: no match");
+                    throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNPARSEABLE_RESPONSE, "LISTUSER", output));
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -847,87 +840,6 @@ class CommandLineUtil {
                 }
             }
         }
-        return attributesFromCommandLine;
-    }
-    
-
-    //TODO: this version does a separate LISTUSER command for each segment
-    //
-    public Map<String, Object> XXXgetAttributesFromCommandLine(String name, boolean ldapAvailable, Set<String> attributesToGet) {
-        // Determine the set of segment names, if any
-        // We use a TreeSet to force an ordering
-        //
-        Set<String> segmentsNeeded = new TreeSet<String>();
-        
-        // If we have no LDAP, minimally, we need the RACF segment
-        //
-        if (!ldapAvailable)
-            segmentsNeeded.add(RACF);
-        
-        String racfName = _connector.extractRacfIdFromLdapId(name);
-        
-        for (String attributeToGet : attributesToGet) {
-            // Ignore catalog attributes, we will handle them separately
-            //
-            if (attributeToGet.startsWith(CATALOG))
-                continue;
-            int index = attributeToGet.indexOf(RacfConnector.SEPARATOR);
-            if (index!=-1) {
-                String prefix = attributeToGet.substring(0, index);
-                segmentsNeeded.add(prefix);
-                
-                if (!_segmentParsers.containsKey(prefix)) {
-                    throw new ConnectorException("Bad Attribute name (no such segment):"+attributeToGet);
-                }
-            }
-        }
-
-        // If we are asking for segment information, ensure that command-line login
-        // information was specified
-        //
-        if (segmentsNeeded.size()>0 && ((RacfConfiguration)_connector.getConfiguration()).getUserName()==null)
-            throw new ConnectorException("Segment attributes requested, but no login information given");
-        
-        Map<String, Object> attributesFromCommandLine = new HashMap<String, Object>();
-        if (segmentsNeeded.size()>0 || ((RacfConfiguration)_connector.getConfiguration()).getUserName()==null) {
-            try {
-                StringBuffer buffer = new StringBuffer();
-                buffer.append("LISTUSER "+racfName);
-                boolean racfNeeded = segmentsNeeded.remove(RACF);
-                boolean catalogNeeded = segmentsNeeded.remove(CATALOG);
-                if (racfNeeded) {
-                    String command = buffer.toString();
-                    String output = getCommandOutput(command);
-                    MapTransform transform = _segmentParsers.get("RACF");
-                    attributesFromCommandLine.putAll((Map<String, Object>)transform.transform(output));
-                }
-                for (String segment : segmentsNeeded) {
-                    String command = buffer.toString()+(segment.equals(RACF)?"": " NORACF "+segment);
-                    String output = getCommandOutput(command);
-                    if (!output.contains("\n NO "+segment+" INFORMATION"))  {
-                        MapTransform transform = _segmentParsers.get(segment);
-                        attributesFromCommandLine.putAll((Map<String, Object>)transform.transform(output));
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw ConnectorException.wrap(e);
-            }
-        }
-        
-        if (attributesToGet.contains(ATTR_CL_CATALOG_ALIAS) ||
-                attributesToGet.contains(ATTR_CL_USER_CATALOG) ||
-                attributesToGet.contains(ATTR_CL_MASTER_CATALOG)) {
-            getCatalogAttributes(racfName, attributesFromCommandLine);
-        }
-            
-        // Default group name must be a stringified Uid
-        //
-        if (attributesFromCommandLine.containsKey(ATTR_CL_DFLTGRP)) {
-            Object value = attributesFromCommandLine.get(ATTR_CL_DFLTGRP);
-            attributesFromCommandLine.put(ATTR_CL_DFLTGRP, _connector.createUidFromName(RacfConnector.RACF_GROUP, (String)value).getUidValue());
-        }
-
         return attributesFromCommandLine;
     }
     

@@ -109,9 +109,9 @@ public class RacfConnectorTests {
     @BeforeClass
     public static void beforeClass() {
         HOST_NAME         = TestHelpers.getProperty("HOST_NAME", null);
-        SYSTEM_PASSWORD   = TestHelpers.getProperty("SYSTEM_PASSWORD", null);
+        SYSTEM_PASSWORD   = "IDM09";//TestHelpers.getProperty("SYSTEM_PASSWORD", null);
         SUFFIX            = TestHelpers.getProperty("SUFFIX", null);
-        SYSTEM_USER       = TestHelpers.getProperty("SYSTEM_USER", null);
+        SYSTEM_USER       = "IDM09";//TestHelpers.getProperty("SYSTEM_USER", null);
         
         SYSTEM_USER_LDAP  = "racfid="+SYSTEM_USER+",profileType=user,"+SUFFIX;
         TEST_USER_UID     = new Uid("racfid="+TEST_USER+",profileType=user,"+SUFFIX);

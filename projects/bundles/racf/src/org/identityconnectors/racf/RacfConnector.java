@@ -45,6 +45,7 @@ import javax.naming.directory.SearchResult;
 
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
@@ -190,10 +191,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                 // Can't see a way to do this via LDAP
                 //
                 attribute = AttributeBuilder.build(ATTR_CL_EXPIRED, attribute.getValue());
-            } else if (attribute.is(Name.NAME)) {
+            } 
+
+            if (attribute.is(Name.NAME)) {
                 commandLineAttrs.add(attribute);
                 ldapAttrs.add(attribute);
-            } else if (attribute.getName().contains(SEPARATOR)) {
+            } if (attribute.getName().contains(SEPARATOR)) {
                 commandLineAttrs.add(attribute);
             } else {
                 ldapAttrs.add(attribute);
@@ -302,33 +305,37 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             if (ldapAttrs.contains(Name.NAME))
                 ldapSize--;
             if (!isLdapConnectionAvailable() && ldapSize>0)
-                throw new IllegalArgumentException("TODO: ldap attrs requested, but no ldap connection");
+                throw new ConnectorException(_configuration.getMessage(RacfMessages.ATTRS_NO_LDAP));
 
             int commandLineSize = commandLineAttrs.size();
             if (commandLineAttrs.contains(Name.NAME))
                 commandLineSize--;
             if (StringUtil.isBlank(_configuration.getUserName()) && commandLineSize>0)
-                throw new IllegalArgumentException("TODO: command line attrs requested, but no command line attrs connection");
+                throw new ConnectorException(_configuration.getMessage(RacfMessages.ATTRS_NO_CL));
             
             SearchControls subTreeControls = new SearchControls(SearchControls.SUBTREE_SCOPE, 4095, 0, ldapAttrs.toArray(new String[0]), true, true);
             for (String name : names) {
-                // We can special case getting just name
-                //
-                ConnectorObject object = null;
-                if (getNameOnly) {
-                    ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
-                    builder.setUid(name);
-                    builder.setName(extractRacfIdFromLdapId(name));
-                    object = builder.build();
-                } else {
-                    SearchResult searchResult = null;
-                    if (isLdapConnectionAvailable()) {
-                        NamingEnumeration<SearchResult> results = _connection.getDirContext().search(name, "(objectclass=*)", subTreeControls);
-                        searchResult = results.next();
+                try {
+                    // We can special case getting just name
+                    //
+                    ConnectorObject object = null;
+                    if (getNameOnly) {
+                        ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+                        builder.setUid(name);
+                        builder.setName(extractRacfIdFromLdapId(name));
+                        object = builder.build();
+                    } else {
+                        SearchResult searchResult = null;
+                        if (isLdapConnectionAvailable()) {
+                            NamingEnumeration<SearchResult> results = _connection.getDirContext().search(name, "(objectclass=*)", subTreeControls);
+                            searchResult = results.next();
+                        }
+                        object = buildObject(objectClass, searchResult, _clUtil.getAttributesFromCommandLine(objectClass, name, isLdapConnectionAvailable(), commandLineAttrs), attributesToGet, wantUid);
                     }
-                    object = buildObject(objectClass, searchResult, _clUtil.getAttributesFromCommandLine(objectClass, name, isLdapConnectionAvailable(), commandLineAttrs), attributesToGet, wantUid);
+                    handler.handle(object);
+                } catch (UnknownUidException uue) {
+                    // Ignore this, user disappeared during query
                 }
-                handler.handle(object);
             }
         } catch (NamingException e) {
             throw new ConnectorException(e);
@@ -906,7 +913,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         if (false && !StringUtil.isBlank(_configuration.getUserName())) {
             String output = _clUtil.getCommandOutput("TIME");
             if (!output.contains("IJK"))
-                throw new ConnectorException("TODO: dead");
+                throw new ConnectorException(_configuration.getMessage(RacfMessages.CONNECTION_DEAD));
         }
     }
 }
