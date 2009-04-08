@@ -415,6 +415,11 @@ namespace Org.IdentityConnectors.Exchange
             // delegate to get the exchange attributes if requested            
             SyncResultsHandler xchangeHandler = delegate(SyncDelta delta)
             {
+                if (delta.DeltaType == SyncDeltaType.DELETE)
+                {
+                    return handler(delta);
+                }
+
                 // replace the ad attributes with exchange one and add recipient type
                 ConnectorObject updated = ExchangeUtility.ReplaceAttributes(delta.Object, attsToGet, AttMapFromAD);
                 updated = this.AddExchangeAttributes(objClass, updated, attsToGet);

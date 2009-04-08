@@ -293,8 +293,11 @@ namespace Org.IdentityConnectors.Exchange
         internal static ConnectorObject ReplaceAttributes(ConnectorObject cobject, IList attsToGet, IDictionary<string, string> map)
         {
             Assertions.NullCheck(cobject, "cobject");
-            Assertions.NullCheck(attsToGet, "attsToGet");
             Assertions.NullCheck(map, "map");
+            if (attsToGet == null)
+            {
+                return cobject;
+            }
 
             var attributes = cobject.GetAttributes();
             var builder = new ConnectorObjectBuilder();
