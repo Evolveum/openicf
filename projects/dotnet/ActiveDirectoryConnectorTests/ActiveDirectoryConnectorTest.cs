@@ -2626,6 +2626,17 @@ namespace Org.IdentityConnectors.ActiveDirectory
         private static void VerifyObject(ICollection<ConnectorAttribute> requestedAttributes,
             ConnectorObject returnedObject)
         {
+            // verify guid is in the proper format.  This is important for IDM.
+            if (returnedObject.ObjectClass.Equals(ObjectClass.ACCOUNT))
+            {
+
+                Uid uid = returnedObject.Uid;
+                String uidValue = uid.GetUidValue();
+                Assert.That(uidValue.StartsWith(("<GUID=")), "GUID for user objects must start with <GUID=");
+                Assert.That(uidValue.EndsWith(">"), "GUID for account objects must end with >");
+                Assert.That(uidValue.ToLower().Replace("guid", "GUID").Equals(uidValue), 
+                    "GUID for account objects must have lowercase hex strings");
+            }
 
             // for now, skipping values that are very difficult to 
             // determine equality ... or they are not returned like
