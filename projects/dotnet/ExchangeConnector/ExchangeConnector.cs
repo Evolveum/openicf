@@ -702,8 +702,8 @@ namespace Org.IdentityConnectors.Exchange
             ExchangeUtility.NullCheck(oc, "name", this.configuration);
             ExchangeUtility.NullCheck(oc, "cobject", this.configuration);
 
-            // we support ACCOUNT only
-            if (!oc.Is(ObjectClass.ACCOUNT_NAME))
+            // we support ACCOUNT only or there is nothing to add
+            if (!oc.Is(ObjectClass.ACCOUNT_NAME) || attToGet == null)
             {
                 return cobject;
             }
