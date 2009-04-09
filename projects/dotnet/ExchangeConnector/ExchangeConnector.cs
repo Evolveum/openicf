@@ -878,6 +878,11 @@ namespace Org.IdentityConnectors.Exchange
                     return new[] { AttExternalMailADName };
                 }
 
+                if (attr.Is(AttRecipientType))
+                {
+                    return null;
+                }
+
                 return base.GetLdapNamesForAttribute(attr);
             }
         }
