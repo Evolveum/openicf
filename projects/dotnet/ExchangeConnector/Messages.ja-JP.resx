@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -118,27 +118,21 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="connector_displayName" xml:space="preserve">
-    <value>ja-JP: Exchange Connector</value>
+    <value>Exchange コネクタ</value>
   </data>
   <data name="ex_argument_null" xml:space="preserve">
-    <value>ja-JP: The Argument [{0}] can't be null</value>
-  </data>
-  <data name="ex_bad_rcpt" xml:space="preserve">
-    <value>ja-JP: Recipient type [{0}] is not supported</value>
+    <value>引数 [{0}] は NULL にできません</value>
   </data>
   <data name="ex_bad_username" xml:space="preserve">
-    <value>ja-JP: Provided User name is not unique or not existing</value>
+    <value>指定されたユーザー名が一意でないか存在しません</value>
   </data>
   <data name="ex_not_updatable" xml:space="preserve">
-    <value>ja-JP: Update of [{0}] attribute is not supported</value>
+    <value>[{0}] 属性の更新はサポートされません</value>
   </data>
   <data name="ex_powershell_problem" xml:space="preserve">
-    <value>ja-JP: Problem while PowerShell execution {0}</value>
-  </data>
-  <data name="ex_update_notsupported" xml:space="preserve">
-    <value>ja-JP: Update of [{0}] to [{1}] is not supported</value>
+    <value>PowerShell の実行中に問題が発生しました {0}</value>
   </data>
   <data name="ex_wrong_update_type" xml:space="preserve">
-    <value>ja-JP: Update type [{0}] not supported</value>
+    <value>更新タイプ [{0}] はサポートされません</value>
   </data>
 </root>
