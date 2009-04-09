@@ -405,11 +405,11 @@ namespace Org.IdentityConnectors.Exchange
                 base.Sync(objClass, token, handler, options);
                 return;
             }
-
-            ArrayList attsToGet = null;
+            
+            ICollection<string> attsToGet = null;
             if (options != null && options.AttributesToGet != null)
             {
-                attsToGet = new ArrayList(options.AttributesToGet);
+                attsToGet = CollectionUtil.NewSet(options.AttributesToGet);
             }
 
             // delegate to get the exchange attributes if requested            
@@ -462,10 +462,10 @@ namespace Org.IdentityConnectors.Exchange
                 return;
             }
 
-            ArrayList attsToGet = null;
+            ICollection<string> attsToGet = null;
             if (options != null && options.AttributesToGet != null)
             {
-                attsToGet = new ArrayList(options.AttributesToGet);
+                attsToGet = CollectionUtil.NewList(options.AttributesToGet);
             }
 
             // delegate to get the exchange attributes if requested            
@@ -492,7 +492,9 @@ namespace Org.IdentityConnectors.Exchange
 
                     // build new op options
                     var builder = new OperationOptionsBuilder(options);
-                    builder.AttributesToGet = (string[])newAttsToGet.ToArray(typeof(string));
+                    string[] attributesToGet = new string[newAttsToGet.Count];
+                    newAttsToGet.CopyTo(attributesToGet, 0);
+                    builder.AttributesToGet = attributesToGet;
                     options2use = builder.Build();
                     handler2use = filter;
                 }
@@ -695,7 +697,7 @@ namespace Org.IdentityConnectors.Exchange
         /// <returns>Connector Object with recipient type added</returns>
         /// <exception cref="ConnectorException">In case of some troubles in powershell (if the 
         /// user is not found we get this exception too)</exception>
-        private ConnectorObject AddExchangeAttributes(ObjectClass oc, ConnectorObject cobject, IList attToGet)
+        private ConnectorObject AddExchangeAttributes(ObjectClass oc, ConnectorObject cobject, IEnumerable<string> attToGet)
         {            
             ExchangeUtility.NullCheck(oc, "name", this.configuration);
             ExchangeUtility.NullCheck(oc, "cobject", this.configuration);
@@ -711,6 +713,20 @@ namespace Org.IdentityConnectors.Exchange
             if (deleted != null && deleted == true)
             {
                 // do nothing, it is deleted object
+                return cobject;
+            }
+
+            IList<string> lattToGet = CollectionUtil.NewList(attToGet);
+            foreach (string att in lattToGet)
+            {
+                if (cobject.GetAttributeByName(att) != null && att != AttDatabase)
+                {
+                    lattToGet.Remove(att);
+                }
+            }
+
+            if (lattToGet.Count == 0)
+            {
                 return cobject;
             }
 
@@ -732,10 +748,16 @@ namespace Org.IdentityConnectors.Exchange
                 foreach (var info in user.Properties)
                 {
                     ConnectorAttribute att = GetAsAttribute(info);                    
-                    if (att != null)
+                    if (att != null && lattToGet.Contains(att.Name))
                     {
                         cobjBuilder.AddAttribute(att);
+                        lattToGet.Remove(att.Name);
                     }                    
+                }
+
+                if (lattToGet.Count == 0)
+                {
+                    return cobjBuilder.Build();
                 }
             } 
 
@@ -764,9 +786,10 @@ namespace Org.IdentityConnectors.Exchange
                 foreach (var info in userDetails.Properties)
                 {
                     ConnectorAttribute att = GetAsAttribute(info);
-                    if (att != null)
+                    if (att != null && lattToGet.Contains(att.Name))
                     {
                         cobjBuilder.AddAttribute(att);
+                        lattToGet.Remove(att.Name);
                     }
                 }
             }            

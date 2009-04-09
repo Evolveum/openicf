@@ -263,12 +263,12 @@ namespace Org.IdentityConnectors.Exchange
         /// <param name="map">Replace mappings</param>
         /// <returns>Replaced <see cref="ArrayList"/></returns>        
         /// <exception cref="ArgumentNullException">If some of the params is null</exception>
-        internal static ArrayList FilterReplace(ArrayList col, IDictionary<string, string> map)
+        internal static ICollection<string> FilterReplace(ICollection<string> col, IDictionary<string, string> map)
         {
             Assertions.NullCheck(col, "col");
             Assertions.NullCheck(map, "map");
 
-            ArrayList newcol = (ArrayList) col.Clone();
+            ICollection<string> newcol = CollectionUtil.NewList(col);
             foreach (KeyValuePair<string, string> pair in map)
             {
                 if (newcol.Contains(pair.Key))
@@ -290,7 +290,7 @@ namespace Org.IdentityConnectors.Exchange
         /// <param name="map">Replace mapping</param>
         /// <returns>ConnectorObject with replaced attributes</returns>        
         /// <exception cref="ArgumentNullException">If some of the params is null</exception>
-        internal static ConnectorObject ReplaceAttributes(ConnectorObject cobject, IList attsToGet, IDictionary<string, string> map)
+        internal static ConnectorObject ReplaceAttributes(ConnectorObject cobject, ICollection<string> attsToGet, IDictionary<string, string> map)
         {
             Assertions.NullCheck(cobject, "cobject");
             Assertions.NullCheck(map, "map");
