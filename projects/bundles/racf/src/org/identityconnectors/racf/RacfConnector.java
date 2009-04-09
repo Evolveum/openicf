@@ -193,7 +193,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                 attribute = AttributeBuilder.build(ATTR_CL_EXPIRED, attribute.getValue());
             } 
 
-            if (attribute.is(Name.NAME)) {
+            if (attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
                 commandLineAttrs.add(attribute);
                 ldapAttrs.add(attribute);
             } if (attribute.getName().contains(SEPARATOR)) {
@@ -413,8 +413,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             if (!newGroups.contains(currentGroup)) {
                 // Group is being eliminated
                 //
-                String connectionName = "racfuserid="+name+"+racfgroupid="+currentGroup+
-                ",profileType=connect,"+_configuration.getSuffix();
+                String connectionName = createConnectionId(name, currentGroup);
                 delete(RACF_CONNECTION, new Uid(connectionName), null);
             }
         }
@@ -423,8 +422,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             if (!currentGroups.contains(newGroup)) {
                 // Group is being added
                 //
-                String connectionName = "racfuserid="+name+"+racfgroupid="+newGroup+
-                ",profileType=connect,"+_configuration.getSuffix();
+                String connectionName = createConnectionId(name, (String)newGroup);
                 Set<Attribute> attributes = new HashSet<Attribute>();
                 attributes.add(AttributeBuilder.build(Name.NAME, connectionName));
                 create(RACF_CONNECTION, attributes, new OperationOptions(new HashMap<String, Object>()));
@@ -432,15 +430,18 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         }
     }
 
+    private String createConnectionId(String name, String currentGroup) {
+        String connectionName = "racfuserid="+name+"+racfgroupid="+
+            "racfid="+currentGroup+",profileType=connect,"+_configuration.getSuffix();
+        return connectionName;
+    }
+
     void setGroupMembershipsForGroups(String name, Attribute members) {
         List<Object> newMembers = members.getValue(); 
         List<String> currentMembers = getMembersOfGroup(name);
         for (String currentMember : currentMembers) {
             if (!newMembers.contains(currentMember)) {
-                // Member is being eliminated
-                //
-                String connectionName = "racfuserid="+currentMember+"+racfgroupid="+name+
-                ",profileType=connect,"+_configuration.getSuffix();
+                String connectionName = createConnectionId(currentMember, name);
                 delete(RACF_CONNECTION, new Uid(connectionName), null);
             }
         }
@@ -449,8 +450,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             if (!currentMembers.contains(newMember)) {
                 // Member is being added
                 //
-                String connectionName = "racfuserid="+newMember+"+racfgroupid="+name+
-                ",profileType=connect,"+_configuration.getSuffix();
+                String connectionName = createConnectionId((String)newMember, name);
                 Set<Attribute> attributes = new HashSet<Attribute>();
                 attributes.add(AttributeBuilder.build(Name.NAME, connectionName));
                 create(RACF_CONNECTION, attributes, new OperationOptions(new HashMap<String, Object>()));
