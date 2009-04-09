@@ -22,8 +22,9 @@
  */
 package org.identityconnectors.racf;
 
-import static org.identityconnectors.racf.RacfConstants.ATTR_LDAP_PASSWORD;
+import static org.identityconnectors.racf.RacfConstants.*;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -39,6 +40,7 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 
+import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
@@ -60,7 +62,7 @@ class LdapUtil {
 
     private RacfConnector               _connector;
     private Schema                      _schema;
-    
+
     public LdapUtil(RacfConnector connector) {
         _connector = connector;
         _schema = _connector.schema();
@@ -221,7 +223,7 @@ class LdapUtil {
             filterText = filter;
         return filterText;
     }
-    
+
     public Uid updateViaLdap(ObjectClass objclass, Set<Attribute> attrs) {
         Uid uid = AttributeUtil.getUidAttribute(attrs);
         if (uid!=null) {
@@ -236,7 +238,7 @@ class LdapUtil {
         }
         return uid;
     }
-    
+
 
     protected void addObjectClass(ObjectClass objectClass, Set<Attribute> attrs) {
         if (objectClass.equals(ObjectClass.ACCOUNT))
@@ -254,7 +256,8 @@ class LdapUtil {
                 accountInfo = objectClassInfo;
         }
         Set<AttributeInfo> attributeInfos = accountInfo.getAttributeInfo();
-
+        List<Object> racfAttributes = new LinkedList<Object>();
+        boolean setRacfAttributes = false;
         // Go through, and validate the attributes.
         //
         for (Attribute attribute : attributes) {
@@ -266,8 +269,8 @@ class LdapUtil {
                 // TODO: skip this for now
                 //
             } else if (attribute.is(RacfConstants.ATTR_LDAP_ATTRIBUTES)) {
-                // TODO: skip this for now
-                //
+                racfAttributes.addAll(attribute.getValue());
+                setRacfAttributes = true;
             } else if (attribute.is(RacfConstants.ATTR_LDAP_AUTHORIZATION_DATE) ||
                     attribute.is(RacfConstants.ATTR_LDAP_PASSWORD_INTERVAL) ||
                     attribute.is(RacfConstants.ATTR_LDAP_RACF_ID) ||
@@ -283,6 +286,11 @@ class LdapUtil {
             } else if (attribute.is(OperationalAttributes.CURRENT_PASSWORD_NAME)) {
                 // Ignore current password
                 //
+            } else if (attribute.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)) {
+                //TODO: determine if this works in absence of setting password 
+                if (!AttributeUtil.getBooleanValue(attribute))
+                    racfAttributes.add("noExpired");
+                setRacfAttributes = true;
             } else if (attribute.is(OperationalAttributes.PASSWORD_NAME)) {
                 // remap password
                 //
@@ -290,7 +298,10 @@ class LdapUtil {
                 if (value==null || value.size()!=1) {
                     throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.MUST_BE_SINGLE_VALUE));
                 }
-                basicAttributes.put(ATTR_LDAP_PASSWORD, value.get(0));
+                GuardedString password = AttributeUtil.getGuardedStringValue(attribute);
+                GuardedStringAccessor accessor = new GuardedStringAccessor();
+                password.access(accessor);
+                basicAttributes.put(ATTR_LDAP_PASSWORD, new String(accessor.getArray()));
             } else {
                 AttributeInfo attributeInfo = getAttributeInfo(attributeInfos, attributeName);
                 if (attributeInfo==null)
@@ -299,11 +310,14 @@ class LdapUtil {
                     basicAttributes.put(attributeName, attribute.getValue());
                 else
                     basicAttributes.put(attributeName, AttributeUtil.getSingleValue(attribute));
-            }    
+            }
         }
+        if (setRacfAttributes)
+            basicAttributes.put(ATTR_LDAP_ATTRIBUTES, racfAttributes);
+
         return basicAttributes;
     }
-    
+
     private AttributeInfo getAttributeInfo(Set<AttributeInfo> attributeInfos, String name) {
         for (AttributeInfo attributeInfo: attributeInfos) {
             if (attributeInfo.getName().equalsIgnoreCase(name))
@@ -312,4 +326,20 @@ class LdapUtil {
         return null;
     }
 
+    private static class GuardedStringAccessor implements GuardedString.Accessor {
+        private char[] _array;
+
+        public void access(char[] clearChars) {
+            _array = new char[clearChars.length];
+            System.arraycopy(clearChars, 0, _array, 0, _array.length);
+        }
+
+        public char[] getArray() {
+            return _array;
+        }
+
+        public void clear() {
+            Arrays.fill(_array, 0, _array.length, ' ');
+        }
+    }
 }

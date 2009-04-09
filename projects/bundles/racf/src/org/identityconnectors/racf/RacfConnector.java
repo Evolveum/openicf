@@ -188,9 +188,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                 else
                     attribute = AttributeBuilder.build(ATTR_CL_PASSWORD_INTERVAL, value);
             } else if (attribute.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)) {
-                // Can't see a way to do this via LDAP
-                //
-                attribute = AttributeBuilder.build(ATTR_CL_EXPIRED, attribute.getValue());
+                if (isLdapConnectionAvailable())
+                    attribute = AttributeBuilder.build(ATTR_LDAP_ATTRIBUTES, attribute.getValue());
+                else
+                    attribute = AttributeBuilder.build(ATTR_CL_EXPIRED, attribute.getValue());
             } 
 
             if (attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
@@ -216,6 +217,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             } else if (attribute.equals(OperationalAttributes.PASSWORD_EXPIRED_NAME)) {
                 // Can't see a way to do this via LDAP
                 //
+                //TODO: racfattributes: noexpired
                 commandLineAttrs.add(ATTR_CL_EXPIRED);
             } else if (attribute.equals(Name.NAME)) {
                 commandLineAttrs.add(attribute);
@@ -779,11 +781,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             attributes.add(OperationalAttributeInfos.PASSWORD);
             attributes.add(PredefinedAttributeInfos.GROUPS);
             attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
-            
-            // Must be done via command line
-            //
-            if (!StringUtil.isBlank(_configuration.getUserName()))
-                attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
+            attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
     
             _accountAttributes = AttributeInfoUtil.toMap(attributes);
             schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
@@ -916,6 +914,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                 throw new ConnectorException(_configuration.getMessage(RacfMessages.CONNECTION_DEAD));
         }
     }
+    
 }
 /*
 private void processPasswordInterval(Map map) {
