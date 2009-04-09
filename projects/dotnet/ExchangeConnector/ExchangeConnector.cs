@@ -716,8 +716,9 @@ namespace Org.IdentityConnectors.Exchange
                 return cobject;
             }
 
-            IList<string> lattToGet = CollectionUtil.NewList(attToGet);
-            foreach (string att in lattToGet)
+            ICollection<string> lattToGet = CollectionUtil.NewCaseInsensitiveSet();
+            CollectionUtil.AddAll(lattToGet, attToGet);
+            foreach (string att in attToGet)
             {
                 if (cobject.GetAttributeByName(att) != null && att != AttDatabase)
                 {
