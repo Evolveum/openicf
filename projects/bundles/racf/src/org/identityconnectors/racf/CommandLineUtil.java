@@ -26,6 +26,8 @@ import static org.identityconnectors.racf.RacfConstants.*;
 
 import java.io.StringReader;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -50,6 +52,7 @@ import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.PredefinedAttributes;
 import org.identityconnectors.framework.common.objects.ScriptContext;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.patternparser.MapTransform;
@@ -78,6 +81,7 @@ class CommandLineUtil {
     
     private Map<String, MapTransform>   _segmentParsers;
     private final Pattern               _connectionPattern  = Pattern.compile("racfuserid=(.*)\\+racfgroupid=(.*),.*");
+    private final Pattern               _racfTimestamp = Pattern.compile("(\\d+)\\.(\\d+)(?:/(\\d+):(\\d+):(\\d+))?");
     private final ScriptExecutorFactory _groovyFactory;
     private RacfConnector               _connector;
 
@@ -793,6 +797,20 @@ class CommandLineUtil {
                     attributesToGet.contains(ATTR_CL_MASTER_CATALOG)) {
                 getCatalogAttributes(racfName, attributesFromCommandLine);
             }
+            // Last Access date must be converted
+            //
+            if (attributesFromCommandLine.containsKey(ATTR_CL_LAST_ACCESS)) {
+                Object value = attributesFromCommandLine.get(ATTR_CL_LAST_ACCESS);
+                Long converted = convertFromRacfTimestamp(value);
+                attributesFromCommandLine.put(PredefinedAttributes.LAST_LOGIN_DATE_NAME, converted);
+            }
+            // password change date must be converted
+            //
+            if (attributesFromCommandLine.containsKey(ATTR_CL_PASSDATE)) {
+                Object value = attributesFromCommandLine.get(ATTR_CL_PASSDATE);
+                Long converted = convertFromRacfTimestamp(value);
+                attributesFromCommandLine.put(PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME, converted);
+            }
             // Default group name must be a stringified Uid
             //
             if (attributesFromCommandLine.containsKey(ATTR_CL_DFLTGRP)) {
@@ -854,6 +872,40 @@ class CommandLineUtil {
             }
         }
         return attributesFromCommandLine;
+    }
+    
+    private Long convertFromRacfTimestamp(Object value) {
+        if (value==null)
+            return null;
+        
+        Matcher matcher = _racfTimestamp.matcher(value.toString());
+        if (matcher.matches()) {
+            String year    = matcher.group(1);
+            String day     = matcher.group(2);
+            String hours   = matcher.group(3);
+            String minutes = matcher.group(4);
+            String seconds = matcher.group(5);
+            
+            int yearValue = Integer.parseInt(year)+2000;
+            int dayValue  = Integer.parseInt(day);
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(Calendar.YEAR, yearValue);
+            calendar.set(Calendar.DAY_OF_YEAR, dayValue);
+            
+            if (hours!=null) {
+                int hoursValue   = Integer.parseInt(hours);
+                int minutesValue = Integer.parseInt(minutes);
+                int secondsValue = Integer.parseInt(seconds);
+                calendar.set(Calendar.HOUR_OF_DAY, hoursValue);
+                calendar.set(Calendar.MINUTE, minutesValue);
+                calendar.set(Calendar.SECOND, secondsValue);
+            }
+            Date date = calendar.getTime();
+            System.out.println("Date conversion:"+value+"->"+date);
+            return date.getTime();
+        } else {
+            return null;
+        }
     }
     
     private StringBuffer _buffer = new StringBuffer();

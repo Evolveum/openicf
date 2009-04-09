@@ -14,6 +14,7 @@
     <SubstituteTransform pattern='^$' substitute='NONE'/>
     <SplitTransform splitPattern='\s+'/>
   </PatternNode>
+  <PatternNode key='RACF*LAST ACCESS'   pattern='LAST-ACCESS=(\S+)'         optional='false' reset='false'/>
         //"  <PatternNode key='RACF*CLAUTH' pattern='CLASS AUTHORIZATIONS=([^\n]*(\s{23}.+\n)*)' optional='true' reset='false'>
         //"    <SubstituteTransform pattern='(.*)\s' substitute='$1'/>
         //"    <SplitTransform splitPattern='\s+'/>

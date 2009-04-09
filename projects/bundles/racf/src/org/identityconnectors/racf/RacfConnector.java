@@ -214,6 +214,16 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                     ldapAttrs.add(ATTR_LDAP_PASSWORD_INTERVAL);
                 else
                     commandLineAttrs.add(ATTR_CL_PASSWORD_INTERVAL);
+            } else if (attribute.equals(PredefinedAttributes.LAST_LOGIN_DATE_NAME)) {
+                if (isLdapConnectionAvailable())
+                    ldapAttrs.add(ATTR_LDAP_LAST_ACCESS);
+                else
+                    commandLineAttrs.add(ATTR_CL_LAST_ACCESS);
+            } else if (attribute.equals(PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME)) {
+                if (isLdapConnectionAvailable())
+                    ldapAttrs.add(ATTR_LDAP_PASSWORD_CHANGE);
+                else
+                    commandLineAttrs.add(ATTR_CL_PASSDATE);
             } else if (attribute.equals(OperationalAttributes.PASSWORD_EXPIRED_NAME)) {
                 // Can't see a way to do this via LDAP
                 //
@@ -637,6 +647,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             attributes.add(OperationalAttributeInfos.PASSWORD);
             attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
             attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
+            attributes.add(PredefinedAttributeInfos.LAST_LOGIN_DATE);
+            attributes.add(PredefinedAttributeInfos.LAST_PASSWORD_CHANGE_DATE);
     
             //TODO: need to make sure special attributes are supported
     
@@ -781,6 +793,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             attributes.add(OperationalAttributeInfos.PASSWORD);
             attributes.add(PredefinedAttributeInfos.GROUPS);
             attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
+            attributes.add(PredefinedAttributeInfos.LAST_LOGIN_DATE);
+            attributes.add(PredefinedAttributeInfos.LAST_PASSWORD_CHANGE_DATE);
             attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
     
             _accountAttributes = AttributeInfoUtil.toMap(attributes);
