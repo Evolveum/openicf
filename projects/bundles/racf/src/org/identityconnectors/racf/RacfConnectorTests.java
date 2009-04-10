@@ -289,38 +289,47 @@ public class RacfConnectorTests {
                 List<Object> attributes = new LinkedList<Object>();
                 attributes.add("SPECIAL");
                 attributes.add("OPERATIONS");
-                changed.add(AttributeBuilder.build("RACF*ATTRIBUTES", attributes));
+                Attribute attributesAttr = AttributeBuilder.build("RACF*ATTRIBUTES", attributes);
+                changed.add(attributesAttr);
                 changed.add(user.getUid());
                 changed.add(user.getName());
                 connector.update(ObjectClass.ACCOUNT, changed, null);
-                displayConnectorObject(getUser(TEST_USER, connector));
+                ConnectorObject object = getUser(TEST_USER, connector);
+                assertAttribute(attributesAttr, object);
             }
             {
                 Set<Attribute> changed = new HashSet<Attribute>();
                 //
+                Attribute disableDate = AttributeBuilder.build(OperationalAttributes.DISABLE_DATE_NAME, new Date("11/12/2010").getTime());
+                changed.add(disableDate);
+                changed.add(user.getUid());
+                changed.add(user.getName());
+                connector.update(ObjectClass.ACCOUNT, changed, null);
+                ConnectorObject object = getUser(TEST_USER, connector);
+                assertAttribute(disableDate, object);
+            }
+            {
+                Set<Attribute> changed = new HashSet<Attribute>();
+                //
+                Attribute size = AttributeBuilder.build(ATTR_CL_TSO_SIZE, new Integer(1000)); 
+                changed.add(size);
+                changed.add(user.getUid());
+                changed.add(user.getName());
+                connector.update(ObjectClass.ACCOUNT, changed, null);
+                ConnectorObject object = getUser(TEST_USER, connector);
+                assertAttribute(size, object);
+            }
+            {
+                Set<Attribute> changed = new HashSet<Attribute>();
+                //
+                Attribute enableDate = AttributeBuilder.build(OperationalAttributes.ENABLE_DATE_NAME, new Date("11/15/2010").getTime());
                 changed.add(AttributeBuilder.build(getInstallationDataAttributeName(), "modified data"));
-                changed.add(AttributeBuilder.build(OperationalAttributes.DISABLE_DATE_NAME, new Date("11/12/2010").getTime()));
+                changed.add(enableDate);
                 changed.add(user.getUid());
                 changed.add(user.getName());
                 connector.update(ObjectClass.ACCOUNT, changed, null);
-                displayConnectorObject(getUser(TEST_USER, connector));
-            }
-            {
-                Set<Attribute> changed = new HashSet<Attribute>();
-                //
-                changed.add(AttributeBuilder.build(ATTR_CL_TSO_SIZE, new Integer(1000)));
-                changed.add(user.getUid());
-                changed.add(user.getName());
-                connector.update(ObjectClass.ACCOUNT, changed, null);
-            }
-            {
-                Set<Attribute> changed = new HashSet<Attribute>();
-                //
-                changed.add(AttributeBuilder.build(getInstallationDataAttributeName(), "modified data"));
-                changed.add(AttributeBuilder.build(OperationalAttributes.ENABLE_DATE_NAME, new Date("11/15/2010").getTime()));
-                changed.add(user.getUid());
-                changed.add(user.getName());
-                connector.update(ObjectClass.ACCOUNT, changed, null);
+                ConnectorObject object = getUser(TEST_USER, connector);
+                assertAttribute(enableDate, object);
             }
             {
                 Set<Attribute> changed = new HashSet<Attribute>();
@@ -349,6 +358,18 @@ public class RacfConnectorTests {
             displayConnectorObject(getUser("IDM01", connector));
         } finally {
             connector.dispose();
+        }
+    }
+    void assertAttribute(Attribute attribute, ConnectorObject object) {
+        if (attribute.getName().equals(ATTR_CL_ATTRIBUTES)) {
+            Set set1 = new HashSet(attribute.getValue());
+            Attribute attribute2 = object.getAttributeByName(attribute.getName());
+            Assert.assertNotNull(attribute2);
+            Set set2 = new HashSet(attribute.getValue());
+            Assert.assertEquals(set1, set2);
+            // must compare as sets
+        } else {
+            Assert.assertEquals(object.getAttributeByName(attribute.getName()), attribute);
         }
     }
     
