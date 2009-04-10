@@ -25,6 +25,8 @@ package org.identityconnectors.racf;
 import static org.identityconnectors.racf.RacfConstants.*;
 
 import java.io.StringReader;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -84,6 +86,9 @@ class CommandLineUtil {
     private final Pattern               _connectionPattern  = Pattern.compile("racfuserid=(.*)\\+racfgroupid=(.*),.*");
     private final Pattern               _racfTimestamp = Pattern.compile("(\\d+)\\.(\\d+)(?:/(\\d+):(\\d+):(\\d+))?");
     private final ScriptExecutorFactory _groovyFactory;
+    private final SimpleDateFormat      _resumeRevokeFormat = new SimpleDateFormat("MMMM dd, yyyy");
+    private final SimpleDateFormat      _dateFormat = new SimpleDateFormat("MM/dd/yy");
+    
     private RacfConnector               _connector;
 
     public CommandLineUtil(RacfConnector connector) {
@@ -176,16 +181,6 @@ class CommandLineUtil {
         }
     }
     
-    // TODO: It is possible for a command output to end with
-    //      READY
-    //      ***
-    // If the command ends at the bottom of the screen.
-    // I haven't yet found out how to work around this.
-    // But see SYNCH LOST/SYNCH RECOVERED, which works
-    // for Hod and Wrq.
-    //
-    private boolean synchLost = false;
-    
     public String getCommandOutput(CharArrayBuffer buffer) {
         char[] command = buffer.getArray();
         try {
@@ -263,6 +258,8 @@ class CommandLineUtil {
         Uid uid = (Uid)attributes.remove(Uid.NAME);
         Attribute expired = attributes.remove(ATTR_CL_EXPIRED);
         Attribute enabled = attributes.remove(ATTR_CL_ENABLED);
+        Attribute enableDate = attributes.remove(ATTR_CL_RESUME_DATE);
+        Attribute disableDate = attributes.remove(ATTR_CL_REVOKE_DATE);
         Attribute attributesAttribute = attributes.remove(ATTR_CL_ATTRIBUTES);
         
         // Build up a map containing the segment attribute values
@@ -318,6 +315,16 @@ class CommandLineUtil {
                 commandAttributes.append(" RESUME");
             else
                 commandAttributes.append(" REVOKE");
+        }
+        if (enableDate!=null) {
+            Date date = new Date(AttributeUtil.getLongValue(enableDate));
+            String dateValue = _dateFormat.format(date);
+            commandAttributes.append(" RESUME("+dateValue+")");
+        }
+        if (disableDate!=null) {
+            Date date = new Date(AttributeUtil.getLongValue(disableDate));
+            String dateValue = _dateFormat.format(date);
+            commandAttributes.append(" REVOKE("+dateValue+")");
         }
         char[] result = commandAttributes.getArray();
         commandAttributes.clear();
@@ -863,6 +870,20 @@ class CommandLineUtil {
                 Boolean expired = "00.000".equals(value);
                 attributesFromCommandLine.put(OperationalAttributes.PASSWORD_EXPIRED_NAME, expired);
             }
+            // Revoke date must be converted
+            //
+            if (attributesFromCommandLine.containsKey(ATTR_CL_REVOKE_DATE)) {
+                Object value = attributesFromCommandLine.get(ATTR_CL_REVOKE_DATE);
+                Long converted = convertFromResumeRevokeFormat(value);
+                attributesFromCommandLine.put(OperationalAttributes.DISABLE_DATE_NAME, converted);
+            }
+            // Resume date must be converted
+            //
+            if (attributesFromCommandLine.containsKey(ATTR_CL_RESUME_DATE)) {
+                Object value = attributesFromCommandLine.get(ATTR_CL_RESUME_DATE);
+                Long converted = convertFromResumeRevokeFormat(value);
+                attributesFromCommandLine.put(OperationalAttributes.ENABLE_DATE_NAME, converted);
+            }
             // Default group name must be a stringified Uid
             //
             if (attributesFromCommandLine.containsKey(ATTR_CL_DFLTGRP)) {
@@ -924,6 +945,15 @@ class CommandLineUtil {
             }
         }
         return attributesFromCommandLine;
+    }
+    
+    
+    private Long convertFromResumeRevokeFormat(Object value) {
+        try {
+            return _resumeRevokeFormat.parse(value.toString()).getTime();
+        } catch (ParseException pe) {
+            return null;
+        }
     }
     
     private Long convertFromRacfTimestamp(Object value) {

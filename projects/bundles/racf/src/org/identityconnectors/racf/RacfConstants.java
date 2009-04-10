@@ -175,6 +175,8 @@ public interface RacfConstants {
     public static final String ATTR_CL_ENABLED                  = "RACF*ENABLED";
     public static final String ATTR_CL_PASSWORD                 = "RACF*PASSWORD";
     public static final String ATTR_CL_LAST_ACCESS              = "RACF*LAST ACCESS";
+    public static final String ATTR_CL_REVOKE_DATE              = "RACF*REVOKE DATE";
+    public static final String ATTR_CL_RESUME_DATE              = "RACF*RESUME DATE";
     public static final String ATTR_CL_PASSWORD_INTERVAL        = "RACF*PASSWORD INTERVAL";
     public static final String ATTR_CL_PASSDATE                 = "RACF*PASSDATE";
     public static final String ATTR_CL_TSO_DELETE_SEGMENT       = "TSO*Delete Segment";

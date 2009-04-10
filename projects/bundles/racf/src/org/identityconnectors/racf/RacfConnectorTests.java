@@ -26,6 +26,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.MessageFormat;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -289,6 +290,26 @@ public class RacfConnectorTests {
                 attributes.add("SPECIAL");
                 attributes.add("OPERATIONS");
                 changed.add(AttributeBuilder.build("RACF*ATTRIBUTES", attributes));
+                changed.add(user.getUid());
+                changed.add(user.getName());
+                connector.update(ObjectClass.ACCOUNT, changed, null);
+                displayConnectorObject(getUser(TEST_USER, connector));
+            }
+            {
+                Set<Attribute> changed = new HashSet<Attribute>();
+                //
+                changed.add(AttributeBuilder.build(getInstallationDataAttributeName(), "modified data"));
+                changed.add(AttributeBuilder.build(OperationalAttributes.DISABLE_DATE_NAME, new Date("11/12/2010").getTime()));
+                changed.add(user.getUid());
+                changed.add(user.getName());
+                connector.update(ObjectClass.ACCOUNT, changed, null);
+                displayConnectorObject(getUser(TEST_USER, connector));
+            }
+            {
+                Set<Attribute> changed = new HashSet<Attribute>();
+                //
+                changed.add(AttributeBuilder.build(getInstallationDataAttributeName(), "modified data"));
+                changed.add(AttributeBuilder.build(OperationalAttributes.ENABLE_DATE_NAME, new Date("11/15/2010").getTime()));
                 changed.add(user.getUid());
                 changed.add(user.getName());
                 connector.update(ObjectClass.ACCOUNT, changed, null);

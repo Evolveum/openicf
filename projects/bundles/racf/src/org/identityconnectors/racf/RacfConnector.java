@@ -192,6 +192,16 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                     attribute = AttributeBuilder.build(ATTR_LDAP_ATTRIBUTES, attribute.getValue());
                 else
                     attribute = AttributeBuilder.build(ATTR_CL_EXPIRED, attribute.getValue());
+            } else if (attribute.is(OperationalAttributes.DISABLE_DATE_NAME)) {
+                if (isLdapConnectionAvailable())
+                    attribute = AttributeBuilder.build(ATTR_LDAP_REVOKE_DATE, attribute.getValue());
+                else
+                    attribute = AttributeBuilder.build(ATTR_CL_REVOKE_DATE, attribute.getValue());
+            } else if (attribute.is(OperationalAttributes.ENABLE_DATE_NAME)) {
+                if (isLdapConnectionAvailable())
+                    attribute = AttributeBuilder.build(ATTR_LDAP_RESUME_DATE, attribute.getValue());
+                else
+                    attribute = AttributeBuilder.build(ATTR_CL_RESUME_DATE, attribute.getValue());
             } else if (attribute.is(OperationalAttributes.ENABLE_NAME)) {
                 if (isLdapConnectionAvailable())
                     ; //TODO: attribute = AttributeBuilder.build(ATTR_LDAP_ENABLED, attribute.getValue());
@@ -234,6 +244,16 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                     ldapAttrs.add(ATTR_LDAP_PASSWORD_CHANGE);
                 else
                     commandLineAttrs.add(ATTR_CL_PASSDATE);
+            } else if (attribute.equals(OperationalAttributes.DISABLE_DATE_NAME)) {
+                if (isLdapConnectionAvailable())
+                    ldapAttrs.add(ATTR_LDAP_REVOKE_DATE);
+                else
+                    commandLineAttrs.add(ATTR_CL_REVOKE_DATE);
+            } else if (attribute.equals(OperationalAttributes.ENABLE_DATE_NAME)) {
+                if (isLdapConnectionAvailable())
+                    ldapAttrs.add(ATTR_LDAP_RESUME_DATE);
+                else
+                    commandLineAttrs.add(ATTR_CL_RESUME_DATE);
             } else if (attribute.equals(OperationalAttributes.PASSWORD_EXPIRED_NAME)) {
                 // Can't see a way to do this via LDAP
                 //
@@ -655,6 +675,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             // Operational Attributes
             //
             attributes.add(OperationalAttributeInfos.ENABLE);
+            attributes.add(OperationalAttributeInfos.ENABLE_DATE);
+            attributes.add(OperationalAttributeInfos.DISABLE_DATE);
             attributes.add(OperationalAttributeInfos.PASSWORD);
             attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
             attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
