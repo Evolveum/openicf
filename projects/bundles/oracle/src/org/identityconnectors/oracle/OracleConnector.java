@@ -6,10 +6,14 @@ package org.identityconnectors.oracle;
 import java.sql.Connection;
 import java.util.*;
 
+import org.identityconnectors.common.Pair;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.objects.*;
+import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
+import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.*;
 import org.identityconnectors.framework.spi.operations.*;
 
@@ -20,16 +24,14 @@ import org.identityconnectors.framework.spi.operations.*;
 @ConnectorClass(configurationClass=OracleConfiguration.class,
         displayNameKey = "oracle.connector",
         messageCatalogPaths={"org/identityconnectors/dbcommon/Messages","org/identityconnectors/oracle/Messages"})
-public class OracleConnector implements PoolableConnector, AuthenticateOp,CreateOp,DeleteOp,UpdateOp,UpdateAttributeValuesOp,AttributeNormalizer {
+public class OracleConnector implements PoolableConnector, AuthenticateOp,
+		CreateOp, DeleteOp, UpdateOp, UpdateAttributeValuesOp,
+		SearchOp<Pair<String, FilterWhereBuilder>>, SchemaOp, AttributeNormalizer {
     private Connection adminConn;
     private OracleConfiguration cfg;
     private final static Log log = Log.getLog(OracleConnector.class);
     
     static final String ORACLE_AUTHENTICATION_ATTR_NAME = "oracleAuthentication";
-    static final String ORACLE_AUTH_LOCAL = "LOCAL";
-    static final String ORACLE_AUTH_EXTERNAL = "EXTERNAL";
-    static final String ORACLE_AUTH_GLOBAL = "GLOBAL";
-    static final String NO_CASCADE = "noCascade";
     static final String ORACLE_GLOBAL_ATTR_NAME = "oracleGlobalName";
     static final String ORACLE_ROLES_ATTR_NAME = "oracleRoles";
     static final String ORACLE_PRIVS_ATTR_NAME = "oraclePrivs";
@@ -38,6 +40,11 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,Create
     static final String ORACLE_TEMP_TS_ATTR_NAME = "oracleTempTS";
     static final String ORACLE_DEF_TS_QUOTA_ATTR_NAME = "oracleDefaultTSQuota";
     static final String ORACLE_TEMP_TS_QUOTA_ATTR_NAME = "oracleTempTSQuota";
+    
+    static final String ORACLE_AUTH_LOCAL = "LOCAL";
+    static final String ORACLE_AUTH_EXTERNAL = "EXTERNAL";
+    static final String ORACLE_AUTH_GLOBAL = "GLOBAL";
+    static final String NO_CASCADE = "noCascade";
     
     private static final Map<String,OracleUserAttribute> attributeMapping = new HashMap<String, OracleUserAttribute>();
     static {
@@ -138,6 +145,35 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,Create
     public Uid removeAttributeValues(ObjectClass objclass, Uid uid, Set<Attribute> valuesToRemove, OperationOptions options) {
         return new OracleOperationUpdate(cfg, adminConn, log).removeAttributeValues(objclass, uid, valuesToRemove, options);
     }
+
+	@Override
+	public FilterTranslator<Pair<String, FilterWhereBuilder>> createFilterTranslator(ObjectClass oclass, OperationOptions options) {
+		return new OracleOperationSearch(cfg, adminConn, log).createFilterTranslator(oclass, options);
+	}
+
+	@Override
+	public void executeQuery(ObjectClass oclass, Pair<String, FilterWhereBuilder> pair, ResultsHandler handler, OperationOptions options) {
+		new OracleOperationSearch(cfg, adminConn, log).executeQuery(oclass, pair, handler, options);
+	}
+
+	@Override
+	public Schema schema() {
+        Set<AttributeInfo> attrInfoSet = new HashSet<AttributeInfo>();
+        attrInfoSet.add(Name.INFO);
+        attrInfoSet.add(OperationalAttributeInfos.PASSWORD);
+        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_AUTHENTICATION_ATTR_NAME,String.class,EnumSet.of(Flags.REQUIRED)));
+        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_GLOBAL_ATTR_NAME,String.class));
+        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_ROLES_ATTR_NAME,String.class,EnumSet.of(Flags.MULTIVALUED)));
+        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_PRIVS_ATTR_NAME,String.class,EnumSet.of(Flags.MULTIVALUED)));
+        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_PROFILE_ATTR_NAME,String.class));
+        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_DEF_TS_ATTR_NAME,String.class));
+        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_TEMP_TS_ATTR_NAME,String.class));
+        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,String.class));
+        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_TEMP_TS_QUOTA_ATTR_NAME,String.class));
+        SchemaBuilder schemaBld = new SchemaBuilder(getClass());
+        schemaBld.defineObjectClass(ObjectClass.ACCOUNT_NAME, attrInfoSet);
+        return schemaBld.build();
+	}
     
     
 

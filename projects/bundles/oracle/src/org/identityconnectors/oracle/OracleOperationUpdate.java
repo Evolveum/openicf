@@ -76,7 +76,7 @@ class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp,
         List<String> roles = OracleConnectorHelper.castList(AttributeUtil.find(ORACLE_ROLES_ATTR_NAME, valuesToAdd), String.class);
         List<String> privileges = OracleConnectorHelper.castList(AttributeUtil.find(ORACLE_PRIVS_ATTR_NAME, valuesToAdd), String.class);
         List<String> grantRolesStatements = new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantRolesSQL(uid.getUidValue(), roles);
-        List<String> grantPrivilegesStatements = new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantRolesSQL(uid.getUidValue(), privileges);
+        List<String> grantPrivilegesStatements = new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantPrivilegesSQL(uid.getUidValue(), privileges);
         try{
 	        for(String grant : grantRolesStatements){
 	        	SQLUtil.executeUpdateStatement(adminConn, grant);
@@ -99,7 +99,7 @@ class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp,
         List<String> roles = OracleConnectorHelper.castList(AttributeUtil.find(ORACLE_ROLES_ATTR_NAME, valuesToRemove), String.class);
         List<String> privileges = OracleConnectorHelper.castList(AttributeUtil.find(ORACLE_PRIVS_ATTR_NAME, valuesToRemove), String.class);
         List<String> revokeRolesStatements = new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokeRoles(uid.getUidValue(), roles);
-        List<String> revokePrivilegesStatements = new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokeRoles(uid.getUidValue(), privileges);
+        List<String> revokePrivilegesStatements = new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokePrivileges(uid.getUidValue(), privileges);
         try{
 	        for(String revoke : revokeRolesStatements){
 	        	SQLUtil.executeUpdateStatement(adminConn, revoke);

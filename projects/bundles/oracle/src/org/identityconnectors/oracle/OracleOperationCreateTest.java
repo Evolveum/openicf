@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.hamcrest.core.AllOf;
+
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
@@ -324,7 +324,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
     /** Test create user with expired password 
      * @throws SQLException */
     @Test
-    public void testCreateUsersExpired() throws SQLException{
+    public void testCreateUserPasswordExpired() throws SQLException{
         Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
         Attribute name = new Name(TEST_USER);
         GuardedString password = new GuardedString("hello".toCharArray());
@@ -337,7 +337,6 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         assertNotNull(record);
         assertEqualsIgnoreCase(TEST_USER, record.userName);
         assertNull(record.expireDate);
-        assertNull(record.externalName);
         assertEquals("EXPIRED",record.status);
     }
     
@@ -398,7 +397,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
      * Test create user with profiles
      * @throws SQLException
      */
-    @Test
+	@Test
     public void testCreateWithPrivileges() throws SQLException{
         Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
         Attribute name = new Name(TEST_USER);
@@ -417,8 +416,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         OracleRolePrivReader roleReader = new OracleRolePrivReader(connector.getAdminConnection());
         final List<String> privRead = roleReader.readPrivileges(uid.getUidValue());
         Assert.assertThat(privRead, JUnitMatchers.hasItem("CREATE SESSION"));
-        Assert.assertThat(privRead, JUnitMatchers.hasItem(new AllOf(Arrays
-				.asList(JUnitMatchers.containsString("SELECT ON"),JUnitMatchers.containsString("MYTABLE")))));
+        Assert.assertThat(privRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUser() + ".MYTABLE"));
     }
     
 

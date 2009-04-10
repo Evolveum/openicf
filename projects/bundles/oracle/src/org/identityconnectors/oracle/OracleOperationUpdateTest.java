@@ -9,7 +9,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.hamcrest.core.AllOf;
+
+import org.hamcrest.core.IsNot;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
@@ -174,9 +175,7 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         String role = "testrole";
         final OracleCaseSensitivitySetup cs = testConf.getCSSetup();
         try{
-            SQLUtil.executeUpdateStatement(connector.getAdminConnection(),
-                    "drop role "
-                            + cs.normalizeAndFormatToken(OracleUserAttribute.ROLE, role));
+            SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "drop role " + cs.normalizeAndFormatToken(OracleUserAttribute.ROLE, role));
         }catch(SQLException e){}
         SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "create role " + cs.normalizeAndFormatToken(OracleUserAttribute.ROLE,role));
         Attribute roles = AttributeBuilder.build(OracleConnector.ORACLE_ROLES_ATTR_NAME, Arrays.asList(role));
@@ -185,7 +184,7 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         Assert.assertThat(rolesRead, JUnitMatchers.hasItem(cs.normalizeToken(OracleUserAttribute.ROLE,role)));
 }
     
-    @Test
+	@Test
     public void testUpdatePrivileges() throws SQLException{
         try{
             SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop table MYTABLE");
@@ -195,19 +194,137 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         Attribute privileges = AttributeBuilder.build(OracleConnector.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION","SELECT ON MYTABLE");
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(privileges), null);
         List<String> privilegesRead = new OracleRolePrivReader(connector.getAdminConnection()).readPrivileges(uid.getUidValue());
-        Assert.assertThat(privilegesRead, JUnitMatchers.hasItem(new AllOf(Arrays
-				.asList(JUnitMatchers.containsString("SELECT ON"),JUnitMatchers.containsString("MYTABLE")))));
+        Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUser() + ".MYTABLE"));
+        Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("CREATE SESSION"));
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop table mytable");
     }
     
-    public void testUpdateEnable(){
-    	//TODO
+    @Test
+    public void testUpdateEnable() throws SQLException{
+    	//new created user will be enabled
+    	UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
+    	assertEquals("OPEN",record.status);
+    	Attribute enable = AttributeBuilder.build(OperationalAttributes.ENABLE_NAME, Boolean.FALSE);
+    	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(enable), null);
+    	record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
+    	assertNotNull(record);
+    	assertEquals("LOCKED",record.status);
+    	enable = AttributeBuilder.build(OperationalAttributes.ENABLE_NAME, Boolean.TRUE);
+    	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(enable), null);
+    	record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
+    	assertNotNull(record);
+    	assertEquals("OPEN",record.status);
     }
     
-    public void testUpdateExpirePasword(){
-    	//TODO
+    @Test
+    public void testUpdateExpirePasword() throws SQLException{
+    	Attribute expirePassword = AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME,Boolean.TRUE);
+    	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(expirePassword), null);
+    	UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
+    	assertNotNull(record);
+        assertEquals("EXPIRED",record.status);
     }
     
+    @Test
+    public void testAddAttributeValuesPrivileges() throws SQLException{
+    	try{
+            SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop table MYTABLE1");
+        }catch(SQLException e){}
+        try{
+            SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop table MYTABLE2");
+        }catch(SQLException e){}
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create table MYTABLE1(id number)");
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create table MYTABLE2(id number)");
+        Attribute privileges = AttributeBuilder.build(OracleConnector.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION","SELECT ON MYTABLE1");
+        facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(privileges), null);
+        List<String> privilegesRead = new OracleRolePrivReader(connector.getAdminConnection()).readPrivileges(uid.getUidValue());
+        Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUser() + ".MYTABLE1"));
+        Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("CREATE SESSION"));
+        Assert.assertThat(privilegesRead, new IsNot<Iterable<String>>(JUnitMatchers.hasItem("SELECT ON " + testConf.getUser() + ".MYTABLE2")));
+        privileges = AttributeBuilder.build(OracleConnector.ORACLE_PRIVS_ATTR_NAME,"SELECT ON MYTABLE2");
+        facade.addAttributeValues(ObjectClass.ACCOUNT, uid, Collections.singleton(privileges), null);
+        privilegesRead = new OracleRolePrivReader(connector.getAdminConnection()).readPrivileges(uid.getUidValue());
+        Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUser() + ".MYTABLE1"));
+        Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("CREATE SESSION"));
+        Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUser() + ".MYTABLE2"));
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop table MYTABLE1");
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop table MYTABLE2");
+    }
     
+    @Test
+    public void testAddAttributeValuesRoles() throws SQLException{
+        try{
+            SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "drop role ROLE1");
+        }catch(SQLException e){}
+        try{
+            SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "drop role ROLE2");
+        }catch(SQLException e){}
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create role ROLE1");
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create role ROLE2");
+        Attribute rolesAttr = AttributeBuilder.build(OracleConnector.ORACLE_ROLES_ATTR_NAME,"ROLE1");
+        facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(rolesAttr), null);
+        List<String> rolesRead = new OracleRolePrivReader(connector.getAdminConnection()).readRoles(uid.getUidValue());
+        Assert.assertThat(rolesRead, JUnitMatchers.hasItem("ROLE1"));
+        Assert.assertThat(rolesRead, new IsNot<Iterable<String>>(JUnitMatchers.hasItem("ROLE2")));
+        rolesAttr = AttributeBuilder.build(OracleConnector.ORACLE_ROLES_ATTR_NAME,"ROLE2");
+        facade.addAttributeValues(ObjectClass.ACCOUNT, uid, Collections.singleton(rolesAttr), null);
+        rolesRead = new OracleRolePrivReader(connector.getAdminConnection()).readRoles(uid.getUidValue());
+        Assert.assertThat(rolesRead, JUnitMatchers.hasItem("ROLE1"));
+        Assert.assertThat(rolesRead, JUnitMatchers.hasItem("ROLE2"));
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop role role1");
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop role role2");
+    }
+    
+    @Test
+    public void testRemoveAttributeValuesPrivileges() throws SQLException{
+    	try{
+            SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop table MYTABLE1");
+        }catch(SQLException e){}
+        try{
+            SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop table MYTABLE2");
+        }catch(SQLException e){}
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create table MYTABLE1(id number)");
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create table MYTABLE2(id number)");
+        Attribute privileges = AttributeBuilder.build(OracleConnector.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION","SELECT ON MYTABLE1","SELECT ON MYTABLE2");
+        facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(privileges), null);
+        List<String> privilegesRead = new OracleRolePrivReader(connector.getAdminConnection()).readPrivileges(uid.getUidValue());
+        Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUser() + ".MYTABLE1"));
+        Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUser() + ".MYTABLE2"));
+        Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("CREATE SESSION"));
+        privileges = AttributeBuilder.build(OracleConnector.ORACLE_PRIVS_ATTR_NAME,"SELECT ON MYTABLE1");
+        facade.removeAttributeValues(ObjectClass.ACCOUNT, uid, Collections.singleton(privileges), null);
+        privilegesRead = new OracleRolePrivReader(connector.getAdminConnection()).readPrivileges(uid.getUidValue());
+        Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUser() + ".MYTABLE2"));
+        Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("CREATE SESSION"));
+        Assert.assertThat(privilegesRead, new IsNot<Iterable<String>>(JUnitMatchers.hasItem("SELECT ON " + testConf.getUser() + ".MYTABLE1")));
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop table MYTABLE1");
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop table MYTABLE2");
+    	
+    }
+    
+    @Test
+    public void testRemoveAttributeValuesRoles() throws SQLException{
+        try{
+            SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "drop role ROLE1");
+        }catch(SQLException e){}
+        try{
+            SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "drop role ROLE2");
+        }catch(SQLException e){}
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create role ROLE1");
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create role ROLE2");
+        Attribute rolesAttr = AttributeBuilder.build(OracleConnector.ORACLE_ROLES_ATTR_NAME,"ROLE1","ROLE2");
+        facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(rolesAttr), null);
+        List<String> rolesRead = new OracleRolePrivReader(connector.getAdminConnection()).readRoles(uid.getUidValue());
+        Assert.assertThat(rolesRead, JUnitMatchers.hasItem("ROLE1"));
+        Assert.assertThat(rolesRead, JUnitMatchers.hasItem("ROLE2"));
+        rolesAttr = AttributeBuilder.build(OracleConnector.ORACLE_ROLES_ATTR_NAME,"ROLE1");
+        facade.removeAttributeValues(ObjectClass.ACCOUNT, uid, Collections.singleton(rolesAttr), null);
+        rolesRead = new OracleRolePrivReader(connector.getAdminConnection()).readRoles(uid.getUidValue());
+        Assert.assertThat(rolesRead, JUnitMatchers.hasItem("ROLE2"));
+        Assert.assertThat(rolesRead, new IsNot<Iterable<String>>(JUnitMatchers.hasItem("ROLE1")));
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop role role1");
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop role role2");
+    }
     
     
     

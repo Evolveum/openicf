@@ -3,10 +3,9 @@ package org.identityconnectors.oracle;
 import static org.junit.Assert.assertTrue;
 
 import java.sql.*;
-import java.util.Arrays;
 import java.util.List;
 
-import org.hamcrest.core.AllOf;
+
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.junit.*;
 import org.junit.matchers.JUnitMatchers;
@@ -20,13 +19,14 @@ public class OracleRolePrivReaderTest {
     private static Connection conn;
     private static OracleRolePrivReader privReader;
     private static OracleUserReader userReader;
+    private static OracleConfiguration cfg;
     
     /**
      * Setup connection
      */
     @BeforeClass
     public static void beforeClass(){
-        final OracleConfiguration cfg = OracleConfigurationTest.createSystemConfiguration();
+        cfg = OracleConfigurationTest.createSystemConfiguration();
         conn = cfg.createAdminConnection();
         privReader = new OracleRolePrivReader(conn);
         userReader = new OracleUserReader(conn);
@@ -70,8 +70,7 @@ public class OracleRolePrivReaderTest {
         SQLUtil.executeUpdateStatement(conn,"grant select on mytable to \"" + user + "\"");
         final List<String> readPrivileges = privReader.readPrivileges(user);
         Assert.assertThat(readPrivileges, JUnitMatchers.hasItem("CREATE SESSION"));
-        Assert.assertThat(readPrivileges, JUnitMatchers.hasItem(new AllOf(Arrays
-				.asList(JUnitMatchers.containsString("SELECT ON"),JUnitMatchers.containsString("MYTABLE")))));
+        Assert.assertThat(readPrivileges, JUnitMatchers.hasItem("SELECT ON " + cfg.getUser() + ".MYTABLE"));
         SQLUtil.rollbackQuietly(conn);
         
     }
