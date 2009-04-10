@@ -43,6 +43,7 @@ import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.l10n.CurrentLocale;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
@@ -280,16 +281,35 @@ public class RacfConnectorTests {
             Set<Attribute> attrs = fillInSampleUser(TEST_USER);
             connector.create(ObjectClass.ACCOUNT, attrs, null);
             ConnectorObject user = getUser(TEST_USER, connector);
-            Set<Attribute> changed = new HashSet<Attribute>();
-            //
-            changed.add(AttributeBuilder.build(getInstallationDataAttributeName(), "modified data"));
-            List<Object> attributes = new LinkedList<Object>();
-            attributes.add("SPECIAL");
-            attributes.add("OPERATIONS");
-            changed.add(AttributeBuilder.build("RACF*ATTRIBUTES", attributes));
-            changed.add(user.getUid());
-            changed.add(user.getName());
-            connector.update(ObjectClass.ACCOUNT, changed, null);
+            {
+                Set<Attribute> changed = new HashSet<Attribute>();
+                //
+                changed.add(AttributeBuilder.build(getInstallationDataAttributeName(), "modified data"));
+                List<Object> attributes = new LinkedList<Object>();
+                attributes.add("SPECIAL");
+                attributes.add("OPERATIONS");
+                changed.add(AttributeBuilder.build("RACF*ATTRIBUTES", attributes));
+                changed.add(user.getUid());
+                changed.add(user.getName());
+                connector.update(ObjectClass.ACCOUNT, changed, null);
+            }
+            {
+                Set<Attribute> changed = new HashSet<Attribute>();
+                //
+                changed.add(AttributeBuilder.build(getInstallationDataAttributeName(), "modified data"));
+                List<Object> attributes = new LinkedList<Object>();
+                attributes.add("SPECIAL");
+                attributes.add("OPERATOR");
+                changed.add(AttributeBuilder.build("RACF*ATTRIBUTES", attributes));
+                changed.add(user.getUid());
+                changed.add(user.getName());
+                try {
+                    connector.update(ObjectClass.ACCOUNT, changed, null);
+                    Assert.fail("Command should have failed");
+                } catch (ConnectorException ce) {
+                    System.out.println(ce);
+                }
+            }
     
             ConnectorObject changedUser = getUser(TEST_USER, connector);
             //Attribute racfInstallationData = changedUser.getAttributeByName("racfinstallationdata");

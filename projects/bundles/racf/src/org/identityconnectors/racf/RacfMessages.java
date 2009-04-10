@@ -57,6 +57,7 @@ public class RacfMessages extends ListResourceBundle {
     public static final String UNKNOWN_SEGMENT                = "UNKNOWN_SEGMENT";
     public static final String UNPARSEABLE_RESPONSE           = "UNPARSEABLE_RESPONSE";
     public static final String EXPIRED_NO_PASSWORD            = "EXPIRED_NO_PASSWORD";
+    public static final String ERROR_IN_RACF_COMMAND          = "ERROR_IN_RACF_COMMAND";
 
     private static final String[][] _contents = {
         { SUFFIX_NULL,             "suffix may not be null" },
@@ -89,6 +90,7 @@ public class RacfMessages extends ListResourceBundle {
         { INCONSISTENT_CATALOG_ARGS, "Either all or none of the catalog arguments must be specified" },
         { UNPARSEABLE_RESPONSE,    "Unable to parse response from ''{0}'':{''{1}''" },
         { EXPIRED_NO_PASSWORD,     "RACF requires that __PASSWORD__ be specified if __PASSWORD_EXPIRED__ is specified" },
+        { ERROR_IN_RACF_COMMAND,   "Error in RACF command ''{0}''" },
         
     };
 

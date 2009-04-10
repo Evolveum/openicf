@@ -1000,10 +1000,11 @@ class CommandLineUtil {
             matches.add(new RegExpMatch(OUTPUT_COMPLETE_PATTERN, new Closure() {
                 public void run(ExpectState state) throws Exception {
                     String data = state.getBuffer();
+                    Object errorDetected = state.getVar("errorDetected");
 
                     // If it's not in column 0, it's not a real match, we we ignore it
                     //
-                    if (state.getMatchedWhere()%80!=0) {
+                    if (errorDetected==null && state.getMatchedWhere()%80!=0) {
                         _buffer.append(data);
                         state.exp_continue();
                         return;
@@ -1031,11 +1032,8 @@ class CommandLineUtil {
                         state.exp_continue();
                     } else {
                         _buffer.append(data);
-                        Object errorDetected = state.getVar("errorDetected");
-                        state.addVar("timeout", Boolean.FALSE);
-                        state.addVar("errorDetected", null);
-                        //if (errorDetected!=null)
-                        //    throw new XXX();;
+                        if (errorDetected!=null)
+                            throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.ERROR_IN_RACF_COMMAND, errorDetected.toString().trim()));
                     }
                 }
             }));
@@ -1044,24 +1042,19 @@ class CommandLineUtil {
             //  send the abort command
             //  continue execution, to see if we can recover
             //
-            /*
-            matches.add(new RegExpMatch(expression2, new Closure() {
+            
+            matches.add(new RegExpMatch("IKJ56703A REENTER THIS OPERAND", new Closure() {
                 public void run(ExpectState state) throws Exception {
                     state.addVar("errorDetected", state.getBuffer());
                     // Need to strip off the match
                     //
                     String data = state.getBuffer();
-                    Matcher matcher = pattern.matcher(data);
-                    if (matcher.find()) {
-                        data = data.substring(0, matcher.start());
-                    }
                     _buffer.append(data);
-                    clearAndUnlock();
-                    sendPAKeys(1);
+                    getRW3270Connection().sendPAKeys(1);
                     state.exp_continue();
                 }
             }));
-            */
+            
             if (timeout != null)
                 matches.add(new TimeoutMatch(timeout, new Closure() {
                     public void run(ExpectState state) throws Exception {
