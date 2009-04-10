@@ -26,6 +26,7 @@ import static org.identityconnectors.framework.common.objects.AttributeUtil.crea
 import static org.identityconnectors.racf.RacfConstants.*;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -66,7 +67,6 @@ import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
 import org.identityconnectors.framework.common.objects.ScriptContext;
 import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.Connector;
@@ -90,9 +90,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
     public static final ObjectClass    RACF_GROUP          = new ObjectClass(RACF_GROUP_NAME);
     public static final String         RACF_CONNECTION_NAME ="RacfConnection";
     public static final ObjectClass    RACF_CONNECTION     = new ObjectClass(RACF_CONNECTION_NAME);
-    public static final String         ACCOUNTS_NAME       = createSpecialName("ACCOUNTS");
-    public static final AttributeInfo  ACCOUNTS            = AttributeInfoBuilder.build(ACCOUNTS_NAME,
-            String.class, EnumSet.of(Flags.MULTIVALUED, Flags.NOT_RETURNED_BY_DEFAULT));
 
     private Map<String, AttributeInfo>  _accountAttributes = null;
     private Map<String, AttributeInfo>  _groupAttributes = null;
@@ -171,6 +168,34 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
     }
 
     private void splitUpOutgoingAttributes(Set<Attribute> attrs, Set<Attribute> ldapAttrs, Set<Attribute> commandLineAttrs) {
+        // Attribute consistency checking
+        //
+        Map<String, Attribute> attributes = AttributeUtil.toMap(attrs);
+        Attribute enable      = attributes.get(OperationalAttributes.ENABLE_NAME);
+        Attribute enableDate  = attributes.get(OperationalAttributes.ENABLE_DATE_NAME);
+        Attribute disableDate = attributes.get(OperationalAttributes.DISABLE_DATE_NAME);
+        Long now              = new Date().getTime();
+        
+        if (enable!=null) {
+            if (AttributeUtil.getBooleanValue(enable)) {
+                if (enableDate!=null)
+                    throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.ENABLE_PLUS_DATE));
+            } else {
+                if (disableDate!=null)
+                    throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.DISABLE_PLUS_DATE));
+            }
+        }
+        if (disableDate!=null) {
+            Long time = AttributeUtil.getLongValue(disableDate);
+            if (time<now)
+                throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.PAST_DISABLE_DATE));
+        }
+        if (enableDate!=null) {
+            Long time = AttributeUtil.getLongValue(enableDate);
+            if (time<now)
+                throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.PAST_ENABLE_DATE));
+        }
+        
         for (Attribute attribute : attrs) {
             // Remap special attributes as needed
             //
@@ -856,7 +881,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             groupAttributes.add(buildMVROAttribute(ATTR_LDAP_SUB_GROUP,                  String.class, false));
             groupAttributes.add(buildMVROAttribute(ATTR_LDAP_GROUP_USERIDS,              String.class, false));
     
-            groupAttributes.add(ACCOUNTS);
+            groupAttributes.add(buildNonDefaultMultivaluedAttribute(ATTR_LDAP_MEMBERS,   String.class, false));
             _groupAttributes = AttributeInfoUtil.toMap(groupAttributes);
             schemaBuilder.defineObjectClass(RACF_GROUP_NAME, groupAttributes);
         }

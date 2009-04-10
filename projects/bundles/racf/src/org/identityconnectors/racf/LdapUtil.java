@@ -104,7 +104,7 @@ class LdapUtil {
                 Set<Attribute> newAttributes = new HashSet<Attribute>(attrs);
                 addObjectClass(objectClass, newAttributes);
                 ((RacfConnection)_connector.getConnection()).getDirContext().createSubcontext(uid.getUidValue(), createLdapAttributesFromConnectorAttributes(objectClass, newAttributes));
-                Attribute groupMembership = AttributeUtil.find(RacfConnector.ACCOUNTS_NAME, attrs);
+                Attribute groupMembership = AttributeUtil.find(ATTR_LDAP_MEMBERS, attrs);
                 if (groupMembership!=null)
                     _connector.setGroupMembershipsForGroups(id, groupMembership);
                 return uid;
