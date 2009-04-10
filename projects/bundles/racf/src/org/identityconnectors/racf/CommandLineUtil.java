@@ -262,6 +262,8 @@ class CommandLineUtil {
         Name name = (Name)attributes.remove(Name.NAME);
         Uid uid = (Uid)attributes.remove(Uid.NAME);
         Attribute expired = attributes.remove(ATTR_CL_EXPIRED);
+        Attribute enabled = attributes.remove(ATTR_CL_ENABLED);
+        Attribute attributesAttribute = attributes.remove(ATTR_CL_ATTRIBUTES);
         
         // Build up a map containing the segment attribute values
         //
@@ -296,11 +298,26 @@ class CommandLineUtil {
                     commandAttributes.append(")");
             }
         }
+        
+        // The various ATTRIBUTES are specified individually on the command line,
+        // not as part of a larger value
+        //
+        if (attributesAttribute!=null) {
+            for (Object attributeValue : attributesAttribute.getValue()) {
+                commandAttributes.append(" "+attributeValue);
+            }
+        }
         if (expired!=null) {
             if (AttributeUtil.getBooleanValue(expired))
                 commandAttributes.append(" EXPIRED");
             else
                 commandAttributes.append(" NOEXPIRED");
+        }
+        if (enabled!=null) {
+            if (AttributeUtil.getBooleanValue(enabled))
+                commandAttributes.append(" RESUME");
+            else
+                commandAttributes.append(" REVOKE");
         }
         char[] result = commandAttributes.getArray();
         commandAttributes.clear();
@@ -714,8 +731,6 @@ class CommandLineUtil {
 
     }
 
-    //TODO: this version does a single LISTUSER command for all segments
-    //
     public Map<String, Object> getAttributesFromCommandLine(ObjectClass objectClass, String name, boolean ldapAvailable, Set<String> attributesToGet) {
         String objectClassPrefix = null;
         String listCommand = null;
@@ -823,6 +838,12 @@ class CommandLineUtil {
                     attributesToGet.contains(ATTR_CL_USER_CATALOG) ||
                     attributesToGet.contains(ATTR_CL_MASTER_CATALOG)) {
                 getCatalogAttributes(racfName, attributesFromCommandLine);
+            }
+            // __ENABLE__ is indicated by the REVOKED ATTRIBUTE
+            //
+            if (attributesFromCommandLine.containsKey(ATTR_CL_ATTRIBUTES)) {
+                List<Object> value = (List<Object>)attributesFromCommandLine.get(ATTR_CL_ATTRIBUTES);
+                attributesFromCommandLine.put(OperationalAttributes.ENABLE_NAME, !value.contains("REVOKED"));
             }
             // Last Access date must be converted
             //

@@ -172,6 +172,7 @@ public interface RacfConstants {
     public static final String ATTR_CL_DATA                     = "RACF*DATA";
     public static final String ATTR_CL_DFLTGRP                  = "RACF*DFLTGRP";
     public static final String ATTR_CL_EXPIRED                  = "RACF*EXPIRED";
+    public static final String ATTR_CL_ENABLED                  = "RACF*ENABLED";
     public static final String ATTR_CL_PASSWORD                 = "RACF*PASSWORD";
     public static final String ATTR_CL_LAST_ACCESS              = "RACF*LAST ACCESS";
     public static final String ATTR_CL_PASSWORD_INTERVAL        = "RACF*PASSWORD INTERVAL";

@@ -283,6 +283,10 @@ public class RacfConnectorTests {
             Set<Attribute> changed = new HashSet<Attribute>();
             //
             changed.add(AttributeBuilder.build(getInstallationDataAttributeName(), "modified data"));
+            List<Object> attributes = new LinkedList<Object>();
+            attributes.add("SPECIAL");
+            attributes.add("OPERATIONS");
+            changed.add(AttributeBuilder.build("RACF*ATTRIBUTES", attributes));
             changed.add(user.getUid());
             changed.add(user.getName());
             connector.update(ObjectClass.ACCOUNT, changed, null);

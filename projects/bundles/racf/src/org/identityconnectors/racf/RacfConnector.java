@@ -192,6 +192,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                     attribute = AttributeBuilder.build(ATTR_LDAP_ATTRIBUTES, attribute.getValue());
                 else
                     attribute = AttributeBuilder.build(ATTR_CL_EXPIRED, attribute.getValue());
+            } else if (attribute.is(OperationalAttributes.ENABLE_NAME)) {
+                if (isLdapConnectionAvailable())
+                    ; //TODO: attribute = AttributeBuilder.build(ATTR_LDAP_ENABLED, attribute.getValue());
+                else
+                    attribute = AttributeBuilder.build(ATTR_CL_ENABLED, attribute.getValue());
             } 
 
             if (attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
@@ -219,6 +224,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                     ldapAttrs.add(ATTR_LDAP_LAST_ACCESS);
                 else
                     commandLineAttrs.add(ATTR_CL_LAST_ACCESS);
+            } else if (attribute.equals(OperationalAttributes.ENABLE_NAME)) {
+                if (isLdapConnectionAvailable())
+                    ldapAttrs.add("TODO");
+                else
+                    commandLineAttrs.add(ATTR_CL_ENABLED);
             } else if (attribute.equals(PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME)) {
                 if (isLdapConnectionAvailable())
                     ldapAttrs.add(ATTR_LDAP_PASSWORD_CHANGE);
@@ -644,6 +654,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
     
             // Operational Attributes
             //
+            attributes.add(OperationalAttributeInfos.ENABLE);
             attributes.add(OperationalAttributeInfos.PASSWORD);
             attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
             attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
