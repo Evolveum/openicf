@@ -139,6 +139,7 @@ public interface RacfConstants {
     // Multi-values read-write attributes
     //
     public static final String ATTR_LDAP_ATTRIBUTES            = "racfAttributes";
+    public static final String ATTR_LDAP_GROUPS                = "ATTR_LDAP_GROUPS";
 
     // Read-only Attributes
     //

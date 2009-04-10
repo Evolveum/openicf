@@ -52,6 +52,7 @@ import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.PredefinedAttributes;
 import org.identityconnectors.framework.common.objects.ScriptContext;
 import org.identityconnectors.framework.common.objects.Uid;
@@ -260,6 +261,7 @@ class CommandLineUtil {
     public char[] mapAttributesToString(Map<String, Attribute> attributes) {
         Name name = (Name)attributes.remove(Name.NAME);
         Uid uid = (Uid)attributes.remove(Uid.NAME);
+        Attribute expired = attributes.remove(ATTR_CL_EXPIRED);
         
         // Build up a map containing the segment attribute values
         //
@@ -293,6 +295,12 @@ class CommandLineUtil {
                 if (!RACF.equalsIgnoreCase(segment.getKey()))
                     commandAttributes.append(")");
             }
+        }
+        if (expired!=null) {
+            if (AttributeUtil.getBooleanValue(expired))
+                commandAttributes.append(" EXPIRED");
+            else
+                commandAttributes.append(" NOEXPIRED");
         }
         char[] result = commandAttributes.getArray();
         commandAttributes.clear();
@@ -349,6 +357,10 @@ class CommandLineUtil {
         String name = ((Name)attributes.get(Name.NAME)).getNameValue();
         if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
             Attribute groups = attributes.remove(ATTR_CL_GROUPS);
+            Attribute expired = attributes.remove(ATTR_CL_EXPIRED);
+            Attribute password = attributes.get(ATTR_CL_PASSWORD);
+            if (expired!=null && password==null) 
+                throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
             
             if (userExists(name))
                 throw new AlreadyExistsException();
@@ -365,6 +377,16 @@ class CommandLineUtil {
                     String command = "CONNECT "+name+" GROUP("+_connector.extractRacfIdFromLdapId((String)groupName)+")";
                     checkCommand(command);
                 }
+            }
+            if (expired!=null) {
+                Map<String, Attribute> updateAttrs = new HashMap<String, Attribute>();
+                updateAttrs.put(ATTR_CL_EXPIRED, expired);
+                updateAttrs.put(ATTR_CL_PASSWORD, password);
+                buffer = new CharArrayBuffer();
+                buffer.append("ALTUSER ");
+                buffer.append(name);
+                buffer.append(mapAttributesToString(updateAttrs));
+                createOrUpdateViaCommandLine(objectClass, name, buffer);
             }
             return uid;
         } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
@@ -564,6 +586,11 @@ class CommandLineUtil {
         
         if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
             Attribute groupMembership = attributes.remove(ATTR_CL_GROUPS);
+            Attribute expired = attributes.get(ATTR_CL_EXPIRED);
+            Attribute password = attributes.get(ATTR_CL_PASSWORD);
+            if (expired!=null && password==null) 
+                throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
+            
             if (!userExists(name))
                 throw new UnknownUidException();
 
@@ -810,6 +837,10 @@ class CommandLineUtil {
                 Object value = attributesFromCommandLine.get(ATTR_CL_PASSDATE);
                 Long converted = convertFromRacfTimestamp(value);
                 attributesFromCommandLine.put(PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME, converted);
+                // password change date is 00.000 if expired
+                //
+                Boolean expired = "00.000".equals(value);
+                attributesFromCommandLine.put(OperationalAttributes.PASSWORD_EXPIRED_NAME, expired);
             }
             // Default group name must be a stringified Uid
             //
@@ -901,7 +932,6 @@ class CommandLineUtil {
                 calendar.set(Calendar.SECOND, secondsValue);
             }
             Date date = calendar.getTime();
-            System.out.println("Date conversion:"+value+"->"+date);
             return date.getTime();
         } else {
             return null;

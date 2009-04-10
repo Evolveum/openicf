@@ -71,6 +71,7 @@ class LdapUtil {
     public Uid createViaLdap(ObjectClass objectClass, Set<Attribute> attrs, OperationOptions options) {
         if (objectClass.equals(RacfConnector.RACF_CONNECTION)) {
             try {
+                //TODO: handle ATTR_LDAP_GROUPS
                 Name name = AttributeUtil.getNameFromAttributes(attrs);
                 ((RacfConnection)_connector.getConnection()).getDirContext().createSubcontext(name.getNameValue(), null);
                 return new Uid(name.getNameValue());
@@ -228,6 +229,7 @@ class LdapUtil {
         Uid uid = AttributeUtil.getUidAttribute(attrs);
         if (uid!=null) {
             try {
+                //TODO: handle ATTR_LDAP_GROUPS
                 ((RacfConnection)_connector.getConnection()).getDirContext().modifyAttributes(uid.getUidValue(), DirContext.REPLACE_ATTRIBUTE, createLdapAttributesFromConnectorAttributes(objclass, attrs));
                 Attribute groupMembership = AttributeUtil.find(PredefinedAttributes.GROUPS_NAME, attrs);
                 if (groupMembership!=null)
@@ -238,7 +240,6 @@ class LdapUtil {
         }
         return uid;
     }
-
 
     protected void addObjectClass(ObjectClass objectClass, Set<Attribute> attrs) {
         if (objectClass.equals(ObjectClass.ACCOUNT))

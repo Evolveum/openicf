@@ -669,6 +669,7 @@ public class RacfConnectorTests {
         Set<Attribute> attrs = new HashSet<Attribute>();
         attrs.add(new Name(testUser));
         attrs.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString("password".toCharArray())));
+        attrs.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME, Boolean.FALSE));
         //attrs.add(AttributeBuilder.build("objectclass", "racfUser"));
         attrs.add(AttributeBuilder.build(getInstallationDataAttributeName(), "original data"));
         return attrs;

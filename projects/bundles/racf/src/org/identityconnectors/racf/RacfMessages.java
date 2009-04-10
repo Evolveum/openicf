@@ -56,6 +56,7 @@ public class RacfMessages extends ListResourceBundle {
     public static final String INCONSISTENT_CATALOG_ARGS      = "INCONSISTENT_CATALOG_ARGS";
     public static final String UNKNOWN_SEGMENT                = "UNKNOWN_SEGMENT";
     public static final String UNPARSEABLE_RESPONSE           = "UNPARSEABLE_RESPONSE";
+    public static final String EXPIRED_NO_PASSWORD            = "EXPIRED_NO_PASSWORD";
 
     private static final String[][] _contents = {
         { SUFFIX_NULL,             "suffix may not be null" },
@@ -87,10 +88,9 @@ public class RacfMessages extends ListResourceBundle {
         { UNKNOWN_SEGMENT,         "Unknown segment for attribute ''{0}''" },
         { INCONSISTENT_CATALOG_ARGS, "Either all or none of the catalog arguments must be specified" },
         { UNPARSEABLE_RESPONSE,    "Unable to parse response from ''{0}'':{''{1}''" },
+        { EXPIRED_NO_PASSWORD,     "RACF requires that __PASSWORD__ be specified if __PASSWORD_EXPIRED__ is specified" },
         
     };
-//                             throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.NEED_LDAP, new String(command.getArray()), output));
-
 
     @Override
     protected Object[][] getContents() {

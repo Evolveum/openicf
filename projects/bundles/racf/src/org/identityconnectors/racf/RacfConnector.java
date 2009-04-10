@@ -630,6 +630,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             attributes.add(buildMultivaluedAttribute(ATTR_CL_CICS_OPCLASS,              Integer.class, false));
             attributes.add(buildMultivaluedAttribute(ATTR_CL_CICS_RLSKEY,               Integer.class, false));
             attributes.add(buildMultivaluedAttribute(ATTR_CL_CICS_TLSKEY,               Integer.class, false));
+            attributes.add(buildMultivaluedAttribute(ATTR_CL_GROUPS,                    String.class, false));
     
             // Catalog Attributes (make non-default)
             //
@@ -643,7 +644,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
     
             // Operational Attributes
             //
-            attributes.add(buildMultivaluedAttribute(ATTR_CL_GROUPS,                    String.class, false));
             attributes.add(OperationalAttributeInfos.PASSWORD);
             attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
             attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
@@ -787,15 +787,15 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             // Multi-valued attributes
             //
             attributes.add(buildMultivaluedAttribute(ATTR_LDAP_ATTRIBUTES,               String.class, false));
+            attributes.add(buildNonDefaultMultivaluedAttribute(ATTR_LDAP_GROUPS,         String.class, false));
     
             // Operational Attributes
             //
             attributes.add(OperationalAttributeInfos.PASSWORD);
-            attributes.add(PredefinedAttributeInfos.GROUPS);
+            attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
             attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
             attributes.add(PredefinedAttributeInfos.LAST_LOGIN_DATE);
             attributes.add(PredefinedAttributeInfos.LAST_PASSWORD_CHANGE_DATE);
-            attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
     
             _accountAttributes = AttributeInfoUtil.toMap(attributes);
             schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
@@ -857,6 +857,16 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         builder.setType(clazz);
         builder.setRequired(required);
         builder.setMultiValued(true);
+        return builder.build();
+    }
+
+    private AttributeInfo buildNonDefaultMultivaluedAttribute(String name, Class<?> clazz, boolean required) {
+        AttributeInfoBuilder builder = new AttributeInfoBuilder();
+        builder.setName(name);
+        builder.setType(clazz);
+        builder.setRequired(required);
+        builder.setMultiValued(true);
+        builder.setReturnedByDefault(false);
         return builder.build();
     }
 
