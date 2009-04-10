@@ -622,8 +622,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_JOBCLASS,             String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_MSGCLASS,             String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_PROC,                 String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_SIZE,                 String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_MAXSIZE,              String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_SIZE,                 Integer.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_MAXSIZE,              Integer.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_SYSOUTCLASS,          String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_UNIT,                 String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_CL_TSO_USERDATA,             String.class));

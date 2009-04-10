@@ -308,6 +308,14 @@ public class RacfConnectorTests {
             {
                 Set<Attribute> changed = new HashSet<Attribute>();
                 //
+                changed.add(AttributeBuilder.build(ATTR_CL_TSO_SIZE, new Integer(1000)));
+                changed.add(user.getUid());
+                changed.add(user.getName());
+                connector.update(ObjectClass.ACCOUNT, changed, null);
+            }
+            {
+                Set<Attribute> changed = new HashSet<Attribute>();
+                //
                 changed.add(AttributeBuilder.build(getInstallationDataAttributeName(), "modified data"));
                 changed.add(AttributeBuilder.build(OperationalAttributes.ENABLE_DATE_NAME, new Date("11/15/2010").getTime()));
                 changed.add(user.getUid());
