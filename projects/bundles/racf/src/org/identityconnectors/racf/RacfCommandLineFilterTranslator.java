@@ -76,7 +76,7 @@ public class RacfCommandLineFilterTranslator extends AbstractFilterTranslator<St
         if (!not && filter.getAttribute().is(Name.NAME))
             return "*"+shorten(AttributeUtil.getAsStringValue(filter.getAttribute()), -7);
         else if (!not && filter.getAttribute().is(Uid.NAME))
-            return "*"+shorten(getNameFromUid(AttributeUtil.getAsStringValue(filter.getAttribute())), 7);
+            return "*"+shorten(getNameFromUid(AttributeUtil.getAsStringValue(filter.getAttribute())), -7);
         else
             return super.createEndsWithExpression(filter, not);
     }
