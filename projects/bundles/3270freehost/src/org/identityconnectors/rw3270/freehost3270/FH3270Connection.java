@@ -67,6 +67,7 @@ public class FH3270Connection extends RW3270BaseConnection {
 
     @Override
     public void clearAndUnlock() throws InterruptedException {
+        waitForUnlock();
         _rw3270.clear();
         waitForUnlock();
     }
