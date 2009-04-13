@@ -92,7 +92,7 @@ public class RacfMessages extends ListResourceBundle {
         { ERROR_IN_GET_GROUPS,     "Error in Get Groups:''{0}''" },
         { UNKNOWN_SEGMENT,         "Unknown segment for attribute ''{0}''" },
         { INCONSISTENT_CATALOG_ARGS, "Either all or none of the catalog arguments must be specified" },
-        { UNPARSEABLE_RESPONSE,    "Unable to parse response from ''{0}'':{''{1}''" },
+        { UNPARSEABLE_RESPONSE,    "Unable to parse response from ''{0}'':''{1}''" },
         { EXPIRED_NO_PASSWORD,     "RACF requires that __PASSWORD__ be specified if __PASSWORD_EXPIRED__ is specified" },
         { ERROR_IN_RACF_COMMAND,   "Error in RACF command ''{0}''" },
         { ENABLE_PLUS_DATE,        "Both __ENABLE_DATE__ and __ENABLE__==true have been specified" },
