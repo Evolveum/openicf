@@ -54,9 +54,9 @@ public class RacfCommandLineFilterTranslator extends AbstractFilterTranslator<St
     protected String createStartsWithExpression(StartsWithFilter filter,
             boolean not) {
         if (!not && filter.getAttribute().is(Name.NAME))
-            return AttributeUtil.getAsStringValue(filter.getAttribute())+"*";
+            return shorten(AttributeUtil.getAsStringValue(filter.getAttribute()), 7)+"*";
         else if (!not && filter.getAttribute().is(Uid.NAME))
-            return getNameFromUid(AttributeUtil.getAsStringValue(filter.getAttribute()))+"*";
+            return shorten(getNameFromUid(AttributeUtil.getAsStringValue(filter.getAttribute())), 7)+"*";
         else
             return super.createStartsWithExpression(filter, not);
     }
@@ -74,9 +74,9 @@ public class RacfCommandLineFilterTranslator extends AbstractFilterTranslator<St
     @Override
     protected String createEndsWithExpression(EndsWithFilter filter, boolean not) {
         if (!not && filter.getAttribute().is(Name.NAME))
-            return "*"+AttributeUtil.getAsStringValue(filter.getAttribute());
+            return "*"+shorten(AttributeUtil.getAsStringValue(filter.getAttribute()), 7);
         else if (!not && filter.getAttribute().is(Uid.NAME))
-            return "*"+getNameFromUid(AttributeUtil.getAsStringValue(filter.getAttribute()));
+            return "*"+shorten(getNameFromUid(AttributeUtil.getAsStringValue(filter.getAttribute())), 7);
         else
             return super.createEndsWithExpression(filter, not);
     }
@@ -84,14 +84,20 @@ public class RacfCommandLineFilterTranslator extends AbstractFilterTranslator<St
     @Override
     protected String createContainsExpression(ContainsFilter filter, boolean not) {
         if (!not && filter.getAttribute().is(Name.NAME))
-            return "*"+AttributeUtil.getAsStringValue(filter.getAttribute())+"*";
+            return "*"+shorten(AttributeUtil.getAsStringValue(filter.getAttribute()), 6)+"*";
         else if (!not && filter.getAttribute().is(Uid.NAME))
-            return "*"+getNameFromUid(AttributeUtil.getAsStringValue(filter.getAttribute()))+"*";
+            return "*"+shorten(getNameFromUid(AttributeUtil.getAsStringValue(filter.getAttribute())), 6)+"*";
         else
             return super.createContainsExpression(filter, not);
     }
     
-    
+    private String shorten(String string, int length) {
+        if (string.length() <= length)
+            return string;
+        else
+            return string.substring(0, length);
+        
+    }
     private String getNameFromUid(String uid) {
         String newUid = uid;
         if (uid.startsWith("racfid="))

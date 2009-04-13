@@ -22,6 +22,14 @@
  */
 package org.identityconnectors.racf;
 
+import static org.identityconnectors.racf.RacfConstants.ATTR_CL_ATTRIBUTES;
+import static org.identityconnectors.racf.RacfConstants.ATTR_CL_DATA;
+import static org.identityconnectors.racf.RacfConstants.ATTR_CL_GROUPS;
+import static org.identityconnectors.racf.RacfConstants.ATTR_CL_MEMBERS;
+import static org.identityconnectors.racf.RacfConstants.ATTR_CL_OWNER;
+import static org.identityconnectors.racf.RacfConstants.ATTR_CL_SUPGROUP;
+import static org.identityconnectors.racf.RacfConstants.ATTR_CL_TSO_SIZE;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -56,10 +64,12 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
-import org.identityconnectors.framework.common.objects.PredefinedAttributes;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
+import org.identityconnectors.framework.common.objects.filter.EndsWithFilter;
 import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
+import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
 import org.identityconnectors.patternparser.MapTransform;
 import org.identityconnectors.patternparser.Transform;
 import org.identityconnectors.test.common.TestHelpers;
@@ -67,8 +77,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import static org.identityconnectors.racf.RacfConstants.*;
 
 public class RacfConnectorTests {
     // Connector Configuration information
@@ -230,15 +238,47 @@ public class RacfConnectorTests {
             Map<String, Object> optionsMap = new HashMap<String, Object>();
             optionsMap.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] {Name.NAME});
             OperationOptions options = new OperationOptions(optionsMap);
-            TestHelpers.search(connector,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Name.NAME, TEST_USER)), handler, options);
-            for (ConnectorObject user : handler) {
-                System.out.println(user);
-                if (TEST_USER_UID.equals(user.getUid()))
-                    found = true;
-                count++;
+            {
+                TestHelpers.search(connector,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Name.NAME, TEST_USER)), handler, options);
+                for (ConnectorObject user : handler) {
+                    System.out.println(user);
+                    if (TEST_USER_UID.equals(user.getUid()))
+                        found = true;
+                    count++;
+                }
+                Assert.assertTrue(found);
+                Assert.assertTrue(count==1);
             }
-            Assert.assertTrue(found);
-            Assert.assertTrue(count==1);
+            {
+                TestHelpers.search(connector,ObjectClass.ACCOUNT, new StartsWithFilter(AttributeBuilder.build(Name.NAME, TEST_USER)), handler, options);
+                for (ConnectorObject user : handler) {
+                    System.out.println(user);
+                    if (TEST_USER_UID.equals(user.getUid()))
+                        found = true;
+                    count++;
+                }
+                Assert.assertTrue(found);
+            }
+            {
+                TestHelpers.search(connector,ObjectClass.ACCOUNT, new EndsWithFilter(AttributeBuilder.build(Name.NAME, TEST_USER)), handler, options);
+                for (ConnectorObject user : handler) {
+                    System.out.println(user);
+                    if (TEST_USER_UID.equals(user.getUid()))
+                        found = true;
+                    count++;
+                }
+                Assert.assertTrue(found);
+            }
+            {
+                TestHelpers.search(connector,ObjectClass.ACCOUNT, new ContainsFilter(AttributeBuilder.build(Name.NAME, TEST_USER)), handler, options);
+                for (ConnectorObject user : handler) {
+                    System.out.println(user);
+                    if (TEST_USER_UID.equals(user.getUid()))
+                        found = true;
+                    count++;
+                }
+                Assert.assertTrue(found);
+            }
         } finally {
             connector.dispose();
         }
@@ -759,9 +799,10 @@ public class RacfConnectorTests {
     private RacfConfiguration createConfiguration() throws IOException {
         RacfConfiguration config = new RacfConfiguration();
         config.setHostNameOrIpAddr(HOST_NAME);
-        initializeLdapConfiguration(config);
+        //initializeLdapConfiguration(config);
         initializeCommandLineConfiguration(config);
-        config.setUseSsl(USE_SSL);
+        config.validate();
+        //TODO: tests expect suffix as part of name
         config.setSuffix(SUFFIX);
 
         OurConnectorMessages messages = new OurConnectorMessages();
@@ -834,7 +875,7 @@ public class RacfConnectorTests {
         private Map<Locale, Map<String, String>> _catalogs = new HashMap<Locale, Map<String, String>>();
 
         public String format(String key, String defaultValue, Object... args) {
-        	Locale locale = CurrentLocale.isSet()?CurrentLocale.get():Locale.getDefault();
+            Locale locale = CurrentLocale.isSet()?CurrentLocale.get():Locale.getDefault();
             Map<String,String> catalog = _catalogs.get(locale);
             String message = catalog.get(key);
             MessageFormat formatter = new MessageFormat(message,locale);
@@ -849,6 +890,7 @@ public class RacfConnectorTests {
     // Override these to do Ldap tests
     //
     protected void initializeCommandLineConfiguration(RacfConfiguration config) throws IOException {
+        config.setUseSsl(USE_SSL);
         config.setHostTelnetPortNumber(HOST_TELNET_PORT);
         config.setConnectScript(getLoginScript());
         config.setDisconnectScript(getLogoffScript());
@@ -870,8 +912,9 @@ public class RacfConnectorTests {
     
     protected void initializeLdapConfiguration(RacfConfiguration config) {
         config.setHostPortNumber(HOST_PORT);
-        //config.setPassword(SYSTEM_PASSWORD);
-        //config.setUserName(SYSTEM_USER_LDAP);
+        config.setSuffix(SUFFIX);
+        config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
+        config.setUserName(SYSTEM_USER_LDAP);
     }
 
     protected String getInstallationDataAttributeName() {
