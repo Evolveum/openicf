@@ -74,7 +74,7 @@ public class RacfCommandLineFilterTranslator extends AbstractFilterTranslator<St
     @Override
     protected String createEndsWithExpression(EndsWithFilter filter, boolean not) {
         if (!not && filter.getAttribute().is(Name.NAME))
-            return "*"+shorten(AttributeUtil.getAsStringValue(filter.getAttribute()), 7);
+            return "*"+shorten(AttributeUtil.getAsStringValue(filter.getAttribute()), -7);
         else if (!not && filter.getAttribute().is(Uid.NAME))
             return "*"+shorten(getNameFromUid(AttributeUtil.getAsStringValue(filter.getAttribute())), 7);
         else
@@ -92,11 +92,14 @@ public class RacfCommandLineFilterTranslator extends AbstractFilterTranslator<St
     }
     
     private String shorten(String string, int length) {
-        if (string.length() <= length)
-            return string;
-        else
-            return string.substring(0, length);
-        
+        if (length > 0) {
+            if (string.length() <= length)
+                return string;
+            else
+                return string.substring(0, length);
+        } else {
+            return string.substring(string.length()+length);
+        }
     }
     private String getNameFromUid(String uid) {
         String newUid = uid;
