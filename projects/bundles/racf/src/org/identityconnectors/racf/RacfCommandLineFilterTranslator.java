@@ -98,7 +98,10 @@ public class RacfCommandLineFilterTranslator extends AbstractFilterTranslator<St
             else
                 return string.substring(0, length);
         } else {
-            return string.substring(string.length()+length);
+            if (string.length() <= -length)
+                return string;
+            else
+                return string.substring(string.length()+length);
         }
     }
     private String getNameFromUid(String uid) {
