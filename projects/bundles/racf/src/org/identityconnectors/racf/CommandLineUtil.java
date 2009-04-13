@@ -77,6 +77,7 @@ class CommandLineUtil {
     private static final String         OUTPUT_COMPLETE             = " READY";
     private static final String         DEFAULT_GROUP_NAME          = "DFLTGRP";
     private static final String         OUTPUT_CONTINUING_PATTERN   = "\\s\\*\\*\\*\\s{76}";
+    private static final String         OUTPUT_CONTINUING           = " ***";
     private static final String         RACF                        = "RACF";
     private static final String         CATALOG                     = "CATALOG";
     private static final String         DELETE_SEGMENT              = "Delete Segment";
@@ -167,7 +168,7 @@ class CommandLineUtil {
     public void checkCommand(CharArrayBuffer command) {
         String output = getCommandOutput(command);
         if (output.trim().length()>0) {
-            throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.NEED_LDAP, new String(command.getArray()), output));
+            throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.ERROR_IN_COMMAND, new String(command.getArray()), output));
         }
     }
     
@@ -193,8 +194,8 @@ class CommandLineUtil {
             //  failure indication for LISTGRP
             //      ICH51003I NAME NOT FOUND IN RACF DATA SET
             RW3270Connection connection = _connector.getConnection().getRacfConnection();
+            connection.clearAndUnlock();
             connection.resetStandardOutput();
-            connection.send("[clear]");
             System.out.println("execute:"+new String(command));
             connection.send(command);
             connection.send("[enter]");
@@ -206,7 +207,7 @@ class CommandLineUtil {
             if (index>-1) {
                 // Round up to line length
                 //
-                index += connection.getWidth();//= connection.getWidth()+index/connection.getWidth()*connection.getWidth();
+                index += connection.getWidth();
                 output = output.substring(index);
             }
             
@@ -231,7 +232,7 @@ class CommandLineUtil {
      * @return
      */
     private int indexOf(String string, char[] substring) {
-        for (int i=0; i<string.length()-substring.length; i++)
+        for (int i=string.length()-substring.length-1; i>-1; i--)
             if (isAt(string, i, substring))
                 return i;
         return -1;
@@ -811,7 +812,11 @@ class CommandLineUtil {
                     int offset = 0;
                     if (racfNeeded) {
                         MapTransform transform = _segmentParsers.get(objectClassPrefix+"RACF");
-                        attributesFromCommandLine.putAll((Map<String, Object>)transform.transform(segmentsMatcher.group(1)));
+                        try {
+                            attributesFromCommandLine.putAll((Map<String, Object>)transform.transform(segmentsMatcher.group(1)));
+                        } catch (Exception e) {
+                            throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNPARSEABLE_RESPONSE, "LISTUSER", output));
+                        }
                         offset = 1;
                     }
                     // Parse the other segments, and add the attributes to the set of
@@ -991,9 +996,11 @@ class CommandLineUtil {
     
     private StringBuffer _buffer = new StringBuffer();
     private boolean _timedOut = false;
+    private boolean _outputComplete = false;
     
     private void waitFor(Integer timeout) {
         _buffer.setLength(0);
+        _outputComplete = false;
         try {
             _timedOut = false;
             List<Match> matches = new LinkedList<Match>();
@@ -1004,21 +1011,37 @@ class CommandLineUtil {
             //
             matches.add(new RegExpMatch(OUTPUT_CONTINUING_PATTERN, new Closure() {
                 public void run(ExpectState state) throws Exception {
-                    String data = state.getBuffer();
                     
                     // If it's not in column 0, it's not a real match, we we ignore it
                     //
                     if (state.getMatchedWhere()%80!=0) {
-                        _buffer.append(data);
                         state.exp_continue();
                         return;
                     }
-                    // Need to strip off the match
+
+                    String display = getRW3270Connection().getDisplay();
+                    int index = display.lastIndexOf(OUTPUT_CONTINUING);
+                    
+                    // If the current display has already been appended by the
+                    // OUTPUT_COMPLETE handler, we don't want to do it a second time
                     //
-                    data = data.substring(0, state.getMatchedWhere());
-                    _buffer.append(data);
-                    getRW3270Connection().sendEnter();
-                    state.exp_continue();
+                    if (!_outputComplete) {
+                        if (index>-1) {
+                            _buffer.append(display.substring(0, index));
+                        } else {
+                            _buffer.append(display);
+                        }
+                        getRW3270Connection().sendEnter();
+                    }
+                    
+                    // If we saw
+                    //      READY
+                    //      ***
+                    // we're done, otherwise, we continue
+                    //
+                    if (display.lastIndexOf(OUTPUT_COMPLETE)+getRW3270Connection().getWidth()!=index) {
+                        state.exp_continue();
+                    }
                 }
             }));
             
@@ -1029,27 +1052,22 @@ class CommandLineUtil {
             //      save the final output
             matches.add(new RegExpMatch(OUTPUT_COMPLETE_PATTERN, new Closure() {
                 public void run(ExpectState state) throws Exception {
-                    String data = state.getBuffer();
                     Object errorDetected = state.getVar("errorDetected");
 
                     // If it's not in column 0, it's not a real match, we we ignore it
                     //
-                    if (errorDetected==null && state.getMatchedWhere()%80!=0) {
-                        _buffer.append(data);
+                    if (false && errorDetected==null && state.getMatchedWhere()%80!=0) {
                         state.exp_continue();
                         return;
                     }
 
                     // This code will be exported to a script, but I want to get the tests back on-line
                     //
-                    boolean commandComplete = getRW3270Connection().getDisplay().trim().endsWith(OUTPUT_COMPLETE);
-                    boolean matched = false;
-                    if (data.length()>state.getMatchedWhere())
-                        matched = data.substring(state.getMatchedWhere()).startsWith(OUTPUT_COMPLETE);
+                    String display = getRW3270Connection().getDisplay();
+                    boolean commandComplete = removeTrailingSpaces(display).endsWith(OUTPUT_COMPLETE);
+                    boolean matched = display.lastIndexOf(OUTPUT_COMPLETE)>-1;
+                    appendScreen(display);
                     if (!commandComplete && matched) {
-                        data = data.substring(0, state.getMatchedWhere());
-                        _buffer.append(data);
-                        //System.out.println("Continuing but complete...");
                         getRW3270Connection().sendEnter();
                         state.exp_continue();
                     } else if (!commandComplete) {
@@ -1057,13 +1075,22 @@ class CommandLineUtil {
                         // if we had the "READY\n***" kind of command completion,
                         // and there was a delay between seeing the READY and the ***.
                         //
-                        //System.out.println("******* command complete lost");
                         getRW3270Connection().sendEnter();
                         state.exp_continue();
                     } else {
-                        _buffer.append(data);
-                        if (errorDetected!=null)
+                        _outputComplete = true;
+                        if (errorDetected!=null) {
                             throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.ERROR_IN_RACF_COMMAND, errorDetected.toString().trim()));
+                        }
+                    }
+                }
+
+                private void appendScreen(String display) {
+                    int index = display.lastIndexOf(OUTPUT_COMPLETE);
+                    if (index>-1) {
+                        _buffer.append(display.substring(0, Math.min(display.length(), index+getRW3270Connection().getWidth())));
+                    } else {
+                        _buffer.append(display);
                     }
                 }
             }));
@@ -1079,7 +1106,7 @@ class CommandLineUtil {
                     // Need to strip off the match
                     //
                     String data = state.getBuffer();
-                    _buffer.append(data);
+                    //_buffer.append(data);
                     getRW3270Connection().sendPAKeys(1);
                     state.exp_continue();
                 }
@@ -1103,7 +1130,15 @@ class CommandLineUtil {
         }
     }
     
-    
+    private String removeTrailingSpaces(String string) {
+        if (StringUtil.isBlank(string))
+            return "";
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(string);
+        while (buffer.charAt(buffer.length()-1)==' ')
+            buffer.setLength(buffer.length()-1);
+        return buffer.toString();
+    }
     private static class CharArrayBuffer {
         private char[]  _array;
         private int     _position;
