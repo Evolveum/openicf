@@ -225,24 +225,24 @@ public class RacfConnectorTests {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
         try {
-            Set<Attribute> attrs = fillInSampleUser(TEST_USER);
+            Set<Attribute> attrs = fillInSampleUser(TEST_USER2);
             
             // Create the account if it doesn't already exist
             //
-            deleteUser(TEST_USER_UID, connector);
+            deleteUser(TEST_USER_UID2, connector);
             connector.create(ObjectClass.ACCOUNT, attrs, null);
     
             boolean found = false;
-            int count = 0;
-            TestHandler handler = new TestHandler();
             Map<String, Object> optionsMap = new HashMap<String, Object>();
             optionsMap.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] {Name.NAME});
             OperationOptions options = new OperationOptions(optionsMap);
             {
-                TestHelpers.search(connector,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Name.NAME, TEST_USER)), handler, options);
+                int count = 0;
+                TestHandler handler = new TestHandler();
+                TestHelpers.search(connector,ObjectClass.ACCOUNT, new EqualsFilter(TEST_USER_UID2), handler, options);
                 for (ConnectorObject user : handler) {
                     System.out.println(user);
-                    if (TEST_USER_UID.equals(user.getUid()))
+                    if (TEST_USER_UID2.equals(user.getUid()))
                         found = true;
                     count++;
                 }
@@ -250,30 +250,49 @@ public class RacfConnectorTests {
                 Assert.assertTrue(count==1);
             }
             {
-                TestHelpers.search(connector,ObjectClass.ACCOUNT, new StartsWithFilter(AttributeBuilder.build(Name.NAME, TEST_USER)), handler, options);
+                int count = 0;
+                TestHandler handler = new TestHandler();
+                TestHelpers.search(connector,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Name.NAME, TEST_USER2)), handler, options);
                 for (ConnectorObject user : handler) {
                     System.out.println(user);
-                    if (TEST_USER_UID.equals(user.getUid()))
+                    if (TEST_USER_UID2.equals(user.getUid()))
+                        found = true;
+                    count++;
+                }
+                Assert.assertTrue(found);
+                Assert.assertTrue(count==1);
+            }
+            {
+                int count = 0;
+                TestHandler handler = new TestHandler();
+                TestHelpers.search(connector,ObjectClass.ACCOUNT, new StartsWithFilter(AttributeBuilder.build(Name.NAME, TEST_USER2)), handler, options);
+                for (ConnectorObject user : handler) {
+                    System.out.println(user);
+                    if (TEST_USER_UID2.equals(user.getUid()))
                         found = true;
                     count++;
                 }
                 Assert.assertTrue(found);
             }
             {
-                TestHelpers.search(connector,ObjectClass.ACCOUNT, new EndsWithFilter(AttributeBuilder.build(Name.NAME, TEST_USER)), handler, options);
+                int count = 0;
+                TestHandler handler = new TestHandler();
+                TestHelpers.search(connector,ObjectClass.ACCOUNT, new EndsWithFilter(AttributeBuilder.build(Name.NAME, TEST_USER2)), handler, options);
                 for (ConnectorObject user : handler) {
                     System.out.println(user);
-                    if (TEST_USER_UID.equals(user.getUid()))
+                    if (TEST_USER_UID2.equals(user.getUid()))
                         found = true;
                     count++;
                 }
                 Assert.assertTrue(found);
             }
             {
-                TestHelpers.search(connector,ObjectClass.ACCOUNT, new ContainsFilter(AttributeBuilder.build(Name.NAME, TEST_USER)), handler, options);
+                int count = 0;
+                TestHandler handler = new TestHandler();
+                TestHelpers.search(connector,ObjectClass.ACCOUNT, new ContainsFilter(AttributeBuilder.build(Name.NAME, TEST_USER2)), handler, options);
                 for (ConnectorObject user : handler) {
                     System.out.println(user);
-                    if (TEST_USER_UID.equals(user.getUid()))
+                    if (TEST_USER_UID2.equals(user.getUid()))
                         found = true;
                     count++;
                 }
