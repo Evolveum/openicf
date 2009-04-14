@@ -163,18 +163,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
      * @param unquoted
      * @return
      */
-    protected String quoteWhenNeeded(String unquoted) {
+    String quoteWhenNeeded(String unquoted) {
         return quoteWhenNeeded(unquoted, false);
     }
 
-    protected String quoteWhenNeeded(String unquoted, boolean needsQuote) {
-        boolean quote = needsQuote;
-        for (char character : unquoted.toCharArray()) {
-            if (character == '!' | character == ' ' | character == '\t')
-                quote = true;
-        }
-        if (unquoted.length()==0)
-            quote=true;
+    private String quoteWhenNeeded(String unquoted, boolean needsQuote) {
+        boolean quote = !Pattern.matches("(\\w+)", unquoted);
         if (!quote) {
             return unquoted;
         }
@@ -690,17 +684,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         List<List<StringBuffer>> commandList = new LinkedList<List<StringBuffer>>();
         try {
             commandList.add(addCommand);
-            if (privileges!=null) {
-                commandList.add(updatePrivileges(accountId, privileges));
-            }
-
-            if (defPrivileges!=null) {
-                commandList.add(updateDefPrivileges(accountId, defPrivileges));
-            }
-
-            if (flags!=null) {
-                commandList.add(updateFlags(accountId, flags));
-            }
             fillInMultipleCommand(commandList, variables);
             result = (String)_multipleAuthorizeCommandExecutor.execute(variables);
         } catch (Exception e) {
@@ -721,6 +704,31 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             if (matcher.find())
                 result = matcher.group();
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE2, result));
+        }
+        
+        // We do the modifies separately, just in case the user already existed, and the create failed
+        //
+        result = "";
+        commandList = new LinkedList<List<StringBuffer>>();
+        try {
+            if (privileges!=null) {
+                commandList.add(updatePrivileges(accountId, privileges));
+            }
+
+            if (defPrivileges!=null) {
+                commandList.add(updateDefPrivileges(accountId, defPrivileges));
+            }
+
+            if (flags!=null) {
+                commandList.add(updateFlags(accountId, flags));
+            }
+            if (commandList.size()>0) {
+                fillInMultipleCommand(commandList, variables);
+                result = (String)_multipleAuthorizeCommandExecutor.execute(variables);
+            }
+        } catch (Exception e) {
+            _log.error(e, "error in create");
+            throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE), e);
         }
         
         // It's possible another connector (or someone else) got in and took the UIC.
@@ -973,10 +981,15 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 if (includeInAttributes(OperationalAttributes.DISABLE_DATE_NAME, attributesToGet)) {
                     String expired = (String)attributes.get(OperationalAttributes.DISABLE_DATE_NAME);
                     if (expired.contains("(none)")) {
-                        // No value to return
+                        builder.addAttribute(OperationalAttributes.DISABLE_DATE_NAME);
                     } else {
                         Date expiredDate = _vmsDateFormatWithoutSecs.parse(expired);
-                        builder.addAttribute(OperationalAttributes.DISABLE_DATE_NAME, expiredDate.getTime());
+                        // If the DISABLE_DATE is in the past, we report it as no value
+                        //
+                        if (expiredDate.before(new Date()))
+                            builder.addAttribute(OperationalAttributes.DISABLE_DATE_NAME);
+                        else
+                            builder.addAttribute(OperationalAttributes.DISABLE_DATE_NAME, expiredDate.getTime());
                     }
                 }
 
@@ -1125,7 +1138,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 String lastChange = (String)attributes.remove(PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME);
                 if (includeInAttributes(PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME, attributesToGet)) {
                     if (lastChange.contains("(pre-expired)")) {
-                        // No value, so return nothing
+                        builder.addAttribute(PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME);
                     } else {
                         Date date = _vmsDateFormatWithoutSecs.parse(lastChange.trim());
                         Object value = date.getTime();

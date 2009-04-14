@@ -235,6 +235,17 @@ public class VmsConnectorTests {
     }
 
     @Test
+    public void testQuote() throws Exception {
+        VmsConfiguration config = createConfiguration();
+        VmsConnector info = createConnector(config);
+        
+        for (String string : new String[] { "12", "foo", "foo123" })
+            Assert.assertEquals(string, info.quoteWhenNeeded(string));
+        for (String string : new String[] { "1 2", "foo ", "foo!123", "foo\"bar\"" , "foo(bar)" })
+            Assert.assertFalse(string.equals(info.quoteWhenNeeded(string)));
+    }
+
+    @Test
     public void testListAllUsers() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
