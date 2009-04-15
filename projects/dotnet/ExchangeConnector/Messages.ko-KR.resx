@@ -135,4 +135,165 @@
   <data name="ex_wrong_update_type" xml:space="preserve">
     <value>업데이트 유형 [{0}]은(는) 지원되지 않습니다.</value>
   </data>
+  <!-- AD connector messages -->
+  <data name="display_CreateHomeDirectory" xml:space="preserve">
+    <value>홈 디렉토리 작성</value>
+  </data>
+  <data name="display_DirectoryAdminName" xml:space="preserve">
+    <value>디렉토리 관리자 계정</value>
+  </data>
+  <data name="display_DirectoryAdminPassword" xml:space="preserve">
+    <value>디렉토리 관리자 비밀번호</value>
+  </data>
+  <data name="display_domainName" xml:space="preserve">
+    <value>도메인 이름</value>
+  </data>
+  <data name="display_LDAPHostName" xml:space="preserve">
+    <value>Active Directory 도메인 컨트롤러 호스트 이름</value>
+  </data>
+  <data name="display_ObjectClass" xml:space="preserve">
+    <value>사용자 객체의 객체 클래스</value>
+  </data>
+  <data name="display_SearchChildDomains" xml:space="preserve">
+    <value>하위 도메인 검색</value>
+  </data>
+  <data name="display_Container" xml:space="preserve">
+    <value>컨테이너</value>
+  </data>
+  <data name="display_SyncDomainController" xml:space="preserve">
+    <value>도메인 컨트롤러 동기화</value>
+  </data>
+  <data name="display_SyncGlobalCatalogServer" xml:space="preserve">
+    <value>전역 카탈로그 서버 동기화</value>
+  </data>
+  <data name="display_SearchContext" xml:space="preserve">
+    <value>검색 컨텍스트</value>
+  </data>
+  <data name="help_CreateHomeDirectory" xml:space="preserve">
+    <value>사용자의 홈 디렉토리를 만들지 여부를 지정합니다. </value>
+  </data>
+  <data name="help_DirectoryAdminName" xml:space="preserve">
+    <value>시스템이 인증해야 하는 관리자 사용자 이름을 입력합니다. 설정은 사용자 이름 또는 &apos;domainname&apos;\&apos;username&apos;일 수 있습니다.</value>
+  </data>
+  <data name="help_DirectoryAdminPassword" xml:space="preserve">
+    <value>인증할 때 사용해야 하는 비밀번호를 입력합니다.</value>
+  </data>
+  <data name="help_domainName" xml:space="preserve">
+    <value>Windows 도메인 이름(예: windowsdomain.mycompany.com)</value>
+  </data>
+  <data name="help_LDAPHostName" xml:space="preserve">
+    <value>교차 도메인 관리의 경우 LDAP 서버의 호스트 이름, IP 주소 또는 도메인 이름을 입력합니다.</value>
+  </data>
+  <data name="help_ObjectClass" xml:space="preserve">
+    <value>이 자원에서 관리될 사용자 객체의 Active Directory 객체 클래스를 지정합니다. 기본값은 User이며, 대부분의 경우 기본값이 적절합니다.</value>
+  </data>
+  <data name="help_SearchChildDomains" xml:space="preserve">
+    <value>Active Directory의 검색에 하위 도메인을 포함하려면 선택합니다. 또한 검색 컨테이너 및 검색 컨텍스트 동기화(동기화 설정 참조) 속성을 상위 도메인의 최상위로 설정해야 합니다(예: DC=mydomain,DC=com).</value>
+  </data>
+  <data name="help_Container" xml:space="preserve">
+    <value>모든 검색의 기본 루트가 되는 컨테이너 객체를 지정합니다. 검색이 명백히 다른 기준을 충족하지 않으면 이 컨테이너 아래에 있는 객체만 검색됩니다. 예를 들어 Users 컨테이너에서 사용자를 검색하려면 CN=Users,DC=MYDOMAIN,DC=COM을 입력합니다.  값을 지정하지 않으면 &apos;기본 컨테이너&apos; 속성 값이 사용됩니다.</value>
+  </data>
+  <data name="help_SyncDomainController" xml:space="preserve">
+    <value>활성 동기화 중에 사용할 도메인 컨트롤러입니다. 하위 도메인을 검색하지 않는 경우에만 사용됩니다.</value>
+  </data>
+  <data name="help_SyncGlobalCatalogServer" xml:space="preserve">
+    <value>전역 카탈로그 서버의 이름입니다. 이 이름은 하위 도메인을 검색하는 경우에만 필요합니다.</value>
+  </data>
+  <data name="help_SearchContext" xml:space="preserve">
+    <value>searchAttributes에 의하여 지정된 속성을 원래 DN 형식으로 변환할 때 찾을 ADSI의 디렉토리를 지정합니다.</value>
+  </data>
+  <data name="ex_ConnectorNotConfigured" xml:space="preserve">
+    <value>커넥터가 구성되지 않았습니다.</value>
+  </data>
+  <data name="ex_DeleteNotSupported" xml:space="preserve">
+    <value>ObjectClass {0}은(는) 삭제할 수 없습니다.</value>
+  </data>
+  <data name="ex_InvalidObjectClass" xml:space="preserve">
+    <value>잘못된 객체 클래스: {0}</value>
+  </data>
+  <data name="ex_missingSyncAttribute" xml:space="preserve">
+    <value>속성 {0}이(가) 커넥터 객체에 없습니다. 동기화를 계속할 수 없습니다.</value>
+  </data>
+  <data name="ex_OperationalAttributeNull" xml:space="preserve">
+    <value>이름 작업 속성은 null일 수 없습니다.</value>
+  </data>
+  <data name="ex_SyncNotAvailable" xml:space="preserve">
+    <value>동기화 작업을 ObjectClass {0}에 사용할 수 없습니다.</value>
+  </data>
+  <data name="ex_UIDNotPresent" xml:space="preserve">
+    <value>Uid가 없습니다.</value>
+  </data>
+  <data name="ex_InvalidObjectClassInConfiguration" xml:space="preserve">
+    <value>커넥터 구성에 잘못된 객체 클래스가 지정되었습니다. 객체 클래스 \&apos;{0}\&apos;이(가) Active Directory에 없습니다.</value>
+  </data>
+  <data name="ex_AttributeNull" xml:space="preserve">
+    <value>커넥터 속성을 &lt;null&gt; 검색 결과에 추가할 수 없습니다.</value>
+  </data>
+  <data name="ex_CouldNotAddNullAttributeToDe" xml:space="preserve">
+    <value>커넥터 속성을 &lt;null&gt; 디렉토리 입력 항목에 추가할 수 없습니다.</value>
+  </data>
+  <data name="ex_ExpectingSingleValue" xml:space="preserve">
+    <value>속성 {0}에 대해 하나의 값이 검색되어야 하는데, 여러 개의 값이 검색되었습니다.</value>
+  </data>
+  <data name="ex_ObjectClassInvalidForConnector" xml:space="preserve">
+    <value>ObjectClass \&apos;{0}\&apos;이(가) 이 커넥터에 유효하지 않습니다.</value>
+  </data>
+  <data name="ex_InvalidCredentials" xml:space="preserve">
+    <value>사용자 {0}에 대해 잘못된 자격 증명이 제공되었습니다.</value>
+  </data>
+  <data name="ex_PasswordMustBeReset" xml:space="preserve">
+    <value>비밀번호 만료는 비밀번호 재설정을 통해서만 재설정할 수 있습니다.</value>
+  </data>
+  <data name="ex_LockAccountNotAllowed" xml:space="preserve">
+    <value>Active Directory는 사용자 잠금을 지원하지 않습니다. 사용자의 잠금을 해제만 할 수 있습니다.</value>
+  </data>
+  <data name="ex_invalidSearchScope" xml:space="preserve">
+    <value>잘못된 검색 범위가 입력되었습니다. {0}</value>
+  </data>
+  <data name="ex_GUIDLookup" xml:space="preserve">
+    <value>사용자 {0}의 유효성을 검사하는 동안 예외가 발생했습니다. 사용자가 인증되었지만 사용자의 guid는 확인하지 못했습니다.</value>
+  </data>
+  <data name="ex_SIDLookup" xml:space="preserve">
+    <value>사용자 {0}의 유효성을 검사하는 동안 예외가 발생했습니다. 사용자가 인증되었지만 사용자의 sid는 확인하지 못했습니다.</value>
+  </data>
+  <data name="confReqParam_adminName" xml:space="preserve">
+    <value>디렉토리 관리자 이름을 제공하지 않았습니다.  </value>
+  </data>
+  <data name="confReqParam_adminPass" xml:space="preserve">
+    <value>디렉토리 관리자 비밀번호를 제공하지 않았습니다.  </value>
+  </data>
+  <data name="confReqParam_domainName" xml:space="preserve">
+    <value>도메인 이름을 제공하지 않았습니다.  </value>
+  </data>
+  <data name="confReqParam_objClass" xml:space="preserve">
+    <value>ObjectClass를 제공하지 않았습니다.  </value>
+  </data>
+  <data name="confReqParam_Container" xml:space="preserve">
+    <value>검색 컨테이너를 제공하지 않았습니다.  </value>
+  </data>
+  <data name="warn_CompatibilityModeQuery" xml:space="preserve">
+    <value>Identity Manger 자원 어댑터 스타일 쿼리 &apos;{0}&apos;을(를) 사용하고 있습니다. 새 커넥터 쿼리 구문을 사용하려면 이 쿼리를 업데이트해야 합니다.</value>
+  </data>
+  <data name="ex_InvalidContainerInConfiguration" xml:space="preserve">
+    <value>잘못된 컨테이너를 제공했습니다.  {0}</value>
+  </data>
+  <data name="display_ShellScriptVariablePrefix" xml:space="preserve">
+    <value>쉘 스크립트 변수 접두어</value>
+  </data>
+  <data name="help_ShellScriptVariablePrefix" xml:space="preserve">
+    <value>모든 쉘 스크립트 인수 이름에 추가되는 접두어입니다. 예를 들어 접두어가 &quot;Connector_&quot;로 설정된 경우 &quot;User&quot;라는 인수는 &quot;Connector_User&quot;가 됩니다.</value>
+  </data>
+  <data name="ex_AccountLocked" xml:space="preserve">
+    <value>사용자의 계정이 잠겼습니다.</value>
+  </data>
+  <data name="ex_PasswordMustChange" xml:space="preserve">
+    <value>사용자 비밀번호를 변경해야 합니다.</value>
+  </data>
+  <data name="ex_AccountExpired" xml:space="preserve">
+    <value>사용자 {0}에 대한 사용자 계정이 만료되었습니다.</value>
+  </data>
+  <data name="ex_InvalidSearchContextInConfiguration" xml:space="preserve">
+    <value>잘못된 검색 컨텍스트를 제공했습니다.  {0}</value>
+  </data>
+  <!-- end of AD connector messages -->
 </root>
