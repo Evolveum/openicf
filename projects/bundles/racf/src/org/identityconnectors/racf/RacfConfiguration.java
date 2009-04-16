@@ -169,6 +169,8 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
             throw new IllegalArgumentException(getMessage(RacfMessages.USERNAMES_NULL));
         if (!noCommandLine && isBlank(_password))
             throw new IllegalArgumentException(getMessage(RacfMessages.PASSWORDS_NULL));
+        if (!noCommandLine && StringUtil.isBlank(_connectionClassName))
+            throw new IllegalArgumentException(getMessage(RacfMessages.CONNECTION_CLASS_NULL));
     }
     
     boolean isBlank(GuardedString string) {

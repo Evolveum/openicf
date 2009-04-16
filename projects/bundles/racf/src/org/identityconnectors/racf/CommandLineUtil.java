@@ -76,6 +76,8 @@ class CommandLineUtil {
     private static final String         OUTPUT_COMPLETE_PATTERN     = "\\sREADY\\s{74}";
     private static final String         OUTPUT_COMPLETE             = " READY";
     private static final String         DEFAULT_GROUP_NAME          = "DFLTGRP";
+    private static final String         SUPGROUP                    = "SUPGROUP";
+    private static final String         OWNER                       = "OWNER";
     private static final String         OUTPUT_CONTINUING_PATTERN   = "\\s\\*\\*\\*\\s{76}";
     private static final String         OUTPUT_CONTINUING           = " ***";
     private static final String         RACF                        = "RACF";
@@ -263,11 +265,20 @@ class CommandLineUtil {
         Attribute disableDate = attributes.remove(ATTR_CL_REVOKE_DATE);
         Attribute attributesAttribute = attributes.remove(ATTR_CL_ATTRIBUTES);
         
+        throwErrorIfNullOrEmpty(name);
+        throwErrorIfNullOrEmpty(uid);
+        throwErrorIfNullOrEmpty(expired);
+        throwErrorIfNullOrEmpty(enabled);
+        throwErrorIfNullOrEmpty(enableDate);
+        throwErrorIfNullOrEmpty(disableDate);
+        throwErrorIfNullOrEmpty(attributesAttribute);
+        
         // Build up a map containing the segment attribute values
         //
         Map<String, Map<String, char[]>> attributeValues = new HashMap<String, Map<String,char[]>>();
         for (Map.Entry<String, Attribute> entry : attributes.entrySet()) {
             String[] attributeName = entry.getKey().split(RacfConnector.SEPARATOR_REGEX);
+            throwErrorIfNullOrEmpty(entry.getValue());
             
             if (!attributeValues.containsKey(attributeName[0])) {
                 attributeValues.put(attributeName[0], new HashMap<String, char[]>());
@@ -348,14 +359,17 @@ class CommandLineUtil {
     public char[] computeValue(char[] value, String segmentName, String attributeName) {
         // Since DFLTGRP comes in as a stringified UID, it must be converted
         //
-        if (DEFAULT_GROUP_NAME.equalsIgnoreCase(attributeName)) {
+        if (DEFAULT_GROUP_NAME.equalsIgnoreCase(attributeName) ||
+                SUPGROUP.equalsIgnoreCase(attributeName) ||
+                OWNER.equalsIgnoreCase(attributeName)
+            ) {
             value = _connector.extractRacfIdFromLdapId(new String(value)).toCharArray();
         }
         
         // DATA and IC must always be quoted, other values must be quoted
         // if they contain special characters
         //
-        boolean quoteNeeded = "DATA".equalsIgnoreCase(segmentName) || "IC".equalsIgnoreCase(segmentName);
+        boolean quoteNeeded = "DATA".equalsIgnoreCase(attributeName) || "IC".equalsIgnoreCase(attributeName);
         if (!quoteNeeded) {
             for (char character : new char[] {'(', ')', ' ', ',', ';', '\''})
                 for (char valueChar : value)
@@ -377,6 +391,32 @@ class CommandLineUtil {
         return value;
     }
     
+    private void throwErrorIfNullOrEmpty(Attribute attribute) {
+        throwErrorIfNull(attribute);
+        if (attribute!=null) {
+            List<Object> values = attribute.getValue();
+            if (values==null || values.size()==0)
+                throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.NO_VALUE_FOR_ATTRIBUTE, attribute.getName()));
+        }
+    }
+    
+    private void throwErrorIfNull(Attribute attribute) {
+        if (attribute!=null) {
+            List<Object> values = attribute.getValue();
+            boolean isNull = values==null;
+            if (!isNull) {
+                for (Object value : values) {
+                    if (value==null) {
+                        isNull = true;
+                        break;
+                    }
+                }
+            }
+            if (isNull)
+                throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.NO_VALUE_FOR_ATTRIBUTE, attribute.getName()));
+        }
+    }
+    
     public Uid createViaCommandLine(ObjectClass objectClass, Set<Attribute> attrs, OperationOptions options) {
         Map<String, Attribute> attributes = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
         String name = ((Name)attributes.get(Name.NAME)).getNameValue();
@@ -384,6 +424,11 @@ class CommandLineUtil {
             Attribute groups = attributes.remove(ATTR_CL_GROUPS);
             Attribute expired = attributes.remove(ATTR_CL_EXPIRED);
             Attribute password = attributes.get(ATTR_CL_PASSWORD);
+            
+            throwErrorIfNull(groups);
+            throwErrorIfNullOrEmpty(expired);
+            throwErrorIfNullOrEmpty(password);
+            
             if (expired!=null && password==null) 
                 throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
             
@@ -416,6 +461,9 @@ class CommandLineUtil {
             return uid;
         } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
             Attribute accounts = attributes.remove(ATTR_CL_MEMBERS);
+
+            throwErrorIfNull(accounts);
+            
             if (groupExists(name))
                 throw new AlreadyExistsException();
             CharArrayBuffer buffer = new CharArrayBuffer();
@@ -426,6 +474,7 @@ class CommandLineUtil {
             buffer.clear();
             if (accounts!=null) {
                 for (Object accountName : accounts.getValue()) {
+                    accountName = _connector.extractRacfIdFromLdapId((String)accountName);
                     String command = "CONNECT "+accountName+" GROUP("+name+")";
                     checkCommand(command);
                 }
@@ -447,17 +496,33 @@ class CommandLineUtil {
         String uidString = uid.getUidValue();
         if (isUserid(uidString)) {
             String name = _connector.extractRacfIdFromLdapId(uidString);
-            if (!userExists(name))
-                throw new UnknownUidException();
             String command = "DELUSER "+name;
-            checkCommand(command);
+            try {
+                checkCommand(command);
+            } catch (ConnectorException e) {
+                if (!userExists(name))
+                    throw new UnknownUidException();
+                throw e;
+            }
         } else if (isGroupid(uidString)) {
             String name = _connector.extractRacfIdFromLdapId(uidString);
-            int memberCount = memberCount(name);
-            if (memberCount>0)
-                throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.GROUP_NOT_EMPTY));
             String command = "DELGROUP "+name;
-            checkCommand(command);
+            
+            // To make this more efficient, we just issue the command.
+            // If it fails, we check to see if
+            //  . group does not exist
+            //  . group has members
+            // Each of which will generate a nice error. Otherwise, throw a
+            // generic error
+            //
+            try {
+                checkCommand(command);
+            } catch (ConnectorException e) {
+                int memberCount = memberCount(name);
+                if (memberCount>0)
+                    throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.GROUP_NOT_EMPTY));
+                throw e;
+            }
         } else if (isConnection(uidString)) {
             String[] info = extractRacfIdAndGroupIdFromLdapId(uidString);
             String user = _connector.extractRacfIdFromLdapId(info[0]);
@@ -470,18 +535,13 @@ class CommandLineUtil {
     }
 
     private boolean groupExists(String name) {
-        // TSO gets into a funny state if you attempt to delete an nonexisting group
-        // so, check and see if the group already exists
-        //
-        String output = getCommandOutput("LISTGRP "+name);
-        boolean notFound = (output.toUpperCase().contains("NAME NOT FOUND"));
-        return !notFound;
+        String command = "SEARCH CLASS(GROUP) FILTER("+name+")";
+        String groups = getCommandOutput(command);
+        
+        return !(groups.contains("NO ENTRIES MEET SEARCH CRITERIA"));
     }
 
     private int memberCount(String name) {
-        // TSO gets into a funny state if you attempt to delete an nonexisting group
-        // so, check and see if the group already exists
-        //
         String output = getCommandOutput("LISTGRP "+name);
         boolean notFound = (output.toUpperCase().contains("NAME NOT FOUND"));
         if (notFound)
@@ -501,12 +561,10 @@ class CommandLineUtil {
     }
 
     private boolean userExists(String name) {
-        // TSO gets into a funny state if you attempt to delete an nonexisting user
-        // so, check and see if the user already exists
-        //
-        String output = getCommandOutput("LISTUSER "+name);
-        boolean notFound = (output.toUpperCase().contains("UNABLE TO LOCATE USER"));
-        return !notFound;
+        String command = "SEARCH CLASS(USER) FILTER("+name+")";
+        String groups = getCommandOutput(command);
+        
+        return !(groups.contains("NO ENTRIES MEET SEARCH CRITERIA"));
     }
     
     public List<String> getMembersOfGroupViaCommandLine(String group) {
@@ -556,6 +614,7 @@ class CommandLineUtil {
         else
             command = "SEARCH CLASS(USER)";
         String users = getCommandOutput(command);
+        
         if (users.contains("NO ENTRIES MEET SEARCH CRITERIA")) {
             return new LinkedList<String>();
         }
@@ -588,6 +647,11 @@ class CommandLineUtil {
         else
             command = "SEARCH CLASS(GROUP)";
         String groups = getCommandOutput(command);
+        
+        if (groups.contains("NO ENTRIES MEET SEARCH CRITERIA")) {
+            return new LinkedList<String>();
+        }
+        
         // Error messages all start with a 9 character error code,
         // and groups are at most 8 characters long. This allow us to
         // determine if there are any error messages in the text
@@ -889,6 +953,12 @@ class CommandLineUtil {
                 Long converted = convertFromResumeRevokeFormat(value);
                 attributesFromCommandLine.put(OperationalAttributes.ENABLE_DATE_NAME, converted);
             }
+            // Owner must be a stringified Uid
+            //
+            if (attributesFromCommandLine.containsKey(ATTR_CL_OWNER)) {
+                Object value = attributesFromCommandLine.get(ATTR_CL_OWNER);
+                attributesFromCommandLine.put(ATTR_CL_OWNER, getOwnerUid(value));
+            }
             // Default group name must be a stringified Uid
             //
             if (attributesFromCommandLine.containsKey(ATTR_CL_DFLTGRP)) {
@@ -903,8 +973,8 @@ class CommandLineUtil {
                 if (members!=null) {
                     for (Object member : members)
                         membersAsString.add(_connector.createUidFromName(RacfConnector.RACF_GROUP, (String)member).getUidValue());
-                    attributesFromCommandLine.put(ATTR_CL_GROUPS, membersAsString);
                 }
+                attributesFromCommandLine.put(ATTR_CL_GROUPS, membersAsString);
             }
         }
 
@@ -915,7 +985,7 @@ class CommandLineUtil {
             //
             if (attributesFromCommandLine.containsKey(ATTR_CL_OWNER)) {
                 Object value = attributesFromCommandLine.get(ATTR_CL_OWNER);
-                attributesFromCommandLine.put(ATTR_CL_OWNER, _connector.createUidFromName(RacfConnector.RACF_GROUP, (String)value).getUidValue());
+                attributesFromCommandLine.put(ATTR_CL_OWNER, getOwnerUid(value));
             }
             // Superior group must be a stringified Uid
             //
@@ -934,8 +1004,8 @@ class CommandLineUtil {
                 if (members!=null) {
                     for (Object member : members)
                         membersAsString.add(_connector.createUidFromName(ObjectClass.ACCOUNT, (String)member).getUidValue());
-                    attributesFromCommandLine.put(ATTR_CL_MEMBERS, membersAsString);
                 }
+                attributesFromCommandLine.put(ATTR_CL_MEMBERS, membersAsString);
             }
             // Groups must be stringified Uids
             //
@@ -945,13 +1015,22 @@ class CommandLineUtil {
                 if (members!=null) {
                     for (Object member : members)
                         membersAsString.add(_connector.createUidFromName(RacfConnector.RACF_GROUP, (String)member).getUidValue());
-                    attributesFromCommandLine.put(ATTR_CL_GROUPS, membersAsString);
                 }
+                attributesFromCommandLine.put(ATTR_CL_GROUPS, membersAsString);
             }
         }
         return attributesFromCommandLine;
     }
     
+
+    // TODO: owner can be either user or group, we must determine which
+    //
+    private String getOwnerUid(Object value) {
+        if (groupExists((String)value))
+            return _connector.createUidFromName(RacfConnector.RACF_GROUP, (String)value).getUidValue();
+        else
+            return _connector.createUidFromName(ObjectClass.ACCOUNT, (String)value).getUidValue();
+    }
     
     private Long convertFromResumeRevokeFormat(Object value) {
         try {
@@ -1100,7 +1179,7 @@ class CommandLineUtil {
             //  continue execution, to see if we can recover
             //
             
-            matches.add(new RegExpMatch("IKJ56703A REENTER THIS OPERAND", new Closure() {
+            matches.add(new RegExpMatch("IKJ\\d+\\w REENTER THIS OPERAND", new Closure() {
                 public void run(ExpectState state) throws Exception {
                     state.addVar("errorDetected", state.getBuffer());
                     // Need to strip off the match

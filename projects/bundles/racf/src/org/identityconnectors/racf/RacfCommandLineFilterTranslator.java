@@ -104,11 +104,13 @@ public class RacfCommandLineFilterTranslator extends AbstractFilterTranslator<St
                 return string.substring(string.length()+length);
         }
     }
+    
     private String getNameFromUid(String uid) {
         String newUid = uid;
         if (uid.startsWith("racfid="))
             newUid = uid.substring("racfid=".length());
-        newUid = newUid.substring(0, newUid.indexOf(",profileType="));
+        if (uid.contains(",profileType="))
+            newUid = newUid.substring(0, newUid.indexOf(",profileType="));
         return newUid;
     }
 

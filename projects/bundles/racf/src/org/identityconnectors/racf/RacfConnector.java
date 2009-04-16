@@ -279,6 +279,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                     ldapAttrs.add(ATTR_LDAP_RESUME_DATE);
                 else
                     commandLineAttrs.add(ATTR_CL_RESUME_DATE);
+            } else if (attribute.equals(OperationalAttributes.PASSWORD_NAME)) {
+                throw new IllegalArgumentException("TODO: password is not readable");
             } else if (attribute.equals(OperationalAttributes.PASSWORD_EXPIRED_NAME)) {
                 // Can't see a way to do this via LDAP
                 //
@@ -372,13 +374,13 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             if (ldapAttrs.contains(Name.NAME))
                 ldapSize--;
             if (!isLdapConnectionAvailable() && ldapSize>0)
-                throw new ConnectorException(_configuration.getMessage(RacfMessages.ATTRS_NO_LDAP));
+                throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.ATTRS_NO_LDAP));
 
             int commandLineSize = commandLineAttrs.size();
             if (commandLineAttrs.contains(Name.NAME))
                 commandLineSize--;
             if (StringUtil.isBlank(_configuration.getUserName()) && commandLineSize>0)
-                throw new ConnectorException(_configuration.getMessage(RacfMessages.ATTRS_NO_CL));
+                throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.ATTRS_NO_CL));
             
             SearchControls subTreeControls = new SearchControls(SearchControls.SUBTREE_SCOPE, 4095, 0, ldapAttrs.toArray(new String[0]), true, true);
             for (String name : names) {
@@ -476,6 +478,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
     void setGroupMembershipsForUser(String name, Attribute groups) {
         List<Object> newGroups = groups.getValue(); 
         List<String> currentGroups = getGroupsForUser(name);
+        if (newGroups==null)
+            newGroups = new LinkedList<Object>();
+        if (currentGroups==null)
+            currentGroups = new LinkedList<String>();
         for (String currentGroup : currentGroups) {
             if (!newGroups.contains(currentGroup)) {
                 // Group is being eliminated
@@ -506,6 +512,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
     void setGroupMembershipsForGroups(String name, Attribute members) {
         List<Object> newMembers = members.getValue(); 
         List<String> currentMembers = getMembersOfGroup(name);
+        if (newMembers==null)
+            newMembers = new LinkedList<Object>();
+        if (currentMembers==null)
+            currentMembers = new LinkedList<String>();
+        
         for (String currentMember : currentMembers) {
             if (!newMembers.contains(currentMember)) {
                 String connectionName = createConnectionId(currentMember, name);
@@ -633,7 +644,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
     
             // Required Attributes
             //
-            attributes.add(Name.INFO);
+            attributes.add(buildNonupdateAttribute(Name.NAME,                           String.class, true));
             attributes.add(AttributeInfoBuilder.build(ATTR_CL_DFLTGRP,                  String.class));
     
             // Optional Attributes (have RACF default values)
@@ -719,12 +730,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         //
         {
             Set<AttributeInfo> groupAttributes = new HashSet<AttributeInfo>();
-            groupAttributes.add(Name.INFO);
+            groupAttributes.add(buildNonupdateAttribute(Name.NAME,                           String.class, true));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_CL_SUPGROUP,                 String.class));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_CL_OWNER,                    String.class));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_CL_DATA,                     String.class));
             groupAttributes.add(buildMultivaluedAttribute(ATTR_CL_MEMBERS,                   String.class, false));
-            groupAttributes.add(buildMultivaluedAttribute(ATTR_CL_GROUPS,                    String.class, false));
+            groupAttributes.add(buildMVROAttribute(ATTR_CL_GROUPS,                           String.class, false));
     
             _groupAttributes = AttributeInfoUtil.toMap(groupAttributes);
             schemaBuilder.defineObjectClass(RACF_GROUP_NAME, groupAttributes);
@@ -743,7 +754,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
     
             // Required Attributes
             //
-            attributes.add(Name.INFO);
+            attributes.add(buildNonupdateAttribute(Name.NAME,                            String.class, true));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DEFAULT_GROUP,           String.class));
     
             // Optional Attributes (have RACF default values)
@@ -865,6 +876,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         //
         {
             Set<AttributeInfo> groupAttributes = new HashSet<AttributeInfo>();
+            groupAttributes.add(buildNonupdateAttribute(Name.NAME,                       String.class, true));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DATA,               String.class));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_MODEL,              String.class));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OWNER,              String.class));
@@ -925,6 +937,19 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         builder.setRequired(required);
         builder.setMultiValued(true);
         builder.setReturnedByDefault(false);
+        return builder.build();
+    }
+
+    private AttributeInfo buildNonupdateAttribute(String name, Class<?> clazz, boolean required) {
+        AttributeInfoBuilder builder = new AttributeInfoBuilder();
+        builder.setName(name);
+        builder.setType(clazz);
+        builder.setRequired(required);
+        builder.setMultiValued(false);
+        builder.setUpdateable(false);
+        builder.setCreateable(true);
+        builder.setReadable(true);
+        builder.setReturnedByDefault(true);
         return builder.build();
     }
 

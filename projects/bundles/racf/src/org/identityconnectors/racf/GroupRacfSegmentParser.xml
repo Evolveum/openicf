@@ -50,20 +50,29 @@
     <SubstituteTransform pattern='^$' substitute='UNKNOWN'/>
   </PatternNode>
   <PatternNode key='RACF*DATA'          pattern='(NO INSTALLATION DATA)'    optional='true' reset='true'/>
-  <PatternNode key='RACF*DATA' pattern='INSTALLATION-DATA=([^\n]*(\s{20}.+\n)*)' optional='true' reset='false'>
+  <PatternNode key='RACF*DATA'          pattern='INSTALLATION DATA=([^\n]*(\s{20}.+\n)*)' optional='true' reset='false'>
     <SubstituteTransform pattern='^(.{50})[^\n]+' substitute='$1'/>
     <SubstituteTransform pattern='\n\s{20}(.{50})[^\n]+' substitute='$1'/>
     <SubstituteTransform pattern='\n' substitute=''/>
-    <SubstituteTransform pattern='^$' substitute='NO-INSTALLATION-DATA'/>
+    <SubstituteTransform pattern='\s+$' substitute=''/>
+    <SubstituteTransform pattern='^$' substitute='NO INSTALLATION DATA'/>
   </PatternNode>
-  <PatternNode key='RACF*GROUPS' pattern='SUBGROUP\(S\)=([^\n]*\n(\s{18}[^\n]+\n)*)' optional='true' reset='false'>
+  <PatternNode key='RACF*GROUPS'        pattern='(NO GROUPS)' optional='true' reset='true'>
+    <SubstituteTransform pattern='(NO GROUPS)' substitute=''/>
+    <SplitTransform splitPattern='\s+'/>
+  </PatternNode>
+  <PatternNode key='RACF*GROUPS'        pattern='SUBGROUP\(S\)=([^\n]*\n(\s{18}[^\n]+\n)*)' optional='true' reset='false'>
      <SubstituteTransform pattern='([,\n])' substitute=' '/>
      <SubstituteTransform pattern='(\S+)\s+' substitute='$1 '/>
      <SubstituteTransform pattern='^\s+(\S+)' substitute='$1'/>
      <SubstituteTransform pattern='(\S+)\s+$' substitute='$1'/>
      <SplitTransform splitPattern='\s+'/>
   </PatternNode>
-  <PatternNode key='RACF*MEMBERS' pattern='USER\(S\)=[^\n]*\n((\s{7}\S+([^\n]+\n){3})*)' optional='true' reset='false'>
+  <PatternNode key='RACF*MEMBERS'       pattern='(NO USERS)' optional='true' reset='true'>
+    <SubstituteTransform pattern='(NO USERS)' substitute=''/>
+    <SplitTransform splitPattern='\s+'/>
+  </PatternNode>
+  <PatternNode key='RACF*MEMBERS'       pattern='USER\(S\)=[^\n]*\n((\s{7}\S+([^\n]+\n){3})*)' optional='true' reset='false'>
      <SubstituteTransform pattern='\s{7}(\S+)(?:[^\n]+\n){3}' substitute='$1 '/>
      <SplitTransform splitPattern='\s+'/>
   </PatternNode>

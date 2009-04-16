@@ -32,6 +32,7 @@ public class RacfMessages extends ListResourceBundle {
     public static final String PORT_NULL                      = "PORT_NULL";
     public static final String USERNAME_NULL                  = "USERNAME_NULL";
     public static final String PASSWORD_NULL                  = "PASSWORD_NULL";
+    public static final String CONNECTION_CLASS_NULL          = "CONNECTION_CLASS_NULL";
     public static final String USERNAMES_NULL                 = "USERNAMES_NULL";
     public static final String PASSWORDS_NULL                 = "PASSWORDS_NULL";
     public static final String POOLNAMES_NULL                 = "POOLNAMES_NULL";
@@ -62,6 +63,7 @@ public class RacfMessages extends ListResourceBundle {
     public static final String PAST_ENABLE_DATE               = "PAST_ENABLE_DATE";
     public static final String DISABLE_PLUS_DATE              = "DISABLE_PLUS_DATE";
     public static final String ENABLE_PLUS_DATE               = "ENABLE_PLUS_DATE";
+    public static final String NO_VALUE_FOR_ATTRIBUTE               = "NO_VALUE_FOR_ATTRIBUTE";
 
     private static final String[][] _contents = {
         { SUFFIX_NULL,             "suffix may not be null" },
@@ -69,6 +71,7 @@ public class RacfMessages extends ListResourceBundle {
         { PORT_NULL,               "port may not be null" },
         { USERNAME_NULL,           "user name may not be null" },
         { PASSWORD_NULL,           "password may not be null" },
+        { CONNECTION_CLASS_NULL,   "connection class may not be null" },
         { USERNAMES_NULL,          "user names may not be null" },
         { PASSWORDS_NULL,          "passwords may not be null" },
         { POOLNAMES_NULL,          "passwords may not be null" },
@@ -99,6 +102,7 @@ public class RacfMessages extends ListResourceBundle {
         { DISABLE_PLUS_DATE,       "Both __DISABLE_DATE__ and __ENABLE__==false have been specified" },
         { PAST_DISABLE_DATE,       "__DISABLE_DATE__ is in the past" },
         { PAST_ENABLE_DATE,        "__ENABLE_DATE__ is in the past" },
+        { NO_VALUE_FOR_ATTRIBUTE,  "No value specified for attribute ''{0}''" },
         
     };
 
