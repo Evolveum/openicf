@@ -134,7 +134,7 @@ class CommandLineUtil {
 
     private Uid createOrUpdateViaCommandLine(ObjectClass objectClass, String name, CharArrayBuffer command) {
         checkCommand(command);
-        return _connector.createUidFromName(objectClass, name);
+        return new Uid(name);
     }
 
     public String[] extractRacfIdAndGroupIdFromLdapId(String uidString) {
@@ -357,14 +357,6 @@ class CommandLineUtil {
     }
 
     public char[] computeValue(char[] value, String segmentName, String attributeName) {
-        // Since DFLTGRP comes in as a stringified UID, it must be converted
-        //
-        if (DEFAULT_GROUP_NAME.equalsIgnoreCase(attributeName) ||
-                SUPGROUP.equalsIgnoreCase(attributeName) ||
-                OWNER.equalsIgnoreCase(attributeName)
-            ) {
-            value = _connector.extractRacfIdFromLdapId(new String(value)).toCharArray();
-        }
         
         // DATA and IC must always be quoted, other values must be quoted
         // if they contain special characters
@@ -444,7 +436,7 @@ class CommandLineUtil {
             buffer.clear();
             if (groups!=null) {
                 for (Object groupName : groups.getValue()) {
-                    String command = "CONNECT "+name+" GROUP("+_connector.extractRacfIdFromLdapId((String)groupName)+")";
+                    String command = "CONNECT "+name+" GROUP("+(String)groupName+")";
                     checkCommand(command);
                 }
             }
@@ -474,7 +466,6 @@ class CommandLineUtil {
             buffer.clear();
             if (accounts!=null) {
                 for (Object accountName : accounts.getValue()) {
-                    accountName = _connector.extractRacfIdFromLdapId((String)accountName);
                     String command = "CONNECT "+accountName+" GROUP("+name+")";
                     checkCommand(command);
                 }
@@ -492,21 +483,19 @@ class CommandLineUtil {
         }
     }
     
-    public void deleteViaCommandLine(Uid uid) {
+    public void deleteViaCommandLine(ObjectClass objectClass, Uid uid) {
         String uidString = uid.getUidValue();
-        if (isUserid(uidString)) {
-            String name = _connector.extractRacfIdFromLdapId(uidString);
-            String command = "DELUSER "+name;
+        if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
+            String command = "DELUSER "+uidString;
             try {
                 checkCommand(command);
             } catch (ConnectorException e) {
-                if (!userExists(name))
+                if (!userExists(uidString))
                     throw new UnknownUidException();
                 throw e;
             }
-        } else if (isGroupid(uidString)) {
-            String name = _connector.extractRacfIdFromLdapId(uidString);
-            String command = "DELGROUP "+name;
+        } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
+            String command = "DELGROUP "+uidString;
             
             // To make this more efficient, we just issue the command.
             // If it fails, we check to see if
@@ -518,12 +507,12 @@ class CommandLineUtil {
             try {
                 checkCommand(command);
             } catch (ConnectorException e) {
-                int memberCount = memberCount(name);
+                int memberCount = memberCount(uidString);
                 if (memberCount>0)
                     throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.GROUP_NOT_EMPTY));
                 throw e;
             }
-        } else if (isConnection(uidString)) {
+        } else if (objectClass.is(RacfConnector.RACF_CONNECTION_NAME)) {
             String[] info = extractRacfIdAndGroupIdFromLdapId(uidString);
             String user = _connector.extractRacfIdFromLdapId(info[0]);
             String group = _connector.extractRacfIdFromLdapId(info[1]);
@@ -579,7 +568,7 @@ class CommandLineUtil {
             List<String> membersAsString = new LinkedList<String>();
             if (members!=null) {
                 for (Object member : members)
-                    membersAsString.add(_connector.createUidFromName(ObjectClass.ACCOUNT, (String)member).getUidValue());
+                    membersAsString.add((String)member);
             }
             return membersAsString;
         } catch (Exception e) {
@@ -598,7 +587,7 @@ class CommandLineUtil {
             List<Object> groups = (List<Object>)map.get(ATTR_CL_GROUPS);
             List<String> groupsAsString = new LinkedList<String>();
             for (Object group : groups)
-                groupsAsString.add(_connector.createUidFromName(RacfConnector.RACF_GROUP, (String)group).getUidValue());
+                groupsAsString.add((String)group);
             return groupsAsString;
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
@@ -630,12 +619,12 @@ class CommandLineUtil {
         } else {
             String[] usersArray = users.trim().split("\\s+");
             for (int i=0; i<usersArray.length; i++)
-                usersArray[i] = _connector.createUidFromName(ObjectClass.ACCOUNT, usersArray[i]).getUidValue();
+                usersArray[i] = usersArray[i];
             List<String> result = new LinkedList<String>(Arrays.asList(usersArray));
             // We eliminate certain users
             //
             for (String user : new String[] {"irrcerta", "irrmulti", "irrsitec"}) 
-                result.remove(_connector.createUidFromName(ObjectClass.ACCOUNT, user).getUidValue());
+                result.remove(user);
             return result;
         }
     }
@@ -663,7 +652,7 @@ class CommandLineUtil {
         } else {
             String[] groupsArray = groups.trim().split("\\s+");
             for (int i=0; i<groupsArray.length; i++)
-                groupsArray[i] = _connector.createUidFromName(RacfConnector.RACF_GROUP, groupsArray[i]).getUidValue();
+                groupsArray[i] = groupsArray[i];
             return Arrays.asList(groupsArray);
         }
     }
@@ -671,7 +660,7 @@ class CommandLineUtil {
     public Uid updateViaCommandLine(ObjectClass objectClass, Set<Attribute> attrs, OperationOptions options) {
         Map<String, Attribute> attributes = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
         Uid uid = (Uid)attributes.get(Uid.NAME);
-        String name = _connector.extractRacfIdFromLdapId(uid.getUidValue());
+        String name = uid.getUidValue();
         
         if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
             Attribute groupMembership = attributes.remove(ATTR_CL_GROUPS);
@@ -803,7 +792,7 @@ class CommandLineUtil {
 
     }
 
-    public Map<String, Object> getAttributesFromCommandLine(ObjectClass objectClass, String name, boolean ldapAvailable, Set<String> attributesToGet) {
+    public Map<String, Object> getAttributesFromCommandLine(ObjectClass objectClass, String racfName, boolean ldapAvailable, Set<String> attributesToGet) {
         String objectClassPrefix = null;
         String listCommand = null;
         if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
@@ -824,8 +813,6 @@ class CommandLineUtil {
         //
         if (!ldapAvailable)
             segmentsNeeded.add(RACF);
-        
-        String racfName = _connector.extractRacfIdFromLdapId(name);
         
         if (attributesToGet!=null) {
             for (String attributeToGet : attributesToGet) {
@@ -953,83 +940,21 @@ class CommandLineUtil {
                 Long converted = convertFromResumeRevokeFormat(value);
                 attributesFromCommandLine.put(OperationalAttributes.ENABLE_DATE_NAME, converted);
             }
-            // Owner must be a stringified Uid
-            //
-            if (attributesFromCommandLine.containsKey(ATTR_CL_OWNER)) {
-                Object value = attributesFromCommandLine.get(ATTR_CL_OWNER);
-                attributesFromCommandLine.put(ATTR_CL_OWNER, getOwnerUid(value));
-            }
-            // Default group name must be a stringified Uid
-            //
-            if (attributesFromCommandLine.containsKey(ATTR_CL_DFLTGRP)) {
-                Object value = attributesFromCommandLine.get(ATTR_CL_DFLTGRP);
-                attributesFromCommandLine.put(ATTR_CL_DFLTGRP, _connector.createUidFromName(RacfConnector.RACF_GROUP, (String)value).getUidValue());
-            }
-            // Groups must be stringified Uids
-            //
-            if (attributesFromCommandLine.containsKey(ATTR_CL_GROUPS)) {
-                List<Object> members = (List<Object>)attributesFromCommandLine.remove(ATTR_CL_GROUPS);
-                List<String> membersAsString = new LinkedList<String>();
-                if (members!=null) {
-                    for (Object member : members)
-                        membersAsString.add(_connector.createUidFromName(RacfConnector.RACF_GROUP, (String)member).getUidValue());
-                }
-                attributesFromCommandLine.put(ATTR_CL_GROUPS, membersAsString);
-            }
         }
 
         // Remap GROUP attributes as needed
         //
         if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
-            // Owner must be a stringified Uid
-            //
-            if (attributesFromCommandLine.containsKey(ATTR_CL_OWNER)) {
-                Object value = attributesFromCommandLine.get(ATTR_CL_OWNER);
-                attributesFromCommandLine.put(ATTR_CL_OWNER, getOwnerUid(value));
-            }
             // Superior group must be a stringified Uid
             //
             if (attributesFromCommandLine.containsKey(ATTR_CL_SUPGROUP)) {
                 Object value = attributesFromCommandLine.get(ATTR_CL_SUPGROUP);
                 if ("NONE".equals(value))
                     attributesFromCommandLine.put(ATTR_CL_SUPGROUP, null);
-                else
-                    attributesFromCommandLine.put(ATTR_CL_SUPGROUP, _connector.createUidFromName(RacfConnector.RACF_GROUP, (String)value).getUidValue());
             }
-            // Group members must be Uids
-            //
-            if (attributesFromCommandLine.containsKey(ATTR_CL_MEMBERS)) {
-                List<Object> members = (List<Object>)attributesFromCommandLine.get(ATTR_CL_MEMBERS);
-                List<String> membersAsString = new LinkedList<String>();
-                if (members!=null) {
-                    for (Object member : members)
-                        membersAsString.add(_connector.createUidFromName(ObjectClass.ACCOUNT, (String)member).getUidValue());
-                }
-                attributesFromCommandLine.put(ATTR_CL_MEMBERS, membersAsString);
-            }
-            // Groups must be stringified Uids
-            //
-            if (attributesFromCommandLine.containsKey(ATTR_CL_GROUPS)) {
-                List<Object> members = (List<Object>)attributesFromCommandLine.remove(ATTR_CL_GROUPS);
-                List<String> membersAsString = new LinkedList<String>();
-                if (members!=null) {
-                    for (Object member : members)
-                        membersAsString.add(_connector.createUidFromName(RacfConnector.RACF_GROUP, (String)member).getUidValue());
-                }
-                attributesFromCommandLine.put(ATTR_CL_GROUPS, membersAsString);
-            }
+
         }
         return attributesFromCommandLine;
-    }
-    
-
-    // TODO: owner can be either user or group, we must determine which
-    //
-    private String getOwnerUid(Object value) {
-        if (groupExists((String)value))
-            return _connector.createUidFromName(RacfConnector.RACF_GROUP, (String)value).getUidValue();
-        else
-            return _connector.createUidFromName(ObjectClass.ACCOUNT, (String)value).getUidValue();
     }
     
     private Long convertFromResumeRevokeFormat(Object value) {

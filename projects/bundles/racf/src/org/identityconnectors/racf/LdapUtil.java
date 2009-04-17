@@ -344,3 +344,79 @@ class LdapUtil {
         }
     }
 }
+/*
+// Since DFLTGRP comes in as a stringified UID, it must be converted
+//
+if (DEFAULT_GROUP_NAME.equalsIgnoreCase(attributeName) ||
+        SUPGROUP.equalsIgnoreCase(attributeName) ||
+        OWNER.equalsIgnoreCase(attributeName)
+    ) {
+    value = _connector.extractRacfIdFromLdapId(new String(value)).toCharArray();
+}
+
+            // Owner must be a stringified Uid
+            //
+            if (attributesFromCommandLine.containsKey(ATTR_CL_OWNER)) {
+                Object value = attributesFromCommandLine.get(ATTR_CL_OWNER);
+                attributesFromCommandLine.put(ATTR_CL_OWNER, getOwnerUid(value));
+            }
+            // Superior group must be a stringified Uid
+            //
+            if (attributesFromCommandLine.containsKey(ATTR_CL_SUPGROUP)) {
+                Object value = attributesFromCommandLine.get(ATTR_CL_SUPGROUP);
+                if ("NONE".equals(value))
+                    attributesFromCommandLine.put(ATTR_CL_SUPGROUP, null);
+                else
+                    attributesFromCommandLine.put(ATTR_CL_SUPGROUP, _connector.createUidFromName(RacfConnector.RACF_GROUP, (String)value).getUidValue());
+            }
+            // Group members must be Uids
+            //
+            if (attributesFromCommandLine.containsKey(ATTR_CL_MEMBERS)) {
+                List<Object> members = (List<Object>)attributesFromCommandLine.get(ATTR_CL_MEMBERS);
+                List<String> membersAsString = new LinkedList<String>();
+                if (members!=null) {
+                    for (Object member : members)
+                        membersAsString.add(_connector.createUidFromName(ObjectClass.ACCOUNT, (String)member).getUidValue());
+                }
+                attributesFromCommandLine.put(ATTR_CL_MEMBERS, membersAsString);
+            }
+            // Groups must be stringified Uids
+            //
+            if (attributesFromCommandLine.containsKey(ATTR_CL_GROUPS)) {
+                List<Object> members = (List<Object>)attributesFromCommandLine.remove(ATTR_CL_GROUPS);
+                List<String> membersAsString = new LinkedList<String>();
+                if (members!=null) {
+                    for (Object member : members)
+                        membersAsString.add(_connector.createUidFromName(RacfConnector.RACF_GROUP, (String)member).getUidValue());
+                }
+                attributesFromCommandLine.put(ATTR_CL_GROUPS, membersAsString);
+            }
+
+
+
+
+            // Owner must be a stringified Uid
+            //
+            if (attributesFromCommandLine.containsKey(ATTR_CL_OWNER)) {
+                Object value = attributesFromCommandLine.get(ATTR_CL_OWNER);
+                attributesFromCommandLine.put(ATTR_CL_OWNER, getOwnerUid(value));
+            }
+            // Default group name must be a stringified Uid
+            //
+            if (attributesFromCommandLine.containsKey(ATTR_CL_DFLTGRP)) {
+                Object value = attributesFromCommandLine.get(ATTR_CL_DFLTGRP);
+                attributesFromCommandLine.put(ATTR_CL_DFLTGRP, _connector.createUidFromName(RacfConnector.RACF_GROUP, (String)value).getUidValue());
+            }
+            // Groups must be stringified Uids
+            //
+            if (attributesFromCommandLine.containsKey(ATTR_CL_GROUPS)) {
+                List<Object> members = (List<Object>)attributesFromCommandLine.remove(ATTR_CL_GROUPS);
+                List<String> membersAsString = new LinkedList<String>();
+                if (members!=null) {
+                    for (Object member : members)
+                        membersAsString.add(_connector.createUidFromName(RacfConnector.RACF_GROUP, (String)member).getUidValue());
+                }
+                attributesFromCommandLine.put(ATTR_CL_GROUPS, membersAsString);
+            }
+
+*/

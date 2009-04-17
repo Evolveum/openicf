@@ -56,15 +56,18 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
+import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
+import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
 import org.identityconnectors.framework.common.objects.filter.EndsWithFilter;
@@ -122,12 +125,12 @@ public class RacfConnectorTests {
         SYSTEM_PASSWORD   = TestHelpers.getProperty("SYSTEM_PASSWORD", null);
         SUFFIX            = TestHelpers.getProperty("SUFFIX", null);
         SYSTEM_USER       = TestHelpers.getProperty("SYSTEM_USER", null);
-        
+       
         SYSTEM_USER_LDAP  = "racfid="+SYSTEM_USER+",profileType=user,"+SUFFIX;
-        TEST_USER_UID     = new Uid("racfid="+TEST_USER+",profileType=user,"+SUFFIX);
-        TEST_USER_UID2    = new Uid("racfid="+TEST_USER2+",profileType=user,"+SUFFIX);
-        TEST_GROUP1_UID   = new Uid("racfid="+TEST_GROUP1.toUpperCase()+",profileType=group,"+SUFFIX);
-        TEST_GROUP2_UID   = new Uid("racfid="+TEST_GROUP2.toUpperCase()+",profileType=group,"+SUFFIX);
+        TEST_USER_UID     = new Uid(TEST_USER);
+        TEST_USER_UID2    = new Uid(TEST_USER2);
+        TEST_GROUP1_UID   = new Uid(TEST_GROUP1);
+        TEST_GROUP2_UID   = new Uid(TEST_GROUP2);
         
         Assert.assertNotNull("HOST_NAME must be specified", HOST_NAME);
         Assert.assertNotNull("SYSTEM_PASSWORD must be specified", SYSTEM_PASSWORD);
@@ -317,7 +320,7 @@ public class RacfConnectorTests {
             TestHelpers.search(connector,RacfConnector.RACF_GROUP, new EqualsFilter(AttributeBuilder.build(Name.NAME, "SYS1")), handler, options);
             for (ConnectorObject group : handler) {
                 displayConnectorObject(group);
-                if (new Uid("racfid=SYS1,profileType=group,"+SUFFIX).equals(group.getUid()))
+                if (new Uid("SYS1").equals(group.getUid()))
                     found = true;
                 count++;
             }
@@ -632,6 +635,48 @@ public class RacfConnectorTests {
                 return user;
         }
         return null;
+    }
+
+    @Test//@Ignore
+    public void testDumpSchema() throws Exception {
+        RacfConfiguration config = createConfiguration();
+        RacfConnector connector = createConnector(config);
+        try {
+            Schema schema = connector.schema();
+            System.out.print("Schema.oclasses = ");
+            char separator = '[';
+            for (ObjectClassInfo ocInfo : schema.getObjectClassInfo()) {
+                System.out.print(separator+" \""+ocInfo.getType()+"\"");
+                separator = ',';
+            }
+            System.out.println("]");
+    
+            for (ObjectClassInfo ocInfo : schema.getObjectClassInfo()) {
+                System.out.print("Schema.attributes."+ocInfo.getType()+".oclasses = ");
+                separator = '[';
+                for (AttributeInfo aInfo : ocInfo.getAttributeInfo()) {
+                    System.out.print(separator+" \""+aInfo.getName()+"\"");
+                    separator = ',';
+                }
+                System.out.println("]");
+            }
+    
+            for (ObjectClassInfo ocInfo : schema.getObjectClassInfo()) {
+                for (AttributeInfo aInfo : ocInfo.getAttributeInfo()) {
+                    System.out.println("Schema.\""+aInfo.getName()+"\".attribute."+ocInfo.getType()+".oclasses = [");
+                    System.out.println("\ttype              : "+aInfo.getType().getName()+".class,");
+                    System.out.println("\treadable          : "+aInfo.isReadable()+",");
+                    System.out.println("\tcreatable         : "+aInfo.isCreateable()+",");
+                    System.out.println("\tupdatable         : "+aInfo.isUpdateable()+",");
+                    System.out.println("\trequired          : "+aInfo.isRequired()+",");
+                    System.out.println("\tmultiValue        : "+aInfo.isMultiValued()+",");
+                    System.out.println("\treturnedByDefault : "+aInfo.isReturnedByDefault());
+                    System.out.println("]\n");
+                }
+            }
+        } finally {
+            connector.dispose();
+        }
     }
 
     @Test//@Ignore

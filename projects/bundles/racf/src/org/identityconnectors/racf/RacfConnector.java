@@ -304,7 +304,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         if (isLdapConnectionAvailable()) {
             _ldapUtil.deleteViaLdap(uid);
         } else {
-            _clUtil.deleteViaCommandLine(uid);
+            _clUtil.deleteViaCommandLine(objClass, uid);
         }
     }
 
@@ -446,7 +446,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
         if (attributesFromCommandLine!=null) {
             if (user==null) {
                 String name = (String)attributesFromCommandLine.get(ATTR_CL_USERID);
-                uid = createUidFromName(objectClass, name);
+                uid = new Uid(name);
                 builder.setUid(uid);
                 builder.setName(name);
             }
