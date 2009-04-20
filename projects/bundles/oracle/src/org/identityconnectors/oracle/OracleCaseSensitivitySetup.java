@@ -46,7 +46,7 @@ enum OracleUserAttribute {
 }
 
 /** Formatter that formats given token. 
- *  It can make it upper case, append quates etc.
+ *  It can append quates etc.
  *
  */
 final class CSTokenFormatter{
@@ -100,14 +100,6 @@ final class CSTokenFormatter{
             }
             return this;
         }
-        Builder setDefaultValues(){
-            //We can have different defaults for each attribute
-            if(element.attribute == null){
-                throw new IllegalStateException("Attribute not set");
-            }
-            element.quatesChar = element.attribute.getDefQuatesChar();
-            return this;
-        }
         CSTokenFormatter build(){
             if(element.attribute == null){
                 throw new IllegalStateException("Attribute not set");
@@ -116,7 +108,7 @@ final class CSTokenFormatter{
         }
         CSTokenFormatter buildWithDefaultValues(OracleUserAttribute attribute){
             setAttribute(attribute);
-            setDefaultValues();
+            element.quatesChar = element.attribute.getDefQuatesChar();
             return build();
         }
     }
@@ -159,14 +151,6 @@ final class CSTokenNormalizer{
             }
             return this;
         }
-        Builder setDefaultValues(){
-            //We can have different defaults for each attribute
-            if(element.attribute == null){
-                throw new IllegalStateException("Attribute not set");
-            }
-            element.toUpper = element.attribute.isDefToUpper();
-            return this;
-        }
         CSTokenNormalizer build(){
             if(element.attribute == null){
                 throw new IllegalStateException("Attribute not set");
@@ -175,7 +159,7 @@ final class CSTokenNormalizer{
         }
         CSTokenNormalizer buildWithDefaultValues(OracleUserAttribute attribute){
             setAttribute(attribute);
-            setDefaultValues();
+            element.toUpper = element.attribute.isDefToUpper();
             return build();
         }
     }

@@ -97,12 +97,11 @@ class OracleCreateOrAlterStBuilder {
 
     private void appendDefaultTSQuota(StringBuilder builder, OracleUserAttributes userAttributes, UserRecord userRecord) {
         builder.append(" quota");
-        String size = userAttributes.defaultTSQuota.size;
-        if(size == null){
+        if("-1".equals(userAttributes.defaultTSQuota)){
             builder.append(" unlimited");
         }
         else{
-            builder.append(' ').append(size);
+            builder.append(' ').append(userAttributes.defaultTSQuota);
         }
         builder.append(" on");
         String defaultTableSpace = userAttributes.defaultTableSpace; 
@@ -117,12 +116,11 @@ class OracleCreateOrAlterStBuilder {
 
     private void appendTempTSQuota(StringBuilder builder, OracleUserAttributes userAttributes, UserRecord userRecord) {
         builder.append(" quota");
-        String size = userAttributes.tempTSQuota.size;
-        if(size == null){
+        if("-1".equals(userAttributes.tempTSQuota)){
             builder.append(" unlimited");
         }
         else{
-            builder.append(' ').append(size);
+            builder.append(' ').append(userAttributes.tempTSQuota);
         }
         builder.append(" on");
         String tempTableSpace = userAttributes.tempTableSpace; 

@@ -20,13 +20,14 @@ class OracleOperationCreate extends AbstractOracleOperation implements CreateOp{
 
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
         OracleConnector.checkObjectClass(oclass, cfg.getConnectorMessages());
-        String userName = OracleConnectorHelper.getStringValue(attrs, Name.NAME);
+        Map<String, Attribute> map = AttributeUtil.toMap(attrs);
+        String userName = OracleConnectorHelper.getStringValue(map, Name.NAME);
         new LocalizedAssert(cfg.getConnectorMessages()).assertNotBlank(userName,Name.NAME);
         checkUserNotExist(userName);
         OracleUserAttributes caAttributes = new OracleUserAttributes();
         caAttributes.userName = userName;
-        new OracleCreateAttributesReader(cfg.getConnectorMessages()).readCreateAuthAttributes(attrs, caAttributes);
-        new OracleCreateAttributesReader(cfg.getConnectorMessages()).readCreateRestAttributes(attrs, caAttributes);
+        new OracleAttributesReader(cfg.getConnectorMessages()).readCreateAuthAttributes(map, caAttributes);
+        new OracleAttributesReader(cfg.getConnectorMessages()).readCreateRestAttributes(map, caAttributes);
         String createSQL = new OracleCreateOrAlterStBuilder(cfg.getCSSetup()).buildCreateUserSt(caAttributes).toString();
         Attribute roles = AttributeUtil.find(ORACLE_ROLES_ATTR_NAME, attrs);
         Attribute privileges = AttributeUtil.find(ORACLE_PRIVS_ATTR_NAME, attrs);

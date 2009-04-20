@@ -15,31 +15,31 @@ import org.junit.*;
  * @author kitko
  *
  */
-public class OracleCreateAttributesReaderTest {
+public class OracleAttributesReaderTest {
 
     /**
-     * Test method for {@link org.identityconnectors.oracle.OracleCreateAttributesReader#readCreateAuthAttributes(java.util.Set, org.identityconnectors.oracle.OracleUserAttributes)}.
+     * Test method for {@link org.identityconnectors.oracle.OracleAttributesReader#readCreateAuthAttributes(java.util.Set, org.identityconnectors.oracle.OracleUserAttributes)}.
      */
     @Test
     public final void testReadCreateAuthAttributes() {
-        final OracleCreateAttributesReader reader = new OracleCreateAttributesReader(TestHelpers.createDummyMessages());
+        final OracleAttributesReader reader = new OracleAttributesReader(TestHelpers.createDummyMessages());
         OracleUserAttributes caAttributes = new OracleUserAttributes();
         caAttributes.userName = "testUser";
         Set<Attribute> attributes = new HashSet<Attribute>();
         attributes.add(AttributeBuilder.build(ORACLE_AUTHENTICATION_ATTR_NAME, ORACLE_AUTH_LOCAL));
         attributes.add(AttributeBuilder.buildPassword("myPassword".toCharArray()));
-        reader.readCreateAuthAttributes(attributes, caAttributes);
+        reader.readCreateAuthAttributes(AttributeUtil.toMap(attributes), caAttributes);
         Assert.assertEquals(OracleAuthentication.LOCAL, caAttributes.auth);
         Assert.assertNotNull("Password must not be null",caAttributes.password);
     }
     
     
     /**
-     * Test method for {@link org.identityconnectors.oracle.OracleCreateAttributesReader#readCreateRestAttributes(java.util.Set, org.identityconnectors.oracle.OracleUserAttributes)}.
+     * Test method for {@link org.identityconnectors.oracle.OracleAttributesReader#readCreateRestAttributes(java.util.Set, org.identityconnectors.oracle.OracleUserAttributes)}.
      */
     @Test
     public final void testReadCreateRestAttributes() {
-        final OracleCreateAttributesReader reader = new OracleCreateAttributesReader(TestHelpers.createDummyMessages());
+        final OracleAttributesReader reader = new OracleAttributesReader(TestHelpers.createDummyMessages());
         OracleUserAttributes caAttributes = new OracleUserAttributes();
         caAttributes.userName = "testUser";
         Set<Attribute> attributes = new HashSet<Attribute>();
@@ -50,16 +50,14 @@ public class OracleCreateAttributesReaderTest {
         attributes.add(AttributeBuilder.buildEnabled(true));
         attributes.add(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,"30M"));
         attributes.add(AttributeBuilder.build(ORACLE_TEMP_TS_QUOTA_ATTR_NAME,"100M"));
-        reader.readCreateRestAttributes(attributes, caAttributes);
+        reader.readCreateRestAttributes(AttributeUtil.toMap(attributes), caAttributes);
         Assert.assertEquals("defts", caAttributes.defaultTableSpace);
         Assert.assertEquals(true, caAttributes.expirePassword);
         Assert.assertEquals("tempts", caAttributes.tempTableSpace);
         Assert.assertEquals("myprofile", caAttributes.profile);
         Assert.assertEquals(true, caAttributes.enable);
-        Assert.assertNotNull("Default quata is null", caAttributes.defaultTSQuota);
-        Assert.assertEquals("30M", caAttributes.defaultTSQuota.size);
-        Assert.assertNotNull("Temp quata is null", caAttributes.tempTSQuota);
-        Assert.assertEquals("100M", caAttributes.tempTSQuota.size);
+        Assert.assertEquals("30M", caAttributes.defaultTSQuota);
+        Assert.assertEquals("100M", caAttributes.tempTSQuota);
         
         
     }

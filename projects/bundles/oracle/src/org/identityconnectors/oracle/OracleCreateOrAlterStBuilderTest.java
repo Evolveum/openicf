@@ -62,20 +62,20 @@ public class OracleCreateOrAlterStBuilderTest {
         attributes.defaultTableSpace = "users";
         attributes.tempTableSpace = "temp";
         attributes.password = new GuardedString("password".toCharArray());
-        attributes.defaultTSQuota = new Quota();
+        attributes.defaultTSQuota = "-1";
         assertEquals(
                 "create user \"user1\" identified by \"password\" default tablespace \"users\" temporary tablespace \"temp\" quota unlimited on \"users\"",
                 createDefaultBuilder().buildCreateUserSt(attributes).toString());
-        attributes.defaultTSQuota = new Quota("32K");
+        attributes.defaultTSQuota = "32K";
         assertEquals(
                 "create user \"user1\" identified by \"password\" default tablespace \"users\" temporary tablespace \"temp\" quota 32K on \"users\"",
                 createDefaultBuilder().buildCreateUserSt(attributes).toString());
         attributes.defaultTSQuota = null;
-        attributes.tempTSQuota = new Quota();
+        attributes.tempTSQuota = "-1";
         assertEquals(
                 "create user \"user1\" identified by \"password\" default tablespace \"users\" temporary tablespace \"temp\" quota unlimited on \"temp\"",
                 createDefaultBuilder().buildCreateUserSt(attributes).toString());
-        attributes.tempTSQuota = new Quota("32M");
+        attributes.tempTSQuota = "32M";
         assertEquals(
                 "create user \"user1\" identified by \"password\" default tablespace \"users\" temporary tablespace \"temp\" quota 32M on \"temp\"",
                 createDefaultBuilder().buildCreateUserSt(attributes).toString());
@@ -130,7 +130,7 @@ public class OracleCreateOrAlterStBuilderTest {
         attributes.userName = "user1";
         attributes.expirePassword = true;
         attributes.enable = true;
-        attributes.defaultTSQuota = new Quota();
+        attributes.defaultTSQuota = "-1";
         UserRecord record = new UserRecord();
         record.defaultTableSpace = "users";
         assertEquals("alter user \"user1\" identified by \"user1\" quota unlimited on \"users\" password expire account unlock", createDefaultBuilder().buildAlterUserSt(attributes, record).toString());

@@ -125,6 +125,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         assertNull(record.expireDate);
         assertNull(record.externalName);
         assertEquals("OPEN",record.status);
+        assertEquals("EXTERNAL",record.password);
     }
     
     /** Test create global user   
@@ -261,7 +262,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         //other oracle versions can adjust real maxsize other way
         assertTrue("Max bytes must be greater than quota set",new Long("66666").compareTo(bytes) < 0);
         facade.delete(ObjectClass.ACCOUNT, uid, null);
-        quota = AttributeBuilder.build(OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME);
+        quota = AttributeBuilder.build(OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME,"-1");
         uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute,defaultTsAttr, quota), null);
         bytes = userReader.readUserTSQuota(uid.getUidValue(), defTS);
         assertEquals("Quata max bytes must be -1 when set to unlimited",new Long("-1"),bytes);

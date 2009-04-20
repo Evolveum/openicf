@@ -47,6 +47,7 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,
     static final String NO_CASCADE = "noCascade";
     
     private static final Map<String,OracleUserAttribute> attributeMapping = new HashMap<String, OracleUserAttribute>();
+    static final Collection<String> ALL_ATTRIBUTE_NAMES = new HashSet<String>();
     static {
         attributeMapping.put(Name.NAME, OracleUserAttribute.USER_NAME);
         attributeMapping.put(Uid.NAME, OracleUserAttribute.USER_NAME);
@@ -56,7 +57,13 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,
         attributeMapping.put(ORACLE_PROFILE_ATTR_NAME, OracleUserAttribute.PROFILE);
         attributeMapping.put(ORACLE_DEF_TS_ATTR_NAME, OracleUserAttribute.DEF_TABLESPACE);
         attributeMapping.put(ORACLE_TEMP_TS_ATTR_NAME, OracleUserAttribute.TEMP_TABLESPACE);
+        
+        ALL_ATTRIBUTE_NAMES.addAll(Arrays.asList(ORACLE_AUTHENTICATION_ATTR_NAME,ORACLE_GLOBAL_ATTR_NAME,ORACLE_ROLES_ATTR_NAME,
+        		ORACLE_PRIVS_ATTR_NAME,ORACLE_PROFILE_ATTR_NAME,ORACLE_DEF_TS_ATTR_NAME,ORACLE_TEMP_TS_ATTR_NAME,
+        		ORACLE_DEF_TS_QUOTA_ATTR_NAME,ORACLE_TEMP_TS_QUOTA_ATTR_NAME));
     }
+    
+    
     
     
     

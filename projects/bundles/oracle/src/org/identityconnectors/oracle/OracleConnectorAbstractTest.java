@@ -17,6 +17,7 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.test.common.TestHelpers;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -38,6 +39,11 @@ public abstract class OracleConnectorAbstractTest {
         facade = createFacade(testConf);
         connector = createTestConnector();
         userReader = new OracleUserReader(connector.getAdminConnection());
+    }
+    
+    @AfterClass
+    public static void afterClass(){
+    	connector.dispose();
     }
     
     private static ConnectorFacade createFacade(OracleConfiguration conf) {

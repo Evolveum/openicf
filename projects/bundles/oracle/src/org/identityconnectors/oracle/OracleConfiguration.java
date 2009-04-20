@@ -258,32 +258,50 @@ public class OracleConfiguration extends AbstractConfiguration implements Clonea
     
     Connection createConnection(String user,GuardedString password){
         validate();
+        Connection connection = null;
+        boolean disableAutoCommit = true;
         if(ConnectionType.DATASOURCE.equals(connType)){
+        	disableAutoCommit = false;
             if(user != null){
-                return OracleSpecifics.createDataSourceConnection(dataSource,user,password,JNDIUtil.arrayToHashtable(dsJNDIEnv, getConnectorMessages()));
+            	connection = OracleSpecifics.createDataSourceConnection(dataSource,user,password,JNDIUtil.arrayToHashtable(dsJNDIEnv, getConnectorMessages()));
             }
             else{
-                return OracleSpecifics.createDataSourceConnection(dataSource,JNDIUtil.arrayToHashtable(dsJNDIEnv,getConnectorMessages()));
+            	connection =  OracleSpecifics.createDataSourceConnection(dataSource,JNDIUtil.arrayToHashtable(dsJNDIEnv,getConnectorMessages()));
             }
         }
         else if(ConnectionType.THIN.equals(connType)){
-            return OracleSpecifics.createThinDriverConnection(new OracleDriverConnectionInfoBuilder().
+        	connection =  OracleSpecifics.createThinDriverConnection(new OracleDriverConnectionInfoBuilder().
                     setDatabase(database).setDriver(driverClassName).setHost(host).setPassword(password).
                     setPort(port).setUser(user).build()
                     );
         }
         else if(ConnectionType.OCI.equals(connType)){
-            return OracleSpecifics.createOciDriverConnection(new OracleDriverConnectionInfoBuilder().
+        	connection =  OracleSpecifics.createOciDriverConnection(new OracleDriverConnectionInfoBuilder().
                     setDatabase(database).setDriver(driverClassName).setHost(host).setPassword(password).
                     setPort(port).setUser(user).build()
                     );
         }
         else if(ConnectionType.CUSTOM_DRIVER.equals(connType)){
-            return OracleSpecifics.createCustomDriverConnection(new OracleDriverConnectionInfoBuilder().
+        	connection =  OracleSpecifics.createCustomDriverConnection(new OracleDriverConnectionInfoBuilder().
                     setUrl(url).setDriver(driverClassName).setUser(user).setPassword(password).build()
             );
         }
-        throw new IllegalStateException("Invalid state of OracleConfiguration");
+        else{
+        	throw new IllegalStateException("Invalid state of OracleConfiguration");
+        }
+        if(disableAutoCommit){
+        	try {
+				connection.setAutoCommit(false);
+			} catch (SQLException e) {
+				throw new ConnectorException("Cannot switch off autocommit",e);
+			}
+        }
+        try {
+			connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+		} catch (SQLException e) {
+			throw new ConnectorException("Cannot set transaction isloation",e);
+		}
+        return connection;
     }
     
     OracleCaseSensitivitySetup getCSSetup(){

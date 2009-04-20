@@ -14,4 +14,6 @@ class UserRecord {
     Date createdDate;
     Date lockDate;
     Date expireDate;
+    //We read this just for testing for external authentication
+    String password;
 }

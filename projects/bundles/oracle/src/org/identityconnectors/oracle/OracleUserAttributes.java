@@ -19,8 +19,8 @@ class OracleUserAttributes implements Cloneable{
     String defaultTableSpace;
     String tempTableSpace;
     String profile;
-    Quota defaultTSQuota;
-    Quota tempTSQuota;
+    String defaultTSQuota;
+    String tempTSQuota;
     
     protected OracleUserAttributes clone(){
         try {
@@ -30,16 +30,6 @@ class OracleUserAttributes implements Cloneable{
         }
     }
     
-}
-
-class Quota{
-    String size;
-
-    Quota(String size) {
-        super();
-        this.size = size;
-    }
-    Quota(){}
 }
 
 enum OracleAuthentication {

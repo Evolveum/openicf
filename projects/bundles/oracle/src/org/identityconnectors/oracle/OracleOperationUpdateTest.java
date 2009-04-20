@@ -121,12 +121,12 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
     
     
     @Test
-    public void testDefTSQuota() throws SQLException{
+    public void testUpdateDefTSQuota() throws SQLException{
 		Attribute defaultTsQuotaAttr =  AttributeBuilder.build(OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME,"30k");
 		facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(defaultTsQuotaAttr), null);
         Long quota = userReader.readUserDefTSQuota(uid.getUidValue());
         Assert.assertTrue("Quota must be at least 30k",new Long(30000).compareTo(quota) < 0);
-        defaultTsQuotaAttr =  AttributeBuilder.build(OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME);
+        defaultTsQuotaAttr =  AttributeBuilder.build(OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME,"-1");
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(defaultTsQuotaAttr), null);
         quota = userReader.readUserDefTSQuota(uid.getUidValue());
         Assert.assertEquals("Quota must be set to -1 for unlimited quota", new Long(-1), quota);

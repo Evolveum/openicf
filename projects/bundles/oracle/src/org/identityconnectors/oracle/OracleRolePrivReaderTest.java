@@ -47,8 +47,8 @@ public class OracleRolePrivReaderTest {
         SQLUtil.executeUpdateStatement(conn, "grant \"testrole\" to \"" + user + "\"");
         final List<String> roles = privReader.readRoles(user);
         assertTrue("User should be granteded testrole",roles.contains("testrole"));
-        SQLUtil.rollbackQuietly(conn);
-        
+        SQLUtil.executeUpdateStatement(conn, "drop user \"" + user + "\"");
+        SQLUtil.executeUpdateStatement(conn, "drop role \"testrole\"");
     }
 
     /** Test reading user privileges 
@@ -71,7 +71,9 @@ public class OracleRolePrivReaderTest {
         final List<String> readPrivileges = privReader.readPrivileges(user);
         Assert.assertThat(readPrivileges, JUnitMatchers.hasItem("CREATE SESSION"));
         Assert.assertThat(readPrivileges, JUnitMatchers.hasItem("SELECT ON " + cfg.getUser() + ".MYTABLE"));
-        SQLUtil.rollbackQuietly(conn);
+        SQLUtil.executeUpdateStatement(conn, "drop user \"" + user + "\"");
+        SQLUtil.executeUpdateStatement(conn, "drop table MYTABLE");
+        
         
     }
 

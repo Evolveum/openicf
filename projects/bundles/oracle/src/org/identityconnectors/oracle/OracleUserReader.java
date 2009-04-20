@@ -111,11 +111,12 @@ class OracleUserReader {
         record.temporaryTableSpace = rs.getString("TEMPORARY_TABLESPACE");
         record.userId = rs.getLong("USER_ID");
         record.userName = rs.getString("USERNAME");
+        record.password = rs.getString("PASSWORD");
         return record;
     }
     
     Long readUserTSQuota(String userName, String tableSpace) throws SQLException{
-    	BigDecimal bytes = (BigDecimal) SQLUtil.selectFirstRowFirstValue(adminConn, "select max_bytes from dba_ts_quotas where USERNAME = '" + userName + "'" + " AND TABLESPACE_NAME = '" + tableSpace + "'" );
+    	BigDecimal bytes = (BigDecimal) SQLUtil.selectSingleValue(adminConn, "select max_bytes from dba_ts_quotas where USERNAME = '" + userName + "'" + " AND TABLESPACE_NAME = '" + tableSpace + "'" );
     	return bytes == null ? null : bytes.longValue();
     }
     
@@ -133,6 +134,16 @@ class OracleUserReader {
     		throw new IllegalArgumentException(MessageFormat.format("No user record found for user [{0}]",userName));
     	}
     	return readUserTSQuota(userName, record.temporaryTableSpace);
+    }
+    
+    OracleAuthentication resolveAuthentication(UserRecord record){
+    	if("EXTERNAL".equals(record.password)){
+    		return OracleAuthentication.EXTERNAL;
+    	}
+    	if(record.externalName != null){
+    		return OracleAuthentication.GLOBAL;
+    	}
+    	return OracleAuthentication.LOCAL;
     }
 
 }

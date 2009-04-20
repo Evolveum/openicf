@@ -7,6 +7,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.identityconnectors.common.logging.Log;
@@ -25,8 +26,9 @@ class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp,
         checkUserExist(uid.getUidValue());
         OracleUserAttributes caAttributes = new OracleUserAttributes();
         caAttributes.userName = uid.getUidValue();
-        new OracleCreateAttributesReader(cfg.getConnectorMessages()).readCreateAuthAttributes(attrs, caAttributes);
-        new OracleCreateAttributesReader(cfg.getConnectorMessages()).readCreateRestAttributes(attrs, caAttributes);
+        Map<String, Attribute> map = AttributeUtil.toMap(attrs);
+        new OracleAttributesReader(cfg.getConnectorMessages()).readCreateAuthAttributes(map, caAttributes);
+        new OracleAttributesReader(cfg.getConnectorMessages()).readCreateRestAttributes(map, caAttributes);
         try{
             UserRecord userRecord = new OracleUserReader(adminConn).readUserRecord(caAttributes.userName);
             String alterSQL = new OracleCreateOrAlterStBuilder(cfg.getCSSetup()).buildAlterUserSt(caAttributes, userRecord);
