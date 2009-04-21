@@ -140,6 +140,7 @@ public interface RacfConstants {
     //
     public static final String ATTR_LDAP_ATTRIBUTES            = "racfAttributes";
     public static final String ATTR_LDAP_GROUPS                = "ATTR_LDAP_GROUPS";
+    public static final String ATTR_LDAP_GROUP_OWNERS          = "ATTR_LDAP_GROUP_OWNERS";
     public static final String ATTR_LDAP_MEMBERS               = "ATTR_LDAP_MEMBERS";
 
     // Read-only Attributes

@@ -354,7 +354,6 @@ public class RacfConnectorTests {
                 Attribute attributesAttr = AttributeBuilder.build("RACF*ATTRIBUTES", attributes);
                 changed.add(attributesAttr);
                 changed.add(user.getUid());
-                changed.add(user.getName());
                 connector.update(ObjectClass.ACCOUNT, changed, null);
                 ConnectorObject object = getUser(TEST_USER, connector);
                 assertAttribute(attributesAttr, object);
@@ -365,7 +364,6 @@ public class RacfConnectorTests {
                 Attribute disableDate = AttributeBuilder.build(OperationalAttributes.DISABLE_DATE_NAME, new Date("11/12/2010").getTime());
                 changed.add(disableDate);
                 changed.add(user.getUid());
-                changed.add(user.getName());
                 connector.update(ObjectClass.ACCOUNT, changed, null);
                 ConnectorObject object = getUser(TEST_USER, connector);
                 assertAttribute(disableDate, object);
@@ -376,7 +374,6 @@ public class RacfConnectorTests {
                 Attribute size = AttributeBuilder.build(ATTR_CL_TSO_SIZE, new Integer(1000)); 
                 changed.add(size);
                 changed.add(user.getUid());
-                changed.add(user.getName());
                 connector.update(ObjectClass.ACCOUNT, changed, null);
                 ConnectorObject object = getUser(TEST_USER, connector);
                 assertAttribute(size, object);
@@ -388,7 +385,6 @@ public class RacfConnectorTests {
                 changed.add(AttributeBuilder.build(getInstallationDataAttributeName(), "modified data"));
                 changed.add(enableDate);
                 changed.add(user.getUid());
-                changed.add(user.getName());
                 connector.update(ObjectClass.ACCOUNT, changed, null);
                 ConnectorObject object = getUser(TEST_USER, connector);
                 assertAttribute(enableDate, object);
@@ -402,7 +398,6 @@ public class RacfConnectorTests {
                 attributes.add("OPERATOR");
                 changed.add(AttributeBuilder.build("RACF*ATTRIBUTES", attributes));
                 changed.add(user.getUid());
-                changed.add(user.getName());
                 try {
                     connector.update(ObjectClass.ACCOUNT, changed, null);
                     Assert.fail("Command should have failed");

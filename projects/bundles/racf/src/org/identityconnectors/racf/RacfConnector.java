@@ -22,12 +22,11 @@
  */
 package org.identityconnectors.racf;
 
-import static org.identityconnectors.framework.common.objects.AttributeUtil.createSpecialName;
 import static org.identityconnectors.racf.RacfConstants.*;
 
+import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -68,6 +67,7 @@ import org.identityconnectors.framework.common.objects.SchemaBuilder;
 import org.identityconnectors.framework.common.objects.ScriptContext;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
+import org.identityconnectors.framework.spi.AttributeNormalizer;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.Connector;
 import org.identityconnectors.framework.spi.ConnectorClass;
@@ -82,7 +82,7 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
 
 @ConnectorClass(configurationClass= RacfConfiguration.class, displayNameKey="RACFConnector")
 public class RacfConnector implements Connector, CreateOp, PoolableConnector,
-DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
+DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNormalizer {
 
     public static final String         SEPARATOR           ="*";
     public static final String         SEPARATOR_REGEX     ="\\*";
@@ -98,6 +98,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
     private RacfConfiguration           _configuration;
     private CommandLineUtil             _clUtil;
     private LdapUtil                    _ldapUtil;
+    private final SimpleDateFormat      _dateFormat = new SimpleDateFormat("MM/dd/yy");
 
     public RacfConnector() {
     }
@@ -218,15 +219,19 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                 else
                     attribute = AttributeBuilder.build(ATTR_CL_EXPIRED, attribute.getValue());
             } else if (attribute.is(OperationalAttributes.DISABLE_DATE_NAME)) {
+                Date date = new Date(AttributeUtil.getLongValue(disableDate));
+                String dateValue = _dateFormat.format(date);
                 if (isLdapConnectionAvailable())
-                    attribute = AttributeBuilder.build(ATTR_LDAP_REVOKE_DATE, attribute.getValue());
+                    attribute = AttributeBuilder.build(ATTR_LDAP_REVOKE_DATE, dateValue);
                 else
-                    attribute = AttributeBuilder.build(ATTR_CL_REVOKE_DATE, attribute.getValue());
+                    attribute = AttributeBuilder.build(ATTR_CL_REVOKE_DATE, dateValue);
             } else if (attribute.is(OperationalAttributes.ENABLE_DATE_NAME)) {
+                Date date = new Date(AttributeUtil.getLongValue(enableDate));
+                String dateValue = _dateFormat.format(date);
                 if (isLdapConnectionAvailable())
-                    attribute = AttributeBuilder.build(ATTR_LDAP_RESUME_DATE, attribute.getValue());
+                    attribute = AttributeBuilder.build(ATTR_LDAP_RESUME_DATE, dateValue);
                 else
-                    attribute = AttributeBuilder.build(ATTR_CL_RESUME_DATE, attribute.getValue());
+                    attribute = AttributeBuilder.build(ATTR_CL_RESUME_DATE, dateValue);
             } else if (attribute.is(OperationalAttributes.ENABLE_NAME)) {
                 if (isLdapConnectionAvailable())
                     ; //TODO: attribute = AttributeBuilder.build(ATTR_LDAP_ENABLED, attribute.getValue());
@@ -234,10 +239,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                     attribute = AttributeBuilder.build(ATTR_CL_ENABLED, attribute.getValue());
             } 
 
+            // Put the attribute on the appropriate attribute list(s)
+            //
             if (attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
                 commandLineAttrs.add(attribute);
                 ldapAttrs.add(attribute);
-            } if (attribute.getName().contains(SEPARATOR)) {
+            } else if (attribute.getName().contains(SEPARATOR)) {
                 commandLineAttrs.add(attribute);
             } else {
                 ldapAttrs.add(attribute);
@@ -300,11 +307,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
     /**
      * {@inheritDoc}
      */
-    public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
+    public void delete(ObjectClass objectClass, Uid uid, OperationOptions options) {
         if (isLdapConnectionAvailable()) {
-            _ldapUtil.deleteViaLdap(uid);
+            _ldapUtil.deleteViaLdap(objectClass, uid);
         } else {
-            _clUtil.deleteViaCommandLine(objClass, uid);
+            _clUtil.deleteViaCommandLine(objectClass, uid);
         }
     }
 
@@ -391,7 +398,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
                     if (getNameOnly) {
                         ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
                         builder.setUid(name);
-                        builder.setName(extractRacfIdFromLdapId(name));
+                        builder.setName(name);
                         object = builder.build();
                     } else {
                         SearchResult searchResult = null;
@@ -618,6 +625,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
     Uid update(ObjectClass objectClass, Set<Attribute> attrs, OperationOptions options) {
         Set<Attribute> ldapAttrs = new HashSet<Attribute>();
         Set<Attribute> commandLineAttrs = new HashSet<Attribute>();
+        if (AttributeUtil.getNameFromAttributes(attrs)!=null) {
+            throw new IllegalArgumentException("TODO: __NAME__ is not updateable");
+        }
         splitUpOutgoingAttributes(attrs, ldapAttrs, commandLineAttrs);
         if (isLdapConnectionAvailable()) {
             Uid uid = _ldapUtil.updateViaLdap(objectClass, ldapAttrs);
@@ -719,8 +729,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             attributes.add(PredefinedAttributeInfos.LAST_LOGIN_DATE);
             attributes.add(PredefinedAttributeInfos.LAST_PASSWORD_CHANGE_DATE);
     
-            //TODO: need to make sure special attributes are supported
-    
             _accountAttributes = AttributeInfoUtil.toMap(attributes);
             schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
         }
@@ -735,7 +743,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_CL_OWNER,                    String.class));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_CL_DATA,                     String.class));
             groupAttributes.add(buildMultivaluedAttribute(ATTR_CL_MEMBERS,                   String.class, false));
-            groupAttributes.add(buildMVROAttribute(ATTR_CL_GROUPS,                           String.class, false));
+            groupAttributes.add(buildMVROAttribute(ATTR_CL_GROUPS,                           String.class));
     
             _groupAttributes = AttributeInfoUtil.toMap(groupAttributes);
             schemaBuilder.defineObjectClass(RACF_GROUP_NAME, groupAttributes);
@@ -890,8 +898,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
     
             // Read-only Multi-valued Attributes
             //
-            groupAttributes.add(buildMVROAttribute(ATTR_LDAP_SUB_GROUP,                  String.class, false));
-            groupAttributes.add(buildMVROAttribute(ATTR_LDAP_GROUP_USERIDS,              String.class, false));
+            groupAttributes.add(buildMVROAttribute(ATTR_LDAP_SUB_GROUP,                  String.class));
+            groupAttributes.add(buildMVROAttribute(ATTR_LDAP_GROUP_USERIDS,              String.class));
     
             groupAttributes.add(buildNonDefaultMultivaluedAttribute(ATTR_LDAP_MEMBERS,   String.class, false));
             _groupAttributes = AttributeInfoUtil.toMap(groupAttributes);
@@ -910,11 +918,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             return clSchema();
     }
 
-    private AttributeInfo buildMVROAttribute(String name, Class<?> clazz, boolean required) {
+    private AttributeInfo buildMVROAttribute(String name, Class<?> clazz) {
         AttributeInfoBuilder builder = new AttributeInfoBuilder();
         builder.setName(name);
         builder.setType(clazz);
-        builder.setRequired(required);
+        builder.setRequired(false);
         builder.setMultiValued(true);
         builder.setCreateable(false);
         builder.setUpdateable(false);
@@ -1020,6 +1028,24 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp {
             if (!output.contains("IJK"))
                 throw new ConnectorException(_configuration.getMessage(RacfMessages.CONNECTION_DEAD));
         }
+    }
+
+    public Attribute normalizeAttribute(ObjectClass oclass, Attribute attribute) {
+        List<Object> values = attribute.getValue();
+        List<Object> newValues = new LinkedList<Object>();
+        if (values==null)
+            return AttributeBuilder.build(attribute.getName().toUpperCase());
+        for (Object value : values)
+            if (value instanceof String)
+                newValues.add(((String)value).toUpperCase());
+            else
+                newValues.add(value);
+        if (attribute instanceof Name)
+            return new Name((String)newValues.get(0));
+        else if (attribute instanceof Uid)
+            return new Uid((String)newValues.get(0));
+        else
+            return AttributeBuilder.build(attribute.getName().toUpperCase(), newValues);
     }
     
 }

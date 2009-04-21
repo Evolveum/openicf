@@ -90,7 +90,6 @@ class CommandLineUtil {
     private final Pattern               _racfTimestamp = Pattern.compile("(\\d+)\\.(\\d+)(?:/(\\d+):(\\d+):(\\d+))?");
     private final ScriptExecutorFactory _groovyFactory;
     private final SimpleDateFormat      _resumeRevokeFormat = new SimpleDateFormat("MMMM dd, yyyy");
-    private final SimpleDateFormat      _dateFormat = new SimpleDateFormat("MM/dd/yy");
     
     private RacfConnector               _connector;
 
@@ -145,18 +144,6 @@ class CommandLineUtil {
             return null;
     }
 
-    public boolean isUserid(String uidString) {
-        return uidString.toUpperCase().contains("PROFILETYPE=USER") && !isConnection(uidString);
-    }
-
-    public boolean isGroupid(String uidString) {
-        return uidString.toUpperCase().contains("PROFILETYPE=GROUP") && !isConnection(uidString);
-    }
-
-    public boolean isConnection(String uidString) {
-        return uidString.toUpperCase().contains("PROFILETYPE=CONNECT");
-    }
-
     public void checkCommand(String command) {
         CharArrayBuffer buffer = new CharArrayBuffer();
         buffer.append(command);
@@ -188,13 +175,6 @@ class CommandLineUtil {
         char[] command = buffer.getArray();
         try {
             
-            // TODO: failure indication for DELGROUP
-            //      IKJ56700A ENTER GROUP NAME(S) -
-            //      (requires PA1 to recover)
-            //      IKJ56718A REENTER THIS OPERAND+ -
-            //      (requires PA1 to recover)
-            //  failure indication for LISTGRP
-            //      ICH51003I NAME NOT FOUND IN RACF DATA SET
             RW3270Connection connection = _connector.getConnection().getRacfConnection();
             connection.clearAndUnlock();
             connection.resetStandardOutput();
@@ -329,14 +309,10 @@ class CommandLineUtil {
                 commandAttributes.append(" REVOKE");
         }
         if (enableDate!=null) {
-            Date date = new Date(AttributeUtil.getLongValue(enableDate));
-            String dateValue = _dateFormat.format(date);
-            commandAttributes.append(" RESUME("+dateValue+")");
+            commandAttributes.append(" RESUME("+AttributeUtil.getStringValue(enableDate)+")");
         }
         if (disableDate!=null) {
-            Date date = new Date(AttributeUtil.getLongValue(disableDate));
-            String dateValue = _dateFormat.format(date);
-            commandAttributes.append(" REVOKE("+dateValue+")");
+            commandAttributes.append(" REVOKE("+AttributeUtil.getStringValue(disableDate)+")");
         }
         char[] result = commandAttributes.getArray();
         commandAttributes.clear();
@@ -1107,10 +1083,6 @@ class CommandLineUtil {
             matches.add(new RegExpMatch("IKJ\\d+\\w REENTER THIS OPERAND", new Closure() {
                 public void run(ExpectState state) throws Exception {
                     state.addVar("errorDetected", state.getBuffer());
-                    // Need to strip off the match
-                    //
-                    String data = state.getBuffer();
-                    //_buffer.append(data);
                     getRW3270Connection().sendPAKeys(1);
                     state.exp_continue();
                 }

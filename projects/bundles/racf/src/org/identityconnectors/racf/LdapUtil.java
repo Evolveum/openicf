@@ -25,9 +25,11 @@ package org.identityconnectors.racf;
 import static org.identityconnectors.racf.RacfConstants.*;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -69,6 +71,7 @@ class LdapUtil {
     }
 
     public Uid createViaLdap(ObjectClass objectClass, Set<Attribute> attrs, OperationOptions options) {
+        Map<String, Attribute> attributes = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
         if (objectClass.equals(RacfConnector.RACF_CONNECTION)) {
             try {
                 //TODO: handle ATTR_LDAP_GROUPS
@@ -81,11 +84,15 @@ class LdapUtil {
         } else if (objectClass.equals(ObjectClass.ACCOUNT)) {
             Name name = AttributeUtil.getNameFromAttributes(attrs);
             try {
+                //TODO: handle ATTR_LDAP_GROUPS
+                Attribute groups = attributes.remove(ATTR_LDAP_GROUPS);
+                Attribute groupOwners = attributes.remove(ATTR_LDAP_GROUP_OWNERS);
+
                 String id = name.getNameValue();
                 Uid uid = _connector.createUidFromName(objectClass, id);
-                Set<Attribute> newAttributes = new HashSet<Attribute>(attrs);
+                Map<String, Attribute> newAttributes = new HashMap<String, Attribute>(attributes);
                 addObjectClass(objectClass, newAttributes);
-                ((RacfConnection)_connector.getConnection()).getDirContext().createSubcontext(uid.getUidValue(), createLdapAttributesFromConnectorAttributes(objectClass, newAttributes));
+                ((RacfConnection)_connector.getConnection()).getDirContext().createSubcontext(_connector.createUidFromName(objectClass, name.getNameValue()).getUidValue(), createLdapAttributesFromConnectorAttributes(objectClass, newAttributes));
                 Attribute groupMembership = AttributeUtil.find(PredefinedAttributes.GROUPS_NAME, attrs);
                 if (groupMembership!=null)
                     _connector.setGroupMembershipsForUser(id, groupMembership);
@@ -99,11 +106,16 @@ class LdapUtil {
         } else if (objectClass.equals(ObjectClass.GROUP)) {
             Name name = AttributeUtil.getNameFromAttributes(attrs);
             try {
+                //TODO: handle ATTR_LDAP_GROUPS
+                Attribute groups = attributes.remove(ATTR_LDAP_GROUPS);
+                Attribute members = attributes.remove(ATTR_LDAP_MEMBERS);
+                Attribute groupOwners = attributes.remove(ATTR_LDAP_GROUP_OWNERS);
+
                 String id = name.getNameValue();
                 Uid uid = _connector.createUidFromName(objectClass, id);
-                Set<Attribute> newAttributes = new HashSet<Attribute>(attrs);
+                Map<String, Attribute> newAttributes = new HashMap<String, Attribute>(attributes);
                 addObjectClass(objectClass, newAttributes);
-                ((RacfConnection)_connector.getConnection()).getDirContext().createSubcontext(uid.getUidValue(), createLdapAttributesFromConnectorAttributes(objectClass, newAttributes));
+                ((RacfConnection)_connector.getConnection()).getDirContext().createSubcontext(_connector.createUidFromName(objectClass, name.getNameValue()).getUidValue(), createLdapAttributesFromConnectorAttributes(objectClass, newAttributes));
                 Attribute groupMembership = AttributeUtil.find(ATTR_LDAP_MEMBERS, attrs);
                 if (groupMembership!=null)
                     _connector.setGroupMembershipsForGroups(id, groupMembership);
@@ -121,9 +133,9 @@ class LdapUtil {
         }
     }
 
-    public void deleteViaLdap(Uid uid) {
+    public void deleteViaLdap(ObjectClass objectClass, Uid uid) {
         try {
-            ((RacfConnection)_connector.getConnection()).getDirContext().destroySubcontext(uid.getUidValue());
+            ((RacfConnection)_connector.getConnection()).getDirContext().destroySubcontext(_connector.createUidFromName(objectClass, uid.getUidValue()).getUidValue());
         } catch (NamingException e) {
             //TODO: may need to handle Groups with different test
             //
@@ -192,7 +204,7 @@ class LdapUtil {
                         name.startsWith("racfid=irrsitec,")) {
                     // Ignore
                 } else {
-                    userNames.add(name);
+                    userNames.add(_connector.extractRacfIdFromLdapId(name));
                 }
             }
         } catch (NamingException e) {
@@ -210,7 +222,7 @@ class LdapUtil {
             while (groups.hasMore()) {
                 SearchResult userRoot = groups.next();
                 String name = userRoot.getNameInNamespace();
-                groupNames.add(name);
+                groupNames.add(_connector.extractRacfIdFromLdapId(name));
             }
         } catch (NamingException e) {
             throw new ConnectorException(e);
@@ -225,15 +237,20 @@ class LdapUtil {
         return filterText;
     }
 
-    public Uid updateViaLdap(ObjectClass objclass, Set<Attribute> attrs) {
+    public Uid updateViaLdap(ObjectClass objectClass, Set<Attribute> attrs) {
+        Map<String, Attribute> attributes = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
         Uid uid = AttributeUtil.getUidAttribute(attrs);
         if (uid!=null) {
             try {
                 //TODO: handle ATTR_LDAP_GROUPS
-                ((RacfConnection)_connector.getConnection()).getDirContext().modifyAttributes(uid.getUidValue(), DirContext.REPLACE_ATTRIBUTE, createLdapAttributesFromConnectorAttributes(objclass, attrs));
+                Attribute groups = attributes.remove(ATTR_LDAP_GROUPS);
+                Attribute members = attributes.remove(ATTR_LDAP_MEMBERS);
+                Attribute groupOwners = attributes.remove(ATTR_LDAP_GROUP_OWNERS);
+                
+                ((RacfConnection)_connector.getConnection()).getDirContext().modifyAttributes(_connector.createUidFromName(objectClass, uid.getUidValue()).getUidValue(), DirContext.REPLACE_ATTRIBUTE, createLdapAttributesFromConnectorAttributes(objectClass, attributes));
                 Attribute groupMembership = AttributeUtil.find(PredefinedAttributes.GROUPS_NAME, attrs);
                 if (groupMembership!=null)
-                    _connector.setGroupMembershipsForUser(_connector.createAccountNameFromUid(uid), groupMembership);
+                    _connector.setGroupMembershipsForUser(uid.getUidValue(), groupMembership);
             } catch (NamingException e) {
                 throw new ConnectorException(e);
             }
@@ -241,14 +258,14 @@ class LdapUtil {
         return uid;
     }
 
-    protected void addObjectClass(ObjectClass objectClass, Set<Attribute> attrs) {
+    protected void addObjectClass(ObjectClass objectClass, Map<String, Attribute> attrs) {
         if (objectClass.equals(ObjectClass.ACCOUNT))
-            attrs.add(AttributeBuilder.build("objectclass", "racfUser"));
+            attrs.put("objectclass", AttributeBuilder.build("objectclass", "racfUser"));
         else if (objectClass.equals(ObjectClass.GROUP))
-            attrs.add(AttributeBuilder.build("objectclass", "racfGroup"));
+            attrs.put("objectclass", AttributeBuilder.build("objectclass", "racfGroup"));
     }
 
-    private Attributes createLdapAttributesFromConnectorAttributes(ObjectClass objectClass, Set<Attribute> attributes) {
+    private Attributes createLdapAttributesFromConnectorAttributes(ObjectClass objectClass, Map<String, Attribute> attributes) {
         Attributes basicAttributes = new BasicAttributes();
         Set<ObjectClassInfo> objectClassInfos = _schema.getObjectClassInfo();
         ObjectClassInfo accountInfo = null;
@@ -261,7 +278,7 @@ class LdapUtil {
         boolean setRacfAttributes = false;
         // Go through, and validate the attributes.
         //
-        for (Attribute attribute : attributes) {
+        for (Attribute attribute : attributes.values()) {
             String attributeName = attribute.getName().toLowerCase();
             if (attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
                 // Ignore Name, Uid
