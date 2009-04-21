@@ -234,7 +234,7 @@ public class VmsConnectorTests {
         }
     }
 
-    @Test
+    @Test@Ignore
     public void testQuote() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);

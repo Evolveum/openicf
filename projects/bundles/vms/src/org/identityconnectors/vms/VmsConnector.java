@@ -163,12 +163,19 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
      * @param unquoted
      * @return
      */
-    String quoteWhenNeeded(String unquoted) {
+    protected String quoteWhenNeeded(String unquoted) {
         return quoteWhenNeeded(unquoted, false);
     }
 
-    private String quoteWhenNeeded(String unquoted, boolean needsQuote) {
-        boolean quote = !Pattern.matches("(\\w+)", unquoted);
+    protected String quoteWhenNeeded(String unquoted, boolean needsQuote) {
+        boolean quote = needsQuote;
+        for (char character : unquoted.toCharArray()) {
+            if (character == '!' | character == ' ' | character == '\t')
+                quote = true;
+        }
+        if (unquoted.length()==0)
+            quote=true;
+        
         if (!quote) {
             return unquoted;
         }
@@ -458,7 +465,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                         command = addNewCommandSegment(commandList, command);
                     }
                     command.append(first);
-                    command.append(quoteWhenNeeded(value));
+                    command.append(value);
                 }
             }
         }
