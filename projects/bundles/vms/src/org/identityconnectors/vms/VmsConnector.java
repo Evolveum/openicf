@@ -168,11 +168,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     }
 
     protected String quoteWhenNeeded(String unquoted, boolean needsQuote) {
-        boolean quote = needsQuote;
-        for (char character : unquoted.toCharArray()) {
-            if (character == '!' | character == ' ' | character == '\t')
-                quote = true;
-        }
+        boolean quote = needsQuote || !Pattern.matches("(\\w|=)+|\\[(\\w)+]|\\[\\d+,\\d+\\]", unquoted);
         if (unquoted.length()==0)
             quote=true;
         
