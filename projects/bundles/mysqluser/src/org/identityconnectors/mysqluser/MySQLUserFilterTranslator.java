@@ -53,8 +53,11 @@ public class MySQLUserFilterTranslator extends DatabaseFilterTranslator {
      */
     @Override
     protected String getDatabaseColumnName(Attribute attribute, ObjectClass oclass, OperationOptions options) {
+        // check the null values
+        if (attribute == null)
+            return null;
         //MySQLUser filter a name or uid attribute
-        if(attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
+        if (attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
             return MYSQL_USER;
         }
         //Password or other are invalid columns for query, 

@@ -468,12 +468,17 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             throw new IllegalArgumentException(config.getMessage(MSG_INVALID_ATTRIBUTE_SET)); 
         }               
         
-        // Check for known attributes
+            // Check for known attributes
         for (Attribute attribute : attrs) {
-            if(attribute.getName() == Name.NAME) continue;
-            if(attribute.getName() == Uid.NAME) continue;
-            if(attribute.getName() == OperationalAttributes.PASSWORD_NAME) continue;
-            throw new IllegalArgumentException(config.getMessage(MSG_INVALID_ATTRIBUTE_SET)); 
+            if (attribute == null)
+                throw new IllegalArgumentException(config.getMessage(MSG_INVALID_ATTRIBUTE_SET));
+            if (attribute.is(Name.NAME))
+                continue;
+            if (attribute.is(Uid.NAME))
+                continue;
+            if (attribute.is(OperationalAttributes.PASSWORD_NAME))
+                continue;
+            throw new IllegalArgumentException(config.getMessage(MSG_INVALID_ATTRIBUTE_SET));
         }        
     }
     
