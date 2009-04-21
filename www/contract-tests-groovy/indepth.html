@@ -89,6 +89,16 @@ configuration properties</a></li>
 
     <ul>
 
+      <li><a href="#authprop">AuthenticationApiOpTests properties</a></li>
+
+    </ul>
+
+  </ul>
+
+  <ul>
+
+    <ul>
+
       <li><a href="#validateprop">ValidateApiOpTests
 properties</a></li>
 
@@ -376,6 +386,28 @@ are listed here (and in <code>bootstrap.groovy</code>):
 <!-- ========================== --></li>
 
 </ol>
+
+<h4><a name="authprop"></a>AuthenticationApiOpTests properties</h4>
+<p>
+Authenticate tests in method <code>testRun()</code> need to know the attribute name, 
+that contains the username. The username is later used to test authentication. 
+The generic form of mandatory test property is:
+
+<pre>
+import org.identityconnectors.contract.data.groovy.Lazy
+testsuite.Authentication.<span class="codeComment">${OBJECT_CLASS}</span>.username = Lazy.get("i0.Authentication.<span class="codeComment">${OBJECT_CLASS}</span>.<span class="codeComment">${USERNAME_ATTR_NAME}</span>")
+</pre>
+
+Where the following parameters should be adjusted based on the Connector:
+<ul>
+<li>${OBJECT_CLASS} - name of tested object class</li>
+<li>${USERNAME_ATTR_NAME} - name of attribute containing username</li>
+</ul>
+</p>
+<p>
+For example in <code>databasetable</code> connector we use the following setting for object class <code>ACCOUNT</code> and <code>username</code> attribute: <code>testsuite.Authentication.__ACCOUNT__.username = Lazy.get("i0.Authentication.__ACCOUNT__.__NAME__")</code>
+</p>
+<!-- ============================ -->
 
 <h4><a name="validateprop">ValidateApiOpTests
 Properties</a></h4>
