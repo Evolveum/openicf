@@ -6,6 +6,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-HEAD"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorTestCommon-HEAD"/>
 	<classpathentry kind="var" path="USER_HOME/.ant/lib/junit-4.5.jar"/>
-	<classpathentry kind="lib" path="/home/kitko/.connectors/connector-oracle/lib/ojdbc14.jar"/>
+	<classpathentry exported="true" kind="var" path="USER_HOME/.connectors/connector-oracle/lib/ojdbc14.jar"/>
 	<classpathentry kind="output" path="ide-build"/>
 </classpath>

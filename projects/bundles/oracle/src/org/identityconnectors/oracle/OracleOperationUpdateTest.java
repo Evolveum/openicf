@@ -10,6 +10,8 @@ import java.util.Collections;
 import java.util.List;
 
 
+
+import org.hamcrest.core.IsEqual;
 import org.hamcrest.core.IsNot;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.security.GuardedString;
@@ -182,6 +184,19 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(roles), null);
         List<String> rolesRead = new OracleRolePrivReader(connector.getAdminConnection()).readRoles(uid.getUidValue());
         Assert.assertThat(rolesRead, JUnitMatchers.hasItem(cs.normalizeToken(OracleUserAttribute.ROLE,role)));
+        
+        //If sending null or empty roles attribute, all roles must get revoked
+        roles = AttributeBuilder.build(OracleConnector.ORACLE_ROLES_ATTR_NAME);
+        facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(roles), null);
+        rolesRead = new OracleRolePrivReader(connector.getAdminConnection()).readRoles(uid.getUidValue());
+        Assert.assertThat("All roles must get revoked when sending null roles attribute",rolesRead, new IsEqual<List<String>>(Collections.<String>emptyList()));
+        
+        roles = AttributeBuilder.build(OracleConnector.ORACLE_ROLES_ATTR_NAME,Collections.emptyList());
+        facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(roles), null);
+        rolesRead = new OracleRolePrivReader(connector.getAdminConnection()).readRoles(uid.getUidValue());
+        Assert.assertThat("All roles must get revoked when sending empty list roles attribute",rolesRead, new IsEqual<List<String>>(Collections.<String>emptyList()));
+        
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "drop role " + cs.normalizeAndFormatToken(OracleUserAttribute.ROLE, role));
 }
     
 	@Test
@@ -196,6 +211,18 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         List<String> privilegesRead = new OracleRolePrivReader(connector.getAdminConnection()).readPrivileges(uid.getUidValue());
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUser() + ".MYTABLE"));
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("CREATE SESSION"));
+        
+        //If sending null or empty privileges attribute, all roles must get revoked
+        privileges = AttributeBuilder.build(OracleConnector.ORACLE_PRIVS_ATTR_NAME);
+        facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(privileges), null);
+        privilegesRead = new OracleRolePrivReader(connector.getAdminConnection()).readPrivileges(uid.getUidValue());
+        Assert.assertThat("All privileges must get revoked when sending null privileges attribute",privilegesRead, new IsEqual<List<String>>(Collections.<String>emptyList()));
+        
+        privileges = AttributeBuilder.build(OracleConnector.ORACLE_PRIVS_ATTR_NAME,Collections.emptyList());
+        facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(privileges), null);
+        privilegesRead = new OracleRolePrivReader(connector.getAdminConnection()).readPrivileges(uid.getUidValue());
+        Assert.assertThat("All privileges must get revoked when sending empty list privileges attribute",privilegesRead, new IsEqual<List<String>>(Collections.<String>emptyList()));
+        
         SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop table mytable");
     }
     

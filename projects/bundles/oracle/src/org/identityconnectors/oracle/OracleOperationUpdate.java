@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.dbcommon.LocalizedAssert;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.*;
 import org.identityconnectors.framework.common.objects.*;
@@ -23,6 +24,7 @@ class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp,
     }
 
     public Uid update(ObjectClass objclass, Uid uid,  Set<Attribute> attrs, OperationOptions options) {
+    	checkUpdateAttributes(attrs);
         checkUserExist(uid.getUidValue());
         OracleUserAttributes caAttributes = new OracleUserAttributes();
         caAttributes.userName = uid.getUidValue();
@@ -34,23 +36,40 @@ class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp,
             String alterSQL = new OracleCreateOrAlterStBuilder(cfg.getCSSetup()).buildAlterUserSt(caAttributes, userRecord);
             
             List<String> grantRevokeSQL = new ArrayList<String>();
-            List<String> roles = OracleConnectorHelper.castList(AttributeUtil.find(ORACLE_ROLES_ATTR_NAME, attrs), String.class);
-            if(!roles.isEmpty()){
-            	List<String> currentRoles = new OracleRolePrivReader(adminConn).readRoles(caAttributes.userName);
-            	List<String> revokeRoles = new ArrayList<String>(currentRoles);
-            	revokeRoles.removeAll(roles);
-            	grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokeRoles(caAttributes.userName, revokeRoles));
-            	roles.removeAll(currentRoles);
-            	grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantRolesSQL(caAttributes.userName, roles));
+            Attribute aRoles = AttributeUtil.find(ORACLE_ROLES_ATTR_NAME, attrs);
+            //If we have null or empty roles attribute, revoke all roles
+            if(aRoles != null){
+				List<String> roles = OracleConnectorHelper.castList(aRoles, String.class);
+	            if(!roles.isEmpty()){
+	            	List<String> currentRoles = new OracleRolePrivReader(adminConn).readRoles(caAttributes.userName);
+	            	List<String> revokeRoles = new ArrayList<String>(currentRoles);
+	            	revokeRoles.removeAll(roles);
+	            	grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokeRoles(caAttributes.userName, revokeRoles));
+	            	roles.removeAll(currentRoles);
+	            	grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantRolesSQL(caAttributes.userName, roles));
+	            }
+	            else{
+	            	List<String> currentRoles = new OracleRolePrivReader(adminConn).readRoles(caAttributes.userName);
+	            	grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokeRoles(caAttributes.userName, currentRoles));
+	            }
             }
-            List<String> privileges = OracleConnectorHelper.castList(AttributeUtil.find(ORACLE_PRIVS_ATTR_NAME, attrs), String.class);
-            if(!privileges.isEmpty()){
-                List<String> currentPrivileges = new OracleRolePrivReader(adminConn).readPrivileges(caAttributes.userName);
-                List<String> revokePrivileges = new ArrayList<String>(currentPrivileges);
-                revokePrivileges.removeAll(privileges);
-                grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokePrivileges(caAttributes.userName, revokePrivileges));
-                privileges.removeAll(currentPrivileges);
-            	grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantPrivilegesSQL(caAttributes.userName, privileges));
+            
+            Attribute aPrivileges = AttributeUtil.find(ORACLE_PRIVS_ATTR_NAME, attrs);
+            //If we have null or empty privileges attribute, revoke all privileges
+            if(aPrivileges != null){
+				List<String> privileges = OracleConnectorHelper.castList(aPrivileges, String.class);
+	            if(!privileges.isEmpty()){
+	                List<String> currentPrivileges = new OracleRolePrivReader(adminConn).readPrivileges(caAttributes.userName);
+	                List<String> revokePrivileges = new ArrayList<String>(currentPrivileges);
+	                revokePrivileges.removeAll(privileges);
+	                grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokePrivileges(caAttributes.userName, revokePrivileges));
+	                privileges.removeAll(currentPrivileges);
+	            	grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantPrivilegesSQL(caAttributes.userName, privileges));
+	            }
+	            else{
+	                List<String> currentPrivileges = new OracleRolePrivReader(adminConn).readPrivileges(caAttributes.userName);
+	                grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokePrivileges(caAttributes.userName, currentPrivileges));
+	            }
             }
             
             SQLUtil.executeUpdateStatement(adminConn, alterSQL);
@@ -74,7 +93,8 @@ class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp,
 
     //It makes sense to add roles and privileges only
     public Uid addAttributeValues(ObjectClass objclass, Uid uid, Set<Attribute> valuesToAdd, OperationOptions options) {
-        checkUserExist(uid.getUidValue());
+        checkAddAttributes(valuesToAdd);
+    	checkUserExist(uid.getUidValue());
         List<String> roles = OracleConnectorHelper.castList(AttributeUtil.find(ORACLE_ROLES_ATTR_NAME, valuesToAdd), String.class);
         List<String> privileges = OracleConnectorHelper.castList(AttributeUtil.find(ORACLE_PRIVS_ATTR_NAME, valuesToAdd), String.class);
         List<String> grantRolesStatements = new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantRolesSQL(uid.getUidValue(), roles);
@@ -97,6 +117,7 @@ class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp,
     //It makes sense to remove roles and privileges only
     //It is error to revoke not existing role/privilege from user
     public Uid removeAttributeValues(ObjectClass objclass, Uid uid, Set<Attribute> valuesToRemove, OperationOptions options) {
+    	checkRemoveAttributes(valuesToRemove);
         checkUserExist(uid.getUidValue());
         List<String> roles = OracleConnectorHelper.castList(AttributeUtil.find(ORACLE_ROLES_ATTR_NAME, valuesToRemove), String.class);
         List<String> privileges = OracleConnectorHelper.castList(AttributeUtil.find(ORACLE_PRIVS_ATTR_NAME, valuesToRemove), String.class);
@@ -117,6 +138,76 @@ class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp,
         return uid;
     }
     
+    private void checkUpdateAttributes(Set<Attribute> attrs) {
+    	LocalizedAssert la = new LocalizedAssert(cfg.getConnectorMessages());
+		for(Attribute attr : attrs){
+			if(attr.is(Name.NAME)){
+				la.assertNotBlank(AttributeUtil.getStringValue(attr), Name.NAME);
+			}
+			else if(attr.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
+				la.assertNotNull(AttributeUtil.getBooleanValue(attr), OperationalAttributes.PASSWORD_EXPIRED_NAME);
+			}
+			else if(attr.is(OperationalAttributes.ENABLE_NAME)){
+				la.assertNotNull(AttributeUtil.getBooleanValue(attr), OperationalAttributes.ENABLE_NAME);
+			}
+			else if(attr.is(OperationalAttributes.PASSWORD_NAME)){
+				//This can be blank, we will default to name
+				//la.assertNotBlank(AttributeUtil.getStringValue(attr), OperationalAttributes.PASSWORD_NAME);
+			}
+			else if(attr.is(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME)){
+				la.assertNotBlank(AttributeUtil.getStringValue(attr), OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME);
+			}
+			else if(attr.is(OracleConnector.ORACLE_DEF_TS_ATTR_NAME)){
+				la.assertNotBlank(AttributeUtil.getStringValue(attr), OracleConnector.ORACLE_DEF_TS_ATTR_NAME);
+			}
+			else if(attr.is(OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME)){
+				la.assertNotBlank(AttributeUtil.getStringValue(attr), OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME);
+			}
+			else if(attr.is(OracleConnector.ORACLE_GLOBAL_ATTR_NAME)){
+				la.assertNotBlank(AttributeUtil.getStringValue(attr), OracleConnector.ORACLE_GLOBAL_ATTR_NAME);
+			}
+			else if(attr.is(OracleConnector.ORACLE_PROFILE_ATTR_NAME)){
+				la.assertNotBlank(AttributeUtil.getStringValue(attr), OracleConnector.ORACLE_PROFILE_ATTR_NAME);
+			}
+			else if(attr.is(OracleConnector.ORACLE_TEMP_TS_ATTR_NAME)){
+				la.assertNotBlank(AttributeUtil.getStringValue(attr), OracleConnector.ORACLE_TEMP_TS_ATTR_NAME);
+			}
+			else if(attr.is(OracleConnector.ORACLE_TEMP_TS_QUOTA_ATTR_NAME)){
+				la.assertNotBlank(AttributeUtil.getStringValue(attr), OracleConnector.ORACLE_TEMP_TS_QUOTA_ATTR_NAME);
+			}
+			else if(attr.is(OracleConnector.ORACLE_PRIVS_ATTR_NAME)){
+			}
+			else if(attr.is(OracleConnector.ORACLE_ROLES_ATTR_NAME)){
+			}
+			else{
+				throw new IllegalArgumentException("Illegal argument " + attr);
+			}
+		}
+	}
+
+    private void checkAddAttributes(Set<Attribute> attrs) {
+		for(Attribute attr : attrs){
+			if(attr.is(OracleConnector.ORACLE_PRIVS_ATTR_NAME)){
+			}
+			else if(attr.is(OracleConnector.ORACLE_ROLES_ATTR_NAME)){
+			}
+			else{
+				throw new IllegalArgumentException("Illegal argument " + attr);
+			}
+		}
+	}
+    
+    private void checkRemoveAttributes(Set<Attribute> attrs) {
+		for(Attribute attr : attrs){
+			if(attr.is(OracleConnector.ORACLE_PRIVS_ATTR_NAME)){
+			}
+			else if(attr.is(OracleConnector.ORACLE_ROLES_ATTR_NAME)){
+			}
+			else{
+				throw new IllegalArgumentException("Illegal argument " + attr);
+			}
+		}
+	}
 
 }
 

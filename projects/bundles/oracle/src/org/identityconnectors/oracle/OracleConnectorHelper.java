@@ -29,6 +29,19 @@ abstract class OracleConnectorHelper {
         Attribute attr = attrs.get(name);
         return attr != null ? AttributeUtil.getStringValue(attr) : null;
     }
+    
+    
+    static String getNotNullAttributeNotEmptyStringValue(Map<String, Attribute> attrs, String name){
+    	Attribute attr = attrs.get(name);
+    	if(attr == null){
+    		return null;
+    	}
+        String value = AttributeUtil.getStringValue(attr);
+		if(StringUtil.isEmpty(value)){
+            throw new IllegalArgumentException("Attribute with name [" + name + "] is empty");
+        }
+		return value;
+    }
 
     
     static <O,T> List<T> castList(List<O> source,Class<T> resultType){

@@ -27,18 +27,12 @@ class OracleAttributesReader {
     
      void readCreateRestAttributes(Map<String, Attribute> map, OracleUserAttributes caAttributes) {
         caAttributes.expirePassword = OracleConnectorHelper.getBooleanValue(map, OperationalAttributes.PASSWORD_EXPIRED_NAME);
-        caAttributes.defaultTableSpace = OracleConnectorHelper.getStringValue(map, ORACLE_DEF_TS_ATTR_NAME);
-        caAttributes.tempTableSpace = OracleConnectorHelper.getStringValue(map, ORACLE_TEMP_TS_ATTR_NAME);
+        caAttributes.defaultTableSpace = OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, ORACLE_DEF_TS_ATTR_NAME);
+        caAttributes.tempTableSpace = OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, ORACLE_TEMP_TS_ATTR_NAME);
         caAttributes.enable = OracleConnectorHelper.getBooleanValue(map, OperationalAttributes.ENABLE_NAME);
-        caAttributes.profile = OracleConnectorHelper.getStringValue(map, ORACLE_PROFILE_ATTR_NAME);
-        Attribute defaultTSQuota = map.get(ORACLE_DEF_TS_QUOTA_ATTR_NAME);
-        if(defaultTSQuota != null){
-            caAttributes.defaultTSQuota = AttributeUtil.getStringValue(defaultTSQuota);
-        }
-        Attribute tempTSQuota = map.get(ORACLE_TEMP_TS_QUOTA_ATTR_NAME);
-        if(tempTSQuota != null){
-            caAttributes.tempTSQuota = AttributeUtil.getStringValue(tempTSQuota);
-        }
+        caAttributes.profile = OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, ORACLE_PROFILE_ATTR_NAME);
+        caAttributes.defaultTSQuota = OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, ORACLE_DEF_TS_QUOTA_ATTR_NAME);
+        caAttributes.tempTSQuota = OracleConnectorHelper.getStringValue(map, ORACLE_TEMP_TS_QUOTA_ATTR_NAME);
     }
 
     void readCreateAuthAttributes(Map<String, Attribute> map, OracleUserAttributes caAttributes) {

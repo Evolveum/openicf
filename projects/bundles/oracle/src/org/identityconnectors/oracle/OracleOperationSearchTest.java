@@ -242,11 +242,11 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 		Listhandler handler = new Listhandler();
 		facade.update(ObjectClass.ACCOUNT, new Uid("TEST5"), Collections.singleton(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,"20k")), null);
 		facade.update(ObjectClass.ACCOUNT, new Uid("TEST6"), Collections.singleton(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,"60k")), null);
-		facade.search(ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name("TEST")),new LessThanFilter(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,10000L))), handler, null);
+		facade.search(ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name("TEST")),new LessThanFilter(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,"10000"))), handler, null);
 		Assert.assertThat(handler.getResultsAndClear(), new UIDMatcher());
-		facade.search(ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name("TEST")),new GreaterThanFilter(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,10000L))), handler, null);
+		facade.search(ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name("TEST")),new GreaterThanFilter(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,"10000"))), handler, null);
 		Assert.assertThat(handler.getResultsAndClear(), new UIDMatcher("TEST5","TEST6"));
-		facade.search(ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name("TEST")),new GreaterThanFilter(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,40000L))), handler, null);
+		facade.search(ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name("TEST")),new GreaterThanFilter(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,"40000"))), handler, null);
 		Assert.assertThat(handler.getResultsAndClear(), new UIDMatcher("TEST6"));
 	}
 	

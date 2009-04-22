@@ -104,10 +104,12 @@ class OracleOperationSearch extends AbstractOracleOperation implements SearchOp<
                 	bld.addAttribute(AttributeBuilder.build(ORACLE_PROFILE_ATTR_NAME,record.profile));
                 }
                 if(attributesToGet.contains(ORACLE_DEF_TS_QUOTA_ATTR_NAME)){
-                	bld.addAttribute(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,userReader.readUserTSQuota(userName, record.defaultTableSpace)));
+                	Long quota = userReader.readUserTSQuota(userName, record.defaultTableSpace);
+					bld.addAttribute(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,quota != null ? quota.toString() : null));
                 }
                 if(attributesToGet.contains(ORACLE_TEMP_TS_QUOTA_ATTR_NAME)){
-                	bld.addAttribute(AttributeBuilder.build(ORACLE_TEMP_TS_QUOTA_ATTR_NAME,userReader.readUserTSQuota(userName, record.temporaryTableSpace)));
+                	Long quota = userReader.readUserTSQuota(userName, record.temporaryTableSpace);
+					bld.addAttribute(AttributeBuilder.build(ORACLE_TEMP_TS_QUOTA_ATTR_NAME,quota != null ? quota.toString() : null));
                 }
                 if(attributesToGet.contains(ORACLE_PRIVS_ATTR_NAME)){
                 	bld.addAttribute(AttributeBuilder.build(ORACLE_PRIVS_ATTR_NAME,new OracleRolePrivReader(adminConn).readPrivileges(userName)));
@@ -180,6 +182,20 @@ class OracleOperationSearch extends AbstractOracleOperation implements SearchOp<
 		protected SQLParam getSQLParam(Attribute attribute, ObjectClass oclass, OperationOptions options) {
 			return new SQLParam(AttributeUtil.getSingleValue(attribute),Types.VARCHAR);
 		}
+
+		@Override
+		protected boolean validateSearchAttribute(Attribute attribute) {
+			//Currently We do not support in filter
+			if(attribute.is(OracleConnector.ORACLE_ROLES_ATTR_NAME)){
+				return false;
+			}
+			if(attribute.is(OracleConnector.ORACLE_PRIVS_ATTR_NAME)){
+				return false;
+			}
+			return true;
+		}
+		
+		
 	}
 	
 	

@@ -4,6 +4,7 @@
 package org.identityconnectors.oracle;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.*;
 
 import org.identityconnectors.common.Pair;
@@ -11,6 +12,7 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
@@ -26,9 +28,10 @@ import org.identityconnectors.framework.spi.operations.*;
         messageCatalogPaths={"org/identityconnectors/dbcommon/Messages","org/identityconnectors/oracle/Messages"})
 public class OracleConnector implements PoolableConnector, AuthenticateOp,
 		CreateOp, DeleteOp, UpdateOp, UpdateAttributeValuesOp,
-		SearchOp<Pair<String, FilterWhereBuilder>>, SchemaOp, AttributeNormalizer {
+		SearchOp<Pair<String, FilterWhereBuilder>>, SchemaOp,TestOp, AttributeNormalizer {
     private Connection adminConn;
     private OracleConfiguration cfg;
+    private Schema schema;
     private final static Log log = Log.getLog(OracleConnector.class);
     
     static final String ORACLE_AUTHENTICATION_ATTR_NAME = "oracleAuthentication";
@@ -126,12 +129,18 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,
     }
 
     public Attribute normalizeAttribute(ObjectClass oclass, Attribute attribute) {
+    	if(attribute == null){
+    		return null;
+    	}
         String name = attribute.getName();
         final OracleUserAttribute oracleUserAttribute = attributeMapping.get(name);
         if(oracleUserAttribute == null){
             return attribute;
         }
         List<Object> values = new ArrayList<Object>();
+        if(attribute.getValue() == null){
+        	return attribute;
+        }
         for(Object o : attribute.getValue()){
             if(o instanceof String){
                 o = cfg.getCSSetup().normalizeToken(oracleUserAttribute, (String) o);
@@ -165,21 +174,36 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,
 
 	@Override
 	public Schema schema() {
+		if(schema != null){
+			return schema;
+		}
+		String dbVersion = null;
+		try{
+			dbVersion = adminConn.getMetaData().getDatabaseProductVersion();
+		}
+		catch(SQLException e){
+			throw new ConnectorException("Cannot resolve getMetaData().getDatabaseProductVersion()",e);
+		}
+		boolean express = false;
+		if(dbVersion.contains("Express")){
+			express = true;
+		}
         Set<AttributeInfo> attrInfoSet = new HashSet<AttributeInfo>();
-        attrInfoSet.add(Name.INFO);
+        attrInfoSet.add(AttributeInfoBuilder.build(Name.NAME,String.class,EnumSet.of(Flags.NOT_UPDATEABLE,Flags.REQUIRED)));
         attrInfoSet.add(OperationalAttributeInfos.PASSWORD);
         attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_AUTHENTICATION_ATTR_NAME,String.class,EnumSet.of(Flags.REQUIRED)));
-        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_GLOBAL_ATTR_NAME,String.class));
+        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_GLOBAL_ATTR_NAME,String.class,express ? EnumSet.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE) : null));
         attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_ROLES_ATTR_NAME,String.class,EnumSet.of(Flags.MULTIVALUED)));
         attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_PRIVS_ATTR_NAME,String.class,EnumSet.of(Flags.MULTIVALUED)));
         attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_PROFILE_ATTR_NAME,String.class));
         attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_DEF_TS_ATTR_NAME,String.class));
         attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_TEMP_TS_ATTR_NAME,String.class));
         attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,String.class));
-        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_TEMP_TS_QUOTA_ATTR_NAME,String.class));
+        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_TEMP_TS_QUOTA_ATTR_NAME,String.class,express ? EnumSet.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE) : null));
         SchemaBuilder schemaBld = new SchemaBuilder(getClass());
         schemaBld.defineObjectClass(ObjectClass.ACCOUNT_NAME, attrInfoSet);
-        return schemaBld.build();
+        schema =  schemaBld.build();
+        return schema;
 	}
     
     
