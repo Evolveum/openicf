@@ -25,11 +25,7 @@ package org.identityconnectors.racf;
 import static org.identityconnectors.racf.RacfConstants.*;
 
 import java.io.StringReader;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -59,7 +55,6 @@ import org.identityconnectors.framework.common.objects.PredefinedAttributes;
 import org.identityconnectors.framework.common.objects.ScriptContext;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.patternparser.MapTransform;
-import org.identityconnectors.patternparser.Transform;
 import org.identityconnectors.rw3270.RW3270Connection;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -75,21 +70,18 @@ import expect4j.matches.TimeoutMatch;
 class CommandLineUtil {
     private static final String         OUTPUT_COMPLETE_PATTERN     = "\\sREADY\\s{74}";
     private static final String         OUTPUT_COMPLETE             = " READY";
-    private static final String         DEFAULT_GROUP_NAME          = "DFLTGRP";
-    private static final String         SUPGROUP                    = "SUPGROUP";
-    private static final String         OWNER                       = "OWNER";
     private static final String         OUTPUT_CONTINUING_PATTERN   = "\\s\\*\\*\\*\\s{76}";
     private static final String         OUTPUT_CONTINUING           = " ***";
     private static final String         RACF                        = "RACF";
     private static final String         CATALOG                     = "CATALOG";
     private static final String         DELETE_SEGMENT              = "Delete Segment";
+    private static final String         NO_ENTRIES                  = "NO ENTRIES MEET SEARCH CRITERIA";
+    private static final String         NAME_NOT_FOUND              = "NAME NOT FOUND";
+    private static final String         UNABLE_TO_LOCATE_USER       = "UNABLE TO LOCATE USER";
     private static final int            COMMAND_TIMEOUT             = 60000;
     
     private Map<String, MapTransform>   _segmentParsers;
-    private final Pattern               _connectionPattern  = Pattern.compile("racfuserid=(.*)\\+racfgroupid=(.*),.*");
-    private final Pattern               _racfTimestamp = Pattern.compile("(\\d+)\\.(\\d+)(?:/(\\d+):(\\d+):(\\d+))?");
     private final ScriptExecutorFactory _groovyFactory;
-    private final SimpleDateFormat      _resumeRevokeFormat = new SimpleDateFormat("MMMM dd, yyyy");
     
     private RacfConnector               _connector;
 
@@ -136,15 +128,7 @@ class CommandLineUtil {
         return new Uid(name);
     }
 
-    public String[] extractRacfIdAndGroupIdFromLdapId(String uidString) {
-        Matcher matcher = _connectionPattern.matcher(uidString);
-        if (matcher.matches())
-            return new String[] {matcher.group(1), matcher.group(2)};
-        else
-            return null;
-    }
-
-    public void checkCommand(String command) {
+    private void checkCommand(String command) {
         CharArrayBuffer buffer = new CharArrayBuffer();
         buffer.append(command);
         try {
@@ -154,7 +138,7 @@ class CommandLineUtil {
         }
     }
 
-    public void checkCommand(CharArrayBuffer command) {
+    private void checkCommand(CharArrayBuffer command) {
         String output = getCommandOutput(command);
         if (output.trim().length()>0) {
             throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.ERROR_IN_COMMAND, new String(command.getArray()), output));
@@ -236,7 +220,7 @@ class CommandLineUtil {
      * @param attrs
      * @return
      */
-    public char[] mapAttributesToString(Map<String, Attribute> attributes) {
+    private char[] mapAttributesToString(Map<String, Attribute> attributes) {
         Name name = (Name)attributes.remove(Name.NAME);
         Uid uid = (Uid)attributes.remove(Uid.NAME);
         Attribute expired = attributes.remove(ATTR_CL_EXPIRED);
@@ -332,7 +316,7 @@ class CommandLineUtil {
         }
     }
 
-    public char[] computeValue(char[] value, String segmentName, String attributeName) {
+    private char[] computeValue(char[] value, String segmentName, String attributeName) {
         
         // DATA and IC must always be quoted, other values must be quoted
         // if they contain special characters
@@ -448,7 +432,7 @@ class CommandLineUtil {
             }
             return uid;
         } else if (objectClass.is(RacfConnector.RACF_CONNECTION_NAME)) {
-            String[] info = extractRacfIdAndGroupIdFromLdapId(name);
+            String[] info = _connector.extractRacfIdAndGroupIdFromLdapId(name);
             String user = _connector.extractRacfIdFromLdapId(info[0]);
             String group = _connector.extractRacfIdFromLdapId(info[1]);
             String command = "CONNECT "+user+" GROUP("+group+")";
@@ -489,7 +473,7 @@ class CommandLineUtil {
                 throw e;
             }
         } else if (objectClass.is(RacfConnector.RACF_CONNECTION_NAME)) {
-            String[] info = extractRacfIdAndGroupIdFromLdapId(uidString);
+            String[] info = _connector.extractRacfIdAndGroupIdFromLdapId(uidString);
             String user = _connector.extractRacfIdFromLdapId(info[0]);
             String group = _connector.extractRacfIdFromLdapId(info[1]);
             String command = "REMOVE "+user+" GROUP("+group+")";
@@ -503,12 +487,12 @@ class CommandLineUtil {
         String command = "SEARCH CLASS(GROUP) FILTER("+name+")";
         String groups = getCommandOutput(command);
         
-        return !(groups.contains("NO ENTRIES MEET SEARCH CRITERIA"));
+        return !(groups.contains(NO_ENTRIES));
     }
 
     private int memberCount(String name) {
         String output = getCommandOutput("LISTGRP "+name);
-        boolean notFound = (output.toUpperCase().contains("NAME NOT FOUND"));
+        boolean notFound = (output.toUpperCase().contains(NAME_NOT_FOUND));
         if (notFound)
             throw new UnknownUidException();
         try {
@@ -529,7 +513,7 @@ class CommandLineUtil {
         String command = "SEARCH CLASS(USER) FILTER("+name+")";
         String groups = getCommandOutput(command);
         
-        return !(groups.contains("NO ENTRIES MEET SEARCH CRITERIA"));
+        return !(groups.contains(NO_ENTRIES));
     }
     
     public List<String> getMembersOfGroupViaCommandLine(String group) {
@@ -559,7 +543,7 @@ class CommandLineUtil {
         if (transform==null)
             throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNKNOWN_SEGMENT, ATTR_CL_GROUPS));
         try {
-            Map<String, Object> map =(Map<String, Object>)transform.transform(output);
+            Map<String, Object> map = (Map<String, Object>)transform.transform(output);
             List<Object> groups = (List<Object>)map.get(ATTR_CL_GROUPS);
             List<String> groupsAsString = new LinkedList<String>();
             for (Object group : groups)
@@ -580,7 +564,7 @@ class CommandLineUtil {
             command = "SEARCH CLASS(USER)";
         String users = getCommandOutput(command);
         
-        if (users.contains("NO ENTRIES MEET SEARCH CRITERIA")) {
+        if (users.contains(NO_ENTRIES)) {
             return new LinkedList<String>();
         }
 
@@ -613,7 +597,7 @@ class CommandLineUtil {
             command = "SEARCH CLASS(GROUP)";
         String groups = getCommandOutput(command);
         
-        if (groups.contains("NO ENTRIES MEET SEARCH CRITERIA")) {
+        if (groups.contains(NO_ENTRIES)) {
             return new LinkedList<String>();
         }
         
@@ -859,7 +843,7 @@ class CommandLineUtil {
                         }
                         i++;
                     }
-                } else if (output.toUpperCase().contains("UNABLE TO LOCATE USER")) {
+                } else if (output.toUpperCase().contains(UNABLE_TO_LOCATE_USER)) {
                     throw new UnknownUidException();
                 } else {
                     throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNPARSEABLE_RESPONSE, "LISTUSER", output));
@@ -888,14 +872,14 @@ class CommandLineUtil {
             //
             if (attributesFromCommandLine.containsKey(ATTR_CL_LAST_ACCESS)) {
                 Object value = attributesFromCommandLine.get(ATTR_CL_LAST_ACCESS);
-                Long converted = convertFromRacfTimestamp(value);
+                Long converted = _connector.convertFromRacfTimestamp(value);
                 attributesFromCommandLine.put(PredefinedAttributes.LAST_LOGIN_DATE_NAME, converted);
             }
             // password change date must be converted
             //
             if (attributesFromCommandLine.containsKey(ATTR_CL_PASSDATE)) {
                 Object value = attributesFromCommandLine.get(ATTR_CL_PASSDATE);
-                Long converted = convertFromRacfTimestamp(value);
+                Long converted = _connector.convertFromRacfTimestamp(value);
                 attributesFromCommandLine.put(PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME, converted);
                 // password change date is 00.000 if expired
                 //
@@ -906,14 +890,14 @@ class CommandLineUtil {
             //
             if (attributesFromCommandLine.containsKey(ATTR_CL_REVOKE_DATE)) {
                 Object value = attributesFromCommandLine.get(ATTR_CL_REVOKE_DATE);
-                Long converted = convertFromResumeRevokeFormat(value);
+                Long converted = _connector.convertFromResumeRevokeFormat(value);
                 attributesFromCommandLine.put(OperationalAttributes.DISABLE_DATE_NAME, converted);
             }
             // Resume date must be converted
             //
             if (attributesFromCommandLine.containsKey(ATTR_CL_RESUME_DATE)) {
                 Object value = attributesFromCommandLine.get(ATTR_CL_RESUME_DATE);
-                Long converted = convertFromResumeRevokeFormat(value);
+                Long converted = _connector.convertFromResumeRevokeFormat(value);
                 attributesFromCommandLine.put(OperationalAttributes.ENABLE_DATE_NAME, converted);
             }
         }
@@ -921,8 +905,6 @@ class CommandLineUtil {
         // Remap GROUP attributes as needed
         //
         if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
-            // Superior group must be a stringified Uid
-            //
             if (attributesFromCommandLine.containsKey(ATTR_CL_SUPGROUP)) {
                 Object value = attributesFromCommandLine.get(ATTR_CL_SUPGROUP);
                 if ("NONE".equals(value))
@@ -931,47 +913,6 @@ class CommandLineUtil {
 
         }
         return attributesFromCommandLine;
-    }
-    
-    private Long convertFromResumeRevokeFormat(Object value) {
-        try {
-            return _resumeRevokeFormat.parse(value.toString()).getTime();
-        } catch (ParseException pe) {
-            return null;
-        }
-    }
-    
-    private Long convertFromRacfTimestamp(Object value) {
-        if (value==null)
-            return null;
-        
-        Matcher matcher = _racfTimestamp.matcher(value.toString());
-        if (matcher.matches()) {
-            String year    = matcher.group(1);
-            String day     = matcher.group(2);
-            String hours   = matcher.group(3);
-            String minutes = matcher.group(4);
-            String seconds = matcher.group(5);
-            
-            int yearValue = Integer.parseInt(year)+2000;
-            int dayValue  = Integer.parseInt(day);
-            Calendar calendar = Calendar.getInstance();
-            calendar.set(Calendar.YEAR, yearValue);
-            calendar.set(Calendar.DAY_OF_YEAR, dayValue);
-            
-            if (hours!=null) {
-                int hoursValue   = Integer.parseInt(hours);
-                int minutesValue = Integer.parseInt(minutes);
-                int secondsValue = Integer.parseInt(seconds);
-                calendar.set(Calendar.HOUR_OF_DAY, hoursValue);
-                calendar.set(Calendar.MINUTE, minutesValue);
-                calendar.set(Calendar.SECOND, secondsValue);
-            }
-            Date date = calendar.getTime();
-            return date.getTime();
-        } else {
-            return null;
-        }
     }
     
     private StringBuffer _buffer = new StringBuffer();

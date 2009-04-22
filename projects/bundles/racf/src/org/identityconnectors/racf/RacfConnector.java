@@ -24,7 +24,9 @@ package org.identityconnectors.racf;
 
 import static org.identityconnectors.racf.RacfConstants.*;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -99,6 +101,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
     private CommandLineUtil             _clUtil;
     private LdapUtil                    _ldapUtil;
     private final SimpleDateFormat      _dateFormat = new SimpleDateFormat("MM/dd/yy");
+    private final SimpleDateFormat      _resumeRevokeFormat = new SimpleDateFormat("MMMM dd, yyyy");
+    private final Pattern               _racfTimestamp = Pattern.compile("(\\d+)\\.(\\d+)(?:/(\\d+):(\\d+):(\\d+))?");
+    private final Pattern               _connectionPattern  = Pattern.compile("racfuserid=(.*)\\+racfgroupid=(.*),.*");
 
     public RacfConnector() {
     }
@@ -587,6 +592,14 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
             return null;
     }
 
+    public String[] extractRacfIdAndGroupIdFromLdapId(String uidString) {
+        Matcher matcher = _connectionPattern.matcher(uidString);
+        if (matcher.matches())
+            return new String[] {matcher.group(1), matcher.group(2)};
+        else
+            return null;
+    }
+
     /**
      * Get the names of the users satisfying the query.
      * 
@@ -1046,6 +1059,47 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
             return new Uid((String)newValues.get(0));
         else
             return AttributeBuilder.build(attribute.getName().toUpperCase(), newValues);
+    }
+
+    Long convertFromResumeRevokeFormat(Object value) {
+        try {
+            return _resumeRevokeFormat.parse(value.toString()).getTime();
+        } catch (ParseException pe) {
+            return null;
+        }
+    }
+    
+    Long convertFromRacfTimestamp(Object value) {
+        if (value==null)
+            return null;
+        
+        Matcher matcher = _racfTimestamp.matcher(value.toString());
+        if (matcher.matches()) {
+            String year    = matcher.group(1);
+            String day     = matcher.group(2);
+            String hours   = matcher.group(3);
+            String minutes = matcher.group(4);
+            String seconds = matcher.group(5);
+            
+            int yearValue = Integer.parseInt(year)+2000;
+            int dayValue  = Integer.parseInt(day);
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(Calendar.YEAR, yearValue);
+            calendar.set(Calendar.DAY_OF_YEAR, dayValue);
+            
+            if (hours!=null) {
+                int hoursValue   = Integer.parseInt(hours);
+                int minutesValue = Integer.parseInt(minutes);
+                int secondsValue = Integer.parseInt(seconds);
+                calendar.set(Calendar.HOUR_OF_DAY, hoursValue);
+                calendar.set(Calendar.MINUTE, minutesValue);
+                calendar.set(Calendar.SECOND, secondsValue);
+            }
+            Date date = calendar.getTime();
+            return date.getTime();
+        } else {
+            return null;
+        }
     }
     
 }
