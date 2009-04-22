@@ -162,6 +162,7 @@ properties</a></li>
 
       <li><a href="#UpdateApiOpTests">UpdateApiOpTests</a></li>
       <li><a href="#SearchApiOpTests">SearchApiOpTests#testCaseInsensitiveSearch</a></li>
+      <li><a href="#SearchApiOpTests2">SearchApiOpTests - compare existing objects in the resource by Uid only</a></li>
       <li><a href="#MultiOpTests">MultiOpTests#testLockOutOpAttribute()</a></li>
       <li><a href="#MultiOpTests2">MultiOpTests#testDisableDateOpAttribute()</a></li>
 
@@ -665,6 +666,19 @@ Connector developer should make his/her choice, if the resource for the connecto
 /* USAGE */
 testsuite.Search.disable.caseinsensitive = true // connector is case sensitive
 testsuite.Search.disable.caseinsensitive = false // otherwise
+</pre>
+
+<h4><a name="SearchApiOpTests2"></a>SearchApiOpTests - compare existing objects in the resource by Uid only</h4>
+<p>
+During the search contract test all the objects which are stored in the resource before the test are retrieved (due to null filter search test) and later then the test checks that are still present and unchanged (since the test does not change them).
+However, in some cases changes made to different objects may affect already existing objects and their attributes. For this reason the connector developer may choose not to compare these objects as a whole (ConnectorObject) and rather compare them by Uids only.</p>
+<p>
+By default the whole ConnectorObject is compared.
+</p>
+<pre>
+/* USAGE */
+testsuite.Search.compareExistingObjectsByUidOnly = true		// compare existing objects by Uid only
+testsuite.Search.compareExistingObjectsByUidOnly = false	// default
 </pre>
 
 
