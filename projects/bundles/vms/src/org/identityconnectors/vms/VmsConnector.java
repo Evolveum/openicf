@@ -168,7 +168,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     }
 
     protected String quoteWhenNeeded(String unquoted, boolean needsQuote) {
-        boolean quote = needsQuote || !Pattern.matches("(\\w|=)+|\\[(\\w)+]|\\[\\d+,\\d+\\]", unquoted);
+        boolean quote = needsQuote || !Pattern.matches("(\\w)+", unquoted);
         if (unquoted.length()==0)
             quote=true;
         
@@ -209,13 +209,14 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         }
     }
 
-    protected String listToVmsValueList(List<Object> values) {
+    protected String listToVmsValueList(String name, List<Object> values) {
         if (values.size()==1) {
             if (values.get(0)==null) {
                 return null;
             } else {
-                String valueArray = asString(values.get(0));
-                String result = quoteWhenNeeded(valueArray);
+                String result = asString(values.get(0));
+                if (mayNeedQuotes(name))
+                    result = quoteWhenNeeded(result);
                 return result;
             }
         } else {
@@ -223,14 +224,23 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             char separator = '(';
             for (Object value : values) {
                 buffer.append(separator);
-                String valueArray = asString(value);
-                String result = quoteWhenNeeded(valueArray);
+                String result = asString(value);
+                if (mayNeedQuotes(name))
+                    result = quoteWhenNeeded(result);
                 buffer.append(result);
                 separator = ',';
             }
             buffer.append(")");
             return buffer.toString();
         }
+    }
+    
+    private boolean mayNeedQuotes(String name) {
+        return (name.equalsIgnoreCase(OperationalAttributes.PASSWORD_NAME) ||
+                name.equalsIgnoreCase(ATTR_OWNER) ||
+                name.equalsIgnoreCase(ATTR_ACCOUNT) ||
+                name.equalsIgnoreCase(ATTR_LGICMD)
+                );
     }
 
     protected boolean isPresent(String base, String subString) {
@@ -455,7 +465,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                         remapToDateTime(values);
                     if (isDeltaAttribute(name))
                         remapToDelta(values);
-                    String value = listToVmsValueList(values);
+                    String value = listToVmsValueList(attribute.getName(), values);
                     String first = "/"+remapName(attribute)+"=";
                     if (command.length()+first.length()+value.length()>SEGMENT_MAX) {
                         command = addNewCommandSegment(commandList, command);
