@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -102,6 +103,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     private VmsConnection               _connection;
     private Schema                      _schema;
     private Map<String, AttributeInfo>  _attributeMap;
+    private Set<String>                 _returnedByDefault;
 
     private String                      _changeOwnPasswordCommandScript;
     private ScriptExecutor              _changeOwnPasswordCommandExecutor;
@@ -163,11 +165,20 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
      * @param unquoted
      * @return
      */
-    protected String quoteWhenNeeded(String unquoted) {
-        return quoteWhenNeeded(unquoted, false);
+
+    protected String quoteForAuthorizeWhenNeeded(String unquoted) {
+        boolean quote = !Pattern.matches("(\\w)+", unquoted);
+        if (unquoted.length()==0)
+            quote=true;
+        
+        if (!quote) {
+            return unquoted;
+        }
+
+        return quoteStringForAuthorize(unquoted);
     }
 
-    protected String quoteWhenNeeded(String unquoted, boolean needsQuote) {
+    protected String quoteForDCLWhenNeeded(String unquoted, boolean needsQuote) {
         boolean quote = needsQuote || !Pattern.matches("(\\w)+", unquoted);
         if (unquoted.length()==0)
             quote=true;
@@ -176,7 +187,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             return unquoted;
         }
 
-        return quoteString(unquoted);
+        return quoteStringForDCL(unquoted);
     }
 
     /**
@@ -191,8 +202,18 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
      * @param string
      * @return
      */
-    private String quoteString(String string) {
+    private String quoteStringForDCL(String string) {
         return "\"" + string.replaceAll("\"", "\"\"").replaceAll("'", "\"+\"'\"+\"") + "\"";
+    }
+
+    /**
+     * Authorize allows quoted strings with an embedded '"' indicated by '""'.
+     * 
+     * @param string
+     * @return
+     */
+    private String quoteStringForAuthorize(String string) {
+        return "\"" + string.replaceAll("\"", "\"\"") + "\"";
     }
 
     protected String asString(Object object) {
@@ -216,7 +237,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             } else {
                 String result = asString(values.get(0));
                 if (mayNeedQuotes(name))
-                    result = quoteWhenNeeded(result);
+                    result = quoteForAuthorizeWhenNeeded(result);
                 return result;
             }
         } else {
@@ -226,7 +247,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 buffer.append(separator);
                 String result = asString(value);
                 if (mayNeedQuotes(name))
-                    result = quoteWhenNeeded(result);
+                    result = quoteForAuthorizeWhenNeeded(result);
                 buffer.append(result);
                 separator = ',';
             }
@@ -364,7 +385,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 command = appendToCommand(commandList, command, value);
             } else {
                 String deltaValue = remapToDelta(expirationTime);
-                String value = "/PWDLIFETIME="+quoteWhenNeeded(deltaValue, true);
+                String value = "/PWDLIFETIME="+quoteForAuthorizeWhenNeeded(deltaValue);
                 command = appendToCommand(commandList, command, value);
             }
         }
@@ -382,7 +403,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 command = appendToCommand(commandList, command, value);
             } else {
                 String deltaValue = _vmsDateFormatWithoutSecs.format(new Date(disableTime));
-                String value = "/EXPIRED="+quoteWhenNeeded(deltaValue, true);
+                String value = "/EXPIRED="+quoteForAuthorizeWhenNeeded(deltaValue);
                 command = appendToCommand(commandList, command, value);
             }
         }
@@ -915,6 +936,17 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     public void executeQuery(ObjectClass objectClass, String query, ResultsHandler handler, OperationOptions options) {
         if (!objectClass.is(ObjectClass.ACCOUNT_NAME))
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
+        Set<String> attributesToGet = null;
+        if (options!=null && options.getAttributesToGet()!=null)
+            attributesToGet = CollectionUtil.newReadOnlySet(options.getAttributesToGet());
+        schema();
+        if (attributesToGet!=null) {
+            for (String name : attributesToGet)
+                if (!_attributeMap.containsKey(name)) 
+                    throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.NO_SUCH_ATTRIBUTE, name));
+        } else {
+            attributesToGet = _returnedByDefault;
+        }
         try {
             if ( query == null ) {
                 query = "*";
@@ -922,10 +954,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             _log.info("executeQuery(''{0}'')", query);
             List<String> filterStrings = new ArrayList<String>();
             filterStrings.add(query);
-            Set<String> attributesToGet = null;
-            if (options!=null && options.getAttributesToGet()!=null)
-                attributesToGet = CollectionUtil.newReadOnlySet(options.getAttributesToGet());
-            filterUsers(handler, filterStrings, attributesToGet==null?null:CollectionUtil.newReadOnlySet(attributesToGet));
+            filterUsers(handler, filterStrings, attributesToGet);
         } catch (Exception e) {
             _log.error(e, "error in executeQuery");
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_SEARCH), e);
@@ -1248,14 +1277,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     private boolean includeInAttributes(String attribute, List<String> attributesToGet) {
         if (attribute.equalsIgnoreCase(Name.NAME))
             return true;
-        if (attributesToGet!=null) {
-            return attributesToGet.contains(attribute);
-        } else {
-            schema();
-            if (_attributeMap.containsKey(attribute))
-                return _attributeMap.get(attribute).isReturnedByDefault();
-        }
-        return false;
+        return attributesToGet.contains(attribute);
     }
 
     public Uid update(ObjectClass obj, Uid uid, Set<Attribute> attrs, OperationOptions options) {
@@ -1588,6 +1610,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
 
         _schema = schemaBuilder.build();
         _attributeMap = AttributeInfoUtil.toMap(attributes);
+        _returnedByDefault = new TreeSet<String>();
+        for (AttributeInfo attribute : attributes)
+            if (attribute.isReturnedByDefault())
+                _returnedByDefault.add(attribute.getName());
         return _schema;
     }
     
@@ -1879,7 +1905,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             do {
                 String token = st.nextToken();
                 if (!StringUtil.isBlank(token)) {
-                    executeCommand(connection, "WRITE OUTPUT_FILE " + quoteWhenNeeded(token, true));
+                    executeCommand(connection, "WRITE OUTPUT_FILE " + quoteForDCLWhenNeeded(token, true));
                 }
             } while (st.hasMoreTokens());
         }
@@ -1909,8 +1935,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         for (Map.Entry<String, Object> entry : keyset) {
             String name = entry.getKey();
             Object value = entry.getValue();
-            String dclAssignment = "$" + name + "=" + quoteWhenNeeded(value.toString(), true);
-            String line = "WRITE OUTPUT_FILE " + quoteWhenNeeded(dclAssignment, true);
+            String dclAssignment = "$" + name + "=" + quoteForDCLWhenNeeded(value.toString(), true);
+            String line = "WRITE OUTPUT_FILE " + quoteForDCLWhenNeeded(dclAssignment, true);
             if (line.length() < 255) {
                 executeCommand(connection, line);
             }

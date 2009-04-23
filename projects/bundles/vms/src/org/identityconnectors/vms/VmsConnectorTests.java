@@ -240,9 +240,9 @@ public class VmsConnectorTests {
         VmsConnector info = createConnector(config);
         
         for (String string : new String[] { "12", "foo", "foo123" })
-            Assert.assertEquals(string, info.quoteWhenNeeded(string));
+            Assert.assertEquals(string, info.quoteForAuthorizeWhenNeeded(string));
         for (String string : new String[] { "1 2", "foo ", "foo!123", "foo\"bar\"" , "foo(bar)" })
-            Assert.assertFalse(string.equals(info.quoteWhenNeeded(string)));
+            Assert.assertFalse(string.equals(info.quoteForAuthorizeWhenNeeded(string)));
     }
 
     @Test
@@ -846,7 +846,10 @@ public class VmsConnectorTests {
     private ConnectorObject getUser(VmsConnector connector, String accountId) throws Exception  {
         TestHandler handler = new TestHandler();
         TestHelpers.search(connector,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Name.NAME, getTestUser())), handler, null);
-        return handler.iterator().next();
+        if (handler.iterator().hasNext())
+            return handler.iterator().next();
+        else
+            return null;
     }
 
     @Test
@@ -1083,6 +1086,60 @@ public class VmsConnectorTests {
         }
     }
 
+    @Test
+    public void testBadAttribute() throws Exception {
+        VmsConfiguration config = createConfiguration();
+        VmsConnector info = createConnector(config);
+
+        try {
+            Set<Attribute> attrs = fillInSampleUser(getTestUser());
+    
+            // Create the account if it doesn't already exist
+            //
+            if (getUser(getTestUser())==null) {
+                try {
+                    Uid newUid = info.create(ObjectClass.ACCOUNT, attrs, null);
+                    System.out.println(newUid.getValue()+" created");
+                } catch (RuntimeException rte) {
+                    if (!(rte.getCause() instanceof AlreadyExistsException)) {
+                        throw rte;
+                    } 
+                }
+            }
+            {
+                // Do a get with Valid OP_ATTRIBUTES_TO_GET
+                //
+                Map<String, Object> map = new HashMap<String, Object>();
+                map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] { VmsConstants.ATTR_ASTLM });
+                OperationOptions options = new OperationOptions(map);
+                TestHandler handler = new TestHandler();
+                TestHelpers.search(info,ObjectClass.ACCOUNT, null, handler, options);
+            }
+            {
+                // Do a get with Invalid OP_ATTRIBUTES_TO_GET
+                //
+                Map<String, Object> map = new HashMap<String, Object>();
+                map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] { VmsConstants.ATTR_ASTLM, "Bogus" });
+                OperationOptions options = new OperationOptions(map);
+                TestHandler handler = new TestHandler();
+                try {
+                    TestHelpers.search(info,ObjectClass.ACCOUNT, null, handler, options);
+                    Assert.fail("No execption thrown");
+                } catch (IllegalArgumentException iae) {
+                    // Exception expected
+                }
+            }
+            // Delete the account
+            //
+            Uid deleteUid = new Uid(getTestUser());
+            info.delete(ObjectClass.ACCOUNT, deleteUid, null);
+            System.out.println(deleteUid.getValue()+" deleted");
+
+        } finally {
+            info.dispose();
+        }
+    }
+
     private Set<Attribute> fillInSampleUser(final String testUser) {
         return fillInSampleUser(testUser, false);
     }
@@ -1128,6 +1185,7 @@ public class VmsConnectorTests {
         attrs.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME, expired));
         attrs.add(AttributeBuilder.build(OperationalAttributes.ENABLE_NAME, enabled));
         attrs.add(AttributeBuilder.build(VmsConstants.ATTR_DEVICE, "SYS$SYSDISK:"));
+        attrs.add(AttributeBuilder.build(VmsConstants.ATTR_ACCOUNT, "Hi!There"));
 
         Name name = new Name(testUser);
         attrs.add(name);

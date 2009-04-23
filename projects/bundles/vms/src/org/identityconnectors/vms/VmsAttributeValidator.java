@@ -89,7 +89,7 @@ public class VmsAttributeValidator {
 
     // Pattern to validate values
     //
-    private static final Pattern _accountPattern            = Pattern.compile("[a-zA-Z0-9]{1,8}"); 
+    private static final Pattern _accountPattern            = Pattern.compile(".{1,8}"); 
     private static final Pattern _algorithmPattern          = Pattern.compile("(\\w+)=(\\w+)(=\\d+)?"); 
     private static final Pattern _cliPattern                = Pattern.compile("[a-zA-Z0-9$_:]{1,31}"); 
     private static final Pattern _cliTablesPattern          = Pattern.compile("[a-zA-Z0-9$_:]{1,31}"); 

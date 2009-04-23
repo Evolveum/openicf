@@ -57,6 +57,7 @@ public interface VmsMessages {
     public static final String TIMEOUT_IN_MATCH              = "TIMEOUT_IN_MATCH";
     public static final String UNSUPPORTED_OBJECT_CLASS      = "UNSUPPORTED_OBJECT_CLASS";
     public static final String TEST_FAILED                   = "TEST_FAILED";
+    public static final String NO_SUCH_ATTRIBUTE             = "NO_SUCH_ATTRIBUTE";
     public static final String NULL_ATTRIBUTE_VALUE          = "NULL_ATTRIBUTE_VALUE";
     public static final String UPDATE_ATTRIBUTE_VALUE        = "UPDATE_ATTRIBUTE_VALUE";
     public static final String MISSING_REQUIRED_ATTRIBUTE    = "MISSING_REQUIRED_ATTRIBUTE";
