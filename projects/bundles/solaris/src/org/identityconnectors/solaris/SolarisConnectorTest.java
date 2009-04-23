@@ -23,10 +23,18 @@
 package org.identityconnectors.solaris;
 
 
+import java.util.HashSet;
+import java.util.Set;
+
 import junit.framework.Assert;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
+import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.After;
@@ -87,6 +95,7 @@ public class SolarisConnectorTest {
         testGoodConfiguration();
     }
     
+    /* ___________ AUTHENTICATE TESTS ___________ */
     @Test
     public void testAuthenticateApiOp() {
         SolarisConnector connector = createConnector(getConfig());
@@ -107,6 +116,18 @@ public class SolarisConnectorTest {
         connector.authenticate(null, username, password, null);
     }
     
+    /* ___________ CREATE TESTS ___________ */
+    /**
+     * creates a sample user
+     */
+    @Test
+    public void testCreate() {
+        SolarisConnector connector = createConnector(getConfig());
+        
+        Set<Attribute> attrs = initSampleUser();
+        connector.create(ObjectClass.ACCOUNT, attrs, null);
+    }
+
     /* ************* TEST CONFIGURATION *********** */
     
     private void testGoodConfiguration() {
@@ -189,4 +210,21 @@ public class SolarisConnectorTest {
         Schema schema = connector.schema();
         Assert.assertNotNull(schema);
     }
+    
+    /** fill in sample user/password for sample user used in create */
+    private Set<Attribute> initSampleUser() {
+        String msg = "test property '%s' should not be null";
+        
+        Set<Attribute> res = new HashSet<Attribute>();
+        
+        String sampleUser = TestHelpers.getProperty("sampleUser", null);
+        Assert.assertNotNull(String.format(msg, "sampleUser"), sampleUser);
+        res.add(AttributeBuilder.build(Name.NAME, sampleUser));
+        
+        String samplePasswd = TestHelpers.getProperty("samplePasswd", null);
+        Assert.assertNotNull(String.format(msg, "samplePasswd"), samplePasswd);
+        res.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString(samplePasswd.toCharArray())));
+        
+        return res;
+    }    
 }

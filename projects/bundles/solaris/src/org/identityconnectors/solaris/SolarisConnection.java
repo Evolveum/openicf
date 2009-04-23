@@ -27,8 +27,6 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 
-import com.jcraft.jsch.JSchException;
-
 import expect4j.Expect4j;
 import expect4j.ExpectUtils;
 
@@ -67,9 +65,10 @@ class SolarisConnection {
                                 .getUserName(), new String(clearChars),
                                 _configuration.getPort());
                     } else if (connType.equals(ConnectionType.TELNET)) {
-                        _expect4j = ExpectUtils.telnet(_configuration
-                                .getHostNameOrIpAddr(), _configuration
-                                .getPort());
+                        throw new UnsupportedOperationException("Telnet access not yet implemented: TODO");
+//                        _expect4j = ExpectUtils.telnet(_configuration
+//                                .getHostNameOrIpAddr(), _configuration
+//                                .getPort());
                     }
                 } catch (Exception e) {
                     log.warn("Starting connection: Exception thrown (cause: invalid configuration, etc.)");

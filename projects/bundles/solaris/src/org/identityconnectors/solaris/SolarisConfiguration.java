@@ -29,15 +29,215 @@ import org.identityconnectors.framework.spi.Configuration;
 
 public class SolarisConfiguration extends AbstractConfiguration {
 
+    /* 
+     * all this info is from resource adapter's prototype xml
+     * 
+     * Supported objectclasses: GROUP, ACCOUNT
+     */
     /**
      * basic configuration properties for SSH connection {@link SolarisConnection}
      */
+    /*
+     * "LOGIN_USER"
+     * 
+     * <b>Login User</b><br>Enter the name of a user account that has permission
+     * to connect to the resource remotely. If this account does not have
+     * permission to manage this resource (create user accounts), then you must
+     * enter account information for an account that does in the Root User
+     * field.<br><br>When connecting to this resource, the initial login is done
+     * as the Login User. If a Root User is specified, the su command is used to
+     * log in as the Root User before managing the resource.
+     */
+    /*
+     * <b>Root User</b><br>Leave this field blank if the user account entered in
+     * the Login User field has permission to manage this resource (create user
+     * accounts). Otherwise, enter the name of the user account that does have
+     * permission to manage this resource. This is often the root
+     * account.<br><br>When connecting to this resource, the initial login is
+     * done as the Login User. If a Root User is specified, the su command is
+     * used to log in as the Root User before managing the resource.
+     */
+    //TODO ROOT_USER
     private String userName;
+    
+    /*
+     * <b>Login Password</b><br>Enter a password for the login account.
+     * "LOGIN_PASSWORD
+     */
+    /*
+     * <b>credentials</b><br>Enter a password for the Root User account. Leave
+     * blank if the Root User field is blank.
+     */
+    //TODO ROOT_PASSWORD
     private GuardedString password;
+    
+    /*
+     * <b>Login Shell Prompt</b><br>Enter the full shell prompt for the login
+     * account. This is used by the adapter to determine when to send a command
+     * and when to stop capturing output.
+     */
+    //TODO loginShellPrompt
+    /*
+     * <b>Root Shell Prompt</b><br>Enter the full shell prompt for the root
+     * account. This is used by the adapter to determine when to send a command
+     * and when to stop capturing output. Leave blank if the Root User field is
+     * blank.
+     */
+    //TODO ROOT_SHELL_PROMPT
+    
+    /*
+     * <b>Sudo Authorization</b><br>Indicate whether the admin commands are to
+     * authorize the user through the sudo utility. Enter a value of TRUE to use
+     * sudo or FALSE for standard authorization.
+     */
+    //TODO SUDO_AUTH
+    
+    
     private String hostNameOrIpAddr;
+    /*
+     * <b>Port</b><br>Enter the port number used to communicate with the
+     * resource. This value may depend on the value of Connection Type. The
+     * standard value for telnet is 23; the standard value for SSH is 22.
+     */
     private Integer port;
+    /*
+     * CONN_TYPE 
+     * 
+     * <b>Connection Type</b><br>Specify the script connection
+     * protocol type. The default protocol is Telnet. Supported protocols are
+     * Telnet, SSH, and SSHPubKey.
+     */
     private ConnectionType connectionType;
 
+    /*
+     * <b>Make Directory</b><br>Indicate whether the user''s home directory
+     * should be created. Enter a value of TRUE to create the user''s home
+     * directory or FALSE to do nothing. <br>The user''s home directory will be
+     * created in /home unless set by using a <b>dir</b> attribute setting in
+     * the schema map to set the home directory path.
+     */
+    // TODO boolean MAKE_DIR (if to make home directory)
+
+    /*
+     * <b>Home Base Directory</b><br>Indicate the home directory base to be used
+     * when creating user home directories. The accountID will be appended to
+     * this value to form the user home directory.
+     */
+    //TODO HOME_BASE_DIR
+    
+    /*
+     * <b>Private Key</b><br>Specify the private key for SSH connection. A
+     * private key is required for key/pair based authentication. If a private
+     * key is specified, you must enter SSHPubKey as the value for the
+     * <b>Connection Type</b> field. Do not use this field if you implement
+     * password-based authentication.
+     */
+    //TODO PRIVATE_KEY
+    
+    /*
+     * <b>Passphrase</b><br>Specify the passphrase, used during key generation.
+     */
+    //TODO KEY_PASSPHRASE
+    
+    /*
+     * <b>Maximum Connections</b><br>Specify the maximum number of concurrent
+     * connections to the resource. The default value is 10.
+     * 
+     * IMHO @deprecated
+     */
+    // CONN_MAX
+    /*
+     * IMHO @deprecated
+     * 
+     * <b>Connection Idle Timeout</b><br>Specify the number of seconds an
+     * established connection is to be idle before being released by the
+     * connection pool. The default value is 900 seconds.
+     * 
+     * see description in RAMessages.properties. The property name is derived
+     * from the SVIDResourceAdapter#svidPrototypeXml
+     * 
+     * For example: </ResourceAttribute>\n" +
+     * "    <ResourceAttribute name='"+RA_CONN_TIMEOUT
+     * +"' displayName='"+RAMessages
+     * .RESATTR_CONN_TIMEOUT+"' type='string' multi='false'\n" +
+     * "      description='" + RAMessages.RESATTR_HELP_73 + "'"
+     * 
+     * RA_CONN_TIMEOUT -> message in RAMessages.properties, at key:
+     * RESATTR_HELP_73
+     */
+    // CONN_TIMEOUT
+    
+    /*
+     * <b>Block Fetch Timeout</b><br>Specify the number of seconds a block fetch
+     * operation is to execute before timing out. The default value is 600
+     * seconds.
+     * 
+     * IMHO @deprecated
+     */
+    // BLOCK_FETCH_TIMEOUT
+    
+    /*
+     * IMHO Mutex was needed just in earlier versions, see the emails.
+     * @deprecated
+     */
+    // MUTEX_ACQUIRE_TIMEOUT
+    
+    /*
+     * <b>Default Primary Group</b><br>Default group a new user will be placed
+     * in.
+     */
+    //TODO DEFAULT_PRIMARY_GROUP
+    
+    /*
+     * <b>Login Shell</b><br>Default shell a new user will be given.
+     */
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //TODO LOGIN_SHELL
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+    /*
+     * <b>Skeleton Directory</b><br>Specify a directory to use to copy default
+     * files to the user''s home directory. Typically this is /etc/skel. This
+     * directory must already exist.
+     */
+    // TODO SKEL_DIR
+    
+    /*
+     * RESATTR_HELP_1=<b>Delete Home Directory</b><br>Specifies whether an
+     * accounts home directory should be deleted when the account is deleted.
+     */
+    //TODO DEL_HOME_DIR
+    
+    /*
+     * <b>System Database Type</b><br>Specify the system database type in use.
+     * The default type is FILES. Supported types are NIS.
+     */
+    // TODO SYS_DB_TYPE
+    
+    /*
+     * <b>NIS Build Directory</b><br>Enter the directory name where the NIS build files are located.
+     */
+    //TODO NISDIR
+    
+    /*
+     * <b>NIS Password Source Directory</b><br>Enter the directory name where
+     * the NIS password source files are located.
+     */
+    // TODO NISPWDDIR
+    
+    /*
+     * <b>NIS Shadow Password Support</b><br>Specify TRUE if the NIS database
+     * used shadow passwords, FALSE otherwise.
+     */
+    //TODO NISSHADOW
+    
+    /*
+     * <b>NIS Source Directory</b><br>Enter the directory name where the NIS source files are located.
+     */
+    //TODO NISSRCDIR
+    
     /* ********** CONSTRUCTOR ************ */
     public SolarisConfiguration() {
         // default constructor
@@ -46,6 +246,10 @@ public class SolarisConfiguration extends AbstractConfiguration {
      * cloning constructor, deep copy 
      */
     public SolarisConfiguration(Configuration config) {
+        if (config == null) {
+            throw new AssertionError("Configuration cannot be null");
+        }
+
         if (config instanceof SolarisConfiguration) {
             final SolarisConfiguration cfg = (SolarisConfiguration) config;
             this.userName = cfg.getUserName();
@@ -54,7 +258,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
             this.port = cfg.getPort();
             this.connectionType = cfg.getConnectionType();
         } else {
-            throw new RuntimeException("cannot clone other than SolarisConfiguration");
+            throw new AssertionError("cannot clone other types than SolarisConfiguration");
         }
     }
     
@@ -105,6 +309,8 @@ public class SolarisConfiguration extends AbstractConfiguration {
             this.connectionType = ConnectionType.SSH;
         } else if (connType.equals(ConnectionType.TELNET.toString())) {
             this.connectionType = ConnectionType.TELNET;
+        } else {
+            throw new AssertionError("invalid connection type, should be SSH or TELNET");
         }
     }
 

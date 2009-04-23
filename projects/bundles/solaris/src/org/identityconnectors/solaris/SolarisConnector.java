@@ -27,7 +27,7 @@ import java.util.Set;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
@@ -38,16 +38,20 @@ import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.ConnectorClass;
 import org.identityconnectors.framework.spi.PoolableConnector;
 import org.identityconnectors.framework.spi.operations.AuthenticateOp;
+import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
 
 /**
- * @author david
+ * @author David Adam
  * 
  */
 @ConnectorClass(displayNameKey = "Solaris", configurationClass = SolarisConfiguration.class)
 public class SolarisConnector implements PoolableConnector, AuthenticateOp,
-        SchemaOp, TestOp {
+        SchemaOp, CreateOp, TestOp {
+
+    /** message constants */
+    private static final String MSG_NOT_SUPPORTED_OBJECTCLASS = "Object class '%s' is not supported";
 
     /**
      * Setup logging for the {@link DatabaseTableConnector}.
@@ -95,7 +99,12 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     }
 
     /* *********************** OPERATIONS ************************** */
-    /** attempts to authenticate the given user / password on configured Solaris resource */
+    /**
+     * {@inheritDoc}
+     * <p>
+     * attempts to authenticate the given user / password on configured Solaris
+     * resource
+     */
     public Uid authenticate(ObjectClass objectClass, String username,
             GuardedString password, OperationOptions options) {
         
@@ -116,6 +125,18 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         }
         
         return new Uid(username);
+    }
+
+    /** {@inheritDoc} */
+    public Uid create(ObjectClass oclass, Set<Attribute> attrs,
+            OperationOptions options) {
+        if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
+            throw new IllegalArgumentException(String.format(
+                    MSG_NOT_SUPPORTED_OBJECTCLASS, ObjectClass.ACCOUNT_NAME));
+        }
+        
+        //TODO
+        throw new UnsupportedOperationException();
     }
 
     /**
