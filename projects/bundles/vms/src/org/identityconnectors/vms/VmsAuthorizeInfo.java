@@ -178,10 +178,11 @@ public class VmsAuthorizeInfo {
                     new SubstituteTransform("(.*?)\\s+$", "$1"),
                     new SplitTransform("[ \\t]+"),
             }));
-            _parser.add(new PatternNode("Identifier",         "Identifier[^\\n]*?"+PLUS_INDENTED_LINES, true, false, 
+            _parser.add(new PatternNode(ATTR_GRANT_IDS,          "Identifier[^\\n]*?"+PLUS_INDENTED_LINES, true, false, 
                 new Transform[] {
+                    new SubstituteTransform("(\\w+)[^\\n]+\\n", "$1"),
                     new SplitTransform("\\n"),
-                    new ListTransform(new GroupsTransform("[ \\t]*([ \\t]+)[ \\t]+([ \\t]+)[ \\t]*([ \\t]+)?$")),
+                    //new ListTransform(new GroupsTransform("[ \\t]*([ \\t]+)[ \\t]+([ \\t]+)[ \\t]*([ \\t]+)?$")),
             }));
         } catch (Exception e) {
             e.printStackTrace();

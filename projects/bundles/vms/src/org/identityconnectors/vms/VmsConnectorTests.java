@@ -234,7 +234,7 @@ public class VmsConnectorTests {
         }
     }
 
-    @Test@Ignore
+    @Test//@Ignore
     public void testQuote() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
@@ -326,7 +326,7 @@ public class VmsConnectorTests {
                 TestHandler handler = new TestHandler();
                 boolean found = false;
                 int count = 0;
-                String[] attributesToGet = { "BYTLM", "PRIVILEGES" };
+                String[] attributesToGet = { ATTR_BYTLM, ATTR_PRIVILEGES };
                 Map<String, Object> optionsMap = new HashMap<String, Object>();
                 optionsMap.put(OperationOptions.OP_ATTRIBUTES_TO_GET, attributesToGet); 
                 OperationOptions options = new OperationOptions(optionsMap);
@@ -525,11 +525,45 @@ public class VmsConnectorTests {
             builder.addAttribute(ATTR_PRIMEDAYS, newList);
             ConnectorObject newUser = builder.build();
             info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
-    
+        
             user = getUser(getTestUser());
             primedays = user.getAttributeByName(ATTR_PRIMEDAYS);
             oldList = primedays.getValue();
             Assert.assertTrue(oldList.contains(DAYS_WED));
+        } finally {
+            info.dispose();
+        }
+    }
+    @Test
+    public void testModifyGrants() throws Exception {
+        VmsConfiguration config = createConfiguration();
+        VmsConnector info = createConnector(config);
+
+        try {
+            Set<Attribute> attrs = fillInSampleUser(getTestUser()+"Z");
+    
+            // Recreate the account (so that PRIMEDAYS is as expected)
+            //
+            deleteUser(getTestUser()+"Z", info);
+            info.create(ObjectClass.ACCOUNT, attrs, null);
+    
+           {
+                ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+                builder.setUid(getTestUser()+"Z");
+                builder.setName(getTestUser()+"Z");
+                List<Object> newGrants = new LinkedList<Object>();
+                newGrants.add("GOO124");
+                builder.addAttribute(ATTR_GRANT_IDS, newGrants);
+                ConnectorObject newUser = builder.build();
+                info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
+        
+                String[] attributesToGet = { ATTR_GRANT_IDS };
+                ConnectorObject user = getUser(getTestUser()+"Z", attributesToGet);
+    
+                Attribute grants = user.getAttributeByName(ATTR_GRANT_IDS);
+                Assert.assertTrue(grants.getValue().size()==1);
+                Assert.assertTrue(grants.getValue().contains("GOO124"));
+            }
         } finally {
             info.dispose();
         }
@@ -824,7 +858,7 @@ public class VmsConnectorTests {
         connector.update(newUser.getObjectClass(), newUser.getAttributes(), null);
 
         if (check) {
-            ConnectorObject user = getUser(connector, getTestUser());
+            ConnectorObject user = getUser(connector, getTestUser(), null);
             Attribute newAttribute = user.getAttributeByName(attribute.getName());
             Object one = attribute.getValue();
             Object two = newAttribute.getValue();
@@ -833,19 +867,26 @@ public class VmsConnectorTests {
     }
 
     private ConnectorObject getUser(String accountId) throws Exception  {
+        return getUser(accountId, null);
+    }
+
+    private ConnectorObject getUser(String accountId, String[] attrsToGet) throws Exception  {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);
         try {
-            return getUser(info, accountId);
+            return getUser(info, accountId, attrsToGet);
         } finally {
             info.dispose();
             info.dispose();
         }
     }
 
-    private ConnectorObject getUser(VmsConnector connector, String accountId) throws Exception  {
+    private ConnectorObject getUser(VmsConnector connector, String accountId, String[] attrsToGet) throws Exception  {
         TestHandler handler = new TestHandler();
-        TestHelpers.search(connector,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Name.NAME, getTestUser())), handler, null);
+        Map<String, Object> map = new HashMap<String, Object>();
+        if (attrsToGet!=null)
+            map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, attrsToGet);
+        TestHelpers.search(connector,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Name.NAME, accountId)), handler, new OperationOptions(map));
         if (handler.iterator().hasNext())
             return handler.iterator().next();
         else
@@ -1167,7 +1208,6 @@ public class VmsConnectorTests {
 
         List<String> flags = new LinkedList<String>();
         attrs.add(AttributeBuilder.build(VmsConstants.ATTR_FLAGS, flags));
-
 
         List<String> privs = new LinkedList<String>();
         privs.add(PRIV_NETMBX);

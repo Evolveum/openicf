@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -672,6 +673,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
 
         // Extract action attributes
         //
+        Attribute grantIds = attrMap.remove(ATTR_GRANT_IDS);
         Attribute createDirectory = attrMap.remove(ATTR_CREATE_DIRECTORY);
         Attribute copyLoginScript = attrMap.remove(ATTR_COPY_LOGIN_SCRIPT);
         Attribute loginScriptSource = attrMap.remove(ATTR_LOGIN_SCRIPT_SOURCE);
@@ -756,6 +758,13 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             if (flags!=null) {
                 commandList.add(updateFlags(accountId, flags));
             }
+
+            if (grantIds!=null) {
+                for (Object grantId : grantIds.getValue()) {
+                    addGrantToCommandList(name.getNameValue(), commandList, grantId);
+                }
+            }
+
             if (commandList.size()>0) {
                 fillInMultipleCommand(commandList, variables);
                 result = (String)_multipleAuthorizeCommandExecutor.execute(variables);
@@ -799,6 +808,24 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         }
 
         return new Uid(accountId);
+    }
+
+    private void addGrantToCommandList(String name,
+            List<List<StringBuffer>> commandList, Object grantId) {
+        StringBuffer buffer = new StringBuffer();
+        List<StringBuffer> grantCommand = new LinkedList<StringBuffer>();
+        grantCommand.add(buffer);
+        buffer.append("GRANT/IDENTIFIER "+grantId+" "+name);
+        commandList.add(grantCommand);
+    }
+
+    private void addRevokeToCommandList(String name,
+            List<List<StringBuffer>> commandList, Object grantId) {
+        StringBuffer buffer = new StringBuffer();
+        List<StringBuffer> grantCommand = new LinkedList<StringBuffer>();
+        grantCommand.add(buffer);
+        buffer.append("REVOKE/IDENTIFIER "+grantId+" "+name);
+        commandList.add(grantCommand);
     }
 
     private List<StringBuffer> updateListAttr(String accountId, Attribute attribute, String name, Collection<String> valueSet) {
@@ -881,13 +908,14 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         if (result.contains(CLI_WARNING)) 
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public void delete(ObjectClass objectClass, Uid uid, OperationOptions options) {
         if (!objectClass.is(ObjectClass.ACCOUNT_NAME))
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
+        
         _log.info("delete(''{0}'')", uid.getUidValue());
         String removeCommand = "REMOVE "+uid.getUidValue();
         Map<String, Object> variables = new HashMap<String, Object>();
@@ -1063,6 +1091,14 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                     } else {
                         builder.addAttribute(ATTR_DEVICE);
                     }
+                }
+
+                // GRANT_IDS may not be in the parse. If not, we reget it.
+                //
+                if (includeInAttributes(ATTR_GRANT_IDS, attributesToGet)) {
+                    List<String> grantIds = (List<String>)attributes.get(ATTR_GRANT_IDS);
+                    if (grantIds==null)
+                        builder.addAttribute(ATTR_GRANT_IDS);
                 }
 
                 // ATTR_DIRECTORY is parsed out from ATTR_DEFAULT
@@ -1292,6 +1328,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
         Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attributes));
 
+        // Grants need to be handled separately
+        //
+        Attribute grantIds = attrMap.remove(ATTR_GRANT_IDS);
+        
         // Create-only attributes may not be specified
         //
         Attribute createDirectory = attrMap.remove(ATTR_CREATE_DIRECTORY);
@@ -1425,6 +1465,13 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 } while (!isUnique(unusedUic));
             }
         }
+        
+        // Now do grants
+        //
+        if (grantIds!=null) {
+            setGrants(grantIds, uid.getUidValue());
+            
+        }
 
         // If name is different from Uid, we are performing a RENAME operation.
         // Do this last, so that we don't lose the Uid change on error.
@@ -1464,6 +1511,56 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         }
 
         return uid;
+    }
+
+    private void setGrants(Attribute grantIds, String name) {
+        ConnectorObject object = getUser(name);
+        if (object!=null) {
+            Attribute currentGrantsAttr = object.getAttributeByName(ATTR_GRANT_IDS);
+            List<Object> currentGrants = currentGrantsAttr==null?new LinkedList<Object>():currentGrantsAttr.getValue();
+            if (currentGrants!=null) {
+                List<Object> grants = grantIds.getValue()==null?new LinkedList<Object>():new LinkedList<Object>(grantIds.getValue());
+                grants.removeAll(currentGrants);
+                List<Object> revokes = new LinkedList<Object>(currentGrants);
+                revokes.removeAll(grants);
+
+                if (grants.size()>0 || revokes.size()>0) {
+                    LinkedList<List<StringBuffer>> commandList = new LinkedList<List<StringBuffer>>();
+                    for (Object grant : grants) {
+                        addGrantToCommandList(name, commandList, (String)grant);
+                    }
+                    for (Object revoke : revokes) {
+                        addRevokeToCommandList(name, commandList, (String)revoke);
+                    }
+                    Map<String, Object> variables = new HashMap<String, Object>();
+                    fillInMultipleCommand(commandList, variables);
+                    String result = "";
+                    try {
+                        result = (String)_multipleAuthorizeCommandExecutor.execute(variables);
+                    } catch (Exception e) {
+                        _log.error(e, "error in modify");
+                        throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY), e);
+                    }
+                    if (result.contains(CLI_WARNING)) 
+                        throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
+
+                    if (isPresent(result, USER_UPDATED) ||isPresent(result, NO_MODS)) {
+                        // OK, drop through and return uid
+                    } else {
+                        throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
+                    }
+                }
+            }
+        }
+    }
+    
+    private ConnectorObject getUser(String name) {
+        LocalHandler handler = new LocalHandler();
+        executeQuery(ObjectClass.ACCOUNT, name, handler, null);
+        if (handler.iterator().hasNext())
+            return handler.iterator().next();
+        else
+            return null;
     }
 
     private void fillInCommand(List<StringBuffer> command, Map<String, Object> variables) {
@@ -1554,6 +1651,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
 
         // Multi-valued attributes
         //
+        attributes.add(buildMultivaluedAttribute(ATTR_GRANT_IDS,      String.class, false));
         attributes.add(buildMultivaluedAttribute(ATTR_FLAGS,          String.class, false));
         attributes.add(buildMultivaluedAttribute(ATTR_PRIMEDAYS,      String.class, false));
         attributes.add(buildMultivaluedAttribute(ATTR_PRIVILEGES,     String.class, false));
@@ -2134,6 +2232,18 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         }
     }
     
+    public static class LocalHandler implements ResultsHandler, Iterable<ConnectorObject> {
+        private List<ConnectorObject> objects = new LinkedList<ConnectorObject>();
+
+        public boolean handle(ConnectorObject object) {
+            objects.add(object);
+            return true;
+        }
+
+        public Iterator<ConnectorObject> iterator() {
+            return objects.iterator();
+        }
+    }
 
 
 }

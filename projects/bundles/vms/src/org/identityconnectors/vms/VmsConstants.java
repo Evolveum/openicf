@@ -44,6 +44,7 @@ public interface VmsConstants {
     public static final String ATTR_EXPIRATION          = "EXPIRATION";
     public static final String ATTR_FILLM               = "FILLM";
     public static final String ATTR_FLAGS               = "FLAGS";
+    public static final String ATTR_GRANT_IDS           = "GRANT_IDS";
     public static final String ATTR_GENERATE_PASSWORD   = "GENERATE_PASSWORD";
     public static final String ATTR_INTERACTIVE         = "INTERACTIVE";
     public static final String ATTR_JTQUOTA             = "JTQUOTA";
