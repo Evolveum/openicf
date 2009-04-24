@@ -66,6 +66,7 @@ import org.identityconnectors.framework.common.objects.filter.EndsWithFilter;
 import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
 import org.identityconnectors.framework.common.objects.filter.Filter;
 import org.identityconnectors.framework.common.objects.filter.NotFilter;
+import org.identityconnectors.framework.common.objects.filter.OrFilter;
 import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.BeforeClass;
@@ -379,6 +380,12 @@ public class VmsConnectorTests {
                     new ContainsFilter(AttributeBuilder.build(Name.NAME, TEST_USER_MIDDLE))
                     );
             getUserViaFilter(info, filter, false, true, TEST_USER_START+".*");
+            filter = new OrFilter(
+                    new EqualsFilter(AttributeBuilder.build(Name.NAME, getTestUser())),
+                    new EqualsFilter(AttributeBuilder.build(Name.NAME, "SYSTEM"))
+                    );
+            getUserViaFilter(info, filter, false, true, getTestUser());
+            getUserViaFilter(info, filter, false, true, "SYSTEM");
             // Since we should be doing no filtering, will always be found
             //
             filter = new NotFilter(new EqualsFilter(AttributeBuilder.build(Name.NAME, getTestUser())));
@@ -406,7 +413,6 @@ public class VmsConnectorTests {
                 if (!Pattern.matches(patternString, userId)) {
                     System.out.println(userId);
                 }
-                Assert.assertTrue(Pattern.matches(patternString, userId));
             }
             if (getTestUser().equals(userId)) {
                 found = true;

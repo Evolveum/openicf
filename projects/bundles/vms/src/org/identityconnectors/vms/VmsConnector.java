@@ -108,11 +108,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
 
     private String                      _changeOwnPasswordCommandScript;
     private ScriptExecutor              _changeOwnPasswordCommandExecutor;
-    private String                      _authorizeCommandScript;
     private String                      _multipleAuthorizeCommandScript;
     private ScriptExecutor              _multipleAuthorizeCommandExecutor;
-    private String                      _listCommandScript;
-    private ScriptExecutor              _listCommandExecutor;
     private String                      _dateCommandScript;
     private ScriptExecutor              _dateCommandExecutor;
 
@@ -147,9 +144,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     public VmsConnector() {
         try {
             _changeOwnPasswordCommandScript = VmsUtilities.readFileFromClassPath("org/identityconnectors/vms/UserPasswordScript.txt");
-            _authorizeCommandScript = VmsUtilities.readFileFromClassPath("org/identityconnectors/vms/AuthorizeCommandScript.txt");
             _multipleAuthorizeCommandScript = VmsUtilities.readFileFromClassPath("org/identityconnectors/vms/MultipleAuthorizeCommandScript.txt");
-            _listCommandScript = VmsUtilities.readFileFromClassPath("org/identityconnectors/vms/ListCommandScript.txt");
             _dateCommandScript = VmsUtilities.readFileFromClassPath("org/identityconnectors/vms/DateCommandScript.txt");
             if (StringUtil.isEmpty(_changeOwnPasswordCommandScript))
                 throw new ConnectorException("Internal error locating command scripts");
@@ -984,13 +979,18 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     }
 
     private void filterUsers(ResultsHandler handler, List<String> filters, Set<String> searchAttributesToGet) throws Exception {
-        List<String> commands = new LinkedList<String>();
-        for (String filter : filters)
-            commands.add("SHOW "+filter);
+        LinkedList<List<StringBuffer>> commandList = new LinkedList<List<StringBuffer>>();
+        for (String filter : filters) {
+            List<StringBuffer> commands = new LinkedList<StringBuffer>();
+            StringBuffer command = new StringBuffer();
+            command.append("SHOW "+filter);
+            commands.add(command);
+            commandList.add(commands);
+        }
         Map<String, Object> variables = getVariablesForCommand();
-        variables.put("COMMANDS", commands);
+        fillInMultipleCommand(commandList, variables);
 
-        String users = (String)_listCommandExecutor.execute(variables);
+        String users = (String)_multipleAuthorizeCommandExecutor.execute(variables);
 
         String[] userArray = users.split(SEPARATOR);
         List<String> attributesToGet = null;
@@ -1858,7 +1858,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         ScriptExecutorFactory scriptFactory = ScriptExecutorFactory.newInstance("GROOVY");
         _multipleAuthorizeCommandExecutor = scriptFactory.newScriptExecutor(getClass().getClassLoader(), _multipleAuthorizeCommandScript, true);
         _changeOwnPasswordCommandExecutor = scriptFactory.newScriptExecutor(getClass().getClassLoader(), _changeOwnPasswordCommandScript, true);
-        _listCommandExecutor = scriptFactory.newScriptExecutor(getClass().getClassLoader(), _listCommandScript, true);
         _dateCommandExecutor = scriptFactory.newScriptExecutor(getClass().getClassLoader(), _dateCommandScript, true);
         try {
             _connection = new VmsConnection(_configuration, VmsConnector.SHORT_WAIT);
@@ -2134,13 +2133,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
      * @return
      */
     private String getUnusedUicForGroup(String uicWithWildCard) {
-        List<String> commands = new LinkedList<String>();
-        commands.add("SHOW/BRIEF "+uicWithWildCard+"\n");
-        Map<String, Object> variables = getVariablesForCommand();
-        variables.put("COMMANDS", commands);
-
         try {
-            String output = (String)_listCommandExecutor.execute(variables);
+            Map<String, Object> variables = getVariablesForCommand();
+            fillInCommand("SHOW/BRIEF "+uicWithWildCard+"\n", variables);
+            String output = (String)_multipleAuthorizeCommandExecutor.execute(variables);
             Pattern uicPattern = Pattern.compile("\\[(\\d+),(\\d+)\\]");
             Matcher matcher = uicPattern.matcher(output);
             int offset = 0;
@@ -2177,13 +2173,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
      * @return
      */
     private boolean isUnique(String uic) {
-        List<String> commands = new LinkedList<String>();
-        commands.add("SHOW/BRIEF "+uic+"\n");
-        Map<String, Object> variables = getVariablesForCommand();
-        variables.put("COMMANDS", commands);
-
         try {
-            String output = (String)_listCommandExecutor.execute(variables);
+            Map<String, Object> variables = getVariablesForCommand();
+            fillInCommand("SHOW/BRIEF "+uic+"\n", variables);
+            String output = (String)_multipleAuthorizeCommandExecutor.execute(variables);
             return output.indexOf(uic)==output.lastIndexOf(uic);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
