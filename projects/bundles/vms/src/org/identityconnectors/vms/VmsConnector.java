@@ -787,8 +787,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
 
         // Process action attributes
         //
-        String createDirCommand = getCreateDirCommand(attrMap);
-        String copyLoginCommand = getCopyLoginCommand(attrMap);
+        String createDirCommand = getCreateDirCommand(attrMap, createDirectory);
+        String copyLoginCommand = getCopyLoginCommand(attrMap, copyLoginScript, loginScriptSource);
 
         if (createDirCommand!=null) {
             result = executeCommand(_connection, createDirCommand);
@@ -869,7 +869,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 if (disableDate!=null) {
                     //throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.DISABLE_AND_ENABLE));
                 } else {
-                    attrMap.put(OperationalAttributes.DISABLE_DATE_NAME, AttributeBuilder.build(OperationalAttributes.DISABLE_DATE_NAME, new Long(0)));
+                    attrMap.put(OperationalAttributes.DISABLE_DATE_NAME, AttributeBuilder.build(OperationalAttributes.DISABLE_DATE_NAME, Long.valueOf(0)));
                 }
             } else {
                 if (containsInsensitive(flagsValue, "NO"+FLAG_DISUSER)) {
@@ -2071,8 +2071,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         return new Uid(username);
     }
 
-    private String getCreateDirCommand(Map<String, Attribute> attrMap) {
-        Attribute createDirectory = attrMap.get(ATTR_CREATE_DIRECTORY);
+    private String getCreateDirCommand(Map<String, Attribute> attrMap, Attribute createDirectory) {
         if (createDirectory==null || !AttributeUtil.getBooleanValue(createDirectory))
             return null;
 
@@ -2112,12 +2111,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         return cmd.toString();
     }
 
-    private String getCopyLoginCommand(Map<String, Attribute> attrMap) {
-        Attribute copyLoginScript = attrMap.get(ATTR_COPY_LOGIN_SCRIPT);
+    private String getCopyLoginCommand(Map<String, Attribute> attrMap, Attribute copyLoginScript, Attribute loginScriptSourceAttr) {
         if (copyLoginScript==null || !AttributeUtil.getBooleanValue(copyLoginScript))
             return null;
 
-        Attribute loginScriptSourceAttr = attrMap.get(ATTR_LOGIN_SCRIPT_SOURCE);
         Attribute uicAttr = attrMap.get(ATTR_UIC);
         Attribute deviceAttr = attrMap.get(ATTR_DEVICE);
         Attribute directoryAttr = attrMap.get(ATTR_DIRECTORY);

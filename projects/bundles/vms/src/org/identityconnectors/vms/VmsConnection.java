@@ -111,7 +111,7 @@ public class VmsConnection {
 
     public void send(String string) throws IOException {
         log.info("send(''{0}'')", string);
-        System.out.println("Send:"+new String(string)+_configuration.getRealHostLineTerminator());
+        //System.out.println("Send:"+string);
         _expect4j.send(string+_configuration.getRealHostLineTerminator());
     }
     
