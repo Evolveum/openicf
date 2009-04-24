@@ -355,7 +355,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 String result = "";
                 try {
                     result = (String)_multipleAuthorizeCommandExecutor.execute(variables);
-                    if (!result.contains("(pre-expired)")) {
+                    if (!isPresent(result, "(pre-expired)")) {
                         String value = "/"+"NO"+ATTR_PWDEXPIRED;
                         command = appendToCommand(commandList, command, value);
                     }
@@ -363,7 +363,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                     _log.error(e, "error in create");
                     throw new ConnectorException(_configuration.getMessage(modify?VmsMessages.ERROR_IN_MODIFY:VmsMessages.ERROR_IN_CREATE), e);
                 }
-                if (result.contains(CLI_WARNING)) 
+                if (isPresent(result, CLI_WARNING)) 
                     throw new ConnectorException(_configuration.getMessage(modify?VmsMessages.ERROR_IN_MODIFY2:VmsMessages.ERROR_IN_CREATE2, result));
             }
         }
@@ -720,7 +720,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             _log.error(e, "error in create");
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE), e);
         }
-        if (result.contains(CLI_WARNING)) 
+        if (isPresent(result, CLI_WARNING)) 
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE2, result));
 
         if (isPresent(result, USER_ADDED)) {
@@ -900,7 +900,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             _log.error(e, "error in tryAnotherUic");
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY), e);
         }
-        if (result.contains(CLI_WARNING)) 
+        if (isPresent(result, CLI_WARNING)) 
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
     }
     
@@ -923,7 +923,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             _log.error(e, "error in delete");
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_DELETE), e);
         }
-        if (result.contains(CLI_WARNING)) 
+        if (isPresent(result, CLI_WARNING)) 
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_DELETE2, result));
 
         if (isPresent(result, USER_REMOVED)) {
@@ -1432,7 +1432,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 _log.error(e, "error in create");
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY), e);
             }
-            if (result.contains(CLI_WARNING)) 
+            if (isPresent(result, CLI_WARNING)) 
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
 
             if (isPresent(result, USER_UPDATED) ||isPresent(result, NO_MODS)) {
@@ -1475,7 +1475,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 _log.error(e, "error in rename");
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY), e);
             }
-            if (result.contains(CLI_WARNING)) 
+            if (isPresent(result, CLI_WARNING)) 
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_CREATE2, result));
 
             if (isPresent(result, USER_RENAMED)) {
@@ -1520,9 +1520,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                         _log.error(e, "error in modify");
                         throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY), e);
                     }
-                    if (result.contains(CLI_WARNING)) 
+                    if (isPresent(result, CLI_WARNING)) 
                         throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
-
                     if (isPresent(result, UAF_ERROR)) {
                         throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
                     }
