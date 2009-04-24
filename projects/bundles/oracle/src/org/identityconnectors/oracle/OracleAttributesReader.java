@@ -18,26 +18,45 @@ import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 
 /** Transforms attributes from Set<Attribute> attrs to {@link OracleUserAttributes} */
-class OracleAttributesReader {
+final class OracleAttributesReader {
      ConnectorMessages messages;
      
      OracleAttributesReader(ConnectorMessages messages){
          this.messages = OracleConnectorHelper.assertNotNull(messages, "messages");
      }
     
-     void readCreateRestAttributes(Map<String, Attribute> map, OracleUserAttributes caAttributes) {
-        caAttributes.expirePassword = OracleConnectorHelper.getBooleanValue(map, OperationalAttributes.PASSWORD_EXPIRED_NAME);
+     void readCreateAttributes(Map<String, Attribute> map, OracleUserAttributes caAttributes){
+    	 caAttributes.operation = Operation.CREATE;
+    	 readAuthAttributes(map, caAttributes);
+    	 readRestAttributes(map, caAttributes);
+     }
+     
+     void readAlterAttributes(Map<String, Attribute> map, OracleUserAttributes caAttributes){
+    	 caAttributes.operation = Operation.ALTER;
+    	 readAuthAttributes(map, caAttributes);
+    	 readRestAttributes(map, caAttributes);
+     }
+     
+     
+     
+     private void readRestAttributes(Map<String, Attribute> map, OracleUserAttributes caAttributes) {
+        caAttributes.expirePassword = OracleConnectorHelper.getNotNullAttributeBooleanValue(map, OperationalAttributes.PASSWORD_EXPIRED_NAME);
         caAttributes.defaultTableSpace = OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, ORACLE_DEF_TS_ATTR_NAME);
         caAttributes.tempTableSpace = OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, ORACLE_TEMP_TS_ATTR_NAME);
-        caAttributes.enable = OracleConnectorHelper.getBooleanValue(map, OperationalAttributes.ENABLE_NAME);
+        caAttributes.enable = OracleConnectorHelper.getNotNullAttributeBooleanValue(map, OperationalAttributes.ENABLE_NAME);
         caAttributes.profile = OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, ORACLE_PROFILE_ATTR_NAME);
         caAttributes.defaultTSQuota = OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, ORACLE_DEF_TS_QUOTA_ATTR_NAME);
-        caAttributes.tempTSQuota = OracleConnectorHelper.getStringValue(map, ORACLE_TEMP_TS_QUOTA_ATTR_NAME);
+        caAttributes.tempTSQuota = OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, ORACLE_TEMP_TS_QUOTA_ATTR_NAME);
     }
 
-    void readCreateAuthAttributes(Map<String, Attribute> map, OracleUserAttributes caAttributes) {
+    private void readAuthAttributes(Map<String, Attribute> map, OracleUserAttributes caAttributes) {
         String authentication =  OracleConnectorHelper.getStringValue(map, ORACLE_AUTHENTICATION_ATTR_NAME);
+        Attribute passwordAttribute = map.get(OperationalAttributes.PASSWORD_NAME);
         if(authentication == null){
+        	//For alter and null passwordAttribute, do not set any authentication nor password
+        	if(Operation.ALTER.equals(caAttributes.operation) && passwordAttribute == null){
+       			return;
+        	}
             authentication = ORACLE_AUTH_LOCAL; 
         }
         try{
@@ -48,14 +67,7 @@ class OracleAttributesReader {
         }
         switch(caAttributes.auth){
 	        case LOCAL :
-	        	Attribute passwordAttribute = map.get(OperationalAttributes.PASSWORD_NAME);
 	            GuardedString password = passwordAttribute != null ? AttributeUtil.getGuardedStringValue(passwordAttribute) : null;
-	            if(password == null){
-	                if(caAttributes.userName == null){
-	                    throw new IllegalArgumentException("Cannot choose default passoword, username is null");
-	                }
-	                password = new GuardedString(caAttributes.userName.toCharArray());
-	            }
 	            caAttributes.password = password;
 	            break;
 	        case EXTERNAL : break;

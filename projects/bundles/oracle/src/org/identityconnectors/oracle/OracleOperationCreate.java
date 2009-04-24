@@ -28,9 +28,12 @@ class OracleOperationCreate extends AbstractOracleOperation implements CreateOp{
         checkUserNotExist(userName);
         OracleUserAttributes caAttributes = new OracleUserAttributes();
         caAttributes.userName = userName;
-        new OracleAttributesReader(cfg.getConnectorMessages()).readCreateAuthAttributes(map, caAttributes);
-        new OracleAttributesReader(cfg.getConnectorMessages()).readCreateRestAttributes(map, caAttributes);
+        new OracleAttributesReader(cfg.getConnectorMessages()).readCreateAttributes(map, caAttributes);
         String createSQL = new OracleCreateOrAlterStBuilder(cfg.getCSSetup()).buildCreateUserSt(caAttributes).toString();
+        if(createSQL == null){
+        	//This should not happen, but be more deffensive
+        	throw new ConnectorException("No create SQL generated, probably not enough attributes");
+        }
         Attribute roles = AttributeUtil.find(ORACLE_ROLES_ATTR_NAME, attrs);
         Attribute privileges = AttributeUtil.find(ORACLE_PRIVS_ATTR_NAME, attrs);
         List<String> rolesSQL = new OracleRolesAndPrivsBuilder(cfg.getCSSetup())

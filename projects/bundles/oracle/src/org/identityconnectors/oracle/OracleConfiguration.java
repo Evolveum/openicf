@@ -17,7 +17,7 @@ import org.identityconnectors.oracle.OracleDriverConnectionInfo.OracleDriverConn
  * @author kitko
  *
  */
-public class OracleConfiguration extends AbstractConfiguration implements Cloneable{
+public final class OracleConfiguration extends AbstractConfiguration implements Cloneable{
     private String host;
     private String port = OracleSpecifics.LISTENER_DEFAULT_PORT;
     private String driver;
@@ -314,13 +314,13 @@ public class OracleConfiguration extends AbstractConfiguration implements Clonea
     /**
      * @return caseSensitivityString
      */
-    public String getCSSetupString(){
+    public String getCaseSensitivity(){
         return caseSensitivityString;
     }
     
     /** Sets case sensitivity from string map 
      * @param cs */
-    public void setCSSetupString(String cs){
+    public void setCaseSensitivity(String cs){
         new LocalizedAssert(getConnectorMessages()).assertNotBlank(cs, "cs");
         this.cs = new OracleCaseSensitivityBuilder().parseMap(cs).build();
         this.caseSensitivityString = cs;

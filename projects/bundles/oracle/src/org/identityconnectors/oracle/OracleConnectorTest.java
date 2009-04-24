@@ -33,6 +33,13 @@ public class OracleConnectorTest extends OracleConnectorAbstractTest{
         OracleConnector oc = createTestConnector();
         oc.checkAlive();
         oc.dispose();
+        
+        OracleConnector con = new OracleConnector();
+        try{
+	        con.checkAlive();
+	        fail("Must fail for not initialized");
+        }
+        catch(RuntimeException e){}
     }
 
     /**
@@ -60,7 +67,7 @@ public class OracleConnectorTest extends OracleConnectorAbstractTest{
             oc.init(cfg);
             fail("Init should fail for uncomplete cfg");
         }
-        catch(IllegalArgumentException e){
+        catch(RuntimeException e){
         }
     }
     

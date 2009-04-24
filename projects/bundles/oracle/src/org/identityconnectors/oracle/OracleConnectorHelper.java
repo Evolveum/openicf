@@ -1,5 +1,6 @@
 package org.identityconnectors.oracle;
 
+import java.text.MessageFormat;
 import java.util.*;
 
 import org.identityconnectors.common.StringUtil;
@@ -63,7 +64,7 @@ abstract class OracleConnectorHelper {
     }
 
     
-    static Boolean getBooleanValue(Map<String, Attribute> attrs, String name){
+    static Boolean getNotNullAttributeBooleanValue(Map<String, Attribute> attrs, String name){
         Attribute attr = attrs.get(name);
         if(attr == null){
             return null;
@@ -72,10 +73,7 @@ abstract class OracleConnectorHelper {
         if(value instanceof Boolean){
             return (Boolean) value;
         }
-        if(value instanceof String){
-            return "true".equals(value);
-        }
-        return null;
+        throw new IllegalArgumentException(MessageFormat.format("Boolean attribute [{0}] has invalid value [{1}]",name,value));
     }
     
     static <T> T assertNotNull(T t,String argument){

@@ -30,6 +30,7 @@ import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.AndFilter;
@@ -125,10 +126,17 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 	
 	private static class UIDMatcher extends BaseMatcher<Iterable<ConnectorObject>>{
 		private List<String> uids;
+		private Set<String> attributesToGet = new HashSet<String>(OracleConnector.ALL_ATTRIBUTE_NAMES);
 		
 		private UIDMatcher(String ...uid){
 			this.uids = new ArrayList<String>(Arrays.asList(uid));
 		}
+		
+		private UIDMatcher(Set<String> attributesToGet,String ...uid){
+			this.uids = new ArrayList<String>(Arrays.asList(uid));
+			this.attributesToGet = new HashSet<String>(attributesToGet);
+		}
+
 		
 		@SuppressWarnings("unchecked")
 		@Override
@@ -155,7 +163,10 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 			
 			//Look at ConnectorObject if all attributes are present
 			for(ConnectorObject object : objects){
-				for(String aName : OracleConnector.ALL_ATTRIBUTE_NAMES){
+				for(String aName : attributesToGet){
+					if(OperationalAttributes.PASSWORD_NAME.equals(aName)){
+						continue;
+					}
 					if(object.getAttributeByName(aName) == null){
 						Assert.fail("Attribute : [" + aName + "] is missing");
 					}

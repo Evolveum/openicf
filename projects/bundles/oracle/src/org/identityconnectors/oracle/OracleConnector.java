@@ -26,7 +26,7 @@ import org.identityconnectors.framework.spi.operations.*;
 @ConnectorClass(configurationClass=OracleConfiguration.class,
         displayNameKey = "oracle.connector",
         messageCatalogPaths={"org/identityconnectors/dbcommon/Messages","org/identityconnectors/oracle/Messages"})
-public class OracleConnector implements PoolableConnector, AuthenticateOp,
+public final class OracleConnector implements PoolableConnector, AuthenticateOp,
 		CreateOp, DeleteOp, UpdateOp, UpdateAttributeValuesOp,
 		SearchOp<Pair<String, FilterWhereBuilder>>, SchemaOp,TestOp, AttributeNormalizer {
     private Connection adminConn;
@@ -61,17 +61,21 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,
         attributeMapping.put(ORACLE_DEF_TS_ATTR_NAME, OracleUserAttribute.DEF_TABLESPACE);
         attributeMapping.put(ORACLE_TEMP_TS_ATTR_NAME, OracleUserAttribute.TEMP_TABLESPACE);
         
-        ALL_ATTRIBUTE_NAMES.addAll(Arrays.asList(ORACLE_AUTHENTICATION_ATTR_NAME,ORACLE_GLOBAL_ATTR_NAME,ORACLE_ROLES_ATTR_NAME,
-        		ORACLE_PRIVS_ATTR_NAME,ORACLE_PROFILE_ATTR_NAME,ORACLE_DEF_TS_ATTR_NAME,ORACLE_TEMP_TS_ATTR_NAME,
-        		ORACLE_DEF_TS_QUOTA_ATTR_NAME,ORACLE_TEMP_TS_QUOTA_ATTR_NAME));
+        ALL_ATTRIBUTE_NAMES.addAll(Arrays.asList(
+				ORACLE_AUTHENTICATION_ATTR_NAME, ORACLE_GLOBAL_ATTR_NAME,
+				ORACLE_ROLES_ATTR_NAME, ORACLE_PRIVS_ATTR_NAME,
+				ORACLE_PROFILE_ATTR_NAME, ORACLE_DEF_TS_ATTR_NAME,
+				ORACLE_TEMP_TS_ATTR_NAME, ORACLE_DEF_TS_QUOTA_ATTR_NAME,
+				ORACLE_TEMP_TS_QUOTA_ATTR_NAME,
+				OperationalAttributes.PASSWORD_EXPIRED_NAME,
+				OperationalAttributes.ENABLE_NAME,
+				Name.NAME,OperationalAttributes.PASSWORD_NAME
+				));
     }
     
     
-    
-    
-    
-    
     public void checkAlive() {
+    	testInitialized();
         OracleSpecifics.testConnection(adminConn);
     }
 
@@ -92,13 +96,14 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,
      * Test of configuration and validity of connection
      */
     public void test() {
+    	testInitialized();
         cfg.validate();
         OracleSpecifics.testConnection(adminConn);
     }
     
 
     public Uid authenticate(ObjectClass objectClass, String username, GuardedString password, OperationOptions options) {
-        return new OracleOperationAuthenticate(cfg, log).authenticate(objectClass, username, password, options);
+        return new OracleOperationAuthenticate(cfg, adminConn, log).authenticate(objectClass, username, password, options);
     }
     
     private Connection createAdminConnection(){
@@ -191,6 +196,8 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,
         Set<AttributeInfo> attrInfoSet = new HashSet<AttributeInfo>();
         attrInfoSet.add(AttributeInfoBuilder.build(Name.NAME,String.class,EnumSet.of(Flags.NOT_UPDATEABLE,Flags.REQUIRED)));
         attrInfoSet.add(OperationalAttributeInfos.PASSWORD);
+        attrInfoSet.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
+        attrInfoSet.add(OperationalAttributeInfos.ENABLE);
         attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_AUTHENTICATION_ATTR_NAME,String.class,EnumSet.of(Flags.REQUIRED)));
         attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_GLOBAL_ATTR_NAME,String.class,express ? EnumSet.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE) : null));
         attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_ROLES_ATTR_NAME,String.class,EnumSet.of(Flags.MULTIVALUED)));
@@ -204,6 +211,12 @@ public class OracleConnector implements PoolableConnector, AuthenticateOp,
         schemaBld.defineObjectClass(ObjectClass.ACCOUNT_NAME, attrInfoSet);
         schema =  schemaBld.build();
         return schema;
+	}
+	
+	private void testInitialized(){
+		if(cfg == null || adminConn == null){
+			throw new ConnectorException("Connector is not yet initialized");
+		}
 	}
     
     

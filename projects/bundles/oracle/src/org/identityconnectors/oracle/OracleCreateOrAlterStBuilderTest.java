@@ -3,7 +3,9 @@
  */
 package org.identityconnectors.oracle;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import junit.framework.Assert;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.junit.Test;
@@ -35,8 +37,6 @@ public class OracleCreateOrAlterStBuilderTest {
         assertEquals("create user \"user1\" identified by \"password\"", createDefaultBuilder().buildCreateUserSt(local).toString());
         
     }
-    
-    
     
     
     /** Test create table space */
@@ -109,18 +109,32 @@ public class OracleCreateOrAlterStBuilderTest {
         assertEquals("create user \"user1\" identified globally as 'global'", createDefaultBuilder().buildCreateUserSt(global).toString());
     }
     
-    /** Test expire and lock/unlock */
+    /** Test expire password  */
     @Test
-    public void testCreateExpireAndLock() {
+    public void testCreateExpirePassword() {
         OracleUserAttributes attributes = new OracleUserAttributes();
         attributes.auth = OracleAuthentication.LOCAL;
         attributes.userName = "user1";
         attributes.expirePassword = true;
-        attributes.enable = true;
-        assertEquals("create user \"user1\" identified by \"user1\" password expire account unlock", createDefaultBuilder().buildCreateUserSt(attributes).toString());
+        assertEquals("create user \"user1\" identified by \"user1\" password expire", createDefaultBuilder().buildCreateUserSt(attributes).toString());
         attributes.expirePassword = false;
-        assertEquals("create user \"user1\" identified by \"user1\" account unlock", createDefaultBuilder().buildCreateUserSt(attributes).toString());
+        assertEquals("create user \"user1\" identified by \"user1\"", createDefaultBuilder().buildCreateUserSt(attributes).toString());
+        attributes.expirePassword = null;
+        assertEquals("create user \"user1\" identified by \"user1\"", createDefaultBuilder().buildCreateUserSt(attributes).toString());
     }
+    
+    /** Test  lock/unlock */
+    @Test
+    public void testCreateLock() {
+        OracleUserAttributes attributes = new OracleUserAttributes();
+        attributes.auth = OracleAuthentication.LOCAL;
+        attributes.userName = "user1";
+        attributes.enable = true;
+        assertEquals("create user \"user1\" identified by \"user1\" account unlock", createDefaultBuilder().buildCreateUserSt(attributes).toString());
+        attributes.enable = false;
+        assertEquals("create user \"user1\" identified by \"user1\" account lock", createDefaultBuilder().buildCreateUserSt(attributes).toString());
+    }
+
     
     /** Test alter user */
     @Test
@@ -135,8 +149,41 @@ public class OracleCreateOrAlterStBuilderTest {
         record.defaultTableSpace = "users";
         assertEquals("alter user \"user1\" identified by \"user1\" quota unlimited on \"users\" password expire account unlock", createDefaultBuilder().buildAlterUserSt(attributes, record).toString());
         
+        attributes.enable = null;
+        attributes.expirePassword = null;
+        attributes.tempTableSpace = "tempTS";
+        record.defaultTableSpace = "defTS";
+        assertEquals("alter user \"user1\" identified by \"user1\" temporary tablespace \"tempTS\" quota unlimited on \"defTS\"", createDefaultBuilder().buildAlterUserSt(attributes, record).toString());
+        
+        attributes = new OracleUserAttributes();
+        attributes.userName = "user1";
+        attributes.expirePassword = true;
+        assertEquals("alter user \"user1\" password expire", createDefaultBuilder().buildAlterUserSt(attributes, record).toString());
+        
+        
+        attributes = new OracleUserAttributes();
+        attributes.userName = "user1";
+       	Assert.assertNull(createDefaultBuilder().buildAlterUserSt(attributes, record));
+        
     }
     
-    
+    /** Test that builder properly formats tokens */
+    @Test
+    public void testCaseSensitivity(){
+    	OracleCaseSensitivitySetup ocs = new OracleCaseSensitivityBuilder()
+				.defineFormatters(
+						CSTokenFormatter.build(OracleUserAttribute.USER_NAME,""),
+						CSTokenFormatter.build(OracleUserAttribute.PROFILE,"'"))
+						.build();
+    	OracleCreateOrAlterStBuilder builder = new OracleCreateOrAlterStBuilder(ocs);
+        OracleUserAttributes attributes = new OracleUserAttributes();
+        attributes.auth = OracleAuthentication.LOCAL;
+        attributes.userName = "user1";
+        attributes.profile = "profile";
+        Assert.assertEquals("create user user1 identified by \"user1\" profile 'profile'", builder.buildCreateUserSt(attributes));
+        UserRecord record = new UserRecord();
+        Assert.assertEquals("alter user user1 identified by \"user1\" profile 'profile'", builder.buildAlterUserSt(attributes, record));
+
+    }
 
 }

@@ -29,8 +29,7 @@ class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp,
         OracleUserAttributes caAttributes = new OracleUserAttributes();
         caAttributes.userName = uid.getUidValue();
         Map<String, Attribute> map = AttributeUtil.toMap(attrs);
-        new OracleAttributesReader(cfg.getConnectorMessages()).readCreateAuthAttributes(map, caAttributes);
-        new OracleAttributesReader(cfg.getConnectorMessages()).readCreateRestAttributes(map, caAttributes);
+        new OracleAttributesReader(cfg.getConnectorMessages()).readAlterAttributes(map, caAttributes);
         try{
             UserRecord userRecord = new OracleUserReader(adminConn).readUserRecord(caAttributes.userName);
             String alterSQL = new OracleCreateOrAlterStBuilder(cfg.getCSSetup()).buildAlterUserSt(caAttributes, userRecord);
@@ -71,8 +70,13 @@ class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp,
 	                grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokePrivileges(caAttributes.userName, currentPrivileges));
 	            }
             }
-            
-            SQLUtil.executeUpdateStatement(adminConn, alterSQL);
+            if(alterSQL == null && grantRevokeSQL.isEmpty()){
+            	//This is dummy update with not DDL , is it valid ?
+            	//yes, if we e.g update roles to same roles, no ddl will be generated
+            }
+            if(alterSQL != null){
+            	SQLUtil.executeUpdateStatement(adminConn, alterSQL);
+            }
             for(String sql : grantRevokeSQL){
             	SQLUtil.executeUpdateStatement(adminConn, sql);
             }

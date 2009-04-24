@@ -2,18 +2,62 @@ package org.identityconnectors.oracle;
 
 import java.util.*;
 
-/** OracleCaseSensitivity is responsible for formatting oracle objects tokens (users,schema...)
+import org.identityconnectors.framework.spi.AttributeNormalizer;
+
+/** OracleCaseSensitivity is responsible for normalizing and formatting oracle objects tokens (users,schema...).
  *  Maybe we do not need such granurality, and have just one settings for all objects, but using this scenario
  *  we should cover all corner cases.
- *  For user we will provide some simplification how to define this caseSensitivy setup 
- * */
+ *  For user we will provide some simplification how to define this caseSensitivy setup.
+ *  This setup is used for formatting and normalizing of user attributes.
+ *  
+ *  We distinguish between normalizing and formatting of attributes.
+ *  Normalizing is called from framework by {@link AttributeNormalizer} while delegating to normalizeToken.
+ *  
+ *  Formating is called when building sql for create/alter where we just e.g append quotes 
+ */
 interface OracleCaseSensitivitySetup {
+	/**
+	 * Normalize token, e.g make it uppercase 
+	 * @param attr
+	 * @param token
+	 * @return
+	 */
     public String normalizeToken(OracleUserAttribute attr,String token);
+    /**
+     * Compound operation that normalizes and then formats
+     * @param attr
+     * @param token
+     * @return
+     */
     public String normalizeAndFormatToken(OracleUserAttribute attr,String token);
+    /**
+     * Just format token, e.g append quotes
+     * @param attr
+     * @param token
+     * @return
+     */
     public String formatToken(OracleUserAttribute attr,String token);
+    /**
+     * Formats char array , useful for password to not convert to String
+     * @param attr
+     * @param token
+     * @return
+     */
     public char[] formatToken(OracleUserAttribute attr,char[] token);
-    public CSTokenFormatter getAttributeFormatter(OracleUserAttribute attribute);
-    public CSTokenNormalizer getAttributeNormalizer(OracleUserAttribute attribute);
+    /**
+     * Gets formatter by attribue
+     * @param attribute
+     * @throws  IllegalArgumentException when formatter by attribute is not found
+     * @return CSTokenFormatter by attribute
+     */
+    public CSTokenFormatter getAttributeFormatter(OracleUserAttribute attribute) throws IllegalArgumentException;
+    /**
+     * Gets normalizer by attribue
+     * @param attribute
+     * @throws  IllegalArgumentException when normalizer by attribute is not found
+     * @return CSTokenFormatter by attribute
+     */
+    public CSTokenNormalizer getAttributeNormalizer(OracleUserAttribute attribute) throws IllegalArgumentException;
 }
 
 /** Oracle user attribute */
@@ -79,6 +123,10 @@ final class CSTokenFormatter{
     }
     private CSTokenFormatter(){}
     
+    static CSTokenFormatter build(OracleUserAttribute attribute,String quatesChar){
+    	return new Builder().setAttribute(attribute).setQuatesChar(quatesChar).build();
+    }
+    
     final static class Builder{
         CSTokenFormatter element = new CSTokenFormatter();
         Builder setAttribute(OracleUserAttribute attribute){
@@ -129,6 +177,11 @@ final class CSTokenNormalizer{
         }
         return toUpper ? token.toUpperCase() : token;
     }
+    
+    static CSTokenNormalizer build(OracleUserAttribute attribute,boolean toUpper){
+    	return new Builder().setAttribute(attribute).setToUpper(toUpper).build();
+    }
+
     
     final static class Builder{
         CSTokenNormalizer element = new CSTokenNormalizer();
@@ -252,6 +305,12 @@ final class OracleCaseSensitivityBuilder{
     
 }
 
+/**
+ * Implementation of OracleCaseSensitivitySetup that will use map of
+ * formatters and normalizers for each {@link OracleUserAttribute}
+ * @author kitko
+ *
+ */
 final class OracleCaseSensitivityImpl implements OracleCaseSensitivitySetup{
     private Map<OracleUserAttribute,CSTokenFormatter> formatters;
     private Map<OracleUserAttribute,CSTokenNormalizer> normalizers;    

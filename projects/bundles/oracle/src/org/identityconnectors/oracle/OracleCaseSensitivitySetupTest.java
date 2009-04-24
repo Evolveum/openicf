@@ -19,6 +19,9 @@ public class OracleCaseSensitivitySetupTest {
     public void testCreateExplicitFormatters(){
         OracleCaseSensitivitySetup cs = new OracleCaseSensitivityBuilder().defineFormatters(new CSTokenFormatter.Builder().setAttribute(OracleUserAttribute.SCHEMA).setQuatesChar("AAA").build()).build();
         Assert.assertEquals("AAA",cs.getAttributeFormatter(OracleUserAttribute.SCHEMA).getQuatesChar());
+        CSTokenFormatter formatter = CSTokenFormatter.build(OracleUserAttribute.PROFILE, "BBB");
+        assertEquals(OracleUserAttribute.PROFILE, formatter.getAttribute());
+        assertEquals("BBB", formatter.getQuatesChar());
     }
     
     /** Tests manual sensitivity with normalizers */
@@ -26,6 +29,10 @@ public class OracleCaseSensitivitySetupTest {
     public void testCreateExplicitNormalizers(){
         OracleCaseSensitivitySetup cs = new OracleCaseSensitivityBuilder().defineNormalizers(new CSTokenNormalizer.Builder().setAttribute(OracleUserAttribute.SCHEMA).setToUpper(true).build()).build();
         Assert.assertTrue(cs.getAttributeNormalizer(OracleUserAttribute.SCHEMA).isToUpper());
+        CSTokenNormalizer normalizer = CSTokenNormalizer.build(OracleUserAttribute.DEF_TABLESPACE, false);
+        assertEquals(OracleUserAttribute.DEF_TABLESPACE, normalizer.getAttribute());
+        assertEquals(false, normalizer.isToUpper());
+        
     }
     
     

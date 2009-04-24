@@ -6,13 +6,15 @@ import static org.identityconnectors.oracle.OracleUserAttribute.*;
 
 /**
  * Builds create or alter user sql statement.
+ * Class uses {@link OracleCaseSensitivitySetup} to format user attributes. 
+ * It expects that passed userAttributes are already normalized, so it does not normalize tokens anymore 
  * See BSF syntax at :
  * Create : http://download.oracle.com/docs/cd/B12037_01/server.101/b10759/statements_8003.htm
  * Alter  : http://www.stanford.edu/dept/itss/docs/oracle/10g/server.101/b10759/statements_4003.htm
  * @author kitko
  *
  */
-class OracleCreateOrAlterStBuilder {
+final class OracleCreateOrAlterStBuilder {
     private OracleCaseSensitivitySetup cs;
     
     public OracleCreateOrAlterStBuilder(OracleCaseSensitivitySetup cs) {
@@ -34,8 +36,8 @@ class OracleCreateOrAlterStBuilder {
         if(userAttributes.auth == null){
             throw new IllegalArgumentException("Authentication not specified");
         }
-        appendCreateOrAlterSt(builder,userAttributes,null);
-        return builder.toString();
+        boolean anyChange = appendCreateOrAlterSt(builder,userAttributes,null);
+        return anyChange ? builder.toString() : null;
     }
     
     String buildAlterUserSt(OracleUserAttributes userAttributes,UserRecord userRecord){
@@ -45,35 +47,45 @@ class OracleCreateOrAlterStBuilder {
             throw new IllegalArgumentException("User not specified");
         }
         builder.append("alter user ").append(cs.formatToken(USER_NAME, userAttributes.userName));
-        appendCreateOrAlterSt(builder,userAttributes,userRecord);
-        return builder.toString();
+        boolean anyChange = appendCreateOrAlterSt(builder,userAttributes,userRecord);
+        return anyChange ? builder.toString() : null;
     }
 
-    private void appendCreateOrAlterSt(StringBuilder builder, OracleUserAttributes userAttributes, UserRecord userRecord) {
+    private boolean appendCreateOrAlterSt(StringBuilder builder, OracleUserAttributes userAttributes, UserRecord userRecord) {
+    	boolean anyChange = false;
         if(userAttributes.auth != null){
+        	anyChange = true;
             appendAuth(builder, userAttributes);
         }
         if(userAttributes.defaultTableSpace != null){
+        	anyChange = true;
             appendDefaultTableSpace(builder,userAttributes);
         }
         if(userAttributes.tempTableSpace != null){
+        	anyChange = true;
             appendTemporaryTableSpace(builder,userAttributes);
         }
         if(userAttributes.defaultTSQuota != null){
+        	anyChange = true;
             appendDefaultTSQuota(builder,userAttributes,userRecord);
         }
         if(userAttributes.tempTSQuota != null){
+        	anyChange = true;
             appendTempTSQuota(builder,userAttributes,userRecord );
         }
         if(userAttributes.expirePassword != null && userAttributes.expirePassword){
+        	anyChange = true;
             appendExpirePassword(builder,userAttributes);
         }
         if(userAttributes.enable != null){
+        	anyChange = true;
             appendEnabled(builder,userAttributes);
         }
         if(userAttributes.profile != null){
+        	anyChange = true;
             appendProfile(builder,userAttributes);
         }
+        return anyChange;
     }
 
     private void appendProfile(StringBuilder builder,OracleUserAttributes userAttributes) {
@@ -149,6 +161,7 @@ class OracleCreateOrAlterStBuilder {
             builder.append(" by ");
             GuardedString password = userAttributes.password;
             if(password == null){
+            	//Can we set password same as username ? , adapter did so
                 password = new GuardedString(userAttributes.userName.toCharArray());
             }
             password.access(new GuardedString.Accessor(){

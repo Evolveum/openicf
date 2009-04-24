@@ -11,7 +11,7 @@ import java.util.Map.Entry;
  * @author kitko
  *
  */
-class MapParser {
+final class MapParser {
     private static class MyEntry implements Map.Entry<String, Object>{
         String key;
         Object value;

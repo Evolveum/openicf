@@ -29,6 +29,7 @@ import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.Filter;
@@ -84,9 +85,10 @@ class OracleOperationSearch extends AbstractOracleOperation implements SearchOp<
                 	attributesToGet = new HashSet<String>(Arrays.asList(options.getAttributesToGet()));
                 }
                 else{
-                	attributesToGet = new HashSet<String>(Arrays.asList(ORACLE_DEF_TS_ATTR_NAME,ORACLE_GLOBAL_ATTR_NAME,ORACLE_AUTHENTICATION_ATTR_NAME,
-                			ORACLE_PROFILE_ATTR_NAME,ORACLE_TEMP_TS_ATTR_NAME,ORACLE_DEF_TS_QUOTA_ATTR_NAME,ORACLE_TEMP_TS_QUOTA_ATTR_NAME,
-                			ORACLE_PRIVS_ATTR_NAME,ORACLE_ROLES_ATTR_NAME));
+                	attributesToGet = new HashSet<String>(OracleConnector.ALL_ATTRIBUTE_NAMES);
+                }
+                if(attributesToGet.contains(Name.NAME)){
+                	bld.addAttribute(new Name(record.userName));
                 }
                 if(attributesToGet.contains(ORACLE_DEF_TS_ATTR_NAME)){
                 	bld.addAttribute(AttributeBuilder.build(ORACLE_DEF_TS_ATTR_NAME,record.defaultTableSpace));
@@ -116,6 +118,12 @@ class OracleOperationSearch extends AbstractOracleOperation implements SearchOp<
                 }
                 if(attributesToGet.contains(ORACLE_ROLES_ATTR_NAME)){
                 	bld.addAttribute(AttributeBuilder.build(ORACLE_ROLES_ATTR_NAME,new OracleRolePrivReader(adminConn).readRoles(userName)));
+                }
+                if(attributesToGet.contains(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
+                	bld.addAttribute(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME,Boolean.valueOf(record.status.contains("EXPIRED"))));
+                }
+                if(attributesToGet.contains(OperationalAttributes.ENABLE_NAME)){
+                	bld.addAttribute(AttributeBuilder.build(OperationalAttributes.ENABLE_NAME,Boolean.valueOf(!record.status.contains("LOCKED"))));
                 }
                 ConnectorObject ret = bld.build();
                 if (!handler.handle(ret)) {

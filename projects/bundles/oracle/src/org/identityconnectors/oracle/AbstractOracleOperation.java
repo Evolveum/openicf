@@ -16,17 +16,10 @@ abstract class AbstractOracleOperation {
     
     AbstractOracleOperation(OracleConfiguration cfg,Connection adminConn, Log log) {
         super();
-        this.cfg = cfg;
-        this.adminConn = adminConn;
-        this.log = log;
+        this.cfg = OracleConnectorHelper.assertNotNull(cfg, "cfg");
+        this.adminConn = OracleConnectorHelper.assertNotNull(adminConn, "adminConn");
+        this.log = OracleConnectorHelper.assertNotNull(log, "log");
     }
-    
-    AbstractOracleOperation(OracleConfiguration cfg, Log log) {
-        super();
-        this.cfg = cfg;
-        this.log = log;
-    }
-    
     
     
     
