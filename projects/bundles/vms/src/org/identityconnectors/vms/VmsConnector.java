@@ -109,7 +109,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     private String                      _changeOwnPasswordCommandScript;
     private ScriptExecutor              _changeOwnPasswordCommandExecutor;
     private String                      _authorizeCommandScript;
-    private ScriptExecutor              _authorizeCommandExecutor;
     private String                      _multipleAuthorizeCommandScript;
     private ScriptExecutor              _multipleAuthorizeCommandExecutor;
     private String                      _listCommandScript;
@@ -354,12 +353,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 buffer.append("SHOW "+prefix);
                 addCommand.add(buffer);
 
-                Map<String, Object> variables = new HashMap<String, Object>();
+                Map<String, Object> variables = getVariablesForCommand();
                 fillInCommand(addCommand, variables);
 
                 String result = "";
                 try {
-                    result = (String)_authorizeCommandExecutor.execute(variables);
+                    result = (String)_multipleAuthorizeCommandExecutor.execute(variables);
                     if (!result.contains("(pre-expired)")) {
                         String value = "/"+"NO"+ATTR_PWDEXPIRED;
                         command = appendToCommand(commandList, command, value);
@@ -714,12 +713,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
 
         List<StringBuffer> addCommand = appendAttributes(false, accountId, attrMap);
 
-        Map<String, Object> variables = new HashMap<String, Object>();
-
         String result = "";
         List<List<StringBuffer>> commandList = new LinkedList<List<StringBuffer>>();
         try {
             commandList.add(addCommand);
+            Map<String, Object> variables = getVariablesForCommand();
             fillInMultipleCommand(commandList, variables);
             result = (String)_multipleAuthorizeCommandExecutor.execute(variables);
         } catch (Exception e) {
@@ -766,6 +764,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             }
 
             if (commandList.size()>0) {
+                Map<String, Object> variables = getVariablesForCommand();
                 fillInMultipleCommand(commandList, variables);
                 result = (String)_multipleAuthorizeCommandExecutor.execute(variables);
             }
@@ -896,11 +895,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         uicAttrMap.put(ATTR_UIC, AttributeBuilder.build(ATTR_UIC, unusedUic));
         List<StringBuffer> uicCommand = appendAttributes(true, accountId, uicAttrMap);
 
-        Map<String, Object> uicVariables = new HashMap<String, Object>();
+        Map<String, Object> uicVariables = getVariablesForCommand();
         fillInCommand(uicCommand, uicVariables);
         String result = "";
         try {
-            result = (String)_authorizeCommandExecutor.execute(uicVariables);
+            result = (String)_multipleAuthorizeCommandExecutor.execute(uicVariables);
         } catch (Exception e) {
             _log.error(e, "error in tryAnotherUic");
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY), e);
@@ -917,19 +916,13 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
         
         _log.info("delete(''{0}'')", uid.getUidValue());
-        String removeCommand = "REMOVE "+uid.getUidValue();
-        Map<String, Object> variables = new HashMap<String, Object>();
-        variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
-        variables.put("SHORT_WAIT", SHORT_WAIT);
-        variables.put("UAF_PROMPT", UAF_PROMPT);
-        variables.put("UAF_PROMPT_CONTINUE", UAF_PROMPT_CONTINUE);
-        variables.put("COMMAND", removeCommand);
-        variables.put("COMMANDS", new LinkedList<StringBuffer>());
-        variables.put("CONNECTION", _connection);
+        
+        Map<String, Object> variables = getVariablesForCommand();
+        fillInCommand("REMOVE "+uid.getUidValue(), variables);
 
         String result = "";
         try {
-            result = (String)_authorizeCommandExecutor.execute(variables);
+            result = (String)_multipleAuthorizeCommandExecutor.execute(variables);
         } catch (Exception e) {
             _log.error(e, "error in delete");
             throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_DELETE), e);
@@ -993,13 +986,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         List<String> commands = new LinkedList<String>();
         for (String filter : filters)
             commands.add("SHOW "+filter);
-        Map<String, Object> variables = new HashMap<String, Object>();
-        variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
-        variables.put("SHORT_WAIT", SHORT_WAIT);
-        variables.put("LONG_WAIT", LONG_WAIT);
-        variables.put("UAF_PROMPT", UAF_PROMPT);
+        Map<String, Object> variables = getVariablesForCommand();
         variables.put("COMMANDS", commands);
-        variables.put("CONNECTION", _connection);
 
         String users = (String)_listCommandExecutor.execute(variables);
 
@@ -1421,8 +1409,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             String accountId = uid.getUidValue();
             List<StringBuffer> modifyCommand = appendAttributes(true, accountId, attrMap);
 
-            Map<String, Object> variables = new HashMap<String, Object>();
-
             String result = "";
             List<List<StringBuffer>> commandList = new LinkedList<List<StringBuffer>>();
             try {
@@ -1438,6 +1424,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                 if (flags!=null) {
                     commandList.add(updateFlags(accountId, flags));
                 }
+                Map<String, Object> variables = getVariablesForCommand();
                 fillInMultipleCommand(commandList, variables);
                 result = (String)_multipleAuthorizeCommandExecutor.execute(variables);
             } catch (Exception e) {
@@ -1477,21 +1464,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         // Do this last, so that we don't lose the Uid change on error.
         //
         if (name!=null && uid!=null && !uid.getUidValue().equals(name.getNameValue())) {
-            StringBuffer renameCommand = new StringBuffer();
-            renameCommand.append("RENAME "+uid.getUidValue()+" "+name.getNameValue());
-
-            Map<String, Object> variables = new HashMap<String, Object>();
-            variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
-            variables.put("SHORT_WAIT", SHORT_WAIT);
-            variables.put("UAF_PROMPT", UAF_PROMPT);
-            variables.put("UAF_PROMPT_CONTINUE", UAF_PROMPT_CONTINUE);
-            variables.put("COMMAND", renameCommand);
-            variables.put("COMMANDS", new LinkedList<StringBuffer>());
-            variables.put("CONNECTION", _connection);
+            Map<String, Object> variables = getVariablesForCommand();
+            fillInCommand("RENAME "+uid.getUidValue()+" "+name.getNameValue(), variables);
 
             String result = "";
             try {
-                result = (String)_authorizeCommandExecutor.execute(variables);
+                result = (String)_multipleAuthorizeCommandExecutor.execute(variables);
             } catch (Exception e) {
                 _log.error(e, "error in rename");
                 throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY), e);
@@ -1532,7 +1510,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                     for (Object revoke : revokes) {
                         addRevokeToCommandList(name, commandList, (String)revoke);
                     }
-                    Map<String, Object> variables = new HashMap<String, Object>();
+                    Map<String, Object> variables = getVariablesForCommand();
                     fillInMultipleCommand(commandList, variables);
                     String result = "";
                     try {
@@ -1563,20 +1541,20 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             return null;
     }
 
+    private void fillInCommand(String command, Map<String, Object> variables) {
+        List<StringBuffer> list = new LinkedList<StringBuffer>();
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(command);
+        list.add(buffer);
+        fillInCommand(list, variables);
+    }
+
+
     private void fillInCommand(List<StringBuffer> command, Map<String, Object> variables) {
-        List<StringBuffer> localCommand = new LinkedList<StringBuffer>(command);
-        StringBuffer lastPart = localCommand.remove(command.size()-1);
-        variables.put("COMMAND", lastPart);
-        List<StringBuffer> firstContents = new LinkedList<StringBuffer>();
-        for (StringBuffer part : localCommand) {
-            firstContents.add(part);
-        }
-        variables.put("COMMANDS", localCommand);
-        variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
-        variables.put("SHORT_WAIT", SHORT_WAIT);
-        variables.put("UAF_PROMPT", UAF_PROMPT);
-        variables.put("UAF_PROMPT_CONTINUE", UAF_PROMPT_CONTINUE);
-        variables.put("CONNECTION", _connection);
+        List<List<StringBuffer>> commands = new LinkedList<List<StringBuffer>>();
+        commands.add(command);
+        fillInMultipleCommand(commands, variables);
+
     }
 
     private void fillInMultipleCommand(List<List<StringBuffer>> commands, Map<String, Object> variables) {
@@ -1594,11 +1572,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             commandValue.add(lastPart);
             localCommandList.add(commandValue);
         }
-        variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
-        variables.put("SHORT_WAIT", SHORT_WAIT);
-        variables.put("UAF_PROMPT", UAF_PROMPT);
-        variables.put("UAF_PROMPT_CONTINUE", UAF_PROMPT_CONTINUE);
-        variables.put("CONNECTION", _connection);
     }
 
     /**
@@ -1884,7 +1857,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         // Internal scripts are all in GROOVY for now
         //
         ScriptExecutorFactory scriptFactory = ScriptExecutorFactory.newInstance("GROOVY");
-        _authorizeCommandExecutor = scriptFactory.newScriptExecutor(getClass().getClassLoader(), _authorizeCommandScript, true);
         _multipleAuthorizeCommandExecutor = scriptFactory.newScriptExecutor(getClass().getClassLoader(), _multipleAuthorizeCommandScript, true);
         _changeOwnPasswordCommandExecutor = scriptFactory.newScriptExecutor(getClass().getClassLoader(), _changeOwnPasswordCommandScript, true);
         _listCommandExecutor = scriptFactory.newScriptExecutor(getClass().getClassLoader(), _listCommandScript, true);
@@ -2165,13 +2137,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     private String getUnusedUicForGroup(String uicWithWildCard) {
         List<String> commands = new LinkedList<String>();
         commands.add("SHOW/BRIEF "+uicWithWildCard+"\n");
-        Map<String, Object> variables = new HashMap<String, Object>();
-        variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
-        variables.put("SHORT_WAIT", SHORT_WAIT);
-        variables.put("LONG_WAIT", LONG_WAIT);
-        variables.put("UAF_PROMPT", UAF_PROMPT);
+        Map<String, Object> variables = getVariablesForCommand();
         variables.put("COMMANDS", commands);
-        variables.put("CONNECTION", _connection);
 
         try {
             String output = (String)_listCommandExecutor.execute(variables);
@@ -2213,13 +2180,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     private boolean isUnique(String uic) {
         List<String> commands = new LinkedList<String>();
         commands.add("SHOW/BRIEF "+uic+"\n");
-        Map<String, Object> variables = new HashMap<String, Object>();
-        variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
-        variables.put("SHORT_WAIT", SHORT_WAIT);
-        variables.put("LONG_WAIT", LONG_WAIT);
-        variables.put("UAF_PROMPT", UAF_PROMPT);
+        Map<String, Object> variables = getVariablesForCommand();
         variables.put("COMMANDS", commands);
-        variables.put("CONNECTION", _connection);
 
         try {
             String output = (String)_listCommandExecutor.execute(variables);
@@ -2242,6 +2204,16 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
         }
     }
 
+    private Map<String, Object> getVariablesForCommand() {
+        Map<String, Object> variables = new HashMap<String, Object>();
+        variables.put("SHELL_PROMPT", _configuration.getLocalHostShellPrompt());
+        variables.put("SHORT_WAIT", SHORT_WAIT);
+        variables.put("LONG_WAIT", LONG_WAIT);
+        variables.put("UAF_PROMPT", UAF_PROMPT);
+        variables.put("UAF_PROMPT_CONTINUE", UAF_PROMPT_CONTINUE);
+        variables.put("CONNECTION", _connection);
+        return variables;
+    }
 
 }
 
