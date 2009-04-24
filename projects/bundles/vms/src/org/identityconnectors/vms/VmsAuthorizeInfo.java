@@ -180,7 +180,7 @@ public class VmsAuthorizeInfo {
             }));
             _parser.add(new PatternNode(ATTR_GRANT_IDS,          "Identifier[^\\n]*?"+PLUS_INDENTED_LINES, true, false, 
                 new Transform[] {
-                    new SubstituteTransform("(\\w+)[^\\n]+\\n", "$1"),
+                    new SubstituteTransform("(\\S+)[^\\n]+\\n", "$1"),
                     new SplitTransform("\\n"),
                     //new ListTransform(new GroupsTransform("[ \\t]*([ \\t]+)[ \\t]+([ \\t]+)[ \\t]*([ \\t]+)?$")),
             }));
