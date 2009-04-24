@@ -140,6 +140,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     private static final String USER_UPDATED     = "%UAF-I-MDFYMSG,";    // user record(s) updated
     private static final String BAD_USER         = "%UAF-W-BADUSR,";     // user name does not exist
     private static final String BAD_SPEC         = "%UAF-W-BADSPC,";     // no user matches specification
+    private static final String UAF_ERROR        = "%UAF-E-";            // any UAF error message
     private static final String DUP_IDENT        = "-SYSTEM-F-DUPIDENT"; // duplicate identifier
     private static final String DUPLNAM          = "-SYSTEM-F-DUPLNAM";  // duplicate name
     
@@ -1522,9 +1523,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
                     if (result.contains(CLI_WARNING)) 
                         throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
 
-                    if (isPresent(result, USER_UPDATED) ||isPresent(result, NO_MODS)) {
-                        // OK, drop through and return uid
-                    } else {
+                    if (isPresent(result, UAF_ERROR)) {
                         throw new ConnectorException(_configuration.getMessage(VmsMessages.ERROR_IN_MODIFY2, result));
                     }
                 }
