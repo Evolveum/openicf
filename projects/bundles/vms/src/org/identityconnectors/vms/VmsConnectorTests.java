@@ -552,24 +552,44 @@ public class VmsConnectorTests {
             //
             deleteUser(getTestUser()+"Z", info);
             info.create(ObjectClass.ACCOUNT, attrs, null);
-    
-           {
-                ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
-                builder.setUid(getTestUser()+"Z");
-                builder.setName(getTestUser()+"Z");
-                List<Object> newGrants = new LinkedList<Object>();
-                newGrants.add("GOO124");
-                builder.addAttribute(ATTR_GRANT_IDS, newGrants);
-                ConnectorObject newUser = builder.build();
-                info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
-        
-                String[] attributesToGet = { ATTR_GRANT_IDS };
-                ConnectorObject user = getUser(getTestUser()+"Z", attributesToGet);
-    
-                Attribute grants = user.getAttributeByName(ATTR_GRANT_IDS);
-                Assert.assertTrue(grants.getValue().size()==1);
-                Assert.assertTrue(grants.getValue().contains("GOO124"));
-            }
+            
+            {
+                 ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+                 builder.setUid(getTestUser()+"Z");
+                 builder.setName(getTestUser()+"Z");
+                 List<Object> newGrants = new LinkedList<Object>();
+                 newGrants.add("GOO124");
+                 builder.addAttribute(ATTR_GRANT_IDS, newGrants);
+                 ConnectorObject newUser = builder.build();
+                 info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
+         
+                 String[] attributesToGet = { ATTR_GRANT_IDS };
+                 ConnectorObject user = getUser(getTestUser()+"Z", attributesToGet);
+     
+                 Attribute grants = user.getAttributeByName(ATTR_GRANT_IDS);
+                 Assert.assertTrue(grants.getValue().size()==1);
+                 Assert.assertTrue(grants.getValue().contains("GOO124"));
+             }
+            
+            // Verify we can delete an existing grant, and add a new one
+            //
+            {
+                 ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+                 builder.setUid(getTestUser()+"Z");
+                 builder.setName(getTestUser()+"Z");
+                 List<Object> newGrants = new LinkedList<Object>();
+                 newGrants.add("NET$MANAGE");
+                 builder.addAttribute(ATTR_GRANT_IDS, newGrants);
+                 ConnectorObject newUser = builder.build();
+                 info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
+         
+                 String[] attributesToGet = { ATTR_GRANT_IDS };
+                 ConnectorObject user = getUser(getTestUser()+"Z", attributesToGet);
+     
+                 Attribute grants = user.getAttributeByName(ATTR_GRANT_IDS);
+                 Assert.assertTrue(grants.getValue().size()==1);
+                 Assert.assertTrue(grants.getValue().contains("NET$MANAGE"));
+             }
         } finally {
             info.dispose();
         }
