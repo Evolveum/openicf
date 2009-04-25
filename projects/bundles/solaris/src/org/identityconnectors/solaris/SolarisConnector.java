@@ -130,13 +130,14 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     /** {@inheritDoc} */
     public Uid create(ObjectClass oclass, Set<Attribute> attrs,
             OperationOptions options) {
-        if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
+        if (!oclass.is(ObjectClass.ACCOUNT_NAME)) {
             throw new IllegalArgumentException(String.format(
                     MSG_NOT_SUPPORTED_OBJECTCLASS, ObjectClass.ACCOUNT_NAME));
         }
         
+        return null;
         //TODO
-        throw new UnsupportedOperationException();
+        //throw new UnsupportedOperationException();
     }
 
     /**
