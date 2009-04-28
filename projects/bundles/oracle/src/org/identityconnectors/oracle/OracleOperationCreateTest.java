@@ -115,8 +115,11 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         Attribute name = new Name(TEST_USER);
         GuardedString password = new GuardedString("hello".toCharArray());
         Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_EXTERNAL);
-        Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
-        Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,passwordAttribute), null);
+        try{
+        	facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,AttributeBuilder.buildPassword(password)), null);
+        	fail("Cannot set password for external authentication");
+        }catch(RuntimeException e){}
+        Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name), null);
         assertNotNull(uid);
         assertEqualsIgnoreCase(TEST_USER, uid.getUidValue());
         UserRecord record = userReader.readUserRecord(uid.getUidValue());
@@ -135,11 +138,15 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         Attribute name = new Name(TEST_USER);
         GuardedString password = new GuardedString("hello".toCharArray());
         Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_GLOBAL);
-        Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
         Attribute globalName = AttributeBuilder.build(OracleConnector.ORACLE_GLOBAL_ATTR_NAME, "global");
         Uid uid = null;
         try{
-            uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,passwordAttribute,globalName), null);
+        	uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,AttributeBuilder.buildPassword(password),globalName), null);
+        	fail("Password cannot be provided for global authentication");
+        }catch(IllegalArgumentException e){
+        }
+        try{
+            uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,globalName), null);
         }
         catch(ConnectorException e){
             if(e.getCause() instanceof SQLException){

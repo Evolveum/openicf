@@ -136,7 +136,7 @@ class OracleUserReader {
     	return readUserTSQuota(userName, record.temporaryTableSpace);
     }
     
-    OracleAuthentication resolveAuthentication(UserRecord record){
+    static OracleAuthentication resolveAuthentication(UserRecord record){
     	if("EXTERNAL".equals(record.password)){
     		return OracleAuthentication.EXTERNAL;
     	}

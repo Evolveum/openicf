@@ -8,6 +8,7 @@ import static org.junit.Assert.fail;
 import junit.framework.Assert;
 
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.test.common.TestHelpers;
 import org.junit.Test;
 
 /**
@@ -27,10 +28,6 @@ public class OracleCreateOrAlterStBuilderTest {
         }catch(Exception e){}
         OracleUserAttributes local = new OracleUserAttributes();
         local.userName = "user1";
-        try{
-            createDefaultBuilder().buildCreateUserSt(local);
-            fail("Not enough info, create must fail");
-        }catch(Exception e){}
         local.auth = OracleAuthentication.LOCAL;        
         assertEquals("create user \"user1\" identified by \"user1\"", createDefaultBuilder().buildCreateUserSt(local).toString());
         local.password = new GuardedString("password".toCharArray());
@@ -83,7 +80,7 @@ public class OracleCreateOrAlterStBuilderTest {
     }
 
     private OracleCreateOrAlterStBuilder createDefaultBuilder() {
-        return new OracleCreateOrAlterStBuilder(new OracleCaseSensitivityBuilder().build());
+        return new OracleCreateOrAlterStBuilder(new OracleCaseSensitivityBuilder().build(),TestHelpers.createDummyMessages());
     }
     
     /** Test create external */
@@ -118,6 +115,7 @@ public class OracleCreateOrAlterStBuilderTest {
         attributes.expirePassword = true;
         assertEquals("create user \"user1\" identified by \"user1\" password expire", createDefaultBuilder().buildCreateUserSt(attributes).toString());
         attributes.expirePassword = false;
+    	createDefaultBuilder().buildCreateUserSt(attributes);
         assertEquals("create user \"user1\" identified by \"user1\"", createDefaultBuilder().buildCreateUserSt(attributes).toString());
         attributes.expirePassword = null;
         assertEquals("create user \"user1\" identified by \"user1\"", createDefaultBuilder().buildCreateUserSt(attributes).toString());
@@ -140,20 +138,20 @@ public class OracleCreateOrAlterStBuilderTest {
     @Test
     public void testAlterUser() {
         OracleUserAttributes attributes = new OracleUserAttributes();
-        attributes.auth = OracleAuthentication.LOCAL;
+        attributes.auth = null;
         attributes.userName = "user1";
         attributes.expirePassword = true;
         attributes.enable = true;
         attributes.defaultTSQuota = "-1";
         UserRecord record = new UserRecord();
         record.defaultTableSpace = "users";
-        assertEquals("alter user \"user1\" identified by \"user1\" quota unlimited on \"users\" password expire account unlock", createDefaultBuilder().buildAlterUserSt(attributes, record).toString());
+        assertEquals("alter user \"user1\" quota unlimited on \"users\" password expire account unlock", createDefaultBuilder().buildAlterUserSt(attributes, record).toString());
         
         attributes.enable = null;
         attributes.expirePassword = null;
         attributes.tempTableSpace = "tempTS";
         record.defaultTableSpace = "defTS";
-        assertEquals("alter user \"user1\" identified by \"user1\" temporary tablespace \"tempTS\" quota unlimited on \"defTS\"", createDefaultBuilder().buildAlterUserSt(attributes, record).toString());
+        assertEquals("alter user \"user1\" temporary tablespace \"tempTS\" quota unlimited on \"defTS\"", createDefaultBuilder().buildAlterUserSt(attributes, record).toString());
         
         attributes = new OracleUserAttributes();
         attributes.userName = "user1";
@@ -164,7 +162,18 @@ public class OracleCreateOrAlterStBuilderTest {
         attributes = new OracleUserAttributes();
         attributes.userName = "user1";
        	Assert.assertNull(createDefaultBuilder().buildAlterUserSt(attributes, record));
-        
+       	
+       	//try to unexpire password. That means just set any new password
+        attributes = new OracleUserAttributes();
+        attributes.userName = "user1";
+        attributes.expirePassword = false;
+        attributes.password = new GuardedString("newPassword".toCharArray());
+        assertEquals("alter user \"user1\" identified by \"newPassword\"", createDefaultBuilder().buildAlterUserSt(attributes, record).toString());
+        attributes.password = null;
+        try{
+        	createDefaultBuilder().buildAlterUserSt(attributes, record);
+        	fail("Must require password for unexpire");
+        }catch(RuntimeException e){}
     }
     
     /** Test that builder properly formats tokens */
@@ -175,14 +184,14 @@ public class OracleCreateOrAlterStBuilderTest {
 						CSTokenFormatter.build(OracleUserAttributeCS.USER_NAME,""),
 						CSTokenFormatter.build(OracleUserAttributeCS.PROFILE,"'"))
 						.build();
-    	OracleCreateOrAlterStBuilder builder = new OracleCreateOrAlterStBuilder(ocs);
+    	OracleCreateOrAlterStBuilder builder = new OracleCreateOrAlterStBuilder(ocs,TestHelpers.createDummyMessages());
         OracleUserAttributes attributes = new OracleUserAttributes();
-        attributes.auth = OracleAuthentication.LOCAL;
+        attributes.auth = null;
         attributes.userName = "user1";
         attributes.profile = "profile";
         Assert.assertEquals("create user user1 identified by \"user1\" profile 'profile'", builder.buildCreateUserSt(attributes));
         UserRecord record = new UserRecord();
-        Assert.assertEquals("alter user user1 identified by \"user1\" profile 'profile'", builder.buildAlterUserSt(attributes, record));
+        Assert.assertEquals("alter user user1 profile 'profile'", builder.buildAlterUserSt(attributes, record));
 
     }
 

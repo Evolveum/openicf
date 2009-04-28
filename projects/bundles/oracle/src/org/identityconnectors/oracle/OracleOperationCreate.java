@@ -11,6 +11,12 @@ import org.identityconnectors.framework.common.exceptions.*;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 
+/**
+ * Oracle create operation. 
+ * It builds create sql using OracleCreateOrAlterStBuilder and builds grants using OracleRolesAndPrivsBuilder 
+ * @author kitko
+ *
+ */
 class OracleOperationCreate extends AbstractOracleOperation implements CreateOp{
     
     
@@ -28,7 +34,7 @@ class OracleOperationCreate extends AbstractOracleOperation implements CreateOp{
         OracleUserAttributes caAttributes = new OracleUserAttributes();
         caAttributes.userName = userName;
         new OracleAttributesReader(cfg.getConnectorMessages()).readCreateAttributes(map, caAttributes);
-        String createSQL = new OracleCreateOrAlterStBuilder(cfg.getCSSetup()).buildCreateUserSt(caAttributes).toString();
+        String createSQL = new OracleCreateOrAlterStBuilder(cfg.getCSSetup(),cfg.getConnectorMessages()).buildCreateUserSt(caAttributes).toString();
         if(createSQL == null){
         	//This should not happen, but be more deffensive
         	throw new ConnectorException("No create SQL generated, probably not enough attributes");

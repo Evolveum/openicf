@@ -1,7 +1,6 @@
 package org.identityconnectors.oracle;
 
 import static org.identityconnectors.oracle.OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_AUTH_LOCAL;
 import static org.identityconnectors.oracle.OracleConnector.ORACLE_DEF_TS_ATTR_NAME;
 import static org.identityconnectors.oracle.OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME;
 import static org.identityconnectors.oracle.OracleConnector.ORACLE_GLOBAL_ATTR_NAME;
@@ -11,13 +10,15 @@ import static org.identityconnectors.oracle.OracleConnector.ORACLE_TEMP_TS_QUOTA
 
 import java.util.Map;
 
-import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 
-/** Transforms attributes from Set<Attribute> attrs to {@link OracleUserAttributes} */
+/** Transforms attributes from Set<Attribute> attrs to {@link OracleUserAttributes}.
+ *  It checks just nullability of attributes and makes some possible value checks.
+ *  It does not do any additional logical checks, it is mainly reader of attributes to the helper structure.
+ * */
 final class OracleAttributesReader {
      ConnectorMessages messages;
      
@@ -52,28 +53,26 @@ final class OracleAttributesReader {
     private void readAuthAttributes(Map<String, Attribute> map, OracleUserAttributes caAttributes) {
         String authentication =  OracleConnectorHelper.getStringValue(map, ORACLE_AUTHENTICATION_ATTR_NAME);
         Attribute passwordAttribute = map.get(OperationalAttributes.PASSWORD_NAME);
-        if(authentication == null){
-        	//For alter and null passwordAttribute, do not set any authentication nor password
-        	if(Operation.ALTER.equals(caAttributes.operation) && passwordAttribute == null){
-       			return;
-        	}
-            authentication = ORACLE_AUTH_LOCAL; 
-        }
-        try{
-        	caAttributes.auth = OracleAuthentication.valueOf(authentication);
-        }
-        catch(IllegalArgumentException e){
-        	throw new IllegalArgumentException(messages.format(OracleMessages.INVALID_AUTH, OracleMessages.INVALID_AUTH, authentication));
-        }
-        switch(caAttributes.auth){
-	        case LOCAL :
-	            GuardedString password = passwordAttribute != null ? AttributeUtil.getGuardedStringValue(passwordAttribute) : null;
-	            caAttributes.password = password;
-	            break;
-	        case EXTERNAL : break;
-	        case GLOBAL : 
-	        	caAttributes.globalName = OracleConnectorHelper.getNotEmptyStringValue(map, ORACLE_GLOBAL_ATTR_NAME);
-	        	break;
+        //Set globalname to not silently skip it
+        caAttributes.globalName = OracleConnectorHelper.getStringValue(map, ORACLE_GLOBAL_ATTR_NAME);
+        caAttributes.password = passwordAttribute != null ? AttributeUtil.getGuardedStringValue(passwordAttribute) : null;
+        if(authentication != null){
+	        try{
+	        	caAttributes.auth = OracleAuthentication.valueOf(authentication);
+	        }
+	        catch(IllegalArgumentException e){
+	        	throw new IllegalArgumentException(messages.format(OracleMessages.INVALID_AUTH, OracleMessages.INVALID_AUTH, authentication));
+	        }
+	        switch(caAttributes.auth){
+		        case LOCAL :
+		        	//We will set default password in sql builder
+		            break;
+		        case EXTERNAL : break;
+		        case GLOBAL : 
+		        	//Now globalname is required
+		        	caAttributes.globalName = OracleConnectorHelper.getNotEmptyStringValue(map, ORACLE_GLOBAL_ATTR_NAME);
+		        	break;
+	        }
         }
     }
 

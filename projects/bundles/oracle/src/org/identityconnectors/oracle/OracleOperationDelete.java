@@ -12,6 +12,7 @@ import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
 
 /**
+ * Oracle delete operation drops oracle user
  * @author kitko
  *
  */

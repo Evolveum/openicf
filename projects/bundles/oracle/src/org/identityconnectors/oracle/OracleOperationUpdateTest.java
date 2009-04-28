@@ -16,6 +16,7 @@ import org.hamcrest.core.IsNot;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.*;
 import org.junit.*;
@@ -252,7 +253,16 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         assertEquals("EXPIRED",record.status);
         
         //now unexpire
-        //TODO
+        expirePassword = AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME,Boolean.FALSE);
+        try{
+        	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(expirePassword), null);
+        	fail("Must require password");
+        }catch(RuntimeException e){
+        }
+        facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil.newSet(expirePassword,AttributeBuilder.buildPassword("newPassword".toCharArray())), null);
+        record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
+    	assertNotNull(record);
+        assertEquals("OPEN",record.status);
     }
     
     @Test
@@ -356,6 +366,60 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop role role2");
     }
     
+    @Test
+    public void testUpdateUserExternal() throws SQLException{
+        //Test external authentication
+    	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConnector.ORACLE_AUTH_EXTERNAL)), null);
+        UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
+    	assertNotNull(record);
+        assertEquals("OPEN",record.status);
+        assertEquals("EXTERNAL",record.password);
+    	facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil
+				.newSet(AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConnector.ORACLE_AUTH_LOCAL),
+						AttributeBuilder.buildPassword("password".toCharArray())
+						),
+				null);
+    }
+    
+    
+    @Test
+    public void testUpdateUserGlobal() throws SQLException{
+        //Test external authentication
+    	try{
+    		facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConnector.ORACLE_AUTH_GLOBAL)), null);
+    		fail("Must require global name");
+    	}catch(RuntimeException e){}
+    	try{
+	    	facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil
+					.newSet(AttributeBuilder.build(
+							OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME,
+							OracleConnector.ORACLE_AUTH_GLOBAL),
+							AttributeBuilder.build(OracleConnector.ORACLE_GLOBAL_ATTR_NAME,"anyGlobal")
+					), null);
+	        UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
+	    	assertNotNull(record);
+	        assertEquals("OPEN",record.status);
+	        assertNotNull(record.externalName);
+	    	facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil
+					.newSet(AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConnector.ORACLE_AUTH_LOCAL),
+							AttributeBuilder.buildPassword("password".toCharArray())
+							),
+					null);
+	    	
+    	}
+        catch(ConnectorException e){
+            if(e.getCause() instanceof SQLException){
+                if("67000".equals(((SQLException)e.getCause()).getSQLState()) && 439 == ((SQLException)e.getCause()).getErrorCode()){
+                }
+                else{
+                    fail(e.getMessage());
+                }
+            }
+            else{
+                fail(e.getMessage());
+            }
+        }
+    }
     
     
     

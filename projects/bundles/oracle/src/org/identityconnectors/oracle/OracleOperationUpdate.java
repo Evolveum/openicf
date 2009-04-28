@@ -17,6 +17,11 @@ import org.identityconnectors.framework.common.exceptions.*;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.spi.operations.*;
 
+/**
+ * Alter the user attributes, his roles and privileges
+ * @author kitko
+ *
+ */
 class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp,UpdateAttributeValuesOp {
 
     OracleOperationUpdate(OracleConfiguration cfg, Connection adminConn, Log log) {
@@ -32,7 +37,7 @@ class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp,
         new OracleAttributesReader(cfg.getConnectorMessages()).readAlterAttributes(map, caAttributes);
         try{
             UserRecord userRecord = new OracleUserReader(adminConn).readUserRecord(caAttributes.userName);
-            String alterSQL = new OracleCreateOrAlterStBuilder(cfg.getCSSetup()).buildAlterUserSt(caAttributes, userRecord);
+            String alterSQL = new OracleCreateOrAlterStBuilder(cfg.getCSSetup(),cfg.getConnectorMessages()).buildAlterUserSt(caAttributes, userRecord);
             
             List<String> grantRevokeSQL = new ArrayList<String>();
             Attribute aRoles = AttributeUtil.find(ORACLE_ROLES_ATTR_NAME, attrs);

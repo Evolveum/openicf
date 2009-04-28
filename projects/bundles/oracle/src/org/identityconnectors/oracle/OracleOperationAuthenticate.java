@@ -10,7 +10,12 @@ import org.identityconnectors.framework.common.exceptions.PasswordExpiredExcepti
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.spi.operations.AuthenticateOp;
 
-class OracleOperationAuthenticate extends AbstractOracleOperation implements AuthenticateOp{
+/** Authenticate operation.
+ *  It just tries to create new jdbc connection with passed user/password
+ * @author kitko
+ *
+ */
+final class OracleOperationAuthenticate extends AbstractOracleOperation implements AuthenticateOp{
     
     
     OracleOperationAuthenticate(OracleConfiguration cfg,Connection adminConn, Log log) {

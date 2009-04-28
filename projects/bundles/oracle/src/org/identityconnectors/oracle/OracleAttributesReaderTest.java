@@ -51,7 +51,7 @@ public class OracleAttributesReaderTest {
         caAttributes = new OracleUserAttributes();
         caAttributes.userName = "testUser";
         reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
-        Assert.assertEquals(OracleAuthentication.LOCAL, caAttributes.auth);
+        Assert.assertNull("Should not set authentication to any default value", caAttributes.auth);
         Assert.assertNull("Password must be null",caAttributes.password);
         
         

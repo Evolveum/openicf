@@ -1,5 +1,15 @@
 package org.identityconnectors.oracle;
 
+import static org.identityconnectors.oracle.OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME;
+import static org.identityconnectors.oracle.OracleConnector.ORACLE_DEF_TS_ATTR_NAME;
+import static org.identityconnectors.oracle.OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME;
+import static org.identityconnectors.oracle.OracleConnector.ORACLE_GLOBAL_ATTR_NAME;
+import static org.identityconnectors.oracle.OracleConnector.ORACLE_PRIVS_ATTR_NAME;
+import static org.identityconnectors.oracle.OracleConnector.ORACLE_PROFILE_ATTR_NAME;
+import static org.identityconnectors.oracle.OracleConnector.ORACLE_ROLES_ATTR_NAME;
+import static org.identityconnectors.oracle.OracleConnector.ORACLE_TEMP_TS_ATTR_NAME;
+import static org.identityconnectors.oracle.OracleConnector.ORACLE_TEMP_TS_QUOTA_ATTR_NAME;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,8 +20,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static org.identityconnectors.oracle.OracleConnector.*;
 
 import org.identityconnectors.common.Pair;
 import org.identityconnectors.common.logging.Log;
@@ -36,7 +44,11 @@ import org.identityconnectors.framework.common.objects.filter.Filter;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 
-
+/**
+ * Oracle search actually exeutes query to search for user. It uses DBA_USERS,DBA_TS_QUOTAS,DBA_ROLE_PRIVS,DBA_SYS_PRIVS,USER_TAB_PRIVS views to perform query
+ * @author kitko
+ *
+ */
 class OracleOperationSearch extends AbstractOracleOperation implements SearchOp<Pair<String, FilterWhereBuilder>>{
 	private static final String SQL = "SELECT DISTINCT DBA_USERS.USERNAME FROM DBA_USERS";
 	
@@ -97,7 +109,7 @@ class OracleOperationSearch extends AbstractOracleOperation implements SearchOp<
                 	bld.addAttribute(AttributeBuilder.build(ORACLE_TEMP_TS_ATTR_NAME,record.temporaryTableSpace));
                 }
                 if(attributesToGet.contains(ORACLE_AUTHENTICATION_ATTR_NAME)){
-                	bld.addAttribute(AttributeBuilder.build(ORACLE_AUTHENTICATION_ATTR_NAME,userReader.resolveAuthentication(record).toString()));
+                	bld.addAttribute(AttributeBuilder.build(ORACLE_AUTHENTICATION_ATTR_NAME,OracleUserReader.resolveAuthentication(record).toString()));
                 }
                 if(attributesToGet.contains(ORACLE_GLOBAL_ATTR_NAME)){
                 	bld.addAttribute(AttributeBuilder.build(ORACLE_GLOBAL_ATTR_NAME,record.externalName));
@@ -157,6 +169,9 @@ class OracleOperationSearch extends AbstractOracleOperation implements SearchOp<
 		@Override
 		protected String getDatabaseColumnName(Attribute attribute, ObjectClass oclass, OperationOptions options) {
 			if(attribute.is(Name.NAME)){
+				return "DBA_USERS.USERNAME";
+			}
+			if(attribute.is(Uid.NAME)){
 				return "DBA_USERS.USERNAME";
 			}
 			if(attribute.is(OracleConnector.ORACLE_DEF_TS_ATTR_NAME)){
