@@ -8,7 +8,7 @@ import static org.identityconnectors.oracle.OracleConnectorAbstractTest.*;
 
 import java.sql.*;
 import java.util.*;
-import static org.identityconnectors.oracle.OracleUserAttribute.*;
+import static org.identityconnectors.oracle.OracleUserAttributeCS.*;
 
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.junit.*;
@@ -69,12 +69,14 @@ public class OracleUserReaderTest {
     @Test
     public void testReadUserRecords() throws SQLException {
         final OracleCaseSensitivitySetup cs = cfg.getCSSetup();
-        if(!userReader.userExist("user1")){
-            SQLUtil.executeUpdateStatement(conn,"create user " + cs.formatToken(USER_NAME,"user1") + " identified by password");
-        }
-        if(!userReader.userExist("user2")){
-            SQLUtil.executeUpdateStatement(conn,"create user " + cs.formatToken(USER_NAME,"user2") + " identified by password");
-        }
+        try{
+        	SQLUtil.executeUpdateStatement(conn,"drop user " + cs.formatToken(USER_NAME,"user1"));
+        }catch(SQLException e){}
+        try{
+        	SQLUtil.executeUpdateStatement(conn,"drop user " + cs.formatToken(USER_NAME,"user2"));
+        }catch(SQLException e){}
+        SQLUtil.executeUpdateStatement(conn,"create user " + cs.formatToken(USER_NAME,"user1") + " identified by password");
+        SQLUtil.executeUpdateStatement(conn,"create user " + cs.formatToken(USER_NAME,"user2") + " identified by password");
         final Collection<UserRecord> records = userReader.readUserRecords(Arrays.asList("user1","user2","user3"));
         assertEquals("Read should return 2 users",2,records.size());
         
@@ -86,7 +88,16 @@ public class OracleUserReaderTest {
         assertNotNull(record1.defaultTableSpace);
         assertNotNull(record1.temporaryTableSpace);
         assertNotNull(record1.createdDate);
+        assertNull(record1.expireDate);
+        assertNull(record1.lockDate);
         assertEquals("OPEN",record1.status);
+        
+        SQLUtil.executeUpdateStatement(conn,"alter user " + cs.formatToken(USER_NAME,"user1") + " password expire account lock");
+        record1 = userReader.readUserRecord("user1");
+        assertNotNull(record1);
+        assertNotNull(record1.expireDate);
+        assertNotNull(record1.lockDate);
+        assertEquals("EXPIRED & LOCKED",record1.status);
         
         SQLUtil.executeUpdateStatement(conn,"drop user " + cs.formatToken(USER_NAME,"user1"));
         SQLUtil.executeUpdateStatement(conn,"drop user " + cs.formatToken(USER_NAME,"user2"));

@@ -4,7 +4,7 @@
 package org.identityconnectors.oracle;
 
 import static org.identityconnectors.oracle.OracleConnector.*;
-import static org.identityconnectors.oracle.OracleUserAttribute.*;
+import static org.identityconnectors.oracle.OracleUserAttributeCS.*;
 import static org.junit.Assert.*;
 
 
@@ -20,6 +20,7 @@ import java.util.Set;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.Pair;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLUtil;
@@ -31,7 +32,6 @@ import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
-import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.AndFilter;
 import org.identityconnectors.framework.common.objects.filter.ContainsAllValuesFilter;
@@ -40,8 +40,10 @@ import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.common.objects.filter.GreaterThanFilter;
 import org.identityconnectors.framework.common.objects.filter.LessThanFilter;
+import org.identityconnectors.framework.common.objects.filter.NotFilter;
 import org.identityconnectors.framework.common.objects.filter.OrFilter;
 import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
+import org.identityconnectors.test.common.TestHelpers;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -49,10 +51,26 @@ import org.junit.Test;
 
 /**
  * @author kitko
+ * We will use SPI for search to really test just SPI when not needed to use API
  *
  */
 public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
-
+	private static final String USER_PREFIX = "TEST_SEARCH";
+	
+	private static String user(int i){
+		return USER_PREFIX + i;
+	}
+	
+	private static final List<String> ALL_UIDS;
+	
+	static {
+		List<String> tmp = new ArrayList<String>();
+		for(int i = 1;i <= 10;i++){
+			tmp.add(user(i));
+		}
+		ALL_UIDS = Collections.unmodifiableList(tmp);
+	}
+	
 	/**
 	 * Test method for {@link org.identityconnectors.oracle.OracleOperationSearch#createFilterTranslator(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.OperationOptions)}.
 	 */
@@ -80,20 +98,21 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 	
 	private static void createTestUsers(){
 		dropTestUsers();
-		for(int i = 1;i <= 10;i++){
+		int i = 1;
+		for(String uid : ALL_UIDS){
 			Set<Attribute> attributes = new HashSet<Attribute>();
 			if(i == 3 | i == 5 || i == 7){
-				attributes.add(AttributeBuilder.build(OracleConnector.ORACLE_PROFILE_ATTR_NAME,"profile" + i));
+				attributes.add(AttributeBuilder.build(OracleConnector.ORACLE_PROFILE_ATTR_NAME,"PROFILE" + i));
 			}
-			attributes.add(new Name("test" + i));
-			
+			attributes.add(new Name(uid));
 			facade.create(ObjectClass.ACCOUNT, attributes, null);
+			i++;
 		}
 	}
 	
 	private static void createProfiles() {
 		dropProfiles();
-		for(String profile : new String[]{"profile3","profile5","profile7"}){
+		for(String profile : new String[]{"PROFILE3","PROFILE5","PROFILE7"}){
 	        try{
 	            SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "create profile " + testConf.getCSSetup().normalizeAndFormatToken(PROFILE,profile) + "limit password_lock_time 6");
 	            connector.getAdminConnection().commit();
@@ -114,10 +133,9 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 	}
 
 	private static void dropTestUsers(){
-		for(int i = 1;i <= 10;i++){
-			Uid uid = new Uid("test" + i);
+		for(String uid : ALL_UIDS){
 			try{
-				facade.delete(ObjectClass.ACCOUNT, uid, null);
+				facade.delete(ObjectClass.ACCOUNT, new Uid(uid), null);
 			}
 			catch(UnknownUidException e){
 			}
@@ -181,56 +199,32 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 			arg0.appendValue(uids);
 		}
 	}
-	
-	private static class Listhandler implements ResultsHandler{
-		private final List<ConnectorObject> results = new ArrayList<ConnectorObject>();
-		@Override
-		public boolean handle(ConnectorObject obj) {
-			results.add(obj);
-			return true;
-		}
-		List<ConnectorObject> getResultsAndClear(){
-			List<ConnectorObject> results = new ArrayList<ConnectorObject>(this.results);
-			this.results.clear();
-			return results;
-		}
-		
-	}
+
 
 	/**
 	 * Test Search by name
 	 */
 	@Test
 	public void testSearchByName() {
-		Listhandler handler = new Listhandler();
-		facade.search(ObjectClass.ACCOUNT, new EqualsFilter(new Name("TEST1")), handler, null);
-		Assert.assertThat(handler.getResultsAndClear(), new UIDMatcher("TEST1"));
-		facade.search(ObjectClass.ACCOUNT, new EqualsFilter(new Name("TEST3")), handler, null);
-		Assert.assertThat(handler.getResultsAndClear(), new UIDMatcher("TEST3"));
-		facade.search(ObjectClass.ACCOUNT, new OrFilter(new EqualsFilter(new Name("TEST5")),new EqualsFilter(new Name("TEST6"))), handler, null);
-		Assert.assertThat(handler.getResultsAndClear(), new UIDMatcher("TEST5","TEST6"));
-		facade.search(ObjectClass.ACCOUNT, new EndsWithFilter(new Name("2")), handler, null);
-		Assert.assertThat(handler.getResultsAndClear(), new UIDMatcher("TEST2"));
+		Assert.assertThat(TestHelpers.searchToList(connector, ObjectClass.ACCOUNT, new EqualsFilter(new Name(user(1)))), new UIDMatcher(user(1)));
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new EqualsFilter(new Name(user(3))) ), new UIDMatcher(user(3)));
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new OrFilter(new EqualsFilter(new Name(user(5))),new EqualsFilter(new Name(user(6)))) ), new UIDMatcher(user(5),user(6)));
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new EndsWithFilter(new Name("2"))  ), new UIDMatcher(user(2)));
 	}
 	
 	@Test
 	public void testSearchByProfile(){
-		Listhandler handler = new Listhandler();
-		facade.search(ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(ORACLE_PROFILE_ATTR_NAME,"profile3")), handler, null);
-		Assert.assertThat(handler.getResultsAndClear(), new UIDMatcher("TEST3"));
-		facade.search(ObjectClass.ACCOUNT, new OrFilter(new EqualsFilter(AttributeBuilder.build(ORACLE_PROFILE_ATTR_NAME,"profile5")),new EqualsFilter(AttributeBuilder.build(ORACLE_PROFILE_ATTR_NAME,"profile7"))), handler, null);
-		Assert.assertThat(handler.getResultsAndClear(), new UIDMatcher("TEST5","TEST7"));
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(ORACLE_PROFILE_ATTR_NAME,"PROFILE3"))  ), new UIDMatcher(user(3)));
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new OrFilter(new EqualsFilter(AttributeBuilder.build(ORACLE_PROFILE_ATTR_NAME,"PROFILE5")),new EqualsFilter(AttributeBuilder.build(ORACLE_PROFILE_ATTR_NAME,"PROFILE7")))  ), new UIDMatcher(user(5),user(7)));
 	}
 	
 	@Test
 	public void testSearchByTableSpace() throws SQLException{
-		Listhandler handler = new Listhandler();
 		List<String> allDefTS = findAllDefTS(connector.getAdminConnection());
 		int i = 1;
 		for(String defTS : allDefTS){
-			String userName = "TEST" + i;
 			try{
-				facade.update(ObjectClass.ACCOUNT, new Uid(userName), Collections.singleton(AttributeBuilder.build(ORACLE_DEF_TS_ATTR_NAME,defTS)), null);
+				facade.update(ObjectClass.ACCOUNT, new Uid(user(i)), Collections.singleton(AttributeBuilder.build(ORACLE_DEF_TS_ATTR_NAME,defTS)), null);
 			}
 			catch(ConnectorException e){
 				continue;
@@ -238,8 +232,7 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 			finally{
 				i++;
 			}
-			facade.search(ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(ORACLE_DEF_TS_ATTR_NAME,defTS)), handler, null);
-			for(ConnectorObject o : handler.getResultsAndClear()){
+			for(ConnectorObject o : TestHelpers.searchToList(connector, ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(ORACLE_DEF_TS_ATTR_NAME,defTS)))){
 				OracleUserReader reader = new OracleUserReader(connector.getAdminConnection());
 				UserRecord record = reader.readUserRecord(o.getUid().getUidValue());
 				assertEquals("Found tablespace does not match",defTS, record.defaultTableSpace);
@@ -250,34 +243,29 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 	
 	@Test
 	public void testSearchByQuota() throws SQLException{
-		Listhandler handler = new Listhandler();
-		facade.update(ObjectClass.ACCOUNT, new Uid("TEST5"), Collections.singleton(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,"20k")), null);
-		facade.update(ObjectClass.ACCOUNT, new Uid("TEST6"), Collections.singleton(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,"60k")), null);
-		facade.search(ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name("TEST")),new LessThanFilter(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,"10000"))), handler, null);
-		Assert.assertThat(handler.getResultsAndClear(), new UIDMatcher());
-		facade.search(ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name("TEST")),new GreaterThanFilter(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,"10000"))), handler, null);
-		Assert.assertThat(handler.getResultsAndClear(), new UIDMatcher("TEST5","TEST6"));
-		facade.search(ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name("TEST")),new GreaterThanFilter(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,"40000"))), handler, null);
-		Assert.assertThat(handler.getResultsAndClear(), new UIDMatcher("TEST6"));
+		facade.update(ObjectClass.ACCOUNT, new Uid(user(5)), Collections.singleton(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,"20k")), null);
+		facade.update(ObjectClass.ACCOUNT, new Uid(user(6)), Collections.singleton(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,"60k")), null);
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new LessThanFilter(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,"10000")))  ), new UIDMatcher());
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new GreaterThanFilter(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,"10000"))) ), new UIDMatcher(user(5),user(6)));
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new GreaterThanFilter(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,"40000"))) ), new UIDMatcher(user(6)));
 	}
 	
 	@Test
 	public void testSearchByRoles() throws SQLException {
-		Listhandler handler = new Listhandler();
 		String[] roles = new String[]{"role1","role2"}; 
 		dropRoles(roles);
 		createRoles(roles);
         Attribute aRoles = AttributeBuilder.build(OracleConnector.ORACLE_ROLES_ATTR_NAME, Arrays.asList(roles));
-        facade.update(ObjectClass.ACCOUNT, new Uid("TEST3"),Collections.singleton(aRoles),null);
-        facade.update(ObjectClass.ACCOUNT, new Uid("TEST7"),Collections.singleton(aRoles),null);
-        facade.search(ObjectClass.ACCOUNT,new AndFilter(new StartsWithFilter(new Name("TEST")),new ContainsAllValuesFilter(aRoles)),handler,null);
-        Assert.assertThat(handler.getResultsAndClear(), new UIDMatcher("TEST3","TEST7"));
+        facade.update(ObjectClass.ACCOUNT, new Uid(user(3)),Collections.singleton(aRoles),null);
+        facade.update(ObjectClass.ACCOUNT, new Uid(user(7)),Collections.singleton(aRoles),null);
+        //We must search using facade, currently we do not support in operator
+        Assert.assertThat(TestHelpers.searchToList(facade, ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new ContainsAllValuesFilter(aRoles)),null),new UIDMatcher(user(3),user(7)));
     }
 	
 	private void createRoles(String ...roles) throws SQLException{
 		final OracleCaseSensitivitySetup cs = testConf.getCSSetup();
 		for(String role : roles){
-			SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "create role " + cs.normalizeAndFormatToken(OracleUserAttribute.ROLE,role));
+			SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "create role " + cs.normalizeAndFormatToken(OracleUserAttributeCS.ROLE,role));
 		}
 	}
 	
@@ -309,7 +297,6 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 	
 	@Test
 	public void testSearchByPrivileges() throws SQLException {
-		Listhandler handler = new Listhandler();
 		dropPrivilegeTables();
 		createPrivilegeTables();
         try{
@@ -317,15 +304,95 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 					OracleConnector.ORACLE_PRIVS_ATTR_NAME, "CREATE SESSION",
 					"SELECT ON " + testConf.getUser() + ".MYTABLE1",
 					"SELECT ON " + testConf.getUser() + ".MYTABLE2");
-	        facade.update(ObjectClass.ACCOUNT, new Uid("TEST3"),Collections.singleton(privileges),null);
-	        facade.update(ObjectClass.ACCOUNT, new Uid("TEST7"),Collections.singleton(privileges),null);
-	        facade.search(ObjectClass.ACCOUNT,new AndFilter(new StartsWithFilter(new Name("TEST")),new ContainsAllValuesFilter(privileges)),handler,null);
-	        Assert.assertThat(handler.getResultsAndClear(), new UIDMatcher("TEST3","TEST7"));
+	        facade.update(ObjectClass.ACCOUNT, new Uid(user(3)),Collections.singleton(privileges),null);
+	        facade.update(ObjectClass.ACCOUNT, new Uid(user(7)),Collections.singleton(privileges),null);
+	        //Must search using facade, we do not support in operator
+	        Assert.assertThat(TestHelpers.searchToList(facade, ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new ContainsAllValuesFilter(privileges))), new UIDMatcher(user(3),user(7)));
         }
         finally{
         	dropPrivilegeTables();
         }
     }
 	
+	@Test
+	public void testSearchByEnabled(){
+		//enable all
+		for(String uid : ALL_UIDS){
+			facade.update(ObjectClass.ACCOUNT, new Uid(uid), Collections.singleton(AttributeBuilder.buildEnabled(true)), null);
+		}
+		//all must be enables
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new EqualsFilter(AttributeBuilder.buildEnabled(true)))), new UIDMatcher(ALL_UIDS.toArray(new String[ALL_UIDS.size()])));
+		//None is disabled
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new EqualsFilter(AttributeBuilder.buildEnabled(false)))), new UIDMatcher());
+		
+		//update two of them - disable them
+		facade.update(ObjectClass.ACCOUNT, new Uid(user(2)), Collections.singleton(AttributeBuilder.buildEnabled(false)), null);
+		facade.update(ObjectClass.ACCOUNT, new Uid(user(6)), Collections.singleton(AttributeBuilder.buildEnabled(false)), null);
+		List<String> newUids = new ArrayList<String>(ALL_UIDS);
+		newUids.removeAll(Arrays.asList(user(2),user(6)));
+		//test others are still enabled
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new EqualsFilter(AttributeBuilder.buildEnabled(true)))), new UIDMatcher(newUids.toArray(new String[newUids.size()])));
+		//and that just two are disabled
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new EqualsFilter(AttributeBuilder.buildEnabled(false)))), new UIDMatcher(user(2),user(6)));
+	}
+	
+	@Test
+	public void testSearchByPasswordExpire(){
+		//Unexpire password
+		for(String uid : ALL_UIDS){
+			facade.update(ObjectClass.ACCOUNT, new Uid(uid), CollectionUtil.newSet(AttributeBuilder.buildPasswordExpired(false),AttributeBuilder.buildPassword(uid.toCharArray())), null);
+		}
+		//All must be unexpired
+		Assert.assertThat(TestHelpers.searchToList(connector, ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new EqualsFilter(AttributeBuilder.buildPasswordExpired(false)))), new UIDMatcher(ALL_UIDS.toArray(new String[ALL_UIDS.size()])));
+		//None is expired
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new EqualsFilter(AttributeBuilder.buildPasswordExpired(true)))), new UIDMatcher());
+		
+		//expire two
+		facade.update(ObjectClass.ACCOUNT, new Uid(user(1)), Collections.singleton(AttributeBuilder.buildPasswordExpired(true)), null);
+		facade.update(ObjectClass.ACCOUNT, new Uid(user(7)), Collections.singleton(AttributeBuilder.buildPasswordExpired(true)), null);
+		List<String> newUids = new ArrayList<String>(ALL_UIDS);
+		newUids.removeAll(Arrays.asList(user(1),user(7)));
+		//others must remain unexpired
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new EqualsFilter(AttributeBuilder.buildPasswordExpired(false)))), new UIDMatcher(newUids.toArray(new String[newUids.size()])));
+		//just two are expired
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new EqualsFilter(AttributeBuilder.buildPasswordExpired(true)))), new UIDMatcher(user(1),user(7)));
+	}
+	
+	
+	@Test
+	public void testSearchByDisabledDate(){
+		//Set all to enabled
+		for(String uid : ALL_UIDS){
+			facade.update(ObjectClass.ACCOUNT, new Uid(uid), Collections.singleton(AttributeBuilder.buildEnabled(true)), null);
+		}
+		//Now all disabled date must be null
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new EqualsFilter(AttributeBuilder.build(OperationalAttributes.DISABLE_DATE_NAME)))), new UIDMatcher(ALL_UIDS.toArray(new String[ALL_UIDS.size()])));
+		//update two of them, so set enabled to false
+		facade.update(ObjectClass.ACCOUNT, new Uid(user(2)), Collections.singleton(AttributeBuilder.buildEnabled(false)), null);
+		facade.update(ObjectClass.ACCOUNT, new Uid(user(6)), Collections.singleton(AttributeBuilder.buildEnabled(false)), null);
+		//They should have set lock date to now, but search to not null
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new NotFilter(new EqualsFilter(AttributeBuilder.build(OperationalAttributes.DISABLE_DATE_NAME))))), new UIDMatcher(user(2),user(6)));
+		//Enabled one
+		facade.update(ObjectClass.ACCOUNT, new Uid(user(6)), Collections.singleton(AttributeBuilder.buildEnabled(true)), null);
+		//Search for it
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new EqualsFilter(new Name(user(6))),new EqualsFilter(AttributeBuilder.build(OperationalAttributes.DISABLE_DATE_NAME)))), new UIDMatcher(user(6)));
+	}
+	
+	@Test
+	public void testSearchByExpirationDate(){
+		//Unexpire all, so set default password
+		for(String uid : ALL_UIDS){
+			facade.update(ObjectClass.ACCOUNT, new Uid(uid), CollectionUtil.newSet(AttributeBuilder.buildPassword(uid.toCharArray()),AttributeBuilder.buildPasswordExpired(false)), null);
+		}
+		//All password expired date must be null now
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new EqualsFilter(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME)))), new UIDMatcher(ALL_UIDS.toArray(new String[ALL_UIDS.size()])));
+		facade.update(ObjectClass.ACCOUNT, new Uid(user(4)), Collections.singleton(AttributeBuilder.buildPasswordExpired(true)), null);
+		facade.update(ObjectClass.ACCOUNT, new Uid(user(5)), Collections.singleton(AttributeBuilder.buildPasswordExpired(true)), null);
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new NotFilter(new EqualsFilter(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME))))), new UIDMatcher(user(4),user(5)));
+		//unexpire, so reset password
+		facade.update(ObjectClass.ACCOUNT, new Uid(user(5)), CollectionUtil.newSet(AttributeBuilder.buildPassword(user(5).toCharArray()),AttributeBuilder.buildPasswordExpired(false)), null);
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new EqualsFilter(new Name(user(5))),new EqualsFilter(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME)))), new UIDMatcher(user(5)));
+	}
+
 
 }

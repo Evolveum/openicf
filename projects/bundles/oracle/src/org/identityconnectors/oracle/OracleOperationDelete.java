@@ -28,7 +28,7 @@ class OracleOperationDelete extends AbstractOracleOperation implements DeleteOp{
         //Currently IDM pass null for options parameter. So there is no way how to decide
         //whether we will do cascade or noCascade delete
         String userName = uid.getUidValue();
-        String sql = "drop user " + cfg.getCSSetup().formatToken(OracleUserAttribute.USER_NAME,userName);
+        String sql = "drop user " + cfg.getCSSetup().formatToken(OracleUserAttributeCS.USER_NAME,userName);
         Statement st = null;
         try{
             st = adminConn.createStatement();

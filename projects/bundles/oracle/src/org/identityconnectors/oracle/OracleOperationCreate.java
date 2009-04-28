@@ -20,11 +20,10 @@ class OracleOperationCreate extends AbstractOracleOperation implements CreateOp{
 
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
         OracleConnector.checkObjectClass(oclass, cfg.getConnectorMessages());
-        
         Map<String, Attribute> map = AttributeUtil.toMap(attrs);
         String userName = OracleConnectorHelper.getStringValue(map, Name.NAME);
         new LocalizedAssert(cfg.getConnectorMessages()).assertNotBlank(userName,Name.NAME);
-        checkCreateAttributes(attrs);
+        checkCreateAttributes(map);
         checkUserNotExist(userName);
         OracleUserAttributes caAttributes = new OracleUserAttributes();
         caAttributes.userName = userName;
@@ -61,9 +60,9 @@ class OracleOperationCreate extends AbstractOracleOperation implements CreateOp{
     }
 
     
-    private void checkCreateAttributes(Set<Attribute> attrs) {
+    private void checkCreateAttributes(Map<String, Attribute> map) {
     	LocalizedAssert la = new LocalizedAssert(cfg.getConnectorMessages());
-		for(Attribute attr : attrs){
+		for(Attribute attr : map.values()){
 			if(attr.is(Name.NAME)){
 				la.assertNotBlank(AttributeUtil.getStringValue(attr), Name.NAME);
 			}

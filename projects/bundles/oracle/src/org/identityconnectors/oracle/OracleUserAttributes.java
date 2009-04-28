@@ -33,11 +33,6 @@ class OracleUserAttributes implements Cloneable{
     
 }
 
-enum OracleAuthentication {
-    LOCAL,
-    EXTERNAL,
-    GLOBAL;
-}
 
 enum Operation{
     CREATE,

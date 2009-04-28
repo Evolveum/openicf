@@ -24,11 +24,11 @@ class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp,
     }
 
     public Uid update(ObjectClass objclass, Uid uid,  Set<Attribute> attrs, OperationOptions options) {
-    	checkUpdateAttributes(attrs);
+        Map<String, Attribute> map = AttributeUtil.toMap(attrs);
+    	checkUpdateAttributes(map);
         checkUserExist(uid.getUidValue());
         OracleUserAttributes caAttributes = new OracleUserAttributes();
         caAttributes.userName = uid.getUidValue();
-        Map<String, Attribute> map = AttributeUtil.toMap(attrs);
         new OracleAttributesReader(cfg.getConnectorMessages()).readAlterAttributes(map, caAttributes);
         try{
             UserRecord userRecord = new OracleUserReader(adminConn).readUserRecord(caAttributes.userName);
@@ -142,14 +142,22 @@ class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp,
         return uid;
     }
     
-    private void checkUpdateAttributes(Set<Attribute> attrs) {
+    private void checkUpdateAttributes(Map<String, Attribute> map) {
     	LocalizedAssert la = new LocalizedAssert(cfg.getConnectorMessages());
-		for(Attribute attr : attrs){
+		for(Attribute attr : map.values()){
 			if(attr.is(Name.NAME)){
 				la.assertNotBlank(AttributeUtil.getStringValue(attr), Name.NAME);
 			}
 			else if(attr.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
 				la.assertNotNull(AttributeUtil.getBooleanValue(attr), OperationalAttributes.PASSWORD_EXPIRED_NAME);
+				//we can 'unexpire' password only if new password is provided
+				//We cannot use password equals to name
+				if(Boolean.FALSE.equals(AttributeUtil.getSingleValue(attr))){
+					Attribute password = map.get(OperationalAttributes.PASSWORD_NAME);
+					if(password == null || AttributeUtil.getGuardedStringValue(password) == null){
+						throw new IllegalArgumentException("No password specified when unexpiring passord");
+					}
+				}
 			}
 			else if(attr.is(OperationalAttributes.ENABLE_NAME)){
 				la.assertNotNull(AttributeUtil.getBooleanValue(attr), OperationalAttributes.ENABLE_NAME);

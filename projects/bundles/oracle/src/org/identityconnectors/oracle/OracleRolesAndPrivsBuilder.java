@@ -4,7 +4,7 @@
 package org.identityconnectors.oracle;
 
 import java.util.*;
-import static org.identityconnectors.oracle.OracleUserAttribute.*;
+import static org.identityconnectors.oracle.OracleUserAttributeCS.*;
 
 /**
  * Builds grant and revoke sql

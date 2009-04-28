@@ -8,7 +8,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.identityconnectors.oracle.OracleUserAttribute.*;
+import static org.identityconnectors.oracle.OracleUserAttributeCS.*;
 
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -381,9 +381,9 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         try{
             SQLUtil.executeUpdateStatement(connector.getAdminConnection(),
                     "drop role "
-                            + cs.normalizeAndFormatToken(OracleUserAttribute.ROLE, role));
+                            + cs.normalizeAndFormatToken(OracleUserAttributeCS.ROLE, role));
         }catch(SQLException e){}
-        SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "create role " + cs.normalizeAndFormatToken(OracleUserAttribute.ROLE,role));
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "create role " + cs.normalizeAndFormatToken(OracleUserAttributeCS.ROLE,role));
         Attribute roles = AttributeBuilder.build(OracleConnector.ORACLE_ROLES_ATTR_NAME, Arrays.asList(role));
         Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute, roles), null);
         UserRecord record = userReader.readUserRecord(uid.getUidValue());
@@ -391,7 +391,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         assertEqualsIgnoreCase(TEST_USER, record.userName);
         OracleRolePrivReader roleReader = new OracleRolePrivReader(connector.getAdminConnection());
         final List<String> rolesRead = roleReader.readRoles(uid.getUidValue());
-        Assert.assertThat(rolesRead, JUnitMatchers.hasItem(cs.normalizeToken(OracleUserAttribute.ROLE,role)));
+        Assert.assertThat(rolesRead, JUnitMatchers.hasItem(cs.normalizeToken(OracleUserAttributeCS.ROLE,role)));
     }
     
     /**

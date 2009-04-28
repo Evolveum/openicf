@@ -49,17 +49,17 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
     static final String ORACLE_AUTH_GLOBAL = "GLOBAL";
     static final String NO_CASCADE = "noCascade";
     
-    private static final Map<String,OracleUserAttribute> attributeMapping = new HashMap<String, OracleUserAttribute>();
+    private static final Map<String,OracleUserAttributeCS> attributeMapping = new HashMap<String, OracleUserAttributeCS>();
     static final Collection<String> ALL_ATTRIBUTE_NAMES = new HashSet<String>();
     static {
-        attributeMapping.put(Name.NAME, OracleUserAttribute.USER_NAME);
-        attributeMapping.put(Uid.NAME, OracleUserAttribute.USER_NAME);
-        attributeMapping.put(ORACLE_GLOBAL_ATTR_NAME, OracleUserAttribute.GLOBAL_NAME);
-        attributeMapping.put(ORACLE_ROLES_ATTR_NAME, OracleUserAttribute.ROLE);
-        attributeMapping.put(ORACLE_PRIVS_ATTR_NAME, OracleUserAttribute.PRIVILEGE);
-        attributeMapping.put(ORACLE_PROFILE_ATTR_NAME, OracleUserAttribute.PROFILE);
-        attributeMapping.put(ORACLE_DEF_TS_ATTR_NAME, OracleUserAttribute.DEF_TABLESPACE);
-        attributeMapping.put(ORACLE_TEMP_TS_ATTR_NAME, OracleUserAttribute.TEMP_TABLESPACE);
+        attributeMapping.put(Name.NAME, OracleUserAttributeCS.USER_NAME);
+        attributeMapping.put(Uid.NAME, OracleUserAttributeCS.USER_NAME);
+        attributeMapping.put(ORACLE_GLOBAL_ATTR_NAME, OracleUserAttributeCS.GLOBAL_NAME);
+        attributeMapping.put(ORACLE_ROLES_ATTR_NAME, OracleUserAttributeCS.ROLE);
+        attributeMapping.put(ORACLE_PRIVS_ATTR_NAME, OracleUserAttributeCS.PRIVILEGE);
+        attributeMapping.put(ORACLE_PROFILE_ATTR_NAME, OracleUserAttributeCS.PROFILE);
+        attributeMapping.put(ORACLE_DEF_TS_ATTR_NAME, OracleUserAttributeCS.DEF_TABLESPACE);
+        attributeMapping.put(ORACLE_TEMP_TS_ATTR_NAME, OracleUserAttributeCS.TEMP_TABLESPACE);
         
         ALL_ATTRIBUTE_NAMES.addAll(Arrays.asList(
 				ORACLE_AUTHENTICATION_ATTR_NAME, ORACLE_GLOBAL_ATTR_NAME,
@@ -67,8 +67,8 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
 				ORACLE_PROFILE_ATTR_NAME, ORACLE_DEF_TS_ATTR_NAME,
 				ORACLE_TEMP_TS_ATTR_NAME, ORACLE_DEF_TS_QUOTA_ATTR_NAME,
 				ORACLE_TEMP_TS_QUOTA_ATTR_NAME,
-				OperationalAttributes.PASSWORD_EXPIRED_NAME,
-				OperationalAttributes.ENABLE_NAME,
+				OperationalAttributes.PASSWORD_EXPIRED_NAME,OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,
+				OperationalAttributes.ENABLE_NAME,OperationalAttributes.DISABLE_DATE_NAME,
 				Name.NAME,OperationalAttributes.PASSWORD_NAME
 				));
     }
@@ -138,7 +138,7 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
     		return null;
     	}
         String name = attribute.getName();
-        final OracleUserAttribute oracleUserAttribute = attributeMapping.get(name);
+        final OracleUserAttributeCS oracleUserAttribute = attributeMapping.get(name);
         if(oracleUserAttribute == null){
             return attribute;
         }
@@ -198,6 +198,8 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
         attrInfoSet.add(OperationalAttributeInfos.PASSWORD);
         attrInfoSet.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
         attrInfoSet.add(OperationalAttributeInfos.ENABLE);
+        attrInfoSet.add(AttributeInfoBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,Long.class,EnumSet.of(Flags.NOT_UPDATEABLE,Flags.NOT_CREATABLE)));
+        attrInfoSet.add(AttributeInfoBuilder.build(OperationalAttributes.DISABLE_DATE_NAME,Long.class,EnumSet.of(Flags.NOT_UPDATEABLE,Flags.NOT_CREATABLE)));
         attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_AUTHENTICATION_ATTR_NAME,String.class,EnumSet.of(Flags.REQUIRED)));
         attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_GLOBAL_ATTR_NAME,String.class,express ? EnumSet.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE) : null));
         attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_ROLES_ATTR_NAME,String.class,EnumSet.of(Flags.MULTIVALUED)));

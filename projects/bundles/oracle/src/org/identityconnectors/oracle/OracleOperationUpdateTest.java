@@ -21,7 +21,7 @@ import org.identityconnectors.framework.common.objects.*;
 import org.junit.*;
 import org.junit.matchers.JUnitMatchers;
 
-import static org.identityconnectors.oracle.OracleUserAttribute.*;
+import static org.identityconnectors.oracle.OracleUserAttributeCS.*;
 import static org.junit.Assert.*;
 
 
@@ -177,13 +177,13 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         String role = "testrole";
         final OracleCaseSensitivitySetup cs = testConf.getCSSetup();
         try{
-            SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "drop role " + cs.normalizeAndFormatToken(OracleUserAttribute.ROLE, role));
+            SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "drop role " + cs.normalizeAndFormatToken(OracleUserAttributeCS.ROLE, role));
         }catch(SQLException e){}
-        SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "create role " + cs.normalizeAndFormatToken(OracleUserAttribute.ROLE,role));
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "create role " + cs.normalizeAndFormatToken(OracleUserAttributeCS.ROLE,role));
         Attribute roles = AttributeBuilder.build(OracleConnector.ORACLE_ROLES_ATTR_NAME, Arrays.asList(role));
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(roles), null);
         List<String> rolesRead = new OracleRolePrivReader(connector.getAdminConnection()).readRoles(uid.getUidValue());
-        Assert.assertThat(rolesRead, JUnitMatchers.hasItem(cs.normalizeToken(OracleUserAttribute.ROLE,role)));
+        Assert.assertThat(rolesRead, JUnitMatchers.hasItem(cs.normalizeToken(OracleUserAttributeCS.ROLE,role)));
         
         //If sending null or empty roles attribute, all roles must get revoked
         roles = AttributeBuilder.build(OracleConnector.ORACLE_ROLES_ATTR_NAME);
@@ -196,7 +196,7 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         rolesRead = new OracleRolePrivReader(connector.getAdminConnection()).readRoles(uid.getUidValue());
         Assert.assertThat("All roles must get revoked when sending empty list roles attribute",rolesRead, new IsEqual<List<String>>(Collections.<String>emptyList()));
         
-        SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "drop role " + cs.normalizeAndFormatToken(OracleUserAttribute.ROLE, role));
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "drop role " + cs.normalizeAndFormatToken(OracleUserAttributeCS.ROLE, role));
 }
     
 	@Test
@@ -250,6 +250,9 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
     	UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
     	assertNotNull(record);
         assertEquals("EXPIRED",record.status);
+        
+        //now unexpire
+        //TODO
     }
     
     @Test

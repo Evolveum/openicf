@@ -283,8 +283,8 @@ public class OracleConfigurationTest {
         conf.setConnectorMessages(TestHelpers.createDummyMessages());
         conf.setCaseSensitivity("default");
         assertNotNull("CaseSensitivity should not be null",conf.getCSSetup());
-        assertTrue("Default normalizer should be toupper",conf.getCSSetup().getAttributeNormalizer(OracleUserAttribute.USER_NAME).isToUpper());
-        assertEquals("Default formatter should use \" for quates","\"",conf.getCSSetup().getAttributeFormatter(OracleUserAttribute.USER_NAME).getQuatesChar());
+        assertTrue("Default normalizer should be toupper",conf.getCSSetup().getAttributeNormalizer(OracleUserAttributeCS.USER_NAME).isToUpper());
+        assertEquals("Default formatter should use \" for quates","\"",conf.getCSSetup().getAttributeFormatter(OracleUserAttributeCS.USER_NAME).getQuatesChar());
     }
     
     

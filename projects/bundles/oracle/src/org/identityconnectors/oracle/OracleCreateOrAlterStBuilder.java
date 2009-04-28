@@ -2,7 +2,7 @@ package org.identityconnectors.oracle;
 
 import java.util.Arrays;
 import org.identityconnectors.common.security.GuardedString;
-import static org.identityconnectors.oracle.OracleUserAttribute.*;
+import static org.identityconnectors.oracle.OracleUserAttributeCS.*;
 
 /**
  * Builds create or alter user sql statement.
@@ -73,9 +73,14 @@ final class OracleCreateOrAlterStBuilder {
         	anyChange = true;
             appendTempTSQuota(builder,userAttributes,userRecord );
         }
-        if(userAttributes.expirePassword != null && userAttributes.expirePassword){
-        	anyChange = true;
-            appendExpirePassword(builder,userAttributes);
+        if(userAttributes.expirePassword != null){
+        	if(userAttributes.expirePassword){
+	        	anyChange = true;
+	            appendExpirePassword(builder,userAttributes);
+        	}
+        	else{
+        		//unexpire 
+        	}
         }
         if(userAttributes.enable != null){
         	anyChange = true;
@@ -179,7 +184,7 @@ final class OracleCreateOrAlterStBuilder {
                 throw new IllegalArgumentException("GlobalName not specified for global authentication");
             }
             builder.append(" globally as ");
-            builder.append(cs.formatToken(OracleUserAttribute.GLOBAL_NAME,userAttributes.globalName));
+            builder.append(cs.formatToken(OracleUserAttributeCS.GLOBAL_NAME,userAttributes.globalName));
         }
         
         

@@ -22,71 +22,43 @@ interface OracleCaseSensitivitySetup {
 	 * @param token
 	 * @return
 	 */
-    public String normalizeToken(OracleUserAttribute attr,String token);
+    public String normalizeToken(OracleUserAttributeCS attr,String token);
     /**
      * Compound operation that normalizes and then formats
      * @param attr
      * @param token
      * @return
      */
-    public String normalizeAndFormatToken(OracleUserAttribute attr,String token);
+    public String normalizeAndFormatToken(OracleUserAttributeCS attr,String token);
     /**
      * Just format token, e.g append quotes
      * @param attr
      * @param token
      * @return
      */
-    public String formatToken(OracleUserAttribute attr,String token);
+    public String formatToken(OracleUserAttributeCS attr,String token);
     /**
      * Formats char array , useful for password to not convert to String
      * @param attr
      * @param token
      * @return
      */
-    public char[] formatToken(OracleUserAttribute attr,char[] token);
+    public char[] formatToken(OracleUserAttributeCS attr,char[] token);
     /**
      * Gets formatter by attribue
      * @param attribute
      * @throws  IllegalArgumentException when formatter by attribute is not found
      * @return CSTokenFormatter by attribute
      */
-    public CSTokenFormatter getAttributeFormatter(OracleUserAttribute attribute) throws IllegalArgumentException;
+    public CSTokenFormatter getAttributeFormatter(OracleUserAttributeCS attribute) throws IllegalArgumentException;
     /**
      * Gets normalizer by attribue
      * @param attribute
      * @throws  IllegalArgumentException when normalizer by attribute is not found
      * @return CSTokenFormatter by attribute
      */
-    public CSTokenNormalizer getAttributeNormalizer(OracleUserAttribute attribute) throws IllegalArgumentException;
-}
-
-/** Oracle user attribute */
-enum OracleUserAttribute {
-    USER_NAME,
-    PASSWORD,
-    SCHEMA,
-    ROLE,
-    PRIVILEGE(""),
-    PROFILE,
-    DEF_TABLESPACE,
-    TEMP_TABLESPACE,
-    GLOBAL_NAME(false,"'");
-    OracleUserAttribute(){}
-    OracleUserAttribute(String defQuatesChar){
-        this.defQuatesChar = defQuatesChar;
-    }
-    OracleUserAttribute(boolean defToUpper,String defQuatesChar){
-        this.defToUpper = true;
-        this.defQuatesChar = defQuatesChar;
-    }
-    private boolean defToUpper = true;
-    private String defQuatesChar = "\"";
-    boolean isDefToUpper() {
-        return defToUpper;
-    }
-    String getDefQuatesChar() {
-        return defQuatesChar;
-    }
+    public CSTokenNormalizer getAttributeNormalizer(OracleUserAttributeCS attribute) throws IllegalArgumentException;
+    
 }
 
 /** Formatter that formats given token. 
@@ -94,9 +66,9 @@ enum OracleUserAttribute {
  *
  */
 final class CSTokenFormatter{
-    private OracleUserAttribute attribute;
+    private OracleUserAttributeCS attribute;
     private String quatesChar = "";
-    OracleUserAttribute getAttribute() {
+    OracleUserAttributeCS getAttribute() {
         return attribute;
     }
     String getQuatesChar() {
@@ -123,13 +95,13 @@ final class CSTokenFormatter{
     }
     private CSTokenFormatter(){}
     
-    static CSTokenFormatter build(OracleUserAttribute attribute,String quatesChar){
+    static CSTokenFormatter build(OracleUserAttributeCS attribute,String quatesChar){
     	return new Builder().setAttribute(attribute).setQuatesChar(quatesChar).build();
     }
     
     final static class Builder{
         CSTokenFormatter element = new CSTokenFormatter();
-        Builder setAttribute(OracleUserAttribute attribute){
+        Builder setAttribute(OracleUserAttributeCS attribute){
             element.attribute = attribute;
             return this;
         }
@@ -154,7 +126,7 @@ final class CSTokenFormatter{
             }
             return element;
         }
-        CSTokenFormatter buildWithDefaultValues(OracleUserAttribute attribute){
+        CSTokenFormatter buildWithDefaultValues(OracleUserAttributeCS attribute){
             setAttribute(attribute);
             element.quatesChar = element.attribute.getDefQuatesChar();
             return build();
@@ -163,9 +135,9 @@ final class CSTokenFormatter{
 }
 
 final class CSTokenNormalizer{
-    private OracleUserAttribute attribute;
+    private OracleUserAttributeCS attribute;
     private boolean toUpper;
-    OracleUserAttribute getAttribute() {
+    OracleUserAttributeCS getAttribute() {
         return attribute;
     }
     boolean isToUpper() {
@@ -178,14 +150,14 @@ final class CSTokenNormalizer{
         return toUpper ? token.toUpperCase() : token;
     }
     
-    static CSTokenNormalizer build(OracleUserAttribute attribute,boolean toUpper){
+    static CSTokenNormalizer build(OracleUserAttributeCS attribute,boolean toUpper){
     	return new Builder().setAttribute(attribute).setToUpper(toUpper).build();
     }
 
     
     final static class Builder{
         CSTokenNormalizer element = new CSTokenNormalizer();
-        Builder setAttribute(OracleUserAttribute attribute){
+        Builder setAttribute(OracleUserAttributeCS attribute){
             element.attribute = attribute;
             return this;
         }
@@ -210,7 +182,7 @@ final class CSTokenNormalizer{
             }
             return element;
         }
-        CSTokenNormalizer buildWithDefaultValues(OracleUserAttribute attribute){
+        CSTokenNormalizer buildWithDefaultValues(OracleUserAttributeCS attribute){
             setAttribute(attribute);
             element.toUpper = element.attribute.isDefToUpper();
             return build();
@@ -221,8 +193,8 @@ final class CSTokenNormalizer{
 
 /** Builder of OracleCaseSensitivity using formatters for user attributes */
 final class OracleCaseSensitivityBuilder{
-    private Map<OracleUserAttribute,CSTokenFormatter> formatters = new HashMap<OracleUserAttribute, CSTokenFormatter>(6);
-    private Map<OracleUserAttribute,CSTokenNormalizer> normalizers = new HashMap<OracleUserAttribute, CSTokenNormalizer>(6);
+    private Map<OracleUserAttributeCS,CSTokenFormatter> formatters = new HashMap<OracleUserAttributeCS, CSTokenFormatter>(6);
+    private Map<OracleUserAttributeCS,CSTokenNormalizer> normalizers = new HashMap<OracleUserAttributeCS, CSTokenNormalizer>(6);
     
     OracleCaseSensitivityBuilder defineFormatters(CSTokenFormatter... formatters){
         for(CSTokenFormatter element : formatters){
@@ -256,12 +228,12 @@ final class OracleCaseSensitivityBuilder{
             for(String attributeName : formatters.keySet()){
                 Map<String, Object> elementMap = (Map<String, Object>) formatters.get(attributeName);
                 if("ALL".equalsIgnoreCase(attributeName)){
-                    for(OracleUserAttribute attribute : OracleUserAttribute.values()){
+                    for(OracleUserAttributeCS attribute : OracleUserAttributeCS.values()){
                         this.formatters.put(attribute, new CSTokenFormatter.Builder().setAttribute(attribute).setValues(elementMap).build());
                     }
                     continue;
                 }
-                OracleUserAttribute attribute = OracleUserAttribute.valueOf(attributeName);
+                OracleUserAttributeCS attribute = OracleUserAttributeCS.valueOf(attributeName);
                 CSTokenFormatter element = new CSTokenFormatter.Builder().setAttribute(attribute).setValues(elementMap).build(); 
                 this.formatters.put(element.getAttribute(),element);    
             }
@@ -270,12 +242,12 @@ final class OracleCaseSensitivityBuilder{
             for(String attributeName : normalizers.keySet()){
                 Map<String, Object> elementMap = (Map<String, Object>) normalizers.get(attributeName);
                 if("ALL".equalsIgnoreCase(attributeName)){
-                    for(OracleUserAttribute attribute : OracleUserAttribute.values()){
+                    for(OracleUserAttributeCS attribute : OracleUserAttributeCS.values()){
                         this.normalizers.put(attribute, new CSTokenNormalizer.Builder().setAttribute(attribute).setValues(elementMap).build());
                     }
                     continue;
                 }
-                OracleUserAttribute attribute = OracleUserAttribute.valueOf(attributeName);
+                OracleUserAttributeCS attribute = OracleUserAttributeCS.valueOf(attributeName);
                 CSTokenNormalizer element = new CSTokenNormalizer.Builder().setAttribute(attribute).setValues(elementMap).build(); 
                 this.normalizers.put(element.getAttribute(),element);    
             }
@@ -284,11 +256,11 @@ final class OracleCaseSensitivityBuilder{
     }
     
     OracleCaseSensitivitySetup build(){
-        Map<OracleUserAttribute,CSTokenFormatter> formatters = new HashMap<OracleUserAttribute, CSTokenFormatter>(this.formatters);
-        Map<OracleUserAttribute,CSTokenNormalizer> normalizers = new HashMap<OracleUserAttribute, CSTokenNormalizer>(this.normalizers);
+        Map<OracleUserAttributeCS,CSTokenFormatter> formatters = new HashMap<OracleUserAttributeCS, CSTokenFormatter>(this.formatters);
+        Map<OracleUserAttributeCS,CSTokenNormalizer> normalizers = new HashMap<OracleUserAttributeCS, CSTokenNormalizer>(this.normalizers);
         
         //If any elements is not defined in specified map set default value
-        for(OracleUserAttribute attribute : OracleUserAttribute.values()){
+        for(OracleUserAttributeCS attribute : OracleUserAttributeCS.values()){
             CSTokenFormatter formatter = formatters.get(attribute);
             if(formatter == null){
                 formatter = new CSTokenFormatter.Builder().buildWithDefaultValues(attribute);
@@ -307,19 +279,19 @@ final class OracleCaseSensitivityBuilder{
 
 /**
  * Implementation of OracleCaseSensitivitySetup that will use map of
- * formatters and normalizers for each {@link OracleUserAttribute}
+ * formatters and normalizers for each {@link OracleUserAttributeCS}
  * @author kitko
  *
  */
 final class OracleCaseSensitivityImpl implements OracleCaseSensitivitySetup{
-    private Map<OracleUserAttribute,CSTokenFormatter> formatters;
-    private Map<OracleUserAttribute,CSTokenNormalizer> normalizers;    
+    private Map<OracleUserAttributeCS,CSTokenFormatter> formatters;
+    private Map<OracleUserAttributeCS,CSTokenNormalizer> normalizers;    
     
-    OracleCaseSensitivityImpl(Map<OracleUserAttribute,CSTokenFormatter> formatters,Map<OracleUserAttribute,CSTokenNormalizer> normalizers){
-        this.formatters = new HashMap<OracleUserAttribute, CSTokenFormatter>(formatters);
-        this.normalizers = new HashMap<OracleUserAttribute, CSTokenNormalizer>(normalizers);
+    OracleCaseSensitivityImpl(Map<OracleUserAttributeCS,CSTokenFormatter> formatters,Map<OracleUserAttributeCS,CSTokenNormalizer> normalizers){
+        this.formatters = new HashMap<OracleUserAttributeCS, CSTokenFormatter>(formatters);
+        this.normalizers = new HashMap<OracleUserAttributeCS, CSTokenNormalizer>(normalizers);
     }
-    public CSTokenFormatter getAttributeFormatter(OracleUserAttribute attribute){
+    public CSTokenFormatter getAttributeFormatter(OracleUserAttributeCS attribute){
         final CSTokenFormatter formatter = formatters.get(attribute);
         if(formatter == null){
             throw new IllegalArgumentException("No formatter defined for attribute " + attribute);
@@ -327,7 +299,7 @@ final class OracleCaseSensitivityImpl implements OracleCaseSensitivitySetup{
         return formatter;
     }
     
-    public CSTokenNormalizer getAttributeNormalizer(OracleUserAttribute attribute){
+    public CSTokenNormalizer getAttributeNormalizer(OracleUserAttributeCS attribute){
         final CSTokenNormalizer normalizer = normalizers.get(attribute);
         if(normalizer == null){
             throw new IllegalArgumentException("No normalizer defined for attribute " + attribute);
@@ -335,16 +307,16 @@ final class OracleCaseSensitivityImpl implements OracleCaseSensitivitySetup{
         return normalizer;
     }
     
-    public String formatToken(OracleUserAttribute attr, String token) {
+    public String formatToken(OracleUserAttributeCS attr, String token) {
         return getAttributeFormatter(attr).formatToken(token);
     }
-    public String normalizeToken(OracleUserAttribute attr, String token) {
+    public String normalizeToken(OracleUserAttributeCS attr, String token) {
         return getAttributeNormalizer(attr).normalizeToken(token);
     }
-    public char[] formatToken(OracleUserAttribute attr, char[] token) {
+    public char[] formatToken(OracleUserAttributeCS attr, char[] token) {
         return getAttributeFormatter(attr).formatToken(token);
     }
-    public String normalizeAndFormatToken(OracleUserAttribute attr, String token) {
+    public String normalizeAndFormatToken(OracleUserAttributeCS attr, String token) {
         token = normalizeToken(attr, token);
         token = formatToken(attr, token);
         return token;

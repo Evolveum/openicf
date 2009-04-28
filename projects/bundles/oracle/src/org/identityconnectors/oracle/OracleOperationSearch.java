@@ -125,6 +125,14 @@ class OracleOperationSearch extends AbstractOracleOperation implements SearchOp<
                 if(attributesToGet.contains(OperationalAttributes.ENABLE_NAME)){
                 	bld.addAttribute(AttributeBuilder.build(OperationalAttributes.ENABLE_NAME,Boolean.valueOf(!record.status.contains("LOCKED"))));
                 }
+                if(attributesToGet.contains(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME)){
+                	Long date = record.expireDate != null ? record.expireDate.getTime() : null;
+                	bld.addAttribute(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,date));
+                }
+                if(attributesToGet.contains(OperationalAttributes.DISABLE_DATE_NAME)){
+                	Long date = record.lockDate != null ? record.lockDate.getTime() : null;
+                	bld.addAttribute(AttributeBuilder.build(OperationalAttributes.DISABLE_DATE_NAME,date));
+                }
                 ConnectorObject ret = bld.build();
                 if (!handler.handle(ret)) {
                     break;
@@ -163,6 +171,18 @@ class OracleOperationSearch extends AbstractOracleOperation implements SearchOp<
 			if(attribute.is(OracleConnector.ORACLE_TEMP_TS_ATTR_NAME)){
 				return "DBA_USERS.TEMPORARY_TABLESPACE";
 			}
+			if(attribute.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
+				return "(CASE WHEN DBA_USERS.ACCOUNT_STATUS LIKE '%EXPIRED%' THEN 'EXPIRED' ELSE 'NOT_EXPIRED' END)";
+			}
+			if(attribute.is(OperationalAttributes.ENABLE_NAME)){
+				return "(CASE WHEN DBA_USERS.ACCOUNT_STATUS LIKE '%LOCKED%' THEN 'LOCKED' ELSE 'NOT_LOCKED' END)";
+			}
+			if(attribute.is(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME)){
+				return "DBA_USERS.EXPIRY_DATE";
+			}
+			if(attribute.is(OperationalAttributes.DISABLE_DATE_NAME)){
+				return "DBA_USERS.LOCK_DATE";
+			}
 			if(attribute.is(OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME)){
 				if(select == SQL){
 					select = ADVANCED_SQL1;
@@ -188,6 +208,20 @@ class OracleOperationSearch extends AbstractOracleOperation implements SearchOp<
 
 		@Override
 		protected SQLParam getSQLParam(Attribute attribute, ObjectClass oclass, OperationOptions options) {
+			if(attribute.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
+				Boolean value = (Boolean) AttributeUtil.getSingleValue(attribute);
+				if(value == null){
+					return null;
+				}
+				return value ? new SQLParam("EXPIRED",Types.VARCHAR) : new SQLParam("NOT_EXPIRED",Types.VARCHAR);
+			}
+			if(attribute.is(OperationalAttributes.ENABLE_NAME)){
+				Boolean value = (Boolean) AttributeUtil.getSingleValue(attribute);
+				if(value == null){
+					return null;
+				}
+				return value ? new SQLParam("NOT_LOCKED",Types.VARCHAR) : new SQLParam("LOCKED",Types.VARCHAR);
+			}
 			return new SQLParam(AttributeUtil.getSingleValue(attribute),Types.VARCHAR);
 		}
 
