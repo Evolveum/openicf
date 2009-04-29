@@ -1300,11 +1300,11 @@ public class VmsConnectorTests {
     }
     
     protected String getTestUser() {
-        return "TEST106";
+        return "TEST105";
     }
 
     protected String getTestUserEnd() {
-        return "106";
+        return "105";
     }
 
     protected String getLineTerminator() {
