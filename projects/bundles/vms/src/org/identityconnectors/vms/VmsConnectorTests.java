@@ -108,7 +108,7 @@ public class VmsConnectorTests {
 
     @Test
     public void testScriptOnResource() throws Exception {
-        String localUserName = "TEST106";
+        String localUserName = "TEST105";
         
         String script = "WRITE SYS$OUTPUT \"Hello ''NAME'\"\nSHOW USERS";
         HashMap<String, Object> map = new HashMap<String, Object>();
