@@ -1032,7 +1032,7 @@ public class VmsConnectorTests {
                 builder.setUid(localUserName);
                 builder.setName(localUserName);
                 Attribute password = AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString(newPassword.toCharArray()));
-                Attribute current_password = AttributeBuilder.build(OperationalAttributes.CURRENT_PASSWORD_NAME, new GuardedString("password".toCharArray()));
+                Attribute current_password = AttributeBuilder.build(OperationalAttributes.CURRENT_PASSWORD_NAME, new GuardedString(oldPassword.toCharArray()));
                 builder.addAttribute(current_password);
                 builder.addAttribute(password);
                 ConnectorObject newUser = builder.build();
