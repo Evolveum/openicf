@@ -36,6 +36,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.PredefinedAttributes;
 
@@ -96,7 +97,7 @@ public class VmsAttributeValidator {
     private static final Pattern _devicePattern             = Pattern.compile(".{1,31}"); 
     private static final Pattern _directoryPattern          = Pattern.compile("(\\[[a-zA-Z$0-9:]{1,39}\\])|[a-zA-Z$0-9:]{1,39}"); 
     private static final Pattern _fileSpecPattern           = Pattern.compile("[a-zA-Z0-9$_:]+"); 
-    private static final Pattern _passwordPattern           = null; 
+    private static final Pattern _passwordPattern           = Pattern.compile("[a-zA-Z0-9$_]{1,31}"); 
     private static final Pattern _uicPattern                = Pattern.compile("\\[[0-7]+,([0-7]+|\\*)\\]"); 
 
     private static Map<String, ValidatorInfo> VALIDATOR_INFO = new HashMap<String, ValidatorInfo>();
@@ -730,12 +731,18 @@ public class VmsAttributeValidator {
         case PATTERN:
             for (Object value : values)
                 if (validatorInfo.getPattern()!=null) {
-                    if (!(value instanceof String)) {
-                        throw new IllegalArgumentException(vmsConfiguration.getMessage(VmsMessages.INVALID_ATTR_VALUE, value, name));
-                    } else {
+                    if (value instanceof String) {
                         Matcher matcher = validatorInfo.getPattern().matcher((String)value);
                         if (!matcher.matches())
                             throw new IllegalArgumentException(vmsConfiguration.getMessage(VmsMessages.INVALID_ATTR_VALUE, value, name));
+                    } else if (value instanceof GuardedString) {
+                        GuardedStringAccessor accessor = new GuardedStringAccessor();
+                        ((GuardedString)value).access(accessor);
+                        Matcher matcher = validatorInfo.getPattern().matcher(new String(accessor.getArray()));
+                        if (!matcher.matches())
+                            throw new IllegalArgumentException(vmsConfiguration.getMessage(VmsMessages.INVALID_ATTR_VALUE, "****", name));
+                    } else {
+                        throw new IllegalArgumentException(vmsConfiguration.getMessage(VmsMessages.INVALID_ATTR_VALUE, value, name));
                     }
                 }
             break;

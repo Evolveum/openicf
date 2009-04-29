@@ -658,6 +658,29 @@ public class VmsConnectorTests {
     }
 
     @Test
+    public void testBadPassword() throws Exception {
+        VmsConfiguration config = createConfiguration();
+        VmsConnector info = createConnector(config);
+
+        try {
+            Set<Attribute> attrs = fillInSampleUser(getTestUser());
+    
+            // Recreate the account
+            //
+            deleteUser(getTestUser(), info);
+            info.create(ObjectClass.ACCOUNT, attrs, null);
+            try {
+                testModifyUserAttribute(info, AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString("Foo!Bar".toCharArray())), true);
+                Assert.fail("no exception thrown");
+            } catch (IllegalArgumentException iae) {
+                // expected
+            }
+        } finally {
+            info.dispose();
+        }
+    }
+
+    @Test
     public void testEnableDisable() throws Exception {
         VmsConfiguration config = createConfiguration();
         VmsConnector info = createConnector(config);

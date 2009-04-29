@@ -255,8 +255,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     private boolean mayNeedQuotes(String name) {
         return (name.equalsIgnoreCase(OperationalAttributes.PASSWORD_NAME) ||
                 name.equalsIgnoreCase(ATTR_OWNER) ||
-                name.equalsIgnoreCase(ATTR_ACCOUNT) ||
-                name.equalsIgnoreCase(ATTR_LGICMD)
+                name.equalsIgnoreCase(ATTR_ACCOUNT)
                 );
     }
 
