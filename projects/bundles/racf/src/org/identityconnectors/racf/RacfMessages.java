@@ -24,8 +24,6 @@ package org.identityconnectors.racf;
 
 import java.util.ListResourceBundle;
 
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
-
 public class RacfMessages extends ListResourceBundle {
     public static final String SUFFIX_NULL                    = "SUFFIX_NULL";
     public static final String HOST_NULL                      = "HOST_NULL";

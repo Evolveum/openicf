@@ -374,12 +374,23 @@ class CommandLineUtil {
         String name = ((Name)attributes.get(Name.NAME)).getNameValue();
         if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
             Attribute groups = attributes.remove(ATTR_CL_GROUPS);
+            Attribute owners = attributes.remove(ATTR_CL_GROUP_CONN_OWNERS);
             Attribute expired = attributes.remove(ATTR_CL_EXPIRED);
             Attribute password = attributes.get(ATTR_CL_PASSWORD);
             
             throwErrorIfNull(groups);
             throwErrorIfNullOrEmpty(expired);
             throwErrorIfNullOrEmpty(password);
+            boolean badOwners = false;
+            if (owners!=null) {
+                try {
+                    badOwners = (groups.getValue().size()!=owners.getValue().size());
+                } catch (NullPointerException npe) {
+                    badOwners = true;
+                }
+                if (badOwners)
+                    throw new ConnectorException("TODO");
+            }
             
             if (expired!=null && password==null) 
                 throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
@@ -395,8 +406,13 @@ class CommandLineUtil {
             setCatalogAttributes(attributes);
             buffer.clear();
             if (groups!=null) {
-                for (Object groupName : groups.getValue()) {
-                    String command = "CONNECT "+name+" GROUP("+(String)groupName+")";
+                List groupsValue = groups.getValue();
+                List ownersValue = owners==null?null:owners.getValue();
+                for (int i=0; i<groupsValue.size(); i++) {
+                    Object newGroup = groupsValue.get(i);
+                    String command = "CONNECT "+name+" GROUP("+(String)newGroup+")";
+                    if (ownersValue!=null)
+                        command += " OWNER("+ownersValue.get(i)+")";
                     checkCommand(command);
                 }
             }
@@ -413,8 +429,19 @@ class CommandLineUtil {
             return uid;
         } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
             Attribute accounts = attributes.remove(ATTR_CL_MEMBERS);
+            Attribute owners = attributes.remove(ATTR_CL_GROUP_CONN_OWNERS);
 
             throwErrorIfNull(accounts);
+            boolean badOwners = false;
+            if (owners!=null) {
+                try {
+                    badOwners = (accounts.getValue().size()!=owners.getValue().size());
+                } catch (NullPointerException npe) {
+                    badOwners = true;
+                }
+                if (badOwners)
+                    throw new ConnectorException("TODO");
+            }
             
             if (groupExists(name))
                 throw new AlreadyExistsException();
@@ -425,17 +452,25 @@ class CommandLineUtil {
             Uid uid = createOrUpdateViaCommandLine(objectClass, name, buffer);
             buffer.clear();
             if (accounts!=null) {
-                for (Object accountName : accounts.getValue()) {
-                    String command = "CONNECT "+accountName+" GROUP("+name+")";
+                List accountsValue = accounts.getValue();
+                List ownersValue = owners==null?null:owners.getValue();
+                for (int i=0; i<accountsValue.size(); i++) {
+                    Object newAccount = accountsValue.get(i);
+                    String command = "CONNECT "+newAccount+" GROUP("+name+")";
+                    if (ownersValue!=null)
+                        command += " OWNER("+ownersValue.get(i)+")";
                     checkCommand(command);
                 }
             }
             return uid;
         } else if (objectClass.is(RacfConnector.RACF_CONNECTION_NAME)) {
             String[] info = _connector.extractRacfIdAndGroupIdFromLdapId(name);
-            String user = _connector.extractRacfIdFromLdapId(info[0]);
-            String group = _connector.extractRacfIdFromLdapId(info[1]);
+            String user = info[0];
+            String group = info[1];
+            Attribute owner = AttributeUtil.find(ATTR_LDAP_OWNER, attrs);
             String command = "CONNECT "+user+" GROUP("+group+")";
+            if (owner!=null)
+                command += " OWNER("+AttributeUtil.getStringValue(owner)+")";
             checkCommand(command);
             return new Uid(name);
         } else {
@@ -474,8 +509,8 @@ class CommandLineUtil {
             }
         } else if (objectClass.is(RacfConnector.RACF_CONNECTION_NAME)) {
             String[] info = _connector.extractRacfIdAndGroupIdFromLdapId(uidString);
-            String user = _connector.extractRacfIdFromLdapId(info[0]);
-            String group = _connector.extractRacfIdFromLdapId(info[1]);
+            String user = info[0];
+            String group = info[1];
             String command = "REMOVE "+user+" GROUP("+group+")";
             checkCommand(command);
         } else {
@@ -537,17 +572,20 @@ class CommandLineUtil {
     }
     
     public List<String> getGroupsForUserViaCommandLine(String user) {
-        String command = "LISTUSER "+user+" RACF";
+        String command = "LISTUSER "+user;
         String output = getCommandOutput(command);
         MapTransform transform = _segmentParsers.get("ACCOUNT.RACF");
         if (transform==null)
             throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNKNOWN_SEGMENT, ATTR_CL_GROUPS));
         try {
             Map<String, Object> map = (Map<String, Object>)transform.transform(output);
-            List<Object> groups = (List<Object>)map.get(ATTR_CL_GROUPS);
+            List<String> groups = (List<String>)map.get(ATTR_CL_GROUPS);
+            String defaultGroup = (String)map.get(ATTR_CL_DFLTGRP);
             List<String> groupsAsString = new LinkedList<String>();
+            groupsAsString.add(defaultGroup);
             for (Object group : groups)
-                groupsAsString.add((String)group);
+                if (!group.equals(defaultGroup))
+                    groupsAsString.add((String)group);
             return groupsAsString;
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
@@ -623,7 +661,8 @@ class CommandLineUtil {
         String name = uid.getUidValue();
         
         if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
-            Attribute groupMembership = attributes.remove(ATTR_CL_GROUPS);
+            Attribute groups = attributes.remove(ATTR_CL_GROUPS);
+            Attribute groupOwners = attributes.remove(ATTR_CL_GROUP_CONN_OWNERS);
             Attribute expired = attributes.get(ATTR_CL_EXPIRED);
             Attribute password = attributes.get(ATTR_CL_PASSWORD);
             if (expired!=null && password==null) 
@@ -642,8 +681,8 @@ class CommandLineUtil {
             char[] attributeString = mapAttributesToString(attributes);
             buffer.append(attributeString);
             try {
-                if (groupMembership!=null)
-                    _connector.setGroupMembershipsForUser(name, groupMembership);
+                if (groups!=null)
+                    _connector.setGroupMembershipsForUser(name, groups, groupOwners);
                 if (attributeString.length>0)
                     return createOrUpdateViaCommandLine(objectClass, name, buffer);
                 else
@@ -652,7 +691,9 @@ class CommandLineUtil {
                 buffer.clear();
             }
         } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
-            Attribute groupMembership = attributes.remove(ATTR_CL_MEMBERS);
+            Attribute members = attributes.remove(ATTR_CL_MEMBERS);
+            Attribute groupOwners = attributes.remove(ATTR_CL_GROUP_CONN_OWNERS);
+            
             if (!groupExists(name))
                 throw new UnknownUidException();
             
@@ -662,8 +703,8 @@ class CommandLineUtil {
             char[] attributeString = mapAttributesToString(attributes);
             buffer.append(attributeString);
             try {
-                if (groupMembership!=null)
-                    _connector.setGroupMembershipsForGroups(name, groupMembership);
+                if (members!=null)
+                    _connector.setGroupMembershipsForGroups(name, members, groupOwners);
                 if (attributeString.length>0)
                     return createOrUpdateViaCommandLine(objectClass, name, buffer);
                 else

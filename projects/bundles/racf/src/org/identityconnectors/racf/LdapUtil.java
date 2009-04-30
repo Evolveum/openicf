@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.naming.LimitExceededException;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attributes;
@@ -74,7 +75,6 @@ class LdapUtil {
         Map<String, Attribute> attributes = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
         if (objectClass.equals(RacfConnector.RACF_CONNECTION)) {
             try {
-                //TODO: handle ATTR_LDAP_GROUPS
                 Name name = AttributeUtil.getNameFromAttributes(attrs);
                 ((RacfConnection)_connector.getConnection()).getDirContext().createSubcontext(name.getNameValue(), null);
                 return new Uid(name.getNameValue());
@@ -93,12 +93,11 @@ class LdapUtil {
                 Map<String, Attribute> newAttributes = new HashMap<String, Attribute>(attributes);
                 addObjectClass(objectClass, newAttributes);
                 ((RacfConnection)_connector.getConnection()).getDirContext().createSubcontext(_connector.createUidFromName(objectClass, name.getNameValue()).getUidValue(), createLdapAttributesFromConnectorAttributes(objectClass, newAttributes));
-                Attribute groupMembership = AttributeUtil.find(PredefinedAttributes.GROUPS_NAME, attrs);
-                if (groupMembership!=null)
-                    _connector.setGroupMembershipsForUser(id, groupMembership);
+                if (groups!=null)
+                    _connector.setGroupMembershipsForUser(id, groups, groupOwners);
                 return uid;
             } catch (NamingException e) {
-                if (e.toString().indexOf("INVALID USER")==-1)
+                if (e.toString().contains("INVALID USER"))
                     throw new ConnectorException(e);
                 else
                     throw new AlreadyExistsException();
@@ -106,7 +105,7 @@ class LdapUtil {
         } else if (objectClass.equals(ObjectClass.GROUP)) {
             Name name = AttributeUtil.getNameFromAttributes(attrs);
             try {
-                //TODO: handle ATTR_LDAP_GROUPS
+                //TODO: handle ATTR_LDAP_MEMBERS
                 Attribute groups = attributes.remove(ATTR_LDAP_GROUPS);
                 Attribute members = attributes.remove(ATTR_LDAP_MEMBERS);
                 Attribute groupOwners = attributes.remove(ATTR_LDAP_GROUP_OWNERS);
@@ -116,14 +115,11 @@ class LdapUtil {
                 Map<String, Attribute> newAttributes = new HashMap<String, Attribute>(attributes);
                 addObjectClass(objectClass, newAttributes);
                 ((RacfConnection)_connector.getConnection()).getDirContext().createSubcontext(_connector.createUidFromName(objectClass, name.getNameValue()).getUidValue(), createLdapAttributesFromConnectorAttributes(objectClass, newAttributes));
-                Attribute groupMembership = AttributeUtil.find(ATTR_LDAP_MEMBERS, attrs);
-                if (groupMembership!=null)
-                    _connector.setGroupMembershipsForGroups(id, groupMembership);
+                if (members!=null)
+                    _connector.setGroupMembershipsForGroups(id, members, groupOwners);
                 return uid;
             } catch (NamingException e) {
-                //TODO: may need to handle Groups with different test
-                //
-                if (e.toString().indexOf("INVALID USER")==-1)
+                if (e.toString().contains("INVALID GROUP"))
                     throw new ConnectorException(e);
                 else
                     throw new AlreadyExistsException();
@@ -137,12 +133,19 @@ class LdapUtil {
         try {
             ((RacfConnection)_connector.getConnection()).getDirContext().destroySubcontext(_connector.createUidFromName(objectClass, uid.getUidValue()).getUidValue());
         } catch (NamingException e) {
-            //TODO: may need to handle Groups with different test
-            //
-            if (e.toString().indexOf("INVALID USER")==-1)
-                throw new ConnectorException(e);
-            else
-                throw new UnknownUidException();
+            if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
+                if (e.toString().contains("INVALID USER"))
+                    throw new UnknownUidException();
+                else
+                    throw new ConnectorException(e);
+            } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
+                if (e.toString().contains("INVALID GROUP"))
+                    throw new UnknownUidException();
+                else
+                    throw new ConnectorException(e);
+            } else {
+                throw ConnectorException.wrap(e);
+            }
         }
     }
 
@@ -163,6 +166,9 @@ class LdapUtil {
                 }
             }
             return groups;
+        } catch (LimitExceededException e) {
+            //TODO: cope with this
+            throw ConnectorException.wrap(e);
         } catch (NamingException e) {
             throw new ConnectorException(e);
         }
@@ -184,7 +190,11 @@ class LdapUtil {
                     throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.PATTERN_FAILED, name));
                 }
             }
+            //TODO: need to include defaultGroup as 0th element, so that it is known
             return groups;
+        } catch (LimitExceededException e) {
+            //TODO: cope with this
+            throw ConnectorException.wrap(e);
         } catch (NamingException e) {
             throw new ConnectorException(e);
         }
@@ -207,6 +217,9 @@ class LdapUtil {
                     userNames.add(_connector.extractRacfIdFromLdapId(name));
                 }
             }
+        } catch (LimitExceededException e) {
+            //TODO: cope with this
+            throw ConnectorException.wrap(e);
         } catch (NamingException e) {
             throw new ConnectorException(e);
         }
@@ -224,6 +237,9 @@ class LdapUtil {
                 String name = userRoot.getNameInNamespace();
                 groupNames.add(_connector.extractRacfIdFromLdapId(name));
             }
+        } catch (LimitExceededException e) {
+            //TODO: cope with this
+            throw ConnectorException.wrap(e);
         } catch (NamingException e) {
             throw new ConnectorException(e);
         }
@@ -248,9 +264,8 @@ class LdapUtil {
                 Attribute groupOwners = attributes.remove(ATTR_LDAP_GROUP_OWNERS);
                 
                 ((RacfConnection)_connector.getConnection()).getDirContext().modifyAttributes(_connector.createUidFromName(objectClass, uid.getUidValue()).getUidValue(), DirContext.REPLACE_ATTRIBUTE, createLdapAttributesFromConnectorAttributes(objectClass, attributes));
-                Attribute groupMembership = AttributeUtil.find(PredefinedAttributes.GROUPS_NAME, attrs);
-                if (groupMembership!=null)
-                    _connector.setGroupMembershipsForUser(uid.getUidValue(), groupMembership);
+                if (groups!=null)
+                    _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, groupOwners);
             } catch (NamingException e) {
                 throw new ConnectorException(e);
             }

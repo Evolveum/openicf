@@ -103,7 +103,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
     private final SimpleDateFormat      _dateFormat = new SimpleDateFormat("MM/dd/yy");
     private final SimpleDateFormat      _resumeRevokeFormat = new SimpleDateFormat("MMMM dd, yyyy");
     private final Pattern               _racfTimestamp = Pattern.compile("(\\d+)\\.(\\d+)(?:/(\\d+):(\\d+):(\\d+))?");
-    private final Pattern               _connectionPattern  = Pattern.compile("racfuserid=(.*)\\+racfgroupid=(.*),.*");
+    private final Pattern               _connectionPattern  = Pattern.compile("racfuserid=([^+]+)\\+racfgroupid=([^,]+),.*");
 
     public RacfConnector() {
     }
@@ -148,7 +148,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
     public Uid create(ObjectClass objectClass, Set<Attribute> attrs, OperationOptions options) {
         Set<Attribute> ldapAttrs = new HashSet<Attribute>();
         Set<Attribute> commandLineAttrs = new HashSet<Attribute>();
-        splitUpOutgoingAttributes(attrs, ldapAttrs, commandLineAttrs);
+        splitUpOutgoingAttributes(objectClass, attrs, ldapAttrs, commandLineAttrs);
         if (isLdapConnectionAvailable()) {
             Uid uid = _ldapUtil.createViaLdap(objectClass, ldapAttrs, options);
             if (hasNonSpecialAttributes(commandLineAttrs)) {
@@ -173,7 +173,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
         return false;
     }
 
-    private void splitUpOutgoingAttributes(Set<Attribute> attrs, Set<Attribute> ldapAttrs, Set<Attribute> commandLineAttrs) {
+    private void splitUpOutgoingAttributes(ObjectClass objectClass, Set<Attribute> attrs, Set<Attribute> ldapAttrs, Set<Attribute> commandLineAttrs) {
         // Attribute consistency checking
         //
         Map<String, Attribute> attributes = AttributeUtil.toMap(attrs);
@@ -249,7 +249,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
             if (attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
                 commandLineAttrs.add(attribute);
                 ldapAttrs.add(attribute);
-            } else if (attribute.getName().contains(SEPARATOR)) {
+            } else if (attribute.getName().contains(SEPARATOR) || 
+                    (!isLdapConnectionAvailable() && objectClass.is(RACF_CONNECTION_NAME))) {
+                // Even when we are in command-line form, use LDAP-style names for connection attributes,
+                // since we don't get thenm via parsing
+                //
                 commandLineAttrs.add(attribute);
             } else {
                 ldapAttrs.add(attribute);
@@ -487,15 +491,27 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
         }
     }
 
-    void setGroupMembershipsForUser(String name, Attribute groups) {
-        List<Object> newGroups = groups.getValue(); 
+    void setGroupMembershipsForUser(String name, Attribute groupsAttribute, Attribute ownersAttribute) {
+        // members and owners must be the same length
+        //
+        boolean badSize = false;
+        try {
+            badSize = (groupsAttribute.getValue().size()!=ownersAttribute.getValue().size());
+        } catch (NullPointerException npe) {
+            badSize = true;
+        }
+        //TODO
+        if (badSize)
+            throw new ConnectorException("TODO");
+
+        List<Object> groups = groupsAttribute.getValue();
+        List<Object> owners = ownersAttribute.getValue();
+        
         List<String> currentGroups = getGroupsForUser(name);
-        if (newGroups==null)
-            newGroups = new LinkedList<Object>();
-        if (currentGroups==null)
-            currentGroups = new LinkedList<String>();
+        String defaultGroup = currentGroups.get(0);
+        
         for (String currentGroup : currentGroups) {
-            if (!newGroups.contains(currentGroup)) {
+            if (!groups.contains(currentGroup) && currentGroup!=defaultGroup) {
                 // Group is being eliminated
                 //
                 String connectionName = createConnectionId(name, currentGroup);
@@ -503,13 +519,16 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
             }
         }
 
-        for (Object newGroup : newGroups) {
+        for (int i=0; i<groups.size(); i++) {
+            Object newGroup = groups.get(i);
+            Object newOwner  = owners.get(i);
             if (!currentGroups.contains(newGroup)) {
                 // Group is being added
                 //
                 String connectionName = createConnectionId(name, (String)newGroup);
                 Set<Attribute> attributes = new HashSet<Attribute>();
                 attributes.add(AttributeBuilder.build(Name.NAME, connectionName));
+                attributes.add(AttributeBuilder.build(ATTR_LDAP_OWNER, newOwner));
                 create(RACF_CONNECTION, attributes, new OperationOptions(new HashMap<String, Object>()));
             }
         }
@@ -517,32 +536,44 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
 
     private String createConnectionId(String name, String currentGroup) {
         String connectionName = "racfuserid="+name+"+racfgroupid="+
-            "racfid="+currentGroup+",profileType=connect,"+_configuration.getSuffix();
+            currentGroup+",profileType=connect,"+_configuration.getSuffix();
         return connectionName;
     }
 
-    void setGroupMembershipsForGroups(String name, Attribute members) {
-        List<Object> newMembers = members.getValue(); 
+    void setGroupMembershipsForGroups(String name, Attribute membersAttribute, Attribute ownersAttribute) {
+        // members and owners must be the same length
+        //
+        boolean badSize = false;
+        try {
+            badSize = (membersAttribute.getValue().size()!=ownersAttribute.getValue().size());
+        } catch (NullPointerException npe) {
+            badSize = true;
+        }
+        //TODO
+        if (badSize)
+            throw new ConnectorException("TODO");
+
+        List<Object> members = membersAttribute.getValue();
+        List<Object> owners  = ownersAttribute.getValue();
+        
         List<String> currentMembers = getMembersOfGroup(name);
-        if (newMembers==null)
-            newMembers = new LinkedList<Object>();
-        if (currentMembers==null)
-            currentMembers = new LinkedList<String>();
         
         for (String currentMember : currentMembers) {
-            if (!newMembers.contains(currentMember)) {
+            if (!members.contains(currentMember)) {
                 String connectionName = createConnectionId(currentMember, name);
                 delete(RACF_CONNECTION, new Uid(connectionName), null);
             }
         }
-
-        for (Object newMember : newMembers) {
+        for (int i=0; i<members.size(); i++) {
+            Object newMember = members.get(i);
+            Object newOwner  = owners.get(i);
             if (!currentMembers.contains(newMember)) {
                 // Member is being added
                 //
                 String connectionName = createConnectionId((String)newMember, name);
                 Set<Attribute> attributes = new HashSet<Attribute>();
                 attributes.add(AttributeBuilder.build(Name.NAME, connectionName));
+                attributes.add(AttributeBuilder.build(ATTR_LDAP_OWNER, newOwner));
                 create(RACF_CONNECTION, attributes, new OperationOptions(new HashMap<String, Object>()));
             }
         }
@@ -641,7 +672,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
         if (AttributeUtil.getNameFromAttributes(attrs)!=null) {
             throw new IllegalArgumentException("TODO: __NAME__ is not updateable");
         }
-        splitUpOutgoingAttributes(attrs, ldapAttrs, commandLineAttrs);
+        splitUpOutgoingAttributes(objectClass, attrs, ldapAttrs, commandLineAttrs);
         if (isLdapConnectionAvailable()) {
             Uid uid = _ldapUtil.updateViaLdap(objectClass, ldapAttrs);
             if (hasNonSpecialAttributes(commandLineAttrs)) {

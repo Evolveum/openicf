@@ -22,13 +22,7 @@
  */
 package org.identityconnectors.racf;
 
-import static org.identityconnectors.racf.RacfConstants.ATTR_CL_ATTRIBUTES;
-import static org.identityconnectors.racf.RacfConstants.ATTR_CL_DATA;
-import static org.identityconnectors.racf.RacfConstants.ATTR_CL_GROUPS;
-import static org.identityconnectors.racf.RacfConstants.ATTR_CL_MEMBERS;
-import static org.identityconnectors.racf.RacfConstants.ATTR_CL_OWNER;
-import static org.identityconnectors.racf.RacfConstants.ATTR_CL_SUPGROUP;
-import static org.identityconnectors.racf.RacfConstants.ATTR_CL_TSO_SIZE;
+import static org.identityconnectors.racf.RacfConstants.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -93,10 +87,12 @@ public class RacfConnectorTests {
     private static String       TEST_USER2 = "TEST106A";
     private static String       TEST_GROUP1 = "IDMGRP01";
     private static String       TEST_GROUP2 = "IDMGRP02";
+    private static String       TEST_GROUP3 = "IDMGRP03";
     private static Uid          TEST_USER_UID;
     private static Uid          TEST_USER_UID2;
     private static Uid          TEST_GROUP1_UID;
     private static Uid          TEST_GROUP2_UID;
+    private static Uid          TEST_GROUP3_UID;
 
     private static final int     HOST_PORT           = 389;
     private static final int     HOST_TELNET_PORT    = 23;
@@ -131,6 +127,7 @@ public class RacfConnectorTests {
         TEST_USER_UID2    = new Uid(TEST_USER2);
         TEST_GROUP1_UID   = new Uid(TEST_GROUP1);
         TEST_GROUP2_UID   = new Uid(TEST_GROUP2);
+        TEST_GROUP3_UID   = new Uid(TEST_GROUP3);
         
         Assert.assertNotNull("HOST_NAME must be specified", HOST_NAME);
         Assert.assertNotNull("SYSTEM_PASSWORD must be specified", SYSTEM_PASSWORD);
@@ -185,7 +182,7 @@ public class RacfConnectorTests {
         RacfConnector connector = createConnector(config);
         try {
             TestHandler handler = new TestHandler();
-            Map map = new HashMap();
+            Map<String, Object> map = new HashMap<String, Object>();
             String[] attributesToGet = { Name.NAME };
             map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, attributesToGet);
             OperationOptions options = new OperationOptions(map);
@@ -207,7 +204,7 @@ public class RacfConnectorTests {
         RacfConnector connector = createConnector(config);
         try {
             TestHandler handler = new TestHandler();
-            Map map = new HashMap();
+            Map<String, Object> map = new HashMap<String, Object>();
             String[] attributesToGet = { Name.NAME };
             map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, attributesToGet);
             OperationOptions options = new OperationOptions(map);
@@ -419,10 +416,10 @@ public class RacfConnectorTests {
     }
     void assertAttribute(Attribute attribute, ConnectorObject object) {
         if (attribute.getName().equals(ATTR_CL_ATTRIBUTES)) {
-            Set set1 = new HashSet(attribute.getValue());
+            Set<Object> set1 = new HashSet<Object>(attribute.getValue());
             Attribute attribute2 = object.getAttributeByName(attribute.getName());
             Assert.assertNotNull(attribute2);
-            Set set2 = new HashSet(attribute.getValue());
+            Set<Object> set2 = new HashSet<Object>(attribute.getValue());
             Assert.assertEquals(set1, set2);
             // must compare as sets
         } else {
@@ -756,6 +753,7 @@ public class RacfConnectorTests {
             deleteUser(TEST_USER_UID2, connector);
             deleteGroup(TEST_GROUP1_UID, connector);
             deleteGroup(TEST_GROUP2_UID, connector);
+            deleteGroup(TEST_GROUP3_UID, connector);
             
             Map<String, Object> optionsMap = new HashMap<String, Object>();;
             OperationOptions options = new OperationOptions(optionsMap); 
@@ -772,6 +770,12 @@ public class RacfConnectorTests {
                 Assert.assertNotNull(groupUid);
             }
             {
+                Set<Attribute> groupAttrs = new HashSet<Attribute>();
+                groupAttrs.add(new Name(TEST_GROUP3));
+                Uid groupUid = connector.create(RacfConnector.RACF_GROUP, groupAttrs, options);
+                Assert.assertNotNull(groupUid);
+            }
+            {
                 // Create a user with 2 groups, and specify a default group
                 // Verify that the attributes are correctly set on the retrieved user
                 //
@@ -780,14 +784,17 @@ public class RacfConnectorTests {
                 //
                 attrs.add(AttributeBuilder.build(getDefaultGroupName(), TEST_GROUP1_UID.getUidValue()));
                 List<String> groups = new LinkedList<String>();
+                List<String> owners = new LinkedList<String>();
                 List<String> allGroups = new LinkedList<String>();
                 allGroups.add(TEST_GROUP1_UID.getUidValue());
                 allGroups.add(TEST_GROUP2_UID.getUidValue());
                 groups.add(TEST_GROUP2_UID.getUidValue());
+                owners.add(SYSTEM_USER);
                 
                 // Groups should not include the default group
                 //
                 attrs.add(AttributeBuilder.build(ATTR_CL_GROUPS, groups));
+                attrs.add(AttributeBuilder.build(ATTR_CL_GROUP_CONN_OWNERS, owners));
                 Uid userUid = connector.create(ObjectClass.ACCOUNT, attrs, options);
                 
                 ConnectorObject user = getUser(TEST_USER2, connector);
@@ -803,10 +810,37 @@ public class RacfConnectorTests {
                 List<Object> defaultGroupAttrValue = defaultGroupAttr.getValue();
                 Assert.assertEquals(defaultGroupAttrValue.get(0), TEST_GROUP1_UID.getUidValue());
             }
+            {
+                ConnectorObject user = getUser(TEST_USER2, connector);
+                // Move the user from group2 to group3
+                //
+                Set<Attribute> attrs = new HashSet<Attribute>();
+                List<String> groups = new LinkedList<String>();
+                List<String> owners = new LinkedList<String>();
+                groups.add(TEST_GROUP3_UID.getUidValue());
+                owners.add(SYSTEM_USER);
+                attrs.add(AttributeBuilder.build(ATTR_CL_GROUPS, groups));
+                attrs.add(AttributeBuilder.build(ATTR_CL_GROUP_CONN_OWNERS, owners));
+                attrs.add(user.getUid());
+                connector.update(ObjectClass.ACCOUNT, attrs, options);
+                
+                user = getUser(TEST_USER2, connector);
+                Attribute groupsAttr = user.getAttributeByName(ATTR_CL_GROUPS);
+                Assert.assertNotNull(groupsAttr);
+                List<Object> retrievedGroups = groupsAttr.getValue();
+                Assert.assertTrue(retrievedGroups.size()==2);
+                Assert.assertTrue(retrievedGroups.contains(TEST_GROUP3_UID.getUidValue()));
+    
+                Attribute defaultGroupAttr = user.getAttributeByName(getDefaultGroupName());
+                Assert.assertNotNull(defaultGroupAttr);
+                List<Object> defaultGroupAttrValue = defaultGroupAttr.getValue();
+                Assert.assertEquals(defaultGroupAttrValue.get(0), TEST_GROUP1_UID.getUidValue());
+            }
             
             deleteUser(TEST_USER_UID2, connector);
             deleteGroup(TEST_GROUP1_UID, connector);
             deleteGroup(TEST_GROUP2_UID, connector);
+            deleteGroup(TEST_GROUP3_UID, connector);
         } finally {
             connector.dispose();
         }
