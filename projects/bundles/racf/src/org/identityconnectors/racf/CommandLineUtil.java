@@ -389,7 +389,7 @@ class CommandLineUtil {
                     badOwners = true;
                 }
                 if (badOwners)
-                    throw new ConnectorException("TODO");
+                    throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.OWNER_INCONSISTENT));
             }
             
             if (expired!=null && password==null) 
@@ -440,7 +440,7 @@ class CommandLineUtil {
                     badOwners = true;
                 }
                 if (badOwners)
-                    throw new ConnectorException("TODO");
+                    throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.OWNER_INCONSISTENT));
             }
             
             if (groupExists(name))

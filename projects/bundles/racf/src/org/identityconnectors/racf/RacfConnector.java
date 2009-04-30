@@ -296,12 +296,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
                 else
                     commandLineAttrs.add(ATTR_CL_RESUME_DATE);
             } else if (attribute.equals(OperationalAttributes.PASSWORD_NAME)) {
-                throw new IllegalArgumentException("TODO: password is not readable");
+                throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.ATTRIBUTE_NOT_READABLE, OperationalAttributes.PASSWORD_NAME));
             } else if (attribute.equals(OperationalAttributes.PASSWORD_EXPIRED_NAME)) {
-                // Can't see a way to do this via LDAP
-                //
-                //TODO: racfattributes: noexpired
-                commandLineAttrs.add(ATTR_CL_EXPIRED);
+                if (isLdapConnectionAvailable())
+                    ;//TODO: racfattributes: noexpired
+                else
+                    commandLineAttrs.add(ATTR_CL_EXPIRED);
             } else if (attribute.equals(Name.NAME)) {
                 commandLineAttrs.add(attribute);
                 ldapAttrs.add(attribute);
@@ -500,9 +500,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
         } catch (NullPointerException npe) {
             badSize = true;
         }
-        //TODO
         if (badSize)
-            throw new ConnectorException("TODO");
+            throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.OWNER_INCONSISTENT));
 
         List<Object> groups = groupsAttribute.getValue();
         List<Object> owners = ownersAttribute.getValue();
@@ -549,9 +548,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
         } catch (NullPointerException npe) {
             badSize = true;
         }
-        //TODO
         if (badSize)
-            throw new ConnectorException("TODO");
+            throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.OWNER_INCONSISTENT));
 
         List<Object> members = membersAttribute.getValue();
         List<Object> owners  = ownersAttribute.getValue();
@@ -670,7 +668,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
         Set<Attribute> ldapAttrs = new HashSet<Attribute>();
         Set<Attribute> commandLineAttrs = new HashSet<Attribute>();
         if (AttributeUtil.getNameFromAttributes(attrs)!=null) {
-            throw new IllegalArgumentException("TODO: __NAME__ is not updateable");
+            throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.ATTRIBUTE_NOT_UPDATEABLE, Name.NAME));
         }
         splitUpOutgoingAttributes(objectClass, attrs, ldapAttrs, commandLineAttrs);
         if (isLdapConnectionAvailable()) {

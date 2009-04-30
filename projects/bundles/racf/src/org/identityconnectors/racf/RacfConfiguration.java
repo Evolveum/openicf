@@ -151,7 +151,7 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
         boolean noCommandLine = StringUtil.isBlank(_userName) && isBlank(_password);
         
         if (noLdap && noCommandLine)
-            throw new IllegalArgumentException(getMessage(RacfMessages.SUFFIX_NULL)); //TODO
+            throw new IllegalArgumentException(getMessage(RacfMessages.BAD_CONNECTION_INFO));
         
         if (StringUtil.isBlank(_hostNameOrIpAddr))
             throw new IllegalArgumentException(getMessage(RacfMessages.HOST_NULL));
