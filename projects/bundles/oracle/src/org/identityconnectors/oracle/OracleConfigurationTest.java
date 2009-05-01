@@ -159,7 +159,7 @@ public class OracleConfigurationTest {
     @Test
     public void testCustomDriverConfiguration(){
         String user = TestHelpers.getProperty("customDriver.user", null);
-        String password = TestHelpers.getProperty("customDriver.user", null);
+        String password = TestHelpers.getProperty("customDriver.password", null);
         String url = TestHelpers.getProperty("customDriver.url", null);
         String driver = TestHelpers.getProperty("customDriver.driverClassName", null);
         OracleConfiguration cfg = new OracleConfiguration();

@@ -83,6 +83,15 @@ abstract class OracleConnectorHelper {
         return t;
     }
     
+    static Attribute buildSingleAttribute(String name,Object value){
+    	if(value != null){
+    		return AttributeBuilder.build(name, value);
+    	}
+    	else{
+    		return AttributeBuilder.build(name);
+    	}
+    }
+    
     
     
     

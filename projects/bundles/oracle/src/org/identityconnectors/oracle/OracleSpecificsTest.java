@@ -104,8 +104,11 @@ public class OracleSpecificsTest {
         String database = TestHelpers.getProperty("thin.database",null);
         String user = TestHelpers.getProperty("thin.user",null);
         String password = TestHelpers.getProperty("thin.password", null);
+        String host = TestHelpers.getProperty("thin.host", null);
+        String port = TestHelpers.getProperty("thin.port", null);
         conn = OracleSpecifics
                 .createThinDriverConnection(new OracleDriverConnectionInfoBuilder()
+                		.setHost(host).setPort(port)
                         .setDatabase(database).setUser(user).setPassword(new GuardedString(password.toCharArray())).build());
         Assert.assertNotNull(conn);
         SQLUtil.closeQuietly(conn);

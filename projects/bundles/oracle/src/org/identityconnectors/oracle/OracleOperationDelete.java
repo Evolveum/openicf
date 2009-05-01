@@ -16,7 +16,7 @@ import org.identityconnectors.framework.spi.operations.DeleteOp;
  * @author kitko
  *
  */
-class OracleOperationDelete extends AbstractOracleOperation implements DeleteOp{
+final class OracleOperationDelete extends AbstractOracleOperation implements DeleteOp{
     
     
     OracleOperationDelete(OracleConfiguration cfg, Connection adminConn,Log log) {

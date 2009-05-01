@@ -89,7 +89,6 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         UserRecord record = userReader.readUserRecord(uid.getUidValue());
         assertNotNull(record);
         assertEqualsIgnoreCase(TEST_USER, record.userName);
-        assertNull(record.expireDate);
         assertNull(record.externalName);
         assertEquals("OPEN",record.status);
         
@@ -162,11 +161,11 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         }
         if(uid != null){
             assertEqualsIgnoreCase(TEST_USER, uid.getUidValue());
-            UserRecord record = userReader.readUserRecord(TEST_USER);
+            UserRecord record = userReader.readUserRecord(uid.getUidValue());
             assertNotNull(record);
-            assertEquals(TEST_USER, record.userName);
+            assertEquals(uid.getUidValue(), record.userName);
             assertNull(record.expireDate);
-            assertNull(record.externalName);
+            assertNotNull(record.externalName);
             assertEquals("OPEN",record.status);
         }
     }
@@ -186,8 +185,6 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         UserRecord record = userReader.readUserRecord(uid.getUidValue());
         assertNotNull(record);
         assertEqualsIgnoreCase(TEST_USER, record.userName);
-        assertNull(record.expireDate);
-        assertNull(record.externalName);
         assertEquals("OPEN",record.status);
         assertEquals(AttributeUtil.getStringValue(defaultTs), record.defaultTableSpace);
         facade.delete(ObjectClass.ACCOUNT, uid, null);
@@ -224,8 +221,6 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         UserRecord record = userReader.readUserRecord(uid.getUidValue());
         assertNotNull(record);
         assertEqualsIgnoreCase(TEST_USER, record.userName);
-        assertNull(record.expireDate);
-        assertNull(record.externalName);
         assertEquals("OPEN",record.status);
         assertEquals(AttributeUtil.getStringValue(tempTs), record.temporaryTableSpace);
         facade.delete(ObjectClass.ACCOUNT, uid, null);
@@ -317,8 +312,6 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         UserRecord record =userReader.readUserRecord(uid.getUidValue());
         assertNotNull(record);
         assertEqualsIgnoreCase(TEST_USER, record.userName);
-        assertNull(record.expireDate);
-        assertNull(record.externalName);
         assertEquals("OPEN",record.status);
         assertEqualsIgnoreCase(profileName,record.profile);
         facade.delete(ObjectClass.ACCOUNT, uid, null);

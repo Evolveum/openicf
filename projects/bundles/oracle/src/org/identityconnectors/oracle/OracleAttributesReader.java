@@ -10,6 +10,7 @@ import static org.identityconnectors.oracle.OracleConnector.ORACLE_TEMP_TS_QUOTA
 
 import java.util.Map;
 
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
@@ -46,8 +47,32 @@ final class OracleAttributesReader {
         caAttributes.tempTableSpace = OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, ORACLE_TEMP_TS_ATTR_NAME);
         caAttributes.enable = OracleConnectorHelper.getNotNullAttributeBooleanValue(map, OperationalAttributes.ENABLE_NAME);
         caAttributes.profile = OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, ORACLE_PROFILE_ATTR_NAME);
-        caAttributes.defaultTSQuota = OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, ORACLE_DEF_TS_QUOTA_ATTR_NAME);
-        caAttributes.tempTSQuota = OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, ORACLE_TEMP_TS_QUOTA_ATTR_NAME);
+        
+        Attribute defaultTSQuota = map.get(ORACLE_DEF_TS_QUOTA_ATTR_NAME);
+        if(defaultTSQuota != null){
+        	String val = AttributeUtil.getStringValue(defaultTSQuota);
+        	if(StringUtil.isBlank(val)){
+        		//when updating to null, actuall we want to drop quouta information and this will
+        		//be done altering to 0
+        		caAttributes.defaultTSQuota = "0";
+        	}
+        	else{
+        		caAttributes.defaultTSQuota = val;
+        	}
+        }
+        
+        Attribute tempTSQuota = map.get(ORACLE_TEMP_TS_QUOTA_ATTR_NAME);
+        if(tempTSQuota != null){
+        	String val = AttributeUtil.getStringValue(tempTSQuota);
+        	if(StringUtil.isBlank(val)){
+        		//when updating to null, actuall we want to drop quouta information and this will
+        		//be done altering to 0
+        		caAttributes.tempTSQuota = "0";
+        	}
+        	else{
+        		caAttributes.tempTSQuota = val;
+        	}
+        }
     }
 
     private void readAuthAttributes(Map<String, Attribute> map, OracleUserAttributes caAttributes) {

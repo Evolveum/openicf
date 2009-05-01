@@ -88,7 +88,6 @@ public class OracleUserReaderTest {
         assertNotNull(record1.defaultTableSpace);
         assertNotNull(record1.temporaryTableSpace);
         assertNotNull(record1.createdDate);
-        assertNull(record1.expireDate);
         assertNull(record1.lockDate);
         assertEquals("OPEN",record1.status);
         

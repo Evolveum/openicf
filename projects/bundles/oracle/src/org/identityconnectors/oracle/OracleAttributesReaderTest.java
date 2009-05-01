@@ -12,6 +12,7 @@ import static org.identityconnectors.oracle.OracleConnector.ORACLE_GLOBAL_ATTR_N
 import static org.identityconnectors.oracle.OracleConnector.ORACLE_PROFILE_ATTR_NAME;
 import static org.identityconnectors.oracle.OracleConnector.ORACLE_TEMP_TS_ATTR_NAME;
 import static org.identityconnectors.oracle.OracleConnector.ORACLE_TEMP_TS_QUOTA_ATTR_NAME;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.util.HashSet;
@@ -179,35 +180,14 @@ public class OracleAttributesReaderTest {
         
         attributes = new HashSet<Attribute>();
         attributes.add(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME));
-        try{
-        	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
-        	fail("Must fail for null ORACLE_PROFILE_ATTR_NAME");
-        }
-        catch(RuntimeException e){}
+       	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
+       	assertEquals("Must set 0 for null quota","0",caAttributes.defaultTSQuota);
         
-        attributes = new HashSet<Attribute>();
-        attributes.add(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,""));
-        try{
-        	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
-        	fail("Must fail for empty ORACLE_PROFILE_ATTR_NAME");
-        }
-        catch(RuntimeException e){}
-        
-        attributes = new HashSet<Attribute>();
-        attributes.add(AttributeBuilder.build(ORACLE_TEMP_TS_QUOTA_ATTR_NAME));
-        try{
-        	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
-        	fail("Must fail for null ORACLE_TEMP_TS_QUOTA_ATTR_NAME");
-        }
-        catch(RuntimeException e){}
-
-        attributes = new HashSet<Attribute>();
+       	attributes = new HashSet<Attribute>();
         attributes.add(AttributeBuilder.build(ORACLE_TEMP_TS_QUOTA_ATTR_NAME,""));
-        try{
-        	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
-        	fail("Must fail for empty ORACLE_TEMP_TS_QUOTA_ATTR_NAME");
-        }
-        catch(RuntimeException e){}
+       	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
+       	assertEquals("Must set 0 for null quota","0",caAttributes.tempTSQuota);
+        
         
     }
     

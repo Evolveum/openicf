@@ -9,7 +9,7 @@ import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 
 /** Reads records from DBA_USERS table */
-class OracleUserReader {
+final class OracleUserReader {
     private Connection adminConn;
     
     OracleUserReader(Connection adminConn){
@@ -101,11 +101,11 @@ class OracleUserReader {
 
     private UserRecord translateRowToUserRecord(ResultSet rs) throws SQLException {
         UserRecord record = new UserRecord();
-        record.createdDate = rs.getDate("CREATED");
+        record.createdDate = rs.getTimestamp("CREATED");
         record.defaultTableSpace = rs.getString("DEFAULT_TABLESPACE");
-        record.expireDate = rs.getDate("EXPIRY_DATE");
+        record.expireDate = rs.getTimestamp("EXPIRY_DATE");
         record.externalName = rs.getString("EXTERNAL_NAME");
-        record.lockDate = rs.getDate("LOCK_DATE");
+        record.lockDate = rs.getTimestamp("LOCK_DATE");
         record.profile = rs.getString("PROFILE");
         record.status = rs.getString("ACCOUNT_STATUS");
         record.temporaryTableSpace = rs.getString("TEMPORARY_TABLESPACE");

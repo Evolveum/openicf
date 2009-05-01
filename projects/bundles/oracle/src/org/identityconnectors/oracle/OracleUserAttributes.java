@@ -8,7 +8,7 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
  * @author kitko
  *
  */
-class OracleUserAttributes implements Cloneable{
+final class OracleUserAttributes implements Cloneable{
     Operation operation;
     String userName;
     OracleAuthentication auth;

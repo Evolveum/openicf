@@ -12,7 +12,7 @@ import static org.identityconnectors.oracle.OracleUserAttributeCS.*;
  * @author kitko
  *
  */
-class OracleRolesAndPrivsBuilder {
+final class OracleRolesAndPrivsBuilder {
     private OracleCaseSensitivitySetup cs;
     
     OracleRolesAndPrivsBuilder(OracleCaseSensitivitySetup cs){

@@ -3,13 +3,16 @@
  */
 package org.identityconnectors.oracle;
 
-import static org.identityconnectors.oracle.OracleConnector.*;
-import static org.identityconnectors.oracle.OracleUserAttributeCS.*;
-import static org.junit.Assert.*;
-
-
+import static org.identityconnectors.oracle.OracleConnector.ORACLE_DEF_TS_ATTR_NAME;
+import static org.identityconnectors.oracle.OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME;
+import static org.identityconnectors.oracle.OracleConnector.ORACLE_PROFILE_ATTR_NAME;
+import static org.identityconnectors.oracle.OracleUserAttributeCS.PROFILE;
+import static org.identityconnectors.oracle.OracleUserAttributeCS.ROLE;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -19,7 +22,6 @@ import java.util.Set;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
-
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.Pair;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
@@ -156,6 +158,10 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 		}
 
 		
+		private UIDMatcher(List<String> uids) {
+			this.uids = new ArrayList<String>(uids);
+		}
+
 		@SuppressWarnings("unchecked")
 		@Override
 		public boolean matches(Object arg0) {
@@ -209,7 +215,7 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 		Assert.assertThat(TestHelpers.searchToList(connector, ObjectClass.ACCOUNT, new EqualsFilter(new Name(user(1)))), new UIDMatcher(user(1)));
 		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new EqualsFilter(new Name(user(3))) ), new UIDMatcher(user(3)));
 		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new OrFilter(new EqualsFilter(new Name(user(5))),new EqualsFilter(new Name(user(6)))) ), new UIDMatcher(user(5),user(6)));
-		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new EndsWithFilter(new Name("2"))  ), new UIDMatcher(user(2)));
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new EndsWithFilter(new Name(user(2)))  ), new UIDMatcher(user(2)));
 	}
 	
 	@Test
@@ -379,19 +385,20 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 	}
 	
 	@Test
-	public void testSearchByExpirationDate(){
-		//Unexpire all, so set default password
+	public void testSearchByExpirationDate() throws SQLException{
 		for(String uid : ALL_UIDS){
+			//unexpire to have null or some date in future
 			facade.update(ObjectClass.ACCOUNT, new Uid(uid), CollectionUtil.newSet(AttributeBuilder.buildPassword(uid.toCharArray()),AttributeBuilder.buildPasswordExpired(false)), null);
+			Timestamp expiredDate = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid).expireDate;
+			Attribute expiredDateAttr = OracleConnectorHelper.buildSingleAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, expiredDate != null ? expiredDate.getTime() : null);
+			Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new EqualsFilter(new Name(uid)),new EqualsFilter(expiredDateAttr))), new UIDMatcher(uid));
 		}
-		//All password expired date must be null now
-		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new EqualsFilter(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME)))), new UIDMatcher(ALL_UIDS.toArray(new String[ALL_UIDS.size()])));
+		//expire two of them
 		facade.update(ObjectClass.ACCOUNT, new Uid(user(4)), Collections.singleton(AttributeBuilder.buildPasswordExpired(true)), null);
-		facade.update(ObjectClass.ACCOUNT, new Uid(user(5)), Collections.singleton(AttributeBuilder.buildPasswordExpired(true)), null);
-		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new NotFilter(new EqualsFilter(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME))))), new UIDMatcher(user(4),user(5)));
-		//unexpire, so reset password
-		facade.update(ObjectClass.ACCOUNT, new Uid(user(5)), CollectionUtil.newSet(AttributeBuilder.buildPassword(user(5).toCharArray()),AttributeBuilder.buildPasswordExpired(false)), null);
-		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new EqualsFilter(new Name(user(5))),new EqualsFilter(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME)))), new UIDMatcher(user(5)));
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new EqualsFilter(new Name(user(4))),new NotFilter(new EqualsFilter(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME))))), new UIDMatcher(user(4)));
+		Timestamp expiredDate = new OracleUserReader(connector.getAdminConnection()).readUserRecord(user(4)).expireDate;
+		Attribute expiredDateAttr = OracleConnectorHelper.buildSingleAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, expiredDate != null ? expiredDate.getTime() : null);
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new EqualsFilter(new Name(user(4))),new EqualsFilter(expiredDateAttr))), new UIDMatcher(user(4)));
 	}
 
 

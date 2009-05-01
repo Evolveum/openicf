@@ -7,7 +7,7 @@ import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 
 /** Reads roles and privileges for user */
-class OracleRolePrivReader {
+final class OracleRolePrivReader {
     
     private Connection conn;
     OracleRolePrivReader(Connection conn) {

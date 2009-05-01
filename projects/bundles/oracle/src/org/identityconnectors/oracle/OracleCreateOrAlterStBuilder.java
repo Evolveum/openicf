@@ -190,7 +190,12 @@ final class OracleCreateOrAlterStBuilder {
             	}
             	else{
             		//no password for update and local authentication
-            		throw new IllegalArgumentException("No password specified for local authenication on update");
+            		//some application can send update of authentication to local and will not send password at the update
+            		//In this case we will rather set password to user name and set (password_expired=true)
+            		//Other option would be to throw exception, but some application could noty have 
+            		//possibility to send password 
+            		password = new GuardedString(userAttributes.userName.toCharArray());
+            		userAttributes.expirePassword = true;
             	}
             }
             password.access(new GuardedString.Accessor(){

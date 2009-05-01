@@ -49,7 +49,7 @@ import org.identityconnectors.framework.spi.operations.SearchOp;
  * @author kitko
  *
  */
-class OracleOperationSearch extends AbstractOracleOperation implements SearchOp<Pair<String, FilterWhereBuilder>>{
+final class OracleOperationSearch extends AbstractOracleOperation implements SearchOp<Pair<String, FilterWhereBuilder>>{
 	private static final String SQL = "SELECT DISTINCT DBA_USERS.USERNAME FROM DBA_USERS";
 	
 	private static final String ADVANCED_SQL1 = SQL + 	" LEFT JOIN DBA_TS_QUOTAS DEF_QUOTA " +
@@ -103,27 +103,27 @@ class OracleOperationSearch extends AbstractOracleOperation implements SearchOp<
                 	bld.addAttribute(new Name(record.userName));
                 }
                 if(attributesToGet.contains(ORACLE_DEF_TS_ATTR_NAME)){
-                	bld.addAttribute(AttributeBuilder.build(ORACLE_DEF_TS_ATTR_NAME,record.defaultTableSpace));
+                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_DEF_TS_ATTR_NAME,record.defaultTableSpace));
                 }
                 if(attributesToGet.contains(ORACLE_TEMP_TS_ATTR_NAME)){
-                	bld.addAttribute(AttributeBuilder.build(ORACLE_TEMP_TS_ATTR_NAME,record.temporaryTableSpace));
+                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_TEMP_TS_ATTR_NAME,record.temporaryTableSpace));
                 }
                 if(attributesToGet.contains(ORACLE_AUTHENTICATION_ATTR_NAME)){
-                	bld.addAttribute(AttributeBuilder.build(ORACLE_AUTHENTICATION_ATTR_NAME,OracleUserReader.resolveAuthentication(record).toString()));
+                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_AUTHENTICATION_ATTR_NAME,OracleUserReader.resolveAuthentication(record).toString()));
                 }
                 if(attributesToGet.contains(ORACLE_GLOBAL_ATTR_NAME)){
-                	bld.addAttribute(AttributeBuilder.build(ORACLE_GLOBAL_ATTR_NAME,record.externalName));
+                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_GLOBAL_ATTR_NAME,record.externalName));
                 }
                 if(attributesToGet.contains(ORACLE_PROFILE_ATTR_NAME)){
-                	bld.addAttribute(AttributeBuilder.build(ORACLE_PROFILE_ATTR_NAME,record.profile));
+                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_PROFILE_ATTR_NAME,record.profile));
                 }
                 if(attributesToGet.contains(ORACLE_DEF_TS_QUOTA_ATTR_NAME)){
                 	Long quota = userReader.readUserTSQuota(userName, record.defaultTableSpace);
-					bld.addAttribute(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,quota != null ? quota.toString() : null));
+					bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_DEF_TS_QUOTA_ATTR_NAME,quota != null ? quota.toString() : null));
                 }
                 if(attributesToGet.contains(ORACLE_TEMP_TS_QUOTA_ATTR_NAME)){
                 	Long quota = userReader.readUserTSQuota(userName, record.temporaryTableSpace);
-					bld.addAttribute(AttributeBuilder.build(ORACLE_TEMP_TS_QUOTA_ATTR_NAME,quota != null ? quota.toString() : null));
+					bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_TEMP_TS_QUOTA_ATTR_NAME,quota != null ? quota.toString() : null));
                 }
                 if(attributesToGet.contains(ORACLE_PRIVS_ATTR_NAME)){
                 	bld.addAttribute(AttributeBuilder.build(ORACLE_PRIVS_ATTR_NAME,new OracleRolePrivReader(adminConn).readPrivileges(userName)));
@@ -139,11 +139,11 @@ class OracleOperationSearch extends AbstractOracleOperation implements SearchOp<
                 }
                 if(attributesToGet.contains(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME)){
                 	Long date = record.expireDate != null ? record.expireDate.getTime() : null;
-                	bld.addAttribute(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,date));
+                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,date));
                 }
                 if(attributesToGet.contains(OperationalAttributes.DISABLE_DATE_NAME)){
                 	Long date = record.lockDate != null ? record.lockDate.getTime() : null;
-                	bld.addAttribute(AttributeBuilder.build(OperationalAttributes.DISABLE_DATE_NAME,date));
+                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(OperationalAttributes.DISABLE_DATE_NAME,date));
                 }
                 ConnectorObject ret = bld.build();
                 if (!handler.handle(ret)) {
@@ -230,16 +230,30 @@ class OracleOperationSearch extends AbstractOracleOperation implements SearchOp<
 				}
 				return value ? new SQLParam("EXPIRED",Types.VARCHAR) : new SQLParam("NOT_EXPIRED",Types.VARCHAR);
 			}
-			if(attribute.is(OperationalAttributes.ENABLE_NAME)){
+			else if(attribute.is(OperationalAttributes.ENABLE_NAME)){
 				Boolean value = (Boolean) AttributeUtil.getSingleValue(attribute);
 				if(value == null){
 					return null;
 				}
 				return value ? new SQLParam("NOT_LOCKED",Types.VARCHAR) : new SQLParam("LOCKED",Types.VARCHAR);
 			}
+			else if(attribute.is(OperationalAttributes.DISABLE_DATE_NAME)){
+				Object date = AttributeUtil.getSingleValue(attribute);
+				if(date instanceof Long){
+					date = new java.sql.Timestamp(((Long)date));
+				}
+				return new SQLParam(date,Types.TIMESTAMP);
+			}
+			else if(attribute.is(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME)){
+				Object date = AttributeUtil.getSingleValue(attribute);
+				if(date instanceof Long){
+					date = new java.sql.Timestamp(((Long)date));
+				}
+				return new SQLParam(date,Types.TIMESTAMP);
+			}
 			return new SQLParam(AttributeUtil.getSingleValue(attribute),Types.VARCHAR);
 		}
-
+		
 		@Override
 		protected boolean validateSearchAttribute(Attribute attribute) {
 			//Currently We do not support in filter

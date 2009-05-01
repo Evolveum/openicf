@@ -13,16 +13,24 @@ import java.util.Set;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.LocalizedAssert;
 import org.identityconnectors.dbcommon.SQLUtil;
-import org.identityconnectors.framework.common.exceptions.*;
-import org.identityconnectors.framework.common.objects.*;
-import org.identityconnectors.framework.spi.operations.*;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.exceptions.UnknownUidException;
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
+import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.spi.operations.UpdateAttributeValuesOp;
+import org.identityconnectors.framework.spi.operations.UpdateOp;
 
 /**
  * Alter the user attributes, his roles and privileges
  * @author kitko
  *
  */
-class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp,UpdateAttributeValuesOp {
+final class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp,UpdateAttributeValuesOp {
 
     OracleOperationUpdate(OracleConfiguration cfg, Connection adminConn, Log log) {
         super(cfg, adminConn, log);
@@ -151,7 +159,6 @@ class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp,
     	LocalizedAssert la = new LocalizedAssert(cfg.getConnectorMessages());
 		for(Attribute attr : map.values()){
 			if(attr.is(Name.NAME)){
-				la.assertNotBlank(AttributeUtil.getStringValue(attr), Name.NAME);
 			}
 			else if(attr.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
 				la.assertNotNull(AttributeUtil.getBooleanValue(attr), OperationalAttributes.PASSWORD_EXPIRED_NAME);
@@ -165,32 +172,22 @@ class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp,
 				}
 			}
 			else if(attr.is(OperationalAttributes.ENABLE_NAME)){
-				la.assertNotNull(AttributeUtil.getBooleanValue(attr), OperationalAttributes.ENABLE_NAME);
 			}
 			else if(attr.is(OperationalAttributes.PASSWORD_NAME)){
-				//This can be blank, we will default to name
-				//la.assertNotBlank(AttributeUtil.getStringValue(attr), OperationalAttributes.PASSWORD_NAME);
 			}
 			else if(attr.is(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME)){
-				la.assertNotBlank(AttributeUtil.getStringValue(attr), OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME);
 			}
 			else if(attr.is(OracleConnector.ORACLE_DEF_TS_ATTR_NAME)){
-				la.assertNotBlank(AttributeUtil.getStringValue(attr), OracleConnector.ORACLE_DEF_TS_ATTR_NAME);
 			}
 			else if(attr.is(OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME)){
-				la.assertNotBlank(AttributeUtil.getStringValue(attr), OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME);
 			}
 			else if(attr.is(OracleConnector.ORACLE_GLOBAL_ATTR_NAME)){
-				la.assertNotBlank(AttributeUtil.getStringValue(attr), OracleConnector.ORACLE_GLOBAL_ATTR_NAME);
 			}
 			else if(attr.is(OracleConnector.ORACLE_PROFILE_ATTR_NAME)){
-				la.assertNotBlank(AttributeUtil.getStringValue(attr), OracleConnector.ORACLE_PROFILE_ATTR_NAME);
 			}
 			else if(attr.is(OracleConnector.ORACLE_TEMP_TS_ATTR_NAME)){
-				la.assertNotBlank(AttributeUtil.getStringValue(attr), OracleConnector.ORACLE_TEMP_TS_ATTR_NAME);
 			}
 			else if(attr.is(OracleConnector.ORACLE_TEMP_TS_QUOTA_ATTR_NAME)){
-				la.assertNotBlank(AttributeUtil.getStringValue(attr), OracleConnector.ORACLE_TEMP_TS_QUOTA_ATTR_NAME);
 			}
 			else if(attr.is(OracleConnector.ORACLE_PRIVS_ATTR_NAME)){
 			}

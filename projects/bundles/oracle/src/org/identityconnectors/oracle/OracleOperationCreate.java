@@ -17,7 +17,7 @@ import org.identityconnectors.framework.spi.operations.CreateOp;
  * @author kitko
  *
  */
-class OracleOperationCreate extends AbstractOracleOperation implements CreateOp{
+final class OracleOperationCreate extends AbstractOracleOperation implements CreateOp{
     
     
     OracleOperationCreate(OracleConfiguration cfg,Connection adminConn, Log log) {
@@ -67,41 +67,28 @@ class OracleOperationCreate extends AbstractOracleOperation implements CreateOp{
 
     
     private void checkCreateAttributes(Map<String, Attribute> map) {
-    	LocalizedAssert la = new LocalizedAssert(cfg.getConnectorMessages());
 		for(Attribute attr : map.values()){
 			if(attr.is(Name.NAME)){
-				la.assertNotBlank(AttributeUtil.getStringValue(attr), Name.NAME);
 			}
 			else if(attr.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
-				la.assertNotNull(AttributeUtil.getBooleanValue(attr), OperationalAttributes.PASSWORD_EXPIRED_NAME);
 			}
 			else if(attr.is(OperationalAttributes.ENABLE_NAME)){
-				la.assertNotNull(AttributeUtil.getBooleanValue(attr), OperationalAttributes.ENABLE_NAME);
 			}
 			else if(attr.is(OperationalAttributes.PASSWORD_NAME)){
-				//This can be blank, we will default to name
-				//la.assertNotBlank(AttributeUtil.getStringValue(attr), OperationalAttributes.PASSWORD_NAME);
 			}
 			else if(attr.is(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME)){
-				la.assertNotBlank(AttributeUtil.getStringValue(attr), OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME);
 			}
 			else if(attr.is(OracleConnector.ORACLE_DEF_TS_ATTR_NAME)){
-				la.assertNotBlank(AttributeUtil.getStringValue(attr), OracleConnector.ORACLE_DEF_TS_ATTR_NAME);
 			}
 			else if(attr.is(OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME)){
-				la.assertNotBlank(AttributeUtil.getStringValue(attr), OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME);
 			}
 			else if(attr.is(OracleConnector.ORACLE_GLOBAL_ATTR_NAME)){
-				la.assertNotBlank(AttributeUtil.getStringValue(attr), OracleConnector.ORACLE_GLOBAL_ATTR_NAME);
 			}
 			else if(attr.is(OracleConnector.ORACLE_PROFILE_ATTR_NAME)){
-				la.assertNotBlank(AttributeUtil.getStringValue(attr), OracleConnector.ORACLE_PROFILE_ATTR_NAME);
 			}
 			else if(attr.is(OracleConnector.ORACLE_TEMP_TS_ATTR_NAME)){
-				la.assertNotBlank(AttributeUtil.getStringValue(attr), OracleConnector.ORACLE_TEMP_TS_ATTR_NAME);
 			}
 			else if(attr.is(OracleConnector.ORACLE_TEMP_TS_QUOTA_ATTR_NAME)){
-				la.assertNotBlank(AttributeUtil.getStringValue(attr), OracleConnector.ORACLE_TEMP_TS_QUOTA_ATTR_NAME);
 			}
 			else if(attr.is(OracleConnector.ORACLE_PRIVS_ATTR_NAME)){
 			}
