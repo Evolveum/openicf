@@ -381,16 +381,7 @@ class CommandLineUtil {
             throwErrorIfNull(groups);
             throwErrorIfNullOrEmpty(expired);
             throwErrorIfNullOrEmpty(password);
-            boolean badOwners = false;
-            if (owners!=null) {
-                try {
-                    badOwners = (groups.getValue().size()!=owners.getValue().size());
-                } catch (NullPointerException npe) {
-                    badOwners = true;
-                }
-                if (badOwners)
-                    throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.OWNER_INCONSISTENT));
-            }
+            checkConnectionConsistency(groups, owners);
             
             if (expired!=null && password==null) 
                 throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
@@ -409,11 +400,7 @@ class CommandLineUtil {
                 List groupsValue = groups.getValue();
                 List ownersValue = owners==null?null:owners.getValue();
                 for (int i=0; i<groupsValue.size(); i++) {
-                    Object newGroup = groupsValue.get(i);
-                    String command = "CONNECT "+name+" GROUP("+(String)newGroup+")";
-                    if (ownersValue!=null)
-                        command += " OWNER("+ownersValue.get(i)+")";
-                    checkCommand(command);
+                    createConnection(name, (String)groupsValue.get(i), (String)(ownersValue==null?null:ownersValue.get(i)));
                 }
             }
             if (expired!=null) {
@@ -432,16 +419,7 @@ class CommandLineUtil {
             Attribute owners = attributes.remove(ATTR_CL_GROUP_CONN_OWNERS);
 
             throwErrorIfNull(accounts);
-            boolean badOwners = false;
-            if (owners!=null) {
-                try {
-                    badOwners = (accounts.getValue().size()!=owners.getValue().size());
-                } catch (NullPointerException npe) {
-                    badOwners = true;
-                }
-                if (badOwners)
-                    throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.OWNER_INCONSISTENT));
-            }
+            checkConnectionConsistency(accounts, owners);
             
             if (groupExists(name))
                 throw new AlreadyExistsException();
@@ -455,11 +433,7 @@ class CommandLineUtil {
                 List accountsValue = accounts.getValue();
                 List ownersValue = owners==null?null:owners.getValue();
                 for (int i=0; i<accountsValue.size(); i++) {
-                    Object newAccount = accountsValue.get(i);
-                    String command = "CONNECT "+newAccount+" GROUP("+name+")";
-                    if (ownersValue!=null)
-                        command += " OWNER("+ownersValue.get(i)+")";
-                    checkCommand(command);
+                    createConnection((String)accountsValue.get(i), name, (String)(ownersValue==null?null:ownersValue.get(i)));
                 }
             }
             return uid;
@@ -468,14 +442,31 @@ class CommandLineUtil {
             String user = info[0];
             String group = info[1];
             Attribute owner = AttributeUtil.find(ATTR_LDAP_OWNER, attrs);
-            String command = "CONNECT "+user+" GROUP("+group+")";
-            if (owner!=null)
-                command += " OWNER("+AttributeUtil.getStringValue(owner)+")";
-            checkCommand(command);
+            createConnection(user, group, (String)(owner==null?null:AttributeUtil.getStringValue(owner)));
             return new Uid(name);
         } else {
             throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNSUPPORTED_OBJECT_CLASS, objectClass));
         }
+    }
+
+    private void checkConnectionConsistency(Attribute groups, Attribute owners) {
+        boolean badOwners = false;
+        if (owners!=null) {
+            try {
+                badOwners = (groups.getValue().size()!=owners.getValue().size());
+            } catch (NullPointerException npe) {
+                badOwners = true;
+            }
+            if (badOwners)
+                throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.OWNER_INCONSISTENT));
+        }
+    }
+    
+    private void createConnection(String user, String group, String owner) {
+        String command = "CONNECT "+user+" GROUP("+group+")";
+        if (owner!=null)
+            command += " OWNER("+owner+")";
+        checkCommand(command);
     }
     
     public void deleteViaCommandLine(ObjectClass objectClass, Uid uid) {
@@ -485,6 +476,8 @@ class CommandLineUtil {
             try {
                 checkCommand(command);
             } catch (ConnectorException e) {
+                if (e.toString().contains("INVALID USERID"))
+                    throw new UnknownUidException();
                 if (!userExists(uidString))
                     throw new UnknownUidException();
                 throw e;
@@ -502,6 +495,8 @@ class CommandLineUtil {
             try {
                 checkCommand(command);
             } catch (ConnectorException e) {
+                if (e.toString().contains("INVALID GROUP"))
+                    throw new UnknownUidException();
                 int memberCount = memberCount(uidString);
                 if (memberCount>0)
                     throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.GROUP_NOT_EMPTY));

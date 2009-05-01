@@ -492,16 +492,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
     }
 
     void setGroupMembershipsForUser(String name, Attribute groupsAttribute, Attribute ownersAttribute) {
-        // members and owners must be the same length
-        //
-        boolean badSize = false;
-        try {
-            badSize = (groupsAttribute.getValue().size()!=ownersAttribute.getValue().size());
-        } catch (NullPointerException npe) {
-            badSize = true;
-        }
-        if (badSize)
-            throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.OWNER_INCONSISTENT));
+        checkConnectionConsistency(groupsAttribute, ownersAttribute);
 
         List<Object> groups = groupsAttribute.getValue();
         List<Object> owners = ownersAttribute.getValue();
@@ -533,6 +524,20 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
         }
     }
 
+    private void checkConnectionConsistency(Attribute groupsAttribute,
+            Attribute ownersAttribute) {
+        // members and owners must be the same length
+        //
+        boolean badSize = false;
+        try {
+            badSize = (groupsAttribute.getValue().size()!=ownersAttribute.getValue().size());
+        } catch (NullPointerException npe) {
+            badSize = true;
+        }
+        if (badSize)
+            throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.OWNER_INCONSISTENT));
+    }
+
     private String createConnectionId(String name, String currentGroup) {
         String connectionName = "racfuserid="+name+"+racfgroupid="+
             currentGroup+",profileType=connect,"+_configuration.getSuffix();
@@ -540,16 +545,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
     }
 
     void setGroupMembershipsForGroups(String name, Attribute membersAttribute, Attribute ownersAttribute) {
-        // members and owners must be the same length
-        //
-        boolean badSize = false;
-        try {
-            badSize = (membersAttribute.getValue().size()!=ownersAttribute.getValue().size());
-        } catch (NullPointerException npe) {
-            badSize = true;
-        }
-        if (badSize)
-            throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.OWNER_INCONSISTENT));
+        checkConnectionConsistency(membersAttribute, ownersAttribute);
 
         List<Object> members = membersAttribute.getValue();
         List<Object> owners  = ownersAttribute.getValue();
