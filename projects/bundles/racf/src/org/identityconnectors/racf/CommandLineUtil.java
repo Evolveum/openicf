@@ -590,44 +590,24 @@ class CommandLineUtil {
     Pattern _errorMessage = Pattern.compile("[^\\s]{9}");
     
     public List<String> getUsersViaCommandLine(String query) {
-        String command = null;
-        if (query!=null && query.length()>0)
-            command = "SEARCH CLASS(USER) FILTER("+query+")";
-        else
-            command = "SEARCH CLASS(USER)";
-        String users = getCommandOutput(command);
-        
-        if (users.contains(NO_ENTRIES)) {
-            return new LinkedList<String>();
-        }
-
-        // Error messages all start with a 9 character error code,
-        // and users are at most 8 characters long. This allow us to
-        // determine if there are any error messages in the text
+        List<String> result = new LinkedList<String>(getObjectsViaCommandLine("USER", query));
+        // We eliminate certain users
         //
-        Matcher matcher = _errorMessage.matcher(users); 
-        if (matcher.find()) {
-            String error = users.substring(matcher.start()).trim();
-            throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.ERROR_IN_GET_USERS, error));
-        } else {
-            String[] usersArray = users.trim().split("\\s+");
-            for (int i=0; i<usersArray.length; i++)
-                usersArray[i] = usersArray[i];
-            List<String> result = new LinkedList<String>(Arrays.asList(usersArray));
-            // We eliminate certain users
-            //
-            for (String user : new String[] {"irrcerta", "irrmulti", "irrsitec"}) 
-                result.remove(user);
-            return result;
-        }
+        for (String user : new String[] {"irrcerta", "irrmulti", "irrsitec"}) 
+            result.remove(user);
+        return result;
     }
     
     public List<String> getGroupsViaCommandLine(String query) {
+        return getObjectsViaCommandLine("GROUP", query);
+    }
+    
+    private List<String> getObjectsViaCommandLine(String className, String query) {
         String command = null;
         if (query!=null && query.length()>0)
-            command = "SEARCH CLASS(GROUP) FILTER("+query+")";
+            command = "SEARCH CLASS("+className+") FILTER("+query+")";
         else
-            command = "SEARCH CLASS(GROUP)";
+            command = "SEARCH CLASS("+className+")";
         String groups = getCommandOutput(command);
         
         if (groups.contains(NO_ENTRIES)) {
@@ -785,7 +765,6 @@ class CommandLineUtil {
         if ((alias||masterCat||userCat)!=(alias&&masterCat&&userCat)) {
             throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.INCONSISTENT_CATALOG_ARGS));
         }
-
     }
 
     public Map<String, Object> getAttributesFromCommandLine(ObjectClass objectClass, String racfName, boolean ldapAvailable, Set<String> attributesToGet) {
@@ -946,7 +925,6 @@ class CommandLineUtil {
                 if ("NONE".equals(value))
                     attributesFromCommandLine.put(ATTR_CL_SUPGROUP, null);
             }
-
         }
         return attributesFromCommandLine;
     }
