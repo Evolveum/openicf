@@ -9,7 +9,8 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 /** Reads roles and privileges for user */
 final class OracleRolePrivReader {
     
-    private Connection conn;
+    private final Connection conn;
+    
     OracleRolePrivReader(Connection conn) {
         super();
         this.conn = conn;

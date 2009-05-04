@@ -10,9 +10,9 @@ import org.identityconnectors.common.logging.Log;
  *
  */
 abstract class AbstractOracleOperation {
-    protected Connection adminConn;
-    protected Log log;
-    protected OracleConfiguration cfg;
+    protected final Connection adminConn;
+    protected final Log log;
+    protected final OracleConfiguration cfg;
     
     AbstractOracleOperation(OracleConfiguration cfg,Connection adminConn, Log log) {
         super();

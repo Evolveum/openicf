@@ -241,7 +241,7 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 			for(ConnectorObject o : TestHelpers.searchToList(connector, ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(ORACLE_DEF_TS_ATTR_NAME,defTS)))){
 				OracleUserReader reader = new OracleUserReader(connector.getAdminConnection());
 				UserRecord record = reader.readUserRecord(o.getUid().getUidValue());
-				assertEquals("Found tablespace does not match",defTS, record.defaultTableSpace);
+				assertEquals("Found tablespace does not match",defTS, record.getDefaultTableSpace());
 			}
 		}
 	}
@@ -389,14 +389,14 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 		for(String uid : ALL_UIDS){
 			//unexpire to have null or some date in future
 			facade.update(ObjectClass.ACCOUNT, new Uid(uid), CollectionUtil.newSet(AttributeBuilder.buildPassword(uid.toCharArray()),AttributeBuilder.buildPasswordExpired(false)), null);
-			Timestamp expiredDate = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid).expireDate;
+			Timestamp expiredDate = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid).getExpireDate();
 			Attribute expiredDateAttr = OracleConnectorHelper.buildSingleAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, expiredDate != null ? expiredDate.getTime() : null);
 			Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new EqualsFilter(new Name(uid)),new EqualsFilter(expiredDateAttr))), new UIDMatcher(uid));
 		}
 		//expire two of them
 		facade.update(ObjectClass.ACCOUNT, new Uid(user(4)), Collections.singleton(AttributeBuilder.buildPasswordExpired(true)), null);
 		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new EqualsFilter(new Name(user(4))),new NotFilter(new EqualsFilter(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME))))), new UIDMatcher(user(4)));
-		Timestamp expiredDate = new OracleUserReader(connector.getAdminConnection()).readUserRecord(user(4)).expireDate;
+		Timestamp expiredDate = new OracleUserReader(connector.getAdminConnection()).readUserRecord(user(4)).getExpireDate();
 		Attribute expiredDateAttr = OracleConnectorHelper.buildSingleAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME, expiredDate != null ? expiredDate.getTime() : null);
 		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new EqualsFilter(new Name(user(4))),new EqualsFilter(expiredDateAttr))), new UIDMatcher(user(4)));
 	}

@@ -63,11 +63,11 @@ public abstract class OracleConnectorAbstractTest {
     }
     
     protected static String findDefDefaultTS(Connection conn) throws SQLException{
-        return getTestUserRecord(conn).defaultTableSpace;
+        return getTestUserRecord(conn).getDefaultTableSpace();
     }
     
     protected static String findDefTempTS(Connection conn) throws SQLException{
-        return getTestUserRecord(conn).temporaryTableSpace;
+        return getTestUserRecord(conn).getTemporaryTableSpace();
     }
     
     private static UserRecord getTestUserRecord(Connection conn) throws SQLException{

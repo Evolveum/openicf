@@ -10,7 +10,7 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.*;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
-import org.identityconnectors.oracle.OracleDriverConnectionInfo.OracleDriverConnectionInfoBuilder;
+import org.identityconnectors.oracle.OracleDriverConnectionInfo.Builder;
 
 /**
  * Set of configuration properties for connecting to Oracle database
@@ -270,19 +270,19 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
             }
         }
         else if(ConnectionType.THIN.equals(connType)){
-        	connection =  OracleSpecifics.createThinDriverConnection(new OracleDriverConnectionInfoBuilder().
+        	connection =  OracleSpecifics.createThinDriverConnection(new Builder().
                     setDatabase(database).setDriver(driverClassName).setHost(host).setPassword(password).
                     setPort(port).setUser(user).build()
                     );
         }
         else if(ConnectionType.OCI.equals(connType)){
-        	connection =  OracleSpecifics.createOciDriverConnection(new OracleDriverConnectionInfoBuilder().
+        	connection =  OracleSpecifics.createOciDriverConnection(new Builder().
                     setDatabase(database).setDriver(driverClassName).setHost(host).setPassword(password).
                     setPort(port).setUser(user).build()
                     );
         }
         else if(ConnectionType.CUSTOM_DRIVER.equals(connType)){
-        	connection =  OracleSpecifics.createCustomDriverConnection(new OracleDriverConnectionInfoBuilder().
+        	connection =  OracleSpecifics.createCustomDriverConnection(new Builder().
                     setUrl(url).setDriver(driverClassName).setUser(user).setPassword(password).build()
             );
         }

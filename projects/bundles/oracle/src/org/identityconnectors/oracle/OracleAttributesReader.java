@@ -21,7 +21,7 @@ import org.identityconnectors.framework.common.objects.OperationalAttributes;
  *  It does not do any additional logical checks, it is mainly reader of attributes to the helper structure.
  * */
 final class OracleAttributesReader {
-     ConnectorMessages messages;
+     final ConnectorMessages messages;
      
      OracleAttributesReader(ConnectorMessages messages){
          this.messages = OracleConnectorHelper.assertNotNull(messages, "messages");

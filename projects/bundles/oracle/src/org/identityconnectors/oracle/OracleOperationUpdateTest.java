@@ -114,7 +114,7 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         Attribute profileAttr = AttributeBuilder.build(OracleConnector.ORACLE_PROFILE_ATTR_NAME, profileName);
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(profileAttr), null);
         final UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
-        assertEquals(testConf.getCSSetup().normalizeToken(PROFILE,profileName), record.profile);
+        assertEquals(testConf.getCSSetup().normalizeToken(PROFILE,profileName), record.getProfile());
         try{
             SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "drop profile " + testConf.getCSSetup().normalizeAndFormatToken(PROFILE,profileName));
         }
@@ -140,7 +140,7 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
     @Test
     public void testUpdateDefTS() throws SQLException{
     	//Test that update to same ts works
-    	String defaultTableSpace = userReader.readUserRecord(uid.getUidValue()).defaultTableSpace;
+    	String defaultTableSpace = userReader.readUserRecord(uid.getUidValue()).getDefaultTableSpace();
     	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConnector.ORACLE_DEF_TS_ATTR_NAME, defaultTableSpace)), null);
         //Now try to update with other tablespaces, if update is successfull, check whether it is correctly set
         for(String ts : findAllDefTS(connector.getAdminConnection())){
@@ -151,14 +151,14 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         		//For any reason , when tablespace cannot be used for user
         		continue;
         	}
-        	assertEquals(ts, userReader.readUserRecord(uid.getUidValue()).defaultTableSpace);
+        	assertEquals(ts, userReader.readUserRecord(uid.getUidValue()).getDefaultTableSpace());
         }
     }
     
     @Test
     public void testUpdateTempTS() throws SQLException{
     	//Test that update to same ts works
-    	String tempTableSpace = userReader.readUserRecord(uid.getUidValue()).temporaryTableSpace;
+    	String tempTableSpace = userReader.readUserRecord(uid.getUidValue()).getTemporaryTableSpace();
     	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConnector.ORACLE_TEMP_TS_ATTR_NAME, tempTableSpace)), null);
         //Now try to update with other tablespaces, if update is successfull, check whether it is correctly set
         for(String ts : findAllTempTS(connector.getAdminConnection())){
@@ -169,7 +169,7 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         		//For any reason , when tablespace cannot be used for user
         		continue;
         	}
-        	assertEquals(ts, userReader.readUserRecord(uid.getUidValue()).temporaryTableSpace);
+        	assertEquals(ts, userReader.readUserRecord(uid.getUidValue()).getTemporaryTableSpace());
         }
     }
     
@@ -231,17 +231,17 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
     public void testUpdateEnable() throws SQLException{
     	//new created user will be enabled
     	UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
-    	assertEquals("OPEN",record.status);
+    	assertEquals("OPEN",record.getStatus());
     	Attribute enable = AttributeBuilder.build(OperationalAttributes.ENABLE_NAME, Boolean.FALSE);
     	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(enable), null);
     	record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
     	assertNotNull(record);
-    	assertEquals("LOCKED",record.status);
+    	assertEquals("LOCKED",record.getStatus());
     	enable = AttributeBuilder.build(OperationalAttributes.ENABLE_NAME, Boolean.TRUE);
     	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(enable), null);
     	record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
     	assertNotNull(record);
-    	assertEquals("OPEN",record.status);
+    	assertEquals("OPEN",record.getStatus());
     }
     
     @Test
@@ -250,7 +250,7 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
     	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(expirePassword), null);
     	UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
     	assertNotNull(record);
-        assertEquals("EXPIRED",record.status);
+        assertEquals("EXPIRED",record.getStatus());
         
         //now unexpire
         expirePassword = AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME,Boolean.FALSE);
@@ -262,7 +262,7 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil.newSet(expirePassword,AttributeBuilder.buildPassword("newPassword".toCharArray())), null);
         record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
     	assertNotNull(record);
-        assertEquals("OPEN",record.status);
+        assertEquals("OPEN",record.getStatus());
     }
     
     @Test
@@ -372,8 +372,8 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
     	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConnector.ORACLE_AUTH_EXTERNAL)), null);
         UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
     	assertNotNull(record);
-        assertEquals("OPEN",record.status);
-        assertEquals("EXTERNAL",record.password);
+        assertEquals("OPEN",record.getStatus());
+        assertEquals("EXTERNAL",record.getPassword());
     	facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil
 				.newSet(AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConnector.ORACLE_AUTH_LOCAL),
 						AttributeBuilder.buildPassword("password".toCharArray())
@@ -398,8 +398,8 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
 					), null);
 	        UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
 	    	assertNotNull(record);
-	        assertEquals("OPEN",record.status);
-	        assertNotNull(record.externalName);
+	        assertEquals("OPEN",record.getStatus());
+	        assertNotNull(record.getExternalName());
 	    	facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil
 					.newSet(AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConnector.ORACLE_AUTH_LOCAL),
 							AttributeBuilder.buildPassword("password".toCharArray())

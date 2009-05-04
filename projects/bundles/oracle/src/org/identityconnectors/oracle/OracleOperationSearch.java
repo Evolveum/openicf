@@ -100,29 +100,29 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
                 	attributesToGet = new HashSet<String>(OracleConnector.ALL_ATTRIBUTE_NAMES);
                 }
                 if(attributesToGet.contains(Name.NAME)){
-                	bld.addAttribute(new Name(record.userName));
+                	bld.addAttribute(new Name(record.getUserName()));
                 }
                 if(attributesToGet.contains(ORACLE_DEF_TS_ATTR_NAME)){
-                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_DEF_TS_ATTR_NAME,record.defaultTableSpace));
+                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_DEF_TS_ATTR_NAME,record.getDefaultTableSpace()));
                 }
                 if(attributesToGet.contains(ORACLE_TEMP_TS_ATTR_NAME)){
-                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_TEMP_TS_ATTR_NAME,record.temporaryTableSpace));
+                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_TEMP_TS_ATTR_NAME,record.getTemporaryTableSpace()));
                 }
                 if(attributesToGet.contains(ORACLE_AUTHENTICATION_ATTR_NAME)){
                 	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_AUTHENTICATION_ATTR_NAME,OracleUserReader.resolveAuthentication(record).toString()));
                 }
                 if(attributesToGet.contains(ORACLE_GLOBAL_ATTR_NAME)){
-                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_GLOBAL_ATTR_NAME,record.externalName));
+                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_GLOBAL_ATTR_NAME,record.getExternalName()));
                 }
                 if(attributesToGet.contains(ORACLE_PROFILE_ATTR_NAME)){
-                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_PROFILE_ATTR_NAME,record.profile));
+                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_PROFILE_ATTR_NAME,record.getProfile()));
                 }
                 if(attributesToGet.contains(ORACLE_DEF_TS_QUOTA_ATTR_NAME)){
-                	Long quota = userReader.readUserTSQuota(userName, record.defaultTableSpace);
+                	Long quota = userReader.readUserTSQuota(userName, record.getDefaultTableSpace());
 					bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_DEF_TS_QUOTA_ATTR_NAME,quota != null ? quota.toString() : null));
                 }
                 if(attributesToGet.contains(ORACLE_TEMP_TS_QUOTA_ATTR_NAME)){
-                	Long quota = userReader.readUserTSQuota(userName, record.temporaryTableSpace);
+                	Long quota = userReader.readUserTSQuota(userName, record.getTemporaryTableSpace());
 					bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_TEMP_TS_QUOTA_ATTR_NAME,quota != null ? quota.toString() : null));
                 }
                 if(attributesToGet.contains(ORACLE_PRIVS_ATTR_NAME)){
@@ -132,17 +132,17 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
                 	bld.addAttribute(AttributeBuilder.build(ORACLE_ROLES_ATTR_NAME,new OracleRolePrivReader(adminConn).readRoles(userName)));
                 }
                 if(attributesToGet.contains(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
-                	bld.addAttribute(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME,Boolean.valueOf(record.status.contains("EXPIRED"))));
+                	bld.addAttribute(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME,Boolean.valueOf(record.getStatus().contains("EXPIRED"))));
                 }
                 if(attributesToGet.contains(OperationalAttributes.ENABLE_NAME)){
-                	bld.addAttribute(AttributeBuilder.build(OperationalAttributes.ENABLE_NAME,Boolean.valueOf(!record.status.contains("LOCKED"))));
+                	bld.addAttribute(AttributeBuilder.build(OperationalAttributes.ENABLE_NAME,Boolean.valueOf(!record.getStatus().contains("LOCKED"))));
                 }
                 if(attributesToGet.contains(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME)){
-                	Long date = record.expireDate != null ? record.expireDate.getTime() : null;
+                	Long date = record.getExpireDate() != null ? record.getExpireDate().getTime() : null;
                 	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,date));
                 }
                 if(attributesToGet.contains(OperationalAttributes.DISABLE_DATE_NAME)){
-                	Long date = record.lockDate != null ? record.lockDate.getTime() : null;
+                	Long date = record.getLockDate() != null ? record.getLockDate().getTime() : null;
                 	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(OperationalAttributes.DISABLE_DATE_NAME,date));
                 }
                 ConnectorObject ret = bld.build();

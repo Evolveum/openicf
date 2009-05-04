@@ -66,13 +66,17 @@ interface OracleCaseSensitivitySetup {
  *
  */
 final class CSTokenFormatter{
-    private OracleUserAttributeCS attribute;
-    private String quatesChar = "";
+    private final OracleUserAttributeCS attribute;
+    private final String quatesChar;
     OracleUserAttributeCS getAttribute() {
         return attribute;
     }
     String getQuatesChar() {
         return quatesChar;
+    }
+    private CSTokenFormatter(Builder builder){
+    	this.attribute = builder.attribute;
+    	this.quatesChar = builder.quatesChar;
     }
     char[] formatToken(char[] token){
         if(token == null){
@@ -93,27 +97,27 @@ final class CSTokenFormatter{
         }
         return new String(formatToken(token.toCharArray()));
     }
-    private CSTokenFormatter(){}
     
     static CSTokenFormatter build(OracleUserAttributeCS attribute,String quatesChar){
     	return new Builder().setAttribute(attribute).setQuatesChar(quatesChar).build();
     }
     
     final static class Builder{
-        CSTokenFormatter element = new CSTokenFormatter();
+        private OracleUserAttributeCS attribute;
+        private String quatesChar = "";
         Builder setAttribute(OracleUserAttributeCS attribute){
-            element.attribute = attribute;
+            this.attribute = attribute;
             return this;
         }
         Builder setQuatesChar(String quatesChar){
-            element.quatesChar = quatesChar;
+            this.quatesChar = quatesChar;
             return this;
         }
         Builder setValues(Map<String, Object> aMap){
             Map<String, Object> map = new HashMap<String, Object>(aMap);
             String quates = (String) map.remove("quates");
             if(quates != null){
-                element.quatesChar = quates;
+                this.quatesChar = quates;
             }
             if(!map.isEmpty()){
                 throw new RuntimeException("Some elements in aMap not recognized : " + map);
@@ -121,22 +125,22 @@ final class CSTokenFormatter{
             return this;
         }
         CSTokenFormatter build(){
-            if(element.attribute == null){
+            if(this.attribute == null){
                 throw new IllegalStateException("Attribute not set");
             }
-            return element;
+            return new CSTokenFormatter(this);
         }
         CSTokenFormatter buildWithDefaultValues(OracleUserAttributeCS attribute){
-            setAttribute(attribute);
-            element.quatesChar = element.attribute.getDefQuatesChar();
+            this.attribute = attribute;
+            this.quatesChar = attribute.getDefQuatesChar();
             return build();
         }
     }
 }
 
 final class CSTokenNormalizer{
-    private OracleUserAttributeCS attribute;
-    private boolean toUpper;
+    private final OracleUserAttributeCS attribute;
+    private final boolean toUpper;
     OracleUserAttributeCS getAttribute() {
         return attribute;
     }
@@ -153,23 +157,28 @@ final class CSTokenNormalizer{
     static CSTokenNormalizer build(OracleUserAttributeCS attribute,boolean toUpper){
     	return new Builder().setAttribute(attribute).setToUpper(toUpper).build();
     }
-
+    
+    private CSTokenNormalizer(Builder builder){
+    	this.attribute = builder.attribute;
+    	this.toUpper = builder.toUpper;
+    }
     
     final static class Builder{
-        CSTokenNormalizer element = new CSTokenNormalizer();
+        private OracleUserAttributeCS attribute;
+        private boolean toUpper;
         Builder setAttribute(OracleUserAttributeCS attribute){
-            element.attribute = attribute;
+            this.attribute = attribute;
             return this;
         }
         Builder setToUpper(boolean toUpper){
-            element.toUpper = toUpper;
+            this.toUpper = toUpper;
             return this;
         }
         Builder setValues(Map<String, Object> aMap){
             Map<String, Object> map = new HashMap<String, Object>(aMap);
             String toUpper = (String) map.remove("upper");
             if(toUpper != null){
-                element.toUpper = Boolean.valueOf(toUpper);
+                this.toUpper = Boolean.valueOf(toUpper);
             }
             if(!map.isEmpty()){
                 throw new RuntimeException("Some elements in aMap not recognized : " + map);
@@ -177,14 +186,14 @@ final class CSTokenNormalizer{
             return this;
         }
         CSTokenNormalizer build(){
-            if(element.attribute == null){
+            if(this.attribute == null){
                 throw new IllegalStateException("Attribute not set");
             }
-            return element;
+            return new CSTokenNormalizer(this);
         }
         CSTokenNormalizer buildWithDefaultValues(OracleUserAttributeCS attribute){
-            setAttribute(attribute);
-            element.toUpper = element.attribute.isDefToUpper();
+            this.attribute = attribute;
+            this.toUpper = attribute.isDefToUpper();
             return build();
         }
     }
@@ -193,8 +202,8 @@ final class CSTokenNormalizer{
 
 /** Builder of OracleCaseSensitivity using formatters for user attributes */
 final class OracleCaseSensitivityBuilder{
-    private Map<OracleUserAttributeCS,CSTokenFormatter> formatters = new HashMap<OracleUserAttributeCS, CSTokenFormatter>(6);
-    private Map<OracleUserAttributeCS,CSTokenNormalizer> normalizers = new HashMap<OracleUserAttributeCS, CSTokenNormalizer>(6);
+    private final Map<OracleUserAttributeCS,CSTokenFormatter> formatters = new HashMap<OracleUserAttributeCS, CSTokenFormatter>(6);
+    private final Map<OracleUserAttributeCS,CSTokenNormalizer> normalizers = new HashMap<OracleUserAttributeCS, CSTokenNormalizer>(6);
     
     OracleCaseSensitivityBuilder defineFormatters(CSTokenFormatter... formatters){
         for(CSTokenFormatter element : formatters){
@@ -284,8 +293,8 @@ final class OracleCaseSensitivityBuilder{
  *
  */
 final class OracleCaseSensitivityImpl implements OracleCaseSensitivitySetup{
-    private Map<OracleUserAttributeCS,CSTokenFormatter> formatters;
-    private Map<OracleUserAttributeCS,CSTokenNormalizer> normalizers;    
+    private final Map<OracleUserAttributeCS,CSTokenFormatter> formatters;
+    private final Map<OracleUserAttributeCS,CSTokenNormalizer> normalizers;    
     
     OracleCaseSensitivityImpl(Map<OracleUserAttributeCS,CSTokenFormatter> formatters,Map<OracleUserAttributeCS,CSTokenNormalizer> normalizers){
         this.formatters = new HashMap<OracleUserAttributeCS, CSTokenFormatter>(formatters);

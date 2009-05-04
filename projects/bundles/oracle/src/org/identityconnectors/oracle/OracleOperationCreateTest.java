@@ -88,9 +88,9 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         assertEqualsIgnoreCase(TEST_USER, uid.getUidValue());
         UserRecord record = userReader.readUserRecord(uid.getUidValue());
         assertNotNull(record);
-        assertEqualsIgnoreCase(TEST_USER, record.userName);
-        assertNull(record.externalName);
-        assertEquals("OPEN",record.status);
+        assertEqualsIgnoreCase(TEST_USER, record.getUserName());
+        assertNull(record.getExternalName());
+        assertEquals("OPEN",record.getStatus());
         
         try {
             SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "grant connect to " + testConf.getCSSetup().formatToken(USER_NAME,uid.getUidValue()));
@@ -102,8 +102,8 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,passwordAttribute), null);
         record = userReader.readUserRecord(uid.getUidValue());
         assertNotNull(record);
-        assertEqualsIgnoreCase(TEST_USER, record.userName);
-        assertEquals("OPEN",record.status);
+        assertEqualsIgnoreCase(TEST_USER, record.getUserName());
+        assertEquals("OPEN",record.getStatus());
     }
     
     /** Test create of user with external authentication 
@@ -123,11 +123,11 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         assertEqualsIgnoreCase(TEST_USER, uid.getUidValue());
         UserRecord record = userReader.readUserRecord(uid.getUidValue());
         assertNotNull(record);
-        assertEqualsIgnoreCase(TEST_USER, record.userName);
-        assertNull(record.expireDate);
-        assertNull(record.externalName);
-        assertEquals("OPEN",record.status);
-        assertEquals("EXTERNAL",record.password);
+        assertEqualsIgnoreCase(TEST_USER, record.getUserName());
+        assertNull(record.getExpireDate());
+        assertNull(record.getExternalName());
+        assertEquals("OPEN",record.getStatus());
+        assertEquals("EXTERNAL",record.getPassword());
     }
     
     /** Test create global user   
@@ -163,10 +163,10 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
             assertEqualsIgnoreCase(TEST_USER, uid.getUidValue());
             UserRecord record = userReader.readUserRecord(uid.getUidValue());
             assertNotNull(record);
-            assertEquals(uid.getUidValue(), record.userName);
-            assertNull(record.expireDate);
-            assertNotNull(record.externalName);
-            assertEquals("OPEN",record.status);
+            assertEquals(uid.getUidValue(), record.getUserName());
+            assertNull(record.getExpireDate());
+            assertNotNull(record.getExternalName());
+            assertEquals("OPEN",record.getStatus());
         }
     }
     
@@ -184,9 +184,9 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         assertEqualsIgnoreCase(TEST_USER, uid.getUidValue());
         UserRecord record = userReader.readUserRecord(uid.getUidValue());
         assertNotNull(record);
-        assertEqualsIgnoreCase(TEST_USER, record.userName);
-        assertEquals("OPEN",record.status);
-        assertEquals(AttributeUtil.getStringValue(defaultTs), record.defaultTableSpace);
+        assertEqualsIgnoreCase(TEST_USER, record.getUserName());
+        assertEquals("OPEN",record.getStatus());
+        assertEquals(AttributeUtil.getStringValue(defaultTs), record.getDefaultTableSpace());
         facade.delete(ObjectClass.ACCOUNT, uid, null);
         
         //Now try to create with other tablespaces, if create is successfull, check whether it is correctly set
@@ -200,7 +200,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         		continue;
         	}
         	record = userReader.readUserRecord(uid.getUidValue());
-        	assertEquals(ts, record.defaultTableSpace);
+        	assertEquals(ts, record.getDefaultTableSpace());
         	facade.delete(ObjectClass.ACCOUNT, uid, null);
         }
         
@@ -220,9 +220,9 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         assertEqualsIgnoreCase(TEST_USER, uid.getUidValue());
         UserRecord record = userReader.readUserRecord(uid.getUidValue());
         assertNotNull(record);
-        assertEqualsIgnoreCase(TEST_USER, record.userName);
-        assertEquals("OPEN",record.status);
-        assertEquals(AttributeUtil.getStringValue(tempTs), record.temporaryTableSpace);
+        assertEqualsIgnoreCase(TEST_USER, record.getUserName());
+        assertEquals("OPEN",record.getStatus());
+        assertEquals(AttributeUtil.getStringValue(tempTs), record.getTemporaryTableSpace());
         facade.delete(ObjectClass.ACCOUNT, uid, null);
         
         //Now try to create with other temp tablespaces, if create is successfull, check whether it is correctly set
@@ -236,7 +236,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         		continue;
         	}
         	record = userReader.readUserRecord(uid.getUidValue());
-        	assertEquals(ts, record.temporaryTableSpace);
+        	assertEquals(ts, record.getTemporaryTableSpace());
         	facade.delete(ObjectClass.ACCOUNT, uid, null);
         }
         
@@ -311,9 +311,9 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         assertEqualsIgnoreCase(TEST_USER, uid.getUidValue());
         UserRecord record =userReader.readUserRecord(uid.getUidValue());
         assertNotNull(record);
-        assertEqualsIgnoreCase(TEST_USER, record.userName);
-        assertEquals("OPEN",record.status);
-        assertEqualsIgnoreCase(profileName,record.profile);
+        assertEqualsIgnoreCase(TEST_USER, record.getUserName());
+        assertEquals("OPEN",record.getStatus());
+        assertEqualsIgnoreCase(profileName,record.getProfile());
         facade.delete(ObjectClass.ACCOUNT, uid, null);
         try{
             SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "drop profile " + testConf.getCSSetup().normalizeAndFormatToken(PROFILE,profileName));
@@ -336,9 +336,9 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         assertEqualsIgnoreCase(TEST_USER, uid.getUidValue());
         UserRecord record = userReader.readUserRecord(uid.getUidValue());
         assertNotNull(record);
-        assertEqualsIgnoreCase(TEST_USER, record.userName);
-        assertNull(record.expireDate);
-        assertEquals("EXPIRED",record.status);
+        assertEqualsIgnoreCase(TEST_USER, record.getUserName());
+        assertNull(record.getExpireDate());
+        assertEquals("EXPIRED",record.getStatus());
     }
     
     /** Test Create user locked/unlocked 
@@ -353,17 +353,17 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute,enabled), null);
         UserRecord record = userReader.readUserRecord(uid.getUidValue());
         assertNotNull(record);
-        assertEqualsIgnoreCase(TEST_USER, record.userName);
-        assertEquals("OPEN",record.status);
-        assertNull(record.lockDate);
+        assertEqualsIgnoreCase(TEST_USER, record.getUserName());
+        assertEquals("OPEN",record.getStatus());
+        assertNull(record.getLockDate());
         facade.delete(ObjectClass.ACCOUNT, new Uid(TEST_USER), null);
         enabled = AttributeBuilder.build(OperationalAttributes.ENABLE_NAME,Boolean.FALSE);
         uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute,enabled), null);
         record = userReader.readUserRecord(uid.getUidValue());
         assertNotNull(record);
-        assertEqualsIgnoreCase(TEST_USER, record.userName);
-        assertEquals("LOCKED",record.status);
-        assertNotNull(record.lockDate);
+        assertEqualsIgnoreCase(TEST_USER, record.getUserName());
+        assertEquals("LOCKED",record.getStatus());
+        assertNotNull(record.getLockDate());
     }
     
     /**
@@ -388,7 +388,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute, roles), null);
         UserRecord record = userReader.readUserRecord(uid.getUidValue());
         assertNotNull(record);
-        assertEqualsIgnoreCase(TEST_USER, record.userName);
+        assertEqualsIgnoreCase(TEST_USER, record.getUserName());
         OracleRolePrivReader roleReader = new OracleRolePrivReader(connector.getAdminConnection());
         final List<String> rolesRead = roleReader.readRoles(uid.getUidValue());
         Assert.assertThat(rolesRead, JUnitMatchers.hasItem(cs.normalizeToken(OracleUserAttributeCS.ROLE,role)));
@@ -413,7 +413,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         final Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute,privileges), null);
         UserRecord record = userReader.readUserRecord(uid.getUidValue());
         assertNotNull(record);
-        assertEqualsIgnoreCase(TEST_USER, record.userName);
+        assertEqualsIgnoreCase(TEST_USER, record.getUserName());
         OracleRolePrivReader roleReader = new OracleRolePrivReader(connector.getAdminConnection());
         final List<String> privRead = roleReader.readPrivileges(uid.getUidValue());
         Assert.assertThat(privRead, JUnitMatchers.hasItem("CREATE SESSION"));

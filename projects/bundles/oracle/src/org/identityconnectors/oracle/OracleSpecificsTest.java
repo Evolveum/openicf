@@ -7,7 +7,7 @@ import java.text.MessageFormat;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
-import org.identityconnectors.oracle.OracleDriverConnectionInfo.OracleDriverConnectionInfoBuilder;
+import org.identityconnectors.oracle.OracleDriverConnectionInfo.Builder;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.*;
 
@@ -23,7 +23,7 @@ public class OracleSpecificsTest {
         String port = TestHelpers.getProperty("thin.port",null);
         String database = TestHelpers.getProperty("thin.database", null);
         Connection conn = 
-            OracleSpecifics.createThinDriverConnection(new OracleDriverConnectionInfoBuilder().
+            OracleSpecifics.createThinDriverConnection(new Builder().
                     setUser(user).setPassword(password).
                     setHost(host).setPort(port).setDatabase(database).
                     build());
@@ -47,7 +47,7 @@ public class OracleSpecificsTest {
         String port = TestHelpers.getProperty("oci.port",null);
         String database = TestHelpers.getProperty("oci.database", null);
         Connection conn = 
-            OracleSpecifics.createOciDriverConnection(new OracleDriverConnectionInfoBuilder().
+            OracleSpecifics.createOciDriverConnection(new Builder().
                     setUser(user).setPassword(password).
                     setHost(host).setPort(port).setDatabase(database).
                     build());
@@ -107,7 +107,7 @@ public class OracleSpecificsTest {
         String host = TestHelpers.getProperty("thin.host", null);
         String port = TestHelpers.getProperty("thin.port", null);
         conn = OracleSpecifics
-                .createThinDriverConnection(new OracleDriverConnectionInfoBuilder()
+                .createThinDriverConnection(new Builder()
                 		.setHost(host).setPort(port)
                         .setDatabase(database).setUser(user).setPassword(new GuardedString(password.toCharArray())).build());
         Assert.assertNotNull(conn);
@@ -137,7 +137,7 @@ public class OracleSpecificsTest {
         String user = TestHelpers.getProperty("oci.user",null);
         String password = TestHelpers.getProperty("oci.password", null);
         conn = OracleSpecifics
-                .createOciDriverConnection(new OracleDriverConnectionInfoBuilder()
+                .createOciDriverConnection(new Builder()
                         .setDatabase(database).setUser(user).setPassword(new GuardedString(password.toCharArray())).build());
         Assert.assertNotNull(conn);
         SQLUtil.closeQuietly(conn);
@@ -151,7 +151,7 @@ public class OracleSpecificsTest {
         String url = TestHelpers.getProperty("customDriver.url", null);
         String driver = TestHelpers.getProperty("customDriver.driverClassName", null);
         Connection conn = OracleSpecifics
-                .createCustomDriverConnection(new OracleDriverConnectionInfoBuilder()
+                .createCustomDriverConnection(new Builder()
                         .setUser(user).setPassword(
                                 new GuardedString(password.toCharArray()))
                         .setUrl(url).setDriver(driver).build());

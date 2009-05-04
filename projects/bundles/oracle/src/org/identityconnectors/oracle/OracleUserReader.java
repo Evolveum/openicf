@@ -79,7 +79,7 @@ final class OracleUserReader {
     static Map<String,UserRecord> createUserRecordMap(Collection<UserRecord> records){
         Map<String,UserRecord> map = new HashMap<String, UserRecord>(records.size());
         for(UserRecord record : records){
-            map.put(record.userName, record);
+            map.put(record.getUserName(), record);
         }
         return map;
     }
@@ -100,18 +100,19 @@ final class OracleUserReader {
     
 
     private UserRecord translateRowToUserRecord(ResultSet rs) throws SQLException {
-        UserRecord record = new UserRecord();
-        record.createdDate = rs.getTimestamp("CREATED");
-        record.defaultTableSpace = rs.getString("DEFAULT_TABLESPACE");
-        record.expireDate = rs.getTimestamp("EXPIRY_DATE");
-        record.externalName = rs.getString("EXTERNAL_NAME");
-        record.lockDate = rs.getTimestamp("LOCK_DATE");
-        record.profile = rs.getString("PROFILE");
-        record.status = rs.getString("ACCOUNT_STATUS");
-        record.temporaryTableSpace = rs.getString("TEMPORARY_TABLESPACE");
-        record.userId = rs.getLong("USER_ID");
-        record.userName = rs.getString("USERNAME");
-        record.password = rs.getString("PASSWORD");
+    	UserRecord.Builder builder = new UserRecord.Builder();
+        builder.setCreatedDate(rs.getTimestamp("CREATED"));
+        builder.setDefaultTableSpace(rs.getString("DEFAULT_TABLESPACE"));
+        builder.setExpireDate(rs.getTimestamp("EXPIRY_DATE"));
+        builder.setExternalName(rs.getString("EXTERNAL_NAME"));
+        builder.setLockDate(rs.getTimestamp("LOCK_DATE"));
+        builder.setProfile(rs.getString("PROFILE"));
+        builder.setStatus(rs.getString("ACCOUNT_STATUS"));
+        builder.setTemporaryTableSpace(rs.getString("TEMPORARY_TABLESPACE"));
+        builder.setUserId(rs.getLong("USER_ID"));
+        builder.setUserName(rs.getString("USERNAME"));
+        builder.setPassword(rs.getString("PASSWORD"));
+        UserRecord record = builder.build();
         return record;
     }
     
@@ -125,7 +126,7 @@ final class OracleUserReader {
     	if(record == null){
     		throw new IllegalArgumentException(MessageFormat.format("No user record found for user [{0}]",userName));
     	}
-    	return readUserTSQuota(userName, record.defaultTableSpace);
+    	return readUserTSQuota(userName, record.getDefaultTableSpace());
     }
     
     Long readUserTempTSQuota(String userName) throws SQLException{
@@ -133,14 +134,14 @@ final class OracleUserReader {
     	if(record == null){
     		throw new IllegalArgumentException(MessageFormat.format("No user record found for user [{0}]",userName));
     	}
-    	return readUserTSQuota(userName, record.temporaryTableSpace);
+    	return readUserTSQuota(userName, record.getTemporaryTableSpace());
     }
     
     static OracleAuthentication resolveAuthentication(UserRecord record){
-    	if("EXTERNAL".equals(record.password)){
+    	if("EXTERNAL".equals(record.getPassword())){
     		return OracleAuthentication.EXTERNAL;
     	}
-    	if(record.externalName != null){
+    	if(record.getExternalName() != null){
     		return OracleAuthentication.GLOBAL;
     	}
     	return OracleAuthentication.LOCAL;

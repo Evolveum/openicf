@@ -6,9 +6,9 @@ import java.util.*;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.objects.*;
 
-/** Helper static methods related to Oracle DB */
+/** Helper static methods related to Oracle connector */
 abstract class OracleConnectorHelper {
-
+	private OracleConnectorHelper(){}
     static String getRequiredStringValue(Map<String, Attribute> attrs, String name){
         Attribute attr = attrs.get(name);
         if(attr == null){

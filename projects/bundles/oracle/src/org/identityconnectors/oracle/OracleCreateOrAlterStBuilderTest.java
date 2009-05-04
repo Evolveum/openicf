@@ -143,14 +143,13 @@ public class OracleCreateOrAlterStBuilderTest {
         attributes.expirePassword = true;
         attributes.enable = true;
         attributes.defaultTSQuota = "-1";
-        UserRecord record = new UserRecord();
-        record.defaultTableSpace = "users";
+        UserRecord record = new UserRecord.Builder().setDefaultTableSpace("users").build();
         assertEquals("alter user \"user1\" quota unlimited on \"users\" password expire account unlock", createDefaultBuilder().buildAlterUserSt(attributes, record).toString());
         
         attributes.enable = null;
         attributes.expirePassword = null;
         attributes.tempTableSpace = "tempTS";
-        record.defaultTableSpace = "defTS";
+        record = new UserRecord.Builder().setDefaultTableSpace("defTS").build();
         assertEquals("alter user \"user1\" temporary tablespace \"tempTS\" quota unlimited on \"defTS\"", createDefaultBuilder().buildAlterUserSt(attributes, record).toString());
         
         attributes = new OracleUserAttributes();
@@ -190,7 +189,7 @@ public class OracleCreateOrAlterStBuilderTest {
         attributes.userName = "user1";
         attributes.profile = "profile";
         Assert.assertEquals("create user user1 identified by \"user1\" profile 'profile'", builder.buildCreateUserSt(attributes));
-        UserRecord record = new UserRecord();
+        UserRecord record = new UserRecord.Builder().build();
         Assert.assertEquals("alter user user1 profile 'profile'", builder.buildAlterUserSt(attributes, record));
 
     }

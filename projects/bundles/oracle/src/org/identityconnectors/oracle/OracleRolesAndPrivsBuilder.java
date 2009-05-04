@@ -13,7 +13,8 @@ import static org.identityconnectors.oracle.OracleUserAttributeCS.*;
  *
  */
 final class OracleRolesAndPrivsBuilder {
-    private OracleCaseSensitivitySetup cs;
+	
+    private final OracleCaseSensitivitySetup cs;
     
     OracleRolesAndPrivsBuilder(OracleCaseSensitivitySetup cs){
         this.cs = OracleConnectorHelper.assertNotNull(cs, "cs");

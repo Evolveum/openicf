@@ -83,20 +83,20 @@ public class OracleUserReaderTest {
         
         UserRecord record1 = userReader.readUserRecord("user1");
         assertNotNull(record1);
-        assertEqualsIgnoreCase("user1",record1.userName);
-        assertNotNull(record1.userId);
-        assertNotNull(record1.defaultTableSpace);
-        assertNotNull(record1.temporaryTableSpace);
-        assertNotNull(record1.createdDate);
-        assertNull(record1.lockDate);
-        assertEquals("OPEN",record1.status);
+        assertEqualsIgnoreCase("user1",record1.getUserName());
+        assertNotNull(record1.getUserId());
+        assertNotNull(record1.getDefaultTableSpace());
+        assertNotNull(record1.getTemporaryTableSpace());
+        assertNotNull(record1.getCreatedDate());
+        assertNull(record1.getLockDate());
+        assertEquals("OPEN",record1.getStatus());
         
         SQLUtil.executeUpdateStatement(conn,"alter user " + cs.formatToken(USER_NAME,"user1") + " password expire account lock");
         record1 = userReader.readUserRecord("user1");
         assertNotNull(record1);
-        assertNotNull(record1.expireDate);
-        assertNotNull(record1.lockDate);
-        assertEquals("EXPIRED & LOCKED",record1.status);
+        assertNotNull(record1.getExpireDate());
+        assertNotNull(record1.getLockDate());
+        assertEquals("EXPIRED & LOCKED",record1.getStatus());
         
         SQLUtil.executeUpdateStatement(conn,"drop user " + cs.formatToken(USER_NAME,"user1"));
         SQLUtil.executeUpdateStatement(conn,"drop user " + cs.formatToken(USER_NAME,"user2"));
@@ -110,7 +110,7 @@ public class OracleUserReaderTest {
             SQLUtil.executeUpdateStatement(conn,"create user " + cs.normalizeAndFormatToken(USER_NAME,user) + " identified by password");
         }
         UserRecord readUserRecord = userReader.readUserRecord(cs.normalizeToken(USER_NAME,user));
-        SQLUtil.executeUpdateStatement(conn, "alter user " + cs.normalizeAndFormatToken(USER_NAME,user) + " quota 30k on " + readUserRecord.defaultTableSpace);
+        SQLUtil.executeUpdateStatement(conn, "alter user " + cs.normalizeAndFormatToken(USER_NAME,user) + " quota 30k on " + readUserRecord.getDefaultTableSpace());
         Long quota = userReader.readUserDefTSQuota(cs.normalizeToken(USER_NAME,user));
         assertTrue("Quota must be set at least to 30k",new Long(30000).compareTo(quota) < 0);
         //For 10.2 , not working

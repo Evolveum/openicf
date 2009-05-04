@@ -19,9 +19,9 @@ import static org.identityconnectors.oracle.OracleUserAttributeCS.*;
  *
  */
 final class OracleCreateOrAlterStBuilder {
-    private OracleCaseSensitivitySetup cs;
+    private final OracleCaseSensitivitySetup cs;
     @SuppressWarnings("unused")
-	private ConnectorMessages cm;
+	private final ConnectorMessages cm;
     
     OracleCreateOrAlterStBuilder(OracleCaseSensitivitySetup cs,ConnectorMessages cm) {
         this.cs = OracleConnectorHelper.assertNotNull(cs, "cs");
@@ -120,10 +120,10 @@ final class OracleCreateOrAlterStBuilder {
         builder.append(" on");
         String defaultTableSpace = userAttributes.defaultTableSpace; 
         if(defaultTableSpace == null){
-            if(userRecord == null || userRecord.defaultTableSpace == null){
+            if(userRecord == null || userRecord.getDefaultTableSpace() == null){
                 throw new IllegalArgumentException("Default tablespace not specified");
             }
-            defaultTableSpace = userRecord.defaultTableSpace;
+            defaultTableSpace = userRecord.getDefaultTableSpace();
         }
         builder.append(' ').append(cs.formatToken(DEF_TABLESPACE, defaultTableSpace));
     }
@@ -139,10 +139,10 @@ final class OracleCreateOrAlterStBuilder {
         builder.append(" on");
         String tempTableSpace = userAttributes.tempTableSpace; 
         if(tempTableSpace == null){
-            if(userRecord == null || userRecord.temporaryTableSpace == null){
+            if(userRecord == null || userRecord.getTemporaryTableSpace() == null){
                 throw new IllegalArgumentException("Temporary tablespace not specified");
             }
-            tempTableSpace = userRecord.temporaryTableSpace;
+            tempTableSpace = userRecord.getTemporaryTableSpace();
         }
         builder.append(' ').append(cs.formatToken(TEMP_TABLESPACE, tempTableSpace));
 
