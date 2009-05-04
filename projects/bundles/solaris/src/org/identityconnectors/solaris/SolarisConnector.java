@@ -22,6 +22,7 @@
  */
 package org.identityconnectors.solaris;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -140,9 +141,17 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
                     MSG_NOT_SUPPORTED_OBJECTCLASS, ObjectClass.ACCOUNT_NAME));
         }
         
-//        SolarisConfiguration config = (SolarisConfiguration) getConfiguration();
-//        SolarisConnection connection = new SolarisConnection(config);
+        SolarisConfiguration config = (SolarisConfiguration) getConfiguration();
+        SolarisConnection connection = new SolarisConnection(config);
         
+        try {
+            connection.send("echo \"ahoj\"");
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        System.out.println("=================");
         
         
         return null;

@@ -57,9 +57,9 @@ public class SolarisTest {
     
     @Test
     public void basicConnectorTests() {
-        testGoodConnection();
-        basicSchemaTest();
         testGoodConfiguration();
+        basicSchemaTest();
+        testGoodConnection();
     }
     
 
@@ -112,11 +112,16 @@ public class SolarisTest {
     }
     
     @Test
-    public void testLs() {
+    public void testEcho() {
         SolarisConfiguration config = getConfig();
         SolarisConnector connector = SolarisTestCommon.createConnector(config);
-        String s = connector.executeCommand(connector.getConnection(), "echo \"hello world\"");
-        System.out.println(s);
+        final String message = "HeLlO WoRlD";
+        String output = connector.executeCommand(connector.getConnection(), String.format("echo \"%s\"", message));
+        //System.out.println(s);
+        /*
+         * the output contains even the optional welcome message on Solaris.
+         */
+        Assert.assertTrue(output.contains(message));
     }
     
     /* ************* AUXILIARY METHODS *********** */

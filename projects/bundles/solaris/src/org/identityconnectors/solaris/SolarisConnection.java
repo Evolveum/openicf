@@ -57,6 +57,8 @@ public class SolarisConnection {
 
     /*  CONSTRUCTOR */
     public SolarisConnection(SolarisConfiguration configuration) {
+        _buffer = new StringBuffer();
+        
         if (configuration == null) {
             throw new ConfigurationException(
                     "Cannot create a SolarisConnection on a null configuration.");
@@ -141,7 +143,7 @@ public class SolarisConnection {
     /** once connection is disposed it won't be used at all. */
     void dispose() {
         log.info("dispose()");
-        if (_expect4j != null){
+        if (_expect4j != null) {
             _expect4j.close();
         }
     }
