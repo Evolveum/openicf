@@ -380,6 +380,20 @@ public class SolarisConfiguration extends AbstractConfiguration {
 
     
     /* *********** AUXILIARY METHODS ***************** */
+    /**
+     * Get the Localization message for the current key 
+     */
+    public String getMessage(String key) {
+        return getConnectorMessages().format(key, key);
+    }
+
+    /**
+     * See {@link SolarisConfiguration#getMessage(String)}.
+     */
+    public String getMessage(String key, Object... objects) {
+        return getConnectorMessages().format(key, key, objects);
+    }
+    
     @Override
     public void validate() {
         String msg = "'%s' cannot be null or empty.";

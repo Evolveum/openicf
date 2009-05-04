@@ -55,62 +55,14 @@ public class SolarisTest {
     
     /* ************ TEST CONNECTOR ************ */
     
+    /** elementary schema test */
     @Test
-    public void basicConnectorTests() {
-        testGoodConfiguration();
-        basicSchemaTest();
-        testGoodConnection();
+    public void basicSchemaTest() {
+        SolarisConnector connector = SolarisTestCommon.createConnector(getConfig());
+        Schema schema = connector.schema();
+        Assert.assertNotNull(schema);
     }
-    
-
-    
-    
-
-    /* ************* TEST CONFIGURATION *********** */
-    
-    private void testGoodConfiguration() {
-        try {
-            SolarisConfiguration config = getConfig();
-            // no IllegalArgumentException should be thrown
-            config.validate();
-        } catch (IllegalArgumentException ex) {
-            Assert
-                    .fail("no IllegalArgumentException should be thrown for valid configuration.\n" + ex.getMessage());
-        }
-    }
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void testMissingUsername() {
-        SolarisConfiguration config = getConfig();
-        config.setUserName(null);
-        config.validate();
-        Assert.fail("Configuration allowed a null admin username.");
-    }
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void testMissingPassword() {
-        SolarisConfiguration config = getConfig();
-        config.setPassword(null);
-        config.validate();
-        Assert.fail("Configuration allowed a null password.");
-    }
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void testMissingHostname() {
-        SolarisConfiguration config = getConfig();
-        config.setHostNameOrIpAddr(null);
-        config.validate();
-        Assert.fail("Configuration allowed a null hostname.");
-    }
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void testMissingPort() {
-        SolarisConfiguration config = getConfig();
-        config.setPort(null);
-        config.validate();
-        Assert.fail("Configuration allowed a null port.");
-    }
-    
+        
     @Test
     public void testEcho() {
         SolarisConfiguration config = getConfig();
@@ -134,23 +86,4 @@ public class SolarisTest {
         return config;
     }
     
-    /** test connection to the configuration given by default credentials (build.groovy) */
-    private void testGoodConnection() {
-        SolarisConfiguration config = getConfig();
-        SolarisConnector connector = SolarisTestCommon.createConnector(config);
-        try {
-            connector.checkAlive();
-        } finally {
-            connector.dispose();
-        }
-    }
-    
-    /** elementary schema test */
-    private void basicSchemaTest() {
-        SolarisConnector connector = SolarisTestCommon.createConnector(getConfig());
-        Schema schema = connector.schema();
-        Assert.assertNotNull(schema);
-    }
-    
-        
 }
