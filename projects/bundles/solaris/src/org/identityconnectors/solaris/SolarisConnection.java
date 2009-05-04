@@ -22,26 +22,38 @@
  */
 package org.identityconnectors.solaris;
 
+import java.io.IOException;
+
+import org.apache.oro.text.regex.MalformedPatternException;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 
+import expect4j.Closure;
 import expect4j.Expect4j;
+import expect4j.ExpectState;
 import expect4j.ExpectUtils;
+import expect4j.matches.Match;
+import expect4j.matches.RegExpMatch;
+import expect4j.matches.TimeoutMatch;
 
 /**
  * maps functionality of SSHConnection.java
  * @author David Adam
  *
  */
-class SolarisConnection {
+public class SolarisConnection {
+    //TODO might be a configuration property
+    private static final String HOST_END_OF_LINE_TERMINATOR = "\n";
+    
     /**
      * the configuration object from which this connection is created.
      */
     private SolarisConfiguration _configuration;
     private final Log log = Log.getLog(SolarisConnection.class);
     private Expect4j _expect4j;
+    private StringBuffer _buffer;
 
     /*  CONSTRUCTOR */
     public SolarisConnection(SolarisConfiguration configuration) {
@@ -79,6 +91,53 @@ class SolarisConnection {
     }
 
     /* *************** METHODS ****************** */
+    public void send(String string) throws IOException {
+        log.info("send(''{0}'')", string);
+        //System.out.println("Send:"+string);
+        _expect4j.send(string + HOST_END_OF_LINE_TERMINATOR);
+    }
+    
+    public void send(StringBuffer string) throws IOException {
+        send(string.toString());
+    }
+    
+    public void waitFor(String string) throws Exception{
+        log.info("waitFor(''{0}'')", string);
+        _expect4j.expect(string, new Closure() {
+            public void run(ExpectState state) {
+                _buffer.append(state.getBuffer());
+            }
+        });
+    }
+    
+    public void waitFor(final String string, int millis) throws MalformedPatternException, Exception {
+        log.info("waitFor(''{0}'', {1})", string, millis);
+        Match[] matches = {
+                new RegExpMatch(string, new Closure() {
+                    public void run(ExpectState state) {
+                        _buffer.append(state.getBuffer());
+                    }
+                }),
+                new TimeoutMatch(millis,  new Closure() {
+                    public void run(ExpectState state) {
+                        System.out.println("timeout:"+_buffer);
+                        ConnectorException e = new ConnectorException("TIMEOUT_IN_MATCH");
+                        log.error(e, "timeout in waitFor");
+                        throw e;
+                    }
+                })
+        };
+        _expect4j.expect(matches);
+    }
+    
+    public String getStandardOutput() {
+        return _buffer.toString();
+    }
+
+    public void resetStandardOutput() {
+        _buffer.setLength(0);
+    }
+    
     /** once connection is disposed it won't be used at all. */
     void dispose() {
         log.info("dispose()");

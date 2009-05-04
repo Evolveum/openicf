@@ -23,10 +23,13 @@
 package org.identityconnectors.solaris.test;
 
 
+import java.io.IOException;
+
 import junit.framework.Assert;
 
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.solaris.SolarisConfiguration;
+import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.junit.After;
 import org.junit.Before;
@@ -106,6 +109,14 @@ public class SolarisTest {
         config.setPort(null);
         config.validate();
         Assert.fail("Configuration allowed a null port.");
+    }
+    
+    @Test
+    public void testLs() {
+        SolarisConfiguration config = getConfig();
+        SolarisConnector connector = SolarisTestCommon.createConnector(config);
+        String s = connector.executeCommand(connector.getConnection(), "echo \"hello world\"");
+        System.out.println(s);
     }
     
     /* ************* AUXILIARY METHODS *********** */

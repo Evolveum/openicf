@@ -32,6 +32,7 @@ public class SolarisTestCommon {
         final String PROP_SYSTEM_USER = "user";
         final String PROP_PORT = "port";
         final String PROP_CONN_TYPE = "connectionType";
+        final String ROOT_SHELL_PROMPT = "rootShellPrompt";
         
         // set the credentials
         final String HOST_NAME = TestHelpers.getProperty(PROP_HOST, null);
@@ -39,6 +40,7 @@ public class SolarisTestCommon {
         final String SYSTEM_USER = TestHelpers.getProperty(PROP_SYSTEM_USER, null);
         final String PORT = TestHelpers.getProperty(PROP_PORT, null);
         final String CONN_TYPE = TestHelpers.getProperty(PROP_CONN_TYPE, null);
+        final String ROOT_PROMPT = TestHelpers.getProperty(ROOT_SHELL_PROMPT, null);
         
         String msg = "%s must be provided in build.groovy";
         Assert.assertNotNull(String.format(msg, PROP_HOST), HOST_NAME);
@@ -46,6 +48,7 @@ public class SolarisTestCommon {
         Assert.assertNotNull(String.format(msg, PROP_SYSTEM_USER), SYSTEM_USER);
         Assert.assertNotNull(String.format(msg, PROP_PORT), PORT);
         Assert.assertNotNull(String.format(msg, PROP_CONN_TYPE), CONN_TYPE);
+        Assert.assertNotNull(String.format(msg, ROOT_SHELL_PROMPT), ROOT_PROMPT);
         
         // save configuration
         SolarisConfiguration config = new SolarisConfiguration();
@@ -54,6 +57,7 @@ public class SolarisTestCommon {
         config.setUserName(SYSTEM_USER);
         config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
         config.setConnectionType(CONN_TYPE);
+        config.setRootShellPrompt(ROOT_PROMPT);
         
         return config;
     }

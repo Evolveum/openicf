@@ -11,6 +11,7 @@ import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
+import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.test.common.TestHelpers;
@@ -44,7 +45,9 @@ public class SolarisTestCreate {
         SolarisConnector connector = createConnector(config);
         
         Set<Attribute> attrs = initSampleUser();
-        connector.create(ObjectClass.ACCOUNT, attrs, null);
+        
+        Uid uid = connector.create(ObjectClass.ACCOUNT, attrs, null);
+        Assert.assertNotNull(uid);
     }
     
     /* ************* AUXILIARY METHODS *********** */

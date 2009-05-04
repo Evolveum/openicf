@@ -7,3 +7,8 @@ HINTS from SolarisRA:
 * // Depending on the amount of data to modify, userAttribParams
   // could push the input beyond what the shell can handle so
   // we break up the input to allow for this.
+  
+  ================================================
+  
+  try to reproduce the 'echo "Hello world"' -- inspire from VMS code.
+  == try to detect, what was sent back.
