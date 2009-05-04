@@ -31,14 +31,14 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.spi.Configuration;
 
-public class OpCreateImpl {
+import static org.identityconnectors.solaris.SolarisHelper.executeCommand;
+
+public class OpCreateImpl extends AbstractOp {
     /** message constants */
     private static final String MSG_NOT_SUPPORTED_OBJECTCLASS = "Object class '%s' is not supported";
     
-    private Configuration _configuration;
-    
     public OpCreateImpl(Configuration configuration) {
-        _configuration = configuration;
+        super(configuration);
     }
     
     Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
@@ -58,9 +58,5 @@ public class OpCreateImpl {
         }
         
         return null;
-    }
-    
-    private Configuration getConfiguration() {
-        return _configuration;
     }
 }

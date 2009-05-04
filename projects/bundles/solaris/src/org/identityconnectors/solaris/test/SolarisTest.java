@@ -23,14 +23,12 @@
 package org.identityconnectors.solaris.test;
 
 
-import java.io.IOException;
-
 import junit.framework.Assert;
 
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.solaris.SolarisConfiguration;
-import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
+import org.identityconnectors.solaris.SolarisHelper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -68,7 +66,8 @@ public class SolarisTest {
         SolarisConfiguration config = getConfig();
         SolarisConnector connector = SolarisTestCommon.createConnector(config);
         final String message = "HeLlO WoRlD";
-        String output = connector.executeCommand(connector.getConnection(), String.format("echo \"%s\"", message));
+        String output = SolarisHelper.executeCommand(config, connector
+                .getConnection(), String.format("echo \"%s\"", message));
         //System.out.println(s);
         /*
          * the output contains even the optional welcome message on Solaris.

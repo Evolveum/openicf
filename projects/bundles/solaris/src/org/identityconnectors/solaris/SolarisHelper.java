@@ -22,8 +22,36 @@
  */
 package org.identityconnectors.solaris;
 
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
+
 
 /** helper class for Solaris specific operations */
-class SolarisHelper {
-
+public class SolarisHelper {
+    public static final int SHORT_WAIT = 60000;
+    
+    public static String executeCommand(SolarisConfiguration configuration,
+            SolarisConnection connection, String command) {
+        connection.resetStandardOutput();
+        try {
+            connection.send(command);
+            connection.waitFor(configuration.getRootShellPrompt(), SHORT_WAIT);
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }
+        String output = connection.getStandardOutput();
+        int index = output.lastIndexOf(configuration.getRootShellPrompt());
+        if (index!=-1)
+            output = output.substring(0, index);
+        
+        String terminator = "\n";
+        // trim off starting or ending \n
+        //
+        if (output.startsWith(terminator)) {
+            output = output.substring(terminator.length());
+        }
+        if (output.endsWith(terminator)) {
+            output = output.substring(0, output.length()-terminator.length());
+        }
+        return output;
+    }
 }

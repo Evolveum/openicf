@@ -46,6 +46,8 @@ import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
 
+import static org.identityconnectors.solaris.SolarisHelper.executeCommand;
+
 /**
  * @author David Adam
  * 
@@ -53,8 +55,6 @@ import org.identityconnectors.framework.spi.operations.TestOp;
 @ConnectorClass(displayNameKey = "Solaris", configurationClass = SolarisConfiguration.class)
 public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         SchemaOp, CreateOp, TestOp {
-
-    public static final int SHORT_WAIT = 60000;
 
     /**
      * Setup logging for the {@link DatabaseTableConnector}.
@@ -110,24 +110,8 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      */
     public Uid authenticate(ObjectClass objectClass, String username,
             GuardedString password, OperationOptions options) {
+        return new OpAuthenticateImpl(_configuration).authenticate(objectClass, username, password, options);
         
-        SolarisConfiguration userConfig = new SolarisConfiguration(getConfiguration());
-        userConfig.setUserName(username);
-        userConfig.setPassword(password);
-        
-        SolarisConnection connection = null;
-        try {
-            connection = new SolarisConnection(userConfig);
-        } catch (RuntimeException ex) {
-            // in case of invalid credentials propagate the exception
-            throw ex;
-        } finally {
-            if (connection != null) {
-                connection.dispose();
-            }
-        }
-        
-        return new Uid(username);
     }
 
     /** {@inheritDoc} */
@@ -136,33 +120,6 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         return new OpCreateImpl(_configuration).create(oclass, attrs, options);
     }
     
-    // TODO change this from protected to public
-    public String executeCommand(SolarisConnection connection, String command) {
-        connection.resetStandardOutput();
-        try {
-            connection.send(command);
-            connection.waitFor(_configuration.getRootShellPrompt(), SHORT_WAIT);
-        } catch (Exception e) {
-            throw ConnectorException.wrap(e);
-        }
-        String output = connection.getStandardOutput();
-        int index = output.lastIndexOf(_configuration.getRootShellPrompt());
-        if (index!=-1)
-            output = output.substring(0, index);
-        
-        String terminator = "\n";
-        // trim off starting or ending \n
-        //
-        if (output.startsWith(terminator)) {
-            output = output.substring(terminator.length());
-        }
-        if (output.endsWith(terminator)) {
-            output = output.substring(0, output.length()-terminator.length());
-        }
-        return output;
-    }
-
-
     /**
      * TODO
      */
