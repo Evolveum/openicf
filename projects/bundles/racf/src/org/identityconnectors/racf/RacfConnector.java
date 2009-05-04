@@ -182,7 +182,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
         Attribute disableDate = attributes.get(OperationalAttributes.DISABLE_DATE_NAME);
         Long now              = new Date().getTime();
         
-        if (enable!=null) {
+        //TODO: fix this later
+        if (false && enable!=null) {
             if (AttributeUtil.getBooleanValue(enable)) {
                 if (enableDate!=null)
                     throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.ENABLE_PLUS_DATE));
@@ -210,14 +211,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
                     attribute = AttributeBuilder.build(ATTR_LDAP_PASSWORD, attribute.getValue());
                 else
                     attribute = AttributeBuilder.build(ATTR_CL_PASSWORD, attribute.getValue());
-            } else if (attribute.is(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME)) {
-                Long passwordChangeInterval = AttributeUtil.getLongValue(attribute);
-                // Password interval is in days
-                String value = Long.toString(passwordChangeInterval/(24*60*60*1000));
-                if (isLdapConnectionAvailable())
-                    attribute = AttributeBuilder.build(ATTR_LDAP_PASSWORD_INTERVAL, value);
-                else
-                    attribute = AttributeBuilder.build(ATTR_CL_PASSWORD_INTERVAL, value);
             } else if (attribute.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)) {
                 if (isLdapConnectionAvailable())
                     attribute = AttributeBuilder.build(ATTR_LDAP_ATTRIBUTES, attribute.getValue());
@@ -742,8 +735,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
             attributes.add(buildMultivaluedAttribute(ATTR_CL_NETVIEW_OPCLASS,           String.class, false));
             attributes.add(buildMultivaluedAttribute(ATTR_CL_NETVIEW_DOMAINS,           String.class, false));
             attributes.add(buildMultivaluedAttribute(ATTR_CL_CICS_OPCLASS,              Integer.class, false));
-            attributes.add(buildMultivaluedAttribute(ATTR_CL_CICS_RLSKEY,               Integer.class, false));
-            attributes.add(buildMultivaluedAttribute(ATTR_CL_CICS_TLSKEY,               Integer.class, false));
+            attributes.add(buildMultivaluedAttribute(ATTR_CL_CICS_RSLKEY,               Integer.class, false));
+            attributes.add(buildMultivaluedAttribute(ATTR_CL_CICS_TSLKEY,               Integer.class, false));
             attributes.add(buildMultivaluedAttribute(ATTR_CL_GROUPS,                    String.class, false));
     
             // Catalog Attributes (make non-default)
@@ -758,12 +751,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
     
             // Operational Attributes
             //
-            attributes.add(OperationalAttributeInfos.ENABLE);
-            attributes.add(OperationalAttributeInfos.ENABLE_DATE);
-            attributes.add(OperationalAttributeInfos.DISABLE_DATE);
+            attributes.add(buildNoncreateAttribute(OperationalAttributes.ENABLE_NAME,  boolean.class, false));
+            attributes.add(buildNoncreateAttribute(OperationalAttributes.ENABLE_DATE_NAME,  long.class, false));
+            attributes.add(buildNoncreateAttribute(OperationalAttributes.DISABLE_DATE_NAME,  long.class, false));
             attributes.add(OperationalAttributeInfos.PASSWORD);
             attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
-            attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
+            attributes.add(buildReadonlyAttribute(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, String.class, false));
             attributes.add(PredefinedAttributeInfos.LAST_LOGIN_DATE);
             attributes.add(PredefinedAttributeInfos.LAST_PASSWORD_CHANGE_DATE);
     
@@ -1009,6 +1002,32 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
         builder.setCreateable(false);
         builder.setReadable(false);
         builder.setReturnedByDefault(false);
+        return builder.build();
+    }
+
+    private AttributeInfo buildNoncreateAttribute(String name, Class<?> clazz, boolean required) {
+        AttributeInfoBuilder builder = new AttributeInfoBuilder();
+        builder.setName(name);
+        builder.setType(clazz);
+        builder.setRequired(required);
+        builder.setMultiValued(false);
+        builder.setUpdateable(true);
+        builder.setCreateable(false);
+        builder.setReadable(true);
+        builder.setReturnedByDefault(true);
+        return builder.build();
+    }
+
+    private AttributeInfo buildReadonlyAttribute(String name, Class<?> clazz, boolean required) {
+        AttributeInfoBuilder builder = new AttributeInfoBuilder();
+        builder.setName(name);
+        builder.setType(clazz);
+        builder.setRequired(required);
+        builder.setMultiValued(false);
+        builder.setUpdateable(false);
+        builder.setCreateable(false);
+        builder.setReadable(true);
+        builder.setReturnedByDefault(true);
         return builder.build();
     }
 

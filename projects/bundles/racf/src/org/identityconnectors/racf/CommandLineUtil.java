@@ -173,7 +173,9 @@ class CommandLineUtil {
             if (index>-1) {
                 // Round up to line length
                 //
+                index += command.length;
                 index += connection.getWidth();
+                index -= index%connection.getWidth();
                 output = output.substring(index);
             }
             
@@ -242,7 +244,6 @@ class CommandLineUtil {
         Map<String, Map<String, char[]>> attributeValues = new HashMap<String, Map<String,char[]>>();
         for (Map.Entry<String, Attribute> entry : attributes.entrySet()) {
             String[] attributeName = entry.getKey().split(RacfConnector.SEPARATOR_REGEX);
-            throwErrorIfNullOrEmpty(entry.getValue());
             
             if (!attributeValues.containsKey(attributeName[0])) {
                 attributeValues.put(attributeName[0], new HashMap<String, char[]>());
@@ -258,17 +259,25 @@ class CommandLineUtil {
             if (segment.getValue().containsKey(DELETE_SEGMENT)) {
                 commandAttributes.append(" NO"+segment.getKey());
             } else {
-                if (!RACF.equalsIgnoreCase(segment.getKey()))
-                    commandAttributes.append(" "+segment.getKey()+"(");
-                for (Map.Entry<String, char[]> entry : segment.getValue().entrySet()) {
-                    char[] value = entry.getValue();
-                    value = computeValue(value, segment.getKey(), entry.getKey());
-                    commandAttributes.append(" "+entry.getKey()+"(");
-                    commandAttributes.append(value);
-                    commandAttributes.append(")");
+                // We ignore CATALOG, since it isn't a real segment
+                //
+                if (!CATALOG.equalsIgnoreCase(segment.getKey())) {
+                    if (!RACF.equalsIgnoreCase(segment.getKey()))
+                        commandAttributes.append(" "+segment.getKey()+"(");
+                    for (Map.Entry<String, char[]> entry : segment.getValue().entrySet()) {
+                        char[] value = entry.getValue();
+                        if (value==null) {
+                            commandAttributes.append(" NO"+entry.getKey());
+                        } else {
+                            value = computeValue(value, segment.getKey(), entry.getKey());
+                            commandAttributes.append(" "+entry.getKey()+"(");
+                            commandAttributes.append(value);
+                            commandAttributes.append(")");
+                        }
+                    }
+                    if (!RACF.equalsIgnoreCase(segment.getKey()))
+                        commandAttributes.append(")");
                 }
-                if (!RACF.equalsIgnoreCase(segment.getKey()))
-                    commandAttributes.append(")");
             }
         }
         
@@ -304,15 +313,20 @@ class CommandLineUtil {
     }
     
     private char[] getAsStringValue(Attribute attribute) {
-        Object value = AttributeUtil.getSingleValue(attribute);
-        if (value instanceof GuardedString) {
-            GuardedString currentGS = (GuardedString)value;
+        if (isNullOrEmpty(attribute))
+            return null;
+        List<Object> values = attribute.getValue();
+        if (values.size()==1 && values.get(0) instanceof GuardedString) {
+            GuardedString currentGS = (GuardedString)values.get(0);
             GuardedStringAccessor accessor = new GuardedStringAccessor();
             currentGS.access(accessor);
             char[] currentArray = accessor.getArray();
             return currentArray;
         } else {
-            return value.toString().toCharArray();
+            StringBuffer buffer = new StringBuffer();
+            for (Object value : values)
+                buffer.append(" "+value.toString());
+            return buffer.substring(1).toCharArray();
         }
     }
 
@@ -352,6 +366,15 @@ class CommandLineUtil {
         }
     }
     
+    private boolean isNullOrEmpty(Attribute attribute) {
+        if (attribute!=null) {
+            List<Object> values = attribute.getValue();
+            if (values==null || values.size()==0)
+                return true;
+        }
+        return false;
+    }
+    
     private void throwErrorIfNull(Attribute attribute) {
         if (attribute!=null) {
             List<Object> values = attribute.getValue();
@@ -383,6 +406,24 @@ class CommandLineUtil {
             throwErrorIfNullOrEmpty(password);
             checkConnectionConsistency(groups, owners);
             
+            // If both ENABLE==false and an ENABLE_DATE are specified,
+            // we need to process the REVOKE in a separate command
+            //
+            Attribute enable      = attributes.get(ATTR_CL_ENABLED);
+            Attribute enableDate  = attributes.get(ATTR_CL_RESUME_DATE);
+            Attribute disableDate = attributes.get(ATTR_CL_REVOKE_DATE);
+            boolean doEnable = false;
+            boolean doDisable = false;
+            
+            if (enableDate!=null && enable!=null && AttributeUtil.getBooleanValue(enable)) {
+                doEnable = true;
+                attributes.remove(ATTR_CL_ENABLED);
+            }
+            if (disableDate!=null && enable!=null && !AttributeUtil.getBooleanValue(enable)) {
+                doDisable = true;
+                attributes.remove(ATTR_CL_ENABLED);
+            }
+            
             if (expired!=null && password==null) 
                 throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
             
@@ -403,14 +444,20 @@ class CommandLineUtil {
                     createConnection(name, (String)groupsValue.get(i), (String)(ownersValue==null?null:ownersValue.get(i)));
                 }
             }
-            if (expired!=null) {
-                Map<String, Attribute> updateAttrs = new HashMap<String, Attribute>();
-                updateAttrs.put(ATTR_CL_EXPIRED, expired);
-                updateAttrs.put(ATTR_CL_PASSWORD, password);
+            if (expired!=null || doDisable || doEnable) {
                 buffer = new CharArrayBuffer();
                 buffer.append("ALTUSER ");
                 buffer.append(name);
-                buffer.append(mapAttributesToString(updateAttrs));
+                if (doDisable)
+                    buffer.append(" REVOKE");
+                if (doEnable)
+                    buffer.append(" RESUME");
+                if (expired!=null) {
+                    Map<String, Attribute> updateAttrs = new HashMap<String, Attribute>();
+                    updateAttrs.put(ATTR_CL_EXPIRED, expired);
+                    updateAttrs.put(ATTR_CL_PASSWORD, password);
+                    buffer.append(mapAttributesToString(updateAttrs));
+                }
                 createOrUpdateViaCommandLine(objectClass, name, buffer);
             }
             return uid;
@@ -640,6 +687,28 @@ class CommandLineUtil {
             Attribute groupOwners = attributes.remove(ATTR_CL_GROUP_CONN_OWNERS);
             Attribute expired = attributes.get(ATTR_CL_EXPIRED);
             Attribute password = attributes.get(ATTR_CL_PASSWORD);
+            
+            // If both ENABLE==false and an ENABLE_DATE are specified,
+            // we need to process the REVOKE in a separate command
+            //
+            Attribute enable      = attributes.get(ATTR_CL_ENABLED);
+            Attribute enableDate  = attributes.get(ATTR_CL_RESUME_DATE);
+            Attribute disableDate = attributes.get(ATTR_CL_REVOKE_DATE);
+            boolean doEnable = false;
+            boolean doDisable = false;
+            
+            if (enableDate!=null && enable!=null && AttributeUtil.getBooleanValue(enable)) {
+                doEnable = true;
+                attributes.remove(ATTR_CL_ENABLED);
+            }
+            if (disableDate!=null && enable!=null && !AttributeUtil.getBooleanValue(enable)) {
+                doDisable = true;
+                attributes.remove(ATTR_CL_ENABLED);
+            }
+            
+            if (expired!=null && password==null) 
+                throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
+            
             if (expired!=null && password==null) 
                 throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
             
@@ -659,12 +728,22 @@ class CommandLineUtil {
                 if (groups!=null)
                     _connector.setGroupMembershipsForUser(name, groups, groupOwners);
                 if (attributeString.length>0)
-                    return createOrUpdateViaCommandLine(objectClass, name, buffer);
-                else
-                    return uid;
+                    uid = createOrUpdateViaCommandLine(objectClass, name, buffer);
             } finally {
                 buffer.clear();
             }
+            
+            if (doDisable || doEnable) {
+                buffer = new CharArrayBuffer();
+                buffer.append("ALTUSER ");
+                buffer.append(name);
+                if (doDisable)
+                    buffer.append(" REVOKE");
+                if (doEnable)
+                    buffer.append(" RESUME");
+                createOrUpdateViaCommandLine(objectClass, name, buffer);
+            }
+            return uid;
         } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
             Attribute members = attributes.remove(ATTR_CL_MEMBERS);
             Attribute groupOwners = attributes.remove(ATTR_CL_GROUP_CONN_OWNERS);
@@ -1036,6 +1115,14 @@ class CommandLineUtil {
             //
             
             matches.add(new RegExpMatch("IKJ\\d+\\w REENTER THIS OPERAND", new Closure() {
+                public void run(ExpectState state) throws Exception {
+                    state.addVar("errorDetected", state.getBuffer());
+                    getRW3270Connection().sendPAKeys(1);
+                    state.exp_continue();
+                }
+            }));
+            
+            matches.add(new RegExpMatch("IKJ\\d+\\w ENTER (\\w\\s)+-", new Closure() {
                 public void run(ExpectState state) throws Exception {
                     state.addVar("errorDetected", state.getBuffer());
                     getRW3270Connection().sendPAKeys(1);

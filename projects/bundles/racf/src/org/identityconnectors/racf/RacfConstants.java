@@ -208,8 +208,8 @@ public interface RacfConstants {
     public static final String ATTR_CL_CICS_OPIDENT             = "CICS*OPIDENT";
     public static final String ATTR_CL_CICS_OPCLASS             = "CICS*OPCLASS";
     public static final String ATTR_CL_CICS_XRFSOFF             = "CICS*XRFSOFF";
-    public static final String ATTR_CL_CICS_RLSKEY              = "CICS*RLSKEY";
-    public static final String ATTR_CL_CICS_TLSKEY              = "CICS*TLSKEY";
+    public static final String ATTR_CL_CICS_RSLKEY              = "CICS*RSLKEY";
+    public static final String ATTR_CL_CICS_TSLKEY              = "CICS*TSLKEY";
     public static final String ATTR_CL_NETVIEW_OPCLASS          = "NETVIEW*OPCLASS";
     public static final String ATTR_CL_NETVIEW_NGMFVSPN         = "NETVIEW*NGMFVSPN";
     public static final String ATTR_CL_NETVIEW_NGMFADMN         = "NETVIEW*NGMFADMN";
