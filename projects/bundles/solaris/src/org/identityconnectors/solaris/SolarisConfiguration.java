@@ -24,6 +24,7 @@ package org.identityconnectors.solaris;
 
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.Configuration;
 
@@ -126,6 +127,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
      * Telnet, SSH, and SSHPubKey.
      */
     private ConnectionType connectionType;
+    private ConnectorMessages _connectorMessages;
     
     /*
      * RA_PRIVATE_KEY
@@ -420,5 +422,6 @@ public class SolarisConfiguration extends AbstractConfiguration {
         if (rootShellPrompt == null) {
             throw new IllegalArgumentException(String.format(msg, "Root shell prompt"));
         }
+
     }
 }

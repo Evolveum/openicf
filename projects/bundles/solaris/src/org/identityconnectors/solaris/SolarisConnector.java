@@ -54,9 +54,6 @@ import org.identityconnectors.framework.spi.operations.TestOp;
 public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         SchemaOp, CreateOp, TestOp {
 
-    /** message constants */
-    private static final String MSG_NOT_SUPPORTED_OBJECTCLASS = "Object class '%s' is not supported";
-
     public static final int SHORT_WAIT = 60000;
 
     /**
@@ -136,25 +133,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     /** {@inheritDoc} */
     public Uid create(ObjectClass oclass, Set<Attribute> attrs,
             OperationOptions options) {
-        if (!oclass.is(ObjectClass.ACCOUNT_NAME)) {
-            throw new IllegalArgumentException(String.format(
-                    MSG_NOT_SUPPORTED_OBJECTCLASS, ObjectClass.ACCOUNT_NAME));
-        }
-        
-        SolarisConfiguration config = (SolarisConfiguration) getConfiguration();
-        SolarisConnection connection = new SolarisConnection(config);
-        
-        try {
-            connection.send("echo \"ahoj\"");
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        
-        System.out.println("=================");
-        
-        
-        return null;
+        return new OpCreateImpl(_configuration).create(oclass, attrs, options);
     }
     
     // TODO change this from protected to public
