@@ -41,6 +41,9 @@
     <SubstituteTransform pattern='\s+$' substitute=''/>
     <SubstituteTransform pattern='^\s+' substitute=''/>
     <SplitTransform      splitPattern=','/>
+    <ListTransform>
+      <SubstituteTransform pattern='^0+(\d)' substitute='$1'/>
+    </ListTransform>
   </PatternNode>
   <PatternNode key='NETVIEW*DOMAINS'     pattern='DOMAINS=\s*([^\n]*)\n'    optional='true' reset='false'>
     <SubstituteTransform pattern='\n' substitute=' '/>

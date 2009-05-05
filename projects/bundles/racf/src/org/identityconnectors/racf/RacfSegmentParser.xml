@@ -26,6 +26,7 @@
     <SubstituteTransform pattern='^(.{50})[^\n]+' substitute='$1'/>
     <SubstituteTransform pattern='\n\s{20}(.{50})[^\n]+' substitute='$1'/>
     <SubstituteTransform pattern='\n' substitute=''/>
+    <SubstituteTransform pattern='\s+$' substitute=''/>
     <SubstituteTransform pattern='^$' substitute='NO-INSTALLATION-DATA'/>
   </PatternNode>
   <PatternNode key='RACF*GROUPS'        pattern='((?:\s+GROUP=\S+\s+AUTH=\S*\s+CONNECT-OWNER=(?:[^\n]+\n){4})+)' optional='true' reset='true'>
