@@ -34,5 +34,52 @@
         <copy todir="${lib}">
             <fileset dir="${databasecommon.dir}/dist" includes="*.jar"/>
         </copy>
-    </target>   
+    </target> 
+
+    <target name="run-unit-tests">
+	<!--
+	<antcall target="connector-build.run-unit-tests">
+		<param name="configuration" value="localhost"/>
+	</antcall>
+	-->
+
+	<antcall target="connector-build.run-unit-tests" inheritAll="false">
+		<param name="configuration" value="prgvm8104"/>
+	</antcall>
+
+	<antcall target="connector-build.run-unit-tests" inheritAll="false">
+		<param name="configuration" value="prgvm8105"/>
+	</antcall>
+
+    </target>
+
+
+    <target name="run-contract-tests" depends="contract-init">
+        
+	<!--
+        <antcall target="contract-dist" inheritAll="false">
+            <param name="configuration" value="localhost"/>
+        </antcall>
+        <antcall target="contract-tests" inheritAll="false">
+            <param name="configuration" value="localhost"/>
+        </antcall>
+	-->
+        
+        <antcall target="contract-dist" inheritAll="false">
+            <param name="configuration" value="prgvm8104"/>
+        </antcall>
+        <antcall target="contract-tests" inheritAll="false">
+            <param name="configuration" value="prgvm8104"/>
+        </antcall>
+        
+        <antcall target="contract-dist" inheritAll="false">
+            <param name="configuration" value="prgvm8105"/>
+        </antcall>
+        <antcall target="contract-tests" inheritAll="false">
+            <param name="configuration" value="prgvm8105"/>
+        </antcall>
+        
+    </target> 	  
+
+  
 </project>

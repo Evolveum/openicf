@@ -163,7 +163,6 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 		}
 
 		@SuppressWarnings("unchecked")
-		@Override
 		public boolean matches(Object arg0) {
 			if(!(arg0 instanceof List)){
 				return false;
@@ -199,7 +198,6 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 			return true;
 		}
 
-		@Override
 		public void describeTo(Description arg0) {
 			arg0.appendText("Not all uids found");
 			arg0.appendValue(uids);

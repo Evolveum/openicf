@@ -67,12 +67,10 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 		super(cfg, adminConn, log);
 	}
 
-	@Override
 	public FilterTranslator<Pair<String, FilterWhereBuilder>> createFilterTranslator(ObjectClass oclass, OperationOptions options) {
 		return new OracleFilterTranslator(oclass,options);
 	}
 
-	@Override
 	public void executeQuery(ObjectClass oclass, Pair<String, FilterWhereBuilder> pair, ResultsHandler handler, OperationOptions options) {
         final DatabaseQueryBuilder query = new DatabaseQueryBuilder(pair.first);
         query.setWhere(pair.second);
@@ -275,7 +273,6 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 		OracleFilterTranslator(ObjectClass oclass,OperationOptions options) {
 			delegate = new OracleDBFilterTranslator(oclass, options);
 		}
-		@Override
 		public List<Pair<String, FilterWhereBuilder>> translate(Filter filter) {
 			List<FilterWhereBuilder> list = delegate.translate(filter);
 			List<Pair<String, FilterWhereBuilder>> result = new ArrayList<Pair<String,FilterWhereBuilder>>();
