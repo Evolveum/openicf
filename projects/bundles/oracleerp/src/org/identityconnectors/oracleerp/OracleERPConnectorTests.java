@@ -22,18 +22,17 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
+import static org.junit.Assume.*;
+import static org.junit.matchers.JUnitMatchers.*;
+import static org.hamcrest.CoreMatchers.*;
 
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import junit.framework.Assert;
-
+import org.hamcrest.core.Is;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.contract.data.DataProvider;
 import org.identityconnectors.contract.test.ConnectorHelper;
@@ -58,6 +57,8 @@ import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.After;
+import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -273,78 +274,8 @@ public class OracleERPConnectorTests {
         assertFalse(config.isNoSchemaId());
         assertFalse(config.isReturnSobOrgAttrs());
         assertNotNull(config.getUserActions());        
-        assertNotNull(config.getConnectionUrl());        
+        assertNotNull(config.getConnectionUrl());       
     }    
-
-    @Test
-    public void testUserCallSQL() {
-        final Set<Attribute> attrs = createAllAccountAttributes();
-        final Map<String, SQLParam> userValues =  Account.getUserValuesMap(ObjectClass.ACCOUNT, attrs, null, true);
-
-        //test sql
-        Assert.assertEquals("Invalid SQL",
-                        "{ call APPS.fnd_user_pkg.CreateUser ( x_user_name => ?, x_owner => upper(?), "+
-                        "x_unencrypted_password => ?, x_start_date => ?, x_end_date => ?, "+
-                        "x_last_logon_date => ?, x_description => ?, x_password_date => ?, "+
-                        "x_password_accesses_left => ?, x_password_lifespan_accesses => ?, "+
-                        "x_password_lifespan_days => ?, x_employee_id => ?, x_email_address => ?, "+
-                        "x_fax => ?, x_customer_id => ?, x_supplier_id => ? ) }",
-                        Account.getUserCallSQL(userValues, true, config.getSchemaId()));
-        //session is always null, so 16 params
-        Assert.assertEquals("Invalid number of  SQL Params", 16, Account.getUserSQLParams(userValues).size());
-        
-        //Old style of creating user
-        Assert.assertEquals("Invalid All SQL",
-                "{ call APPS.fnd_user_pkg.CreateUser ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ) }",
-                Account.getAllSQL(userValues, true, config.getSchemaId()));
-        
-        //all 17 params
-        Assert.assertEquals("Invalid number of  SQL Params", 17, Account.getAllSQLParams(userValues).size());
-
-        Assert.assertFalse("Is update needed", Account.isUpdateNeeded(userValues));
-    }    
-
-    @Test
-    public void testUserCallSQLNulls() {
-        final Set<Attribute> attrs = createNullAccountAttributes();
-        final Map<String, SQLParam> userValues =  Account.getUserValuesMap(ObjectClass.ACCOUNT, attrs, null, true);
-        //test sql
-        Assert.assertEquals("Invalid SQL",
-                "{ call APPS.fnd_user_pkg.CreateUser ( x_user_name => ?, x_owner => upper(?), "+
-                "x_unencrypted_password => ?, x_end_date => FND_USER_PKG.null_date, "+
-                "x_last_logon_date => ?, x_description => FND_USER_PKG.null_char, "+
-                "x_password_date => ?, x_password_accesses_left => FND_USER_PKG.null_number, "+
-                "x_password_lifespan_accesses => FND_USER_PKG.null_number, "+
-                "x_password_lifespan_days => FND_USER_PKG.null_number, x_employee_id => FND_USER_PKG.null_number, "+
-                "x_email_address => FND_USER_PKG.null_char, x_fax => FND_USER_PKG.null_char, "+
-                "x_customer_id => FND_USER_PKG.null_number, x_supplier_id => FND_USER_PKG.null_number ) }",
-                Account.getUserCallSQL(userValues, true, config.getSchemaId()));
-        //session is always null, so 16 params
-        Assert.assertEquals("Invalid number of  SQL Params", 5, Account.getUserSQLParams(userValues).size());
-        
-        //Test Old style of creating user
-        Assert.assertEquals("Invalid All SQL",
-                "{ call APPS.fnd_user_pkg.CreateUser ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ) }",
-                Account.getAllSQL(userValues, true, config.getSchemaId()));
-        
-        //all 17 params
-        Assert.assertEquals("Invalid number of  SQL Params", 17, Account.getAllSQLParams(userValues).size());
-
-        Assert.assertTrue("Is update needed", Account.isUpdateNeeded(userValues));
-
-        Assert.assertEquals("Invalid All SQL",
-                "{ call APPS.fnd_user_pkg.UpdateUser ( x_user_name => ?, x_owner => upper(?), "+
-                "x_end_date => FND_USER_PKG.null_date, "+
-                "x_description => FND_USER_PKG.null_char, x_password_accesses_left => FND_USER_PKG.null_number, "+
-                "x_password_lifespan_accesses => FND_USER_PKG.null_number, "+
-                "x_password_lifespan_days => FND_USER_PKG.null_number, x_employee_id => FND_USER_PKG.null_number, "+
-                "x_email_address => FND_USER_PKG.null_char, x_fax => FND_USER_PKG.null_char, "+
-                "x_customer_id => FND_USER_PKG.null_number, x_supplier_id => FND_USER_PKG.null_number ) }",
-                Account.getUserUpdateNullsSQL(userValues, config.getSchemaId()));
-        
-        //the required user name and owner
-        Assert.assertEquals("Invalid number of update SQL Params", 2, Account.getUserUpdateNullsParams(userValues).size());        
-    }
 
     /**
      * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.

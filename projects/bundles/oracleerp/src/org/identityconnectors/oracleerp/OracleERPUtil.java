@@ -22,8 +22,16 @@
  */
 package org.identityconnectors.oracleerp;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.MessageFormat;
 
+import org.identityconnectors.common.Assertions;
+import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 
 /**
@@ -32,6 +40,10 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
  * @since 1.0
  */
 public class OracleERPUtil {
+    /**
+     * Setup logging.
+     */
+    static final Log log = Log.getLog(OracleERPUtil.class);
 
     static final String MSG = "Oracle ERP: ";    
     
@@ -140,6 +152,7 @@ public class OracleERPUtil {
     static final String RESPS_INDIRECT_VIEW = "fnd_user_resp_groups_indirect";
     static final String RESPS_ALL_VIEW = "fnd_user_resp_groups_all";    
     
+    
 
     /**
      * 
@@ -149,6 +162,94 @@ public class OracleERPUtil {
     static final String CURLY_BEGIN = "{ ";
     static final String CURLY_END = " }";    
 
+    /**
+     * @param userName
+     * @return The UserId string value
+     * @throws SQLException
+     */
+    static String getUserId(OracleERPConnector con, String userName) {
+        final OracleERPConfiguration cfg = con.getCfg();
+        final OracleERPConnection conn = con.getConn();
+
+        String ret = null;
+            log.info("get UserId for {0}", userName);        
+            final String sql = "select user_id from "+cfg.app()+"FND_USER where upper(user_name) = ?";
+            PreparedStatement ps = null;
+            ResultSet rs = null;
+            try {
+                ps = conn.prepareStatement(sql);
+                ps.setString(1, userName.toUpperCase());
+                rs = ps.executeQuery();
+                if (rs != null) {
+                    if ( rs.next()) {
+                        ret = rs.getString(1);
+                    }
+                    // rs closed in finally below
+                }
+            } catch (SQLException e) {
+                log.error(e, sql);
+                throw ConnectorException.wrap(e);
+            } finally {
+                SQLUtil.closeQuietly(ps);
+                SQLUtil.closeQuietly(rs);
+            }
+            
+            // pstmt closed in finally below
+            Assertions.nullCheck(ret, "userId");       
+        log.info("UserId is :{0}, for :{0}", ret, userName);
+        return ret;
+    }    
+
+    
+    /**
+     * Get The personId from employeNumber or NPW number
+     * @param empNum employeNumber or null 
+     * @param npwNum mpw number or null
+     * @return
+     */
+    static String getPersonId(OracleERPConnector con, final Integer empNum, final Integer npwNum) {
+        final OracleERPConfiguration cfg = con.getCfg();
+
+        String ret = null;
+        String columnName = "";
+        int number;
+        if (empNum != null) {
+            columnName = Account.EMP_NUM;
+            number = empNum;
+        } else if ( npwNum != null) {
+            columnName = Account.NPW_NUM;
+            number = npwNum;
+        } else {
+            return null;
+        }
+         
+        final String sql = "select person_id from "+cfg.app()+"PER_PEOPLE_F where "+columnName+" = ?";
+        ResultSet rs = null; // SQL query on person_id
+        PreparedStatement ps = null; // statement that generates the query
+        log.ok(sql);
+        try {
+            ps = con.getConn().prepareStatement(sql);
+            ps.setInt(1, number);
+            ps.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                ret = rs.getString(1);
+            }
+        } catch (SQLException e) {
+            log.error(e, sql);
+            throw ConnectorException.wrap(e);
+        } finally {
+            SQLUtil.closeQuietly(rs);
+            rs = null;
+            SQLUtil.closeQuietly(ps);
+            ps = null;
+        }
+        Assertions.nullCheck(ret, "person_id");
+        return ret;
+    }
+    
+    
+    
     /**
      * @param dateString
      * @return the timestamp

@@ -539,13 +539,13 @@ public class OracleERPConfiguration extends AbstractConfiguration {
     }
 
     /**
-     * The schema id from the user
+     * The application id from the user
      * see the bug id. 19352
-     * @return The user and dot et the end.
+     * @return The "APPL." or empty, if noSchemaId is true
      */
-    public String getSchemaId() {
+    public String app() {
         if(noSchemaId) return "";
-        return user.toUpperCase()+".";
+        return user.trim().toUpperCase()+".";
     }
     
     /**

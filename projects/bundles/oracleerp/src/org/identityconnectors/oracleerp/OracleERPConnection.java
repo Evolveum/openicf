@@ -22,13 +22,20 @@
  */
 package org.identityconnectors.oracleerp;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.Hashtable;
+import java.util.List;
 
 import org.identityconnectors.common.StringUtil;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.DatabaseConnection;
+import org.identityconnectors.dbcommon.DatabaseQueryBuilder;
 import org.identityconnectors.dbcommon.JNDIUtil;
+import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.spi.Configuration;
@@ -41,6 +48,13 @@ import org.identityconnectors.framework.spi.Configuration;
  * @since 1.0
  */
 public class OracleERPConnection extends DatabaseConnection { 
+
+    
+    /**
+     * Setup logging for the {@link OracleERPConnector}.
+     */
+    static final Log log = Log.getLog(OracleERPConnector.class);
+    
     /**
      * Use the {@link Configuration} passed in to immediately connect to a database. If the {@link Connection} fails a
      * {@link RuntimeException} will be thrown.
@@ -66,6 +80,7 @@ public class OracleERPConnection extends DatabaseConnection {
         final GuardedString password = config.getPassword();
         final String datasource = config.getDataSource();
         if (StringUtil.isNotBlank(datasource)) {
+            log.info("Create datasource connection {0}", datasource);
             final String[] jndiProperties = config.getJndiProperties();
             final ConnectorMessages connectorMessages = config.getConnectorMessages();
             final Hashtable<String, String> prop = JNDIUtil.arrayToHashtable(jndiProperties, connectorMessages);                
@@ -77,9 +92,78 @@ public class OracleERPConnection extends DatabaseConnection {
         } else {
             final String driver = config.getDriver();
             final String connectionUrl = config.getConnectionUrl();
+            log.info("Create driver connectionUrl {0}", connectionUrl);
             connection = SQLUtil.getDriverMangerConnection(driver, connectionUrl, user, password);
         }
         return new OracleERPConnection(connection);
     }
 
+    /**
+     * OracleERP prepare statement
+     * @param sql
+     * @return the prepared statement
+     * @throws SQLException 
+     */
+    public PreparedStatement prepareStatement(String sql) throws SQLException {
+        log.info("Prepare SQL Statement : {0}", sql);        
+        PreparedStatement ps = getConnection().prepareStatement(sql);
+        ps.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
+        return ps;
+    }
+    
+    /**
+     * OracleERP prepare statement with mapped prepare statement parameters
+     * @param sql a <CODE>String</CODE> sql statement definition
+     * @param params the bind parameter values
+     * @return return a prepared statement
+     * @throws SQLException an exception in statement
+     */
+    @Override
+    public PreparedStatement prepareStatement(final String sql, final List<SQLParam> params) throws SQLException {
+        log.info("Prepare SQL Statement : {0}", sql);        
+        final PreparedStatement ps = super.prepareStatement(sql, params);
+        ps.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
+        return ps;
+    }
+
+    /**
+     * OracleERP prepare statement using the query builder object
+     * @param query DatabaseQueryBuilder query
+     * @return return a prepared statement
+     * @throws SQLException an exception in statement
+     */
+    @Override
+    public PreparedStatement prepareStatement(DatabaseQueryBuilder query) throws SQLException {
+        final PreparedStatement ps = super.prepareStatement(query);
+        ps.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
+        return ps;
+    }
+
+    /**
+     * OracleERP prepareCall statement with mapped callable statement parameters
+     * @param sql a <CODE>String</CODE> sql statement definition
+     * @return return a callable statement
+     * @throws SQLException an exception in statement
+     */
+    public CallableStatement prepareCall(final String sql) throws SQLException {
+        log.info("Prepare SQL Calls : {0}", sql);        
+        final CallableStatement cs = getConnection().prepareCall(sql);
+        cs.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
+        return cs;
+    }         
+
+    /**
+     * OracleERP prepareCall statement with mapped callable statement parameters
+     * @param sql a <CODE>String</CODE> sql statement definition
+     * @param params the bind parameter values
+     * @return return a callable statement
+     * @throws SQLException an exception in statement
+     */
+    @Override
+    public CallableStatement prepareCall(final String sql, final List<SQLParam> params) throws SQLException {
+        log.info("Prepare SQL Calls : {0}", sql);        
+        final CallableStatement cs = super.prepareCall(sql, params);
+        cs.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
+        return cs;
+    }      
 }
