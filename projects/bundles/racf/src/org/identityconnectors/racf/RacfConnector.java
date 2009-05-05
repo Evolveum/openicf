@@ -751,12 +751,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
     
             // Operational Attributes
             //
+            attributes.add(buildReadonlyAttribute(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, long.class, false));
             attributes.add(buildNoncreateAttribute(OperationalAttributes.ENABLE_NAME,  boolean.class, false));
             attributes.add(buildNoncreateAttribute(OperationalAttributes.ENABLE_DATE_NAME,  long.class, false));
             attributes.add(buildNoncreateAttribute(OperationalAttributes.DISABLE_DATE_NAME,  long.class, false));
             attributes.add(OperationalAttributeInfos.PASSWORD);
             attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
-            attributes.add(buildReadonlyAttribute(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, String.class, false));
             attributes.add(PredefinedAttributeInfos.LAST_LOGIN_DATE);
             attributes.add(PredefinedAttributeInfos.LAST_PASSWORD_CHANGE_DATE);
     
@@ -1098,9 +1098,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
             else
                 newValues.add(value);
         if (attribute instanceof Name)
-            return new Name((String)newValues.get(0));
+            return new Name(((String)newValues.get(0)).toUpperCase());
         else if (attribute instanceof Uid)
-            return new Uid((String)newValues.get(0));
+            return new Uid(((String)newValues.get(0)).toUpperCase());
         else
             return AttributeBuilder.build(attribute.getName().toUpperCase(), newValues);
     }
