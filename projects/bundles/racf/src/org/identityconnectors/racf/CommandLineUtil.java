@@ -994,6 +994,16 @@ class CommandLineUtil {
                 Long converted = _connector.convertFromResumeRevokeFormat(value);
                 attributesFromCommandLine.put(OperationalAttributes.ENABLE_DATE_NAME, converted);
             }
+            // Groups must be filled in if null
+            //
+            if (!attributesFromCommandLine.containsKey(ATTR_CL_GROUPS)) {
+                attributesFromCommandLine.put(ATTR_CL_GROUPS, new LinkedList<Object>());
+            }
+            // Group Owners must be filled in if null
+            //
+            if (!attributesFromCommandLine.containsKey(ATTR_CL_GROUP_CONN_OWNERS)) {
+                attributesFromCommandLine.put(ATTR_CL_GROUP_CONN_OWNERS, new LinkedList<Object>());
+            }
         }
 
         // Remap GROUP attributes as needed
@@ -1003,6 +1013,21 @@ class CommandLineUtil {
                 Object value = attributesFromCommandLine.get(ATTR_CL_SUPGROUP);
                 if ("NONE".equals(value))
                     attributesFromCommandLine.put(ATTR_CL_SUPGROUP, null);
+            }
+            // Groups must be filled in if null
+            //
+            if (!attributesFromCommandLine.containsKey(ATTR_CL_GROUPS)) {
+                attributesFromCommandLine.put(ATTR_CL_GROUPS, new LinkedList<Object>());
+            }
+            // Members must be filled in if null
+            //
+            if (!attributesFromCommandLine.containsKey(ATTR_CL_MEMBERS)) {
+                attributesFromCommandLine.put(ATTR_CL_MEMBERS, new LinkedList<Object>());
+            }
+            // Group Owners must be filled in if null
+            //
+            if (!attributesFromCommandLine.containsKey(ATTR_CL_GROUP_CONN_OWNERS)) {
+                attributesFromCommandLine.put(ATTR_CL_GROUP_CONN_OWNERS, new LinkedList<Object>());
             }
         }
         return attributesFromCommandLine;
