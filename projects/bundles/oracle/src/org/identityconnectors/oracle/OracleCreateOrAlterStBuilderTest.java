@@ -23,15 +23,15 @@ public class OracleCreateOrAlterStBuilderTest {
     @Test
     public void testCreateLocalUserSt() {
         try{
-            createDefaultBuilder().buildCreateUserSt(new OracleUserAttributes());
+            createDefaultBuilder().buildCreateUserSt(new OracleUserAttributes.Builder().build());
             fail("Not enough info, create must fail");
         }catch(Exception e){}
-        OracleUserAttributes local = new OracleUserAttributes();
-        local.userName = "user1";
-        local.auth = OracleAuthentication.LOCAL;        
-        assertEquals("create user \"user1\" identified by \"user1\"", createDefaultBuilder().buildCreateUserSt(local).toString());
-        local.password = new GuardedString("password".toCharArray());
-        assertEquals("create user \"user1\" identified by \"password\"", createDefaultBuilder().buildCreateUserSt(local).toString());
+        OracleUserAttributes.Builder local = new OracleUserAttributes.Builder();
+        local.setUserName("user1");
+        local.setAuth(OracleAuthentication.LOCAL);        
+        assertEquals("create user \"user1\" identified by \"user1\"", createDefaultBuilder().buildCreateUserSt(local.build()).toString());
+        local.setPassword(new GuardedString("password".toCharArray()));
+        assertEquals("create user \"user1\" identified by \"password\"", createDefaultBuilder().buildCreateUserSt(local.build()).toString());
         
     }
     
@@ -39,43 +39,43 @@ public class OracleCreateOrAlterStBuilderTest {
     /** Test create table space */
     @Test
     public void testCreateTableSpace(){
-        OracleUserAttributes attributes = new OracleUserAttributes();
-        attributes.userName = "user1";
-        attributes.defaultTableSpace = "users";
-        attributes.tempTableSpace = "temp";
-        attributes.auth = OracleAuthentication.LOCAL;
-        attributes.password = new GuardedString("password".toCharArray());
-        assertEquals("create user \"user1\" identified by \"password\" default tablespace \"users\" temporary tablespace \"temp\"", createDefaultBuilder().buildCreateUserSt(attributes).toString());
-        attributes.profile = "MyProfile";
-        assertEquals("create user \"user1\" identified by \"password\" default tablespace \"users\" temporary tablespace \"temp\" profile \"MyProfile\"", createDefaultBuilder().buildCreateUserSt(attributes).toString());
+        OracleUserAttributes.Builder attributes = new OracleUserAttributes.Builder();
+        attributes.setUserName("user1");
+        attributes.setDefaultTableSpace("users");
+        attributes.setTempTableSpace("temp");
+        attributes.setAuth(OracleAuthentication.LOCAL);
+        attributes.setPassword(new GuardedString("password".toCharArray()));
+        assertEquals("create user \"user1\" identified by \"password\" default tablespace \"users\" temporary tablespace \"temp\"", createDefaultBuilder().buildCreateUserSt(attributes.build()).toString());
+        attributes.setProfile("MyProfile");
+        assertEquals("create user \"user1\" identified by \"password\" default tablespace \"users\" temporary tablespace \"temp\" profile \"MyProfile\"", createDefaultBuilder().buildCreateUserSt(attributes.build()).toString());
     }
     
     /** Test quotas */
     @Test
     public void testCreateQuota(){
-        OracleUserAttributes attributes = new OracleUserAttributes();
-        attributes.auth = OracleAuthentication.LOCAL;
-        attributes.userName = "user1";
-        attributes.defaultTableSpace = "users";
-        attributes.tempTableSpace = "temp";
-        attributes.password = new GuardedString("password".toCharArray());
-        attributes.defaultTSQuota = "-1";
+        OracleUserAttributes.Builder attributes = new OracleUserAttributes.Builder();
+        attributes.setAuth(OracleAuthentication.LOCAL);
+        attributes.setUserName("user1");
+        attributes.setDefaultTableSpace("users");
+        attributes.setTempTableSpace("temp");
+        attributes.setPassword(new GuardedString("password".toCharArray()));
+        attributes.setDefaultTSQuota("-1");
         assertEquals(
                 "create user \"user1\" identified by \"password\" default tablespace \"users\" temporary tablespace \"temp\" quota unlimited on \"users\"",
-                createDefaultBuilder().buildCreateUserSt(attributes).toString());
-        attributes.defaultTSQuota = "32K";
+                createDefaultBuilder().buildCreateUserSt(attributes.build()).toString());
+        attributes.setDefaultTSQuota("32K");
         assertEquals(
                 "create user \"user1\" identified by \"password\" default tablespace \"users\" temporary tablespace \"temp\" quota 32K on \"users\"",
-                createDefaultBuilder().buildCreateUserSt(attributes).toString());
-        attributes.defaultTSQuota = null;
-        attributes.tempTSQuota = "-1";
+                createDefaultBuilder().buildCreateUserSt(attributes.build()).toString());
+        attributes.setDefaultTSQuota(null);
+        attributes.setTempTSQuota("-1");
         assertEquals(
                 "create user \"user1\" identified by \"password\" default tablespace \"users\" temporary tablespace \"temp\" quota unlimited on \"temp\"",
-                createDefaultBuilder().buildCreateUserSt(attributes).toString());
-        attributes.tempTSQuota = "32M";
+                createDefaultBuilder().buildCreateUserSt(attributes.build()).toString());
+        attributes.setTempTSQuota("32M");
         assertEquals(
                 "create user \"user1\" identified by \"password\" default tablespace \"users\" temporary tablespace \"temp\" quota 32M on \"temp\"",
-                createDefaultBuilder().buildCreateUserSt(attributes).toString());
+                createDefaultBuilder().buildCreateUserSt(attributes.build()).toString());
         
     }
 
@@ -86,91 +86,90 @@ public class OracleCreateOrAlterStBuilderTest {
     /** Test create external */
     @Test
     public void testCreateExternallUserSt() {
-        OracleUserAttributes external = new OracleUserAttributes();
-        external.userName = "user1";
-        external.auth = OracleAuthentication.EXTERNAL;
-        assertEquals("create user \"user1\" identified externally", createDefaultBuilder().buildCreateUserSt(external).toString());
+        OracleUserAttributes.Builder external = new OracleUserAttributes.Builder();
+        external.setUserName("user1");
+        external.setAuth(OracleAuthentication.EXTERNAL);
+        assertEquals("create user \"user1\" identified externally", createDefaultBuilder().buildCreateUserSt(external.build()).toString());
     }
     
     /** Test create global */
     @Test
     public void testCreateGlobalUserSt() {
-        OracleUserAttributes global = new OracleUserAttributes();
-        global.userName = "user1";
-        global.auth = OracleAuthentication.GLOBAL;
+        OracleUserAttributes.Builder global = new OracleUserAttributes.Builder();
+        global.setUserName("user1");
+        global.setAuth(OracleAuthentication.GLOBAL);
         try{
-            createDefaultBuilder().buildCreateUserSt(global);
+            createDefaultBuilder().buildCreateUserSt(global.build());
             fail("GlobalName should be missed");
         }catch(Exception e){}
-        global.globalName = "global";
-        assertEquals("create user \"user1\" identified globally as 'global'", createDefaultBuilder().buildCreateUserSt(global).toString());
+        global.setGlobalName("global");
+        assertEquals("create user \"user1\" identified globally as 'global'", createDefaultBuilder().buildCreateUserSt(global.build()).toString());
     }
     
     /** Test expire password  */
     @Test
     public void testCreateExpirePassword() {
-        OracleUserAttributes attributes = new OracleUserAttributes();
-        attributes.auth = OracleAuthentication.LOCAL;
-        attributes.userName = "user1";
-        attributes.expirePassword = true;
-        assertEquals("create user \"user1\" identified by \"user1\" password expire", createDefaultBuilder().buildCreateUserSt(attributes).toString());
-        attributes.expirePassword = false;
-    	createDefaultBuilder().buildCreateUserSt(attributes);
-        assertEquals("create user \"user1\" identified by \"user1\"", createDefaultBuilder().buildCreateUserSt(attributes).toString());
-        attributes.expirePassword = null;
-        assertEquals("create user \"user1\" identified by \"user1\"", createDefaultBuilder().buildCreateUserSt(attributes).toString());
+        OracleUserAttributes.Builder attributes = new OracleUserAttributes.Builder();
+        attributes.setAuth(OracleAuthentication.LOCAL);
+        attributes.setUserName("user1");
+        attributes.setExpirePassword(true);
+        assertEquals("create user \"user1\" identified by \"user1\" password expire", createDefaultBuilder().buildCreateUserSt(attributes.build()).toString());
+        attributes.setExpirePassword(false);
+        assertEquals("create user \"user1\" identified by \"user1\"", createDefaultBuilder().buildCreateUserSt(attributes.build()).toString());
+        attributes.setExpirePassword(null);
+        assertEquals("create user \"user1\" identified by \"user1\"", createDefaultBuilder().buildCreateUserSt(attributes.build()).toString());
     }
     
     /** Test  lock/unlock */
     @Test
     public void testCreateLock() {
-        OracleUserAttributes attributes = new OracleUserAttributes();
-        attributes.auth = OracleAuthentication.LOCAL;
-        attributes.userName = "user1";
-        attributes.enable = true;
-        assertEquals("create user \"user1\" identified by \"user1\" account unlock", createDefaultBuilder().buildCreateUserSt(attributes).toString());
-        attributes.enable = false;
-        assertEquals("create user \"user1\" identified by \"user1\" account lock", createDefaultBuilder().buildCreateUserSt(attributes).toString());
+        OracleUserAttributes.Builder attributes = new OracleUserAttributes.Builder();
+        attributes.setAuth(OracleAuthentication.LOCAL);
+        attributes.setUserName("user1");
+        attributes.setEnable(true);
+        assertEquals("create user \"user1\" identified by \"user1\" account unlock", createDefaultBuilder().buildCreateUserSt(attributes.build()).toString());
+        attributes.setEnable(false);
+        assertEquals("create user \"user1\" identified by \"user1\" account lock", createDefaultBuilder().buildCreateUserSt(attributes.build()).toString());
     }
 
     
     /** Test alter user */
     @Test
     public void testAlterUser() {
-        OracleUserAttributes attributes = new OracleUserAttributes();
-        attributes.auth = null;
-        attributes.userName = "user1";
-        attributes.expirePassword = true;
-        attributes.enable = true;
-        attributes.defaultTSQuota = "-1";
+        OracleUserAttributes.Builder attributes = new OracleUserAttributes.Builder();
+        attributes.setAuth(null);
+        attributes.setUserName("user1");
+        attributes.setExpirePassword(true);
+        attributes.setEnable(true);
+        attributes.setDefaultTSQuota("-1");
         UserRecord record = new UserRecord.Builder().setDefaultTableSpace("users").build();
-        assertEquals("alter user \"user1\" quota unlimited on \"users\" password expire account unlock", createDefaultBuilder().buildAlterUserSt(attributes, record).toString());
+        assertEquals("alter user \"user1\" quota unlimited on \"users\" password expire account unlock", createDefaultBuilder().buildAlterUserSt(attributes.build(), record).toString());
         
-        attributes.enable = null;
-        attributes.expirePassword = null;
-        attributes.tempTableSpace = "tempTS";
+        attributes.setEnable(null);
+        attributes.setExpirePassword(null);
+        attributes.setTempTableSpace("tempTS");
         record = new UserRecord.Builder().setDefaultTableSpace("defTS").build();
-        assertEquals("alter user \"user1\" temporary tablespace \"tempTS\" quota unlimited on \"defTS\"", createDefaultBuilder().buildAlterUserSt(attributes, record).toString());
+        assertEquals("alter user \"user1\" temporary tablespace \"tempTS\" quota unlimited on \"defTS\"", createDefaultBuilder().buildAlterUserSt(attributes.build(), record).toString());
         
-        attributes = new OracleUserAttributes();
-        attributes.userName = "user1";
-        attributes.expirePassword = true;
-        assertEquals("alter user \"user1\" password expire", createDefaultBuilder().buildAlterUserSt(attributes, record).toString());
+        attributes = new OracleUserAttributes.Builder();
+        attributes.setUserName("user1");
+        attributes.setExpirePassword(true);
+        assertEquals("alter user \"user1\" password expire", createDefaultBuilder().buildAlterUserSt(attributes.build(), record).toString());
         
         
-        attributes = new OracleUserAttributes();
-        attributes.userName = "user1";
-       	Assert.assertNull(createDefaultBuilder().buildAlterUserSt(attributes, record));
+        attributes = new OracleUserAttributes.Builder();
+        attributes.setUserName("user1");
+       	Assert.assertNull(createDefaultBuilder().buildAlterUserSt(attributes.build(), record));
        	
        	//try to unexpire password. That means just set any new password
-        attributes = new OracleUserAttributes();
-        attributes.userName = "user1";
-        attributes.expirePassword = false;
-        attributes.password = new GuardedString("newPassword".toCharArray());
-        assertEquals("alter user \"user1\" identified by \"newPassword\"", createDefaultBuilder().buildAlterUserSt(attributes, record).toString());
-        attributes.password = null;
+        attributes = new OracleUserAttributes.Builder();
+        attributes.setUserName("user1");
+        attributes.setExpirePassword(false);
+        attributes.setPassword(new GuardedString("newPassword".toCharArray()));
+        assertEquals("alter user \"user1\" identified by \"newPassword\"", createDefaultBuilder().buildAlterUserSt(attributes.build(), record).toString());
+        attributes.setPassword(null);
         try{
-        	createDefaultBuilder().buildAlterUserSt(attributes, record);
+        	createDefaultBuilder().buildAlterUserSt(attributes.build(), record);
         	fail("Must require password for unexpire");
         }catch(RuntimeException e){}
     }
@@ -184,13 +183,13 @@ public class OracleCreateOrAlterStBuilderTest {
 						CSTokenFormatter.build(OracleUserAttributeCS.PROFILE,"'"))
 						.build();
     	OracleCreateOrAlterStBuilder builder = new OracleCreateOrAlterStBuilder(ocs,TestHelpers.createDummyMessages());
-        OracleUserAttributes attributes = new OracleUserAttributes();
-        attributes.auth = null;
-        attributes.userName = "user1";
-        attributes.profile = "profile";
-        Assert.assertEquals("create user user1 identified by \"user1\" profile 'profile'", builder.buildCreateUserSt(attributes));
+        OracleUserAttributes.Builder attributes = new OracleUserAttributes.Builder();
+        attributes.setAuth(null);
+        attributes.setUserName("user1");
+        attributes.setProfile("profile");
+        Assert.assertEquals("create user user1 identified by \"user1\" profile 'profile'", builder.buildCreateUserSt(attributes.build()));
         UserRecord record = new UserRecord.Builder().build();
-        Assert.assertEquals("alter user user1 profile 'profile'", builder.buildAlterUserSt(attributes, record));
+        Assert.assertEquals("alter user user1 profile 'profile'", builder.buildAlterUserSt(attributes.build(), record));
 
     }
 

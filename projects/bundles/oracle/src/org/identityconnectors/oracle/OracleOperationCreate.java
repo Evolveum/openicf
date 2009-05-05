@@ -31,9 +31,10 @@ final class OracleOperationCreate extends AbstractOracleOperation implements Cre
         new LocalizedAssert(cfg.getConnectorMessages()).assertNotBlank(userName,Name.NAME);
         checkCreateAttributes(map);
         checkUserNotExist(userName);
-        OracleUserAttributes caAttributes = new OracleUserAttributes();
-        caAttributes.userName = userName;
-        new OracleAttributesReader(cfg.getConnectorMessages()).readCreateAttributes(map, caAttributes);
+        OracleUserAttributes.Builder builder = new OracleUserAttributes.Builder();
+        builder.setUserName(userName);
+        new OracleAttributesReader(cfg.getConnectorMessages()).readCreateAttributes(map, builder);
+        OracleUserAttributes caAttributes = builder.build();
         String createSQL = new OracleCreateOrAlterStBuilder(cfg.getCSSetup(),cfg.getConnectorMessages()).buildCreateUserSt(caAttributes).toString();
         if(createSQL == null){
         	//This should not happen, but be more deffensive

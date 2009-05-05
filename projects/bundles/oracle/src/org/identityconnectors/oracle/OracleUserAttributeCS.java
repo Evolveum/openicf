@@ -11,16 +11,18 @@ enum OracleUserAttributeCS {
     DEF_TABLESPACE,
     TEMP_TABLESPACE,
     GLOBAL_NAME(false,"'");
+    
     OracleUserAttributeCS(){}
     OracleUserAttributeCS(String defQuatesChar){
         this.defQuatesChar = defQuatesChar;
     }
     OracleUserAttributeCS(boolean defToUpper,String defQuatesChar){
-        this.defToUpper = true;
+        this.defToUpper = defToUpper;
         this.defQuatesChar = defQuatesChar;
     }
     private boolean defToUpper = true;
     private String defQuatesChar = "\"";
+    
     boolean isDefToUpper() {
         return defToUpper;
     }

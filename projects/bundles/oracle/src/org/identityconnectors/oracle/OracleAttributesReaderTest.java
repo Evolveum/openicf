@@ -39,21 +39,21 @@ public class OracleAttributesReaderTest {
     @Test
     public final void testReadCreateAuthAttributes() {
         final OracleAttributesReader reader = new OracleAttributesReader(TestHelpers.createDummyMessages());
-        OracleUserAttributes caAttributes = new OracleUserAttributes();
-        caAttributes.userName = "testUser";
+        OracleUserAttributes.Builder caAttributes = new OracleUserAttributes.Builder();
+        caAttributes.setUserName("testUser");
         Set<Attribute> attributes = new HashSet<Attribute>();
         attributes.add(AttributeBuilder.build(ORACLE_AUTHENTICATION_ATTR_NAME, ORACLE_AUTH_LOCAL));
         attributes.add(AttributeBuilder.buildPassword("myPassword".toCharArray()));
         reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
-        Assert.assertEquals(OracleAuthentication.LOCAL, caAttributes.auth);
-        Assert.assertNotNull("Password must not be null",caAttributes.password);
+        Assert.assertEquals(OracleAuthentication.LOCAL, caAttributes.getAuth());
+        Assert.assertNotNull("Password must not be null",caAttributes.getPassword());
         
         attributes.clear();
-        caAttributes = new OracleUserAttributes();
-        caAttributes.userName = "testUser";
+        caAttributes = new OracleUserAttributes.Builder();
+        caAttributes.setUserName("testUser");
         reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
-        Assert.assertNull("Should not set authentication to any default value", caAttributes.auth);
-        Assert.assertNull("Password must be null",caAttributes.password);
+        Assert.assertNull("Should not set authentication to any default value", caAttributes.getAuth());
+        Assert.assertNull("Password must be null",caAttributes.getPassword());
         
         
         //Test for failures
@@ -93,8 +93,8 @@ public class OracleAttributesReaderTest {
     @Test
     public final void testReadCreateRestAttributes() {
         final OracleAttributesReader reader = new OracleAttributesReader(TestHelpers.createDummyMessages());
-        OracleUserAttributes caAttributes = new OracleUserAttributes();
-        caAttributes.userName = "testUser";
+        OracleUserAttributes.Builder caAttributes = new OracleUserAttributes.Builder();
+        caAttributes.setUserName("testUser");
         Set<Attribute> attributes = new HashSet<Attribute>();
         attributes.add(AttributeBuilder.buildPasswordExpired(true));
         attributes.add(AttributeBuilder.build(ORACLE_DEF_TS_ATTR_NAME, "defts"));
@@ -104,13 +104,13 @@ public class OracleAttributesReaderTest {
         attributes.add(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,"30M"));
         attributes.add(AttributeBuilder.build(ORACLE_TEMP_TS_QUOTA_ATTR_NAME,"100M"));
         reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
-        Assert.assertEquals("defts", caAttributes.defaultTableSpace);
-        Assert.assertEquals(true, caAttributes.expirePassword);
-        Assert.assertEquals("tempts", caAttributes.tempTableSpace);
-        Assert.assertEquals("myprofile", caAttributes.profile);
-        Assert.assertEquals(true, caAttributes.enable);
-        Assert.assertEquals("30M", caAttributes.defaultTSQuota);
-        Assert.assertEquals("100M", caAttributes.tempTSQuota);
+        Assert.assertEquals("defts", caAttributes.getDefaultTableSpace());
+        Assert.assertEquals(true, caAttributes.getExpirePassword());
+        Assert.assertEquals("tempts", caAttributes.getTempTableSpace());
+        Assert.assertEquals("myprofile", caAttributes.getProfile());
+        Assert.assertEquals(true, caAttributes.getEnable());
+        Assert.assertEquals("30M", caAttributes.getDefaultTSQuota());
+        Assert.assertEquals("100M", caAttributes.getTempTSQuota());
         
         //Test for failures
         attributes.clear();
@@ -181,12 +181,12 @@ public class OracleAttributesReaderTest {
         attributes = new HashSet<Attribute>();
         attributes.add(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME));
        	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
-       	assertEquals("Must set 0 for null quota","0",caAttributes.defaultTSQuota);
+       	assertEquals("Must set 0 for null quota","0",caAttributes.getDefaultTSQuota());
         
        	attributes = new HashSet<Attribute>();
         attributes.add(AttributeBuilder.build(ORACLE_TEMP_TS_QUOTA_ATTR_NAME,""));
        	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
-       	assertEquals("Must set 0 for null quota","0",caAttributes.tempTSQuota);
+       	assertEquals("Must set 0 for null quota","0",caAttributes.getTempTSQuota());
         
         
     }
@@ -195,22 +195,22 @@ public class OracleAttributesReaderTest {
     @Test
     public void testReadAlterAttributes(){
         final OracleAttributesReader reader = new OracleAttributesReader(TestHelpers.createDummyMessages());
-        OracleUserAttributes caAttributes = new OracleUserAttributes();
-        caAttributes.userName = "testUser";
+        OracleUserAttributes.Builder caAttributes = new OracleUserAttributes.Builder();
+        caAttributes.setUserName("testUser");
         Set<Attribute> attributes = new HashSet<Attribute>();
         attributes.add(AttributeBuilder.build(ORACLE_AUTHENTICATION_ATTR_NAME, ORACLE_AUTH_LOCAL));
         attributes.add(AttributeBuilder.buildPassword("myPassword".toCharArray()));
         reader.readAlterAttributes(AttributeUtil.toMap(attributes), caAttributes);
-        Assert.assertEquals(OracleAuthentication.LOCAL, caAttributes.auth);
-        Assert.assertNotNull("Password must not be null",caAttributes.password);
+        Assert.assertEquals(OracleAuthentication.LOCAL, caAttributes.getAuth());
+        Assert.assertNotNull("Password must not be null",caAttributes.getPassword());
 
         //verify that password is not set for alter when not set
-        caAttributes = new OracleUserAttributes();
-        caAttributes.userName = "testUser";        
+        caAttributes = new OracleUserAttributes.Builder();
+        caAttributes.setUserName("testUser");        
         attributes.clear();
         attributes.add(AttributeBuilder.buildPasswordExpired(true));
         reader.readAlterAttributes(AttributeUtil.toMap(attributes), caAttributes);
-        Assert.assertNull("Password must be null",caAttributes.password);
+        Assert.assertNull("Password must be null",caAttributes.getPassword());
         
         
     }

@@ -1,10 +1,15 @@
 package org.identityconnectors.oracle;
 
+import static org.identityconnectors.oracle.OracleUserAttributeCS.DEF_TABLESPACE;
+import static org.identityconnectors.oracle.OracleUserAttributeCS.PASSWORD;
+import static org.identityconnectors.oracle.OracleUserAttributeCS.PROFILE;
+import static org.identityconnectors.oracle.OracleUserAttributeCS.TEMP_TABLESPACE;
+import static org.identityconnectors.oracle.OracleUserAttributeCS.USER_NAME;
+
 import java.util.Arrays;
+
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
-
-import static org.identityconnectors.oracle.OracleUserAttributeCS.*;
 
 /**
  * Builds create or alter user sql statement.
@@ -23,6 +28,14 @@ final class OracleCreateOrAlterStBuilder {
     @SuppressWarnings("unused")
 	private final ConnectorMessages cm;
     
+    /** Helper status where we store real set attributes */
+    private static class BuilderStatus{
+        // Real password set
+        private GuardedString passwordSet;
+        //Force to expire password even if no attribute was specified by user
+        private boolean forceExpirePassword;
+    }
+    
     OracleCreateOrAlterStBuilder(OracleCaseSensitivitySetup cs,ConnectorMessages cm) {
         this.cs = OracleConnectorHelper.assertNotNull(cs, "cs");
         this.cm = OracleConnectorHelper.assertNotNull(cm, "cm");
@@ -34,69 +47,65 @@ final class OracleCreateOrAlterStBuilder {
      * @return
      */
     String buildCreateUserSt(OracleUserAttributes userAttributes){
-        userAttributes.operation = Operation.CREATE;
-        if(userAttributes.userName == null){
+        if(userAttributes.getUserName() == null){
             throw new IllegalArgumentException("User not specified");
         }
         StringBuilder builder = new StringBuilder();
-        builder.append("create user ").append(cs.formatToken(USER_NAME, userAttributes.userName));
+        builder.append("create user ").append(cs.formatToken(USER_NAME, userAttributes.getUserName()));
         int length = builder.length();
-        appendCreateOrAlterSt(builder,userAttributes,null);
+        appendCreateOrAlterSt(builder,userAttributes,Operation.CREATE,null);
         return builder.length() == length ? null : builder.toString();
     }
     
     String buildAlterUserSt(OracleUserAttributes userAttributes,UserRecord userRecord){
-        userAttributes.operation = Operation.ALTER;
-        if(userAttributes.userName == null){
+        if(userAttributes.getUserName() == null){
             throw new IllegalArgumentException("User not specified");
         }
         StringBuilder builder = new StringBuilder();
-        builder.append("alter user ").append(cs.formatToken(USER_NAME, userAttributes.userName));
+        builder.append("alter user ").append(cs.formatToken(USER_NAME, userAttributes.getUserName()));
         int length = builder.length();
-        appendCreateOrAlterSt(builder,userAttributes,userRecord);
+        appendCreateOrAlterSt(builder,userAttributes,Operation.ALTER,userRecord);
         return builder.length() == length ? null : builder.toString();
     }
 
-    private void appendCreateOrAlterSt(StringBuilder builder, OracleUserAttributes userAttributes, UserRecord userRecord) {
-        appendAuth(builder, userAttributes, userRecord);
-        if(userAttributes.defaultTableSpace != null){
+    private void appendCreateOrAlterSt(StringBuilder builder, OracleUserAttributes userAttributes, Operation operation, UserRecord userRecord) {
+    	BuilderStatus status = new BuilderStatus();
+        appendAuth(builder, userAttributes, operation, status, userRecord);
+        if(userAttributes.getDefaultTableSpace() != null){
             appendDefaultTableSpace(builder,userAttributes);
         }
-        if(userAttributes.tempTableSpace != null){
+        if(userAttributes.getTempTableSpace() != null){
             appendTemporaryTableSpace(builder,userAttributes);
         }
-        if(userAttributes.defaultTSQuota != null){
+        if(userAttributes.getDefaultTSQuota() != null){
             appendDefaultTSQuota(builder,userAttributes,userRecord);
         }
-        if(userAttributes.tempTSQuota != null){
+        if(userAttributes.getTempTSQuota() != null){
             appendTempTSQuota(builder,userAttributes,userRecord );
         }
-        if(userAttributes.expirePassword != null){
-        	if(userAttributes.expirePassword){
-	            appendExpirePassword(builder,userAttributes);
-        	}
-        	else{
-        		//We must have password, otherwise we would silently skip expirePassword attribute
-        		if(Operation.ALTER.equals(userAttributes.operation) && userAttributes.password == null ){
-        			throw new IllegalArgumentException("Cannot reset password, no password provided");
-        		}
+        if(Boolean.FALSE.equals(userAttributes.getExpirePassword())){
+        	if(status.passwordSet == null){
+        		throw new IllegalArgumentException("Cannot reset password, no password provided");
         	}
         }
-        if(userAttributes.enable != null){
+        if(status.forceExpirePassword || Boolean.TRUE.equals(userAttributes.getExpirePassword())){
+        	appendExpirePassword(builder,userAttributes);
+        }
+        if(userAttributes.getEnable() != null){
             appendEnabled(builder,userAttributes);
         }
-        if(userAttributes.profile != null){
+        if(userAttributes.getProfile() != null){
             appendProfile(builder,userAttributes);
         }
     }
 
     private void appendProfile(StringBuilder builder,OracleUserAttributes userAttributes) {
-        builder.append(" profile ").append(cs.formatToken(PROFILE,userAttributes.profile));
+        builder.append(" profile ").append(cs.formatToken(PROFILE,userAttributes.getProfile()));
         
     }
 
     private void appendEnabled(StringBuilder builder, OracleUserAttributes userAttributes) {
-        if(userAttributes.enable){
+        if(userAttributes.getEnable()){
             builder.append(" account unlock");
         }
         else{
@@ -111,14 +120,14 @@ final class OracleCreateOrAlterStBuilder {
 
     private void appendDefaultTSQuota(StringBuilder builder, OracleUserAttributes userAttributes, UserRecord userRecord) {
         builder.append(" quota");
-        if("-1".equals(userAttributes.defaultTSQuota)){
+        if("-1".equals(userAttributes.getDefaultTSQuota())){
             builder.append(" unlimited");
         }
         else{
-            builder.append(' ').append(userAttributes.defaultTSQuota);
+            builder.append(' ').append(userAttributes.getDefaultTSQuota());
         }
         builder.append(" on");
-        String defaultTableSpace = userAttributes.defaultTableSpace; 
+        String defaultTableSpace = userAttributes.getDefaultTableSpace(); 
         if(defaultTableSpace == null){
             if(userRecord == null || userRecord.getDefaultTableSpace() == null){
                 throw new IllegalArgumentException("Default tablespace not specified");
@@ -130,14 +139,14 @@ final class OracleCreateOrAlterStBuilder {
 
     private void appendTempTSQuota(StringBuilder builder, OracleUserAttributes userAttributes, UserRecord userRecord) {
         builder.append(" quota");
-        if("-1".equals(userAttributes.tempTSQuota)){
+        if("-1".equals(userAttributes.getTempTSQuota())){
             builder.append(" unlimited");
         }
         else{
-            builder.append(' ').append(userAttributes.tempTSQuota);
+            builder.append(' ').append(userAttributes.getTempTSQuota());
         }
         builder.append(" on");
-        String tempTableSpace = userAttributes.tempTableSpace; 
+        String tempTableSpace = userAttributes.getTempTableSpace(); 
         if(tempTableSpace == null){
             if(userRecord == null || userRecord.getTemporaryTableSpace() == null){
                 throw new IllegalArgumentException("Temporary tablespace not specified");
@@ -149,31 +158,31 @@ final class OracleCreateOrAlterStBuilder {
     }
     
     private void appendTemporaryTableSpace(StringBuilder builder, OracleUserAttributes userAttributes) {
-        builder.append(" temporary tablespace ").append(cs.formatToken(TEMP_TABLESPACE, userAttributes.tempTableSpace));
+        builder.append(" temporary tablespace ").append(cs.formatToken(TEMP_TABLESPACE, userAttributes.getTempTableSpace()));
         
     }
 
     private void appendDefaultTableSpace(StringBuilder builder, OracleUserAttributes userAttributes) {
-        builder.append(" default tablespace ").append(cs.formatToken(DEF_TABLESPACE, userAttributes.defaultTableSpace));
+        builder.append(" default tablespace ").append(cs.formatToken(DEF_TABLESPACE, userAttributes.getDefaultTableSpace()));
     }
 
-    private void appendAuth(final StringBuilder builder, OracleUserAttributes userAttributes, UserRecord userRecord) {
-    	OracleAuthentication auth = userAttributes.auth;
+    private void appendAuth(final StringBuilder builder, OracleUserAttributes userAttributes, Operation operation, BuilderStatus status,UserRecord userRecord) {
+    	OracleAuthentication auth = userAttributes.getAuth();
     	if(auth == null){
-    		if(Operation.CREATE.equals(userAttributes.operation)){
+    		if(Operation.CREATE.equals(operation)){
     			auth = OracleAuthentication.LOCAL;
     		}
     		else{
-    			if(userAttributes.password != null){
+    			if(userAttributes.getPassword() != null){
     				//we have update of password, so set auth to local
     				auth = OracleAuthentication.LOCAL;
     			}
     		}
     	}
-    	if(userAttributes.globalName != null && !OracleAuthentication.GLOBAL.equals(auth)){
+    	if(userAttributes.getGlobalName() != null && !OracleAuthentication.GLOBAL.equals(auth)){
     		throw new IllegalArgumentException("Globalname cannot be set for not global authentication");
     	}
-    	if(userAttributes.password != null && !OracleAuthentication.LOCAL.equals(auth)){
+    	if(userAttributes.getPassword() != null && !OracleAuthentication.LOCAL.equals(auth)){
     		throw new IllegalArgumentException("Password cannot be set for not local authentication");
     	}
     	if(auth == null){
@@ -182,11 +191,11 @@ final class OracleCreateOrAlterStBuilder {
     	builder.append(" identified");
         if(OracleAuthentication.LOCAL.equals(auth)){
             builder.append(" by ");
-            GuardedString password = userAttributes.password;
-            if(password == null){
+            status.passwordSet = userAttributes.getPassword();
+            if(status.passwordSet == null){
             	//Can we set password same as username ? , adapter did so
-            	if(Operation.CREATE.equals(userAttributes.operation)){
-	                password = new GuardedString(userAttributes.userName.toCharArray());
+            	if(Operation.CREATE.equals(operation)){
+            		status.passwordSet = new GuardedString(userAttributes.getUserName().toCharArray());
             	}
             	else{
             		//no password for update and local authentication
@@ -194,11 +203,11 @@ final class OracleCreateOrAlterStBuilder {
             		//In this case we will rather set password to user name and set (password_expired=true)
             		//Other option would be to throw exception, but some application could noty have 
             		//possibility to send password 
-            		password = new GuardedString(userAttributes.userName.toCharArray());
-            		userAttributes.expirePassword = true;
+            		status.passwordSet = new GuardedString(userAttributes.getUserName().toCharArray());
+            		status.forceExpirePassword = true;
             	}
             }
-            password.access(new GuardedString.Accessor(){
+            status.passwordSet.access(new GuardedString.Accessor(){
                 public void access(char[] clearChars) {
                     builder.append(cs.formatToken(PASSWORD, clearChars));
                     Arrays.fill(clearChars, (char)0);
@@ -209,11 +218,11 @@ final class OracleCreateOrAlterStBuilder {
             builder.append(" externally");
         }
         else if(OracleAuthentication.GLOBAL.equals(auth)){
-            if(userAttributes.globalName == null){
+            if(userAttributes.getGlobalName() == null){
                 throw new IllegalArgumentException("GlobalName not specified for global authentication");
             }
             builder.append(" globally as ");
-            builder.append(cs.formatToken(OracleUserAttributeCS.GLOBAL_NAME,userAttributes.globalName));
+            builder.append(cs.formatToken(OracleUserAttributeCS.GLOBAL_NAME,userAttributes.getGlobalName()));
         }
         
         

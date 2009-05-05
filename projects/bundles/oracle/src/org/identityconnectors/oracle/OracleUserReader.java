@@ -10,7 +10,7 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 
 /** Reads records from DBA_USERS table */
 final class OracleUserReader {
-    private Connection adminConn;
+    private final Connection adminConn;
     
     OracleUserReader(Connection adminConn){
         this.adminConn = OracleConnectorHelper.assertNotNull(adminConn, "adminConn");

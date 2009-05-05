@@ -5,6 +5,19 @@ import java.sql.Timestamp;
 /** User record represents one record from DBA_USERS table */
 final class UserRecord {
 	
+	private final String userName;
+	private final String profile;
+	private final String defaultTableSpace;
+	private final String temporaryTableSpace;
+	private final String externalName;
+	private final Long userId;
+	private final String status;
+	private final Timestamp createdDate;
+	private final Timestamp lockDate;
+	private final Timestamp expireDate;
+    //We read this just for testing for external authentication
+	private final String password;
+	
     private UserRecord(Builder builder) {
 		this.createdDate = builder.getCreatedDate();
 		this.defaultTableSpace = builder.getDefaultTableSpace();
@@ -18,19 +31,7 @@ final class UserRecord {
 		this.userId = builder.getUserId();
 		this.userName = builder.getUserName();
 	}
-
-	private final String userName;
-	private final String profile;
-	private final String defaultTableSpace;
-	private final String temporaryTableSpace;
-	private final String externalName;
-	private final Long userId;
-	private final String status;
-	private final Timestamp createdDate;
-	private final Timestamp lockDate;
-	private final Timestamp expireDate;
-    //We read this just for testing for external authentication
-	private final String password;
+	
 	
     String getUserName() {
 		return userName;

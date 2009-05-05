@@ -40,11 +40,12 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
         Map<String, Attribute> map = AttributeUtil.toMap(attrs);
     	checkUpdateAttributes(map);
         checkUserExist(uid.getUidValue());
-        OracleUserAttributes caAttributes = new OracleUserAttributes();
-        caAttributes.userName = uid.getUidValue();
-        new OracleAttributesReader(cfg.getConnectorMessages()).readAlterAttributes(map, caAttributes);
+        OracleUserAttributes.Builder builder = new OracleUserAttributes.Builder();
+        builder.setUserName(uid.getUidValue());
+        new OracleAttributesReader(cfg.getConnectorMessages()).readAlterAttributes(map, builder);
+        OracleUserAttributes caAttributes = builder.build();
         try{
-            UserRecord userRecord = new OracleUserReader(adminConn).readUserRecord(caAttributes.userName);
+            UserRecord userRecord = new OracleUserReader(adminConn).readUserRecord(caAttributes.getUserName());
             String alterSQL = new OracleCreateOrAlterStBuilder(cfg.getCSSetup(),cfg.getConnectorMessages()).buildAlterUserSt(caAttributes, userRecord);
             
             List<String> grantRevokeSQL = new ArrayList<String>();
@@ -53,16 +54,16 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
             if(aRoles != null){
 				List<String> roles = OracleConnectorHelper.castList(aRoles, String.class);
 	            if(!roles.isEmpty()){
-	            	List<String> currentRoles = new OracleRolePrivReader(adminConn).readRoles(caAttributes.userName);
+	            	List<String> currentRoles = new OracleRolePrivReader(adminConn).readRoles(caAttributes.getUserName());
 	            	List<String> revokeRoles = new ArrayList<String>(currentRoles);
 	            	revokeRoles.removeAll(roles);
-	            	grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokeRoles(caAttributes.userName, revokeRoles));
+	            	grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokeRoles(caAttributes.getUserName(), revokeRoles));
 	            	roles.removeAll(currentRoles);
-	            	grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantRolesSQL(caAttributes.userName, roles));
+	            	grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantRolesSQL(caAttributes.getUserName(), roles));
 	            }
 	            else{
-	            	List<String> currentRoles = new OracleRolePrivReader(adminConn).readRoles(caAttributes.userName);
-	            	grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokeRoles(caAttributes.userName, currentRoles));
+	            	List<String> currentRoles = new OracleRolePrivReader(adminConn).readRoles(caAttributes.getUserName());
+	            	grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokeRoles(caAttributes.getUserName(), currentRoles));
 	            }
             }
             
@@ -71,16 +72,16 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
             if(aPrivileges != null){
 				List<String> privileges = OracleConnectorHelper.castList(aPrivileges, String.class);
 	            if(!privileges.isEmpty()){
-	                List<String> currentPrivileges = new OracleRolePrivReader(adminConn).readPrivileges(caAttributes.userName);
+	                List<String> currentPrivileges = new OracleRolePrivReader(adminConn).readPrivileges(caAttributes.getUserName());
 	                List<String> revokePrivileges = new ArrayList<String>(currentPrivileges);
 	                revokePrivileges.removeAll(privileges);
-	                grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokePrivileges(caAttributes.userName, revokePrivileges));
+	                grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokePrivileges(caAttributes.getUserName(), revokePrivileges));
 	                privileges.removeAll(currentPrivileges);
-	            	grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantPrivilegesSQL(caAttributes.userName, privileges));
+	            	grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantPrivilegesSQL(caAttributes.getUserName(), privileges));
 	            }
 	            else{
-	                List<String> currentPrivileges = new OracleRolePrivReader(adminConn).readPrivileges(caAttributes.userName);
-	                grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokePrivileges(caAttributes.userName, currentPrivileges));
+	                List<String> currentPrivileges = new OracleRolePrivReader(adminConn).readPrivileges(caAttributes.getUserName());
+	                grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokePrivileges(caAttributes.getUserName(), currentPrivileges));
 	            }
             }
             if(alterSQL == null && grantRevokeSQL.isEmpty()){
