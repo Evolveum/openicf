@@ -10,6 +10,5 @@
 	<classpathentry kind="lib" path="lib/expect4j-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/jakarta-oro-2.0.8.jar"/>
 	<classpathentry kind="lib" path="lib/jsch-0.1.41.jar"/>
-	<classpathentry kind="lib" path="lib/patternparser-1.0.x.jar"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>
