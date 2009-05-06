@@ -3,6 +3,9 @@ This connector is under development, it is not release ready.
 TODOs:
 * test against other unix flavours, e.g. HPUX, Linux (RedHat, SUSE), possible SecurId, Aix, NIS.
 * getConnectorMessages() -- organize message propeties, so they are optimal for localization
+* add delete supporting deletion of nonexisting accounts.
+
+!!! ** finish the create process, including authentication!!!
 
 HINTS from SolarisRA:
 * // Depending on the amount of data to modify, userAttribParams

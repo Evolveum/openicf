@@ -43,6 +43,7 @@ import org.identityconnectors.framework.spi.ConnectorClass;
 import org.identityconnectors.framework.spi.PoolableConnector;
 import org.identityconnectors.framework.spi.operations.AuthenticateOp;
 import org.identityconnectors.framework.spi.operations.CreateOp;
+import org.identityconnectors.framework.spi.operations.DeleteOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
 
@@ -54,7 +55,7 @@ import static org.identityconnectors.solaris.SolarisHelper.executeCommand;
  */
 @ConnectorClass(displayNameKey = "Solaris", configurationClass = SolarisConfiguration.class)
 public class SolarisConnector implements PoolableConnector, AuthenticateOp,
-        SchemaOp, CreateOp, TestOp {
+        SchemaOp, CreateOp, DeleteOp, TestOp {
 
     /**
      * Setup logging for the {@link DatabaseTableConnector}.
@@ -117,7 +118,14 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     /** {@inheritDoc} */
     public Uid create(ObjectClass oclass, Set<Attribute> attrs,
             OperationOptions options) {
+        
         return new OpCreateImpl(_configuration, _connection, _log).create(oclass, attrs, options);
+    }
+    
+    /** {@inheritDoc} */
+    public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
+        
+        new OpDeleteImpl(_configuration, _connection, _log).delete(objClass, uid, options);
     }
     
     /**

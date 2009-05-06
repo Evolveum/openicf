@@ -93,25 +93,38 @@ public class SolarisConnection {
     }
 
     /* *************** METHODS ****************** */
+    /**
+     * send a command to the resource, no end of line needed.
+     * @param string
+     */
     public void send(String string) throws IOException {
         log.info("send(''{0}'')", string);
         //System.out.println("Send:"+string);
         _expect4j.send(string + HOST_END_OF_LINE_TERMINATOR);
     }
     
+    /**
+     * {@see SolarisConnection#send(String)}
+     */
     public void send(StringBuffer string) throws IOException {
         send(string.toString());
     }
     
+    /**
+     * {@see SolarisConnection#waitFor(String, int)}
+     */
     public void waitFor(String string) throws Exception{
-        log.info("waitFor(''{0}'')", string);
-        _expect4j.expect(string, new Closure() {
-            public void run(ExpectState state) {
-                _buffer.append(state.getBuffer());
-            }
-        });
+        waitFor(string, SolarisHelper.DEFAULT_WAIT);
     }
     
+    /**
+     * Waits for feedback from the resource, respecting given timeout.
+     * 
+     * @param string is a standard regular expression
+     * @param millis time in millis until expect waits for reply
+     * @throws MalformedPatternException
+     * @throws Exception
+     */
     public void waitFor(final String string, int millis) throws MalformedPatternException, Exception {
         log.info("waitFor(''{0}'', {1})", string, millis);
         Match[] matches = {
@@ -157,24 +170,24 @@ public class SolarisConnection {
     static void test(SolarisConfiguration configuration) throws Exception {
         SolarisConnection connection = new SolarisConnection(configuration);
         
-        if (!testIfUserIsRoot(connection, configuration)) {
-            throw new IllegalArgumentException(
-                    String.format("The Administrative User defined in configuration property '%s'==\"%s\" is not 'root'", 
-                            "SolarisConfiguration#userName", configuration.getUserName()));
-        }
+//        if (!testIfUserIsRoot(connection, configuration)) {
+//            throw new IllegalArgumentException(
+//                    String.format("The Administrative User defined in configuration property '%s'==\"%s\" is not 'root'", 
+//                            "SolarisConfiguration#userName", configuration.getUserName()));
+//        }
     }
 
-    /** helper method for evaluating if user has root privileges */
-    private static boolean testIfUserIsRoot(SolarisConnection connection,
-            SolarisConfiguration configuration) {
-        /*
-         * use the whoami script to look for root named account TODO generalize this.
-         */
-        final String command = "whoami";
-        String result = SolarisHelper.executeCommand(configuration, connection, command);
-        if (result.contains("root")) {
-            return true;
-        }
-        return false;
-    }
+//    /** helper method for evaluating if user has root privileges */
+//    private static boolean testIfUserIsRoot(SolarisConnection connection,
+//            SolarisConfiguration configuration) {
+//        /*
+//         * use the whoami script to look for root named account TODO generalize this.
+//         */
+//        final String command = "whoami";
+//        String result = SolarisHelper.executeCommand(configuration, connection, command);
+//        if (result.contains("root")) {
+//            return true;
+//        }
+//        return false;
+//    }
 }

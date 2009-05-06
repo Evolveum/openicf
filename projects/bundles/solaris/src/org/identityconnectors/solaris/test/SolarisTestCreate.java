@@ -22,7 +22,9 @@
  */
 package org.identityconnectors.solaris.test;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import junit.framework.Assert;
@@ -30,12 +32,14 @@ import junit.framework.Assert;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnector;
+import org.identityconnectors.solaris.SolarisHelper;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.After;
 import org.junit.Before;
@@ -64,16 +68,48 @@ public class SolarisTestCreate {
      */
     @Test
     public void testCreate() {
-        SolarisConnector connector = createConnector(config);
+        final SolarisConnector connector = createConnector(config);
         
-        Set<Attribute> attrs = initSampleUser();
-        
+        // create a new user
+        final Set<Attribute> attrs = initSampleUser();
+        // Read only list of attributes
+        final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
+        final String username = ((Name) attrMap.get(Name.NAME)).getNameValue();
         Uid uid = connector.create(ObjectClass.ACCOUNT, attrs, null);
         Assert.assertNotNull(uid);
+        
+        final GuardedString password = SolarisHelper.getPasswordFromMap(attrMap);
+        
+        //cleanup the new user ##################
+        connector.delete(ObjectClass.ACCOUNT, new Uid(username), null);
+        try {
+            connector.authenticate(ObjectClass.ACCOUNT, username, password, null);
+            Assert.fail(String.format("Account was not cleaned up: '%s'", username));
+        } catch (RuntimeException ex) {
+            //OK
+        }
+        
+        // try to authenticate 
+        try {
+            connector.authenticate(ObjectClass.ACCOUNT, username, password, null);
+        } catch (RuntimeException ex) {
+            ex.printStackTrace();
+            Assert.fail(String.format("Authenticate failed for: '%s'", username));
+        }
+        
+        //cleanup the new user
+        connector.delete(ObjectClass.ACCOUNT, new Uid(username), null);
+        try {
+            connector.authenticate(ObjectClass.ACCOUNT, username, password, null);
+            Assert.fail(String.format("Account was not cleaned up: '%s'", username));
+        } catch (RuntimeException ex) {
+            //OK
+        }
     }
     
     /* ************* AUXILIARY METHODS *********** */
-    
+
+
     /** fill in sample user/password for sample user used in create */
     private Set<Attribute> initSampleUser() {
         String msg = "test property '%s' should not be null";
