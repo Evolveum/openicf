@@ -27,6 +27,7 @@ import static org.identityconnectors.racf.RacfConstants.*;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -410,36 +411,37 @@ class CommandLineUtil {
             Attribute owners = attributes.remove(ATTR_CL_GROUP_CONN_OWNERS);
             Attribute expired = attributes.remove(ATTR_CL_EXPIRED);
             Attribute password = attributes.get(ATTR_CL_PASSWORD);
-            
+
             throwErrorIfNull(groups);
             throwErrorIfNullOrEmpty(expired);
             throwErrorIfNullOrEmpty(password);
             checkConnectionConsistency(groups, owners);
-            
-            // If both ENABLE==false and an ENABLE_DATE are specified,
-            // we need to process the REVOKE in a separate command
-            //
-            Attribute enable      = attributes.get(ATTR_CL_ENABLED);
-            Attribute enableDate  = attributes.get(ATTR_CL_RESUME_DATE);
-            Attribute disableDate = attributes.get(ATTR_CL_REVOKE_DATE);
-            boolean doEnable = false;
-            boolean doDisable = false;
-            
-            if (enableDate!=null && enable!=null && AttributeUtil.getBooleanValue(enable)) {
-                doEnable = true;
-                attributes.remove(ATTR_CL_ENABLED);
-            }
-            if (disableDate!=null && enable!=null && !AttributeUtil.getBooleanValue(enable)) {
-                doDisable = true;
-                attributes.remove(ATTR_CL_ENABLED);
-            }
-            
             if (expired!=null && password==null) 
                 throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
-            
             if (userExists(name))
                 throw new AlreadyExistsException();
             validateCatalogAttributes(attributes);
+
+            // Some attributes cannot be specified during create, only modify.
+            // Save these off to the side.
+            //
+            Set<Attribute> changes = new HashSet<Attribute>();
+            Attribute enable      = attributes.remove(ATTR_CL_ENABLED);
+            Attribute enableDate  = attributes.remove(ATTR_CL_RESUME_DATE);
+            Attribute disableDate = attributes.remove(ATTR_CL_REVOKE_DATE);
+            if (expired!=null) {
+                changes.add(expired);
+                changes.add(password);
+            }
+            if (enable!=null)
+                changes.add(enable);
+            if (enableDate!=null)
+                changes.add(enableDate);
+            if (disableDate!=null)
+                changes.add(disableDate);
+            
+            // Create the user
+            //
             CharArrayBuffer buffer = new CharArrayBuffer();
             buffer.append("ADDUSER ");
             buffer.append(name);
@@ -454,21 +456,12 @@ class CommandLineUtil {
                     createConnection(name, (String)groupsValue.get(i), (String)(ownersValue==null?null:ownersValue.get(i)));
                 }
             }
-            if (expired!=null || doDisable || doEnable) {
-                buffer = new CharArrayBuffer();
-                buffer.append("ALTUSER ");
-                buffer.append(name);
-                if (doDisable)
-                    buffer.append(" REVOKE");
-                if (doEnable)
-                    buffer.append(" RESUME");
-                if (expired!=null) {
-                    Map<String, Attribute> updateAttrs = new HashMap<String, Attribute>();
-                    updateAttrs.put(ATTR_CL_EXPIRED, expired);
-                    updateAttrs.put(ATTR_CL_PASSWORD, password);
-                    buffer.append(mapAttributesToString(updateAttrs));
-                }
-                createOrUpdateViaCommandLine(objectClass, name, buffer);
+            
+            // Now, process the deferred attributes
+            //
+            if (changes.size()>0) {
+                changes.add(uid);
+                updateViaCommandLine(objectClass, changes, options);
             }
             return uid;
         } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {

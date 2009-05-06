@@ -754,9 +754,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
             // Operational Attributes
             //
             attributes.add(buildReadonlyAttribute(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, long.class, false));
-            attributes.add(buildNoncreateAttribute(OperationalAttributes.ENABLE_NAME,  boolean.class, false));
-            attributes.add(buildNoncreateAttribute(OperationalAttributes.ENABLE_DATE_NAME,  long.class, false));
-            attributes.add(buildNoncreateAttribute(OperationalAttributes.DISABLE_DATE_NAME,  long.class, false));
+            attributes.add(OperationalAttributeInfos.ENABLE);
+            attributes.add(OperationalAttributeInfos.ENABLE_DATE);
+            attributes.add(OperationalAttributeInfos.DISABLE_DATE);
             attributes.add(OperationalAttributeInfos.PASSWORD);
             attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
             attributes.add(PredefinedAttributeInfos.LAST_LOGIN_DATE);
