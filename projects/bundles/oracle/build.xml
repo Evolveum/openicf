@@ -36,7 +36,8 @@
         </copy>
     </target> 
 
-    <target name="run-unit-tests">
+
+    <target name="run-unit-tests" depends="test-init, instrument, build-testclasspath">
 	<!--
 	<antcall target="connector-build.run-unit-tests">
 		<param name="configuration" value="localhost"/>
