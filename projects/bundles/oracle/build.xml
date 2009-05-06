@@ -43,9 +43,12 @@
 	</antcall>
 	-->
 
-	<antcall target="connector-build.run-unit-tests" inheritAll="false">
+	<!-- Oracle is having some performance problem on this machine -->
+    <!--	
+    <antcall target="connector-build.run-unit-tests" inheritAll="false">
 		<param name="configuration" value="prgvm8104"/>
 	</antcall>
+	-->
 
 	<antcall target="connector-build.run-unit-tests" inheritAll="false">
 		<param name="configuration" value="prgvm8105"/>
@@ -65,13 +68,16 @@
         </antcall>
 	-->
         
+    	<!-- Oracle is having some performance problem on this machine -->
+        <!--	
         <antcall target="contract-dist" inheritAll="false">
             <param name="configuration" value="prgvm8104"/>
         </antcall>
         <antcall target="contract-tests" inheritAll="false">
             <param name="configuration" value="prgvm8104"/>
         </antcall>
-        
+		-->
+    	
         <antcall target="contract-dist" inheritAll="false">
             <param name="configuration" value="prgvm8105"/>
         </antcall>

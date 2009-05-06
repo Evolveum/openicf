@@ -10,7 +10,9 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.*;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
+import org.identityconnectors.framework.spi.ConfigurationProperty;
 import org.identityconnectors.oracle.OracleDriverConnectionInfo.Builder;
+import static org.identityconnectors.oracle.OracleMessages.*;
 
 /**
  * Set of configuration properties for connecting to Oracle database
@@ -70,6 +72,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
      * @return the host
      */
+    @ConfigurationProperty(order = 0,displayMessageKey=HOST_DISPLAY,helpMessageKey=HOST_HELP)
     public String getHost() {
         return host;
     }
@@ -84,6 +87,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
      * @return the port
      */
+    @ConfigurationProperty(order = 1,displayMessageKey=PORT_DISPLAY,helpMessageKey=PORT_HELP)
     public String getPort() {
         return port;
     }
@@ -98,6 +102,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
      * @return the driver
      */
+    @ConfigurationProperty(order = 2,displayMessageKey=DRIVER_DISPLAY,helpMessageKey=DRIVER_HELP)
     public String getDriver() {
         return driver;
     }
@@ -112,6 +117,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
      * @return the database
      */
+    @ConfigurationProperty(order = 3,displayMessageKey=DATABASE_DISPLAY,helpMessageKey=DATABASE_HELP)
     public String getDatabase() {
         return database;
     }
@@ -126,6 +132,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
      * @return the user
      */
+    @ConfigurationProperty(order = 4,displayMessageKey=USER_DISPLAY,helpMessageKey=USER_HELP)
     public String getUser() {
         return user;
     }
@@ -140,6 +147,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
      * @return the password
      */
+    @ConfigurationProperty(order = 5,displayMessageKey=PASSWORD_DISPLAY,helpMessageKey=PASSWORD_HELP)
     public GuardedString getPassword() {
         return password;
     }
@@ -154,6 +162,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
      * @return the dataSource
      */
+    @ConfigurationProperty(order = 6,displayMessageKey=DATASOURCE_DISPLAY,helpMessageKey=DATASOURCE_HELP)
     public String getDataSource() {
         return dataSource;
     }
@@ -168,6 +177,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
      * @return the dsJNDIEnv
      */
+    @ConfigurationProperty(order = 6,displayMessageKey=DSJNDIENV_DISPLAY,helpMessageKey=DSJNDIENV_HELP)
     public String[] getDsJNDIEnv() {
         return dsJNDIEnv;
     }
@@ -184,6 +194,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
      * @return the url
      */
+    @ConfigurationProperty(order = 7,displayMessageKey=URL_DISPLAY,helpMessageKey=URL_HELP)
     public String getUrl() {
         return url;
     }
@@ -194,7 +205,32 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     public void setUrl(String url) {
         this.url = url;
     }
+    
+    /**
+     * @return caseSensitivityString
+     */
+    @ConfigurationProperty(order = 8,displayMessageKey=CS_DISPLAY,helpMessageKey=CS_HELP)
+    public String getCaseSensitivity(){
+        return caseSensitivityString;
+    }
+    
+    /** Sets case sensitivity from string map 
+     * @param cs */
+    public void setCaseSensitivity(String cs){
+        new LocalizedAssert(getConnectorMessages()).assertNotBlank(cs, "cs");
+        this.cs = new OracleCaseSensitivityBuilder().parseMap(cs).build();
+        this.caseSensitivityString = cs;
+    }
+    
+    OracleCaseSensitivitySetup getCSSetup(){
+        return cs;
+    }
+    
+    void setCSSetup(OracleCaseSensitivitySetup cs){
+        this.cs = new LocalizedAssert(getConnectorMessages()).assertNotNull(cs, "cs");
+    }
 
+    
     @Override
     public void validate() {
         if(dataSource != null){
@@ -304,26 +340,5 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
         return connection;
     }
     
-    OracleCaseSensitivitySetup getCSSetup(){
-        return cs;
-    }
-    
-    void setCSSetup(OracleCaseSensitivitySetup cs){
-        this.cs = new LocalizedAssert(getConnectorMessages()).assertNotNull(cs, "cs");
-    }
-    /**
-     * @return caseSensitivityString
-     */
-    public String getCaseSensitivity(){
-        return caseSensitivityString;
-    }
-    
-    /** Sets case sensitivity from string map 
-     * @param cs */
-    public void setCaseSensitivity(String cs){
-        new LocalizedAssert(getConnectorMessages()).assertNotBlank(cs, "cs");
-        this.cs = new OracleCaseSensitivityBuilder().parseMap(cs).build();
-        this.caseSensitivityString = cs;
-    }
 
 }

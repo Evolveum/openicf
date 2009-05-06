@@ -18,6 +18,7 @@ import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.*;
 import org.identityconnectors.framework.spi.operations.*;
+import static org.identityconnectors.oracle.OracleMessages.*;
 
 /**
  * Implementation of Oracle connector. It just holds common oracle constants and delegates SPI calls to AbstractOracleOperation subclasses
@@ -25,7 +26,7 @@ import org.identityconnectors.framework.spi.operations.*;
  *
  */
 @ConnectorClass(configurationClass=OracleConfiguration.class,
-        displayNameKey = "oracle.connector",
+        displayNameKey = CONNECTOR_DISPLAY,
         messageCatalogPaths={"org/identityconnectors/dbcommon/Messages","org/identityconnectors/oracle/Messages"})
 public final class OracleConnector implements PoolableConnector, AuthenticateOp,
 		CreateOp, DeleteOp, UpdateOp, UpdateAttributeValuesOp,
