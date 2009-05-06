@@ -1,0 +1,44 @@
+<MapTransform>
+  <PatternNode key='RACF*USERID'        pattern='USER=(\S{1,8})'            optional='false' reset='false'/>
+  <PatternNode key='RACF*NAME'          pattern='NAME=(.*?)\s+(?=OWNER=)'   optional='false' reset='false'/>
+  <PatternNode key='RACF*OWNER'         pattern='OWNER=(\S{1,8})'           optional='false' reset='false'>
+    <SubstituteTransform pattern='^$' substitute='UNKNOWN'/>
+  </PatternNode>
+  <PatternNode key='RACF*DFLTGRP'       pattern='DEFAULT-GROUP=(\S{1,8})'   optional='false' reset='false'/>
+  <PatternNode key='RACF*PASSDATE'      pattern='PASSDATE=(\S{0,6})'        optional='false' reset='false'/>
+  <PatternNode key='RACF*PASSWORD INTERVAL' pattern='PASS-INTERVAL=(\S*)'   optional='false' reset='false'/>
+  <PatternNode key='RACF*PHRASEDATE'    pattern='PHRASEDATE=(.*?)\s+\n'     optional='true' reset='false'/>
+  <PatternNode key='RACF*ATTRIBUTES'    pattern='((ATTRIBUTES=.*\n\s*)+)'   optional='true' reset='false'>
+    <SubstituteTransform pattern='ATTRIBUTES=(\S+)\s+' substitute='$1 '/>
+    <SubstituteTransform pattern='(.*)\s' substitute='$1'/>
+    <SubstituteTransform pattern='^$' substitute='NONE'/>
+    <SplitTransform splitPattern='\s+'/>
+  </PatternNode>
+  <PatternNode key='RACF*REVOKE DATE'   pattern='REVOKE DATE=(NONE|\w+\s\d+,\s\d+)'   optional='false' reset='false'/>
+  <PatternNode key='RACF*RESUME DATE'   pattern='RESUME DATE=(NONE|\w+\s\d+,\s\d+)'     optional='false' reset='false'/>
+  <PatternNode key='RACF*LAST ACCESS'   pattern='LAST-ACCESS=(\S+)'         optional='false' reset='false'/>
+        //"  <PatternNode key='RACF*CLAUTH' pattern='CLASS AUTHORIZATIONS=([^\n]*(\s{23}.+\n)*)' optional='true' reset='false'>
+        //"    <SubstituteTransform pattern='(.*)\s' substitute='$1'/>
+        //"    <SplitTransform splitPattern='\s+'/>
+        //"  </PatternNode>
+  <PatternNode key='RACF*DATA'          pattern='(NO-INSTALLATION-DATA)'    optional='true' reset='true'/>
+  <PatternNode key='RACF*DATA'          pattern='INSTALLATION-DATA=([^\n]*(\s{20}.+\n)*)' optional='true' reset='false'>
+    <SubstituteTransform pattern='^(.{50})[^\n]+' substitute='$1'/>
+    <SubstituteTransform pattern='\n\s{20}(.{50})[^\n]+' substitute='$1'/>
+    <SubstituteTransform pattern='\n' substitute=''/>
+    <SubstituteTransform pattern='\s+$' substitute=''/>
+    <SubstituteTransform pattern='^$' substitute='NO-INSTALLATION-DATA'/>
+  </PatternNode>
+  <PatternNode key='RACF*GROUPS'        pattern='((?:\s+GROUP=\S+\s+AUTH=\S*\s+CONNECT-OWNER=(?:[^\n]+\n){4})+)' optional='true' reset='true'>
+    <SubstituteTransform pattern='.*?GROUP=(\S+)\s+AUTH=.+?CONNECT-OWNER=\S+([^\n]+\n){4}' substitute='$1 '/>
+    <SubstituteTransform pattern='^\s+(.*)' substitute='$1'/>
+    <SubstituteTransform pattern='(\s+)$' substitute=''/>
+    <SplitTransform splitPattern='\s+'/>
+  </PatternNode>
+  <PatternNode key='RACF*CONNECT-OWNERS' pattern='((?:\s+GROUP=\S+\s+AUTH=\S*\s+CONNECT-OWNER=(?:[^\n]+\n){4})+)' optional='true' reset='false'>
+    <SubstituteTransform pattern='.*?GROUP=\S+\s+AUTH=.+?CONNECT-OWNER=(\S+)([^\n]+\n){4}' substitute='$1 '/>
+    <SubstituteTransform pattern='^\s+(.*)' substitute='$1'/>
+    <SubstituteTransform pattern='(\s+)$' substitute=''/>
+    <SplitTransform splitPattern='\s+'/>
+  </PatternNode>
+</MapTransform>
