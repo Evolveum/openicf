@@ -24,11 +24,11 @@ package org.identityconnectors.solaris.test;
 
 import junit.framework.Assert;
 
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class SolarisConfigurationTest {
@@ -96,7 +96,7 @@ public class SolarisConfigurationTest {
         Assert.fail("Configuration allowed a null port.");
     }
     
-    @Test
+    @Test @Ignore
     public void testGetMessageProperty() {
         String result = getConfig().getMessage("SOLARIS");
         Assert.assertTrue(result.equals("Solaris"));

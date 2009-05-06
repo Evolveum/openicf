@@ -28,13 +28,15 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 /** helper class for Solaris specific operations */
 public class SolarisHelper {
     public static final int SHORT_WAIT = 60000;
+    public static final int LONG_WAIT = 120000;
+    public static final int VERY_LONG_WAIT = 1200000;
     
     public static String executeCommand(SolarisConfiguration configuration,
             SolarisConnection connection, String command) {
         connection.resetStandardOutput();
         try {
             connection.send(command);
-            connection.waitFor(configuration.getRootShellPrompt(), SHORT_WAIT);
+            connection.waitFor(configuration.getRootShellPrompt(), VERY_LONG_WAIT);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }

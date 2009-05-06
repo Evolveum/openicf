@@ -22,16 +22,37 @@
  */
 package org.identityconnectors.solaris;
 
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.spi.Configuration;
 
 public abstract class AbstractOp {
-    private Configuration _configuration;
+    private SolarisConfiguration _configuration;
+    private SolarisConnection _connection;
+    private Log _log;
     
-    public AbstractOp(Configuration config) {
-        _configuration = config;
+    public AbstractOp(Configuration config, SolarisConnection connection, Log log) {
+        if (config instanceof SolarisConfiguration) {
+            _configuration = (SolarisConfiguration) config;
+        } else {
+            throw new IllegalArgumentException("AbstractOp's constructor should be passed Solaris Configuration only");
+        }
+        if (connection != null) {
+            _connection = connection;
+        } else {
+            throw new IllegalArgumentException("Connection should not be null.");
+        }
+        _log = log;
     }
 
-    protected Configuration getConfiguration() {
+    public Log getLog() {
+        return _log;
+    }
+
+    protected SolarisConfiguration getConfiguration() {
         return _configuration;
+    }
+    
+    protected SolarisConnection getConnection() {
+        return _connection;
     }
 }

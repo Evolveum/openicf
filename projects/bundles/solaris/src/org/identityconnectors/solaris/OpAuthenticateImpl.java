@@ -2,6 +2,7 @@ package org.identityconnectors.solaris;
 
 import static org.identityconnectors.solaris.SolarisHelper.executeCommand;
 
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
@@ -9,13 +10,13 @@ import org.identityconnectors.framework.common.objects.Uid;
 
 public class OpAuthenticateImpl extends AbstractOp {
 
-    public OpAuthenticateImpl(SolarisConfiguration configuration) {
-        super(configuration);
+    public OpAuthenticateImpl(SolarisConfiguration configuration, SolarisConnection connection, Log log) {
+        super(configuration, connection, log);
     }
 
     public Uid authenticate(ObjectClass objectClass, String username,
             GuardedString password, OperationOptions options) {
-        SolarisConfiguration userConfig = new SolarisConfiguration(getConfiguration());
+        SolarisConfiguration userConfig = getConfiguration();
         userConfig.setUserName(username);
         userConfig.setPassword(password);
         
@@ -23,6 +24,7 @@ public class OpAuthenticateImpl extends AbstractOp {
         try {
             connection = new SolarisConnection(userConfig);
         } catch (RuntimeException ex) {
+            getLog().warn("Failed to authenticate user ''{0}'' RuntimeException thrown during authentication.", username);
             // in case of invalid credentials propagate the exception
             throw ex;
         } finally {
@@ -31,6 +33,7 @@ public class OpAuthenticateImpl extends AbstractOp {
             }
         }
         
+        getLog().info("User ''{0}'' succesfully authenticated", username);
         return new Uid(username);
     }
 

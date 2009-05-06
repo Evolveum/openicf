@@ -59,7 +59,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     /**
      * Setup logging for the {@link DatabaseTableConnector}.
      */
-    private Log log = Log.getLog(SolarisConnector.class);
+    private Log _log = Log.getLog(SolarisConnector.class);
 
     private SolarisConnection _connection;
 
@@ -110,14 +110,14 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      */
     public Uid authenticate(ObjectClass objectClass, String username,
             GuardedString password, OperationOptions options) {
-        return new OpAuthenticateImpl(_configuration).authenticate(objectClass, username, password, options);
+        return new OpAuthenticateImpl(_configuration, _connection, _log).authenticate(objectClass, username, password, options);
         
     }
 
     /** {@inheritDoc} */
     public Uid create(ObjectClass oclass, Set<Attribute> attrs,
             OperationOptions options) {
-        return new OpCreateImpl(_configuration).create(oclass, attrs, options);
+        return new OpCreateImpl(_configuration, _connection, _log).create(oclass, attrs, options);
     }
     
     /**

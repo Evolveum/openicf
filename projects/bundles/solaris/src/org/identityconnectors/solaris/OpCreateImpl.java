@@ -22,41 +22,66 @@
  */
 package org.identityconnectors.solaris;
 
-import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
+import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.spi.Configuration;
-
-import static org.identityconnectors.solaris.SolarisHelper.executeCommand;
 
 public class OpCreateImpl extends AbstractOp {
     /** message constants */
     private static final String MSG_NOT_SUPPORTED_OBJECTCLASS = "Object class '%s' is not supported";
     
-    public OpCreateImpl(Configuration configuration) {
-        super(configuration);
+    public OpCreateImpl(Configuration configuration, SolarisConnection connection, Log log) {
+        super(configuration, connection, log);
     }
     
-    Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
+    Uid create(ObjectClass oclass, final Set<Attribute> attrs, final OperationOptions options) {
         if (!oclass.is(ObjectClass.ACCOUNT_NAME)) {
             throw new IllegalArgumentException(String.format(
                     MSG_NOT_SUPPORTED_OBJECTCLASS, ObjectClass.ACCOUNT_NAME));
         }
         
-        SolarisConfiguration config = (SolarisConfiguration) getConfiguration();
-        SolarisConnection connection = new SolarisConnection(config);
+        // Read only list of attributes
+        final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
         
-        try {
-            connection.send("echo \"ahoj\"");
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        Name name = (Name) attrMap.get(Name.NAME);
+        String accountId = name.getNameValue();
+        getLog().info("~~~~~~~ create(''{0}'') ~~~~~~~", accountId);
+        
+        // USERADD accountId
+        final String command = String.format("useradd %s\n", accountId);
+        executeCommand(command);
+        getLog().info("useradd(''{0}'')", accountId);
+        
+        // PASSWD password
+        Attribute passwdAttr = attrMap.get(OperationalAttributes.PASSWORD_NAME);
+        if (passwdAttr.getValue().size() > 0) {
+            throw new IllegalArgumentException(String.format("Password is missing for user '%s'", accountId));
         }
+        final GuardedString password = (GuardedString) passwdAttr.getValue().get(0);
+        password.access(new GuardedString.Accessor() {
+            public void access(char[] clearChars) {
+                String realPasswd = new String(clearChars);
+                final String command = String.format("passwd %s\n", realPasswd);
+                executeCommand(command);
+                getLog().info("passwd()");
+            }
+        });        
         
-        return null;
+        return null; //TODO
+    }
+    
+    private String executeCommand(String command) {
+        return SolarisHelper.executeCommand(getConfiguration(), getConnection(), command);
     }
 }
