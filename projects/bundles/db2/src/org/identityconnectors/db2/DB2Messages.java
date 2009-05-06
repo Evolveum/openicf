@@ -19,6 +19,7 @@ abstract class DB2Messages {
     static final String UPDATE_UID_CANNOT_BE_NULL_OR_EMPTY = "db2.update.uid.cannot.be.null.or.empty";
     static final String SEARCH_FAILED = "db2.search.failed";
     
+    static final String DB2_CONNECTOR_DISPLAY = "db2.connector";
     static final String DB2_ADMINACCOUNT_DISPLAY = "db2.adminAccount.display";
     static final String DB2_ADMINACCOUNT_HELP = "db2.adminAccount.help";
     static final String DB2_ADMINPASSWORD_DISPLAY = "db2.adminPassword.display";
