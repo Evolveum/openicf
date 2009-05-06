@@ -74,7 +74,7 @@ class CommandLineUtil {
     private static final String         OUTPUT_CONTINUING           = " ***";
     private static final String         RACF                        = "RACF";
     private static final String         CATALOG                     = "CATALOG";
-    private static final String         DELETE_SEGMENT              = "Delete Segment";
+    private static final String         DELETE_SEGMENT              = "DELETE SEGMENT";
     private static final String         NO_ENTRIES                  = "NO ENTRIES MEET SEARCH CRITERIA";
     private static final String         NAME_NOT_FOUND              = "NAME NOT FOUND";
     private static final String         UNABLE_TO_LOCATE_USER       = "UNABLE TO LOCATE USER";
@@ -84,6 +84,8 @@ class CommandLineUtil {
     private final ScriptExecutorFactory _groovyFactory;
     
     private RacfConnector               _connector;
+    private static final List<String>   POSSIBLE_ATTRIBUTES         = Arrays.asList(
+                    "ADSP", "AUDITOR", "SPECIAL", "GRPACC", "OIDCARD", "OPERATIONS");
 
     public CommandLineUtil(RacfConnector connector) {
         try {
@@ -249,7 +251,7 @@ class CommandLineUtil {
                 attributeValues.put(attributeName[0], new HashMap<String, char[]>());
             }
             Map<String, char[]> map = attributeValues.get(attributeName[0]);
-            map.put(attributeName[1], getAsStringValue(entry.getValue()));
+            map.put(attributeName[1], getAsStringValue(attributeName[0], attributeName[1], entry.getValue()));
         }
         
         // Build the attributes portion of the command
@@ -269,7 +271,6 @@ class CommandLineUtil {
                         if (value==null) {
                             commandAttributes.append(" NO"+entry.getKey());
                         } else {
-                            value = computeValue(value, segment.getKey(), entry.getKey());
                             commandAttributes.append(" "+entry.getKey()+"(");
                             commandAttributes.append(value);
                             commandAttributes.append(")");
@@ -283,10 +284,15 @@ class CommandLineUtil {
         
         // The various ATTRIBUTES are specified individually on the command line,
         // not as part of a larger value
-        //
+        // TODO: docs list "UAUDIT", but our RACF doesn't support this 
+        List<String> possibleAttributes = new LinkedList<String>(POSSIBLE_ATTRIBUTES);
         if (attributesAttribute!=null) {
             for (Object attributeValue : attributesAttribute.getValue()) {
                 commandAttributes.append(" "+attributeValue);
+                possibleAttributes.remove(attributeValue);
+            }
+            for (String attributeValue : possibleAttributes) {
+                commandAttributes.append(" NO"+attributeValue);
             }
         }
         if (expired!=null) {
@@ -302,17 +308,23 @@ class CommandLineUtil {
                 commandAttributes.append(" REVOKE");
         }
         if (enableDate!=null) {
-            commandAttributes.append(" RESUME("+AttributeUtil.getStringValue(enableDate)+")");
+            if (enableDate.getValue()==null)
+                commandAttributes.append(" NORESUME");
+            else
+                commandAttributes.append(" RESUME("+AttributeUtil.getStringValue(enableDate)+")");
         }
         if (disableDate!=null) {
-            commandAttributes.append(" REVOKE("+AttributeUtil.getStringValue(disableDate)+")");
+            if (disableDate.getValue()==null)
+                commandAttributes.append(" NOREVOKE");
+            else
+                commandAttributes.append(" REVOKE("+AttributeUtil.getStringValue(disableDate)+")");
         }
         char[] result = commandAttributes.getArray();
         commandAttributes.clear();
         return result;
     }
     
-    private char[] getAsStringValue(Attribute attribute) {
+    private char[] getAsStringValue(String segmentName, String attributeName, Attribute attribute) {
         if (isNullOrEmpty(attribute))
             return null;
         List<Object> values = attribute.getValue();
@@ -324,13 +336,15 @@ class CommandLineUtil {
             return currentArray;
         } else {
             StringBuffer buffer = new StringBuffer();
-            for (Object value : values)
-                buffer.append(" "+value.toString());
+            for (Object value : values) {
+                value = computeValue(value.toString(), segmentName, attributeName);
+                buffer.append(" "+value);
+            }
             return buffer.substring(1).toCharArray();
         }
     }
 
-    private char[] computeValue(char[] value, String segmentName, String attributeName) {
+    private String computeValue(String value, String segmentName, String attributeName) {
         
         // DATA and IC must always be quoted, other values must be quoted
         // if they contain special characters
@@ -338,23 +352,18 @@ class CommandLineUtil {
         boolean quoteNeeded = "DATA".equalsIgnoreCase(attributeName) || "IC".equalsIgnoreCase(attributeName);
         if (!quoteNeeded) {
             for (char character : new char[] {'(', ')', ' ', ',', ';', '\''})
-                for (char valueChar : value)
+                for (char valueChar : value.toCharArray())
                     quoteNeeded = quoteNeeded || character==valueChar;
         }
         if (quoteNeeded) {
-            CharArrayBuffer buffer = new CharArrayBuffer();
+            StringBuffer buffer = new StringBuffer();
             buffer.append("'");
-            for (char character : value) {
-                if (character=='\'')
-                    buffer.append("''");
-                else
-                    buffer.append(character);
-            }
+            buffer.append(value.replaceAll("'", "''"));
             buffer.append("'");
-            value = buffer.getArray();
-            buffer.clear();
+            return buffer.toString();
+        } else {
+            return value;
         }
-        return value;
     }
     
     private void throwErrorIfNullOrEmpty(Attribute attribute) {
@@ -391,6 +400,7 @@ class CommandLineUtil {
                 throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.NO_VALUE_FOR_ATTRIBUTE, attribute.getName()));
         }
     }
+
     
     public Uid createViaCommandLine(ObjectClass objectClass, Set<Attribute> attrs, OperationOptions options) {
         Map<String, Attribute> attributes = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
@@ -957,10 +967,12 @@ class CommandLineUtil {
                 getCatalogAttributes(racfName, attributesFromCommandLine);
             }
             // __ENABLE__ is indicated by the REVOKED ATTRIBUTE
+            // We also remove REVOKED from attribute list, since we display it separately
             //
             if (attributesFromCommandLine.containsKey(ATTR_CL_ATTRIBUTES)) {
                 List<Object> value = (List<Object>)attributesFromCommandLine.get(ATTR_CL_ATTRIBUTES);
-                attributesFromCommandLine.put(OperationalAttributes.ENABLE_NAME, !value.contains("REVOKED"));
+                boolean revoked = value.remove("REVOKED");
+                attributesFromCommandLine.put(OperationalAttributes.ENABLE_NAME, !revoked);
             }
             // Last Access date must be converted
             //

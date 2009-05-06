@@ -49,7 +49,6 @@
   <PatternNode key='RACF*OWNER'         pattern='OWNER=(\S{1,8})' optional='false' reset='false'>
     <SubstituteTransform pattern='^$' substitute='UNKNOWN'/>
   </PatternNode>
-  <PatternNode key='RACF*DATA'          pattern='(NO INSTALLATION DATA)'    optional='true' reset='true'/>
   <PatternNode key='RACF*DATA'          pattern='INSTALLATION DATA=([^\n]*(\s{20}.+\n)*)' optional='true' reset='false'>
     <SubstituteTransform pattern='^(.{50})[^\n]+' substitute='$1'/>
     <SubstituteTransform pattern='\n\s{20}(.{50})[^\n]+' substitute='$1'/>

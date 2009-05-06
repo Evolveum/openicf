@@ -36,20 +36,26 @@
   </PatternNode>
   <PatternNode key='OMVS*CPUTIMEMAX'  pattern='CPUTIMEMAX=\s*(NONE|\d+)'  optional='false' reset='false'>
      <SubstituteTransform pattern='^0+(\d)' substitute='$1'/>
+     <NullTransform pattern='NONE'/>
   </PatternNode>
   <PatternNode key='OMVS*ASSIZEMAX'   pattern='ASSIZEMAX=\s*(NONE|\d+)'   optional='false' reset='false'>
      <SubstituteTransform pattern='^0+(\d)' substitute='$1'/>
+     <NullTransform pattern='NONE'/>
   </PatternNode>
   <PatternNode key='OMVS*FILEPROCMAX' pattern='FILEPROCMAX=\s*(NONE|\d+)' optional='false' reset='false'>
      <SubstituteTransform pattern='^0+(\d)' substitute='$1'/>
+     <NullTransform pattern='NONE'/>
   </PatternNode>
   <PatternNode key='OMVS*PROCUSERMAX' pattern='PROCUSERMAX=\s*(NONE|\d+)' optional='false' reset='false'>
      <SubstituteTransform pattern='^0+(\d)' substitute='$1'/>
+     <NullTransform pattern='NONE'/>
   </PatternNode>
   <PatternNode key='OMVS*THREADSMAX'  pattern='THREADSMAX=\s*(NONE|\d+)'  optional='false' reset='false'>
      <SubstituteTransform pattern='^0+(\d)' substitute='$1'/>
+     <NullTransform pattern='NONE'/>
   </PatternNode>
   <PatternNode key='OMVS*MMAPAREAMAX' pattern='MMAPAREAMAX=\s*(NONE|\d+)' optional='false' reset='false'>
      <SubstituteTransform pattern='^0+(\d)' substitute='$1'/>
+     <NullTransform pattern='NONE'/>
   </PatternNode>
 </MapTransform>

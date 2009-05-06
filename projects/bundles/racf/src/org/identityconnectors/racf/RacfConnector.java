@@ -172,7 +172,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
         }
         return false;
     }
-
+    
     private void splitUpOutgoingAttributes(ObjectClass objectClass, Set<Attribute> attrs, Set<Attribute> ldapAttrs, Set<Attribute> commandLineAttrs) {
         // Attribute consistency checking
         //
@@ -465,6 +465,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
                 if (includeInAttributes(objectClass, name, attributesToGet)) {
                     if (value instanceof Collection)
                         builder.addAttribute(name, (Collection<? extends Object>)value);
+                    else if (value==null)
+                        builder.addAttribute(name);
                     else
                         builder.addAttribute(name, value);
                 }
@@ -1131,6 +1133,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
             calendar.set(Calendar.YEAR, yearValue);
             calendar.set(Calendar.DAY_OF_YEAR, dayValue);
             
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            calendar.set(Calendar.MILLISECOND, 0);
             if (hours!=null) {
                 int hoursValue   = Integer.parseInt(hours);
                 int minutesValue = Integer.parseInt(minutes);
