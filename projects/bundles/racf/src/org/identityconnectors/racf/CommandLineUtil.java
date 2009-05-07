@@ -233,6 +233,18 @@ class CommandLineUtil {
         Attribute enableDate = attributes.remove(ATTR_CL_RESUME_DATE);
         Attribute disableDate = attributes.remove(ATTR_CL_REVOKE_DATE);
         Attribute attributesAttribute = attributes.remove(ATTR_CL_ATTRIBUTES);
+
+        throwErrorIfNull(attributes, "NETVIEW*CTL");
+        throwErrorIfNull(attributes, "NETVIEW*MSGRECVR");
+        throwErrorIfNull(attributes, "NETVIEW*NGMFADMN");
+
+        throwErrorIfNull(attributes, "CICS*OPPRTY");
+        throwErrorIfNull(attributes, "CICS*TIMEOUT");
+        throwErrorIfNull(attributes, "CICS*XRFSOFF");
+        
+        throwErrorIfNull(attributes, "TSO*SIZE");
+        throwErrorIfNull(attributes, "TSO*MAXSIZE");
+        throwErrorIfNull(attributes, "TSO*USERDATA");
         
         throwErrorIfNullOrEmpty(name);
         throwErrorIfNullOrEmpty(uid);
@@ -383,6 +395,12 @@ class CommandLineUtil {
                 return true;
         }
         return false;
+    }
+    
+    private void throwErrorIfNull(Map<String, Attribute> attributes, String name) {
+        Attribute attribute = attributes.get(name);
+        if (attribute!=null)
+            throwErrorIfNull(attribute);
     }
     
     private void throwErrorIfNull(Attribute attribute) {
