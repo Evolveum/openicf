@@ -27,6 +27,7 @@
 <MapTransform>
   <PatternNode key='OMVS*UID'         pattern='UID=\s*(\S+)'         optional='false' reset='false'>
      <SubstituteTransform pattern='^0+(\d)' substitute='$1'/>
+     <NullTransform pattern='NONE'/>
   </PatternNode>
   <PatternNode key='OMVS*HOME'        pattern='HOME=\s*([^\n]*)\n'        optional='true' reset='false'>
      <SubstituteTransform pattern='\s+$' substitute=''/>
