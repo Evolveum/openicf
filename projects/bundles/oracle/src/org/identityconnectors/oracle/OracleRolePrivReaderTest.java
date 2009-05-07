@@ -70,7 +70,7 @@ public class OracleRolePrivReaderTest {
         SQLUtil.executeUpdateStatement(conn,"grant select on mytable to \"" + user + "\"");
         final List<String> readPrivileges = privReader.readPrivileges(user);
         Assert.assertThat(readPrivileges, JUnitMatchers.hasItem("CREATE SESSION"));
-        Assert.assertThat(readPrivileges, JUnitMatchers.hasItem("SELECT ON " + cfg.getUser() + ".MYTABLE"));
+        Assert.assertThat(readPrivileges, JUnitMatchers.hasItem("SELECT ON " + cfg.getUserOwner() + ".MYTABLE"));
         SQLUtil.executeUpdateStatement(conn, "drop user \"" + user + "\"");
         SQLUtil.executeUpdateStatement(conn, "drop table MYTABLE");
         

@@ -39,7 +39,7 @@ final class MapParser {
         }
         if(string.charAt(0) == '{'){
             if(string.charAt(string.length() - 1) != '}'){
-                throw new RuntimeException(MessageFormat.format("String [{0}] not properly bracket", string));
+                throw new IllegalArgumentException(MessageFormat.format("String [{0}] not properly bracket", string));
             }
             string = string.substring(1,string.length() - 1);
         }
@@ -68,7 +68,7 @@ final class MapParser {
                 i = rightBracketIndex;
             }
             else if(c == '}'){
-                throw new RuntimeException(MessageFormat.format("Illegal right bracket at index [{0}] for [{1}]",i,string));
+                throw new IllegalArgumentException(MessageFormat.format("Illegal right bracket at index [{0}] for [{1}]",i,string));
             }
             else{
                 currentEntry.append(c);
@@ -82,10 +82,10 @@ final class MapParser {
     private static Entry<String, Object> parseEntry(String entry) {
         int eqIndex = entry.indexOf('=');
         if(eqIndex == -1){
-            throw new RuntimeException(MessageFormat.format("No '=' character in entry [{0}]",entry));
+            throw new IllegalArgumentException(MessageFormat.format("No '=' character in entry [{0}]",entry));
         }
         if(eqIndex == 0){
-            throw new RuntimeException(MessageFormat.format("Character '=' is at the start of entry [{0}]",entry));
+            throw new IllegalArgumentException(MessageFormat.format("Character '=' is at the start of entry [{0}]",entry));
         }
         String key = entry.substring(0,eqIndex);
         String valueString = (eqIndex == entry.length() -1) ? null : entry.substring(eqIndex + 1, entry.length());
@@ -100,7 +100,7 @@ final class MapParser {
         }
         if(value.startsWith("{")){
             if(value.charAt(value.length() - 1) != '}'){
-                throw new RuntimeException(MessageFormat.format("String [{0}] not properly bracket", value));
+                throw new IllegalArgumentException(MessageFormat.format("String [{0}] not properly bracket", value));
             }
             return parseMap(value);
         }
@@ -110,7 +110,7 @@ final class MapParser {
     private static int getRightBracketIndex(String string,int leftBracketIndex){
         Stack<Character> stack = new Stack<Character>();
         if(string.charAt(leftBracketIndex) != '{'){
-            throw new RuntimeException(MessageFormat.format("No bracket at [{0}] at index [{1}]",string,leftBracketIndex));
+            throw new IllegalArgumentException(MessageFormat.format("No bracket at [{0}] at index [{1}]",string,leftBracketIndex));
         }
         for(int i = leftBracketIndex,length = string.length();i < length;i++){
             char c = string.charAt(i);
@@ -124,6 +124,6 @@ final class MapParser {
                 return i;
             }
         }
-        throw new RuntimeException(MessageFormat.format("String [{0}] not properly bracket", string));
+        throw new IllegalArgumentException(MessageFormat.format("String [{0}] not properly bracket", string));
     }
 }

@@ -37,8 +37,8 @@ public class OracleSpecificsTest {
     }
     
     private Connection createSystemThinDriverConnection(){
-        String user = TestHelpers.getProperty("thin.systemUser",null);
-        String passwordString = TestHelpers.getProperty("thin.systemPassword", null);
+        String user = TestHelpers.getProperty("thin.user",null);
+        String passwordString = TestHelpers.getProperty("thin.password", null);
         return createThinDriverConnection(user, new GuardedString(passwordString.toCharArray()));
     }
     
@@ -63,8 +63,8 @@ public class OracleSpecificsTest {
     }
     
     private Connection createSystemOciDriverConnection(){
-        String user = TestHelpers.getProperty("oci.systemUser",null);
-        String passwordString = TestHelpers.getProperty("oci.systemPassword", null);
+        String user = TestHelpers.getProperty("oci.user",null);
+        String passwordString = TestHelpers.getProperty("oci.password", null);
         GuardedString password = new GuardedString(passwordString.toCharArray());
         return createOciDriverConnection(user, password);
     }

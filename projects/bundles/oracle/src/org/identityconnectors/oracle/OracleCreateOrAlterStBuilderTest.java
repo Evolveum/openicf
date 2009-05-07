@@ -179,7 +179,7 @@ public class OracleCreateOrAlterStBuilderTest {
     public void testCaseSensitivity(){
     	OracleCaseSensitivitySetup ocs = new OracleCaseSensitivityBuilder()
 				.defineFormatters(
-						CSTokenFormatter.build(OracleUserAttributeCS.USER_NAME,""),
+						CSTokenFormatter.build(OracleUserAttributeCS.USER,""),
 						CSTokenFormatter.build(OracleUserAttributeCS.PROFILE,"'"))
 						.build();
     	OracleCreateOrAlterStBuilder builder = new OracleCreateOrAlterStBuilder(ocs,TestHelpers.createDummyMessages());

@@ -93,7 +93,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         assertEquals("OPEN",record.getStatus());
         
         try {
-            SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "grant connect to " + testConf.getCSSetup().formatToken(USER_NAME,uid.getUidValue()));
+            SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "grant connect to " + testConf.getCSSetup().formatToken(USER,uid.getUidValue()));
         } catch (SQLException e) {
             fail(e.getMessage());
         }
@@ -417,7 +417,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         OracleRolePrivReader roleReader = new OracleRolePrivReader(connector.getAdminConnection());
         final List<String> privRead = roleReader.readPrivileges(uid.getUidValue());
         Assert.assertThat(privRead, JUnitMatchers.hasItem("CREATE SESSION"));
-        Assert.assertThat(privRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUser() + ".MYTABLE"));
+        Assert.assertThat(privRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUserOwner() + ".MYTABLE"));
     }
     
 

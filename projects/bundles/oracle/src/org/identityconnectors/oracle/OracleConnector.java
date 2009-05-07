@@ -54,8 +54,8 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
     private static final Map<String,OracleUserAttributeCS> attributeMapping = new HashMap<String, OracleUserAttributeCS>();
     static final Collection<String> ALL_ATTRIBUTE_NAMES = new HashSet<String>();
     static {
-        attributeMapping.put(Name.NAME, OracleUserAttributeCS.USER_NAME);
-        attributeMapping.put(Uid.NAME, OracleUserAttributeCS.USER_NAME);
+        attributeMapping.put(Name.NAME, OracleUserAttributeCS.USER);
+        attributeMapping.put(Uid.NAME, OracleUserAttributeCS.USER);
         attributeMapping.put(ORACLE_GLOBAL_ATTR_NAME, OracleUserAttributeCS.GLOBAL_NAME);
         attributeMapping.put(ORACLE_ROLES_ATTR_NAME, OracleUserAttributeCS.ROLE);
         attributeMapping.put(ORACLE_PRIVS_ATTR_NAME, OracleUserAttributeCS.PRIVILEGE);
@@ -109,7 +109,7 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
     }
     
     private Connection createAdminConnection(){
-        return cfg.createConnection(cfg.getUser(), cfg.getPassword());
+        return cfg.createAdminConnection();
     }
 
     
@@ -151,6 +151,9 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
         for(Object o : attribute.getValue()){
             if(o instanceof String){
                 o = cfg.getCSSetup().normalizeToken(oracleUserAttribute, (String) o);
+            }
+            else if(o instanceof GuardedString){
+            	o = cfg.getCSSetup().normalizeToken(oracleUserAttribute, (GuardedString) o);
             }
             values.add(o);
         }

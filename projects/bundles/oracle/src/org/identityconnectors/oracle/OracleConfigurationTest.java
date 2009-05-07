@@ -198,6 +198,7 @@ public class OracleConfigurationTest {
         cfg.setHost(host);
         cfg.setPassword(password);
         cfg.setPort(port);
+        cfg.setConnectorMessages(TestHelpers.createDummyMessages());
         return  cfg;
     }
     
@@ -216,26 +217,13 @@ public class OracleConfigurationTest {
         cfg.setHost(host);
         cfg.setPassword(password);
         cfg.setPort(port);
+        cfg.setConnectorMessages(TestHelpers.createDummyMessages());
         return  cfg;
     }
     
     static OracleConfiguration createSystemConfiguration(){
-        String user = TestHelpers.getProperty("thin.systemUser", null);
-        String passwordString = TestHelpers.getProperty("thin.systemPassword", "missingPassword");
-        GuardedString password = new GuardedString(passwordString.toCharArray());
-        String database = TestHelpers.getProperty("thin.database", null);
-        String driver = OracleSpecifics.THIN_DRIVER;
-        String host = TestHelpers.getProperty("thin.host",null);
-        String port = TestHelpers.getProperty("thin.port",OracleSpecifics.LISTENER_DEFAULT_PORT);
-        OracleConfiguration cfg = new OracleConfiguration();
-        cfg.setUser(user);
-        cfg.setPassword(password);
-        cfg.setDatabase(database);
-        cfg.setDriver(driver);
-        cfg.setHost(host);
-        cfg.setPort(port);
-        cfg.setConnectorMessages(TestHelpers.createDummyMessages());
-        return cfg;
+    	//use thin here, no switch
+    	return createThinConfiguration();
     }
     
     private static final String[] dsJNDIEnv = new String[]{"java.naming.factory.initial=" + MockContextFactory.class.getName()};
@@ -283,8 +271,8 @@ public class OracleConfigurationTest {
         conf.setConnectorMessages(TestHelpers.createDummyMessages());
         conf.setCaseSensitivity("default");
         assertNotNull("CaseSensitivity should not be null",conf.getCSSetup());
-        assertTrue("Default normalizer should be toupper",conf.getCSSetup().getAttributeNormalizer(OracleUserAttributeCS.USER_NAME).isToUpper());
-        assertEquals("Default formatter should use \" for quates","\"",conf.getCSSetup().getAttributeFormatter(OracleUserAttributeCS.USER_NAME).getQuatesChar());
+        assertTrue("Default normalizer should be toupper",conf.getCSSetup().getAttributeNormalizer(OracleUserAttributeCS.USER).isToUpper());
+        assertEquals("Default formatter should use \" for quates","\"",conf.getCSSetup().getAttributeFormatter(OracleUserAttributeCS.USER).getQuatesChar());
     }
     
     

@@ -6,6 +6,7 @@ package org.identityconnectors.oracle;
 import java.sql.*;
 
 import org.identityconnectors.common.Assertions;
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.*;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
@@ -21,7 +22,7 @@ import static org.identityconnectors.oracle.OracleMessages.*;
  */
 public final class OracleConfiguration extends AbstractConfiguration implements Cloneable{
     private String host;
-    private String port = OracleSpecifics.LISTENER_DEFAULT_PORT;
+    private String port;
     private String driver;
     private String driverClassName;
     private String database;
@@ -41,6 +42,8 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
         //Set casesensitivity setup to default one
         cs = new OracleCaseSensitivityBuilder().build();
         caseSensitivityString = "default";
+        port = OracleSpecifics.LISTENER_DEFAULT_PORT;
+        driver = OracleSpecifics.THIN_DRIVER;
     }
     
     
@@ -53,7 +56,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
         /** Connecting using type 2 driver (using TNSNAMES.ora) */
         OCI,
         /** Custom driver with custom URL */
-        CUSTOM_DRIVER
+        FULL_URL
     }
     
     /**
@@ -136,6 +139,14 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     public String getUser() {
         return user;
     }
+    
+    String getUserOwner(){
+    	//if we were logged as system, owner will be SYSTEM
+    	if("".equals(cs.getAttributeFormatter(OracleUserAttributeCS.SYSTEM_USER).getQuatesChar())){
+    		return user.toUpperCase();
+    	}
+    	return user;
+    }
 
     /**
      * @param user the user to set
@@ -147,7 +158,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
      * @return the password
      */
-    @ConfigurationProperty(order = 5,displayMessageKey=PASSWORD_DISPLAY,helpMessageKey=PASSWORD_HELP)
+    @ConfigurationProperty(order = 5,displayMessageKey=PASSWORD_DISPLAY,helpMessageKey=PASSWORD_HELP,confidential=true)
     public GuardedString getPassword() {
         return password;
     }
@@ -240,7 +251,26 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
         }
         else{
             Assertions.blankCheck(driver, "driver");
-            if(OracleSpecifics.THIN_DRIVER.equals(driver)){
+            if(StringUtil.isNotBlank(url)){
+                Assertions.blankCheck(user,"user");
+                Assertions.nullCheck(password, "password");
+                if(OracleSpecifics.THIN_DRIVER.equals(driver)){
+                    driverClassName = OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME;
+                }
+                else if(OracleSpecifics.OCI_DRIVER.equals(driver)){
+                    driverClassName = OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME;
+                }
+                else{
+                	driverClassName = driver;
+                }
+                try {
+                    Class.forName(driverClassName);
+                } catch (ClassNotFoundException e) {
+                    throw new IllegalArgumentException("Cannot load driver class : + " + driverClassName,e);
+                }
+                connType = ConnectionType.FULL_URL;
+            }
+            else if(OracleSpecifics.THIN_DRIVER.equals(driver)){
                 Assertions.blankCheck(host,"host");
                 Assertions.blankCheck(port,"port");
                 Assertions.blankCheck(user,"user");
@@ -267,32 +297,26 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
                 connType = ConnectionType.OCI;
             }
             else{
-                //This should be custom driver class
-                Class<?> driverClass = null;
-                try {
-                    driverClass = Class.forName(driver);
-                } catch (ClassNotFoundException e) {
-                    throw new IllegalArgumentException("Cannot load driver class : + " + driver,e);
-                }
-                if(!Driver.class.isAssignableFrom(driverClass)){
-                    throw new IllegalArgumentException("Specified driver class is not java.sql.Driver");
-                }
-                driverClassName = driverClass.getName();
-                Assertions.blankCheck(url,"url");
-                Assertions.blankCheck(user,"user");
-                Assertions.nullCheck(password, "password");
-                connType = ConnectionType.CUSTOM_DRIVER;    
+            	throw new IllegalArgumentException("Must specify thin/oci driver or custom driver with full url");
             }
         }
         
     }
     
+    Connection createUserConnection(String user, GuardedString password){
+    	user = cs.normalizeAndFormatToken(OracleUserAttributeCS.USER, user);
+    	password = cs.normalizeAndFormatToken(OracleUserAttributeCS.PASSWORD, password);
+    	return createConnection(user,password);
+    }
+    
     Connection createAdminConnection(){
+    	String user = cs.normalizeAndFormatToken(OracleUserAttributeCS.SYSTEM_USER, this.user);
+    	GuardedString password = cs.normalizeAndFormatToken(OracleUserAttributeCS.SYSTEM_PASSWORD, this.password);
         return createConnection(user,password);
     }
     
     
-    Connection createConnection(String user,GuardedString password){
+    private Connection createConnection(String user,GuardedString password){
         validate();
         Connection connection = null;
         boolean disableAutoCommit = true;
@@ -317,7 +341,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
                     setPort(port).setUser(user).build()
                     );
         }
-        else if(ConnectionType.CUSTOM_DRIVER.equals(connType)){
+        else if(ConnectionType.FULL_URL.equals(connType)){
         	connection =  OracleSpecifics.createCustomDriverConnection(new Builder().
                     setUrl(url).setDriver(driverClassName).setUser(user).setPassword(password).build()
             );

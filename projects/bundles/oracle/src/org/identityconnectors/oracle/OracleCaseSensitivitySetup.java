@@ -2,6 +2,7 @@ package org.identityconnectors.oracle;
 
 import java.util.*;
 
+import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.spi.AttributeNormalizer;
 
 /** OracleCaseSensitivity is responsible for normalizing and formatting oracle objects tokens (users,schema...).
@@ -20,16 +21,24 @@ interface OracleCaseSensitivitySetup {
 	 * Normalize token, e.g make it uppercase 
 	 * @param attr
 	 * @param token
-	 * @return
+	 * @return normalized token
 	 */
     public String normalizeToken(OracleUserAttributeCS attr,String token);
+    
     /**
-     * Compound operation that normalizes and then formats
+     * Normalizes array token (e.g make password upper case )
      * @param attr
      * @param token
-     * @return
+     * @return normalized token
      */
-    public String normalizeAndFormatToken(OracleUserAttributeCS attr,String token);
+    public char[] normalizeToken(OracleUserAttributeCS attr,char[] token);
+    /**
+     * Normalizes GuardedString token (e.g make password upper case )
+     * @param attr
+     * @param token
+     * @return normalized token
+     */
+    public GuardedString normalizeToken(OracleUserAttributeCS attr,GuardedString token);
     /**
      * Just format token, e.g append quotes
      * @param attr
@@ -38,12 +47,40 @@ interface OracleCaseSensitivitySetup {
      */
     public String formatToken(OracleUserAttributeCS attr,String token);
     /**
-     * Formats char array , useful for password to not convert to String
+     * Formats char array token , useful for password to not convert to String
      * @param attr
      * @param token
-     * @return
+     * @return formatted password
      */
     public char[] formatToken(OracleUserAttributeCS attr,char[] token);
+    /**
+     * Formats GuardedString , useful for password to not convert to String
+     * @param attr
+     * @param token
+     * @return formatted password
+     */
+    public GuardedString formatToken(OracleUserAttributeCS attr,GuardedString token);
+    /**
+     * Compound operation that normalizes and then formats string token
+     * @param attr
+     * @param token
+     * @return normalized and formatted token
+     */
+    public String normalizeAndFormatToken(OracleUserAttributeCS attr,String token);
+    /**
+     * Compound operation that normalizes and then formats char[] token
+     * @param attr
+     * @param token
+     * @return normalized and formatted token
+     */
+    public char[] normalizeAndFormatToken(OracleUserAttributeCS attr,char[] token);
+    /**
+     * Compound operation that normalizes and then formats GuardedString token
+     * @param attr
+     * @param token
+     * @return normalized and formatted token
+     */
+    public GuardedString normalizeAndFormatToken(OracleUserAttributeCS attr,GuardedString token);
     /**
      * Gets formatter by attribue
      * @param attribute
@@ -152,6 +189,17 @@ final class CSTokenNormalizer{
             return token;
         }
         return toUpper ? token.toUpperCase() : token;
+    }
+
+    char[] normalizeToken(char[] token){
+        if(token == null || token.length == 0){
+            return token;
+        }
+        char[] newToken = new char[token.length];
+        for(int i = 0;i < token.length;i++){
+        	newToken[i] = toUpper ? Character.toUpperCase(token[i]) : token[i];
+        }
+        return newToken;
     }
     
     static CSTokenNormalizer build(OracleUserAttributeCS attribute,boolean toUpper){
@@ -322,14 +370,53 @@ final class OracleCaseSensitivityImpl implements OracleCaseSensitivitySetup{
     public String normalizeToken(OracleUserAttributeCS attr, String token) {
         return getAttributeNormalizer(attr).normalizeToken(token);
     }
-    public char[] formatToken(OracleUserAttributeCS attr, char[] token) {
-        return getAttributeFormatter(attr).formatToken(token);
-    }
     public String normalizeAndFormatToken(OracleUserAttributeCS attr, String token) {
         token = normalizeToken(attr, token);
         token = formatToken(attr, token);
         return token;
     }
+	public GuardedString formatToken(OracleUserAttributeCS attr, GuardedString token) {
+		if(token == null){
+			return null;
+		}
+		final GuardedString[] holder = new GuardedString[1];
+		final CSTokenFormatter formatter = getAttributeFormatter(attr);
+		token.access(new GuardedString.Accessor(){
+			public void access(char[] clearChars) {
+				holder[0] = new GuardedString(formatter.formatToken(clearChars));
+			}
+		});
+		return holder[0];
+	}
+	public GuardedString normalizeAndFormatToken(OracleUserAttributeCS attr, GuardedString token) {
+		token = normalizeToken(attr, token);
+		token = formatToken(attr, token);
+		return token;
+	}
+	public GuardedString normalizeToken(OracleUserAttributeCS attr, GuardedString token) {
+		if(token == null){
+			return null;
+		}
+		final GuardedString[] holder = new GuardedString[1];
+		final CSTokenNormalizer normalizer = getAttributeNormalizer(attr);
+		token.access(new GuardedString.Accessor(){
+			public void access(char[] clearChars) {
+				holder[0] = new GuardedString(normalizer.normalizeToken(clearChars));
+			}
+		});
+		return holder[0];
+	}
+	public char[] formatToken(OracleUserAttributeCS attr, char[] token) {
+        return getAttributeFormatter(attr).formatToken(token);
+	}
+	public char[] normalizeAndFormatToken(OracleUserAttributeCS attr,char[] token) {
+        token = normalizeToken(attr, token);
+        token = formatToken(attr, token);
+        return token;
+	}
+	public char[] normalizeToken(OracleUserAttributeCS attr, char[] token) {
+		return getAttributeNormalizer(attr).normalizeToken(token);
+	}
     
 }
 

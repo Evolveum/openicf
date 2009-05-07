@@ -59,12 +59,12 @@ final class OracleRolesAndPrivsBuilder {
     
     //Maybe better would be to have it in one statement
     private void appendGrantRole(StringBuilder builder,String userName,String role){
-        builder.append("grant ").append(cs.formatToken(ROLE, role)).append(" to ").append(cs.formatToken(USER_NAME, userName));
+        builder.append("grant ").append(cs.formatToken(ROLE, role)).append(" to ").append(cs.formatToken(USER, userName));
     }
     
   //Maybe better would be to have it in one statement
     private void appendGrantPrivilege(StringBuilder builder,String userName,String privilege){
-        builder.append("grant ").append(cs.formatToken(PRIVILEGE, privilege)).append(" to ").append(cs.formatToken(USER_NAME, userName));
+        builder.append("grant ").append(cs.formatToken(PRIVILEGE, privilege)).append(" to ").append(cs.formatToken(USER, userName));
     }
     
     List<String> buildRevokeRoles(String userName,List<String> roles){
@@ -92,11 +92,11 @@ final class OracleRolesAndPrivsBuilder {
     }
     
 	private void appendRevokeRole(StringBuilder builder, String userName, String role) {
-		builder.append("revoke ").append(cs.formatToken(ROLE, role)).append(" from ").append(cs.formatToken(USER_NAME, userName));
+		builder.append("revoke ").append(cs.formatToken(ROLE, role)).append(" from ").append(cs.formatToken(USER, userName));
 	}
 	
 	private void appendRevokePrivilege(StringBuilder builder, String userName, String privilege) {
-		builder.append("revoke ").append(cs.formatToken(PRIVILEGE, privilege)).append(" from ").append(cs.formatToken(USER_NAME, userName));
+		builder.append("revoke ").append(cs.formatToken(PRIVILEGE, privilege)).append(" from ").append(cs.formatToken(USER, userName));
 		
 	}
     

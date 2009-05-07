@@ -63,9 +63,9 @@ public class OracleCaseSensitivitySetupTest {
             fail("Must fail for unknown");
         }
         catch(RuntimeException e){}
-        final OracleCaseSensitivitySetup cs = new OracleCaseSensitivityBuilder().parseMap("formatters={USER_NAME={quates=\"},ROLE={quates=AAA}},normalizers={ALL={upper=false}}").build();
+        final OracleCaseSensitivitySetup cs = new OracleCaseSensitivityBuilder().parseMap("formatters={USER={quates=\"},ROLE={quates=AAA}},normalizers={ALL={upper=false}}").build();
         assertEquals("AAA",cs.getAttributeFormatter(OracleUserAttributeCS.ROLE).getQuatesChar());
-        assertEquals(false,cs.getAttributeNormalizer(OracleUserAttributeCS.USER_NAME).isToUpper());
+        assertEquals(false,cs.getAttributeNormalizer(OracleUserAttributeCS.USER).isToUpper());
         
     }
     

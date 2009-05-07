@@ -92,8 +92,5 @@ abstract class OracleConnectorHelper {
     	}
     }
     
-    
-    
-    
 
 }

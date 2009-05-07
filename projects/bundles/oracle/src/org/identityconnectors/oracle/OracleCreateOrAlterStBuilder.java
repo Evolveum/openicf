@@ -4,7 +4,7 @@ import static org.identityconnectors.oracle.OracleUserAttributeCS.DEF_TABLESPACE
 import static org.identityconnectors.oracle.OracleUserAttributeCS.PASSWORD;
 import static org.identityconnectors.oracle.OracleUserAttributeCS.PROFILE;
 import static org.identityconnectors.oracle.OracleUserAttributeCS.TEMP_TABLESPACE;
-import static org.identityconnectors.oracle.OracleUserAttributeCS.USER_NAME;
+import static org.identityconnectors.oracle.OracleUserAttributeCS.USER;
 
 import java.util.Arrays;
 
@@ -51,7 +51,7 @@ final class OracleCreateOrAlterStBuilder {
             throw new IllegalArgumentException("User not specified");
         }
         StringBuilder builder = new StringBuilder();
-        builder.append("create user ").append(cs.formatToken(USER_NAME, userAttributes.getUserName()));
+        builder.append("create user ").append(cs.formatToken(USER, userAttributes.getUserName()));
         int length = builder.length();
         appendCreateOrAlterSt(builder,userAttributes,Operation.CREATE,null);
         return builder.length() == length ? null : builder.toString();
@@ -62,7 +62,7 @@ final class OracleCreateOrAlterStBuilder {
             throw new IllegalArgumentException("User not specified");
         }
         StringBuilder builder = new StringBuilder();
-        builder.append("alter user ").append(cs.formatToken(USER_NAME, userAttributes.getUserName()));
+        builder.append("alter user ").append(cs.formatToken(USER, userAttributes.getUserName()));
         int length = builder.length();
         appendCreateOrAlterSt(builder,userAttributes,Operation.ALTER,userRecord);
         return builder.length() == length ? null : builder.toString();
