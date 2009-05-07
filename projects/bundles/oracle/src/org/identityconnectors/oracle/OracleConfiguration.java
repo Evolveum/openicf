@@ -3,17 +3,38 @@
  */
 package org.identityconnectors.oracle;
 
-import java.sql.*;
+import static org.identityconnectors.oracle.OracleMessages.CS_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.CS_HELP;
+import static org.identityconnectors.oracle.OracleMessages.DATABASE_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.DATABASE_HELP;
+import static org.identityconnectors.oracle.OracleMessages.DATASOURCE_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.DATASOURCE_HELP;
+import static org.identityconnectors.oracle.OracleMessages.DRIVER_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.DRIVER_HELP;
+import static org.identityconnectors.oracle.OracleMessages.DSJNDIENV_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.DSJNDIENV_HELP;
+import static org.identityconnectors.oracle.OracleMessages.HOST_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.HOST_HELP;
+import static org.identityconnectors.oracle.OracleMessages.PASSWORD_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.PASSWORD_HELP;
+import static org.identityconnectors.oracle.OracleMessages.PORT_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.PORT_HELP;
+import static org.identityconnectors.oracle.OracleMessages.URL_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.URL_HELP;
+import static org.identityconnectors.oracle.OracleMessages.USER_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.USER_HELP;
 
-import org.identityconnectors.common.Assertions;
+import java.sql.Connection;
+import java.sql.SQLException;
+
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.dbcommon.*;
+import org.identityconnectors.dbcommon.JNDIUtil;
+import org.identityconnectors.dbcommon.LocalizedAssert;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
 import org.identityconnectors.oracle.OracleDriverConnectionInfo.Builder;
-import static org.identityconnectors.oracle.OracleMessages.*;
 
 /**
  * Set of configuration properties for connecting to Oracle database
@@ -220,7 +241,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
      * @return caseSensitivityString
      */
-    @ConfigurationProperty(order = 8,displayMessageKey=CS_DISPLAY,helpMessageKey=CS_HELP)
+    @ConfigurationProperty(order = 8,displayMessageKey=CS_DISPLAY,helpMessageKey=CS_HELP,required=true)
     public String getCaseSensitivity(){
         return caseSensitivityString;
     }
@@ -228,8 +249,6 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /** Sets case sensitivity from string map 
      * @param cs */
     public void setCaseSensitivity(String cs){
-        new LocalizedAssert(getConnectorMessages()).assertNotBlank(cs, "cs");
-        this.cs = new OracleCaseSensitivityBuilder().parseMap(cs).build();
         this.caseSensitivityString = cs;
     }
     
@@ -244,16 +263,25 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     
     @Override
     public void validate() {
+    	LocalizedAssert la = new LocalizedAssert(getConnectorMessages(),true);
+        la.assertNotBlank(caseSensitivityString, CS_DISPLAY);
+        this.cs = new OracleCaseSensitivityBuilder().parseMap(caseSensitivityString).build();
         if(dataSource != null){
-            Assertions.blankCheck(dataSource,"datasource");
+			la.assertNotBlank(dataSource, DATASOURCE_DISPLAY);
+			la.assertBlank(host, HOST_DISPLAY);
+			la.assertBlank(database,DATABASE_DISPLAY);
+			la.assertBlank(driver,DRIVER_DISPLAY);
+			la.assertBlank(port,PORT_DISPLAY);
             connType = ConnectionType.DATASOURCE;
-            //just datasource is required
         }
         else{
-            Assertions.blankCheck(driver, "driver");
+        	la.assertNotBlank(driver, DRIVER_DISPLAY);
             if(StringUtil.isNotBlank(url)){
-                Assertions.blankCheck(user,"user");
-                Assertions.nullCheck(password, "password");
+                la.assertNotBlank(user,USER_DISPLAY);
+                la.assertNotNull(password, PASSWORD_DISPLAY);
+    			la.assertBlank(host, HOST_DISPLAY);
+    			la.assertBlank(database,DATABASE_DISPLAY);
+    			la.assertBlank(port,PORT_DISPLAY);
                 if(OracleSpecifics.THIN_DRIVER.equals(driver)){
                     driverClassName = OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME;
                 }
@@ -271,23 +299,23 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
                 connType = ConnectionType.FULL_URL;
             }
             else if(OracleSpecifics.THIN_DRIVER.equals(driver)){
-                Assertions.blankCheck(host,"host");
-                Assertions.blankCheck(port,"port");
-                Assertions.blankCheck(user,"user");
-                Assertions.nullCheck(password, "password");
-                Assertions.blankCheck(database,"database");
+            	la.assertNotBlank(host, HOST_DISPLAY);
+            	la.assertNotBlank(port, PORT_DISPLAY);
+            	la.assertNotBlank(user, USER_DISPLAY);
+            	la.assertNotNull(password, PASSWORD_DISPLAY);
+            	la.assertNotBlank(database, DATABASE_DISPLAY);
                 driverClassName = OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME;
                 try {
                     Class.forName(driverClassName);
                 } catch (ClassNotFoundException e) {
-                    throw new IllegalArgumentException("Cannot load driver class : + " + driverClassName,e);
+                    throw new IllegalArgumentException("Cannot load thin driver class : + " + driverClassName,e);
                 }
                 connType = ConnectionType.THIN;
             }
             else if(OracleSpecifics.OCI_DRIVER.equals(driver)){
-                Assertions.blankCheck(database,"database");
-                Assertions.blankCheck(user,"user");
-                Assertions.nullCheck(password, "password");
+            	la.assertNotBlank(user, USER_DISPLAY);
+            	la.assertNotNull(password, PASSWORD_DISPLAY);
+            	la.assertNotBlank(database, DATABASE_DISPLAY);
                 driverClassName = OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME;
                 try {
                     Class.forName(driverClassName);

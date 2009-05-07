@@ -52,7 +52,7 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
     static final String NO_CASCADE = "noCascade";
     
     private static final Map<String,OracleUserAttributeCS> attributeMapping = new HashMap<String, OracleUserAttributeCS>();
-    static final Collection<String> ALL_ATTRIBUTE_NAMES = new HashSet<String>();
+    static final Collection<String> ALL_ATTRIBUTE_NAMES;
     static {
         attributeMapping.put(Name.NAME, OracleUserAttributeCS.USER);
         attributeMapping.put(Uid.NAME, OracleUserAttributeCS.USER);
@@ -63,7 +63,8 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
         attributeMapping.put(ORACLE_DEF_TS_ATTR_NAME, OracleUserAttributeCS.DEF_TABLESPACE);
         attributeMapping.put(ORACLE_TEMP_TS_ATTR_NAME, OracleUserAttributeCS.TEMP_TABLESPACE);
         
-        ALL_ATTRIBUTE_NAMES.addAll(Arrays.asList(
+        Collection<String> tmp = new HashSet<String>();
+        tmp.addAll(Arrays.asList(
 				ORACLE_AUTHENTICATION_ATTR_NAME, ORACLE_GLOBAL_ATTR_NAME,
 				ORACLE_ROLES_ATTR_NAME, ORACLE_PRIVS_ATTR_NAME,
 				ORACLE_PROFILE_ATTR_NAME, ORACLE_DEF_TS_ATTR_NAME,
@@ -73,6 +74,7 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
 				OperationalAttributes.ENABLE_NAME,OperationalAttributes.DISABLE_DATE_NAME,
 				Name.NAME,OperationalAttributes.PASSWORD_NAME
 				));
+        ALL_ATTRIBUTE_NAMES = Collections.unmodifiableCollection(tmp);
     }
     
     
@@ -210,7 +212,9 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
         attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_DEF_TS_ATTR_NAME,String.class));
         attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_TEMP_TS_ATTR_NAME,String.class));
         attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,String.class));
-        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_TEMP_TS_QUOTA_ATTR_NAME,String.class,express ? EnumSet.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE) : null));
+        attrInfoSet.add(AttributeInfoBuilder.build(
+				ORACLE_TEMP_TS_QUOTA_ATTR_NAME, String.class, express ? EnumSet
+						.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE) : null));
         SchemaBuilder schemaBld = new SchemaBuilder(getClass());
         schemaBld.defineObjectClass(ObjectClass.ACCOUNT_NAME, attrInfoSet);
         schema =  schemaBld.build();

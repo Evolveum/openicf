@@ -50,7 +50,7 @@ import org.identityconnectors.framework.spi.operations.SearchOp;
  *
  */
 final class OracleOperationSearch extends AbstractOracleOperation implements SearchOp<Pair<String, FilterWhereBuilder>>{
-	private static final String SQL = "SELECT DISTINCT DBA_USERS.USERNAME FROM DBA_USERS";
+	private static final String SQL = "SELECT DISTINCT DBA_USERS.* FROM DBA_USERS";
 	
 	private static final String ADVANCED_SQL1 = SQL + 	" LEFT JOIN DBA_TS_QUOTAS DEF_QUOTA " +
     													"ON DBA_USERS.USERNAME = DEF_QUOTA.USERNAME AND DBA_USERS.DEFAULT_TABLESPACE=DEF_QUOTA.TABLESPACE_NAME " + 
@@ -82,24 +82,26 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
             SQLUtil.setParams(st, query.getParams());
 			rs = st.executeQuery();
 			OracleUserReader userReader = new OracleUserReader(adminConn);
+            Set<String> attributesToGet = null;
+            if(options.getAttributesToGet() != null && options.getAttributesToGet().length > 0){
+            	attributesToGet = new HashSet<String>(Arrays.asList(options.getAttributesToGet()));
+            }
+            else{
+            	//Only attributes for which we do not need create additional selects
+            	attributesToGet = new HashSet<String>(OracleConnector.ALL_ATTRIBUTE_NAMES);
+            	//Now all attributes are read by default
+            	//There is small performance problem with reading roles,privileges,quotas
+            }
 			while(rs.next()){
                 ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
                 final String userName = rs.getString("USERNAME");
                 bld.setUid(new Uid(userName));
                 bld.setName(userName);
                 bld.setObjectClass(ObjectClass.ACCOUNT);
-                //Better would be to have it in one select, but this way, it is much more readable
-                UserRecord record = userReader.readUserRecord(userName);
-                Set<String> attributesToGet = null;
-                if(options.getAttributesToGet() != null && options.getAttributesToGet().length > 0){
-                	attributesToGet = new HashSet<String>(Arrays.asList(options.getAttributesToGet()));
-                }
-                else{
-                	attributesToGet = new HashSet<String>(OracleConnector.ALL_ATTRIBUTE_NAMES);
-                }
                 if(attributesToGet.contains(Name.NAME)){
-                	bld.addAttribute(new Name(record.getUserName()));
+                	bld.addAttribute(new Name(userName));
                 }
+                UserRecord record = OracleUserReader.translateRowToUserRecord(rs);
                 if(attributesToGet.contains(ORACLE_DEF_TS_ATTR_NAME)){
                 	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_DEF_TS_ATTR_NAME,record.getDefaultTableSpace()));
                 }

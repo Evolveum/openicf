@@ -99,7 +99,7 @@ final class OracleUserReader {
     }
     
 
-    private UserRecord translateRowToUserRecord(ResultSet rs) throws SQLException {
+    static UserRecord translateRowToUserRecord(ResultSet rs) throws SQLException {
     	UserRecord.Builder builder = new UserRecord.Builder();
         builder.setCreatedDate(rs.getTimestamp("CREATED"));
         builder.setDefaultTableSpace(rs.getString("DEFAULT_TABLESPACE"));

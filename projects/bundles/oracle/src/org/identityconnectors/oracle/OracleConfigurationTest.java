@@ -28,14 +28,29 @@ public class OracleConfigurationTest {
     /** Test validation of cfg */
     @Test
     public void testValidate() {
-        OracleConfiguration cfg = new OracleConfiguration();
+        OracleConfiguration cfg = createEmptyCfg();
         assertValidateFail(cfg,"Validate for empty cfg should fail");
         //Try datasource validate
         cfg.setDataSource("myDS");
+        cfg.setDriver(null);
+        cfg.setPort(null);
         cfg.validate();
         
+        cfg.setHost("anyHost");
+        assertValidateFail(cfg, "validate must fail for datasource configuration when host is not blank");
+        cfg.setHost(null);
+        cfg.setPort("1234");
+        assertValidateFail(cfg, "validate must fail for datasource configuration when port is not blank");
+        cfg.setPort(null);
+        cfg.setDatabase("myDB");
+        assertValidateFail(cfg, "validate must fail for custom datasource configuration when database is not blank");
+        cfg.setDatabase(null);
+        cfg.setDriver("myDriver");
+        assertValidateFail(cfg, "validate must fail for custom datasource configuration when driver is not blank");
+
+        
         //Try thin driver
-        cfg = new OracleConfiguration();
+        cfg = createEmptyCfg();
         cfg.setDriver(OracleSpecifics.THIN_DRIVER);
         assertValidateFail(cfg,"Validate cfg should fail, not enaough info");
         cfg.setHost("localhost");
@@ -45,7 +60,7 @@ public class OracleConfigurationTest {
         cfg.validate();
         
         //Try oci driver
-        cfg = new OracleConfiguration();
+        cfg = createEmptyCfg();
         cfg.setDriver(OracleSpecifics.OCI_DRIVER);
         assertValidateFail(cfg,"Validate cfg should fail, not enaough info");
         cfg.setDatabase("XE");
@@ -61,9 +76,26 @@ public class OracleConfigurationTest {
         cfg.setDriver(Driver.class.getName());
         assertValidateFail(cfg,"Validate cfg should fail, not enough info");
         cfg.setUrl("java:jdbc:customUrl");
+        cfg.setDatabase(null);
+        cfg.setPort(null);
+        cfg.setHost(null);
         cfg.validate();
+        cfg.setHost("myHost");
+        assertValidateFail(cfg, "validate must fail for custom URL configuration when host is not blank");
+        cfg.setHost(null);
+        cfg.setPort("1234");
+        assertValidateFail(cfg, "validate must fail for custom URL configuration when port is not blank");
+        cfg.setPort(null);
+        cfg.setDatabase("myDB");
+        assertValidateFail(cfg, "validate must fail for custom URL configuration when database is not blank");
         
     }
+
+	private OracleConfiguration createEmptyCfg() {
+		OracleConfiguration cfg = new OracleConfiguration();
+        cfg.setConnectorMessages(TestHelpers.createDummyMessages());
+		return cfg;
+	}
     
     private void assertValidateFail(OracleConfiguration cfg,String failMsg){
         try{
@@ -116,6 +148,9 @@ public class OracleConfigurationTest {
         failCfg.setDriver(OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME);
         assertValidateFail(failCfg, "Must fail, url must be specified when driver classname is specified");
         failCfg.setUrl("invalidUrl");
+        failCfg.setHost(null);
+        failCfg.setPort(null);
+        failCfg.setDatabase(null);
         failCfg.validate();
         assertCreateAdminConnectionFail(failCfg, "Create connection must fail on invalid url");
         String url = TestHelpers.getProperty("thin.url", null);
@@ -162,11 +197,12 @@ public class OracleConfigurationTest {
         String password = TestHelpers.getProperty("customDriver.password", null);
         String url = TestHelpers.getProperty("customDriver.url", null);
         String driver = TestHelpers.getProperty("customDriver.driverClassName", null);
-        OracleConfiguration cfg = new OracleConfiguration();
+        OracleConfiguration cfg = createEmptyCfg();
         cfg.setUser(user);
         cfg.setPassword(new GuardedString(password.toCharArray()));
         cfg.setUrl(url);
         cfg.setDriver(driver);
+        cfg.setPort(null);
         cfg.validate();
         final Connection conn = cfg.createAdminConnection();
         assertNotNull(conn);
@@ -230,6 +266,7 @@ public class OracleConfigurationTest {
     
     private static OracleConfiguration createDataSourceConfiguration(){
         OracleConfiguration conf = new OracleConfiguration();
+        conf.setConnectorMessages(TestHelpers.createDummyMessages());
         conf.setDataSource("testDS");
         conf.setUser("user");
         conf.setPassword(new GuardedString(new char[]{'t'}));
@@ -267,8 +304,7 @@ public class OracleConfigurationTest {
     /** Test settings of case sensitivity */
     @Test
     public void testSetCaseSensitivity(){
-        OracleConfiguration conf = new OracleConfiguration();
-        conf.setConnectorMessages(TestHelpers.createDummyMessages());
+        OracleConfiguration conf = createEmptyCfg();
         conf.setCaseSensitivity("default");
         assertNotNull("CaseSensitivity should not be null",conf.getCSSetup());
         assertTrue("Default normalizer should be toupper",conf.getCSSetup().getAttributeNormalizer(OracleUserAttributeCS.USER).isToUpper());
