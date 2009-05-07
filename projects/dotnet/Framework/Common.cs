@@ -105,6 +105,7 @@ namespace Org.IdentityConnectors.Framework.Common
                 typeof(bool?),
                 typeof(Uri),
                 typeof(FileName),
+                typeof(GuardedByteArray),
                 typeof(GuardedString)
             );
             ATTR_SUPPORTED_TYPES = CollectionUtil.NewReadOnlySet<Type>
@@ -125,6 +126,7 @@ namespace Org.IdentityConnectors.Framework.Common
                 typeof(byte[]),
                 typeof(BigDecimal),
                 typeof(BigInteger),
+                typeof(GuardedByteArray),
                 typeof(GuardedString)
             );
     

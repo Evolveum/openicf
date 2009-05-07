@@ -42,6 +42,207 @@ namespace Org.IdentityConnectors.Common.Security
     #endregion
     
     /**
+     * Secure byte array implementation that solves the problems associated with
+     * keeping confidential data as <code>byte[]</code>. That is, anything 
+     * represented as a <code>byte[]</code> is kept in memory in clear
+     * text and stays in memory <b>at least</b> until it is garbage collected.
+     * <p>
+     * The GuardedByteArray class alleviates this problem by storing the bytes in
+     * memory in an encrypted form. The encryption key will be a randomly-generated
+     * key.
+     * <p>
+     * In their serialized form, GuardedByteArray will be encrypted using a known
+     * default key. This is to provide a minimum level of protection regardless
+     * of the transport. For communications with the Remote Connector Framework
+     * it is recommended that deployments enable SSL for true encryption.
+     * <p>
+     * Applications may also wish to persist GuardedByteArrays. In the case of 
+     * Identity Manager, it should convert GuardedByteArrays to EncryptedData so
+     * that they can be stored and managed using the Manage Encryption features
+     * of Identity Manager. Other applications may wish to serialize APIConfiguration
+     * as a whole. These applications are responsible for encrypting the APIConfiguration
+     * blob for an additional layer of security (beyond the basic default key encryption
+     * provided by GuardedByteArray).
+     */
+    public sealed class GuardedByteArray : IDisposable
+    {
+        /**
+         * This method will be called with the clear text of the byte array.
+         * After the call the clearBytes array will be automatically zeroed
+         * out, thus keeping the window of potential exposure to a bare-minimum.
+         * @param clearChars
+         */
+        public delegate void Accessor(UnmanagedArray<byte> clearBytes);
+
+
+        private SecureString _target;
+        private String _base64SHA1Hash;
+
+        /**
+         * Creates an empty secure byte array.
+         */
+        public GuardedByteArray()
+        {
+            _target = new SecureString();
+            ComputeHash();
+        }
+
+        public GuardedByteArray(UnmanagedArray<byte> clearBytes)
+        {
+            _target = new SecureString();
+            AppendBytes(clearBytes);
+        }
+
+        private GuardedByteArray(SecureString str)
+        {
+            _target = str.Copy();
+            ComputeHash();
+        }
+
+
+        /**
+         * Provides access to the clear-text value of the bytes in a controlled fashion.
+         * The clear-text bytes will only be available for the duration of the call
+         * and automatically zeroed out following the call. 
+         * 
+         * <p>
+         * <b>NOTE:</b> Callers are encouraged to use {@link #verifyBase64SHA1Hash(String)}
+         * where possible if the intended use is merely to verify the contents of
+         * the string match an expected hash value.
+         * @param accessor Accessor callback.
+         * @throws IllegalStateException If the byte array has been disposed
+         */
+        public void Access(Accessor accessor)
+        {
+            using (SecureStringToByteArrayAdapter adapter = new SecureStringToByteArrayAdapter(_target))
+            {
+                accessor(adapter);
+            }
+        }
+
+        /**
+         * Appends a single clear-text byte to the secure byte array.
+         * The in-memory data will be decrypted, the character will be
+         * appended, and then it will be re-encrypted.
+         * @param b The byte to append.
+         * @throws IllegalStateException If the byte array is read-only
+         * @throws IllegalStateException If the byte array has been disposed
+         */
+        public void AppendByte(byte b)
+        {
+            _target.AppendChar((char)b);
+            ComputeHash();
+        }
+
+        private void AppendBytes(UnmanagedArray<byte> clearBytes)
+        {
+            for (int i = 0; i < clearBytes.Length; i++)
+            {
+                _target.AppendChar((char)clearBytes[i]);
+            }
+            ComputeHash();
+        }
+
+        /**
+         * Clears the in-memory representation of the byte array.
+         */
+        public void Dispose()
+        {
+            _target.Dispose();
+        }
+
+        /**
+         * Returns true iff this byte array has been marked read-only
+         * @return true iff this byte array has been marked read-only
+         * @throws IllegalStateException If the byte array has been disposed
+         */
+        public bool IsReadOnly()
+        {
+            return _target.IsReadOnly();
+        }
+
+        /**
+         * Mark this byte array as read-only.
+         * @throws IllegalStateException If the byte array has been disposed
+         */
+        public void MakeReadOnly()
+        {
+            _target.MakeReadOnly();
+        }
+
+        /**
+         * Create a copy of the byte array. If this instance is read-only,
+         * the copy will not be read-only.
+         * @return A copy of the byte array.
+         * @throws IllegalStateException If the byte array has been disposed
+         */
+        public GuardedByteArray Copy()
+        {
+            SecureString t2 = _target.Copy();
+            GuardedByteArray rv = new GuardedByteArray(t2);
+            return rv;
+        }
+
+        /**
+         * Verifies that this base-64 encoded SHA1 hash of this byte array
+         * matches the given value.
+         * @param hash The hash to verify against.
+         * @return True if the hash matches the given parameter.
+         * @throws IllegalStateException If the byte array has been disposed
+         */
+        public bool VerifyBase64SHA1Hash(String hash)
+        {
+            CheckNotDisposed();
+            return _base64SHA1Hash.Equals(hash);
+        }
+
+        public string GetBase64SHA1Hash()
+        {
+            CheckNotDisposed();
+            return _base64SHA1Hash;
+        }
+
+
+
+        private void CheckNotDisposed()
+        {
+            //this throws if disposed
+            _target.IsReadOnly();
+        }
+
+
+        public override bool Equals(Object o)
+        {
+            if (o is GuardedByteArray)
+            {
+                GuardedByteArray other = (GuardedByteArray)o;
+                //not the true contract of equals. however,
+                //due to the high mathematical improbability of
+                //two unequal strings having the same secure hash,
+                //this approach feels good. the alternative,
+                //decrypting for comparison, is simply too
+                //performance intensive to be used for equals
+                return _base64SHA1Hash.Equals(other._base64SHA1Hash);
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return _base64SHA1Hash.GetHashCode();
+        }
+
+        private void ComputeHash()
+        {
+            Access(array =>
+            {
+                _base64SHA1Hash = SecurityUtil.ComputeBase64SHA1Hash(array);
+            });
+        }
+
+    }
+
+    /**
      * Secure string implementation that solves the problems associated with
      * keeping passwords as <code>java.lang.String</code>. That is, anything 
      * represented as a <code>String</code> is kept in memory as a clear
@@ -300,6 +501,39 @@ namespace Org.IdentityConnectors.Common.Security
     }
     #endregion
     
+    #region SecureStringToByteArrayAdapter
+    internal class SecureStringToByteArrayAdapter : AbstractUnmanagedArray<byte>
+    {
+        private IntPtr _bstrPtr;
+        public SecureStringToByteArrayAdapter(SecureString secureString)
+            : base(secureString.Length)
+        {
+            Assertions.NullCheck(secureString, "secureString");
+            _bstrPtr = Marshal.SecureStringToBSTR(secureString);
+        }
+        protected override byte GetValue(int index)
+        {
+            unsafe
+            {
+                char* charPtr = (char*)_bstrPtr;
+                return (byte)*(charPtr + index);
+            }
+        }
+        protected override void SetValue(int index, byte b)
+        {
+            unsafe
+            {
+                char* charPtr = (char*)_bstrPtr;
+                *(charPtr + index) = (char)b;
+            }
+        }
+        protected override void FreeMemory()
+        {
+            Marshal.ZeroFreeBSTR(_bstrPtr);
+        }
+    }
+    #endregion
+
     #region UnmanagedCharArray
     public class UnmanagedCharArray : AbstractUnmanagedArray<char>
     {
@@ -405,24 +639,33 @@ namespace Org.IdentityConnectors.Common.Security
             return chars;
         }
 
-        
+
         public unsafe static string ComputeBase64SHA1Hash(UnmanagedArray<char> input)
-        {            
-            using (UnmanagedArray<byte> bytes = SecurityUtil.CharsToBytes(input)) {
-                byte [] managedBytes = new byte[bytes.Length];
-                fixed (byte*dummy=managedBytes) { //pin it
-                    try {
-                        //populate it in pinned block
-                        SecurityUtil.UnmanagedBytesToManagedBytes(bytes,managedBytes);
-                        SHA1 hasher = SHA1.Create(); 
-                        byte[] data = hasher.ComputeHash(managedBytes);
-                        return Convert.ToBase64String(data);
-                    }
-                    finally {
-                        //clear it before we leave pinned block
-                        SecurityUtil.Clear(managedBytes);
-                    }
-                }                
+        {
+            using (UnmanagedArray<byte> bytes = SecurityUtil.CharsToBytes(input))
+            {
+                return ComputeBase64SHA1Hash(bytes);
+            }
+        }
+        
+        public unsafe static string ComputeBase64SHA1Hash(UnmanagedArray<byte> input)
+        {
+            byte[] managedBytes = new byte[input.Length];
+            fixed (byte* dummy = managedBytes)
+            { //pin it
+                try
+                {
+                    //populate it in pinned block
+                    SecurityUtil.UnmanagedBytesToManagedBytes(input, managedBytes);
+                    SHA1 hasher = SHA1.Create();
+                    byte[] data = hasher.ComputeHash(managedBytes);
+                    return Convert.ToBase64String(data);
+                }
+                finally
+                {
+                    //clear it before we leave pinned block
+                    SecurityUtil.Clear(managedBytes);
+                }
             }
         }
         

@@ -550,6 +550,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
             HANDLERS.Add(new ListHandler<object>());
             HANDLERS.Add(new SetHandler<object>());
             HANDLERS.Add(new LocaleHandler());
+            HANDLERS.Add(new GuardedByteArrayHandler());
             HANDLERS.Add(new GuardedStringHandler());
         } 
         private class BooleanHandler : AbstractObjectSerializationHandler {
@@ -989,22 +990,20 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
             }
         }
 
-        private class GuardedStringHandler : AbstractObjectSerializationHandler {
-            public GuardedStringHandler() 
-                : base(typeof(GuardedString),"GuardedString") {
+        private class GuardedByteArrayHandler : AbstractObjectSerializationHandler {
+            public GuardedByteArrayHandler() 
+                : base(typeof(GuardedByteArray),"GuardedByteArray") {
                 
             }
             public override Object Deserialize(ObjectDecoder decoder) {
                 byte [] encryptedBytes = null;                        
                 UnmanagedArray<byte> clearBytes = null; 
-                UnmanagedArray<char> clearChars = null;
                 try {
                     encryptedBytes = decoder.ReadByteArrayContents();
                     clearBytes = EncryptorFactory.GetInstance().GetDefaultEncryptor().Decrypt(encryptedBytes);
-                    clearChars = SecurityUtil.BytesToChars(clearBytes);
-                    GuardedString rv = new GuardedString();
-                    for ( int i = 0; i < clearChars.Length; i++ ) {
-                        rv.AppendChar(clearChars[i]);
+                    GuardedByteArray rv = new GuardedByteArray();
+                    for ( int i = 0; i < clearBytes.Length; i++ ) {
+                        rv.AppendByte(clearBytes[i]);
                     }
                     return rv;
                 }
@@ -1012,31 +1011,87 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                     if ( clearBytes != null ) {
                         clearBytes.Dispose();
                     }
-                    if ( clearChars != null ) {
-                        clearChars.Dispose();
-                    }
                     SecurityUtil.Clear(encryptedBytes);                    
                 }
             }
         
             public override void Serialize(Object obj, ObjectEncoder encoder) {
-                GuardedString str = (GuardedString)obj;
+                GuardedByteArray str = (GuardedByteArray)obj;
                 str.Access(
-                     clearChars=>
+                     clearBytes=>
                  {
-                        UnmanagedArray<byte> clearBytes = null; 
                         byte [] encryptedBytes = null;                        
                         try {
-                            clearBytes = SecurityUtil.CharsToBytes(clearChars);
                             encryptedBytes = EncryptorFactory.GetInstance().GetDefaultEncryptor().Encrypt(clearBytes);
                             encoder.WriteByteArrayContents(encryptedBytes);
                         }
                         finally {
-                            if ( clearBytes != null ) {
-                                clearBytes.Dispose();
-                            }
                             SecurityUtil.Clear(encryptedBytes);
                         }
+                     });
+            }
+        }
+
+        private class GuardedStringHandler : AbstractObjectSerializationHandler
+        {
+            public GuardedStringHandler()
+                : base(typeof(GuardedString), "GuardedString")
+            {
+
+            }
+            public override Object Deserialize(ObjectDecoder decoder)
+            {
+                byte[] encryptedBytes = null;
+                UnmanagedArray<byte> clearBytes = null;
+                UnmanagedArray<char> clearChars = null;
+                try
+                {
+                    encryptedBytes = decoder.ReadByteArrayContents();
+                    clearBytes = EncryptorFactory.GetInstance().GetDefaultEncryptor().Decrypt(encryptedBytes);
+                    clearChars = SecurityUtil.BytesToChars(clearBytes);
+                    GuardedString rv = new GuardedString();
+                    for (int i = 0; i < clearChars.Length; i++)
+                    {
+                        rv.AppendChar(clearChars[i]);
+                    }
+                    return rv;
+                }
+                finally
+                {
+                    if (clearBytes != null)
+                    {
+                        clearBytes.Dispose();
+                    }
+                    if (clearChars != null)
+                    {
+                        clearChars.Dispose();
+                    }
+                    SecurityUtil.Clear(encryptedBytes);
+                }
+            }
+
+            public override void Serialize(Object obj, ObjectEncoder encoder)
+            {
+                GuardedString str = (GuardedString)obj;
+                str.Access(
+                     clearChars =>
+                     {
+                         UnmanagedArray<byte> clearBytes = null;
+                         byte[] encryptedBytes = null;
+                         try
+                         {
+                             clearBytes = SecurityUtil.CharsToBytes(clearChars);
+                             encryptedBytes = EncryptorFactory.GetInstance().GetDefaultEncryptor().Encrypt(clearBytes);
+                             encoder.WriteByteArrayContents(encryptedBytes);
+                         }
+                         finally
+                         {
+                             if (clearBytes != null)
+                             {
+                                 clearBytes.Dispose();
+                             }
+                             SecurityUtil.Clear(encryptedBytes);
+                         }
                      });
             }
         }

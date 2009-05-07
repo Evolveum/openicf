@@ -1023,6 +1023,16 @@ namespace FrameworkTests
         }
         
         [Test]
+        public void TestGuardedByteArray() {
+            GuardedByteArray v1 = new GuardedByteArray();
+            v1.AppendByte(0x00);
+            v1.AppendByte(0x01);
+            v1.AppendByte(0x02);
+            GuardedByteArray v2 = (GuardedByteArray)CloneObject(v1);
+            Assert.AreEqual(new byte[] { 0x00, 0x01, 0x02 },DecryptToByteArray(v2));
+        }
+        
+        [Test]
         public void TestGuardedString() {
             GuardedString v1 = new GuardedString();
             v1.AppendChar('f');
@@ -1062,7 +1072,23 @@ namespace FrameworkTests
             return buf.ToString();
         }
 
-        protected virtual Object CloneObject(Object o) {
+        private byte[] DecryptToByteArray(GuardedByteArray bytes)
+        {
+            byte[] result = null;
+            bytes.Access(
+                                            array =>
+                {
+                    result = new byte[array.Length];
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        result[i] = array[i];
+                    }
+                });
+            return result;
+        }
+
+        protected virtual Object CloneObject(Object o)
+        {
             return SerializerUtil.CloneObject(o);
         }
     }
