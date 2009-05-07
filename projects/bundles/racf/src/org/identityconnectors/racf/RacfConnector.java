@@ -371,8 +371,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
                     attributesToGet = getDefaultAttributes(_groupAttributes);
             }
             
-            boolean wantUid = (attributesToGet!=null && attributesToGet.remove(Uid.NAME));
+            boolean wantUid     = (attributesToGet!=null && attributesToGet.remove(Uid.NAME));
             boolean getNameOnly = (attributesToGet!=null && attributesToGet.size()==1 && Name.NAME.equalsIgnoreCase(attributesToGet.first()));
+            boolean getNothing  = (attributesToGet!=null && attributesToGet.size()==0);
             
             // It's an error to request attributes from a source we can't use
             //
@@ -394,13 +395,14 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
             SearchControls subTreeControls = new SearchControls(SearchControls.SUBTREE_SCOPE, 4095, 0, ldapAttrs.toArray(new String[0]), true, true);
             for (String name : names) {
                 try {
-                    // We can special case getting just name
+                    // We can special case getting at most just name
                     //
                     ConnectorObject object = null;
-                    if (getNameOnly) {
+                    if (getNameOnly || getNothing) {
                         ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
                         builder.setUid(name);
-                        builder.setName(name);
+                        if (getNameOnly)
+                            builder.setName(name);
                         object = builder.build();
                     } else {
                         SearchResult searchResult = null;
