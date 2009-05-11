@@ -26,8 +26,10 @@ import static org.identityconnectors.racf.RacfConstants.*;
 
 import java.io.StringReader;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -48,11 +50,13 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.PredefinedAttributes;
+import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.ScriptContext;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.patternparser.MapTransform;
@@ -709,26 +713,16 @@ class CommandLineUtil {
             Attribute expired = attributes.get(ATTR_CL_EXPIRED);
             Attribute password = attributes.get(ATTR_CL_PASSWORD);
             
-            // If both ENABLE==false and an ENABLE_DATE are specified,
-            // we need to process the REVOKE in a separate command
+            // RACF makes it difficult to specify ENABLE_DATE/DISABLE_DATE
+            // except in its own command
             //
             Attribute enable      = attributes.get(ATTR_CL_ENABLED);
-            Attribute enableDate  = attributes.get(ATTR_CL_RESUME_DATE);
-            Attribute disableDate = attributes.get(ATTR_CL_REVOKE_DATE);
-            boolean doEnable = false;
-            boolean doDisable = false;
+            Attribute enableDate  = attributes.remove(ATTR_CL_RESUME_DATE);
+            Attribute disableDate = attributes.remove(ATTR_CL_REVOKE_DATE);
             
-            if (enableDate!=null && enable!=null && AttributeUtil.getBooleanValue(enable)) {
-                doEnable = true;
+            if (enableDate!=null && disableDate!=null)
                 attributes.remove(ATTR_CL_ENABLED);
-            }
-            if (disableDate!=null && enable!=null && !AttributeUtil.getBooleanValue(enable)) {
-                doDisable = true;
-                attributes.remove(ATTR_CL_ENABLED);
-            }
-            
-            if (expired!=null && password==null) 
-                throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
+
             
             if (expired!=null && password==null) 
                 throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
@@ -754,15 +748,62 @@ class CommandLineUtil {
                 buffer.clear();
             }
             
-            if (doDisable || doEnable) {
-                buffer = new CharArrayBuffer();
-                buffer.append("ALTUSER ");
-                buffer.append(name);
-                if (doDisable)
+            if (enableDate!=null || disableDate!=null) {
+                // If we are given a ENABLE_DATE/DISABLE_DATE, but not an ENABLE status
+                // we have to fetch ENABLE status, since we will alter it as part of
+                // setting ENABLE_DATE/DISABLE_DATE
+                //
+                if (enable==null && (disableDate!=null || enableDate!=null)) {
+                    Map<String, Object> map = new HashMap<String, Object>();
+                    map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] { OperationalAttributes.ENABLE_NAME});
+                    OperationOptions operationOptions = new OperationOptions(map);
+                    TestHandler handler = new TestHandler();
+                    _connector.executeQuery(ObjectClass.ACCOUNT, name, handler, operationOptions);
+                    ConnectorObject object = handler.iterator().next();
+                    enable = object.getAttributeByName(OperationalAttributes.ENABLE_NAME);
+                }
+                Boolean currentEnableState = enable==null?null:AttributeUtil.getBooleanValue(enable);
+                Boolean lastEnableState = currentEnableState;
+                
+                if (enableDate!=null) {
+                    lastEnableState = Boolean.FALSE;
+                    buffer = new CharArrayBuffer();
+                    
+                    buffer.append("ALTUSER ");
+                    buffer.append(name);
                     buffer.append(" REVOKE");
-                if (doEnable)
+                    Map<String, Attribute> enableDateAttributes = new HashMap<String, Attribute>();
+                    enableDateAttributes.put(enableDate.getName(), enableDate);
+                    attributeString = mapAttributesToString(enableDateAttributes);
+                    buffer.append(attributeString);
+                    createOrUpdateViaCommandLine(objectClass, name, buffer);
+                }
+                
+                if (disableDate!=null) {
+                    lastEnableState = Boolean.TRUE;
+                    buffer = new CharArrayBuffer();
+                    
+                    buffer.append("ALTUSER ");
+                    buffer.append(name);
                     buffer.append(" RESUME");
-                createOrUpdateViaCommandLine(objectClass, name, buffer);
+                    Map<String, Attribute> disableDateAttributes = new HashMap<String, Attribute>();
+                    disableDateAttributes.put(disableDate.getName(), disableDate);
+                    attributeString = mapAttributesToString(disableDateAttributes);
+                    buffer.append(attributeString);
+                    createOrUpdateViaCommandLine(objectClass, name, buffer);
+                }
+                
+                if (!lastEnableState.equals(currentEnableState)) {
+                    buffer = new CharArrayBuffer();
+                    
+                    buffer.append("ALTUSER ");
+                    buffer.append(name);
+                    if (currentEnableState)
+                        buffer.append(" RESUME");
+                    else
+                        buffer.append(" REVOKE");
+                    createOrUpdateViaCommandLine(objectClass, name, buffer);
+                }
             }
             return uid;
         } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
@@ -1241,6 +1282,23 @@ class CommandLineUtil {
             char[] result = new char[_position];
             System.arraycopy(_array, 0, result, 0, _position);
             return result;
+        }
+    }
+
+    public static class TestHandler implements ResultsHandler, Iterable<ConnectorObject> {
+        private List<ConnectorObject> objects = new LinkedList<ConnectorObject>();
+
+        public boolean handle(ConnectorObject object) {
+            objects.add(object);
+            return true;
+        }
+
+        public Iterator<ConnectorObject> iterator() {
+            return objects.iterator();
+        }
+
+        public int size() {
+            return objects.size();
         }
     }
 

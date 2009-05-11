@@ -177,21 +177,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
         // Attribute consistency checking
         //
         Map<String, Attribute> attributes = AttributeUtil.toMap(attrs);
-        Attribute enable      = attributes.get(OperationalAttributes.ENABLE_NAME);
         Attribute enableDate  = attributes.get(OperationalAttributes.ENABLE_DATE_NAME);
         Attribute disableDate = attributes.get(OperationalAttributes.DISABLE_DATE_NAME);
         Long now              = new Date().getTime();
         
-        //TODO: fix this later
-        if (false && enable!=null) {
-            if (AttributeUtil.getBooleanValue(enable)) {
-                if (enableDate!=null)
-                    throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.ENABLE_PLUS_DATE));
-            } else {
-                if (disableDate!=null)
-                    throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.DISABLE_PLUS_DATE));
-            }
-        }
         if (disableDate!=null) {
             Long time = AttributeUtil.getLongValue(disableDate);
             if (time<now)
@@ -245,7 +234,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
             } else if (attribute.getName().contains(SEPARATOR) || 
                     (!isLdapConnectionAvailable() && objectClass.is(RACF_CONNECTION_NAME))) {
                 // Even when we are in command-line form, use LDAP-style names for connection attributes,
-                // since we don't get thenm via parsing
+                // since we don't get them via parsing
                 //
                 commandLineAttrs.add(attribute);
             } else {
@@ -508,7 +497,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
 
         for (int i=0; i<groups.size(); i++) {
             Object newGroup = groups.get(i);
-            Object newOwner  = owners.get(i);
+            Object newOwner = owners.get(i);
             if (!currentGroups.contains(newGroup)) {
                 // Group is being added
                 //
@@ -663,6 +652,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
         if (AttributeUtil.getNameFromAttributes(attrs)!=null) {
             throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.ATTRIBUTE_NOT_UPDATEABLE, Name.NAME));
         }
+        // TODO: if PASSWORD is specified, but EXPIRED is not,
+        //  we must reconstruct its value by reading the user.
+        //
         splitUpOutgoingAttributes(objectClass, attrs, ldapAttrs, commandLineAttrs);
         if (isLdapConnectionAvailable()) {
             Uid uid = _ldapUtil.updateViaLdap(objectClass, ldapAttrs);
