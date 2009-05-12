@@ -753,9 +753,9 @@ class CommandLineUtil {
                 // we have to fetch ENABLE status, since we will alter it as part of
                 // setting ENABLE_DATE/DISABLE_DATE
                 //
-                if (enable==null && (disableDate!=null || enableDate!=null)) {
+                if (enable==null) {
                     Map<String, Object> map = new HashMap<String, Object>();
-                    map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] { OperationalAttributes.ENABLE_NAME});
+                    map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] { OperationalAttributes.ENABLE_NAME });
                     OperationOptions operationOptions = new OperationOptions(map);
                     TestHandler handler = new TestHandler();
                     _connector.executeQuery(ObjectClass.ACCOUNT, name, handler, operationOptions);
