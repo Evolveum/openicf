@@ -73,7 +73,7 @@ public abstract class OracleConnectorAbstractTest {
     private static UserRecord getTestUserRecord(Connection conn) throws SQLException{
         String TEST_USER = "testTS";
         if(!userReader.userExist(TEST_USER)){
-            Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
+            Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL);
             Attribute name = new Name(TEST_USER);
             GuardedString password = new GuardedString("hello".toCharArray());
             Attribute passwordAttribute = AttributeBuilder.buildPassword(password);

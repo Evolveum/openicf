@@ -1,14 +1,27 @@
 package org.identityconnectors.oracle;
 
-import static org.identityconnectors.oracle.OracleConnector.*;
-
 import java.sql.Connection;
-import java.util.*;
+import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.identityconnectors.common.logging.Log;
-import org.identityconnectors.dbcommon.*;
-import org.identityconnectors.framework.common.exceptions.*;
-import org.identityconnectors.framework.common.objects.*;
+import org.identityconnectors.dbcommon.LocalizedAssert;
+import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
+import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 
 /**
@@ -19,7 +32,15 @@ import org.identityconnectors.framework.spi.operations.CreateOp;
  */
 final class OracleOperationCreate extends AbstractOracleOperation implements CreateOp{
     
+	private static final Collection<String> VALID_CREATE_ATTRIBUTES;
+	
+	static {
+		Collection<String> tmp = new HashSet<String>(OracleConstants.ALL_ATTRIBUTE_NAMES);
+		tmp.removeAll(Arrays.asList(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,OperationalAttributes.DISABLE_DATE_NAME));
+		VALID_CREATE_ATTRIBUTES = Collections.unmodifiableCollection(tmp);
+	}
     
+	
     OracleOperationCreate(OracleConfiguration cfg,Connection adminConn, Log log) {
         super(cfg, adminConn, log);
     }
@@ -31,6 +52,7 @@ final class OracleOperationCreate extends AbstractOracleOperation implements Cre
         new LocalizedAssert(cfg.getConnectorMessages()).assertNotBlank(userName,Name.NAME);
         checkCreateAttributes(map);
         checkUserNotExist(userName);
+        log.info("Creating user : [{0}]", userName);
         OracleUserAttributes.Builder builder = new OracleUserAttributes.Builder();
         builder.setUserName(userName);
         new OracleAttributesReader(cfg.getConnectorMessages()).readCreateAttributes(map, builder);
@@ -40,8 +62,8 @@ final class OracleOperationCreate extends AbstractOracleOperation implements Cre
         	//This should not happen, but be more deffensive
         	throw new ConnectorException("No create SQL generated, probably not enough attributes");
         }
-        Attribute roles = AttributeUtil.find(ORACLE_ROLES_ATTR_NAME, attrs);
-        Attribute privileges = AttributeUtil.find(ORACLE_PRIVS_ATTR_NAME, attrs);
+        Attribute roles = AttributeUtil.find(OracleConstants.ORACLE_ROLES_ATTR_NAME, attrs);
+        Attribute privileges = AttributeUtil.find(OracleConstants.ORACLE_PRIVS_ATTR_NAME, attrs);
         List<String> rolesSQL = new OracleRolesAndPrivsBuilder(cfg.getCSSetup())
                 .buildGrantRolesSQL(userName, OracleConnectorHelper.castList(
                         roles, String.class)); 
@@ -69,34 +91,8 @@ final class OracleOperationCreate extends AbstractOracleOperation implements Cre
     
     private void checkCreateAttributes(Map<String, Attribute> map) {
 		for(Attribute attr : map.values()){
-			if(attr.is(Name.NAME)){
-			}
-			else if(attr.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
-			}
-			else if(attr.is(OperationalAttributes.ENABLE_NAME)){
-			}
-			else if(attr.is(OperationalAttributes.PASSWORD_NAME)){
-			}
-			else if(attr.is(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME)){
-			}
-			else if(attr.is(OracleConnector.ORACLE_DEF_TS_ATTR_NAME)){
-			}
-			else if(attr.is(OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME)){
-			}
-			else if(attr.is(OracleConnector.ORACLE_GLOBAL_ATTR_NAME)){
-			}
-			else if(attr.is(OracleConnector.ORACLE_PROFILE_ATTR_NAME)){
-			}
-			else if(attr.is(OracleConnector.ORACLE_TEMP_TS_ATTR_NAME)){
-			}
-			else if(attr.is(OracleConnector.ORACLE_TEMP_TS_QUOTA_ATTR_NAME)){
-			}
-			else if(attr.is(OracleConnector.ORACLE_PRIVS_ATTR_NAME)){
-			}
-			else if(attr.is(OracleConnector.ORACLE_ROLES_ATTR_NAME)){
-			}
-			else{
-				throw new IllegalArgumentException("Illegal argument " + attr);
+			if(!VALID_CREATE_ATTRIBUTES.contains(attr.getName())){
+				throw new IllegalArgumentException(MessageFormat.format("Attribute [{0}] not supported for create",attr.getName()));
 			}
 		}
 	}

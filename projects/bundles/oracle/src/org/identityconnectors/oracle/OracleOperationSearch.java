@@ -1,25 +1,17 @@
 package org.identityconnectors.oracle;
 
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_DEF_TS_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_GLOBAL_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_PRIVS_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_PROFILE_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_ROLES_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_TEMP_TS_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_TEMP_TS_QUOTA_ATTR_NAME;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.identityconnectors.common.Pair;
 import org.identityconnectors.common.logging.Log;
@@ -45,7 +37,7 @@ import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 
 /**
- * Oracle search actually exeutes query to search for user. It uses DBA_USERS,DBA_TS_QUOTAS,DBA_ROLE_PRIVS,DBA_SYS_PRIVS,USER_TAB_PRIVS views to perform query
+ * Oracle search actually executes query to search for users. It uses DBA_USERS,DBA_TS_QUOTAS,DBA_ROLE_PRIVS,DBA_SYS_PRIVS,USER_TAB_PRIVS views to perform query
  * @author kitko
  *
  */
@@ -63,6 +55,20 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 																"LEFT JOIN USER_TAB_PRIVS ON DBA_USERS.USERNAME=USER_TAB_PRIVS.GRANTEE";
 
 	
+	static final Collection<String> VALID_ATTRIBUTES_TO_GET;
+	
+	static final Collection<String> VALIDSEARCHBYATTRIBUTES;
+	
+	static {
+		Collection<String> tmp = new HashSet<String>(OracleConstants.ALL_ATTRIBUTE_NAMES);
+		tmp.remove(OperationalAttributes.PASSWORD_NAME);
+		tmp.add(Uid.NAME);
+		VALID_ATTRIBUTES_TO_GET = Collections.unmodifiableCollection(tmp);
+		VALIDSEARCHBYATTRIBUTES = Collections.unmodifiableCollection(tmp);
+	}
+	
+	
+	
 	OracleOperationSearch(OracleConfiguration cfg, Connection adminConn, Log log) {
 		super(cfg, adminConn, log);
 	}
@@ -78,19 +84,20 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
         PreparedStatement st = null;
         ResultSet rs = null;
         try {
+        	log.info("Executing search query : {0}", sql);
 			st = this.adminConn.prepareStatement(sql);
             SQLUtil.setParams(st, query.getParams());
 			rs = st.executeQuery();
 			OracleUserReader userReader = new OracleUserReader(adminConn);
-            Set<String> attributesToGet = null;
+            Collection<String> attributesToGet = null;
+            checkAttributesToGet(options.getAttributesToGet());
             if(options.getAttributesToGet() != null && options.getAttributesToGet().length > 0){
             	attributesToGet = new HashSet<String>(Arrays.asList(options.getAttributesToGet()));
             }
             else{
-            	//Only attributes for which we do not need create additional selects
-            	attributesToGet = new HashSet<String>(OracleConnector.ALL_ATTRIBUTE_NAMES);
             	//Now all attributes are read by default
             	//There is small performance problem with reading roles,privileges,quotas
+            	attributesToGet = VALID_ATTRIBUTES_TO_GET;
             }
 			while(rs.next()){
                 ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
@@ -102,34 +109,34 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
                 	bld.addAttribute(new Name(userName));
                 }
                 UserRecord record = OracleUserReader.translateRowToUserRecord(rs);
-                if(attributesToGet.contains(ORACLE_DEF_TS_ATTR_NAME)){
-                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_DEF_TS_ATTR_NAME,record.getDefaultTableSpace()));
+                if(attributesToGet.contains(OracleConstants.ORACLE_DEF_TS_ATTR_NAME)){
+                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(OracleConstants.ORACLE_DEF_TS_ATTR_NAME,record.getDefaultTableSpace()));
                 }
-                if(attributesToGet.contains(ORACLE_TEMP_TS_ATTR_NAME)){
-                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_TEMP_TS_ATTR_NAME,record.getTemporaryTableSpace()));
+                if(attributesToGet.contains(OracleConstants.ORACLE_TEMP_TS_ATTR_NAME)){
+                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(OracleConstants.ORACLE_TEMP_TS_ATTR_NAME,record.getTemporaryTableSpace()));
                 }
-                if(attributesToGet.contains(ORACLE_AUTHENTICATION_ATTR_NAME)){
-                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_AUTHENTICATION_ATTR_NAME,OracleUserReader.resolveAuthentication(record).toString()));
+                if(attributesToGet.contains(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME)){
+                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,OracleUserReader.resolveAuthentication(record).toString()));
                 }
-                if(attributesToGet.contains(ORACLE_GLOBAL_ATTR_NAME)){
-                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_GLOBAL_ATTR_NAME,record.getExternalName()));
+                if(attributesToGet.contains(OracleConstants.ORACLE_GLOBAL_ATTR_NAME)){
+                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(OracleConstants.ORACLE_GLOBAL_ATTR_NAME,record.getExternalName()));
                 }
-                if(attributesToGet.contains(ORACLE_PROFILE_ATTR_NAME)){
-                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_PROFILE_ATTR_NAME,record.getProfile()));
+                if(attributesToGet.contains(OracleConstants.ORACLE_PROFILE_ATTR_NAME)){
+                	bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(OracleConstants.ORACLE_PROFILE_ATTR_NAME,record.getProfile()));
                 }
-                if(attributesToGet.contains(ORACLE_DEF_TS_QUOTA_ATTR_NAME)){
+                if(attributesToGet.contains(OracleConstants.ORACLE_DEF_TS_QUOTA_ATTR_NAME)){
                 	Long quota = userReader.readUserTSQuota(userName, record.getDefaultTableSpace());
-					bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_DEF_TS_QUOTA_ATTR_NAME,quota != null ? quota.toString() : null));
+					bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(OracleConstants.ORACLE_DEF_TS_QUOTA_ATTR_NAME,quota != null ? quota.toString() : null));
                 }
-                if(attributesToGet.contains(ORACLE_TEMP_TS_QUOTA_ATTR_NAME)){
+                if(attributesToGet.contains(OracleConstants.ORACLE_TEMP_TS_QUOTA_ATTR_NAME)){
                 	Long quota = userReader.readUserTSQuota(userName, record.getTemporaryTableSpace());
-					bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(ORACLE_TEMP_TS_QUOTA_ATTR_NAME,quota != null ? quota.toString() : null));
+					bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(OracleConstants.ORACLE_TEMP_TS_QUOTA_ATTR_NAME,quota != null ? quota.toString() : null));
                 }
-                if(attributesToGet.contains(ORACLE_PRIVS_ATTR_NAME)){
-                	bld.addAttribute(AttributeBuilder.build(ORACLE_PRIVS_ATTR_NAME,new OracleRolePrivReader(adminConn).readPrivileges(userName)));
+                if(attributesToGet.contains(OracleConstants.ORACLE_PRIVS_ATTR_NAME)){
+                	bld.addAttribute(AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,new OracleRolePrivReader(adminConn).readPrivileges(userName)));
                 }
-                if(attributesToGet.contains(ORACLE_ROLES_ATTR_NAME)){
-                	bld.addAttribute(AttributeBuilder.build(ORACLE_ROLES_ATTR_NAME,new OracleRolePrivReader(adminConn).readRoles(userName)));
+                if(attributesToGet.contains(OracleConstants.ORACLE_ROLES_ATTR_NAME)){
+                	bld.addAttribute(AttributeBuilder.build(OracleConstants.ORACLE_ROLES_ATTR_NAME,new OracleRolePrivReader(adminConn).readRoles(userName)));
                 }
                 if(attributesToGet.contains(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
                 	bld.addAttribute(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME,Boolean.valueOf(record.getStatus().contains("EXPIRED"))));
@@ -160,6 +167,17 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 		
 	}
 	
+	private void checkAttributesToGet(String[] attributesToGet) {
+		if(attributesToGet == null){
+			return;
+		}
+		for(String attribute : attributesToGet){
+			if(!VALID_ATTRIBUTES_TO_GET.contains(attribute)){
+				throw new IllegalArgumentException(MessageFormat.format("Attribute [{0}] not supported for attributesToGet in search",attribute));
+			}
+		}
+	}
+
 	private static class OracleDBFilterTranslator extends DatabaseFilterTranslator{
 		private String select = SQL;
 		OracleDBFilterTranslator(ObjectClass oclass,OperationOptions options) {
@@ -171,58 +189,64 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 			if(attribute.is(Name.NAME)){
 				return "DBA_USERS.USERNAME";
 			}
-			if(attribute.is(Uid.NAME)){
+			else if(attribute.is(Uid.NAME)){
 				return "DBA_USERS.USERNAME";
 			}
-			if(attribute.is(OracleConnector.ORACLE_DEF_TS_ATTR_NAME)){
+			else if(attribute.is(OracleConstants.ORACLE_DEF_TS_ATTR_NAME)){
 				return "DBA_USERS.DEFAULT_TABLESPACE";
 			}
-			if(attribute.is(OracleConnector.ORACLE_PROFILE_ATTR_NAME)){
+			else if(attribute.is(OracleConstants.ORACLE_PROFILE_ATTR_NAME)){
 				return "DBA_USERS.PROFILE";
 			}
-			if(attribute.is(OracleConnector.ORACLE_GLOBAL_ATTR_NAME)){
+			else if(attribute.is(OracleConstants.ORACLE_GLOBAL_ATTR_NAME)){
 				return "DBA_USERS.EXTERNAL_NAME";
 			}
-			if(attribute.is(OracleConnector.ORACLE_TEMP_TS_ATTR_NAME)){
+			else if(attribute.is(OracleConstants.ORACLE_TEMP_TS_ATTR_NAME)){
 				return "DBA_USERS.TEMPORARY_TABLESPACE";
 			}
-			if(attribute.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
+			else if(attribute.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
 				return "(CASE WHEN DBA_USERS.ACCOUNT_STATUS LIKE '%EXPIRED%' THEN 'EXPIRED' ELSE 'NOT_EXPIRED' END)";
 			}
-			if(attribute.is(OperationalAttributes.ENABLE_NAME)){
+			else if(attribute.is(OperationalAttributes.ENABLE_NAME)){
 				return "(CASE WHEN DBA_USERS.ACCOUNT_STATUS LIKE '%LOCKED%' THEN 'LOCKED' ELSE 'NOT_LOCKED' END)";
 			}
-			if(attribute.is(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME)){
+			else if(attribute.is(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME)){
 				return "DBA_USERS.EXPIRY_DATE";
 			}
-			if(attribute.is(OperationalAttributes.DISABLE_DATE_NAME)){
+			else if(attribute.is(OperationalAttributes.DISABLE_DATE_NAME)){
 				return "DBA_USERS.LOCK_DATE";
 			}
-			if(attribute.is(OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME)){
+			else if(attribute.is(OracleConstants.ORACLE_DEF_TS_QUOTA_ATTR_NAME)){
 				if(select == SQL){
 					select = ADVANCED_SQL1;
 				}
 				return "DEF_QUOTA.MAX_BYTES";
 			}
-			if(attribute.is(OracleConnector.ORACLE_TEMP_TS_QUOTA_ATTR_NAME)){
+			else if(attribute.is(OracleConstants.ORACLE_TEMP_TS_QUOTA_ATTR_NAME)){
 				if(select == SQL){
 					select = ADVANCED_SQL1;
 				}
 				return "TEMP_QUOTA.MAX_BYTES";
 			}
-			if(attribute.is(OracleConnector.ORACLE_ROLES_ATTR_NAME)){
+			else if(attribute.is(OracleConstants.ORACLE_ROLES_ATTR_NAME)){
 				select = ADVANCED_SQL2;
 				return "GRANTED_ROLE";
 			}
-			if(attribute.is(OracleConnector.ORACLE_PRIVS_ATTR_NAME)){
+			else if(attribute.is(OracleConstants.ORACLE_PRIVS_ATTR_NAME)){
 				select = ADVANCED_SQL2;
 				return "GRANTED_ROLE";
 			}
-			return null;
+			else if(attribute.is(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME)){
+				return "(CASE WHEN DBA_USERS.PASSWORD='EXTERNAL' THEN 'EXTERNAL' ELSE (CASE WHEN DBA_USERS.EXTERNAL_NAME IS NOT NULL THEN 'GLOBAL' ELSE 'LOCAL' END) END)";
+			}
+			throw new IllegalArgumentException("Invalid db column : " + attribute.getName());
 		}
 
 		@Override
 		protected SQLParam getSQLParam(Attribute attribute, ObjectClass oclass, OperationOptions options) {
+			if(!VALIDSEARCHBYATTRIBUTES.contains(attribute.getName())){
+				throw new IllegalArgumentException("Illegal search attribute : " + attribute.getName());
+			}
 			if(attribute.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
 				Boolean value = (Boolean) AttributeUtil.getSingleValue(attribute);
 				if(value == null){
@@ -257,10 +281,10 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 		@Override
 		protected boolean validateSearchAttribute(Attribute attribute) {
 			//Currently We do not support in filter
-			if(attribute.is(OracleConnector.ORACLE_ROLES_ATTR_NAME)){
+			if(attribute.is(OracleConstants.ORACLE_ROLES_ATTR_NAME)){
 				return false;
 			}
-			if(attribute.is(OracleConnector.ORACLE_PRIVS_ATTR_NAME)){
+			if(attribute.is(OracleConstants.ORACLE_PRIVS_ATTR_NAME)){
 				return false;
 			}
 			return true;

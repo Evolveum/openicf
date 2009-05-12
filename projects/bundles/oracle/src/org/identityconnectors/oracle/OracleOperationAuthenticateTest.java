@@ -39,10 +39,10 @@ public class OracleOperationAuthenticateTest extends OracleConnectorAbstractTest
     	try{
     		facade.delete(ObjectClass.ACCOUNT, new Uid(user),null);
     	}catch(UnknownUidException e){}
-        Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
+        Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL);
         Attribute name = new Name(user);
         Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
-        Attribute privileges = AttributeBuilder.build(OracleConnector.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION");
+        Attribute privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION");
         Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,passwordAttribute,privileges), null);
     	
         uid = facade.authenticate(ObjectClass.ACCOUNT, user, password, null);

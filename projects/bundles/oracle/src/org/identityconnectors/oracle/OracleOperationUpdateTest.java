@@ -7,7 +7,9 @@ package org.identityconnectors.oracle;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 
@@ -45,11 +47,11 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
             facade.delete(ObjectClass.ACCOUNT, uid, null);
         }
         catch(UnknownUidException e){}
-        Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
+        Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL);
         Attribute name = new Name(TEST_USER);
         password = new GuardedString("hello".toCharArray());
         Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
-        Attribute privileges = AttributeBuilder.build(OracleConnector.ORACLE_PRIVS_ATTR_NAME, "create session");
+        Attribute privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME, "create session");
         uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,passwordAttribute,privileges), null);
     }
     
@@ -77,7 +79,7 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
      * @throws SQLException */
     @Test
     public void testUpdateAuthentication() throws SQLException{
-        Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_EXTERNAL);
+        Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_EXTERNAL);
         facade.authenticate(ObjectClass.ACCOUNT, uid.getUidValue(), password, null);
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(authentication), null);
         try{
@@ -111,7 +113,7 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         catch(SQLException e){
             fail(e.getMessage());
         }
-        Attribute profileAttr = AttributeBuilder.build(OracleConnector.ORACLE_PROFILE_ATTR_NAME, profileName);
+        Attribute profileAttr = AttributeBuilder.build(OracleConstants.ORACLE_PROFILE_ATTR_NAME, profileName);
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(profileAttr), null);
         final UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
         assertEquals(testConf.getCSSetup().normalizeToken(PROFILE,profileName), record.getProfile());
@@ -125,11 +127,11 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
     
     @Test
     public void testUpdateDefTSQuota() throws SQLException{
-		Attribute defaultTsQuotaAttr =  AttributeBuilder.build(OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME,"30k");
+		Attribute defaultTsQuotaAttr =  AttributeBuilder.build(OracleConstants.ORACLE_DEF_TS_QUOTA_ATTR_NAME,"30k");
 		facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(defaultTsQuotaAttr), null);
         Long quota = userReader.readUserDefTSQuota(uid.getUidValue());
         Assert.assertTrue("Quota must be at least 30k",new Long(30000).compareTo(quota) < 0);
-        defaultTsQuotaAttr =  AttributeBuilder.build(OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME,"-1");
+        defaultTsQuotaAttr =  AttributeBuilder.build(OracleConstants.ORACLE_DEF_TS_QUOTA_ATTR_NAME,"-1");
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(defaultTsQuotaAttr), null);
         quota = userReader.readUserDefTSQuota(uid.getUidValue());
         Assert.assertEquals("Quota must be set to -1 for unlimited quota", new Long(-1), quota);
@@ -141,11 +143,11 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
     public void testUpdateDefTS() throws SQLException{
     	//Test that update to same ts works
     	String defaultTableSpace = userReader.readUserRecord(uid.getUidValue()).getDefaultTableSpace();
-    	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConnector.ORACLE_DEF_TS_ATTR_NAME, defaultTableSpace)), null);
+    	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConstants.ORACLE_DEF_TS_ATTR_NAME, defaultTableSpace)), null);
         //Now try to update with other tablespaces, if update is successfull, check whether it is correctly set
         for(String ts : findAllDefTS(connector.getAdminConnection())){
         	try{
-        		facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConnector.ORACLE_DEF_TS_ATTR_NAME, ts)), null);
+        		facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConstants.ORACLE_DEF_TS_ATTR_NAME, ts)), null);
         	}
         	catch(Exception e){
         		//For any reason , when tablespace cannot be used for user
@@ -159,11 +161,11 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
     public void testUpdateTempTS() throws SQLException{
     	//Test that update to same ts works
     	String tempTableSpace = userReader.readUserRecord(uid.getUidValue()).getTemporaryTableSpace();
-    	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConnector.ORACLE_TEMP_TS_ATTR_NAME, tempTableSpace)), null);
+    	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConstants.ORACLE_TEMP_TS_ATTR_NAME, tempTableSpace)), null);
         //Now try to update with other tablespaces, if update is successfull, check whether it is correctly set
         for(String ts : findAllTempTS(connector.getAdminConnection())){
         	try{
-        		facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConnector.ORACLE_TEMP_TS_ATTR_NAME, ts)), null);
+        		facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConstants.ORACLE_TEMP_TS_ATTR_NAME, ts)), null);
         	}
         	catch(Exception e){
         		//For any reason , when tablespace cannot be used for user
@@ -181,18 +183,18 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
             SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "drop role " + cs.normalizeAndFormatToken(OracleUserAttributeCS.ROLE, role));
         }catch(SQLException e){}
         SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "create role " + cs.normalizeAndFormatToken(OracleUserAttributeCS.ROLE,role));
-        Attribute roles = AttributeBuilder.build(OracleConnector.ORACLE_ROLES_ATTR_NAME, Arrays.asList(role));
+        Attribute roles = AttributeBuilder.build(OracleConstants.ORACLE_ROLES_ATTR_NAME, Arrays.asList(role));
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(roles), null);
         List<String> rolesRead = new OracleRolePrivReader(connector.getAdminConnection()).readRoles(uid.getUidValue());
         Assert.assertThat(rolesRead, JUnitMatchers.hasItem(cs.normalizeToken(OracleUserAttributeCS.ROLE,role)));
         
         //If sending null or empty roles attribute, all roles must get revoked
-        roles = AttributeBuilder.build(OracleConnector.ORACLE_ROLES_ATTR_NAME);
+        roles = AttributeBuilder.build(OracleConstants.ORACLE_ROLES_ATTR_NAME);
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(roles), null);
         rolesRead = new OracleRolePrivReader(connector.getAdminConnection()).readRoles(uid.getUidValue());
         Assert.assertThat("All roles must get revoked when sending null roles attribute",rolesRead, new IsEqual<List<String>>(Collections.<String>emptyList()));
         
-        roles = AttributeBuilder.build(OracleConnector.ORACLE_ROLES_ATTR_NAME,Collections.emptyList());
+        roles = AttributeBuilder.build(OracleConstants.ORACLE_ROLES_ATTR_NAME,Collections.emptyList());
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(roles), null);
         rolesRead = new OracleRolePrivReader(connector.getAdminConnection()).readRoles(uid.getUidValue());
         Assert.assertThat("All roles must get revoked when sending empty list roles attribute",rolesRead, new IsEqual<List<String>>(Collections.<String>emptyList()));
@@ -207,19 +209,19 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         }
         catch(SQLException e){}
         SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create table mytable(id number)");
-        Attribute privileges = AttributeBuilder.build(OracleConnector.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION","SELECT ON MYTABLE");
+        Attribute privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION","SELECT ON MYTABLE");
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(privileges), null);
         List<String> privilegesRead = new OracleRolePrivReader(connector.getAdminConnection()).readPrivileges(uid.getUidValue());
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUserOwner() + ".MYTABLE"));
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("CREATE SESSION"));
         
         //If sending null or empty privileges attribute, all roles must get revoked
-        privileges = AttributeBuilder.build(OracleConnector.ORACLE_PRIVS_ATTR_NAME);
+        privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME);
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(privileges), null);
         privilegesRead = new OracleRolePrivReader(connector.getAdminConnection()).readPrivileges(uid.getUidValue());
         Assert.assertThat("All privileges must get revoked when sending null privileges attribute",privilegesRead, new IsEqual<List<String>>(Collections.<String>emptyList()));
         
-        privileges = AttributeBuilder.build(OracleConnector.ORACLE_PRIVS_ATTR_NAME,Collections.emptyList());
+        privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,Collections.emptyList());
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(privileges), null);
         privilegesRead = new OracleRolePrivReader(connector.getAdminConnection()).readPrivileges(uid.getUidValue());
         Assert.assertThat("All privileges must get revoked when sending empty list privileges attribute",privilegesRead, new IsEqual<List<String>>(Collections.<String>emptyList()));
@@ -263,6 +265,7 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
     	assertNotNull(record);
         assertEquals("OPEN",record.getStatus());
+        
     }
     
     @Test
@@ -275,13 +278,13 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         }catch(SQLException e){}
         SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create table MYTABLE1(id number)");
         SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create table MYTABLE2(id number)");
-        Attribute privileges = AttributeBuilder.build(OracleConnector.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION","SELECT ON MYTABLE1");
+        Attribute privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION","SELECT ON MYTABLE1");
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(privileges), null);
         List<String> privilegesRead = new OracleRolePrivReader(connector.getAdminConnection()).readPrivileges(uid.getUidValue());
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUserOwner() + ".MYTABLE1"));
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("CREATE SESSION"));
         Assert.assertThat(privilegesRead, new IsNot<Iterable<String>>(JUnitMatchers.hasItem("SELECT ON " + testConf.getUser() + ".MYTABLE2")));
-        privileges = AttributeBuilder.build(OracleConnector.ORACLE_PRIVS_ATTR_NAME,"SELECT ON MYTABLE2");
+        privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,"SELECT ON MYTABLE2");
         facade.addAttributeValues(ObjectClass.ACCOUNT, uid, Collections.singleton(privileges), null);
         privilegesRead = new OracleRolePrivReader(connector.getAdminConnection()).readPrivileges(uid.getUidValue());
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUserOwner() + ".MYTABLE1"));
@@ -301,12 +304,12 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         }catch(SQLException e){}
         SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create role ROLE1");
         SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create role ROLE2");
-        Attribute rolesAttr = AttributeBuilder.build(OracleConnector.ORACLE_ROLES_ATTR_NAME,"ROLE1");
+        Attribute rolesAttr = AttributeBuilder.build(OracleConstants.ORACLE_ROLES_ATTR_NAME,"ROLE1");
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(rolesAttr), null);
         List<String> rolesRead = new OracleRolePrivReader(connector.getAdminConnection()).readRoles(uid.getUidValue());
         Assert.assertThat(rolesRead, JUnitMatchers.hasItem("ROLE1"));
         Assert.assertThat(rolesRead, new IsNot<Iterable<String>>(JUnitMatchers.hasItem("ROLE2")));
-        rolesAttr = AttributeBuilder.build(OracleConnector.ORACLE_ROLES_ATTR_NAME,"ROLE2");
+        rolesAttr = AttributeBuilder.build(OracleConstants.ORACLE_ROLES_ATTR_NAME,"ROLE2");
         facade.addAttributeValues(ObjectClass.ACCOUNT, uid, Collections.singleton(rolesAttr), null);
         rolesRead = new OracleRolePrivReader(connector.getAdminConnection()).readRoles(uid.getUidValue());
         Assert.assertThat(rolesRead, JUnitMatchers.hasItem("ROLE1"));
@@ -325,13 +328,13 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         }catch(SQLException e){}
         SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create table MYTABLE1(id number)");
         SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create table MYTABLE2(id number)");
-        Attribute privileges = AttributeBuilder.build(OracleConnector.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION","SELECT ON MYTABLE1","SELECT ON MYTABLE2");
+        Attribute privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION","SELECT ON MYTABLE1","SELECT ON MYTABLE2");
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(privileges), null);
         List<String> privilegesRead = new OracleRolePrivReader(connector.getAdminConnection()).readPrivileges(uid.getUidValue());
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUserOwner() + ".MYTABLE1"));
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUserOwner() + ".MYTABLE2"));
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("CREATE SESSION"));
-        privileges = AttributeBuilder.build(OracleConnector.ORACLE_PRIVS_ATTR_NAME,"SELECT ON MYTABLE1");
+        privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,"SELECT ON MYTABLE1");
         facade.removeAttributeValues(ObjectClass.ACCOUNT, uid, Collections.singleton(privileges), null);
         privilegesRead = new OracleRolePrivReader(connector.getAdminConnection()).readPrivileges(uid.getUidValue());
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUserOwner() + ".MYTABLE2"));
@@ -352,12 +355,12 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         }catch(SQLException e){}
         SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create role ROLE1");
         SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create role ROLE2");
-        Attribute rolesAttr = AttributeBuilder.build(OracleConnector.ORACLE_ROLES_ATTR_NAME,"ROLE1","ROLE2");
+        Attribute rolesAttr = AttributeBuilder.build(OracleConstants.ORACLE_ROLES_ATTR_NAME,"ROLE1","ROLE2");
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(rolesAttr), null);
         List<String> rolesRead = new OracleRolePrivReader(connector.getAdminConnection()).readRoles(uid.getUidValue());
         Assert.assertThat(rolesRead, JUnitMatchers.hasItem("ROLE1"));
         Assert.assertThat(rolesRead, JUnitMatchers.hasItem("ROLE2"));
-        rolesAttr = AttributeBuilder.build(OracleConnector.ORACLE_ROLES_ATTR_NAME,"ROLE1");
+        rolesAttr = AttributeBuilder.build(OracleConstants.ORACLE_ROLES_ATTR_NAME,"ROLE1");
         facade.removeAttributeValues(ObjectClass.ACCOUNT, uid, Collections.singleton(rolesAttr), null);
         rolesRead = new OracleRolePrivReader(connector.getAdminConnection()).readRoles(uid.getUidValue());
         Assert.assertThat(rolesRead, JUnitMatchers.hasItem("ROLE2"));
@@ -369,13 +372,13 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
     @Test
     public void testUpdateUserExternal() throws SQLException{
         //Test external authentication
-    	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConnector.ORACLE_AUTH_EXTERNAL)), null);
+    	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConstants.ORACLE_AUTH_EXTERNAL)), null);
         UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
     	assertNotNull(record);
         assertEquals("OPEN",record.getStatus());
         assertEquals("EXTERNAL",record.getPassword());
     	facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil
-				.newSet(AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConnector.ORACLE_AUTH_LOCAL),
+				.newSet(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConstants.ORACLE_AUTH_LOCAL),
 						AttributeBuilder.buildPassword("password".toCharArray())
 						),
 				null);
@@ -386,22 +389,22 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
     public void testUpdateUserGlobal() throws SQLException{
         //Test external authentication
     	try{
-    		facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConnector.ORACLE_AUTH_GLOBAL)), null);
+    		facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConstants.ORACLE_AUTH_GLOBAL)), null);
     		fail("Must require global name");
     	}catch(RuntimeException e){}
     	try{
 	    	facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil
 					.newSet(AttributeBuilder.build(
-							OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME,
-							OracleConnector.ORACLE_AUTH_GLOBAL),
-							AttributeBuilder.build(OracleConnector.ORACLE_GLOBAL_ATTR_NAME,"anyGlobal")
+							OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,
+							OracleConstants.ORACLE_AUTH_GLOBAL),
+							AttributeBuilder.build(OracleConstants.ORACLE_GLOBAL_ATTR_NAME,"anyGlobal")
 					), null);
 	        UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
 	    	assertNotNull(record);
 	        assertEquals("OPEN",record.getStatus());
 	        assertNotNull(record.getExternalName());
 	    	facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil
-					.newSet(AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConnector.ORACLE_AUTH_LOCAL),
+					.newSet(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConstants.ORACLE_AUTH_LOCAL),
 							AttributeBuilder.buildPassword("password".toCharArray())
 							),
 					null);
@@ -422,6 +425,41 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
     }
     
     
+	/** Test that update will fail on any not known attribute */
+	@Test
+	public void testValidUpdateAttributes(){
+        Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL);
+        GuardedString password = new GuardedString("hello".toCharArray());
+        Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
+        Attribute privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION");
+        Attribute enabled = AttributeBuilder.build(OperationalAttributes.ENABLE_NAME,Boolean.TRUE);
+        Attribute expirePassword = AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME,Boolean.TRUE);
+        Set<Attribute> attrs = new HashSet<Attribute>(Arrays.asList(authentication,passwordAttribute,
+        		privileges,enabled,expirePassword));
+		facade.update(ObjectClass.ACCOUNT,uid, attrs, null);
+		//Now add some dummy attribute
+		Set<Attribute> badAttrs = new HashSet<Attribute>(attrs); 
+		badAttrs.add(AttributeBuilder.buildDisableDate(0));
+		try{
+			facade.update(ObjectClass.ACCOUNT,uid, badAttrs, null);
+			fail("Disabled date should not be supported");
+		}
+		catch(IllegalArgumentException e){}
+		badAttrs = new HashSet<Attribute>(attrs); 
+		badAttrs.add(AttributeBuilder.buildPasswordExpirationDate(0));
+		try{
+			facade.update(ObjectClass.ACCOUNT,uid, badAttrs, null);
+			fail("Expired password date should not be supported");
+		}
+		catch(IllegalArgumentException e){}
+		badAttrs = new HashSet<Attribute>(attrs); 
+		badAttrs.add(AttributeBuilder.build("dummy","dummyValue"));
+		try{
+			facade.update(ObjectClass.ACCOUNT,uid, badAttrs, null);
+			fail("Dummy attribute should not be supported");
+		}
+		catch(IllegalArgumentException e){}
+	}
     
 
     

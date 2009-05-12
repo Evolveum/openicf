@@ -1,13 +1,5 @@
 package org.identityconnectors.oracle;
 
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_DEF_TS_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_GLOBAL_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_PROFILE_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_TEMP_TS_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_TEMP_TS_QUOTA_ATTR_NAME;
-
 import java.util.Map;
 
 import org.identityconnectors.common.StringUtil;
@@ -41,12 +33,12 @@ final class OracleAttributesReader {
      
      private void readRestAttributes(Map<String, Attribute> map, OracleUserAttributes.Builder caAttributes) {
         caAttributes.setExpirePassword(OracleConnectorHelper.getNotNullAttributeBooleanValue(map, OperationalAttributes.PASSWORD_EXPIRED_NAME));
-        caAttributes.setDefaultTableSpace(OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, ORACLE_DEF_TS_ATTR_NAME));
-        caAttributes.setTempTableSpace(OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, ORACLE_TEMP_TS_ATTR_NAME));
+        caAttributes.setDefaultTableSpace(OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, OracleConstants.ORACLE_DEF_TS_ATTR_NAME));
+        caAttributes.setTempTableSpace(OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, OracleConstants.ORACLE_TEMP_TS_ATTR_NAME));
         caAttributes.setEnable(OracleConnectorHelper.getNotNullAttributeBooleanValue(map, OperationalAttributes.ENABLE_NAME));
-        caAttributes.setProfile(OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, ORACLE_PROFILE_ATTR_NAME));
+        caAttributes.setProfile(OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, OracleConstants.ORACLE_PROFILE_ATTR_NAME));
         
-        Attribute defaultTSQuota = map.get(ORACLE_DEF_TS_QUOTA_ATTR_NAME);
+        Attribute defaultTSQuota = map.get(OracleConstants.ORACLE_DEF_TS_QUOTA_ATTR_NAME);
         if(defaultTSQuota != null){
         	String val = AttributeUtil.getStringValue(defaultTSQuota);
         	if(StringUtil.isBlank(val)){
@@ -59,7 +51,7 @@ final class OracleAttributesReader {
         	}
         }
         
-        Attribute tempTSQuota = map.get(ORACLE_TEMP_TS_QUOTA_ATTR_NAME);
+        Attribute tempTSQuota = map.get(OracleConstants.ORACLE_TEMP_TS_QUOTA_ATTR_NAME);
         if(tempTSQuota != null){
         	String val = AttributeUtil.getStringValue(tempTSQuota);
         	if(StringUtil.isBlank(val)){
@@ -74,10 +66,10 @@ final class OracleAttributesReader {
     }
 
     private void readAuthAttributes(Map<String, Attribute> map, OracleUserAttributes.Builder caAttributes) {
-        String authentication =  OracleConnectorHelper.getStringValue(map, ORACLE_AUTHENTICATION_ATTR_NAME);
+        String authentication =  OracleConnectorHelper.getStringValue(map, OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME);
         Attribute passwordAttribute = map.get(OperationalAttributes.PASSWORD_NAME);
         //Set globalname to not silently skip it
-        caAttributes.setGlobalName(OracleConnectorHelper.getStringValue(map, ORACLE_GLOBAL_ATTR_NAME));
+        caAttributes.setGlobalName(OracleConnectorHelper.getStringValue(map, OracleConstants.ORACLE_GLOBAL_ATTR_NAME));
         caAttributes.setPassword(passwordAttribute != null ? AttributeUtil.getGuardedStringValue(passwordAttribute) : null);
         if(authentication != null){
 	        try{
@@ -93,7 +85,7 @@ final class OracleAttributesReader {
 		        case EXTERNAL : break;
 		        case GLOBAL : 
 		        	//Now globalname is required
-		        	caAttributes.setGlobalName(OracleConnectorHelper.getNotEmptyStringValue(map, ORACLE_GLOBAL_ATTR_NAME));
+		        	caAttributes.setGlobalName(OracleConnectorHelper.getNotEmptyStringValue(map, OracleConstants.ORACLE_GLOBAL_ATTR_NAME));
 		        	break;
 	        }
         }

@@ -1,11 +1,13 @@
 package org.identityconnectors.oracle;
 
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_PRIVS_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_ROLES_ATTR_NAME;
-
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,7 +19,6 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
@@ -32,6 +33,15 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
  */
 final class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp,UpdateAttributeValuesOp {
 
+	private static final Collection<String> VALIDUPDATEATTRIBUTES;
+	
+	static {
+		Collection<String> tmp = new HashSet<String>(OracleConstants.ALL_ATTRIBUTE_NAMES);
+		tmp.removeAll(Arrays.asList(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,OperationalAttributes.DISABLE_DATE_NAME));
+		VALIDUPDATEATTRIBUTES = Collections.unmodifiableCollection(tmp);
+	}
+	
+	
     OracleOperationUpdate(OracleConfiguration cfg, Connection adminConn, Log log) {
         super(cfg, adminConn, log);
     }
@@ -40,6 +50,7 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
         Map<String, Attribute> map = AttributeUtil.toMap(attrs);
     	checkUpdateAttributes(map);
         checkUserExist(uid.getUidValue());
+        log.info("Update user : [{0}]", uid.getUidValue());
         OracleUserAttributes.Builder builder = new OracleUserAttributes.Builder();
         builder.setUserName(uid.getUidValue());
         new OracleAttributesReader(cfg.getConnectorMessages()).readAlterAttributes(map, builder);
@@ -49,7 +60,7 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
             String alterSQL = new OracleCreateOrAlterStBuilder(cfg.getCSSetup(),cfg.getConnectorMessages()).buildAlterUserSt(caAttributes, userRecord);
             
             List<String> grantRevokeSQL = new ArrayList<String>();
-            Attribute aRoles = AttributeUtil.find(ORACLE_ROLES_ATTR_NAME, attrs);
+            Attribute aRoles = AttributeUtil.find(OracleConstants.ORACLE_ROLES_ATTR_NAME, attrs);
             //If we have null or empty roles attribute, revoke all roles
             if(aRoles != null){
 				List<String> roles = OracleConnectorHelper.castList(aRoles, String.class);
@@ -67,7 +78,7 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
 	            }
             }
             
-            Attribute aPrivileges = AttributeUtil.find(ORACLE_PRIVS_ATTR_NAME, attrs);
+            Attribute aPrivileges = AttributeUtil.find(OracleConstants.ORACLE_PRIVS_ATTR_NAME, attrs);
             //If we have null or empty privileges attribute, revoke all privileges
             if(aPrivileges != null){
 				List<String> privileges = OracleConnectorHelper.castList(aPrivileges, String.class);
@@ -95,6 +106,7 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
             	SQLUtil.executeUpdateStatement(adminConn, sql);
             }
             adminConn.commit();
+            log.info("User updated : [{0}]", uid.getUidValue());
             return uid;
         }catch(Exception e){
             SQLUtil.rollbackQuietly(adminConn);
@@ -113,8 +125,8 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
     public Uid addAttributeValues(ObjectClass objclass, Uid uid, Set<Attribute> valuesToAdd, OperationOptions options) {
         checkAddAttributes(valuesToAdd);
     	checkUserExist(uid.getUidValue());
-        List<String> roles = OracleConnectorHelper.castList(AttributeUtil.find(ORACLE_ROLES_ATTR_NAME, valuesToAdd), String.class);
-        List<String> privileges = OracleConnectorHelper.castList(AttributeUtil.find(ORACLE_PRIVS_ATTR_NAME, valuesToAdd), String.class);
+        List<String> roles = OracleConnectorHelper.castList(AttributeUtil.find(OracleConstants.ORACLE_ROLES_ATTR_NAME, valuesToAdd), String.class);
+        List<String> privileges = OracleConnectorHelper.castList(AttributeUtil.find(OracleConstants.ORACLE_PRIVS_ATTR_NAME, valuesToAdd), String.class);
         List<String> grantRolesStatements = new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantRolesSQL(uid.getUidValue(), roles);
         List<String> grantPrivilegesStatements = new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantPrivilegesSQL(uid.getUidValue(), privileges);
         try{
@@ -137,8 +149,8 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
     public Uid removeAttributeValues(ObjectClass objclass, Uid uid, Set<Attribute> valuesToRemove, OperationOptions options) {
     	checkRemoveAttributes(valuesToRemove);
         checkUserExist(uid.getUidValue());
-        List<String> roles = OracleConnectorHelper.castList(AttributeUtil.find(ORACLE_ROLES_ATTR_NAME, valuesToRemove), String.class);
-        List<String> privileges = OracleConnectorHelper.castList(AttributeUtil.find(ORACLE_PRIVS_ATTR_NAME, valuesToRemove), String.class);
+        List<String> roles = OracleConnectorHelper.castList(AttributeUtil.find(OracleConstants.ORACLE_ROLES_ATTR_NAME, valuesToRemove), String.class);
+        List<String> privileges = OracleConnectorHelper.castList(AttributeUtil.find(OracleConstants.ORACLE_PRIVS_ATTR_NAME, valuesToRemove), String.class);
         List<String> revokeRolesStatements = new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokeRoles(uid.getUidValue(), roles);
         List<String> revokePrivilegesStatements = new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokePrivileges(uid.getUidValue(), privileges);
         try{
@@ -159,9 +171,10 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
     private void checkUpdateAttributes(Map<String, Attribute> map) {
     	LocalizedAssert la = new LocalizedAssert(cfg.getConnectorMessages());
 		for(Attribute attr : map.values()){
-			if(attr.is(Name.NAME)){
+			if(!VALIDUPDATEATTRIBUTES.contains(attr.getName())){
+				throw new IllegalArgumentException(MessageFormat.format("Attribute [{0}] not supported for update",attr.getName()));
 			}
-			else if(attr.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
+			if(attr.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
 				la.assertNotNull(AttributeUtil.getBooleanValue(attr), OperationalAttributes.PASSWORD_EXPIRED_NAME);
 				//we can 'unexpire' password only if new password is provided
 				//We cannot use password equals to name
@@ -172,39 +185,14 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
 					}
 				}
 			}
-			else if(attr.is(OperationalAttributes.ENABLE_NAME)){
-			}
-			else if(attr.is(OperationalAttributes.PASSWORD_NAME)){
-			}
-			else if(attr.is(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME)){
-			}
-			else if(attr.is(OracleConnector.ORACLE_DEF_TS_ATTR_NAME)){
-			}
-			else if(attr.is(OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME)){
-			}
-			else if(attr.is(OracleConnector.ORACLE_GLOBAL_ATTR_NAME)){
-			}
-			else if(attr.is(OracleConnector.ORACLE_PROFILE_ATTR_NAME)){
-			}
-			else if(attr.is(OracleConnector.ORACLE_TEMP_TS_ATTR_NAME)){
-			}
-			else if(attr.is(OracleConnector.ORACLE_TEMP_TS_QUOTA_ATTR_NAME)){
-			}
-			else if(attr.is(OracleConnector.ORACLE_PRIVS_ATTR_NAME)){
-			}
-			else if(attr.is(OracleConnector.ORACLE_ROLES_ATTR_NAME)){
-			}
-			else{
-				throw new IllegalArgumentException("Illegal argument " + attr);
-			}
 		}
 	}
 
     private void checkAddAttributes(Set<Attribute> attrs) {
 		for(Attribute attr : attrs){
-			if(attr.is(OracleConnector.ORACLE_PRIVS_ATTR_NAME)){
+			if(attr.is(OracleConstants.ORACLE_PRIVS_ATTR_NAME)){
 			}
-			else if(attr.is(OracleConnector.ORACLE_ROLES_ATTR_NAME)){
+			else if(attr.is(OracleConstants.ORACLE_ROLES_ATTR_NAME)){
 			}
 			else{
 				throw new IllegalArgumentException("Illegal argument " + attr);
@@ -214,9 +202,9 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
     
     private void checkRemoveAttributes(Set<Attribute> attrs) {
 		for(Attribute attr : attrs){
-			if(attr.is(OracleConnector.ORACLE_PRIVS_ATTR_NAME)){
+			if(attr.is(OracleConstants.ORACLE_PRIVS_ATTR_NAME)){
 			}
-			else if(attr.is(OracleConnector.ORACLE_ROLES_ATTR_NAME)){
+			else if(attr.is(OracleConstants.ORACLE_ROLES_ATTR_NAME)){
 			}
 			else{
 				throw new IllegalArgumentException("Illegal argument " + attr);

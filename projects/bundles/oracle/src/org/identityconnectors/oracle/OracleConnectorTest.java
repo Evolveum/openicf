@@ -77,7 +77,7 @@ public class OracleConnectorTest extends OracleConnectorAbstractTest{
     	assertNotNull(schema);
     	ObjectClassInfo account = schema.findObjectClassInfo(ObjectClass.ACCOUNT_NAME);
     	assertNotNull(account);
-    	Set<String> attributeNames = new HashSet<String>(OracleConnector.ALL_ATTRIBUTE_NAMES);
+    	Set<String> attributeNames = new HashSet<String>(OracleConstants.ALL_ATTRIBUTE_NAMES);
     	for(AttributeInfo info : account.getAttributeInfo()){
     		for(Iterator<String> i = attributeNames.iterator();i.hasNext();){
     			if(info.is(i.next())){

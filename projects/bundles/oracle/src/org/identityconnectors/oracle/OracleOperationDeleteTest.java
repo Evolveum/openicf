@@ -31,7 +31,7 @@ public class OracleOperationDeleteTest extends OracleConnectorAbstractTest {
             catch(UnknownUidException e){}
         }
         catch(UnknownUidException e){}
-        Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
+        Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL);
         Attribute name = new Name(newUser);
         Attribute password = AttributeBuilder.buildPassword("password".toCharArray());
         Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,password), null);

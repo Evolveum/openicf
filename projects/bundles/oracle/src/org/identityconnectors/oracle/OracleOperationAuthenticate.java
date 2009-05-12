@@ -26,12 +26,15 @@ final class OracleOperationAuthenticate extends AbstractOracleOperation implemen
         OracleConnector.checkObjectClass(objectClass, cfg.getConnectorMessages());
         new LocalizedAssert(cfg.getConnectorMessages()).assertNotBlank(username, "username");
         new LocalizedAssert(cfg.getConnectorMessages()).assertNotNull(password, "password");
+        log.info("Authenticate user: [{0}]", username);
         try{
             final Connection conn = cfg.createUserConnection(username, password);
+            log.info("User authenticated : [{0}]",username);
             SQLUtil.closeQuietly(conn);
             return new Uid(username);
         }
         catch(RuntimeException e){
+        	log.info("Authentication of user [{0}] failed",username);
             if(e.getCause() instanceof SQLException){
                 SQLException sqlE = (SQLException) e.getCause();
                 if("72000".equals(sqlE.getSQLState()) && 1017 == sqlE.getErrorCode()){

@@ -3,9 +3,10 @@
  */
 package org.identityconnectors.oracle;
 
+import static org.identityconnectors.oracle.OracleMessages.CONNECTOR_DISPLAY;
+
 import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.*;
+import java.util.Set;
 
 import org.identityconnectors.common.Pair;
 import org.identityconnectors.common.logging.Log;
@@ -13,12 +14,26 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.objects.*;
-import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.ConnectorMessages;
+import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.ResultsHandler;
+import org.identityconnectors.framework.common.objects.Schema;
+import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
-import org.identityconnectors.framework.spi.*;
-import org.identityconnectors.framework.spi.operations.*;
-import static org.identityconnectors.oracle.OracleMessages.*;
+import org.identityconnectors.framework.spi.AttributeNormalizer;
+import org.identityconnectors.framework.spi.Configuration;
+import org.identityconnectors.framework.spi.ConnectorClass;
+import org.identityconnectors.framework.spi.PoolableConnector;
+import org.identityconnectors.framework.spi.operations.AuthenticateOp;
+import org.identityconnectors.framework.spi.operations.CreateOp;
+import org.identityconnectors.framework.spi.operations.DeleteOp;
+import org.identityconnectors.framework.spi.operations.SchemaOp;
+import org.identityconnectors.framework.spi.operations.SearchOp;
+import org.identityconnectors.framework.spi.operations.TestOp;
+import org.identityconnectors.framework.spi.operations.UpdateAttributeValuesOp;
+import org.identityconnectors.framework.spi.operations.UpdateOp;
 
 /**
  * Implementation of Oracle connector. It just holds common oracle constants and delegates SPI calls to AbstractOracleOperation subclasses
@@ -31,51 +46,12 @@ import static org.identityconnectors.oracle.OracleMessages.*;
 public final class OracleConnector implements PoolableConnector, AuthenticateOp,
 		CreateOp, DeleteOp, UpdateOp, UpdateAttributeValuesOp,
 		SearchOp<Pair<String, FilterWhereBuilder>>, SchemaOp,TestOp, AttributeNormalizer {
+    
+	private final static Log log = Log.getLog(OracleConnector.class);
+    
     private Connection adminConn;
     private OracleConfiguration cfg;
     private Schema schema;
-    private final static Log log = Log.getLog(OracleConnector.class);
-    
-    static final String ORACLE_AUTHENTICATION_ATTR_NAME = "oracleAuthentication";
-    static final String ORACLE_GLOBAL_ATTR_NAME = "oracleGlobalName";
-    static final String ORACLE_ROLES_ATTR_NAME = "oracleRoles";
-    static final String ORACLE_PRIVS_ATTR_NAME = "oraclePrivs";
-    static final String ORACLE_PROFILE_ATTR_NAME = "oracleProfile";
-    static final String ORACLE_DEF_TS_ATTR_NAME = "oracleDefaultTS";
-    static final String ORACLE_TEMP_TS_ATTR_NAME = "oracleTempTS";
-    static final String ORACLE_DEF_TS_QUOTA_ATTR_NAME = "oracleDefaultTSQuota";
-    static final String ORACLE_TEMP_TS_QUOTA_ATTR_NAME = "oracleTempTSQuota";
-    
-    static final String ORACLE_AUTH_LOCAL = "LOCAL";
-    static final String ORACLE_AUTH_EXTERNAL = "EXTERNAL";
-    static final String ORACLE_AUTH_GLOBAL = "GLOBAL";
-    static final String NO_CASCADE = "noCascade";
-    
-    private static final Map<String,OracleUserAttributeCS> attributeMapping = new HashMap<String, OracleUserAttributeCS>();
-    static final Collection<String> ALL_ATTRIBUTE_NAMES;
-    static {
-        attributeMapping.put(Name.NAME, OracleUserAttributeCS.USER);
-        attributeMapping.put(Uid.NAME, OracleUserAttributeCS.USER);
-        attributeMapping.put(ORACLE_GLOBAL_ATTR_NAME, OracleUserAttributeCS.GLOBAL_NAME);
-        attributeMapping.put(ORACLE_ROLES_ATTR_NAME, OracleUserAttributeCS.ROLE);
-        attributeMapping.put(ORACLE_PRIVS_ATTR_NAME, OracleUserAttributeCS.PRIVILEGE);
-        attributeMapping.put(ORACLE_PROFILE_ATTR_NAME, OracleUserAttributeCS.PROFILE);
-        attributeMapping.put(ORACLE_DEF_TS_ATTR_NAME, OracleUserAttributeCS.DEF_TABLESPACE);
-        attributeMapping.put(ORACLE_TEMP_TS_ATTR_NAME, OracleUserAttributeCS.TEMP_TABLESPACE);
-        
-        Collection<String> tmp = new HashSet<String>();
-        tmp.addAll(Arrays.asList(
-				ORACLE_AUTHENTICATION_ATTR_NAME, ORACLE_GLOBAL_ATTR_NAME,
-				ORACLE_ROLES_ATTR_NAME, ORACLE_PRIVS_ATTR_NAME,
-				ORACLE_PROFILE_ATTR_NAME, ORACLE_DEF_TS_ATTR_NAME,
-				ORACLE_TEMP_TS_ATTR_NAME, ORACLE_DEF_TS_QUOTA_ATTR_NAME,
-				ORACLE_TEMP_TS_QUOTA_ATTR_NAME,
-				OperationalAttributes.PASSWORD_EXPIRED_NAME,OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,
-				OperationalAttributes.ENABLE_NAME,OperationalAttributes.DISABLE_DATE_NAME,
-				Name.NAME,OperationalAttributes.PASSWORD_NAME
-				));
-        ALL_ATTRIBUTE_NAMES = Collections.unmodifiableCollection(tmp);
-    }
     
     
     public void checkAlive() {
@@ -85,6 +61,9 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
 
     public void dispose() {
         SQLUtil.closeQuietly(adminConn);
+        adminConn = null;
+        cfg = null;
+        schema = null;
     }
 
     public OracleConfiguration getConfiguration() {
@@ -133,33 +112,12 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
     
     static void checkObjectClass(ObjectClass objectClass,ConnectorMessages messages){
         if(!ObjectClass.ACCOUNT.equals(objectClass)){
-            throw new IllegalArgumentException("Invalid obejct class");
+            throw new IllegalArgumentException("Invalid object class");
         }
     }
 
     public Attribute normalizeAttribute(ObjectClass oclass, Attribute attribute) {
-    	if(attribute == null){
-    		return null;
-    	}
-        String name = attribute.getName();
-        final OracleUserAttributeCS oracleUserAttribute = attributeMapping.get(name);
-        if(oracleUserAttribute == null){
-            return attribute;
-        }
-        List<Object> values = new ArrayList<Object>();
-        if(attribute.getValue() == null){
-        	return attribute;
-        }
-        for(Object o : attribute.getValue()){
-            if(o instanceof String){
-                o = cfg.getCSSetup().normalizeToken(oracleUserAttribute, (String) o);
-            }
-            else if(o instanceof GuardedString){
-            	o = cfg.getCSSetup().normalizeToken(oracleUserAttribute, (GuardedString) o);
-            }
-            values.add(o);
-        }
-        return AttributeBuilder.build(name,values);
+    	return new OracleAttributeNormalizer(cfg).normalizeAttribute(oclass, attribute);
     }
     
     public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
@@ -186,38 +144,7 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
 		if(schema != null){
 			return schema;
 		}
-		String dbVersion = null;
-		try{
-			dbVersion = adminConn.getMetaData().getDatabaseProductVersion();
-		}
-		catch(SQLException e){
-			throw new ConnectorException("Cannot resolve getMetaData().getDatabaseProductVersion()",e);
-		}
-		boolean express = false;
-		if(dbVersion.contains("Express")){
-			express = true;
-		}
-        Set<AttributeInfo> attrInfoSet = new HashSet<AttributeInfo>();
-        attrInfoSet.add(AttributeInfoBuilder.build(Name.NAME,String.class,EnumSet.of(Flags.NOT_UPDATEABLE,Flags.REQUIRED)));
-        attrInfoSet.add(OperationalAttributeInfos.PASSWORD);
-        attrInfoSet.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
-        attrInfoSet.add(OperationalAttributeInfos.ENABLE);
-        attrInfoSet.add(AttributeInfoBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,Long.class,EnumSet.of(Flags.NOT_UPDATEABLE,Flags.NOT_CREATABLE)));
-        attrInfoSet.add(AttributeInfoBuilder.build(OperationalAttributes.DISABLE_DATE_NAME,Long.class,EnumSet.of(Flags.NOT_UPDATEABLE,Flags.NOT_CREATABLE)));
-        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_AUTHENTICATION_ATTR_NAME,String.class,EnumSet.of(Flags.REQUIRED)));
-        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_GLOBAL_ATTR_NAME,String.class,express ? EnumSet.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE) : null));
-        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_ROLES_ATTR_NAME,String.class,EnumSet.of(Flags.MULTIVALUED)));
-        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_PRIVS_ATTR_NAME,String.class,EnumSet.of(Flags.MULTIVALUED)));
-        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_PROFILE_ATTR_NAME,String.class));
-        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_DEF_TS_ATTR_NAME,String.class));
-        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_TEMP_TS_ATTR_NAME,String.class));
-        attrInfoSet.add(AttributeInfoBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,String.class));
-        attrInfoSet.add(AttributeInfoBuilder.build(
-				ORACLE_TEMP_TS_QUOTA_ATTR_NAME, String.class, express ? EnumSet
-						.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE) : null));
-        SchemaBuilder schemaBld = new SchemaBuilder(getClass());
-        schemaBld.defineObjectClass(ObjectClass.ACCOUNT_NAME, attrInfoSet);
-        schema =  schemaBld.build();
+		schema = new OracleOperationSchema(cfg, adminConn, log).schema();
         return schema;
 	}
 	

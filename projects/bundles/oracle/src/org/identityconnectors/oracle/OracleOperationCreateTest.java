@@ -13,7 +13,9 @@ import static org.identityconnectors.oracle.OracleUserAttributeCS.*;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 import org.identityconnectors.common.CollectionUtil;
@@ -79,7 +81,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
     @Test
     public void testCreateUserLocal() throws SQLException{
         //Test local authentication
-        Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
+        Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL);
         Attribute name = new Name(TEST_USER);
         GuardedString password = new GuardedString("hello".toCharArray());
         Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
@@ -113,7 +115,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         //Test external authentication
         Attribute name = new Name(TEST_USER);
         GuardedString password = new GuardedString("hello".toCharArray());
-        Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_EXTERNAL);
+        Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_EXTERNAL);
         try{
         	facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,AttributeBuilder.buildPassword(password)), null);
         	fail("Cannot set password for external authentication");
@@ -136,8 +138,8 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
     public void testCreateUserGlobal() throws SQLException{
         Attribute name = new Name(TEST_USER);
         GuardedString password = new GuardedString("hello".toCharArray());
-        Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_GLOBAL);
-        Attribute globalName = AttributeBuilder.build(OracleConnector.ORACLE_GLOBAL_ATTR_NAME, "global");
+        Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_GLOBAL);
+        Attribute globalName = AttributeBuilder.build(OracleConstants.ORACLE_GLOBAL_ATTR_NAME, "global");
         Uid uid = null;
         try{
         	uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,AttributeBuilder.buildPassword(password),globalName), null);
@@ -174,11 +176,11 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
      * @throws SQLException */
     @Test
     public void testCreateUserWithDefTableSpace() throws SQLException{
-        Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
+        Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL);
         Attribute name = new Name(TEST_USER);
         GuardedString password = new GuardedString("hello".toCharArray());
         Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
-        Attribute defaultTs =  AttributeBuilder.build(OracleConnector.ORACLE_DEF_TS_ATTR_NAME,findDefDefaultTS(connector.getAdminConnection()));
+        Attribute defaultTs =  AttributeBuilder.build(OracleConstants.ORACLE_DEF_TS_ATTR_NAME,findDefDefaultTS(connector.getAdminConnection()));
         Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute,defaultTs), null);
         assertNotNull(uid);
         assertEqualsIgnoreCase(TEST_USER, uid.getUidValue());
@@ -191,7 +193,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         
         //Now try to create with other tablespaces, if create is successfull, check whether it is correctly set
         for(String ts : findAllDefTS(connector.getAdminConnection())){
-        	defaultTs =  AttributeBuilder.build(OracleConnector.ORACLE_DEF_TS_ATTR_NAME,ts);
+        	defaultTs =  AttributeBuilder.build(OracleConstants.ORACLE_DEF_TS_ATTR_NAME,ts);
         	try{
         		uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute,defaultTs), null);
         	}
@@ -210,11 +212,11 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
      * @throws SQLException */
     @Test
     public void testCreateUserWithTempTableSpace() throws SQLException{
-        Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
+        Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL);
         Attribute name = new Name(TEST_USER);
         GuardedString password = new GuardedString("hello".toCharArray());
         Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
-        Attribute tempTs =  AttributeBuilder.build(OracleConnector.ORACLE_TEMP_TS_ATTR_NAME,findDefTempTS(connector.getAdminConnection()));
+        Attribute tempTs =  AttributeBuilder.build(OracleConstants.ORACLE_TEMP_TS_ATTR_NAME,findDefTempTS(connector.getAdminConnection()));
         Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute,tempTs), null);
         assertNotNull(uid);
         assertEqualsIgnoreCase(TEST_USER, uid.getUidValue());
@@ -227,7 +229,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         
         //Now try to create with other temp tablespaces, if create is successfull, check whether it is correctly set
         for(String ts : findAllTempTS(connector.getAdminConnection())){
-        	tempTs =  AttributeBuilder.build(OracleConnector.ORACLE_TEMP_TS_ATTR_NAME,ts);
+        	tempTs =  AttributeBuilder.build(OracleConstants.ORACLE_TEMP_TS_ATTR_NAME,ts);
         	try{
         		uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute,tempTs), null);
         	}
@@ -246,17 +248,17 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
     /** Test setting of quota */
     @Test
     public void testCreateUserWithQuota() throws SQLException{
-        Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
+        Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL);
         Attribute name = new Name(TEST_USER);
         GuardedString password = new GuardedString("hello".toCharArray());
         Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
         String defTS = findDefDefaultTS(connector.getAdminConnection());
-		Attribute defaultTsAttr =  AttributeBuilder.build(OracleConnector.ORACLE_DEF_TS_ATTR_NAME,defTS);
+		Attribute defaultTsAttr =  AttributeBuilder.build(OracleConstants.ORACLE_DEF_TS_ATTR_NAME,defTS);
         
 		
     	
         //Add quotas for default ts
-        Attribute quota = AttributeBuilder.build(OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME, "66666");
+        Attribute quota = AttributeBuilder.build(OracleConstants.ORACLE_DEF_TS_QUOTA_ATTR_NAME, "66666");
         Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute,defaultTsAttr, quota), null);
         //Look at dba_ts_quotas table
         Long bytes = userReader.readUserTSQuota(uid.getUidValue(), defTS); 
@@ -264,7 +266,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         //other oracle versions can adjust real maxsize other way
         assertTrue("Max bytes must be greater than quota set",new Long("66666").compareTo(bytes) < 0);
         facade.delete(ObjectClass.ACCOUNT, uid, null);
-        quota = AttributeBuilder.build(OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME,"-1");
+        quota = AttributeBuilder.build(OracleConstants.ORACLE_DEF_TS_QUOTA_ATTR_NAME,"-1");
         uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute,defaultTsAttr, quota), null);
         bytes = userReader.readUserTSQuota(uid.getUidValue(), defTS);
         assertEquals("Quata max bytes must be -1 when set to unlimited",new Long("-1"),bytes);
@@ -301,11 +303,11 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         catch(SQLException e){
             fail(e.getMessage());
         }
-        Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
+        Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL);
         Attribute name = new Name(TEST_USER);
         GuardedString password = new GuardedString("hello".toCharArray());
         Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
-        Attribute profile = AttributeBuilder.build(OracleConnector.ORACLE_PROFILE_ATTR_NAME, profileName);
+        Attribute profile = AttributeBuilder.build(OracleConstants.ORACLE_PROFILE_ATTR_NAME, profileName);
         Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute,profile), null);
         assertNotNull(uid);
         assertEqualsIgnoreCase(TEST_USER, uid.getUidValue());
@@ -326,7 +328,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
      * @throws SQLException */
     @Test
     public void testCreateUserPasswordExpired() throws SQLException{
-        Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
+        Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL);
         Attribute name = new Name(TEST_USER);
         GuardedString password = new GuardedString("hello".toCharArray());
         Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
@@ -339,13 +341,19 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         assertEqualsIgnoreCase(TEST_USER, record.getUserName());
         assertNull(record.getExpireDate());
         assertEquals("EXPIRED",record.getStatus());
+        //Even if no password is set, default password will be set
+        facade.delete(ObjectClass.ACCOUNT, uid, null);
+        uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, expirePassword), null);
+        record = userReader.readUserRecord(uid.getUidValue());
+        assertNotNull(record);
+        assertEquals("EXPIRED",record.getStatus());
     }
     
     /** Test Create user locked/unlocked 
      * @throws SQLException */
     @Test
     public void testCreateUserLocked() throws SQLException{
-        Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
+        Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL);
         Attribute name = new Name(TEST_USER);
         GuardedString password = new GuardedString("hello".toCharArray());
         Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
@@ -372,7 +380,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
      */
     @Test
     public void testCreateWithRoles() throws SQLException{
-        Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
+        Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL);
         Attribute name = new Name(TEST_USER);
         GuardedString password = new GuardedString("hello".toCharArray());
         Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
@@ -384,7 +392,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
                             + cs.normalizeAndFormatToken(OracleUserAttributeCS.ROLE, role));
         }catch(SQLException e){}
         SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "create role " + cs.normalizeAndFormatToken(OracleUserAttributeCS.ROLE,role));
-        Attribute roles = AttributeBuilder.build(OracleConnector.ORACLE_ROLES_ATTR_NAME, Arrays.asList(role));
+        Attribute roles = AttributeBuilder.build(OracleConstants.ORACLE_ROLES_ATTR_NAME, Arrays.asList(role));
         Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute, roles), null);
         UserRecord record = userReader.readUserRecord(uid.getUidValue());
         assertNotNull(record);
@@ -400,7 +408,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
      */
 	@Test
     public void testCreateWithPrivileges() throws SQLException{
-        Attribute authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_LOCAL);
+        Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL);
         Attribute name = new Name(TEST_USER);
         GuardedString password = new GuardedString("hello".toCharArray());
         Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
@@ -409,7 +417,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         }
         catch(SQLException e){}
         SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create table mytable(id number)");
-        Attribute privileges = AttributeBuilder.build(OracleConnector.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION","SELECT ON MYTABLE");
+        Attribute privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION","SELECT ON MYTABLE");
         final Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute,privileges), null);
         UserRecord record = userReader.readUserRecord(uid.getUidValue());
         assertNotNull(record);
@@ -419,6 +427,42 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         Assert.assertThat(privRead, JUnitMatchers.hasItem("CREATE SESSION"));
         Assert.assertThat(privRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUserOwner() + ".MYTABLE"));
     }
-    
-
+	
+	/** Test that create will fail on any not known attribute */
+	@Test
+	public void testValidCreateAttributes(){
+        Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL);
+        Attribute name = new Name(TEST_USER);
+        GuardedString password = new GuardedString("hello".toCharArray());
+        Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
+        Attribute privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION");
+        Attribute enabled = AttributeBuilder.build(OperationalAttributes.ENABLE_NAME,Boolean.TRUE);
+        Attribute expirePassword = AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME,Boolean.TRUE);
+        Set<Attribute> attrs = new HashSet<Attribute>(Arrays.asList(authentication,name,passwordAttribute,
+        		privileges,enabled,expirePassword));
+		facade.create(ObjectClass.ACCOUNT, attrs, null);
+		facade.delete(ObjectClass.ACCOUNT, new Uid(TEST_USER), null);
+		//Now add some dummy attribute
+		Set<Attribute> badAttrs = new HashSet<Attribute>(attrs); 
+		badAttrs.add(AttributeBuilder.buildDisableDate(0));
+		try{
+			facade.create(ObjectClass.ACCOUNT, badAttrs, null);
+			fail("Disabled date should not be supported");
+		}
+		catch(IllegalArgumentException e){}
+		badAttrs = new HashSet<Attribute>(attrs); 
+		badAttrs.add(AttributeBuilder.buildPasswordExpirationDate(0));
+		try{
+			facade.create(ObjectClass.ACCOUNT, badAttrs, null);
+			fail("Expired password date should not be supported");
+		}
+		catch(IllegalArgumentException e){}
+		badAttrs = new HashSet<Attribute>(attrs); 
+		badAttrs.add(AttributeBuilder.build("dummy","dummyValue"));
+		try{
+			facade.create(ObjectClass.ACCOUNT, badAttrs, null);
+			fail("Dummy attribute should not be supported");
+		}
+		catch(IllegalArgumentException e){}
+	}
 }

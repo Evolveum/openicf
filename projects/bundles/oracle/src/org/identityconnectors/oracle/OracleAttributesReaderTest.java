@@ -3,15 +3,6 @@
  */
 package org.identityconnectors.oracle;
 
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_AUTH_GLOBAL;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_AUTH_LOCAL;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_DEF_TS_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_DEF_TS_QUOTA_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_GLOBAL_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_PROFILE_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_TEMP_TS_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleConnector.ORACLE_TEMP_TS_QUOTA_ATTR_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -42,7 +33,7 @@ public class OracleAttributesReaderTest {
         OracleUserAttributes.Builder caAttributes = new OracleUserAttributes.Builder();
         caAttributes.setUserName("testUser");
         Set<Attribute> attributes = new HashSet<Attribute>();
-        attributes.add(AttributeBuilder.build(ORACLE_AUTHENTICATION_ATTR_NAME, ORACLE_AUTH_LOCAL));
+        attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL));
         attributes.add(AttributeBuilder.buildPassword("myPassword".toCharArray()));
         reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
         Assert.assertEquals(OracleAuthentication.LOCAL, caAttributes.getAuth());
@@ -59,7 +50,7 @@ public class OracleAttributesReaderTest {
         //Test for failures
         attributes.clear();
         reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
-        attributes.add(AttributeBuilder.build(ORACLE_AUTHENTICATION_ATTR_NAME, "invalid authentication"));
+        attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, "invalid authentication"));
         try{
         	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
             fail("Must fail for invalid authentication");
@@ -67,7 +58,7 @@ public class OracleAttributesReaderTest {
         catch(RuntimeException e){}
 
         attributes.clear();
-        attributes.add(AttributeBuilder.build(ORACLE_AUTHENTICATION_ATTR_NAME, ORACLE_AUTH_GLOBAL));
+        attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_GLOBAL));
         try{
         	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
             fail("Must fail for missing global name");
@@ -75,8 +66,8 @@ public class OracleAttributesReaderTest {
         catch(RuntimeException e){}
         
         attributes.clear();
-        attributes.add(AttributeBuilder.build(ORACLE_AUTHENTICATION_ATTR_NAME, ORACLE_AUTH_GLOBAL));
-        attributes.add(AttributeBuilder.build(ORACLE_GLOBAL_ATTR_NAME, ""));
+        attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_GLOBAL));
+        attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_GLOBAL_ATTR_NAME, ""));
 
         try{
         	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
@@ -97,12 +88,12 @@ public class OracleAttributesReaderTest {
         caAttributes.setUserName("testUser");
         Set<Attribute> attributes = new HashSet<Attribute>();
         attributes.add(AttributeBuilder.buildPasswordExpired(true));
-        attributes.add(AttributeBuilder.build(ORACLE_DEF_TS_ATTR_NAME, "defts"));
-        attributes.add(AttributeBuilder.build(ORACLE_TEMP_TS_ATTR_NAME, "tempts"));
-        attributes.add(AttributeBuilder.build(ORACLE_PROFILE_ATTR_NAME, "myprofile"));
+        attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_DEF_TS_ATTR_NAME, "defts"));
+        attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_TEMP_TS_ATTR_NAME, "tempts"));
+        attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_PROFILE_ATTR_NAME, "myprofile"));
         attributes.add(AttributeBuilder.buildEnabled(true));
-        attributes.add(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME,"30M"));
-        attributes.add(AttributeBuilder.build(ORACLE_TEMP_TS_QUOTA_ATTR_NAME,"100M"));
+        attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_DEF_TS_QUOTA_ATTR_NAME,"30M"));
+        attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_TEMP_TS_QUOTA_ATTR_NAME,"100M"));
         reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
         Assert.assertEquals("defts", caAttributes.getDefaultTableSpace());
         Assert.assertEquals(true, caAttributes.getExpirePassword());
@@ -131,7 +122,7 @@ public class OracleAttributesReaderTest {
         catch(RuntimeException e){}
         
         attributes.clear();
-        attributes.add(AttributeBuilder.build(ORACLE_DEF_TS_ATTR_NAME));
+        attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_DEF_TS_ATTR_NAME));
         try{
         	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
         	fail("Must fail for null ORACLE_DEF_TS_ATTR_NAME");
@@ -139,7 +130,7 @@ public class OracleAttributesReaderTest {
         catch(RuntimeException e){}
         
         attributes.clear();
-        attributes.add(AttributeBuilder.build(ORACLE_DEF_TS_ATTR_NAME,""));
+        attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_DEF_TS_ATTR_NAME,""));
         try{
         	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
         	fail("Must fail for empty ORACLE_DEF_TS_ATTR_NAME");
@@ -147,7 +138,7 @@ public class OracleAttributesReaderTest {
         catch(RuntimeException e){}
         
         attributes = new HashSet<Attribute>();
-        attributes.add(AttributeBuilder.build(ORACLE_TEMP_TS_ATTR_NAME));
+        attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_TEMP_TS_ATTR_NAME));
         try{
         	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
         	fail("Must fail for null ORACLE_TEMP_TS_ATTR_NAME");
@@ -155,7 +146,7 @@ public class OracleAttributesReaderTest {
         catch(RuntimeException e){}
         
         attributes = new HashSet<Attribute>();
-        attributes.add(AttributeBuilder.build(ORACLE_TEMP_TS_ATTR_NAME,""));
+        attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_TEMP_TS_ATTR_NAME,""));
         try{
         	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
         	fail("Must fail for empty ORACLE_TEMP_TS_ATTR_NAME");
@@ -163,7 +154,7 @@ public class OracleAttributesReaderTest {
         catch(RuntimeException e){}
         
         attributes = new HashSet<Attribute>();
-        attributes.add(AttributeBuilder.build(ORACLE_PROFILE_ATTR_NAME));
+        attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_PROFILE_ATTR_NAME));
         try{
         	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
         	fail("Must fail for null ORACLE_PROFILE_ATTR_NAME");
@@ -171,7 +162,7 @@ public class OracleAttributesReaderTest {
         catch(RuntimeException e){}
         
         attributes = new HashSet<Attribute>();
-        attributes.add(AttributeBuilder.build(ORACLE_PROFILE_ATTR_NAME,""));
+        attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_PROFILE_ATTR_NAME,""));
         try{
         	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
         	fail("Must fail for empty ORACLE_PROFILE_ATTR_NAME");
@@ -179,12 +170,12 @@ public class OracleAttributesReaderTest {
         catch(RuntimeException e){}
         
         attributes = new HashSet<Attribute>();
-        attributes.add(AttributeBuilder.build(ORACLE_DEF_TS_QUOTA_ATTR_NAME));
+        attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_DEF_TS_QUOTA_ATTR_NAME));
        	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
        	assertEquals("Must set 0 for null quota","0",caAttributes.getDefaultTSQuota());
         
        	attributes = new HashSet<Attribute>();
-        attributes.add(AttributeBuilder.build(ORACLE_TEMP_TS_QUOTA_ATTR_NAME,""));
+        attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_TEMP_TS_QUOTA_ATTR_NAME,""));
        	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
        	assertEquals("Must set 0 for null quota","0",caAttributes.getTempTSQuota());
         
@@ -198,7 +189,7 @@ public class OracleAttributesReaderTest {
         OracleUserAttributes.Builder caAttributes = new OracleUserAttributes.Builder();
         caAttributes.setUserName("testUser");
         Set<Attribute> attributes = new HashSet<Attribute>();
-        attributes.add(AttributeBuilder.build(ORACLE_AUTHENTICATION_ATTR_NAME, ORACLE_AUTH_LOCAL));
+        attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL));
         attributes.add(AttributeBuilder.buildPassword("myPassword".toCharArray()));
         reader.readAlterAttributes(AttributeUtil.toMap(attributes), caAttributes);
         Assert.assertEquals(OracleAuthentication.LOCAL, caAttributes.getAuth());
