@@ -30,7 +30,9 @@ import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisHelper;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class SolarisTest {
@@ -73,6 +75,15 @@ public class SolarisTest {
          * the output contains even the optional welcome message on Solaris.
          */
         Assert.assertTrue(output.contains(message));
+    }
+    
+    @Test
+    public void testDummy1() {
+        Assume.assumeTrue(false);
+    }
+    
+    @Test @Ignore
+    public void testDummyIgnored() {
     }
     
     /* ************* AUXILIARY METHODS *********** */
