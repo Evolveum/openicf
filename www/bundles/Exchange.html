@@ -1,0 +1,56 @@
+<HTML>
+<HEAD>
+    <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=iso-8859-1">
+    <TITLE>Active Directory Connector</TITLE>
+</HEAD>
+<DIV id="projecthome" class="app">
+    <H1>Exchange Connector Overview</H1>    
+    <p>
+	The Exchange Connector supports provisioning to Windows servers running Active Directory and MS Exchange Server 2007. In fact, the Exchange Connector
+	is and extension of the <a href="ActiveDirectory.html">Active Directory connector</a>.
+    <h3>Bundle Information</h3>
+    <ul>  
+       <li><b>Latest stable release:</b> <a href="https://identityconnectors.dev.java.net/downloads.html#Bundles">1.0.4559</a></li>
+	   <li><b>Platform:</b> .NET</li>
+       <li><b>3rd-party libraries required:</b> None</li>
+       <li><b>Other dependencies: MS PowerShell 1.0/MS Exchange 2007</b></li>
+       <li><b>Release notes:</b></li>
+    </ul>
+</p>
+<h3>Version Information</h3>
+     <table border="1">
+     	<tr><th>Connector Version</th><th>Framework Version</th><th>Supported Resource Version(s)</th></tr>
+     	<tr>
+     	    <td><a href="https://identityconnectors.dev.java.net/downloads.html#Bundles">1.0</a></td>
+     	    <td><a href="https://identityconnectors.dev.java.net/downloads.html#Framework">1.0</a></td>
+     	    <td><ul><li>Windows Server 2003</li><li>Windows Server 2008</li><li>MS Exchange Server 2007</li></ul></td>
+     	</tr>
+     	<!-- Add later versions here -->
+     </table>
+    <p><b>Note:</b> The "Framework Version" listed is the <b><i>minimum</i></b> required framework version for that version of
+    the connector. Newer framework versions are backwards compatible and will support previous connectors.</p>
+<h3>Configuration Properties</h3>
+<p>
+The properties are same as for the <a href="ActiveDirectory.html">Active Directory connector</a>.
+</p>
+<h3>Schema and Supported Features</h3>
+<p>
+The following lists all explicitly supported attributes in the schema by Exchange Connector, it expands the attributes supported by <a href="ActiveDirectory.html">Active Directory connector</a>.  Many attributes beyond these can be set as well.  Unless othewise noted, all attributes are Createable, Updateable, Readable, and Single Value
+</p>
+<p>
+For ObjectClass ACCOUNT, the following additional attributes are supported:
+</p>
+<p>
+<li><b>RecipientType</b> (String) : REQUIRED (possible values: User, MailUser, UserMailbox)
+<li><b>ExternalEmailAddress</b> (String) : MULTIVALUE
+<li><b>Database</b> (String) : 
+</p>
+
+<p>
+The Exchange Connector supports the same operations as <a href="ActiveDirectory.html">Active Directory connector</a>.
+</p>
+<h3>Documentation and Source Code</h3>
+<p>The javadoc for this bundle is included in the zip file when you download the connector. The source code can be found under the <a href="https://identityconnectors.dev.java.net/source/browse/identityconnectors/">Subversion</a>
+section of the IdentityConnectors website.</p>
+</DIV>
+</HTML>
