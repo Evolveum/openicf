@@ -2033,6 +2033,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                 SyncDeltaBuilder builder = new SyncDeltaBuilder();
                 builder.DeltaType=((SyncDeltaType)decoder.ReadObjectField("SyncDeltaType",typeof(SyncDeltaType),null));
                 builder.Token=((SyncToken)decoder.ReadObjectField("SyncToken",typeof(SyncToken),null));
+                builder.PreviousUid=((Uid)decoder.ReadObjectField("PreviousUid",typeof(Uid),null));
                 builder.Uid=((Uid)decoder.ReadObjectField("Uid",typeof(Uid),null));
                 builder.Object=((ConnectorObject)decoder.ReadObjectField("ConnectorObject",typeof(ConnectorObject),null));
                 return builder.Build();
@@ -2042,6 +2043,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                 SyncDelta val = (SyncDelta)obj;
                 encoder.WriteObjectField("SyncDeltaType", val.DeltaType,true);
                 encoder.WriteObjectField("SyncToken", val.Token,true);
+                encoder.WriteObjectField("PreviousUid", val.PreviousUid,true);
                 encoder.WriteObjectField("Uid", val.Uid,true);
                 encoder.WriteObjectField("ConnectorObject", val.Object, true);
             }

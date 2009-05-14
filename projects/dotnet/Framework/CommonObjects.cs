@@ -3404,6 +3404,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
     public sealed class SyncDelta {
         private readonly SyncToken _token;
         private readonly SyncDeltaType _deltaType;
+        private readonly Uid _previousUid;
         private readonly Uid _uid;
         private readonly ConnectorObject _object;
     
@@ -3419,12 +3420,17 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          *            The object that has changed. May be null for delete.
          */
         internal SyncDelta(SyncToken token, SyncDeltaType deltaType,
-                Uid uid,
+                Uid previousUid, Uid uid,
                 ConnectorObject obj) {
             Assertions.NullCheck(token, "token");
             Assertions.NullCheck(deltaType, "deltaType");
             Assertions.NullCheck(uid, "uid");
             
+            //do not allow previous Uid for anything else than create or update
+            if ( previousUid != null && deltaType != SyncDeltaType.CREATE_OR_UPDATE) {
+                throw new ArgumentException("The previous Uid can only be specified for create or update.");
+            }
+
             //only allow null object for delete
             if ( obj == null && 
                  deltaType != SyncDeltaType.DELETE) {
@@ -3441,9 +3447,25 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
     
             _token = token;
             _deltaType = deltaType;
+            _previousUid    = previousUid;
             _uid    = uid;
             _object = obj;
     
+        }
+
+        /**
+         * If the change described by this <code>SyncDelta</code> modified the
+         * object's Uid, this method returns the Uid before the change. Not
+         * all resources can determine the previous Uid, so this method can
+         * return <code>null</code>.
+         * @return the previous Uid or null if it could not be determined 
+         *         or the change did not modify the Uid.
+         */
+        public Uid PreviousUid
+        {
+            get {
+                return _previousUid;
+            }
         }
     
         /**
@@ -3496,6 +3518,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             IDictionary<String,Object> values = new Dictionary<String, Object>();
             values["Token"] = _token;
             values["DeltaType"] = _deltaType;
+            values["PreviousUid"] = _previousUid;
             values["Uid"] = _uid;
             values["Object"] = _object;
             return values.ToString();
@@ -3512,6 +3535,14 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
                     return false;
                 }
                 if (!_deltaType.Equals(other._deltaType)) {
+                    return false;
+                }
+                if (_previousUid == null) {
+                    if ( other._previousUid != null ) {
+                        return false;
+                    }
+                }
+                else if (!_previousUid.Equals(other._previousUid)) {
                     return false;
                 }
                 if (!_uid.Equals(other._uid)) {
@@ -3539,6 +3570,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
     public sealed class SyncDeltaBuilder {
         private SyncToken _token;
         private SyncDeltaType _deltaType;
+        private Uid _previousUid;
         private Uid _uid;
         private ConnectorObject _object;
     
@@ -3557,8 +3589,9 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         public SyncDeltaBuilder(SyncDelta delta) {
             _token = delta.Token;
             _deltaType = delta.DeltaType;
-            _object = delta.Object;
+            _previousUid = delta.PreviousUid;
             _uid = delta.Uid;
+            _object = delta.Object;
         }
             
         /**
@@ -3586,6 +3619,20 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
             }
             set {
                 _deltaType = value;
+            }
+        }
+
+        /**
+         * Returns the <code>Uid</code> before the change.
+         * 
+         * @return the <code>Uid</code> before the change.
+         */
+        public Uid PreviousUid {
+            get {
+                return _previousUid;
+            }
+            set {
+                _previousUid = value;
             }
         }
         
@@ -3634,7 +3681,7 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
          * </ol>
          */
         public SyncDelta Build() {
-            return new SyncDelta(_token, _deltaType, _uid, _object);
+            return new SyncDelta(_token, _deltaType, _previousUid, _uid, _object);
         }
     }
     #endregion

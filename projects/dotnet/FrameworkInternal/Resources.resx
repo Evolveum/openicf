@@ -432,7 +432,10 @@ OperationOptionInfo | SyncDeltaType | SyncToken | SyncDelta | QualifiedUid
 &gt;
 
 &lt;!ELEMENT SyncToken (value)&gt;
-&lt;!ELEMENT SyncDelta (SyncDeltaType,SyncToken,Uid,ConnectorObject?)&gt;
+&lt;!ELEMENT SyncDelta (SyncDeltaType,SyncToken,PreviousUid,Uid,ConnectorObject?)&gt;
+
+&lt;!ELEMENT PreviousUid (#PCDATA)&gt; 
+
 &lt;!ELEMENT QualifiedUid (ObjectClass,Uid)&gt;
 
 
