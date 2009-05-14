@@ -1037,6 +1037,11 @@ public class VmsConnectorTests {
                 builder.addAttribute(password);
                 ConnectorObject newUser = builder.build();
                 info.update(newUser.getObjectClass(), newUser.getAttributes(), null);
+                // I think we may be getting caught in VMS password evasion.
+                // This sometimes fails on the Hudson after the contract tests
+                // (which force authentication failures), so add a sleep
+                //
+                Thread.sleep(5*60*1000);
                 testAuthenticate(localUserName, newPassword);
             }
             // try changing to an invalid password, and ensure it is caught
