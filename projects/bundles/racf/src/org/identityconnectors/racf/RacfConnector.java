@@ -202,7 +202,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
                     attribute = AttributeBuilder.build(ATTR_CL_PASSWORD, attribute.getValue());
             } else if (attribute.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)) {
                 if (isLdapConnectionAvailable())
-                    attribute = AttributeBuilder.build(ATTR_LDAP_ATTRIBUTES, attribute.getValue());
+                    attribute = AttributeBuilder.build(ATTR_LDAP_EXPIRED, attribute.getValue());
                 else
                     attribute = AttributeBuilder.build(ATTR_CL_EXPIRED, attribute.getValue());
             } else if (attribute.is(OperationalAttributes.DISABLE_DATE_NAME)) {
@@ -281,7 +281,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
                 throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.ATTRIBUTE_NOT_READABLE, OperationalAttributes.PASSWORD_NAME));
             } else if (attribute.equals(OperationalAttributes.PASSWORD_EXPIRED_NAME)) {
                 if (isLdapConnectionAvailable())
-                    ;//TODO: racfattributes: noexpired
+                    ldapAttrs.add(OperationalAttributes.PASSWORD_EXPIRED_NAME);
                 else
                     commandLineAttrs.add(ATTR_CL_EXPIRED);
             } else if (attribute.equals(Name.NAME)) {
@@ -516,7 +516,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
         //
         boolean badSize = false;
         try {
-            badSize = (groupsAttribute.getValue().size()!=ownersAttribute.getValue().size());
+            if (ownersAttribute!=null)
+                badSize = (groupsAttribute.getValue().size()!=ownersAttribute.getValue().size());
         } catch (NullPointerException npe) {
             badSize = true;
         }
@@ -534,7 +535,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
         checkConnectionConsistency(membersAttribute, ownersAttribute);
 
         List<Object> members = membersAttribute.getValue();
-        List<Object> owners  = ownersAttribute.getValue();
+        List<Object> owners  = ownersAttribute==null?null:ownersAttribute.getValue();
         
         List<String> currentMembers = getMembersOfGroup(name);
         
@@ -546,14 +547,15 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
         }
         for (int i=0; i<members.size(); i++) {
             Object newMember = members.get(i);
-            Object newOwner  = owners.get(i);
+            Object newOwner  = ownersAttribute==null?null:owners.get(i);
             if (!currentMembers.contains(newMember)) {
                 // Member is being added
                 //
                 String connectionName = createConnectionId((String)newMember, name);
                 Set<Attribute> attributes = new HashSet<Attribute>();
                 attributes.add(AttributeBuilder.build(Name.NAME, connectionName));
-                attributes.add(AttributeBuilder.build(ATTR_LDAP_OWNER, newOwner));
+                if (newOwner!=null)
+                    attributes.add(AttributeBuilder.build(ATTR_LDAP_OWNER, newOwner));
                 create(RACF_CONNECTION, attributes, new OperationOptions(new HashMap<String, Object>()));
             }
         }
@@ -891,7 +893,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
             // Multi-valued attributes
             //
             attributes.add(buildMultivaluedAttribute(ATTR_LDAP_ATTRIBUTES,               String.class, false));
-            attributes.add(buildNonDefaultMultivaluedAttribute(ATTR_LDAP_GROUPS,         String.class, false));
+            attributes.add(buildReadOnlyMultivaluedAttribute(ATTR_LDAP_GROUPS,           String.class));
     
             // Operational Attributes
             //
@@ -962,6 +964,17 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
         builder.setType(clazz);
         builder.setRequired(required);
         builder.setMultiValued(true);
+        return builder.build();
+    }
+    
+    private AttributeInfo buildReadOnlyMultivaluedAttribute(String name, Class<?> clazz) {
+        AttributeInfoBuilder builder = new AttributeInfoBuilder();
+        builder.setName(name);
+        builder.setType(clazz);
+        builder.setRequired(false);
+        builder.setMultiValued(true);
+        builder.setCreateable(false);
+        builder.setUpdateable(false);
         return builder.build();
     }
 

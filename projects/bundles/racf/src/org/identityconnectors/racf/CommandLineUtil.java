@@ -712,7 +712,10 @@ class CommandLineUtil {
             Attribute groupOwners = attributes.remove(ATTR_CL_GROUP_CONN_OWNERS);
             Attribute expired = attributes.get(ATTR_CL_EXPIRED);
             Attribute password = attributes.get(ATTR_CL_PASSWORD);
-            
+
+            throwErrorIfNull(groups);
+            throwErrorIfNull(groupOwners);
+
             // RACF makes it difficult to specify ENABLE_DATE/DISABLE_DATE
             // except in its own command
             //
@@ -809,6 +812,9 @@ class CommandLineUtil {
         } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
             Attribute members = attributes.remove(ATTR_CL_MEMBERS);
             Attribute groupOwners = attributes.remove(ATTR_CL_GROUP_CONN_OWNERS);
+            
+            throwErrorIfNull(members);
+            throwErrorIfNull(groupOwners);
             
             if (!groupExists(name))
                 throw new UnknownUidException();

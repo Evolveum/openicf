@@ -84,9 +84,27 @@ class LdapUtil {
         } else if (objectClass.equals(ObjectClass.ACCOUNT)) {
             Name name = AttributeUtil.getNameFromAttributes(attrs);
             try {
-                //TODO: handle ATTR_LDAP_GROUPS
+                Attribute enabled = attributes.remove(ATTR_LDAP_ENABLED);
                 Attribute groups = attributes.remove(ATTR_LDAP_GROUPS);
                 Attribute groupOwners = attributes.remove(ATTR_LDAP_GROUP_OWNERS);
+                
+                // Enabled is mapped into racfAttribute:RESUME or REVOKE
+                //
+                if (enabled!=null) {
+                    Attribute attributesAttribute = attributes.get(ATTR_LDAP_ATTRIBUTES);
+                    if (attributesAttribute==null) {
+                        attributesAttribute = AttributeBuilder.build(ATTR_LDAP_ATTRIBUTES, new LinkedList<Object>());
+                    }
+                    List<Object> value = attributesAttribute.getValue();
+                    if (value==null)
+                        value = new LinkedList<Object>();
+                    if (AttributeUtil.getBooleanValue(enabled))
+                        value.add("RESUME");
+                    else
+                        value.add("REVOKE");
+                    attributesAttribute = AttributeBuilder.build(ATTR_LDAP_ATTRIBUTES, value);
+                    attributes.put(ATTR_LDAP_ATTRIBUTES, attributesAttribute);
+                }
 
                 String id = name.getNameValue();
                 Uid uid = _connector.createUidFromName(objectClass, id);
@@ -105,8 +123,6 @@ class LdapUtil {
         } else if (objectClass.equals(ObjectClass.GROUP)) {
             Name name = AttributeUtil.getNameFromAttributes(attrs);
             try {
-                //TODO: handle ATTR_LDAP_MEMBERS
-                Attribute groups = attributes.remove(ATTR_LDAP_GROUPS);
                 Attribute members = attributes.remove(ATTR_LDAP_MEMBERS);
                 Attribute groupOwners = attributes.remove(ATTR_LDAP_GROUP_OWNERS);
 
@@ -256,18 +272,32 @@ class LdapUtil {
     public Uid updateViaLdap(ObjectClass objectClass, Set<Attribute> attrs) {
         Map<String, Attribute> attributes = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
         Uid uid = AttributeUtil.getUidAttribute(attrs);
+        //TODO: need to process null values, which correspond to DirContext.REMOVE_ATTRIBUTE
         if (uid!=null) {
-            try {
-                //TODO: handle ATTR_LDAP_GROUPS
-                Attribute groups = attributes.remove(ATTR_LDAP_GROUPS);
-                Attribute members = attributes.remove(ATTR_LDAP_MEMBERS);
-                Attribute groupOwners = attributes.remove(ATTR_LDAP_GROUP_OWNERS);
-                
-                ((RacfConnection)_connector.getConnection()).getDirContext().modifyAttributes(_connector.createUidFromName(objectClass, uid.getUidValue()).getUidValue(), DirContext.REPLACE_ATTRIBUTE, createLdapAttributesFromConnectorAttributes(objectClass, attributes));
-                if (groups!=null)
-                    _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, groupOwners);
-            } catch (NamingException e) {
-                throw new ConnectorException(e);
+            if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
+                try {
+                    Attribute groups = attributes.remove(ATTR_LDAP_GROUPS);
+                    Attribute groupOwners = attributes.remove(ATTR_LDAP_GROUP_OWNERS);
+                    
+                    ((RacfConnection)_connector.getConnection()).getDirContext().modifyAttributes(_connector.createUidFromName(objectClass, uid.getUidValue()).getUidValue(), DirContext.REPLACE_ATTRIBUTE, createLdapAttributesFromConnectorAttributes(objectClass, attributes));
+                    if (groups!=null)
+                        _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, groupOwners);
+                } catch (NamingException e) {
+                    throw new ConnectorException(e);
+                }
+            } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
+                try {
+                    Attribute members = attributes.remove(ATTR_LDAP_MEMBERS);
+                    Attribute groupOwners = attributes.remove(ATTR_LDAP_GROUP_OWNERS);
+                    
+                    ((RacfConnection)_connector.getConnection()).getDirContext().modifyAttributes(_connector.createUidFromName(objectClass, uid.getUidValue()).getUidValue(), DirContext.REPLACE_ATTRIBUTE, createLdapAttributesFromConnectorAttributes(objectClass, attributes));
+                    if (members!=null)
+                        _connector.setGroupMembershipsForGroups(uid.getUidValue(), members, groupOwners);
+                } catch (NamingException e) {
+                    throw new ConnectorException(e);
+                }
+            } else {
+                throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNSUPPORTED_OBJECT_CLASS, objectClass));
             }
         }
         return uid;
@@ -291,8 +321,13 @@ class LdapUtil {
         Set<AttributeInfo> attributeInfos = accountInfo.getAttributeInfo();
         List<Object> racfAttributes = new LinkedList<Object>();
         boolean setRacfAttributes = false;
+        //TODO: need to deal with ENABLE/DISABLE_DATE like command-line code
         // Go through, and validate the attributes.
         //
+        Attribute enabled       = attributes.get(ATTR_LDAP_ENABLED);
+        Attribute enableDate    = attributes.get(OperationalAttributes.ENABLE_DATE_NAME);
+        Attribute disableDate   = attributes.get(OperationalAttributes.DISABLE_DATE_NAME);
+        
         for (Attribute attribute : attributes.values()) {
             String attributeName = attribute.getName().toLowerCase();
             if (attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
@@ -319,12 +354,18 @@ class LdapUtil {
             } else if (attribute.is(OperationalAttributes.CURRENT_PASSWORD_NAME)) {
                 // Ignore current password
                 //
-            } else if (attribute.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)) {
+            } else if (attribute.is(ATTR_LDAP_EXPIRED)) {
+                Attribute password = attributes.get(ATTR_LDAP_PASSWORD);
+                if (password==null) {
+                    // TODO: throw error, I expect
+                }
                 //TODO: determine if this works in absence of setting password 
-                if (!AttributeUtil.getBooleanValue(attribute))
+                if (AttributeUtil.getBooleanValue(attribute))
                     racfAttributes.add("noExpired");
+                else
+                    racfAttributes.add("Expired");
                 setRacfAttributes = true;
-            } else if (attribute.is(OperationalAttributes.PASSWORD_NAME)) {
+            } else if (attribute.is(ATTR_LDAP_PASSWORD)) {
                 // remap password
                 //
                 List<Object> value = attribute.getValue();
