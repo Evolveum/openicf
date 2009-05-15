@@ -4,9 +4,9 @@
 package org.identityconnectors.oracle;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -22,7 +22,7 @@ import org.identityconnectors.framework.spi.AttributeNormalizer;
  *
  */
 final class OracleAttributeNormalizer implements AttributeNormalizer {
-    private static final Map<String,OracleUserAttributeCS> attributeMapping = new HashMap<String, OracleUserAttributeCS>();
+    private static final Map<String,OracleUserAttributeCS> attributeMapping = new TreeMap<String, OracleUserAttributeCS>(OracleConnectorHelper.getAttributeNamesComparator());
     static {
         attributeMapping.put(Name.NAME, OracleUserAttributeCS.USER);
         attributeMapping.put(Uid.NAME, OracleUserAttributeCS.USER);
@@ -49,10 +49,10 @@ final class OracleAttributeNormalizer implements AttributeNormalizer {
         if(oracleUserAttribute == null){
             return attribute;
         }
-        List<Object> values = new ArrayList<Object>();
         if(attribute.getValue() == null){
         	return attribute;
         }
+        List<Object> values = new ArrayList<Object>();
         for(Object o : attribute.getValue()){
             if(o instanceof String){
                 o = cfg.getCSSetup().normalizeToken(oracleUserAttribute, (String) o);

@@ -7,6 +7,7 @@ import java.util.List;
 
 
 import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.test.common.TestHelpers;
 import org.junit.*;
 import org.junit.matchers.JUnitMatchers;
 
@@ -29,7 +30,7 @@ public class OracleRolePrivReaderTest {
         cfg = OracleConfigurationTest.createSystemConfiguration();
         conn = cfg.createAdminConnection();
         privReader = new OracleRolePrivReader(conn);
-        userReader = new OracleUserReader(conn);
+        userReader = new OracleUserReader(conn,TestHelpers.createDummyMessages());
     }
 
     /** Test reading user roles 

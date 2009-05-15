@@ -34,7 +34,7 @@ abstract class OracleSpecifics {
         }
         catch(SQLException e){
             if("61000".equals(e.getSQLState()) && 28 == e.getErrorCode()){
-                throw new IllegalStateException("Oracle connection has been killed",e);
+                throw new IllegalStateException("Oracle connection was killed",e);
             }
             else{
                 throw new IllegalStateException("Unknown Oracle error while testing connection",e); 

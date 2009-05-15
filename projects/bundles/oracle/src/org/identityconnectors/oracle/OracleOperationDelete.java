@@ -7,6 +7,7 @@ import java.sql.*;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
@@ -43,6 +44,7 @@ final class OracleOperationDelete extends AbstractOracleOperation implements Del
             if("42000".equals(e.getSQLState()) && 1918==e.getErrorCode()){
                 throw new UnknownUidException(uid,ObjectClass.ACCOUNT);
             }
+            throw new ConnectorException(cfg.getConnectorMessages().format("oracle.delete.of.user.failed",null,uid.getUidValue()),e);
         }
         finally{
             SQLUtil.closeQuietly(st);

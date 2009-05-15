@@ -1,14 +1,13 @@
 package org.identityconnectors.oracle;
 
 import java.sql.Connection;
-import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.LocalizedAssert;
@@ -35,7 +34,8 @@ final class OracleOperationCreate extends AbstractOracleOperation implements Cre
 	private static final Collection<String> VALID_CREATE_ATTRIBUTES;
 	
 	static {
-		Collection<String> tmp = new HashSet<String>(OracleConstants.ALL_ATTRIBUTE_NAMES);
+		Collection<String> tmp = new TreeSet<String>(OracleConnectorHelper.getAttributeNamesComparator());
+		tmp.addAll(OracleConstants.ALL_ATTRIBUTE_NAMES);
 		tmp.removeAll(Arrays.asList(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,OperationalAttributes.DISABLE_DATE_NAME));
 		VALID_CREATE_ATTRIBUTES = Collections.unmodifiableCollection(tmp);
 	}
@@ -48,9 +48,9 @@ final class OracleOperationCreate extends AbstractOracleOperation implements Cre
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
         OracleConnector.checkObjectClass(oclass, cfg.getConnectorMessages());
         Map<String, Attribute> map = AttributeUtil.toMap(attrs);
-        String userName = OracleConnectorHelper.getStringValue(map, Name.NAME);
-        new LocalizedAssert(cfg.getConnectorMessages()).assertNotBlank(userName,Name.NAME);
         checkCreateAttributes(map);
+        String userName = OracleConnectorHelper.getStringValue(map, Name.NAME, cfg.getConnectorMessages());
+        new LocalizedAssert(cfg.getConnectorMessages()).assertNotBlank(userName,Name.NAME);
         checkUserNotExist(userName);
         log.info("Creating user : [{0}]", userName);
         OracleUserAttributes.Builder builder = new OracleUserAttributes.Builder();
@@ -59,7 +59,7 @@ final class OracleOperationCreate extends AbstractOracleOperation implements Cre
         OracleUserAttributes caAttributes = builder.build();
         String createSQL = new OracleCreateOrAlterStBuilder(cfg.getCSSetup(),cfg.getConnectorMessages()).buildCreateUserSt(caAttributes).toString();
         if(createSQL == null){
-        	//This should not happen, but be more deffensive
+        	//This should not happen, we want to be just more defensive 
         	throw new ConnectorException("No create SQL generated, probably not enough attributes");
         }
         Attribute roles = AttributeUtil.find(OracleConstants.ORACLE_ROLES_ATTR_NAME, attrs);
@@ -83,22 +83,25 @@ final class OracleOperationCreate extends AbstractOracleOperation implements Cre
             log.info("User created : [{0}]", userName);
         } catch (Exception e) {
             SQLUtil.rollbackQuietly(adminConn);
-            throw ConnectorException.wrap(e);
+            throw new ConnectorException(cfg.getConnectorMessages().format("oracle.create.of.user.failed",null,userName),e);
         }
         return new Uid(userName);
     }
 
     
     private void checkCreateAttributes(Map<String, Attribute> map) {
+    	if(map.isEmpty()){
+    		throw new IllegalArgumentException(cfg.getConnectorMessages().format("oracle.create.no.attributes", null));
+    	}
 		for(Attribute attr : map.values()){
 			if(!VALID_CREATE_ATTRIBUTES.contains(attr.getName())){
-				throw new IllegalArgumentException(MessageFormat.format("Attribute [{0}] not supported for create",attr.getName()));
+				throw new IllegalArgumentException(cfg.getConnectorMessages().format("oracle.create.attribute.not.supported", null, attr.getName()));
 			}
 		}
 	}
 
 	private void checkUserNotExist(String user) {
-        boolean userExist = new OracleUserReader(adminConn).userExist(user);
+        boolean userExist = new OracleUserReader(adminConn,cfg.getConnectorMessages()).userExist(user);
         if(userExist){
             throw new AlreadyExistsException("User " + user + " already exists");
         }

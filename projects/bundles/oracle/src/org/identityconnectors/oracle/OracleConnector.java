@@ -3,7 +3,6 @@
  */
 package org.identityconnectors.oracle;
 
-import static org.identityconnectors.oracle.OracleMessages.CONNECTOR_DISPLAY;
 
 import java.sql.Connection;
 import java.util.Set;
@@ -41,7 +40,7 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
  *
  */
 @ConnectorClass(configurationClass=OracleConfiguration.class,
-        displayNameKey = CONNECTOR_DISPLAY,
+        displayNameKey = OracleMessages.MSG_ATTRIBUTE_IS_MISSING,
         messageCatalogPaths={"org/identityconnectors/dbcommon/Messages","org/identityconnectors/oracle/Messages"})
 public final class OracleConnector implements PoolableConnector, AuthenticateOp,
 		CreateOp, DeleteOp, UpdateOp, UpdateAttributeValuesOp,

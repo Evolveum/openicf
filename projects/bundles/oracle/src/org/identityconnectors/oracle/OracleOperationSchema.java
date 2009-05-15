@@ -23,6 +23,7 @@ import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
 
 /**
+ * Constructs schema for Oracle connector
  * @author kitko
  *
  */
@@ -39,7 +40,8 @@ final class OracleOperationSchema extends AbstractOracleOperation implements Sch
 			dbVersion = adminConn.getMetaData().getDatabaseProductVersion();
 		}
 		catch(SQLException e){
-			throw new ConnectorException("Cannot resolve getMetaData().getDatabaseProductVersion()",e);
+			//This is internal error
+			throw new ConnectorException("Cannot resolve getMetaData().getDatabaseProductVersion()", e);
 		}
 		boolean express = false;
 		if(dbVersion.contains("Express")){

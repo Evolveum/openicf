@@ -38,7 +38,7 @@ public abstract class OracleConnectorAbstractTest {
         testConf = OracleConfigurationTest.createSystemConfiguration();
         facade = createFacade(testConf);
         connector = createTestConnector();
-        userReader = new OracleUserReader(connector.getAdminConnection());
+        userReader = new OracleUserReader(connector.getAdminConnection(),TestHelpers.createDummyMessages());
     }
     
     @AfterClass

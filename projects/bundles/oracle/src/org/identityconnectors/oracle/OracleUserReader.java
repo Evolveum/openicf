@@ -1,19 +1,30 @@
 package org.identityconnectors.oracle;
 
 import java.math.BigDecimal;
-import java.sql.*;
-import java.text.MessageFormat;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.ConnectorMessages;
+import static org.identityconnectors.oracle.OracleMessages.*;
 
 /** Reads records from DBA_USERS table */
 final class OracleUserReader {
     private final Connection adminConn;
+    private final ConnectorMessages cm;
     
-    OracleUserReader(Connection adminConn){
+    OracleUserReader(Connection adminConn,ConnectorMessages cm){
         this.adminConn = OracleConnectorHelper.assertNotNull(adminConn, "adminConn");
+        this.cm = OracleConnectorHelper.assertNotNull(cm, "cm");
     }
     
     /** Test whether user exists, looking at DBA_USERS table */
@@ -29,7 +40,7 @@ final class OracleUserReader {
             return rs.next(); 
         }
         catch(SQLException e){
-            throw new ConnectorException("Cannot test whether user exist",e);
+            throw new ConnectorException(cm.format(MSG_ERROR_TEST_USER_EXISTENCE,null),e);
         }
         finally{
             SQLUtil.closeQuietly(rs);
@@ -117,14 +128,17 @@ final class OracleUserReader {
     }
     
     Long readUserTSQuota(String userName, String tableSpace) throws SQLException{
-    	BigDecimal bytes = (BigDecimal) SQLUtil.selectSingleValue(adminConn, "select max_bytes from dba_ts_quotas where USERNAME = '" + userName + "'" + " AND TABLESPACE_NAME = '" + tableSpace + "'" );
+    	BigDecimal bytes = (BigDecimal) SQLUtil.selectSingleValue(adminConn,
+				"select max_bytes from dba_ts_quotas where USERNAME = '"
+						+ userName + "'" + " AND TABLESPACE_NAME = '"
+						+ tableSpace + "'");
     	return bytes == null ? null : bytes.longValue();
     }
     
     Long readUserDefTSQuota(String userName) throws SQLException{
     	UserRecord record = readUserRecord(userName);
     	if(record == null){
-    		throw new IllegalArgumentException(MessageFormat.format("No user record found for user [{0}]",userName));
+    		throw new IllegalArgumentException(cm.format(MSG_USER_RECORD_NOT_FOUND, null, userName));
     	}
     	return readUserTSQuota(userName, record.getDefaultTableSpace());
     }
@@ -132,7 +146,7 @@ final class OracleUserReader {
     Long readUserTempTSQuota(String userName) throws SQLException{
     	UserRecord record = readUserRecord(userName);
     	if(record == null){
-    		throw new IllegalArgumentException(MessageFormat.format("No user record found for user [{0}]",userName));
+    		throw new IllegalArgumentException(cm.format(MSG_USER_RECORD_NOT_FOUND, null, userName));
     	}
     	return readUserTSQuota(userName, record.getTemporaryTableSpace());
     }

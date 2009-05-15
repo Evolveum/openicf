@@ -6,6 +6,7 @@ package org.identityconnectors.oracle;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
+import java.sql.SQLException;
 import java.util.Collections;
 
 import org.identityconnectors.common.CollectionUtil;
@@ -101,10 +102,32 @@ public class OracleOperationAuthenticateTest extends OracleConnectorAbstractTest
         
         facade.delete(ObjectClass.ACCOUNT, new Uid(user),null);
         
-        
-
-        
     }
+    
+    /** Test that authenticate fails for invalid port connection 
+     * @throws SQLException */
+    @Test
+    public void testAuthenticateFail() throws SQLException{
+    	String user = "TESTUSER";
+		OracleConnector testConnector = createTestConnector();
+		try{
+			testConnector.delete(ObjectClass.ACCOUNT, new Uid(user), null);
+		}
+		catch(UnknownUidException e){}
+		GuardedString password = new GuardedString("testPassword".toCharArray());
+		Uid uid = testConnector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(new Name(user),AttributeBuilder.buildPassword(password),AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION")), null);
+		testConnector.authenticate(ObjectClass.ACCOUNT, uid.getUidValue(), password, null);
+		testConnector.getConfiguration().setPort("12345");
+		try{
+			testConnector.authenticate(ObjectClass.ACCOUNT, uid.getUidValue(), password, null);
+			fail("Authenticate must fail for killed connection");
+		}catch(RuntimeException e){}
+		connector.delete(ObjectClass.ACCOUNT, uid, null);
+		testConnector.dispose();
+    	
+    }
+    
+    
     
     
 

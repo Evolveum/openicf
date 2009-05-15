@@ -9,6 +9,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.identityconnectors.oracle.OracleUserAttributeCS.*;
+import static org.identityconnectors.oracle.OracleConstants.*;
 
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -30,6 +31,7 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.test.common.TestHelpers;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -428,9 +430,10 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         Assert.assertThat(privRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUserOwner() + ".MYTABLE"));
     }
 	
-	/** Test that create will fail on any not known attribute */
+	/** Test that create will fail on any not known attribute 
+	 * @throws SQLException */
 	@Test
-	public void testValidCreateAttributes(){
+	public void testValidCreateAttributes() throws SQLException{
         Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL);
         Attribute name = new Name(TEST_USER);
         GuardedString password = new GuardedString("hello".toCharArray());
@@ -464,5 +467,46 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
 			fail("Dummy attribute should not be supported");
 		}
 		catch(IllegalArgumentException e){}
+		
+		//Test create no attributes
+		try{
+			facade.create(ObjectClass.ACCOUNT, Collections.<Attribute>emptySet(), null);
+			fail("Create must fail for no attributes");
+		}catch(RuntimeException e){}
+		
+		//try other case of attributes
+        authentication = AttributeBuilder.build(ORACLE_AUTHENTICATION_ATTR_NAME.toUpperCase(), OracleConstants.ORACLE_AUTH_LOCAL);
+        name = new Name(TEST_USER);
+        password = new GuardedString("hello".toCharArray());
+        passwordAttribute = AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME.toUpperCase(),password);
+        privileges = AttributeBuilder.build(ORACLE_PRIVS_ATTR_NAME.toUpperCase(),"CREATE SESSION");
+        enabled = AttributeBuilder.build(OperationalAttributes.ENABLE_NAME.toUpperCase(),Boolean.TRUE);
+        expirePassword = AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME.toUpperCase(),Boolean.FALSE);
+        attrs = new HashSet<Attribute>(Arrays.asList(authentication,name,passwordAttribute,
+        		privileges,enabled,expirePassword));
+		Uid uid = facade.create(ObjectClass.ACCOUNT, attrs, null);
+		UserRecord record = new OracleUserReader(connector.getAdminConnection(),TestHelpers.createDummyMessages()).readUserRecord(uid.getUidValue());
+		assertNotNull(record);
+		assertEquals(uid.getUidValue(), record.getUserName());
+		facade.authenticate(ObjectClass.ACCOUNT, uid.getUidValue(), password, null);
+	}
+	
+	/** Test that create will fail 
+	 * @throws SQLException */
+	@Test
+	public void testCreateFail() throws SQLException{
+		OracleConnector testConnector = createTestConnector();
+		try{
+			testConnector.delete(ObjectClass.ACCOUNT, new Uid(TEST_USER), null);
+		}
+		catch(UnknownUidException e){}
+		Uid uid = testConnector.create(ObjectClass.ACCOUNT, Collections.<Attribute>singleton(new Name(TEST_USER)), null);
+		testConnector.delete(ObjectClass.ACCOUNT, uid, null);
+		OracleSpecificsTest.killConnection(connector.getAdminConnection(), testConnector.getAdminConnection());
+		try{
+			uid = testConnector.create(ObjectClass.ACCOUNT, Collections.<Attribute>singleton(new Name(TEST_USER)), null);
+			fail("Create must fail for killed connection");
+		}catch(RuntimeException e){}
+		testConnector.dispose();
 	}
 }

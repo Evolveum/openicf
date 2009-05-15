@@ -8,6 +8,7 @@ import static org.junit.Assert.fail;
 import junit.framework.Assert;
 
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.Test;
 
@@ -80,7 +81,7 @@ public class OracleCreateOrAlterStBuilderTest {
     }
 
     private OracleCreateOrAlterStBuilder createDefaultBuilder() {
-        return new OracleCreateOrAlterStBuilder(new OracleCaseSensitivityBuilder().build(),TestHelpers.createDummyMessages());
+        return new OracleCreateOrAlterStBuilder(new OracleCaseSensitivityBuilder(TestHelpers.createDummyMessages()).build(),TestHelpers.createDummyMessages());
     }
     
     /** Test create external */
@@ -177,11 +178,12 @@ public class OracleCreateOrAlterStBuilderTest {
     /** Test that builder properly formats tokens */
     @Test
     public void testCaseSensitivity(){
-    	OracleCaseSensitivitySetup ocs = new OracleCaseSensitivityBuilder()
+    	ConnectorMessages cm = TestHelpers.createDummyMessages();
+		OracleCaseSensitivitySetup ocs = new OracleCaseSensitivityBuilder(cm)
 				.defineFormatters(
-						CSTokenFormatter.build(OracleUserAttributeCS.USER,""),
-						CSTokenFormatter.build(OracleUserAttributeCS.PROFILE,"'"))
-						.build();
+						new CSTokenFormatter.Builder(cm).setAttribute(OracleUserAttributeCS.USER).setQuatesChar("").build(),
+						new CSTokenFormatter.Builder(cm).setAttribute(OracleUserAttributeCS.PROFILE).setQuatesChar("'").build()
+						).build();
     	OracleCreateOrAlterStBuilder builder = new OracleCreateOrAlterStBuilder(ocs,TestHelpers.createDummyMessages());
         OracleUserAttributes.Builder attributes = new OracleUserAttributes.Builder();
         attributes.setAuth(null);

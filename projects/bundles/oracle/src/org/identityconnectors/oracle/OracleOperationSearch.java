@@ -3,15 +3,14 @@ package org.identityconnectors.oracle;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Types;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.TreeSet;
 
 import org.identityconnectors.common.Pair;
 import org.identityconnectors.common.logging.Log;
@@ -24,6 +23,7 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
@@ -57,14 +57,15 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 	
 	static final Collection<String> VALID_ATTRIBUTES_TO_GET;
 	
-	static final Collection<String> VALIDSEARCHBYATTRIBUTES;
+	static final Collection<String> VALID_SEARCH_BY_ATTRIBUTES;
 	
 	static {
-		Collection<String> tmp = new HashSet<String>(OracleConstants.ALL_ATTRIBUTE_NAMES);
+		Collection<String> tmp = new TreeSet<String>(OracleConnectorHelper.getAttributeNamesComparator());
+		tmp.addAll(OracleConstants.ALL_ATTRIBUTE_NAMES);
 		tmp.remove(OperationalAttributes.PASSWORD_NAME);
 		tmp.add(Uid.NAME);
 		VALID_ATTRIBUTES_TO_GET = Collections.unmodifiableCollection(tmp);
-		VALIDSEARCHBYATTRIBUTES = Collections.unmodifiableCollection(tmp);
+		VALID_SEARCH_BY_ATTRIBUTES = Collections.unmodifiableCollection(tmp);
 	}
 	
 	
@@ -74,7 +75,7 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 	}
 
 	public FilterTranslator<Pair<String, FilterWhereBuilder>> createFilterTranslator(ObjectClass oclass, OperationOptions options) {
-		return new OracleFilterTranslator(oclass,options);
+		return new OracleFilterTranslator(oclass, options, cfg.getConnectorMessages());
 	}
 
 	public void executeQuery(ObjectClass oclass, Pair<String, FilterWhereBuilder> pair, ResultsHandler handler, OperationOptions options) {
@@ -88,7 +89,7 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 			st = this.adminConn.prepareStatement(sql);
             SQLUtil.setParams(st, query.getParams());
 			rs = st.executeQuery();
-			OracleUserReader userReader = new OracleUserReader(adminConn);
+			OracleUserReader userReader = new OracleUserReader(adminConn,cfg.getConnectorMessages());
             Collection<String> attributesToGet = null;
             checkAttributesToGet(options.getAttributesToGet());
             if(options.getAttributesToGet() != null && options.getAttributesToGet().length > 0){
@@ -157,9 +158,10 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
                     break;
                 }
 			}
+			adminConn.commit();
 		}
-        catch (SQLException e) {
-        	throw new ConnectorException("Error running search query",e);
+        catch (Exception e) {
+        	throw new ConnectorException(cfg.getConnectorMessages().format("oracle.error.executing.search", null), e);
 		}
         finally{
         	SQLUtil.closeQuietly(st);
@@ -172,20 +174,24 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 			return;
 		}
 		for(String attribute : attributesToGet){
+			//We do not need to use Attribute.is, we use Attribute comparator
 			if(!VALID_ATTRIBUTES_TO_GET.contains(attribute)){
-				throw new IllegalArgumentException(MessageFormat.format("Attribute [{0}] not supported for attributesToGet in search",attribute));
+				throw new IllegalArgumentException(cfg.getConnectorMessages().format("oracle.search.attribute.not.supported.for.attributesToGet", null, attribute));
 			}
 		}
 	}
 
-	private static class OracleDBFilterTranslator extends DatabaseFilterTranslator{
+	private static final class OracleDBFilterTranslator extends DatabaseFilterTranslator{
 		private String select = SQL;
-		OracleDBFilterTranslator(ObjectClass oclass,OperationOptions options) {
+		private final ConnectorMessages cm;
+		OracleDBFilterTranslator(ObjectClass oclass, OperationOptions options, ConnectorMessages cm) {
 			super(oclass, options);
+			this.cm = OracleConnectorHelper.assertNotNull(cm, "cm");
 		}
 
 		@Override
 		protected String getDatabaseColumnName(Attribute attribute, ObjectClass oclass, OperationOptions options) {
+			checkSearchByAttribute(attribute);
 			if(attribute.is(Name.NAME)){
 				return "DBA_USERS.USERNAME";
 			}
@@ -239,14 +245,19 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 			else if(attribute.is(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME)){
 				return "(CASE WHEN DBA_USERS.PASSWORD='EXTERNAL' THEN 'EXTERNAL' ELSE (CASE WHEN DBA_USERS.EXTERNAL_NAME IS NOT NULL THEN 'GLOBAL' ELSE 'LOCAL' END) END)";
 			}
-			throw new IllegalArgumentException("Invalid db column : " + attribute.getName());
+			//Should not get here, invalid attributes should be already handled
+			throw new IllegalArgumentException("Cannot map db column for attribute : " + attribute.getName());
+		}
+
+		private void checkSearchByAttribute(Attribute attribute) {
+			if(!VALID_SEARCH_BY_ATTRIBUTES.contains(attribute.getName())){
+				throw new IllegalArgumentException(cm.format("oracle.search.attribute.not.supported.for.searchBy", null, attribute.getName()));
+			}
 		}
 
 		@Override
 		protected SQLParam getSQLParam(Attribute attribute, ObjectClass oclass, OperationOptions options) {
-			if(!VALIDSEARCHBYATTRIBUTES.contains(attribute.getName())){
-				throw new IllegalArgumentException("Illegal search attribute : " + attribute.getName());
-			}
+			checkSearchByAttribute(attribute);
 			if(attribute.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
 				Boolean value = (Boolean) AttributeUtil.getSingleValue(attribute);
 				if(value == null){
@@ -280,6 +291,7 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 		
 		@Override
 		protected boolean validateSearchAttribute(Attribute attribute) {
+			checkSearchByAttribute(attribute);
 			//Currently We do not support in filter
 			if(attribute.is(OracleConstants.ORACLE_ROLES_ATTR_NAME)){
 				return false;
@@ -289,15 +301,13 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 			}
 			return true;
 		}
-		
-		
 	}
 	
 	
-	private static class OracleFilterTranslator implements FilterTranslator<Pair<String, FilterWhereBuilder>>{
-		OracleDBFilterTranslator delegate ;
-		OracleFilterTranslator(ObjectClass oclass,OperationOptions options) {
-			delegate = new OracleDBFilterTranslator(oclass, options);
+	private static final class OracleFilterTranslator implements FilterTranslator<Pair<String, FilterWhereBuilder>>{
+		private final OracleDBFilterTranslator delegate ;
+		OracleFilterTranslator(ObjectClass oclass, OperationOptions options, ConnectorMessages cm) {
+			delegate = new OracleDBFilterTranslator(oclass, options, cm);
 		}
 		public List<Pair<String, FilterWhereBuilder>> translate(Filter filter) {
 			List<FilterWhereBuilder> list = delegate.translate(filter);

@@ -2,6 +2,8 @@ package org.identityconnectors.oracle;
 
 import java.util.Map;
 
+import static org.identityconnectors.oracle.OracleMessages.*;
+
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
@@ -13,10 +15,10 @@ import org.identityconnectors.framework.common.objects.OperationalAttributes;
  *  It does not do any additional logical checks, it is mainly reader of attributes to the helper structure.
  * */
 final class OracleAttributesReader {
-     final ConnectorMessages messages;
+     private final ConnectorMessages cm;
      
      OracleAttributesReader(ConnectorMessages messages){
-         this.messages = OracleConnectorHelper.assertNotNull(messages, "messages");
+         this.cm = OracleConnectorHelper.assertNotNull(messages, "messages");
      }
     
      void readCreateAttributes(Map<String, Attribute> map, OracleUserAttributes.Builder caAttributes){
@@ -32,11 +34,11 @@ final class OracleAttributesReader {
      
      
      private void readRestAttributes(Map<String, Attribute> map, OracleUserAttributes.Builder caAttributes) {
-        caAttributes.setExpirePassword(OracleConnectorHelper.getNotNullAttributeBooleanValue(map, OperationalAttributes.PASSWORD_EXPIRED_NAME));
-        caAttributes.setDefaultTableSpace(OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, OracleConstants.ORACLE_DEF_TS_ATTR_NAME));
-        caAttributes.setTempTableSpace(OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, OracleConstants.ORACLE_TEMP_TS_ATTR_NAME));
-        caAttributes.setEnable(OracleConnectorHelper.getNotNullAttributeBooleanValue(map, OperationalAttributes.ENABLE_NAME));
-        caAttributes.setProfile(OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, OracleConstants.ORACLE_PROFILE_ATTR_NAME));
+        caAttributes.setExpirePassword(OracleConnectorHelper.getNotNullAttributeBooleanValue(map, OperationalAttributes.PASSWORD_EXPIRED_NAME, cm));
+        caAttributes.setDefaultTableSpace(OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, OracleConstants.ORACLE_DEF_TS_ATTR_NAME, cm));
+        caAttributes.setTempTableSpace(OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, OracleConstants.ORACLE_TEMP_TS_ATTR_NAME, cm));
+        caAttributes.setEnable(OracleConnectorHelper.getNotNullAttributeBooleanValue(map, OperationalAttributes.ENABLE_NAME, cm));
+        caAttributes.setProfile(OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, OracleConstants.ORACLE_PROFILE_ATTR_NAME, cm));
         
         Attribute defaultTSQuota = map.get(OracleConstants.ORACLE_DEF_TS_QUOTA_ATTR_NAME);
         if(defaultTSQuota != null){
@@ -66,17 +68,17 @@ final class OracleAttributesReader {
     }
 
     private void readAuthAttributes(Map<String, Attribute> map, OracleUserAttributes.Builder caAttributes) {
-        String authentication =  OracleConnectorHelper.getStringValue(map, OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME);
+        String authentication =  OracleConnectorHelper.getStringValue(map, OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, cm);
         Attribute passwordAttribute = map.get(OperationalAttributes.PASSWORD_NAME);
         //Set globalname to not silently skip it
-        caAttributes.setGlobalName(OracleConnectorHelper.getStringValue(map, OracleConstants.ORACLE_GLOBAL_ATTR_NAME));
+        caAttributes.setGlobalName(OracleConnectorHelper.getStringValue(map, OracleConstants.ORACLE_GLOBAL_ATTR_NAME, cm));
         caAttributes.setPassword(passwordAttribute != null ? AttributeUtil.getGuardedStringValue(passwordAttribute) : null);
         if(authentication != null){
 	        try{
 	        	caAttributes.setAuth(OracleAuthentication.valueOf(authentication));
 	        }
 	        catch(IllegalArgumentException e){
-	        	throw new IllegalArgumentException(messages.format(OracleMessages.INVALID_AUTH, OracleMessages.INVALID_AUTH, authentication));
+	        	throw new IllegalArgumentException(cm.format(MSG_INVALID_AUTH, null, authentication));
 	        }
 	        switch(caAttributes.getAuth()){
 		        case LOCAL :
@@ -85,7 +87,7 @@ final class OracleAttributesReader {
 		        case EXTERNAL : break;
 		        case GLOBAL : 
 		        	//Now globalname is required
-		        	caAttributes.setGlobalName(OracleConnectorHelper.getNotEmptyStringValue(map, OracleConstants.ORACLE_GLOBAL_ATTR_NAME));
+		        	caAttributes.setGlobalName(OracleConnectorHelper.getNotEmptyStringValue(map, OracleConstants.ORACLE_GLOBAL_ATTR_NAME, cm));
 		        	break;
 	        }
         }

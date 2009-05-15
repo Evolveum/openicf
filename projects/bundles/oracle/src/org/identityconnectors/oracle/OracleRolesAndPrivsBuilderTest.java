@@ -5,6 +5,7 @@ package org.identityconnectors.oracle;
 
 import java.util.*;
 
+import org.identityconnectors.test.common.TestHelpers;
 import org.junit.*;
 import org.junit.matchers.JUnitMatchers;
 
@@ -20,7 +21,7 @@ public class OracleRolesAndPrivsBuilderTest {
      */
     @Test
     public void testBuildCreateSQL() {
-        OracleRolesAndPrivsBuilder builder = new OracleRolesAndPrivsBuilder(new OracleCaseSensitivityBuilder().build());
+        OracleRolesAndPrivsBuilder builder = new OracleRolesAndPrivsBuilder(new OracleCaseSensitivityBuilder(TestHelpers.createDummyMessages()).build());
         List<String> roles = Arrays.asList("myRole1","myRole2");
         List<String> privileges = Arrays.asList("CREATE SESSION","SELECT ON MYTABLE");
         List<String> sql = builder.buildGrantRolesSQL("testUser", roles);

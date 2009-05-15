@@ -115,7 +115,7 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         }
         Attribute profileAttr = AttributeBuilder.build(OracleConstants.ORACLE_PROFILE_ATTR_NAME, profileName);
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(profileAttr), null);
-        final UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
+        final UserRecord record = userReader.readUserRecord(uid.getUidValue());
         assertEquals(testConf.getCSSetup().normalizeToken(PROFILE,profileName), record.getProfile());
         try{
             SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "drop profile " + testConf.getCSSetup().normalizeAndFormatToken(PROFILE,profileName));
@@ -232,16 +232,16 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
     @Test
     public void testUpdateEnable() throws SQLException{
     	//new created user will be enabled
-    	UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
+    	UserRecord record = userReader.readUserRecord(uid.getUidValue());
     	assertEquals("OPEN",record.getStatus());
     	Attribute enable = AttributeBuilder.build(OperationalAttributes.ENABLE_NAME, Boolean.FALSE);
     	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(enable), null);
-    	record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
+    	record = userReader.readUserRecord(uid.getUidValue());
     	assertNotNull(record);
     	assertEquals("LOCKED",record.getStatus());
     	enable = AttributeBuilder.build(OperationalAttributes.ENABLE_NAME, Boolean.TRUE);
     	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(enable), null);
-    	record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
+    	record = userReader.readUserRecord(uid.getUidValue());
     	assertNotNull(record);
     	assertEquals("OPEN",record.getStatus());
     }
@@ -250,7 +250,7 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
     public void testUpdateExpirePasword() throws SQLException{
     	Attribute expirePassword = AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME,Boolean.TRUE);
     	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(expirePassword), null);
-    	UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
+    	UserRecord record = userReader.readUserRecord(uid.getUidValue());
     	assertNotNull(record);
         assertEquals("EXPIRED",record.getStatus());
         
@@ -262,7 +262,7 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         }catch(RuntimeException e){
         }
         facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil.newSet(expirePassword,AttributeBuilder.buildPassword("newPassword".toCharArray())), null);
-        record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
+        record = userReader.readUserRecord(uid.getUidValue());
     	assertNotNull(record);
         assertEquals("OPEN",record.getStatus());
         
@@ -373,7 +373,7 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
     public void testUpdateUserExternal() throws SQLException{
         //Test external authentication
     	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConstants.ORACLE_AUTH_EXTERNAL)), null);
-        UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
+        UserRecord record = userReader.readUserRecord(uid.getUidValue());
     	assertNotNull(record);
         assertEquals("OPEN",record.getStatus());
         assertEquals("EXTERNAL",record.getPassword());
@@ -399,7 +399,7 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
 							OracleConstants.ORACLE_AUTH_GLOBAL),
 							AttributeBuilder.build(OracleConstants.ORACLE_GLOBAL_ATTR_NAME,"anyGlobal")
 					), null);
-	        UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
+	        UserRecord record = userReader.readUserRecord(uid.getUidValue());
 	    	assertNotNull(record);
 	        assertEquals("OPEN",record.getStatus());
 	        assertNotNull(record.getExternalName());
@@ -459,8 +459,56 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
 			fail("Dummy attribute should not be supported");
 		}
 		catch(IllegalArgumentException e){}
+		
+		//Call with no attributes, this must fail
+		try{
+			facade.update(ObjectClass.ACCOUNT,uid, Collections.<Attribute>emptySet(), null);
+			fail("Update with no attributes should fail");
+		}
+		catch(IllegalArgumentException e){}
+		
+		try{
+			facade.addAttributeValues(ObjectClass.ACCOUNT,uid, Collections.<Attribute>emptySet(), null);
+			fail("AddAttributeValues with no attributes should fail");
+		}
+		catch(IllegalArgumentException e){}
+
+		try{
+			facade.removeAttributeValues(ObjectClass.ACCOUNT,uid, Collections.<Attribute>emptySet(), null);
+			fail("RemoveAttributeValues with no attributes should fail");
+		}
+		catch(IllegalArgumentException e){}
+		
+		//try other case of attributes
+        authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME.toUpperCase(), OracleConstants.ORACLE_AUTH_LOCAL);
+        password = new GuardedString("hello".toCharArray());
+        passwordAttribute = AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME.toUpperCase(),password);
+        privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME.toUpperCase(),"CREATE SESSION");
+        enabled = AttributeBuilder.build(OperationalAttributes.ENABLE_NAME.toUpperCase(),Boolean.TRUE);
+        expirePassword = AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME.toUpperCase(),Boolean.TRUE);
+        attrs = new HashSet<Attribute>(Arrays.asList(authentication,passwordAttribute,
+        		privileges,enabled,expirePassword));
+
+        facade.update(ObjectClass.ACCOUNT,uid, attrs, null);
+        //We do not need to verify update effect, we test that invalid attributes are rejected 
 	}
-    
+	
+	/** Test that update will fail for sql error, e.g killed connection 
+	 * @throws SQLException */ 
+	@Test
+	public void testUpdateFail() throws SQLException{
+		OracleConnector testConnector = createTestConnector();
+		testConnector.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.buildPassword("newpassword".toCharArray())) , null);
+		//Now kill connection
+		OracleSpecificsTest.killConnection(connector.getAdminConnection(), testConnector.getAdminConnection());
+		//now update should fail
+		try{
+			testConnector.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.buildPassword("newpassword".toCharArray())) , null);
+			fail("Update must fail for killed connection");
+		}catch(RuntimeException e){
+		}
+		testConnector.dispose();
+	}
 
     
     

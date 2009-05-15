@@ -3,29 +3,11 @@
  */
 package org.identityconnectors.oracle;
 
-import static org.identityconnectors.oracle.OracleMessages.CS_DISPLAY;
-import static org.identityconnectors.oracle.OracleMessages.CS_HELP;
-import static org.identityconnectors.oracle.OracleMessages.DATABASE_DISPLAY;
-import static org.identityconnectors.oracle.OracleMessages.DATABASE_HELP;
-import static org.identityconnectors.oracle.OracleMessages.DATASOURCE_DISPLAY;
-import static org.identityconnectors.oracle.OracleMessages.DATASOURCE_HELP;
-import static org.identityconnectors.oracle.OracleMessages.DRIVER_DISPLAY;
-import static org.identityconnectors.oracle.OracleMessages.DRIVER_HELP;
-import static org.identityconnectors.oracle.OracleMessages.DSJNDIENV_DISPLAY;
-import static org.identityconnectors.oracle.OracleMessages.DSJNDIENV_HELP;
-import static org.identityconnectors.oracle.OracleMessages.HOST_DISPLAY;
-import static org.identityconnectors.oracle.OracleMessages.HOST_HELP;
-import static org.identityconnectors.oracle.OracleMessages.PASSWORD_DISPLAY;
-import static org.identityconnectors.oracle.OracleMessages.PASSWORD_HELP;
-import static org.identityconnectors.oracle.OracleMessages.PORT_DISPLAY;
-import static org.identityconnectors.oracle.OracleMessages.PORT_HELP;
-import static org.identityconnectors.oracle.OracleMessages.URL_DISPLAY;
-import static org.identityconnectors.oracle.OracleMessages.URL_HELP;
-import static org.identityconnectors.oracle.OracleMessages.USER_DISPLAY;
-import static org.identityconnectors.oracle.OracleMessages.USER_HELP;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+
+import static org.identityconnectors.oracle.OracleMessages.*;
 
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
@@ -61,7 +43,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
      */
     public OracleConfiguration() {
         //Set casesensitivity setup to default one
-        cs = new OracleCaseSensitivityBuilder().build();
+        cs = new OracleCaseSensitivityBuilder(getConnectorMessages()).build();
         caseSensitivityString = "default";
         port = OracleSpecifics.LISTENER_DEFAULT_PORT;
         driver = OracleSpecifics.THIN_DRIVER;
@@ -96,7 +78,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
      * @return the host
      */
-    @ConfigurationProperty(order = 0,displayMessageKey=HOST_DISPLAY,helpMessageKey=HOST_HELP)
+    @ConfigurationProperty(order = 0,displayMessageKey=MSG_HOST_DISPLAY,helpMessageKey=MSG_HOST_HELP)
     public String getHost() {
         return host;
     }
@@ -111,7 +93,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
      * @return the port
      */
-    @ConfigurationProperty(order = 1,displayMessageKey=PORT_DISPLAY,helpMessageKey=PORT_HELP)
+    @ConfigurationProperty(order = 1,displayMessageKey=MSG_PORT_DISPLAY,helpMessageKey=MSG_PORT_HELP)
     public String getPort() {
         return port;
     }
@@ -126,7 +108,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
      * @return the driver
      */
-    @ConfigurationProperty(order = 2,displayMessageKey=DRIVER_DISPLAY,helpMessageKey=DRIVER_HELP)
+    @ConfigurationProperty(order = 2,displayMessageKey=MSG_DRIVER_DISPLAY,helpMessageKey=MSG_DRIVER_HELP)
     public String getDriver() {
         return driver;
     }
@@ -141,7 +123,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
      * @return the database
      */
-    @ConfigurationProperty(order = 3,displayMessageKey=DATABASE_DISPLAY,helpMessageKey=DATABASE_HELP)
+    @ConfigurationProperty(order = 3,displayMessageKey=MSG_DATABASE_DISPLAY,helpMessageKey=MSG_DATABASE_HELP)
     public String getDatabase() {
         return database;
     }
@@ -156,7 +138,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
      * @return the user
      */
-    @ConfigurationProperty(order = 4,displayMessageKey=USER_DISPLAY,helpMessageKey=USER_HELP)
+    @ConfigurationProperty(order = 4,displayMessageKey=MSG_USER_DISPLAY,helpMessageKey=MSG_USER_HELP)
     public String getUser() {
         return user;
     }
@@ -179,7 +161,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
      * @return the password
      */
-    @ConfigurationProperty(order = 5,displayMessageKey=PASSWORD_DISPLAY,helpMessageKey=PASSWORD_HELP,confidential=true)
+    @ConfigurationProperty(order = 5,displayMessageKey=MSG_PASSWORD_DISPLAY,helpMessageKey=MSG_PASSWORD_HELP,confidential=true)
     public GuardedString getPassword() {
         return password;
     }
@@ -194,7 +176,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
      * @return the dataSource
      */
-    @ConfigurationProperty(order = 6,displayMessageKey=DATASOURCE_DISPLAY,helpMessageKey=DATASOURCE_HELP)
+    @ConfigurationProperty(order = 6,displayMessageKey=MSG_DATASOURCE_DISPLAY,helpMessageKey=MSG_DATASOURCE_HELP)
     public String getDataSource() {
         return dataSource;
     }
@@ -209,7 +191,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
      * @return the dsJNDIEnv
      */
-    @ConfigurationProperty(order = 6,displayMessageKey=DSJNDIENV_DISPLAY,helpMessageKey=DSJNDIENV_HELP)
+    @ConfigurationProperty(order = 6,displayMessageKey=MSG_DSJNDIENV_DISPLAY,helpMessageKey=MSG_DSJNDIENV_HELP)
     public String[] getDsJNDIEnv() {
         return dsJNDIEnv;
     }
@@ -226,7 +208,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
      * @return the url
      */
-    @ConfigurationProperty(order = 7,displayMessageKey=URL_DISPLAY,helpMessageKey=URL_HELP)
+    @ConfigurationProperty(order = 7,displayMessageKey=MSG_URL_DISPLAY,helpMessageKey=MSG_URL_HELP)
     public String getUrl() {
         return url;
     }
@@ -241,7 +223,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
      * @return caseSensitivityString
      */
-    @ConfigurationProperty(order = 8,displayMessageKey=CS_DISPLAY,helpMessageKey=CS_HELP,required=true)
+    @ConfigurationProperty(order = 8,displayMessageKey=MSG_CS_DISPLAY,helpMessageKey=MSG_CS_HELP,required=true)
     public String getCaseSensitivity(){
         return caseSensitivityString;
     }
@@ -264,24 +246,24 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     @Override
     public void validate() {
     	LocalizedAssert la = new LocalizedAssert(getConnectorMessages(),true);
-        la.assertNotBlank(caseSensitivityString, CS_DISPLAY);
-        this.cs = new OracleCaseSensitivityBuilder().parseMap(caseSensitivityString).build();
+        la.assertNotBlank(caseSensitivityString, "oracle.cs.display");
+        this.cs = new OracleCaseSensitivityBuilder(getConnectorMessages()).parseMap(caseSensitivityString).build();
         if(dataSource != null){
-			la.assertNotBlank(dataSource, DATASOURCE_DISPLAY);
-			la.assertBlank(host, HOST_DISPLAY);
-			la.assertBlank(database,DATABASE_DISPLAY);
-			la.assertBlank(driver,DRIVER_DISPLAY);
-			la.assertBlank(port,PORT_DISPLAY);
+			la.assertNotBlank(dataSource, MSG_DATASOURCE_DISPLAY);
+			la.assertBlank(host, "MSG_HOST_DISPLAY");
+			la.assertBlank(database,MSG_DATABASE_DISPLAY);
+			la.assertBlank(driver,MSG_DRIVER_DISPLAY);
+			la.assertBlank(port,MSG_PORT_DISPLAY);
             connType = ConnectionType.DATASOURCE;
         }
         else{
-        	la.assertNotBlank(driver, DRIVER_DISPLAY);
+        	la.assertNotBlank(driver, MSG_DRIVER_DISPLAY);
             if(StringUtil.isNotBlank(url)){
-                la.assertNotBlank(user,USER_DISPLAY);
-                la.assertNotNull(password, PASSWORD_DISPLAY);
-    			la.assertBlank(host, HOST_DISPLAY);
-    			la.assertBlank(database,DATABASE_DISPLAY);
-    			la.assertBlank(port,PORT_DISPLAY);
+                la.assertNotBlank(user,MSG_USER_DISPLAY);
+                la.assertNotNull(password, MSG_PASSWORD_DISPLAY);
+    			la.assertBlank(host, "MSG_HOST_DISPLAY");
+    			la.assertBlank(database,MSG_DATABASE_DISPLAY);
+    			la.assertBlank(port,MSG_PORT_DISPLAY);
                 if(OracleSpecifics.THIN_DRIVER.equals(driver)){
                     driverClassName = OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME;
                 }
@@ -299,11 +281,11 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
                 connType = ConnectionType.FULL_URL;
             }
             else if(OracleSpecifics.THIN_DRIVER.equals(driver)){
-            	la.assertNotBlank(host, HOST_DISPLAY);
-            	la.assertNotBlank(port, PORT_DISPLAY);
-            	la.assertNotBlank(user, USER_DISPLAY);
-            	la.assertNotNull(password, PASSWORD_DISPLAY);
-            	la.assertNotBlank(database, DATABASE_DISPLAY);
+            	la.assertNotBlank(host, "MSG_HOST_DISPLAY");
+            	la.assertNotBlank(port, MSG_PORT_DISPLAY);
+            	la.assertNotBlank(user, MSG_USER_DISPLAY);
+            	la.assertNotNull(password, MSG_PASSWORD_DISPLAY);
+            	la.assertNotBlank(database, MSG_DATABASE_DISPLAY);
                 driverClassName = OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME;
                 try {
                     Class.forName(driverClassName);
@@ -313,9 +295,9 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
                 connType = ConnectionType.THIN;
             }
             else if(OracleSpecifics.OCI_DRIVER.equals(driver)){
-            	la.assertNotBlank(user, USER_DISPLAY);
-            	la.assertNotNull(password, PASSWORD_DISPLAY);
-            	la.assertNotBlank(database, DATABASE_DISPLAY);
+            	la.assertNotBlank(user, MSG_USER_DISPLAY);
+            	la.assertNotNull(password, MSG_PASSWORD_DISPLAY);
+            	la.assertNotBlank(database, MSG_DATABASE_DISPLAY);
                 driverClassName = OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME;
                 try {
                     Class.forName(driverClassName);

@@ -2,7 +2,7 @@ package org.identityconnectors.oracle;
 
 import org.identityconnectors.common.security.GuardedString;
 
-/** Helper immutable holder of oracle connection information */
+/** Helper immutable holder of oracle jdbc connection information */
 final class OracleDriverConnectionInfo {
     private final String host;
     private final String port;

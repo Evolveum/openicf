@@ -23,7 +23,7 @@ public class OracleSpecificsTest {
         String port = TestHelpers.getProperty("thin.port",null);
         String database = TestHelpers.getProperty("thin.database", null);
         Connection conn = 
-            OracleSpecifics.createThinDriverConnection(new Builder().
+        	OracleSpecifics.createThinDriverConnection(new Builder().
                     setUser(user).setPassword(password).
                     setHost(host).setPort(port).setDatabase(database).
                     build());
@@ -47,7 +47,7 @@ public class OracleSpecificsTest {
         String port = TestHelpers.getProperty("oci.port",null);
         String database = TestHelpers.getProperty("oci.database", null);
         Connection conn = 
-            OracleSpecifics.createOciDriverConnection(new Builder().
+        	OracleSpecifics.createOciDriverConnection(new Builder().
                     setUser(user).setPassword(password).
                     setHost(host).setPort(port).setDatabase(database).
                     build());
@@ -72,19 +72,23 @@ public class OracleSpecificsTest {
     private void testStaleConnection(Connection systemConn,Connection testConn) throws SQLException{
         //Here connection should be ok
         OracleSpecifics.testConnection(testConn);
-        Object sid = SQLUtil.selectSingleValue(testConn, "SELECT USERENV('SID') FROM DUAL");
-        Object serialNumber = SQLUtil.selectSingleValue(systemConn, "select serial# from v$session where SID  = " +  sid);
-        String killSql = MessageFormat.format("ALTER SYSTEM KILL SESSION {0} ", "'" + sid + "," + serialNumber + "'");
-        SQLUtil.executeUpdateStatement(systemConn, killSql);
+        killConnection(systemConn, testConn);
         //Here testConn is staled
         try{
-            OracleSpecifics.testConnection(testConn);
+        	OracleSpecifics.testConnection(testConn);
             fail("Session is killed, test should fail");
         }
         catch(Exception e){
         }
         SQLUtil.closeQuietly(systemConn);
         SQLUtil.closeQuietly(testConn);
+    }
+    
+    static void killConnection(Connection systemConn,Connection connToKill) throws SQLException{
+        Object sid = SQLUtil.selectSingleValue(connToKill, "SELECT USERENV('SID') FROM DUAL");
+        Object serialNumber = SQLUtil.selectSingleValue(systemConn, "select serial# from v$session where SID  = " +  sid);
+        String killSql = MessageFormat.format("ALTER SYSTEM KILL SESSION {0} ", "'" + sid + "," + serialNumber + "'");
+        SQLUtil.executeUpdateStatement(systemConn, killSql);
     }
     
     

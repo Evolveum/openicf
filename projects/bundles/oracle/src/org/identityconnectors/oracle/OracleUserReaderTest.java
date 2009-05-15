@@ -11,6 +11,7 @@ import java.util.*;
 import static org.identityconnectors.oracle.OracleUserAttributeCS.*;
 
 import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.test.common.TestHelpers;
 import org.junit.*;
 
 /**
@@ -30,7 +31,7 @@ public class OracleUserReaderTest {
     public static void beforeClass(){
         cfg = OracleConfigurationTest.createSystemConfiguration();
         conn = cfg.createAdminConnection();
-        userReader = new OracleUserReader(conn);
+        userReader = new OracleUserReader(conn,TestHelpers.createDummyMessages());
     }
     
     /**

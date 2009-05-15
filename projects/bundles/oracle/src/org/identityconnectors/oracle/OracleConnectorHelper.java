@@ -1,47 +1,50 @@
 package org.identityconnectors.oracle;
 
-import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 import org.identityconnectors.common.StringUtil;
-import org.identityconnectors.framework.common.objects.*;
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.ConnectorMessages;
 
 /** Helper static methods related to Oracle connector */
 abstract class OracleConnectorHelper {
 	private OracleConnectorHelper(){}
-    static String getRequiredStringValue(Map<String, Attribute> attrs, String name){
+	
+    static String getRequiredStringValue(Map<String, Attribute> attrs, String name, ConnectorMessages cm){
         Attribute attr = attrs.get(name);
         if(attr == null){
-            throw new IllegalArgumentException("No attribute with name  [" + name + "] found in set");
+            throw new IllegalArgumentException(cm.format("oracle.attribute.is.missing", null, name));
         }
         return AttributeUtil.getStringValue(attr);
     }
 
-    static String getNotEmptyStringValue(Map<String, Attribute> attrs, String name){
-        String value = getRequiredStringValue(attrs, name);
+    static String getNotEmptyStringValue(Map<String, Attribute> attrs, String name, ConnectorMessages cm){
+        String value = getRequiredStringValue(attrs, name, cm);
         if(StringUtil.isEmpty(value)){
-            throw new IllegalArgumentException("Attribute with name [" + name + "] is empty");
+            throw new IllegalArgumentException(cm.format("oracle.attribute.is.empty", null, name));
         }
         return value;
          
     }
 
-    static String getStringValue(Map<String, Attribute> attrs, String name){
+    static String getStringValue(Map<String, Attribute> attrs, String name, ConnectorMessages cm){
         Attribute attr = attrs.get(name);
         return attr != null ? AttributeUtil.getStringValue(attr) : null;
     }
     
     
-    static String getNotNullAttributeNotEmptyStringValue(Map<String, Attribute> attrs, String name){
+    static String getNotNullAttributeNotEmptyStringValue(Map<String, Attribute> attrs, String name, ConnectorMessages cm){
     	Attribute attr = attrs.get(name);
     	if(attr == null){
     		return null;
     	}
-        String value = AttributeUtil.getStringValue(attr);
-		if(StringUtil.isEmpty(value)){
-            throw new IllegalArgumentException("Attribute with name [" + name + "] is empty");
-        }
-		return value;
+    	return getNotEmptyStringValue(attrs, name, cm);
     }
 
     
@@ -64,7 +67,7 @@ abstract class OracleConnectorHelper {
     }
 
     
-    static Boolean getNotNullAttributeBooleanValue(Map<String, Attribute> attrs, String name){
+    static Boolean getNotNullAttributeBooleanValue(Map<String, Attribute> attrs, String name, ConnectorMessages cm){
         Attribute attr = attrs.get(name);
         if(attr == null){
             return null;
@@ -73,7 +76,7 @@ abstract class OracleConnectorHelper {
         if(value instanceof Boolean){
             return (Boolean) value;
         }
-        throw new IllegalArgumentException(MessageFormat.format("Boolean attribute [{0}] has invalid value [{1}]",name,value));
+        throw new IllegalArgumentException(cm.format("oracle.boolean.attribute.has.invalid.value", null, name, value));
     }
     
     static <T> T assertNotNull(T t,String argument){
@@ -90,6 +93,17 @@ abstract class OracleConnectorHelper {
     	else{
     		return AttributeBuilder.build(name);
     	}
+    }
+    
+    /** Later switch to framework implementation */ 
+    static class AttributeComparator implements Comparator<String>{
+		public int compare(String o1, String o2) {
+			return o1.compareToIgnoreCase(o2);
+		}
+    }
+    
+    static Comparator<String> getAttributeNamesComparator(){
+    	return new AttributeComparator();
     }
     
 
