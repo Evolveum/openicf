@@ -50,7 +50,7 @@ public class SolarisHelper {
         connection.resetStandardOutput();
         try {
             connection.send(command);
-            connection.waitFor(configuration.getRootShellPrompt(), DEFAULT_WAIT);
+            connection.waitFor(configuration.getRootShellPrompt(), VERY_LONG_WAIT);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }

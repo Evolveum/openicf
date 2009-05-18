@@ -61,27 +61,56 @@ public class OpCreateImpl extends AbstractOp {
 
         getLog().info("~~~~~~~ create(''{0}'') ~~~~~~~", accountId);
         
-        // USERADD accountId
-        final String command = String.format("useradd %s", accountId);
-        executeCommand(command);
-        getLog().info("useradd(''{0}'')", accountId);
+        /*
+         * CREATE A NEW ACCOUNT
+         */
         
-        // PASSWD password
+        // USERADD accountId
+        String command = String.format("useradd %s", accountId);
+        //executeCommand(command);
+        try {//CONNECTION
+            getLog().info("useradd(''{0}'')", accountId);
+            
+            getConnection().resetStandardOutput();
+            getConnection().send(command);
+            getConnection().waitFor(getConfiguration().getRootShellPrompt());
+            
+        } catch (Exception ex) {
+            getLog().error(ex.getMessage() + "\n");
+            ex.printStackTrace();
+        } //EOF CONNECTION
+        
+        /*
+         * PASSWORD SET
+         */
         final GuardedString password = SolarisHelper.getPasswordFromMap(attrMap);
-        password.access(new GuardedString.Accessor() {
-            public void access(char[] clearChars) {
-                String realPasswd = new String(clearChars);
-                final String command = String.format("passwd %s", accountId);
-                String result = executeCommand(command);
-                try {
-                    getConnection().send(realPasswd);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+        try {// CONNECTION
+            getLog().info("passwd()");
+            // TODO configurable source of password
+            command = String.format("passwd -r files %s", accountId);
+            getConnection().send(command);
+            
+            password.access(new GuardedString.Accessor() {
+                public void access(char[] clearChars) {
+                    String realPasswd = new String(clearChars);
+                    try {
+                        getConnection().waitFor("New Password:");
+                        getConnection().send(realPasswd);
+                        getConnection().waitFor("Re-enter new Password:");
+                        getConnection().send(realPasswd);
+                        getConnection().waitFor(String.format("passwd: password successfully changed for %s", accountId));
+                    } catch (Exception ex) {
+                        getLog().error(ex.getMessage() + "\n");
+                        ex.printStackTrace();
+                    }
                 }
-                getLog().info(String.format("password change result: %s", result));
-                getLog().info("passwd()");
-            }
-        });        
+            });
+
+        } catch (Exception ex) {
+            getLog().error(ex.getMessage() + "\n");
+            ex.printStackTrace();
+        } // EOF CONNECTION
+        // PASSWD password
         
         return new Uid(accountId);
     }

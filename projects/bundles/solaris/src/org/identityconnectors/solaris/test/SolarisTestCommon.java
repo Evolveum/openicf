@@ -50,26 +50,13 @@ public class SolarisTestCommon {
         return conn;
     }
     
-    /**
-     * set up a configuration with given property key/value pair. 
-     * The setting is done via helper interface
-     * 
-     * @param propertyName
-     * @param config
-     * @param method
-     * @return the new configuration with performed setup
-     */
-    private static SolarisConfiguration augmentConfiguration(
-            String propertyName, SolarisConfiguration config,
-            SetConfiguration method) {
-        SolarisConfiguration configResult = new SolarisConfiguration(config);
-        final String propValue = TestHelpers.getProperty(propertyName, null);
+    private static String getTestProperty(String name) {
+        final String propValue = TestHelpers.getProperty(name, null);
         String msg = "%s must be provided in build.groovy";
-        Assert.assertNotNull(String.format(msg, propertyName), propValue);
-        configResult = method.set(propValue, configResult);
-        return configResult;
+        Assert.assertNotNull(String.format(msg, name), propValue);
+        return propValue;
     }
-    
+
     static SolarisConfiguration createConfiguration() {
         // names of properties in the property file (build.groovy)
         final String PROP_HOST = "host";
@@ -82,60 +69,18 @@ public class SolarisTestCommon {
         // save configuration
         SolarisConfiguration config = new SolarisConfiguration();
 
-        config = augmentConfiguration(PROP_HOST, config,
-                new SetConfiguration() {
-                    public SolarisConfiguration set(String value,
-                            SolarisConfiguration config) {
-                        config.setHostNameOrIpAddr(value);
-                        return config;
-                    }
-                });
+        config.setHostNameOrIpAddr(getTestProperty(PROP_HOST));
 
-        config = augmentConfiguration(PROP_SYSTEM_PASSWORD, config,
-                new SetConfiguration() {
-                    public SolarisConfiguration set(String value,
-                            SolarisConfiguration config) {
-                        config.setPassword(new GuardedString(value
-                                .toCharArray()));
-                        return config;
-                    }
-                });
+        final String password = getTestProperty(PROP_SYSTEM_PASSWORD);
+        config.setPassword(new GuardedString(password.toCharArray()));
 
-        config = augmentConfiguration(PROP_SYSTEM_USER, config,
-                new SetConfiguration() {
-                    public SolarisConfiguration set(String value,
-                            SolarisConfiguration config) {
-                        config.setUserName(value);
-                        return config;
-                    }
-                });
+        config.setUserName(getTestProperty(PROP_SYSTEM_USER));
 
-        config = augmentConfiguration(PROP_PORT, config,
-                new SetConfiguration() {
-                    public SolarisConfiguration set(String value,
-                            SolarisConfiguration config) {
-                        config.setPort(Integer.valueOf(value));
-                        return config;
-                    }
-                });
+        config.setPort(Integer.valueOf(getTestProperty(PROP_PORT)));
 
-        config = augmentConfiguration(PROP_CONN_TYPE, config,
-                new SetConfiguration() {
-                    public SolarisConfiguration set(String value,
-                            SolarisConfiguration config) {
-                        config.setConnectionType(value);
-                        return config;
-                    }
-                });
+        config.setConnectionType(getTestProperty(PROP_CONN_TYPE));
 
-        config = augmentConfiguration(ROOT_SHELL_PROMPT, config,
-                new SetConfiguration() {
-                    public SolarisConfiguration set(String value,
-                            SolarisConfiguration config) {
-                        config.setRootShellPrompt(value);
-                        return config;
-                    }
-                });
+        config.setRootShellPrompt(getTestProperty(ROOT_SHELL_PROMPT));
 
         return config;
     }
