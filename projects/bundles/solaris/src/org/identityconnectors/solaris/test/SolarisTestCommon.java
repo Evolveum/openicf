@@ -25,6 +25,9 @@ package org.identityconnectors.solaris.test;
 import junit.framework.Assert;
 
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.api.APIConfiguration;
+import org.identityconnectors.framework.api.ConnectorFacade;
+import org.identityconnectors.framework.api.ConnectorFacadeFactory;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.test.common.TestHelpers;
@@ -82,5 +85,12 @@ public class SolarisTestCommon {
         config.setRootShellPrompt(ROOT_PROMPT);
         
         return config;
+    }
+    
+    /** for simulating API calls */
+    static ConnectorFacade createConnectorFacade(SolarisConfiguration conf) {
+        ConnectorFacadeFactory factory = ConnectorFacadeFactory.getInstance();
+        APIConfiguration apiCfg = TestHelpers.createTestConfiguration(SolarisConnector.class, conf);
+        return factory.newInstance(apiCfg);
     }
 }

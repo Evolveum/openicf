@@ -26,5 +26,21 @@ package org.identityconnectors.solaris;
  * selector of connection type
  */
 enum ConnectionType {
-    SSH, TELNET
+    SSH, TELNET;
+    
+    public static ConnectionType toConnectionType(String s) {
+        //validate
+        String connType = s.toUpperCase();
+        
+        final String SSH = ConnectionType.SSH.toString();
+        final String TELNET = ConnectionType.TELNET.toString();
+        
+        if (connType.equals(SSH)) {
+            return ConnectionType.SSH;
+        } else if (connType.equals(TELNET)) {
+            return ConnectionType.TELNET;
+        } else {
+            throw new AssertionError(String.format("invalid connection type, should be '%s' or '%s'", SSH, TELNET));
+        }
+    }
 }

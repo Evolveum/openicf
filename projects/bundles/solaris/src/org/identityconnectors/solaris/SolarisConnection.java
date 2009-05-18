@@ -70,8 +70,9 @@ public class SolarisConnection {
         password.access(new GuardedString.Accessor() {
             public void access(char[] clearChars) {
                 try {
-                    final ConnectionType connType = _configuration
-                            .getConnectionType();
+                    final ConnectionType connType = ConnectionType
+                            .toConnectionType(_configuration
+                                    .getConnectionType());
 
                     if (connType.equals(ConnectionType.SSH)) {
                         _expect4j = ExpectUtils.SSH(_configuration

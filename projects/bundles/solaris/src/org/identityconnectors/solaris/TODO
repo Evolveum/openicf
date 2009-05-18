@@ -16,3 +16,4 @@ HINTS from SolarisRA:
   
   try to reproduce the 'echo "Hello world"' -- inspire from VMS code.
   == try to detect, what was sent back.
+  

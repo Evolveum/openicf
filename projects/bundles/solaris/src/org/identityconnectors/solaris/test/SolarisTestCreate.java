@@ -30,6 +30,7 @@ import java.util.Set;
 import junit.framework.Assert;
 
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
@@ -38,7 +39,6 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConfiguration;
-import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisHelper;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.After;
@@ -48,6 +48,7 @@ import org.junit.Test;
 public class SolarisTestCreate {
     
     private SolarisConfiguration config;
+    private ConnectorFacade facade;
 
     /**
      * set valid credentials based on build.groovy property file
@@ -56,11 +57,13 @@ public class SolarisTestCreate {
     @Before
     public void setUp() throws Exception {
         config = SolarisTestCommon.createConfiguration();
+        facade = SolarisTestCommon.createConnectorFacade(config);
     }
 
     @After
     public void tearDown() throws Exception {
         config = null;
+        facade = null;
     }
     
     /**
@@ -68,22 +71,20 @@ public class SolarisTestCreate {
      */
     @Test
     public void testCreate() {
-        final SolarisConnector connector = createConnector(config);
-        
         // create a new user
         final Set<Attribute> attrs = initSampleUser();
         // Read only list of attributes
         final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
         final String username = ((Name) attrMap.get(Name.NAME)).getNameValue();
-        Uid uid = connector.create(ObjectClass.ACCOUNT, attrs, null);
+        Uid uid = facade.create(ObjectClass.ACCOUNT, attrs, null);
         Assert.assertNotNull(uid);
         
         final GuardedString password = SolarisHelper.getPasswordFromMap(attrMap);
         
         //cleanup the new user ##################
-        connector.delete(ObjectClass.ACCOUNT, new Uid(username), null);
+        facade.delete(ObjectClass.ACCOUNT, new Uid(username), null);
         try {
-            connector.authenticate(ObjectClass.ACCOUNT, username, password, null);
+            facade.authenticate(ObjectClass.ACCOUNT, username, password, null);
             Assert.fail(String.format("Account was not cleaned up: '%s'", username));
         } catch (RuntimeException ex) {
             //OK
@@ -91,16 +92,16 @@ public class SolarisTestCreate {
         
         // try to authenticate 
         try {
-            connector.authenticate(ObjectClass.ACCOUNT, username, password, null);
+            facade.authenticate(ObjectClass.ACCOUNT, username, password, null);
         } catch (RuntimeException ex) {
             ex.printStackTrace();
-            Assert.fail(String.format("Authenticate failed for: '%s'", username));
+            Assert.fail(String.format("Authenticate failed for: '%s'\n ExceptionMessage: %s", username, ex.getMessage()));
         }
         
         //cleanup the new user
-        connector.delete(ObjectClass.ACCOUNT, new Uid(username), null);
+        facade.delete(ObjectClass.ACCOUNT, new Uid(username), null);
         try {
-            connector.authenticate(ObjectClass.ACCOUNT, username, password, null);
+            facade.authenticate(ObjectClass.ACCOUNT, username, password, null);
             Assert.fail(String.format("Account was not cleaned up: '%s'", username));
         } catch (RuntimeException ex) {
             //OK
@@ -125,16 +126,5 @@ public class SolarisTestCreate {
         res.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString(samplePasswd.toCharArray())));
         
         return res;
-    }
-    
-    /**
-     * create a new solaris connector and initialize it with the given configuration
-     * @param config the configuration to be used.
-     */
-    private SolarisConnector createConnector(SolarisConfiguration config) {
-        SolarisConnector conn = new SolarisConnector();
-        conn.init(config);
-        
-        return conn;
     }
 }

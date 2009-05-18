@@ -23,9 +23,10 @@
 package org.identityconnectors.solaris.test;
 
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.solaris.SolarisConfiguration;
-import org.identityconnectors.solaris.SolarisConnector;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,6 +34,7 @@ import org.junit.Test;
 public class SolarisTestAuthenticate {
     
     private SolarisConfiguration config;
+    private ConnectorFacade facade;
 
     /**
      * set valid credentials based on build.groovy property file
@@ -41,19 +43,20 @@ public class SolarisTestAuthenticate {
     @Before
     public void setUp() throws Exception {
         config = SolarisTestCommon.createConfiguration();
+        facade = SolarisTestCommon.createConnectorFacade(config);
     }
 
     @After
     public void tearDown() throws Exception {
         config = null;
+        facade = null;
     }
     
     @Test
     public void testAuthenticateApiOp() {
-        SolarisConnector connector = SolarisTestCommon.createConnector(config);
         GuardedString password = config.getPassword();
         String username = config.getUserName();
-        connector.authenticate(null, username, password, null);
+        facade.authenticate(ObjectClass.ACCOUNT, username, password, null);
     }
     
     /**
@@ -61,10 +64,9 @@ public class SolarisTestAuthenticate {
      */
     @Test (expected=ConnectorException.class)
     public void testAuthenticateApiOpInvalidCredentials() {
-        SolarisConnector connector = SolarisTestCommon.createConnector(config);
         GuardedString password = new GuardedString(
                 "WRONG_PASSWORD_FOOBAR2135465".toCharArray());
         String username = config.getUserName();
-        connector.authenticate(null, username, password, null);
+        facade.authenticate(ObjectClass.ACCOUNT, username, password, null);
     }
 }

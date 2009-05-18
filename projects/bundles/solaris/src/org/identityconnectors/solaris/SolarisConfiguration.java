@@ -126,7 +126,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
      * protocol type. The default protocol is Telnet. Supported protocols are
      * Telnet, SSH, and SSHPubKey.
      */
-    private ConnectionType connectionType;
+    private String connectionType;
     private ConnectorMessages _connectorMessages;
     
     /*
@@ -354,23 +354,12 @@ public class SolarisConfiguration extends AbstractConfiguration {
         this.port = port;
     }
 
-    public ConnectionType getConnectionType() {
+    public String getConnectionType() {
         return connectionType;
     }
 
-    public void setConnectionType(ConnectionType connectionType) {
-        this.connectionType = connectionType;
-    }
-
     public void setConnectionType(String connectionType) {
-        String connType = connectionType.toUpperCase();
-        if (connType.equals(ConnectionType.SSH.toString())) {
-            this.connectionType = ConnectionType.SSH;
-        } else if (connType.equals(ConnectionType.TELNET.toString())) {
-            this.connectionType = ConnectionType.TELNET;
-        } else {
-            throw new AssertionError("invalid connection type, should be SSH or TELNET");
-        }
+        this.connectionType = ConnectionType.toConnectionType(connectionType).toString();
     }
     
     public String getRootShellPrompt() {
