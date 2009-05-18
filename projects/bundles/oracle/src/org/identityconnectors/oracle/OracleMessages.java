@@ -55,4 +55,6 @@ class OracleMessages {
 	static final String MSG_MISSING_GLOBALNAME_FOR_GLOBAL_AUTHENTICATION = "oracle.missing.globalname.for.global.authentication";
 	static final String MSG_BOOLEAN_ATTRIBUTE_HAS_INVALID_VALUE = "oracle.boolean.attribute.has.invalid.value";
 	static final String MSG_ATTRIBUTE_IS_EMPTY = "oracle.attribute.is.empty";
+	static final String MSG_SET_DRIVER_OR_URL = "oracle.set.driver.or.url";
+	static final String MSG_CANNOT_LOAD_DRIVER = "oracle.cannot.load.driver";
 }

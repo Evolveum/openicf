@@ -250,7 +250,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
         this.cs = new OracleCaseSensitivityBuilder(getConnectorMessages()).parseMap(caseSensitivityString).build();
         if(dataSource != null){
 			la.assertNotBlank(dataSource, MSG_DATASOURCE_DISPLAY);
-			la.assertBlank(host, "MSG_HOST_DISPLAY");
+			la.assertBlank(host, MSG_HOST_DISPLAY);
 			la.assertBlank(database,MSG_DATABASE_DISPLAY);
 			la.assertBlank(driver,MSG_DRIVER_DISPLAY);
 			la.assertBlank(port,MSG_PORT_DISPLAY);
@@ -276,12 +276,12 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
                 try {
                     Class.forName(driverClassName);
                 } catch (ClassNotFoundException e) {
-                    throw new IllegalArgumentException("Cannot load driver class : + " + driverClassName,e);
+                    throw new IllegalArgumentException(getConnectorMessages().format(MSG_CANNOT_LOAD_DRIVER, null, driverClassName) ,e);
                 }
                 connType = ConnectionType.FULL_URL;
             }
             else if(OracleSpecifics.THIN_DRIVER.equals(driver)){
-            	la.assertNotBlank(host, "MSG_HOST_DISPLAY");
+            	la.assertNotBlank(host, MSG_HOST_DISPLAY);
             	la.assertNotBlank(port, MSG_PORT_DISPLAY);
             	la.assertNotBlank(user, MSG_USER_DISPLAY);
             	la.assertNotNull(password, MSG_PASSWORD_DISPLAY);
@@ -290,7 +290,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
                 try {
                     Class.forName(driverClassName);
                 } catch (ClassNotFoundException e) {
-                    throw new IllegalArgumentException("Cannot load thin driver class : + " + driverClassName,e);
+                	throw new IllegalArgumentException(getConnectorMessages().format(MSG_CANNOT_LOAD_DRIVER, null, driverClassName) ,e);
                 }
                 connType = ConnectionType.THIN;
             }
@@ -302,12 +302,12 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
                 try {
                     Class.forName(driverClassName);
                 } catch (ClassNotFoundException e) {
-                    throw new IllegalArgumentException("Cannot load driver class : + " + driverClassName,e);
+                	throw new IllegalArgumentException(getConnectorMessages().format(MSG_CANNOT_LOAD_DRIVER, null, driverClassName) ,e);
                 }
                 connType = ConnectionType.OCI;
             }
             else{
-            	throw new IllegalArgumentException("Must specify thin/oci driver or custom driver with full url");
+            	throw new IllegalArgumentException(getConnectorMessages().format(MSG_SET_DRIVER_OR_URL,null));
             }
         }
         

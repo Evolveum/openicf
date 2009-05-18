@@ -2,7 +2,7 @@ package org.identityconnectors.oracle;
 
 /** Case sensitivity settings of user tokens */
 enum OracleUserAttributeCS {
-    USER,
+    USER(false),
     PASSWORD(false),
     SCHEMA,
     ROLE,
@@ -11,8 +11,8 @@ enum OracleUserAttributeCS {
     DEF_TABLESPACE,
     TEMP_TABLESPACE,
     GLOBAL_NAME(false,"'"),
-    SYSTEM_USER(false,""), //by default system user will be case insensitive
-    SYSTEM_PASSWORD(false); //but password will be case sensitive 
+    SYSTEM_USER(false,""), 
+    SYSTEM_PASSWORD(false);  
     
     OracleUserAttributeCS(){}
     OracleUserAttributeCS(String defQuatesChar){
