@@ -35,6 +35,7 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.Filter;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.operations.SearchOp;
+import static org.identityconnectors.oracle.OracleMessages.*;
 
 /**
  * Oracle search actually executes query to search for users. It uses DBA_USERS,DBA_TS_QUOTAS,DBA_ROLE_PRIVS,DBA_SYS_PRIVS,USER_TAB_PRIVS views to perform query
@@ -161,7 +162,7 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 			adminConn.commit();
 		}
         catch (Exception e) {
-        	throw new ConnectorException(cfg.getConnectorMessages().format("oracle.error.executing.search", null), e);
+        	throw new ConnectorException(cfg.getConnectorMessages().format(MSG_ERROR_EXECUTING_SEARCH, null), e);
 		}
         finally{
         	SQLUtil.closeQuietly(st);
@@ -176,7 +177,7 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 		for(String attribute : attributesToGet){
 			//We do not need to use Attribute.is, we use Attribute comparator
 			if(!VALID_ATTRIBUTES_TO_GET.contains(attribute)){
-				throw new IllegalArgumentException(cfg.getConnectorMessages().format("oracle.search.attribute.not.supported.for.attributesToGet", null, attribute));
+				throw new IllegalArgumentException(cfg.getConnectorMessages().format(MSG_SEARCH_ATTRIBUTE_NOT_SUPPORTED_FOR_ATTRIBUTESTOGET, null, attribute));
 			}
 		}
 	}
@@ -251,7 +252,7 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 
 		private void checkSearchByAttribute(Attribute attribute) {
 			if(!VALID_SEARCH_BY_ATTRIBUTES.contains(attribute.getName())){
-				throw new IllegalArgumentException(cm.format("oracle.search.attribute.not.supported.for.searchBy", null, attribute.getName()));
+				throw new IllegalArgumentException(cm.format(MSG_SEARCH_ATTRIBUTE_NOT_SUPPORTED_FOR_SEARCHBY, null, attribute.getName()));
 			}
 		}
 

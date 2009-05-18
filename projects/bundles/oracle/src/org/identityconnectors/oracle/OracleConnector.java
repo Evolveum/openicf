@@ -40,7 +40,7 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
  *
  */
 @ConnectorClass(configurationClass=OracleConfiguration.class,
-        displayNameKey = OracleMessages.MSG_ATTRIBUTE_IS_MISSING,
+        displayNameKey = OracleMessages.MSG_CONNECTOR_DISPLAY,
         messageCatalogPaths={"org/identityconnectors/dbcommon/Messages","org/identityconnectors/oracle/Messages"})
 public final class OracleConnector implements PoolableConnector, AuthenticateOp,
 		CreateOp, DeleteOp, UpdateOp, UpdateAttributeValuesOp,

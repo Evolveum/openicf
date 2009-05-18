@@ -140,7 +140,7 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
         }
         catch(Exception e){
             SQLUtil.rollbackQuietly(adminConn);
-            throw new ConnectorException(cfg.getConnectorMessages().format("oracle.addAttributeValues.for.user.failed", null, uid.getUidValue()), e);
+            throw new ConnectorException(cfg.getConnectorMessages().format(MSG_ADDATTRIBUTEVALUES_FOR_USER_FAILED, null, uid.getUidValue()), e);
         }
         return uid;
     }
@@ -165,7 +165,7 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
         }
         catch(Exception e){
             SQLUtil.rollbackQuietly(adminConn);
-            throw new ConnectorException(cfg.getConnectorMessages().format("oracle.removeAttributeValues.for.user.failed", null, uid.getUidValue()), e);
+            throw new ConnectorException(cfg.getConnectorMessages().format(MSG_REMOVEATTRIBUTEVALUES_FOR_USER_FAILED, null, uid.getUidValue()), e);
         }
         return uid;
     }
@@ -176,7 +176,7 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
 		for(Attribute attr : map.values()){
 			//No need to call Attribute.is, set is caseinsensitive  
 			if(!VALIDUPDATEATTRIBUTES.contains(attr.getName())){
-				throw new IllegalArgumentException(cfg.getConnectorMessages().format("oracle.update.attribute.not.supported", null, attr.getName()));
+				throw new IllegalArgumentException(cfg.getConnectorMessages().format(MSG_UPDATE_ATTRIBUTE_NOT_SUPPORTED, null, attr.getName()));
 			}
 			if(attr.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
 				la.assertNotNull(AttributeUtil.getBooleanValue(attr), OperationalAttributes.PASSWORD_EXPIRED_NAME);
@@ -185,7 +185,7 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
 				if(Boolean.FALSE.equals(AttributeUtil.getSingleValue(attr))){
 					Attribute password = map.get(OperationalAttributes.PASSWORD_NAME);
 					if(password == null || AttributeUtil.getGuardedStringValue(password) == null){
-						throw new IllegalArgumentException(cfg.getConnectorMessages().format("oracle.must.specify.password.for.unexpire",null));
+						throw new IllegalArgumentException(cfg.getConnectorMessages().format(MSG_MUST_SPECIFY_PASSWORD_FOR_UNEXPIRE,null));
 					}
 				}
 			}
@@ -195,7 +195,7 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
     private void checkNoAttributes(Map<String, Attribute> map) {
 		//Is it really error to call update with no attributes ? Probably application should not issue dummy calls
 		if(map.isEmpty()){
-			throw new IllegalArgumentException(cfg.getConnectorMessages().format("oracle.update.no.attributes", null));
+			throw new IllegalArgumentException(cfg.getConnectorMessages().format(MSG_UPDATE_NO_ATTRIBUTES, null));
 		}
 	}
 
@@ -207,7 +207,7 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
 			else if(attr.is(OracleConstants.ORACLE_ROLES_ATTR_NAME)){
 			}
 			else{
-				throw new IllegalArgumentException(cfg.getConnectorMessages().format("oracle.addAttributeValues.attribute.not.supported", null, attr.getName()));
+				throw new IllegalArgumentException(cfg.getConnectorMessages().format(MSG_ADDATTRIBUTEVALUES_ATTRIBUTE_NOT_SUPPORTED, null, attr.getName()));
 			}
 		}
 	}
@@ -220,7 +220,7 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
 			else if(attr.is(OracleConstants.ORACLE_ROLES_ATTR_NAME)){
 			}
 			else{
-				throw new IllegalArgumentException(cfg.getConnectorMessages().format("oracle.removeAttributeValues.attribute.not.supported", null, attr.getName()));
+				throw new IllegalArgumentException(cfg.getConnectorMessages().format(MSG_REMOVEATTRIBUTEVALUES_ATTRIBUTE_NOT_SUPPORTED, null, attr.getName()));
 			}
 		}
 	}

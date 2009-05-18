@@ -22,6 +22,7 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.spi.operations.CreateOp;
+import static org.identityconnectors.oracle.OracleMessages.*;
 
 /**
  * Oracle create operation. 
@@ -83,7 +84,7 @@ final class OracleOperationCreate extends AbstractOracleOperation implements Cre
             log.info("User created : [{0}]", userName);
         } catch (Exception e) {
             SQLUtil.rollbackQuietly(adminConn);
-            throw new ConnectorException(cfg.getConnectorMessages().format("oracle.create.of.user.failed",null,userName),e);
+            throw new ConnectorException(cfg.getConnectorMessages().format(MSG_CREATE_OF_USER_FAILED,null,userName),e);
         }
         return new Uid(userName);
     }
@@ -91,11 +92,11 @@ final class OracleOperationCreate extends AbstractOracleOperation implements Cre
     
     private void checkCreateAttributes(Map<String, Attribute> map) {
     	if(map.isEmpty()){
-    		throw new IllegalArgumentException(cfg.getConnectorMessages().format("oracle.create.no.attributes", null));
+    		throw new IllegalArgumentException(cfg.getConnectorMessages().format(MSG_CREATE_NO_ATTRIBUTES, null));
     	}
 		for(Attribute attr : map.values()){
 			if(!VALID_CREATE_ATTRIBUTES.contains(attr.getName())){
-				throw new IllegalArgumentException(cfg.getConnectorMessages().format("oracle.create.attribute.not.supported", null, attr.getName()));
+				throw new IllegalArgumentException(cfg.getConnectorMessages().format(MSG_CREATE_ATTRIBUTE_NOT_SUPPORTED, null, attr.getName()));
 			}
 		}
 	}

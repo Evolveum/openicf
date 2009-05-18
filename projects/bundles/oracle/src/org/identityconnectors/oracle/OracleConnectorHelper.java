@@ -11,6 +11,7 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
+import static org.identityconnectors.oracle.OracleMessages.*;
 
 /** Helper static methods related to Oracle connector */
 abstract class OracleConnectorHelper {
@@ -19,7 +20,7 @@ abstract class OracleConnectorHelper {
     static String getRequiredStringValue(Map<String, Attribute> attrs, String name, ConnectorMessages cm){
         Attribute attr = attrs.get(name);
         if(attr == null){
-            throw new IllegalArgumentException(cm.format("oracle.attribute.is.missing", null, name));
+            throw new IllegalArgumentException(cm.format(MSG_ATTRIBUTE_IS_MISSING, null, name));
         }
         return AttributeUtil.getStringValue(attr);
     }
@@ -27,7 +28,7 @@ abstract class OracleConnectorHelper {
     static String getNotEmptyStringValue(Map<String, Attribute> attrs, String name, ConnectorMessages cm){
         String value = getRequiredStringValue(attrs, name, cm);
         if(StringUtil.isEmpty(value)){
-            throw new IllegalArgumentException(cm.format("oracle.attribute.is.empty", null, name));
+            throw new IllegalArgumentException(cm.format(MSG_ATTRIBUTE_IS_EMPTY, null, name));
         }
         return value;
          
@@ -76,7 +77,7 @@ abstract class OracleConnectorHelper {
         if(value instanceof Boolean){
             return (Boolean) value;
         }
-        throw new IllegalArgumentException(cm.format("oracle.boolean.attribute.has.invalid.value", null, name, value));
+        throw new IllegalArgumentException(cm.format(MSG_BOOLEAN_ATTRIBUTE_HAS_INVALID_VALUE, null, name, value));
     }
     
     static <T> T assertNotNull(T t,String argument){

@@ -10,6 +10,7 @@ import java.util.Arrays;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
+import static org.identityconnectors.oracle.OracleMessages.*;
 
 /**
  * Builds create or alter user sql statement.
@@ -87,7 +88,7 @@ final class OracleCreateOrAlterStBuilder {
         }
         if(Boolean.FALSE.equals(userAttributes.getExpirePassword())){
         	if(status.passwordSet == null){
-        		throw new IllegalArgumentException(cm.format("oracle.must.specify.password.for.unexpire", null));
+        		throw new IllegalArgumentException(cm.format(MSG_MUST_SPECIFY_PASSWORD_FOR_UNEXPIRE, null));
         	}
         }
         if(status.forceExpirePassword || Boolean.TRUE.equals(userAttributes.getExpirePassword())){
@@ -132,7 +133,7 @@ final class OracleCreateOrAlterStBuilder {
         String defaultTableSpace = userAttributes.getDefaultTableSpace(); 
         if(defaultTableSpace == null){
             if(userRecord == null || userRecord.getDefaultTableSpace() == null){
-                throw new IllegalArgumentException(cm.format("oracle.missing.default.tablespace", null)); 
+                throw new IllegalArgumentException(cm.format(MSG_MISSING_DEFAULT_TABLESPACE, null)); 
             }
             defaultTableSpace = userRecord.getDefaultTableSpace();
         }
@@ -151,7 +152,7 @@ final class OracleCreateOrAlterStBuilder {
         String tempTableSpace = userAttributes.getTempTableSpace(); 
         if(tempTableSpace == null){
             if(userRecord == null || userRecord.getTemporaryTableSpace() == null){
-            	throw new IllegalArgumentException(cm.format("oracle.missing.temporary.tablespace", null));
+            	throw new IllegalArgumentException(cm.format(MSG_MISSING_TEMPORARY_TABLESPACE, null));
             }
             tempTableSpace = userRecord.getTemporaryTableSpace();
         }
@@ -182,10 +183,10 @@ final class OracleCreateOrAlterStBuilder {
     		}
     	}
     	if(userAttributes.getGlobalName() != null && !OracleAuthentication.GLOBAL.equals(auth)){
-    		throw new IllegalArgumentException(cm.format("oracle.cannot.set.globalname.for.not.global.authentication", null));
+    		throw new IllegalArgumentException(cm.format(MSG_CANNOT_SET_GLOBALNAME_FOR_NOT_GLOBAL_AUTHENTICATION, null));
     	}
     	if(userAttributes.getPassword() != null && !OracleAuthentication.LOCAL.equals(auth)){
-    		throw new IllegalArgumentException(cm.format("oracle.cannot.set.password.for.not.local.authentication", null));
+    		throw new IllegalArgumentException(cm.format(MSG_CANNOT_SET_PASSWORD_FOR_NOT_LOCAL_AUTHENTICATION, null));
     	}
     	if(auth == null){
     		return;
@@ -221,7 +222,7 @@ final class OracleCreateOrAlterStBuilder {
         }
         else if(OracleAuthentication.GLOBAL.equals(auth)){
             if(userAttributes.getGlobalName() == null){
-                throw new IllegalArgumentException(cm.format("oracle.missing.globalname.for.global.authentication", null));
+                throw new IllegalArgumentException(cm.format(MSG_MISSING_GLOBALNAME_FOR_GLOBAL_AUTHENTICATION, null));
             }
             builder.append(" globally as ");
             builder.append(cs.formatToken(OracleUserAttributeCS.GLOBAL_NAME,userAttributes.getGlobalName()));
