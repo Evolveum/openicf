@@ -76,35 +76,28 @@ public class SolarisTestCreate {
         // Read only list of attributes
         final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
         final String username = ((Name) attrMap.get(Name.NAME)).getNameValue();
-        Uid uid = facade.create(ObjectClass.ACCOUNT, attrs, null);
-        Assert.assertNotNull(uid);
-        
         final GuardedString password = SolarisHelper.getPasswordFromMap(attrMap);
         
-        //cleanup the new user ##################
-        facade.delete(ObjectClass.ACCOUNT, new Uid(username), null);
         try {
-            facade.authenticate(ObjectClass.ACCOUNT, username, password, null);
-            Assert.fail(String.format("Account was not cleaned up: '%s'", username));
-        } catch (RuntimeException ex) {
-            //OK
-        }
+            Uid uid = facade.create(ObjectClass.ACCOUNT, attrs, null);
+            Assert.assertNotNull(uid);
         
-        // try to authenticate 
-        try {
-            facade.authenticate(ObjectClass.ACCOUNT, username, password, null);
-        } catch (RuntimeException ex) {
-            ex.printStackTrace();
-            Assert.fail(String.format("Authenticate failed for: '%s'\n ExceptionMessage: %s", username, ex.getMessage()));
-        }
-        
-        //cleanup the new user
-        facade.delete(ObjectClass.ACCOUNT, new Uid(username), null);
-        try {
-            facade.authenticate(ObjectClass.ACCOUNT, username, password, null);
-            Assert.fail(String.format("Account was not cleaned up: '%s'", username));
-        } catch (RuntimeException ex) {
-            //OK
+            // try to authenticate 
+            try {
+                facade.authenticate(ObjectClass.ACCOUNT, username, password, null);
+            } catch (RuntimeException ex) {
+                ex.printStackTrace();
+                Assert.fail(String.format("Authenticate failed for: '%s'\n ExceptionMessage: %s", username, ex.getMessage()));
+            }
+        } finally {
+            // cleanup the new user
+            facade.delete(ObjectClass.ACCOUNT, new Uid(username), null);
+            try {
+                facade.authenticate(ObjectClass.ACCOUNT, username, password, null);
+                Assert.fail(String.format("Account was not cleaned up: '%s'", username));
+            } catch (RuntimeException ex) {
+                //OK
+            }
         }
     }
     

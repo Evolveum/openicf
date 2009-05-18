@@ -50,6 +50,26 @@ public class SolarisTestCommon {
         return conn;
     }
     
+    /**
+     * set up a configuration with given property key/value pair. 
+     * The setting is done via helper interface
+     * 
+     * @param propertyName
+     * @param config
+     * @param method
+     * @return the new configuration with performed setup
+     */
+    private static SolarisConfiguration augmentConfiguration(
+            String propertyName, SolarisConfiguration config,
+            SetConfiguration method) {
+        SolarisConfiguration configResult = new SolarisConfiguration(config);
+        final String propValue = TestHelpers.getProperty(propertyName, null);
+        String msg = "%s must be provided in build.groovy";
+        Assert.assertNotNull(String.format(msg, propertyName), propValue);
+        configResult = method.set(propValue, configResult);
+        return configResult;
+    }
+    
     static SolarisConfiguration createConfiguration() {
         // names of properties in the property file (build.groovy)
         final String PROP_HOST = "host";
@@ -58,32 +78,65 @@ public class SolarisTestCommon {
         final String PROP_PORT = "port";
         final String PROP_CONN_TYPE = "connectionType";
         final String ROOT_SHELL_PROMPT = "rootShellPrompt";
-        
-        // set the credentials
-        final String HOST_NAME = TestHelpers.getProperty(PROP_HOST, null);
-        final String SYSTEM_PASSWORD = TestHelpers.getProperty(PROP_SYSTEM_PASSWORD, null);
-        final String SYSTEM_USER = TestHelpers.getProperty(PROP_SYSTEM_USER, null);
-        final String PORT = TestHelpers.getProperty(PROP_PORT, null);
-        final String CONN_TYPE = TestHelpers.getProperty(PROP_CONN_TYPE, null);
-        final String ROOT_PROMPT = TestHelpers.getProperty(ROOT_SHELL_PROMPT, null);
-        
-        String msg = "%s must be provided in build.groovy";
-        Assert.assertNotNull(String.format(msg, PROP_HOST), HOST_NAME);
-        Assert.assertNotNull(String.format(msg, PROP_SYSTEM_PASSWORD), SYSTEM_PASSWORD);
-        Assert.assertNotNull(String.format(msg, PROP_SYSTEM_USER), SYSTEM_USER);
-        Assert.assertNotNull(String.format(msg, PROP_PORT), PORT);
-        Assert.assertNotNull(String.format(msg, PROP_CONN_TYPE), CONN_TYPE);
-        Assert.assertNotNull(String.format(msg, ROOT_SHELL_PROMPT), ROOT_PROMPT);
-        
+
         // save configuration
         SolarisConfiguration config = new SolarisConfiguration();
-        config.setHostNameOrIpAddr(HOST_NAME);
-        config.setPort(Integer.parseInt(PORT));
-        config.setUserName(SYSTEM_USER);
-        config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
-        config.setConnectionType(CONN_TYPE);
-        config.setRootShellPrompt(ROOT_PROMPT);
-        
+
+        config = augmentConfiguration(PROP_HOST, config,
+                new SetConfiguration() {
+                    public SolarisConfiguration set(String value,
+                            SolarisConfiguration config) {
+                        config.setHostNameOrIpAddr(value);
+                        return config;
+                    }
+                });
+
+        config = augmentConfiguration(PROP_SYSTEM_PASSWORD, config,
+                new SetConfiguration() {
+                    public SolarisConfiguration set(String value,
+                            SolarisConfiguration config) {
+                        config.setPassword(new GuardedString(value
+                                .toCharArray()));
+                        return config;
+                    }
+                });
+
+        config = augmentConfiguration(PROP_SYSTEM_USER, config,
+                new SetConfiguration() {
+                    public SolarisConfiguration set(String value,
+                            SolarisConfiguration config) {
+                        config.setUserName(value);
+                        return config;
+                    }
+                });
+
+        config = augmentConfiguration(PROP_PORT, config,
+                new SetConfiguration() {
+                    public SolarisConfiguration set(String value,
+                            SolarisConfiguration config) {
+                        config.setPort(Integer.valueOf(value));
+                        return config;
+                    }
+                });
+
+        config = augmentConfiguration(PROP_CONN_TYPE, config,
+                new SetConfiguration() {
+                    public SolarisConfiguration set(String value,
+                            SolarisConfiguration config) {
+                        config.setConnectionType(value);
+                        return config;
+                    }
+                });
+
+        config = augmentConfiguration(ROOT_SHELL_PROMPT, config,
+                new SetConfiguration() {
+                    public SolarisConfiguration set(String value,
+                            SolarisConfiguration config) {
+                        config.setRootShellPrompt(value);
+                        return config;
+                    }
+                });
+
         return config;
     }
     
@@ -93,4 +146,8 @@ public class SolarisTestCommon {
         APIConfiguration apiCfg = TestHelpers.createTestConfiguration(SolarisConnector.class, conf);
         return factory.newInstance(apiCfg);
     }
+}
+
+interface SetConfiguration {
+    public SolarisConfiguration set(String value, SolarisConfiguration config);
 }

@@ -29,12 +29,6 @@ enum ConnectionType {
     SSH, TELNET;
     
     public static ConnectionType toConnectionType(String s) {
-        //validate
-        String connType = s.toUpperCase();
-        
-        final String SSH = ConnectionType.SSH.toString();
-        final String TELNET = ConnectionType.TELNET.toString();
-        
         return ConnectionType.valueOf(s.toUpperCase());
     }
 }
