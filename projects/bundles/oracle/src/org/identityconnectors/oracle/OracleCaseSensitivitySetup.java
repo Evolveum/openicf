@@ -368,7 +368,6 @@ final class OracleCaseSensitivityImpl implements OracleCaseSensitivitySetup{
 		return getAttributeFormatterAndNormalizer(attr).normalizeToken(token);
 	}
 
-	@Override
 	public String formatSQLColumn(OracleUserAttributeCS attr, String sqlColumn) {
 		return getAttributeFormatterAndNormalizer(attr).formatSQLColumn(sqlColumn);
 	}
