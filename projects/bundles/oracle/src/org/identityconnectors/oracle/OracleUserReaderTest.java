@@ -3,16 +3,22 @@
  */
 package org.identityconnectors.oracle;
 
-import static org.junit.Assert.*;
-import static org.identityconnectors.oracle.OracleConnectorAbstractTest.*;
+import static org.identityconnectors.oracle.OracleConnectorAbstractTest.assertEqualsIgnoreCase;
+import static org.identityconnectors.oracle.OracleUserAttributeCS.USER;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
-import java.sql.*;
-import java.util.*;
-import static org.identityconnectors.oracle.OracleUserAttributeCS.*;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.test.common.TestHelpers;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * Tests related to OracleUserReader
@@ -78,8 +84,6 @@ public class OracleUserReaderTest {
         }catch(SQLException e){}
         SQLUtil.executeUpdateStatement(conn,"create user " + cs.formatToken(USER,"user1") + " identified by password");
         SQLUtil.executeUpdateStatement(conn,"create user " + cs.formatToken(USER,"user2") + " identified by password");
-        final Collection<UserRecord> records = userReader.readUserRecords(Arrays.asList("user1","user2","user3"));
-        assertEquals("Read should return 2 users",2,records.size());
         
         
         UserRecord record1 = userReader.readUserRecord("user1");
