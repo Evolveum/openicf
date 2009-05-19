@@ -32,22 +32,22 @@ public class OracleAttributeNormalizerTest {
 		assertNotNull(attr);
 		assertEquals("dummyValue", AttributeUtil.getSingleValue(attr));
 		
-		//User is by default case sensitive
+		//User is by default case sensitive/insensitive, depends on OracleUserAttributeCS
 		attr = normalizer.normalizeAttribute(objectClass, AttributeBuilder.build(Name.NAME,"myName"));
 		assertNotNull(attr);
-		assertEquals("myName", AttributeUtil.getSingleValue(attr));
+		assertEquals(OracleUserAttributeCS.USER.isDefToUpper() ?  "myName".toUpperCase() : "myName", AttributeUtil.getSingleValue(attr));
 
 		attr = normalizer.normalizeAttribute(objectClass, AttributeBuilder.build(Name.NAME.toLowerCase(),"myName"));
 		assertNotNull(attr);
-		assertEquals("myName", AttributeUtil.getSingleValue(attr));
+		assertEquals(OracleUserAttributeCS.USER.isDefToUpper() ?  "myName".toUpperCase() : "myName", AttributeUtil.getSingleValue(attr));
 		
 		attr = normalizer.normalizeAttribute(objectClass, AttributeBuilder.build(Uid.NAME,"myUid"));
 		assertNotNull(attr);
-		assertEquals("myUid", AttributeUtil.getSingleValue(attr));
+		assertEquals(OracleUserAttributeCS.USER.isDefToUpper() ?  "myUid".toUpperCase() : "myUid", AttributeUtil.getSingleValue(attr));
 
 		attr = normalizer.normalizeAttribute(objectClass, AttributeBuilder.build(Uid.NAME.toLowerCase(),"myUid"));
 		assertNotNull(attr);
-		assertEquals("myUid", AttributeUtil.getSingleValue(attr));
+		assertEquals(OracleUserAttributeCS.USER.isDefToUpper() ?  "myUid".toUpperCase() : "myUid", AttributeUtil.getSingleValue(attr));
 		
 		// By default we do not uppercase globalname
 		attr = normalizer.normalizeAttribute(objectClass, AttributeBuilder.build(OracleConstants.ORACLE_GLOBAL_ATTR_NAME,"myGlobalName"));

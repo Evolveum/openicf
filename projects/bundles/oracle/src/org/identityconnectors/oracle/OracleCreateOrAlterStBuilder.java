@@ -133,7 +133,7 @@ final class OracleCreateOrAlterStBuilder {
         String defaultTableSpace = userAttributes.getDefaultTableSpace(); 
         if(defaultTableSpace == null){
             if(userRecord == null || userRecord.getDefaultTableSpace() == null){
-                throw new IllegalArgumentException(cm.format(MSG_MISSING_DEFAULT_TABLESPACE, null)); 
+                throw new IllegalArgumentException(cm.format(MSG_MISSING_DEFAULT_TABLESPACE_FOR_QUOTA, null)); 
             }
             defaultTableSpace = userRecord.getDefaultTableSpace();
         }
@@ -152,7 +152,7 @@ final class OracleCreateOrAlterStBuilder {
         String tempTableSpace = userAttributes.getTempTableSpace(); 
         if(tempTableSpace == null){
             if(userRecord == null || userRecord.getTemporaryTableSpace() == null){
-            	throw new IllegalArgumentException(cm.format(MSG_MISSING_TEMPORARY_TABLESPACE, null));
+            	throw new IllegalArgumentException(cm.format(MSG_MISSING_TEMPORARY_TABLESPACE_FOR_QUOTA, null));
             }
             tempTableSpace = userRecord.getTemporaryTableSpace();
         }

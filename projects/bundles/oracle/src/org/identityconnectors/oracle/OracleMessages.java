@@ -47,8 +47,8 @@ class OracleMessages {
 	static final String MSG_CREATE_NO_ATTRIBUTES = "oracle.create.no.attributes";
 	static final String MSG_CREATE_ATTRIBUTE_NOT_SUPPORTED = "oracle.create.attribute.not.supported";
 	static final String MSG_CREATE_OF_USER_FAILED = "oracle.create.of.user.failed";
-	static final String MSG_MISSING_DEFAULT_TABLESPACE = "oracle.missing.default.tablespace";
-	static final String MSG_MISSING_TEMPORARY_TABLESPACE = "oracle.missing.temporary.tablespace";
+	static final String MSG_MISSING_DEFAULT_TABLESPACE_FOR_QUOTA = "oracle.missing.default.tablespace.for.quota";
+	static final String MSG_MISSING_TEMPORARY_TABLESPACE_FOR_QUOTA = "oracle.missing.temporary.tablespace.for.quota";
 	static final String MSG_CANNOT_SET_GLOBALNAME_FOR_NOT_GLOBAL_AUTHENTICATION = "oracle.cannot.set.globalname.for.not.global.authentication";
 	static final String MSG_CANNOT_SET_PASSWORD_FOR_NOT_LOCAL_AUTHENTICATION = "oracle.cannot.set.password.for.not.local.authentication";
 	static final String MSG_MISSING_GLOBALNAME_FOR_GLOBAL_AUTHENTICATION = "oracle.missing.globalname.for.global.authentication";
