@@ -1052,17 +1052,24 @@ class CommandLineUtil {
             }
             // Revoke date must be converted
             //
+            long now = new Date().getTime(); 
             if (attributesFromCommandLine.containsKey(ATTR_CL_REVOKE_DATE)) {
                 Object value = attributesFromCommandLine.get(ATTR_CL_REVOKE_DATE);
                 Long converted = _connector.convertFromResumeRevokeFormat(value);
-                attributesFromCommandLine.put(OperationalAttributes.DISABLE_DATE_NAME, converted);
+                if (converted==null || converted<now)
+                    attributesFromCommandLine.put(OperationalAttributes.DISABLE_DATE_NAME, null);
+                else
+                    attributesFromCommandLine.put(OperationalAttributes.DISABLE_DATE_NAME, converted);
             }
             // Resume date must be converted
             //
             if (attributesFromCommandLine.containsKey(ATTR_CL_RESUME_DATE)) {
                 Object value = attributesFromCommandLine.get(ATTR_CL_RESUME_DATE);
                 Long converted = _connector.convertFromResumeRevokeFormat(value);
-                attributesFromCommandLine.put(OperationalAttributes.ENABLE_DATE_NAME, converted);
+                if (converted==null || converted<now)
+                    attributesFromCommandLine.put(OperationalAttributes.ENABLE_DATE_NAME, null);
+                else
+                    attributesFromCommandLine.put(OperationalAttributes.ENABLE_DATE_NAME, converted);
             }
             // Groups must be filled in if null
             //
