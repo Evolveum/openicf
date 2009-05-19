@@ -28,7 +28,6 @@ class OracleMessages {
 	static final String MSG_ILLEGAL_RIGHT_BRACKET = "oracle.illegal.right.bracket";
 	static final String MSG_NO_EQ_CHAR_IN_ENTRY = "oracle.no.eq.char.in.entry";
 	static final String MSG_CHAR_EQ_IS_AT_START_OF_ENTRY = "oracle.char.eq.is.at.start.of.entry";
-	static final String MSG_ELEMENTS_FOR_FORMATTER_NOT_RECOGNIZED = "oracle.elements.for.formatter.not.recognized";
 	static final String MSG_ELEMENTS_FOR_NORMALIZER_NOT_RECOGNIZED = "oracle.elements.for.normalizer.not.recognized";
 	static final String MSG_ELEMENTS_FOR_CSBUILDER_NOT_RECOGNIZED = "oracle.elements.for.csbuilder.not.recognized";
 	static final String MSG_ERROR_TEST_USER_EXISTENCE = "oracle.error.test.user.existence";

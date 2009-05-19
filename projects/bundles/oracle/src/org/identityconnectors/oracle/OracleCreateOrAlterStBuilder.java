@@ -175,18 +175,15 @@ final class OracleCreateOrAlterStBuilder {
     		if(Operation.CREATE.equals(operation)){
     			auth = OracleAuthentication.LOCAL;
     		}
-    		else{
-    			if(userAttributes.getPassword() != null){
-    				//we have update of password, so set auth to local
-    				auth = OracleAuthentication.LOCAL;
-    			}
+    		else if(userAttributes.getPassword() != null){
+    			auth = OracleUserReader.resolveAuthentication(userRecord);
     		}
-    	}
-    	if(userAttributes.getGlobalName() != null && !OracleAuthentication.GLOBAL.equals(auth)){
-    		throw new IllegalArgumentException(cm.format(MSG_CANNOT_SET_GLOBALNAME_FOR_NOT_GLOBAL_AUTHENTICATION, null));
     	}
     	if(userAttributes.getPassword() != null && !OracleAuthentication.LOCAL.equals(auth)){
     		throw new IllegalArgumentException(cm.format(MSG_CANNOT_SET_PASSWORD_FOR_NOT_LOCAL_AUTHENTICATION, null));
+    	}
+    	if(userAttributes.getGlobalName() != null && !OracleAuthentication.GLOBAL.equals(auth)){
+    		throw new IllegalArgumentException(cm.format(MSG_CANNOT_SET_GLOBALNAME_FOR_NOT_GLOBAL_AUTHENTICATION, null));
     	}
     	if(auth == null){
     		return;
@@ -198,13 +195,14 @@ final class OracleCreateOrAlterStBuilder {
             if(status.passwordSet == null){
             	//Can we set password same as username ? , adapter did so
             	if(Operation.CREATE.equals(operation)){
+            		//Set password to userName, it is already normalized
             		status.passwordSet = new GuardedString(userAttributes.getUserName().toCharArray());
             	}
             	else{
             		//no password for update and local authentication
             		//some application can send update of authentication to local and will not send password at the update
             		//In this case we will rather set password to user name and set (password_expired=true)
-            		//Other option would be to throw exception, but some application could noty have 
+            		//Other option would be to throw exception, but some application could not have 
             		//possibility to send password 
             		status.passwordSet = new GuardedString(userAttributes.getUserName().toCharArray());
             		status.forceExpirePassword = true;
@@ -227,8 +225,6 @@ final class OracleCreateOrAlterStBuilder {
             builder.append(" globally as ");
             builder.append(cs.formatToken(OracleUserAttributeCS.GLOBAL_NAME,userAttributes.getGlobalName()));
         }
-        
-        
     }
 
 }

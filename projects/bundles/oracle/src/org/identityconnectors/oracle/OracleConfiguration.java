@@ -145,7 +145,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     
     String getUserOwner(){
     	//if we were logged as system, owner will be SYSTEM
-    	if("".equals(cs.getAttributeFormatter(OracleUserAttributeCS.SYSTEM_USER).getQuatesChar())){
+    	if("".equals(cs.getAttributeFormatterAndNormalizer(OracleUserAttributeCS.SYSTEM_USER).getQuatesChar())){
     		return user.toUpperCase();
     	}
     	return user;

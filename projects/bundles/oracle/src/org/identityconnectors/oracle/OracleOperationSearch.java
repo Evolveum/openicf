@@ -76,7 +76,7 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 	}
 
 	public FilterTranslator<Pair<String, FilterWhereBuilder>> createFilterTranslator(ObjectClass oclass, OperationOptions options) {
-		return new OracleFilterTranslator(oclass, options, cfg.getConnectorMessages());
+		return new OracleFilterTranslator(oclass, options, cfg.getConnectorMessages(), cfg.getCSSetup());
 	}
 
 	public void executeQuery(ObjectClass oclass, Pair<String, FilterWhereBuilder> pair, ResultsHandler handler, OperationOptions options) {
@@ -185,31 +185,35 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 	private static final class OracleDBFilterTranslator extends DatabaseFilterTranslator{
 		private String select = SQL;
 		private final ConnectorMessages cm;
-		OracleDBFilterTranslator(ObjectClass oclass, OperationOptions options, ConnectorMessages cm) {
+		private final OracleCaseSensitivitySetup cs;
+		OracleDBFilterTranslator(ObjectClass oclass, OperationOptions options, ConnectorMessages cm, OracleCaseSensitivitySetup cs) {
 			super(oclass, options);
 			this.cm = OracleConnectorHelper.assertNotNull(cm, "cm");
+			this.cs = OracleConnectorHelper.assertNotNull(cs, "cs");
 		}
 
 		@Override
 		protected String getDatabaseColumnName(Attribute attribute, ObjectClass oclass, OperationOptions options) {
 			checkSearchByAttribute(attribute);
+			//format sql column using Formatter for concrete attribute.
+			//Formatter can then e.g surround column with UPPER function 
 			if(attribute.is(Name.NAME)){
-				return "DBA_USERS.USERNAME";
+				return cs.formatSQLColumn(OracleUserAttributeCS.USER, "DBA_USERS.USERNAME");
 			}
 			else if(attribute.is(Uid.NAME)){
-				return "DBA_USERS.USERNAME";
+				return cs.formatSQLColumn(OracleUserAttributeCS.USER, "DBA_USERS.USERNAME");
 			}
 			else if(attribute.is(OracleConstants.ORACLE_DEF_TS_ATTR_NAME)){
-				return "DBA_USERS.DEFAULT_TABLESPACE";
-			}
-			else if(attribute.is(OracleConstants.ORACLE_PROFILE_ATTR_NAME)){
-				return "DBA_USERS.PROFILE";
-			}
-			else if(attribute.is(OracleConstants.ORACLE_GLOBAL_ATTR_NAME)){
-				return "DBA_USERS.EXTERNAL_NAME";
+				return cs.formatSQLColumn(OracleUserAttributeCS.DEF_TABLESPACE, "DBA_USERS.DEFAULT_TABLESPACE");
 			}
 			else if(attribute.is(OracleConstants.ORACLE_TEMP_TS_ATTR_NAME)){
-				return "DBA_USERS.TEMPORARY_TABLESPACE";
+				return cs.formatSQLColumn(OracleUserAttributeCS.TEMP_TABLESPACE, "DBA_USERS.TEMPORARY_TABLESPACE");
+			}
+			else if(attribute.is(OracleConstants.ORACLE_PROFILE_ATTR_NAME)){
+				return cs.formatSQLColumn(OracleUserAttributeCS.PROFILE, "DBA_USERS.PROFILE");
+			}
+			else if(attribute.is(OracleConstants.ORACLE_GLOBAL_ATTR_NAME)){
+				return cs.formatSQLColumn(OracleUserAttributeCS.GLOBAL_NAME, "DBA_USERS.EXTERNAL_NAME");
 			}
 			else if(attribute.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
 				return "(CASE WHEN DBA_USERS.ACCOUNT_STATUS LIKE '%EXPIRED%' THEN 'EXPIRED' ELSE 'NOT_EXPIRED' END)";
@@ -237,11 +241,11 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 			}
 			else if(attribute.is(OracleConstants.ORACLE_ROLES_ATTR_NAME)){
 				select = ADVANCED_SQL2;
-				return "GRANTED_ROLE";
+				return cs.formatSQLColumn(OracleUserAttributeCS.ROLE, "GRANTED_ROLE");
 			}
 			else if(attribute.is(OracleConstants.ORACLE_PRIVS_ATTR_NAME)){
 				select = ADVANCED_SQL2;
-				return "GRANTED_ROLE";
+				return cs.formatSQLColumn(OracleUserAttributeCS.PRIVILEGE, "GRANTED_ROLE");
 			}
 			else if(attribute.is(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME)){
 				return "(CASE WHEN DBA_USERS.PASSWORD='EXTERNAL' THEN 'EXTERNAL' ELSE (CASE WHEN DBA_USERS.EXTERNAL_NAME IS NOT NULL THEN 'GLOBAL' ELSE 'LOCAL' END) END)";
@@ -307,8 +311,8 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 	
 	private static final class OracleFilterTranslator implements FilterTranslator<Pair<String, FilterWhereBuilder>>{
 		private final OracleDBFilterTranslator delegate ;
-		OracleFilterTranslator(ObjectClass oclass, OperationOptions options, ConnectorMessages cm) {
-			delegate = new OracleDBFilterTranslator(oclass, options, cm);
+		OracleFilterTranslator(ObjectClass oclass, OperationOptions options, ConnectorMessages cm, OracleCaseSensitivitySetup cs) {
+			delegate = new OracleDBFilterTranslator(oclass, options, cm, cs);
 		}
 		public List<Pair<String, FilterWhereBuilder>> translate(Filter filter) {
 			List<FilterWhereBuilder> list = delegate.translate(filter);

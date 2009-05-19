@@ -20,9 +20,9 @@ public class OracleCaseSensitivitySetupTest {
     @Test
     public void testCreateExplicitFormatters(){
     	ConnectorMessages cm = TestHelpers.createDummyMessages();
-        OracleCaseSensitivitySetup cs = createBuilder().defineFormatters(new CSTokenFormatter.Builder(cm).setAttribute(OracleUserAttributeCS.SCHEMA).setQuatesChar("AAA").build()).build();
-        Assert.assertEquals("AAA",cs.getAttributeFormatter(OracleUserAttributeCS.SCHEMA).getQuatesChar());
-        CSTokenFormatter formatter = new CSTokenFormatter.Builder(cm).setAttribute(OracleUserAttributeCS.PROFILE).setQuatesChar("BBB").build();
+        OracleCaseSensitivitySetup cs = createBuilder().defineFormattersAndNormalizers(new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(OracleUserAttributeCS.SCHEMA).setQuatesChar("AAA").build()).build();
+        Assert.assertEquals("AAA",cs.getAttributeFormatterAndNormalizer(OracleUserAttributeCS.SCHEMA).getQuatesChar());
+        CSAttributeFormatterAndNormalizer formatter = new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(OracleUserAttributeCS.PROFILE).setQuatesChar("BBB").build();
         assertEquals(OracleUserAttributeCS.PROFILE, formatter.getAttribute());
         assertEquals("BBB", formatter.getQuatesChar());
     }
@@ -31,9 +31,9 @@ public class OracleCaseSensitivitySetupTest {
     @Test
     public void testCreateExplicitNormalizers(){
     	ConnectorMessages cm = TestHelpers.createDummyMessages();
-        OracleCaseSensitivitySetup cs = createBuilder().defineNormalizers(new CSTokenNormalizer.Builder(cm).setAttribute(OracleUserAttributeCS.SCHEMA).setToUpper(true).build()).build();
-        Assert.assertTrue(cs.getAttributeNormalizer(OracleUserAttributeCS.SCHEMA).isToUpper());
-        CSTokenNormalizer normalizer = new CSTokenNormalizer.Builder(cm).setAttribute(OracleUserAttributeCS.DEF_TABLESPACE).setToUpper(false).build();
+        OracleCaseSensitivitySetup cs = createBuilder().defineFormattersAndNormalizers(new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(OracleUserAttributeCS.SCHEMA).setToUpper(true).build()).build();
+        Assert.assertTrue(cs.getAttributeFormatterAndNormalizer(OracleUserAttributeCS.SCHEMA).isToUpper());
+        CSAttributeFormatterAndNormalizer normalizer = new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(OracleUserAttributeCS.DEF_TABLESPACE).setToUpper(false).build();
         assertEquals(OracleUserAttributeCS.DEF_TABLESPACE, normalizer.getAttribute());
         assertEquals(false, normalizer.isToUpper());
         
@@ -43,9 +43,9 @@ public class OracleCaseSensitivitySetupTest {
     /** Test create all formatters */
     @Test
     public void testCreateAllFormatters(){
-        OracleCaseSensitivitySetup cs = createBuilder().defineFormatters().build();
+        OracleCaseSensitivitySetup cs = createBuilder().defineFormattersAndNormalizers().build();
         for(OracleUserAttributeCS oua : OracleUserAttributeCS.values()){
-            Assert.assertNotNull("Formatter for attribute " + oua + " cannot be null", cs.getAttributeFormatter(oua));
+            Assert.assertNotNull("Formatter for attribute " + oua + " cannot be null", cs.getAttributeFormatterAndNormalizer(oua));
         }
     }
     
@@ -54,7 +54,7 @@ public class OracleCaseSensitivitySetupTest {
     public void testCreateAllNormalizers(){
         OracleCaseSensitivitySetup cs = createBuilder().build();
         for(OracleUserAttributeCS oua : OracleUserAttributeCS.values()){
-            Assert.assertNotNull("Normalizer for attribute " + oua + " cannot be null", cs.getAttributeNormalizer(oua));
+            Assert.assertNotNull("Normalizer for attribute " + oua + " cannot be null", cs.getAttributeFormatterAndNormalizer(oua));
         }
     }
     
@@ -67,9 +67,9 @@ public class OracleCaseSensitivitySetupTest {
             fail("Must fail for unknown");
         }
         catch(RuntimeException e){}
-        final OracleCaseSensitivitySetup cs = createBuilder().parseMap("formatters={USER={quates=\"},ROLE={quates=AAA}},normalizers={ALL={upper=false}}").build();
-        assertEquals("AAA",cs.getAttributeFormatter(OracleUserAttributeCS.ROLE).getQuatesChar());
-        assertEquals(false,cs.getAttributeNormalizer(OracleUserAttributeCS.USER).isToUpper());
+        final OracleCaseSensitivitySetup cs = createBuilder().parseMap("normalizers={ALL={upper=false},USER={quates=AAA}}").build();
+        assertEquals("AAA",cs.getAttributeFormatterAndNormalizer((OracleUserAttributeCS.USER)).getQuatesChar());
+        assertEquals(false,cs.getAttributeFormatterAndNormalizer(OracleUserAttributeCS.USER).isToUpper());
         
     }
     

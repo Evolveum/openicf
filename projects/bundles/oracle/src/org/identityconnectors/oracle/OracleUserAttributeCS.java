@@ -1,6 +1,6 @@
 package org.identityconnectors.oracle;
 
-/** Case sensitivity settings of user tokens */
+/** Case sensitivity settings of user attributes */
 enum OracleUserAttributeCS {
     USER(false),
     PASSWORD(false),

@@ -28,6 +28,7 @@ final class OracleOperationAuthenticate extends AbstractOracleOperation implemen
         new LocalizedAssert(cfg.getConnectorMessages()).assertNotNull(password, "password");
         log.info("Authenticate user: [{0}]", username);
         try{
+        	//In next method, we normalize user and password
             final Connection conn = cfg.createUserConnection(username, password);
             log.info("User authenticated : [{0}]",username);
             SQLUtil.closeQuietly(conn);
