@@ -314,8 +314,8 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     }
     
     Connection createUserConnection(String user, GuardedString password){
-    	user = cs.normalizeAndFormatToken(OracleUserAttributeCS.USER, user);
-    	password = cs.normalizeAndFormatToken(OracleUserAttributeCS.PASSWORD, password);
+    	user = cs.formatToken(OracleUserAttributeCS.USER, user);
+    	password = cs.formatToken(OracleUserAttributeCS.PASSWORD, password);
     	return createConnection(user,password);
     }
     

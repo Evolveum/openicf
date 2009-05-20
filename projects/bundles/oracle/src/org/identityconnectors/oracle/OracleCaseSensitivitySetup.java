@@ -165,9 +165,9 @@ final class CSAttributeFormatterAndNormalizer{
     }
     
     String formatSQLColumn(String sqlColumn){
-    	//Now we use same flag to use UPPER SQL function , so UPPER(USERNAME) 
+    	//Never use UPPER function, we would not be ever completely consistent for natively(externally to connector) created accounts   
     	if(toUpper){
-    		return "UPPER(" + sqlColumn + ")";
+    		return sqlColumn;
     	}
     	return sqlColumn;
     }

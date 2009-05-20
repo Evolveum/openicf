@@ -26,15 +26,15 @@ import org.junit.Test;
 public class OracleConnectorTest extends OracleConnectorAbstractTest{
     
     /**
-     * Test method for {@link org.identityconnectors.oracle.OracleConnector#checkAlive()}.
+     * Test method for {@link org.identityconnectors.oracle.OracleConnectorImpl#checkAlive()}.
      */
     @Test
     public void testCheckAlive() {
-        OracleConnector oc = createTestConnector();
+        OracleConnectorImpl oc = createTestConnector();
         oc.checkAlive();
         oc.dispose();
         
-        OracleConnector con = new OracleConnector();
+        OracleConnectorImpl con = new OracleConnectorImpl();
         try{
 	        con.checkAlive();
 	        fail("Must fail for not initialized");
@@ -43,25 +43,25 @@ public class OracleConnectorTest extends OracleConnectorAbstractTest{
     }
 
     /**
-     * Test method for {@link org.identityconnectors.oracle.OracleConnector#getConfiguration()}.
+     * Test method for {@link org.identityconnectors.oracle.OracleConnectorImpl#getConfiguration()}.
      */
     @Test
     public void testGetConfiguration() {
-        OracleConnector oc = createTestConnector();
+        OracleConnectorImpl oc = createTestConnector();
         OracleConfiguration cfg2 = oc.getConfiguration();
         assertSame(testConf,cfg2);
         oc.dispose();
     }
 
     /**
-     * Test method for {@link org.identityconnectors.oracle.OracleConnector#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method for {@link org.identityconnectors.oracle.OracleConnectorImpl#init(org.identityconnectors.framework.spi.Configuration)}.
      */
     @Test
     public void testInit() {
-        OracleConnector oc = createTestConnector();
+        OracleConnectorImpl oc = createTestConnector();
         oc.dispose();
         
-        oc = new OracleConnector();
+        oc = new OracleConnectorImpl();
         OracleConfiguration cfg = new OracleConfiguration();
         try{
             oc.init(cfg);
@@ -90,7 +90,7 @@ public class OracleConnectorTest extends OracleConnectorAbstractTest{
     
     @Test
     public void testTest(){
-    	OracleConnector c = new OracleConnector();
+    	OracleConnectorImpl c = new OracleConnectorImpl();
     	try{
     		c.test();
     		fail("Test must fail if init was not called");

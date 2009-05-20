@@ -46,6 +46,26 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
     static final String TEST_USER = "testUser";
     
     
+    /** Deletes before create  */
+    @Before
+    public void before(){
+        try{
+            facade.delete(ObjectClass.ACCOUNT, new Uid(TEST_USER.toUpperCase()), null);
+        }
+        catch(UnknownUidException e){
+        	
+        }
+    }
+    
+    /** Deletes after create */
+    @After
+    public void after(){
+        try{
+            facade.delete(ObjectClass.ACCOUNT, new Uid(TEST_USER.toUpperCase()), null);
+        }
+        catch(UnknownUidException e){}
+    }
+    
     /** Test fail of create groups */
     @Test
     public void testCreateGroups(){
@@ -56,25 +76,6 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         }
         catch(IllegalArgumentException e){}
     }
-    
-    /** Deletes before create  */
-    @Before
-    public void before(){
-        try{
-            facade.delete(ObjectClass.ACCOUNT, new Uid(TEST_USER), null);
-        }
-        catch(UnknownUidException e){}
-    }
-    
-    /** Deletes after create */
-    @After
-    public void after(){
-        try{
-            facade.delete(ObjectClass.ACCOUNT, new Uid(TEST_USER), null);
-        }
-        catch(UnknownUidException e){}
-    }
-    
         
     /**
      * Test method for local create
@@ -366,7 +367,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         assertEqualsIgnoreCase(TEST_USER, record.getUserName());
         assertEquals("OPEN",record.getStatus());
         assertNull(record.getLockDate());
-        facade.delete(ObjectClass.ACCOUNT, new Uid(TEST_USER), null);
+        facade.delete(ObjectClass.ACCOUNT, uid , null);
         enabled = AttributeBuilder.build(OperationalAttributes.ENABLE_NAME,Boolean.FALSE);
         uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute,enabled), null);
         record = userReader.readUserRecord(uid.getUidValue());
@@ -443,8 +444,8 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         Attribute expirePassword = AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME,Boolean.TRUE);
         Set<Attribute> attrs = new HashSet<Attribute>(Arrays.asList(authentication,name,passwordAttribute,
         		privileges,enabled,expirePassword));
-		facade.create(ObjectClass.ACCOUNT, attrs, null);
-		facade.delete(ObjectClass.ACCOUNT, new Uid(TEST_USER), null);
+		Uid uid = facade.create(ObjectClass.ACCOUNT, attrs, null);
+		facade.delete(ObjectClass.ACCOUNT, uid, null);
 		//Now add some dummy attribute
 		Set<Attribute> badAttrs = new HashSet<Attribute>(attrs); 
 		badAttrs.add(AttributeBuilder.buildDisableDate(0));
@@ -484,7 +485,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         expirePassword = AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME.toUpperCase(),Boolean.FALSE);
         attrs = new HashSet<Attribute>(Arrays.asList(authentication,name,passwordAttribute,
         		privileges,enabled,expirePassword));
-		Uid uid = facade.create(ObjectClass.ACCOUNT, attrs, null);
+		uid = facade.create(ObjectClass.ACCOUNT, attrs, null);
 		UserRecord record = new OracleUserReader(connector.getAdminConnection(),TestHelpers.createDummyMessages()).readUserRecord(uid.getUidValue());
 		assertNotNull(record);
 		assertEquals(uid.getUidValue(), record.getUserName());
@@ -495,7 +496,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
 	 * @throws SQLException */
 	@Test
 	public void testCreateFail() throws SQLException{
-		OracleConnector testConnector = createTestConnector();
+		OracleConnectorImpl testConnector = createTestConnector();
 		try{
 			testConnector.delete(ObjectClass.ACCOUNT, new Uid(TEST_USER), null);
 		}

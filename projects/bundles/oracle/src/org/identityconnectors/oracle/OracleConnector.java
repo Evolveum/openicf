@@ -1,20 +1,11 @@
-/**
- * 
- */
 package org.identityconnectors.oracle;
 
-
-import java.sql.Connection;
 import java.util.Set;
 
 import org.identityconnectors.common.Pair;
-import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
-import org.identityconnectors.dbcommon.SQLUtil;
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
@@ -35,7 +26,10 @@ import org.identityconnectors.framework.spi.operations.UpdateAttributeValuesOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
 
 /**
- * Implementation of Oracle connector. It just holds common oracle constants and delegates SPI calls to AbstractOracleOperation subclasses
+ * Implementation of Oracle DB Connector.
+ * It delegates to real implementation of Oracle connector, but before create and update, it normalizes attributes.
+ * We do not use {@link AttributeNormalizer} , because we want just to somehow create/update user with some default case, but we want to return back attributes
+ * as stored natively in DB
  * @author kitko
  *
  */
@@ -43,116 +37,83 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
         displayNameKey = OracleMessages.MSG_CONNECTOR_DISPLAY,
         messageCatalogPaths={"org/identityconnectors/dbcommon/Messages","org/identityconnectors/oracle/Messages"})
 public final class OracleConnector implements PoolableConnector, AuthenticateOp,
-		CreateOp, DeleteOp, UpdateOp, UpdateAttributeValuesOp,
-		SearchOp<Pair<String, FilterWhereBuilder>>, SchemaOp,TestOp, AttributeNormalizer {
-    
-	private final static Log log = Log.getLog(OracleConnector.class);
-    
-    private Connection adminConn;
-    private OracleConfiguration cfg;
-    private Schema schema;
-    
-    
-    public void checkAlive() {
-    	testInitialized();
-        OracleSpecifics.testConnection(adminConn);
-    }
+CreateOp, DeleteOp, UpdateOp, UpdateAttributeValuesOp,
+SearchOp<Pair<String, FilterWhereBuilder>>, SchemaOp,TestOp{
 
-    public void dispose() {
-        SQLUtil.closeQuietly(adminConn);
-        adminConn = null;
-        cfg = null;
-        schema = null;
-    }
-
-    public OracleConfiguration getConfiguration() {
-        return cfg;
-    }
-
-    public void init(Configuration cfg) {
-        this.cfg = (OracleConfiguration) cfg;
-        this.adminConn = createAdminConnection();
-    }
-    
-    /**
-     * Test of configuration and validity of connection
-     */
-    public void test() {
-    	testInitialized();
-        cfg.validate();
-        OracleSpecifics.testConnection(adminConn);
-    }
-    
-
-    public Uid authenticate(ObjectClass objectClass, String username, GuardedString password, OperationOptions options) {
-        return new OracleOperationAuthenticate(cfg, adminConn, log).authenticate(objectClass, username, password, options);
-    }
-    
-    private Connection createAdminConnection(){
-        return cfg.createAdminConnection();
-    }
-
-    
-    public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
-        new OracleOperationDelete(cfg, adminConn, log).delete(objClass, uid, options);
-    }
-    
-    Connection getAdminConnection(){
-        return adminConn;
-    }
-    
-    static Log getLog(){
-        return log;
-    }
-
-    public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
-        return new OracleOperationCreate(cfg, adminConn, log).create(oclass, attrs, options);
-    }
-    
-    static void checkObjectClass(ObjectClass objectClass,ConnectorMessages messages){
-        if(!ObjectClass.ACCOUNT.equals(objectClass)){
-            throw new IllegalArgumentException("Invalid object class");
-        }
-    }
-
-    public Attribute normalizeAttribute(ObjectClass oclass, Attribute attribute) {
-    	return new OracleAttributeNormalizer(cfg).normalizeAttribute(oclass, attribute);
-    }
-    
-    public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
-        return new OracleOperationUpdate(cfg, adminConn, log).update(objclass, uid, attrs, options);
-    }
-
-    public Uid addAttributeValues(ObjectClass objclass, Uid uid, Set<Attribute> valuesToAdd, OperationOptions options) {
-        return new OracleOperationUpdate(cfg, adminConn, log).addAttributeValues(objclass, uid, valuesToAdd, options);
-    }
-
-    public Uid removeAttributeValues(ObjectClass objclass, Uid uid, Set<Attribute> valuesToRemove, OperationOptions options) {
-        return new OracleOperationUpdate(cfg, adminConn, log).removeAttributeValues(objclass, uid, valuesToRemove, options);
-    }
-
-	public FilterTranslator<Pair<String, FilterWhereBuilder>> createFilterTranslator(ObjectClass oclass, OperationOptions options) {
-		return new OracleOperationSearch(cfg, adminConn, log).createFilterTranslator(oclass, options);
+	private OracleConnectorImpl connector;
+	
+	public OracleConnector(){
+		this.connector = new OracleConnectorImpl();
 	}
 
-	public void executeQuery(ObjectClass oclass, Pair<String, FilterWhereBuilder> pair, ResultsHandler handler, OperationOptions options) {
-		new OracleOperationSearch(cfg, adminConn, log).executeQuery(oclass, pair, handler, options);
+	public Uid addAttributeValues(ObjectClass objclass, Uid uid,
+			Set<Attribute> valuesToAdd, OperationOptions options) {
+    	valuesToAdd = new OracleAttributeNormalizer(getConfiguration().getCSSetup()).normalizeAttributes(objclass, UpdateOp.class, valuesToAdd);
+		return connector.addAttributeValues(objclass, uid, valuesToAdd, options);
+	}
+
+	public Uid authenticate(ObjectClass objectClass, String username,
+			GuardedString password, OperationOptions options) {
+		return connector.authenticate(objectClass, username, password, options);
+	}
+
+	public void checkAlive() {
+		connector.checkAlive();
+	}
+
+	public Uid create(ObjectClass oclass, Set<Attribute> attrs,
+			OperationOptions options) {
+        attrs = new OracleAttributeNormalizer(getConfiguration().getCSSetup()).normalizeAttributes(oclass, CreateOp.class, attrs);
+		return connector.create(oclass, attrs, options);
+	}
+
+	public FilterTranslator<Pair<String, FilterWhereBuilder>> createFilterTranslator(
+			ObjectClass oclass, OperationOptions options) {
+		return connector.createFilterTranslator(oclass, options);
+	}
+
+	public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
+		connector.delete(objClass, uid, options);
+	}
+
+	public void dispose() {
+		connector.dispose();
+	}
+
+	public void executeQuery(ObjectClass oclass,
+			Pair<String, FilterWhereBuilder> pair, ResultsHandler handler,
+			OperationOptions options) {
+		connector.executeQuery(oclass, pair, handler, options);
+	}
+
+	public OracleConfiguration getConfiguration() {
+		return connector.getConfiguration();
+	}
+
+	public void init(Configuration cfg) {
+		connector.init(cfg);
+	}
+
+	public Uid removeAttributeValues(ObjectClass objclass, Uid uid,
+			Set<Attribute> valuesToRemove, OperationOptions options) {
+    	valuesToRemove = new OracleAttributeNormalizer(getConfiguration().getCSSetup()).normalizeAttributes(objclass, UpdateOp.class, valuesToRemove);
+		return connector.removeAttributeValues(objclass, uid, valuesToRemove,
+				options);
 	}
 
 	public Schema schema() {
-		if(schema != null){
-			return schema;
-		}
-		schema = new OracleOperationSchema(cfg, adminConn, log).schema();
-        return schema;
+		return connector.schema();
+	}
+
+	public void test() {
+		connector.test();
+	}
+
+	public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs,
+			OperationOptions options) {
+    	attrs = new OracleAttributeNormalizer(getConfiguration().getCSSetup()).normalizeAttributes(objclass, UpdateOp.class, attrs);
+		return connector.update(objclass, uid, attrs, options);
 	}
 	
-	private void testInitialized(){
-		if(cfg == null || adminConn == null){
-			throw new ConnectorException("Connector is not yet initialized");
-		}
-	}
-    
-    
 
 }

@@ -89,7 +89,7 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 	 */
 	@Test
 	public void testCreateFilterTranslator() {
-		FilterTranslator<Pair<String, FilterWhereBuilder>> translator = new OracleOperationSearch(testConf,connector.getAdminConnection(),OracleConnector.getLog()).createFilterTranslator(ObjectClass.ACCOUNT, null);
+		FilterTranslator<Pair<String, FilterWhereBuilder>> translator = new OracleOperationSearch(testConf,connector.getAdminConnection(),OracleConnectorImpl.getLog()).createFilterTranslator(ObjectClass.ACCOUNT, null);
 		assertNotNull(translator);
 		List<Pair<String, FilterWhereBuilder>> translate = translator.translate(new EqualsFilter(new Name("test")));
 		assertNotNull(translate);
@@ -291,7 +291,7 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 	
 	@Test
 	public void testSearchByRoles() throws SQLException {
-		String[] roles = new String[]{"role1","role2"}; 
+		String[] roles = new String[]{"role1".toUpperCase(),"role2".toUpperCase()}; 
 		dropRoles(roles);
 		createRoles(roles);
         Attribute aRoles = AttributeBuilder.build(ORACLE_ROLES_ATTR_NAME, Arrays.asList(roles));
@@ -304,7 +304,7 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 	private void createRoles(String ...roles) throws SQLException{
 		final OracleCaseSensitivitySetup cs = testConf.getCSSetup();
 		for(String role : roles){
-			SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "create role " + cs.normalizeAndFormatToken(OracleUserAttributeCS.ROLE,role));
+			SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "create role " + cs.formatToken(OracleUserAttributeCS.ROLE,role));
 		}
 	}
 	
@@ -312,7 +312,7 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 		final OracleCaseSensitivitySetup cs = testConf.getCSSetup();
 		for(String role : roles){
 	        try{
-	            SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop role " + cs.normalizeAndFormatToken(ROLE, role));
+	            SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop role " + cs.formatToken(ROLE, role));
 	        }catch(SQLException e){}
 		}
 	}
@@ -338,11 +338,13 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 	public void testSearchByPrivileges() throws SQLException {
 		dropPrivilegeTables();
 		createPrivilegeTables();
+		OracleCaseSensitivitySetup cs = new OracleCaseSensitivityBuilder(TestHelpers.createDummyMessages()).build();
+		String owner = cs.normalizeToken(OracleUserAttributeCS.SYSTEM_USER, testConf.getUser());
         try{
-			Attribute privileges = AttributeBuilder.build(
-					ORACLE_PRIVS_ATTR_NAME, "CREATE SESSION",
-					"SELECT ON " + testConf.getUser() + ".MYTABLE1",
-					"SELECT ON " + testConf.getUser() + ".MYTABLE2");
+        	String priv1 = cs.normalizeToken(OracleUserAttributeCS.PRIVILEGE, "create session");
+        	String priv2 = cs.normalizeToken(OracleUserAttributeCS.PRIVILEGE, "SELECT ON " + owner + ".MYTABLE1");
+        	String priv3 = cs.normalizeToken(OracleUserAttributeCS.PRIVILEGE, "SELECT ON " + owner + ".MYTABLE2");
+			Attribute privileges = AttributeBuilder.build(ORACLE_PRIVS_ATTR_NAME, priv1, priv2, priv3);
 	        facade.update(ObjectClass.ACCOUNT, new Uid(user(3)),Collections.singleton(privileges),null);
 	        facade.update(ObjectClass.ACCOUNT, new Uid(user(7)),Collections.singleton(privileges),null);
 	        //Must search using facade, we do not support in operator
@@ -524,7 +526,7 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 	/** Test that search will fail for killed connection */
 	@Test
 	public void testSearchfail() throws SQLException{
-		OracleConnector testConnector = createTestConnector();
+		OracleConnectorImpl testConnector = createTestConnector();
 		Filter f = createFullFilter(false);
 		TestHelpers.searchToList(testConnector,ObjectClass.ACCOUNT,f);
 		OracleSpecificsTest.killConnection(connector.getAdminConnection(), testConnector.getAdminConnection());

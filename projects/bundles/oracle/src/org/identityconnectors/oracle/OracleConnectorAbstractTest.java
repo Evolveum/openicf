@@ -27,7 +27,7 @@ import org.junit.Ignore;
 public abstract class OracleConnectorAbstractTest {
     protected static OracleConfiguration testConf;
     protected static ConnectorFacade facade;
-    protected static OracleConnector connector;
+    protected static OracleConnectorImpl connector;
     protected static OracleUserReader userReader;
 
     /**
@@ -52,8 +52,8 @@ public abstract class OracleConnectorAbstractTest {
         return factory.newInstance(apiCfg);
     }
     
-    protected static OracleConnector createTestConnector(){
-        OracleConnector oc = new OracleConnector();
+    protected static OracleConnectorImpl createTestConnector(){
+        OracleConnectorImpl oc = new OracleConnectorImpl();
         oc.init(testConf);
         return oc;
     }
@@ -71,16 +71,16 @@ public abstract class OracleConnectorAbstractTest {
     }
     
     private static UserRecord getTestUserRecord(Connection conn) throws SQLException{
-        String TEST_USER = "testTS";
-        if(!userReader.userExist(TEST_USER)){
+        String testUser = "TEST_TS";
+        if(!userReader.userExist(testUser)){
             Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL);
-            Attribute name = new Name(TEST_USER);
+            Attribute name = new Name(testUser);
             GuardedString password = new GuardedString("hello".toCharArray());
             Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
-            connector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,passwordAttribute), null);
+            testUser = connector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,passwordAttribute), null).getUidValue();
         }
-        UserRecord record = userReader.readUserRecord(TEST_USER);
-        connector.delete(ObjectClass.ACCOUNT, new Uid(TEST_USER),null);
+        UserRecord record = userReader.readUserRecord(testUser);
+        connector.delete(ObjectClass.ACCOUNT, new Uid(testUser),null);
         return record;
     }
     

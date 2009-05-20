@@ -24,7 +24,7 @@ import org.junit.Test;
 public class OracleOperationDeleteTest extends OracleConnectorAbstractTest {
 
     /** 
-     * Test method for {@link org.identityconnectors.oracle.OracleConnector#delete(ObjectClass, Uid, OperationOptions)}
+     * Test method for {@link org.identityconnectors.oracle.OracleConnectorImpl#delete(ObjectClass, Uid, OperationOptions)}
      */
     @Test
     public void testDelete(){
@@ -60,7 +60,7 @@ public class OracleOperationDeleteTest extends OracleConnectorAbstractTest {
 	 * @throws SQLException */ 
 	@Test
 	public void testDeleteFail() throws SQLException{
-		OracleConnector testConnector = createTestConnector();
+		OracleConnectorImpl testConnector = createTestConnector();
 		String newUser = "newUser";
         try{
         	testConnector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);

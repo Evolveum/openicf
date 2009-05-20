@@ -497,7 +497,7 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
 	 * @throws SQLException */ 
 	@Test
 	public void testUpdateFail() throws SQLException{
-		OracleConnector testConnector = createTestConnector();
+		OracleConnectorImpl testConnector = createTestConnector();
 		testConnector.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.buildPassword("newpassword".toCharArray())) , null);
 		//Now kill connection
 		OracleSpecificsTest.killConnection(connector.getAdminConnection(), testConnector.getAdminConnection());

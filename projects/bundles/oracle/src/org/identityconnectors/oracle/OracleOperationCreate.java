@@ -47,7 +47,7 @@ final class OracleOperationCreate extends AbstractOracleOperation implements Cre
     }
 
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
-        OracleConnector.checkObjectClass(oclass, cfg.getConnectorMessages());
+        OracleConnectorImpl.checkObjectClass(oclass, cfg.getConnectorMessages());
         Map<String, Attribute> map = AttributeUtil.toMap(attrs);
         checkCreateAttributes(map);
         String userName = OracleConnectorHelper.getStringValue(map, Name.NAME, cfg.getConnectorMessages());

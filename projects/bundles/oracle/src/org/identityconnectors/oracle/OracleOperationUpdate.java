@@ -1,5 +1,14 @@
 package org.identityconnectors.oracle;
 
+import static org.identityconnectors.oracle.OracleMessages.MSG_ADDATTRIBUTEVALUES_ATTRIBUTE_NOT_SUPPORTED;
+import static org.identityconnectors.oracle.OracleMessages.MSG_ADDATTRIBUTEVALUES_FOR_USER_FAILED;
+import static org.identityconnectors.oracle.OracleMessages.MSG_MUST_SPECIFY_PASSWORD_FOR_UNEXPIRE;
+import static org.identityconnectors.oracle.OracleMessages.MSG_REMOVEATTRIBUTEVALUES_ATTRIBUTE_NOT_SUPPORTED;
+import static org.identityconnectors.oracle.OracleMessages.MSG_REMOVEATTRIBUTEVALUES_FOR_USER_FAILED;
+import static org.identityconnectors.oracle.OracleMessages.MSG_UPDATE_ATTRIBUTE_NOT_SUPPORTED;
+import static org.identityconnectors.oracle.OracleMessages.MSG_UPDATE_NO_ATTRIBUTES;
+import static org.identityconnectors.oracle.OracleMessages.MSG_UPDATE_OF_USER_FAILED;
+
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,7 +33,6 @@ import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.spi.operations.UpdateAttributeValuesOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
-import static org.identityconnectors.oracle.OracleMessages.*;
 
 /**
  * Alter the user attributes, his roles and privileges

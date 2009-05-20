@@ -31,7 +31,7 @@ import org.junit.matchers.JUnitMatchers;
 public class OracleOperationAuthenticateTest extends OracleConnectorAbstractTest {
     
     /**
-     * Test method for {@link org.identityconnectors.oracle.OracleConnector#authenticate(org.identityconnectors.framework.common.objects.ObjectClass, java.lang.String, org.identityconnectors.common.security.GuardedString, org.identityconnectors.framework.common.objects.OperationOptions)}.
+     * Test method for {@link org.identityconnectors.oracle.OracleConnectorImpl#authenticate(org.identityconnectors.framework.common.objects.ObjectClass, java.lang.String, org.identityconnectors.common.security.GuardedString, org.identityconnectors.framework.common.objects.OperationOptions)}.
      */
     @Test
     public void testAuthenticate() {
@@ -109,7 +109,7 @@ public class OracleOperationAuthenticateTest extends OracleConnectorAbstractTest
     @Test
     public void testAuthenticateFail() throws SQLException{
     	String user = "TESTUSER";
-		OracleConnector testConnector = createTestConnector();
+		OracleConnectorImpl testConnector = createTestConnector();
 		try{
 			testConnector.delete(ObjectClass.ACCOUNT, new Uid(user), null);
 		}

@@ -200,6 +200,7 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 			if(attribute.is(Name.NAME)){
 				return cs.formatSQLColumn(OracleUserAttributeCS.USER, "DBA_USERS.USERNAME");
 			}
+			//we do not normalize UID 
 			else if(attribute.is(Uid.NAME)){
 				return cs.formatSQLColumn(OracleUserAttributeCS.USER, "DBA_USERS.USERNAME");
 			}
