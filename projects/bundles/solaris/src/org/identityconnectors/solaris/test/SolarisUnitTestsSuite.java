@@ -33,7 +33,7 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses( { SolarisTest.class, SolarisConfigurationTest.class,
         SolarisConnectionTest.class, SolarisTestAuthenticate.class,
-        SolarisTestCreate.class })
+        SolarisTestCreate.class, SolarisTestUpdate.class })
 public class SolarisUnitTestsSuite {
     // the class remains completely empty,
     // being used only as a holder for the above annotations

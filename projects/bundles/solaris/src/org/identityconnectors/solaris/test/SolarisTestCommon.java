@@ -50,11 +50,20 @@ public class SolarisTestCommon {
         return conn;
     }
     
-    private static String getTestProperty(String name) {
+    /**
+     * acquires a test property with given name
+     */
+    public static String getTestProperty(String name, boolean nullCheck) {
         final String propValue = TestHelpers.getProperty(name, null);
-        String msg = "%s must be provided in build.groovy";
-        Assert.assertNotNull(String.format(msg, name), propValue);
+        if (nullCheck) {
+            String msg = "%s must be provided in build.groovy. It cannot be null.";
+            Assert.assertNotNull(String.format(msg, name), propValue);
+        }
         return propValue;
+    }
+    
+    public static String getTestProperty(String name) {
+        return getTestProperty(name, false);
     }
 
     static SolarisConfiguration createConfiguration() {
