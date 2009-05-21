@@ -159,12 +159,18 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
         if (!noLdap && StringUtil.isBlank(_suffix))
             throw new IllegalArgumentException(getMessage(RacfMessages.SUFFIX_NULL));
         if (!noLdap && _hostLdapPortNumber==null)
-            throw new IllegalArgumentException(getMessage(RacfMessages.PORT_NULL));
+            throw new IllegalArgumentException(getMessage(RacfMessages.LDAP_PORT_NULL));
+        if (_hostLdapPortNumber!=null && (_hostLdapPortNumber<1 || _hostLdapPortNumber>65536))
+            throw new IllegalArgumentException(getMessage(RacfMessages.ILLEGAL_LDAP_PORT, _hostLdapPortNumber));
         if (!noLdap && StringUtil.isBlank(_ldapUserName))
             throw new IllegalArgumentException(getMessage(RacfMessages.USERNAME_NULL));
         if (!noLdap && isBlank(_ldapPassword))
             throw new IllegalArgumentException(getMessage(RacfMessages.PASSWORD_NULL));
-        
+
+        if (!noCommandLine && _hostTelnetPortNumber==null)
+            throw new IllegalArgumentException(getMessage(RacfMessages.TELNET_PORT_NULL));
+        if (_hostTelnetPortNumber!=null && (_hostTelnetPortNumber<1 || _hostTelnetPortNumber>65536))
+            throw new IllegalArgumentException(getMessage(RacfMessages.ILLEGAL_TELNET_PORT, _hostTelnetPortNumber));
         if (!noCommandLine && StringUtil.isBlank(_userName))
             throw new IllegalArgumentException(getMessage(RacfMessages.USERNAMES_NULL));
         if (!noCommandLine && isBlank(_password))

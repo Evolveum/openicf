@@ -27,7 +27,10 @@ import java.util.ListResourceBundle;
 public class RacfMessages extends ListResourceBundle {
     public static final String SUFFIX_NULL                    = "SUFFIX_NULL";
     public static final String HOST_NULL                      = "HOST_NULL";
-    public static final String PORT_NULL                      = "PORT_NULL";
+    public static final String LDAP_PORT_NULL                 = "LDAP_PORT_NULL";
+    public static final String ILLEGAL_LDAP_PORT              = "ILLEGAL_LDAP_PORT";
+    public static final String TELNET_PORT_NULL               = "TELNET_PORT_NULL";
+    public static final String ILLEGAL_TELNET_PORT            = "ILLEGAL_TELNET_PORT";
     public static final String USERNAME_NULL                  = "USERNAME_NULL";
     public static final String PASSWORD_NULL                  = "PASSWORD_NULL";
     public static final String CONNECTION_CLASS_NULL          = "CONNECTION_CLASS_NULL";
@@ -66,11 +69,15 @@ public class RacfMessages extends ListResourceBundle {
     public static final String ATTRIBUTE_NOT_UPDATEABLE       = "ATTRIBUTE_NOT_UPDATEABLE";
     public static final String OWNER_INCONSISTENT             = "OWNER_INCONSISTENT";
     public static final String BAD_CONNECTION_INFO            = "BAD_CONNECTION_INFO";
+    public static final String BAD_NAME_FILTER                = "BAD_NAME_FILTER";
 
     private static final String[][] _contents = {
         { SUFFIX_NULL,             "suffix may not be null" },
         { HOST_NULL,               "host name may not be null" },
-        { PORT_NULL,               "port may not be null" },
+        { LDAP_PORT_NULL,          "ldap port may not be null" },
+        { ILLEGAL_LDAP_PORT,       "the value ''{0}'' is not a legal value for ldap port" },
+        { TELNET_PORT_NULL,        "telnet port may not be null" },
+        { ILLEGAL_TELNET_PORT,     "the value ''{0}'' is not a legal value for telnet port" },
         { USERNAME_NULL,           "user name may not be null" },
         { PASSWORD_NULL,           "password may not be null" },
         { CONNECTION_CLASS_NULL,   "connection class may not be null" },
@@ -106,10 +113,10 @@ public class RacfMessages extends ListResourceBundle {
         { PAST_ENABLE_DATE,        "__ENABLE_DATE__ is in the past" },
         { NO_VALUE_FOR_ATTRIBUTE,  "No value specified for attribute ''{0}''" },
         { ATTRIBUTE_NOT_READABLE,  "Attribute ''{0}'' is not readable" },
-        { ATTRIBUTE_NOT_UPDATEABLE,  "Attribute ''{0}'' is not updateable" },
+        { ATTRIBUTE_NOT_UPDATEABLE, "Attribute ''{0}'' is not updateable" },
         { OWNER_INCONSISTENT,      "The owner and relationship target attributes must be the same size" },
         { BAD_CONNECTION_INFO,     "Either LDAP or Command Line connection information must be specified" },
-         
+        { BAD_NAME_FILTER,         "''{0}'' is not a valid filter value" }
     };
 
     @Override

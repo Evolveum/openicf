@@ -37,6 +37,11 @@ import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
  * Supported filters are wild cards on name (username or groupname)
  */
 public class RacfCommandLineFilterTranslator extends AbstractFilterTranslator<String> {
+    private RacfConfiguration _config;
+    
+    public RacfCommandLineFilterTranslator(RacfConfiguration config) {
+        _config = config;
+    }
     @Override
     protected String createAndExpression(String leftExpression,
             String rightExpression) {
@@ -53,6 +58,7 @@ public class RacfCommandLineFilterTranslator extends AbstractFilterTranslator<St
     @Override
     protected String createStartsWithExpression(StartsWithFilter filter,
             boolean not) {
+        CommandLineUtil.validateName(filter.getAttribute(), _config);
         if (!not && filter.getAttribute().is(Name.NAME))
             return shorten(AttributeUtil.getAsStringValue(filter.getAttribute()), 7)+"*";
         else if (!not && filter.getAttribute().is(Uid.NAME))
@@ -63,6 +69,7 @@ public class RacfCommandLineFilterTranslator extends AbstractFilterTranslator<St
 
     @Override
     protected String createEqualsExpression(EqualsFilter filter, boolean not) {
+        CommandLineUtil.validateName(filter.getAttribute(), _config);
         if (!not && filter.getAttribute().is(Name.NAME))
             return AttributeUtil.getAsStringValue(filter.getAttribute());
         else if (!not && filter.getAttribute().is(Uid.NAME))
@@ -73,6 +80,7 @@ public class RacfCommandLineFilterTranslator extends AbstractFilterTranslator<St
 
     @Override
     protected String createEndsWithExpression(EndsWithFilter filter, boolean not) {
+        CommandLineUtil.validateName(filter.getAttribute(), _config);
         if (!not && filter.getAttribute().is(Name.NAME))
             return "*"+shorten(AttributeUtil.getAsStringValue(filter.getAttribute()), -7);
         else if (!not && filter.getAttribute().is(Uid.NAME))
@@ -83,6 +91,7 @@ public class RacfCommandLineFilterTranslator extends AbstractFilterTranslator<St
 
     @Override
     protected String createContainsExpression(ContainsFilter filter, boolean not) {
+        CommandLineUtil.validateName(filter.getAttribute(), _config);
         if (!not && filter.getAttribute().is(Name.NAME))
             return "*"+shorten(AttributeUtil.getAsStringValue(filter.getAttribute()), 6)+"*";
         else if (!not && filter.getAttribute().is(Uid.NAME))
@@ -113,6 +122,8 @@ public class RacfCommandLineFilterTranslator extends AbstractFilterTranslator<St
             newUid = newUid.substring(0, newUid.indexOf(",profileType="));
         return newUid;
     }
+    
+
 
 }
 

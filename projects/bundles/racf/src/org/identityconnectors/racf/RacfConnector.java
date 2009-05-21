@@ -66,7 +66,6 @@ import org.identityconnectors.framework.common.objects.PredefinedAttributes;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
-import org.identityconnectors.framework.common.objects.ScriptContext;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.AttributeNormalizer;
@@ -77,14 +76,14 @@ import org.identityconnectors.framework.spi.PoolableConnector;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
-import org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
+import org.identityconnectors.framework.spi.operations.TestOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
 
 
 @ConnectorClass(configurationClass= RacfConfiguration.class, displayNameKey="RACFConnector")
 public class RacfConnector implements Connector, CreateOp, PoolableConnector,
-DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNormalizer {
+DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
 
     public static final String         SEPARATOR           ="*";
     public static final String         SEPARATOR_REGEX     ="\\*";
@@ -138,7 +137,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
         }
     }
 
-    RacfConnection getConnection() {
+    public RacfConnection getConnection() {
         return _connection;
     }
 
@@ -321,9 +320,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
                 return null;
         } else {
             if (oclass.is(ObjectClass.ACCOUNT_NAME))
-                return new RacfCommandLineFilterTranslator();
+                return new RacfCommandLineFilterTranslator(_configuration);
             if (oclass.is(RACF_GROUP_NAME))
-                return new RacfCommandLineFilterTranslator();
+                return new RacfCommandLineFilterTranslator(_configuration);
             else
                 return null;
         }
@@ -686,6 +685,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
             attributes.add(buildNonupdateAttribute(Name.NAME,                           String.class, true));
             attributes.add(AttributeInfoBuilder.build(ATTR_CL_DFLTGRP,                  String.class));
     
+            attributes.add(buildMultivaluedAttribute(ATTR_CL_GROUP_CONN_OWNERS,         String.class, false));
+            attributes.add(buildMultivaluedAttribute(ATTR_CL_GROUPS,                    String.class, false));
+
             // Optional Attributes (have RACF default values)
             //
             attributes.add(AttributeInfoBuilder.build(ATTR_CL_OWNER,                    String.class));
@@ -718,7 +720,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
             attributes.add(AttributeInfoBuilder.build(ATTR_CL_CICS_OPPRTY,              String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_CL_CICS_OPIDENT,             String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_CL_CICS_XRFSOFF,             String.class));
+            attributes.add(buildMultivaluedAttribute(ATTR_CL_CICS_OPCLASS,              Integer.class, false));
+            attributes.add(buildMultivaluedAttribute(ATTR_CL_CICS_RSLKEY,               Integer.class, false));
+            attributes.add(buildMultivaluedAttribute(ATTR_CL_CICS_TSLKEY,               Integer.class, false));
            
+            attributes.add(buildMultivaluedAttribute(ATTR_CL_NETVIEW_OPCLASS,           String.class, false));
+            attributes.add(buildMultivaluedAttribute(ATTR_CL_NETVIEW_DOMAINS,           String.class, false));
             attributes.add(AttributeInfoBuilder.build(ATTR_CL_NETVIEW_NGMFVSPN,         boolean.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_CL_NETVIEW_NGMFADMN,         String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_CL_NETVIEW_MSGRECVR,         boolean.class));
@@ -728,14 +735,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
     
             // Multi-valued attributes
             //
-            attributes.add(buildMultivaluedAttribute(ATTR_CL_GROUP_CONN_OWNERS,         String.class, false));
             attributes.add(buildMultivaluedAttribute(ATTR_CL_ATTRIBUTES,                String.class, false));
-            attributes.add(buildMultivaluedAttribute(ATTR_CL_NETVIEW_OPCLASS,           String.class, false));
-            attributes.add(buildMultivaluedAttribute(ATTR_CL_NETVIEW_DOMAINS,           String.class, false));
-            attributes.add(buildMultivaluedAttribute(ATTR_CL_CICS_OPCLASS,              Integer.class, false));
-            attributes.add(buildMultivaluedAttribute(ATTR_CL_CICS_RSLKEY,               Integer.class, false));
-            attributes.add(buildMultivaluedAttribute(ATTR_CL_CICS_TSLKEY,               Integer.class, false));
-            attributes.add(buildMultivaluedAttribute(ATTR_CL_GROUPS,                    String.class, false));
     
             // Catalog Attributes (make non-default)
             //
@@ -1060,26 +1060,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
         return false;
     }
 
-    /**
-     * Run a script on the connector.
-     * <p>
-     * This needs to be locally implemented, because the RacfConnection is the LDAP 
-     * connection, and scripts need to be run in the context of a RW3270 connection.
-     * So, we need to borrow such a connection from the connection pool.
-     * <p>
-     * One additional argument is added to the set of script arguments:
-     * <ul>
-     * <li><b>rw3270Connection</b> -- an org.identityconnectors.rw3270.RW3270Connection that is logged in to the host
-     * </li>
-     * </ul>
-     * <p>
-     * If an exception occurs running the script, and attempt is made to reset the
-     * connection. If the reset fails, the connection is not returned to the pool.
-     */
-    public Object runScriptOnConnector(ScriptContext request, OperationOptions options) {
-        return _clUtil.runScriptOnConnector(request, options);
-    }
-
     private boolean isLdapConnectionAvailable() {
         return _configuration.getLdapUserName()!=null;
     }
@@ -1157,6 +1137,14 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, ScriptOnConnectorOp, AttributeNo
         } else {
             return null;
         }
+    }
+
+    public void test() {
+        // This actually needs to do nothing, because, as a poolable connector,
+        // we only get here via
+        //  - creating a new connector, and running init
+        //  - pulling a connector from the pool, and running isAlive()
+        // Either of these guarantees a working connection
     }
     
 }

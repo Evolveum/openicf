@@ -42,7 +42,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.identityconnectors.common.StringUtil;
-import org.identityconnectors.common.script.ScriptExecutor;
 import org.identityconnectors.common.script.ScriptExecutorFactory;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
@@ -57,7 +56,6 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.PredefinedAttributes;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
-import org.identityconnectors.framework.common.objects.ScriptContext;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.patternparser.MapTransform;
 import org.identityconnectors.rw3270.RW3270Connection;
@@ -586,6 +584,7 @@ class CommandLineUtil {
     }
 
     private boolean groupExists(String name) {
+        validateName(name, ((RacfConfiguration)_connector.getConfiguration()));
         String command = "SEARCH CLASS(GROUP) FILTER("+name+")";
         String groups = getCommandOutput(command);
         
@@ -610,8 +609,26 @@ class CommandLineUtil {
             throw ConnectorException.wrap(e);
         }
     }
-
+    
+    static private Pattern _namePattern = Pattern.compile("[a-zA-Z0-9*%@]+");
+    static void validateName(Attribute attribute, RacfConfiguration config) {
+        if (!attribute.is(Name.NAME))
+            return;
+        
+        String name = ((Name)attribute).getNameValue();
+        validateName(name, config);
+    }
+    
+    static void validateName(String name, RacfConfiguration config) {
+        if (name.length()>8)
+            throw new ConnectorException(config.getMessage(RacfMessages.BAD_NAME_FILTER, name));
+        
+        if (!_namePattern.matcher(name).matches())
+            throw new ConnectorException(config.getMessage(RacfMessages.BAD_NAME_FILTER, name));
+    }
+    
     private boolean userExists(String name) {
+        validateName(name, ((RacfConfiguration)_connector.getConfiguration()));
         String command = "SEARCH CLASS(USER) FILTER("+name+")";
         String groups = getCommandOutput(command);
         
@@ -619,6 +636,7 @@ class CommandLineUtil {
     }
     
     public List<String> getMembersOfGroupViaCommandLine(String group) {
+        validateName(group, ((RacfConfiguration)_connector.getConfiguration()));
         String command = "LISTGRP "+group;
         String output = getCommandOutput(command);
         try {
@@ -639,6 +657,7 @@ class CommandLineUtil {
     }
     
     public List<String> getGroupsForUserViaCommandLine(String user) {
+        validateName(user, ((RacfConfiguration)_connector.getConfiguration()));
         String command = "LISTUSER "+user;
         String output = getCommandOutput(command);
         MapTransform transform = _segmentParsers.get("ACCOUNT.RACF");
@@ -836,38 +855,6 @@ class CommandLineUtil {
             }
         } else {
             throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNSUPPORTED_OBJECT_CLASS, objectClass));
-        }
-    }
-    
-    /**
-     * Run a script on the connector.
-     * <p>
-     * This needs to be locally implemented, because the RacfConnection is the LDAP 
-     * connection, and scripts need to be run in the context of a RW3270 connection.
-     * So, we need to borrow such a connection from the connection pool.
-     * <p>
-     * One additional argument is added to the set of script arguments:
-     * <ul>
-     * <li><b>rw3270Connection</b> -- an org.identityconnectors.rw3270.RW3270Connection that is logged in to the host
-     * </li>
-     * </ul>
-     * <p>
-     * If an exception occurs running the script, and attempt is made to reset the
-     * connection. If the reset fails, the connection is not returned to the pool.
-     */
-    public Object runScriptOnConnector(ScriptContext request, OperationOptions options) {
-        if (!"groovy".equalsIgnoreCase(request.getScriptLanguage()))
-            throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNSUPPORTED_SCRIPTING_LANGUAGE, request.getScriptLanguage()));
-        ScriptExecutor executor = _groovyFactory.newScriptExecutor(getClass().getClassLoader(), request.getScriptText(), false);
-        Map<String, Object> arguments = new HashMap<String, Object>(request.getScriptArguments());
-        try {
-            RW3270Connection connection = _connector.getConnection().getRacfConnection();
-            arguments.put("rw3270Connection", connection);
-            Object result = executor.execute(arguments);
-            return result;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw ConnectorException.wrap(e);
         }
     }
 
