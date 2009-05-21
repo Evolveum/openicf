@@ -317,14 +317,14 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             if (oclass.is(RACF_CONNECTION_NAME))
                 return new RacfConnectFilterTranslator();
             else
-                return null;
+                throw new ConnectorException(_configuration.getMessage(RacfMessages.UNSUPPORTED_OBJECT_CLASS, oclass));
         } else {
             if (oclass.is(ObjectClass.ACCOUNT_NAME))
                 return new RacfCommandLineFilterTranslator(_configuration);
             if (oclass.is(RACF_GROUP_NAME))
                 return new RacfCommandLineFilterTranslator(_configuration);
             else
-                return null;
+                throw new ConnectorException(_configuration.getMessage(RacfMessages.UNSUPPORTED_OBJECT_CLASS, oclass));
         }
     }
 
@@ -339,7 +339,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             names = getUsers(query);
         else if (objectClass.is(RACF_GROUP_NAME))
             names = getGroups(query);
-
+        else
+            throw new ConnectorException(_configuration.getMessage(RacfMessages.UNSUPPORTED_OBJECT_CLASS, objectClass));
+        
         try {
             TreeSet<String> attributesToGet = null;
             schema();
