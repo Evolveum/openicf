@@ -248,8 +248,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     	LocalizedAssert la = new LocalizedAssert(getConnectorMessages(),true);
         la.assertNotBlank(caseSensitivityString, "oracle.cs.display");
         this.cs = new OracleCaseSensitivityBuilder(getConnectorMessages()).parseMap(caseSensitivityString).build();
-        if(dataSource != null){
-			la.assertNotBlank(dataSource, MSG_DATASOURCE_DISPLAY);
+        if(StringUtil.isNotBlank(dataSource)){
 			la.assertBlank(host, MSG_HOST_DISPLAY);
 			la.assertBlank(database,MSG_DATABASE_DISPLAY);
 			la.assertBlank(driver,MSG_DRIVER_DISPLAY);
@@ -280,7 +279,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
                 }
                 connType = ConnectionType.FULL_URL;
             }
-            else if(OracleSpecifics.THIN_DRIVER.equals(driver)){
+            else if(OracleSpecifics.THIN_DRIVER.equals(driver) || OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME.equals(driver)){
             	la.assertNotBlank(host, MSG_HOST_DISPLAY);
             	la.assertNotBlank(port, MSG_PORT_DISPLAY);
             	la.assertNotBlank(user, MSG_USER_DISPLAY);

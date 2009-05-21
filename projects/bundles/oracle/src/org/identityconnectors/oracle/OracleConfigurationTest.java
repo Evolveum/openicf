@@ -30,6 +30,7 @@ public class OracleConfigurationTest {
     public void testValidate() {
         OracleConfiguration cfg = createEmptyCfg();
         assertValidateFail(cfg,"Validate for empty cfg should fail");
+        
         //Try datasource validate
         cfg.setDataSource("myDS");
         cfg.setDriver(null);
@@ -116,74 +117,90 @@ public class OracleConfigurationTest {
     /** Test creation of connection from thin driver */
     @Test
     public void testThinConfiguration() {
-        OracleConfiguration cfg = createThinConfiguration();
-        cfg.validate();
-        Connection conn = cfg.createAdminConnection();
-        assertNotNull(conn);
-        OracleConfiguration failCfg = cfg.clone();
-        failCfg.setUser(null);
-        assertValidateFail(failCfg, "Validate for null user must fail");
-        failCfg = cfg.clone();
-        failCfg.setUser("invalidUser");
-        failCfg.validate();
-        assertCreateAdminConnectionFail(failCfg, "Create connection must fail on invalid user");
-        failCfg = cfg.clone();
-        failCfg.setDriver(OracleSpecifics.THIN_DRIVER);
-        failCfg.validate();
-        failCfg.createAdminConnection();
+        OracleConfiguration thinCfg = createThinConfiguration();
+        thinCfg.validate();
+        Connection conn = thinCfg.createAdminConnection();
         assertNotNull(conn);
         SQLUtil.closeQuietly(conn);
-        failCfg.setDriver("invalidDriver");
-        assertValidateFail(failCfg, "Validate for invalid driver must fail");
-        failCfg = cfg.clone();
-        failCfg.setDatabase(null);
-        assertValidateFail(failCfg,"Validate must fail for null database");
-        failCfg = cfg.clone();
-        failCfg.setDriver(null);
-        assertValidateFail(failCfg,"Validate must fail for null driver");
-        failCfg = cfg.clone();
-        failCfg.setHost(null);
-        assertValidateFail(failCfg,"Validate must fail for null host");
-        failCfg = cfg.clone();
-        failCfg.setDriver(OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME);
-        assertValidateFail(failCfg, "Must fail, url must be specified when driver classname is specified");
-        failCfg.setUrl("invalidUrl");
-        failCfg.setHost(null);
-        failCfg.setPort(null);
-        failCfg.setDatabase(null);
-        failCfg.validate();
-        assertCreateAdminConnectionFail(failCfg, "Create connection must fail on invalid url");
+        
+        OracleConfiguration cfg = thinCfg.clone();
+        cfg.setUser(null);
+        assertValidateFail(cfg, "Validate for null user must fail");
+        
+        cfg = thinCfg.clone();
+        cfg.setUser("invalidUser");
+        cfg.validate();
+        assertCreateAdminConnectionFail(cfg, "Create connection must fail on invalid user");
+        
+        //Set thin driver
+        cfg = thinCfg.clone();
+        cfg.setDriver(OracleSpecifics.THIN_DRIVER);
+        cfg.validate();
+        conn = cfg.createAdminConnection();
+        assertNotNull(conn);
+        SQLUtil.closeQuietly(conn);
+        
+        //Thin and oracle.jdbc.driver.OracleDriver we find as thin driver 
+        cfg = thinCfg.clone();
+        cfg.setDriver(OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME);
+        cfg.validate();
+        SQLUtil.closeQuietly(cfg.createAdminConnection());
+        
+        cfg = thinCfg.clone();
+        cfg.setDriver("invalidDriver");
+        assertValidateFail(cfg, "Validate for invalid driver must fail");
+        
+        cfg = thinCfg.clone();
+        cfg.setDatabase(null);
+        assertValidateFail(cfg,"Validate must fail for null database");
+        
+        cfg = thinCfg.clone();
+        cfg.setDriver(null);
+        assertValidateFail(cfg,"Validate must fail for null driver");
+        
+        cfg = thinCfg.clone();
+        cfg.setHost(null);
+        assertValidateFail(cfg,"Validate must fail for null host");
+        
+        cfg = thinCfg.clone();
+        cfg.setUrl("invalidUrl");
+        cfg.setHost(null);
+        cfg.setPort(null);
+        cfg.setDatabase(null);
+        cfg.validate();
+        assertCreateAdminConnectionFail(cfg, "Create connection must fail on invalid url");
+        
         String url = TestHelpers.getProperty("thin.url", null);
         assertNotNull(url);
-        failCfg.setUrl(url);
-        failCfg.validate();
-        SQLUtil.closeQuietly(failCfg.createAdminConnection());
+        cfg.setUrl(url);
+        cfg.validate();
+        SQLUtil.closeQuietly(cfg.createAdminConnection());
     }
     
     /** Test OCI driver configuration */
     @Test
     public void testOciConfiguration(){
-        OracleConfiguration cfg = createOciConfiguration();
-        cfg.validate();
+        OracleConfiguration ociCfg = createOciConfiguration();
+        ociCfg.validate();
         Connection conn = null;
         try{
-        	conn = cfg.createAdminConnection();
+        	conn = ociCfg.createAdminConnection();
         }
         catch(UnsatisfiedLinkError e){
         	return;
         }
         assertNotNull(conn);
         SQLUtil.closeQuietly(conn);
-        OracleConfiguration failCfg = cfg.clone();
-        failCfg.setDatabase(null);
-        assertValidateFail(failCfg, "Validate must fail for null database");
-        failCfg = cfg.clone();
-        failCfg.setDriver(null);
-        assertValidateFail(failCfg,"Validate must fail for null driver");
-        failCfg = cfg.clone();
-        failCfg.setHost(null);
-        failCfg.validate();
-        conn = failCfg.createAdminConnection();
+        OracleConfiguration cfg = ociCfg.clone();
+        cfg.setDatabase(null);
+        assertValidateFail(cfg, "Validate must fail for null database");
+        cfg = ociCfg.clone();
+        cfg.setDriver(null);
+        assertValidateFail(cfg,"Validate must fail for null driver");
+        cfg = ociCfg.clone();
+        cfg.setHost(null);
+        cfg.validate();
+        conn = cfg.createAdminConnection();
         assertNotNull(conn);
         SQLUtil.closeQuietly(conn);
     }
@@ -282,23 +299,23 @@ public class OracleConfigurationTest {
      */
     @Test
     public void testDataSourceConfiguration(){
-        OracleConfiguration conf = createDataSourceConfiguration();
+        OracleConfiguration dsConf = createDataSourceConfiguration();
         //set to thread local
-        dsCfg.set(conf);
-        assertArrayEquals(conf.getDsJNDIEnv(), dsJNDIEnv);
-        conf.validate();
-        Connection conn = conf.createAdminConnection();
-        conf.setUser(null);
-        conf.setPassword(null);
-        conf.validate();
-        conn = conf.createAdminConnection();
+        dsCfg.set(dsConf);
+        assertArrayEquals(dsConf.getDsJNDIEnv(), dsJNDIEnv);
+        dsConf.validate();
+        Connection conn = dsConf.createAdminConnection();
+        dsConf.setUser(null);
+        dsConf.setPassword(null);
+        dsConf.validate();
+        conn = dsConf.createAdminConnection();
         assertNotNull(conn);
         
-        OracleConfiguration failConf = conf.clone();
-        failConf.setDataSource(null);
-        assertValidateFail(failConf, "Validate should fail for null datasource");
-        failConf.setDataSource(WRONG_DATASOURCE);
-        assertCreateAdminConnectionFail(failConf, "CreateAdminConnection with wrong datasource should fail");
+        OracleConfiguration cfg = dsConf.clone();
+        cfg.setDataSource(null);
+        assertValidateFail(cfg, "Validate should fail for null datasource");
+        cfg.setDataSource(WRONG_DATASOURCE);
+        assertCreateAdminConnectionFail(cfg, "CreateAdminConnection with wrong datasource should fail");
     }
     
     /** Test settings of case sensitivity */
