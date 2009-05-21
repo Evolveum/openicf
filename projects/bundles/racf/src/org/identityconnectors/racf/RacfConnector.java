@@ -81,7 +81,12 @@ import org.identityconnectors.framework.spi.operations.TestOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
 
 
-@ConnectorClass(configurationClass= RacfConfiguration.class, displayNameKey="RACFConnector")
+@ConnectorClass(configurationClass= RacfConfiguration.class, displayNameKey="RACFConnector", 
+        messageCatalogPaths={"org.identityconnectors.racf.Messages", 
+                             "org.identityconnectors.rw3270.Messages",  
+                             "org.identityconnectors.rw3270.hod.Messages",  
+                             "org.identityconnectors.rw3270.wrq.Messages",  
+                             "org.identityconnectors.rw3270.freehost3270.Messages"})
 public class RacfConnector implements Connector, CreateOp, PoolableConnector,
 DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
 
