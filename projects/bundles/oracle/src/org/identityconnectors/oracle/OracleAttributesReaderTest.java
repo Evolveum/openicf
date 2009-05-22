@@ -203,7 +203,14 @@ public class OracleAttributesReaderTest {
         reader.readAlterAttributes(AttributeUtil.toMap(attributes), caAttributes);
         Assert.assertNull("Password must be null",caAttributes.getPassword());
         
-        
+        //try to update authentication to null
+        attributes = new HashSet<Attribute>();
+        attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME));
+        attributes.add(AttributeBuilder.buildPassword("myPassword".toCharArray()));
+        try{
+	        reader.readAlterAttributes(AttributeUtil.toMap(attributes), caAttributes);
+	        fail("Create attributes must fail for null authentication");
+        }catch(IllegalArgumentException e){}
     }
 
 

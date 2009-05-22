@@ -22,18 +22,18 @@ final class OracleAttributesReader {
      }
     
      void readCreateAttributes(Map<String, Attribute> map, OracleUserAttributes.Builder caAttributes){
-    	 readAuthAttributes(map, caAttributes);
-    	 readRestAttributes(map, caAttributes);
+    	 readAuthAttributes(map, caAttributes, Operation.CREATE);
+    	 readRestAttributes(map, caAttributes, Operation.CREATE);
      }
      
      void readAlterAttributes(Map<String, Attribute> map, OracleUserAttributes.Builder caAttributes){
-    	 readAuthAttributes(map, caAttributes);
-    	 readRestAttributes(map, caAttributes);
+    	 readAuthAttributes(map, caAttributes, Operation.ALTER);
+    	 readRestAttributes(map, caAttributes, Operation.ALTER);
      }
      
      
      
-     private void readRestAttributes(Map<String, Attribute> map, OracleUserAttributes.Builder caAttributes) {
+     private void readRestAttributes(Map<String, Attribute> map, OracleUserAttributes.Builder caAttributes, Operation operation) {
         caAttributes.setExpirePassword(OracleConnectorHelper.getNotNullAttributeBooleanValue(map, OperationalAttributes.PASSWORD_EXPIRED_NAME, cm));
         caAttributes.setDefaultTableSpace(OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, OracleConstants.ORACLE_DEF_TS_ATTR_NAME, cm));
         caAttributes.setTempTableSpace(OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, OracleConstants.ORACLE_TEMP_TS_ATTR_NAME, cm));
@@ -67,8 +67,14 @@ final class OracleAttributesReader {
         }
     }
 
-    private void readAuthAttributes(Map<String, Attribute> map, OracleUserAttributes.Builder caAttributes) {
-        String authentication =  OracleConnectorHelper.getStringValue(map, OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, cm);
+    private void readAuthAttributes(Map<String, Attribute> map, OracleUserAttributes.Builder caAttributes, Operation operation) {
+        String authentication = null;
+        if(Operation.CREATE.equals(operation)){
+        	authentication = OracleConnectorHelper.getStringValue(map, OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, cm);
+        }
+        else{
+        	authentication = OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, cm);
+        }
         Attribute passwordAttribute = map.get(OperationalAttributes.PASSWORD_NAME);
         //Set globalname to not silently skip it
         caAttributes.setGlobalName(OracleConnectorHelper.getStringValue(map, OracleConstants.ORACLE_GLOBAL_ATTR_NAME, cm));

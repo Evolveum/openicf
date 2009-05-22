@@ -54,7 +54,7 @@ final class OracleOperationSchema extends AbstractOracleOperation implements Sch
         attrInfoSet.add(OperationalAttributeInfos.ENABLE);
         attrInfoSet.add(AttributeInfoBuilder.build(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,Long.class,EnumSet.of(Flags.NOT_UPDATEABLE,Flags.NOT_CREATABLE)));
         attrInfoSet.add(AttributeInfoBuilder.build(OperationalAttributes.DISABLE_DATE_NAME,Long.class,EnumSet.of(Flags.NOT_UPDATEABLE,Flags.NOT_CREATABLE)));
-        attrInfoSet.add(AttributeInfoBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,String.class,EnumSet.of(Flags.REQUIRED)));
+        attrInfoSet.add(AttributeInfoBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,String.class));
         attrInfoSet.add(AttributeInfoBuilder.build(OracleConstants.ORACLE_GLOBAL_ATTR_NAME,String.class,express ? EnumSet.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE) : null));
         attrInfoSet.add(AttributeInfoBuilder.build(OracleConstants.ORACLE_ROLES_ATTR_NAME,String.class,EnumSet.of(Flags.MULTIVALUED)));
         attrInfoSet.add(AttributeInfoBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,String.class,EnumSet.of(Flags.MULTIVALUED)));
