@@ -170,8 +170,7 @@ public class WrqConnection extends RW3270BaseConnection implements ECLPSListener
 
     public void PSNotifyEvent(ECLPSEvent event) {
         if (event.GetType()==ECLPS.HOST_EVENTS)
-            if (_semaphore.availablePermits()==0)
-                _semaphore.release();
+            _semaphore.release();
     }
 
     public void PSNotifyStop(ECLPS event, int arg1) {
