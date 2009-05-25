@@ -253,6 +253,12 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
 			la.assertBlank(database,MSG_DATABASE_DISPLAY);
 			la.assertBlank(driver,MSG_DRIVER_DISPLAY);
 			la.assertBlank(port,MSG_PORT_DISPLAY);
+			//If user is not blank, then also password must not be blank
+			//Most of datasource configuration will not allow to pass user and password when retrieving connection from ds,
+			//But for some configuration it is valid to specify user/password and override configuration at application server level
+			if((StringUtil.isNotBlank(user) && password == null) || (StringUtil.isBlank(user) && password != null)){
+				throw new IllegalArgumentException(MSG_USER_AND_PASSWORD_MUST_BE_SET_BOTH_OR_NONE);
+			}
             connType = ConnectionType.DATASOURCE;
         }
         else{

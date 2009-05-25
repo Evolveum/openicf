@@ -23,6 +23,7 @@ class OracleMessages {
 	static final String MSG_URL_HELP = "oracle.url.help";
 	static final String MSG_CS_DISPLAY = "oracle.cs.display";
 	static final String MSG_CS_HELP = "oracle.cs.help";
+	static final String MSG_USER_AND_PASSWORD_MUST_BE_SET_BOTH_OR_NONE = "oracle.user.and.password.must.be.set.both.or.none";
 	static final String MSG_INVALID_AUTH = "oracle.invalid.auth";
 	static final String MSG_INVALID_BRACKET = "oracle.invalid.bracket";
 	static final String MSG_ILLEGAL_RIGHT_BRACKET = "oracle.illegal.right.bracket";

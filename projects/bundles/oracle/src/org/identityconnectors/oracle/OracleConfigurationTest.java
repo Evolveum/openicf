@@ -48,7 +48,19 @@ public class OracleConfigurationTest {
         cfg.setDatabase(null);
         cfg.setDriver("myDriver");
         assertValidateFail(cfg, "validate must fail for custom datasource configuration when driver is not blank");
-
+        //if user is set, then also password must be set
+        cfg = createEmptyCfg();
+        cfg.setDataSource("myDS");
+        cfg.setDriver(null);
+        cfg.setPort(null);
+        cfg.validate();
+        cfg.setUser("myUser");
+        assertValidateFail(cfg, "validate must fail for custom datasource configuration , set user and null password");
+        cfg.setUser(null);
+        cfg.setPassword(new GuardedString("myPassword".toCharArray()));
+        assertValidateFail(cfg, "validate must fail for custom datasource configuration , null user and not null password");
+        cfg.setUser("myUser");
+        cfg.validate();
         
         //Try thin driver
         cfg = createEmptyCfg();
