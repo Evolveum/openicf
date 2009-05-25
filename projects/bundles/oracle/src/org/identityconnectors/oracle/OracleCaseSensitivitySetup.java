@@ -266,7 +266,9 @@ final class OracleCaseSensitivityBuilder{
                 Map<String, Object> elementMap = (Map<String, Object>) normalizers.get(attributeName);
                 if("ALL".equalsIgnoreCase(attributeName)){
                     for(OracleUserAttributeCS attribute : OracleUserAttributeCS.values()){
-                        this.normalizers.put(attribute, new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(attribute).setValues(elementMap).build());
+                    	if(!this.normalizers.containsKey(attribute)){
+                    		this.normalizers.put(attribute, new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(attribute).setValues(elementMap).build());
+                    	}
                     }
                     continue;
                 }
