@@ -5,6 +5,9 @@ import java.util.Hashtable;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.ConnectorMessages;
+import static org.identityconnectors.oracle.OracleMessages.*;
 
 /** Oracle specifics related to JDBC, error codes, constants 
  *  More info on syntax of url can be find at :
@@ -34,10 +37,10 @@ abstract class OracleSpecifics {
         }
         catch(SQLException e){
             if("61000".equals(e.getSQLState()) && 28 == e.getErrorCode()){
-                throw new IllegalStateException("Oracle connection was killed",e);
+                throw new IllegalStateException("Oracle connection was killed", e);
             }
             else{
-                throw new IllegalStateException("Unknown Oracle error while testing connection",e); 
+                throw new IllegalStateException("Unknown Oracle error while testing connection", e); 
             }
         }
         finally{
@@ -51,7 +54,7 @@ abstract class OracleSpecifics {
      * @param connInfo
      * @return
      */
-    static Connection createThinDriverConnection(OracleDriverConnectionInfo connInfo){
+    static Connection createThinDriverConnection(OracleDriverConnectionInfo connInfo, ConnectorMessages cm){
         String url = connInfo.getUrl();
         if(url == null){
             //Build this syntax : jdbc:oracle:thin:@//myhost:1521/orcl
@@ -67,7 +70,20 @@ abstract class OracleSpecifics {
             urlBuilder.append("/").append(connInfo.getDatabase());
             url = urlBuilder.toString();
         }
-        return SQLUtil.getDriverMangerConnection(THIN_AND_OCI_DRIVER_CLASSNAME, url, connInfo.getUser(), connInfo.getPassword());
+        try{
+        	return SQLUtil.getDriverMangerConnection(THIN_AND_OCI_DRIVER_CLASSNAME, url, connInfo.getUser(), connInfo.getPassword());
+        }
+        catch(RuntimeException e){
+        	throw new ConnectorException(cm.format(MSG_THIN_CONNECTION_ERROR, null, getCauseMessage(e)), getCause(e));
+        }
+    }
+    
+    private static Throwable getCause(Exception e){
+    	return e.getCause() != null ? e.getCause() : e;
+    }
+    
+    private static String getCauseMessage(Exception e){
+    	return getCause(e).toString();
     }
     
     
@@ -76,7 +92,7 @@ abstract class OracleSpecifics {
      * @param connInfo
      * @return
      */
-    static Connection createOciDriverConnection(OracleDriverConnectionInfo connInfo){
+    static Connection createOciDriverConnection(OracleDriverConnectionInfo connInfo, ConnectorMessages cm){
         String url = connInfo.getUrl();
         if(url == null){
             StringBuilder urlBuilder = new StringBuilder();
@@ -93,7 +109,12 @@ abstract class OracleSpecifics {
             }
             url = urlBuilder.toString();
         }
-        return SQLUtil.getDriverMangerConnection(THIN_AND_OCI_DRIVER_CLASSNAME, url, connInfo.getUser(), connInfo.getPassword());
+        try{
+        	return SQLUtil.getDriverMangerConnection(THIN_AND_OCI_DRIVER_CLASSNAME, url, connInfo.getUser(), connInfo.getPassword());
+        }
+        catch(RuntimeException e){
+        	throw new ConnectorException(cm.format(MSG_OCI_CONNECTION_ERROR, null, getCauseMessage(e)), getCause(e));
+        }
     }
     
     /**
@@ -101,8 +122,13 @@ abstract class OracleSpecifics {
      * @param connInfo
      * @return
      */
-    static Connection createCustomDriverConnection(OracleDriverConnectionInfo connInfo){
-        return SQLUtil.getDriverMangerConnection(connInfo.getDriver(), connInfo.getUrl(), connInfo.getUser(), connInfo.getPassword());
+    static Connection createCustomDriverConnection(OracleDriverConnectionInfo connInfo, ConnectorMessages cm){
+    	try{
+    		return SQLUtil.getDriverMangerConnection(connInfo.getDriver(), connInfo.getUrl(), connInfo.getUser(), connInfo.getPassword());
+    	}
+    	catch(RuntimeException e){
+    		throw new ConnectorException(cm.format(MSG_CUSTOM_CONNECTION_ERROR, null, getCauseMessage(e)), getCause(e));
+    	}
     }
     
     /**
@@ -112,12 +138,22 @@ abstract class OracleSpecifics {
      * @param env
      * @return
      */
-    static Connection createDataSourceConnection(String dsName,Hashtable<?,?> env){
-        return SQLUtil.getDatasourceConnection(dsName,env);
+    static Connection createDataSourceConnection(String dsName,Hashtable<?,?> env, ConnectorMessages cm){
+    	try{
+    		return SQLUtil.getDatasourceConnection(dsName,env);
+    	}
+    	catch(RuntimeException e){
+    		throw new ConnectorException(cm.format(MSG_DATASOURCE_CONNECTION_ERROR, null, getCauseMessage(e)), getCause(e));
+    	}
     }
     
-    static Connection createDataSourceConnection(String dsName,String user,GuardedString password,Hashtable<?,?> env){
-        return SQLUtil.getDatasourceConnection(dsName,user,password,env);
+    static Connection createDataSourceConnection(String dsName,String user,GuardedString password,Hashtable<?,?> env, ConnectorMessages cm){
+        try{
+        	return SQLUtil.getDatasourceConnection(dsName,user,password,env);
+        }
+    	catch(RuntimeException e){
+    		throw new ConnectorException(cm.format(MSG_DATASOURCE_CONNECTION_ERROR, null, getCauseMessage(e)), getCause(e));
+    	}
     }
     
     

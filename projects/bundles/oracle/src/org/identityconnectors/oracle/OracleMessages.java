@@ -57,4 +57,8 @@ class OracleMessages {
 	static final String MSG_ATTRIBUTE_IS_EMPTY = "oracle.attribute.is.empty";
 	static final String MSG_SET_DRIVER_OR_URL = "oracle.set.driver.or.url";
 	static final String MSG_CANNOT_LOAD_DRIVER = "oracle.cannot.load.driver";
+	static final String MSG_THIN_CONNECTION_ERROR = "oracle.thin.connection.error";
+	static final String MSG_OCI_CONNECTION_ERROR = "oracle.oci.connection.error";
+	static final String MSG_CUSTOM_CONNECTION_ERROR = "oracle.custom.connection.error";
+	static final String MSG_DATASOURCE_CONNECTION_ERROR = "oracle.datasource.connection.error";
 }

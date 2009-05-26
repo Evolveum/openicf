@@ -170,7 +170,17 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
      * @param password the password to set
      */
     public void setPassword(GuardedString password) {
-        this.password = password;
+    	//We cannot have empty password for oracle, so simplify test to set to null when empty
+    	this.password = password;
+    	if(this.password != null){
+    		this.password.access(new GuardedString.Accessor(){
+				public void access(char[] clearChars) {
+					if(clearChars.length == 0){
+						OracleConfiguration.this.password = null;
+					}
+				}
+    		});
+    	}
     }
 
     /**
@@ -257,7 +267,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
 			//Most of datasource configuration will not allow to pass user and password when retrieving connection from ds,
 			//But for some configuration it is valid to specify user/password and override configuration at application server level
 			if((StringUtil.isNotBlank(user) && password == null) || (StringUtil.isBlank(user) && password != null)){
-				throw new IllegalArgumentException(MSG_USER_AND_PASSWORD_MUST_BE_SET_BOTH_OR_NONE);
+				throw new IllegalArgumentException(getConnectorMessages().format(MSG_USER_AND_PASSWORD_MUST_BE_SET_BOTH_OR_NONE, null));
 			}
             connType = ConnectionType.DATASOURCE;
         }
@@ -337,28 +347,29 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
         boolean disableAutoCommit = true;
         if(ConnectionType.DATASOURCE.equals(connType)){
         	disableAutoCommit = false;
-            if(user != null){
-            	connection = OracleSpecifics.createDataSourceConnection(dataSource,user,password,JNDIUtil.arrayToHashtable(dsJNDIEnv, getConnectorMessages()));
+            if(StringUtil.isNotBlank(user)){
+            	//This could fail, but we cannot invoke method without user/password if user and password were specified
+            	connection = OracleSpecifics.createDataSourceConnection(dataSource,user,password,JNDIUtil.arrayToHashtable(dsJNDIEnv, getConnectorMessages()), getConnectorMessages());
             }
             else{
-            	connection =  OracleSpecifics.createDataSourceConnection(dataSource,JNDIUtil.arrayToHashtable(dsJNDIEnv,getConnectorMessages()));
+            	connection =  OracleSpecifics.createDataSourceConnection(dataSource,JNDIUtil.arrayToHashtable(dsJNDIEnv,getConnectorMessages()), getConnectorMessages());
             }
         }
         else if(ConnectionType.THIN.equals(connType)){
         	connection =  OracleSpecifics.createThinDriverConnection(new Builder().
                     setDatabase(database).setDriver(driverClassName).setHost(host).setPassword(password).
-                    setPort(port).setUser(user).build()
+                    setPort(port).setUser(user).build(), getConnectorMessages()
                     );
         }
         else if(ConnectionType.OCI.equals(connType)){
         	connection =  OracleSpecifics.createOciDriverConnection(new Builder().
                     setDatabase(database).setDriver(driverClassName).setHost(host).setPassword(password).
-                    setPort(port).setUser(user).build()
+                    setPort(port).setUser(user).build(), getConnectorMessages()
                     );
         }
         else if(ConnectionType.FULL_URL.equals(connType)){
         	connection =  OracleSpecifics.createCustomDriverConnection(new Builder().
-                    setUrl(url).setDriver(driverClassName).setUser(user).setPassword(password).build()
+                    setUrl(url).setDriver(driverClassName).setUser(user).setPassword(password).build(), getConnectorMessages()
             );
         }
         else{

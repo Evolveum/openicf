@@ -26,7 +26,7 @@ public class OracleSpecificsTest {
         	OracleSpecifics.createThinDriverConnection(new Builder().
                     setUser(user).setPassword(password).
                     setHost(host).setPort(port).setDatabase(database).
-                    build());
+                    build(), TestHelpers.createDummyMessages());
         return conn;
     }
     
@@ -50,7 +50,7 @@ public class OracleSpecificsTest {
         	OracleSpecifics.createOciDriverConnection(new Builder().
                     setUser(user).setPassword(password).
                     setHost(host).setPort(port).setDatabase(database).
-                    build());
+                    build(), TestHelpers.createDummyMessages());
         return conn;
     }
     
@@ -113,7 +113,7 @@ public class OracleSpecificsTest {
         conn = OracleSpecifics
                 .createThinDriverConnection(new Builder()
                 		.setHost(host).setPort(port)
-                        .setDatabase(database).setUser(user).setPassword(new GuardedString(password.toCharArray())).build());
+                        .setDatabase(database).setUser(user).setPassword(new GuardedString(password.toCharArray())).build(), TestHelpers.createDummyMessages());
         Assert.assertNotNull(conn);
         SQLUtil.closeQuietly(conn);
     }
@@ -142,7 +142,7 @@ public class OracleSpecificsTest {
         String password = TestHelpers.getProperty("oci.password", null);
         conn = OracleSpecifics
                 .createOciDriverConnection(new Builder()
-                        .setDatabase(database).setUser(user).setPassword(new GuardedString(password.toCharArray())).build());
+                        .setDatabase(database).setUser(user).setPassword(new GuardedString(password.toCharArray())).build(), TestHelpers.createDummyMessages());
         Assert.assertNotNull(conn);
         SQLUtil.closeQuietly(conn);
     }
@@ -158,7 +158,7 @@ public class OracleSpecificsTest {
                 .createCustomDriverConnection(new Builder()
                         .setUser(user).setPassword(
                                 new GuardedString(password.toCharArray()))
-                        .setUrl(url).setDriver(driver).build());
+                        .setUrl(url).setDriver(driver).build(), TestHelpers.createDummyMessages());
         Assert.assertNotNull(conn);
         SQLUtil.closeQuietly(conn);
     }
