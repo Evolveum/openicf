@@ -58,7 +58,7 @@ final class OracleOperationCreate extends AbstractOracleOperation implements Cre
         builder.setUserName(userName);
         new OracleAttributesReader(cfg.getConnectorMessages()).readCreateAttributes(map, builder);
         OracleUserAttributes caAttributes = builder.build();
-        String createSQL = new OracleCreateOrAlterStBuilder(cfg.getCSSetup(),cfg.getConnectorMessages()).buildCreateUserSt(caAttributes).toString();
+        String createSQL = new OracleCreateOrAlterStBuilder(cfg.getCSSetup(),cfg.getConnectorMessages()).buildCreateUserSt(caAttributes);
         if(createSQL == null){
         	//This should not happen, we want to be just more defensive 
         	throw new ConnectorException("No create SQL generated, probably not enough attributes");

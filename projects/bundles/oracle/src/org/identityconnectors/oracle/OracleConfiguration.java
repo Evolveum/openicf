@@ -87,7 +87,12 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
      */
     @ConfigurationProperty(order = 1,displayMessageKey=MSG_DSJNDIENV_DISPLAY,helpMessageKey=MSG_DSJNDIENV_HELP)
     public String[] getDsJNDIEnv() {
-        return dsJNDIEnv;
+		if(dsJNDIEnv == null){
+			return new String[0];
+		}
+		String[] res = new String[dsJNDIEnv.length];
+		System.arraycopy(dsJNDIEnv,0,res,0,dsJNDIEnv.length);
+		return res;
     }
 
     /**
@@ -231,7 +236,13 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
      * @param dsJNDIEnv the dsJNDIEnv to set
      */
     public void setDsJNDIEnv(String[] dsJNDIEnv) {
-        this.dsJNDIEnv = dsJNDIEnv;
+		if(dsJNDIEnv == null){
+			this.dsJNDIEnv = null;
+		}
+		else{
+			this.dsJNDIEnv = new String[dsJNDIEnv.length];
+			System.arraycopy(dsJNDIEnv,0,this.dsJNDIEnv,0,dsJNDIEnv.length);
+		}
     }
     
     
