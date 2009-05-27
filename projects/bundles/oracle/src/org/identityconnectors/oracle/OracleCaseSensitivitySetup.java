@@ -1,7 +1,9 @@
 package org.identityconnectors.oracle;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
@@ -175,14 +177,14 @@ final class CSAttributeFormatterAndNormalizer{
     
     private CSAttributeFormatterAndNormalizer(Builder builder){
     	this.attribute = builder.attribute;
-    	this.toUpper = builder.toUpper;
-    	this.quatesChar = builder.quatesChar;
+    	this.toUpper = builder.toUpper != null ? builder.toUpper : attribute.isDefToUpper();
+    	this.quatesChar = builder.quatesChar != null ? builder.quatesChar : attribute.getDefQuatesChar();
     }
     
     final static class Builder{
         private OracleUserAttributeCS attribute;
-        private boolean toUpper;
-        private String quatesChar = "";
+        private Boolean toUpper;
+        private String quatesChar ;
         private final ConnectorMessages cm;
         
         Builder(ConnectorMessages cm){
@@ -257,25 +259,25 @@ final class OracleCaseSensitivityBuilder{
             return this;
         }
         final Map<String, Object> map = MapParser.parseMap(format,cm);
-        final Map<String, Object> normalizers = (Map<String, Object>) map.remove("normalizers");
+        for(Iterator<Map.Entry<String, Object>> i = map.entrySet().iterator();i.hasNext();){
+        	Entry<String, Object> entry = i.next();
+        	i.remove();
+        	String attributeName = entry.getKey();
+        	Map<String, Object> elementMap = (Map<String, Object>) entry.getValue();
+            if("ALL".equalsIgnoreCase(attributeName)){
+                for(OracleUserAttributeCS attribute : OracleUserAttributeCS.values()){
+                	if(!this.normalizers.containsKey(attribute)){
+                		this.normalizers.put(attribute, new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(attribute).setValues(elementMap).build());
+                	}
+                }
+                continue;
+            }
+            OracleUserAttributeCS attribute = OracleUserAttributeCS.valueOf(attributeName);
+            CSAttributeFormatterAndNormalizer element = new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(attribute).setValues(elementMap).build(); 
+            this.normalizers.put(element.getAttribute(),element);    
+        }
         if(!map.isEmpty()){
             throw new IllegalArgumentException(cm.format(MSG_ELEMENTS_FOR_CSBUILDER_NOT_RECOGNIZED, null, map));
-        }
-        if(normalizers != null){
-            for(String attributeName : normalizers.keySet()){
-                Map<String, Object> elementMap = (Map<String, Object>) normalizers.get(attributeName);
-                if("ALL".equalsIgnoreCase(attributeName)){
-                    for(OracleUserAttributeCS attribute : OracleUserAttributeCS.values()){
-                    	if(!this.normalizers.containsKey(attribute)){
-                    		this.normalizers.put(attribute, new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(attribute).setValues(elementMap).build());
-                    	}
-                    }
-                    continue;
-                }
-                OracleUserAttributeCS attribute = OracleUserAttributeCS.valueOf(attributeName);
-                CSAttributeFormatterAndNormalizer element = new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(attribute).setValues(elementMap).build(); 
-                this.normalizers.put(element.getAttribute(),element);    
-            }
         }
         return this;
     }

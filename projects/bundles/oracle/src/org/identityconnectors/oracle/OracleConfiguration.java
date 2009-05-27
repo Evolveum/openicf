@@ -74,30 +74,95 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
         }
     }
     
+    /**
+     * @return the dataSource
+     */
+    @ConfigurationProperty(order = 0,displayMessageKey=MSG_DATASOURCE_DISPLAY,helpMessageKey=MSG_DATASOURCE_HELP)
+    public String getDataSource() {
+        return dataSource;
+    }
+
+    /**
+     * @return the dsJNDIEnv
+     */
+    @ConfigurationProperty(order = 1,displayMessageKey=MSG_DSJNDIENV_DISPLAY,helpMessageKey=MSG_DSJNDIENV_HELP)
+    public String[] getDsJNDIEnv() {
+        return dsJNDIEnv;
+    }
+
+    /**
+     * @return the url
+     */
+    @ConfigurationProperty(order = 2,displayMessageKey=MSG_URL_DISPLAY,helpMessageKey=MSG_URL_HELP)
+    public String getUrl() {
+        return url;
+    }
+
+    /**
+     * @return the driver
+     */
+    @ConfigurationProperty(order = 3,displayMessageKey=MSG_DRIVER_DISPLAY,helpMessageKey=MSG_DRIVER_HELP)
+    public String getDriver() {
+        return driver;
+    }
+    
     
     /**
      * @return the host
      */
-    @ConfigurationProperty(order = 0,displayMessageKey=MSG_HOST_DISPLAY,helpMessageKey=MSG_HOST_HELP)
+    @ConfigurationProperty(order = 4,displayMessageKey=MSG_HOST_DISPLAY,helpMessageKey=MSG_HOST_HELP)
     public String getHost() {
         return host;
     }
 
+    /**
+     * @return the port
+     */
+    @ConfigurationProperty(order = 5,displayMessageKey=MSG_PORT_DISPLAY,helpMessageKey=MSG_PORT_HELP)
+    public String getPort() {
+        return port;
+    }
+
+    /**
+     * @return the database
+     */
+    @ConfigurationProperty(order = 6,displayMessageKey=MSG_DATABASE_DISPLAY,helpMessageKey=MSG_DATABASE_HELP)
+    public String getDatabase() {
+        return database;
+    }
+    
+    /**
+     * @return the user
+     */
+    @ConfigurationProperty(order = 7,displayMessageKey=MSG_USER_DISPLAY,helpMessageKey=MSG_USER_HELP)
+    public String getUser() {
+        return user;
+    }
+    
+    /**
+     * @return the password
+     */
+    @ConfigurationProperty(order = 8,displayMessageKey=MSG_PASSWORD_DISPLAY,helpMessageKey=MSG_PASSWORD_HELP,confidential=true)
+    public GuardedString getPassword() {
+        return password;
+    }
+    
+    /**
+     * @return caseSensitivityString
+     */
+    @ConfigurationProperty(order = 9,displayMessageKey=MSG_CS_DISPLAY,helpMessageKey=MSG_CS_HELP,required=true)
+    public String getCaseSensitivity(){
+        return caseSensitivityString;
+    }
+    
+    
     /**
      * @param host the host to set
      */
     public void setHost(String host) {
         this.host = host;
     }
-
-    /**
-     * @return the port
-     */
-    @ConfigurationProperty(order = 1,displayMessageKey=MSG_PORT_DISPLAY,helpMessageKey=MSG_PORT_HELP)
-    public String getPort() {
-        return port;
-    }
-
+    
     /**
      * @param port the port to set
      */
@@ -105,13 +170,6 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
         this.port = port;
     }
 
-    /**
-     * @return the driver
-     */
-    @ConfigurationProperty(order = 2,displayMessageKey=MSG_DRIVER_DISPLAY,helpMessageKey=MSG_DRIVER_HELP)
-    public String getDriver() {
-        return driver;
-    }
 
     /**
      * @param driver the driver to set
@@ -120,13 +178,6 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
         this.driver = driver;
     }
 
-    /**
-     * @return the database
-     */
-    @ConfigurationProperty(order = 3,displayMessageKey=MSG_DATABASE_DISPLAY,helpMessageKey=MSG_DATABASE_HELP)
-    public String getDatabase() {
-        return database;
-    }
 
     /**
      * @param database the database to set
@@ -135,13 +186,6 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
         this.database = database;
     }
 
-    /**
-     * @return the user
-     */
-    @ConfigurationProperty(order = 4,displayMessageKey=MSG_USER_DISPLAY,helpMessageKey=MSG_USER_HELP)
-    public String getUser() {
-        return user;
-    }
     
     String getUserOwner(){
     	//if we were logged as system, owner will be SYSTEM
@@ -156,14 +200,6 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
      */
     public void setUser(String user) {
         this.user = user;
-    }
-
-    /**
-     * @return the password
-     */
-    @ConfigurationProperty(order = 5,displayMessageKey=MSG_PASSWORD_DISPLAY,helpMessageKey=MSG_PASSWORD_HELP,confidential=true)
-    public GuardedString getPassword() {
-        return password;
     }
 
     /**
@@ -183,27 +219,12 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     	}
     }
 
-    /**
-     * @return the dataSource
-     */
-    @ConfigurationProperty(order = 6,displayMessageKey=MSG_DATASOURCE_DISPLAY,helpMessageKey=MSG_DATASOURCE_HELP)
-    public String getDataSource() {
-        return dataSource;
-    }
 
     /**
      * @param dataSource the dataSource to set
      */
     public void setDataSource(String dataSource) {
         this.dataSource = dataSource;
-    }
-
-    /**
-     * @return the dsJNDIEnv
-     */
-    @ConfigurationProperty(order = 6,displayMessageKey=MSG_DSJNDIENV_DISPLAY,helpMessageKey=MSG_DSJNDIENV_HELP)
-    public String[] getDsJNDIEnv() {
-        return dsJNDIEnv;
     }
 
     /**
@@ -215,13 +236,6 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     
     
 
-    /**
-     * @return the url
-     */
-    @ConfigurationProperty(order = 7,displayMessageKey=MSG_URL_DISPLAY,helpMessageKey=MSG_URL_HELP)
-    public String getUrl() {
-        return url;
-    }
 
     /**
      * @param url the url to set
@@ -230,13 +244,6 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
         this.url = url;
     }
     
-    /**
-     * @return caseSensitivityString
-     */
-    @ConfigurationProperty(order = 8,displayMessageKey=MSG_CS_DISPLAY,helpMessageKey=MSG_CS_HELP,required=true)
-    public String getCaseSensitivity(){
-        return caseSensitivityString;
-    }
     
     /** Sets case sensitivity from string map 
      * @param cs */
