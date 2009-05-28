@@ -22,8 +22,6 @@
  */
 package org.identityconnectors.solaris;
 
-import static org.identityconnectors.solaris.SolarisMessages.MSG_NOT_SUPPORTED_OBJECTCLASS;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -108,9 +106,5 @@ public class OpCreateImpl extends AbstractOp {
         // PASSWD password
         
         return new Uid(accountId);
-    }
-    
-    private String executeCommand(String command) {
-        return SolarisHelper.executeCommand(getConfiguration(), getConnection(), command);
     }
 }

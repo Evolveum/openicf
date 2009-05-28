@@ -42,8 +42,4 @@ public class OpUpdateImpl extends AbstractOp {
         SolarisHelper.controlObjectClassValidity(objclass);
         return null;
     }
-    
-    private String executeCommand(String command) {
-        return SolarisHelper.executeCommand(getConfiguration(), getConnection(), command);
-    }
 }

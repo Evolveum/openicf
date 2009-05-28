@@ -27,8 +27,6 @@ import static org.identityconnectors.solaris.SolarisMessages.MSG_NOT_SUPPORTED_O
 import java.util.List;
 import java.util.Map;
 
-import junit.framework.Assert;
-
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -38,8 +36,8 @@ import org.identityconnectors.framework.common.objects.OperationalAttributes;
 
 /** helper class for Solaris specific operations */
 public class SolarisHelper {
-    private static final int SHORT_WAIT = 60000;
-    private static final int LONG_WAIT = 120000;
+    //private static final int SHORT_WAIT = 60000;
+    //private static final int LONG_WAIT = 120000;
     private static final int VERY_LONG_WAIT = 1200000;
     
     /** set the timeout for waiting on reply. */

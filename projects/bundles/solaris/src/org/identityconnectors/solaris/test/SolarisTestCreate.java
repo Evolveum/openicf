@@ -22,6 +22,10 @@
  */
 package org.identityconnectors.solaris.test;
 
+
+
+import static org.identityconnectors.solaris.test.SolarisTestCommon.getTestProperty;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -40,7 +44,6 @@ import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisHelper;
-import org.identityconnectors.test.common.TestHelpers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -106,16 +109,11 @@ public class SolarisTestCreate {
 
     /** fill in sample user/password for sample user used in create */
     private Set<Attribute> initSampleUser() {
-        String msg = "test property '%s' should not be null";
-        
         Set<Attribute> res = new HashSet<Attribute>();
         
-        String sampleUser = TestHelpers.getProperty("sampleUser", null);
-        Assert.assertNotNull(String.format(msg, "sampleUser"), sampleUser);
-        res.add(AttributeBuilder.build(Name.NAME, sampleUser));
+        res.add(AttributeBuilder.build(Name.NAME, getTestProperty("sampleUser", true)));
         
-        String samplePasswd = TestHelpers.getProperty("samplePasswd", null);
-        Assert.assertNotNull(String.format(msg, "samplePasswd"), samplePasswd);
+        String samplePasswd = getTestProperty("samplePasswd", true);
         res.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString(samplePasswd.toCharArray())));
         
         return res;

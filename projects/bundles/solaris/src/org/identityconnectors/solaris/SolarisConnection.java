@@ -170,25 +170,6 @@ public class SolarisConnection {
      */
     static void test(SolarisConfiguration configuration) throws Exception {
         SolarisConnection connection = new SolarisConnection(configuration);
-        
-//        if (!testIfUserIsRoot(connection, configuration)) {
-//            throw new IllegalArgumentException(
-//                    String.format("The Administrative User defined in configuration property '%s'==\"%s\" is not 'root'", 
-//                            "SolarisConfiguration#userName", configuration.getUserName()));
-//        }
+        connection.dispose();
     }
-
-//    /** helper method for evaluating if user has root privileges */
-//    private static boolean testIfUserIsRoot(SolarisConnection connection,
-//            SolarisConfiguration configuration) {
-//        /*
-//         * use the whoami script to look for root named account TODO generalize this.
-//         */
-//        final String command = "whoami";
-//        String result = SolarisHelper.executeCommand(configuration, connection, command);
-//        if (result.contains("root")) {
-//            return true;
-//        }
-//        return false;
-//    }
 }

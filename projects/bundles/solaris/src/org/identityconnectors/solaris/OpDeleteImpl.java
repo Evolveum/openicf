@@ -22,14 +22,7 @@
  */
 package org.identityconnectors.solaris;
 
-import static org.identityconnectors.solaris.SolarisMessages.MSG_NOT_SUPPORTED_OBJECTCLASS;
-
-import java.util.HashMap;
-import java.util.Map;
-
 import org.identityconnectors.common.logging.Log;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
@@ -56,9 +49,5 @@ public class OpDeleteImpl extends AbstractOp {
         System.out.println(output);
         getLog().info("userdel(''{0}'')", accountId);
 
-    }
-    
-    private String executeCommand(String command) {
-        return SolarisHelper.executeCommand(getConfiguration(), getConnection(), command);
     }
 }

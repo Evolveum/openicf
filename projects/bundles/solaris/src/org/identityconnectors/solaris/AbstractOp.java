@@ -55,4 +55,8 @@ public abstract class AbstractOp {
     protected SolarisConnection getConnection() {
         return _connection;
     }
+    
+    protected String executeCommand(String command) {
+        return SolarisHelper.executeCommand(getConfiguration(), getConnection(), command);
+    }
 }
