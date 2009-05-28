@@ -395,6 +395,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
                     ConnectorObject object = null;
                     if (getNameOnly || getNothing) {
                         ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+                        builder.setObjectClass(objectClass);
                         builder.setUid(name);
                         if (getNameOnly)
                             builder.setName(name);
