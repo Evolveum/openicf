@@ -29,10 +29,9 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
-import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.OperationalAttributes;
+import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
 import org.identityconnectors.framework.common.objects.Uid;
@@ -57,7 +56,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     /**
      * Setup logging for the {@link DatabaseTableConnector}.
      */
-    private Log _log = Log.getLog(SolarisConnector.class);
+    private final Log _log = Log.getLog(SolarisConnector.class);
 
     private SolarisConnection _connection;
 
@@ -149,7 +148,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         // USERS
         attributes = new HashSet<AttributeInfo>();
         
-        attributes.add(AttributeInfoBuilder.build(OperationalAttributes.PASSWORD_NAME, GuardedString.class));
+        attributes.add(OperationalAttributeInfos.PASSWORD);
         schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
         
         _schema = schemaBuilder.build();
@@ -214,17 +213,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      * @throws Exception if the test of connection was failed.
      */
     public void test() {
-        if (_configuration == null) {
-            throw new IllegalStateException(
-                    "Solaris connector has not been initialized");
-        }
-        _configuration.validate();
-
-        if (_connection == null) {
-            throw new IllegalStateException(
-                    "Solaris connector does not have a connection");
-        }
-        
+        _configuration.validate();        
         checkAlive();
     }
 

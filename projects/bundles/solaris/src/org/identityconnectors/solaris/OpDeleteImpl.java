@@ -26,11 +26,10 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.framework.spi.Configuration;
 
 public class OpDeleteImpl extends AbstractOp {
 
-    public OpDeleteImpl(Configuration config, SolarisConnection connection, Log log) {
+    public OpDeleteImpl(SolarisConfiguration config, SolarisConnection connection, Log log) {
         super(config, connection, log);
     }
     

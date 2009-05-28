@@ -28,7 +28,7 @@ import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.Configuration;
 
-public class SolarisConfiguration extends AbstractConfiguration {
+public final class SolarisConfiguration extends AbstractConfiguration {
 
     // ALL OF CONFIGURATION COMES FROM SVIDResourceAdapter
     

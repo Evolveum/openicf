@@ -43,7 +43,7 @@ import expect4j.matches.TimeoutMatch;
  * @author David Adam
  *
  */
-public class SolarisConnection {
+public final class SolarisConnection {
     //TODO might be a configuration property
     private static final String HOST_END_OF_LINE_TERMINATOR = "\n";
     

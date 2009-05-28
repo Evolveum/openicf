@@ -23,6 +23,6 @@
 package org.identityconnectors.solaris;
 
 // temporary class, it should be added to Messsages.properties
-public class SolarisMessages {
+public final class SolarisMessages {
     public static final String MSG_NOT_SUPPORTED_OBJECTCLASS = "Object class '%s' is not supported";
 }
