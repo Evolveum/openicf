@@ -43,10 +43,7 @@ public class OpDeleteImpl extends AbstractOp {
     
     // TODO
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
-        if (!objClass.is(ObjectClass.ACCOUNT_NAME)) {
-            throw new IllegalArgumentException(String.format(
-                    MSG_NOT_SUPPORTED_OBJECTCLASS, ObjectClass.ACCOUNT_NAME));
-        }
+        SolarisHelper.controlObjectClassValidity(objClass);
         
         final String accountId = uid.getUidValue();
         getLog().info("delete(''{0}'')", accountId);

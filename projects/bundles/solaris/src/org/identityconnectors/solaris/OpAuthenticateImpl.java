@@ -38,11 +38,7 @@ public class OpAuthenticateImpl extends AbstractOp {
 
     public Uid authenticate(ObjectClass objectClass, String username,
             GuardedString password, OperationOptions options) {
-        
-        if (!objectClass.is(ObjectClass.ACCOUNT_NAME)) {
-            throw new IllegalArgumentException(String.format(
-                    MSG_NOT_SUPPORTED_OBJECTCLASS, ObjectClass.ACCOUNT_NAME));
-        }
+        SolarisHelper.controlObjectClassValidity(objectClass);
         
         SolarisConfiguration userConfig = getConfiguration();
         userConfig.setUserName(username);

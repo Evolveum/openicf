@@ -45,10 +45,7 @@ public class OpCreateImpl extends AbstractOp {
     }
     
     Uid create(ObjectClass oclass, final Set<Attribute> attrs, final OperationOptions options) {
-        if (!oclass.is(ObjectClass.ACCOUNT_NAME)) {
-            throw new IllegalArgumentException(String.format(
-                    MSG_NOT_SUPPORTED_OBJECTCLASS, ObjectClass.ACCOUNT_NAME));
-        }
+        SolarisHelper.controlObjectClassValidity(oclass);
         
         // Read only list of attributes
         final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(

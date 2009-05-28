@@ -22,6 +22,8 @@
  */
 package org.identityconnectors.solaris;
 
+import static org.identityconnectors.solaris.SolarisMessages.MSG_NOT_SUPPORTED_OBJECTCLASS;
+
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +32,7 @@ import junit.framework.Assert;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 
 
@@ -90,6 +93,13 @@ public class SolarisHelper {
         } else {
             msg = String.format("password should be of type GuardedString, inside attribute map: %s", attrMap.toString());
             throw new IllegalArgumentException(msg);
+        }
+    }
+    
+    public static void controlObjectClassValidity(ObjectClass oclass) {
+        if (!oclass.is(ObjectClass.ACCOUNT_NAME)) {
+            throw new IllegalArgumentException(String.format(
+                    MSG_NOT_SUPPORTED_OBJECTCLASS, ObjectClass.ACCOUNT_NAME));
         }
     }
 }
