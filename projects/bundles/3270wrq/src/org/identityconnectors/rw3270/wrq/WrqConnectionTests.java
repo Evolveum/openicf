@@ -66,8 +66,8 @@ public class WrqConnectionTests {
     private static final int        HOST_TELNET_PORT    = 23;
     private static final Boolean    USE_SSL             = Boolean.FALSE;
     private static final int        SHORT_WAIT          = 5000;
-    private static final String  READY               = "\\sREADY\\s{74}";
-    private static final String  CONTINUE            = "\\s\\*\\*\\*\\s{76}";
+    private static final String     READY               = "\\sREADY\\s{74}";
+    private static final String     CONTINUE            = "\\s\\*\\*\\*\\s{76}";
 
 
     @BeforeClass
