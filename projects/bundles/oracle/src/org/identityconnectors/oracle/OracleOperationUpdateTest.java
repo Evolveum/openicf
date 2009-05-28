@@ -511,7 +511,18 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
 	}
 
     
-    
+    /** Test setting lockout parameter 
+     * @throws SQLException */
+	@Test
+    public void testUpdateLockOut() throws SQLException{
+    	assertEquals("OPEN",userReader.readUserRecord(uid.getUidValue()).getStatus());
+    	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.buildLockOut(true)), null);
+    	assertEquals("LOCKED",userReader.readUserRecord(uid.getUidValue()).getStatus());
+    	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.buildPassword("newPassword".toCharArray())), null);
+    	assertEquals("LOCKED",userReader.readUserRecord(uid.getUidValue()).getStatus());
+    	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.buildLockOut(false)), null);
+    	assertEquals("OPEN",userReader.readUserRecord(uid.getUidValue()).getStatus());
+    }
     
     
     

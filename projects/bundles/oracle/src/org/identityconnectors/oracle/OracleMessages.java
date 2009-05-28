@@ -1,5 +1,6 @@
 package org.identityconnectors.oracle;
 
+/** All constants for oracle messages that will be translated */
 class OracleMessages {
 	static final String MSG_CONNECTOR_DISPLAY = "oracle.connector.display";
 	static final String MSG_ATTRIBUTE_IS_MISSING = "oracle.attribute.is.missing";
@@ -61,4 +62,6 @@ class OracleMessages {
 	static final String MSG_OCI_CONNECTION_ERROR = "oracle.oci.connection.error";
 	static final String MSG_CUSTOM_CONNECTION_ERROR = "oracle.custom.connection.error";
 	static final String MSG_DATASOURCE_CONNECTION_ERROR = "oracle.datasource.connection.error";
+	static final String MSG_ENABLE_LOCK_ATTR_VALUE_CONFLICT_FALSE = "oracle.enable.lock.attr.value.conflict.false";
+	static final String MSG_ENABLE_LOCK_ATTR_VALUE_CONFLICT_TRUE = "oracle.enable.lock.attr.value.conflict.true";
 }

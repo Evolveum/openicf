@@ -1,8 +1,8 @@
 package org.identityconnectors.oracle;
 
-import java.util.Map;
-
 import static org.identityconnectors.oracle.OracleMessages.*;
+
+import java.util.Map;
 
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -37,7 +37,24 @@ final class OracleAttributesReader {
         caAttributes.setExpirePassword(OracleConnectorHelper.getNotNullAttributeBooleanValue(map, OperationalAttributes.PASSWORD_EXPIRED_NAME, cm));
         caAttributes.setDefaultTableSpace(OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, OracleConstants.ORACLE_DEF_TS_ATTR_NAME, cm));
         caAttributes.setTempTableSpace(OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, OracleConstants.ORACLE_TEMP_TS_ATTR_NAME, cm));
-        caAttributes.setEnable(OracleConnectorHelper.getNotNullAttributeBooleanValue(map, OperationalAttributes.ENABLE_NAME, cm));
+        Boolean enabled = OracleConnectorHelper.getNotNullAttributeBooleanValue(map, OperationalAttributes.ENABLE_NAME, cm);
+        Boolean lockOut = OracleConnectorHelper.getNotNullAttributeBooleanValue(map, OperationalAttributes.LOCK_OUT_NAME, cm);
+        if(enabled != null && lockOut != null){
+        	//enable and lock must have different values , throw separate message for each case
+        	if(enabled && lockOut){
+        		throw new IllegalArgumentException(cm.format(MSG_ENABLE_LOCK_ATTR_VALUE_CONFLICT_TRUE, null));
+        	}
+        	if(!enabled && !lockOut){
+        		throw new IllegalArgumentException(cm.format(MSG_ENABLE_LOCK_ATTR_VALUE_CONFLICT_FALSE, null));
+        	}
+        }
+        
+        if(enabled != null){
+        	caAttributes.setEnable(enabled);
+        }
+        if(lockOut != null){
+        	caAttributes.setEnable(!lockOut);
+        }
         caAttributes.setProfile(OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, OracleConstants.ORACLE_PROFILE_ATTR_NAME, cm));
         
         Attribute defaultTSQuota = map.get(OracleConstants.ORACLE_DEF_TS_QUOTA_ATTR_NAME);

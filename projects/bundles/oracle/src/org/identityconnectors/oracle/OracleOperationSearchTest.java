@@ -516,6 +516,7 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 		f = new AndFilter(f,new EqualsFilter(AttributeBuilder.buildPasswordExpirationDate(0)));
 		f = new AndFilter(f,new EqualsFilter(AttributeBuilder.buildEnabled(true)));
 		f = new AndFilter(f,new EqualsFilter(AttributeBuilder.buildDisableDate(0)));
+		f = new AndFilter(f,new EqualsFilter(AttributeBuilder.buildLockOut(true)));
 		return f;
 	}
 	
@@ -535,5 +536,30 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 			Assert.fail("Search must fail for killed connection");
 		}catch(RuntimeException e){}
 		testConnector.dispose();
+	}
+	
+	@Test
+	public void testSearchByLockOUt(){
+		//lock all
+		for(String uid : ALL_UIDS){
+			facade.update(ObjectClass.ACCOUNT, new Uid(uid), Collections.singleton(AttributeBuilder.buildLockOut(true)), null);
+		}
+		//all must be locked
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new EqualsFilter(AttributeBuilder.buildLockOut(true))),allAttributes), new UIDMatcher(ALL_UIDS.toArray(new String[ALL_UIDS.size()])));
+		//None is not locked
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new EqualsFilter(AttributeBuilder.buildLockOut(false))),allAttributes), new UIDMatcher());
+		
+		//update two of them - unlock them
+		facade.update(ObjectClass.ACCOUNT, new Uid(user(2)), Collections.singleton(AttributeBuilder.buildLockOut(false)), null);
+		facade.update(ObjectClass.ACCOUNT, new Uid(user(6)), Collections.singleton(AttributeBuilder.buildLockOut(false)), null);
+		List<String> newUids = new ArrayList<String>(ALL_UIDS);
+		newUids.removeAll(Arrays.asList(user(2),user(6)));
+		//test others are still locked
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new EqualsFilter(AttributeBuilder.buildLockOut(true))),allAttributes), new UIDMatcher(newUids.toArray(new String[newUids.size()])));
+		//and that just two are unlocked
+		Assert.assertThat(TestHelpers.searchToList(connector,ObjectClass.ACCOUNT, new AndFilter(new StartsWithFilter(new Name(USER_PREFIX)),new EqualsFilter(AttributeBuilder.buildLockOut(false))),allAttributes), new UIDMatcher(user(2),user(6)));
+		for(String uid : ALL_UIDS){
+			facade.update(ObjectClass.ACCOUNT, new Uid(uid), Collections.singleton(AttributeBuilder.buildLockOut(false)), null);
+		}
 	}
 }

@@ -35,7 +35,7 @@ abstract class OracleConstants {
 				OracleConstants.ORACLE_TEMP_TS_QUOTA_ATTR_NAME,
 				OperationalAttributes.PASSWORD_EXPIRED_NAME,OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,
 				OperationalAttributes.ENABLE_NAME,OperationalAttributes.DISABLE_DATE_NAME,
-				Name.NAME,OperationalAttributes.PASSWORD_NAME
+				Name.NAME,OperationalAttributes.PASSWORD_NAME,OperationalAttributes.LOCK_OUT_NAME
 				));
         ALL_ATTRIBUTE_NAMES = Collections.unmodifiableCollection(tmp);
 	}

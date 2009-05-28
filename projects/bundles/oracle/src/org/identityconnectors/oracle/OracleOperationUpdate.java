@@ -41,13 +41,13 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
  */
 final class OracleOperationUpdate extends AbstractOracleOperation implements UpdateOp,UpdateAttributeValuesOp {
 
-	private static final Collection<String> VALIDUPDATEATTRIBUTES;
+	private static final Collection<String> VALID_UPDATE_ATTRIBUTES;
 	
 	static {
 		SortedSet<String> tmp = new TreeSet<String>(OracleConnectorHelper.getAttributeNamesComparator());
 		tmp.addAll(OracleConstants.ALL_ATTRIBUTE_NAMES);
 		tmp.removeAll(Arrays.asList(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,OperationalAttributes.DISABLE_DATE_NAME));
-		VALIDUPDATEATTRIBUTES = Collections.unmodifiableCollection(tmp);
+		VALID_UPDATE_ATTRIBUTES = Collections.unmodifiableCollection(tmp);
 	}
 	
 	
@@ -183,7 +183,7 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
     	LocalizedAssert la = new LocalizedAssert(cfg.getConnectorMessages());
 		for(Attribute attr : map.values()){
 			//No need to call Attribute.is, set is caseinsensitive  
-			if(!VALIDUPDATEATTRIBUTES.contains(attr.getName())){
+			if(!VALID_UPDATE_ATTRIBUTES.contains(attr.getName())){
 				throw new IllegalArgumentException(cfg.getConnectorMessages().format(MSG_UPDATE_ATTRIBUTE_NOT_SUPPORTED, null, attr.getName()));
 			}
 			if(attr.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){

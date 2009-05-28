@@ -208,6 +208,9 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 		if(attributesToGet.contains(OperationalAttributes.ENABLE_NAME)){
 			bld.addAttribute(AttributeBuilder.build(OperationalAttributes.ENABLE_NAME,Boolean.valueOf(!record.getStatus().contains("LOCKED"))));
 		}
+		if(attributesToGet.contains(OperationalAttributes.LOCK_OUT_NAME)){
+			bld.addAttribute(AttributeBuilder.build(OperationalAttributes.LOCK_OUT_NAME,Boolean.valueOf(record.getStatus().contains("LOCKED"))));
+		}
 		if(attributesToGet.contains(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME)){
 			Long date = record.getExpireDate() != null ? record.getExpireDate().getTime() : null;
 			bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME,date));
@@ -268,7 +271,7 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 			else if(attribute.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
 				return "(CASE WHEN DBA_USERS.ACCOUNT_STATUS LIKE '%EXPIRED%' THEN 'EXPIRED' ELSE 'NOT_EXPIRED' END)";
 			}
-			else if(attribute.is(OperationalAttributes.ENABLE_NAME)){
+			else if(attribute.is(OperationalAttributes.ENABLE_NAME) || attribute.is(OperationalAttributes.LOCK_OUT_NAME)){
 				return "(CASE WHEN DBA_USERS.ACCOUNT_STATUS LIKE '%LOCKED%' THEN 'LOCKED' ELSE 'NOT_LOCKED' END)";
 			}
 			else if(attribute.is(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME)){
@@ -326,6 +329,13 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 					return null;
 				}
 				return value ? new SQLParam("NOT_LOCKED",Types.VARCHAR) : new SQLParam("LOCKED",Types.VARCHAR);
+			}
+			else if(attribute.is(OperationalAttributes.LOCK_OUT_NAME)){
+				Boolean value = (Boolean) AttributeUtil.getSingleValue(attribute);
+				if(value == null){
+					return null;
+				}
+				return value ? new SQLParam("LOCKED",Types.VARCHAR) : new SQLParam("NOT_LOCKED",Types.VARCHAR);
 			}
 			else if(attribute.is(OperationalAttributes.DISABLE_DATE_NAME)){
 				Object date = AttributeUtil.getSingleValue(attribute);

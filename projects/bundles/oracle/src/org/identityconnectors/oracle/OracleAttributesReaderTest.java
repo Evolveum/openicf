@@ -170,16 +170,61 @@ public class OracleAttributesReaderTest {
         catch(RuntimeException e){}
         
         attributes = new HashSet<Attribute>();
+        caAttributes = new OracleUserAttributes.Builder();
         attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_DEF_TS_QUOTA_ATTR_NAME));
        	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
        	assertEquals("Must set 0 for null quota","0",caAttributes.getDefaultTSQuota());
         
        	attributes = new HashSet<Attribute>();
+       	caAttributes = new OracleUserAttributes.Builder();
         attributes.add(AttributeBuilder.build(OracleConstants.ORACLE_TEMP_TS_QUOTA_ATTR_NAME,""));
        	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
        	assertEquals("Must set 0 for null quota","0",caAttributes.getTempTSQuota());
         
-        
+       	attributes = new HashSet<Attribute>();
+       	caAttributes = new OracleUserAttributes.Builder();
+        attributes.add(AttributeBuilder.buildLockOut(true));
+       	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
+       	Assert.assertFalse("Enabled must be false for lock_out(true)",caAttributes.getEnable());
+       	
+       	attributes = new HashSet<Attribute>();
+       	caAttributes = new OracleUserAttributes.Builder();
+        attributes.add(AttributeBuilder.buildLockOut(false));
+       	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
+       	Assert.assertTrue("Enabled must be true for lock_out(false)",caAttributes.getEnable());
+       	
+       	attributes = new HashSet<Attribute>();
+       	caAttributes = new OracleUserAttributes.Builder();
+       	attributes.add(AttributeBuilder.buildEnabled(false));
+       	attributes.add(AttributeBuilder.buildLockOut(true));
+       	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
+       	Assert.assertFalse("Enabled must be false for enabled(false) and lock_out(true)",caAttributes.getEnable());
+       	
+       	attributes = new HashSet<Attribute>();
+       	caAttributes = new OracleUserAttributes.Builder();
+       	attributes.add(AttributeBuilder.buildEnabled(true));
+       	attributes.add(AttributeBuilder.buildLockOut(false));
+       	reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
+       	Assert.assertTrue("Enabled must be true for enabled(true) and lock_out(false)",caAttributes.getEnable());
+       	
+       	attributes = new HashSet<Attribute>();
+       	caAttributes = new OracleUserAttributes.Builder();
+       	attributes.add(AttributeBuilder.buildEnabled(true));
+       	attributes.add(AttributeBuilder.buildLockOut(true));
+       	try{
+       		reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
+       		fail("Read attributes must fail for enabled(true) nad lockout(true)");
+       	}catch(RuntimeException e){}
+       	
+       	attributes = new HashSet<Attribute>();
+       	caAttributes = new OracleUserAttributes.Builder();
+       	attributes.add(AttributeBuilder.buildEnabled(false));
+       	attributes.add(AttributeBuilder.buildLockOut(false));
+       	try{
+       		reader.readCreateAttributes(AttributeUtil.toMap(attributes), caAttributes);
+       		fail("Read attributes must fail for enabled(false) nad lockout(false)");
+       	}catch(RuntimeException e){}
+       	
     }
     
     

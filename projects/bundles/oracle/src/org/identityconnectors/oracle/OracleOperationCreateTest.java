@@ -510,4 +510,20 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
 		}catch(RuntimeException e){}
 		testConnector.dispose();
 	}
+	
+    /** Test setting lockout parameter 
+     * @throws SQLException */
+	@Test
+    public void testUpdateLockOut() throws SQLException{
+		Uid uid = facade.create(ObjectClass.ACCOUNT, Collections.<Attribute>singleton(new Name(TEST_USER)), null);
+    	assertEquals("OPEN",userReader.readUserRecord(uid.getUidValue()).getStatus());
+    	facade.delete(ObjectClass.ACCOUNT, uid, null);
+    	uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(new Name(TEST_USER), AttributeBuilder.buildLockOut(true)), null);
+    	assertEquals("LOCKED",userReader.readUserRecord(uid.getUidValue()).getStatus());
+    	facade.delete(ObjectClass.ACCOUNT, uid, null);
+    	uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(new Name(TEST_USER), AttributeBuilder.buildLockOut(false)), null);
+    	assertEquals("OPEN",userReader.readUserRecord(uid.getUidValue()).getStatus());
+    	facade.delete(ObjectClass.ACCOUNT, uid, null);
+    }
+	
 }
