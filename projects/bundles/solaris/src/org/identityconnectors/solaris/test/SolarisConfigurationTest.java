@@ -24,6 +24,7 @@ package org.identityconnectors.solaris.test;
 
 import junit.framework.Assert;
 
+import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.After;
@@ -64,7 +65,7 @@ public class SolarisConfigurationTest {
     }
     
     /* **************** "MISSING" PROPERTY TESTS ***************** */
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = ConfigurationException.class)
     public void testMissingUsername() {
         SolarisConfiguration config = getConfig();
         config.setUserName(null);
@@ -72,7 +73,7 @@ public class SolarisConfigurationTest {
         Assert.fail("Configuration allowed a null admin username.");
     }
     
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = ConfigurationException.class)
     public void testMissingPassword() {
         SolarisConfiguration config = getConfig();
         config.setPassword(null);
@@ -80,7 +81,7 @@ public class SolarisConfigurationTest {
         Assert.fail("Configuration allowed a null password.");
     }
     
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = ConfigurationException.class)
     public void testMissingHostname() {
         SolarisConfiguration config = getConfig();
         config.setHostNameOrIpAddr(null);
@@ -88,7 +89,7 @@ public class SolarisConfigurationTest {
         Assert.fail("Configuration allowed a null hostname.");
     }
     
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = ConfigurationException.class)
     public void testMissingPort() {
         SolarisConfiguration config = getConfig();
         config.setPort(null);

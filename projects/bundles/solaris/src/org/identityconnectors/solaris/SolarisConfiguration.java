@@ -24,6 +24,7 @@ package org.identityconnectors.solaris;
 
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.Configuration;
@@ -389,27 +390,27 @@ public final class SolarisConfiguration extends AbstractConfiguration {
     public void validate() {
         String msg = "'%s' cannot be null or empty.";
         if (StringUtil.isBlank(getUserName())) {
-            throw new IllegalArgumentException(String.format(msg, "UserName"));
+            throw new ConfigurationException(String.format(msg, "UserName"));
         }
         
         if (getPassword() == null) {
-            throw new IllegalArgumentException(String.format(msg, "Password"));
+            throw new ConfigurationException(String.format(msg, "Password"));
         }
         
         if (StringUtil.isBlank(getHostNameOrIpAddr())) {
-            throw new IllegalArgumentException(String.format(msg, "Hostname/IP address"));
+            throw new ConfigurationException(String.format(msg, "Hostname/IP address"));
         }
         
         if (port == null || port < 0) {
-            throw new IllegalArgumentException(String.format(msg, "Port"));
+            throw new ConfigurationException(String.format(msg, "Port"));
         }
         
         if (connectionType == null) {
-            throw new IllegalArgumentException(String.format(msg, "Connection type"));
+            throw new ConfigurationException(String.format(msg, "Connection type"));
         }
         
         if (rootShellPrompt == null) {
-            throw new IllegalArgumentException(String.format(msg, "Root shell prompt"));
+            throw new ConfigurationException(String.format(msg, "Root shell prompt"));
         }
 
     }

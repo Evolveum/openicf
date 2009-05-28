@@ -86,7 +86,6 @@ public final class SolarisConnection {
 //                                .getPort());
                     }
                 } catch (Exception e) {
-                    log.warn("Starting connection: Exception thrown (cause: invalid configuration, etc.)");
                     throw ConnectorException.wrap(e);
                 }
             }
@@ -159,6 +158,7 @@ public final class SolarisConnection {
         log.info("dispose()");
         if (_expect4j != null) {
             _expect4j.close();
+            _expect4j = null;
         }
     }
     

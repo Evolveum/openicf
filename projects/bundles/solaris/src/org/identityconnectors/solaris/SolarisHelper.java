@@ -95,9 +95,9 @@ public class SolarisHelper {
     }
     
     public static void controlObjectClassValidity(ObjectClass oclass) {
-        if (!oclass.is(ObjectClass.ACCOUNT_NAME)) {
+        if (!(oclass.is(ObjectClass.ACCOUNT_NAME) || oclass.is(ObjectClass.GROUP_NAME))) {
             throw new IllegalArgumentException(String.format(
-                    MSG_NOT_SUPPORTED_OBJECTCLASS, ObjectClass.ACCOUNT_NAME));
+                    MSG_NOT_SUPPORTED_OBJECTCLASS, oclass, ObjectClass.ACCOUNT_NAME, ObjectClass.GROUP_NAME));
         }
     }
 }

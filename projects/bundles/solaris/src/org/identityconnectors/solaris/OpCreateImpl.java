@@ -68,8 +68,7 @@ public class OpCreateImpl extends AbstractOp {
             getConnection().waitFor(getConfiguration().getRootShellPrompt());
             
         } catch (Exception ex) {
-            getLog().error(ex.getMessage() + "\n");
-            ex.printStackTrace();
+            getLog().error(ex, null);
         } //EOF CONNECTION
         
         /*
@@ -92,15 +91,13 @@ public class OpCreateImpl extends AbstractOp {
                         getConnection().send(realPasswd);
                         getConnection().waitFor(String.format("passwd: password successfully changed for %s", accountId));
                     } catch (Exception ex) {
-                        getLog().error(ex.getMessage() + "\n");
-                        ex.printStackTrace();
+                        getLog().error(ex, null);
                     }
                 }
             });
 
         } catch (Exception ex) {
-            getLog().error(ex.getMessage() + "\n");
-            ex.printStackTrace();
+            getLog().error(ex, null);
         } // EOF CONNECTION
         // PASSWD password
         
