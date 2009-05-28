@@ -119,8 +119,10 @@ public class WrqConnection extends RW3270BaseConnection implements ECLPSListener
         p.put(ECLSession.SESSION_USE_CLASSPATH, ECLSession.SESSION_ON);
         p.put(ECLSession.SESSION_TERMINAL_MODEL, _model+"");
         try {
+            System.out.println("URL is "+p.getProperty(ECLSession.SESSION_HOST));
             _session = new ECLSession(p);
         } catch (ECLErr e) {
+            e.printStackTrace();
             throw new ConnectorException(e);
         }
         _session.StartCommunication();
