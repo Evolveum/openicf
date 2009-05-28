@@ -354,10 +354,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             if (options!=null && options.getAttributesToGet()!=null) {
                 attributesToGet = new TreeSet<String>();
                 for (String name : options.getAttributesToGet()) {
-                    // Ignore request for "description"
-                    //
-                    if (!name.equals("description"))
-                        attributesToGet.add(name);
+                    attributesToGet.add(name);
                 }
             } else {
                 if (objectClass.is(ObjectClass.ACCOUNT_NAME))
