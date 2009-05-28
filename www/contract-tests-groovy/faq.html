@@ -33,6 +33,10 @@ Contents<br>
 <ul>
 
   <li><a href="#cmdcontract">Running a single contract test from command line</a></li>
+
+<li><a href="#disablingAttribute">How to disable single attribute in tests?</a>
+</li>
+
   <li><a href="#Troubleshooting_tests_errors_">Troubleshooting
 tests' errors</a></li>
 
@@ -57,6 +61,19 @@ To run just a single contract test from the command line use the following ant c
 <pre>
 //run just CreateApiOpTests:
 ant run-contract-tests -Dcontract.suite.classname=org.identityconnectors.contract.test.CreateApiOpTests
+</pre>
+</p>
+
+<h2>
+<a name = "disablingAttribute">
+How to disable single attribute in tests?
+</a></h2>
+
+<p>
+For instance we want to disable sending <code>FIRSTNAME</code> attribute of <code>__ACCOUNT__</code> objectclass in <code>CreateApiOpTests</code>: 
+<pre>
+import org.identityconnectors.test.common.ObjectNotFoundException
+Create.__ACCOUNT__.FIRSTNAME = new ObjectNotFoundException()
 </pre>
 </p>
 
