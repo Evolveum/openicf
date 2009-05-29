@@ -63,7 +63,6 @@ public class OpCreateImpl extends AbstractOp {
         try {//CONNECTION
             getLog().info("useradd(''{0}'')", accountId);
             
-            getConnection().resetStandardOutput();
             getConnection().send(command);
             getConnection().waitFor(getConfiguration().getRootShellPrompt());
             

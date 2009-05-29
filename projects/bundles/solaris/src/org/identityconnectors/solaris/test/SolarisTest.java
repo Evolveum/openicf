@@ -68,7 +68,6 @@ public class SolarisTest {
         final String message = "HeLlO WoRlD";
         String output = SolarisHelper.executeCommand(config, connector
                 .getConnection(), String.format("echo \"%s\"", message));
-        //System.out.println(s);
         /*
          * the output contains even the optional welcome message on Solaris.
          */

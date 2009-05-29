@@ -55,7 +55,7 @@ public class OpAuthenticateImpl extends AbstractOp {
             }
         }
         
-        getLog().info("User ''{0}'' succesfully authenticated", username);
+        getLog().ok("User ''{0}'' succesfully authenticated", username);
         return new Uid(username);
     }
 

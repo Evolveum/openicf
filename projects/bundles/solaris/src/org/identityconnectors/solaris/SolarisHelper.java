@@ -48,14 +48,14 @@ public class SolarisHelper {
      */
     public static String executeCommand(SolarisConfiguration configuration,
             SolarisConnection connection, String command) {
-        connection.resetStandardOutput();
+        String output = null;
         try {
             connection.send(command);
-            connection.waitFor(configuration.getRootShellPrompt(), VERY_LONG_WAIT);
+            output = connection.waitFor(configuration.getRootShellPrompt(), VERY_LONG_WAIT); 
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
-        String output = connection.getStandardOutput();
+        
         int index = output.lastIndexOf(configuration.getRootShellPrompt());
         if (index!=-1)
             output = output.substring(0, index);

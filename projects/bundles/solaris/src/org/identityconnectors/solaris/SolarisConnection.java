@@ -98,8 +98,6 @@ public final class SolarisConnection {
      * @param string
      */
     public void send(String string) throws IOException {
-        log.info("send(''{0}'')", string);
-        //System.out.println("Send:"+string);
         _expect4j.send(string + HOST_END_OF_LINE_TERMINATOR);
     }
     
@@ -122,20 +120,23 @@ public final class SolarisConnection {
      * 
      * @param string is a standard regular expression
      * @param millis time in millis until expect waits for reply
+     * @return 
      * @throws MalformedPatternException
      * @throws Exception
      */
-    public void waitFor(final String string, int millis) throws MalformedPatternException, Exception {
+    public String waitFor(final String string, int millis) throws MalformedPatternException, Exception {
         log.info("waitFor(''{0}'', {1})", string, millis);
+        
+        final Holder buffer = new Holder();
+        
         Match[] matches = {
                 new RegExpMatch(string, new Closure() {
                     public void run(ExpectState state) {
-                        _buffer.append(state.getBuffer());
+                        buffer.setS(state.getBuffer());
                     }
                 }),
                 new TimeoutMatch(millis,  new Closure() {
                     public void run(ExpectState state) {
-                        System.out.println("timeout:"+_buffer);
                         ConnectorException e = new ConnectorException("TIMEOUT_IN_MATCH");
                         log.error(e, "timeout in waitFor");
                         throw e;
@@ -143,16 +144,10 @@ public final class SolarisConnection {
                 })
         };
         _expect4j.expect(matches);
-    }
-    
-    public String getStandardOutput() {
-        return _buffer.toString();
+        
+        return buffer.getS();
     }
 
-    public void resetStandardOutput() {
-        _buffer.setLength(0);
-    }
-    
     /** once connection is disposed it won't be used at all. */
     void dispose() {
         log.info("dispose()");
@@ -171,5 +166,17 @@ public final class SolarisConnection {
     static void test(SolarisConfiguration configuration) throws Exception {
         SolarisConnection connection = new SolarisConnection(configuration);
         connection.dispose();
+    }
+}
+
+class Holder {
+    private String s;
+
+    public String getS() {
+        return s;
+    }
+
+    public void setS(String s) {
+        this.s = s;
     }
 }

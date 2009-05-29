@@ -45,8 +45,7 @@ public class OpDeleteImpl extends AbstractOp {
         String output = executeCommand(command);
         
         //TODO add handling of exceptions: existing user, etc.
-        System.out.println(output);
-        getLog().info("userdel(''{0}'')", accountId);
+        getLog().ok("userdel(''{0}'')", accountId);
 
     }
 }
