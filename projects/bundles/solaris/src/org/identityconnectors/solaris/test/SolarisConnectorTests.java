@@ -66,8 +66,7 @@ public class SolarisConnectorTests {
         SolarisConfiguration config = getConfig();
         SolarisConnector connector = SolarisTestCommon.createConnector(config);
         final String message = "HeLlO WoRlD";
-        String output = SolarisConnection.executeCommand(config, connector
-                .getConnection(), String.format("echo \"%s\"", message));
+        String output = connector.getConnection().executeCommand(String.format("echo \"%s\"", message));
         /*
          * the output contains even the optional welcome message on Solaris.
          */

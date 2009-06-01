@@ -51,6 +51,6 @@ public abstract class AbstractOp {
     }
     
     protected String executeCommand(String command) {
-        return SolarisConnection.executeCommand(getConfiguration(), getConnection(), command);
+        return getConnection().executeCommand(command);
     }
 }

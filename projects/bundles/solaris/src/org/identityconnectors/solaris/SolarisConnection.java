@@ -62,8 +62,17 @@ public final class SolarisConnection {
     private final Log log = Log.getLog(SolarisConnection.class);
     private Expect4j _expect4j;
 
-    /*  CONSTRUCTOR */
+    /** default constructor */
     public SolarisConnection(SolarisConfiguration configuration) {
+        this(configuration, configuration.getUserName(), configuration.getPassword());
+    }
+    
+    /**
+     * Specific constructor used by OpAuthenticateImpl. In most cases consider
+     * using {@link SolarisConnection#SolarisConnection(SolarisConfiguration)}
+     */
+    public SolarisConnection(SolarisConfiguration configuration,
+            final String username, final GuardedString password) {
         if (configuration == null) {
             throw new ConfigurationException(
                     "Cannot create a SolarisConnection on a null configuration.");
@@ -71,7 +80,6 @@ public final class SolarisConnection {
         _configuration = configuration;
 
         // initialize EXPECT4J
-        final GuardedString password = _configuration.getPassword();
         password.access(new GuardedString.Accessor() {
             public void access(char[] clearChars) {
                 try {
@@ -81,14 +89,14 @@ public final class SolarisConnection {
 
                     if (connType.equals(ConnectionType.SSH)) {
                         _expect4j = ExpectUtils.SSH(_configuration
-                                .getHostNameOrIpAddr(), _configuration
-                                .getUserName(), new String(clearChars),
-                                _configuration.getPort());
+                                .getHostNameOrIpAddr(), username, new String(
+                                clearChars), _configuration.getPort());
                     } else if (connType.equals(ConnectionType.TELNET)) {
-                        throw new UnsupportedOperationException("Telnet access not yet implemented: TODO");
-//                        _expect4j = ExpectUtils.telnet(_configuration
-//                                .getHostNameOrIpAddr(), _configuration
-//                                .getPort());
+                        throw new UnsupportedOperationException(
+                                "Telnet access not yet implemented: TODO");
+                        // _expect4j = ExpectUtils.telnet(_configuration
+                        // .getHostNameOrIpAddr(), _configuration
+                        // .getPort());
                     }
                 } catch (Exception e) {
                     throw ConnectorException.wrap(e);
@@ -156,17 +164,16 @@ public final class SolarisConnection {
     /** 
      * Execute a issue a command on the resource specified by the configuration 
      */
-    public static String executeCommand(SolarisConfiguration configuration,
-            SolarisConnection connection, String command) {
+    public String executeCommand(String command) {
         String output = null;
         try {
-            connection.send(command);
-            output = connection.waitFor(configuration.getRootShellPrompt(), VERY_LONG_WAIT); 
+            send(command);
+            output = waitFor(_configuration.getRootShellPrompt(), VERY_LONG_WAIT); 
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
         
-        int index = output.lastIndexOf(configuration.getRootShellPrompt());
+        int index = output.lastIndexOf(_configuration.getRootShellPrompt());
         if (index!=-1)
             output = output.substring(0, index);
         

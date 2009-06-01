@@ -38,13 +38,9 @@ public class OpAuthenticateImpl extends AbstractOp {
             GuardedString password, OperationOptions options) {
         SolarisHelper.controlObjectClassValidity(objectClass);
         
-        SolarisConfiguration userConfig = getConfiguration();
-        userConfig.setUserName(username);
-        userConfig.setPassword(password);
-        
         SolarisConnection connection = null;
         try {
-            connection = new SolarisConnection(userConfig);
+            connection = new SolarisConnection(getConfiguration(), username, password);
         } catch (RuntimeException ex) {
             getLog().warn("Failed to authenticate user ''{0}'' RuntimeException thrown during authentication.", username);
             // in case of invalid credentials propagate the exception
