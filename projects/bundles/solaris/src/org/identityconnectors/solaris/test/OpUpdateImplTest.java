@@ -22,8 +22,6 @@
  */
 package org.identityconnectors.solaris.test;
 
-
-
 import static org.identityconnectors.solaris.test.SolarisTestCommon.getTestProperty;
 
 import java.util.HashMap;
@@ -48,7 +46,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class SolarisTestCreate {
+public class OpUpdateImplTest {
     
     private SolarisConfiguration config;
     private ConnectorFacade facade;
@@ -68,12 +66,12 @@ public class SolarisTestCreate {
         config = null;
         facade = null;
     }
-    
+
     /**
-     * creates a sample user
+     * create a new user and try to change its password, and later try to authenticate
      */
     @Test
-    public void testCreate() {
+    public void testUpdate() {
         // create a new user
         final Set<Attribute> attrs = initSampleUser();
         // Read only list of attributes
@@ -90,8 +88,24 @@ public class SolarisTestCreate {
                 facade.authenticate(ObjectClass.ACCOUNT, username, password, null);
             } catch (RuntimeException ex) {
                 ex.printStackTrace();
-                Assert.fail(String.format("Authenticate failed for: '%s'\n ExceptionMessage: %s", username, ex.getMessage()));
+                Assert.fail(String.format("Authenticate failed for newly created user: '%s'\n ExceptionMessage: %s", username, ex.getMessage()));
             }
+            
+            Set<Attribute> replaceAttributes = new HashSet<Attribute>();
+            final String newPassword = getTestProperty("samplePasswd.modified");
+            Attribute chngPasswdAttribute = AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, newPassword);
+            replaceAttributes.add(chngPasswdAttribute);
+            // 1) PERFORM THE UPDATE OF PASSWORD
+            facade.update(ObjectClass.ACCOUNT, new Uid(username), replaceAttributes , null);
+            
+            // 2) try to authenticate with new password
+            try {
+                facade.authenticate(ObjectClass.ACCOUNT, username, new GuardedString(newPassword.toCharArray()), null);
+            } catch (RuntimeException ex) {
+                ex.printStackTrace();
+                Assert.fail(String.format("Authenticate failed for user with changed password: '%s'\n ExceptionMessage: %s", username, ex.getMessage()));
+            }
+            
         } finally {
             // cleanup the new user
             facade.delete(ObjectClass.ACCOUNT, new Uid(username), null);
@@ -111,7 +125,7 @@ public class SolarisTestCreate {
     private Set<Attribute> initSampleUser() {
         Set<Attribute> res = new HashSet<Attribute>();
         
-        res.add(AttributeBuilder.build(Name.NAME, getTestProperty("sampleUser", true)));
+        res.add(AttributeBuilder.build(Name.NAME, getTestProperty("sampleUser")));
         
         String samplePasswd = getTestProperty("samplePasswd", true);
         res.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString(samplePasswd.toCharArray())));
