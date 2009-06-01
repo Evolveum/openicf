@@ -1104,7 +1104,6 @@ class CommandLineUtil {
     private StringBuffer _buffer = new StringBuffer();
     private StringBuffer _buffer2 = new StringBuffer();
     private boolean _timedOut = false;
-    private boolean _outputComplete = false;
 
     private void appendScreen(String display) {
         int index = display.lastIndexOf(OUTPUT_COMPLETE);
@@ -1115,10 +1114,65 @@ class CommandLineUtil {
         }
     }
     
+    private void handleScreenOfOutput(ExpectState state) throws InterruptedException {
+
+        // If we are at commandComplete, we're done
+        //
+        Object commandComplete = state.getVar("commandComplete");
+        if (Boolean.TRUE.equals(commandComplete)) {
+            return;
+        }
+        
+        // If we found an error earlier, we must just return
+        //
+        Object errorDetected = state.getVar("errorDetected");
+        if (errorDetected!=null)
+            throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.ERROR_IN_RACF_COMMAND, errorDetected.toString().trim()));
+
+        // Get the screen contents
+        //
+        getRW3270Connection().waitForUnlock();
+        String display = getRW3270Connection().getDisplay();
+        
+        // If display ends with "***", we may have
+        //      READY
+        //      ***
+        if (removeTrailingSpaces(display).endsWith(OUTPUT_CONTINUING)) {
+            String display2 = display.substring(0, display.lastIndexOf(OUTPUT_CONTINUING));
+            if (removeTrailingSpaces(display2).endsWith(OUTPUT_COMPLETE)) {
+                // We have 
+                //      READY
+                //      ***
+                // So, make sure we don't double save
+                state.addVar("commandComplete", Boolean.TRUE);
+            }
+            // We have 
+            //      ***
+            // So, shorten the display, and send [enter], and continue
+            //
+            _buffer2.append(display2.toString());
+            _buffer2.append("-0------------------------------------------------------------------------------");
+            appendScreen(display2);
+            getRW3270Connection().sendEnter();
+            state.exp_continue();
+            return;
+        }
+
+        // In this case, we should end with READY
+        //
+        if (removeTrailingSpaces(display).endsWith(OUTPUT_COMPLETE)) {
+            _buffer2.append(display.toString());
+            _buffer2.append("-1------------------------------------------------------------------------------");
+            appendScreen(display);
+        } else {
+            // Nothing special, so keep going
+            state.exp_continue();
+        }
+    }
+    
     private void waitFor(Integer timeout) {
         _buffer.setLength(0);
         _buffer2.setLength(0);
-        _outputComplete = false;
         try {
             _timedOut = false;
             List<Match> matches = new LinkedList<Match>();
@@ -1129,67 +1183,8 @@ class CommandLineUtil {
             //
             matches.add(new RegExpMatch(OUTPUT_CONTINUING_PATTERN, new Closure() {
                 public void run(ExpectState state) throws Exception {
-                    if (_debug) System.out.println("CONTINUE"+state.getMatch().trim());
-                    // If it's not in column 0, it's not a real match, we we ignore it
-                    //
-                    if (false && state.getMatchedWhere()%80!=0) {
-                        state.exp_continue();
-                        return;
-                    }
-                    getRW3270Connection().waitForUnlock();
-                    String display = getRW3270Connection().getDisplay();
-                    int continuingIndex = display.lastIndexOf(OUTPUT_CONTINUING);
-                    int completeIndex = display.lastIndexOf(OUTPUT_COMPLETE);
-                    
-                    if (continuingIndex==-1) {
-                        // this is left over from previous command, just continue
-                        //
-                        if (_debug) if (_buffer.length()==0 && display.trim().length()==0) {
-                            System.out.println("+++leftover");
-                        }
-                        if (_buffer.toString().trim().endsWith(OUTPUT_COMPLETE)) {
-                            if (_debug) System.out.println("+++completed already");
-                            if (_debug) if (display.trim().length()>0)
-                                System.out.println(display.replaceAll("(.{80})", "$1\n"));
-                            return;
-                        }
-                        if (display.trim().endsWith(OUTPUT_COMPLETE)) {
-                            _buffer2.append(display.toString());
-                            _buffer2.append("-2------------------------------------------------------------------------------");
-                            if (_debug) System.out.println("+++completed now");
-                            appendScreen(display);
-                            state.exp_continue();
-                            if (_debug) System.out.println(_buffer.toString().replaceAll("(.{80})", "$1\n"));
-                            return;
-                        }
-                        if (_debug) System.out.println("+++skipping:"+display.trim());
-                        state.exp_continue();
-                    }
-                    // If the current display has already been appended by the
-                    // OUTPUT_COMPLETE handler, we don't want to do it a second time
-                    //
-                    if (!_outputComplete) {
-                        if (continuingIndex>-1) {
-                            _buffer.append(display.substring(0, continuingIndex));
-                            _buffer2.append(display.toString());
-                            _buffer2.append("-3------------------------------------------------------------------------------");
-                            getRW3270Connection().sendEnter();
-                        } else {
-                            if (_debug) System.out.println("+++oopsie");
-                            //_buffer.append(display);
-                        }
-                    }
-                    
-                    // If we saw
-                    //      READY
-                    //      ***
-                    // we're done, otherwise, we continue
-                    //
-                    if (completeIndex+getRW3270Connection().getWidth()==continuingIndex) {
-                        if (_debug) System.out.println("+++OUTPUT COMPLETE plus continue");
-                    } else {
-                        state.exp_continue();
-                    }
+                    handleScreenOfOutput(state);
+                    return;
                 }
             }));
             
@@ -1200,43 +1195,9 @@ class CommandLineUtil {
             //      save the final output
             matches.add(new RegExpMatch(OUTPUT_COMPLETE_PATTERN, new Closure() {
                 public void run(ExpectState state) throws Exception {
-                    Object errorDetected = state.getVar("errorDetected");
-
-                    // If it's not in column 0, it's not a real match, we we ignore it
-                    //
-                    if (false && errorDetected==null && state.getMatchedWhere()%80!=0) {
-                        state.exp_continue();
-                        return;
-                    }
-
-                    getRW3270Connection().waitForUnlock();
-                    // This code will be exported to a script, but I want to get the tests back on-line
-                    //
-                    String display = getRW3270Connection().getDisplay();
-                    boolean commandComplete = removeTrailingSpaces(display).endsWith(OUTPUT_COMPLETE);
-                    boolean matched = display.lastIndexOf(OUTPUT_COMPLETE)>-1;
-                    _buffer2.append(display.toString());
-                    _buffer2.append("-1------------------------------------------------------------------------------");
-                    appendScreen(display);
-                    if (!commandComplete && matched) {
-                        getRW3270Connection().sendEnter();
-                        state.exp_continue();
-                    } else if (!commandComplete) {
-                        // I think we could wind up here via a race condition
-                        // if we had the "READY\n***" kind of command completion,
-                        // and there was a delay between seeing the READY and the ***.
-                        //
-                        getRW3270Connection().sendEnter();
-                        state.exp_continue();
-                    } else {
-                        if (_debug) System.out.println("+++OUTPUT COMPLETE");
-                        _outputComplete = true;
-                        if (errorDetected!=null) {
-                            throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.ERROR_IN_RACF_COMMAND, errorDetected.toString().trim()));
-                        }
-                    }
+                    handleScreenOfOutput(state);
+                    return;
                 }
-
             }));
             
             // Match the error expression, so
@@ -1247,6 +1208,7 @@ class CommandLineUtil {
             matches.add(new RegExpMatch("IKJ\\d+\\w REENTER THIS OPERAND", new Closure() {
                 public void run(ExpectState state) throws Exception {
                     state.addVar("errorDetected", state.getBuffer());
+                    getRW3270Connection().waitForUnlock();
                     getRW3270Connection().sendPAKeys(1);
                     state.exp_continue();
                 }
@@ -1255,6 +1217,7 @@ class CommandLineUtil {
             matches.add(new RegExpMatch("IKJ\\d+\\w ENTER (\\w\\s)+-", new Closure() {
                 public void run(ExpectState state) throws Exception {
                     state.addVar("errorDetected", state.getBuffer());
+                    getRW3270Connection().waitForUnlock();
                     getRW3270Connection().sendPAKeys(1);
                     state.exp_continue();
                 }
@@ -1283,7 +1246,7 @@ class CommandLineUtil {
             return "";
         StringBuffer buffer = new StringBuffer();
         buffer.append(string);
-        while (buffer.charAt(buffer.length()-1)==' ')
+        while (buffer.charAt(buffer.length()-1)==' ' || buffer.charAt(buffer.length()-1)=='|')
             buffer.setLength(buffer.length()-1);
         return buffer.toString();
     }
