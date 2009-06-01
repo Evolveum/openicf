@@ -25,7 +25,6 @@ package org.identityconnectors.solaris;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
-import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.Configuration;
 
@@ -128,7 +127,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
      * Telnet, SSH, and SSHPubKey.
      */
     private String connectionType;
-    private ConnectorMessages _connectorMessages;
+    //private ConnectorMessages _connectorMessages;
     
     /*
      * RA_PRIVATE_KEY

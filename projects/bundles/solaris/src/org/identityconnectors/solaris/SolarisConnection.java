@@ -53,12 +53,9 @@ public final class SolarisConnection {
     private SolarisConfiguration _configuration;
     private final Log log = Log.getLog(SolarisConnection.class);
     private Expect4j _expect4j;
-    private StringBuffer _buffer;
 
     /*  CONSTRUCTOR */
     public SolarisConnection(SolarisConfiguration configuration) {
-        _buffer = new StringBuffer();
-        
         if (configuration == null) {
             throw new ConfigurationException(
                     "Cannot create a SolarisConnection on a null configuration.");
