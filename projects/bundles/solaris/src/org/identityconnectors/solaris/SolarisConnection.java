@@ -44,6 +44,14 @@ import expect4j.matches.TimeoutMatch;
  *
  */
 public final class SolarisConnection {
+    //TODO externalize this into configuration
+    //private static final int SHORT_WAIT = 60000;
+    //private static final int LONG_WAIT = 120000;
+    private static final int VERY_LONG_WAIT = 1200000;
+    /** set the timeout for waiting on reply. */
+    public static final int DEFAULT_WAIT = VERY_LONG_WAIT;
+
+    
     //TODO might be a configuration property
     private static final String HOST_END_OF_LINE_TERMINATOR = "\n";
     
@@ -109,7 +117,7 @@ public final class SolarisConnection {
      * {@see SolarisConnection#waitFor(String, int)}
      */
     public void waitFor(String string) throws Exception{
-        waitFor(string, SolarisHelper.DEFAULT_WAIT);
+        waitFor(string, DEFAULT_WAIT);
     }
     
     /**
@@ -143,6 +151,35 @@ public final class SolarisConnection {
         _expect4j.expect(matches);
         
         return buffer.getS();
+    }
+    
+    /** 
+     * Execute a issue a command on the resource specified by the configuration 
+     */
+    public static String executeCommand(SolarisConfiguration configuration,
+            SolarisConnection connection, String command) {
+        String output = null;
+        try {
+            connection.send(command);
+            output = connection.waitFor(configuration.getRootShellPrompt(), VERY_LONG_WAIT); 
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }
+        
+        int index = output.lastIndexOf(configuration.getRootShellPrompt());
+        if (index!=-1)
+            output = output.substring(0, index);
+        
+        String terminator = "\n";
+        // trim off starting or ending \n
+        //
+        if (output.startsWith(terminator)) {
+            output = output.substring(terminator.length());
+        }
+        if (output.endsWith(terminator)) {
+            output = output.substring(0, output.length()-terminator.length());
+        }
+        return output;
     }
 
     /** once connection is disposed it won't be used at all. */

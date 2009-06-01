@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
@@ -36,41 +35,6 @@ import org.identityconnectors.framework.common.objects.OperationalAttributes;
 
 /** helper class for Solaris specific operations */
 public class SolarisHelper {
-    //private static final int SHORT_WAIT = 60000;
-    //private static final int LONG_WAIT = 120000;
-    private static final int VERY_LONG_WAIT = 1200000;
-    
-    /** set the timeout for waiting on reply. */
-    public static final int DEFAULT_WAIT = VERY_LONG_WAIT;
-    
-    /** 
-     * Execute a issue a command on the resource specified by the configuration 
-     */
-    public static String executeCommand(SolarisConfiguration configuration,
-            SolarisConnection connection, String command) {
-        String output = null;
-        try {
-            connection.send(command);
-            output = connection.waitFor(configuration.getRootShellPrompt(), VERY_LONG_WAIT); 
-        } catch (Exception e) {
-            throw ConnectorException.wrap(e);
-        }
-        
-        int index = output.lastIndexOf(configuration.getRootShellPrompt());
-        if (index!=-1)
-            output = output.substring(0, index);
-        
-        String terminator = "\n";
-        // trim off starting or ending \n
-        //
-        if (output.startsWith(terminator)) {
-            output = output.substring(terminator.length());
-        }
-        if (output.endsWith(terminator)) {
-            output = output.substring(0, output.length()-terminator.length());
-        }
-        return output;
-    }
     
     /** helper method for getting the password from an attribute map */
     public static GuardedString getPasswordFromMap(Map<String, Attribute> attrMap) {
