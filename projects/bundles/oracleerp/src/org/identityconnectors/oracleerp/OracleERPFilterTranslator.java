@@ -60,7 +60,7 @@ public class OracleERPFilterTranslator extends DatabaseFilterTranslator {
      */
     @Override
     protected String getDatabaseColumnName(Attribute attribute, ObjectClass oclass, OperationOptions options) {
-        return cnr.accountAttributeToColumnName(attribute.getName());
+        return cnr.getColumnName(attribute.getName());
     }
 
     /* (non-Javadoc)

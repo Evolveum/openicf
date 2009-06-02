@@ -26,7 +26,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.text.MessageFormat;
 
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.logging.Log;
@@ -76,20 +75,20 @@ public class OracleERPUtil {
      */
     
     static final String RESPS = "responsibilities";
-    static final String RESP = "responsibility";
+    static final String RESP = RESPS;
     public static final ObjectClass RESP_OC = new ObjectClass(RESP);    
 
     static final String DIRECT_RESPS = "directResponsibilities";
-    static final String DIRECT_RESP = "directResponsibility";
+    static final String DIRECT_RESP = DIRECT_RESPS;
     public static final ObjectClass DIRECT_RESP_OC = new ObjectClass(DIRECT_RESP);    
 
     static final String INDIRECT_RESPS = "indirectResponsibilities";
-    static final String INDIRECT_RESP = "indirectResponsibility";
+    static final String INDIRECT_RESP = INDIRECT_RESPS;
     public static final ObjectClass INDIRECT_RESP_OC = new ObjectClass(INDIRECT_RESP); 
     
     static final String RESP_NAMES = "responsibilityNames";
-    static final String RESP_NAME = "responsibilityName";
-    public static final ObjectClass RESP_NAME_OC = new ObjectClass(RESP_NAME);        
+    static final String RESP_NAME = RESP_NAMES;
+    public static final ObjectClass RESP_NAMES_OC = new ObjectClass(RESP_NAMES);        
     
     static final String APPS = "applications";
     static final String APP = "application";

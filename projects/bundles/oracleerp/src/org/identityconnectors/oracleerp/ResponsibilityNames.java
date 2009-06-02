@@ -23,13 +23,20 @@
 package org.identityconnectors.oracleerp;
 
 import java.util.EnumSet;
+import java.util.Set;
 
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
 import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
+import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
+import org.identityconnectors.framework.spi.operations.CreateOp;
+import org.identityconnectors.framework.spi.operations.UpdateOp;
 
 /**
  * Main implementation of the OracleErp Connector
@@ -38,7 +45,7 @@ import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
  * @version 1.0
  * @since 1.0
  */
-public class ResponsibilityNames {
+public class ResponsibilityNames implements UpdateOp, CreateOp {
     /**
      * Setup logging.
      */
@@ -64,12 +71,35 @@ public class ResponsibilityNames {
     static final String READ_WRITE_ONLY_FUNCTION_NAMES = "readWriteOnlyFunctionNames";
     static final String READ_WRITE_ONLY_FUNCTION_IDS = "readWriteOnlyFunctionIds";
 
+    
+    /**
+     * The get Instance method
+     * @param connector parent
+     * @return the account
+     */
+    public static ResponsibilityNames getInstance(OracleERPConnector connector) {
+       return new ResponsibilityNames(connector);
+    }
+    
+    /**
+     * The account sigleton 
+     * @param connector parent
+     */
+    private ResponsibilityNames(OracleERPConnector connector) {
+        this.parent = connector;
+    }
+    
+    /**
+     * The parent connector
+     */
+    private OracleERPConnector parent;
+    
     /**
      * Get the Account Object Class Info
      * 
      * @return ObjectClassInfo value
      */
-    public static ObjectClassInfo getSchema() {
+    public ObjectClassInfo getSchema() {
         ObjectClassInfoBuilder aoc = new ObjectClassInfoBuilder();
         aoc.setType(RESP_NAMES);
 
@@ -122,4 +152,23 @@ public class ResponsibilityNames {
                 .of(Flags.REQUIRED)));
         return aoc.build();
     }
+
+    /* (non-Javadoc)
+     * @see org.identityconnectors.framework.spi.operations.UpdateOp#update(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.Uid, java.util.Set, org.identityconnectors.framework.common.objects.OperationOptions)
+     */
+    public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    /* (non-Javadoc)
+     * @see org.identityconnectors.framework.spi.operations.UpdateOp#update(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.Uid, java.util.Set, org.identityconnectors.framework.common.objects.OperationOptions)
+     */
+    public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> replaceAttributes, OperationOptions options) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+    
+
+
 }
