@@ -28,7 +28,7 @@ import org.identityconnectors.framework.common.exceptions.ConfigurationException
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.Configuration;
 
-public final class SolarisConfiguration extends AbstractConfiguration {
+public class SolarisConfiguration extends AbstractConfiguration {
 
     // ALL OF CONFIGURATION COMES FROM SVIDResourceAdapter
     

@@ -27,7 +27,6 @@ import junit.framework.Assert;
 
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.solaris.SolarisConfiguration;
-import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.junit.After;
 import org.junit.Before;

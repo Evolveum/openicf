@@ -33,7 +33,7 @@ public abstract class AbstractOp {
     public AbstractOp(SolarisConfiguration config, SolarisConnection connection, Log log) {
         _configuration = (SolarisConfiguration) config;
         
-        Assertions.nullCheck(connection, "SolarisConnection");
+        Assertions.nullCheck(connection, "connection");
         _connection = connection;
         _log = log;
     }

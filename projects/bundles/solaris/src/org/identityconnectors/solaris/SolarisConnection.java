@@ -43,7 +43,7 @@ import expect4j.matches.TimeoutMatch;
  * @author David Adam
  *
  */
-public final class SolarisConnection {
+public class SolarisConnection {
     //TODO externalize this into configuration
     //private static final int SHORT_WAIT = 60000;
     //private static final int LONG_WAIT = 120000;
@@ -140,12 +140,12 @@ public final class SolarisConnection {
     public String waitFor(final String string, int millis) throws MalformedPatternException, Exception {
         log.info("waitFor(''{0}'', {1})", string, millis);
         
-        final Holder buffer = new Holder();
+        final StringBuffer buffer = new StringBuffer();
         
         Match[] matches = {
                 new RegExpMatch(string, new Closure() {
                     public void run(ExpectState state) {
-                        buffer.setS(state.getBuffer());
+                        buffer.append(state.getBuffer());
                     }
                 }),
                 new TimeoutMatch(millis,  new Closure() {
@@ -158,7 +158,7 @@ public final class SolarisConnection {
         };
         _expect4j.expect(matches);
         
-        return buffer.getS();
+        return buffer.toString();
     }
     
     /** 
@@ -207,17 +207,5 @@ public final class SolarisConnection {
     static void test(SolarisConfiguration configuration) throws Exception {
         SolarisConnection connection = new SolarisConnection(configuration);
         connection.dispose();
-    }
-}
-
-class Holder {
-    private String s;
-
-    public String getS() {
-        return s;
-    }
-
-    public void setS(String s) {
-        this.s = s;
     }
 }
