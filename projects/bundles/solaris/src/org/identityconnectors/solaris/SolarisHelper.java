@@ -24,11 +24,11 @@ package org.identityconnectors.solaris;
 
 import static org.identityconnectors.solaris.SolarisMessages.MSG_NOT_SUPPORTED_OBJECTCLASS;
 
-import java.util.List;
 import java.util.Map;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 
@@ -38,24 +38,14 @@ public class SolarisHelper {
     
     /** helper method for getting the password from an attribute map */
     public static GuardedString getPasswordFromMap(Map<String, Attribute> attrMap) {
-        String msg; 
         Attribute attrPasswd = attrMap.get(OperationalAttributes.PASSWORD_NAME);
-        List<Object> listValues = attrPasswd.getValue();
-        
-        Object o = null;
-        try {
-            o = listValues.get(0);
-        } catch (ArrayIndexOutOfBoundsException ex) {
-            msg = String.format("password attribute is missing from attribute map: %s", attrMap.toString());
+        if (attrPasswd == null) {
+            String msg = String.format("password should be of type GuardedString, inside attribute map: %s",
+                    attrMap.toString());
+            
             throw new IllegalArgumentException(msg);
         }
-        
-        if (o instanceof GuardedString) {
-            return (GuardedString) listValues.get(0);
-        } else {
-            msg = String.format("password should be of type GuardedString, inside attribute map: %s", attrMap.toString());
-            throw new IllegalArgumentException(msg);
-        }
+        return AttributeUtil.getGuardedStringValue(attrPasswd);
     }
     
     public static void controlObjectClassValidity(ObjectClass oclass) {

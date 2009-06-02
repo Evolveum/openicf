@@ -53,15 +53,9 @@ public class SolarisConfigurationTest {
     
     @Test
     public void testGoodConfiguration() {
-        try {
-            SolarisConfiguration config = getConfig();
-            // no IllegalArgumentException should be thrown
-            config.validate();
-        } catch (IllegalArgumentException ex) {
-            Assert
-                    .fail("no IllegalArgumentException should be thrown for valid configuration: "
-                            + ex.getMessage());
-        }
+        SolarisConfiguration config = getConfig();
+        config.validate();
+        // no IllegalArgumentException should be thrown for valid configuration
     }
     
     /* **************** "MISSING" PROPERTY TESTS ***************** */

@@ -114,7 +114,7 @@ public class OpCreateImplTest {
         res.add(AttributeBuilder.build(Name.NAME, getTestProperty("sampleUser", true)));
         
         String samplePasswd = getTestProperty("samplePasswd", true);
-        res.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString(samplePasswd.toCharArray())));
+        res.add(AttributeBuilder.buildPassword(new GuardedString(samplePasswd.toCharArray())));
         
         return res;
     }

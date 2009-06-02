@@ -101,7 +101,3 @@ public class SolarisTestCommon {
         return factory.newInstance(apiCfg);
     }
 }
-
-interface SetConfiguration {
-    public SolarisConfiguration set(String value, SolarisConfiguration config);
-}

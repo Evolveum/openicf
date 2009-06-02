@@ -93,7 +93,7 @@ public class OpUpdateImplTest {
             
             Set<Attribute> replaceAttributes = new HashSet<Attribute>();
             final String newPassword = getTestProperty("samplePasswd.modified");
-            Attribute chngPasswdAttribute = AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, newPassword);
+            Attribute chngPasswdAttribute = AttributeBuilder.buildPassword(new GuardedString(newPassword.toCharArray()));
             replaceAttributes.add(chngPasswdAttribute);
             // 1) PERFORM THE UPDATE OF PASSWORD
             facade.update(ObjectClass.ACCOUNT, new Uid(username), replaceAttributes , null);
