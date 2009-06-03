@@ -12,6 +12,7 @@ import javax.sql.DataSource;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.oracle.OracleConfiguration.ConnectionType;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.*;
 
@@ -36,6 +37,7 @@ public class OracleConfigurationTest {
         cfg.setDriver(null);
         cfg.setPort(null);
         cfg.validate();
+        Assert.assertEquals(ConnectionType.DATASOURCE,cfg.getConnType());
         
         cfg.setHost("anyHost");
         assertValidateFail(cfg, "validate must fail for datasource configuration when host is not blank");
@@ -71,6 +73,7 @@ public class OracleConfigurationTest {
         cfg.setUser("user");
         cfg.setPassword(new GuardedString(new char[]{'p'}));
         cfg.validate();
+        Assert.assertEquals(ConnectionType.THIN,cfg.getConnType());
         
         //Try oci driver
         cfg = createEmptyCfg();
@@ -80,6 +83,7 @@ public class OracleConfigurationTest {
         cfg.setUser("user");
         cfg.setPassword(new GuardedString(new char[]{'p'}));
         cfg.validate();
+        Assert.assertEquals(ConnectionType.OCI,cfg.getConnType());
         
         //Try custom driver
         cfg.setDriver("invalidClass");
@@ -93,6 +97,7 @@ public class OracleConfigurationTest {
         cfg.setPort(null);
         cfg.setHost(null);
         cfg.validate();
+        Assert.assertEquals(ConnectionType.FULL_URL,cfg.getConnType());
         cfg.setHost("myHost");
         assertValidateFail(cfg, "validate must fail for custom URL configuration when host is not blank");
         cfg.setHost(null);
@@ -102,6 +107,63 @@ public class OracleConfigurationTest {
         cfg.setDatabase("myDB");
         assertValidateFail(cfg, "validate must fail for custom URL configuration when database is not blank");
         
+    }
+    
+    @Test
+    public void testExplicitValidation(){
+    	//Test with ds
+    	OracleConfiguration cfg = createEmptyCfg();
+    	cfg.setSourceType(ConnectionType.DATASOURCE.getSourceType());
+    	cfg.setDataSource("myDS");
+    	cfg.validate();
+    	Assert.assertEquals(ConnectionType.DATASOURCE, cfg.getConnType());
+    	Assert.assertNull("Driver classname must be null", cfg.getDriverClassName());
+    	//We should be able to set host even when ignored
+    	cfg.setHost("myHost");
+    	cfg.setDataSource(null);
+    	assertValidateFail(cfg, "Validate must fail for null ds");
+    	
+    	//Test with thin driver
+    	cfg = createEmptyCfg();
+    	cfg.setSourceType(ConnectionType.THIN.getSourceType());
+    	cfg.setHost("myHost");
+    	cfg.setPort("12345");
+    	cfg.setUser("user");
+    	cfg.setPassword(new GuardedString("myPassword".toCharArray()));
+    	cfg.setDatabase("myDB");
+    	cfg.validate();
+    	Assert.assertEquals(ConnectionType.THIN, cfg.getConnType());
+    	Assert.assertEquals(OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME, cfg.getDriverClassName());
+    	cfg.setDataSource("ds");
+    	cfg.validate();
+    	cfg.setHost(null);
+    	assertValidateFail(cfg, "Validate must fail for null host");
+    	
+    	//Test with oci driver
+    	cfg = createEmptyCfg();
+    	cfg.setSourceType(ConnectionType.OCI.getSourceType());
+    	cfg.setUser("user");
+    	cfg.setPassword(new GuardedString("myPassword".toCharArray()));
+    	cfg.setDatabase("myDB");
+    	cfg.validate();
+    	Assert.assertEquals(ConnectionType.OCI, cfg.getConnType());
+    	cfg.setDataSource("ds");
+    	cfg.validate();
+    	Assert.assertEquals(OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME, cfg.getDriverClassName());
+    	cfg.setDatabase(null);
+    	assertValidateFail(cfg, "Validate must fail for null database");
+    	
+    	//Test with custom driver
+    	cfg = createEmptyCfg();
+		cfg.setSourceType(ConnectionType.FULL_URL.getSourceType());
+		cfg.setUrl("myURL");
+		cfg.setDriver(Driver.class.getName());
+    	cfg.setUser("user");
+    	cfg.setPassword(new GuardedString("myPassword".toCharArray()));
+    	cfg.validate();
+    	Assert.assertEquals(ConnectionType.FULL_URL, cfg.getConnType());
+    	cfg.setUrl(null);
+    	assertValidateFail(cfg, "Validate must fail for null url");
     }
 
 	private OracleConfiguration createEmptyCfg() {
@@ -381,9 +443,18 @@ public class OracleConfigurationTest {
             throw new IllegalArgumentException("Invalid method");
         }
     }
-    
+    //Replace with EasyMock after switch to maven
     private static  class ConnectionIH implements InvocationHandler{
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        	if("getAutoCommit".equals(method.getName())){
+        		return false;
+        	}
+        	if("getTransactionIsolation".equals(method.getName())){
+        		return Connection.TRANSACTION_READ_COMMITTED;
+        	}
+        	if("isClosed".equals(method.getName())){
+        		return false;
+        	}
             return null;
         }
     }

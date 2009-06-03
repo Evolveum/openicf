@@ -24,6 +24,11 @@ class OracleMessages {
 	static final String MSG_URL_HELP = "oracle.url.help";
 	static final String MSG_CS_DISPLAY = "oracle.cs.display";
 	static final String MSG_CS_HELP = "oracle.cs.help";
+	static final String MSG_IGNORE_CREATE_EXTRA_OPER_ATTRS_DISPLAY = "oracle.ignore.create.extra.oper.attrs.display";
+	static final String MSG_IGNORE_CREATE_EXTRA_OPER_ATTRS_HELP = "oracle.ignore.create.extra.oper.attrs.help";
+	static final String MSG_SOURCE_TYPE_DISPLAY = "oracle.source.type.display";
+	static final String MSG_SOURCE_TYPE_HELP = "oracle.source.type.help";
+	
 	static final String MSG_USER_AND_PASSWORD_MUST_BE_SET_BOTH_OR_NONE = "oracle.user.and.password.must.be.set.both.or.none";
 	static final String MSG_INVALID_AUTH = "oracle.invalid.auth";
 	static final String MSG_INVALID_BRACKET = "oracle.invalid.bracket";
@@ -53,6 +58,7 @@ class OracleMessages {
 	static final String MSG_MISSING_TEMPORARY_TABLESPACE_FOR_QUOTA = "oracle.missing.temporary.tablespace.for.quota";
 	static final String MSG_CANNOT_SET_GLOBALNAME_FOR_NOT_GLOBAL_AUTHENTICATION = "oracle.cannot.set.globalname.for.not.global.authentication";
 	static final String MSG_CANNOT_SET_PASSWORD_FOR_NOT_LOCAL_AUTHENTICATION = "oracle.cannot.set.password.for.not.local.authentication";
+	static final String MSG_CANNOT_EXPIRE_PASSWORD_FOR_NOT_LOCAL_AUTHENTICATION = "oracle.cannot.expire.password.for.not.local.authentication";
 	static final String MSG_MISSING_GLOBALNAME_FOR_GLOBAL_AUTHENTICATION = "oracle.missing.globalname.for.global.authentication";
 	static final String MSG_BOOLEAN_ATTRIBUTE_HAS_INVALID_VALUE = "oracle.boolean.attribute.has.invalid.value";
 	static final String MSG_ATTRIBUTE_IS_EMPTY = "oracle.attribute.is.empty";
@@ -64,4 +70,9 @@ class OracleMessages {
 	static final String MSG_DATASOURCE_CONNECTION_ERROR = "oracle.datasource.connection.error";
 	static final String MSG_ENABLE_LOCK_ATTR_VALUE_CONFLICT_FALSE = "oracle.enable.lock.attr.value.conflict.false";
 	static final String MSG_ENABLE_LOCK_ATTR_VALUE_CONFLICT_TRUE = "oracle.enable.lock.attr.value.conflict.true";
+	static final String MSG_INVALID_SOURCE_TYPE = "oracle.invalid.source.type";
+	static final String MSG_CONNECTION_AUTOCOMMIT_TRUE = "oracle.connection.autocommit.true";
+	static final String MSG_CONNECTION_TRANSACTION_ISOLATION_NONE = "oracle.connection.transaction.isolation.none";
+	static final String MSG_CONNECTION_TRANSACTION_ISOLATION_UNCOMMITTED = "oracle.connection.transaction.isolation.uncommited";
+	
 }

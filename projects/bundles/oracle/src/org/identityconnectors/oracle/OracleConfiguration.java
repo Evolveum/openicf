@@ -13,7 +13,9 @@ import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.JNDIUtil;
 import org.identityconnectors.dbcommon.LocalizedAssert;
+import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
 import org.identityconnectors.oracle.OracleDriverConnectionInfo.Builder;
@@ -37,36 +39,59 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     private ConnectionType connType;
     private OracleCaseSensitivitySetup cs;
     private String caseSensitivityString;
-    
+    //Source type is user defined ConnectionType
+    private String sourceType;
+    private boolean ignoreCreateExtraOperAttrs;
     /**
      * Creates configuration
      */
     public OracleConfiguration() {
-        //Set casesensitivity setup to default one
         cs = new OracleCaseSensitivityBuilder(getConnectorMessages()).build();
         caseSensitivityString = "default";
         port = OracleSpecifics.LISTENER_DEFAULT_PORT;
-        driver = OracleSpecifics.THIN_DRIVER;
     }
-    
     
     /** Type of connection we will use to connect to Oracle */
     static enum ConnectionType{
         /** Connecting using datasource */
-        DATASOURCE,
+        DATASOURCE("DataSource"),
         /** Connecting using type 4 driver (host,port,databaseName)*/
-        THIN,
+        THIN("Thin Driver"),
         /** Connecting using type 2 driver (using TNSNAMES.ora) */
-        OCI,
+        OCI("OCI Driver"),
         /** Custom driver with custom URL */
-        FULL_URL
+        FULL_URL("Custom Driver");
+
+    	private final String sourceType;
+    	
+    	String getSourceType(){
+    		return sourceType;
+    	}
+    	
+    	ConnectionType(String sourceType){
+    		this.sourceType = sourceType;
+    	}
+    	
+        
+        static ConnectionType resolveType(String name, ConnectorMessages msg){
+        	for(ConnectionType type : values()){
+        		if(type.sourceType.equals(name)){
+        			return type;
+        		}
+        	}
+        	throw new IllegalArgumentException(msg.format(MSG_INVALID_SOURCE_TYPE,null));
+        }
     }
+    
+    
+    
+    
     
     /**
      * Default clone implementation.
      * @throws ConnectorException when super.clone fails
      */
-    public OracleConfiguration clone() throws ConnectorException{
+    protected OracleConfiguration clone() throws ConnectorException{
         try {
             return (OracleConfiguration) super.clone();
         } catch (CloneNotSupportedException e) {
@@ -162,10 +187,32 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     
     
     /**
+	 * @return the ignoreCreateExtraOperAttrs
+	 */
+	@ConfigurationProperty(order = 10, displayMessageKey = MSG_IGNORE_CREATE_EXTRA_OPER_ATTRS_DISPLAY, helpMessageKey = MSG_IGNORE_CREATE_EXTRA_OPER_ATTRS_HELP, required = true)
+    public boolean isIgnoreCreateExtraOperAttrs() {
+		return ignoreCreateExtraOperAttrs;
+	}
+	
+	@ConfigurationProperty(order = 11, displayMessageKey = MSG_SOURCE_TYPE_DISPLAY, helpMessageKey = MSG_SOURCE_TYPE_HELP, required = false)
+	public String getSourceType() {
+    	return sourceType;
+    }
+
+
+	/**
+	 * @param ignoreCreateExtraOperAttrs the ignoreExtraPassword to set
+	 */
+	public void setIgnoreCreateExtraOperAttrs(boolean ignoreCreateExtraOperAttrs) {
+		this.ignoreCreateExtraOperAttrs = ignoreCreateExtraOperAttrs;
+	}
+
+	/**
      * @param host the host to set
      */
     public void setHost(String host) {
         this.host = host;
+        this.connType = null;
     }
     
     /**
@@ -173,6 +220,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
      */
     public void setPort(String port) {
         this.port = port;
+        this.connType = null;
     }
 
 
@@ -181,6 +229,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
      */
     public void setDriver(String driver) {
         this.driver = driver;
+        this.connType = null;
     }
 
 
@@ -189,6 +238,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
      */
     public void setDatabase(String database) {
         this.database = database;
+        this.connType = null;
     }
 
     
@@ -205,6 +255,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
      */
     public void setUser(String user) {
         this.user = user;
+        this.connType = null;
     }
 
     /**
@@ -222,6 +273,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
 				}
     		});
     	}
+    	this.connType = null;
     }
 
 
@@ -230,6 +282,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
      */
     public void setDataSource(String dataSource) {
         this.dataSource = dataSource;
+        this.connType = null;
     }
 
     /**
@@ -243,16 +296,15 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
 			this.dsJNDIEnv = new String[dsJNDIEnv.length];
 			System.arraycopy(dsJNDIEnv,0,this.dsJNDIEnv,0,dsJNDIEnv.length);
 		}
+		this.connType = null;
     }
-    
-    
-
 
     /**
      * @param url the url to set
      */
     public void setUrl(String url) {
         this.url = url;
+        this.connType = null;
     }
     
     
@@ -260,6 +312,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
      * @param cs */
     public void setCaseSensitivity(String cs){
         this.caseSensitivityString = cs;
+        this.connType = null;
     }
     
     OracleCaseSensitivitySetup getCSSetup(){
@@ -269,82 +322,53 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     void setCSSetup(OracleCaseSensitivitySetup cs){
         this.cs = new LocalizedAssert(getConnectorMessages()).assertNotNull(cs, "cs");
     }
+    
+    public void setSourceType(String sourceType){
+    	this.sourceType = sourceType;
+    	this.connType = null;
+    }
 
     
-    @Override
+    ConnectionType getConnType() {
+		return connType;
+	}
+
+	void setConnType(ConnectionType connType) {
+		this.connType = connType;
+	}
+	
+
+	String getDriverClassName() {
+		return driverClassName;
+	}
+
+	void setDriverClassName(String driverClassName) {
+		this.driverClassName = driverClassName;
+	}
+
+	String getCaseSensitivityString() {
+		return caseSensitivityString;
+	}
+
+	void setCaseSensitivityString(String caseSensitivityString) {
+		this.caseSensitivityString = caseSensitivityString;
+	}
+
+	@Override
     public void validate() {
-    	LocalizedAssert la = new LocalizedAssert(getConnectorMessages(),true);
-        la.assertNotBlank(caseSensitivityString, "oracle.cs.display");
-        this.cs = new OracleCaseSensitivityBuilder(getConnectorMessages()).parseMap(caseSensitivityString).build();
-        if(StringUtil.isNotBlank(dataSource)){
-			la.assertBlank(host, MSG_HOST_DISPLAY);
-			la.assertBlank(database,MSG_DATABASE_DISPLAY);
-			la.assertBlank(driver,MSG_DRIVER_DISPLAY);
-			la.assertBlank(port,MSG_PORT_DISPLAY);
-			//If user is not blank, then also password must not be blank
-			//Most of datasource configuration will not allow to pass user and password when retrieving connection from ds,
-			//But for some configuration it is valid to specify user/password and override configuration at application server level
-			if((StringUtil.isNotBlank(user) && password == null) || (StringUtil.isBlank(user) && password != null)){
-				throw new IllegalArgumentException(getConnectorMessages().format(MSG_USER_AND_PASSWORD_MUST_BE_SET_BOTH_OR_NONE, null));
-			}
-            connType = ConnectionType.DATASOURCE;
-        }
-        else{
-        	la.assertNotBlank(driver, MSG_DRIVER_DISPLAY);
-            if(StringUtil.isNotBlank(url)){
-                la.assertNotBlank(user,MSG_USER_DISPLAY);
-                la.assertNotNull(password, MSG_PASSWORD_DISPLAY);
-    			la.assertBlank(host, "MSG_HOST_DISPLAY");
-    			la.assertBlank(database,MSG_DATABASE_DISPLAY);
-    			la.assertBlank(port,MSG_PORT_DISPLAY);
-                if(OracleSpecifics.THIN_DRIVER.equals(driver)){
-                    driverClassName = OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME;
-                }
-                else if(OracleSpecifics.OCI_DRIVER.equals(driver)){
-                    driverClassName = OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME;
-                }
-                else{
-                	driverClassName = driver;
-                }
-                try {
-                    Class.forName(driverClassName);
-                } catch (ClassNotFoundException e) {
-                    throw new IllegalArgumentException(getConnectorMessages().format(MSG_CANNOT_LOAD_DRIVER, null, driverClassName) ,e);
-                }
-                connType = ConnectionType.FULL_URL;
-            }
-            else if(OracleSpecifics.THIN_DRIVER.equals(driver) || OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME.equals(driver)){
-            	la.assertNotBlank(host, MSG_HOST_DISPLAY);
-            	la.assertNotBlank(port, MSG_PORT_DISPLAY);
-            	la.assertNotBlank(user, MSG_USER_DISPLAY);
-            	la.assertNotNull(password, MSG_PASSWORD_DISPLAY);
-            	la.assertNotBlank(database, MSG_DATABASE_DISPLAY);
-                driverClassName = OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME;
-                try {
-                    Class.forName(driverClassName);
-                } catch (ClassNotFoundException e) {
-                	throw new IllegalArgumentException(getConnectorMessages().format(MSG_CANNOT_LOAD_DRIVER, null, driverClassName) ,e);
-                }
-                connType = ConnectionType.THIN;
-            }
-            else if(OracleSpecifics.OCI_DRIVER.equals(driver)){
-            	la.assertNotBlank(user, MSG_USER_DISPLAY);
-            	la.assertNotNull(password, MSG_PASSWORD_DISPLAY);
-            	la.assertNotBlank(database, MSG_DATABASE_DISPLAY);
-                driverClassName = OracleSpecifics.THIN_AND_OCI_DRIVER_CLASSNAME;
-                try {
-                    Class.forName(driverClassName);
-                } catch (ClassNotFoundException e) {
-                	throw new IllegalArgumentException(getConnectorMessages().format(MSG_CANNOT_LOAD_DRIVER, null, driverClassName) ,e);
-                }
-                connType = ConnectionType.OCI;
-            }
-            else{
-            	throw new IllegalArgumentException(getConnectorMessages().format(MSG_SET_DRIVER_OR_URL,null));
-            }
-        }
-        
+    	if(connType != null){
+    		return;
+    	}
+    	try{
+    		new OracleConfigurationValidator(this).validate();
+    	}
+    	catch(RuntimeException e){
+    		//Just to be sure that failed validation does not set connType
+    		setConnType(null);
+    		throw e;
+    	}
     }
+    
     
     Connection createUserConnection(String user, GuardedString password){
     	user = cs.formatToken(OracleUserAttributeCS.USER, user);
@@ -362,10 +386,10 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     private Connection createConnection(String user,GuardedString password){
         validate();
         Connection connection = null;
-        boolean disableAutoCommit = true;
+        boolean adjustConn = true;
         if(ConnectionType.DATASOURCE.equals(connType)){
-        	disableAutoCommit = false;
-            if(StringUtil.isNotBlank(user)){
+        	adjustConn = false;
+            if(StringUtil.isNotBlank(user) && password != null){
             	//This could fail, but we cannot invoke method without user/password if user and password were specified
             	connection = OracleSpecifics.createDataSourceConnection(dataSource,user,password,JNDIUtil.arrayToHashtable(dsJNDIEnv, getConnectorMessages()), getConnectorMessages());
             }
@@ -391,22 +415,54 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
             );
         }
         else{
-        	throw new IllegalStateException("Invalid state of OracleConfiguration");
+        	throw new IllegalStateException("Invalid state of OracleConfiguration, connectionType = " + connType);
         }
-        if(disableAutoCommit){
-        	try {
-				connection.setAutoCommit(false);
-			} catch (SQLException e) {
-				throw new ConnectorException("Cannot switch off autocommit",e);
-			}
+        try{
+	        if(adjustConn){
+	        	adjustConnnection(connection);
+	        }
+	        checkConnection(connection);
+        }catch(RuntimeException e){
+        	SQLUtil.closeQuietly(connection);
+        	throw e;
         }
-        try {
-			connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-		} catch (SQLException e) {
-			throw new ConnectorException("Cannot set transaction isloation",e);
-		}
         return connection;
     }
+
+	private void checkConnection(Connection connection) {
+		try{
+	        if(connection.getAutoCommit()){
+	        	throw new IllegalStateException(getConnectorMessages().format(MSG_CONNECTION_AUTOCOMMIT_TRUE, null));
+	        }
+        }catch(SQLException e){
+			throw new ConnectorException("Cannot check connection autocommit flag",e);
+        }
+        try{
+        	if(connection.getTransactionIsolation() == Connection.TRANSACTION_NONE){
+        		throw new IllegalStateException(getConnectorMessages().format(MSG_CONNECTION_TRANSACTION_ISOLATION_NONE, null, connection.getTransactionIsolation()));
+        	}
+        	else if(connection.getTransactionIsolation() == Connection.TRANSACTION_READ_UNCOMMITTED){
+        		throw new IllegalStateException(getConnectorMessages().format(MSG_CONNECTION_TRANSACTION_ISOLATION_UNCOMMITTED, null, connection.getTransactionIsolation()));
+        	}
+        }
+        catch(SQLException e){
+        	throw new ConnectorException("Cannot check connection transaction isolation settings", e);
+        }
+	}
+
+	private void adjustConnnection(Connection connection) {
+		try {
+			connection.setAutoCommit(false);
+		} catch (SQLException e) {
+			throw new ConnectorException("Cannot switch off autocommit",e);
+		}
+		try {
+			connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+		} catch (SQLException e) {
+			SQLUtil.closeQuietly(connection);
+			throw new ConnectorException("Cannot set transaction isolation",e);
+		}
+	}
     
 
 }

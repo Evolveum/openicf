@@ -46,7 +46,7 @@ public abstract class OracleConnectorAbstractTest {
     	connector.dispose();
     }
     
-    private static ConnectorFacade createFacade(OracleConfiguration conf) {
+    protected static ConnectorFacade createFacade(OracleConfiguration conf) {
         ConnectorFacadeFactory factory = ConnectorFacadeFactory.getInstance();
         APIConfiguration apiCfg = TestHelpers.createTestConfiguration(OracleConnector.class, conf);
         return factory.newInstance(apiCfg);

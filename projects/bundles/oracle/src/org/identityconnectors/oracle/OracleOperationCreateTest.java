@@ -3,13 +3,15 @@
  */
 package org.identityconnectors.oracle;
 
+import static org.identityconnectors.oracle.OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME;
+import static org.identityconnectors.oracle.OracleConstants.ORACLE_PRIVS_ATTR_NAME;
+import static org.identityconnectors.oracle.OracleUserAttributeCS.PROFILE;
+import static org.identityconnectors.oracle.OracleUserAttributeCS.USER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.identityconnectors.oracle.OracleUserAttributeCS.*;
-import static org.identityconnectors.oracle.OracleConstants.*;
 
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -17,7 +19,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.security.GuardedString;
@@ -133,6 +134,19 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         assertNull(record.getExternalName());
         assertEquals("OPEN",record.getStatus());
         assertEquals("EXTERNAL",record.getPassword());
+        facade.delete(ObjectClass.ACCOUNT, uid, null);
+        
+        //Try to set external authentication and password
+        authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_EXTERNAL);
+        //Set ignoreExtrAtt
+        OracleConfiguration newConf = OracleConfigurationTest.createSystemConfiguration();
+        newConf.setIgnoreCreateExtraOperAttrs(true);
+        OracleConnector testConnector = new OracleConnector();
+        testConnector.init(newConf);
+        uid = testConnector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, AttributeBuilder.buildPassword(password)), null);
+        testConnector.delete(ObjectClass.ACCOUNT, uid, null);
+        testConnector.dispose();
+
     }
     
     /** Test create global user   
@@ -147,7 +161,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         try{
         	uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,AttributeBuilder.buildPassword(password),globalName), null);
         	fail("Password cannot be provided for global authentication");
-        }catch(IllegalArgumentException e){
+        }catch(RuntimeException e){
         }
         try{
             uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,globalName), null);
@@ -170,8 +184,18 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
             assertNotNull(record);
             assertEquals(uid.getUidValue(), record.getUserName());
             assertNull(record.getExpireDate());
-            assertNotNull(record.getExternalName());
+            assertEquals("global",record.getExternalName());
             assertEquals("OPEN",record.getStatus());
+            facade.delete(ObjectClass.ACCOUNT, uid, null);
+            //Try to set global authentication and password
+            //Set ignoreExtrAtt
+            OracleConfiguration newConf = OracleConfigurationTest.createSystemConfiguration();
+            newConf.setIgnoreCreateExtraOperAttrs(true);
+            OracleConnector testConnector = new OracleConnector();
+            testConnector.init(newConf);
+            uid = testConnector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,AttributeBuilder.buildPassword(password),globalName), null);
+            testConnector.delete(ObjectClass.ACCOUNT, uid, null);
+            testConnector.dispose();
         }
     }
     
@@ -350,6 +374,24 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         record = userReader.readUserRecord(uid.getUidValue());
         assertNotNull(record);
         assertEquals("EXPIRED",record.getStatus());
+        
+        facade.delete(ObjectClass.ACCOUNT, uid, null);
+        
+        //Try to set external authentication and expire password
+        authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_EXTERNAL);
+        try{
+        	uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, expirePassword), null);
+        	fail("Create with external auth and expire password must fail");
+        }catch(ConnectorException e){}
+        //Set ignoreExtrAtt
+        OracleConfiguration newConf = OracleConfigurationTest.createSystemConfiguration();
+        newConf.setIgnoreCreateExtraOperAttrs(true);
+        OracleConnector testConnector = new OracleConnector();
+        testConnector.init(newConf);
+        uid = testConnector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, expirePassword), null);
+        testConnector.delete(ObjectClass.ACCOUNT, uid, null);
+        testConnector.dispose();
+        
     }
     
     /** Test Create user locked/unlocked 

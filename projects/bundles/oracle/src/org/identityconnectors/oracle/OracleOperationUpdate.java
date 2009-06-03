@@ -66,7 +66,7 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
         OracleUserAttributes caAttributes = builder.build();
         try{
             UserRecord userRecord = new OracleUserReader(adminConn,cfg.getConnectorMessages()).readUserRecord(caAttributes.getUserName());
-            String alterSQL = new OracleCreateOrAlterStBuilder(cfg.getCSSetup(),cfg.getConnectorMessages()).buildAlterUserSt(caAttributes, userRecord);
+            String alterSQL = new OracleCreateOrAlterStBuilder(cfg).buildAlterUserSt(caAttributes, userRecord);
             List<String> grantRevokeSQL = new ArrayList<String>();
             Attribute aRoles = AttributeUtil.find(OracleConstants.ORACLE_ROLES_ATTR_NAME, attrs);
             //If we have null or empty roles attribute, revoke all roles

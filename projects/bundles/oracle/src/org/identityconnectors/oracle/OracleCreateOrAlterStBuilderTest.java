@@ -34,6 +34,12 @@ public class OracleCreateOrAlterStBuilderTest {
         local.setPassword(new GuardedString("password".toCharArray()));
         assertEquals("create user \"user1\" identified by \"password\"", createDefaultBuilder().buildCreateUserSt(local.build()).toString());
         
+        local.setGlobalName("myGlobalName");
+        try{
+            createDefaultBuilder().buildCreateUserSt(local.build());
+            fail("Must fail for extra globa name");
+        }catch(Exception e){}
+        
     }
     
     
@@ -81,8 +87,13 @@ public class OracleCreateOrAlterStBuilderTest {
     }
 
     private OracleCreateOrAlterStBuilder createDefaultBuilder() {
-        return new OracleCreateOrAlterStBuilder(new OracleCaseSensitivityBuilder(TestHelpers.createDummyMessages()).build(),TestHelpers.createDummyMessages());
+        return new OracleCreateOrAlterStBuilder(new OracleCaseSensitivityBuilder(TestHelpers.createDummyMessages()).build(),TestHelpers.createDummyMessages(), false);
     }
+    
+    private OracleCreateOrAlterStBuilder createIgnorePasswordBuilder() {
+        return new OracleCreateOrAlterStBuilder(new OracleCaseSensitivityBuilder(TestHelpers.createDummyMessages()).build(),TestHelpers.createDummyMessages(), true);
+    }
+    
     
     /** Test create external */
     @Test
@@ -91,6 +102,14 @@ public class OracleCreateOrAlterStBuilderTest {
         external.setUserName("user1");
         external.setAuth(OracleAuthentication.EXTERNAL);
         assertEquals("create user \"user1\" identified externally", createDefaultBuilder().buildCreateUserSt(external.build()).toString());
+        
+        external.setPassword(new GuardedString("myPassword".toCharArray()));
+        try{
+        	createDefaultBuilder().buildCreateUserSt(external.build());
+        	fail("Build for external authentication must fail when password is sent");
+        }catch(Exception e){}
+        //When ignoring password, we should not fail
+        createIgnorePasswordBuilder().buildCreateUserSt(external.build());
     }
     
     /** Test create global */
@@ -101,10 +120,19 @@ public class OracleCreateOrAlterStBuilderTest {
         global.setAuth(OracleAuthentication.GLOBAL);
         try{
             createDefaultBuilder().buildCreateUserSt(global.build());
-            fail("GlobalName should be missed");
+            fail("Must fail for missing global name");
         }catch(Exception e){}
         global.setGlobalName("global");
         assertEquals("create user \"user1\" identified globally as 'global'", createDefaultBuilder().buildCreateUserSt(global.build()).toString());
+        
+        global.setPassword(new GuardedString("myPassword".toCharArray()));
+        try{
+        	createDefaultBuilder().buildCreateUserSt(global.build());
+        	fail("Build for global authentication must fail when password is sent");
+        }catch(Exception e){}
+        //When ignoring password, we should not fail
+        createIgnorePasswordBuilder().buildCreateUserSt(global.build());
+        
     }
     
     /** Test expire password  */
@@ -184,7 +212,7 @@ public class OracleCreateOrAlterStBuilderTest {
 						new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(OracleUserAttributeCS.USER).setQuatesChar("").build(),
 						new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(OracleUserAttributeCS.PROFILE).setQuatesChar("'").build()
 						).build();
-    	OracleCreateOrAlterStBuilder builder = new OracleCreateOrAlterStBuilder(ocs,TestHelpers.createDummyMessages());
+    	OracleCreateOrAlterStBuilder builder = new OracleCreateOrAlterStBuilder(ocs,TestHelpers.createDummyMessages(), false);
         OracleUserAttributes.Builder attributes = new OracleUserAttributes.Builder();
         attributes.setAuth(null);
         attributes.setUserName("user1");

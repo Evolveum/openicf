@@ -8,6 +8,7 @@ import static org.identityconnectors.oracle.OracleUserAttributeCS.USER;
 
 import java.util.Arrays;
 
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import static org.identityconnectors.oracle.OracleMessages.*;
@@ -27,6 +28,7 @@ import static org.identityconnectors.oracle.OracleMessages.*;
 final class OracleCreateOrAlterStBuilder {
     private final OracleCaseSensitivitySetup cs;
     private final ConnectorMessages cm;
+	private final boolean ignoreCreateExtraOperAttrs;
     
     /** Helper status where we store real set attributes */
     private static class BuilderStatus{
@@ -34,11 +36,18 @@ final class OracleCreateOrAlterStBuilder {
         private GuardedString passwordSet;
         //Force to expire password even if no attribute was specified by user
         private boolean forceExpirePassword;
+        //Real set authentication
+        OracleAuthentication currentAuth;
     }
     
-    OracleCreateOrAlterStBuilder(OracleCaseSensitivitySetup cs,ConnectorMessages cm) {
+    OracleCreateOrAlterStBuilder(OracleCaseSensitivitySetup cs, ConnectorMessages cm, boolean ignoreCreateExtraOperAttrs) {
         this.cs = OracleConnectorHelper.assertNotNull(cs, "cs");
         this.cm = OracleConnectorHelper.assertNotNull(cm, "cm");
+        this.ignoreCreateExtraOperAttrs = ignoreCreateExtraOperAttrs;
+    }
+    
+    OracleCreateOrAlterStBuilder(OracleConfiguration cfg) {
+    	this(cfg.getCSSetup(), cfg.getConnectorMessages(), cfg.isIgnoreCreateExtraOperAttrs());
     }
     
     /**
@@ -92,7 +101,16 @@ final class OracleCreateOrAlterStBuilder {
         	}
         }
         if(status.forceExpirePassword || Boolean.TRUE.equals(userAttributes.getExpirePassword())){
-        	appendExpirePassword(builder,userAttributes);
+        	//We can expire password only for LOCAL authentication
+        	if(OracleAuthentication.LOCAL.equals(status.currentAuth)){
+        		appendExpirePassword(builder,userAttributes);
+        	}
+        	else{
+        		//We will use same flag for ignoring password expire like for ignoring the password
+        		if(Operation.ALTER.equals(operation) || (!ignoreCreateExtraOperAttrs)){
+        			throw new IllegalArgumentException(cm.format(MSG_CANNOT_EXPIRE_PASSWORD_FOR_NOT_LOCAL_AUTHENTICATION, null));
+        		}
+        	}
         }
         if(userAttributes.getEnable() != null){
             appendEnabled(builder,userAttributes);
@@ -170,26 +188,30 @@ final class OracleCreateOrAlterStBuilder {
     }
 
     private void appendAuth(final StringBuilder builder, OracleUserAttributes userAttributes, Operation operation, BuilderStatus status,UserRecord userRecord) {
-    	OracleAuthentication auth = userAttributes.getAuth();
-    	if(auth == null){
+    	status.currentAuth = userAttributes.getAuth();
+    	if(status.currentAuth == null){
     		if(Operation.CREATE.equals(operation)){
-    			auth = OracleAuthentication.LOCAL;
+    			status.currentAuth = OracleAuthentication.LOCAL;
     		}
-    		else if(userAttributes.getPassword() != null){
-    			auth = OracleUserReader.resolveAuthentication(userRecord);
+    		else {
+    			status.currentAuth = OracleUserReader.resolveAuthentication(userRecord);
     		}
     	}
-    	if(userAttributes.getPassword() != null && !OracleAuthentication.LOCAL.equals(auth)){
-    		throw new IllegalArgumentException(cm.format(MSG_CANNOT_SET_PASSWORD_FOR_NOT_LOCAL_AUTHENTICATION, null));
-    	}
-    	if(userAttributes.getGlobalName() != null && !OracleAuthentication.GLOBAL.equals(auth)){
-    		throw new IllegalArgumentException(cm.format(MSG_CANNOT_SET_GLOBALNAME_FOR_NOT_GLOBAL_AUTHENTICATION, null));
-    	}
-    	if(auth == null){
+    	boolean appendIdentified = Operation.CREATE.equals(operation) || userAttributes.getAuth() != null || userAttributes.getPassword() != null || userAttributes.getGlobalName() != null;
+    	if(!appendIdentified){
     		return;
     	}
+    	if(userAttributes.getPassword() != null && !OracleAuthentication.LOCAL.equals(status.currentAuth)){
+    		//In case of update or create with !ignoreCreateExtraOperAttrs and password is present, throw exception
+    		if(Operation.ALTER.equals(operation) || (!ignoreCreateExtraOperAttrs)){
+    			throw new IllegalArgumentException(cm.format(MSG_CANNOT_SET_PASSWORD_FOR_NOT_LOCAL_AUTHENTICATION, null));
+    		}
+    	}
+    	if(userAttributes.getGlobalName() != null && !OracleAuthentication.GLOBAL.equals(status.currentAuth)){
+    		throw new IllegalArgumentException(cm.format(MSG_CANNOT_SET_GLOBALNAME_FOR_NOT_GLOBAL_AUTHENTICATION, null));
+    	}
     	builder.append(" identified");
-        if(OracleAuthentication.LOCAL.equals(auth)){
+        if(OracleAuthentication.LOCAL.equals(status.currentAuth)){
             builder.append(" by ");
             status.passwordSet = userAttributes.getPassword();
             if(status.passwordSet == null){
@@ -215,11 +237,11 @@ final class OracleCreateOrAlterStBuilder {
                 }
             });
         }
-        else if(OracleAuthentication.EXTERNAL.equals(auth)){
+        else if(OracleAuthentication.EXTERNAL.equals(status.currentAuth)){
             builder.append(" externally");
         }
-        else if(OracleAuthentication.GLOBAL.equals(auth)){
-            if(userAttributes.getGlobalName() == null){
+        else if(OracleAuthentication.GLOBAL.equals(status.currentAuth)){
+            if(StringUtil.isBlank(userAttributes.getGlobalName())){
                 throw new IllegalArgumentException(cm.format(MSG_MISSING_GLOBALNAME_FOR_GLOBAL_AUTHENTICATION, null));
             }
             builder.append(" globally as ");

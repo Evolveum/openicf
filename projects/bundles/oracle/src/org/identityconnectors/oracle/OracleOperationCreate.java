@@ -58,20 +58,20 @@ final class OracleOperationCreate extends AbstractOracleOperation implements Cre
         builder.setUserName(userName);
         new OracleAttributesReader(cfg.getConnectorMessages()).readCreateAttributes(map, builder);
         OracleUserAttributes caAttributes = builder.build();
-        String createSQL = new OracleCreateOrAlterStBuilder(cfg.getCSSetup(),cfg.getConnectorMessages()).buildCreateUserSt(caAttributes);
-        if(createSQL == null){
-        	//This should not happen, we want to be just more defensive 
-        	throw new ConnectorException("No create SQL generated, probably not enough attributes");
-        }
-        Attribute roles = AttributeUtil.find(OracleConstants.ORACLE_ROLES_ATTR_NAME, attrs);
-        Attribute privileges = AttributeUtil.find(OracleConstants.ORACLE_PRIVS_ATTR_NAME, attrs);
-        List<String> rolesSQL = new OracleRolesAndPrivsBuilder(cfg.getCSSetup())
-                .buildGrantRolesSQL(userName, OracleConnectorHelper.castList(
-                        roles, String.class)); 
-        List<String> privilegesSQL = new OracleRolesAndPrivsBuilder(cfg.getCSSetup())
-        .buildGrantPrivilegesSQL(userName, OracleConnectorHelper.castList(
-                privileges, String.class)); 
         try {
+	        String createSQL = new OracleCreateOrAlterStBuilder(cfg).buildCreateUserSt(caAttributes);
+	        if(createSQL == null){
+	        	//This should not happen, we want to be just more defensive 
+	        	throw new ConnectorException("No create SQL generated, probably not enough attributes");
+	        }
+	        Attribute roles = AttributeUtil.find(OracleConstants.ORACLE_ROLES_ATTR_NAME, attrs);
+	        Attribute privileges = AttributeUtil.find(OracleConstants.ORACLE_PRIVS_ATTR_NAME, attrs);
+	        List<String> rolesSQL = new OracleRolesAndPrivsBuilder(cfg.getCSSetup())
+	                .buildGrantRolesSQL(userName, OracleConnectorHelper.castList(
+	                        roles, String.class)); 
+	        List<String> privilegesSQL = new OracleRolesAndPrivsBuilder(cfg.getCSSetup())
+	        .buildGrantPrivilegesSQL(userName, OracleConnectorHelper.castList(
+                privileges, String.class)); 
             //Now execute create and grant statements
             SQLUtil.executeUpdateStatement(adminConn, createSQL);
             for(String sql : rolesSQL){

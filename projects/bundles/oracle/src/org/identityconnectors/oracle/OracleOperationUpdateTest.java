@@ -79,21 +79,40 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
      * @throws SQLException */
     @Test
     public void testUpdateAuthentication() throws SQLException{
-        Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_EXTERNAL);
-        facade.authenticate(ObjectClass.ACCOUNT, uid.getUidValue(), password, null);
-        facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(authentication), null);
-        try{
-            facade.authenticate(ObjectClass.ACCOUNT, uid.getUidValue(), password, null);
-            fail("Authenticate must fail for external authentication");
+    	//Update to local
+    	facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil.newSet(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL)), null);
+    	UserRecord record = userReader.readUserRecord(uid.getUidValue());
+    	assertEquals(OracleAuthentication.LOCAL, OracleUserReader.resolveAuthentication(record));
+
+    	//Update to external
+    	facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil.newSet(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_EXTERNAL)), null);
+    	record = userReader.readUserRecord(uid.getUidValue());
+    	assertEquals(OracleAuthentication.EXTERNAL, OracleUserReader.resolveAuthentication(record));
+    	
+    	//Update to global
+    	try{
+	    	facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil
+					.newSet(AttributeBuilder.build(
+							OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,
+							OracleConstants.ORACLE_AUTH_GLOBAL),
+							AttributeBuilder.build(OracleConstants.ORACLE_GLOBAL_ATTR_NAME,"anyGlobal")
+					), null);
+	    	record = userReader.readUserRecord(uid.getUidValue());
+	    	assertEquals(OracleAuthentication.GLOBAL, OracleUserReader.resolveAuthentication(record));
+	    	assertEquals("anyGlobal", record.getExternalName());
+    	}
+        catch(ConnectorException e){
+            if(e.getCause() instanceof SQLException){
+                if("67000".equals(((SQLException)e.getCause()).getSQLState()) && 439 == ((SQLException)e.getCause()).getErrorCode()){
+                }
+                else{
+                    fail(e.getMessage());
+                }
+            }
+            else{
+                fail(e.getMessage());
+            }
         }
-        catch(RuntimeException e){}
-        /* Not enabled for XE
-        authentication = AttributeBuilder.build(OracleConnector.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConnector.ORACLE_AUTH_GLOBAL);
-        Attribute globalName = AttributeBuilder.build(OracleConnector.ORACLE_GLOBAL_ATTR_NAME,"myGlobalName");
-        facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil.newSet(authentication,globalName), null);
-        final UserRecord record = new OracleUserReader(connector.getAdminConnection()).readUserRecord(uid.getUidValue());
-        assertEquals("myGlobalName", record.externalName);
-        */
     }
     
     /** Test update of profile 
@@ -266,6 +285,33 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
     	assertNotNull(record);
         assertEquals("OPEN",record.getStatus());
         
+        //expire must fail for not local authentication
+        //Update to external
+        facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConstants.ORACLE_AUTH_EXTERNAL)), null);
+        try{
+        	//Try expire
+	        facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.buildPasswordExpired(true)), null);
+	        fail("Update with expiredPassword for not local authentication must fail");
+        }catch(RuntimeException e){
+        	if(e.getCause() instanceof SQLException){
+        		fail("Update with expiredPassword for not local authentication should not fail with SQLException");
+        	}
+        }
+        //Update back to local
+        facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConstants.ORACLE_AUTH_LOCAL)), null);
+        try{
+        	//Try update to external with expire in one call
+	        facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil.newSet(
+					AttributeBuilder.buildPasswordExpired(true),
+					AttributeBuilder.build(
+							OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,
+							OracleConstants.ORACLE_AUTH_EXTERNAL)), null);
+	        fail("Update with expiredPassword for not local authentication must fail");
+        }catch(RuntimeException e){
+        	if(e.getCause() instanceof SQLException){
+        		fail("Update with expiredPassword for not local authentication should not fail with SQLException");
+        	}
+        }
     }
     
     @Test
@@ -370,27 +416,36 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
     }
     
     @Test
-    public void testUpdateUserExternal() throws SQLException{
+    public void testUpdateExternal() throws SQLException{
         //Test external authentication
     	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConstants.ORACLE_AUTH_EXTERNAL)), null);
         UserRecord record = userReader.readUserRecord(uid.getUidValue());
     	assertNotNull(record);
-        assertEquals("OPEN",record.getStatus());
-        assertEquals("EXTERNAL",record.getPassword());
+    	assertEquals(OracleAuthentication.EXTERNAL, OracleUserReader.resolveAuthentication(record));
     	facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil
 				.newSet(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConstants.ORACLE_AUTH_LOCAL),
 						AttributeBuilder.buildPassword("password".toCharArray())
 						),
 				null);
+    	record = userReader.readUserRecord(uid.getUidValue());
+    	assertNotNull(record);
+        assertEquals(OracleAuthentication.LOCAL, OracleUserReader.resolveAuthentication(record));
     }
     
     
     @Test
     public void testUpdateUserGlobal() throws SQLException{
-        //Test external authentication
     	try{
     		facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConstants.ORACLE_AUTH_GLOBAL)), null);
     		fail("Must require global name");
+    	}catch(RuntimeException e){}
+    	try{
+    		facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil.newSet(AttributeBuilder.build(OracleConstants.ORACLE_GLOBAL_ATTR_NAME,""),AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConstants.ORACLE_AUTH_GLOBAL)), null);
+    		fail("Global name cannot be blank");
+    	}catch(RuntimeException e){}
+    	try{
+    		facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil.newSet(AttributeBuilder.build(OracleConstants.ORACLE_GLOBAL_ATTR_NAME),AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConstants.ORACLE_AUTH_GLOBAL)), null);
+    		fail("Global name cannot be null");
     	}catch(RuntimeException e){}
     	try{
 	    	facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil
@@ -401,13 +456,35 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
 					), null);
 	        UserRecord record = userReader.readUserRecord(uid.getUidValue());
 	    	assertNotNull(record);
-	        assertEquals("OPEN",record.getStatus());
-	        assertNotNull(record.getExternalName());
-	    	facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil
+	        assertEquals(OracleAuthentication.GLOBAL, OracleUserReader.resolveAuthentication(record));
+	        assertEquals("anyGlobal",record.getExternalName());
+
+	    	//update to newGlobal and check it
+	        facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil
+					.newSet(AttributeBuilder.build(OracleConstants.ORACLE_GLOBAL_ATTR_NAME,"newGlobal")
+					), null);
+	    	record = userReader.readUserRecord(uid.getUidValue());
+	    	assertNotNull(record);
+	        assertEquals(OracleAuthentication.GLOBAL, OracleUserReader.resolveAuthentication(record));
+	        assertEquals("newGlobal",record.getExternalName());
+	        
+	    	//Set back to local and check it
+	        facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil
 					.newSet(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConstants.ORACLE_AUTH_LOCAL),
 							AttributeBuilder.buildPassword("password".toCharArray())
 							),
 					null);
+	    	record = userReader.readUserRecord(uid.getUidValue());
+	    	assertNotNull(record);
+	        assertEquals(OracleAuthentication.LOCAL, OracleUserReader.resolveAuthentication(record));
+	        //Now try to set Global name, which should fail
+	        try{
+		        facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil
+						.newSet(AttributeBuilder.build(OracleConstants.ORACLE_GLOBAL_ATTR_NAME,"newGlobal")
+						), null);
+		        fail("Update with global name must fail for local authentication");
+	        }catch(ConnectorException e){}
+	        
 	    	
     	}
         catch(ConnectorException e){

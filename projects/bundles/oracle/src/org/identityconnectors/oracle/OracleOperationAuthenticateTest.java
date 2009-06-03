@@ -11,6 +11,7 @@ import java.util.Collections;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.ConnectorSecurityException;
 import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
 import org.identityconnectors.framework.common.exceptions.PasswordExpiredException;
@@ -99,6 +100,42 @@ public class OracleOperationAuthenticateTest extends OracleConnectorAbstractTest
         catch(ConnectorSecurityException e){
         	Assert.assertThat(e.getMessage(), JUnitMatchers.containsString("account is locked"));
         }
+        facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.buildEnabled(true)), null);
+    	facade.authenticate(ObjectClass.ACCOUNT, user, password, null);
+    	
+    	//Update to external
+    	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConstants.ORACLE_AUTH_EXTERNAL)), null);
+    	try{
+    		facade.authenticate(ObjectClass.ACCOUNT, user, password, null);
+    		fail("Cannot authenticate with external authentication");
+    	}catch(ConnectorException e){}
+    	
+    	//Update to Global
+    	boolean tryGlobal = false;
+    	try{
+			facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil
+					.newSet(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConstants.ORACLE_AUTH_GLOBAL),
+							AttributeBuilder.build(OracleConstants.ORACLE_GLOBAL_ATTR_NAME,"anyGlobalName")
+							), null);
+			tryGlobal = true;
+    	}catch(ConnectorException e){
+            if(e.getCause() instanceof SQLException){
+                if("67000".equals(((SQLException)e.getCause()).getSQLState()) && 439 == ((SQLException)e.getCause()).getErrorCode()){
+                }
+                else{
+                    fail(e.getMessage());
+                }
+            }
+            else{
+                fail(e.getMessage());
+            }
+        }
+    	if(tryGlobal){
+	    	try{
+	    		facade.authenticate(ObjectClass.ACCOUNT, user, password, null);
+	    		fail("Cannot authenticate with global authentication");
+	    	}catch(ConnectorException e){}
+    	}
         
         facade.delete(ObjectClass.ACCOUNT, new Uid(user),null);
         
