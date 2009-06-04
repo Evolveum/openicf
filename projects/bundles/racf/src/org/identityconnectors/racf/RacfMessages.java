@@ -62,8 +62,6 @@ public class RacfMessages extends ListResourceBundle {
     public static final String ERROR_IN_RACF_COMMAND          = "ERROR_IN_RACF_COMMAND";
     public static final String PAST_DISABLE_DATE              = "PAST_DISABLE_DATE";
     public static final String PAST_ENABLE_DATE               = "PAST_ENABLE_DATE";
-    public static final String DISABLE_PLUS_DATE              = "DISABLE_PLUS_DATE";
-    public static final String ENABLE_PLUS_DATE               = "ENABLE_PLUS_DATE";
     public static final String NO_VALUE_FOR_ATTRIBUTE         = "NO_VALUE_FOR_ATTRIBUTE";
     public static final String ATTRIBUTE_NOT_READABLE         = "ATTRIBUTE_NOT_READABLE";
     public static final String ATTRIBUTE_NOT_UPDATEABLE       = "ATTRIBUTE_NOT_UPDATEABLE";
@@ -107,8 +105,6 @@ public class RacfMessages extends ListResourceBundle {
         { UNPARSEABLE_RESPONSE,    "Unable to parse response from ''{0}'':''{1}''" },
         { EXPIRED_NO_PASSWORD,     "RACF requires that __PASSWORD__ be specified if __PASSWORD_EXPIRED__ is specified" },
         { ERROR_IN_RACF_COMMAND,   "Error in RACF command ''{0}''" },
-        { ENABLE_PLUS_DATE,        "Both __ENABLE_DATE__ and __ENABLE__==true have been specified" },
-        { DISABLE_PLUS_DATE,       "Both __DISABLE_DATE__ and __ENABLE__==false have been specified" },
         { PAST_DISABLE_DATE,       "__DISABLE_DATE__ is in the past" },
         { PAST_ENABLE_DATE,        "__ENABLE_DATE__ is in the past" },
         { NO_VALUE_FOR_ATTRIBUTE,  "No value specified for attribute ''{0}''" },
