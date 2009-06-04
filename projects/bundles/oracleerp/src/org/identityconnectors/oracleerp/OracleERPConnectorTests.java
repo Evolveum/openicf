@@ -22,6 +22,8 @@
  */
 package org.identityconnectors.oracleerp;
 
+import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+
 import static org.junit.Assert.*;
 import static org.junit.Assume.*;
 import static org.junit.matchers.JUnitMatchers.*;
@@ -290,19 +292,19 @@ public class OracleERPConnectorTests {
      */
     private Set<Attribute> createAllAccountAttributes() {
         final Set<Attribute> attrs = dataProvider.getAttributeSet(ACCOUNT_ALL_ATTRS);       
-        attrs.add(AttributeBuilder.build(Account.START_DATE, (new Timestamp(System.currentTimeMillis()-10*24*3600000)).toString()));
-        attrs.add(AttributeBuilder.build(Account.END_DATE, (new Timestamp(System.currentTimeMillis()+10*24*3600000)).toString()));        
+        attrs.add(AttributeBuilder.build(START_DATE, (new Timestamp(System.currentTimeMillis()-10*24*3600000)).toString()));
+        attrs.add(AttributeBuilder.build(END_DATE, (new Timestamp(System.currentTimeMillis()+10*24*3600000)).toString()));        
         
         /*        attrs.add(AttributeBuilder.buildPasswordExpired(false));                
-        attrs.add(AttributeBuilder.build(Account.DESCR, "descrip"));
-        attrs.add(AttributeBuilder.build(Account.PWD_ACCESSES_LEFT, 54));
-        attrs.add(AttributeBuilder.build(Account.PWD_LIFE_ACCESSES, 55));
-        attrs.add(AttributeBuilder.build(Account.PWD_LIFE_DAYS, 56));
-        attrs.add(AttributeBuilder.build(Account.EMP_ID, 101));
-        attrs.add(AttributeBuilder.build(Account.EMAIL, "test@google.com"));
-        attrs.add(AttributeBuilder.build(Account.FAX, "12456"));
-        attrs.add(AttributeBuilder.build(Account.CUST_ID, 120));
-        attrs.add(AttributeBuilder.build(Account.SUPP_ID, 130));*/
+        attrs.add(AttributeBuilder.build(DESCR, "descrip"));
+        attrs.add(AttributeBuilder.build(PWD_ACCESSES_LEFT, 54));
+        attrs.add(AttributeBuilder.build(PWD_LIFE_ACCESSES, 55));
+        attrs.add(AttributeBuilder.build(PWD_LIFE_DAYS, 56));
+        attrs.add(AttributeBuilder.build(EMP_ID, 101));
+        attrs.add(AttributeBuilder.build(EMAIL, "test@google.com"));
+        attrs.add(AttributeBuilder.build(FAX, "12456"));
+        attrs.add(AttributeBuilder.build(CUST_ID, 120));
+        attrs.add(AttributeBuilder.build(SUPP_ID, 130));*/
         return attrs;
     }
     
@@ -312,17 +314,17 @@ public class OracleERPConnectorTests {
     private Set<Attribute> createNullAccountAttributes() {
         Set<Attribute> attrs = createRequiredAccountAttributes();
         attrs.add(AttributeBuilder.buildPasswordExpired(false));        
-        attrs.add(AttributeBuilder.build(Account.START_DATE, (String) null));
-        attrs.add(AttributeBuilder.build(Account.DESCR, (String) null));
-        attrs.add(AttributeBuilder.build(Account.END_DATE, (String) null));        
-        attrs.add(AttributeBuilder.build(Account.PWD_ACCESSES_LEFT, (String) null));
-        attrs.add(AttributeBuilder.build(Account.PWD_LIFE_ACCESSES, (String) null));
-        attrs.add(AttributeBuilder.build(Account.PWD_LIFE_DAYS, (String) null));
-        attrs.add(AttributeBuilder.build(Account.EMP_ID, (String) null));
-        attrs.add(AttributeBuilder.build(Account.EMAIL, (String) null));
-        attrs.add(AttributeBuilder.build(Account.FAX, (String) null));
-        attrs.add(AttributeBuilder.build(Account.CUST_ID, (String) null));
-        attrs.add(AttributeBuilder.build(Account.SUPP_ID, (String) null));
+        attrs.add(AttributeBuilder.build(START_DATE, (String) null));
+        attrs.add(AttributeBuilder.build(DESCR, (String) null));
+        attrs.add(AttributeBuilder.build(END_DATE, (String) null));        
+        attrs.add(AttributeBuilder.build(PWD_ACCESSES_LEFT, (String) null));
+        attrs.add(AttributeBuilder.build(PWD_LIFE_ACCESSES, (String) null));
+        attrs.add(AttributeBuilder.build(PWD_LIFE_DAYS, (String) null));
+        attrs.add(AttributeBuilder.build(EMP_ID, (String) null));
+        attrs.add(AttributeBuilder.build(EMAIL, (String) null));
+        attrs.add(AttributeBuilder.build(FAX, (String) null));
+        attrs.add(AttributeBuilder.build(CUST_ID, (String) null));
+        attrs.add(AttributeBuilder.build(SUPP_ID, (String) null));
         return attrs;
     }
 

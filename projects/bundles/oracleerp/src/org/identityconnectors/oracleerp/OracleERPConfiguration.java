@@ -538,15 +538,6 @@ public class OracleERPConfiguration extends AbstractConfiguration {
         }
     }
 
-    /**
-     * The application id from the user
-     * see the bug id. 19352
-     * @return The "APPL." or empty, if noSchemaId is true
-     */
-    public String app() {
-        if(noSchemaId) return "";
-        return user.trim().toUpperCase()+".";
-    }
     
     /**
      * The connection url constructed from host, port and database name, or from connection urlS

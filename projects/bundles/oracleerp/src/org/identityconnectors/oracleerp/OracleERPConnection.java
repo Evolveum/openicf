@@ -51,6 +51,10 @@ import org.identityconnectors.framework.spi.Configuration;
  */
 public class OracleERPConnection extends DatabaseConnection { 
 
+    /**
+     * The default row prefetch
+     */
+    private static final int DEFAULT_ROW_PREFETCH = 10;
     
     /**
      * Setup logging for the {@link OracleERPConnector}.
@@ -98,18 +102,22 @@ public class OracleERPConnection extends DatabaseConnection {
             final OracleConnection oracleConn = (OracleConnection) connection;
             /* On Oracle enable the synonyms */
             try {
-                log.info("setIncludeSynonyms on ORACLE");
-                oracleConn.setIncludeSynonyms(true);
-                log.ok("setIncludeSynonyms success");
+                if( !oracleConn.getIncludeSynonyms() ) {
+                    log.info("setIncludeSynonyms on ORACLE");
+                    oracleConn.setIncludeSynonyms(true);
+                    log.ok("setIncludeSynonyms success");
+                }
             } catch (Exception e) {
                 log.error(e, "setIncludeSynonyms on ORACLE exception");
             }
 
             //Set default row Prefetch
             try {
-                log.info("setDefaultRowPrefetch on ORACLE");
-                oracleConn.setDefaultRowPrefetch(10);
-                log.ok("setDefaultRowPrefetch success");
+                if ( oracleConn.getDefaultRowPrefetch()!=DEFAULT_ROW_PREFETCH) {
+                    log.info("setDefaultRowPrefetch on ORACLE");
+                    oracleConn.setDefaultRowPrefetch(DEFAULT_ROW_PREFETCH);
+                    log.ok("setDefaultRowPrefetch success");
+                }
             } catch (SQLException expected) {
                 //expected
                 log.error(expected, "setDefaultRowPrefetch exception");
@@ -119,8 +127,10 @@ public class OracleERPConnection extends DatabaseConnection {
 
         //Disable auto-commit mode
         try {
-            log.info("setAutoCommit(false)");
-            connection.setAutoCommit(false);
+            if ( connection.getAutoCommit() ) {
+                log.info("setAutoCommit(false)");
+                connection.setAutoCommit(false);
+            }
         } catch (SQLException expected) {
             //expected
             log.error(expected, "setAutoCommit(false) exception");
@@ -150,7 +160,7 @@ public class OracleERPConnection extends DatabaseConnection {
      * Close connection if pooled
      */
     public void closeConnection() {
-        if( nativeConn != null && StringUtil.isNotBlank(config.getDataSource()) /*&& this.conn.getConnection() instanceof PooledConnection */) {
+        if( getConnection() != null && StringUtil.isNotBlank(config.getDataSource()) /*&& this.conn.getConnection() instanceof PooledConnection */) {
             log.info("Close the pooled connection");
             dispose();
         }
@@ -161,9 +171,9 @@ public class OracleERPConnection extends DatabaseConnection {
      * @throws SQLException
      */
     public void openConnection() throws SQLException {
-        if( nativeConn == null || nativeConn.isClosed() ) {
+        if( getConnection() == null || getConnection().isClosed() ) {
             log.info("Get new connection, it is closed");
-            nativeConn = getNativeConnection(config);
+            setConnection( getNativeConnection(config) );
         }
     }
 

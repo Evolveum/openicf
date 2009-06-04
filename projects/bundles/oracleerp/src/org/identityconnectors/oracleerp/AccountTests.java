@@ -22,6 +22,8 @@
  */
 package org.identityconnectors.oracleerp;
 
+import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+
 import java.sql.Timestamp;
 import java.util.Map;
 import java.util.Set;
@@ -205,19 +207,19 @@ public class AccountTests {
     static public Set<Attribute> createAllAccountAttributes() {
         final Set<Attribute> attrs = createRequiredAccountAttributes();    
         attrs.add(AttributeBuilder.buildPasswordExpired(false));                
-        attrs.add(AttributeBuilder.build(Account.START_DATE, (new Timestamp(System.currentTimeMillis()-10*24*3600000)).toString()));
-        attrs.add(AttributeBuilder.build(Account.END_DATE, (new Timestamp(System.currentTimeMillis()+10*24*3600000)).toString()));        
-        attrs.add(AttributeBuilder.build(Account.RESP, "Cash Forecasting||Oracle Cash Management||Standard||Test Description||2004-04-12 00:00:00.0||null"));
-        attrs.add(AttributeBuilder.build(Account.PWD_ACCESSES_LEFT, 56));
-        attrs.add(AttributeBuilder.build(Account.PWD_LIFE_ACCESSES, 5));
-        attrs.add(AttributeBuilder.build(Account.PWD_LIFE_DAYS, 5));
-        attrs.add(AttributeBuilder.build(Account.EMP_ID, 5));
-        attrs.add(AttributeBuilder.build(Account.DESCR, "Test Description"));        
-        attrs.add(AttributeBuilder.build(Account.EMAIL, "person@somewhere.com"));
-        attrs.add(AttributeBuilder.build(Account.FAX, "555-555-5555"));
-        attrs.add(AttributeBuilder.build(Account.CUST_ID, 11223344));
-        attrs.add(AttributeBuilder.build(Account.SUPP_ID, 102));
-        attrs.add(AttributeBuilder.build(Account.SEC_ATTRS, "TO_PERSON_ID||Oracle Self-Service Web Applications||110"));
+        attrs.add(AttributeBuilder.build(START_DATE, (new Timestamp(System.currentTimeMillis()-10*24*3600000)).toString()));
+        attrs.add(AttributeBuilder.build(END_DATE, (new Timestamp(System.currentTimeMillis()+10*24*3600000)).toString()));        
+        attrs.add(AttributeBuilder.build(RESP, "Cash Forecasting||Oracle Cash Management||Standard||Test Description||2004-04-12 00:00:00.0||null"));
+        attrs.add(AttributeBuilder.build(PWD_ACCESSES_LEFT, 56));
+        attrs.add(AttributeBuilder.build(PWD_LIFE_ACCESSES, 5));
+        attrs.add(AttributeBuilder.build(PWD_LIFE_DAYS, 5));
+        attrs.add(AttributeBuilder.build(EMP_ID, 5));
+        attrs.add(AttributeBuilder.build(DESCR, "Test Description"));        
+        attrs.add(AttributeBuilder.build(EMAIL, "person@somewhere.com"));
+        attrs.add(AttributeBuilder.build(FAX, "555-555-5555"));
+        attrs.add(AttributeBuilder.build(CUST_ID, 11223344));
+        attrs.add(AttributeBuilder.build(SUPP_ID, 102));
+        attrs.add(AttributeBuilder.build(SEC_ATTRS, "TO_PERSON_ID||Oracle Self-Service Web Applications||110"));
         return attrs;
     }
     
@@ -227,19 +229,19 @@ public class AccountTests {
     static public Set<Attribute> createNullAccountAttributes() {
         Set<Attribute> attrs = createRequiredAccountAttributes();
         attrs.add(AttributeBuilder.buildPasswordExpired(false));        
-        attrs.add(AttributeBuilder.build(Account.START_DATE, (String) null));
-        attrs.add(AttributeBuilder.build(Account.END_DATE, (String) null));        
-        attrs.add(AttributeBuilder.build(Account.RESP, (String) null));
-        attrs.add(AttributeBuilder.build(Account.PWD_ACCESSES_LEFT, (String) null));
-        attrs.add(AttributeBuilder.build(Account.PWD_LIFE_ACCESSES, (String) null));
-        attrs.add(AttributeBuilder.build(Account.PWD_LIFE_DAYS, (String) null));
-        attrs.add(AttributeBuilder.build(Account.EMP_ID, (String) null));
-        attrs.add(AttributeBuilder.build(Account.DESCR, (String) null));        
-        attrs.add(AttributeBuilder.build(Account.EMAIL, (String) null));
-        attrs.add(AttributeBuilder.build(Account.FAX, (String) null));
-        attrs.add(AttributeBuilder.build(Account.CUST_ID, (String) null));
-        attrs.add(AttributeBuilder.build(Account.SUPP_ID, (String) null));
-        attrs.add(AttributeBuilder.build(Account.SEC_ATTRS, (String) null));
+        attrs.add(AttributeBuilder.build(START_DATE, (String) null));
+        attrs.add(AttributeBuilder.build(END_DATE, (String) null));        
+        attrs.add(AttributeBuilder.build(RESP, (String) null));
+        attrs.add(AttributeBuilder.build(PWD_ACCESSES_LEFT, (String) null));
+        attrs.add(AttributeBuilder.build(PWD_LIFE_ACCESSES, (String) null));
+        attrs.add(AttributeBuilder.build(PWD_LIFE_DAYS, (String) null));
+        attrs.add(AttributeBuilder.build(EMP_ID, (String) null));
+        attrs.add(AttributeBuilder.build(DESCR, (String) null));        
+        attrs.add(AttributeBuilder.build(EMAIL, (String) null));
+        attrs.add(AttributeBuilder.build(FAX, (String) null));
+        attrs.add(AttributeBuilder.build(CUST_ID, (String) null));
+        attrs.add(AttributeBuilder.build(SUPP_ID, (String) null));
+        attrs.add(AttributeBuilder.build(SEC_ATTRS, (String) null));
         return attrs;
     }
 
@@ -251,7 +253,7 @@ public class AccountTests {
         final Set<Attribute> attrs = CollectionUtil.newSet();       
         attrs.add(AttributeBuilder.build(Name.NAME, "TSTUSER"));
         attrs.add(AttributeBuilder.buildPassword("tstpwd".toCharArray()));
-        attrs.add(AttributeBuilder.build(Account.OWNER, "CUST"));
+        attrs.add(AttributeBuilder.build(OWNER, "CUST"));
         return attrs;
     } 
 }
