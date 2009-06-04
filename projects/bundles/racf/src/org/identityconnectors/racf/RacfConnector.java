@@ -514,7 +514,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
         }
     }
 
-    private void checkConnectionConsistency(Attribute groupsAttribute,
+    void checkConnectionConsistency(Attribute groupsAttribute,
             Attribute ownersAttribute) {
         // members and owners must be the same length
         //

@@ -437,7 +437,7 @@ class CommandLineUtil {
             throwErrorIfNull(groups);
             throwErrorIfNullOrEmpty(expired);
             throwErrorIfNullOrEmpty(password);
-            checkConnectionConsistency(groups, owners);
+            _connector.checkConnectionConsistency(groups, owners);
             if (expired!=null && password==null) 
                 throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
             if (userExists(name))
@@ -491,7 +491,7 @@ class CommandLineUtil {
             Attribute owners = attributes.remove(ATTR_CL_GROUP_CONN_OWNERS);
 
             throwErrorIfNull(accounts);
-            checkConnectionConsistency(accounts, owners);
+            _connector.checkConnectionConsistency(accounts, owners);
             
             if (groupExists(name))
                 throw new AlreadyExistsException();
@@ -521,19 +521,6 @@ class CommandLineUtil {
         }
     }
 
-    private void checkConnectionConsistency(Attribute groups, Attribute owners) {
-        boolean badOwners = false;
-        if (owners!=null) {
-            try {
-                badOwners = (groups.getValue().size()!=owners.getValue().size());
-            } catch (NullPointerException npe) {
-                badOwners = true;
-            }
-            if (badOwners)
-                throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.OWNER_INCONSISTENT));
-        }
-    }
-    
     private void createConnection(String user, String group, String owner) {
         String command = "CONNECT "+user+" GROUP("+group+")";
         if (owner!=null)
@@ -586,13 +573,21 @@ class CommandLineUtil {
     }
 
     private boolean groupExists(String name) {
-        validateName(name, ((RacfConfiguration)_connector.getConfiguration()));
-        String command = "SEARCH CLASS(GROUP) FILTER("+name+")";
-        String groups = getCommandOutput(command);
-        
-        return !(groups.contains(NO_ENTRIES));
+        return objectExists(name, "GROUP");
     }
-
+    
+    private boolean userExists(String name) {
+        return objectExists(name, "USER");
+    }
+    
+    private boolean objectExists(String name, String type) {
+        validateName(name, ((RacfConfiguration)_connector.getConfiguration()));
+        String command = "SEARCH CLASS("+type+") FILTER("+name+")";
+        String objects = getCommandOutput(command);
+        
+        return !(objects.contains(NO_ENTRIES));
+    }
+    
     private int memberCount(String name) {
         String output = getCommandOutput("LISTGRP "+name);
         boolean notFound = (output.toUpperCase().contains(NAME_NOT_FOUND));
@@ -627,14 +622,6 @@ class CommandLineUtil {
         
         if (!_namePattern.matcher(name).matches())
             throw new ConnectorException(config.getMessage(RacfMessages.BAD_NAME_FILTER, name));
-    }
-    
-    private boolean userExists(String name) {
-        validateName(name, ((RacfConfiguration)_connector.getConfiguration()));
-        String command = "SEARCH CLASS(USER) FILTER("+name+")";
-        String groups = getCommandOutput(command);
-        
-        return !(groups.contains(NO_ENTRIES));
     }
     
     public List<String> getMembersOfGroupViaCommandLine(String group) {
@@ -701,25 +688,25 @@ class CommandLineUtil {
             command = "SEARCH CLASS("+className+") FILTER("+query+")";
         else
             command = "SEARCH CLASS("+className+")";
-        String groups = getCommandOutput(command);
+        String objects = getCommandOutput(command);
         
-        if (groups.contains(NO_ENTRIES)) {
+        if (objects.contains(NO_ENTRIES)) {
             return new LinkedList<String>();
         }
         
         // Error messages all start with a 9 character error code,
-        // and groups are at most 8 characters long. This allow us to
+        // and groups/users are at most 8 characters long. This allow us to
         // determine if there are any error messages in the text
         //
-        Matcher matcher = _errorMessage.matcher(groups); 
+        Matcher matcher = _errorMessage.matcher(objects); 
         if (matcher.find()) {
-            String error = groups.substring(matcher.start()).trim();
+            String error = objects.substring(matcher.start()).trim();
             throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.ERROR_IN_GET_GROUPS, error));
         } else {
-            String[] groupsArray = groups.trim().split("\\s+");
-            for (int i=0; i<groupsArray.length; i++)
-                groupsArray[i] = groupsArray[i];
-            return Arrays.asList(groupsArray);
+            String[] objectsArray = objects.trim().split("\\s+");
+            for (int i=0; i<objectsArray.length; i++)
+                objectsArray[i] = objectsArray[i];
+            return Arrays.asList(objectsArray);
         }
     }
     
