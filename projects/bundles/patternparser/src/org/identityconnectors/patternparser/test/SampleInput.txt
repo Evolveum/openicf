@@ -1,0 +1,34 @@
+Username: SYSTEM                           Owner:  SYSTEM MANAGER
+Account:  SYSTEM                           UIC:    [1,4] ([SYSTEM])
+CLI:      DCL                              Tables: DCLTABLES
+Default:  SYS$SYSROOT:[SYSMGR]
+LGICMD:   LOGIN
+Flags: 
+Primary days:   Mon Tue Wed Thu Fri        
+Secondary days:                     Sat Sun
+No access restrictions
+Expiration:            (none)    Pwdminimum:  8   Login Fails:     0
+Pwdlifetime:           (none)    Pwdchange:  21-JUL-2005 16:28 
+Last Login: 29-OCT-2007 00:19 (interactive), 28-JUN-2007 15:23 (non-interactive)
+Maxjobs:         0  Fillm:       300  Bytlm:        32768
+Maxacctjobs:     0  Shrfillm:      0  Pbytlm:           0
+Maxdetach:       0  BIOlm:        40  JTquota:       4096
+Prclm:          10  DIOlm:        40  WSdef:          256
+Prio:            4  ASTlm:        50  WSquo:          512
+Queprio:         0  TQElm:        30  WSextent:      2048
+CPU:        (none)  Enqlm:       200  Pgflquo:      40960
+Authorized Privileges: 
+  ACNT      ALLSPOOL  ALTPRI    AUDIT     BUGCHK    BYPASS    CMEXEC    CMKRNL
+  IMPERSONATDIAGNOSE  DOWNGRADE EXQUOTA   GROUP     GRPNAM    GRPPRV    IMPORT
+  LOG_IO    MOUNT     NETMBX    OPER      PFNMAP    PHY_IO    PRMCEB    PRMGBL
+  PRMMBX    PSWAPM    READALL   SECURITY  SETPRV    SHARE     SHMEM     SYSGBL
+  SYSLCK    SYSNAM    SYSPRV    TMPMBX    UPGRADE   VOLPRO    WORLD
+Default Privileges: 
+  ACNT      ALLSPOOL  ALTPRI    AUDIT     BUGCHK    BYPASS    CMEXEC    CMKRNL
+  IMPERSONATDIAGNOSE  DOWNGRADE EXQUOTA   GROUP     GRPNAM    GRPPRV    IMPORT
+  LOG_IO    MOUNT     NETMBX    OPER      PFNMAP    PHY_IO    PRMCEB    PRMGBL
+  PRMMBX    PSWAPM    READALL   SECURITY  SETPRV    SHARE     SHMEM     SYSGBL
+  SYSLCK    SYSNAM    SYSPRV    TMPMBX    UPGRADE   VOLPRO    WORLD
+Identifier                         Value           Attributes
+  GOOMBAH                          %X91F50002      Zoom
+  NET$MANAGE                       %X91F5AAAA      

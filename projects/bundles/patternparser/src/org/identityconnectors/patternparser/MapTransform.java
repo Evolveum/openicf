@@ -24,6 +24,7 @@ package org.identityconnectors.patternparser;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +56,10 @@ import org.w3c.dom.NodeList;
  * <li><b>reset</b> -- If true, the the next PatternNode is matched starting at the first character after the substring matched by this PatternNode. If false, the next PatternNode is matched against the same point in the input String as this PatternNode.</li>
  * </ul>
  */
-public class MapTransform extends Transform {    
+public class MapTransform extends Transform {
+    
+    private boolean _debug                    = false;
+    
     /**
      * Store the information about a map element
      */
@@ -160,6 +164,17 @@ public class MapTransform extends Transform {
         }
         return children.toString();
     }
+    
+    private String resultToString(Object result) {
+        if (result.getClass().isArray()) {
+            return Arrays.deepToString((Object[])result);
+        } else if (result == null) {
+            return "<null>";
+        } else {
+            return result.toString();
+        }
+        
+    }
 
     @SuppressWarnings("unchecked")
     private int parse(String inputString, Map<String, Object> output, int offset) throws Exception {
@@ -167,11 +182,19 @@ public class MapTransform extends Transform {
         for (PatternNode patternNode : _parseInfo) {
             Matcher matcher = patternNode._pattern.matcher(inputString);
             if (matcher.find(newOffset)) {
+                if (_debug) {
+                    System.out.println("Matched regex '"+patternNode._pattern.pattern()+"' to '"+matcher.group()+"' at character "+matcher.start());
+                    System.out.println("    Match value:'"+matcher.group(1)+"'");;
+                }
                 if (!patternNode._reset)
                     newOffset = matcher.end();
                 Object result = matcher.group(1);
                 for (Transform transform : patternNode._transforms) {
+                    String oldResult = resultToString(result);
                     result = transform.transform(result);
+                    if (_debug) {
+                        System.out.println("    Transform "+transform.getClass().getName()+":'"+oldResult+"'->'"+resultToString(result)+"'");
+                    }
                 }
                 
                 if (patternNode._key.length()>0) {
@@ -194,6 +217,10 @@ public class MapTransform extends Transform {
             }
         }
         return newOffset;
+    }
+    
+    void setDebug(boolean debug) {
+        _debug = debug;
     }
 
     /**
