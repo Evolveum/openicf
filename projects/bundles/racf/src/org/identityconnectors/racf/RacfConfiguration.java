@@ -109,12 +109,12 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     
     private String loadParserFromFile(String fileName) throws IOException {
         BufferedReader is = new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream(fileName)));
-        StringBuffer tsoParser = new StringBuffer();
+        StringBuffer parser = new StringBuffer();
         String line = null;
         while ((line=is.readLine())!=null) {
-            tsoParser.append(line);
+            parser.append(line+"\n");
         }
-        return tsoParser.toString();
+        return parser.toString();
     }
     
     private String getLoginScript() {
