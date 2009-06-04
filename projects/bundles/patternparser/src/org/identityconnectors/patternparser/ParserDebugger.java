@@ -7,11 +7,11 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Map;
 
-public class ParserTester {
+public class ParserDebugger {
     
     public static void main(String[] args) {
         if (args.length!=2) {
-            System.out.println("usage: ParserTester parserFile dataFile");
+            System.out.println("usage: ParserDebugger parserFile dataFile");
         }
         try {
             String parser = loadFromFile(args[0]);

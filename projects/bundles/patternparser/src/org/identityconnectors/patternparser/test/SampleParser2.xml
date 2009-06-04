@@ -1,0 +1,22 @@
+<MapTransform>
+  <PatternNode key='TSO*ACCTNUM'     pattern='ACCTNUM=\s*([^\n]*)\n'  optional='true' reset='false'>
+    <SubstituteTransform pattern='\s*$' substitute=''/>
+  </PatternNode>
+  <PatternNode key='TSO*HOLDCLASS'   pattern='HOLDCLASS=\s*(\S)'      optional='true' reset='false'/>
+  <PatternNode key='TSO*JOBCLASS'    pattern='JOBCLASS=\s*(\S)'       optional='true' reset='false'/>
+  <PatternNode key='TSO*MSGCLASS'    pattern='MSGCLASS=\s*(\S)'       optional='true' reset='false'/>
+  <PatternNode key='TSO*PROC'        pattern='PROC=\s*(\S{1,8})'      optional='true' reset='false'/>
+  <PatternNode key='TSO*SIZE'        pattern='SIZE=\s*(\d+)'          optional='false' reset='false'>
+      <ClassTransform transform='java.lang.Integer'/>
+  </PatternNode>
+  <PatternNode key='TSO*MAXSIZE'     pattern='MAXSIZE=\s*(\d+)'       optional='false' reset='false'>
+      <ClassTransform transform='java.lang.Integer'/>
+  </PatternNode>
+  <PatternNode key='TSO*SYSOUTCLASS' pattern='SYSOUTCLASS=\s*(\S)'    optional='true' reset='false'/>
+  <PatternNode key='TSO*UNIT'        pattern='UNIT=\s*(\S{1,8})'      optional='true' reset='false'/>
+  <PatternNode key='TSO*USERDATA'    pattern='USERDATA=\s*(\S{1,4})'  optional='false' reset='false'/>
+  <PatternNode key='TSO*SECLABEL'    pattern='SECLABEL=\s*([^\n]*)\n' optional='true' reset='false'/>
+  <PatternNode key='TSO*COMMAND'     pattern='COMMAND=\s*([^\n]*)\n'  optional='true' reset='false'>
+    <SubstituteTransform pattern='\s*$' substitute=''/>
+  </PatternNode>
+</MapTransform>

@@ -32,7 +32,17 @@ command-line output and producing sets of Attributes.
 <p>
 The most important class is the MapTransform class. The MapTransform parses a String into a Map, 
 using an array of PatternNodes, which contain regular expressions to break up the input. 
-The values stored in the Map can be modified by an array of <code>Transform</code>s attached to the PatternNode.
+
+Each PatternNode specifies a java Pattern to be matched. The output from the PatternNode is the first group
+in the Pattern, thus
+<pre>
+    &lt;PatternNode key='TSO*HOLDCLASS' pattern='HOLDCLASS=\s*(\S)'/&gt;
+</pre>
+will return a <code>Map.Entry</code> with key 'TSO*HOLDCLASS', and a value of single character -- the first non-whitespace character after HOLDCLASS=. 
+The values stored in the Map can be modified by an array of <code>Transform</code>s attached to the PatternNode. 
+These <code>Transform</code>s are applied as a chain -- each <code>Transform</code> takes as input the output of the previous <code>Transform</code>.
+See below for examples.
+<p>
 <p>
 The Pattern Parser contains a set of pre-defined <code>Transform</code>s:
 <ul>
@@ -54,7 +64,7 @@ In order to do this, the new <code>Transform</code> class must do the following:
 <li>If the <code>Transform</code> has attributes, override the <code>getAttributes()</code> method (the <code>Transform</code> <b>must</b> have an attribute <code>class</code>, which specified the class name of the <code>Transform</code>.</li>
 <li>If the <code>Transform</code> has children, override the <code>getChildren()</code> method</li>
 </ol>
-<h1>Example</h1>
+<h1>Example User-Written Transform Class</h1>
 <pre>
     public static class SubstringTransform extends Transform {
         private static final String START = "start";
@@ -86,3 +96,106 @@ In order to do this, the new <code>Transform</code> class must do the following:
         
     }
 </pre>
+<h1>Debugging</h1>
+<p>
+A ParserDebugger class is provide to assist with debugging your MapTransforms.
+<p>
+It can be run with a command line such as:
+<pre>
+    java -cp PatternParser-1.0.x.jar org.identityconnectors.patternparser.ParserDebugger SampleParser.xml SampleInput.txt
+</pre>
+This will produce a trace of all matching and Transforms performed during a Pattern-based parse.
+</body>
+<h1>Example User-Written Parser</h1>
+<p>
+As an example, this Parser parses the output from the
+<pre>
+    LISTUSER name NORACF TSO
+</pre>
+RACF command, and creates a java.util.Map&lt;String, Object&gt;.
+
+<h2>Sample Parser</h2>
+<pre>
+&lt;MapTransform&gt;
+  &lt;PatternNode key='TSO*ACCTNUM'     pattern='ACCTNUM=\s*([^\n]*)\n'  optional='true' reset='false'&gt;
+    &lt;SubstituteTransform pattern='\s*$' substitute=''/&gt;
+  &lt;/PatternNode&gt;
+  &lt;PatternNode key='TSO*HOLDCLASS'   pattern='HOLDCLASS=\s*(\S)'      optional='true' reset='false'/&gt;
+  &lt;PatternNode key='TSO*JOBCLASS'    pattern='JOBCLASS=\s*(\S)'       optional='true' reset='false'/&gt;
+  &lt;PatternNode key='TSO*MSGCLASS'    pattern='MSGCLASS=\s*(\S)'       optional='true' reset='false'/&gt;
+  &lt;PatternNode key='TSO*PROC'        pattern='PROC=\s*(\S{1,8})'      optional='true' reset='false'/&gt;
+  &lt;PatternNode key='TSO*SIZE'        pattern='SIZE=\s*(\d+)'          optional='false' reset='false'&gt;
+      &lt;ClassTransform transform='java.lang.Integer'/&gt;
+  &lt;/PatternNode&gt;
+  &lt;PatternNode key='TSO*MAXSIZE'     pattern='MAXSIZE=\s*(\d+)'       optional='false' reset='false'&gt;
+      &lt;ClassTransform transform='java.lang.Integer'/&gt;
+  &lt;/PatternNode&gt;
+  &lt;PatternNode key='TSO*SYSOUTCLASS' pattern='SYSOUTCLASS=\s*(\S)'    optional='true' reset='false'/&gt;
+  &lt;PatternNode key='TSO*UNIT'        pattern='UNIT=\s*(\S{1,8})'      optional='true' reset='false'/&gt;
+  &lt;PatternNode key='TSO*USERDATA'    pattern='USERDATA=\s*(\S{1,4})'  optional='false' reset='false'/&gt;
+  &lt;PatternNode key='TSO*SECLABEL'    pattern='SECLABEL=\s*([^\n]*)\n' optional='true' reset='false'/&gt;
+  &lt;PatternNode key='TSO*COMMAND'     pattern='COMMAND=\s*([^\n]*)\n'  optional='true' reset='false'&gt;
+    &lt;SubstituteTransform pattern='\s*$' substitute=''/&gt;
+  &lt;/PatternNode&gt;
+&lt;/MapTransform&gt;
+</pre>
+<h2>Sample Input</h2>
+<pre>
+TSO INFORMATION                                                                 
+---------------                                                                 
+ACCTNUM= ACCT#                                                                  
+HOLDCLASS= X                                                                    
+JOBCLASS= A                                                                     
+MSGCLASS= X                                                                     
+PROC= ISPFPROC                                                                  
+SIZE= 00006133                                                                  
+MAXSIZE= 00000000                                                               
+SYSOUTCLASS= X                                                                  
+USERDATA= 0000                                                                  
+COMMAND= ISPF PANEL(ISR@390)                                                    
+</pre>
+<h2>Debugging the Example</h2>
+<p>
+Running the ParserDebugger with the preceding Parser and test data produces:
+<pre>
+Matched regex 'ACCTNUM=\s*([^\n]*)\n' to 'ACCTNUM= ACCT#                                                                  
+' at character 162
+    Match value:'ACCT#                                                                  '
+    Transform org.identityconnectors.patternparser.SubstituteTransform:'ACCT#                                                                  '->'ACCT#'
+Matched regex 'HOLDCLASS=\s*(\S)' to 'HOLDCLASS= X' at character 243
+    Match value:'X'
+Matched regex 'JOBCLASS=\s*(\S)' to 'JOBCLASS= A' at character 324
+    Match value:'A'
+Matched regex 'MSGCLASS=\s*(\S)' to 'MSGCLASS= X' at character 405
+    Match value:'X'
+Matched regex 'PROC=\s*(\S{1,8})' to 'PROC= ISPFPROC' at character 486
+    Match value:'ISPFPROC'
+Matched regex 'SIZE=\s*(\d+)' to 'SIZE= 00006133' at character 567
+    Match value:'00006133'
+    Transform org.identityconnectors.patternparser.ClassTransform:'00006133'->'6133'
+Matched regex 'MAXSIZE=\s*(\d+)' to 'MAXSIZE= 00000000' at character 648
+    Match value:'00000000'
+    Transform org.identityconnectors.patternparser.ClassTransform:'00000000'->'0'
+Matched regex 'SYSOUTCLASS=\s*(\S)' to 'SYSOUTCLASS= X' at character 729
+    Match value:'X'
+Matched regex 'USERDATA=\s*(\S{1,4})' to 'USERDATA= 0000' at character 810
+    Match value:'0000'
+Matched regex 'COMMAND=\s*([^\n]*)\n' to 'COMMAND= ISPF PANEL(ISR@390)                                                    
+' at character 891
+    Match value:'ISPF PANEL(ISR@390)                                                    '
+    Transform org.identityconnectors.patternparser.SubstituteTransform:'ISPF PANEL(ISR@390)                                                    '->'ISPF PANEL(ISR@390)'
+
+Results:
+    TSO*PROC=ISPFPROC
+    TSO*MSGCLASS=X
+    TSO*ACCTNUM=ACCT#
+    TSO*USERDATA=0000
+    TSO*SYSOUTCLASS=X
+    TSO*SIZE=6133
+    TSO*MAXSIZE=0
+    TSO*JOBCLASS=A
+    TSO*HOLDCLASS=X
+    TSO*COMMAND=ISPF PANEL(ISR@390)
+</pre>
+This allows you to see what is captured by each pattern, and how the transforms affect the
+output at each stage.
