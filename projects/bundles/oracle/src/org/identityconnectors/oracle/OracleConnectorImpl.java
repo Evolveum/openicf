@@ -42,7 +42,7 @@ final class OracleConnectorImpl implements PoolableConnector, AuthenticateOp,
 		CreateOp, DeleteOp, UpdateOp, UpdateAttributeValuesOp,
 		SearchOp<Pair<String, FilterWhereBuilder>>, SchemaOp,TestOp {
     
-	private final static Log log = Log.getLog(OracleConnectorImpl.class);
+	private final static Log log = Log.getLog(OracleConnector.class);
     
     private Connection adminConn;
     private OracleConfiguration cfg;

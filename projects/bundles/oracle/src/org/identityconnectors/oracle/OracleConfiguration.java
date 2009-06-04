@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import static org.identityconnectors.oracle.OracleMessages.*;
 
 import org.identityconnectors.common.StringUtil;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.JNDIUtil;
 import org.identityconnectors.dbcommon.LocalizedAssert;
@@ -42,6 +43,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     //Source type is user defined ConnectionType
     private String sourceType;
     private boolean ignoreCreateExtraOperAttrs;
+    private static final Log log = Log.getLog(OracleConfiguration.class);
     /**
      * Creates configuration
      */
@@ -386,9 +388,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     private Connection createConnection(String user,GuardedString password){
         validate();
         Connection connection = null;
-        boolean adjustConn = true;
         if(ConnectionType.DATASOURCE.equals(connType)){
-        	adjustConn = false;
             if(StringUtil.isNotBlank(user) && password != null){
             	//This could fail, but we cannot invoke method without user/password if user and password were specified
             	connection = OracleSpecifics.createDataSourceConnection(dataSource,user,password,JNDIUtil.arrayToHashtable(dsJNDIEnv, getConnectorMessages()), getConnectorMessages());
@@ -418,10 +418,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
         	throw new IllegalStateException("Invalid state of OracleConfiguration, connectionType = " + connType);
         }
         try{
-	        if(adjustConn){
-	        	adjustConnnection(connection);
-	        }
-	        checkConnection(connection);
+        	checkAndAdjustConnection(connType,connection);
         }catch(RuntimeException e){
         	SQLUtil.closeQuietly(connection);
         	throw e;
@@ -429,40 +426,28 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
         return connection;
     }
 
-	private void checkConnection(Connection connection) {
+	private void checkAndAdjustConnection(ConnectionType type, Connection connection) {
+		//Set autocommit to off
+		//When using datasource with sharable connection , it could throw exception or log warning
 		try{
 	        if(connection.getAutoCommit()){
-	        	throw new IllegalStateException(getConnectorMessages().format(MSG_CONNECTION_AUTOCOMMIT_TRUE, null));
+	        	log.info("connection.setAutoCommit(false)");
+	        	connection.setAutoCommit(false);
 	        }
         }catch(SQLException e){
-			throw new ConnectorException("Cannot check connection autocommit flag",e);
+			throw new ConnectorException("Cannot check or adjust connection autocommit flag",e);
         }
+		//Set Transaction Isolation
+		//When using datasource with sharable connection , it could throw exception or log warning
         try{
-        	if(connection.getTransactionIsolation() == Connection.TRANSACTION_NONE){
-        		throw new IllegalStateException(getConnectorMessages().format(MSG_CONNECTION_TRANSACTION_ISOLATION_NONE, null, connection.getTransactionIsolation()));
-        	}
-        	else if(connection.getTransactionIsolation() == Connection.TRANSACTION_READ_UNCOMMITTED){
-        		throw new IllegalStateException(getConnectorMessages().format(MSG_CONNECTION_TRANSACTION_ISOLATION_UNCOMMITTED, null, connection.getTransactionIsolation()));
-        	}
+	        if(connection.getTransactionIsolation() == Connection.TRANSACTION_NONE || connection.getTransactionIsolation() == Connection.TRANSACTION_READ_UNCOMMITTED){
+	        	log.info("connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED)");
+	        	connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+	        }
+        }catch(SQLException e){
+        	throw new ConnectorException("Cannot check or adjust transaction isolation settings", e);
         }
-        catch(SQLException e){
-        	throw new ConnectorException("Cannot check connection transaction isolation settings", e);
-        }
+		
 	}
-
-	private void adjustConnnection(Connection connection) {
-		try {
-			connection.setAutoCommit(false);
-		} catch (SQLException e) {
-			throw new ConnectorException("Cannot switch off autocommit",e);
-		}
-		try {
-			connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-		} catch (SQLException e) {
-			SQLUtil.closeQuietly(connection);
-			throw new ConnectorException("Cannot set transaction isolation",e);
-		}
-	}
-    
 
 }

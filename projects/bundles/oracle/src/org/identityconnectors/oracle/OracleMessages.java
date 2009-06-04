@@ -71,8 +71,4 @@ class OracleMessages {
 	static final String MSG_ENABLE_LOCK_ATTR_VALUE_CONFLICT_FALSE = "oracle.enable.lock.attr.value.conflict.false";
 	static final String MSG_ENABLE_LOCK_ATTR_VALUE_CONFLICT_TRUE = "oracle.enable.lock.attr.value.conflict.true";
 	static final String MSG_INVALID_SOURCE_TYPE = "oracle.invalid.source.type";
-	static final String MSG_CONNECTION_AUTOCOMMIT_TRUE = "oracle.connection.autocommit.true";
-	static final String MSG_CONNECTION_TRANSACTION_ISOLATION_NONE = "oracle.connection.transaction.isolation.none";
-	static final String MSG_CONNECTION_TRANSACTION_ISOLATION_UNCOMMITTED = "oracle.connection.transaction.isolation.uncommited";
-	
 }
