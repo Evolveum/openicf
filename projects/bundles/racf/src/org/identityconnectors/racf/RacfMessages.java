@@ -93,7 +93,7 @@ public class RacfMessages extends ListResourceBundle {
         { UNSUPPORTED_SCRIPTING_LANGUAGE, "''{0}'' is not supported as a scripting langauge" },
         { NEED_LDAP,               "Must have LDAP connection for LDAP-style attributes" },
         { NEED_COMMAND_LINE,       "Must have command-line connection for command-line-style attributes" },
-        { ATTRS_NO_LDAP,           "Ldap attrs requested, but no ldap connection" },
+        { ATTRS_NO_LDAP,           "No segment name specified:{0}" },
         { ATTRS_NO_CL,             "Command Line attrs requested, but no command line connection" },
         { CONNECTION_DEAD,         "Connection dead" },
         { ERROR_IN_COMMAND,        "Error in command ''{0}''\n''{1}''" },

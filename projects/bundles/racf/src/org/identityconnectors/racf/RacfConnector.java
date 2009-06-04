@@ -376,7 +376,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             if (ldapAttrs.contains(Name.NAME))
                 ldapSize--;
             if (!isLdapConnectionAvailable() && ldapSize>0)
-                throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.ATTRS_NO_LDAP));
+                throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.ATTRS_NO_LDAP, ldapAttrs.toString()));
 
             int commandLineSize = commandLineAttrs.size();
             if (commandLineAttrs.contains(Name.NAME))
