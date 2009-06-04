@@ -39,11 +39,11 @@ public class OracleAttributeNormalizerTest {
 		//User is by default case sensitive/insensitive, depends on OracleUserAttributeCS
 		attr = normalizer.normalizeAttribute(objectClass, op, AttributeBuilder.build(Name.NAME,"myName"));
 		assertNotNull(attr);
-		assertEquals(OracleUserAttributeCS.USER.isDefToUpper() ?  "myName".toUpperCase() : "myName", AttributeUtil.getSingleValue(attr));
+		assertEquals(OracleUserAttribute.USER.getFormatting().isToUpper() ?  "myName".toUpperCase() : "myName", AttributeUtil.getSingleValue(attr));
 
 		attr = normalizer.normalizeAttribute(objectClass, op, AttributeBuilder.build(Name.NAME.toLowerCase(),"myName"));
 		assertNotNull(attr);
-		assertEquals(OracleUserAttributeCS.USER.isDefToUpper() ?  "myName".toUpperCase() : "myName", AttributeUtil.getSingleValue(attr));
+		assertEquals(OracleUserAttribute.USER.getFormatting().isToUpper() ?  "myName".toUpperCase() : "myName", AttributeUtil.getSingleValue(attr));
 		
 		//We do not normalize by UID
 		attr = normalizer.normalizeAttribute(objectClass, op, AttributeBuilder.build(Uid.NAME,"myUid"));

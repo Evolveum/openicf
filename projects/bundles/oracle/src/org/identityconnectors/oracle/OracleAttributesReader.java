@@ -9,6 +9,9 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
+import org.identityconnectors.framework.spi.operations.CreateOp;
+import org.identityconnectors.framework.spi.operations.SPIOperation;
+import org.identityconnectors.framework.spi.operations.UpdateOp;
 
 /** Transforms attributes from Set<Attribute> attrs to {@link OracleUserAttributes}.
  *  It checks just nullability of attributes and makes some possible value checks.
@@ -22,18 +25,18 @@ final class OracleAttributesReader {
      }
     
      void readCreateAttributes(Map<String, Attribute> map, OracleUserAttributes.Builder caAttributes){
-    	 readAuthAttributes(map, caAttributes, Operation.CREATE);
-    	 readRestAttributes(map, caAttributes, Operation.CREATE);
+    	 readAuthAttributes(map, caAttributes, CreateOp.class);
+    	 readRestAttributes(map, caAttributes, CreateOp.class);
      }
      
      void readAlterAttributes(Map<String, Attribute> map, OracleUserAttributes.Builder caAttributes){
-    	 readAuthAttributes(map, caAttributes, Operation.ALTER);
-    	 readRestAttributes(map, caAttributes, Operation.ALTER);
+    	 readAuthAttributes(map, caAttributes, UpdateOp.class);
+    	 readRestAttributes(map, caAttributes, UpdateOp.class);
      }
      
      
      
-     private void readRestAttributes(Map<String, Attribute> map, OracleUserAttributes.Builder caAttributes, Operation operation) {
+     private void readRestAttributes(Map<String, Attribute> map, OracleUserAttributes.Builder caAttributes, Class<? extends SPIOperation> operation) {
         caAttributes.setExpirePassword(OracleConnectorHelper.getNotNullAttributeBooleanValue(map, OperationalAttributes.PASSWORD_EXPIRED_NAME, cm));
         caAttributes.setDefaultTableSpace(OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, OracleConstants.ORACLE_DEF_TS_ATTR_NAME, cm));
         caAttributes.setTempTableSpace(OracleConnectorHelper.getNotNullAttributeNotEmptyStringValue(map, OracleConstants.ORACLE_TEMP_TS_ATTR_NAME, cm));
@@ -84,9 +87,9 @@ final class OracleAttributesReader {
         }
     }
 
-    private void readAuthAttributes(Map<String, Attribute> map, OracleUserAttributes.Builder caAttributes, Operation operation) {
+    private void readAuthAttributes(Map<String, Attribute> map, OracleUserAttributes.Builder caAttributes, Class<? extends SPIOperation> operation) {
         String authentication = null;
-        if(Operation.CREATE.equals(operation)){
+        if(CreateOp.class.equals(operation)){
         	authentication = OracleConnectorHelper.getStringValue(map, OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, cm);
         }
         else{

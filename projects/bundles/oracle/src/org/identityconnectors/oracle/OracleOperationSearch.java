@@ -250,23 +250,23 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 			//format sql column using Formatter for concrete attribute.
 			//Formatter can then e.g surround column with UPPER function 
 			if(attribute.is(Name.NAME)){
-				return cs.formatSQLColumn(OracleUserAttributeCS.USER, "DBA_USERS.USERNAME");
+				return cs.formatSQLColumn(OracleUserAttribute.USER, "DBA_USERS.USERNAME");
 			}
 			//we do not normalize UID 
 			else if(attribute.is(Uid.NAME)){
-				return cs.formatSQLColumn(OracleUserAttributeCS.USER, "DBA_USERS.USERNAME");
+				return cs.formatSQLColumn(OracleUserAttribute.USER, "DBA_USERS.USERNAME");
 			}
 			else if(attribute.is(OracleConstants.ORACLE_DEF_TS_ATTR_NAME)){
-				return cs.formatSQLColumn(OracleUserAttributeCS.DEF_TABLESPACE, "DBA_USERS.DEFAULT_TABLESPACE");
+				return cs.formatSQLColumn(OracleUserAttribute.DEF_TABLESPACE, "DBA_USERS.DEFAULT_TABLESPACE");
 			}
 			else if(attribute.is(OracleConstants.ORACLE_TEMP_TS_ATTR_NAME)){
-				return cs.formatSQLColumn(OracleUserAttributeCS.TEMP_TABLESPACE, "DBA_USERS.TEMPORARY_TABLESPACE");
+				return cs.formatSQLColumn(OracleUserAttribute.TEMP_TABLESPACE, "DBA_USERS.TEMPORARY_TABLESPACE");
 			}
 			else if(attribute.is(OracleConstants.ORACLE_PROFILE_ATTR_NAME)){
-				return cs.formatSQLColumn(OracleUserAttributeCS.PROFILE, "DBA_USERS.PROFILE");
+				return cs.formatSQLColumn(OracleUserAttribute.PROFILE, "DBA_USERS.PROFILE");
 			}
 			else if(attribute.is(OracleConstants.ORACLE_GLOBAL_ATTR_NAME)){
-				return cs.formatSQLColumn(OracleUserAttributeCS.GLOBAL_NAME, "DBA_USERS.EXTERNAL_NAME");
+				return cs.formatSQLColumn(OracleUserAttribute.GLOBAL_NAME, "DBA_USERS.EXTERNAL_NAME");
 			}
 			else if(attribute.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
 				return "(CASE WHEN DBA_USERS.ACCOUNT_STATUS LIKE '%EXPIRED%' THEN 'EXPIRED' ELSE 'NOT_EXPIRED' END)";
@@ -294,11 +294,11 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 			}
 			else if(attribute.is(OracleConstants.ORACLE_ROLES_ATTR_NAME)){
 				select = ADVANCED_SQL2;
-				return cs.formatSQLColumn(OracleUserAttributeCS.ROLE, "GRANTED_ROLE");
+				return cs.formatSQLColumn(OracleUserAttribute.ROLE, "GRANTED_ROLE");
 			}
 			else if(attribute.is(OracleConstants.ORACLE_PRIVS_ATTR_NAME)){
 				select = ADVANCED_SQL2;
-				return cs.formatSQLColumn(OracleUserAttributeCS.PRIVILEGE, "GRANTED_ROLE");
+				return cs.formatSQLColumn(OracleUserAttribute.PRIVILEGE, "GRANTED_ROLE");
 			}
 			else if(attribute.is(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME)){
 				return "(CASE WHEN DBA_USERS.PASSWORD='EXTERNAL' THEN 'EXTERNAL' ELSE (CASE WHEN DBA_USERS.EXTERNAL_NAME IS NOT NULL THEN 'GLOBAL' ELSE 'LOCAL' END) END)";

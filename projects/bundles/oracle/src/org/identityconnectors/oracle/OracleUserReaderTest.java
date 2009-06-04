@@ -4,7 +4,7 @@
 package org.identityconnectors.oracle;
 
 import static org.identityconnectors.oracle.OracleConnectorAbstractTest.assertEqualsIgnoreCase;
-import static org.identityconnectors.oracle.OracleUserAttributeCS.USER;
+import static org.identityconnectors.oracle.OracleUserAttribute.USER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;

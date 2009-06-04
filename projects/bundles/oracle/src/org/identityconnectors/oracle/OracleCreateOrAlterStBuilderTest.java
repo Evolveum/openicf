@@ -209,8 +209,8 @@ public class OracleCreateOrAlterStBuilderTest {
     	ConnectorMessages cm = TestHelpers.createDummyMessages();
 		OracleCaseSensitivitySetup ocs = new OracleCaseSensitivityBuilder(cm)
 				.defineFormattersAndNormalizers(
-						new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(OracleUserAttributeCS.USER).setQuatesChar("").build(),
-						new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(OracleUserAttributeCS.PROFILE).setQuatesChar("'").build()
+						new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(OracleUserAttribute.USER).setQuatesChar("").build(),
+						new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(OracleUserAttribute.PROFILE).setQuatesChar("'").build()
 						).build();
     	OracleCreateOrAlterStBuilder builder = new OracleCreateOrAlterStBuilder(ocs,TestHelpers.createDummyMessages(), false);
         OracleUserAttributes.Builder attributes = new OracleUserAttributes.Builder();

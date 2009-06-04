@@ -246,7 +246,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     
     String getUserOwner(){
     	//if we were logged as system, owner will be SYSTEM
-    	if("".equals(cs.getAttributeFormatterAndNormalizer(OracleUserAttributeCS.SYSTEM_USER).getQuatesChar())){
+    	if("".equals(cs.getAttributeFormatterAndNormalizer(OracleUserAttribute.SYSTEM_USER).getQuatesChar())){
     		return user.toUpperCase();
     	}
     	return user;
@@ -373,14 +373,14 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     
     
     Connection createUserConnection(String user, GuardedString password){
-    	user = cs.formatToken(OracleUserAttributeCS.USER, user);
-    	password = cs.formatToken(OracleUserAttributeCS.PASSWORD, password);
+    	user = cs.formatToken(OracleUserAttribute.USER, user);
+    	password = cs.formatToken(OracleUserAttribute.PASSWORD, password);
     	return createConnection(user,password);
     }
     
     Connection createAdminConnection(){
-    	String user = cs.normalizeAndFormatToken(OracleUserAttributeCS.SYSTEM_USER, this.user);
-    	GuardedString password = cs.normalizeAndFormatToken(OracleUserAttributeCS.SYSTEM_PASSWORD, this.password);
+    	String user = cs.normalizeAndFormatToken(OracleUserAttribute.SYSTEM_USER, this.user);
+    	GuardedString password = cs.normalizeAndFormatToken(OracleUserAttribute.SYSTEM_PASSWORD, this.password);
         return createConnection(user,password);
     }
     

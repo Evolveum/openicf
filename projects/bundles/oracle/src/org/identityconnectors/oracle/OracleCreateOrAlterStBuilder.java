@@ -1,16 +1,20 @@
 package org.identityconnectors.oracle;
 
-import static org.identityconnectors.oracle.OracleUserAttributeCS.DEF_TABLESPACE;
-import static org.identityconnectors.oracle.OracleUserAttributeCS.PASSWORD;
-import static org.identityconnectors.oracle.OracleUserAttributeCS.PROFILE;
-import static org.identityconnectors.oracle.OracleUserAttributeCS.TEMP_TABLESPACE;
-import static org.identityconnectors.oracle.OracleUserAttributeCS.USER;
+import static org.identityconnectors.oracle.OracleUserAttribute.DEF_TABLESPACE;
+import static org.identityconnectors.oracle.OracleUserAttribute.PASSWORD;
+import static org.identityconnectors.oracle.OracleUserAttribute.PROFILE;
+import static org.identityconnectors.oracle.OracleUserAttribute.TEMP_TABLESPACE;
+import static org.identityconnectors.oracle.OracleUserAttribute.USER;
 
 import java.util.Arrays;
 
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
+import org.identityconnectors.framework.spi.operations.CreateOp;
+import org.identityconnectors.framework.spi.operations.SPIOperation;
+import org.identityconnectors.framework.spi.operations.UpdateOp;
+
 import static org.identityconnectors.oracle.OracleMessages.*;
 
 /**
@@ -62,7 +66,7 @@ final class OracleCreateOrAlterStBuilder {
         StringBuilder builder = new StringBuilder();
         builder.append("create user ").append(cs.formatToken(USER, userAttributes.getUserName()));
         int length = builder.length();
-        appendCreateOrAlterSt(builder,userAttributes,Operation.CREATE,null);
+        appendCreateOrAlterSt(builder,userAttributes,CreateOp.class,null);
         return builder.length() == length ? null : builder.toString();
     }
     
@@ -76,11 +80,11 @@ final class OracleCreateOrAlterStBuilder {
         StringBuilder builder = new StringBuilder();
         builder.append("alter user ").append(cs.formatToken(USER, userAttributes.getUserName()));
         int length = builder.length();
-        appendCreateOrAlterSt(builder,userAttributes,Operation.ALTER,userRecord);
+        appendCreateOrAlterSt(builder,userAttributes,UpdateOp.class,userRecord);
         return builder.length() == length ? null : builder.toString();
     }
 
-    private void appendCreateOrAlterSt(StringBuilder builder, OracleUserAttributes userAttributes, Operation operation, UserRecord userRecord) {
+    private void appendCreateOrAlterSt(StringBuilder builder, OracleUserAttributes userAttributes, Class<? extends SPIOperation> operation, UserRecord userRecord) {
     	BuilderStatus status = new BuilderStatus();
         appendAuth(builder, userAttributes, operation, status, userRecord);
         if(userAttributes.getDefaultTableSpace() != null){
@@ -107,7 +111,7 @@ final class OracleCreateOrAlterStBuilder {
         	}
         	else{
         		//We will use same flag for ignoring password expire like for ignoring the password
-        		if(Operation.ALTER.equals(operation) || (!ignoreCreateExtraOperAttrs)){
+        		if(UpdateOp.class.equals(operation) || (!ignoreCreateExtraOperAttrs)){
         			throw new IllegalArgumentException(cm.format(MSG_CANNOT_EXPIRE_PASSWORD_FOR_NOT_LOCAL_AUTHENTICATION, null));
         		}
         	}
@@ -187,23 +191,23 @@ final class OracleCreateOrAlterStBuilder {
         builder.append(" default tablespace ").append(cs.formatToken(DEF_TABLESPACE, userAttributes.getDefaultTableSpace()));
     }
 
-    private void appendAuth(final StringBuilder builder, OracleUserAttributes userAttributes, Operation operation, BuilderStatus status,UserRecord userRecord) {
+    private void appendAuth(final StringBuilder builder, OracleUserAttributes userAttributes, Class<? extends SPIOperation> operation, BuilderStatus status,UserRecord userRecord) {
     	status.currentAuth = userAttributes.getAuth();
     	if(status.currentAuth == null){
-    		if(Operation.CREATE.equals(operation)){
+    		if(CreateOp.class.equals(operation)){
     			status.currentAuth = OracleAuthentication.LOCAL;
     		}
     		else {
     			status.currentAuth = OracleUserReader.resolveAuthentication(userRecord);
     		}
     	}
-    	boolean appendIdentified = Operation.CREATE.equals(operation) || userAttributes.getAuth() != null || userAttributes.getPassword() != null || userAttributes.getGlobalName() != null;
+    	boolean appendIdentified = CreateOp.class.equals(operation) || userAttributes.getAuth() != null || userAttributes.getPassword() != null || userAttributes.getGlobalName() != null;
     	if(!appendIdentified){
     		return;
     	}
     	if(userAttributes.getPassword() != null && !OracleAuthentication.LOCAL.equals(status.currentAuth)){
     		//In case of update or create with !ignoreCreateExtraOperAttrs and password is present, throw exception
-    		if(Operation.ALTER.equals(operation) || (!ignoreCreateExtraOperAttrs)){
+    		if(UpdateOp.class.equals(operation) || (!ignoreCreateExtraOperAttrs)){
     			throw new IllegalArgumentException(cm.format(MSG_CANNOT_SET_PASSWORD_FOR_NOT_LOCAL_AUTHENTICATION, null));
     		}
     	}
@@ -216,7 +220,7 @@ final class OracleCreateOrAlterStBuilder {
             status.passwordSet = userAttributes.getPassword();
             if(status.passwordSet == null){
             	//Can we set password same as username ? , adapter did so
-            	if(Operation.CREATE.equals(operation)){
+            	if(CreateOp.class.equals(operation)){
             		//Set password to userName, it is already normalized
             		status.passwordSet = new GuardedString(userAttributes.getUserName().toCharArray());
             	}
@@ -245,7 +249,7 @@ final class OracleCreateOrAlterStBuilder {
                 throw new IllegalArgumentException(cm.format(MSG_MISSING_GLOBALNAME_FOR_GLOBAL_AUTHENTICATION, null));
             }
             builder.append(" globally as ");
-            builder.append(cs.formatToken(OracleUserAttributeCS.GLOBAL_NAME,userAttributes.getGlobalName()));
+            builder.append(cs.formatToken(OracleUserAttribute.GLOBAL_NAME,userAttributes.getGlobalName()));
         }
     }
 

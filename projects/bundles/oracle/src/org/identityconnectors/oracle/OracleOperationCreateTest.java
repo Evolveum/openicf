@@ -5,8 +5,8 @@ package org.identityconnectors.oracle;
 
 import static org.identityconnectors.oracle.OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME;
 import static org.identityconnectors.oracle.OracleConstants.ORACLE_PRIVS_ATTR_NAME;
-import static org.identityconnectors.oracle.OracleUserAttributeCS.PROFILE;
-import static org.identityconnectors.oracle.OracleUserAttributeCS.USER;
+import static org.identityconnectors.oracle.OracleUserAttribute.PROFILE;
+import static org.identityconnectors.oracle.OracleUserAttribute.USER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -434,9 +434,9 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         try{
             SQLUtil.executeUpdateStatement(connector.getAdminConnection(),
                     "drop role "
-                            + cs.normalizeAndFormatToken(OracleUserAttributeCS.ROLE, role));
+                            + cs.normalizeAndFormatToken(OracleUserAttribute.ROLE, role));
         }catch(SQLException e){}
-        SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "create role " + cs.normalizeAndFormatToken(OracleUserAttributeCS.ROLE,role));
+        SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "create role " + cs.normalizeAndFormatToken(OracleUserAttribute.ROLE,role));
         Attribute roles = AttributeBuilder.build(OracleConstants.ORACLE_ROLES_ATTR_NAME, Arrays.asList(role));
         Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute, roles), null);
         UserRecord record = userReader.readUserRecord(uid.getUidValue());
@@ -444,7 +444,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         assertEqualsIgnoreCase(TEST_USER, record.getUserName());
         OracleRolePrivReader roleReader = new OracleRolePrivReader(connector.getAdminConnection());
         final List<String> rolesRead = roleReader.readRoles(uid.getUidValue());
-        Assert.assertThat(rolesRead, JUnitMatchers.hasItem(cs.normalizeToken(OracleUserAttributeCS.ROLE,role)));
+        Assert.assertThat(rolesRead, JUnitMatchers.hasItem(cs.normalizeToken(OracleUserAttribute.ROLE,role)));
     }
     
     /**

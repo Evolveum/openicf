@@ -25,17 +25,17 @@ import org.identityconnectors.framework.spi.operations.SPIOperation;
  *
  */
 final class OracleAttributeNormalizer  {
-    private static final Map<String,OracleUserAttributeCS> attributeMapping = new TreeMap<String, OracleUserAttributeCS>(OracleConnectorHelper.getAttributeNamesComparator());
+    private static final Map<String,OracleUserAttribute> attributeMapping = new TreeMap<String, OracleUserAttribute>(OracleConnectorHelper.getAttributeNamesComparator());
     static {
-        attributeMapping.put(Name.NAME, OracleUserAttributeCS.USER);
+        attributeMapping.put(Name.NAME, OracleUserAttribute.USER);
         //UID should never be normalized
         //attributeMapping.put(Uid.NAME, OracleUserAttributeCS.USER);
-        attributeMapping.put(OracleConstants.ORACLE_GLOBAL_ATTR_NAME, OracleUserAttributeCS.GLOBAL_NAME);
-        attributeMapping.put(OracleConstants.ORACLE_ROLES_ATTR_NAME, OracleUserAttributeCS.ROLE);
-        attributeMapping.put(OracleConstants.ORACLE_PRIVS_ATTR_NAME, OracleUserAttributeCS.PRIVILEGE);
-        attributeMapping.put(OracleConstants.ORACLE_PROFILE_ATTR_NAME, OracleUserAttributeCS.PROFILE);
-        attributeMapping.put(OracleConstants.ORACLE_DEF_TS_ATTR_NAME, OracleUserAttributeCS.DEF_TABLESPACE);
-        attributeMapping.put(OracleConstants.ORACLE_TEMP_TS_ATTR_NAME, OracleUserAttributeCS.TEMP_TABLESPACE);
+        attributeMapping.put(OracleConstants.ORACLE_GLOBAL_ATTR_NAME, OracleUserAttribute.GLOBAL_NAME);
+        attributeMapping.put(OracleConstants.ORACLE_ROLES_ATTR_NAME, OracleUserAttribute.ROLE);
+        attributeMapping.put(OracleConstants.ORACLE_PRIVS_ATTR_NAME, OracleUserAttribute.PRIVILEGE);
+        attributeMapping.put(OracleConstants.ORACLE_PROFILE_ATTR_NAME, OracleUserAttribute.PROFILE);
+        attributeMapping.put(OracleConstants.ORACLE_DEF_TS_ATTR_NAME, OracleUserAttribute.DEF_TABLESPACE);
+        attributeMapping.put(OracleConstants.ORACLE_TEMP_TS_ATTR_NAME, OracleUserAttribute.TEMP_TABLESPACE);
     }
     
     private final OracleCaseSensitivitySetup cs;
@@ -61,7 +61,7 @@ final class OracleAttributeNormalizer  {
         	return null;
         }
 		String name = attribute.getName();
-        final OracleUserAttributeCS oracleUserAttribute = attributeMapping.get(name);
+        final OracleUserAttribute oracleUserAttribute = attributeMapping.get(name);
         if(oracleUserAttribute == null){
             return attribute;
         }

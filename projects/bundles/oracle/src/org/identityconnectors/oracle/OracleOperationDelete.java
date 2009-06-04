@@ -32,7 +32,7 @@ final class OracleOperationDelete extends AbstractOracleOperation implements Del
         //whether we will do cascade or noCascade delete
         log.info("Deleting user : [{0}]", uid.getUidValue());
         String userName = uid.getUidValue();
-        String sql = "drop user " + cfg.getCSSetup().formatToken(OracleUserAttributeCS.USER,userName) + " CASCADE";
+        String sql = "drop user " + cfg.getCSSetup().formatToken(OracleUserAttribute.USER,userName) + " CASCADE";
         Statement st = null;
         try{
             st = adminConn.createStatement();

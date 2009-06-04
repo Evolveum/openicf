@@ -3,8 +3,8 @@
  */
 package org.identityconnectors.oracle;
 
-import static org.identityconnectors.oracle.OracleUserAttributeCS.PROFILE;
-import static org.identityconnectors.oracle.OracleUserAttributeCS.ROLE;
+import static org.identityconnectors.oracle.OracleUserAttribute.PROFILE;
+import static org.identityconnectors.oracle.OracleUserAttribute.ROLE;
 import static org.identityconnectors.oracle.OracleConstants.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -304,7 +304,7 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 	private void createRoles(String ...roles) throws SQLException{
 		final OracleCaseSensitivitySetup cs = testConf.getCSSetup();
 		for(String role : roles){
-			SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "create role " + cs.formatToken(OracleUserAttributeCS.ROLE,role));
+			SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "create role " + cs.formatToken(OracleUserAttribute.ROLE,role));
 		}
 	}
 	
@@ -339,11 +339,11 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 		dropPrivilegeTables();
 		createPrivilegeTables();
 		OracleCaseSensitivitySetup cs = new OracleCaseSensitivityBuilder(TestHelpers.createDummyMessages()).build();
-		String owner = cs.normalizeToken(OracleUserAttributeCS.SYSTEM_USER, testConf.getUser());
+		String owner = cs.normalizeToken(OracleUserAttribute.SYSTEM_USER, testConf.getUser());
         try{
-        	String priv1 = cs.normalizeToken(OracleUserAttributeCS.PRIVILEGE, "create session");
-        	String priv2 = cs.normalizeToken(OracleUserAttributeCS.PRIVILEGE, "SELECT ON " + owner + ".MYTABLE1");
-        	String priv3 = cs.normalizeToken(OracleUserAttributeCS.PRIVILEGE, "SELECT ON " + owner + ".MYTABLE2");
+        	String priv1 = cs.normalizeToken(OracleUserAttribute.PRIVILEGE, "create session");
+        	String priv2 = cs.normalizeToken(OracleUserAttribute.PRIVILEGE, "SELECT ON " + owner + ".MYTABLE1");
+        	String priv3 = cs.normalizeToken(OracleUserAttribute.PRIVILEGE, "SELECT ON " + owner + ".MYTABLE2");
 			Attribute privileges = AttributeBuilder.build(ORACLE_PRIVS_ATTR_NAME, priv1, priv2, priv3);
 	        facade.update(ObjectClass.ACCOUNT, new Uid(user(3)),Collections.singleton(privileges),null);
 	        facade.update(ObjectClass.ACCOUNT, new Uid(user(7)),Collections.singleton(privileges),null);

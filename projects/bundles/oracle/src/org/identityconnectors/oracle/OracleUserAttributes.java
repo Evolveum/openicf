@@ -177,9 +177,3 @@ final class OracleUserAttributes {
     }
     
 }
-
-
-enum Operation{
-    CREATE,
-    ALTER;
-}
