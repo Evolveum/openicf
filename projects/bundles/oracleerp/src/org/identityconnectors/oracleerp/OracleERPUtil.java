@@ -22,9 +22,6 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.EMP_NUM;
-import static org.identityconnectors.oracleerp.OracleERPUtil.NPW_NUM;
-
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -42,7 +39,6 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.Uid;
 
 /**
  * @author Petr Jung

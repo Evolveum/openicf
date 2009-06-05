@@ -29,13 +29,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.SQLParam;
@@ -43,7 +41,6 @@ import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
@@ -492,11 +489,10 @@ public class ResponsibilityNames {
         List<String> respKeys = null;
         if (resps != null) {
             respKeys = new ArrayList<String>();
-            for (int i = 0; i < resps.size(); i++) {
-                String strResp = resps.get(i);
+            for (String strResp : resps) {
                 String strRespReformatted = getResp(strResp, respFmt);
                 log.info(method + " strResp='" + strResp + "', strRespReformatted='" + strRespReformatted + "'");
-                respKeys.add(strRespReformatted);
+                respKeys.add(strRespReformatted);                
             }
         }
         log.ok(method);
@@ -543,115 +539,99 @@ public class ResponsibilityNames {
         List<String> oldRespsWithNormalizedDates = getResps(oldResp, RESP_FMT_NORMALIZE_DATES);
         // if old key is not in new list, delete it
         if (oldRespKeys != null) {
-            if (!oldRespKeys.isEmpty()) {
-                int index = 0;
-                Iterator<String> it = oldRespKeys.iterator();
-                while (it.hasNext()) {
-                    Object resp = it.next();
-                    if (!newRespKeys.contains(resp)) {
-                        // bug#9637 check to see if resp is already 
-                        // endDated (disabled), if so, ignore, if not,
-                        // delete resp from User
-                        java.util.Date curDate = getCurrentDate();
-                        java.sql.Date endDate = null;
-                        boolean delResp = false;
-                        String respStr = oldResp.get(index);
-                        StringTokenizer tok = new StringTokenizer(respStr, "||", false);
-                        if (tok != null) {
-                            String endDateStr = null;
-                            while (tok.hasMoreTokens()) {
-                                endDateStr = tok.nextToken();
-                            }
-                            if (endDateStr != null && !endDateStr.equalsIgnoreCase("null")) {
-                                // format date input
-                                int i = endDateStr.indexOf(" ");
-                                endDate = java.sql.Date.valueOf(endDateStr.substring(0, i));
-                                delResp = endDate.after(curDate);
-                            } else {
-                                delResp = true;
-                            }
+            int index = 0;
+            for (String resp : oldRespKeys) {
+                if (!newRespKeys.contains(resp)) {
+                    // bug#9637 check to see if resp is already 
+                    // endDated (disabled), if so, ignore, if not,
+                    // delete resp from User
+                    java.util.Date curDate = getCurrentDate();
+                    java.sql.Date endDate = null;
+                    boolean delResp = false;
+                    String respStr = oldResp.get(index);
+                    StringTokenizer tok = new StringTokenizer(respStr, "||", false);
+                    if (tok != null) {
+                        String endDateStr = null;
+                        while (tok.hasMoreTokens()) {
+                            endDateStr = tok.nextToken();
                         }
-                        if (delResp) {
-                            deleteUserResponsibility(identity, (String) resp, errors);
-                            log.error("deleted, (end_dated), responsibility: '" + resp + "' for " + identity);
+                        if (endDateStr != null && !endDateStr.equalsIgnoreCase("null")) {
+                            // format date input
+                            int i = endDateStr.indexOf(" ");
+                            endDate = java.sql.Date.valueOf(endDateStr.substring(0, i));
+                            delResp = endDate.after(curDate);
+                        } else {
+                            delResp = true;
                         }
                     }
-                    index++;
+                    if (delResp) {
+                        deleteUserResponsibility(identity, resp, errors);
+                        log.error("deleted, (end_dated), responsibility: '" + resp + "' for " + identity);
+                    }
                 }
+                index++;                
             }
         }
         // if new key is not in old list add it and remove from respList
         // after adding
         if (respList != null) {
-            if (!respList.isEmpty()) {
-                // make copy of array to itereate through because we will be
-                // modifying the respList
-                List<String> resps = new ArrayList<String>(respList);
-                Iterator<String> it = resps.iterator();
-                String resp = null;
-                while (it.hasNext()) {
-                    resp = it.next();
-                    // Add/Update resp to user
-                    String respKey = getResp(resp, RESP_FMT_KEYS);
-                    if (!resp.equalsIgnoreCase("") && !oldRespKeys.contains(respKey)) {
-                        addUserResponsibility(identity, resp, errors);
-                        respList.remove(resp);
-                        log.info("added responsibility: '" + resp + "' for " + identity);
-                    }
-                }// end-while
-            }//end-if
+            // make copy of array to itereate through because we will be
+            // modifying the respList
+            List<String> resps = new ArrayList<String>(respList);
+            for (String resp : resps) {
+                String respKey = getResp(resp, RESP_FMT_KEYS);
+                if (!resp.equalsIgnoreCase("") && !oldRespKeys.contains(respKey)) {
+                    addUserResponsibility(identity, resp, errors);
+                    respList.remove(resp);
+                    log.info("added responsibility: '" + resp + "' for " + identity);
+                }                
+            }
         }//end-if
         // if new key is both lists, update it
         if (respList != null) {
-            if (!respList.isEmpty()) {
-                Iterator<String> it = respList.iterator();
-                String resp = null;
-                String respWithNormalizedDates = null;
-                while (it.hasNext()) {
-                    // bug#13889 -  do not update all responsibilities
-                    //              only update the ones that changed.
-                    //              Updating all responsibilities every time masks the audit records.
-                    //              Added check to see if oldResp list 
-                    //              contains the current entire responsibility
-                    //              string.
-                    resp = it.next();
-                    if (resp != null) {
-                        log.info("checking if update required for responsibility: '" + resp + "' for " + identity);
+            String respWithNormalizedDates = null;
+            for (String resp : respList) {
+                // bug#13889 -  do not update all responsibilities
+                //              only update the ones that changed.
+                //              Updating all responsibilities every time masks the audit records.
+                //              Added check to see if oldResp list 
+                //              contains the current entire responsibility
+                //              string.
+                if (resp != null) {
+                    log.info("checking if update required for responsibility: '" + resp + "' for " + identity);
+                } else {
+                    log.warn(" resp=NULL while processing updates");
+                }
+                // Add/Update resp to user
+                if (resp != null && !resp.equalsIgnoreCase("")) {
+                    // normalize the date string to only contain the date, no time information.
+                    respWithNormalizedDates = getResp(resp, RESP_FMT_NORMALIZE_DATES);
+
+                    if (respWithNormalizedDates != null) {
+                        log.info("respWithNormalizedDates='" + respWithNormalizedDates + "'");
                     } else {
-                        log.warn(" resp=NULL while processing updates");
+                        log.warn("respWithNormalizedDates=null while processing updates");
                     }
-                    // Add/Update resp to user
-                    if (resp != null && !resp.equalsIgnoreCase("")) {
-                        // normalize the date string to only contain the date, no time information.
-                        respWithNormalizedDates = getResp(resp, RESP_FMT_NORMALIZE_DATES);
 
-                        if (respWithNormalizedDates != null) {
-                            log.info("respWithNormalizedDates='" + respWithNormalizedDates + "'");
-                        } else {
-                            log.warn("respWithNormalizedDates=null while processing updates");
-                        }
+                    // Add/update resp to user if the date normalized responsibility string is not in the old date normalized list.
+                    if ((oldRespsWithNormalizedDates != null) && respWithNormalizedDates != null
+                            && !respWithNormalizedDates.equalsIgnoreCase("")
+                            && !oldRespsWithNormalizedDates.contains(respWithNormalizedDates)) {
+                        updateUserResponsibility(identity, resp, errors);
 
-                        // Add/update resp to user if the date normalized responsibility string is not in the old date normalized list.
-                        if ((oldRespsWithNormalizedDates != null) && respWithNormalizedDates != null
-                                && !respWithNormalizedDates.equalsIgnoreCase("")
-                                && !oldRespsWithNormalizedDates.contains(respWithNormalizedDates)) {
-                            updateUserResponsibility(identity, resp, errors);
-
-                            String msg = "updated responsibility: '" + resp + "' for " + identity;
-                            log.info(msg);
-                        }
+                        String msg = "updated responsibility: '" + resp + "' for " + identity;
+                        log.info(msg);
                     }
-                }// end-while
-            }//end-if
+                }                
+            }
         }//end-if
 
         // bug#16656: delayed error handling for missing responsibilities
         if (!errors.isEmpty()) {
             StringBuilder error = new StringBuilder();
-            for (int i = 0; i < errors.size(); i++) {
-                String msg = errors.get(i);
+            for (String msg : errors) {
                 error.append(msg);
-                error.append(";");
+                error.append(";");                
             }
             log.error(error.toString());
             throw new ConnectorException(error.toString());

@@ -26,6 +26,7 @@ import java.text.MessageFormat;
 
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.StringUtil;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.JNDIUtil;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
@@ -40,6 +41,12 @@ import org.identityconnectors.framework.spi.ConfigurationProperty;
  * @since 1.0
  */
 public class OracleERPConfiguration extends AbstractConfiguration {
+    
+    
+    /**
+     * Setup logging.
+     */
+    static final Log log = Log.getLog(OracleERPConfiguration.class);
 
     /**
      * Datasource attributed
@@ -552,5 +559,29 @@ public class OracleERPConfiguration extends AbstractConfiguration {
         }
         return url;
     }
+    
+    
+    /**
+     * Format the connector message
+     * @param key key of the message
+     * @return return the formated message
+     */
+    public String getMessage(String key) {
+        final String fmt = getConnectorMessages().format(key, key);
+        log.ok("Get for a key {0} connector message {1}", key, fmt);        
+        return fmt;
+    }
+    
+    /**
+     * Format message with arguments 
+     * @param key key of the message
+     * @param objects arguments
+     * @return the localized message string
+     */
+    public String getMessage(String key, Object... objects) {
+        final String fmt = getConnectorMessages().format(key, key, objects);
+        log.ok("Get for a key {0} connector message {1}", key, fmt);        
+        return fmt;
+    }    
     
 }

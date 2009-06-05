@@ -26,8 +26,6 @@ import static org.identityconnectors.oracleerp.OracleERPUtil.RESP_NAMES;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.text.MessageFormat;
@@ -492,7 +490,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      * Init connector`s call 
      */
     private void initFndGlobal() {
-        final String respId = getRespNames().getRespId();;        
+        final String respId = getRespNames().getRespId();        
         final String respApplId = getRespNames().getRespApplId();
         //Real initialize call
         if (StringUtil.isNotBlank(this.userId) && StringUtil.isNotBlank(respId)
