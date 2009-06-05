@@ -7,6 +7,7 @@ abstract class DB2Messages {
     static final String USERNAME_LONG = "db2.username.long";
     static final String USERNAME_CONTAINS_ILLEGAL_CHARACTERS = "db2.username.contains.illegal.characters";
     static final String USERNAME_IS_RESERVED_WORD = "db2.username.is.reserved.word";
+    static final String USERNAME_HAS_INVALID_PREFIX = "db2.username.has.invalid.prefix";
     static final String UNSUPPORTED_OBJECT_CLASS = "db2.unsupported.object.class";
     static final String AUTHENTICATE_INVALID_CREDENTIALS = "db2.authenticate.invalid.credentials";
     static final String NAME_IS_NULL_OR_EMPTY = "db2.name.is.null.or.empty";
@@ -42,6 +43,7 @@ abstract class DB2Messages {
     static final String DB2_DSJNDIENV_HELP = "db2.dsJNDIEnv.help";
     static final String DB2_REPLACEALLGRANTSONUPDATE_DISPLAY = "db2.replaceAllGrantsOnUpdate.display";
     static final String DB2_REPLACEALLGRANTSONUPDATE_HELP = "db2.replaceAllGrantsOnUpdate.help";
+    
     
     
 }

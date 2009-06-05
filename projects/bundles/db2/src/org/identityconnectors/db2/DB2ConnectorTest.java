@@ -512,10 +512,10 @@ public class DB2ConnectorTest {
     }
     
     /**
-     * Test validity of names
+     * Test validity of names for create
      */
     @Test
-    public void testValidNames(){
+    public void testValidNamesOnCreate(){
         //too long name
         char[] goodName = new char[DB2Specifics.MAX_NAME_SIZE];
         char[] tooLongName = new char[DB2Specifics.MAX_NAME_SIZE + 1];
@@ -566,6 +566,29 @@ public class DB2ConnectorTest {
         }
         catch(IllegalArgumentException e){}
         
+    }
+    
+    /** Test valid names */
+    @Test
+    public void testDB2Validity(){
+    	DB2Connector connector = new DB2Connector();
+    	connector.init(testConf);
+    	connector.checkDB2Validity("TEST1");
+    	connector.checkDB2Validity("#TEST1");
+    	testFailForValidity(connector,"ABCDEFGHIJKLMNOPRSTABCDEFGHIJKLMNO","Must fail for too long name");
+    	testFailForValidity(connector,"US%US","Must fail for invalid char");
+    	testFailForValidity(connector,"1USER","Must fail for invalid prefix");
+    	testFailForValidity(connector,".USER","Must fail for invalid prefix");
+    	testFailForValidity(connector,",USER","Must fail for invalid prefix");
+    }
+    
+    private void testFailForValidity(DB2Connector connector,String name,String msg){
+    	try{
+    		connector.checkDB2Validity(name);
+    		fail(msg);
+    	}
+    	catch(RuntimeException e){
+    	}
     }
     
     

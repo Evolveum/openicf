@@ -422,15 +422,18 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
      *  Manual.  They include length limits, forbidden prefixes, and forbidden
      *  keywords.  Throws and exception if the name or password are invalid.
      */
-    private void checkDB2Validity(String accountID)  {
+    void checkDB2Validity(String accountID)  {
         if (accountID.length() > DB2Specifics.MAX_NAME_SIZE) {
         	throw new IllegalArgumentException(cfg.getConnectorMessages().format(DB2Messages.USERNAME_LONG, null, DB2Specifics.MAX_NAME_SIZE));
         }
         if (DB2Specifics.containsIllegalDB2Chars(accountID.toCharArray())) {
             throw new IllegalArgumentException(cfg.getConnectorMessages().format(DB2Messages.USERNAME_CONTAINS_ILLEGAL_CHARACTERS, null));
         }
-        if (!DB2Specifics.isValidName(accountID.toUpperCase())) {
+        if (DB2Specifics.isReservedName(accountID.toUpperCase())) {
             throw new IllegalArgumentException(cfg.getConnectorMessages().format(DB2Messages.USERNAME_IS_RESERVED_WORD, null));
+        }
+        if(DB2Specifics.hasInvalidPrefix(accountID.toUpperCase())){
+        	throw new IllegalArgumentException(cfg.getConnectorMessages().format(DB2Messages.USERNAME_HAS_INVALID_PREFIX, null));
         }
     }
     

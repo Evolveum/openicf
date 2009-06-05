@@ -115,8 +115,8 @@ abstract class DB2Specifics {
 		return Collections.unmodifiableCollection(excludedNamePrefixes);
 	}
 	
-	static boolean isValidName(String name){
-		return !getExcludeNames().contains(name) && !includesPrefix(name,excludedNamePrefixes);
+	static boolean isReservedName(String name){
+		return getExcludeNames().contains(name) || includesPrefix(name,excludedNamePrefixes);
 	}
 	
     /**
@@ -243,6 +243,20 @@ abstract class DB2Specifics {
 	
 	static Connection createDataSourceConnection(String dsName,String user,GuardedString password,Hashtable<?,?> env){
 		return SQLUtil.getDatasourceConnection(dsName,user,password,env);
+	}
+
+	static boolean hasInvalidPrefix(String name) {
+		char firstChar = name.charAt(0);
+		if(Character.isDigit(firstChar)){
+			return true;
+		}
+		if('.' == firstChar){
+			return true;
+		}
+		if(',' == firstChar){
+			return true;
+		}
+		return false;
 	}
 
 
