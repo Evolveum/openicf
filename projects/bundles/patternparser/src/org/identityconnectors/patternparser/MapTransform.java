@@ -166,10 +166,10 @@ public class MapTransform extends Transform {
     }
     
     private String resultToString(Object result) {
-        if (result.getClass().isArray()) {
-            return Arrays.deepToString((Object[])result);
-        } else if (result == null) {
+        if (result == null) {
             return "<null>";
+        } else if (result.getClass().isArray()) {
+            return Arrays.deepToString((Object[])result);
         } else {
             return result.toString();
         }
