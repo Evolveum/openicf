@@ -9,6 +9,7 @@ import junit.framework.Assert;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
+import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.Test;
 
@@ -87,11 +88,19 @@ public class OracleCreateOrAlterStBuilderTest {
     }
 
     private OracleCreateOrAlterStBuilder createDefaultBuilder() {
-        return new OracleCreateOrAlterStBuilder(new OracleCaseSensitivityBuilder(TestHelpers.createDummyMessages()).build(),TestHelpers.createDummyMessages(), false);
+        return new OracleCreateOrAlterStBuilder(
+				new OracleCaseSensitivityBuilder(TestHelpers
+						.createDummyMessages()).build(), TestHelpers
+						.createDummyMessages(), new ExtraAttributesPolicySetupBuilder(TestHelpers.createDummyMessages()).build());
     }
     
     private OracleCreateOrAlterStBuilder createIgnorePasswordBuilder() {
-        return new OracleCreateOrAlterStBuilder(new OracleCaseSensitivityBuilder(TestHelpers.createDummyMessages()).build(),TestHelpers.createDummyMessages(), true);
+        return new OracleCreateOrAlterStBuilder(
+				new OracleCaseSensitivityBuilder(TestHelpers
+						.createDummyMessages()).build(), TestHelpers
+						.createDummyMessages(),
+				new ExtraAttributesPolicySetupBuilder(TestHelpers
+						.createDummyMessages()).definePolicy(OracleUserAttribute.PASSWORD, CreateOp.class, ExtraAttributesPolicy.IGNORE).build());
     }
     
     
@@ -212,7 +221,10 @@ public class OracleCreateOrAlterStBuilderTest {
 						new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(OracleUserAttribute.USER).setQuatesChar("").build(),
 						new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(OracleUserAttribute.PROFILE).setQuatesChar("'").build()
 						).build();
-    	OracleCreateOrAlterStBuilder builder = new OracleCreateOrAlterStBuilder(ocs,TestHelpers.createDummyMessages(), false);
+    	OracleCreateOrAlterStBuilder builder = new OracleCreateOrAlterStBuilder(
+				ocs, TestHelpers.createDummyMessages(),
+				new ExtraAttributesPolicySetupBuilder(TestHelpers
+						.createDummyMessages()).build());
         OracleUserAttributes.Builder attributes = new OracleUserAttributes.Builder();
         attributes.setAuth(null);
         attributes.setUserName("user1");

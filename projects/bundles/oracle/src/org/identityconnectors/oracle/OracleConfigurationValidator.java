@@ -27,6 +27,7 @@ class OracleConfigurationValidator {
     	LocalizedAssert la = new LocalizedAssert(cfg.getConnectorMessages(),true);
         la.assertNotBlank(cfg.getCaseSensitivityString(), MSG_CS_DISPLAY);
         cfg.setCSSetup(new OracleCaseSensitivityBuilder(cfg.getConnectorMessages()).parseMap(cfg.getCaseSensitivityString()).build());
+        cfg.setExtraAttributesPolicySetup(new ExtraAttributesPolicySetupBuilder(cfg.getConnectorMessages()).parseMap(cfg.getExtraAttributesPolicyString()).build());
     	//Now we map source type directly to connectionType
     	cfg.setConnType(ConnectionType.resolveType(cfg.getSourceType(), cfg.getConnectorMessages()));
     	switch(cfg.getConnType()){
@@ -81,6 +82,7 @@ class OracleConfigurationValidator {
     	LocalizedAssert la = new LocalizedAssert(cfg.getConnectorMessages(),true);
         la.assertNotBlank(cfg.getCaseSensitivityString(), MSG_CS_DISPLAY);
         cfg.setCSSetup(new OracleCaseSensitivityBuilder(cfg.getConnectorMessages()).parseMap(cfg.getCaseSensitivityString()).build());
+        cfg.setExtraAttributesPolicySetup(new ExtraAttributesPolicySetupBuilder(cfg.getConnectorMessages()).parseMap(cfg.getExtraAttributesPolicyString()).build());
         if(StringUtil.isNotBlank(cfg.getDataSource())){
 			la.assertBlank(cfg.getHost(), MSG_HOST_DISPLAY);
 			la.assertBlank(cfg.getDatabase(),MSG_DATABASE_DISPLAY);

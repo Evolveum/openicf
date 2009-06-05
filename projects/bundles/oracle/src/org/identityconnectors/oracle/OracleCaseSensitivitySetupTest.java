@@ -61,7 +61,11 @@ public class OracleCaseSensitivitySetupTest {
     /** Test create formatter and normalizers from string map */
     @Test
     public void testCreateFromFormat(){
-        createBuilder().parseMap("default").build();
+    	createBuilder().parseMap(null).build();
+        OracleCaseSensitivitySetup setup = createBuilder().parseMap("default").build();
+    	for(OracleUserAttribute oua : OracleUserAttribute.values()){
+    		assertNotNull("Formatter for all attributes muts be defined", setup.getAttributeFormatterAndNormalizer(oua));
+    	}
         try{
             createBuilder().parseMap("unknown").build();
             fail("Must fail for unknown");
@@ -74,6 +78,34 @@ public class OracleCaseSensitivitySetupTest {
         assertEquals(true,cs.getAttributeFormatterAndNormalizer(OracleUserAttribute.ROLE).isToUpper());
         assertEquals("\"",cs.getAttributeFormatterAndNormalizer((OracleUserAttribute.ROLE)).getQuatesChar());
         
+    }
+    
+    @Test
+    public void testCreateFromArray(){
+    	createBuilder().parseArray(null).build();
+    	OracleCaseSensitivitySetup setup = createBuilder().parseArray(new String[0]).build();
+    	for(OracleUserAttribute oua : OracleUserAttribute.values()){
+    		assertNotNull("Formatter for all attributes muts be defined", setup.getAttributeFormatterAndNormalizer(oua));
+    	}
+    	String[] array = new String []{"USER={quates=AAA}","ROLE={upper=false,quates=BBB}"};
+    	setup = createBuilder().parseArray(array).build();
+    	assertEquals("AAA",setup.getAttributeFormatterAndNormalizer((OracleUserAttribute.USER)).getQuatesChar());
+    	assertEquals("BBB",setup.getAttributeFormatterAndNormalizer((OracleUserAttribute.ROLE)).getQuatesChar());
+    	assertEquals(false,setup.getAttributeFormatterAndNormalizer((OracleUserAttribute.ROLE)).isToUpper());
+    	
+        try{
+            createBuilder().parseArray(new String[]{"dummy"}).build();
+            fail("Must fail for dummy");
+        }
+        catch(RuntimeException e){}
+        
+        try{
+            createBuilder().parseArray(new String[]{"USER={quates=AAA},ROLE={upper=false,quates=BBB}"}).build();
+            fail("Must fail for more elements");
+        }
+        catch(RuntimeException e){}
+        
+    	
     }
     
     private OracleCaseSensitivityBuilder createBuilder(){

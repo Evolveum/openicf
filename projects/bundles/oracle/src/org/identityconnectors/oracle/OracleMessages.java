@@ -24,8 +24,9 @@ class OracleMessages {
 	static final String MSG_URL_HELP = "oracle.url.help";
 	static final String MSG_CS_DISPLAY = "oracle.cs.display";
 	static final String MSG_CS_HELP = "oracle.cs.help";
-	static final String MSG_IGNORE_CREATE_EXTRA_OPER_ATTRS_DISPLAY = "oracle.ignore.create.extra.oper.attrs.display";
-	static final String MSG_IGNORE_CREATE_EXTRA_OPER_ATTRS_HELP = "oracle.ignore.create.extra.oper.attrs.help";
+	
+	static final String ORACLE_EXTRA_ATTRS_POLICY_DISPLAY = "oracle.extra.attrs.policy.display";
+	static final String ORACLE_EXTRA_ATTRS_POLICY_HELP = "oracle.extra.attrs.policy.help";
 	static final String MSG_SOURCE_TYPE_DISPLAY = "oracle.source.type.display";
 	static final String MSG_SOURCE_TYPE_HELP = "oracle.source.type.help";
 	
@@ -71,4 +72,11 @@ class OracleMessages {
 	static final String MSG_ENABLE_LOCK_ATTR_VALUE_CONFLICT_FALSE = "oracle.enable.lock.attr.value.conflict.false";
 	static final String MSG_ENABLE_LOCK_ATTR_VALUE_CONFLICT_TRUE = "oracle.enable.lock.attr.value.conflict.true";
 	static final String MSG_INVALID_SOURCE_TYPE = "oracle.invalid.source.type";
+	static final String MSG_CS_MUST_SPECIFY_ONE_ARRAY_ELEMENT = "oracle.cs.must.specify.one.array.element";
+	static final String MSG_EAP_MUST_SPECIFY_ONE_ARRAY_ELEMENT = "oracle.eap.must.specify.one.array.element";
+	static final String ORACLE_EAP_INVALID_ELEMENTS_IN_MAP = "oracle.eap.invalid.elements.in.map";
+	static final String ORACLE_EAP_CANNOT_RESOLVE_SPI_OPERATION = "oracle.eap.cannot.resolve.spi.operation";
+	
+	
+	
 }

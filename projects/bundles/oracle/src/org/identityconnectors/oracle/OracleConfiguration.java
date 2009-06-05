@@ -4,10 +4,34 @@
 package org.identityconnectors.oracle;
 
 
+import static org.identityconnectors.oracle.OracleMessages.MSG_CS_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.MSG_CS_HELP;
+import static org.identityconnectors.oracle.OracleMessages.MSG_DATABASE_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.MSG_DATABASE_HELP;
+import static org.identityconnectors.oracle.OracleMessages.MSG_DATASOURCE_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.MSG_DATASOURCE_HELP;
+import static org.identityconnectors.oracle.OracleMessages.MSG_DRIVER_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.MSG_DRIVER_HELP;
+import static org.identityconnectors.oracle.OracleMessages.MSG_DSJNDIENV_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.MSG_DSJNDIENV_HELP;
+import static org.identityconnectors.oracle.OracleMessages.MSG_HOST_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.MSG_HOST_HELP;
+import static org.identityconnectors.oracle.OracleMessages.MSG_INVALID_SOURCE_TYPE;
+import static org.identityconnectors.oracle.OracleMessages.MSG_PASSWORD_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.MSG_PASSWORD_HELP;
+import static org.identityconnectors.oracle.OracleMessages.MSG_PORT_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.MSG_PORT_HELP;
+import static org.identityconnectors.oracle.OracleMessages.MSG_SOURCE_TYPE_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.MSG_SOURCE_TYPE_HELP;
+import static org.identityconnectors.oracle.OracleMessages.MSG_URL_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.MSG_URL_HELP;
+import static org.identityconnectors.oracle.OracleMessages.MSG_USER_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.MSG_USER_HELP;
+import static org.identityconnectors.oracle.OracleMessages.ORACLE_EXTRA_ATTRS_POLICY_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.ORACLE_EXTRA_ATTRS_POLICY_HELP;
+
 import java.sql.Connection;
 import java.sql.SQLException;
-
-import static org.identityconnectors.oracle.OracleMessages.*;
 
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
@@ -42,7 +66,8 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     private String caseSensitivityString;
     //Source type is user defined ConnectionType
     private String sourceType;
-    private boolean ignoreCreateExtraOperAttrs;
+    private String extraAttributesPolicyString;
+    private ExtraAttributesPolicySetup extraAttributesPolicySetup;
     private static final Log log = Log.getLog(OracleConfiguration.class);
     /**
      * Creates configuration
@@ -183,17 +208,16 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
      * @return caseSensitivityString
      */
     @ConfigurationProperty(order = 9,displayMessageKey=MSG_CS_DISPLAY,helpMessageKey=MSG_CS_HELP,required=true)
-    public String getCaseSensitivity(){
+    public String getCaseSensitivityString(){
         return caseSensitivityString;
     }
     
-    
     /**
-	 * @return the ignoreCreateExtraOperAttrs
+	 * @return the extraAttributesPolicy
 	 */
-	@ConfigurationProperty(order = 10, displayMessageKey = MSG_IGNORE_CREATE_EXTRA_OPER_ATTRS_DISPLAY, helpMessageKey = MSG_IGNORE_CREATE_EXTRA_OPER_ATTRS_HELP, required = true)
-    public boolean isIgnoreCreateExtraOperAttrs() {
-		return ignoreCreateExtraOperAttrs;
+	@ConfigurationProperty(order = 10, displayMessageKey = ORACLE_EXTRA_ATTRS_POLICY_DISPLAY, helpMessageKey = ORACLE_EXTRA_ATTRS_POLICY_HELP)
+    public String getExtraAttributesPolicyString() {
+		return extraAttributesPolicyString;
 	}
 	
 	@ConfigurationProperty(order = 11, displayMessageKey = MSG_SOURCE_TYPE_DISPLAY, helpMessageKey = MSG_SOURCE_TYPE_HELP, required = false)
@@ -203,10 +227,11 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
 
 
 	/**
-	 * @param ignoreCreateExtraOperAttrs the ignoreExtraPassword to set
+	 * @param extraAttributesPolicyString the extraAttributesPolicy to set
 	 */
-	public void setIgnoreCreateExtraOperAttrs(boolean ignoreCreateExtraOperAttrs) {
-		this.ignoreCreateExtraOperAttrs = ignoreCreateExtraOperAttrs;
+	public void setExtraAttributesPolicyString(String extraAttributesPolicyString) {
+		this.extraAttributesPolicyString = extraAttributesPolicyString;
+		this.connType = null;
 	}
 
 	/**
@@ -312,7 +337,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     
     /** Sets case sensitivity from string map 
      * @param cs */
-    public void setCaseSensitivity(String cs){
+    public void setCaseSensitivityString(String cs){
         this.caseSensitivityString = cs;
         this.connType = null;
     }
@@ -323,6 +348,14 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     
     void setCSSetup(OracleCaseSensitivitySetup cs){
         this.cs = new LocalizedAssert(getConnectorMessages()).assertNotNull(cs, "cs");
+    }
+    
+    void setExtraAttributesPolicySetup(ExtraAttributesPolicySetup setup){
+    	this.extraAttributesPolicySetup = setup;
+    }
+    
+    ExtraAttributesPolicySetup getExtraAttributesPolicySetup(){
+    	return extraAttributesPolicySetup;
     }
     
     public void setSourceType(String sourceType){
@@ -346,14 +379,6 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
 
 	void setDriverClassName(String driverClassName) {
 		this.driverClassName = driverClassName;
-	}
-
-	String getCaseSensitivityString() {
-		return caseSensitivityString;
-	}
-
-	void setCaseSensitivityString(String caseSensitivityString) {
-		this.caseSensitivityString = caseSensitivityString;
 	}
 
 	@Override

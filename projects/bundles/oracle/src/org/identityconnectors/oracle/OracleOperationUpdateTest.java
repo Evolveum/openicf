@@ -4,14 +4,17 @@
 package org.identityconnectors.oracle;
 
 
+import static org.identityconnectors.oracle.OracleUserAttribute.PROFILE;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-
 
 import org.hamcrest.core.IsEqual;
 import org.hamcrest.core.IsNot;
@@ -20,12 +23,19 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
-import org.identityconnectors.framework.common.objects.*;
-import org.junit.*;
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
+import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
+import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.spi.operations.UpdateOp;
+import org.identityconnectors.test.common.TestHelpers;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.matchers.JUnitMatchers;
-
-import static org.identityconnectors.oracle.OracleUserAttribute.*;
-import static org.junit.Assert.*;
 
 
 /**
@@ -73,6 +83,34 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(passwordAttribute),null);
         //now try to authenticate
         facade.authenticate(ObjectClass.ACCOUNT, uid.getUidValue(), password, null);
+        
+        //If password is present, for external auth we must fail
+    	try{
+	        facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil
+					.newSet(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConstants.ORACLE_AUTH_EXTERNAL),
+							AttributeBuilder.buildPassword("password".toCharArray())
+							),
+					null);
+	        fail("Update must fail with external authntication and password");
+    	}catch(ConnectorException e){}
+    	
+    	//Now set ignore extra attributes
+        OracleConfiguration newConf = OracleConfigurationTest.createSystemConfiguration();
+        newConf.validate();
+        newConf
+				.setExtraAttributesPolicySetup(new ExtraAttributesPolicySetupBuilder(
+						TestHelpers.createDummyMessages()).definePolicy(
+						OracleUserAttribute.PASSWORD, UpdateOp.class,
+						ExtraAttributesPolicy.IGNORE).build());
+        OracleConnector testConnector = new OracleConnector();
+        testConnector.init(newConf);
+        testConnector.update(ObjectClass.ACCOUNT, uid, CollectionUtil
+				.newSet(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConstants.ORACLE_AUTH_EXTERNAL),
+						AttributeBuilder.buildPassword("password".toCharArray())
+						),
+				null);
+        testConnector.dispose();
+        
     }
     
     /** Test updating authentication 
@@ -312,6 +350,24 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         		fail("Update with expiredPassword for not local authentication should not fail with SQLException");
         	}
         }
+    	
+    	//Now set ignore extra attributes
+        OracleConfiguration newConf = OracleConfigurationTest.createSystemConfiguration();
+        newConf.validate();
+        newConf
+				.setExtraAttributesPolicySetup(new ExtraAttributesPolicySetupBuilder(
+						TestHelpers.createDummyMessages()).definePolicy(
+						OracleUserAttribute.PASSWORD, UpdateOp.class,
+						ExtraAttributesPolicy.IGNORE).build());
+        OracleConnector testConnector = new OracleConnector();
+        testConnector.init(newConf);
+        testConnector.update(ObjectClass.ACCOUNT, uid, CollectionUtil
+				.newSet(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConstants.ORACLE_AUTH_EXTERNAL),
+						AttributeBuilder.buildPassword("password".toCharArray())
+						),
+				null);
+        testConnector.dispose();
+        
     }
     
     @Test

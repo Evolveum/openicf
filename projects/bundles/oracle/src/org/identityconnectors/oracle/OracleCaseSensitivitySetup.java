@@ -1,14 +1,16 @@
 package org.identityconnectors.oracle;
 
+import static org.identityconnectors.oracle.OracleMessages.*;
+
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.spi.AttributeNormalizer;
-import static org.identityconnectors.oracle.OracleMessages.*;
 
 /** OracleCaseSensitivity is responsible for normalizing and formatting oracle objects tokens (users,schema...).
  *  Maybe we do not need such granularity , and have just one settings for all objects, but using this scenario
@@ -243,19 +245,23 @@ final class CSAttributeFormatterAndNormalizer{
 
 /** Builder of OracleCaseSensitivity using formatters for user attributes */
 final class OracleCaseSensitivityBuilder{
-    private final Map<OracleUserAttribute,CSAttributeFormatterAndNormalizer> normalizers = new HashMap<OracleUserAttribute, CSAttributeFormatterAndNormalizer>(6);
+    private final Map<OracleUserAttribute,CSAttributeFormatterAndNormalizer> normalizers = new LinkedHashMap<OracleUserAttribute, CSAttributeFormatterAndNormalizer>(6);
     private final ConnectorMessages cm;
     
     OracleCaseSensitivityBuilder(ConnectorMessages cm){
     	this.cm = cm;
     }
     
-    
     OracleCaseSensitivityBuilder defineFormattersAndNormalizers(CSAttributeFormatterAndNormalizer... normalizers){
         for(CSAttributeFormatterAndNormalizer element : normalizers){
             this.normalizers.put(element.getAttribute(),element);
         }
         return this;
+    }
+    
+    OracleCaseSensitivityBuilder clearFormattersAndNormalizers(){
+    	this.normalizers.clear();
+    	return this;
     }
     
     
@@ -268,26 +274,48 @@ final class OracleCaseSensitivityBuilder{
         final Map<String, Object> map = MapParser.parseMap(format,cm);
         for(Iterator<Map.Entry<String, Object>> i = map.entrySet().iterator();i.hasNext();){
         	Entry<String, Object> entry = i.next();
-        	i.remove();
         	String attributeName = entry.getKey();
         	Map<String, Object> elementMap = (Map<String, Object>) entry.getValue();
-            if("ALL".equalsIgnoreCase(attributeName)){
-                for(OracleUserAttribute attribute : OracleUserAttribute.values()){
-                	if(!this.normalizers.containsKey(attribute)){
-                		this.normalizers.put(attribute, new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(attribute).setValues(elementMap).build());
-                	}
-                }
-                continue;
-            }
-            OracleUserAttribute attribute = OracleUserAttribute.valueOf(attributeName);
-            CSAttributeFormatterAndNormalizer element = new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(attribute).setValues(elementMap).build(); 
-            this.normalizers.put(element.getAttribute(),element);    
+        	parseAttributeMap(attributeName, elementMap);
+        	i.remove();
         }
         if(!map.isEmpty()){
             throw new IllegalArgumentException(cm.format(MSG_ELEMENTS_FOR_CSBUILDER_NOT_RECOGNIZED, null, map));
         }
         return this;
     }
+    
+    private void parseAttributeMap(String attributeName, Map<String, Object> elementMap){
+        if("ALL".equalsIgnoreCase(attributeName)){
+            for(OracleUserAttribute attribute : OracleUserAttribute.values()){
+            	if(!this.normalizers.containsKey(attribute)){
+            		this.normalizers.put(attribute, new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(attribute).setValues(elementMap).build());
+            	}
+            }
+            return;
+        }
+        OracleUserAttribute attribute = OracleUserAttribute.valueOf(attributeName);
+        CSAttributeFormatterAndNormalizer element = new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(attribute).setValues(elementMap).build(); 
+        this.normalizers.put(element.getAttribute(),element);    
+    }
+    
+    @SuppressWarnings("unchecked")
+	OracleCaseSensitivityBuilder parseArray(String[] array){
+    	if(array == null){
+    		return this;
+    	}
+    	for(String element : array){
+            final Map<String, Object> map = MapParser.parseMap(element,cm);
+            if(map.size() != 1){
+            	throw new IllegalArgumentException(cm.format(MSG_CS_MUST_SPECIFY_ONE_ARRAY_ELEMENT, null));
+            }
+            String attributeName = map.keySet().iterator().next();
+            Map<String, Object> elementMap = (Map<String, Object>) map.values().iterator().next();
+            parseAttributeMap(attributeName, elementMap);
+    	}
+    	return this;
+    }
+    
     
     OracleCaseSensitivitySetup build(){
         Map<OracleUserAttribute,CSAttributeFormatterAndNormalizer> normalizers = new HashMap<OracleUserAttribute, CSAttributeFormatterAndNormalizer>(this.normalizers);
@@ -314,12 +342,13 @@ final class OracleCaseSensitivityImpl implements OracleCaseSensitivitySetup{
     private final Map<OracleUserAttribute,CSAttributeFormatterAndNormalizer> normalizers;    
     
     OracleCaseSensitivityImpl(Map<OracleUserAttribute,CSAttributeFormatterAndNormalizer> normalizers){
-        this.normalizers = new HashMap<OracleUserAttribute, CSAttributeFormatterAndNormalizer>(normalizers);
+        this.normalizers = new LinkedHashMap<OracleUserAttribute, CSAttributeFormatterAndNormalizer>(normalizers);
     }
     
     public CSAttributeFormatterAndNormalizer getAttributeFormatterAndNormalizer(OracleUserAttribute attribute){
         final CSAttributeFormatterAndNormalizer normalizer = normalizers.get(attribute);
         if(normalizer == null){
+        	//This should not happen, builder should set all normalizers, so no need to localize
             throw new IllegalArgumentException("No normalizer defined for attribute " + attribute);
         }
         return normalizer;

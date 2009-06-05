@@ -32,6 +32,7 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.After;
 import org.junit.Assert;
@@ -138,9 +139,15 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         
         //Try to set external authentication and password
         authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_EXTERNAL);
+        
         //Set ignoreExtrAtt
         OracleConfiguration newConf = OracleConfigurationTest.createSystemConfiguration();
-        newConf.setIgnoreCreateExtraOperAttrs(true);
+        newConf.validate();
+        newConf
+				.setExtraAttributesPolicySetup(new ExtraAttributesPolicySetupBuilder(
+						TestHelpers.createDummyMessages()).definePolicy(
+						OracleUserAttribute.PASSWORD, CreateOp.class,
+						ExtraAttributesPolicy.IGNORE).build());
         OracleConnector testConnector = new OracleConnector();
         testConnector.init(newConf);
         uid = testConnector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, AttributeBuilder.buildPassword(password)), null);
@@ -190,7 +197,12 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
             //Try to set global authentication and password
             //Set ignoreExtrAtt
             OracleConfiguration newConf = OracleConfigurationTest.createSystemConfiguration();
-            newConf.setIgnoreCreateExtraOperAttrs(true);
+            newConf.validate();
+            newConf
+    				.setExtraAttributesPolicySetup(new ExtraAttributesPolicySetupBuilder(
+    						TestHelpers.createDummyMessages()).definePolicy(
+    						OracleUserAttribute.PASSWORD, CreateOp.class,
+    						ExtraAttributesPolicy.IGNORE).build());
             OracleConnector testConnector = new OracleConnector();
             testConnector.init(newConf);
             uid = testConnector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,AttributeBuilder.buildPassword(password),globalName), null);
@@ -385,7 +397,12 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         }catch(ConnectorException e){}
         //Set ignoreExtrAtt
         OracleConfiguration newConf = OracleConfigurationTest.createSystemConfiguration();
-        newConf.setIgnoreCreateExtraOperAttrs(true);
+        newConf.validate();
+        newConf
+				.setExtraAttributesPolicySetup(new ExtraAttributesPolicySetupBuilder(
+						TestHelpers.createDummyMessages()).definePolicy(
+						OracleUserAttribute.PASSWORD_EXPIRE, CreateOp.class,
+						ExtraAttributesPolicy.IGNORE).build());
         OracleConnector testConnector = new OracleConnector();
         testConnector.init(newConf);
         uid = testConnector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, expirePassword), null);

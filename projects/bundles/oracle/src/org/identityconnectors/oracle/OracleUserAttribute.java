@@ -1,5 +1,7 @@
 package org.identityconnectors.oracle;
 
+import org.identityconnectors.framework.spi.operations.SPIOperation;
+
 /** Policy settings of user attributes */
 
 final class DefFormatting {
@@ -51,5 +53,9 @@ enum OracleUserAttribute {
 
     Formatting getFormatting(){
     	return DefFormatting.DEF_FORMATTING;
+    }
+    
+    ExtraAttributesPolicy getExtraAttributesPolicy(Class<? extends SPIOperation> operation){
+    	return ExtraAttributesPolicy.FAIL;
     }
 }

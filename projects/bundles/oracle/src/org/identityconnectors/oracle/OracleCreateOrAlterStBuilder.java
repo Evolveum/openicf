@@ -1,7 +1,15 @@
 package org.identityconnectors.oracle;
 
+import static org.identityconnectors.oracle.OracleMessages.MSG_CANNOT_EXPIRE_PASSWORD_FOR_NOT_LOCAL_AUTHENTICATION;
+import static org.identityconnectors.oracle.OracleMessages.MSG_CANNOT_SET_GLOBALNAME_FOR_NOT_GLOBAL_AUTHENTICATION;
+import static org.identityconnectors.oracle.OracleMessages.MSG_CANNOT_SET_PASSWORD_FOR_NOT_LOCAL_AUTHENTICATION;
+import static org.identityconnectors.oracle.OracleMessages.MSG_MISSING_DEFAULT_TABLESPACE_FOR_QUOTA;
+import static org.identityconnectors.oracle.OracleMessages.MSG_MISSING_GLOBALNAME_FOR_GLOBAL_AUTHENTICATION;
+import static org.identityconnectors.oracle.OracleMessages.MSG_MISSING_TEMPORARY_TABLESPACE_FOR_QUOTA;
+import static org.identityconnectors.oracle.OracleMessages.MSG_MUST_SPECIFY_PASSWORD_FOR_UNEXPIRE;
 import static org.identityconnectors.oracle.OracleUserAttribute.DEF_TABLESPACE;
 import static org.identityconnectors.oracle.OracleUserAttribute.PASSWORD;
+import static org.identityconnectors.oracle.OracleUserAttribute.PASSWORD_EXPIRE;
 import static org.identityconnectors.oracle.OracleUserAttribute.PROFILE;
 import static org.identityconnectors.oracle.OracleUserAttribute.TEMP_TABLESPACE;
 import static org.identityconnectors.oracle.OracleUserAttribute.USER;
@@ -9,13 +17,12 @@ import static org.identityconnectors.oracle.OracleUserAttribute.USER;
 import java.util.Arrays;
 
 import org.identityconnectors.common.StringUtil;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.SPIOperation;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
-
-import static org.identityconnectors.oracle.OracleMessages.*;
 
 /**
  * Builds create or alter user sql statement.
@@ -32,7 +39,9 @@ import static org.identityconnectors.oracle.OracleMessages.*;
 final class OracleCreateOrAlterStBuilder {
     private final OracleCaseSensitivitySetup cs;
     private final ConnectorMessages cm;
-	private final boolean ignoreCreateExtraOperAttrs;
+	private final ExtraAttributesPolicySetup extraAttributesPolicySetup;
+	
+	private final static Log log = Log.getLog(OracleCreateOrAlterStBuilder.class);
     
     /** Helper status where we store real set attributes */
     private static class BuilderStatus{
@@ -44,14 +53,14 @@ final class OracleCreateOrAlterStBuilder {
         OracleAuthentication currentAuth;
     }
     
-    OracleCreateOrAlterStBuilder(OracleCaseSensitivitySetup cs, ConnectorMessages cm, boolean ignoreCreateExtraOperAttrs) {
+    OracleCreateOrAlterStBuilder(OracleCaseSensitivitySetup cs, ConnectorMessages cm, ExtraAttributesPolicySetup extraAttributesPolicySetup) {
         this.cs = OracleConnectorHelper.assertNotNull(cs, "cs");
         this.cm = OracleConnectorHelper.assertNotNull(cm, "cm");
-        this.ignoreCreateExtraOperAttrs = ignoreCreateExtraOperAttrs;
+        this.extraAttributesPolicySetup = OracleConnectorHelper.assertNotNull(extraAttributesPolicySetup, "extraAttributesPolicySetup");
     }
     
     OracleCreateOrAlterStBuilder(OracleConfiguration cfg) {
-    	this(cfg.getCSSetup(), cfg.getConnectorMessages(), cfg.isIgnoreCreateExtraOperAttrs());
+    	this(cfg.getCSSetup(), cfg.getConnectorMessages(), cfg.getExtraAttributesPolicySetup());
     }
     
     /**
@@ -110,9 +119,11 @@ final class OracleCreateOrAlterStBuilder {
         		appendExpirePassword(builder,userAttributes);
         	}
         	else{
-        		//We will use same flag for ignoring password expire like for ignoring the password
-        		if(UpdateOp.class.equals(operation) || (!ignoreCreateExtraOperAttrs)){
+        		if(ExtraAttributesPolicy.FAIL.equals(extraAttributesPolicySetup.getPolicy(PASSWORD_EXPIRE, operation))){
         			throw new IllegalArgumentException(cm.format(MSG_CANNOT_EXPIRE_PASSWORD_FOR_NOT_LOCAL_AUTHENTICATION, null));
+        		}
+        		else{
+        			log.info("Ignoring extra password_expire attribute in operation [{0}]", operation);
         		}
         	}
         }
@@ -186,6 +197,7 @@ final class OracleCreateOrAlterStBuilder {
         builder.append(" temporary tablespace ").append(cs.formatToken(TEMP_TABLESPACE, userAttributes.getTempTableSpace()));
         
     }
+    
 
     private void appendDefaultTableSpace(StringBuilder builder, OracleUserAttributes userAttributes) {
         builder.append(" default tablespace ").append(cs.formatToken(DEF_TABLESPACE, userAttributes.getDefaultTableSpace()));
@@ -206,9 +218,11 @@ final class OracleCreateOrAlterStBuilder {
     		return;
     	}
     	if(userAttributes.getPassword() != null && !OracleAuthentication.LOCAL.equals(status.currentAuth)){
-    		//In case of update or create with !ignoreCreateExtraOperAttrs and password is present, throw exception
-    		if(UpdateOp.class.equals(operation) || (!ignoreCreateExtraOperAttrs)){
+    		if(ExtraAttributesPolicy.FAIL.equals(extraAttributesPolicySetup.getPolicy(PASSWORD, operation))){
     			throw new IllegalArgumentException(cm.format(MSG_CANNOT_SET_PASSWORD_FOR_NOT_LOCAL_AUTHENTICATION, null));
+    		}
+    		else{
+    			log.info("Ignoring extra password attribute in operation [{0}]", operation);
     		}
     	}
     	if(userAttributes.getGlobalName() != null && !OracleAuthentication.GLOBAL.equals(status.currentAuth)){
