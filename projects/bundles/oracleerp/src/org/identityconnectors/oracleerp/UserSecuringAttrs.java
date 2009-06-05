@@ -30,32 +30,19 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.StringTokenizer;
 
-import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
-import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
-import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
-import org.identityconnectors.framework.spi.operations.CreateOp;
-import org.identityconnectors.framework.spi.operations.UpdateOp;
 
 /**
  * Main implementation of the OracleErp Connector
@@ -69,7 +56,9 @@ public class UserSecuringAttrs  {
      * Setup logging.
      */
     static final Log log = Log.getLog(UserSecuringAttrs.class);
-   
+    
+
+
     /**
      * The get Instance method
      * @param connector parent
@@ -78,6 +67,17 @@ public class UserSecuringAttrs  {
     public static UserSecuringAttrs getInstance(OracleERPConnector connector) {
        return new UserSecuringAttrs(connector);
     }
+
+    /**
+     * used for adminUserId for calling storing procedures
+     */
+    private int adminUserId = 0;
+
+   
+    /**
+     * The parent connector
+     */
+    private OracleERPConnector co;
     
     /**
      * The account
@@ -87,24 +87,6 @@ public class UserSecuringAttrs  {
         this.co = connector;
     }
     
-    /**
-     * The parent connector
-     */
-    private OracleERPConnector co;
-    
-    /**
-     * Get the Account Object Class Info
-     * 
-     * @return ObjectClassInfo value
-     */
-    public ObjectClassInfo getSchema() {
-        ObjectClassInfoBuilder aoc = new ObjectClassInfoBuilder();
-      //  aoc.setType(RESP_NAMES);
-
-
-        return aoc.build();
-    }
-
     /**
      * @param bld
      * @param columnValues
@@ -121,15 +103,46 @@ public class UserSecuringAttrs  {
             bld.addAttribute(SEC_ATTRS, secAttrs);
         }
     }
+    
+    /**
+     * Accessor for the adminUserId property
+     * @return the adminUserId
+     */
+    public int getAdminUserId() {
+        return adminUserId;
+    }
+
+    /**
+     * Get the Account Object Class Info
+     * 
+     * @return ObjectClassInfo value
+     */
+    public ObjectClassInfo getSchema() {
+        ObjectClassInfoBuilder aoc = new ObjectClassInfoBuilder();
+        return aoc.build();
+    }
 
 
+
+    /**
+     * @param userId
+     */
+    public void initAdminUserId(String userId) {
+        try {
+            adminUserId = new Integer(userId).intValue();
+            log.ok("The adminUserId is : {0} ", userId);
+        } catch (Exception ex) {
+            log.error(ex, "The User Id String {0} is not a number", userId);
+        }
+    }    
+    
 
     /**
      * 
      * 
      * @param secAttrList
      * @param identity
-     * @param result
+     * @param userId 
      * @throws WavesetException
      * 
      *             Interesting thing here is that a user can have exact duplicate securing attributes, as crazy as that
@@ -138,7 +151,7 @@ public class UserSecuringAttrs  {
      *             Since there is no available key, we will delete all and add all new ones
      * 
      */
-    private void updateUserSecuringAttrs(List<String> secAttrList, String identity, String userId) {
+    public void updateUserSecuringAttrs(List<String> secAttrList, String identity, String userId) {
         final String method = "updateUserSecuringAttrs";
         log.info(method);
 
@@ -175,98 +188,6 @@ public class UserSecuringAttrs  {
         co.getConn().commit();
 
         log.ok(method);
-    }    
-    
-
-    /**
-     * Get Securing Attributes
-     * @param id 
-     * @param options 
-     * @return list of strings
-     */
-    private List<String> getSecuringAttrs(String id, Map options) {
-        final String method = "getSecAttrs";
-        log.info(method);
-        PreparedStatement st = null;
-        ResultSet res = null;
-        StringBuffer b = new StringBuffer();
-        //default value
-        String pattern = null;
-        if (options != null) {
-            pattern = (String) options.get(PATTERN);
-        }
-        b.append("SELECT distinct akattrvl.NAME, fndappvl.APPLICATION_NAME ");
-        if (id != null) {
-            b.append(", akwebsecattr.VARCHAR2_VALUE, akwebsecattr.DATE_VALUE, akwebsecattr.NUMBER_VALUE ");
-        }
-        b.append("FROM " + co.app() + "AK_ATTRIBUTES_VL akattrvl, " + co.app()
-                + "FND_APPLICATION_VL fndappvl ");
-        // conditionalize including AK_WEB_USER_SEC_ATTR_VALUES in the FROM
-        // list, has significant performance impact when present but not
-        // referenced.
-        if (id != null) {
-            b.append(", " + co.app() + "AK_WEB_USER_SEC_ATTR_VALUES akwebsecattr, ");
-            b.append(co.app() + "FND_USER fnduser ");
-        }
-
-        b.append("WHERE akattrvl.ATTRIBUTE_APPLICATION_ID = fndappvl.APPLICATION_ID ");
-        if (id != null) {
-            b.append("AND akwebsecattr.WEB_USER_ID = fnduser.USER_ID ");
-            b.append("AND akattrvl.ATTRIBUTE_APPLICATION_ID = akwebsecattr.ATTRIBUTE_APPLICATION_ID ");
-            b.append("AND akattrvl.ATTRIBUTE_CODE = akwebsecattr.ATTRIBUTE_CODE ");
-            b.append("AND fnduser.USER_NAME = ?");
-            pattern = "%";
-        }
-        b.append(" AND akattrvl.NAME LIKE '");
-        b.append(pattern);
-        b.append("' ");
-        b.append("ORDER BY akattrvl.NAME");
-
-        List<String> arrayList = new ArrayList<String>();
-        final String sql = b.toString();
-        try {
-            log.info("execute sql {0}", sql);
-            st = co.getConn().prepareStatement(sql);
-            if (id != null) {
-                st.setString(1, id.toUpperCase());
-            }
-            res = st.executeQuery();
-            while (res.next()) {
-
-                StringBuffer sb = new StringBuffer();
-                sb.append(getColumn(res, 1));
-                sb.append("||");
-                sb.append(getColumn(res, 2));
-                // get one of three values (one column per type) if id is specified
-                // value can be type varchar2, date, number
-                if (id != null) {
-                    if (getColumn(res, 3) != null) {
-                        sb.append("||");
-                        sb.append(getColumn(res, 3));
-                    }
-                    if (getColumn(res, 4) != null) {
-                        sb.append("||");
-                        sb.append(getColumn(res, 4));
-                    }
-                    if (getColumn(res, 5) != null) {
-                        sb.append("||");
-                        sb.append(getColumn(res, 5));
-                    }
-                }
-                arrayList.add(sb.toString());
-            }
-        } catch (SQLException e) {
-            final String msg = "could not get Securing attributes";
-            log.error(e, msg);
-            throw new ConnectorException(msg, e);
-        } finally {
-            SQLUtil.closeQuietly(res);
-            res = null;
-            SQLUtil.closeQuietly(st);
-            st = null;
-        }
-        log.ok(method);
-        return arrayList;
     }
 
     /**
@@ -441,8 +362,8 @@ public class UserSecuringAttrs  {
                 log.ok(msg);
                 
             }
-            cstmt1.setInt(15, co.getAdminUserId());
-            msg = "Oracle ERP: created_by = " + co.getAdminUserId();
+            cstmt1.setInt(15, getAdminUserId());
+            msg = "Oracle ERP: created_by = " + getAdminUserId();
             log.ok(msg);
             
             java.sql.Date sqlDate = getCurrentDate();
@@ -450,16 +371,16 @@ public class UserSecuringAttrs  {
             msg = "Oracle ERP: creation_date = sysdate";
             log.ok(msg);
             
-            cstmt1.setInt(17, co.getAdminUserId());
-            msg = "Oracle ERP: last_updated_by = " + co.getAdminUserId();
+            cstmt1.setInt(17, getAdminUserId());
+            msg = "Oracle ERP: last_updated_by = " + getAdminUserId();
             log.ok(msg);
             
             cstmt1.setDate(18, sqlDate);
             msg = "Oracle ERP: last_updated_date = sysdate";
             log.ok(msg);
             
-            cstmt1.setInt(19, co.getAdminUserId());
-            msg = "Oracle ERP: last_update_login = " + co.getAdminUserId();
+            cstmt1.setInt(19, getAdminUserId());
+            msg = "Oracle ERP: last_update_login = " + getAdminUserId();
             log.ok(msg);
             
 
@@ -565,7 +486,7 @@ public class UserSecuringAttrs  {
             cstmt1.setInt(1, 1);
             msg = "Oracle ERP: api_version_number = " + 1;
             log.ok(msg);
-            
+
             cstmt1.setNull(2, java.sql.Types.VARCHAR);
             msg = "Oracle ERP: init_msg_list = NULL";
             log.ok(msg);
@@ -588,7 +509,7 @@ public class UserSecuringAttrs  {
             cstmt1.registerOutParameter(7, java.sql.Types.NUMERIC);
             //msg_data
             cstmt1.registerOutParameter(8, java.sql.Types.VARCHAR);
-            
+
             cstmt1.setInt(9, intUserId);
             msg = "Oracle ERP: web_user_id = {0}";
             log.ok(msg, intUserId);
@@ -601,43 +522,43 @@ public class UserSecuringAttrs  {
             if (strAttrApplId != null) {
                 attrApplId = new Integer(strAttrApplId).intValue();
             }
-            cstmt1.setInt(11, attrApplId);         
+            cstmt1.setInt(11, attrApplId);
             msg = "Oracle ERP: attribute_appl_id = {0}";
             log.ok(msg, strAttrApplId);
-           
+
             if (dataType.equalsIgnoreCase("VARCHAR2")) {
-                cstmt1.setString(12, value);                
+                cstmt1.setString(12, value);
                 msg = "Oracle ERP: varchar2_value  = {0}";
                 log.ok(msg, value);
-                
+
             } else {
-                cstmt1.setNull(12, Types.VARCHAR);                
+                cstmt1.setNull(12, Types.VARCHAR);
                 msg = "Oracle ERP: varchar2_value = null";
                 log.ok(msg);
-                
+
             }
 
             if (dataType.equalsIgnoreCase("DATE")) {
-                cstmt1.setTimestamp(13, java.sql.Timestamp.valueOf(value));                
+                cstmt1.setTimestamp(13, java.sql.Timestamp.valueOf(value));
                 msg = "Oracle ERP: date_value  = {0}";
-                log.ok(msg, value);                
+                log.ok(msg, value);
 
             } else {
                 cstmt1.setNull(13, java.sql.Types.DATE);
                 msg = "Oracle ERP: date_value = NULL";
-                log.ok(msg);                
+                log.ok(msg);
             }
             if (dataType.equalsIgnoreCase("NUMBER")) {
                 if (value != null) {
                     int intValue = new Integer(value).intValue();
                     cstmt1.setInt(14, intValue);
                     msg = "Oracle ERP: number_value = " + intValue;
-                    log.ok(msg, value);                       
+                    log.ok(msg, value);
                 }
             } else {
-                cstmt1.setNull(14, java.sql.Types.NUMERIC);                
+                cstmt1.setNull(14, java.sql.Types.NUMERIC);
                 msg = "Oracle ERP: number_value = null";
-                log.ok(msg);                 
+                log.ok(msg);
             }
             cstmt1.execute();
             // cstmt1 closed in finally below
@@ -660,4 +581,94 @@ public class UserSecuringAttrs  {
     }
 
 
+    /**
+     * Get Securing Attributes
+     * @param id 
+     * @param options 
+     * @return list of strings
+     */
+    private List<String> getSecuringAttrs(String id, Map options) {
+        final String method = "getSecAttrs";
+        log.info(method);
+        PreparedStatement st = null;
+        ResultSet res = null;
+        StringBuffer b = new StringBuffer();
+        //default value
+        String pattern = null;
+        if (options != null) {
+            pattern = (String) options.get(PATTERN);
+        }
+        b.append("SELECT distinct akattrvl.NAME, fndappvl.APPLICATION_NAME ");
+        if (id != null) {
+            b.append(", akwebsecattr.VARCHAR2_VALUE, akwebsecattr.DATE_VALUE, akwebsecattr.NUMBER_VALUE ");
+        }
+        b.append("FROM " + co.app() + "AK_ATTRIBUTES_VL akattrvl, " + co.app()
+                + "FND_APPLICATION_VL fndappvl ");
+        // conditionalize including AK_WEB_USER_SEC_ATTR_VALUES in the FROM
+        // list, has significant performance impact when present but not
+        // referenced.
+        if (id != null) {
+            b.append(", " + co.app() + "AK_WEB_USER_SEC_ATTR_VALUES akwebsecattr, ");
+            b.append(co.app() + "FND_USER fnduser ");
+        }
+
+        b.append("WHERE akattrvl.ATTRIBUTE_APPLICATION_ID = fndappvl.APPLICATION_ID ");
+        if (id != null) {
+            b.append("AND akwebsecattr.WEB_USER_ID = fnduser.USER_ID ");
+            b.append("AND akattrvl.ATTRIBUTE_APPLICATION_ID = akwebsecattr.ATTRIBUTE_APPLICATION_ID ");
+            b.append("AND akattrvl.ATTRIBUTE_CODE = akwebsecattr.ATTRIBUTE_CODE ");
+            b.append("AND fnduser.USER_NAME = ?");
+            pattern = "%";
+        }
+        b.append(" AND akattrvl.NAME LIKE '");
+        b.append(pattern);
+        b.append("' ");
+        b.append("ORDER BY akattrvl.NAME");
+
+        List<String> arrayList = new ArrayList<String>();
+        final String sql = b.toString();
+        try {
+            log.info("execute sql {0}", sql);
+            st = co.getConn().prepareStatement(sql);
+            if (id != null) {
+                st.setString(1, id.toUpperCase());
+            }
+            res = st.executeQuery();
+            while (res.next()) {
+
+                StringBuffer sb = new StringBuffer();
+                sb.append(getColumn(res, 1));
+                sb.append("||");
+                sb.append(getColumn(res, 2));
+                // get one of three values (one column per type) if id is specified
+                // value can be type varchar2, date, number
+                if (id != null) {
+                    if (getColumn(res, 3) != null) {
+                        sb.append("||");
+                        sb.append(getColumn(res, 3));
+                    }
+                    if (getColumn(res, 4) != null) {
+                        sb.append("||");
+                        sb.append(getColumn(res, 4));
+                    }
+                    if (getColumn(res, 5) != null) {
+                        sb.append("||");
+                        sb.append(getColumn(res, 5));
+                    }
+                }
+                arrayList.add(sb.toString());
+            }
+        } catch (SQLException e) {
+            final String msg = "could not get Securing attributes";
+            log.error(e, msg);
+            throw new ConnectorException(msg, e);
+        } finally {
+            SQLUtil.closeQuietly(res);
+            res = null;
+            SQLUtil.closeQuietly(st);
+            st = null;
+        }
+        log.ok(method);
+        return arrayList;
+    }
 }

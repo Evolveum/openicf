@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
@@ -59,7 +60,7 @@ public class ResponsibilityNames {
      * Setup logging.
      */
     static final Log log = Log.getLog(ResponsibilityNames.class); 
-    
+
     /**
      * The get Instance method
      * @param connector parent
@@ -68,6 +69,51 @@ public class ResponsibilityNames {
     public static ResponsibilityNames getInstance(OracleERPConnector connector) {
        return new ResponsibilityNames(connector);
     }
+
+    /**
+     * The parent connector
+     */
+    private OracleERPConnector co;
+
+    /**
+     * If 11.5.10, determine if description field exists in responsibility views. Default to true
+     */
+    private boolean descrExists = true;
+
+    /**
+     * Check to see which responsibility account attribute is sent. Version 11.5.9 only supports responsibilities, and
+     * 11.5.10 only supports directResponsibilities and indirectResponsibilities Default to false If 11.5.10, determine
+     * if description field exists in responsibility views.
+     */
+    private boolean newResponsibilityViews = false;
+    
+    
+    /**
+     * Accessor for the descrExists property
+     * @return the descrExists
+     */
+    public boolean isDescrExists() {
+        return descrExists;
+    }
+
+
+    /**
+     * Accessor for the newResponsibilityViews property
+     * @return the newResponsibilityViews
+     */
+    public boolean isNewResponsibilityViews() {
+        return newResponsibilityViews;
+    }    
+    
+    /**
+     * Responsibility Application Id
+     */
+    private String respApplId = "";
+
+    /**
+     * Responsibility Id
+     */
+    private String respId = "";
     
     /**
      * The ResponsibilityNames
@@ -78,9 +124,185 @@ public class ResponsibilityNames {
     }
     
     /**
-     * The parent connector
+     * @param bld
+     * @param columnValues
+     * @param columnNames 
      */
-    private OracleERPConnector co;
+    public void buildResponsibilitiesToAccountObject(ConnectorObjectBuilder bld, Map<String, SQLParam> columnValues, Set<String> columnNames) {
+        final String id = getStringParamValue(columnValues, USER_ID);
+        if (columnNames.contains(RESP) && !isNewResponsibilityViews()) {
+            //add responsibilities
+            final List<String> responsibilities = getResponsibilities(id, RESPS_TABLE, false);
+            bld.addAttribute(RESP, responsibilities);
+
+            //add resps list
+            final List<String> resps = getResps(responsibilities, RESP_FMT_KEYS);
+            bld.addAttribute(RESPKEYS, resps);
+        } else if (columnNames.contains(DIRECT_RESP)) {
+            final List<String> responsibilities = getResponsibilities(id, RESPS_DIRECT_VIEW, false);
+            bld.addAttribute(DIRECT_RESP, responsibilities);
+
+            //add resps list
+            final List<String> resps = getResps(responsibilities, RESP_FMT_KEYS);
+            bld.addAttribute(RESPKEYS, resps);
+        }
+
+        if (columnNames.contains(INDIRECT_RESP) ) {
+            //add responsibilities
+            final List<String> responsibilities = getResponsibilities(id, RESPS_INDIRECT_VIEW, false);
+            bld.addAttribute(INDIRECT_RESP, responsibilities);
+        }       
+    }
+    
+    /**
+     * The New responsibility format there
+     * 
+     * @return true/false
+     */
+    public boolean getNewResponsibilityViews() {
+        final String sql = "select * from " + co.app()
+                + "fnd_views where VIEW_NAME = 'FND_USER_RESP_GROUPS_DIRECT' and APPLICATION_ID = '0'";
+        PreparedStatement ps = null;
+        ResultSet res = null;
+        try {
+            ps = co.getConn().prepareStatement(sql);
+            res = ps.executeQuery();
+            log.ok(sql);
+            if (res != null && res.next()) {
+                log.ok("ResponsibilityViews exists");
+                return true;
+            }
+        } catch (SQLException e) {
+            log.error(e, sql);
+            throw ConnectorException.wrap(e);
+        } finally {
+            SQLUtil.closeQuietly(res);
+            res = null;
+            SQLUtil.closeQuietly(ps);
+            ps = null;
+        }
+        log.ok("ResponsibilityViews does not exists");
+        return false;
+    }
+    
+
+    /**
+     * bug#13889 : Added method to create a responsibility string with dates normalized.
+     * respFmt: 
+     *   RESP_FMT_KEYS: get responsibility keys (resp_name, app_name, sec_group)
+     *   RESP_FMT_NORMALIZE_DATES: get responsibility string (resp_name, app_name, sec_group, description, start_date, end_date)
+     *                             start_date, end_date (no time data, allow nulls)
+     * @param strResp 
+     * @param respFmt 
+     * @return normalized resps string
+     */
+    public String getResp(String strResp, int respFmt) {
+        final String method = "getResp(String, int)";
+        log.info(method + "respFmt=" + respFmt);
+        String strRespRet = null;
+        StringTokenizer tok = new StringTokenizer(strResp, "||", false);
+        if (tok != null && tok.countTokens() > 2) {
+            StringBuffer key = new StringBuffer();
+            key.append(tok.nextToken()); // responsiblity name
+            key.append("||");
+            key.append(tok.nextToken()); // application name
+            key.append("||");
+            key.append(tok.nextToken()); // security group name
+            if (respFmt != RESP_FMT_KEYS) {
+                key.append("||");
+                // descr possibly not available in ui version 11.5.10
+                if (!isNewResponsibilityViews() || isDescrExists()) {
+                    key.append(tok.nextToken()); // description
+                }
+                key.append("||");
+                key.append(normalizeStrDate(tok.nextToken())); // start_date
+                key.append("||");
+                key.append(normalizeStrDate(tok.nextToken())); // end_date
+            }
+            strRespRet = key.toString();
+        }
+        log.ok(method);
+        return strRespRet;
+    } // getRespWithNormalizeDates()  
+    
+
+    /**
+     * Accessor for the respApplId property
+     * @return the respApplId
+     */
+    public String getRespApplId() {
+        return respApplId;
+    }
+
+    
+    /**
+     * Accessor for the respId property
+     * @return the respId
+     */
+    public String getRespId() {
+        return respId;
+    }    
+    
+
+    /**
+     * Init the responsibilities
+     */
+    public void initResponsibilities() {
+        this.newResponsibilityViews = getNewResponsibilityViews();
+        
+        if (isNewResponsibilityViews()) {
+            this.descrExists = getDescriptionExiests();
+        }
+        
+        // three pieces of data need for apps_initialize()
+        final String auditResponsibility = co.getCfg().getAuditResponsibility();
+        final String userId = OracleERPUtil.getUserId(co, co.getCfg().getUser());
+
+        if (StringUtil.isNotBlank(auditResponsibility)) {
+            if (StringUtil.isNotBlank(userId)) {
+                co.getSecAttrs().initAdminUserId(userId);
+            }
+
+            final String view = co.app()
+                    + ((isNewResponsibilityViews()) ? OracleERPUtil.RESPS_ALL_VIEW : OracleERPUtil.RESPS_TABLE);
+            final String sql = "select responsibility_id, responsibility_application_id from "
+                    + view
+                    + " where user_id = ? and "
+                    + "(responsibility_id,responsibility_application_id) = (select responsibility_id,application_id from "
+                    + "{0}fnd_responsibility_vl where responsibility_name = ?)";
+
+            final String msg = "Oracle ERP SQL: {0} returned: RESP_ID = {1}, RESP_APPL_ID = {2}";
+
+            ArrayList<SQLParam> params = new ArrayList<SQLParam>();
+            params.add(new SQLParam(userId));
+            params.add(new SQLParam(auditResponsibility));
+            PreparedStatement ps = null;
+            ResultSet rs = null;
+            try {
+                log.info("Select responsibility for user_id: {0}, and audit responsibility {1}", userId,
+                        auditResponsibility);
+                ps = co.getConn().prepareStatement(sql, params);
+                rs = ps.executeQuery();
+                if (rs != null) {
+                    if (rs.next()) {
+                        respId = rs.getString(1);
+                        respApplId = rs.getString(2);
+                    }
+                }
+
+                log.ok(msg, sql, respId, respApplId);
+            } catch (SQLException e) {
+                log.error(e, msg, sql, respId, respApplId);
+            } finally {
+                // close everything in case we had an exception in the middle of something
+                SQLUtil.closeQuietly(rs);
+                rs = null;
+                SQLUtil.closeQuietly(ps);
+                ps = null;
+            }
+        }
+    }    
+    
     
     /**
      * Get the Account Object Class Info
@@ -140,37 +362,8 @@ public class ResponsibilityNames {
         return aoc.build();
     }
 
-    /**
-     * @param bld
-     * @param columnValues
-     * @param columnNames 
-     */
-    public void buildResponsibilitiesToAccountObject(ConnectorObjectBuilder bld, Map<String, SQLParam> columnValues, Set<String> columnNames) {
-        final String id = getStringParamValue(columnValues, USER_ID);
-        if (columnNames.contains(RESP) && !co.isNnewResponsibilityViews()) {
-            //add responsibilities
-            final List<String> responsibilities = getResponsibilities(id, RESPS_TABLE, false);
-            bld.addAttribute(RESP, responsibilities);
-
-            //add resps list
-            final List<String> resps = getResps(responsibilities, RESP_FMT_KEYS);
-            bld.addAttribute(RESPKEYS, resps);
-        } else if (columnNames.contains(DIRECT_RESP)) {
-            final List<String> responsibilities = getResponsibilities(id, RESPS_DIRECT_VIEW, false);
-            bld.addAttribute(DIRECT_RESP, responsibilities);
-
-            //add resps list
-            final List<String> resps = getResps(responsibilities, RESP_FMT_KEYS);
-            bld.addAttribute(RESPKEYS, resps);
-        }
-
-        if (columnNames.contains(INDIRECT_RESP) ) {
-            //add responsibilities
-            final List<String> responsibilities = getResponsibilities(id, RESPS_INDIRECT_VIEW, false);
-            bld.addAttribute(INDIRECT_RESP, responsibilities);
-        }       
-    }
-  
+    
+    
     /**
      * getResponsibilities
      * 
@@ -191,8 +384,8 @@ public class ResponsibilityNames {
         // descr may not be available in view or in native ui with new resp views
         // bug#15492 - do not include user tables in query if id not specified, does not return allr responsibilities
         if (id != null) {
-            if (!co.isNnewResponsibilityViews()
-                    || (co.isDescrExists() && respLocation.equalsIgnoreCase(RESPS_DIRECT_VIEW))) {
+            if (!isNewResponsibilityViews()
+                    || (isDescrExists() && respLocation.equalsIgnoreCase(RESPS_DIRECT_VIEW))) {
                 b.append(", fnduserg.DESCRIPTION");
             }
             b.append(", fnduserg.START_DATE, fnduserg.END_DATE ");
@@ -255,8 +448,8 @@ public class ResponsibilityNames {
                     s = getColumn(res, 5); // fnduserg.START_DATE or fnduserg.END_DATE
                     sb.append(s);
                 }
-                if (!co.isNnewResponsibilityViews()
-                        || (co.isDescrExists() && respLocation.equalsIgnoreCase(RESPS_DIRECT_VIEW))) {
+                if (!isNewResponsibilityViews()
+                        || (isDescrExists() && respLocation.equalsIgnoreCase(RESPS_DIRECT_VIEW))) {
                     sb.append("||");
                     if (id != null) {
                         s = getColumn(res, 6); // fnduserg.END_DATE
@@ -278,7 +471,7 @@ public class ResponsibilityNames {
 
         log.ok(method);
         return arrayList;
-    }
+    }    
 
 
     /**
@@ -309,47 +502,6 @@ public class ResponsibilityNames {
 
 
     /**
-     * bug#13889 : Added method to create a responsibility string with dates normalized.
-     * respFmt: 
-     *   RESP_FMT_KEYS: get responsibility keys (resp_name, app_name, sec_group)
-     *   RESP_FMT_NORMALIZE_DATES: get responsibility string (resp_name, app_name, sec_group, description, start_date, end_date)
-     *                             start_date, end_date (no time data, allow nulls)
-     * @param strResp 
-     * @param respFmt 
-     * @return normalized resps string
-     */
-    public String getResp(String strResp, int respFmt) {
-        final String method = "getResp(String, int)";
-        log.info(method + "respFmt=" + respFmt);
-        String strRespRet = null;
-        StringTokenizer tok = new StringTokenizer(strResp, "||", false);
-        if (tok != null && tok.countTokens() > 2) {
-            StringBuffer key = new StringBuffer();
-            key.append(tok.nextToken()); // responsiblity name
-            key.append("||");
-            key.append(tok.nextToken()); // application name
-            key.append("||");
-            key.append(tok.nextToken()); // security group name
-            if (respFmt != RESP_FMT_KEYS) {
-                key.append("||");
-                // descr possibly not available in ui version 11.5.10
-                if (!co.isNnewResponsibilityViews() || co.isDescrExists()) {
-                    key.append(tok.nextToken()); // description
-                }
-                key.append("||");
-                key.append(normalizeStrDate(tok.nextToken())); // start_date
-                key.append("||");
-                key.append(normalizeStrDate(tok.nextToken())); // end_date
-            }
-            strRespRet = key.toString();
-        }
-        log.ok(method);
-        return strRespRet;
-    } // getRespWithNormalizeDates()  
-    
-    
-
-    /**
      * 
      * @param respList
      * @param identity
@@ -364,7 +516,7 @@ public class ResponsibilityNames {
 
         // get Users Current Responsibilties
         List<String> oldResp = null;
-        if (!co.isNnewResponsibilityViews()) {
+        if (!isNewResponsibilityViews()) {
             oldResp = getResponsibilities(identity, RESPS_TABLE, false);
         } else {
             // can only update directly assigned resps; indirect resps are readonly
@@ -501,122 +653,8 @@ public class ResponsibilityNames {
         log.ok(method);
 
     }
-
-    private void updateUserResponsibility(String identity, String resp, List<String> errors) {
-        final String method = "updateUserResponsibility";
-        log.info(method);
-        PreparedStatement st = null;
-        String securityGroup = null;
-        String respName = null;
-        String respAppName = null;
-        String description = null;
-        String fromDate = null;
-        String toDate = null;
-
-        // * What if one of values is null in resp, will strTok still count it??
-        StringTokenizer tok = new StringTokenizer(resp, "||", false);
-        int count = tok.countTokens();
-        if ((tok != null) && (count > 4)) {
-            respName = tok.nextToken();
-            respAppName = tok.nextToken();
-            securityGroup = tok.nextToken();
-            // descr optionable in 11.5.10 - check if sent
-            if (count > 5) {
-                description = tok.nextToken();
-            }
-            fromDate = tok.nextToken();
-            toDate = tok.nextToken();
-        } else {
-            final String msg = "Invalid Responsibility: " + resp;
-            log.error(msg);
-            throw new ConnectorException(msg);
-        }
-
-        // descr null conversion
-        if (description != null && !description.equalsIgnoreCase("null")) {
-            description = "'" + description + "'";
-        } else {
-            description = null;
-        }
-        // date field convert - start_date cannot be null, set to sysdate
-        if ((fromDate == null) || fromDate.equalsIgnoreCase("null")) {
-            fromDate = "sysdate";
-        } else if (fromDate.length() == 10) {
-            fromDate = "to_date('" + fromDate + "', 'yyyy-mm-dd')";
-        } else if (fromDate.length() > 10) {
-            // try YYYY-MM-DD HH:MM:SS.n
-            fromDate = "to_date('" + fromDate.substring(0, fromDate.length() - 2) + "', 'yyyy-mm-dd hh24:mi:ss')";
-        }
-
-        if ((toDate == null) || toDate.equalsIgnoreCase("null")) {
-            toDate = null;
-        } else if (toDate.equalsIgnoreCase(SYSDATE)) {
-            toDate = "sysdate";
-        } else if (toDate.length() == 10) {
-            toDate = "to_date('" + toDate + "', 'yyyy-mm-dd')";
-        } else if (toDate.length() > 10) {
-            // try YYYY-MM-DD HH:MM:SS.n
-            toDate = "to_date('" + toDate.substring(0, toDate.length() - 2) + "', 'yyyy-mm-dd hh24:mi:ss')";
-        }
-
-        StringBuffer b = buildUserRespStatement(identity.toUpperCase(), securityGroup.toUpperCase(), respName,
-                respAppName, fromDate, toDate, description, false /* not doing an insert, doing an update */);
-
-        boolean doRetryWithoutAppname = false;
-        String sql = b.toString();
-        try {
-            log.info("sql select {0}", sql);
-            st = co.getConn().prepareStatement(sql);
-            st.execute();
-        } catch (SQLException e) {
-            //
-            // 19057: check whether this is a "no data found" error;
-            // if so, then perhaps the responsibility we seek doesn't
-            // have a valid app name.  We'll retry the query without
-            // specifying the app name.
-            //
-            if (e.getErrorCode() == ORA_01403) {
-                doRetryWithoutAppname = true;
-            } else {
-                final String msg = "Error in sql :" + sql;
-                log.error(e, msg);
-                throw new ConnectorException(msg, e);
-            }
-        } finally {
-            SQLUtil.closeQuietly(st);
-            st = null;
-        }
-
-        if (doRetryWithoutAppname) {
-            //
-            // 19057: without the responsibility's application name, must
-            // fall back to using just the responsibility name to identify
-            // the desired responsibility
-            //
-            b = buildUserRespStatement(identity.toUpperCase(), securityGroup.toUpperCase(), respName,
-                    null /* respAppName is not valid */, fromDate, toDate, description, false);
-
-            sql = b.toString();
-            try {
-                log.info("sql select {0}", sql);
-                st = co.getConn().prepareStatement(sql);
-                st.execute();
-            } catch (SQLException e) {
-                if (e.getErrorCode() == ORA_01403) {
-                    // bug#16656: delay error handling for missing responsibilities
-                    errors.add("Failed to update '" + resp + "' responsibility:" + e.getMessage());
-                } else {
-                    final String msg = "Can not execute the sql " + sql;
-                    log.error(e, msg);
-                    throw new ConnectorException(msg, e);
-                }
-            } finally {
-                SQLUtil.closeQuietly(st);
-                st = null;
-            }
-        }
-        log.ok(method);
-    }
+    
+    
 
     private void addUserResponsibility(String identity, String resp, List<String> errors) {
         final String method = "addUserResponsibility";
@@ -732,6 +770,63 @@ public class ResponsibilityNames {
         log.ok(method);
     }
 
+    /**
+     * This method is shared by addUserResponsibility and updateUserResponsibility to build their PL/SQL statements.
+     */
+    private StringBuffer buildUserRespStatement(String user, String secGroup, String respName, String respAppName,
+            String fromDate, String toDate, String description, boolean doInsert) {
+
+        StringBuffer b = new StringBuffer();
+        b.append("DECLARE user varchar2(300); security_group varchar2(300); ");
+        b.append("responsibility_long_name varchar2(300); ");
+        if (respAppName != null) {
+            b.append("responsibility_app_name varchar2(300); ");
+        }
+        b.append("sec_group_id Number; user_id_num Number; resp_id varchar2(300); app_id Number; sec_id Number; ");
+        b.append("description varchar2(300); resp_sec_g_key varchar2(300); ");
+        b.append("BEGIN user := ");
+        addQuoted(b, user.toUpperCase());
+        b.append("; security_group := ");
+        addQuoted(b, secGroup.toUpperCase());
+        b.append("; responsibility_long_name := ");
+        addQuoted(b, respName);
+        if (respAppName != null) {
+            b.append("; responsibility_app_name := ");
+            addQuoted(b, respAppName);
+        }
+        b.append("; ");
+        b.append("SELECT responsibility_id, application_id INTO resp_id, app_id ");
+        b.append("FROM " + co.app() + "fnd_responsibility_vl ");
+        b.append("WHERE responsibility_name = responsibility_long_name");
+        if (respAppName != null) {
+            b.append(" AND application_id = ");
+            b.append("(SELECT application_id FROM " + co.app() + "fnd_application_vl ");
+            b.append("WHERE application_name = responsibility_app_name)");
+        }
+        b.append("; ");
+        b.append("SELECT user_id INTO user_id_num ");
+        b.append("FROM " + co.app() + "fnd_user ");
+        b.append("WHERE USER_NAME = user; ");
+        b.append("SELECT security_group_id INTO sec_group_id ");
+        b.append("FROM " + co.app() + "fnd_security_groups_vl ");
+        b.append("WHERE SECURITY_GROUP_KEY = security_group; ");
+
+        b.append(co.app());
+        if (doInsert) {
+            b.append("fnd_user_resp_groups_api.Insert_Assignment (user_id_num, resp_id, app_id, sec_group_id, ");
+        } else {
+            b.append("fnd_user_resp_groups_api.Update_Assignment (user_id_num, resp_id, app_id, sec_group_id, ");
+        }
+        b.append(fromDate);
+        b.append(", ");
+        b.append(toDate);
+        b.append(", ");
+        b.append(description);
+        b.append("); COMMIT; END;");
+
+        return b;
+    }
+
     private void deleteUserResponsibility(String identity, String resp, List<String> errors) {
         final String method = "deleteUserResponsibility";
         log.info(method);
@@ -809,59 +904,143 @@ public class ResponsibilityNames {
     }
 
     /**
-     * This method is shared by addUserResponsibility and updateUserResponsibility to build their PL/SQL statements.
+     * @return
      */
-    private StringBuffer buildUserRespStatement(String user, String secGroup, String respName, String respAppName,
-            String fromDate, String toDate, String description, boolean doInsert) {
+    private boolean getDescriptionExiests() {
+        final String sql = "select user_id, description from " + co.app()
+                + "fnd_user_resp_groups_direct where USER_ID = '9999999999'";
+        PreparedStatement ps = null;
+        ResultSet res = null;
+        try {
+            ps = co.getConn().prepareStatement(sql);
+            res = ps.executeQuery();
+            log.ok("description exists");
+            return true;
+        } catch (SQLException e) {
+            //log.error(e, sql);
+            log.ok("description does not exists");
+        } finally {
+            SQLUtil.closeQuietly(res);
+            res = null;
+            SQLUtil.closeQuietly(ps);
+            ps = null;
+        }
+        return false;
+    }
 
-        StringBuffer b = new StringBuffer();
-        b.append("DECLARE user varchar2(300); security_group varchar2(300); ");
-        b.append("responsibility_long_name varchar2(300); ");
-        if (respAppName != null) {
-            b.append("responsibility_app_name varchar2(300); ");
-        }
-        b.append("sec_group_id Number; user_id_num Number; resp_id varchar2(300); app_id Number; sec_id Number; ");
-        b.append("description varchar2(300); resp_sec_g_key varchar2(300); ");
-        b.append("BEGIN user := ");
-        addQuoted(b, user.toUpperCase());
-        b.append("; security_group := ");
-        addQuoted(b, secGroup.toUpperCase());
-        b.append("; responsibility_long_name := ");
-        addQuoted(b, respName);
-        if (respAppName != null) {
-            b.append("; responsibility_app_name := ");
-            addQuoted(b, respAppName);
-        }
-        b.append("; ");
-        b.append("SELECT responsibility_id, application_id INTO resp_id, app_id ");
-        b.append("FROM " + co.app() + "fnd_responsibility_vl ");
-        b.append("WHERE responsibility_name = responsibility_long_name");
-        if (respAppName != null) {
-            b.append(" AND application_id = ");
-            b.append("(SELECT application_id FROM " + co.app() + "fnd_application_vl ");
-            b.append("WHERE application_name = responsibility_app_name)");
-        }
-        b.append("; ");
-        b.append("SELECT user_id INTO user_id_num ");
-        b.append("FROM " + co.app() + "fnd_user ");
-        b.append("WHERE USER_NAME = user; ");
-        b.append("SELECT security_group_id INTO sec_group_id ");
-        b.append("FROM " + co.app() + "fnd_security_groups_vl ");
-        b.append("WHERE SECURITY_GROUP_KEY = security_group; ");
+    private void updateUserResponsibility(String identity, String resp, List<String> errors) {
+        final String method = "updateUserResponsibility";
+        log.info(method);
+        PreparedStatement st = null;
+        String securityGroup = null;
+        String respName = null;
+        String respAppName = null;
+        String description = null;
+        String fromDate = null;
+        String toDate = null;
 
-        b.append(co.app());
-        if (doInsert) {
-            b.append("fnd_user_resp_groups_api.Insert_Assignment (user_id_num, resp_id, app_id, sec_group_id, ");
+        // * What if one of values is null in resp, will strTok still count it??
+        StringTokenizer tok = new StringTokenizer(resp, "||", false);
+        int count = tok.countTokens();
+        if ((tok != null) && (count > 4)) {
+            respName = tok.nextToken();
+            respAppName = tok.nextToken();
+            securityGroup = tok.nextToken();
+            // descr optionable in 11.5.10 - check if sent
+            if (count > 5) {
+                description = tok.nextToken();
+            }
+            fromDate = tok.nextToken();
+            toDate = tok.nextToken();
         } else {
-            b.append("fnd_user_resp_groups_api.Update_Assignment (user_id_num, resp_id, app_id, sec_group_id, ");
+            final String msg = "Invalid Responsibility: " + resp;
+            log.error(msg);
+            throw new ConnectorException(msg);
         }
-        b.append(fromDate);
-        b.append(", ");
-        b.append(toDate);
-        b.append(", ");
-        b.append(description);
-        b.append("); COMMIT; END;");
 
-        return b;
+        // descr null conversion
+        if (description != null && !description.equalsIgnoreCase("null")) {
+            description = "'" + description + "'";
+        } else {
+            description = null;
+        }
+        // date field convert - start_date cannot be null, set to sysdate
+        if ((fromDate == null) || fromDate.equalsIgnoreCase("null")) {
+            fromDate = "sysdate";
+        } else if (fromDate.length() == 10) {
+            fromDate = "to_date('" + fromDate + "', 'yyyy-mm-dd')";
+        } else if (fromDate.length() > 10) {
+            // try YYYY-MM-DD HH:MM:SS.n
+            fromDate = "to_date('" + fromDate.substring(0, fromDate.length() - 2) + "', 'yyyy-mm-dd hh24:mi:ss')";
+        }
+
+        if ((toDate == null) || toDate.equalsIgnoreCase("null")) {
+            toDate = null;
+        } else if (toDate.equalsIgnoreCase(SYSDATE)) {
+            toDate = "sysdate";
+        } else if (toDate.length() == 10) {
+            toDate = "to_date('" + toDate + "', 'yyyy-mm-dd')";
+        } else if (toDate.length() > 10) {
+            // try YYYY-MM-DD HH:MM:SS.n
+            toDate = "to_date('" + toDate.substring(0, toDate.length() - 2) + "', 'yyyy-mm-dd hh24:mi:ss')";
+        }
+
+        StringBuffer b = buildUserRespStatement(identity.toUpperCase(), securityGroup.toUpperCase(), respName,
+                respAppName, fromDate, toDate, description, false /* not doing an insert, doing an update */);
+
+        boolean doRetryWithoutAppname = false;
+        String sql = b.toString();
+        try {
+            log.info("sql select {0}", sql);
+            st = co.getConn().prepareStatement(sql);
+            st.execute();
+        } catch (SQLException e) {
+            //
+            // 19057: check whether this is a "no data found" error;
+            // if so, then perhaps the responsibility we seek doesn't
+            // have a valid app name.  We'll retry the query without
+            // specifying the app name.
+            //
+            if (e.getErrorCode() == ORA_01403) {
+                doRetryWithoutAppname = true;
+            } else {
+                final String msg = "Error in sql :" + sql;
+                log.error(e, msg);
+                throw new ConnectorException(msg, e);
+            }
+        } finally {
+            SQLUtil.closeQuietly(st);
+            st = null;
+        }
+
+        if (doRetryWithoutAppname) {
+            //
+            // 19057: without the responsibility's application name, must
+            // fall back to using just the responsibility name to identify
+            // the desired responsibility
+            //
+            b = buildUserRespStatement(identity.toUpperCase(), securityGroup.toUpperCase(), respName,
+                    null /* respAppName is not valid */, fromDate, toDate, description, false);
+
+            sql = b.toString();
+            try {
+                log.info("sql select {0}", sql);
+                st = co.getConn().prepareStatement(sql);
+                st.execute();
+            } catch (SQLException e) {
+                if (e.getErrorCode() == ORA_01403) {
+                    // bug#16656: delay error handling for missing responsibilities
+                    errors.add("Failed to update '" + resp + "' responsibility:" + e.getMessage());
+                } else {
+                    final String msg = "Can not execute the sql " + sql;
+                    log.error(e, msg);
+                    throw new ConnectorException(msg, e);
+                }
+            } finally {
+                SQLUtil.closeQuietly(st);
+                st = null;
+            }
+        }
+        log.ok(method);
     }    
 }

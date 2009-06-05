@@ -22,7 +22,7 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+import static org.identityconnectors.oracleerp.OracleERPUtil.RESP_NAMES;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -32,16 +32,10 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.StringUtil;
@@ -97,13 +91,6 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      */
     static final Log log = Log.getLog(OracleERPConnector.class);
 
-
-
-    /**
-     * used for adminUserId for calling storing procedures
-     */
-    private int adminUserId = 0;
-
     /**
      * Place holder for the {@link Configuration} passed into the init() method {@link OracleERPConnector#init}.
      */
@@ -146,19 +133,6 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
     public UserSecuringAttrs getSecAttrs() {
         return secAttrs;
     }
-    
-    /**
-     * If 11.5.10, determine if description field exists in responsibility views. Default to true
-     */
-    private boolean descrExists = true;
-
-    /**
-     * Accessor for the adminUserId property
-     * @return the adminUserId
-     */
-    public int getAdminUserId() {
-        return adminUserId;
-    }
 
     /**
      * Accessor for the account property
@@ -168,37 +142,6 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         return account;
     }
 
-    /**
-     * Accessor for the descrExists property
-     * @return the descrExists
-     */
-    public boolean isDescrExists() {
-        return descrExists;
-    }
-
-    /**
-     * Accessor for the newResponsibilityViews property
-     * @return the newResponsibilityViews
-     */
-    public boolean isNnewResponsibilityViews() {
-        return newResponsibilityViews;
-    }
-
-    /**
-     * Accessor for the respApplId property
-     * @return the respApplId
-     */
-    public String getRespApplId() {
-        return respApplId;
-    }
-
-    /**
-     * Accessor for the respId property
-     * @return the respId
-     */
-    public String getRespId() {
-        return respId;
-    }
 
     /**
      * Accessor for the userId property
@@ -208,25 +151,13 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         return userId;
     }
 
-    /**
-     * Check to see which responsibility account attribute is sent. Version 11.5.9 only supports responsibilities, and
-     * 11.5.10 only supports directResponsibilities and indirectResponsibilities Default to false If 11.5.10, determine
-     * if description field exists in responsibility views.
-     */
-    private boolean newResponsibilityViews = false;
-    /**
-     * Responsibility Application Id
-     */
-    private String respApplId = "";
 
-    /**
-     * Responsibility Id
-     */
-    private String respId = "";
     /**
      * User id from cfg.User
      */
     private String userId = "";
+    
+    
 
     /* (non-Javadoc)
      * @see org.identityconnectors.framework.spi.operations.AuthenticateOp#authenticate(java.lang.String, org.identityconnectors.common.security.GuardedString, org.identityconnectors.framework.common.objects.OperationOptions)
@@ -422,13 +353,9 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
          *  initFndGlobal();
          */
 
-        this.newResponsibilityViews = getNewResponsibilityViews();
-        if (this.isNnewResponsibilityViews()) {
-            this.descrExists = getDescriptionExiests();
-        }
-        this.userId = OracleERPUtil.getUserId(this, this.cfg.getUser());
+        respNames.initResponsibilities();
 
-        initResponsibilities();
+        this.userId = OracleERPUtil.getUserId(this, this.cfg.getUser());
 
         initFndGlobal();
     }
@@ -567,76 +494,21 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
                 + "account,responsibilityNames");
     }
 
-    /**
-     * @return
-     */
-    private boolean getDescriptionExiests() {
-        final String sql = "select user_id, description from " + app()
-                + "fnd_user_resp_groups_direct where USER_ID = '9999999999'";
-        PreparedStatement ps = null;
-        ResultSet res = null;
-        try {
-            ps = conn.prepareStatement(sql);
-            res = ps.executeQuery();
-            log.ok("description exists");
-            return true;
-        } catch (SQLException e) {
-            //log.error(e, sql);
-            log.ok("description does not exists");
-        } finally {
-            SQLUtil.closeQuietly(res);
-            res = null;
-            SQLUtil.closeQuietly(ps);
-            ps = null;
-        }
-        return false;
-    }
-
-    /**
-     * The New responsibility format there
-     * 
-     * @return true/false
-     */
-    private boolean getNewResponsibilityViews() {
-        final String sql = "select * from " + app()
-                + "fnd_views where VIEW_NAME = 'FND_USER_RESP_GROUPS_DIRECT' and APPLICATION_ID = '0'";
-        PreparedStatement ps = null;
-        ResultSet res = null;
-        try {
-            ps = conn.prepareStatement(sql);
-            res = ps.executeQuery();
-            log.ok(sql);
-            if (res != null && res.next()) {
-                log.ok("ResponsibilityViews exists");
-                return true;
-            }
-        } catch (SQLException e) {
-            log.error(e, sql);
-            throw ConnectorException.wrap(e);
-        } finally {
-            SQLUtil.closeQuietly(res);
-            res = null;
-            SQLUtil.closeQuietly(ps);
-            ps = null;
-        }
-        log.ok("ResponsibilityViews does not exists");
-        return false;
-    }
-
     private void initFndGlobal() {
-
+        final String respId = getRespNames().getRespId();;        
+        final String respApplId = getRespNames().getRespApplId();
         //Real initialize call
-        if (StringUtil.isNotBlank(this.userId) && StringUtil.isNotBlank(this.respId)
-                && StringUtil.isNotBlank(this.respApplId)) {
+        if (StringUtil.isNotBlank(this.userId) && StringUtil.isNotBlank(respId)
+                && StringUtil.isNotBlank(respApplId)) {
             CallableStatement cs = null;
             try {
                 final String sql = "call " + app() + "FND_GLOBAL.APPS_INITIALIZE(?,?,?)";
                 final String msg = "Oracle ERP: {0}FND_GLOBAL.APPS_INITIALIZE({1}, {2}, {3}) called.";
-                log.ok(msg, app(), this.userId, this.respId, this.respApplId);
+                log.ok(msg, app(), this.userId, respId, respApplId);
                 List<SQLParam> pars = new ArrayList<SQLParam>();
                 pars.add(new SQLParam(this.userId));
-                pars.add(new SQLParam(this.respId));
-                pars.add(new SQLParam(this.respApplId));
+                pars.add(new SQLParam(respId));
+                pars.add(new SQLParam(respApplId));
 
                 cs = conn.prepareCall(sql, pars);
                 cs.execute();
@@ -654,68 +526,12 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
             }
         } else {
             log.info("Oracle ERP: one of the userIDStr:{0}, respId: {1}, respApplId: {2} is null", this.userId,
-                    this.respId, this.respApplId);
+                    respId, respApplId);
             log.ok("Oracle ERP: {0}FND_GLOBAL.APPS_INITIALIZE() NOT called.", app());
         }
     }
 
-    /**
-     * 
-     */
-    private void initResponsibilities() {
-        // three pieces of data need for apps_initialize()
-        final String auditResponsibility = cfg.getAuditResponsibility();
-        final String userId = OracleERPUtil.getUserId(this, cfg.getUser());
 
-        if (StringUtil.isNotBlank(auditResponsibility)) {
-            if (StringUtil.isNotBlank(userId)) {
-                try {
-                    adminUserId = new Integer(userId).intValue();
-                    log.ok("The adminUserId is : {0} ", userId);
-                } catch (Exception ex) {
-                    log.error(ex, "The User Id String {0} is not a number", userId);
-                }
-            }
-
-            final String view = app()
-                    + ((isNnewResponsibilityViews()) ? OracleERPUtil.RESPS_ALL_VIEW : OracleERPUtil.RESPS_TABLE);
-            final String sql = "select responsibility_id, responsibility_application_id from "
-                    + view
-                    + " where user_id = ? and "
-                    + "(responsibility_id,responsibility_application_id) = (select responsibility_id,application_id from "
-                    + "{0}fnd_responsibility_vl where responsibility_name = ?)";
-
-            final String msg = "Oracle ERP SQL: {0} returned: RESP_ID = {1}, RESP_APPL_ID = {2}";
-
-            ArrayList<SQLParam> params = new ArrayList<SQLParam>();
-            params.add(new SQLParam(userId));
-            params.add(new SQLParam(auditResponsibility));
-            PreparedStatement ps = null;
-            ResultSet rs = null;
-            try {
-                log.info("Select responsibility for user_id: {0}, and audit responsibility {1}", userId,
-                        auditResponsibility);
-                ps = conn.prepareStatement(sql, params);
-                rs = ps.executeQuery();
-                if (rs != null) {
-                    if (rs.next()) {
-                        respId = rs.getString(1);
-                        respApplId = rs.getString(2);
-                    }
-                }
-
-                log.ok(msg, sql, respId, respApplId);
-            } catch (SQLException e) {
-                log.error(e, msg, sql, respId, respApplId);
-            } finally {
-                // close everything in case we had an exception in the middle of something
-                SQLUtil.closeQuietly(rs);
-                rs = null;
-                SQLUtil.closeQuietly(ps);
-                ps = null;
-            }
-        }
-    }
 
    /**
      * 
