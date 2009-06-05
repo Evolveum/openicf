@@ -40,6 +40,7 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
@@ -140,7 +141,7 @@ public class UserSecuringAttrs  {
     /**
      * 
      * 
-     * @param secAttrList
+     * @param secAttr
      * @param identity
      * @param userId 
      * @throws WavesetException
@@ -151,41 +152,36 @@ public class UserSecuringAttrs  {
      *             Since there is no available key, we will delete all and add all new ones
      * 
      */
-    public void updateUserSecuringAttrs(List<String> secAttrList, String identity, String userId) {
+    public void updateUserSecuringAttrs(final Attribute secAttr, String identity, String userId) {
         final String method = "updateUserSecuringAttrs";
         log.info(method);
+
+        //Convert to list of Strings
+        final List<String> secAttrList = new ArrayList<String>();
+        for (Object obj : secAttr.getValue()) {
+            secAttrList.add(obj.toString());
+        }
 
         // get Users Securing Attrs
         List<String> oldSecAttrs = getSecuringAttrs(identity, null);
 
         // add new attrs
-        if (secAttrList != null) {
-            if (!secAttrList.isEmpty()) {
-                Iterator<String> it = secAttrList.iterator();
-                String secAttr = null;
-                while (it.hasNext()) {
-                    secAttr = it.next();
-                    // Only add if not there already (including value)
-                    // , otherwise delete from old list
-                    if (oldSecAttrs.contains(secAttr)) {
-                        oldSecAttrs.remove(secAttr);
-                    } else {
-                        addSecuringAttr(userId, secAttr);
-                    }
-                }// end-while
-            }//end-if
-        }//end-if
-        // delete old attrs
-        if (oldSecAttrs != null) {
-            if (!oldSecAttrs.isEmpty()) {
-                Iterator<String> it = oldSecAttrs.iterator();
-                while (it.hasNext()) {
-                    deleteSecuringAttr(userId, it.next());
-                }
-            }
+        for (String secAttribute : secAttrList) {
+            // Only add if not there already (including value)
+            // , otherwise delete from old list
+            if (oldSecAttrs.contains(secAttribute)) {
+                oldSecAttrs.remove(secAttribute);
+            } else {
+                addSecuringAttr(userId, secAttribute);
+            }            
         }
         
-        co.getConn().commit();
+        // delete old attrs
+        if (oldSecAttrs != null) {
+            for (String secAttribute : oldSecAttrs) {
+                deleteSecuringAttr(userId, secAttribute);
+            }
+        }
 
         log.ok(method);
     }

@@ -232,46 +232,58 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      */
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
         final OracleERPConnection conn = co.getConn();
-        
-        final Attribute empAttr = AttributeUtil.find(EMP_NUM, attrs);
-        final Integer empNum =  empAttr == null ? null :  AttributeUtil.getIntegerValue(empAttr);
-        final Attribute npwAttr = AttributeUtil.find(NPW_NUM, attrs);
-        final Integer nwpNum = npwAttr == null ? null : AttributeUtil.getIntegerValue(npwAttr);
-        
+               
         //Get the person_id and set is it as a employee id
-        final String person_id = getPersonId(co, empNum, nwpNum);
+        final String identity = getName(co, attrs);
+        final String person_id = getPersonId(co, attrs);
         if (person_id != null) {
             // Person Id as a Employee_Id
             attrs.add(AttributeBuilder.build(EMP_ID, person_id));
         }
         
         // Get the User values
-        final Map<String, SQLParam> userValues = getParamsMap(oclass, attrs, options, true);
-        
+        final Map<String, SQLParam> userValues = getParamsMap(oclass, attrs, options, true);        
         // Run the create call, new style is using the defaults
-        CallableStatement cs = null;
-        final String sql = getUserCallSQL(userValues, true, co.app());
-        final List<SQLParam> userSQLParams = getUserSQLParams(userValues);
-        final String msg = "Create user account {0} : {1}";
-        final String user_name = getStringParamValue(userValues, USER_NAME);
-        log.ok(msg, user_name, sql);
-        try {
-            // Create the user
-            cs = conn.prepareCall(sql, userSQLParams);
-            cs.setQueryTimeout(ORACLE_TIMEOUT);
-            cs.execute();
-        } catch (SQLException e) {
-            log.error(e, user_name, sql);
-            SQLUtil.rollbackQuietly(conn);
-            throw new AlreadyExistsException(e);
-        } finally {
-            SQLUtil.closeQuietly(cs);
+        
+        if ( !userValues.isEmpty() ) {
+            CallableStatement cs = null;
+            final String sql = getUserCallSQL(userValues, true, co.app());
+            final List<SQLParam> userSQLParams = getUserSQLParams(userValues);
+            final String msg = "Create user account {0} : {1}";
+            final String user_name = getStringParamValue(userValues, USER_NAME);
+            log.ok(msg, user_name, sql);
+            try {
+                // Create the user
+                cs = conn.prepareCall(sql, userSQLParams);
+                cs.execute();
+            } catch (SQLException e) {
+                log.error(e, user_name, sql);
+                SQLUtil.rollbackQuietly(conn);
+                throw new AlreadyExistsException(e);
+            } finally {
+                SQLUtil.closeQuietly(cs);
+            }
         }
-        //Commit all
+                
+        // Update responsibilities
+        final Attribute resp = AttributeUtil.find(RESP, attrs);
+        final Attribute directResp = AttributeUtil.find(DIRECT_RESP, attrs);
+        if ( resp != null ) {
+            co.getRespNames().updateUserResponsibilities( resp, identity);
+        } else if ( directResp != null ) {
+            co.getRespNames().updateUserResponsibilities( directResp, identity);
+        }
+        // update securing attributes
+        final String userId=getUserId(co, identity);
+        final Attribute secAttr = AttributeUtil.find(SEC_ATTRS, attrs);
+        if ( secAttr != null ) {
+            co.getSecAttrs().updateUserSecuringAttrs(secAttr, identity, userId);
+        }
+                
         conn.commit();
         
         //Return new UID
-        return new Uid(user_name);
+        return new Uid(userId);
     }
     
     /* (non-Javadoc)
@@ -285,9 +297,8 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      * @see org.identityconnectors.framework.spi.operations.DeleteOp#delete(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.Uid, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {       
-        final String SQL ="call {0}fnd_user_pkg.disableuser(?)";
-        final String sql = "{ " + MessageFormat.format(SQL, co.app())+ " }";
-   //     log.ok(sql);
+        final String sql = "{ call "+co.app()+"fnd_user_pkg.disableuser(?) }";
+        log.info(sql);
         CallableStatement cs = null;
         try {
             cs = co.getConn().prepareCall(sql);
@@ -494,35 +505,130 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      * @param attrs Set<Attribute>
      * @param options OperationOptions
      */
-    public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> replaceAttributes, OperationOptions options) {
+    public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
         final OracleERPConnection conn = co.getConn();
+        final String identity = getName(co, attrs);
+        // update securing attributes
+        final String userId=getUserId(co, identity);
+        
+        // Enable/dissable user
+        final Attribute enableAttr = AttributeUtil.find(OperationalAttributes.ENABLE_NAME, attrs);
+        if ( enableAttr != null ) {
+            boolean enable =AttributeUtil.getBooleanValue(enableAttr);
+            if ( enable ) {
+                //delete user is the same as dissable
+                disable(objclass, uid, options);
+                return new Uid(userId);
+            } else {
+                enable(objclass, uid, options);
+                return new Uid(userId);
+            }
+        }
         
         // Get the User values
-        final Map<String, SQLParam> userValues = getParamsMap(objclass, replaceAttributes, options, false);
-        
-        // Run the create call, new style is using the defaults
-        CallableStatement cs = null;
-        final String sql = getUserCallSQL(userValues, false, co.app());
-        final String msg = "Create user account {0} : {1}";
-        final String userName = getStringParamValue(userValues, USER_NAME); 
-        log.ok(msg, userName, sql);
-        try {
-            // Create the user
-            cs = conn.prepareCall(sql, getUserSQLParams(userValues));
-            cs.setQueryTimeout(ORACLE_TIMEOUT);
-            cs.execute();
-        } catch (SQLException e) {
-            log.error(e, msg, userName, sql);
-            SQLUtil.rollbackQuietly(conn);
-            throw new AlreadyExistsException(e);
-        } finally {
-            SQLUtil.closeQuietly(cs);
+        final Map<String, SQLParam> userValues = getParamsMap(objclass, attrs, options, false);
+        if ( !userValues.isEmpty() ) {
+            // Run the create call, new style is using the defaults
+            CallableStatement cs = null;
+            final String sql = getUserCallSQL(userValues, false, co.app());
+            final String msg = "Create user account {0} : {1}";
+            final String userName = getStringParamValue(userValues, USER_NAME); 
+            log.ok(msg, userName, sql);
+            try {
+                // Create the user
+                cs = conn.prepareCall(sql, getUserSQLParams(userValues));
+                cs.execute();
+            } catch (SQLException e) {
+                log.error(e, msg, userName, sql);
+                SQLUtil.rollbackQuietly(conn);
+                throw new AlreadyExistsException(e);
+            } finally {
+                SQLUtil.closeQuietly(cs);
+            }            
         }
-        //Commit all
+                        
+        // Update responsibilities
+        final Attribute resp = AttributeUtil.find(RESP, attrs);
+        final Attribute directResp = AttributeUtil.find(DIRECT_RESP, attrs);
+        if ( resp != null ) {
+            co.getRespNames().updateUserResponsibilities( resp, identity);
+        } else if ( directResp != null ) {
+            co.getRespNames().updateUserResponsibilities( directResp, identity);
+        }
+
+        final Attribute secAttr = AttributeUtil.find(SEC_ATTRS, attrs);
+        if ( secAttr != null ) {
+            co.getSecAttrs().updateUserSecuringAttrs(secAttr, identity, userId);
+        }
         conn.commit();
         
         //Return new UID
-        return new Uid(getUserId(co, userName).toString());
+        return new Uid(userId);
+    }
+
+    /**
+     * @param objclass
+     * @param uid
+     * @param options
+     */
+    private void enable(ObjectClass objclass, Uid uid, OperationOptions options) {
+        final String method = "realEnable";
+        log.info( method);
+        String identity = uid.getUidValue();
+        //Map attrs = _actionUtil.getAccountAttributes(user, JActionUtil.OP_ENABLE_USER);
+
+        // no enable user stored procedure that I could find, null out
+        // end_date will do nicely
+        // Need user's OWNER, so need to do a getUser();
+        PreparedStatement st = null;
+        try {
+            StringBuilder b = new StringBuilder();
+            b.append("{ call " + co.app() + "fnd_user_pkg.updateuser(x_user_name => ?");
+            b.append(",x_owner => upper(?),x_end_date => FND_USER_PKG.null_date");
+            b.append(") }");
+            
+            String msg = "Oracle ERP: realEnable sql: {0}";
+            final String sql = b.toString();
+            log.info( msg, sql);
+
+            st = co.getConn().prepareStatement(sql);
+            st.setString(1, identity.toUpperCase());
+            st.setString(2, co.getCfg().getUser());
+            st.execute();
+        } catch (SQLException e) {
+            final String msg = "Cold not enable user {0}";
+            log.error(msg, uid.getUidValue());
+            throw new ConnectorException(msg, e);
+        } finally {
+            SQLUtil.closeQuietly(st);
+            st = null;
+        }
+        log.ok( method); 
+    }
+
+    /**
+     * @param objclass
+     * @param uid
+     * @param options
+     */
+    private void disable(ObjectClass objclass, Uid uid, OperationOptions options) {
+        final String sql = "{ call "+co.app()+"fnd_user_pkg.disableuser(?) }";
+        log.info(sql);
+        CallableStatement cs = null;
+        try {
+            cs = co.getConn().prepareCall(sql);
+            final String asStringValue = AttributeUtil.getAsStringValue(uid);
+            cs.setString(1, asStringValue);
+            cs.execute();
+            // No Result ??
+        } catch (SQLException e) {
+            final String msg = "SQL Exception trying to disable Oracle user '{0}' ";
+            throw new IllegalArgumentException(MessageFormat.format(msg, uid),e);
+        } finally {
+            SQLUtil.closeQuietly(cs);
+            cs = null;
+        }
+
     }
 
     /**
@@ -538,7 +644,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             return;
         }
         
-        //Names to ge filter
+        //Names to get filter
         final String tblname = co.app()+ "PER_PEOPLE_F";
         final Set<String> personColumns = CollectionUtil.newSet(columnNames);
         personColumns.retainAll(READ_PEOPLE_COLUMNS);
@@ -724,7 +830,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                     "Create operation requires an 'ObjectClass' attribute of type 'Account'.");
         }
 
-        final Map<String, SQLParam> userValues = new HashMap<String, SQLParam>();
+        final Map<String, SQLParam> userValues = CollectionUtil.newCaseInsensitiveMap();
         final SQLParam currentDate = new SQLParam(new java.sql.Date(System.currentTimeMillis()), Types.DATE);
 
         // At first, couldn't do anything to null fields except make sql call

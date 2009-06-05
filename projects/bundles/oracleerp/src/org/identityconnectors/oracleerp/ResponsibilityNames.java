@@ -35,12 +35,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
@@ -503,16 +506,20 @@ public class ResponsibilityNames {
 
     /**
      * 
-     * @param respList
+     * @param attr resp attribute
      * @param identity
      * @param result
      * @throws WavesetException
      */
-    public void updateUserResponsibilities(List<String> respList, String identity) {
+    public void updateUserResponsibilities(final Attribute attr, final String identity) {
         final String method = "updateUserResponsibilities";
         log.info(method);
 
-        List<String> errors = new ArrayList<String>();
+        final List<String> errors = new ArrayList<String>();        
+        final List<String> respList = new ArrayList<String>();
+        for (Object obj : attr.getValue()) {
+            respList.add(obj.toString());
+        }
 
         // get Users Current Responsibilties
         List<String> oldResp = null;

@@ -240,13 +240,12 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      * @see org.identityconnectors.framework.spi.operations.DeleteOp#delete(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.Uid, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
-        Assertions.nullCheck(objClass, "oclass");
-        Assertions.nullCheck(uid, "uid");
-        if (!objClass.equals(ObjectClass.ACCOUNT)) {
-            throw new IllegalArgumentException("Delete operation requires an 'ObjectClass' of type account");
+        if (objClass.equals(ObjectClass.ACCOUNT)) {
+            account.delete(objClass, uid, options);
+            return;
         }
 
-        account.delete(objClass, uid, options);
+        throw new IllegalArgumentException("Delete operation requires an 'ObjectClass' of type account");
     }
 
     /**
@@ -473,14 +472,9 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      * @see org.identityconnectors.framework.spi.operations.UpdateOp#update(org.identityconnectors.framework.common.objects.ObjectClass, java.util.Set, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> replaceAttributes, OperationOptions options) {
-        Assertions.nullCheck(objclass, "objclass");
-        Assertions.nullCheck(replaceAttributes, "replaceAttributes");
         if (replaceAttributes.isEmpty()) {
             throw new IllegalArgumentException("Invalid attributes provided to a create operation.");
         }
-
-        //doBeforeCreateActionScripts(oclass, attrs, options);
-
         if (objclass.equals(ObjectClass.ACCOUNT)) {
             //doBeforeUpdateActionScripts(oclass, attrs, options);
             uid = account.update(objclass, uid, replaceAttributes, options);
@@ -494,6 +488,9 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
                 + "account,responsibilityNames");
     }
 
+    /**
+     * Init connector`s call 
+     */
     private void initFndGlobal() {
         final String respId = getRespNames().getRespId();;        
         final String respApplId = getRespNames().getRespApplId();
@@ -506,9 +503,9 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
                 final String msg = "Oracle ERP: {0}FND_GLOBAL.APPS_INITIALIZE({1}, {2}, {3}) called.";
                 log.ok(msg, app(), this.userId, respId, respApplId);
                 List<SQLParam> pars = new ArrayList<SQLParam>();
-                pars.add(new SQLParam(this.userId));
-                pars.add(new SQLParam(respId));
-                pars.add(new SQLParam(respApplId));
+                pars.add(new SQLParam(this.userId, Types.VARCHAR));
+                pars.add(new SQLParam(respId, Types.VARCHAR));
+                pars.add(new SQLParam(respApplId, Types.VARCHAR));
 
                 cs = conn.prepareCall(sql, pars);
                 cs.execute();
@@ -518,15 +515,12 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
             } catch (SQLException e) {
                 final String msg = "Oracle ERP: Failed to call {0}FND_GLOBAL.APPS_INITIALIZE()";
                 log.error(e, msg, app());
-
             } finally {
                 // close everything in case we had an exception in the middle of something
                 SQLUtil.closeQuietly(cs);
                 cs = null;
             }
         } else {
-            log.info("Oracle ERP: one of the userIDStr:{0}, respId: {1}, respApplId: {2} is null", this.userId,
-                    respId, respApplId);
             log.ok("Oracle ERP: {0}FND_GLOBAL.APPS_INITIALIZE() NOT called.", app());
         }
     }

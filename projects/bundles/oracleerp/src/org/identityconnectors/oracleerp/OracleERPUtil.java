@@ -22,19 +22,27 @@
  */
 package org.identityconnectors.oracleerp;
 
+import static org.identityconnectors.oracleerp.OracleERPUtil.EMP_NUM;
+import static org.identityconnectors.oracleerp.OracleERPUtil.NPW_NUM;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Map;
+import java.util.Set;
 
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.Uid;
 
 /**
  * @author Petr Jung
@@ -277,33 +285,45 @@ public class OracleERPUtil {
 
     
     /**
-     * Get The personId from employeNumber or NPW number
-     * @param empNum employeNumber or null 
-     * @param npwNum mpw number or null
-     * @return
+     * @param con conector 
+     * @param attrs attributes
+     * @return the identity
      */
-    static String getPersonId(OracleERPConnector con, final Integer empNum, final Integer npwNum) {
-
+    public static String getName(OracleERPConnector con, Set<Attribute> attrs) {
+        final Name nameAttr = AttributeUtil.getNameFromAttributes(attrs);
+        return nameAttr.getNameValue();
+    }    
+    
+    
+    /**
+     * Get The personId from employeNumber or NPW number
+     * @param con connector
+     * @param attrs attributes 
+     * @return personid the id of the person
+     */
+    public static String getPersonId(OracleERPConnector con, Set<Attribute> attrs) {
         String ret = null;
-        String columnName = "";
-        int number;
-        if (empNum != null) {
+        int num = 0;
+        String columnName = null;
+        final Attribute empAttr = AttributeUtil.find(EMP_NUM, attrs);
+        final Attribute npwAttr = AttributeUtil.find(NPW_NUM, attrs);
+        if ( empAttr != null ) {
+            num = AttributeUtil.getIntegerValue(empAttr);
             columnName = EMP_NUM;
-            number = empNum;
-        } else if ( npwNum != null) {
-            columnName = NPW_NUM;
-            number = npwNum;
+        } else if ( npwAttr != null ){
+            num = AttributeUtil.getIntegerValue(npwAttr);
+            columnName = NPW_NUM;            
         } else {
             return null;
         }
-         
+        
         final String sql = "select "+PERSON_ID+" from "+con.app()+"PER_PEOPLE_F where "+columnName+" = ?";
         ResultSet rs = null; // SQL query on person_id
         PreparedStatement ps = null; // statement that generates the query
         log.ok(sql);
         try {
             ps = con.getConn().prepareStatement(sql);
-            ps.setInt(1, number);
+            ps.setInt(1, num);
             ps.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
             rs = ps.executeQuery();
             if (rs.next()) {
@@ -318,7 +338,6 @@ public class OracleERPUtil {
             SQLUtil.closeQuietly(ps);
             ps = null;
         }
-        Assertions.nullCheck(ret, PERSON_ID);
         return ret;
     }
     
