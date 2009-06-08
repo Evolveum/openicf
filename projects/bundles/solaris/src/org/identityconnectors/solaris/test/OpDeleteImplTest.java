@@ -22,17 +22,28 @@
  */
 package org.identityconnectors.solaris.test;
 
+import static org.identityconnectors.solaris.test.SolarisTestCommon.getTestProperty;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.ConnectorFacade;
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class OpAuthenticateImplTest {
+public class OpDeleteImplTest {
     
     private SolarisConfiguration config;
     private ConnectorFacade facade;
@@ -53,34 +64,38 @@ public class OpAuthenticateImplTest {
         facade = null;
     }
     
-    @Test
-    public void testAuthenticateApiOp() {
-        GuardedString password = config.getPassword();
-        String username = config.getUserName();
-        facade.authenticate(ObjectClass.ACCOUNT, username, password, null);
-    }
-    
-    /**
-     * test to authenticate with invalid credentials.
-     */
-    @Test (expected=ConnectorException.class)
-    public void testAuthenticateApiOpInvalidCredentials() {
-        GuardedString password = new GuardedString(
-                "WRONG_PASSWORD_FOOBAR2135465".toCharArray());
-        String username = config.getUserName();
-        facade.authenticate(ObjectClass.ACCOUNT, username, password, null);
+    @Test (expected=UnknownUidException.class)
+    public void testDeleteUnknownUid() {
+        facade.delete(new ObjectClass("NONEXISTING_OBJECTCLASS"), new Uid("NONEXISTING_UID____"), null);
     }
     
     @Test (expected=IllegalArgumentException.class)
     public void unknownObjectClass() {
-        GuardedString password = config.getPassword();
-        String username = config.getUserName();
-        facade.authenticate(new ObjectClass("NONEXISTING_OBJECTCLASS"), username, password, null);
+        final Set<Attribute> attrs = initSampleUser();
+        facade.delete(new ObjectClass("NONEXISTING_OBJECTCLASS"), getUid(attrs), null);
     }
     
-    @Test (expected=RuntimeException.class)
-    public void unknownUid() {
-        GuardedString password = config.getPassword();
-        facade.authenticate(ObjectClass.ACCOUNT, "NONEXISTING_UID___", password, null);
+    
+
+    /* ************* AUXILIARY METHODS *********** */
+
+    /** fill in sample user/password for sample user used in create */
+    private Set<Attribute> initSampleUser() {
+        Set<Attribute> res = new HashSet<Attribute>();
+        
+        res.add(AttributeBuilder.build(Name.NAME, getTestProperty("sampleUser", true)));
+        
+        String samplePasswd = getTestProperty("samplePasswd", true);
+        res.add(AttributeBuilder.buildPassword(new GuardedString(samplePasswd.toCharArray())));
+        
+        return res;
     }
+    
+    private Uid getUid(Set<Attribute> attrs) {
+        // Read only list of attributes
+        final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
+        final String username = ((Name) attrMap.get(Name.NAME)).getNameValue();
+        return new Uid(username);
+    }
+
 }

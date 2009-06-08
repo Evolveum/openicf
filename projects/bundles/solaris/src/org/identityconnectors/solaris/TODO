@@ -20,3 +20,7 @@ HINTS from SolarisRA:
   try to reproduce the 'echo "Hello world"' -- inspire from VMS code.
   == try to detect, what was sent back.
   
+  ================================================
+  
+  * is it possible to create a user based on a commmon template, or to edit it?
+  

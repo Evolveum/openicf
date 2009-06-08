@@ -103,6 +103,12 @@ public class OpCreateImplTest {
         }
     }
     
+    @Test (expected=IllegalArgumentException.class)
+    public void unknownObjectClass() {
+        final Set<Attribute> attrs = initSampleUser();
+        facade.create(new ObjectClass("NONEXISTING_OBJECTCLASS"), attrs, null);
+    }
+    
     /* ************* AUXILIARY METHODS *********** */
 
 

@@ -29,13 +29,15 @@ import org.identityconnectors.framework.common.objects.Uid;
 
 public class OpDeleteImpl extends AbstractOp {
 
+    final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT, ObjectClass.GROUP};
+    
     public OpDeleteImpl(SolarisConfiguration config, SolarisConnection connection, Log log) {
         super(config, connection, log);
     }
     
     // TODO
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
-        SolarisHelper.controlObjectClassValidity(objClass);
+        SolarisHelper.controlObjectClassValidity(objClass, acceptOC, getClass());
         
         final String accountId = uid.getUidValue();
         getLog().info("delete(''{0}'')", accountId);

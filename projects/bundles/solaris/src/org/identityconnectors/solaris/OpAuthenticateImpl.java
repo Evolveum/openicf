@@ -30,13 +30,15 @@ import org.identityconnectors.framework.common.objects.Uid;
 
 public class OpAuthenticateImpl extends AbstractOp {
 
+    final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT, ObjectClass.GROUP};
+    
     public OpAuthenticateImpl(SolarisConfiguration configuration, SolarisConnection connection, Log log) {
         super(configuration, connection, log);
     }
 
     public Uid authenticate(ObjectClass objectClass, String username,
             GuardedString password, OperationOptions options) {
-        SolarisHelper.controlObjectClassValidity(objectClass);
+        SolarisHelper.controlObjectClassValidity(objectClass, acceptOC, getClass());
         
         SolarisConnection connection = null;
         try {

@@ -37,12 +37,14 @@ import org.identityconnectors.framework.common.objects.Uid;
 
 public class OpCreateImpl extends AbstractOp {
     
+    final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT, ObjectClass.GROUP};
+    
     public OpCreateImpl(SolarisConfiguration configuration, SolarisConnection connection, Log log) {
         super(configuration, connection, log);
     }
     
     Uid create(ObjectClass oclass, final Set<Attribute> attrs, final OperationOptions options) {
-        SolarisHelper.controlObjectClassValidity(oclass);
+        SolarisHelper.controlObjectClassValidity(oclass, acceptOC, getClass());
         
         // Read only list of attributes
         final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(

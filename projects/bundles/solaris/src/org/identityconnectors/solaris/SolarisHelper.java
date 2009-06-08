@@ -48,10 +48,14 @@ public class SolarisHelper {
         return AttributeUtil.getGuardedStringValue(attrPasswd);
     }
     
-    public static void controlObjectClassValidity(ObjectClass oclass) {
-        if (!(oclass.is(ObjectClass.ACCOUNT_NAME) || oclass.is(ObjectClass.GROUP_NAME))) {
-            throw new IllegalArgumentException(String.format(
-                    MSG_NOT_SUPPORTED_OBJECTCLASS, oclass, ObjectClass.ACCOUNT_NAME, ObjectClass.GROUP_NAME));
+    public static void controlObjectClassValidity(ObjectClass oclass, ObjectClass[] acceptedObjectClasses, Class<? extends AbstractOp> operation) {
+        for (ObjectClass objectClass : acceptedObjectClasses) {
+            if (objectClass.equals(oclass)) {
+                return;
+            }
         }
+        
+        throw new IllegalArgumentException(String.format(
+                MSG_NOT_SUPPORTED_OBJECTCLASS, oclass, operation.getName()));
     }
 }

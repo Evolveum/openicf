@@ -63,7 +63,7 @@ public class SolarisTestCommon {
     }
     
     public static String getTestProperty(String name) {
-        return getTestProperty(name, false);
+        return getTestProperty(name, true);
     }
 
     static SolarisConfiguration createConfiguration() {
