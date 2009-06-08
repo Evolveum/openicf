@@ -149,24 +149,24 @@ we edit <code>${bundle-folder}/build.xml</code> the following way:
 &lt;target name="run-contract-tests" depends="contract-init"&gt;<br> 
 &lt;!-- mysql configuration --&gt;<br> 
 &lt;antcall target="contract-dist" inheritAll="false"&gt;<br> 
-&lt;param name="configuration" value="mysql"/&gt;<br> 
+&lt;param name="testConfig" value="mysql"/&gt;<br> 
 &lt;/antcall&gt;<br> 
 &lt;antcall target="contract-tests" inheritAll="false"&gt;<br> 
-&lt;param name="configuration" value="mysql"/&gt;<br> 
+&lt;param name="testConfig" value="mysql"/&gt;<br> 
 &lt;/antcall&gt;<br>        <br> 
 &lt;!-- mssql configuration --&gt;<br> 
 &lt;antcall target="contract-dist" inheritAll="false"&gt;<br> 
-&lt;param name="configuration" value="mssql"/&gt;<br> 
+&lt;param name="testConfig" value="mssql"/&gt;<br> 
 &lt;/antcall&gt;<br> 
 &lt;antcall target="contract-tests" inheritAll="false"&gt;<br> 
-&lt;param name="configuration" value="mssql"/&gt;<br> 
+&lt;param name="testConfig" value="mssql"/&gt;<br> 
 &lt;/antcall&gt;<br>        <br> 
 &lt;!-- db2 configuration --&gt;<br> 
 &lt;antcall target="contract-dist" inheritAll="false"&gt;<br> 
-&lt;param name="configuration" value="db2"/&gt;<br> 
+&lt;param name="testConfig" value="db2"/&gt;<br> 
 &lt;/antcall&gt;<br> 
 &lt;antcall target="contract-tests" inheritAll="false"&gt;<br> 
-&lt;param name="configuration" value="db2"/&gt;<br> 
+&lt;param name="testConfig" value="db2"/&gt;<br> 
 &lt;/antcall&gt;<br>    &lt;/target&gt; 
 <br>&lt;/project&gt;<br>
 </div>

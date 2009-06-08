@@ -912,7 +912,7 @@ following command:<br>
 
 Or, if the connector has more test configurations:<br>
 
-<pre style="margin-left: 40px;">ant -Dconfiguration=<span style="color: rgb(0, 102, 0);">conf1</span> run-contract-tests<br></pre>
+<pre style="margin-left: 40px;">ant -DtestConfig=<span style="color: rgb(0, 102, 0);">conf1</span> run-contract-tests<br></pre>
 
 where <code>conf1</code> is the configuration name. In this case, tests will use the 
 <code>{$bundle.dir}/config/<span style="color: rgb(0, 102, 0);">conf1</span>/build.groovy</code> for non confident configuration settings and
@@ -958,7 +958,7 @@ arguments</strong>:
 
 <ul>
 
-  <li><code>-Dconfiguration=mysql</code> &nbsp;-
+  <li><code>-DtestConfig=mysql</code> &nbsp;-
 Optional argument. Only set if&nbsp;you want to run particular
 configuration.</li>
 

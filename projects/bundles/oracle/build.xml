@@ -40,16 +40,16 @@
     <target name="run-unit-tests" depends="test-init, instrument, build-testclasspath">
 	<!--
 	<antcall target="connector-build.run-unit-tests">
-		<param name="configuration" value="localhost"/>
+		<param name="testConfig" value="localhost"/>
 	</antcall>
 	-->
 
     <antcall target="connector-build.run-unit-tests" inheritAll="false">
-		<param name="configuration" value="prgvm8104"/>
+		<param name="testConfig" value="prgvm8104"/>
 	</antcall>
 
 	<antcall target="connector-build.run-unit-tests" inheritAll="false">
-		<param name="configuration" value="prgvm8105"/>
+		<param name="testConfig" value="prgvm8105"/>
 	</antcall>
 
     </target>
@@ -59,25 +59,25 @@
         
 	<!--
         <antcall target="contract-dist" inheritAll="false">
-            <param name="configuration" value="localhost"/>
+            <param name="testConfig" value="localhost"/>
         </antcall>
         <antcall target="contract-tests" inheritAll="false">
-            <param name="configuration" value="localhost"/>
+            <param name="testConfig" value="localhost"/>
         </antcall>
 	-->
         
         <antcall target="contract-dist" inheritAll="false">
-            <param name="configuration" value="prgvm8104"/>
+            <param name="testConfig" value="prgvm8104"/>
         </antcall>
         <antcall target="contract-tests" inheritAll="false">
-            <param name="configuration" value="prgvm8104"/>
+            <param name="testConfig" value="prgvm8104"/>
         </antcall>
     	
         <antcall target="contract-dist" inheritAll="false">
-            <param name="configuration" value="prgvm8105"/>
+            <param name="testConfig" value="prgvm8105"/>
         </antcall>
         <antcall target="contract-tests" inheritAll="false">
-            <param name="configuration" value="prgvm8105"/>
+            <param name="testConfig" value="prgvm8105"/>
         </antcall>
         
     </target> 	  
