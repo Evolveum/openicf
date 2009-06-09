@@ -56,7 +56,7 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 	private static final String ADVANCED_SQL2 = ADVANCED_SQL1 + " LEFT JOIN DBA_ROLE_PRIVS " +
 																"ON DBA_USERS.USERNAME=DBA_ROLE_PRIVS.GRANTEE " + 
 																"LEFT JOIN DBA_SYS_PRIVS ON DBA_USERS.USERNAME=DBA_SYS_PRIVS.GRANTEE " + 
-																"LEFT JOIN USER_TAB_PRIVS ON DBA_USERS.USERNAME=USER_TAB_PRIVS.GRANTEE";
+																"LEFT JOIN DBA_TAB_PRIVS ON DBA_USERS.USERNAME=USER_TAB_PRIVS.GRANTEE";
 
 	
 	static final Collection<String> VALID_ATTRIBUTES_TO_GET;

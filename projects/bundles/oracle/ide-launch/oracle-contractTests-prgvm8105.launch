@@ -26,6 +26,6 @@
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.identityconnectors.contract.test.ContractTestSuite"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="ConnectorContractTests"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dproject.name=connector-oracle&#10;-Ddata-provider=org.identityconnectors.contract.data.GroovyDataProvider&#10;-DbundleJar=dist/org.identityconnectors.oracle-1.0.0.jar&#10;-DbundleName=org.identityconnectors.oracle&#10;-DbundleVersion=1.0.0&#10;-Dconfiguration=prgvm8105"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dproject.name=connector-oracle&#10;-Ddata-provider=org.identityconnectors.contract.data.GroovyDataProvider&#10;-DbundleJar=dist/org.identityconnectors.oracle-1.0.0.jar&#10;-DbundleName=org.identityconnectors.oracle&#10;-DbundleVersion=1.0.0&#10;-DtestConfig=prgvm8105"/>
 <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:ConnectorOracle}"/>
 </launchConfiguration>
