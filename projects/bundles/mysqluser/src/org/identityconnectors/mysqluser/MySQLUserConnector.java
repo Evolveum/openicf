@@ -90,12 +90,11 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
         configurationClass = MySQLUserConfiguration.class) 
 public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp<FilterWhereBuilder>, DeleteOp, UpdateOp,
         SchemaOp, TestOp, AuthenticateOp {
-
-
+    
     /**
      * Setup logging for the {@link MySQLUserConnector}.
      */
-    private Log log = Log.getLog(MySQLUserConnector.class);
+    private static final Log log = Log.getLog(MySQLUserConnector.class);
     
     /**
      * Place holder for the {@link Configuration} passed into the callback {@link MySQLUserConnector#init(Configuration)}.
@@ -136,6 +135,8 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      */
     public void checkAlive() {
         conn.test();
+        conn.commit();
+        log.ok("checkAlive");
     }    
 
 
@@ -158,6 +159,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             this.conn = null;
         }
         this.config = null;
+        log.ok("dispose");
     }
     
     /**
@@ -188,9 +190,10 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         }
         // Create the user
         log.info("Creating user: {0}", user.getNameValue());
+            
         createUser(user.getNameValue(), password);
         // Don't forget to create Uid
-        Uid uid = newUid(user.getNameValue());
+        final Uid uid = newUid(user.getNameValue());
 
         // Model name is needed to set rights for the new user
         String modelUserName = config.getUsermodel();
@@ -207,7 +210,6 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         // commit all
         conn.commit();
         log.ok("Created user: {0}", user.getNameValue());
-
         return uid;
     }
     
@@ -362,11 +364,16 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
                 }
             }
         } catch (SQLException e) {
+            SQLUtil.rollbackQuietly(conn);
             throw ConnectorException.wrap(e);
         } finally {
             SQLUtil.closeQuietly(result);
             SQLUtil.closeQuietly(statement);
         }
+        
+        //Commit finally
+        conn.commit();
+        log.ok("executeQuery");
     }
 
 
@@ -385,6 +392,10 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         // Use SchemaBuilder to build the schema. Currently, only ACCOUNT type is supported.
         SchemaBuilder schemaBld = new SchemaBuilder(getClass());
         schemaBld.defineObjectClass(ObjectClass.ACCOUNT_NAME, attrInfoSet);
+        
+        //commit all
+        conn.commit();
+        log.ok("schema");        
         return schemaBld.build();
     } 
 
@@ -398,6 +409,8 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         if( !findUser(config.getUsermodel())) {
             throw new IllegalArgumentException(config.getMessage(MSG_USER_MODEL_NOT_FOUND, config.getUsermodel()));
         }
+        conn.commit();
+        log.ok("test");
     }
     
 
@@ -442,14 +455,18 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
                 throw new InvalidCredentialException(config.getMessage(MSG_AUTH_FAILED, user));
             }            
             final Uid uid = new Uid( result.getString(1));
+            
+            conn.commit();
+
             log.info("user: {0} authenticated ", user);
             return uid;
         } catch (SQLException e) {
             log.error(e, "user: {0} authentication failed ", user);
+            SQLUtil.rollbackQuietly(conn);
             throw ConnectorException.wrap(e);
         } finally {
             SQLUtil.closeQuietly(result);
-            SQLUtil.closeQuietly(stmt);            
+            SQLUtil.closeQuietly(stmt);
         }
     }
 
@@ -554,6 +571,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             }
         } catch (SQLException ex) {
             log.error(ex,"find User {0} ", userName);
+            SQLUtil.rollbackQuietly(conn);
             throw new IllegalStateException(ex);
         } finally {
             SQLUtil.closeQuietly(result);
@@ -595,11 +613,11 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
                     String grant = rs2.getString(1);
                     grants.add(grant);
                 }
-            }                     
+            }
         } catch (SQLException e) {
             log.error(e, "Error read GRANTS for model user {0}", modelUser);
             //No error when the modelUser does not exist
-            //SQLUtil.rollbackQuietly(getConnection());
+            SQLUtil.rollbackQuietly(conn);
             //throw ConnectorException.wrap(e);
         } finally {
             SQLUtil.closeQuietly(rs1);

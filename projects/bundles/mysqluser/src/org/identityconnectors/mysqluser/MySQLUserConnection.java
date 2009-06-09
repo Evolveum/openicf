@@ -46,11 +46,17 @@ import org.identityconnectors.framework.spi.Configuration;
  */
 public class MySQLUserConnection extends DatabaseConnection {
 
+
     /**
      * Setup logging for the {@link MySQLUserConnector}.
      */
-    private Log log = Log.getLog(MySQLUserConnection.class);    
+    private static final Log log = Log.getLog(MySQLUserConnection.class);    
 
+    /**
+     * The configuration.
+     */
+    private MySQLUserConfiguration config;
+    
     /**
      * Use the {@link Configuration} passed in to immediately connect to a database. If the {@link Connection} fails a
      * {@link RuntimeException} will be thrown.
@@ -60,8 +66,9 @@ public class MySQLUserConnection extends DatabaseConnection {
      * @throws RuntimeException
      *             if there is a problem creating a {@link java.sql.Connection}.
      */
-    private MySQLUserConnection(Connection conn) {
+    private MySQLUserConnection(MySQLUserConfiguration config, Connection conn) {
         super(conn);
+        this.config = config;
     }
 
     /**
@@ -99,7 +106,16 @@ public class MySQLUserConnection extends DatabaseConnection {
      * @return The connection instance
      */
     static MySQLUserConnection getConnection(MySQLUserConfiguration config) {
-        java.sql.Connection connection;
+        final Connection connection = getNativeConnection(config);       
+        return new MySQLUserConnection(config, connection);
+    }
+
+    /**
+     * @param config
+     * @return
+     */
+    private static java.sql.Connection getNativeConnection(MySQLUserConfiguration config) {
+        Connection connection;
         final String user = config.getUser();
         final GuardedString password = config.getPassword();
         final String datasource = config.getDatasource();
@@ -122,11 +138,32 @@ public class MySQLUserConnection extends DatabaseConnection {
         
         //Disable auto-commit mode
         try {
-          connection.setAutoCommit(false);   
+            if ( connection.getAutoCommit() ) {
+                connection.setAutoCommit(false);
+            }
         } catch (SQLException expected) {
-            //expected
+            log.error(expected, "Could not disable auto-commit mode");
         }
-        
-        return new MySQLUserConnection(connection);
+        return connection;
     }
+    
+    /**
+     * Close connection if pooled
+     */
+    void closeConnection() {
+        if( getConnection() != null && StringUtil.isNotBlank(config.getDatasource()) /*&& this.conn.getConnection() instanceof PooledConnection */) {
+            log.info("Close the pooled connection");
+            dispose();
+        }
+    }
+    /**
+     * Create new connection if pooled and taken from the datasource
+     * @throws SQLException
+     */
+    void openConnection() throws SQLException {
+        if( getConnection() == null || getConnection().isClosed() ) {
+            log.info("Get new connection, it is closed");
+            setConnection( getNativeConnection(config) );
+        }
+    }      
 }
