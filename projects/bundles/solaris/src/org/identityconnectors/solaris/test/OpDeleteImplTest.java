@@ -66,7 +66,7 @@ public class OpDeleteImplTest {
     
     @Test (expected=UnknownUidException.class)
     public void testDeleteUnknownUid() {
-        facade.delete(new ObjectClass("NONEXISTING_OBJECTCLASS"), new Uid("NONEXISTING_UID____"), null);
+        facade.delete(ObjectClass.ACCOUNT, new Uid("NONEXISTING_UID____"), null);
     }
     
     @Test (expected=IllegalArgumentException.class)
