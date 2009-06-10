@@ -89,7 +89,7 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 	 */
 	@Test
 	public void testCreateFilterTranslator() {
-		FilterTranslator<Pair<String, FilterWhereBuilder>> translator = new OracleOperationSearch(testConf,connector.getAdminConnection(),OracleConnectorImpl.getLog()).createFilterTranslator(ObjectClass.ACCOUNT, null);
+		FilterTranslator<Pair<String, FilterWhereBuilder>> translator = new OracleOperationSearch(testConf,connector.getOrCreateAdminConnection(),OracleConnectorImpl.getLog()).createFilterTranslator(ObjectClass.ACCOUNT, null);
 		assertNotNull(translator);
 		List<Pair<String, FilterWhereBuilder>> translate = translator.translate(new EqualsFilter(new Name("test")));
 		assertNotNull(translate);
@@ -127,8 +127,8 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 		dropProfiles();
 		for(String profile : new String[]{"PROFILE3","PROFILE5","PROFILE7"}){
 	        try{
-	            SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "create profile " + testConf.getCSSetup().normalizeAndFormatToken(PROFILE,profile) + "limit password_lock_time 6");
-	            connector.getAdminConnection().commit();
+	            SQLUtil.executeUpdateStatement(connector.getOrCreateAdminConnection(), "create profile " + testConf.getCSSetup().normalizeAndFormatToken(PROFILE,profile) + "limit password_lock_time 6");
+	            connector.getOrCreateAdminConnection().commit();
 	        }
 	        catch(SQLException e){
 	        }
@@ -138,7 +138,7 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 	private static void dropProfiles() {
 		for(String profile : new String[]{"profile3","profile5","profile7"}){
 	        try{
-	            SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "drop profile " + testConf.getCSSetup().normalizeAndFormatToken(PROFILE,profile));
+	            SQLUtil.executeUpdateStatement(connector.getOrCreateAdminConnection(), "drop profile " + testConf.getCSSetup().normalizeAndFormatToken(PROFILE,profile));
 	        }
 	        catch(SQLException e){
 	        }
@@ -260,7 +260,7 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 	
 	@Test
 	public void testSearchByTableSpace() throws SQLException{
-		List<String> allDefTS = findAllDefTS(connector.getAdminConnection());
+		List<String> allDefTS = findAllDefTS(connector.getOrCreateAdminConnection());
 		int i = 1;
 		for(String defTS : allDefTS){
 			try{
@@ -304,7 +304,7 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 	private void createRoles(String ...roles) throws SQLException{
 		final OracleCaseSensitivitySetup cs = testConf.getCSSetup();
 		for(String role : roles){
-			SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "create role " + cs.formatToken(OracleUserAttribute.ROLE,role));
+			SQLUtil.executeUpdateStatement(connector.getOrCreateAdminConnection(), "create role " + cs.formatToken(OracleUserAttribute.ROLE,role));
 		}
 	}
 	
@@ -312,25 +312,25 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 		final OracleCaseSensitivitySetup cs = testConf.getCSSetup();
 		for(String role : roles){
 	        try{
-	            SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop role " + cs.formatToken(ROLE, role));
+	            SQLUtil.executeUpdateStatement(connector.getOrCreateAdminConnection(),"drop role " + cs.formatToken(ROLE, role));
 	        }catch(SQLException e){}
 		}
 	}
 	
 	private void dropPrivilegeTables(){
         try{
-            SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop table MYTABLE1");
+            SQLUtil.executeUpdateStatement(connector.getOrCreateAdminConnection(),"drop table MYTABLE1");
         }
         catch(SQLException e){}
         try{
-            SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop table MYTABLE2");
+            SQLUtil.executeUpdateStatement(connector.getOrCreateAdminConnection(),"drop table MYTABLE2");
         }
         catch(SQLException e){}
 	}
 	
 	private void createPrivilegeTables() throws SQLException{
-		SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create table MYTABLE1(id number)");
-		SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create table MYTABLE2(id number)");
+		SQLUtil.executeUpdateStatement(connector.getOrCreateAdminConnection(),"create table MYTABLE1(id number)");
+		SQLUtil.executeUpdateStatement(connector.getOrCreateAdminConnection(),"create table MYTABLE2(id number)");
 	}
 	
 	
@@ -530,7 +530,7 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 		OracleConnectorImpl testConnector = createTestConnector();
 		Filter f = createFullFilter(false);
 		TestHelpers.searchToList(testConnector,ObjectClass.ACCOUNT,f);
-		OracleSpecificsTest.killConnection(connector.getAdminConnection(), testConnector.getAdminConnection());
+		OracleSpecificsTest.killConnection(connector.getOrCreateAdminConnection(), testConnector.getOrCreateAdminConnection());
 		try{
 			TestHelpers.searchToList(testConnector,ObjectClass.ACCOUNT,f);
 			Assert.fail("Search must fail for killed connection");

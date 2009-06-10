@@ -100,7 +100,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         assertEquals("OPEN",record.getStatus());
         
         try {
-            SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "grant connect to " + testConf.getCSSetup().formatToken(USER,uid.getUidValue()));
+            SQLUtil.executeUpdateStatement(connector.getOrCreateAdminConnection(), "grant connect to " + testConf.getCSSetup().formatToken(USER,uid.getUidValue()));
         } catch (SQLException e) {
             fail(e.getMessage());
         }
@@ -219,7 +219,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         Attribute name = new Name(TEST_USER);
         GuardedString password = new GuardedString("hello".toCharArray());
         Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
-        Attribute defaultTs =  AttributeBuilder.build(OracleConstants.ORACLE_DEF_TS_ATTR_NAME,findDefDefaultTS(connector.getAdminConnection()));
+        Attribute defaultTs =  AttributeBuilder.build(OracleConstants.ORACLE_DEF_TS_ATTR_NAME,findDefDefaultTS(connector.getOrCreateAdminConnection()));
         Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute,defaultTs), null);
         assertNotNull(uid);
         assertEqualsIgnoreCase(TEST_USER, uid.getUidValue());
@@ -231,7 +231,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         facade.delete(ObjectClass.ACCOUNT, uid, null);
         
         //Now try to create with other tablespaces, if create is successfull, check whether it is correctly set
-        for(String ts : findAllDefTS(connector.getAdminConnection())){
+        for(String ts : findAllDefTS(connector.getOrCreateAdminConnection())){
         	defaultTs =  AttributeBuilder.build(OracleConstants.ORACLE_DEF_TS_ATTR_NAME,ts);
         	try{
         		uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute,defaultTs), null);
@@ -255,7 +255,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         Attribute name = new Name(TEST_USER);
         GuardedString password = new GuardedString("hello".toCharArray());
         Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
-        Attribute tempTs =  AttributeBuilder.build(OracleConstants.ORACLE_TEMP_TS_ATTR_NAME,findDefTempTS(connector.getAdminConnection()));
+        Attribute tempTs =  AttributeBuilder.build(OracleConstants.ORACLE_TEMP_TS_ATTR_NAME,findDefTempTS(connector.getOrCreateAdminConnection()));
         Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute,tempTs), null);
         assertNotNull(uid);
         assertEqualsIgnoreCase(TEST_USER, uid.getUidValue());
@@ -267,7 +267,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         facade.delete(ObjectClass.ACCOUNT, uid, null);
         
         //Now try to create with other temp tablespaces, if create is successfull, check whether it is correctly set
-        for(String ts : findAllTempTS(connector.getAdminConnection())){
+        for(String ts : findAllTempTS(connector.getOrCreateAdminConnection())){
         	tempTs =  AttributeBuilder.build(OracleConstants.ORACLE_TEMP_TS_ATTR_NAME,ts);
         	try{
         		uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute,tempTs), null);
@@ -291,7 +291,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         Attribute name = new Name(TEST_USER);
         GuardedString password = new GuardedString("hello".toCharArray());
         Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
-        String defTS = findDefDefaultTS(connector.getAdminConnection());
+        String defTS = findDefDefaultTS(connector.getOrCreateAdminConnection());
 		Attribute defaultTsAttr =  AttributeBuilder.build(OracleConstants.ORACLE_DEF_TS_ATTR_NAME,defTS);
         
 		
@@ -331,13 +331,13 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
     public void testCreateUserWithProfile() throws SQLException{
         String profileName = "myProfile";
         try{
-            SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "drop profile " + testConf.getCSSetup().normalizeAndFormatToken(PROFILE,profileName));
+            SQLUtil.executeUpdateStatement(connector.getOrCreateAdminConnection(), "drop profile " + testConf.getCSSetup().normalizeAndFormatToken(PROFILE,profileName));
         }
         catch(SQLException e){
         }
         try{
-            SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "create profile " + testConf.getCSSetup().normalizeAndFormatToken(PROFILE,profileName) + "limit password_lock_time 6");
-            connector.getAdminConnection().commit();
+            SQLUtil.executeUpdateStatement(connector.getOrCreateAdminConnection(), "create profile " + testConf.getCSSetup().normalizeAndFormatToken(PROFILE,profileName) + "limit password_lock_time 6");
+            connector.getOrCreateAdminConnection().commit();
         }
         catch(SQLException e){
             fail(e.getMessage());
@@ -357,7 +357,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         assertEqualsIgnoreCase(profileName,record.getProfile());
         facade.delete(ObjectClass.ACCOUNT, uid, null);
         try{
-            SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "drop profile " + testConf.getCSSetup().normalizeAndFormatToken(PROFILE,profileName));
+            SQLUtil.executeUpdateStatement(connector.getOrCreateAdminConnection(), "drop profile " + testConf.getCSSetup().normalizeAndFormatToken(PROFILE,profileName));
         }
         catch(SQLException e){
         }
@@ -449,17 +449,17 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         String role = "testrole";
         final OracleCaseSensitivitySetup cs = testConf.getCSSetup();
         try{
-            SQLUtil.executeUpdateStatement(connector.getAdminConnection(),
+            SQLUtil.executeUpdateStatement(connector.getOrCreateAdminConnection(),
                     "drop role "
                             + cs.normalizeAndFormatToken(OracleUserAttribute.ROLE, role));
         }catch(SQLException e){}
-        SQLUtil.executeUpdateStatement(connector.getAdminConnection(), "create role " + cs.normalizeAndFormatToken(OracleUserAttribute.ROLE,role));
+        SQLUtil.executeUpdateStatement(connector.getOrCreateAdminConnection(), "create role " + cs.normalizeAndFormatToken(OracleUserAttribute.ROLE,role));
         Attribute roles = AttributeBuilder.build(OracleConstants.ORACLE_ROLES_ATTR_NAME, Arrays.asList(role));
         Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute, roles), null);
         UserRecord record = userReader.readUserRecord(uid.getUidValue());
         assertNotNull(record);
         assertEqualsIgnoreCase(TEST_USER, record.getUserName());
-        OracleRolePrivReader roleReader = new OracleRolePrivReader(connector.getAdminConnection());
+        OracleRolePrivReader roleReader = new OracleRolePrivReader(connector.getOrCreateAdminConnection());
         final List<String> rolesRead = roleReader.readRoles(uid.getUidValue());
         Assert.assertThat(rolesRead, JUnitMatchers.hasItem(cs.normalizeToken(OracleUserAttribute.ROLE,role)));
     }
@@ -475,16 +475,16 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         GuardedString password = new GuardedString("hello".toCharArray());
         Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
         try{
-            SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"drop table MYTABLE");
+            SQLUtil.executeUpdateStatement(connector.getOrCreateAdminConnection(),"drop table MYTABLE");
         }
         catch(SQLException e){}
-        SQLUtil.executeUpdateStatement(connector.getAdminConnection(),"create table mytable(id number)");
+        SQLUtil.executeUpdateStatement(connector.getOrCreateAdminConnection(),"create table mytable(id number)");
         Attribute privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION","SELECT ON MYTABLE");
         final Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication, name, passwordAttribute,privileges), null);
         UserRecord record = userReader.readUserRecord(uid.getUidValue());
         assertNotNull(record);
         assertEqualsIgnoreCase(TEST_USER, record.getUserName());
-        OracleRolePrivReader roleReader = new OracleRolePrivReader(connector.getAdminConnection());
+        OracleRolePrivReader roleReader = new OracleRolePrivReader(connector.getOrCreateAdminConnection());
         final List<String> privRead = roleReader.readPrivileges(uid.getUidValue());
         Assert.assertThat(privRead, JUnitMatchers.hasItem("CREATE SESSION"));
         Assert.assertThat(privRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUserOwner() + ".MYTABLE"));
@@ -545,7 +545,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         attrs = new HashSet<Attribute>(Arrays.asList(authentication,name,passwordAttribute,
         		privileges,enabled,expirePassword));
 		uid = facade.create(ObjectClass.ACCOUNT, attrs, null);
-		UserRecord record = new OracleUserReader(connector.getAdminConnection(),TestHelpers.createDummyMessages()).readUserRecord(uid.getUidValue());
+		UserRecord record = new OracleUserReader(connector.getOrCreateAdminConnection(),TestHelpers.createDummyMessages()).readUserRecord(uid.getUidValue());
 		assertNotNull(record);
 		assertEquals(uid.getUidValue(), record.getUserName());
 		facade.authenticate(ObjectClass.ACCOUNT, uid.getUidValue(), password, null);
@@ -562,7 +562,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
 		catch(UnknownUidException e){}
 		Uid uid = testConnector.create(ObjectClass.ACCOUNT, Collections.<Attribute>singleton(new Name(TEST_USER)), null);
 		testConnector.delete(ObjectClass.ACCOUNT, uid, null);
-		OracleSpecificsTest.killConnection(connector.getAdminConnection(), testConnector.getAdminConnection());
+		OracleSpecificsTest.killConnection(connector.getOrCreateAdminConnection(), testConnector.getOrCreateAdminConnection());
 		try{
 			uid = testConnector.create(ObjectClass.ACCOUNT, Collections.<Attribute>singleton(new Name(TEST_USER)), null);
 			fail("Create must fail for killed connection");

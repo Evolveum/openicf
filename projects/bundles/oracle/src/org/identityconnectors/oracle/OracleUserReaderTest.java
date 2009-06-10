@@ -10,6 +10,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -69,12 +70,8 @@ public class OracleUserReaderTest {
         }
     }
 
-    /**
-     * Test method for {@link org.identityconnectors.oracle.OracleConnectorHelper#readUserRecords(java.sql.Connection, java.util.List)}.
-     * @throws SQLException 
-     */
     @Test
-    public void testReadUserRecords() throws SQLException {
+    public void testReadUserRecord() throws SQLException {
         final OracleCaseSensitivitySetup cs = cfg.getCSSetup();
         try{
         	SQLUtil.executeUpdateStatement(conn,"drop user " + cs.formatToken(USER,"user1"));
@@ -105,6 +102,7 @@ public class OracleUserReaderTest {
         
         SQLUtil.executeUpdateStatement(conn,"drop user " + cs.formatToken(USER,"user1"));
         SQLUtil.executeUpdateStatement(conn,"drop user " + cs.formatToken(USER,"user2"));
+        assertNull(userReader.readUserRecord("dummyUser"));
     }
     
     @Test
@@ -118,6 +116,11 @@ public class OracleUserReaderTest {
         SQLUtil.executeUpdateStatement(conn, "alter user " + cs.normalizeAndFormatToken(USER,user) + " quota 30k on " + readUserRecord.getDefaultTableSpace());
         Long quota = userReader.readUserDefTSQuota(cs.normalizeToken(USER,user));
         assertTrue("Quota must be set at least to 30k",new Long(30000).compareTo(quota) < 0);
+        try{
+        	userReader.readUserDefTSQuota("dummyUser");
+        	fail("Should not be able to return quota for unknown user");
+        }
+        catch(IllegalArgumentException e){}
         //For 10.2 , not working
         //quota = userReader.readUserTempTSQuota(cs.normalizeToken(USER_NAME,user));
         SQLUtil.executeUpdateStatement(conn,"drop user " + cs.normalizeAndFormatToken(USER,"user1"));

@@ -1,12 +1,21 @@
 package org.identityconnectors.oracle;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.fail;
 
-import java.lang.reflect.*;
-import java.sql.*;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.SQLException;
 import java.util.Hashtable;
 
-import javax.naming.*;
+import javax.naming.Context;
+import javax.naming.NamingException;
 import javax.naming.spi.InitialContextFactory;
 import javax.sql.DataSource;
 
@@ -14,7 +23,10 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.oracle.OracleConfiguration.ConnectionType;
 import org.identityconnectors.test.common.TestHelpers;
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests for {@link OracleConfiguration}
@@ -23,7 +35,17 @@ import org.junit.*;
  */
 public class OracleConfigurationTest {
     private final static String WRONG_DATASOURCE = "wrongDatasource";
-    private static ThreadLocal<OracleConfiguration> dsCfg = new ThreadLocal<OracleConfiguration>();
+    private static ThreadLocal<OracleConfiguration> threadCfg = new ThreadLocal<OracleConfiguration>();
+
+    @After
+    public void tearDown() throws SQLException{
+    	tearDownClass();
+    }
+    
+    @AfterClass
+    public static void tearDownClass() throws SQLException{
+    	threadCfg.set(null);
+    }
 
 
     /** Test validation of cfg */
@@ -355,7 +377,7 @@ public class OracleConfigurationTest {
     
     private static final String[] dsJNDIEnv = new String[]{"java.naming.factory.initial=" + MockContextFactory.class.getName()};
     
-    private static OracleConfiguration createDataSourceConfiguration(){
+    static OracleConfiguration createDataSourceConfiguration(){
         OracleConfiguration conf = new OracleConfiguration();
         conf.setConnectorMessages(TestHelpers.createDummyMessages());
         conf.setDataSource("testDS");
@@ -364,18 +386,19 @@ public class OracleConfigurationTest {
         conf.setDsJNDIEnv(dsJNDIEnv);
         conf.setPort(null);
         conf.setDriver(null);
+        threadCfg.set(conf);
         return conf;
     }
     
     
     /**
      * Test getting Connection from DS
+     * @throws SQLException 
      */
     @Test
-    public void testDataSourceConfiguration(){
+    public void testDataSourceConfiguration() throws SQLException{
         OracleConfiguration dsConf = createDataSourceConfiguration();
         //set to thread local
-        dsCfg.set(dsConf);
         assertArrayEquals(dsConf.getDsJNDIEnv(), dsJNDIEnv);
         dsConf.validate();
         Connection conn = dsConf.createAdminConnection();
@@ -432,32 +455,16 @@ public class OracleConfigurationTest {
     private static class DataSourceIH implements InvocationHandler{
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             if(method.getName().equals("getConnection")){
-                if(dsCfg.get().getUser() == null){
+                if(threadCfg.get().getUser() == null){
                     Assert.assertEquals("getConnection must be called without user and password",0,method.getParameterTypes().length);
+                    return createThinConfiguration().createAdminConnection();
                 }
                 else{
                     Assert.assertEquals("getConnection must be called with user and password",2,method.getParameterTypes().length);
+                    return createThinConfiguration().createAdminConnection();
                 }
-                return Proxy.newProxyInstance(getClass().getClassLoader(),new Class[]{Connection.class}, new ConnectionIH());
             }
             throw new IllegalArgumentException("Invalid method");
         }
     }
-    //Replace with EasyMock after switch to maven
-    private static  class ConnectionIH implements InvocationHandler{
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        	if("getAutoCommit".equals(method.getName())){
-        		return false;
-        	}
-        	if("getTransactionIsolation".equals(method.getName())){
-        		return Connection.TRANSACTION_READ_COMMITTED;
-        	}
-        	if("isClosed".equals(method.getName())){
-        		return false;
-        	}
-            return null;
-        }
-    }
-    
-
 }
