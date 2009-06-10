@@ -14,7 +14,6 @@ import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
@@ -103,12 +102,6 @@ final class OracleConnectorImpl implements PoolableConnector, AuthenticateOp,
 
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
         return new OracleOperationCreate(cfg, adminConn, log).create(oclass, attrs, options);
-    }
-    
-    static void checkObjectClass(ObjectClass objectClass,ConnectorMessages messages){
-        if(!ObjectClass.ACCOUNT.equals(objectClass)){
-            throw new IllegalArgumentException("Invalid object class");
-        }
     }
     
     public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {

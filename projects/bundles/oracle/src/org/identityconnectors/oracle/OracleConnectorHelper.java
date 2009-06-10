@@ -11,6 +11,8 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
+import org.identityconnectors.framework.common.objects.ObjectClass;
+
 import static org.identityconnectors.oracle.OracleMessages.*;
 
 /** Helper static methods related to Oracle connector */
@@ -106,6 +108,12 @@ abstract class OracleConnectorHelper {
     static Comparator<String> getAttributeNamesComparator(){
     	return new AttributeComparator();
     }
+
+	static void checkObjectClass(ObjectClass objectClass,ConnectorMessages messages){
+	    if(!ObjectClass.ACCOUNT.equals(objectClass)){
+	        throw new IllegalArgumentException("Invalid object class");
+	    }
+	}
     
 
 }

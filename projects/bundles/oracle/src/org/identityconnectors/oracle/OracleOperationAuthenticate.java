@@ -23,7 +23,7 @@ final class OracleOperationAuthenticate extends AbstractOracleOperation implemen
     }
 
     public Uid authenticate(ObjectClass objectClass, String username, GuardedString password, OperationOptions options) {
-        OracleConnectorImpl.checkObjectClass(objectClass, cfg.getConnectorMessages());
+        OracleConnectorHelper.checkObjectClass(objectClass, cfg.getConnectorMessages());
         new LocalizedAssert(cfg.getConnectorMessages()).assertNotBlank(username, "username");
         new LocalizedAssert(cfg.getConnectorMessages()).assertNotNull(password, "password");
         log.info("Authenticate user: [{0}]", username);

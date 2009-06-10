@@ -27,7 +27,7 @@ final class OracleOperationDelete extends AbstractOracleOperation implements Del
 
 
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
-        OracleConnectorImpl.checkObjectClass(objClass, cfg.getConnectorMessages());
+        OracleConnectorHelper.checkObjectClass(objClass, cfg.getConnectorMessages());
         //Currently IDM pass null for options parameter. So there is no way how to decide
         //whether we will do cascade or noCascade delete
         log.info("Deleting user : [{0}]", uid.getUidValue());

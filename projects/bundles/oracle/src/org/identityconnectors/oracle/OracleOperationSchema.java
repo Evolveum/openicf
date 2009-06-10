@@ -66,7 +66,7 @@ final class OracleOperationSchema extends AbstractOracleOperation implements Sch
         attrInfoSet.add(AttributeInfoBuilder.build(
 				OracleConstants.ORACLE_TEMP_TS_QUOTA_ATTR_NAME, String.class, express ? EnumSet
 						.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE) : null));
-        SchemaBuilder schemaBld = new SchemaBuilder(OracleConnectorImpl.class);
+        SchemaBuilder schemaBld = new SchemaBuilder(OracleConnector.class);
         schemaBld.defineObjectClass(ObjectClass.ACCOUNT_NAME, attrInfoSet);
         Schema schema =  schemaBld.build();
         return schema;

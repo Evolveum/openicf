@@ -46,8 +46,7 @@ SearchOp<Pair<String, FilterWhereBuilder>>, SchemaOp,TestOp{
 		this.connector = new OracleConnectorImpl();
 	}
 
-	public Uid addAttributeValues(ObjectClass objclass, Uid uid,
-			Set<Attribute> valuesToAdd, OperationOptions options) {
+	public Uid addAttributeValues(ObjectClass objclass, Uid uid, Set<Attribute> valuesToAdd, OperationOptions options) {
     	valuesToAdd = new OracleAttributeNormalizer(getConfiguration().getCSSetup()).normalizeAttributes(objclass, UpdateOp.class, valuesToAdd);
 		return connector.addAttributeValues(objclass, uid, valuesToAdd, options);
 	}
