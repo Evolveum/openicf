@@ -30,7 +30,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Hashtable;
-import java.util.Set;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
@@ -42,9 +41,6 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.DatabaseConnection;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.api.ConnectorFacadeFactory;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.After;
 import org.junit.AfterClass;
