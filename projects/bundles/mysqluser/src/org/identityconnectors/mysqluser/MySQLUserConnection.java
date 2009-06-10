@@ -131,7 +131,7 @@ public class MySQLUserConnection extends DatabaseConnection {
         } else {
             connection = SQLUtil.getDriverMangerConnection(
                     config.getDriver(), 
-                    config.getUrlString(), 
+                    MySQLUserConfiguration.getUrlString(config.getHost(), config.getPort()), 
                     config.getUser(), 
                     config.getPassword());
         } 
@@ -151,8 +151,8 @@ public class MySQLUserConnection extends DatabaseConnection {
      * Close connection if pooled
      */
     void closeConnection() {
-        if( getConnection() != null && StringUtil.isNotBlank(config.getDatasource()) /*&& this.conn.getConnection() instanceof PooledConnection */) {
-            log.info("Close the pooled connection");
+        if( getConnection() != null && StringUtil.isNotBlank(config.getDatasource()) ) {
+            log.info("Close the connection");
             dispose();
         }
     }

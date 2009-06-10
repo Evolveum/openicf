@@ -22,13 +22,29 @@
  */
 package org.identityconnectors.mysqluser;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.util.Arrays;
+import java.util.Hashtable;
+import java.util.Set;
+
+import javax.naming.Context;
+import javax.naming.NamingException;
+import javax.naming.spi.InitialContextFactory;
+import javax.sql.DataSource;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.DatabaseConnection;
+import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.api.ConnectorFacadeFactory;
+import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -40,13 +56,21 @@ import org.junit.Test;
 /**
  * Attempts to test the Connector with the framework.
  */
-public class MySQLUserConnectorTests extends MySQLTestBase {
+public class MySQLUserConnectorDSTests extends MySQLTestBase {
     /**
      * Setup logging for the {@link DatabaseConnection}.
      */
     static final Log log = Log.getLog(DatabaseConnection.class);
     static boolean modelUserCreated = false;
    
+    /**
+     * Derby's embedded ds.
+     */
+    static final String TEST_DS="testDS";
+
+    //jndi for datasource
+    static final String[] JNDI_PROPERTIES = new String[]{"java.naming.factory.initial=" + MockContextFactory.class.getName()};    
+    
     /**
      * Create the test suite
      * @throws Exception a resource exception
@@ -124,11 +148,8 @@ public class MySQLUserConnectorTests extends MySQLTestBase {
     @Override
     public MySQLUserConfiguration newConfiguration() {
         MySQLUserConfiguration config = new MySQLUserConfiguration();
-        config.setDriver(idmDriver);
-        config.setHost(idmHost);
-        config.setUser(idmUser);
-        config.setPassword(idmPassword);
-        config.setPort(idmPort);
+        config.setDatasource(TEST_DS);
+        config.setJndiProperties(JNDI_PROPERTIES);
         config.setUsermodel(idmModelUser);
         config.setConnectorMessages(TestHelpers.createDummyMessages());
         return config;
@@ -140,64 +161,55 @@ public class MySQLUserConnectorTests extends MySQLTestBase {
      */
     @Test()
     public void testConfiguration() throws Exception {
-    
-        assertNotNull("tstDriver", config.getDriver());
-        assertNotNull("tstHost", config.getHost());
-        assertNotNull("tstLogin", config.getUser());
-        assertNotNull("tstPassword", config.getPassword());
-        assertNotNull("tstPort", config.getPort());
-        assertNotNull("usermodel", config.getUsermodel());
-    
-        assertEquals("tstDriver", idmDriver, config.getDriver());
-        assertEquals("tstHost", idmHost, config.getHost());
-        assertEquals("tstLogin", idmUser, config.getUser());
-        assertEquals("tstPassword", idmPassword, config.getPassword());
-        assertEquals("tstPort", idmPort, config.getPort());
-        assertEquals("usermodel", idmModelUser, config.getUsermodel());
+        
+        assertEquals("tstDatasource", TEST_DS, config.getDatasource());
+        assertEquals("tstJndiProperties", Arrays.asList(JNDI_PROPERTIES), Arrays.asList(config.getJndiProperties()));
     
     }
-    
 
     /**
-     * Test method 
-     * @throws Exception
+     * Context is set in jndiProperties
      */
-    @Test(expected = IllegalArgumentException.class)
-    public void testInvalidConfigurationHost() throws Exception {
-        config.setHost("");
-        config.validate();
-    }    
-    
+    public static class MockContextFactory implements InitialContextFactory {
 
-    /**
-     * Test method 
-     * @throws Exception
-     */
-    @Test(expected = IllegalArgumentException.class)
-    public void testInvalidConfigurationDriver() throws Exception {
-        config.setDriver("");
-        config.validate();
+        @SuppressWarnings("unchecked")
+        public Context getInitialContext(Hashtable environment) throws NamingException {
+            Context context = (Context) Proxy.newProxyInstance(getClass().getClassLoader(),
+                    new Class[] { Context.class }, new ContextIH());
+            return context;
+        }
     }
-    
+   
+    /**
+     *  MockContextFactory create the ContextIH
+     *  The looup method will return DataSourceIH
+     */
+    static class ContextIH implements InvocationHandler {
+
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if (method.getName().equals("lookup")) {
+                return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] { DataSource.class },
+                        new DataSourceIH());
+            }
+            return null;
+        }
+    }
 
     /**
-     * Test method 
-     * @throws Exception
+     * ContextIH create DataSourceIH
+     * The getConnection method will return ConnectionIH
      */
-    @Test(expected = IllegalArgumentException.class)
-    public void testInvalidConfigurationLogin() throws Exception {
-        config.setUser("");
-        config.validate();
-    }
-    
-
-    /**
-     * Test method 
-     * @throws Exception
-     */
-    @Test(expected = IllegalArgumentException.class)
-    public void testInvalidConfigurationPort() throws Exception {
-        config.setPort("");
-        config.validate();
-    }
+    static class DataSourceIH implements InvocationHandler {
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if (method.getName().equals("getConnection")) {
+                log.info("DataSource "+TEST_DS+" getConnection");
+                return SQLUtil.getDriverMangerConnection(
+                        idmDriver, 
+                        MySQLUserConfiguration.getUrlString(idmHost, idmPort), 
+                        idmUser, 
+                        idmPassword);
+            }
+            throw new IllegalArgumentException("DataSource, invalid method:"+method.getName());            
+        }
+    }          
 }

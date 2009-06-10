@@ -134,8 +134,18 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      * @see org.identityconnectors.framework.spi.PoolableConnector#checkAlive()
      */
     public void checkAlive() {
-        conn.test();
-        conn.commit();
+        if ( StringUtil.isNotBlank(config.getDatasource())) {
+            try {
+                conn.openConnection();
+            } catch (SQLException e) {
+                log.error(e, "error in checkAlive");
+                throw ConnectorException.wrap(e);
+            }
+        } else {
+            conn.test();
+            conn.commit();
+        }
+        // will not close connection, it is expected to be used in following api op
         log.ok("checkAlive");
     }    
 
@@ -188,29 +198,36 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         if (password == null) {
             throw new IllegalArgumentException(config.getMessage(MSG_PWD_BLANK));
         }
-        // Create the user
-        log.info("Creating user: {0}", user.getNameValue());
-            
-        createUser(user.getNameValue(), password);
-        // Don't forget to create Uid
-        final Uid uid = newUid(user.getNameValue());
+        try {
+            // Create the user
+            log.info("Creating user: {0}", user.getNameValue());
+            conn.openConnection();
+            createUser(user.getNameValue(), password);
+            // Don't forget to create Uid
+            final Uid uid = newUid(user.getNameValue());
 
-        // Model name is needed to set rights for the new user
-        String modelUserName = config.getUsermodel();
-        log.info("Reading the modeluser: {0}", modelUserName);
-        List<String> grants = readGrantsForModelUser(modelUserName);
+            // Model name is needed to set rights for the new user
+            String modelUserName = config.getUsermodel();
+            log.info("Reading the modeluser: {0}", modelUserName);
+            List<String> grants = readGrantsForModelUser(modelUserName);
 
-        // Replace modelUser to newUser for the GRANT statement
-        List<String> newGrants = replaceModelUserInGrants(user.getNameValue(), modelUserName, grants);
+            // Replace modelUser to newUser for the GRANT statement
+            List<String> newGrants = replaceModelUserInGrants(user.getNameValue(), modelUserName, grants);
 
-        // Granting rights for the new user
-        log.info("Granting rights for user: {0}", user.getNameValue());
-        grantingRights(newGrants, user.getNameValue(), password);
+            // Granting rights for the new user
+            log.info("Granting rights for user: {0}", user.getNameValue());
+            grantingRights(newGrants, user.getNameValue(), password);
 
-        // commit all
-        conn.commit();
-        log.ok("Created user: {0}", user.getNameValue());
-        return uid;
+            // commit all
+            conn.commit();
+            log.ok("Created user: {0}", user.getNameValue());
+            return uid;
+        } catch (SQLException ex) {
+            log.error(ex, "error in create");
+            throw ConnectorException.wrap(ex);
+        } finally {
+            conn.closeConnection();
+        }
     }
     
     /**
@@ -225,20 +242,27 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      * @see DeleteOp#delete(ObjectClass, Uid, OperationOptions)
      */
     public void delete(final ObjectClass oclass, final Uid uid, final OperationOptions options) {
-        if(oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
-            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED)); 
+        if (oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
+            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED));
         }
 
         if (uid == null || (uid.getUidValue() == null)) {
             throw new IllegalArgumentException(config.getMessage(MSG_UID_BLANK));
         }
-        
-        log.info("Delete user uid: {0}", uid.getName());
-        //Delete the user
-        deleteUser(uid);
-        //Commit delete
-        conn.commit();
-        log.ok("Deleted user uid: {0}", uid.getName());
+        try {
+            log.info("Delete user uid: {0}", uid.getName());
+            conn.openConnection();
+            //Delete the user
+            deleteUser(uid);
+            //Commit delete
+            conn.commit();
+            log.ok("Deleted user uid: {0}", uid.getName());
+        } catch (SQLException ex) {
+            log.error(ex, "error in delete");
+            throw ConnectorException.wrap(ex);
+        } finally {
+            conn.closeConnection();
+        }
     }
     
     /**
@@ -286,11 +310,18 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         String sql = MessageFormat.format(SQL_UPDATE, updateSet);
         values.add(new SQLParam(oldUid.getUidValue(), Types.CHAR));
         
-        // Update the user, insert bind values into the statement
-        updateUser(sql, values);
-        
-        // Commit changes
-        conn.commit();
+        try {
+            conn.openConnection();
+            // Update the user, insert bind values into the statement
+            updateUser(sql, values);            
+            // Commit changes
+            conn.commit();
+        } catch (SQLException ex) {
+            log.error(ex, "error in update");
+            throw ConnectorException.wrap(ex);
+        } finally {
+            conn.closeConnection();
+        }
         log.ok("User name: {0} updated", name);
         return ret;
     }
@@ -336,6 +367,8 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         ResultSet result = null;
         PreparedStatement statement = null;
         try {
+            conn.openConnection();
+            
             statement = conn.prepareStatement(query);
             result = statement.executeQuery();
             while (result.next()) {
@@ -363,16 +396,18 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
                     break;
                 }
             }
+            //Commit finally
+            conn.commit();
         } catch (SQLException e) {
             SQLUtil.rollbackQuietly(conn);
             throw ConnectorException.wrap(e);
         } finally {
             SQLUtil.closeQuietly(result);
             SQLUtil.closeQuietly(statement);
+            
+            conn.closeConnection();
         }
         
-        //Commit finally
-        conn.commit();
         log.ok("executeQuery");
     }
 
@@ -393,8 +428,6 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         SchemaBuilder schemaBld = new SchemaBuilder(getClass());
         schemaBld.defineObjectClass(ObjectClass.ACCOUNT_NAME, attrInfoSet);
         
-        //commit all
-        conn.commit();
         log.ok("schema");        
         return schemaBld.build();
     } 
@@ -405,11 +438,21 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      * @see org.identityconnectors.framework.spi.operations.TestOp#test()
      */
     public void test() {
-        conn.test();
-        if( !findUser(config.getUsermodel())) {
-            throw new IllegalArgumentException(config.getMessage(MSG_USER_MODEL_NOT_FOUND, config.getUsermodel()));
+        try {
+            conn.openConnection();
+            conn.test();
+            if (!findUser(config.getUsermodel())) {
+                SQLUtil.rollbackQuietly(conn);
+                throw new IllegalArgumentException(config.getMessage(MSG_USER_MODEL_NOT_FOUND, config.getUsermodel()));
+            }
+            conn.commit();
+        } catch (SQLException e) {
+            log.error(e, "Error in test");
+            //No rolback, the error could be just in the openConnection
+            throw ConnectorException.wrap(e);
+        } finally {
+            conn.closeConnection();
         }
-        conn.commit();
         log.ok("test");
     }
     
@@ -448,6 +491,8 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         PreparedStatement stmt = null;
         ResultSet result = null;
         try {
+            conn.openConnection();
+            
             stmt = conn.prepareStatement(AUTH_SELECT, values);
             result = stmt.executeQuery();
             //No PasswordExpired capability
@@ -467,6 +512,8 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         } finally {
             SQLUtil.closeQuietly(result);
             SQLUtil.closeQuietly(stmt);
+            
+            conn.closeConnection();
         }
     }
 

@@ -293,15 +293,17 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
     
     /**
      * The url string
+     * @param host host of mysql db
+     * @param port port of the db
      * @return the url string of the database
      */
-    public String getUrlString() {
+    public static String getUrlString(String host, String port) {
         final String URL_TEMPLATE = "jdbc:mysql://{0}:{1}/mysql";
         // create the connection base on the configuration..
         String url = null;
         try {
             // get the database URL..
-            url = MessageFormat.format(URL_TEMPLATE, getHost(), getPort());
+            url = MessageFormat.format(URL_TEMPLATE, host, port);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
