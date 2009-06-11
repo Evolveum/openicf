@@ -40,9 +40,11 @@ import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
-import org.identityconnectors.framework.common.objects.ObjectClassInfo;
+import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
+import org.identityconnectors.framework.common.objects.SchemaBuilder;
 
 /**
  * Main implementation of the OracleErp Connector
@@ -114,12 +116,22 @@ public class UserSecuringAttrs  {
 
     /**
      * Get the Account Object Class Info
-     * 
-     * @return ObjectClassInfo value
+     * @param schemaBld 
      */
-    public ObjectClassInfo getSchema() {
-        ObjectClassInfoBuilder aoc = new ObjectClassInfoBuilder();
-        return aoc.build();
+    public void schema(SchemaBuilder schemaBld) {
+        //securityGroups object class
+        ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
+        oc.setType(SEC_GROUPS); 
+        oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class));
+        //Define object class
+        schemaBld.defineObjectClass(oc.build());
+        
+        //securingAttrs object class
+        oc = new ObjectClassInfoBuilder();
+        oc.setType(SEC_ATTRS); 
+        oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class));
+        //Define object class
+        schemaBld.defineObjectClass(oc.build());        
     }
 
 

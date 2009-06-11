@@ -62,6 +62,7 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
+import org.identityconnectors.framework.common.objects.SchemaBuilder;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
@@ -388,73 +389,73 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
 
     /**
      * Get the Account Object Class Info
-     * 
-     * @return ObjectClassInfo value
+     * @param schemaBld 
      */
-    public ObjectClassInfo getSchema() {
-        ObjectClassInfoBuilder aoc = new ObjectClassInfoBuilder();
-        aoc.setType(ObjectClass.ACCOUNT_NAME);
+    public void schema(SchemaBuilder schemaBld) {
+        ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
+        oc.setType(ObjectClass.ACCOUNT_NAME);
 
         // The Name is supported attribute
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, EnumSet.of(Flags.REQUIRED)));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, EnumSet.of(Flags.REQUIRED)));
         // name='owner' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(OWNER, String.class, EnumSet.of(Flags.NOT_READABLE,
+        oc.addAttributeInfo(AttributeInfoBuilder.build(OWNER, String.class, EnumSet.of(Flags.NOT_READABLE,
                 Flags.REQUIRED)));
         // name='session_number' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(SESS_NUM, String.class, EnumSet.of(
+        oc.addAttributeInfo(AttributeInfoBuilder.build(SESS_NUM, String.class, EnumSet.of(
                 Flags.NOT_UPDATEABLE, Flags.NOT_CREATABLE)));
         // name='start_date' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(START_DATE, String.class));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(START_DATE, String.class));
         // name='end_date' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(END_DATE, String.class));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(END_DATE, String.class));
         // name='last_logon_date' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(LAST_LOGON_DATE, String.class, EnumSet.of(
+        oc.addAttributeInfo(AttributeInfoBuilder.build(LAST_LOGON_DATE, String.class, EnumSet.of(
                 Flags.NOT_UPDATEABLE, Flags.NOT_CREATABLE)));
         // name='description' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(DESCR, String.class));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(DESCR, String.class));
         // <Views><String>Enable</String></Views>
-        aoc.addAttributeInfo(OperationalAttributeInfos.ENABLE);
+        oc.addAttributeInfo(OperationalAttributeInfos.ENABLE);
         // <Views><String>Password</String><String>Reset</String></Views>
         //aoc.addAttributeInfo(OperationalAttributeInfos.RESET_PASSWORD); 
         // reset is implemented as change password
         // name='Password',  Password is mapped to operationalAttribute
-        aoc.addAttributeInfo(OperationalAttributeInfos.PASSWORD);
+        oc.addAttributeInfo(OperationalAttributeInfos.PASSWORD);
         // name='password_accesses_left' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(PWD_DATE, String.class));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(PWD_DATE, String.class));
         // name='password_accesses_left' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(PWD_ACCESSES_LEFT, String.class));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(PWD_ACCESSES_LEFT, String.class));
         // name='password_lifespan_accesses' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(PWD_LIFE_ACCESSES, String.class));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(PWD_LIFE_ACCESSES, String.class));
         // name='password_lifespan_days' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(PWD_LIFE_DAYS, String.class));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(PWD_LIFE_DAYS, String.class));
         // name='employee_id' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(EMP_ID, String.class));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(EMP_ID, String.class));
         // name='employee_number' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(EMP_NUM, Integer.class));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(EMP_NUM, Integer.class));
         // name='person_fullname' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(PERSON_FULLNAME, String.class));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(PERSON_FULLNAME, String.class));
         // name='npw_number' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(NPW_NUM, Integer.class));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(NPW_NUM, Integer.class));
         // name='email_address' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(EMAIL, String.class));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(EMAIL, String.class));
         // name='fax' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(FAX, String.class));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(FAX, String.class));
         // name='customer_id' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(CUST_ID, String.class));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(CUST_ID, String.class));
         // name='supplier_id' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(SUPP_ID, String.class));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(SUPP_ID, String.class));
         // name='person_party_id' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(PERSON_PARTY_ID, String.class));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(PERSON_PARTY_ID, String.class));
         // name='RESP' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(RESP, String.class, EnumSet.of(Flags.MULTIVALUED)));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(RESP, String.class, EnumSet.of(Flags.MULTIVALUED)));
         // name='RESPKEYS' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(RESPKEYS, String.class, EnumSet.of(Flags.MULTIVALUED)));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(RESPKEYS, String.class, EnumSet.of(Flags.MULTIVALUED)));
         // name='SEC_ATTRS' type='string' required='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(SEC_ATTRS, String.class, EnumSet.of(Flags.MULTIVALUED)));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(SEC_ATTRS, String.class, EnumSet.of(Flags.MULTIVALUED)));
         // name='expirePassword' type='string' required='false' is mapped to PASSWORD_EXPIRED
-        aoc.addAttributeInfo(OperationalAttributeInfos.PASSWORD_EXPIRED);
-
-        return aoc.build();
+        oc.addAttributeInfo(OperationalAttributeInfos.PASSWORD_EXPIRED);
+        
+        //Define object class
+        schemaBld.defineObjectClass(oc.build());
     }
 
     /**

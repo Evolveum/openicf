@@ -450,9 +450,12 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
     public Schema schema() {
         // Use SchemaBuilder to build the schema.
         SchemaBuilder schemaBld = new SchemaBuilder(getClass());
-        schemaBld.defineObjectClass(getAccount().getSchema());
+        getAccount().schema(schemaBld);
+
         // The Responsibilities
-        schemaBld.defineObjectClass(getSecAttrs().getSchema());
+        getRespNames().schema(schemaBld);
+        
+        getSecAttrs().schema(schemaBld);
         return schemaBld.build();
     }
 

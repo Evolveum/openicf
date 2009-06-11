@@ -45,11 +45,13 @@ import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
+import org.identityconnectors.framework.common.objects.SchemaBuilder;
 import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
+
+import com.sun.corba.se.spi.activation.InitialNameServicePackage.NameAlreadyBound;
 
 
 /**
@@ -311,65 +313,6 @@ public class ResponsibilityNames {
                 ps = null;
             }
         }
-    }
-
-    /**
-     * Get the Account Object Class Info
-     * 
-     * @return ObjectClassInfo value
-     */
-    public ObjectClassInfo getSchema() {
-        ObjectClassInfoBuilder aoc = new ObjectClassInfoBuilder();
-        aoc.setType(RESP_NAMES);
-
-        // The Name is supported attribute
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, EnumSet.of(Flags.REQUIRED)));
-        // name='userMenuNames' type='string' audit='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(USER_MENU_NAMES, String.class, EnumSet.of(Flags.REQUIRED)));
-        // name='menuIds' type='string' audit='false'    
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(MENU_IDS, String.class, EnumSet.of(Flags.REQUIRED)));
-        // name='userFunctionNames' type='string' audit='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(USER_FUNCTION_NAMES, String.class, EnumSet.of(Flags.REQUIRED)));
-        // name='functionIds' type='string' audit='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_IDS, String.class, EnumSet.of(Flags.REQUIRED)));
-        // name='formIds' type='string' audit='false'    
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(FORM_IDS, String.class, EnumSet.of(Flags.REQUIRED)));
-        // name='formNames' type='string' audit='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(FORM_NAMES, String.class, EnumSet.of(Flags.REQUIRED)));
-        // name='functionNames' type='string' audit='false'    
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_NAMES, String.class, EnumSet.of(Flags.REQUIRED)));
-        // name='userFormNames' type='string' audit='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(USER_FORM_NAMES, String.class, EnumSet.of(Flags.REQUIRED)));
-        // name='readOnlyFormIds' type='string' audit='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_IDS, String.class, EnumSet.of(Flags.REQUIRED)));
-        // name='readWriteOnlyFormIds' type='string' audit='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_IDS, String.class, EnumSet.of(Flags.REQUIRED)));
-        // name='readOnlyFormNames' type='string' audit='false'
-        aoc
-                .addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_NAMES, String.class, EnumSet
-                        .of(Flags.REQUIRED)));
-        // name='readOnlyFunctionNames' type='string' audit='false'    
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTION_NAMES, String.class, EnumSet
-                .of(Flags.REQUIRED)));
-        // name='readOnlyUserFormNames' type='string' audit='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_USER_FORM_NAMES, String.class, EnumSet
-                .of(Flags.REQUIRED)));
-        // name='readOnlyFunctionIds' type='string' audit='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTIONS_IDS, String.class, EnumSet
-                .of(Flags.REQUIRED)));
-        // name='readWriteOnlyFormNames' type='string' audit='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_NAMES, String.class, EnumSet
-                .of(Flags.REQUIRED)));
-        // name='readWriteOnlyUserFormNames' type='string' audit='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_USER_FORM_NAMES, String.class, EnumSet
-                .of(Flags.REQUIRED)));
-        // name='readWriteOnlyFunctionNames' type='string' audit='false'        
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_NAMES, String.class, EnumSet
-                .of(Flags.REQUIRED)));
-        // name='readWriteOnlyFunctionIds' type='string' audit='false'                 
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_IDS, String.class, EnumSet
-                .of(Flags.REQUIRED)));
-        return aoc.build();
     }
 
     /**
@@ -1131,6 +1074,134 @@ public class ResponsibilityNames {
         }
         log.ok(method);
         return arrayList;
+    }
+
+    /**
+     * @param schemaBld
+     */
+    public void schema(SchemaBuilder schemaBld) {
+        final EnumSet<Flags> STD_RNA = EnumSet.of(Flags.NOT_UPDATEABLE, Flags.NOT_CREATABLE);
+        
+        ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
+        oc.setType(RESP_NAMES);
+
+        // The Name is supported attribute
+        oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
+        // name='userMenuNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_MENU_NAMES, String.class, STD_RNA));
+        // name='menuIds' type='string' audit='false'    
+        oc.addAttributeInfo(AttributeInfoBuilder.build(MENU_IDS, String.class, STD_RNA));
+        // name='userFunctionNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_FUNCTION_NAMES, String.class, STD_RNA));
+        // name='functionIds' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_IDS, String.class, STD_RNA));
+        // name='formIds' type='string' audit='false'    
+        oc.addAttributeInfo(AttributeInfoBuilder.build(FORM_IDS, String.class, STD_RNA));
+        // name='formNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(FORM_NAMES, String.class, STD_RNA));
+        // name='functionNames' type='string' audit='false'    
+        oc.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_NAMES, String.class, STD_RNA));
+        // name='userFormNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_FORM_NAMES, String.class, STD_RNA));
+        // name='readOnlyFormIds' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_IDS, String.class, STD_RNA));
+        // name='readWriteOnlyFormIds' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_IDS, String.class, STD_RNA));
+        // name='readOnlyFormNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_NAMES, String.class, STD_RNA));
+        // name='readOnlyFunctionNames' type='string' audit='false'    
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTION_NAMES, String.class, STD_RNA));
+        // name='readOnlyUserFormNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_USER_FORM_NAMES, String.class, STD_RNA));
+        // name='readOnlyFunctionIds' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTIONS_IDS, String.class, STD_RNA));
+        // name='readWriteOnlyFormNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_NAMES, String.class, STD_RNA));
+        // name='readWriteOnlyUserFormNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_USER_FORM_NAMES));
+        // name='readWriteOnlyFunctionNames' type='string' audit='false'        
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_NAMES, String.class, STD_RNA));
+        // name='readWriteOnlyFunctionIds' type='string' audit='false'                 
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_IDS, String.class, STD_RNA));
+        //Define object class
+        schemaBld.defineObjectClass(oc.build());
+
+        //Auditor responsibilities
+        oc = new ObjectClassInfoBuilder();
+        oc.setType(AUDITOR_RESPS);
+
+        // The Name is supported attribute
+        oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
+        // name='userMenuNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_MENU_NAMES, String.class, STD_RNA));
+        // name='menuIds' type='string' audit='false'    
+        oc.addAttributeInfo(AttributeInfoBuilder.build(MENU_IDS, String.class, STD_RNA));
+        // name='userFunctionNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_FUNCTION_NAMES, String.class, STD_RNA));
+        // name='functionIds' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_IDS, String.class, STD_RNA));
+        // name='formIds' type='string' audit='false'    
+        oc.addAttributeInfo(AttributeInfoBuilder.build(FORM_IDS, String.class, STD_RNA));
+        // name='formNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(FORM_NAMES, String.class, STD_RNA));
+        // name='functionNames' type='string' audit='false'    
+        oc.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_NAMES, String.class, STD_RNA));
+        // name='userFormNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_FORM_NAMES, String.class, STD_RNA));
+        // name='readOnlyFormIds' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_IDS, String.class, STD_RNA));
+        // name='readWriteOnlyFormIds' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_IDS, String.class, STD_RNA));
+        // name='readOnlyFormNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_NAMES, String.class, STD_RNA));
+        // name='readOnlyFunctionNames' type='string' audit='false'    
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTION_NAMES, String.class, STD_RNA));
+        // name='readOnlyUserFormNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_USER_FORM_NAMES, String.class, STD_RNA));
+        // name='readOnlyFunctionIds' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTIONS_IDS, String.class, STD_RNA));
+        // name='readWriteOnlyFormNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_NAMES, String.class, STD_RNA));
+        // name='readWriteOnlyUserFormNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_USER_FORM_NAMES));
+        // name='readWriteOnlyFunctionNames' type='string' audit='false'        
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_NAMES, String.class, STD_RNA));
+        // name='readWriteOnlyFunctionIds' type='string' audit='false'                 
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_IDS, String.class, STD_RNA));
+        //Define object class
+        schemaBld.defineObjectClass(oc.build());
+        
+        //Resp object class
+        oc = new ObjectClassInfoBuilder();
+        oc.setType(RESP); 
+        oc.setContainer(true);
+        oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
+        //Define object class
+        schemaBld.defineObjectClass(oc.build());
+        
+        //Resp object class
+        oc = new ObjectClassInfoBuilder();
+        oc.setType(DIRECT_RESP); 
+        oc.setContainer(true);
+        oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
+        //Define object class
+        schemaBld.defineObjectClass(oc.build());
+        
+        //directResponsibilities object class
+        oc = new ObjectClassInfoBuilder();
+        oc.setType(INDIRECT_RESP); 
+        oc.setContainer(true);
+        oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
+        //Define object class
+        schemaBld.defineObjectClass(oc.build());
+        
+        //directResponsibilities object class
+        oc = new ObjectClassInfoBuilder();
+        oc.setType(APPS); 
+        oc.setContainer(true);
+        oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
+        //Define object class
+        schemaBld.defineObjectClass(oc.build());
     }
     
 }
