@@ -1498,9 +1498,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             List<Object> currentGrants = currentGrantsAttr==null?new LinkedList<Object>():currentGrantsAttr.getValue();
             if (currentGrants!=null) {
                 List<Object> grants = grantIds.getValue()==null?new LinkedList<Object>():new LinkedList<Object>(grantIds.getValue());
-                grants.removeAll(currentGrants);
                 List<Object> revokes = new LinkedList<Object>(currentGrants);
                 revokes.removeAll(grants);
+                grants.removeAll(currentGrants);
 
                 if (grants.size()>0 || revokes.size()>0) {
                     LinkedList<List<StringBuffer>> commandList = new LinkedList<List<StringBuffer>>();
