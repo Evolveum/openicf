@@ -109,6 +109,37 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
 						AttributeBuilder.buildPassword("password".toCharArray())
 						),
 				null);
+        
+        //update to external
+		testConnector.update(ObjectClass.ACCOUNT, uid, CollectionUtil
+				.newSet(AttributeBuilder.build(
+						OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,
+						OracleConstants.ORACLE_AUTH_EXTERNAL)), null);
+        //if we update only password, and no other attributes, this should fail
+		try{
+			testConnector.update(ObjectClass.ACCOUNT, uid, CollectionUtil
+					.newSet(AttributeBuilder.buildPassword("password".toCharArray())), null);
+			fail("Update must fail with external authntication and password");
+		}catch(ConnectorException e){}
+		
+		//but if we update e.g also quota, it should pass
+		testConnector.update(ObjectClass.ACCOUNT, uid, CollectionUtil
+				.newSet(AttributeBuilder.buildPassword("newPassword".toCharArray()),
+						AttributeBuilder.build(OracleConstants.ORACLE_DEF_TS_QUOTA_ATTR_NAME,"10k")), null);
+		
+		//If updating only extra attributes, this should fail
+        newConf
+		.setExtraAttributesPolicySetup(new ExtraAttributesPolicySetupBuilder(
+				TestHelpers.createDummyMessages()).definePolicy(
+				OracleUserAttribute.PASSWORD_EXPIRE, UpdateOp.class,
+				ExtraAttributesPolicy.IGNORE).definePolicy(OracleUserAttribute.PASSWORD, UpdateOp.class, ExtraAttributesPolicy.IGNORE). build());
+		try{
+			testConnector.update(ObjectClass.ACCOUNT, uid, CollectionUtil
+					.newSet(AttributeBuilder.buildPasswordExpired(true),AttributeBuilder.buildPassword("newPassword".toCharArray())), null);
+			fail("Update must fail with external authentication and password and password expired");
+		}catch(ConnectorException e){}
+
+        
         testConnector.dispose();
         
     }
@@ -357,15 +388,44 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         newConf
 				.setExtraAttributesPolicySetup(new ExtraAttributesPolicySetupBuilder(
 						TestHelpers.createDummyMessages()).definePolicy(
-						OracleUserAttribute.PASSWORD, UpdateOp.class,
+						OracleUserAttribute.PASSWORD_EXPIRE, UpdateOp.class,
 						ExtraAttributesPolicy.IGNORE).build());
         OracleConnector testConnector = new OracleConnector();
         testConnector.init(newConf);
         testConnector.update(ObjectClass.ACCOUNT, uid, CollectionUtil
 				.newSet(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConstants.ORACLE_AUTH_EXTERNAL),
-						AttributeBuilder.buildPassword("password".toCharArray())
+						AttributeBuilder.buildPasswordExpired(true)
 						),
 				null);
+        
+        //update to external
+		testConnector.update(ObjectClass.ACCOUNT, uid, CollectionUtil
+				.newSet(AttributeBuilder.build(
+						OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,
+						OracleConstants.ORACLE_AUTH_EXTERNAL)), null);
+        //if we update only password_expired, and no other attributes, this should fail
+		try{
+			testConnector.update(ObjectClass.ACCOUNT, uid, CollectionUtil
+					.newSet(AttributeBuilder.buildPasswordExpired(true)), null);
+			fail("Update must fail with external authentication and password expired");
+		}catch(ConnectorException e){}
+		//but if we update e.g also quota, it should pass
+		testConnector.update(ObjectClass.ACCOUNT, uid, CollectionUtil
+				.newSet(AttributeBuilder.buildPasswordExpired(true),
+						AttributeBuilder.build(OracleConstants.ORACLE_DEF_TS_QUOTA_ATTR_NAME,"10k")), null);
+		//if we update just the ignored attributes, we should fail
+        newConf
+		.setExtraAttributesPolicySetup(new ExtraAttributesPolicySetupBuilder(
+				TestHelpers.createDummyMessages()).definePolicy(
+				OracleUserAttribute.PASSWORD_EXPIRE, UpdateOp.class,
+				ExtraAttributesPolicy.IGNORE).definePolicy(OracleUserAttribute.PASSWORD, UpdateOp.class, ExtraAttributesPolicy.IGNORE). build());
+		try{
+			testConnector.update(ObjectClass.ACCOUNT, uid, CollectionUtil
+					.newSet(AttributeBuilder.buildPasswordExpired(true),AttributeBuilder.buildPassword("newPassword".toCharArray())), null);
+			fail("Update must fail with external authentication and password expired");
+		}catch(ConnectorException e){}
+        
+        
         testConnector.dispose();
         
     }
@@ -490,7 +550,7 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
     
     
     @Test
-    public void testUpdateUserGlobal() throws SQLException{
+    public void testUpdateGlobal() throws SQLException{
     	try{
     		facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME,OracleConstants.ORACLE_AUTH_GLOBAL)), null);
     		fail("Must require global name");

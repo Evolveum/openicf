@@ -14,7 +14,9 @@ import static org.identityconnectors.oracle.OracleUserAttribute.PROFILE;
 import static org.identityconnectors.oracle.OracleUserAttribute.TEMP_TABLESPACE;
 import static org.identityconnectors.oracle.OracleUserAttribute.USER;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
@@ -51,6 +53,11 @@ final class OracleCreateOrAlterStBuilder {
         private boolean forceExpirePassword;
         //Real set authentication
         OracleAuthentication currentAuth;
+        private final List<Pair<OracleUserAttribute,RuntimeException>> ignoredAttributes = new ArrayList<Pair<OracleUserAttribute,RuntimeException>>(2);
+        private BuilderStatus addIgnoredAttribute(OracleUserAttribute oua,RuntimeException e){
+        	ignoredAttributes.add(new Pair<OracleUserAttribute,RuntimeException>(oua,e));
+        	return this;
+        }
     }
     
     OracleCreateOrAlterStBuilder(OracleCaseSensitivitySetup cs, ConnectorMessages cm, ExtraAttributesPolicySetup extraAttributesPolicySetup) {
@@ -72,11 +79,14 @@ final class OracleCreateOrAlterStBuilder {
         if(userAttributes.getUserName() == null){
             throw new IllegalArgumentException("User not specified"); //Internal error
         }
+        String ddl = generateDDL(userAttributes,CreateOp.class,null);
+        if(ddl == null || ddl.length() == 0){
+        	return null;
+        }
         StringBuilder builder = new StringBuilder();
         builder.append("create user ").append(cs.formatToken(USER, userAttributes.getUserName()));
-        int length = builder.length();
-        appendCreateOrAlterSt(builder,userAttributes,CreateOp.class,null);
-        return builder.length() == length ? null : builder.toString();
+        builder.append(ddl);
+        return builder.toString();
     }
     
     String buildAlterUserSt(OracleUserAttributes userAttributes,UserRecord userRecord){
@@ -86,14 +96,18 @@ final class OracleCreateOrAlterStBuilder {
         if(userRecord == null){
         	throw new IllegalArgumentException("Must set userRecord for update"); //Internal error
         }
+        String ddl = generateDDL(userAttributes,UpdateOp.class,userRecord);
+        if(ddl == null || ddl.length() == 0){
+        	return null;
+        }
         StringBuilder builder = new StringBuilder();
         builder.append("alter user ").append(cs.formatToken(USER, userAttributes.getUserName()));
-        int length = builder.length();
-        appendCreateOrAlterSt(builder,userAttributes,UpdateOp.class,userRecord);
-        return builder.length() == length ? null : builder.toString();
+        builder.append(ddl);
+        return builder.toString();
     }
 
-    private void appendCreateOrAlterSt(StringBuilder builder, OracleUserAttributes userAttributes, Class<? extends SPIOperation> operation, UserRecord userRecord) {
+    private String generateDDL(OracleUserAttributes userAttributes, Class<? extends SPIOperation> operation, UserRecord userRecord) {
+    	StringBuilder builder = new StringBuilder();
     	BuilderStatus status = new BuilderStatus();
         appendAuth(builder, userAttributes, operation, status, userRecord);
         if(userAttributes.getDefaultTableSpace() != null){
@@ -119,10 +133,12 @@ final class OracleCreateOrAlterStBuilder {
         		appendExpirePassword(builder,userAttributes);
         	}
         	else{
+        		IllegalArgumentException e = new IllegalArgumentException(cm.format(MSG_CANNOT_EXPIRE_PASSWORD_FOR_NOT_LOCAL_AUTHENTICATION, null)); 
         		if(ExtraAttributesPolicy.FAIL.equals(extraAttributesPolicySetup.getPolicy(PASSWORD_EXPIRE, operation))){
-        			throw new IllegalArgumentException(cm.format(MSG_CANNOT_EXPIRE_PASSWORD_FOR_NOT_LOCAL_AUTHENTICATION, null));
+        			throw e;
         		}
         		else{
+        			status.addIgnoredAttribute(PASSWORD_EXPIRE, e);        			
         			log.info("Ignoring extra password_expire attribute in operation [{0}]", operation);
         		}
         	}
@@ -133,6 +149,11 @@ final class OracleCreateOrAlterStBuilder {
         if(userAttributes.getProfile() != null){
             appendProfile(builder,userAttributes);
         }
+        if(builder.length() == 0 && !status.ignoredAttributes.isEmpty()){
+        	//throw the fisrt exception
+        	throw status.ignoredAttributes.get(0).getSecond();
+        }
+        return builder.toString();
     }
 
     private void appendProfile(StringBuilder builder,OracleUserAttributes userAttributes) {
@@ -213,20 +234,33 @@ final class OracleCreateOrAlterStBuilder {
     			status.currentAuth = OracleUserReader.resolveAuthentication(userRecord);
     		}
     	}
-    	boolean appendIdentified = CreateOp.class.equals(operation) || userAttributes.getAuth() != null || userAttributes.getPassword() != null || userAttributes.getGlobalName() != null;
+    	boolean appendIdentified = CreateOp.class.equals(operation)
+				|| userAttributes.getAuth() != null
+				|| userAttributes.getPassword() != null
+				|| userAttributes.getGlobalName() != null;
     	if(!appendIdentified){
     		return;
     	}
     	if(userAttributes.getPassword() != null && !OracleAuthentication.LOCAL.equals(status.currentAuth)){
+    		//Apply the extra attribute policy 
+    		IllegalArgumentException e = new IllegalArgumentException(cm.format(MSG_CANNOT_SET_PASSWORD_FOR_NOT_LOCAL_AUTHENTICATION, null));
     		if(ExtraAttributesPolicy.FAIL.equals(extraAttributesPolicySetup.getPolicy(PASSWORD, operation))){
-    			throw new IllegalArgumentException(cm.format(MSG_CANNOT_SET_PASSWORD_FOR_NOT_LOCAL_AUTHENTICATION, null));
+    			throw e;
     		}
     		else{
     			log.info("Ignoring extra password attribute in operation [{0}]", operation);
+    			status.addIgnoredAttribute(PASSWORD, e);
+    			//If only password was set, return
+    			if(userAttributes.getAuth() == null && userAttributes.getGlobalName() == null && UpdateOp.class.equals(operation)){
+    				appendIdentified = false;
+    			}
     		}
     	}
     	if(userAttributes.getGlobalName() != null && !OracleAuthentication.GLOBAL.equals(status.currentAuth)){
     		throw new IllegalArgumentException(cm.format(MSG_CANNOT_SET_GLOBALNAME_FOR_NOT_GLOBAL_AUTHENTICATION, null));
+    	}
+    	if(!appendIdentified){
+    		return;
     	}
     	builder.append(" identified");
         if(OracleAuthentication.LOCAL.equals(status.currentAuth)){
