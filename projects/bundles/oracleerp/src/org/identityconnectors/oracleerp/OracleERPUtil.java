@@ -134,23 +134,26 @@ public class OracleERPUtil {
     static final int ORA_01403 = 1403;
     
     // Validate messages constants
-    static final String MSG_NAME_BLANK = "name.blank";
-    static final String MSG_PWD_BLANK = "pwd.blank";    
-    static final String MSG_USER_BLANK = "user.blank";
-    static final String MSG_USER_MODEL_BLANK = "user.model.blank";
-    static final String MSG_USER_MODEL_NOT_FOUND="user.model.not.found";
-    static final String MSG_PASSWORD_BLANK = "password.blank";
-    static final String MSG_HOST_BLANK = "host.blank";
-    static final String MSG_PORT_BLANK = "port.blank";
-    static final String MSG_DATABASE_BLANK = "database.blank";
-    static final String MSG_JDBC_DRIVER_BLANK = "jdbc.driver.blank";
-    static final String MSG_JDBC_DRIVER_NOT_FOUND = "jdbc.driver.not.found";
-    static final String MSG_ACCOUNT_OBJECT_CLASS_REQUIRED = "acount.object.class.required";
-    static final String MSG_AUTHENTICATE_OP_NOT_SUPPORTED = "auth.op.not.supported";
-    static final String MSG_AUTH_FAILED = "auth.op.failed";
-    static final String MSG_INVALID_ATTRIBUTE_SET = "invalid.attribute.set";
-    static final String MSG_UID_BLANK = "uid.blank";
-    static final String MSG_RESULT_HANDLER_NULL = "result.handler.null";    
+    static final String MSG_PWD_BLANK = "msg.pwd.blank";    
+    static final String MSG_USER_BLANK = "msg.user.blank";
+    static final String MSG_PASSWORD_BLANK = "msg.password.blank";
+    static final String MSG_HOST_BLANK = "msg.host.blank";
+    static final String MSG_PORT_BLANK = "msg.port.blank";
+    static final String MSG_DATABASE_BLANK = "msg.database.blank";
+    static final String MSG_DRIVER_BLANK = "msg.driver.blank";
+    static final String MSG_DRIVER_NOT_FOUND = "msg.jdbc.driver.not.found";
+    static final String MSG_ACCOUNT_NOT_CREATE="msg.account.not.create";    
+    static final String MSG_ACCOUNT_NOT_DELETE="msg.account.not.delete";
+    static final String MSG_ACCOUNT_NOT_READ="msg.account.not.read";
+    static final String MSG_ACCOUNT_NOT_UPDATE="msg.account.not.update";
+    static final String MSG_UNKNOWN_OPERATION_TYPE = "msg.unknown.operation.type";
+    
+    static final String MSG_ACCOUNT_OBJECT_CLASS_REQUIRED = "msg.acount.object.class.required";
+    static final String MSG_AUTHENTICATE_OP_NOT_SUPPORTED = "msg.auth.op.not.supported";
+    static final String MSG_AUTH_FAILED = "msg.auth.op.failed";
+    static final String MSG_INVALID_ATTRIBUTE_SET = "msg.invalid.attribute.set";
+    static final String MSG_UID_BLANK = "msg.uid.blank";
+    static final String MSG_RESULT_HANDLER_NULL = "msg.result.handler.null";  
     
     /**
      * object class name definitions
@@ -158,25 +161,31 @@ public class OracleERPUtil {
      */
     
     static final String RESPS = RESP;
+    /** Object Class name */
     public static final ObjectClass RESP_OC = new ObjectClass(RESP);    
 
     static final String DIRECT_RESPS = "directResponsibilities";
     static final String DIRECT_RESP = DIRECT_RESPS;
+    /** Object Class name */
     public static final ObjectClass DIRECT_RESP_OC = new ObjectClass(DIRECT_RESP);    
 
     static final String INDIRECT_RESPS = "indirectResponsibilities";
     static final String INDIRECT_RESP = INDIRECT_RESPS;
+    /** Object Class name */
     public static final ObjectClass INDIRECT_RESP_OC = new ObjectClass(INDIRECT_RESP); 
 
     static final String RESP_NAME = RESP_NAMES;
+    /** Object Class name */
     public static final ObjectClass RESP_NAMES_OC = new ObjectClass(RESP_NAMES);        
     
     static final String APPS = "applications";
     static final String APP = "application";
+    /** Object Class name */
     public static final ObjectClass APP_OC = new ObjectClass(APP);    
     
     static final String SEC_GROUPS = "securityGroups";
     static final String SEC_GROUP = "securityGroup";
+    /** Object Class name */
     public static final ObjectClass SEC_GROUP_OC = new ObjectClass(SEC_GROUP);    
     
     static final String PATTERN = "searchPattern";
@@ -356,7 +365,7 @@ public class OracleERPUtil {
     /**
      * @param sqlSelect 
      * @param whereAnd
-     * @return
+     * @return and string
      */
     public static String whereAnd(String sqlSelect, String whereAnd) {
         int iofw = sqlSelect.toUpperCase().indexOf("WHERE");
@@ -406,8 +415,8 @@ public class OracleERPUtil {
     } // normalizeStrDate()
     
     /**
+     * @return sql date type
      * 
-     * @return
      */
     public static java.sql.Date getCurrentDate() {
         Calendar rightNow = Calendar.getInstance();
@@ -420,6 +429,8 @@ public class OracleERPUtil {
      * Add a quoted string to a SQL statement we're building in a buffer. If the attribute might be an integer, then
      * call addAttributeValue() instead, which factors in the syntax of the attribute when determining whether or not to
      * quote the value.
+     * @param b buffer
+     * @param s string to be quoted
      */
     public static void addQuoted(StringBuffer b, String s) {
         b.append("'");

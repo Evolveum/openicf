@@ -666,4 +666,44 @@ public class UserSecuringAttrs  {
         log.ok(method);
         return arrayList;
     }
+    
+    /**
+     * Get securing Groups for appName 
+     * @param appName
+     * @return list
+     */
+    public List<String> getSecGroups(String appName) {
+        final String method = "getSecGroups";
+        log.info( method);
+        
+        PreparedStatement st = null;
+        ResultSet res = null;
+        StringBuffer b = new StringBuffer();
+
+        b.append("SELECT distinct fndsecgvl.security_group_name ");
+        b.append("FROM " + co.app() + "fnd_security_groups_vl fndsecgvl ");
+
+        List<String> arrayList = new ArrayList<String>();
+        try {
+            st = co.getConn().prepareStatement(b.toString());
+            res = st.executeQuery();
+            while (res.next()) {
+
+                String s = getColumn(res, 1);
+
+                arrayList.add(s);
+            }
+        }
+        catch (SQLException e) {
+            log.error(e, method);
+            throw ConnectorException.wrap(e);
+        } finally {
+            SQLUtil.closeQuietly(res);
+            res = null;
+            SQLUtil.closeQuietly(st);
+            st = null;
+        }
+        log.ok(method);
+        return arrayList;
+    }    
 }

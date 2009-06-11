@@ -22,8 +22,9 @@
  */
 package org.identityconnectors.oracleerp;
 
-import java.text.MessageFormat;
+import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
+import java.text.MessageFormat;
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
@@ -531,17 +532,37 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      */
     @Override
     public void validate() {
-        Assertions.blankCheck(user, "user");
-        Assertions.nullCheck(password, "password");
+        if(StringUtil.isBlank(getUser())){
+            throw new IllegalArgumentException(getMessage(MSG_USER_BLANK));
+        }
         if (StringUtil.isBlank(dataSource)) {
-            if(StringUtil.isBlank(url)) {
-                Assertions.blankCheck(host, "database"); 
-                Assertions.blankCheck(port, "database"); 
-                Assertions.blankCheck(database, "database"); 
+            if(getPassword()==null){
+                throw new IllegalArgumentException(getMessage(MSG_PASSWORD_BLANK));
             }
+            if(StringUtil.isBlank(getDriver())){
+                throw new IllegalArgumentException(getMessage(MSG_DRIVER_BLANK));
+            }                 
+            try {
+                Class.forName(getDriver());
+            } catch (ClassNotFoundException e) {
+                throw new IllegalArgumentException(getMessage(MSG_DRIVER_NOT_FOUND));
+            }
+            if(StringUtil.isBlank(url)) {
+                if(StringUtil.isBlank(getHost())){
+                    throw new IllegalArgumentException(getMessage(MSG_HOST_BLANK));
+                }
+                if(StringUtil.isBlank(getPort())){
+                    throw new IllegalArgumentException(getMessage(MSG_PORT_BLANK));
+                }
+                if(StringUtil.isBlank(getDatabase())){
+                    throw new IllegalArgumentException(getMessage(MSG_DATABASE_BLANK));
+                }
+            }
+            log.ok("driver configuration is ok");                
         } else {
             //Validate the JNDI properties
             JNDIUtil.arrayToHashtable(getJndiProperties(), getConnectorMessages());           
+            log.ok("dataSource configuration is ok");                
         }
     }
 

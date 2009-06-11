@@ -36,6 +36,7 @@ import java.util.StringTokenizer;
 
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
@@ -43,9 +44,13 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
+import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
+
 
 /**
  * Main implementation of the OracleErp Connector
@@ -59,15 +64,17 @@ public class ResponsibilityNames {
     /**
      * Setup logging.
      */
-    static final Log log = Log.getLog(ResponsibilityNames.class); 
+    static final Log log = Log.getLog(ResponsibilityNames.class);
 
     /**
      * The get Instance method
-     * @param connector parent
+     * 
+     * @param connector
+     *            parent
      * @return the account
      */
     public static ResponsibilityNames getInstance(OracleERPConnector connector) {
-       return new ResponsibilityNames(connector);
+        return new ResponsibilityNames(connector);
     }
 
     /**
@@ -86,25 +93,25 @@ public class ResponsibilityNames {
      * if description field exists in responsibility views.
      */
     private boolean newResponsibilityViews = false;
-    
-    
+
     /**
      * Accessor for the descrExists property
+     * 
      * @return the descrExists
      */
     public boolean isDescrExists() {
         return descrExists;
     }
 
-
     /**
      * Accessor for the newResponsibilityViews property
+     * 
      * @return the newResponsibilityViews
      */
     public boolean isNewResponsibilityViews() {
         return newResponsibilityViews;
-    }    
-    
+    }
+
     /**
      * Responsibility Application Id
      */
@@ -114,21 +121,24 @@ public class ResponsibilityNames {
      * Responsibility Id
      */
     private String respId = "";
-    
+
     /**
      * The ResponsibilityNames
-     * @param connector parent
+     * 
+     * @param connector
+     *            parent
      */
     private ResponsibilityNames(OracleERPConnector connector) {
         this.co = connector;
     }
-    
+
     /**
      * @param bld
      * @param columnValues
-     * @param columnNames 
+     * @param columnNames
      */
-    public void buildResponsibilitiesToAccountObject(ConnectorObjectBuilder bld, Map<String, SQLParam> columnValues, Set<String> columnNames) {
+    public void buildResponsibilitiesToAccountObject(ConnectorObjectBuilder bld, Map<String, SQLParam> columnValues,
+            Set<String> columnNames) {
         final String id = getStringParamValue(columnValues, USER_ID);
         if (columnNames.contains(RESP) && !isNewResponsibilityViews()) {
             //add responsibilities
@@ -147,13 +157,13 @@ public class ResponsibilityNames {
             bld.addAttribute(RESPKEYS, resps);
         }
 
-        if (columnNames.contains(INDIRECT_RESP) ) {
+        if (columnNames.contains(INDIRECT_RESP)) {
             //add responsibilities
             final List<String> responsibilities = getResponsibilities(id, RESPS_INDIRECT_VIEW, false);
             bld.addAttribute(INDIRECT_RESP, responsibilities);
-        }       
+        }
     }
-    
+
     /**
      * The New responsibility format there
      * 
@@ -184,16 +194,15 @@ public class ResponsibilityNames {
         log.ok("ResponsibilityViews does not exists");
         return false;
     }
-    
 
     /**
-     * bug#13889 : Added method to create a responsibility string with dates normalized.
-     * respFmt: 
-     *   RESP_FMT_KEYS: get responsibility keys (resp_name, app_name, sec_group)
-     *   RESP_FMT_NORMALIZE_DATES: get responsibility string (resp_name, app_name, sec_group, description, start_date, end_date)
-     *                             start_date, end_date (no time data, allow nulls)
-     * @param strResp 
-     * @param respFmt 
+     * bug#13889 : Added method to create a responsibility string with dates normalized. respFmt: RESP_FMT_KEYS: get
+     * responsibility keys (resp_name, app_name, sec_group) RESP_FMT_NORMALIZE_DATES: get responsibility string
+     * (resp_name, app_name, sec_group, description, start_date, end_date) start_date, end_date (no time data, allow
+     * nulls)
+     * 
+     * @param strResp
+     * @param respFmt
      * @return normalized resps string
      */
     public String getResp(String strResp, int respFmt) {
@@ -224,43 +233,44 @@ public class ResponsibilityNames {
         log.ok(method);
         return strRespRet;
     } // getRespWithNormalizeDates()  
-    
 
     /**
      * Accessor for the respApplId property
+     * 
      * @return the respApplId
      */
     public String getRespApplId() {
         return respApplId;
     }
 
-    
     /**
      * Accessor for the respId property
+     * 
      * @return the respId
      */
     public String getRespId() {
         return respId;
-    }    
-    
+    }
 
     /**
      * Init the responsibilities
+     * 
+     * @param configUserId
+     *            configUserId
      */
-    public void initResponsibilities() {
+    public void initResponsibilities(final String configUserId) {
         this.newResponsibilityViews = getNewResponsibilityViews();
-        
+
         if (isNewResponsibilityViews()) {
             this.descrExists = getDescriptionExiests();
         }
-        
+
         // three pieces of data need for apps_initialize()
         final String auditResponsibility = co.getCfg().getAuditResponsibility();
-        final String userId = OracleERPUtil.getUserId(co, co.getCfg().getUser());
 
         if (StringUtil.isNotBlank(auditResponsibility)) {
-            if (StringUtil.isNotBlank(userId)) {
-                co.getSecAttrs().initAdminUserId(userId);
+            if (StringUtil.isNotBlank(configUserId)) {
+                co.getSecAttrs().initAdminUserId(configUserId);
             }
 
             final String view = co.app()
@@ -274,12 +284,12 @@ public class ResponsibilityNames {
             final String msg = "Oracle ERP SQL: {0} returned: RESP_ID = {1}, RESP_APPL_ID = {2}";
 
             ArrayList<SQLParam> params = new ArrayList<SQLParam>();
-            params.add(new SQLParam(userId));
+            params.add(new SQLParam(configUserId));
             params.add(new SQLParam(auditResponsibility));
             PreparedStatement ps = null;
             ResultSet rs = null;
             try {
-                log.info("Select responsibility for user_id: {0}, and audit responsibility {1}", userId,
+                log.info("Select responsibility for user_id: {0}, and audit responsibility {1}", configUserId,
                         auditResponsibility);
                 ps = co.getConn().prepareStatement(sql, params);
                 rs = ps.executeQuery();
@@ -301,9 +311,8 @@ public class ResponsibilityNames {
                 ps = null;
             }
         }
-    }    
-    
-    
+    }
+
     /**
      * Get the Account Object Class Info
      * 
@@ -336,7 +345,8 @@ public class ResponsibilityNames {
         // name='readWriteOnlyFormIds' type='string' audit='false'
         aoc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_IDS, String.class, EnumSet.of(Flags.REQUIRED)));
         // name='readOnlyFormNames' type='string' audit='false'
-        aoc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_NAMES, String.class, EnumSet
+        aoc
+                .addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_NAMES, String.class, EnumSet
                         .of(Flags.REQUIRED)));
         // name='readOnlyFunctionNames' type='string' audit='false'    
         aoc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTION_NAMES, String.class, EnumSet
@@ -362,14 +372,15 @@ public class ResponsibilityNames {
         return aoc.build();
     }
 
-    
-    
     /**
      * getResponsibilities
      * 
-     * @param id user id
-     * @param respLocation The responsibilities table
-     * @param activeOnly select active only
+     * @param id
+     *            user id
+     * @param respLocation
+     *            The responsibilities table
+     * @param activeOnly
+     *            select active only
      * @return list of strings of multivalued attribute
      */
     public List<String> getResponsibilities(String id, String respLocation, boolean activeOnly) {
@@ -384,8 +395,7 @@ public class ResponsibilityNames {
         // descr may not be available in view or in native ui with new resp views
         // bug#15492 - do not include user tables in query if id not specified, does not return allr responsibilities
         if (id != null) {
-            if (!isNewResponsibilityViews()
-                    || (isDescrExists() && respLocation.equalsIgnoreCase(RESPS_DIRECT_VIEW))) {
+            if (!isNewResponsibilityViews() || (isDescrExists() && respLocation.equalsIgnoreCase(RESPS_DIRECT_VIEW))) {
                 b.append(", fnduserg.DESCRIPTION");
             }
             b.append(", fnduserg.START_DATE, fnduserg.END_DATE ");
@@ -471,14 +481,13 @@ public class ResponsibilityNames {
 
         log.ok(method);
         return arrayList;
-    }    
-
+    }
 
     /**
-     * bug#13889 : Added method to create a responsibilities list with dates normalized.
-     * RESP_FMT_KEYS: get responsibility keys (resp_name, app_name, sec_group)
-     * RESP_FMT_NORMALIZE_DATES: get responsibility keys (resp_name, app_name, sec_group, description, start_date, end_date)
-     *   
+     * bug#13889 : Added method to create a responsibilities list with dates normalized. RESP_FMT_KEYS: get
+     * responsibility keys (resp_name, app_name, sec_group) RESP_FMT_NORMALIZE_DATES: get responsibility keys
+     * (resp_name, app_name, sec_group, description, start_date, end_date)
+     * 
      * @param resps
      * @param respFmt
      * @return list of Sting
@@ -492,17 +501,17 @@ public class ResponsibilityNames {
             for (String strResp : resps) {
                 String strRespReformatted = getResp(strResp, respFmt);
                 log.info(method + " strResp='" + strResp + "', strRespReformatted='" + strRespReformatted + "'");
-                respKeys.add(strRespReformatted);                
+                respKeys.add(strRespReformatted);
             }
         }
         log.ok(method);
         return respKeys;
     } // getResps()  
 
-
     /**
      * 
-     * @param attr resp attribute
+     * @param attr
+     *            resp attribute
      * @param identity
      * @param result
      * @throws WavesetException
@@ -511,7 +520,7 @@ public class ResponsibilityNames {
         final String method = "updateUserResponsibilities";
         log.info(method);
 
-        final List<String> errors = new ArrayList<String>();        
+        final List<String> errors = new ArrayList<String>();
         final List<String> respList = new ArrayList<String>();
         for (Object obj : attr.getValue()) {
             respList.add(obj.toString());
@@ -569,7 +578,7 @@ public class ResponsibilityNames {
                         log.error("deleted, (end_dated), responsibility: '" + resp + "' for " + identity);
                     }
                 }
-                index++;                
+                index++;
             }
         }
         // if new key is not in old list add it and remove from respList
@@ -584,7 +593,7 @@ public class ResponsibilityNames {
                     addUserResponsibility(identity, resp, errors);
                     respList.remove(resp);
                     log.info("added responsibility: '" + resp + "' for " + identity);
-                }                
+                }
             }
         }//end-if
         // if new key is both lists, update it
@@ -622,7 +631,7 @@ public class ResponsibilityNames {
                         String msg = "updated responsibility: '" + resp + "' for " + identity;
                         log.info(msg);
                     }
-                }                
+                }
             }
         }//end-if
 
@@ -631,7 +640,7 @@ public class ResponsibilityNames {
             StringBuilder error = new StringBuilder();
             for (String msg : errors) {
                 error.append(msg);
-                error.append(";");                
+                error.append(";");
             }
             log.error(error.toString());
             throw new ConnectorException(error.toString());
@@ -640,8 +649,6 @@ public class ResponsibilityNames {
         log.ok(method);
 
     }
-    
-    
 
     private void addUserResponsibility(String identity, String resp, List<String> errors) {
         final String method = "addUserResponsibility";
@@ -850,15 +857,12 @@ public class ResponsibilityNames {
         b.append("; responsibility_app_name := ");
         addQuoted(b, respAppName);
         b.append("; SELECT  fndsecg.security_group_key INTO resp_sec_g_key ");
-        b.append("FROM " + co.app() + "fnd_security_groups fndsecg, " + co.app()
-                + "fnd_security_groups_vl fndsecgvl ");
+        b.append("FROM " + co.app() + "fnd_security_groups fndsecg, " + co.app() + "fnd_security_groups_vl fndsecgvl ");
         b.append("WHERE fndsecg.security_group_id = fndsecgvl.security_group_id ");
         b.append("AND fndsecgvl.security_group_name = security_group; ");
         b.append("SELECT fndapp.application_short_name, fndresp.responsibility_key, ");
         b.append("fndrespvl.description INTO resp_app, resp_key, description ");
-        b
-                .append("FROM " + co.app() + "fnd_responsibility_vl fndrespvl, " + co.app()
-                        + "fnd_responsibility fndresp, ");
+        b.append("FROM " + co.app() + "fnd_responsibility_vl fndrespvl, " + co.app() + "fnd_responsibility fndresp, ");
         b.append(co.app() + "fnd_application_vl fndappvl, " + co.app() + "fnd_application fndapp ");
         b.append("WHERE fndappvl.application_id = fndrespvl.application_id ");
         b.append("AND fndappvl.APPLICATION_ID = fndapp.APPLICATION_ID ");
@@ -1029,5 +1033,104 @@ public class ResponsibilityNames {
             }
         }
         log.ok(method);
-    }    
+    }
+
+    /**
+     * The ResponsibilityNames
+     * @return the list of the responsibility names
+     */
+    public List<String> getResponsibilityNames() {
+        final String method = "getResponsibilityName";
+        log.info( method);
+
+        PreparedStatement st = null;
+        ResultSet res = null;
+        StringBuffer b = new StringBuffer();
+
+        b.append("SELECT distinct fndrespvl.responsibility_name ");
+        b.append("FROM " + co.app()+ "fnd_responsibility_vl fndrespvl, ");
+        b.append(co.app() + "fnd_application_vl fndappvl ");
+        b.append("WHERE fndappvl.application_id = fndrespvl.application_id ");
+
+        List<String> arrayList = new ArrayList<String>();
+        try {
+            st = co.getConn().prepareStatement(b.toString());
+            res = st.executeQuery();
+            while (res.next()) {
+
+                String s = getColumn(res, 1);
+
+                arrayList.add(s);
+            }
+        }
+        catch (SQLException e) {
+            log.error(e, method);
+            throw ConnectorException.wrap(e);
+        } finally {
+            SQLUtil.closeQuietly(res);
+            res = null;
+            SQLUtil.closeQuietly(st);
+            st = null;
+        }
+        log.ok(method);
+        return arrayList;
+    }
+    
+    
+    /**
+     * @param oclass
+     * @param where
+     * @param handler
+     * @param options
+     */
+    public void executeQuery(ObjectClass oclass, FilterWhereBuilder where, ResultsHandler handler,
+            OperationOptions options) {
+        // TODO Auto-generated method stub
+
+    }
+    
+    /**
+     * Get applications for a argument
+     * @param respName responsibility name
+     * @return list
+     */
+    public List<String> getApplications(String respName) {
+        final String method = "getApplications";
+        log.info( method);
+
+        PreparedStatement st = null;
+        ResultSet res = null;
+        StringBuffer b = new StringBuffer();
+
+        b.append("SELECT distinct fndappvl.application_name ");
+        b.append("FROM " + co.app() + "fnd_responsibility_vl fndrespvl, ");
+        b.append(co.app() + "fnd_application_vl fndappvl ");
+        b.append("WHERE fndappvl.application_id = fndrespvl.application_id ");
+        b.append("AND fndrespvl.responsibility_name = ?");
+
+        List<String> arrayList = new ArrayList<String>();
+        try {
+            st = co.getConn().prepareStatement(b.toString());
+            st.setString(1, respName);
+            res = st.executeQuery();
+            while (res.next()) {
+
+                String s = getColumn(res, 1);
+
+                arrayList.add(s);
+            }
+        }
+        catch (SQLException e) {
+            log.error(e, method);
+            throw ConnectorException.wrap(e);
+        } finally {
+            SQLUtil.closeQuietly(res);
+            res = null;
+            SQLUtil.closeQuietly(st);
+            st = null;
+        }
+        log.ok(method);
+        return arrayList;
+    }
+    
 }

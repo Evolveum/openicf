@@ -22,7 +22,7 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.RESP_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -145,15 +145,15 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      * Accessor for the userId property
      * @return the userId
      */
-    public String getUserId() {
-        return userId;
+    public String getConfigUserId() {
+        return configUserId;
     }
 
 
     /**
      * User id from cfg.User
      */
-    private String userId = "";
+    private String configUserId = "";
     
     
 
@@ -177,7 +177,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         log.ok(sql);
         CallableStatement st = null;
         try {
-            st = conn.prepareCall(sql);
+            st = getConn().prepareCall(sql);
             st.registerOutParameter(1, Types.BOOLEAN);
             st.setString(2, username.toUpperCase());
             SQLUtil.setGuardedStringParam(st, 3, password); //Guarded String unwrapping 
@@ -213,7 +213,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
 
         if (oclass.equals(ObjectClass.ACCOUNT)) {
             //doBeforeCreateActionScripts(oclass, attrs, options);
-            final Uid uid = account.create(oclass, attrs, options);
+            final Uid uid = getAccount().create(oclass, attrs, options);
             
             //doAfterCreateActionScripts(oclass, attrs, options);
             return uid;
@@ -222,8 +222,8 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         //    return uid;
         }
 
-        throw new IllegalArgumentException("Create operation requires one 'ObjectClass' of "
-                + "account, responsibilityNames");
+        throw new IllegalArgumentException(getCfg().getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
+
     }
 
     /* (non-Javadoc)
@@ -237,13 +237,13 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
     /* (non-Javadoc)
      * @see org.identityconnectors.framework.spi.operations.DeleteOp#delete(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.Uid, org.identityconnectors.framework.common.objects.OperationOptions)
      */
-    public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
-        if (objClass.equals(ObjectClass.ACCOUNT)) {
-            account.delete(objClass, uid, options);
+    public void delete(ObjectClass oclass, Uid uid, OperationOptions options) {
+        if (oclass.equals(ObjectClass.ACCOUNT)) {
+            getAccount().delete(oclass, uid, options);
             return;
         }
 
-        throw new IllegalArgumentException("Delete operation requires an 'ObjectClass' of type account");
+        throw new IllegalArgumentException(getCfg().getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
     }
 
     /**
@@ -252,10 +252,12 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      * @see Connector#dispose()
      */
     public void dispose() {
+        conn.dispose();
         cfg = null;
         conn = null;
         account = null;
         respNames = null;
+        secAttrs = null;
     }
 
     /* (non-Javadoc)
@@ -268,14 +270,20 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         Assertions.nullCheck(handler, "handler");
 
         if (oclass.equals(ObjectClass.ACCOUNT)) {
-            account.executeQuery(oclass, where, handler, options);
-
+            getAccount().executeQuery(oclass, where, handler, options);
+            return;    
+        } else if (oclass.equals(OracleERPUtil.RESP_NAMES_OC)) {
+            getRespNames().executeQuery(oclass, where, handler,options);
+            return;
         } else if (oclass.equals(OracleERPUtil.RESP_OC)) { //OK
-            // TODO add implementation
+            getRespNames().executeQuery(oclass, where, handler,options);
+            return;
         } else if (oclass.equals(OracleERPUtil.DIRECT_RESP_OC)) { //OK
-            // TODO add implementation
+            getRespNames().executeQuery(oclass, where, handler,options);
+            return;
         } else if (oclass.equals(OracleERPUtil.INDIRECT_RESP_OC)) { //OK
-            // TODO add implementation 
+            getRespNames().executeQuery(oclass, where, handler,options);
+            return;
         } else if (oclass.equals(OracleERPUtil.APP_OC)) {
             // TODO add implementation
         } else if (oclass.equals(OracleERPUtil.AUDITOR_RESP_OC)) { // ok
@@ -286,12 +294,11 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
             // TODO add implementation
         } else if (oclass.equals(OracleERPUtil.MENU_OC)) {
             // TODO add implementation
-        } else if (oclass.equals(OracleERPUtil.RESP_NAMES_OC)) {
-            // TODO add implementation
         } else if (oclass.equals(OracleERPUtil.SEC_GROUP_OC)) {
             // TODO add implementation
         }
-
+        
+        throw new IllegalArgumentException(getCfg().getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
     }
 
     /**
@@ -341,20 +348,19 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
          */
         log.info("Init using configuration {0}", cfg);
         this.cfg = (OracleERPConfiguration) cfg;
-        this.conn = OracleERPConnection.createOracleERPConnection(this.cfg);
-        Assertions.nullCheck(this.conn, "connection");
+        this.conn = OracleERPConnection.createOracleERPConnection(getCfg());
 
         /*  
          * RA: startConnection(): 
          *  setNewRespView();
          *  initFndGlobal();
          */
-
-        respNames.initResponsibilities();
-
-        this.userId = OracleERPUtil.getUserId(this, this.cfg.getUser());
-
+        configUserId = OracleERPUtil.getUserId(this, getCfg().getUser());
+        log.info("Init Responsibilities for config user {0}", configUserId);
+        getRespNames().initResponsibilities(getConfigUserId());
+        log.info("Init global");
         initFndGlobal();
+        log.ok("init");
     }
 
     /* (non-Javadoc)
@@ -377,7 +383,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         final ScriptExecutor scripEx = scriptExFact.newScriptExecutor(loader, request.getScriptText(), true);
         try {
             //openConnection();
-            scriptArguments.put("conn", conn.getConnection()); //The real connection
+            scriptArguments.put("conn", getConn().getConnection()); //The real connection
             return scripEx.execute(scriptArguments);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
@@ -406,7 +412,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         final String nameValue = ((Name) scriptArguments.get(Name.NAME)).getNameValue();
         final GuardedString password = ((GuardedString) scriptArguments.get(OperationalAttributes.PASSWORD_NAME));
 
-        actionContext.put("conn", conn.getConnection()); //The real connection
+        actionContext.put("conn", getConn().getConnection()); //The real connection
         actionContext.put("action", scriptArguments.get("operation")); // The action is the operation name createUser/updateUser/deleteUser/disableUser/enableUser
         actionContext.put("timing", scriptArguments.get("timing")); // The timming before / after
         actionContext.put("attributes", scriptArguments.get("attributes")); // The attributes
@@ -462,28 +468,27 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      * @see org.identityconnectors.framework.spi.operations.TestOp#test()
      */
     public void test() {
-        cfg.validate();
-        conn.test();
+        getCfg().validate();
+        getConn().test();
     }
 
     /* (non-Javadoc)
      * @see org.identityconnectors.framework.spi.operations.UpdateOp#update(org.identityconnectors.framework.common.objects.ObjectClass, java.util.Set, org.identityconnectors.framework.common.objects.OperationOptions)
      */
-    public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> replaceAttributes, OperationOptions options) {
+    public Uid update(ObjectClass oclass, Uid uid, Set<Attribute> replaceAttributes, OperationOptions options) {
         if (replaceAttributes.isEmpty()) {
             throw new IllegalArgumentException("Invalid attributes provided to a create operation.");
         }
-        if (objclass.equals(ObjectClass.ACCOUNT)) {
+        if (oclass.equals(ObjectClass.ACCOUNT)) {
             //doBeforeUpdateActionScripts(oclass, attrs, options);
-            uid = account.update(objclass, uid, replaceAttributes, options);
+            uid = getAccount().update(oclass, uid, replaceAttributes, options);
             //doAfterUpdateActionScripts(oclass, attrs, options);
             return uid;
-        } else if (objclass.equals(RESP_NAMES)) {
-           // uid = respNames.update(objclass, uid, replaceAttributes, options);
+        } else if (oclass.equals(RESP_NAMES)) {
+           // uid = respNames.update(oclass, uid, replaceAttributes, options);
         }
 
-        throw new IllegalArgumentException("Update operation requires one 'ObjectClass' of "
-                + "account,responsibilityNames");
+        throw new IllegalArgumentException(getCfg().getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
     }
 
     /**
@@ -493,19 +498,19 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         final String respId = getRespNames().getRespId();        
         final String respApplId = getRespNames().getRespApplId();
         //Real initialize call
-        if (StringUtil.isNotBlank(this.userId) && StringUtil.isNotBlank(respId)
+        if (StringUtil.isNotBlank(getConfigUserId()) && StringUtil.isNotBlank(respId)
                 && StringUtil.isNotBlank(respApplId)) {
             CallableStatement cs = null;
             try {
                 final String sql = "call " + app() + "FND_GLOBAL.APPS_INITIALIZE(?,?,?)";
                 final String msg = "Oracle ERP: {0}FND_GLOBAL.APPS_INITIALIZE({1}, {2}, {3}) called.";
-                log.ok(msg, app(), this.userId, respId, respApplId);
+                log.ok(msg, app(), getConfigUserId(), respId, respApplId);
                 List<SQLParam> pars = new ArrayList<SQLParam>();
-                pars.add(new SQLParam(this.userId, Types.VARCHAR));
+                pars.add(new SQLParam(getConfigUserId(), Types.VARCHAR));
                 pars.add(new SQLParam(respId, Types.VARCHAR));
                 pars.add(new SQLParam(respApplId, Types.VARCHAR));
 
-                cs = conn.prepareCall(sql, pars);
+                cs = getConn().prepareCall(sql, pars);
                 cs.execute();
                 // Result ?
                 // cstmt1 closed in finally below
