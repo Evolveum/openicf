@@ -57,5 +57,10 @@ final class Pair<F,S> {
 		return true;
 	}
 	
+	@Override
+	public String toString(){
+		return "(" + first + "," + second + ")"; 
+	}
+	
 	
 }

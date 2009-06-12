@@ -4,6 +4,7 @@
 package org.identityconnectors.oracle;
 
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -28,23 +29,27 @@ import org.identityconnectors.framework.spi.operations.SchemaOp;
  *
  */
 final class OracleOperationSchema extends AbstractOracleOperation implements SchemaOp {
-
+	//Last veersion for oracle where oracle supports quotas for temporary table spaces
+	private static final Pair<Integer, Integer> LAST_TMP_TS_QUOTA_VERSION = new Pair<Integer, Integer>(10,1);
 	OracleOperationSchema(OracleConfiguration cfg, Connection adminConn,
 			Log log) {
 		super(cfg, adminConn, log);
 	}
 
 	public Schema schema() {
-		String dbVersion = null;
+		String dbProductVersion = null;
+		Pair<Integer, Integer> dbVersion = null;;
 		try{
-			dbVersion = adminConn.getMetaData().getDatabaseProductVersion();
+			DatabaseMetaData metaData = adminConn.getMetaData();
+			dbVersion = new Pair<Integer, Integer>(metaData.getDatabaseMajorVersion(), metaData.getDatabaseMinorVersion());
+			dbProductVersion = metaData.getDatabaseProductVersion();
 		}
 		catch(SQLException e){
 			//This is internal error
 			throw new ConnectorException("Cannot resolve getMetaData().getDatabaseProductVersion()", e);
 		}
 		boolean express = false;
-		if(dbVersion.contains("Express")){
+		if(dbProductVersion.contains("Express")){
 			express = true;
 		}
         Set<AttributeInfo> attrInfoSet = new HashSet<AttributeInfo>();
@@ -61,15 +66,30 @@ final class OracleOperationSchema extends AbstractOracleOperation implements Sch
         attrInfoSet.add(AttributeInfoBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,String.class,EnumSet.of(Flags.MULTIVALUED)));
         attrInfoSet.add(AttributeInfoBuilder.build(OracleConstants.ORACLE_PROFILE_ATTR_NAME,String.class));
         attrInfoSet.add(AttributeInfoBuilder.build(OracleConstants.ORACLE_DEF_TS_ATTR_NAME,String.class));
-        attrInfoSet.add(AttributeInfoBuilder.build(OracleConstants.ORACLE_TEMP_TS_ATTR_NAME,String.class));
         attrInfoSet.add(AttributeInfoBuilder.build(OracleConstants.ORACLE_DEF_TS_QUOTA_ATTR_NAME,String.class));
-        attrInfoSet.add(AttributeInfoBuilder.build(
-				OracleConstants.ORACLE_TEMP_TS_QUOTA_ATTR_NAME, String.class, express ? EnumSet
-						.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE) : null));
+        attrInfoSet.add(AttributeInfoBuilder.build(OracleConstants.ORACLE_TEMP_TS_ATTR_NAME,String.class));
+        attrInfoSet.add(AttributeInfoBuilder.build(OracleConstants.ORACLE_TEMP_TS_QUOTA_ATTR_NAME,String.class, !isTempTsQuotaWriteable(dbVersion) ? EnumSet.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE) : null));
         SchemaBuilder schemaBld = new SchemaBuilder(OracleConnector.class);
         schemaBld.defineObjectClass(ObjectClass.ACCOUNT_NAME, attrInfoSet);
         Schema schema =  schemaBld.build();
         return schema;
+	}
+
+	/** If current version of oracle is greater then LAST_TMP_TS_QUOTA_VERSION, we will not support
+	 *  writeable temporary table space quotas
+	 * @param dbVersion
+	 * @return true resource supports ORACLE_DEF_TS_QUOTA_ATTR_NAME attribute
+	 */
+	private boolean isTempTsQuotaWriteable(Pair<Integer, Integer> dbVersion) {
+		if(dbVersion.getFirst() < LAST_TMP_TS_QUOTA_VERSION.getFirst()){
+			return true;
+		}
+		else if(dbVersion.getFirst() > LAST_TMP_TS_QUOTA_VERSION.getFirst()){
+			return false;
+		}
+		else{
+			return dbVersion.getSecond() <= LAST_TMP_TS_QUOTA_VERSION.getSecond();
+		}
 	}
 
 }
