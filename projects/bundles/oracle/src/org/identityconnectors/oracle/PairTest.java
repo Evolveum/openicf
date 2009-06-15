@@ -1,6 +1,7 @@
 package org.identityconnectors.oracle;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import org.junit.Test;
 
@@ -48,6 +49,14 @@ public class PairTest {
 		pair2 = new Pair<Integer, String>(1,null);
 		assertEquals(pair1,pair2);
 		assertEquals(pair2,pair1);
+
+		pair1 = new Pair<Integer, String>(null,null);
+		pair2 = new Pair<Integer, String>(null,null);
+		assertEquals(pair1,pair2);
+		assertEquals(pair2,pair1);
+		
+		assertFalse(pair1.equals(null));
+		assertFalse(pair1.equals("hello"));
 		
 	}
 

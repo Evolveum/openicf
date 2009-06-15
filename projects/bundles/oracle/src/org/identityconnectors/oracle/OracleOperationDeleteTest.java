@@ -61,6 +61,8 @@ public class OracleOperationDeleteTest extends OracleConnectorAbstractTest {
 	@Test
 	public void testDeleteFail() throws SQLException{
 		OracleConnectorImpl testConnector = createTestConnector();
+		
+		
 		String newUser = "newUser";
         try{
         	testConnector.delete(ObjectClass.ACCOUNT, new Uid(newUser), null);
@@ -74,15 +76,30 @@ public class OracleOperationDeleteTest extends OracleConnectorAbstractTest {
         uid = testConnector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,password), null);
         OracleSpecificsTest.killConnection(connector.getOrCreateAdminConnection(), testConnector.getOrCreateAdminConnection());
         try{
-        	testConnector.delete(ObjectClass.GROUP, uid, null);
+        	testConnector.delete(ObjectClass.ACCOUNT, uid, null);
         	fail("Delete must fail for killed connection");
         }catch(UnknownUidException e){
         	fail("Should not throw UnknownUidException for killed connection");
         }
         catch(RuntimeException e){
         }
+        testConnector.dispose();
         connector.delete(ObjectClass.ACCOUNT, uid, null);
-		testConnector.dispose();
+        
+        //delete group must fail
+        try{
+        	connector.delete(ObjectClass.GROUP, uid, null);
+        	fail("Delete must fail group");
+        }catch(UnknownUidException e){
+        	fail("Should not throw UnknownUidException for group");
+        }
+        catch(RuntimeException e){
+        }
+        
+        
+        
+		
+		
 	}
 
 
