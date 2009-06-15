@@ -28,11 +28,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
@@ -42,6 +47,7 @@ import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
+import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -50,8 +56,6 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
 import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
-
-import com.sun.corba.se.spi.activation.InitialNameServicePackage.NameAlreadyBound;
 
 
 /**
@@ -142,27 +146,27 @@ public class ResponsibilityNames {
     public void buildResponsibilitiesToAccountObject(ConnectorObjectBuilder bld, Map<String, SQLParam> columnValues,
             Set<String> columnNames) {
         final String id = getStringParamValue(columnValues, USER_ID);
-        if (columnNames.contains(RESP) && !isNewResponsibilityViews()) {
+        if (columnNames.contains(RESPS) && !isNewResponsibilityViews()) {
             //add responsibilities
             final List<String> responsibilities = getResponsibilities(id, RESPS_TABLE, false);
-            bld.addAttribute(RESP, responsibilities);
+            bld.addAttribute(RESPS, responsibilities);
 
             //add resps list
             final List<String> resps = getResps(responsibilities, RESP_FMT_KEYS);
             bld.addAttribute(RESPKEYS, resps);
-        } else if (columnNames.contains(DIRECT_RESP)) {
+        } else if (columnNames.contains(DIRECT_RESPS)) {
             final List<String> responsibilities = getResponsibilities(id, RESPS_DIRECT_VIEW, false);
-            bld.addAttribute(DIRECT_RESP, responsibilities);
+            bld.addAttribute(DIRECT_RESPS, responsibilities);
 
             //add resps list
             final List<String> resps = getResps(responsibilities, RESP_FMT_KEYS);
             bld.addAttribute(RESPKEYS, resps);
         }
 
-        if (columnNames.contains(INDIRECT_RESP)) {
+        if (columnNames.contains(INDIRECT_RESPS)) {
             //add responsibilities
             final List<String> responsibilities = getResponsibilities(id, RESPS_INDIRECT_VIEW, false);
-            bld.addAttribute(INDIRECT_RESP, responsibilities);
+            bld.addAttribute(INDIRECT_RESPS, responsibilities);
         }
     }
 
@@ -207,7 +211,7 @@ public class ResponsibilityNames {
      * @param respFmt
      * @return normalized resps string
      */
-    public String getResp(String strResp, int respFmt) {
+    private String getResp(String strResp, int respFmt) {
         final String method = "getResp(String, int)";
         log.info(method + "respFmt=" + respFmt);
         String strRespRet = null;
@@ -326,7 +330,7 @@ public class ResponsibilityNames {
      *            select active only
      * @return list of strings of multivalued attribute
      */
-    public List<String> getResponsibilities(String id, String respLocation, boolean activeOnly) {
+    private List<String> getResponsibilities(String id, String respLocation, boolean activeOnly) {
 
         final String method = "getResponsibilities";
         log.info(method);
@@ -435,7 +439,7 @@ public class ResponsibilityNames {
      * @param respFmt
      * @return list of Sting
      */
-    public List<String> getResps(List<String> resps, int respFmt) {
+    private List<String> getResps(List<String> resps, int respFmt) {
         final String method = "getResps(ArrayList, int)";
         log.info(method + " respFmt=" + respFmt);
         List<String> respKeys = null;
@@ -980,10 +984,12 @@ public class ResponsibilityNames {
 
     /**
      * The ResponsibilityNames
-     * @return the list of the responsibility names
+     * @param where 
+     * @param handler 
+     * @param options 
      */
-    public List<String> getResponsibilityNames() {
-        final String method = "getResponsibilityName";
+    private void getResponsibilityNames(FilterWhereBuilder where, ResultsHandler handler, OperationOptions options) {
+        final String method = "getResponsibilityNames";
         log.info( method);
 
         PreparedStatement st = null;
@@ -995,15 +1001,20 @@ public class ResponsibilityNames {
         b.append(co.app() + "fnd_application_vl fndappvl ");
         b.append("WHERE fndappvl.application_id = fndrespvl.application_id ");
 
-        List<String> arrayList = new ArrayList<String>();
         try {
             st = co.getConn().prepareStatement(b.toString());
             res = st.executeQuery();
             while (res.next()) {
+                ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
+                bld.setObjectClass(RESP_NAMES_OC);
 
                 String s = getColumn(res, 1);
-
-                arrayList.add(s);
+                bld.addAttribute(Name.NAME, s);
+                bld.addAttribute(NAME, s);
+                
+                if (!handler.handle(bld.build())) {
+                    break;
+                }
             }
         }
         catch (SQLException e) {
@@ -1016,7 +1027,6 @@ public class ResponsibilityNames {
             st = null;
         }
         log.ok(method);
-        return arrayList;
     }
     
     
@@ -1028,39 +1038,72 @@ public class ResponsibilityNames {
      */
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder where, ResultsHandler handler,
             OperationOptions options) {
-        // TODO Auto-generated method stub
-
+        if (oclass.equals(RESP_NAMES_OC)) {
+            getResponsibilityNames(where, handler,options);
+            return;
+        } else if (oclass.equals(RESP_OC)) { //OK
+            getResponsibilityNames(where, handler,options);
+            return;
+        } else if (oclass.equals(DIRECT_RESP_OC)) { //OK
+            getResponsibilityNames(where, handler,options);
+            return;
+        } else if (oclass.equals(INDIRECT_RESP_OC)) { //OK
+            getResponsibilityNames(where, handler,options);
+            return;
+        } else if (oclass.equals(APPS_OC)) {            
+            getApplications(where, handler, options);
+            return;
+        } else if (oclass.equals(AUDITOR_RESPS_OC)) { // ok
+            getAuditorResponsibilities(where, handler,options);
+            return;
+        }
+        throw new IllegalArgumentException(co.getCfg().getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
     }
     
+
+
     /**
-     * Get applications for a argument
-     * @param respName responsibility name
-     * @return list
+     * Get applications for a argument 
+     * @param where
+     * @param handler
+     * @param options
      */
-    public List<String> getApplications(String respName) {
+    private void getApplications(FilterWhereBuilder where, ResultsHandler handler, OperationOptions options) {
         final String method = "getApplications";
         log.info( method);
 
         PreparedStatement st = null;
         ResultSet res = null;
         StringBuffer b = new StringBuffer();
-
+        String respName = null;
+        if(options != null && options.getOptions() != null) {
+            respName = (String) options.getOptions().get(RESP_NAME);
+        } else {
+            //TODO do I support where there?
+            return;
+        }
+        
         b.append("SELECT distinct fndappvl.application_name ");
         b.append("FROM " + co.app() + "fnd_responsibility_vl fndrespvl, ");
         b.append(co.app() + "fnd_application_vl fndappvl ");
         b.append("WHERE fndappvl.application_id = fndrespvl.application_id ");
         b.append("AND fndrespvl.responsibility_name = ?");
 
-        List<String> arrayList = new ArrayList<String>();
         try {
             st = co.getConn().prepareStatement(b.toString());
             st.setString(1, respName);
             res = st.executeQuery();
             while (res.next()) {
+                ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
+                bld.setObjectClass(APPS_OC);
 
                 String s = getColumn(res, 1);
-
-                arrayList.add(s);
+                bld.addAttribute(Name.NAME, s);
+                bld.addAttribute(NAME, s);
+                
+                if (!handler.handle(bld.build())) {
+                    break;
+                }
             }
         }
         catch (SQLException e) {
@@ -1073,8 +1116,8 @@ public class ResponsibilityNames {
             st = null;
         }
         log.ok(method);
-        return arrayList;
-    }
+}
+
 
     /**
      * @param schemaBld
@@ -1083,7 +1126,7 @@ public class ResponsibilityNames {
         final EnumSet<Flags> STD_RNA = EnumSet.of(Flags.NOT_UPDATEABLE, Flags.NOT_CREATABLE);
         
         ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
-        oc.setType(RESP_NAMES);
+        oc.setType(RESP_NAMES_OC.getObjectClassValue());
 
         // The Name is supported attribute
         oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
@@ -1128,7 +1171,7 @@ public class ResponsibilityNames {
 
         //Auditor responsibilities
         oc = new ObjectClassInfoBuilder();
-        oc.setType(AUDITOR_RESPS);
+        oc.setType(AUDITOR_RESPS_OC.getObjectClassValue());
 
         // The Name is supported attribute
         oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
@@ -1173,7 +1216,7 @@ public class ResponsibilityNames {
         
         //Resp object class
         oc = new ObjectClassInfoBuilder();
-        oc.setType(RESP); 
+        oc.setType(RESP_OC.getObjectClassValue()); 
         oc.setContainer(true);
         oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
         //Define object class
@@ -1181,7 +1224,7 @@ public class ResponsibilityNames {
         
         //Resp object class
         oc = new ObjectClassInfoBuilder();
-        oc.setType(DIRECT_RESP); 
+        oc.setType(DIRECT_RESP_OC.getObjectClassValue()); 
         oc.setContainer(true);
         oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
         //Define object class
@@ -1189,7 +1232,7 @@ public class ResponsibilityNames {
         
         //directResponsibilities object class
         oc = new ObjectClassInfoBuilder();
-        oc.setType(INDIRECT_RESP); 
+        oc.setType(INDIRECT_RESP_OC.getObjectClassValue()); 
         oc.setContainer(true);
         oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
         //Define object class
@@ -1197,11 +1240,469 @@ public class ResponsibilityNames {
         
         //directResponsibilities object class
         oc = new ObjectClassInfoBuilder();
-        oc.setType(APPS); 
+        oc.setType(APPS_OC.getObjectClassValue()); 
         oc.setContainer(true);
         oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
         //Define object class
         schemaBld.defineObjectClass(oc.build());
     }
     
+    /**
+     * @param where
+     * @param handler
+     * @param options
+     */
+    private void getAuditorResponsibilities(FilterWhereBuilder where, ResultsHandler handler, OperationOptions options) {
+        String id = null;
+        if (options != null && options.getOptions() != null) {
+            id = (String) options.getOptions().get("id");
+        }
+
+        String respLocation = RESPS_TABLE;
+        if (co.getCfg().isActiveAccountsOnly()) {
+            respLocation = RESPS_ALL_VIEW;
+        }
+
+        List<String> auditorRespList = getResponsibilities(id, respLocation, co.getCfg().isActiveAccountsOnly());
+        for (String respName : auditorRespList) {
+            ConnectorObject auditorData = getAuditorDataObject(respName);
+            if (!handler.handle(auditorData)) {
+                break;
+            }
+        }
+    }    
+    
+
+    /**
+     * 
+     * Return Object of Auditor Data
+     * 
+     * List auditorResps (GO) userMenuNames menuIds userFunctionNames functionIds formIds formNames userFormNames
+     * readOnlyFormIds readWriteOnlyFormIds readOnlyFunctionIds readWriteOnlyFunctionIds readOnlyFormNames
+     * readOnlyUserFormNames readWriteOnlyFormNames readWriteOnlyUserFormNames
+     * @param resp 
+     * @return an audit object
+     * @throws SQLException 
+     * 
+     */
+     private ConnectorObject getAuditorDataObject(String respName) {
+         final String method = "getAuditorDataObject";
+         log.info(method);
+         // Profile Options used w/SOB and Organization
+         String sobOption = "GL Set of Books ID";
+         String ouOption = "MO: Operating Unit";
+
+         ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
+
+        String curResp = respName;
+        String resp = null;
+        String app = null;
+        if (curResp != null) {
+            StringTokenizer tok = new StringTokenizer(curResp, "||", false);
+            if (tok != null && tok.countTokens() > 1) {
+                resp = tok.nextToken();
+                app = tok.nextToken();
+            }
+        }
+        StringBuffer b = new StringBuffer();
+
+        //one query 
+        b.append("SELECT DISTINCT 'N/A' userMenuName, 0 menuID, fffv.function_id,");
+        b.append("fffv.user_function_name , ffv.form_id, ffv.form_name, ffv.user_form_name, ");
+        b.append("fffv.function_name, ");
+        b.append("fffv.parameters  FROM fnd_form_functions_vl fffv, ");
+        b.append("fnd_form_vl ffv WHERE fffv.form_id=ffv.form_id(+) ");
+        b.append("AND fffv.function_id NOT IN (SELECT action_id FROM fnd_resp_functions frf1 ");
+        b.append("WHERE responsibility_id=(SELECT frv.responsibility_id ");
+        b.append("FROM fnd_responsibility_vl frv , fnd_application_vl fa WHERE ");
+        b.append("frv.application_id=fa.application_id AND  frv.responsibility_name=? ");
+        b.append("AND fa.application_name=?) AND rule_type='F') ");
+        b.append("AND function_id IN (SELECT function_id FROM fnd_menu_entries fme ");
+        b.append("WHERE menu_id NOT IN (SELECT action_id FROM fnd_resp_functions ");
+        b.append("WHERE responsibility_id=(SELECT frv.responsibility_id FROM fnd_responsibility_vl frv ");
+        b.append(", fnd_application_vl fa WHERE frv.application_id=fa.application_id ");
+        b.append("AND  frv.responsibility_name=? ");
+        b.append("AND fa.application_name=?) AND rule_type='M')");
+        b.append("START WITH menu_id=(SELECT frv.menu_id FROM fnd_responsibility_vl frv ");
+        b.append(", fnd_application_vl fa WHERE frv.application_id=fa.application_id ");
+        b.append("AND  frv.responsibility_name=? ");
+        b.append("AND fa.application_name=?) CONNECT BY prior sub_menu_id=menu_id) ");
+        b.append("UNION SELECT DISTINCT user_menu_name userMenuName, menu_id MenuID, ");
+        b.append("0 function_id, 'N/A' user_function_name, 0 form_id, 'N/A' form_name, 'N/A' user_form_name, ");
+        b.append(" 'N/A' function_name, ");
+        b.append("'N/A' parameters  FROM fnd_menus_vl fmv WHERE menu_id IN (");
+        b.append("SELECT menu_id FROM fnd_menu_entries fme WHERE menu_id NOT IN (");
+        b.append("SELECT action_id FROM fnd_resp_functions WHERE responsibility_id=(");
+        b.append("SELECT frv.responsibility_id FROM fnd_responsibility_vl frv, fnd_application_vl fa ");
+        b.append("WHERE frv.application_id=fa.application_id AND frv.responsibility_name=? ");
+        b.append("AND fa.application_name=?) ");
+        b.append("AND rule_type='M') START WITH menu_id=(SELECT frv.menu_id ");
+        b.append("FROM fnd_responsibility_vl frv , fnd_application_vl fa WHERE ");
+        b.append("frv.application_id=fa.application_id AND  frv.responsibility_name=? ");
+        b.append("AND fa.application_name=?) ");
+        b.append("CONNECT BY prior sub_menu_id=menu_id) ORDER BY 2,4");
+        // one query
+        log.info(method + ": SQL statement: " + b.toString());
+        log.ok(method + ": Resp: " + curResp);
+
+        PreparedStatement st = null;
+        ResultSet res = null;
+
+        List<String> menuIds = new ArrayList<String>();
+        List<String> menuNames = new ArrayList<String>();
+        List<String> functionIds = new ArrayList<String>();
+        List<String> userFunctionNames = new ArrayList<String>();
+        List<String> roFormIds = new ArrayList<String>();
+        List<String> rwFormIds = new ArrayList<String>();
+        List<String> roFormNames = new ArrayList<String>();
+        List<String> rwFormNames = new ArrayList<String>();
+        List<String> roUserFormNames = new ArrayList<String>();
+        List<String> rwUserFormNames = new ArrayList<String>();
+        List<String> roFunctionNames = new ArrayList<String>();
+        List<String> rwFunctionNames = new ArrayList<String>();
+        List<String> roFunctionIds = new ArrayList<String>();
+        List<String> rwFunctionIds = new ArrayList<String>();
+
+        // objects to collect all read/write functions and related info
+        // which is used later for false positive fix-up
+        Map<String, Map<String, Object>> functionIdMap = new HashMap<String, Map<String, Object>>();
+        Map<String, Object> attrMap = new HashMap<String, Object>();
+
+        try {
+
+            st = co.getConn().prepareStatement(b.toString());
+            st.setString(1, resp);
+            st.setString(2, app);
+            st.setString(3, resp);
+            st.setString(4, app);
+            st.setString(5, resp);
+            st.setString(6, app);
+            st.setString(7, resp);
+            st.setString(8, app);
+            st.setString(9, resp);
+            st.setString(10, app);
+            res = st.executeQuery();
+
+            while (res != null && res.next()) {
+
+                String menuName = getColumn(res, 1);
+                if (menuName != null && !menuName.equals("N/A")) {
+                    menuNames.add(menuName);
+                }
+                String menuId = getColumn(res, 2);
+                if (menuId != null && !menuId.equals("0")) {
+                    menuIds.add(menuId);
+                }
+                String funId = getColumn(res, 3);
+                if (funId != null && !funId.equals("0")) {
+                    functionIds.add(funId);
+                }
+                String funName = getColumn(res, 4);
+                if (funName != null && !funName.equals("N/A")) {
+                    userFunctionNames.add(funName);
+                }
+                String param = getColumn(res, 9);// column added for parameters
+                boolean qo = false;
+                if (param != null) {
+                    // pattern can be QUERY_ONLY=YES, QUERY_ONLY = YES, QUERY_ONLY="YES",
+                    // QUERY_ONLY=Y, etc..
+                    Pattern pattern = Pattern.compile("\\s*QUERY_ONLY\\s*=\\s*\"*Y");
+                    Matcher matcher = pattern.matcher(param.toUpperCase());
+                    if (matcher.find()) {
+                        qo = true;
+                    }
+                }
+                if (qo) {
+                    String ROfunId = getColumn(res, 3);
+                    if (ROfunId != null && !ROfunId.equals("0")) {
+                        roFunctionIds.add(ROfunId);
+                    }
+                    String ROfunctionName = getColumn(res, 8);
+                    if (ROfunctionName != null && !ROfunctionName.equals("N/A")) {
+                        roFunctionNames.add(ROfunctionName);
+                    }
+                    String ROformId = getColumn(res, 5);
+                    if (ROformId != null && !ROformId.equals("0")) {
+                        roFormIds.add(ROformId);
+                    }
+                    String ROformName = getColumn(res, 6);
+                    if (ROformName != null && !ROformName.equals("N/A")) {
+                        roFormNames.add(ROformName);
+                    }
+                    String ROuserFormName = getColumn(res, 7);
+                    if (ROuserFormName != null && !ROuserFormName.equals("N/A")) {
+                        roUserFormNames.add(ROuserFormName);
+                    }
+                } else {
+                    String RWfunId = getColumn(res, 3);
+                    if (RWfunId != null && !RWfunId.equals("0")) {
+                        rwFunctionIds.add(RWfunId);
+                    }
+                    String RWfunctionName = getColumn(res, 8);
+                    if (RWfunctionName != null && !RWfunctionName.equals("N/A")) {
+                        rwFunctionNames.add(RWfunctionName);
+                        attrMap.put("rwFunctionName", RWfunctionName);
+                    }
+                    String RWformId = getColumn(res, 5);
+                    if (RWformId != null && !RWformId.equals("0")) {
+                        rwFormIds.add(RWformId);
+                        attrMap.put("rwFormId", RWformId);
+                    }
+                    String RWformName = getColumn(res, 6);
+                    if (RWformName != null && !RWformName.equals("N/A")) {
+                        rwFormNames.add(RWformName);
+                        attrMap.put("rwFormName", RWformName);
+                    }
+                    String RWuserFormName = getColumn(res, 7);
+                    if (RWuserFormName != null && !RWuserFormName.equals("N/A")) {
+                        rwUserFormNames.add(RWuserFormName);
+                        attrMap.put("rwUserFormName", RWuserFormName);
+                    }
+                    if (!attrMap.isEmpty()) {
+                        functionIdMap.put(RWfunId, new HashMap<String, Object>(attrMap));
+                        attrMap.clear();
+                    }
+                }// end-if (qo)
+            }// end-while
+            // no catch, just use finally to ensure closes happen
+        } catch (SQLException e) {
+            log.error(e, method);
+            throw ConnectorException.wrap(e);
+        } finally {
+            SQLUtil.closeQuietly(res);
+            res = null;
+            SQLUtil.closeQuietly(st);
+            st = null;
+        }
+
+        // Post Process Results looking for false-positive (misidentified rw objects) only if 
+        // there are any read only functions (roFunctionIds != null)
+        // The results of this query are additional roFunctionIds by following logic
+        // in bug#13405.
+        if (roFunctionIds != null && roFunctionIds.size() > 0) {
+            b = new StringBuffer();
+            b.append("SELECT function_id from fnd_compiled_menu_functions ");
+            b.append("WHERE menu_id IN ");
+            b.append("( SELECT sub_menu_id from fnd_menu_entries ");
+            b.append("WHERE function_id IN (");
+            b.append(listToCommaDelimitedString(roFunctionIds));
+            b.append(") AND sub_menu_id > 0 AND grant_flag = 'Y' ");
+            b.append("AND sub_menu_id IN (");
+            b.append(listToCommaDelimitedString(menuIds));
+            b.append(") )");
+            log.info(method + ", SQL statement (Post Processing): " + b.toString());
+            try {
+                st = co.getConn().prepareStatement(b.toString());
+                res = st.executeQuery();
+                while (res != null && res.next()) {
+                    // get each functionId and use as key to find associated rw objects
+                    // remove from rw bucket and place in ro bucket
+                    String functionId = getColumn(res, 1);
+                    if (functionId != null) {
+                        Map<String, Object> idObj = functionIdMap.get(functionId);
+                        if (idObj != null) {
+                            if (rwFunctionIds.contains(functionId)) {
+                                rwFunctionIds.remove(functionId);
+                                roFunctionIds.add(functionId);
+                            }
+                            String rwFunctionName = (String) idObj.get("rwFunctionName");
+                            if (rwFunctionNames.contains(rwFunctionName)) {
+                                rwFunctionNames.remove(rwFunctionName);
+                                roFunctionNames.add(rwFunctionName);
+                            }
+                            String rwFormId = (String) idObj.get("rwFormId");
+                            if (rwFormIds.contains(rwFormId)) {
+                                rwFormIds.remove(rwFormId);
+                                roFormIds.add(rwFormId);
+                            }
+                            String rwFormName = (String) idObj.get("rwFormName");
+                            if (rwFormNames.contains(rwFormName)) {
+                                rwFormNames.remove(rwFormName);
+                                roFormNames.add(rwFormName);
+                            }
+                            String rwUserFormName = (String) idObj.get("rwUserFormName");
+                            if (rwUserFormNames.contains(rwUserFormName)) {
+                                rwUserFormNames.remove(rwUserFormName);
+                                roUserFormNames.add(rwUserFormName);
+                            }
+                        }// if idObj ! null
+                    }// if functionId != null                    
+                }// end while
+
+                // no catch, just use finally to ensure closes happen
+            } catch (SQLException e) {
+                log.error(e, method);
+                throw ConnectorException.wrap(e);
+            } finally {
+                SQLUtil.closeQuietly(res);
+                res = null;
+                SQLUtil.closeQuietly(st);
+                st = null;
+            }
+        } // end-if roFunctionIds has contents              
+
+        // create objects and load auditor data
+        List<String> userFormNameList = new ArrayList<String>(roUserFormNames);
+        userFormNameList.addAll(rwUserFormNames);
+        List<String> formNameList = new ArrayList<String>(roFormNames);
+        formNameList.addAll(rwFormNames);
+        List<String> formIdList = new ArrayList<String>(roFormIds);
+        formIdList.addAll(rwFormIds);
+        List<String> functionNameList = new ArrayList<String>(roFunctionNames);
+        functionNameList.addAll(rwFunctionNames);
+        List<String> functionIdsList = new ArrayList<String>(roFunctionIds);
+        functionIdsList.addAll(rwFunctionIds);
+
+        bld.addAttribute(USER_MENU_NAMES, menuNames);
+        bld.addAttribute(MENU_IDS, menuIds);
+        bld.addAttribute(USER_FUNCTION_NAMES, userFunctionNames);
+        bld.addAttribute(FUNCTION_IDS, functionIdsList);
+        bld.addAttribute(READ_ONLY_FUNCTIONS_IDS, roFunctionIds);
+        bld.addAttribute(READ_WRITE_ONLY_FUNCTION_IDS, rwFunctionIds);
+        bld.addAttribute(FORM_IDS, formIdList);
+        bld.addAttribute(READ_ONLY_FORM_IDS, roFormIds);
+        bld.addAttribute(READ_WRITE_ONLY_FORM_IDS, rwFormIds);
+        bld.addAttribute(FORM_NAMES, formNameList);
+        bld.addAttribute(READ_ONLY_FORM_NAMES, roFormNames);
+        bld.addAttribute(READ_WRITE_ONLY_FORM_NAMES, rwFormNames);
+        bld.addAttribute(USER_FORM_NAMES, userFormNameList);
+        bld.addAttribute(READ_ONLY_USER_FORM_NAMES, roUserFormNames);
+        bld.addAttribute(READ_WRITE_ONLY_USER_FORM_NAMES, rwUserFormNames);
+        bld.addAttribute(FUNCTION_NAMES, functionNameList);
+        bld.addAttribute(READ_ONLY_FUNCTION_NAMES, roFunctionNames);
+        bld.addAttribute(READ_WRITE_ONLY_FUNCTION_NAMES, rwFunctionNames);
+        bld.addAttribute(RESP_NAMES, resp + "||" + app);
+
+        // check to see if SOB/ORGANIZATION is required
+        if (co.getCfg().isReturnSobOrgAttrs()) {
+            b = new StringBuffer();
+            // query for SOB / Organization
+            b.append("Select distinct ");
+            b.append("decode(fpo1.user_profile_option_name, '");
+            b.append(sobOption + "', fpo1.user_profile_option_name||'||'||gsob.name||'||'||gsob.set_of_books_id, '");
+            b.append(ouOption + "', fpo1.user_profile_option_name||'||'||hou1.name||'||'||hou1.organization_id)");
+            b.append(" from " + co.app() + "fnd_responsibility_vl fr, " + co.app() + "fnd_profile_option_values fpov, "
+                    + co.app() + "fnd_profile_options fpo");
+            b.append(" , " + co.app() + "fnd_profile_options_vl fpo1, " + co.app() + "hr_organization_units hou1, "
+                    + co.app() + "gl_sets_of_books gsob");
+            b
+                    .append(" where fr.responsibility_id = fpov.level_value and gsob.set_of_books_id = fpov.profile_option_value");
+            b
+                    .append(" and  fpo.profile_option_name = fpo1.profile_option_name and fpo.profile_option_id = fpov.profile_option_id");
+            b
+                    .append(" and  fpo.application_id = fpov.application_id and   fpov.profile_option_value = to_char(hou1.organization_id(+))");
+            b.append(" and  fpov.profile_option_value = to_char(gsob.set_of_books_id(+)) and   fpov.level_id = 10003");
+            b.append(" and  fr.responsibility_name = ?");
+            b.append(" order by 1");
+
+            log.info(method + ",SQL statement: " + b.toString());
+            log.info(method + ", Resp: " + curResp);
+
+            try {
+                st = co.getConn().prepareStatement(b.toString());
+                st.setString(1, resp);
+                res = st.executeQuery();
+
+                while (res != null && res.next()) {
+                    String option = getColumn(res, 1);
+                    if (option != null && option.startsWith(sobOption)) {
+                        List<String> values = Arrays.asList(option.split("||"));
+                        if (values != null && values.size() == 3) {
+                            bld.addAttribute(SOB_NAME, values.get(1));
+                            bld.addAttribute(SOB_ID, values.get(2));
+                        }
+                    } else if (option != null && option.startsWith(ouOption)) {
+                        List<String> values = Arrays.asList(option.split("||"));
+                        if (values != null && values.size() == 3) {
+                            bld.addAttribute(OU_NAME, values.get(1));
+                            bld.addAttribute(OU_ID, values.get(2));
+                        }
+                    }
+                }
+            } catch (SQLException e) {
+                log.error(e, method);
+                throw ConnectorException.wrap(e);
+            } finally {
+                SQLUtil.closeQuietly(res);
+                res = null;
+                SQLUtil.closeQuietly(st);
+                st = null;
+            }
+        }
+
+        if (menuNames != null) {
+            Collections.sort(menuNames);
+            log.ok(method + "USER_MENU_NAMES " + menuNames.toString());
+        }
+        if (menuIds != null) {
+            Collections.sort(menuIds);
+            log.ok(method + "MENU_IDS " + menuIds.toString());
+        }
+        if (userFunctionNames != null) {
+            Collections.sort(userFunctionNames);
+            log.ok(method + "USER_FUNCTION_NAMES " + userFunctionNames.toString());
+        }
+        if (functionIdsList != null) {
+            Collections.sort(functionIdsList);
+            log.ok(method + "FUNCTION_IDS " + functionIdsList.toString());
+        }
+        if (roFunctionIds != null) {
+            Collections.sort(roFunctionIds);
+            log.ok(method + "RO_FUNCTION_IDS " + roFunctionIds.toString());
+        }
+        if (rwFunctionIds != null) {
+            Collections.sort(rwFunctionIds);
+            log.ok(method + "RW_FUNCTION_IDS " + rwFunctionIds.toString());
+        }
+        if (formIdList != null) {
+            Collections.sort(formIdList);
+            log.ok(method + "APP_ID_FORM_IDS " + formIdList.toString());
+        }
+        if (roFormIds != null) {
+            Collections.sort(roFormIds);
+            log.ok(method + "RO_APP_ID_FORM_IDS " + roFormIds.toString());
+        }
+        if (rwFormIds != null) {
+            Collections.sort(rwFormIds);
+            log.ok(method + "RW_APP_ID_FORM_IDS " + rwFormIds.toString());
+        }
+        if (formNameList != null) {
+            Collections.sort(formNameList);
+            log.ok(method + "FORM_NAMES " + formNameList.toString());
+        }
+        if (roFormNames != null) {
+            Collections.sort(roFormNames);
+            log.ok(method + "RO_FORM_NAMES " + roFormNames.toString());
+        }
+        if (rwFormNames != null) {
+            Collections.sort(rwFormNames);
+            log.ok(method + "RW_FORM_NAMES " + rwFormNames.toString());
+        }
+        if (userFormNameList != null) {
+            Collections.sort(userFormNameList);
+            log.ok(method + "USER_FORM_NAMES " + userFormNameList.toString());
+        }
+        if (roUserFormNames != null) {
+            Collections.sort(roUserFormNames);
+            log.ok(method + "RO_USER_FORM_NAMES " + roUserFormNames.toString());
+        }
+        if (rwUserFormNames != null) {
+            Collections.sort(rwUserFormNames);
+            log.ok(method + "RW_USER_FORM_NAMES " + rwUserFormNames.toString());
+        }
+        if (functionNameList != null) {
+            Collections.sort(functionNameList);
+            log.ok(method + "FUNCTION_NAMES " + functionNameList.toString());
+        }
+        if (roFunctionNames != null) {
+            Collections.sort(roFunctionNames);
+            log.ok(method + "RO_FUNCTION_NAMES " + roFunctionNames.toString());
+        }
+        if (rwFunctionNames != null) {
+            Collections.sort(rwFunctionNames);
+            log.ok(method + "RW_FUNCTION_NAMES " + rwFunctionNames.toString());
+        }
+         log.ok(method);
+         return bld.build();
+     }    
 }

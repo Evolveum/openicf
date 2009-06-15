@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
@@ -43,7 +44,10 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
+import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
 
 /**
@@ -100,7 +104,7 @@ public class UserSecuringAttrs  {
         }
         final String id = getStringParamValue(columnValues, USER_ID);
 
-        List<String> secAttrs = getSecuringAttrs(id, null);
+        List<String> secAttrs = getSecuringAttrs(id);
         if (secAttrs != null) {
             bld.addAttribute(SEC_ATTRS, secAttrs);
         }
@@ -121,14 +125,14 @@ public class UserSecuringAttrs  {
     public void schema(SchemaBuilder schemaBld) {
         //securityGroups object class
         ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
-        oc.setType(SEC_GROUPS); 
+        oc.setType(SEC_GROUPS_OC.getObjectClassValue()); 
         oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class));
         //Define object class
         schemaBld.defineObjectClass(oc.build());
         
         //securingAttrs object class
         oc = new ObjectClassInfoBuilder();
-        oc.setType(SEC_ATTRS); 
+        oc.setType(SEC_ATTRS_OC.getObjectClassValue()); 
         oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class));
         //Define object class
         schemaBld.defineObjectClass(oc.build());        
@@ -168,13 +172,10 @@ public class UserSecuringAttrs  {
         log.info(method);
 
         //Convert to list of Strings
-        final List<String> secAttrList = new ArrayList<String>();
-        for (Object obj : secAttr.getValue()) {
-            secAttrList.add(obj.toString());
-        }
+        final List<String> secAttrList = convertToListString(secAttr.getValue());
 
         // get Users Securing Attrs
-        List<String> oldSecAttrs = getSecuringAttrs(identity, null);
+        List<String> oldSecAttrs = getSecuringAttrs(identity);
 
         // add new attrs
         for (String secAttribute : secAttrList) {
@@ -587,24 +588,20 @@ public class UserSecuringAttrs  {
         log.ok(method);
     }
 
-
     /**
      * Get Securing Attributes
      * @param id 
      * @param options 
      * @return list of strings
      */
-    private List<String> getSecuringAttrs(String id, Map options) {
+    private List<String> getSecuringAttrs(String id) {
         final String method = "getSecAttrs";
         log.info(method);
         PreparedStatement st = null;
         ResultSet res = null;
         StringBuffer b = new StringBuffer();
         //default value
-        String pattern = null;
-        if (options != null) {
-            pattern = (String) options.get(PATTERN);
-        }
+        String pattern = "%";
         b.append("SELECT distinct akattrvl.NAME, fndappvl.APPLICATION_NAME ");
         if (id != null) {
             b.append(", akwebsecattr.VARCHAR2_VALUE, akwebsecattr.DATE_VALUE, akwebsecattr.NUMBER_VALUE ");
@@ -614,19 +611,15 @@ public class UserSecuringAttrs  {
         // conditionalize including AK_WEB_USER_SEC_ATTR_VALUES in the FROM
         // list, has significant performance impact when present but not
         // referenced.
-        if (id != null) {
-            b.append(", " + co.app() + "AK_WEB_USER_SEC_ATTR_VALUES akwebsecattr, ");
-            b.append(co.app() + "FND_USER fnduser ");
-        }
+        b.append(", " + co.app() + "AK_WEB_USER_SEC_ATTR_VALUES akwebsecattr, ");
+        b.append(co.app() + "FND_USER fnduser ");
 
         b.append("WHERE akattrvl.ATTRIBUTE_APPLICATION_ID = fndappvl.APPLICATION_ID ");
-        if (id != null) {
-            b.append("AND akwebsecattr.WEB_USER_ID = fnduser.USER_ID ");
-            b.append("AND akattrvl.ATTRIBUTE_APPLICATION_ID = akwebsecattr.ATTRIBUTE_APPLICATION_ID ");
-            b.append("AND akattrvl.ATTRIBUTE_CODE = akwebsecattr.ATTRIBUTE_CODE ");
-            b.append("AND fnduser.USER_NAME = ?");
-            pattern = "%";
-        }
+
+        b.append("AND akwebsecattr.WEB_USER_ID = fnduser.USER_ID ");
+        b.append("AND akattrvl.ATTRIBUTE_APPLICATION_ID = akwebsecattr.ATTRIBUTE_APPLICATION_ID ");
+        b.append("AND akattrvl.ATTRIBUTE_CODE = akwebsecattr.ATTRIBUTE_CODE ");
+        b.append("AND fnduser.USER_NAME = ?");
         b.append(" AND akattrvl.NAME LIKE '");
         b.append(pattern);
         b.append("' ");
@@ -637,9 +630,7 @@ public class UserSecuringAttrs  {
         try {
             log.info("execute sql {0}", sql);
             st = co.getConn().prepareStatement(sql);
-            if (id != null) {
-                st.setString(1, id.toUpperCase());
-            }
+            st.setString(1, id.toUpperCase());
             res = st.executeQuery();
             while (res.next()) {
 
@@ -649,19 +640,17 @@ public class UserSecuringAttrs  {
                 sb.append(getColumn(res, 2));
                 // get one of three values (one column per type) if id is specified
                 // value can be type varchar2, date, number
-                if (id != null) {
-                    if (getColumn(res, 3) != null) {
-                        sb.append("||");
-                        sb.append(getColumn(res, 3));
-                    }
-                    if (getColumn(res, 4) != null) {
-                        sb.append("||");
-                        sb.append(getColumn(res, 4));
-                    }
-                    if (getColumn(res, 5) != null) {
-                        sb.append("||");
-                        sb.append(getColumn(res, 5));
-                    }
+                if (getColumn(res, 3) != null) {
+                    sb.append("||");
+                    sb.append(getColumn(res, 3));
+                }
+                if (getColumn(res, 4) != null) {
+                    sb.append("||");
+                    sb.append(getColumn(res, 4));
+                }
+                if (getColumn(res, 5) != null) {
+                    sb.append("||");
+                    sb.append(getColumn(res, 5));
                 }
                 arrayList.add(sb.toString());
             }
@@ -679,12 +668,80 @@ public class UserSecuringAttrs  {
         return arrayList;
     }
     
+    
+    /**
+     * Get Securing Attributes for list of all results
+     * @param where 
+     * @param handler 
+     * @param options 
+     */
+    public void getSecuringAttrsResult(FilterWhereBuilder where, ResultsHandler handler, OperationOptions options) {
+        final String method = "getSecAttrs";
+        log.info(method);
+        PreparedStatement st = null;
+        ResultSet res = null;
+        StringBuffer b = new StringBuffer();
+        //default value
+        String pattern = "%";
+        if (options != null && options.getOptions() != null) {
+            pattern = (String) options.getOptions().get(PATTERN);
+        }
+        b.append("SELECT distinct akattrvl.NAME, fndappvl.APPLICATION_NAME ");
+
+        b.append("FROM " + co.app() + "AK_ATTRIBUTES_VL akattrvl, " + co.app()
+                + "FND_APPLICATION_VL fndappvl ");
+
+
+        b.append("WHERE akattrvl.ATTRIBUTE_APPLICATION_ID = fndappvl.APPLICATION_ID ");
+
+        b.append(" AND akattrvl.NAME LIKE '");
+        b.append(pattern);
+        b.append("' ");
+        b.append("ORDER BY akattrvl.NAME");
+
+        final String sql = b.toString();
+        try {
+            log.info("execute sql {0}", sql);
+            st = co.getConn().prepareStatement(sql);
+            res = st.executeQuery();
+            while (res.next()) {
+
+                StringBuffer sb = new StringBuffer();
+                sb.append(getColumn(res, 1));
+                sb.append("||");
+                sb.append(getColumn(res, 2));
+                
+                ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
+                bld.setObjectClass(SEC_ATTRS_OC);
+
+                bld.addAttribute(Name.NAME, sb.toString());
+                bld.addAttribute(NAME, sb.toString());
+                
+                if (!handler.handle(bld.build())) {
+                    break;
+                }                
+            }
+        } catch (SQLException e) {
+            final String msg = "could not get Securing attributes";
+            log.error(e, msg);
+            throw new ConnectorException(msg, e);
+        } finally {
+            SQLUtil.closeQuietly(res);
+            res = null;
+            SQLUtil.closeQuietly(st);
+            st = null;
+        }
+        log.ok(method);
+    }
+    
     /**
      * Get securing Groups for appName 
+     * @param where 
+     * @param handler 
+     * @param options 
      * @param appName
-     * @return list
      */
-    public List<String> getSecGroups(String appName) {
+    public void getSecGroups(FilterWhereBuilder where, ResultsHandler handler, OperationOptions options) {
         final String method = "getSecGroups";
         log.info( method);
         
@@ -695,15 +752,21 @@ public class UserSecuringAttrs  {
         b.append("SELECT distinct fndsecgvl.security_group_name ");
         b.append("FROM " + co.app() + "fnd_security_groups_vl fndsecgvl ");
 
-        List<String> arrayList = new ArrayList<String>();
         try {
             st = co.getConn().prepareStatement(b.toString());
             res = st.executeQuery();
             while (res.next()) {
+                
+                ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
+                bld.setObjectClass(SEC_GROUPS_OC);
 
                 String s = getColumn(res, 1);
-
-                arrayList.add(s);
+                bld.addAttribute(Name.NAME, s);
+                bld.addAttribute(NAME, s);
+                
+                if (!handler.handle(bld.build())) {
+                    break;
+                }                
             }
         }
         catch (SQLException e) {
@@ -716,6 +779,24 @@ public class UserSecuringAttrs  {
             st = null;
         }
         log.ok(method);
-        return arrayList;
+    }
+
+    /**
+     * @param oclass
+     * @param where
+     * @param handler
+     * @param options
+     */
+    public void executeQuery(ObjectClass oclass, FilterWhereBuilder where, ResultsHandler handler,
+            OperationOptions options) {
+        if (oclass.equals(OracleERPUtil.SEC_GROUPS)) {
+            getSecGroups(where, handler, options);
+            return;
+        } else if (oclass.equals(OracleERPUtil.SEC_ATTRS)) { //OK
+            getSecuringAttrsResult(where, handler,options);
+            return;
+        } 
+        throw new IllegalArgumentException(co.getCfg().getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
+        
     }    
 }

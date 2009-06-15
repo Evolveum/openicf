@@ -56,7 +56,6 @@ import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
@@ -105,7 +104,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             PERSON_PARTY_ID, //18   not createble, updatable  
             PERSON_FULLNAME, //19     
             NPW_NUM, NPW_NUM, //20
-            RESP, //22
+            RESPS, //22
             EMP_NUM, //21     
             RESPKEYS, //23     
             SEC_ATTRS, //24     
@@ -266,8 +265,8 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         }
                 
         // Update responsibilities
-        final Attribute resp = AttributeUtil.find(RESP, attrs);
-        final Attribute directResp = AttributeUtil.find(DIRECT_RESP, attrs);
+        final Attribute resp = AttributeUtil.find(RESPS, attrs);
+        final Attribute directResp = AttributeUtil.find(DIRECT_RESPS, attrs);
         if ( resp != null ) {
             co.getRespNames().updateUserResponsibilities( resp, identity);
         } else if ( directResp != null ) {
@@ -324,6 +323,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      */
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder where, ResultsHandler handler,
             OperationOptions options) {
+        final String method = "executeQuery";
         //Names
         final String tblname = co.app() + "fnd_user";
         
@@ -367,6 +367,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                 }
             }
         } catch (SQLException e) {
+            log.error(e, method);
             throw ConnectorException.wrap(e);
         } finally {
             SQLUtil.closeQuietly(result);
@@ -446,7 +447,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         // name='person_party_id' type='string' required='false'
         oc.addAttributeInfo(AttributeInfoBuilder.build(PERSON_PARTY_ID, String.class));
         // name='RESP' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(RESP, String.class, EnumSet.of(Flags.MULTIVALUED)));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(RESPS, String.class, EnumSet.of(Flags.MULTIVALUED)));
         // name='RESPKEYS' type='string' required='false'
         oc.addAttributeInfo(AttributeInfoBuilder.build(RESPKEYS, String.class, EnumSet.of(Flags.MULTIVALUED)));
         // name='SEC_ATTRS' type='string' required='false'
@@ -548,8 +549,8 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         }
                         
         // Update responsibilities
-        final Attribute resp = AttributeUtil.find(RESP, attrs);
-        final Attribute directResp = AttributeUtil.find(DIRECT_RESP, attrs);
+        final Attribute resp = AttributeUtil.find(RESPS, attrs);
+        final Attribute directResp = AttributeUtil.find(DIRECT_RESPS, attrs);
         if ( resp != null ) {
             co.getRespNames().updateUserResponsibilities( resp, identity);
         } else if ( directResp != null ) {

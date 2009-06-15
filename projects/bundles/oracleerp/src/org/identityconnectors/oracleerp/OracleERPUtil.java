@@ -26,7 +26,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -96,9 +98,9 @@ public class OracleERPUtil {
     static final String EXP_PWD = "expirePassword";
 
     // The container attributes 
-    static final String RESP = "responsibilities";
+
     static final String RESPKEYS = "responsibilityKeys";
-    static final String SEC_ATTRS = "securingAttrs";
+
     
     // static variable on update to set dates to local server time
     static final String SYSDATE = "sysdate";
@@ -108,7 +110,6 @@ public class OracleERPUtil {
     static final String Q = "?";    
 
 
-    static final String RESP_NAMES = "responsibilityNames";
     static final String USER_MENU_NAMES = "userMenuNames";
     static final String MENU_IDS = "menuIds";
     static final String USER_FUNCTION_NAMES = "userFunctionNames";
@@ -134,7 +135,6 @@ public class OracleERPUtil {
     static final int ORA_01403 = 1403;
     
     // Validate messages constants
-    static final String MSG_PWD_BLANK = "msg.pwd.blank";    
     static final String MSG_USER_BLANK = "msg.user.blank";
     static final String MSG_PASSWORD_BLANK = "msg.password.blank";
     static final String MSG_HOST_BLANK = "msg.host.blank";
@@ -142,51 +142,56 @@ public class OracleERPUtil {
     static final String MSG_DATABASE_BLANK = "msg.database.blank";
     static final String MSG_DRIVER_BLANK = "msg.driver.blank";
     static final String MSG_DRIVER_NOT_FOUND = "msg.jdbc.driver.not.found";
-    static final String MSG_ACCOUNT_NOT_CREATE="msg.account.not.create";    
-    static final String MSG_ACCOUNT_NOT_DELETE="msg.account.not.delete";
-    static final String MSG_ACCOUNT_NOT_READ="msg.account.not.read";
-    static final String MSG_ACCOUNT_NOT_UPDATE="msg.account.not.update";
     static final String MSG_UNKNOWN_OPERATION_TYPE = "msg.unknown.operation.type";
-    
+
+    //Not yet used
     static final String MSG_ACCOUNT_OBJECT_CLASS_REQUIRED = "msg.acount.object.class.required";
     static final String MSG_AUTHENTICATE_OP_NOT_SUPPORTED = "msg.auth.op.not.supported";
     static final String MSG_AUTH_FAILED = "msg.auth.op.failed";
     static final String MSG_INVALID_ATTRIBUTE_SET = "msg.invalid.attribute.set";
     static final String MSG_UID_BLANK = "msg.uid.blank";
     static final String MSG_RESULT_HANDLER_NULL = "msg.result.handler.null";  
+    static final String MSG_ACCOUNT_NOT_CREATE="msg.account.not.create";    
+    static final String MSG_ACCOUNT_NOT_DELETE="msg.account.not.delete";
+    static final String MSG_ACCOUNT_NOT_READ="msg.account.not.read";
+    static final String MSG_ACCOUNT_NOT_UPDATE="msg.account.not.update";
     
     /**
      * object class name definitions
      * responsibilities, responsibilityNames, applications, securityGroups, auditorResps
      */
     
-    static final String RESPS = RESP;
+    static final String RESPS = "responsibilities";
     /** Object Class name */
-    public static final ObjectClass RESP_OC = new ObjectClass(RESP);    
+    public static final ObjectClass RESP_OC = new ObjectClass(RESPS);    
 
     static final String DIRECT_RESPS = "directResponsibilities";
-    static final String DIRECT_RESP = DIRECT_RESPS;
     /** Object Class name */
-    public static final ObjectClass DIRECT_RESP_OC = new ObjectClass(DIRECT_RESP);    
+    public static final ObjectClass DIRECT_RESP_OC = new ObjectClass(DIRECT_RESPS);    
 
     static final String INDIRECT_RESPS = "indirectResponsibilities";
-    static final String INDIRECT_RESP = INDIRECT_RESPS;
     /** Object Class name */
-    public static final ObjectClass INDIRECT_RESP_OC = new ObjectClass(INDIRECT_RESP); 
+    public static final ObjectClass INDIRECT_RESP_OC = new ObjectClass(INDIRECT_RESPS); 
 
-    static final String RESP_NAME = RESP_NAMES;
+    static final String RESP_NAMES = "responsibilityNames";
+    static final String RESP_NAME = "responsibility";
     /** Object Class name */
     public static final ObjectClass RESP_NAMES_OC = new ObjectClass(RESP_NAMES);        
     
     static final String APPS = "applications";
     static final String APP = "application";
     /** Object Class name */
-    public static final ObjectClass APP_OC = new ObjectClass(APP);    
+    public static final ObjectClass APPS_OC = new ObjectClass(APPS);    
     
     static final String SEC_GROUPS = "securityGroups";
-    static final String SEC_GROUP = "securityGroup";
+    //static final String SEC_GROUP = "securityGroup";
     /** Object Class name */
-    public static final ObjectClass SEC_GROUP_OC = new ObjectClass(SEC_GROUP);    
+    public static final ObjectClass SEC_GROUPS_OC = new ObjectClass(SEC_GROUPS); 
+    
+    static final String SEC_ATTRS = "securingAttrs";
+    /** Object Class name */
+    public static final ObjectClass SEC_ATTRS_OC = new ObjectClass(SEC_ATTRS); 
+    
     
     static final String PATTERN = "searchPattern";
    
@@ -198,32 +203,7 @@ public class OracleERPUtil {
      * Auditor responsibilities has menus, forms, functions, 
      * Auditor attributes: activeRespsOnly
      */
-    public static final ObjectClass AUDITOR_RESP_OC =  new ObjectClass(AUDITOR_RESP);
-
-    static final String MENUS = "menus";
-    static final String MENU = "menu";
-    /**
-     * Menu has forms
-     * Menu attributes: id, name, userMenu
-     */
-    public static final ObjectClass MENU_OC =  new ObjectClass(MENU);
-
-    static final String FORMS = "forms";
-    static final String FORM = "form";
-    /**
-     * Form has functions
-     * Form attributes: id, name, writable, userForm 
-     */
-    public static final ObjectClass FORM_OC =  new ObjectClass(FORM);
-    
-    static final String FUNCTIONS = "functions";
-    static final String FUNCTION = "function";
-    /**
-     * Function
-     * Function attributes: id, name, writeble, userFunction
-     */
-    public static final ObjectClass FUNCTION_OC =  new ObjectClass(FUNCTION);
-    
+    public static final ObjectClass AUDITOR_RESPS_OC =  new ObjectClass(AUDITOR_RESPS);
     
     static final String ACTIVE_RESPS_ONLY = "activeRespsOnly";
     static final String SOB_NAME = "setOfBooksName";
@@ -231,9 +211,7 @@ public class OracleERPUtil {
     static final String OU_NAME = "organizationalUnitName";
     static final String OU_ID = "organizationalUnitId";
     
-    static final String DEFAULT_USER_NAME = "APPL"; // Default user name    
-    
-    
+    static final String DEFAULT_USER_NAME = "APPL"; // Default user name           
     
     // new version 11.5.10 does not use responsibility table, it uses 2 new views
     static final String RESPS_TABLE = "fnd_user_resp_groups";    
@@ -241,7 +219,10 @@ public class OracleERPUtil {
     static final String RESPS_INDIRECT_VIEW = "fnd_user_resp_groups_indirect";
     static final String RESPS_ALL_VIEW = "fnd_user_resp_groups_all";    
     
-    
+    /**
+     * Name attribute, old name attribute, TODO should I support both?
+     */
+    static final String NAME = "name";
 
     /**
      * 
@@ -458,5 +439,34 @@ public class OracleERPUtil {
         final String ret = (String) param.getValue();
         return ret;
     }
-        
+    
+
+    /**
+     * Convert to strings
+     * @param from 
+     * @return list of strings
+     */
+    public static List<String> convertToListString(List<Object> from) {
+        //Convert to list of Strings
+        final List<String> ret = new ArrayList<String>();
+        for (Object obj : from) {
+            ret.add(obj.toString());
+        }    
+        return ret;                    
+    }    
+    
+    /**
+     * @param list
+     * @return The string value
+     */
+    public static String listToCommaDelimitedString(List<String> list) {
+        StringBuilder ret = new StringBuilder();
+        boolean first = true;
+        for (String val : list) {
+            if(!first) ret.append(",");
+            ret.append(val);
+            first = false;
+        }
+        return ret.toString();        
+    }
 }

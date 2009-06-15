@@ -25,7 +25,7 @@ package org.identityconnectors.oracleerp;
 import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.text.MessageFormat;
-import org.identityconnectors.common.Assertions;
+
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;

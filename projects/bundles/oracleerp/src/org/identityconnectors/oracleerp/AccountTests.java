@@ -56,6 +56,9 @@ public class AccountTests {
     //Schema id
     private static String SCHEMA_PREFIX="APPS.";
 
+    /**
+     * Test method
+     */
     @Test
     public void testCreateUserCall() {
         final Set<Attribute> attrs = createAllAccountAttributes();
@@ -75,7 +78,9 @@ public class AccountTests {
         Assert.assertFalse("Is update needed", account.isUpdateNeeded(userValues));
     }    
     
-
+    /**
+     * Test method
+     */
     @Test
     public void testUpdateUserCall() {
         final Set<Attribute> attrs = createAllAccountAttributes();
@@ -94,6 +99,9 @@ public class AccountTests {
         Assert.assertFalse("Is update needed", account.isUpdateNeeded(userValues));
     }        
     
+    /**
+     * Test method
+     */
     @Test
     public void testCreateUserCreateUserAll() {
         final Set<Attribute> attrs = createAllAccountAttributes();
@@ -109,7 +117,9 @@ public class AccountTests {
         Assert.assertFalse("Is update needed", account.isUpdateNeeded(userValues));
     }     
     
-    
+    /**
+     * Test method
+     */
     @Test
     public void testUpdateUserCreateUserAll() {
         final Set<Attribute> attrs = createAllAccountAttributes();
@@ -125,7 +135,9 @@ public class AccountTests {
         Assert.assertFalse("Is update needed", account.isUpdateNeeded(userValues));
     }     
     
-
+    /**
+     * Test method
+     */
     @Test
     public void testCreateUserCallNulls() {
         final Set<Attribute> attrs = createNullAccountAttributes();
@@ -145,7 +157,9 @@ public class AccountTests {
         Assert.assertEquals("Invalid number of  SQL Params", 5, account.getUserSQLParams(userValues).size());    
     }
     
-
+    /**
+     * Test method
+     */
     @Test
     public void testUpdateUserCallNulls() {
         final Set<Attribute> attrs = createNullAccountAttributes();
@@ -165,6 +179,9 @@ public class AccountTests {
         Assert.assertEquals("Invalid number of  SQL Params", 4, account.getUserSQLParams(userValues).size());    
     }    
 
+    /**
+     * Test method
+     */
     @Test
     public void testCreateUserCallAllNulls() {
         final Set<Attribute> attrs = createNullAccountAttributes();
@@ -178,6 +195,10 @@ public class AccountTests {
         Assert.assertEquals("Invalid number of  SQL Params", 17, account.getAllSQLParams(userValues).size());
         Assert.assertTrue("Is update needed", account.isUpdateNeeded(userValues)); 
     }
+    
+    /**
+     * Test method
+     */
     @Test
     public void tesUpdateUserCallAllNulls() {
         final Set<Attribute> attrs = createNullAccountAttributes();
@@ -209,7 +230,7 @@ public class AccountTests {
         attrs.add(AttributeBuilder.buildPasswordExpired(false));                
         attrs.add(AttributeBuilder.build(START_DATE, (new Timestamp(System.currentTimeMillis()-10*24*3600000)).toString()));
         attrs.add(AttributeBuilder.build(END_DATE, (new Timestamp(System.currentTimeMillis()+10*24*3600000)).toString()));        
-        attrs.add(AttributeBuilder.build(RESP, "Cash Forecasting||Oracle Cash Management||Standard||Test Description||2004-04-12 00:00:00.0||null"));
+        attrs.add(AttributeBuilder.build(RESPS, "Cash Forecasting||Oracle Cash Management||Standard||Test Description||2004-04-12 00:00:00.0||null"));
         attrs.add(AttributeBuilder.build(PWD_ACCESSES_LEFT, 56));
         attrs.add(AttributeBuilder.build(PWD_LIFE_ACCESSES, 5));
         attrs.add(AttributeBuilder.build(PWD_LIFE_DAYS, 5));
@@ -231,7 +252,7 @@ public class AccountTests {
         attrs.add(AttributeBuilder.buildPasswordExpired(false));        
         attrs.add(AttributeBuilder.build(START_DATE, (String) null));
         attrs.add(AttributeBuilder.build(END_DATE, (String) null));        
-        attrs.add(AttributeBuilder.build(RESP, (String) null));
+        attrs.add(AttributeBuilder.build(RESPS, (String) null));
         attrs.add(AttributeBuilder.build(PWD_ACCESSES_LEFT, (String) null));
         attrs.add(AttributeBuilder.build(PWD_LIFE_ACCESSES, (String) null));
         attrs.add(AttributeBuilder.build(PWD_LIFE_DAYS, (String) null));
