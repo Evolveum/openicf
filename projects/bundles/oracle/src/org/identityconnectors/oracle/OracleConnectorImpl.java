@@ -7,7 +7,6 @@ package org.identityconnectors.oracle;
 import java.sql.Connection;
 import java.util.Set;
 
-import org.identityconnectors.common.Pair;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;

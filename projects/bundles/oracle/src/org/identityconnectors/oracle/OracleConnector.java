@@ -2,7 +2,6 @@ package org.identityconnectors.oracle;
 
 import java.util.Set;
 
-import org.identityconnectors.common.Pair;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.framework.common.objects.Attribute;

@@ -17,7 +17,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.TreeSet;
 
-import org.identityconnectors.common.Pair;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.DatabaseFilterTranslator;
 import org.identityconnectors.dbcommon.DatabaseQueryBuilder;
@@ -83,8 +82,8 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 	}
 
 	public void executeQuery(ObjectClass oclass, Pair<String, FilterWhereBuilder> pair, ResultsHandler handler, OperationOptions options) {
-        final DatabaseQueryBuilder query = new DatabaseQueryBuilder(pair.first);
-        query.setWhere(pair.second);
+        final DatabaseQueryBuilder query = new DatabaseQueryBuilder(pair.getFirst());
+        query.setWhere(pair.getSecond());
         final String sql = query.getSQL();
         PreparedStatement st = null;
         ResultSet rs = null;
@@ -133,8 +132,8 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 	private void handleCaseInsensitiveNames(Pair<String, FilterWhereBuilder> pair,
 			Collection<String> attributesToGet, ResultsHandler handler,
 			OracleUserReader userReader) throws SQLException {
-        DatabaseQueryBuilder query = new DatabaseQueryBuilder(pair.first);
-        query.setWhere(pair.second);
+        DatabaseQueryBuilder query = new DatabaseQueryBuilder(pair.getFirst());
+        query.setWhere(pair.getSecond());
         String sql = query.getSQL();
 		if("SELECT DISTINCT DBA_USERS.* FROM DBA_USERS WHERE DBA_USERS.USERNAME = ?".equals(sql)){
 	        sql = "SELECT DISTINCT DBA_USERS.* FROM DBA_USERS WHERE DBA_USERS.USERNAME = UPPER(?)";
