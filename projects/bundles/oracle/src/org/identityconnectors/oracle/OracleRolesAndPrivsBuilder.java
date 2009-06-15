@@ -27,7 +27,7 @@ final class OracleRolesAndPrivsBuilder {
      * @param privileges
      * @return list of sql statements
      */
-    List<String> buildGrantRolesSQL(String userName,List<String> roles){
+    List<String> buildGrantRoles(String userName,List<String> roles){
         List<String> statements = new ArrayList<String>();
         StringBuilder builder = new StringBuilder(30);
         for(String grant : roles){
@@ -45,7 +45,7 @@ final class OracleRolesAndPrivsBuilder {
      * @param privileges
      * @return list of sql statements
      */
-    List<String> buildGrantPrivilegesSQL(String userName,List<String> privileges){
+    List<String> buildGrantPrivileges(String userName,List<String> privileges){
         List<String> statements = new ArrayList<String>();
         StringBuilder builder = new StringBuilder(30);
         for(String grant : privileges){
@@ -54,17 +54,6 @@ final class OracleRolesAndPrivsBuilder {
             builder.delete(0,builder.length());
         }
         return statements;
-    }
-    
-    
-    //Maybe better would be to have it in one statement
-    private void appendGrantRole(StringBuilder builder,String userName,String role){
-        builder.append("grant ").append(cs.formatToken(ROLE, role)).append(" to ").append(cs.formatToken(USER, userName));
-    }
-    
-  //Maybe better would be to have it in one statement
-    private void appendGrantPrivilege(StringBuilder builder,String userName,String privilege){
-        builder.append("grant ").append(cs.formatToken(PRIVILEGE, privilege)).append(" to ").append(cs.formatToken(USER, userName));
     }
     
     List<String> buildRevokeRoles(String userName,List<String> roles){
@@ -90,6 +79,19 @@ final class OracleRolesAndPrivsBuilder {
         }
         return statements;
     }
+
+    
+    
+    //Maybe better would be to have it in one statement
+    private void appendGrantRole(StringBuilder builder,String userName,String role){
+        builder.append("grant ").append(cs.formatToken(ROLE, role)).append(" to ").append(cs.formatToken(USER, userName));
+    }
+    
+  //Maybe better would be to have it in one statement
+    private void appendGrantPrivilege(StringBuilder builder,String userName,String privilege){
+        builder.append("grant ").append(cs.formatToken(PRIVILEGE, privilege)).append(" to ").append(cs.formatToken(USER, userName));
+    }
+    
     
 	private void appendRevokeRole(StringBuilder builder, String userName, String role) {
 		builder.append("revoke ").append(cs.formatToken(ROLE, role)).append(" from ").append(cs.formatToken(USER, userName));

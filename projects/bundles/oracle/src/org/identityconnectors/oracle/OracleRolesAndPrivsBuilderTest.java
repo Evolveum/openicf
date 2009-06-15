@@ -17,29 +17,40 @@ import org.junit.matchers.JUnitMatchers;
 public class OracleRolesAndPrivsBuilderTest {
 
     /**
-     * Test method for {@link org.identityconnectors.oracle.OracleRolesAndPrivsBuilder#buildGrantSQL(java.lang.String, java.util.List, java.util.List)}.
+     * Test grant methods
      */
     @Test
-    public void testBuildCreateSQL() {
+    public void testBuildGrants() {
         OracleRolesAndPrivsBuilder builder = new OracleRolesAndPrivsBuilder(new OracleCaseSensitivityBuilder(TestHelpers.createDummyMessages()).build());
         List<String> roles = Arrays.asList("myRole1","myRole2");
         List<String> privileges = Arrays.asList("CREATE SESSION","SELECT ON MYTABLE");
-        List<String> sql = builder.buildGrantRolesSQL("testUser", roles);
+        List<String> sql = builder.buildGrantRoles("testUser", roles);
         Assert.assertNotNull(sql);
         Assert.assertThat(sql, JUnitMatchers.hasItem("grant \"myRole1\" to \"testUser\""));
         Assert.assertThat(sql, JUnitMatchers.hasItem("grant \"myRole2\" to \"testUser\""));
-        sql = builder.buildGrantPrivilegesSQL("testUser", privileges);
+        sql = builder.buildGrantPrivileges("testUser", privileges);
         Assert.assertThat(sql, JUnitMatchers.hasItem("grant CREATE SESSION to \"testUser\""));
         Assert.assertThat(sql, JUnitMatchers.hasItem("grant SELECT ON MYTABLE to \"testUser\""));
-        System.out.println(sql);
     }
 
     /**
-     * Test method for {@link org.identityconnectors.oracle.OracleRolesAndPrivsBuilder#buildAlter(java.lang.String, java.util.List, java.util.List)}.
+     * Test revoke methods
      */
     @Test
-    public void testBuildAlter() {
-        //TODO
+    public void testBuildRevokes() {
+        OracleRolesAndPrivsBuilder builder = new OracleRolesAndPrivsBuilder(new OracleCaseSensitivityBuilder(TestHelpers.createDummyMessages()).build());
+        List<String> roles = Arrays.asList("myRole1","myRole2");
+        List<String> privileges = Arrays.asList("CREATE SESSION","SELECT ON MYTABLE");
+        List<String> sql = builder.buildRevokeRoles("testUser", roles);
+        Assert.assertNotNull(sql);
+        Assert.assertThat(sql, JUnitMatchers.hasItem("revoke \"myRole1\" from \"testUser\""));
+        Assert.assertThat(sql, JUnitMatchers.hasItem("revoke \"myRole2\" from \"testUser\""));
+        sql = builder.buildRevokePrivileges("testUser", privileges);
+        Assert.assertNotNull(sql);
+        Assert.assertThat(sql, JUnitMatchers.hasItem("revoke CREATE SESSION from \"testUser\""));
+        Assert.assertThat(sql, JUnitMatchers.hasItem("revoke SELECT ON MYTABLE from \"testUser\""));
+        
+        
     }
 
 }

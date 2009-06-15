@@ -78,7 +78,7 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
 	            	revokeRoles.removeAll(roles);
 	            	grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokeRoles(caAttributes.getUserName(), revokeRoles));
 	            	roles.removeAll(currentRoles);
-	            	grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantRolesSQL(caAttributes.getUserName(), roles));
+	            	grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantRoles(caAttributes.getUserName(), roles));
 	            }
 	            else{
 	            	List<String> currentRoles = new OracleRolePrivReader(adminConn).readRoles(caAttributes.getUserName());
@@ -96,7 +96,7 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
 	                revokePrivileges.removeAll(privileges);
 	                grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokePrivileges(caAttributes.getUserName(), revokePrivileges));
 	                privileges.removeAll(currentPrivileges);
-	            	grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantPrivilegesSQL(caAttributes.getUserName(), privileges));
+	            	grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantPrivileges(caAttributes.getUserName(), privileges));
 	            }
 	            else{
 	                List<String> currentPrivileges = new OracleRolePrivReader(adminConn).readPrivileges(caAttributes.getUserName());
@@ -136,8 +136,8 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
     	checkUserExist(uid.getUidValue());
         List<String> roles = OracleConnectorHelper.castList(AttributeUtil.find(OracleConstants.ORACLE_ROLES_ATTR_NAME, valuesToAdd), String.class);
         List<String> privileges = OracleConnectorHelper.castList(AttributeUtil.find(OracleConstants.ORACLE_PRIVS_ATTR_NAME, valuesToAdd), String.class);
-        List<String> grantRolesStatements = new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantRolesSQL(uid.getUidValue(), roles);
-        List<String> grantPrivilegesStatements = new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantPrivilegesSQL(uid.getUidValue(), privileges);
+        List<String> grantRolesStatements = new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantRoles(uid.getUidValue(), roles);
+        List<String> grantPrivilegesStatements = new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantPrivileges(uid.getUidValue(), privileges);
         try{
 	        for(String grant : grantRolesStatements){
 	        	SQLUtil.executeUpdateStatement(adminConn, grant);

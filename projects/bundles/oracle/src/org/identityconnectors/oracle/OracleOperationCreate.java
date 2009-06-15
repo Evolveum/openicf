@@ -67,10 +67,10 @@ final class OracleOperationCreate extends AbstractOracleOperation implements Cre
 	        Attribute roles = AttributeUtil.find(OracleConstants.ORACLE_ROLES_ATTR_NAME, attrs);
 	        Attribute privileges = AttributeUtil.find(OracleConstants.ORACLE_PRIVS_ATTR_NAME, attrs);
 	        List<String> rolesSQL = new OracleRolesAndPrivsBuilder(cfg.getCSSetup())
-	                .buildGrantRolesSQL(userName, OracleConnectorHelper.castList(
+	                .buildGrantRoles(userName, OracleConnectorHelper.castList(
 	                        roles, String.class)); 
 	        List<String> privilegesSQL = new OracleRolesAndPrivsBuilder(cfg.getCSSetup())
-	        .buildGrantPrivilegesSQL(userName, OracleConnectorHelper.castList(
+	        .buildGrantPrivileges(userName, OracleConnectorHelper.castList(
                 privileges, String.class)); 
             //Now execute create and grant statements
             SQLUtil.executeUpdateStatement(adminConn, createSQL);
