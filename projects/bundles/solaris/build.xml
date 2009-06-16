@@ -26,13 +26,6 @@
     <import file="${framework.dir}/connector_build.xml"/>      
 </project>
 <target name="run-contract-tests" depends="contract-init">
-<!-- mysql configuration -->
-<antcall target="contract-dist" inheritAll="false">
-<param name="testConfig" value="mysql"/>
-</antcall>
-<antcall target="contract-tests" inheritAll="false">
-<param name="testConfig" value="mysql"/>
-</antcall>
 
 <!-- opensolaris configuration -->
 <antcall target="contract-dist" inheritAll="false">
