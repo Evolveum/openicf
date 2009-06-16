@@ -988,7 +988,7 @@ public class ResponsibilityNames {
      * @param handler 
      * @param options 
      */
-    private void getResponsibilityNames(FilterWhereBuilder where, ResultsHandler handler, OperationOptions options) {
+    private void responsibilityNames(FilterWhereBuilder where, ResultsHandler handler, OperationOptions options) {
         final String method = "getResponsibilityNames";
         log.info( method);
 
@@ -1009,7 +1009,7 @@ public class ResponsibilityNames {
                 bld.setObjectClass(RESP_NAMES_OC);
 
                 String s = getColumn(res, 1);
-                bld.addAttribute(Name.NAME, s);
+                bld.setName(s);
                 bld.addAttribute(NAME, s);
                 
                 if (!handler.handle(bld.build())) {
@@ -1038,26 +1038,72 @@ public class ResponsibilityNames {
      */
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder where, ResultsHandler handler,
             OperationOptions options) {
+
         if (oclass.equals(RESP_NAMES_OC)) {
-            getResponsibilityNames(where, handler,options);
+            responsibilityNames(where, handler, options);
             return;
         } else if (oclass.equals(RESP_OC)) { //OK
-            getResponsibilityNames(where, handler,options);
+            responsibilityRes(oclass, where, handler, options);
             return;
         } else if (oclass.equals(DIRECT_RESP_OC)) { //OK
-            getResponsibilityNames(where, handler,options);
+            responsibilityRes(oclass, where, handler, options);
             return;
         } else if (oclass.equals(INDIRECT_RESP_OC)) { //OK
-            getResponsibilityNames(where, handler,options);
+            responsibilityRes(oclass, where, handler, options);
             return;
-        } else if (oclass.equals(APPS_OC)) {            
+        } else if (oclass.equals(APPS_OC)) {
             getApplications(where, handler, options);
             return;
         } else if (oclass.equals(AUDITOR_RESPS_OC)) { // ok
-            getAuditorResponsibilities(where, handler,options);
+            auditorResponsibilities(where, handler, options);
             return;
         }
         throw new IllegalArgumentException(co.getCfg().getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
+    }
+
+    /**
+     * @param oclass
+     * @param where
+     * @param handler
+     * @param options
+     */
+    private void responsibilityRes(ObjectClass oclass, FilterWhereBuilder where, ResultsHandler handler,
+            OperationOptions options) {
+
+        final boolean activeRespsOnly = isActiveRespOnly(options);
+        final String id = getOptionId(options);
+
+        String respLocation = null;
+        if (oclass.equals(DIRECT_RESP_OC)) { //OK
+            respLocation = RESPS_DIRECT_VIEW;
+        } else if (oclass.equals(INDIRECT_RESP_OC)) { //OK
+            respLocation = RESPS_INDIRECT_VIEW;
+        } else {
+            respLocation = getRespLocation();
+        }
+
+        List<String> objectList = getResponsibilities(id, respLocation, activeRespsOnly);
+
+        for (String respName : objectList) {
+            ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
+            bld.setObjectClass(oclass);
+            bld.setName(respName);
+            bld.addAttribute(NAME, respName);
+            if (!handler.handle(bld.build())) {
+                break;
+            }
+        }
+    }
+
+    /**
+     * @return
+     */
+    private String getRespLocation() {
+        String respLocation = RESPS_TABLE;
+        if (isNewResponsibilityViews()) {
+            respLocation = RESPS_ALL_VIEW;
+        }
+        return respLocation;
     }
     
 
@@ -1098,7 +1144,7 @@ public class ResponsibilityNames {
                 bld.setObjectClass(APPS_OC);
 
                 String s = getColumn(res, 1);
-                bld.addAttribute(Name.NAME, s);
+                bld.setName(s);
                 bld.addAttribute(NAME, s);
                 
                 if (!handler.handle(bld.build())) {
@@ -1252,24 +1298,42 @@ public class ResponsibilityNames {
      * @param handler
      * @param options
      */
-    private void getAuditorResponsibilities(FilterWhereBuilder where, ResultsHandler handler, OperationOptions options) {
-        String id = null;
-        if (options != null && options.getOptions() != null) {
-            id = (String) options.getOptions().get("id");
-        }
-
-        String respLocation = RESPS_TABLE;
-        if (co.getCfg().isActiveAccountsOnly()) {
-            respLocation = RESPS_ALL_VIEW;
-        }
-
-        List<String> auditorRespList = getResponsibilities(id, respLocation, co.getCfg().isActiveAccountsOnly());
+    private void auditorResponsibilities(FilterWhereBuilder where, ResultsHandler handler, OperationOptions options) {
+        final String id = getOptionId(options);
+        final boolean activeRespsOnly = isActiveRespOnly(options);
+        final String respLocation = getRespLocation();
+        
+        List<String> auditorRespList = getResponsibilities(id, respLocation, activeRespsOnly);
         for (String respName : auditorRespList) {
             ConnectorObject auditorData = getAuditorDataObject(respName);
             if (!handler.handle(auditorData)) {
                 break;
             }
         }
+    }
+
+    /**
+     * @param options
+     * @return
+     */
+    private String getOptionId(OperationOptions options) {
+        String id = null;
+        if (options != null && options.getOptions() != null) {
+            id = (String) options.getOptions().get("id");
+        }
+        return id;
+    }
+
+    /**
+     * @param options
+     * @return
+     */
+    private boolean isActiveRespOnly(OperationOptions options) {
+        boolean activeRespsOnly = false;
+        if ( options != null && options.getOptions() != null) {
+            activeRespsOnly = Boolean.TRUE.equals(options.getOptions().get(ACTIVE_RESPS_ONLY)) ? true : false;
+        }
+        return activeRespsOnly;
     }    
     
 
@@ -1293,6 +1357,7 @@ public class ResponsibilityNames {
          String ouOption = "MO: Operating Unit";
 
          ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
+         bld.setObjectClass(AUDITOR_RESPS_OC);
 
         String curResp = respName;
         String resp = null;
@@ -1704,5 +1769,17 @@ public class ResponsibilityNames {
         }
          log.ok(method);
          return bld.build();
-     }    
+     }
+
+    /**
+     * @param bld
+     * @param columnValues
+     * @param columnNames
+     */
+    public void buildAuditorData(ConnectorObjectBuilder bld, Map<String, SQLParam> columnValues, Set<String> columnNames) {
+        ArrayList activeRespList = getResponsibilities(id, RESPS_TABLE, true);
+        auditorData = getAuditorDataObject(activeRespList);
+        
+        
+    }    
 }

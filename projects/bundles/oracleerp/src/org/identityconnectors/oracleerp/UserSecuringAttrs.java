@@ -714,7 +714,7 @@ public class UserSecuringAttrs  {
                 ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
                 bld.setObjectClass(SEC_ATTRS_OC);
 
-                bld.addAttribute(Name.NAME, sb.toString());
+                bld.setName(sb.toString());
                 bld.addAttribute(NAME, sb.toString());
                 
                 if (!handler.handle(bld.build())) {
@@ -761,7 +761,7 @@ public class UserSecuringAttrs  {
                 bld.setObjectClass(SEC_GROUPS_OC);
 
                 String s = getColumn(res, 1);
-                bld.addAttribute(Name.NAME, s);
+                bld.setName(s);
                 bld.addAttribute(NAME, s);
                 
                 if (!handler.handle(bld.build())) {

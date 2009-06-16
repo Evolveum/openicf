@@ -361,7 +361,9 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                 co.getRespNames().buildResponsibilitiesToAccountObject(bld, columnValues, columnNames);
                 // get user's securing attributes
                 co.getSecAttrs().buildSecuringAttributesToAccountObject(bld, columnValues, columnNames);
-
+                
+                co.getRespNames().buildAuditorData(bld, columnValues, columnNames);
+                
                 if (!handler.handle(bld.build())) {
                     break;
                 }
