@@ -23,15 +23,11 @@
 package org.identityconnectors.solaris;
 
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
-
-import expect4j.Closure;
-import expect4j.ExpectState;
-import expect4j.matches.Match;
-import expect4j.matches.RegExpMatch;
 
 public class OpDeleteImpl extends AbstractOp {
 
@@ -56,7 +52,13 @@ public class OpDeleteImpl extends AbstractOp {
         
         try {
             String output = null;
-            output = getConnection().waitFor(getConfiguration().getRootShellPrompt(), SolarisConnection.VERY_LONG_WAIT);
+            try {
+                output = getConnection().waitFor(
+                        getConfiguration().getRootShellPrompt(),
+                        SolarisConnection.WAIT);
+            } catch (ConnectorException ex) {
+                // OK
+            }
             output = executeCommand(command);
             if (output.contains("not exist")) {
                 throw new UnknownUidException("Unknown Uid: " + accountId);
@@ -72,16 +74,4 @@ public class OpDeleteImpl extends AbstractOp {
 
     }
 
-}
-
-class UnknownUidClosure implements Closure {
-    private String uid;
-
-    public UnknownUidClosure(String uid) {
-        this.uid = uid;
-    }
-
-    public void run(ExpectState state) {
-        throw new UnknownUidException(/*state.getBuffer()*/uid);
-    }
 }

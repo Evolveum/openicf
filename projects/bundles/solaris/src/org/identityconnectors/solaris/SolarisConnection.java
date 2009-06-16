@@ -44,12 +44,8 @@ import expect4j.matches.TimeoutMatch;
  *
  */
 public class SolarisConnection {
-    //TODO externalize this into configuration
-    //private static final int SHORT_WAIT = 60000;
-    //private static final int LONG_WAIT = 120000;
-    static final int VERY_LONG_WAIT = 1200000;
     /** set the timeout for waiting on reply. */
-    public static final int DEFAULT_WAIT = VERY_LONG_WAIT;
+    static final int WAIT = 12000;
 
     
     //TODO might be a configuration property
@@ -125,7 +121,7 @@ public class SolarisConnection {
      * {@see SolarisConnection#waitFor(String, int)}
      */
     public void waitFor(String string) throws Exception{
-        waitFor(string, DEFAULT_WAIT);
+        waitFor(string, WAIT);
     }
     
     /** used for very specific matching */
@@ -174,7 +170,7 @@ public class SolarisConnection {
         try {
             
             send(command);
-            output = waitFor(_configuration.getRootShellPrompt(), VERY_LONG_WAIT); 
+            output = waitFor(_configuration.getRootShellPrompt(), WAIT); 
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
