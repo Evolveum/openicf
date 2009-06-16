@@ -114,7 +114,10 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 			rs.close();
 			if(!found){
 				//This is hack to search case insensitive by name
-				handleCaseInsensitiveNames(pair,attributesToGet,handler,userReader);
+		        //If case sensitivity policy does not upper case user names
+		        if(cfg.getCSSetup().getAttributeFormatterAndNormalizer(OracleUserAttribute.USER).isToUpper()){
+		        	handleCaseInsensitiveNames(pair,attributesToGet,handler,userReader);
+		        }
 			}
 			adminConn.commit();
 		}
@@ -136,7 +139,7 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
         query.setWhere(pair.getSecond());
         String sql = query.getSQL();
 		if("SELECT DISTINCT DBA_USERS.* FROM DBA_USERS WHERE DBA_USERS.USERNAME = ?".equals(sql)){
-	        sql = "SELECT DISTINCT DBA_USERS.* FROM DBA_USERS WHERE DBA_USERS.USERNAME = UPPER(?)";
+	        sql = "SELECT DISTINCT DBA_USERS.* FROM DBA_USERS WHERE UPPER(DBA_USERS.USERNAME) = UPPER(?)";
 	        PreparedStatement st = null;
 	        ResultSet rs = null;
 	        try{
@@ -145,6 +148,10 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 				rs = st.executeQuery();
 				if(rs.next()){
 					ConnectorObjectBuilder builder = buildConnectorObject(rs, userReader, attributesToGet);
+					//If there are more accounts, do not return any of them
+					if(rs.next()){
+						return;
+					}
 	                //We must set name to value from filter, otherwise framework would filter it
 					String name = (String) query.getParams().get(0).getValue();
 					builder.addAttribute(new Name(name));

@@ -122,8 +122,10 @@ public class OracleUserReaderTest {
         }
         catch(IllegalArgumentException e){}
         //For 10.2 , not working
-        //quota = userReader.readUserTempTSQuota(cs.normalizeToken(USER_NAME,user));
+        quota = userReader.readUserTempTSQuota(cs.normalizeToken(USER,user));
+        assertNull("Quota for tem ts must be null", quota);
         SQLUtil.executeUpdateStatement(conn,"drop user " + cs.normalizeAndFormatToken(USER,"user1"));
+        
     }
 
 
