@@ -47,7 +47,7 @@ public class SolarisConnection {
     //TODO externalize this into configuration
     //private static final int SHORT_WAIT = 60000;
     //private static final int LONG_WAIT = 120000;
-    private static final int VERY_LONG_WAIT = 1200000;
+    static final int VERY_LONG_WAIT = 1200000;
     /** set the timeout for waiting on reply. */
     public static final int DEFAULT_WAIT = VERY_LONG_WAIT;
 
@@ -128,6 +128,11 @@ public class SolarisConnection {
         waitFor(string, DEFAULT_WAIT);
     }
     
+    /** used for very specific matching */
+    public void match(Match[] matches) throws MalformedPatternException, Exception {
+        _expect4j.expect(matches);
+    }
+    
     /**
      * Waits for feedback from the resource, respecting given timeout.
      * 
@@ -167,6 +172,7 @@ public class SolarisConnection {
     public String executeCommand(String command) {
         String output = null;
         try {
+            
             send(command);
             output = waitFor(_configuration.getRootShellPrompt(), VERY_LONG_WAIT); 
         } catch (Exception e) {

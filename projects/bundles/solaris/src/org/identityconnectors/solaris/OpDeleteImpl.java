@@ -23,15 +23,22 @@
 package org.identityconnectors.solaris;
 
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
 
+import expect4j.Closure;
+import expect4j.ExpectState;
+import expect4j.matches.Match;
+import expect4j.matches.RegExpMatch;
+
 public class OpDeleteImpl extends AbstractOp {
 
-    final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT, ObjectClass.GROUP};
-    
-    public OpDeleteImpl(SolarisConfiguration config, SolarisConnection connection, Log log) {
+    final ObjectClass[] acceptOC = { ObjectClass.ACCOUNT, ObjectClass.GROUP };
+
+    public OpDeleteImpl(SolarisConfiguration config,
+            SolarisConnection connection, Log log) {
         super(config, connection, log);
     }
     
@@ -40,16 +47,41 @@ public class OpDeleteImpl extends AbstractOp {
         SolarisHelper.controlObjectClassValidity(objClass, acceptOC, getClass());
         
         final String accountId = uid.getUidValue();
+        // checkIfUserExists(accountId);
+        
         getLog().info("delete(''{0}'')", accountId);
         
         // USERDEL accountId
         final String command = String.format("userdel %s", accountId);
         
-        /*String output = */
-        executeCommand(command);
-        
-        //TODO add handling of exceptions: existing user, etc.
+        try {
+            String output = null;
+            output = getConnection().waitFor(getConfiguration().getRootShellPrompt(), SolarisConnection.VERY_LONG_WAIT);
+            output = executeCommand(command);
+            if (output.contains("not exist")) {
+                throw new UnknownUidException("Unknown Uid: " + accountId);
+            }
+        } catch (RuntimeException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            getLog().error(ex, null);
+        }
+
+        // TODO add handling of exceptions: existing user, etc.
         getLog().ok("userdel(''{0}'')", accountId);
 
+    }
+
+}
+
+class UnknownUidClosure implements Closure {
+    private String uid;
+
+    public UnknownUidClosure(String uid) {
+        this.uid = uid;
+    }
+
+    public void run(ExpectState state) {
+        throw new UnknownUidException(/*state.getBuffer()*/uid);
     }
 }

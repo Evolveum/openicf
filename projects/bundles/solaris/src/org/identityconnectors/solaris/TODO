@@ -1,14 +1,15 @@
 This connector is under development, it is not release ready.
 
 TODOs:
-* test against other unix flavours, e.g. HPUX, Linux (RedHat, SUSE), possible SecurId, Aix, NIS.
-* getConnectorMessages() -- organize message propeties, so they are optimal for localization
 * add delete supporting deletion of nonexisting accounts.
 * DELETE: handle the option, whe the user is logged in, at it can't be deleted:
      root@prgvm8092:~# userdel sample
      UX: userdel: ERROR: sample is in use.  Cannot remove it.
-
-!!! ** finish the create process, including authentication!!!
+* delete does not throw UnknownUidException.
+* consider issuing an echo "abc" before every command is started.
+     
+ low priority:
+* getConnectorMessages() -- organize message propeties, so they are optimal for localization
 
 HINTS from SolarisRA:
 * // Depending on the amount of data to modify, userAttribParams
@@ -16,11 +17,5 @@ HINTS from SolarisRA:
   // we break up the input to allow for this.
   
   ================================================
-  
-  try to reproduce the 'echo "Hello world"' -- inspire from VMS code.
-  == try to detect, what was sent back.
-  
-  ================================================
-  
   * is it possible to create a user based on a commmon template, or to edit it?
   
