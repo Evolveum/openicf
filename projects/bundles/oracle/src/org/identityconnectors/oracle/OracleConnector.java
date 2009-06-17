@@ -52,6 +52,8 @@ SearchOp<Pair<String, FilterWhereBuilder>>, SchemaOp,TestOp{
 
 	public Uid authenticate(ObjectClass objectClass, String username,
 			GuardedString password, OperationOptions options) {
+		username = getConfiguration().getCSSetup().normalizeToken(OracleUserAttribute.USER, username);
+		password = getConfiguration().getCSSetup().normalizeToken(OracleUserAttribute.PASSWORD, password);
 		return connector.authenticate(objectClass, username, password, options);
 	}
 
