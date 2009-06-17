@@ -43,6 +43,8 @@ public class SolarisConnectorTests {
     @Before
     public void setUp() throws Exception {
         config = SolarisTestCommon.createConfiguration();
+        
+        SolarisTestCommon.printIPAddress(config);
     }
 
     @After

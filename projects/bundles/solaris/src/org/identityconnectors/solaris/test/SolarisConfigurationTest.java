@@ -44,6 +44,8 @@ public class SolarisConfigurationTest {
     public void setUp() throws Exception {
         config = SolarisTestCommon.createConfiguration();
         config.setConnectorMessages(TestHelpers.createDummyMessages());
+        
+        SolarisTestCommon.printIPAddress(config);
     }
 
     @After

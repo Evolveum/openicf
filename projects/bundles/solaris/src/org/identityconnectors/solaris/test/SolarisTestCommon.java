@@ -39,6 +39,11 @@ import org.identityconnectors.test.common.TestHelpers;
  */
 public class SolarisTestCommon {
     
+    /** used to view the ip address of the resource that we are connecting to */
+    public static void printIPAddress(SolarisConfiguration config) {
+        System.out.println("TEST HOST: " + config.getHostNameOrIpAddr());
+    }
+    
     /**
      * create a new solaris connector and initialize it with the given configuration
      * @param config the configuration to be used.

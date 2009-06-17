@@ -25,7 +25,6 @@ package org.identityconnectors.solaris.test;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.junit.After;
@@ -45,6 +44,8 @@ public class OpAuthenticateImplTest {
     public void setUp() throws Exception {
         config = SolarisTestCommon.createConfiguration();
         facade = SolarisTestCommon.createConnectorFacade(config);
+        
+        SolarisTestCommon.printIPAddress(config);
     }
 
     @After

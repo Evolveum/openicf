@@ -60,6 +60,8 @@ public class OpUpdateImplTest {
     public void setUp() throws Exception {
         config = SolarisTestCommon.createConfiguration();
         facade = SolarisTestCommon.createConnectorFacade(config);
+        
+        SolarisTestCommon.printIPAddress(config);
     }
 
     @After
