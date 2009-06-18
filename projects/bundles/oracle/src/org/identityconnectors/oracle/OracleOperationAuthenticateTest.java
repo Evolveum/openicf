@@ -164,6 +164,10 @@ public class OracleOperationAuthenticateTest extends OracleConnectorAbstractTest
     	
     }
     
+    public void testDoExtraConnectionTest(){
+    	//TODO
+    }
+    
     
     
     

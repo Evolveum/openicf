@@ -1,14 +1,18 @@
 package org.identityconnectors.oracle;
 
 import java.sql.*;
+import java.text.MessageFormat;
 
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.*;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
 import org.identityconnectors.framework.common.exceptions.PasswordExpiredException;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.spi.operations.AuthenticateOp;
+import org.identityconnectors.oracle.OracleConfiguration.ConnectionType;
 
 /** Authenticate operation.
  *  It just tries to create new jdbc connection with passed user/password
@@ -27,35 +31,114 @@ final class OracleOperationAuthenticate extends AbstractOracleOperation implemen
         new LocalizedAssert(cfg.getConnectorMessages()).assertNotBlank(username, "username");
         new LocalizedAssert(cfg.getConnectorMessages()).assertNotNull(password, "password");
         log.info("Authenticate user: [{0}]", username);
+        Connection conn = null;
         try{
-            final Connection conn = cfg.createUserConnection(username, password);
-            log.info("User authenticated : [{0}]",username);
-            SQLUtil.closeQuietly(conn);
-            return new Uid(username);
+            conn = cfg.createUserConnection(username, password);
         }
         catch(RuntimeException e){
         	log.info("Authentication of user [{0}] failed",username);
             if(e.getCause() instanceof SQLException){
                 SQLException sqlE = (SQLException) e.getCause();
-                if("72000".equals(sqlE.getSQLState()) && 1017 == sqlE.getErrorCode()){
-                	//By contract we must throw PasswordExpiredException when account is expired
-                	
-                    //Wrong user or password, log it here and rethrow
-                    log.info(e,"Oracle.authenticate : Invalid user/passord for user: {0}",username);
-                    throw new InvalidCredentialException("Oracle.authenticate :  Invalid user/password",e.getCause());
+                if(StringUtil.isBlank(sqlE.getSQLState())){
+                	handleNotCompletedSQLEXception(e, sqlE, username, password);
                 }
-                else if("99999".equals(sqlE.getSQLState()) && 28000==sqlE.getErrorCode()){
-                	InvalidCredentialException icException = new InvalidCredentialException("User account is locked",e);
-					throw icException;
-                }
-                else if("99999".equals(sqlE.getSQLState()) && 28001==sqlE.getErrorCode()){
-                	PasswordExpiredException passwordExpiredException = new PasswordExpiredException("Password expired");
-                	passwordExpiredException.initUid(new Uid(username));
-					throw passwordExpiredException;
+                else{
+                	handleSQLException(e, sqlE, username, password);
                 }
             }
             throw e;
         }
+        //When we get connection from DS, test the connection
+        try{
+	        if(ConnectionType.DATASOURCE.equals(cfg.getConnType())){
+	        	doExtraConnectionTest(username, conn);
+	        }
+        }
+        finally{
+        	SQLUtil.closeQuietly(conn);
+        }
+        log.info("User authenticated : [{0}]",username);
+        return new Uid(username);
     }
+
+	private void doExtraConnectionTest(String username, Connection conn) {
+		try{
+        	OracleSpecifics.testConnection(conn);
+        }
+        catch(RuntimeException e){
+        	//This should not happen
+        	throw new ConnectorException("Error testing connection after succesufull authenticate", e);
+        }
+        //Now imagine the case we get connection from pool (key is user/password), but the user is already expired or locked.
+        //Then we will get connection, that is open and we cannot findout that user is locked
+        //The solution would be , that datasource pool would not chache connections retrieved by ds.getConnection(user, password)
+        //But this is not configurable
+        //so we will look at DBA_USERS view to find the state of user
+        try {
+			UserRecord userRecord = new OracleUserReader(adminConn, cfg.getConnectorMessages()).readUserRecord(username);
+			if(userRecord == null){
+				throw new ConnectorException(MessageFormat.format("Cannot find userRecord for user [{0}] at authenticate, probably user is deleted",username));
+			}
+			if(StringUtil.isBlank(userRecord.getStatus())){
+				//should not happen
+				throw new ConnectorException(MessageFormat.format("userRecord.getStatus() is blank for user [{0}]", username));
+			}
+			if(userRecord.getStatus().contains("LOCKED")){
+	        	throw new InvalidCredentialException("User account is locked");
+			}
+			else if(userRecord.getStatus().contains("EXPIRED")){
+	        	PasswordExpiredException passwordExpiredException = new PasswordExpiredException("Password expired");
+	        	passwordExpiredException.initUid(new Uid(username));
+				throw passwordExpiredException;
+			}
+			//http://www.dbforums.com/oracle/1617629-account_status-dba_users.html
+			//We will not look at other values 
+		} catch (SQLException e) {
+			throw new ConnectorException(MessageFormat.format("Cannot find userRecord for user [{0}] at authenticate",username) , e);
+		}
+	}
+
+	private void handleSQLException(RuntimeException e, SQLException sqlE, String username, GuardedString password) {
+        if("72000".equals(sqlE.getSQLState()) && 1017 == sqlE.getErrorCode()){
+        	//By contract we must throw PasswordExpiredException when account is expired
+            //Wrong user or password, log it here and rethrow
+            log.info(sqlE, "Oracle.authenticate : Invalid user/passord for user: {0}", username);
+            throw new InvalidCredentialException("Oracle.authenticate :  Invalid user/password", sqlE);
+        }
+        else if("99999".equals(sqlE.getSQLState()) && 28000==sqlE.getErrorCode()){
+        	InvalidCredentialException icException = new InvalidCredentialException("User account is locked", sqlE);
+			throw icException;
+        }
+        else if("99999".equals(sqlE.getSQLState()) && 28001==sqlE.getErrorCode()){
+        	PasswordExpiredException passwordExpiredException = new PasswordExpiredException("Password expired", sqlE);
+        	passwordExpiredException.initUid(new Uid(username));
+			throw passwordExpiredException;
+        }
+        throw e;
+	}
+
+	private void handleNotCompletedSQLEXception(RuntimeException e, SQLException sqlE, String username, GuardedString password) {
+    	//If we get exception without sql state, we must try to look at the message of exception.
+		//Status of user in DBA_USERS view could also help, but the real cause of exception can be absolutely different
+    	String msg = sqlE.getMessage();
+    	if(StringUtil.isBlank(msg)){
+    		//here we cannot do anything to determine the cause, just throw the original wrapper
+    		throw e;
+    	}
+    	if(msg.contains("ORA-01017")){
+            log.info(sqlE, "Oracle.authenticate : Invalid user/passord for user: {0}", username);
+            throw new InvalidCredentialException("Oracle.authenticate :  Invalid user/password", sqlE);
+    	}
+        else if(msg.contains("ORA-28000")){
+        	InvalidCredentialException icException = new InvalidCredentialException("User account is locked", sqlE);
+			throw icException;
+        }
+    	else if(msg.contains("ORA-28001")){
+        	PasswordExpiredException passwordExpiredException = new PasswordExpiredException("Password expired", sqlE);
+        	passwordExpiredException.initUid(new Uid(username));
+			throw passwordExpiredException;
+    	}
+    	throw e;
+	}
 
 }
