@@ -42,6 +42,10 @@ public class OpDeleteImpl extends AbstractOp {
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
         SolarisHelper.controlObjectClassValidity(objClass, acceptOC, getClass());
         
+        if (objClass.equals(ObjectClass.GROUP_NAME)) {
+            throw new UnsupportedOperationException();
+        }
+        
         final String accountId = uid.getUidValue();
         // checkIfUserExists(accountId);
         
@@ -52,6 +56,8 @@ public class OpDeleteImpl extends AbstractOp {
         
         try {
             String output = null;
+            // if i run the tests separately, the login info is in the expect4j's buffer
+            // otherwise (when tests are run in batch), there is empty buffer, so this waitfor will timeout.
             try {
                 output = getConnection().waitFor(
                         getConfiguration().getRootShellPrompt(),
@@ -60,7 +66,7 @@ public class OpDeleteImpl extends AbstractOp {
                 // OK
             }
             output = executeCommand(command);
-            if (output.contains("not exist")) {
+            if (output.contains("does not exist") || output.contains("nknown user")) {
                 throw new UnknownUidException("Unknown Uid: " + accountId);
             }
         } catch (RuntimeException ex) {

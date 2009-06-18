@@ -1,11 +1,10 @@
 This connector is under development, it is not release ready.
 
 TODOs:
-* add delete supporting deletion of nonexisting accounts.
 * DELETE: handle the option, whe the user is logged in, at it can't be deleted:
      root@prgvm8092:~# userdel sample
      UX: userdel: ERROR: sample is in use.  Cannot remove it.
-* delete does not throw UnknownUidException.
+* support deletion of groups - is this inclusive delete? (the accounts of that group should be deleted?) 
 * consider issuing an echo "abc" before every command is started.
      
  low priority:

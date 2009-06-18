@@ -30,7 +30,7 @@ import org.identityconnectors.framework.common.objects.Uid;
 
 public class OpAuthenticateImpl extends AbstractOp {
 
-    final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT, ObjectClass.GROUP};
+    final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT};
     
     public OpAuthenticateImpl(SolarisConfiguration configuration, SolarisConnection connection, Log log) {
         super(configuration, connection, log);
