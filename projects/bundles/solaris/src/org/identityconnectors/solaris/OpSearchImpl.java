@@ -13,7 +13,7 @@ public class OpSearchImpl extends AbstractOp {
         super(configuration, connection, log);
     }
     
-    public void executeQuery(ObjectClass oclass, SolarisFilter query,
+    public void executeQuery(ObjectClass oclass, String query,
             ResultsHandler handler, OperationOptions options) {
         throw new UnsupportedOperationException();
 //      //evaluate if the user exists

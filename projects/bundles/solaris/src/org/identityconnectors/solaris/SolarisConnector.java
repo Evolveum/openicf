@@ -32,9 +32,11 @@ import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
+import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.ConnectorClass;
 import org.identityconnectors.framework.spi.PoolableConnector;
@@ -42,6 +44,7 @@ import org.identityconnectors.framework.spi.operations.AuthenticateOp;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
+import org.identityconnectors.framework.spi.operations.SearchOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
 
@@ -51,7 +54,7 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
  */
 @ConnectorClass(displayNameKey = "Solaris", configurationClass = SolarisConfiguration.class)
 public class SolarisConnector implements PoolableConnector, AuthenticateOp,
-        SchemaOp, CreateOp, DeleteOp, UpdateOp, TestOp {
+        SchemaOp, CreateOp, DeleteOp, UpdateOp, SearchOp<String>, TestOp {
 
     /**
      * Setup logging for the {@link DatabaseTableConnector}.
@@ -127,6 +130,16 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     public Uid update(ObjectClass objclass, Uid uid,
             Set<Attribute> replaceAttributes, OperationOptions options) {
         return new OpUpdateImpl(_configuration, _connection, _log).update(objclass, uid, replaceAttributes, options);
+    }
+    
+    public void executeQuery(ObjectClass oclass, String query,
+            ResultsHandler handler, OperationOptions options) {
+        new OpSearchImpl(_configuration, _connection, _log).executeQuery(oclass, query, handler, options);
+    }
+
+    public FilterTranslator<String> createFilterTranslator(
+            ObjectClass oclass, OperationOptions options) {
+        return new SolarisFilterTranslator(/*oclass, options*/);
     }
     
     /**
@@ -228,4 +241,8 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     public Configuration getConfiguration() {
         return _configuration;
     }
+
+
+
+
 }

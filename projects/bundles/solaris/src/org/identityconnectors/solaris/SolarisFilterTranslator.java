@@ -36,7 +36,7 @@ import org.identityconnectors.framework.common.objects.filter.LessThanOrEqualFil
 import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
 
 public class SolarisFilterTranslator extends
-        AbstractFilterTranslator<SolarisFilter> {
+        AbstractFilterTranslator<String> {
 
     // private ObjectClass objectClass;
     // private OperationOptions operationOptions;
@@ -51,89 +51,89 @@ public class SolarisFilterTranslator extends
     }
 
     @Override
-    protected SolarisFilter createAndExpression(SolarisFilter leftExpression,
-            SolarisFilter rightExpression) {
+    protected String createAndExpression(String leftExpression,
+            String rightExpression) {
         // anding of two groups is not supported in basic regular expression
         // defined by POSIX.
         return super.createAndExpression(leftExpression, rightExpression);
     }
 
     @Override
-    protected SolarisFilter createOrExpression(SolarisFilter leftExpression,
-            SolarisFilter rightExpression) {
+    protected String createOrExpression(String leftExpression,
+            String rightExpression) {
         // or-ing works in basic regular expression defined by POSIX:
         // for example: cat /etc/passwd | grep '\(Donald\)\|\(Gray\)'
         // matches string: 'Older Donald Smith Gray went to walk.'
-        return new SolarisFilter(String.format("\\(%s\\)\\|\\(%s\\)", leftExpression.getExpression(),
-                        rightExpression.getExpression()));
+        return String.format("\\(%s\\)\\|\\(%s\\)", leftExpression,
+                        rightExpression);
     }
 
     @Override
-    protected SolarisFilter createContainsAllValuesExpression(
+    protected String createContainsAllValuesExpression(
             ContainsAllValuesFilter filter, boolean not) {
         return super.createContainsAllValuesExpression(filter, not);
     }
 
     @Override
-    protected SolarisFilter createContainsExpression(ContainsFilter filter,
+    protected String createContainsExpression(ContainsFilter filter,
             boolean not) {
         if (!not && isNamingAttribute(filter.getAttribute())) {
-            return new SolarisFilter(String.format("*%s*", filter.getValue()));
+            return String.format("*%s*", filter.getValue());
         }
 
         return super.createContainsExpression(filter, not);
     }
 
     @Override
-    protected SolarisFilter createEndsWithExpression(EndsWithFilter filter,
+    protected String createEndsWithExpression(EndsWithFilter filter,
             boolean not) {
         if (!not && isNamingAttribute(filter.getAttribute())) {
-            return new SolarisFilter(String.format("*%s", filter.getValue()));
+            return String.format("*%s", filter.getValue());
         }
 
         return super.createEndsWithExpression(filter, not);
     }
 
     @Override
-    protected SolarisFilter createStartsWithExpression(StartsWithFilter filter,
+    protected String createStartsWithExpression(StartsWithFilter filter,
             boolean not) {
         if (!not && isNamingAttribute(filter.getAttribute())) {
-            return new SolarisFilter(String.format("%s*", filter.getValue()));
+            return String.format("%s*", filter.getValue());
         }
 
         return super.createStartsWithExpression(filter, not);
     }
 
     @Override
-    protected SolarisFilter createEqualsExpression(EqualsFilter filter,
+    protected String createEqualsExpression(EqualsFilter filter,
             boolean not) {
         if (!not && isNamingAttribute(filter.getAttribute())) {
-            return new SolarisFilter((String) filter.getAttribute().getValue().get(0));
+            return (String) filter.getAttribute().getValue().get(0);
         }
 
         return super.createEqualsExpression(filter, not);
     }
 
     @Override
-    protected SolarisFilter createGreaterThanExpression(
+    protected String createGreaterThanExpression(
             GreaterThanFilter filter, boolean not) {
         return super.createGreaterThanExpression(filter, not);
     }
 
     @Override
-    protected SolarisFilter createGreaterThanOrEqualExpression(
+    protected String createGreaterThanOrEqualExpression(
             GreaterThanOrEqualFilter filter, boolean not) {
         return super.createGreaterThanOrEqualExpression(filter, not);
     }
 
     @Override
-    protected SolarisFilter createLessThanExpression(LessThanFilter filter,
+    protected String createLessThanExpression(LessThanFilter filter,
             boolean not) {
         return super.createLessThanExpression(filter, not);
     }
 
     @Override
-    protected SolarisFilter createLessThanOrEqualExpression(
+    protected String createLessThanOrEqualExpression(
             LessThanOrEqualFilter filter, boolean not) {
         return super.createLessThanOrEqualExpression(filter, not);
     }
