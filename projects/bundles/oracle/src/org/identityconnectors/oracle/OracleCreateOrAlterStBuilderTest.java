@@ -206,10 +206,15 @@ public class OracleCreateOrAlterStBuilderTest {
         attributes.setPassword(new GuardedString("newPassword".toCharArray()));
         assertEquals("alter user \"user1\" identified by \"newPassword\"", createDefaultBuilder().buildAlterUserSt(attributes.build(), record).toString());
         attributes.setPassword(null);
+        
+        record = new UserRecord.Builder().setDefaultTableSpace("users").setStatus("EXPIRED").build();
         try{
         	createDefaultBuilder().buildAlterUserSt(attributes.build(), record);
         	fail("Must require password for unexpire");
         }catch(RuntimeException e){}
+        record = new UserRecord.Builder().setDefaultTableSpace("users").setStatus("OPEN").build();
+        //When already unexpired, ignore unexpire attribute
+       	createDefaultBuilder().buildAlterUserSt(attributes.build(), record);
     }
     
     /** Test that builder properly formats tokens */
