@@ -47,6 +47,13 @@ public class OracleConfigurationTest {
     	threadCfg.set(null);
     }
 
+    @Test
+    public void testDefaultValues(){
+    	OracleConfiguration cfg = createEmptyCfg();
+    	Assert.assertNotNull(cfg.getCSSetup());
+    	Assert.assertEquals("default", cfg.getCaseSensitivityString());
+    	Assert.assertTrue(cfg.isDropCascade());
+    }
 
     /** Test validation of cfg */
     @Test

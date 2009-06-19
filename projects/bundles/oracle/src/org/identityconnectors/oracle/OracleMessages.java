@@ -29,6 +29,8 @@ class OracleMessages {
 	static final String ORACLE_EXTRA_ATTRS_POLICY_HELP = "oracle.extra.attrs.policy.help";
 	static final String MSG_SOURCE_TYPE_DISPLAY = "oracle.source.type.display";
 	static final String MSG_SOURCE_TYPE_HELP = "oracle.source.type.help";
+	static final String MSG_DROP_CASCADE_DISPLAY = "oracle.drop.cascade.display";
+	static final String MSG_DROP_CASCADE_HELP = "oracle.drop.cascade.help";
 	
 	static final String MSG_USER_AND_PASSWORD_MUST_BE_SET_BOTH_OR_NONE = "oracle.user.and.password.must.be.set.both.or.none";
 	static final String MSG_INVALID_AUTH = "oracle.invalid.auth";

@@ -12,6 +12,7 @@ import static org.identityconnectors.oracle.OracleMessages.MSG_DATASOURCE_DISPLA
 import static org.identityconnectors.oracle.OracleMessages.MSG_DATASOURCE_HELP;
 import static org.identityconnectors.oracle.OracleMessages.MSG_DRIVER_DISPLAY;
 import static org.identityconnectors.oracle.OracleMessages.MSG_DRIVER_HELP;
+import static org.identityconnectors.oracle.OracleMessages.MSG_DROP_CASCADE_DISPLAY;
 import static org.identityconnectors.oracle.OracleMessages.MSG_DSJNDIENV_DISPLAY;
 import static org.identityconnectors.oracle.OracleMessages.MSG_DSJNDIENV_HELP;
 import static org.identityconnectors.oracle.OracleMessages.MSG_HOST_DISPLAY;
@@ -68,6 +69,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     private String sourceType;
     private String extraAttributesPolicyString;
     private ExtraAttributesPolicySetup extraAttributesPolicySetup;
+    private boolean dropCascade;
     private static final Log log = Log.getLog(OracleConfiguration.class);
     /**
      * Creates configuration
@@ -76,6 +78,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
         cs = new OracleCaseSensitivityBuilder(getConnectorMessages()).build();
         caseSensitivityString = "default";
         port = OracleSpecifics.LISTENER_DEFAULT_PORT;
+        dropCascade = true;
     }
     
     /** Type of connection we will use to connect to Oracle */
@@ -224,6 +227,11 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
 	public String getSourceType() {
     	return sourceType;
     }
+	
+	@ConfigurationProperty(order = 12, displayMessageKey = MSG_DROP_CASCADE_DISPLAY, helpMessageKey = MSG_DROP_CASCADE_DISPLAY, required = false)
+	public boolean isDropCascade(){
+		return dropCascade;
+	}
 
 
 	/**
@@ -231,6 +239,11 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
 	 */
 	public void setExtraAttributesPolicyString(String extraAttributesPolicyString) {
 		this.extraAttributesPolicyString = extraAttributesPolicyString;
+		this.connType = null;
+	}
+	
+	public void setDropCascade(boolean dropCascade){
+		this.dropCascade = dropCascade;
 		this.connType = null;
 	}
 
