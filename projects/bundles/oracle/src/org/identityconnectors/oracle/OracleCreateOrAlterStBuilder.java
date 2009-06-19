@@ -124,7 +124,10 @@ final class OracleCreateOrAlterStBuilder {
         }
         if(Boolean.FALSE.equals(userAttributes.getExpirePassword())){
         	if(status.passwordSet == null){
-        		throw new IllegalArgumentException(cm.format(MSG_MUST_SPECIFY_PASSWORD_FOR_UNEXPIRE, null));
+        		//If password is already not expired, just ignore attribute that would not have any effect
+        		if(userRecord == null || OracleUserReader.isPasswordExpired(userRecord)){
+        			throw new IllegalArgumentException(cm.format(MSG_MUST_SPECIFY_PASSWORD_FOR_UNEXPIRE, null));
+        		}
         	}
         }
         if(status.forceExpirePassword || Boolean.TRUE.equals(userAttributes.getExpirePassword())){

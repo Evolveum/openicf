@@ -209,13 +209,13 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 			bld.addAttribute(AttributeBuilder.build(OracleConstants.ORACLE_ROLES_ATTR_NAME,new OracleRolePrivReader(adminConn).readRoles(userName)));
 		}
 		if(attributesToGet.contains(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
-			bld.addAttribute(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME,Boolean.valueOf(record.getStatus().contains("EXPIRED"))));
+			bld.addAttribute(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME,OracleUserReader.isPasswordExpired(record)));
 		}
 		if(attributesToGet.contains(OperationalAttributes.ENABLE_NAME)){
-			bld.addAttribute(AttributeBuilder.build(OperationalAttributes.ENABLE_NAME,Boolean.valueOf(!record.getStatus().contains("LOCKED"))));
+			bld.addAttribute(AttributeBuilder.build(OperationalAttributes.ENABLE_NAME,Boolean.valueOf(!OracleUserReader.isUserLocked(record))));
 		}
 		if(attributesToGet.contains(OperationalAttributes.LOCK_OUT_NAME)){
-			bld.addAttribute(AttributeBuilder.build(OperationalAttributes.LOCK_OUT_NAME,Boolean.valueOf(record.getStatus().contains("LOCKED"))));
+			bld.addAttribute(AttributeBuilder.build(OperationalAttributes.LOCK_OUT_NAME,Boolean.valueOf(OracleUserReader.isUserLocked(record))));
 		}
 		if(attributesToGet.contains(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME)){
 			Long date = record.getExpireDate() != null ? record.getExpireDate().getTime() : null;

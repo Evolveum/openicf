@@ -120,5 +120,13 @@ final class OracleUserReader {
     	}
     	return OracleAuthentication.LOCAL;
     }
+    
+    static boolean isPasswordExpired(UserRecord record){
+    	return record.getStatus() != null && record.getStatus().contains("EXPIRED");
+    }
+    
+    static boolean isUserLocked(UserRecord record){
+    	return record.getStatus() != null && record.getStatus().contains("LOCKED");
+    }
 
 }

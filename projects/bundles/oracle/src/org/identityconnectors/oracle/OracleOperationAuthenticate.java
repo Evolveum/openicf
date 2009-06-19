@@ -83,10 +83,10 @@ final class OracleOperationAuthenticate extends AbstractOracleOperation implemen
 				//should not happen
 				throw new ConnectorException(MessageFormat.format("userRecord.getStatus() is blank for user [{0}]", username));
 			}
-			if(userRecord.getStatus().contains("LOCKED")){
+			if(OracleUserReader.isUserLocked(userRecord)){
 	        	throw new InvalidCredentialException("User account is locked");
 			}
-			else if(userRecord.getStatus().contains("EXPIRED")){
+			else if(OracleUserReader.isPasswordExpired(userRecord)){
 	        	PasswordExpiredException passwordExpiredException = new PasswordExpiredException("Password expired");
 	        	passwordExpiredException.initUid(new Uid(username));
 				throw passwordExpiredException;

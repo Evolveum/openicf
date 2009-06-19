@@ -346,9 +346,17 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         expirePassword = AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME,Boolean.FALSE);
         try{
         	facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(expirePassword), null);
-        	fail("Must require password");
+        	fail("Must fail for unexpire and missing password");
         }catch(RuntimeException e){
         }
+        
+        //now unexpire with password
+        facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil.newSet(expirePassword,AttributeBuilder.buildPassword("newPassword".toCharArray())), null);
+        //And now perform dummy operation to unexpire again
+        facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(expirePassword), null);
+        
+        
+        
         facade.update(ObjectClass.ACCOUNT, uid, CollectionUtil.newSet(expirePassword,AttributeBuilder.buildPassword("newPassword".toCharArray())), null);
         record = userReader.readUserRecord(uid.getUidValue());
     	assertNotNull(record);

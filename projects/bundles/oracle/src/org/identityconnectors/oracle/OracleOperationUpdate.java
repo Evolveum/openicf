@@ -189,13 +189,7 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
 			if(attr.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
 				la.assertNotNull(AttributeUtil.getBooleanValue(attr), OperationalAttributes.PASSWORD_EXPIRED_NAME);
 				//we can 'unexpire' password only if new password is provided
-				//We cannot use password equals to name
-				if(Boolean.FALSE.equals(AttributeUtil.getSingleValue(attr))){
-					Attribute password = map.get(OperationalAttributes.PASSWORD_NAME);
-					if(password == null || AttributeUtil.getGuardedStringValue(password) == null){
-						throw new IllegalArgumentException(cfg.getConnectorMessages().format(MSG_MUST_SPECIFY_PASSWORD_FOR_UNEXPIRE,null));
-					}
-				}
+				//But if the pasword is already not expired, we will just ignore
 			}
 		}
 	}
