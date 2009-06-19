@@ -41,6 +41,7 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.Uid;
 
 /**
  * @author Petr Jung
@@ -100,7 +101,6 @@ public class OracleERPUtil {
     // The container attributes 
 
     static final String RESPKEYS = "responsibilityKeys";
-
     
     // static variable on update to set dates to local server time
     static final String SYSDATE = "sysdate";
@@ -143,6 +143,7 @@ public class OracleERPUtil {
     static final String MSG_DRIVER_BLANK = "msg.driver.blank";
     static final String MSG_DRIVER_NOT_FOUND = "msg.jdbc.driver.not.found";
     static final String MSG_UNKNOWN_OPERATION_TYPE = "msg.unknown.operation.type";
+    static final String MSG_HR_LINKING_ERROR="msg.hr.linking.error";
 
     //Not yet used
     static final String MSG_ACCOUNT_OBJECT_CLASS_REQUIRED = "msg.acount.object.class.required";
@@ -155,6 +156,7 @@ public class OracleERPUtil {
     static final String MSG_ACCOUNT_NOT_DELETE="msg.account.not.delete";
     static final String MSG_ACCOUNT_NOT_READ="msg.account.not.read";
     static final String MSG_ACCOUNT_NOT_UPDATE="msg.account.not.update";
+    
     
     /**
      * object class name definitions
@@ -199,6 +201,9 @@ public class OracleERPUtil {
     // Auditor Data Object
     static final String AUDITOR_RESPS = "auditorResps";
     static final String AUDITOR_RESP = "auditorResp";
+    static final String AUDITOR_OBJECT = "auditorObject";
+
+
     /**
      * Auditor responsibilities has menus, forms, functions, 
      * Auditor attributes: activeRespsOnly
@@ -281,13 +286,25 @@ public class OracleERPUtil {
     }    
     
     
+    
+    /**
+     * @param con conector 
+     * @param attrs attributes
+     * @return the identity
+     */
+    public static String getId(OracleERPConnector con, Set<Attribute> attrs) {
+        final Uid uid = AttributeUtil.getUidAttribute(attrs);
+        return uid.getUidValue();
+    }        
+    
     /**
      * Get The personId from employeNumber or NPW number
+     * @param id user identity
      * @param con connector
      * @param attrs attributes 
      * @return personid the id of the person
      */
-    public static String getPersonId(OracleERPConnector con, Set<Attribute> attrs) {
+    public static String getPersonId(String id, OracleERPConnector con, Set<Attribute> attrs) {
         String ret = null;
         int num = 0;
         String columnName = null;
@@ -314,6 +331,13 @@ public class OracleERPUtil {
             rs = ps.executeQuery();
             if (rs.next()) {
                 ret = rs.getString(1);
+            }
+            log.ok("Oracle ERP: PERSON_ID return from {0} = {1}", sql, ret);
+            
+            if( ret == null ) {
+                final String msg =  con.getCfg().getMessage(MSG_HR_LINKING_ERROR, num, id);
+                log.error(msg);
+                throw new ConnectorException(msg);
             }
         } catch (SQLException e) {
             log.error(e, sql);

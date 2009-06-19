@@ -530,57 +530,55 @@ public class ResponsibilityNames {
         }
         // if new key is not in old list add it and remove from respList
         // after adding
-        if (respList != null) {
+
             // make copy of array to itereate through because we will be
-            // modifying the respList
-            List<String> resps = new ArrayList<String>(respList);
-            for (String resp : resps) {
-                String respKey = getResp(resp, RESP_FMT_KEYS);
-                if (!resp.equalsIgnoreCase("") && !oldRespKeys.contains(respKey)) {
-                    addUserResponsibility(identity, resp, errors);
-                    respList.remove(resp);
-                    log.info("added responsibility: '" + resp + "' for " + identity);
-                }
+        // modifying the respList
+        List<String> resps = new ArrayList<String>(respList);
+        for (String resp : resps) {
+            String respKey = getResp(resp, RESP_FMT_KEYS);
+            if (!resp.equalsIgnoreCase("") && !oldRespKeys.contains(respKey)) {
+                addUserResponsibility(identity, resp, errors);
+                respList.remove(resp);
+                log.info("added responsibility: '" + resp + "' for " + identity);
             }
-        }//end-if
+        }
+
         // if new key is both lists, update it
-        if (respList != null) {
-            String respWithNormalizedDates = null;
-            for (String resp : respList) {
-                // bug#13889 -  do not update all responsibilities
-                //              only update the ones that changed.
-                //              Updating all responsibilities every time masks the audit records.
-                //              Added check to see if oldResp list 
-                //              contains the current entire responsibility
-                //              string.
-                if (resp != null) {
-                    log.info("checking if update required for responsibility: '" + resp + "' for " + identity);
+        String respWithNormalizedDates = null;
+        for (String resp : respList) {
+            // bug#13889 -  do not update all responsibilities
+            //              only update the ones that changed.
+            //              Updating all responsibilities every time masks the audit records.
+            //              Added check to see if oldResp list 
+            //              contains the current entire responsibility
+            //              string.
+            if (resp != null) {
+                log.info("checking if update required for responsibility: '" + resp + "' for " + identity);
+            } else {
+                log.warn(" resp=NULL while processing updates");
+            }
+            // Add/Update resp to user
+            if (resp != null && !resp.equalsIgnoreCase("")) {
+                // normalize the date string to only contain the date, no time information.
+                respWithNormalizedDates = getResp(resp, RESP_FMT_NORMALIZE_DATES);
+
+                if (respWithNormalizedDates != null) {
+                    log.info("respWithNormalizedDates='" + respWithNormalizedDates + "'");
                 } else {
-                    log.warn(" resp=NULL while processing updates");
+                    log.warn("respWithNormalizedDates=null while processing updates");
                 }
-                // Add/Update resp to user
-                if (resp != null && !resp.equalsIgnoreCase("")) {
-                    // normalize the date string to only contain the date, no time information.
-                    respWithNormalizedDates = getResp(resp, RESP_FMT_NORMALIZE_DATES);
 
-                    if (respWithNormalizedDates != null) {
-                        log.info("respWithNormalizedDates='" + respWithNormalizedDates + "'");
-                    } else {
-                        log.warn("respWithNormalizedDates=null while processing updates");
-                    }
+                // Add/update resp to user if the date normalized responsibility string is not in the old date normalized list.
+                if ((oldRespsWithNormalizedDates != null) && respWithNormalizedDates != null
+                        && !respWithNormalizedDates.equalsIgnoreCase("")
+                        && !oldRespsWithNormalizedDates.contains(respWithNormalizedDates)) {
+                    updateUserResponsibility(identity, resp, errors);
 
-                    // Add/update resp to user if the date normalized responsibility string is not in the old date normalized list.
-                    if ((oldRespsWithNormalizedDates != null) && respWithNormalizedDates != null
-                            && !respWithNormalizedDates.equalsIgnoreCase("")
-                            && !oldRespsWithNormalizedDates.contains(respWithNormalizedDates)) {
-                        updateUserResponsibility(identity, resp, errors);
-
-                        String msg = "updated responsibility: '" + resp + "' for " + identity;
-                        log.info(msg);
-                    }
+                    String msg = "updated responsibility: '" + resp + "' for " + identity;
+                    log.info(msg);
                 }
             }
-        }//end-if
+        }
 
         // bug#16656: delayed error handling for missing responsibilities
         if (!errors.isEmpty()) {
@@ -694,6 +692,7 @@ public class ResponsibilityNames {
                 log.info("execute statement ''{0}''", sql);
                 st = co.getConn().prepareStatement(sql);
                 st.execute();
+
             } catch (SQLException e) {
                 if (e.getErrorCode() == ORA_01403) {
                     // bug#16656: delay error handling for missing responsibilities
@@ -708,6 +707,7 @@ public class ResponsibilityNames {
                 st = null;
             }
         }
+        co.getConn().commit();
         log.ok(method);
     }
 
@@ -992,6 +992,7 @@ public class ResponsibilityNames {
         final String method = "getResponsibilityNames";
         log.info( method);
 
+        //TODO add filter one resp name to the responsibility query
         PreparedStatement st = null;
         ResultSet res = null;
         StringBuffer b = new StringBuffer();
@@ -1012,6 +1013,8 @@ public class ResponsibilityNames {
                 bld.setName(s);
                 bld.addAttribute(NAME, s);
                 
+                
+                //TODO add responsibility details from auditor object, if in attributes to get
                 if (!handler.handle(bld.build())) {
                     break;
                 }
@@ -1176,6 +1179,7 @@ public class ResponsibilityNames {
 
         // The Name is supported attribute
         oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(NAME, String.class, STD_RNA));
         // name='userMenuNames' type='string' audit='false'
         oc.addAttributeInfo(AttributeInfoBuilder.build(USER_MENU_NAMES, String.class, STD_RNA));
         // name='menuIds' type='string' audit='false'    
@@ -1195,7 +1199,7 @@ public class ResponsibilityNames {
         // name='readOnlyFormIds' type='string' audit='false'
         oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_IDS, String.class, STD_RNA));
         // name='readWriteOnlyFormIds' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_IDS, String.class, STD_RNA));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_IDS, String.class, STD_RNA));
         // name='readOnlyFormNames' type='string' audit='false'
         oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_NAMES, String.class, STD_RNA));
         // name='readOnlyFunctionNames' type='string' audit='false'    
@@ -1773,13 +1777,20 @@ public class ResponsibilityNames {
 
     /**
      * @param bld
+     * @param options
      * @param columnValues
-     * @param columnNames
      */
-    public void buildAuditorData(ConnectorObjectBuilder bld, Map<String, SQLParam> columnValues, Set<String> columnNames) {
-        ArrayList activeRespList = getResponsibilities(id, RESPS_TABLE, true);
-        auditorData = getAuditorDataObject(activeRespList);
+    public void buildAuditorDataObject(ConnectorObjectBuilder bld, OperationOptions options,
+            Map<String, SQLParam> columnValues) {
+        //TODO do not know how to build auditor data object
+        final String id = (String) columnValues.get(USER_ID).getValue();
         
-        
+        List<String> activeRespList = getResponsibilities(id, RESPS_TABLE, true);
+        List<Object> auditorList = new ArrayList<Object>(); 
+        for (String activeRespName : activeRespList) {
+            ConnectorObject auditorData = getAuditorDataObject(activeRespName);  
+            auditorList.add(auditorData);
+        }
+        // TODO invalid, needs to be referenced bld.addAttribute(AUDITOR_OBJECT, auditorList);
     }    
 }

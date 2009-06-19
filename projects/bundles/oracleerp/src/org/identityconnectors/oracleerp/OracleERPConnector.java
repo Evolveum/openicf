@@ -81,7 +81,7 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
  * @since 1.0
  */
 @ConnectorClass(displayNameKey = "oracleerp.connector.display", configurationClass = OracleERPConfiguration.class)
-public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, SyncOp, SearchOp<FilterWhereBuilder>,
+public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, SearchOp<FilterWhereBuilder>,
         UpdateOp, CreateOp, TestOp, SchemaOp, ScriptOnConnectorOp, ScriptOnResourceOp {
 
     /**
@@ -322,14 +322,6 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         return this.conn;
     }
 
-    /* (non-Javadoc)
-     * @see org.identityconnectors.framework.spi.operations.SyncOp#getLatestSyncToken()
-     */
-    public SyncToken getLatestSyncToken(ObjectClass objClass) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
     /**
      * Callback method to receive the {@link Configuration}.
      * 
@@ -405,7 +397,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
          */
         final Map<String, Object> actionContext = new HashMap<String, Object>();
         final Map<String, Object> scriptArguments = request.getScriptArguments();
-        final String nameValue = ((Name) scriptArguments.get(Name.NAME)).getNameValue();
+        final String nameValue = ((Uid) scriptArguments.get(Uid.NAME)).getUidValue();
         final GuardedString password = ((GuardedString) scriptArguments.get(OperationalAttributes.PASSWORD_NAME));
 
         actionContext.put("conn", getConn().getConnection()); //The real connection
@@ -455,13 +447,6 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         return schemaBld.build();
     }
 
-    /* (non-Javadoc)
-     * @see org.identityconnectors.framework.spi.operations.SyncOp#sync(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.SyncToken, org.identityconnectors.framework.common.objects.SyncResultsHandler, org.identityconnectors.framework.common.objects.OperationOptions)
-     */
-    public void sync(ObjectClass objClass, SyncToken token, SyncResultsHandler handler, OperationOptions options) {
-        // TODO Auto-generated method stub
-
-    }
 
     /* (non-Javadoc)
      * @see org.identityconnectors.framework.spi.operations.TestOp#test()
@@ -483,9 +468,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
             uid = getAccount().update(oclass, uid, replaceAttributes, options);
             //doAfterUpdateActionScripts(oclass, attrs, options);
             return uid;
-        } else if (oclass.equals(RESP_NAMES)) {
-           // uid = respNames.update(oclass, uid, replaceAttributes, options);
-        }
+        } 
 
         throw new IllegalArgumentException(getCfg().getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
     }

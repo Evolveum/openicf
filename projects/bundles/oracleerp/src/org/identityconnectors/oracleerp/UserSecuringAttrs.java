@@ -167,9 +167,11 @@ public class UserSecuringAttrs  {
      *             Since there is no available key, we will delete all and add all new ones
      * 
      */
-    public void updateUserSecuringAttrs(final Attribute secAttr, String identity, String userId) {
+    public void updateUserSecuringAttrs(final Attribute secAttr, String identity) {
         final String method = "updateUserSecuringAttrs";
         log.info(method);
+
+        final String userId=getUserId(co, identity);
 
         //Convert to list of Strings
         final List<String> secAttrList = convertToListString(secAttr.getValue());

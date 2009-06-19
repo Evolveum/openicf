@@ -230,11 +230,10 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      * @param options OperationOptions
      */
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
-        final OracleERPConnection conn = co.getConn();
-               
+                       
         //Get the person_id and set is it as a employee id
-        final String identity = getName(co, attrs);
-        final String person_id = getPersonId(co, attrs);
+        final String identity = getId(co, attrs);
+        final String person_id = getPersonId(identity, co, attrs);
         if (person_id != null) {
             // Person Id as a Employee_Id
             attrs.add(AttributeBuilder.build(EMP_ID, person_id));
@@ -253,11 +252,13 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             log.ok(msg, user_name, sql);
             try {
                 // Create the user
-                cs = conn.prepareCall(sql, userSQLParams);
+                cs = co.getConn().prepareCall(sql, userSQLParams);
                 cs.execute();
+                
+                co.getConn().commit();                
             } catch (SQLException e) {
                 log.error(e, user_name, sql);
-                SQLUtil.rollbackQuietly(conn);
+                SQLUtil.rollbackQuietly(co.getConn());
                 throw new AlreadyExistsException(e);
             } finally {
                 SQLUtil.closeQuietly(cs);
@@ -273,15 +274,14 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             co.getRespNames().updateUserResponsibilities( directResp, identity);
         }
         // update securing attributes
-        final String userId=getUserId(co, identity);
         final Attribute secAttr = AttributeUtil.find(SEC_ATTRS, attrs);
         if ( secAttr != null ) {
-            co.getSecAttrs().updateUserSecuringAttrs(secAttr, identity, userId);
+            co.getSecAttrs().updateUserSecuringAttrs(secAttr, identity);
         }
-                
-        conn.commit();
+
         
         //Return new UID
+        final String userId=getUserId(co, identity);
         return new Uid(userId);
     }
     
@@ -301,9 +301,11 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         CallableStatement cs = null;
         try {
             cs = co.getConn().prepareCall(sql);
-            final String asStringValue = AttributeUtil.getAsStringValue(uid);
-            cs.setString(1, asStringValue);
+            final String identity = AttributeUtil.getAsStringValue(uid).toUpperCase();
+            cs.setString(1, identity);
             cs.execute();
+            
+            co.getConn().commit();
             // No Result ??
         } catch (SQLException e) {
             if (e.getErrorCode() == 20001 || e.getErrorCode() == 1403) {
@@ -327,11 +329,9 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         //Names
         final String tblname = co.app() + "fnd_user";
         
-        final Set<String> columnNames = resolveColumnNamesToGet(options);
-        final Set<String> accountNames = CollectionUtil.newSet(columnNames);
-        columnNames.retainAll(DEFAULT_READ_COLUMNS);
+        final Set<String> columnNames = accountColumnNamesToGet(options);
         // For all user query there is no need to replace or quote anything
-        final DatabaseQueryBuilder query = new DatabaseQueryBuilder(tblname, accountNames );
+        final DatabaseQueryBuilder query = new DatabaseQueryBuilder(tblname, columnNames );
         String sqlSelect = query.getSQL();
         
         if(StringUtil.isNotBlank(co.getCfg().getAccountsIncluded())) {
@@ -362,12 +362,13 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                 // get user's securing attributes
                 co.getSecAttrs().buildSecuringAttributesToAccountObject(bld, columnValues, columnNames);
                 
-                co.getRespNames().buildAuditorData(bld, columnValues, columnNames);
+                co.getRespNames().buildAuditorDataObject(bld, options, columnValues);
                 
                 if (!handler.handle(bld.build())) {
                     break;
                 }
             }
+            co.getConn().commit();
         } catch (SQLException e) {
             log.error(e, method);
             throw ConnectorException.wrap(e);
@@ -387,7 +388,11 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         } else if (Uid.NAME.equalsIgnoreCase(attributeName)) { 
             return USER_ID;
         } 
-        return attributeName;  
+        //We need to filter just a known kolumns
+        if ( READ_PEOPLE_COLUMNS.contains(attributeName)) {
+            return attributeName;
+        }
+        return null;
     }
 
     /**
@@ -401,8 +406,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         // The Name is supported attribute
         oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, EnumSet.of(Flags.REQUIRED)));
         // name='owner' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(OWNER, String.class, EnumSet.of(Flags.NOT_READABLE,
-                Flags.REQUIRED)));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(OWNER, String.class, EnumSet.of(Flags.NOT_READABLE)));
         // name='session_number' type='string' required='false'
         oc.addAttributeInfo(AttributeInfoBuilder.build(SESS_NUM, String.class, EnumSet.of(
                 Flags.NOT_UPDATEABLE, Flags.NOT_CREATABLE)));
@@ -465,7 +469,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      * @param options from application
      * @return the set of the column names
      */
-    public Set<String> resolveColumnNamesToGet(OperationOptions options) {
+    public Set<String> accountColumnNamesToGet(OperationOptions options) {
         Set<String> columnNamesToGet = DEFAULT_READ_COLUMNS;
         if (options != null && options.getAttributesToGet() != null) {
             columnNamesToGet = CollectionUtil.newCaseInsensitiveSet();
@@ -474,7 +478,9 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         // Replace attributes to quoted columnNames
         for (String attributeName : options.getAttributesToGet()) {
             final String columnName = getColumnName(attributeName);
-            columnNamesToGet.add(columnName);
+            if ( columnName != null) {
+                columnNamesToGet.add(columnName);
+            }
         }
 
         return columnNamesToGet;
@@ -509,10 +515,9 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      * @param options OperationOptions
      */
     public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
-        final OracleERPConnection conn = co.getConn();
-        final String identity = getName(co, attrs);
+        final String identity = getId(co, attrs);
         // update securing attributes
-        final String userId=getUserId(co, identity);
+        
         
         // Enable/dissable user
         final Attribute enableAttr = AttributeUtil.find(OperationalAttributes.ENABLE_NAME, attrs);
@@ -521,9 +526,11 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             if ( enable ) {
                 //delete user is the same as dissable
                 disable(objclass, uid, options);
+                final String userId=getUserId(co, identity);
                 return new Uid(userId);
             } else {
                 enable(objclass, uid, options);
+                final String userId=getUserId(co, identity);
                 return new Uid(userId);
             }
         }
@@ -539,11 +546,12 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             log.ok(msg, userName, sql);
             try {
                 // Create the user
-                cs = conn.prepareCall(sql, getUserSQLParams(userValues));
+                cs = co.getConn().prepareCall(sql, getUserSQLParams(userValues));
                 cs.execute();
+                co.getConn().commit();
             } catch (SQLException e) {
                 log.error(e, msg, userName, sql);
-                SQLUtil.rollbackQuietly(conn);
+                SQLUtil.rollbackQuietly(co.getConn());
                 throw new AlreadyExistsException(e);
             } finally {
                 SQLUtil.closeQuietly(cs);
@@ -561,10 +569,10 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
 
         final Attribute secAttr = AttributeUtil.find(SEC_ATTRS, attrs);
         if ( secAttr != null ) {
-            co.getSecAttrs().updateUserSecuringAttrs(secAttr, identity, userId);
+            co.getSecAttrs().updateUserSecuringAttrs(secAttr, identity);
         }
-        conn.commit();
         
+        final String userId=getUserId(co, identity);
         //Return new UID
         return new Uid(userId);
     }
@@ -598,6 +606,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             st.setString(1, identity.toUpperCase());
             st.setString(2, co.getCfg().getUser());
             st.execute();
+            co.getConn().commit();
         } catch (SQLException e) {
             final String msg = "Cold not enable user {0}";
             log.error(msg, uid.getUidValue());
@@ -623,6 +632,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             final String asStringValue = AttributeUtil.getAsStringValue(uid);
             cs.setString(1, asStringValue);
             cs.execute();
+            co.getConn().commit();
             // No Result ??
         } catch (SQLException e) {
             final String msg = "SQL Exception trying to disable Oracle user '{0}' ";
@@ -682,6 +692,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                         log.ok("Person values {0} from result set ", personValues);
                     }
                 }
+                co.getConn().commit();
             } catch (SQLException e) {
                 String emsg = e.getMessage();
                 msg = "Caught SQLException when executing: ''{0}'': {1}";
