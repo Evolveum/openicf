@@ -27,7 +27,7 @@ import org.junit.Ignore;
 public abstract class OracleConnectorAbstractTest {
     protected static OracleConfiguration testConf;
     protected static ConnectorFacade facade;
-    protected static OracleConnectorImpl connector;
+    protected static OracleConnector connector;
     protected static OracleUserReader userReader;
 
     /**
@@ -52,8 +52,8 @@ public abstract class OracleConnectorAbstractTest {
         return factory.newInstance(apiCfg);
     }
     
-    protected static OracleConnectorImpl createTestConnector(){
-        OracleConnectorImpl oc = new OracleConnectorImpl();
+    protected static OracleConnector createTestConnector(){
+        OracleConnector oc = new OracleConnector();
         oc.init(testConf);
         return oc;
     }

@@ -28,15 +28,15 @@ import org.junit.Test;
 public class OracleConnectorImplTest extends OracleConnectorAbstractTest{
     
     /**
-     * Test method for {@link org.identityconnectors.oracle.OracleConnectorImpl#checkAlive()}.
+     * Test method for {@link org.identityconnectors.oracle.OracleConnector#checkAlive()}.
      */
     @Test
     public void testCheckAlive() {
-        OracleConnectorImpl oc = createTestConnector();
+        OracleConnector oc = createTestConnector();
         oc.checkAlive();
         oc.dispose();
         
-        OracleConnectorImpl con = new OracleConnectorImpl();
+        OracleConnector con = new OracleConnector();
         try{
 	        con.checkAlive();
 	        fail("Must fail for not initialized");
@@ -45,25 +45,25 @@ public class OracleConnectorImplTest extends OracleConnectorAbstractTest{
     }
 
     /**
-     * Test method for {@link org.identityconnectors.oracle.OracleConnectorImpl#getConfiguration()}.
+     * Test method for {@link org.identityconnectors.oracle.OracleConnector#getConfiguration()}.
      */
     @Test
     public void testGetConfiguration() {
-        OracleConnectorImpl oc = createTestConnector();
+        OracleConnector oc = createTestConnector();
         OracleConfiguration cfg2 = oc.getConfiguration();
         assertSame(testConf,cfg2);
         oc.dispose();
     }
 
     /**
-     * Test method for {@link org.identityconnectors.oracle.OracleConnectorImpl#init(org.identityconnectors.framework.spi.Configuration)}.
+     * Test method for {@link org.identityconnectors.oracle.OracleConnector#init(org.identityconnectors.framework.spi.Configuration)}.
      */
     @Test
     public void testInit() {
-        OracleConnectorImpl oc = createTestConnector();
+        OracleConnector oc = createTestConnector();
         oc.dispose();
         
-        oc = new OracleConnectorImpl();
+        oc = new OracleConnector();
         OracleConfiguration cfg = new OracleConfiguration();
         try{
             oc.init(cfg);
@@ -75,7 +75,7 @@ public class OracleConnectorImplTest extends OracleConnectorAbstractTest{
     
     @Test
     public void testTest(){
-    	OracleConnectorImpl c = new OracleConnectorImpl();
+    	OracleConnector c = new OracleConnector();
     	try{
     		c.test();
     		fail("Test must fail if init was not called");
@@ -90,7 +90,7 @@ public class OracleConnectorImplTest extends OracleConnectorAbstractTest{
     /** Test that connection is kept open when using driver */
     @Test
     public void testConnectionDirectDriver() throws SQLException{
-    	final OracleConnectorImpl c = new OracleConnectorImpl();
+    	final OracleConnector c = new OracleConnector();
     	//First use driver connection
     	c.init(OracleConfigurationTest.createThinConfiguration());
     	Assert.assertNull("Admin connection should be initialized lazy", c.getAdminConnection());
@@ -116,7 +116,7 @@ public class OracleConnectorImplTest extends OracleConnectorAbstractTest{
     /** Test that connection is kept open when using driver */
     @Test
     public void testConnectionDataSource() throws SQLException{
-    	final OracleConnectorImpl c = new OracleConnectorImpl();
+    	final OracleConnector c = new OracleConnector();
     	//First use driver connection
     	c.init(OracleConfigurationTest.createDataSourceConfiguration());
     	Assert.assertNull("Admin connection should be initialized lazy", c.getAdminConnection());
@@ -137,7 +137,7 @@ public class OracleConnectorImplTest extends OracleConnectorAbstractTest{
     
     
     
-    private void runSimpleContract(OracleConnectorImpl connector, Runnable after) throws SQLException{
+    private void runSimpleContract(OracleConnector connector, Runnable after) throws SQLException{
     	//First create the user
     	Uid uid = new Uid("testUser");
     	try{

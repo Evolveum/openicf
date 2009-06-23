@@ -4,6 +4,8 @@
 package org.identityconnectors.oracle;
 
 
+import static org.identityconnectors.oracle.OracleMessages.MSG_NORMALIZER_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.MSG_NORMALIZER_HELP;
 import static org.identityconnectors.oracle.OracleMessages.MSG_CS_DISPLAY;
 import static org.identityconnectors.oracle.OracleMessages.MSG_CS_HELP;
 import static org.identityconnectors.oracle.OracleMessages.MSG_DATABASE_DISPLAY;
@@ -70,15 +72,18 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     private String extraAttributesPolicyString;
     private ExtraAttributesPolicySetup extraAttributesPolicySetup;
     private boolean dropCascade;
+    private String normalizerString;
+    private OracleNormalizerName normalizerName;
     private static final Log log = Log.getLog(OracleConfiguration.class);
     /**
      * Creates configuration
      */
     public OracleConfiguration() {
-        cs = new OracleCaseSensitivityBuilder(getConnectorMessages()).build();
         caseSensitivityString = "default";
+        cs = new OracleCaseSensitivityBuilder(getConnectorMessages()).build();
         port = OracleSpecifics.LISTENER_DEFAULT_PORT;
         dropCascade = true;
+        normalizerString = OracleNormalizerName.INPUT.name();
     }
     
     /** Type of connection we will use to connect to Oracle */
@@ -232,7 +237,16 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
 	public boolean isDropCascade(){
 		return dropCascade;
 	}
-
+	
+	@ConfigurationProperty(order = 13, displayMessageKey = MSG_NORMALIZER_DISPLAY, helpMessageKey = MSG_NORMALIZER_HELP, required = false)
+	public String getNormalizerString(){
+		return normalizerString;
+	}
+	
+	public void setNormalizerString(String normalizerString){
+		this.normalizerString = normalizerString;
+		this.connType = null;
+	}
 
 	/**
 	 * @param extraAttributesPolicyString the extraAttributesPolicy to set
@@ -371,7 +385,15 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     	return extraAttributesPolicySetup;
     }
     
-    public void setSourceType(String sourceType){
+    OracleNormalizerName getNormalizerName() {
+		return normalizerName;
+	}
+
+	void setNormalizerName(OracleNormalizerName normalizer) {
+		this.normalizerName = normalizer;
+	}
+
+	public void setSourceType(String sourceType){
     	this.sourceType = sourceType;
     	this.connType = null;
     }
@@ -411,12 +433,14 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     
     
     Connection createUserConnection(String user, GuardedString password){
+    	validate();
     	user = cs.formatToken(OracleUserAttribute.USER, user);
     	password = cs.formatToken(OracleUserAttribute.PASSWORD, password);
     	return createConnection(user,password);
     }
     
     Connection createAdminConnection(){
+    	validate();
     	String user = cs.normalizeAndFormatToken(OracleUserAttribute.SYSTEM_USER, this.user);
     	GuardedString password = cs.normalizeAndFormatToken(OracleUserAttribute.SYSTEM_PASSWORD, this.password);
         return createConnection(user,password);

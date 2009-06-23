@@ -100,7 +100,7 @@ interface OracleCaseSensitivitySetup {
      */
     public GuardedString normalizeAndFormatToken(OracleUserAttribute attr,GuardedString token);
     /**
-     * Gets normalizer by attribue
+     * Gets normalizer by attribute
      * @param attribute
      * @throws  IllegalArgumentException when normalizer by attribute is not found
      * @return CSTokenFormatter by attribute

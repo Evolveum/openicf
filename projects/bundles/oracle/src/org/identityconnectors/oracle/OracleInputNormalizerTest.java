@@ -21,11 +21,11 @@ import org.junit.Test;
  * @author kitko
  *
  */
-public class OracleAttributeNormalizerTest {
+public class OracleInputNormalizerTest {
 
 	@Test
 	public void testNormalizeAttribute(){
-		OracleAttributeNormalizer normalizer = new OracleAttributeNormalizer(OracleConfigurationTest.createSystemConfiguration().getCSSetup());
+		OracleInputNormalizer normalizer = new OracleInputNormalizer(OracleConfigurationTest.createSystemConfiguration().getCSSetup());
 		ObjectClass objectClass = ObjectClass.ACCOUNT;
 		
 		Class<? extends SPIOperation> op = UpdateOp.class;

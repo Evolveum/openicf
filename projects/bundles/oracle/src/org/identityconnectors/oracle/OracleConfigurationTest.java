@@ -50,9 +50,9 @@ public class OracleConfigurationTest {
     @Test
     public void testDefaultValues(){
     	OracleConfiguration cfg = createEmptyCfg();
-    	Assert.assertNotNull(cfg.getCSSetup());
     	Assert.assertEquals("default", cfg.getCaseSensitivityString());
     	Assert.assertTrue(cfg.isDropCascade());
+    	Assert.assertEquals(OracleNormalizerName.INPUT.name(), cfg.getNormalizerString());
     }
 
     /** Test validation of cfg */

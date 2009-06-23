@@ -555,7 +555,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
 	 * @throws SQLException */
 	@Test
 	public void testCreateFail() throws SQLException{
-		OracleConnectorImpl testConnector = createTestConnector();
+		OracleConnector testConnector = createTestConnector();
 		try{
 			testConnector.delete(ObjectClass.ACCOUNT, new Uid(TEST_USER), null);
 		}

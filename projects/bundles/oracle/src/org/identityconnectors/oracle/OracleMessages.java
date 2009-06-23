@@ -31,6 +31,8 @@ class OracleMessages {
 	static final String MSG_SOURCE_TYPE_HELP = "oracle.source.type.help";
 	static final String MSG_DROP_CASCADE_DISPLAY = "oracle.drop.cascade.display";
 	static final String MSG_DROP_CASCADE_HELP = "oracle.drop.cascade.help";
+	static final String MSG_NORMALIZER_DISPLAY = "oracle.normalizer.display";
+	static final String MSG_NORMALIZER_HELP = "oracle.normalizer.help";
 	
 	static final String MSG_USER_AND_PASSWORD_MUST_BE_SET_BOTH_OR_NONE = "oracle.user.and.password.must.be.set.both.or.none";
 	static final String MSG_INVALID_AUTH = "oracle.invalid.auth";
