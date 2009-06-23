@@ -21,6 +21,8 @@ import javax.sql.DataSource;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.framework.spi.operations.CreateOp;
+import org.identityconnectors.framework.spi.operations.UpdateOp;
 import org.identityconnectors.oracle.OracleConfiguration.ConnectionType;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.After;
@@ -430,6 +432,40 @@ public class OracleConfigurationTest {
         assertNotNull("CaseSensitivity should not be null",conf.getCSSetup());
         assertEquals("Default normalizer should have value from attribute be toupper",OracleUserAttribute.USER.getFormatting().isToUpper(),conf.getCSSetup().getAttributeFormatterAndNormalizer(OracleUserAttribute.USER).isToUpper());
         assertEquals("Default formatter should use quates from attribute",OracleUserAttribute.USER.getFormatting().getQuatesChar(),conf.getCSSetup().getAttributeFormatterAndNormalizer(OracleUserAttribute.USER).getQuatesChar());
+    }
+    
+    @Test
+    public void testDependentValues(){
+    	OracleConfiguration cfg = createSystemConfiguration();
+    	OracleConfiguration copy = cfg.clone();
+    	cfg.validate();
+        assertNotNull(cfg.getCSSetup());
+        assertNotNull(cfg.getExtraAttributesPolicySetup());
+        assertNotNull(cfg.getNormalizerName());
+        
+        cfg.setCaseSensitivityString("Invalid");
+        try{
+        	cfg.validate();
+        	fail("Validate must fail for invalid caseSensitivityString");
+        }
+        catch(RuntimeException e){}
+        
+        cfg = copy;
+        cfg.setExtraAttributesPolicyString("PASSWORD={CREATE=FAIL,UPDATE=IGNORE},PASSWORD_EXPIRE={CREATE=IGNORE,UPDATE=FAIL}");
+        cfg.validate();
+        assertNotNull(cfg.getExtraAttributesPolicySetup());
+        assertEquals(ExtraAttributesPolicy.IGNORE,cfg.getExtraAttributesPolicySetup().getPolicy(OracleUserAttribute.PASSWORD, UpdateOp.class));
+        assertEquals(ExtraAttributesPolicy.FAIL,cfg.getExtraAttributesPolicySetup().getPolicy(OracleUserAttribute.PASSWORD, CreateOp.class));
+        
+        cfg = copy;
+        cfg.setNormalizerString(OracleNormalizerName.FULL.name());
+        cfg.validate();
+        assertEquals(OracleNormalizerName.FULL, cfg.getNormalizerName());
+        
+        cfg.setNormalizerString(OracleNormalizerName.INPUT_AUTH.name());
+        cfg.validate();
+        assertEquals(OracleNormalizerName.INPUT_AUTH, cfg.getNormalizerName());
+        
     }
     
     
