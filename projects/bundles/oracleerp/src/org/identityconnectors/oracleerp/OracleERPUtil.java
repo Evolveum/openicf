@@ -31,8 +31,10 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 
 import org.identityconnectors.common.Assertions;
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
@@ -41,6 +43,7 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
 
 /**
@@ -296,6 +299,23 @@ public class OracleERPUtil {
         final Uid uid = AttributeUtil.getUidAttribute(attrs);
         return uid.getUidValue();
     }        
+    
+    /**
+     * Get attributes to get list
+     * @param options
+     * @return set of attribute names to get
+     */
+    public static Set<String> getAttributesToGetSet(OperationOptions options) {
+        SortedSet<String> _attrToGet = CollectionUtil.newCaseInsensitiveSet();
+        if(options != null) {
+            for (String toGet : options.getAttributesToGet()) {
+                _attrToGet.add(toGet);
+            }
+        }
+        _attrToGet.add(Name.NAME);
+        _attrToGet.add(Uid.NAME);        
+        return _attrToGet;
+    }    
     
     /**
      * Get The personId from employeNumber or NPW number

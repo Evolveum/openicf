@@ -47,7 +47,6 @@ import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
-import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -55,6 +54,7 @@ import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
+import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
 
 
@@ -139,34 +139,35 @@ public class ResponsibilityNames {
     }
 
     /**
-     * @param bld
-     * @param columnValues
-     * @param columnNames
+     * @param amb builder
+     * @param id id of the user
+     * @param options 
      */
-    public void buildResponsibilitiesToAccountObject(ConnectorObjectBuilder bld, Map<String, SQLParam> columnValues,
-            Set<String> columnNames) {
-        final String id = getStringParamValue(columnValues, USER_ID);
-        if (columnNames.contains(RESPS) && !isNewResponsibilityViews()) {
+    public void buildResponsibilitiesToAccountObject(AttributeMergeBuilder amb, final String id,
+            OperationOptions options) {
+        
+        Set<String> attrToGet = getAttributesToGetSet(options); 
+        if (attrToGet.contains(RESPS) && !isNewResponsibilityViews()) {
             //add responsibilities
             final List<String> responsibilities = getResponsibilities(id, RESPS_TABLE, false);
-            bld.addAttribute(RESPS, responsibilities);
+            amb.addAttribute(RESPS, responsibilities);
 
             //add resps list
             final List<String> resps = getResps(responsibilities, RESP_FMT_KEYS);
-            bld.addAttribute(RESPKEYS, resps);
-        } else if (columnNames.contains(DIRECT_RESPS)) {
+            amb.addAttribute(RESPKEYS, resps);
+        } else if (attrToGet.contains(DIRECT_RESPS)) {
             final List<String> responsibilities = getResponsibilities(id, RESPS_DIRECT_VIEW, false);
-            bld.addAttribute(DIRECT_RESPS, responsibilities);
+            amb.addAttribute(DIRECT_RESPS, responsibilities);
 
             //add resps list
             final List<String> resps = getResps(responsibilities, RESP_FMT_KEYS);
-            bld.addAttribute(RESPKEYS, resps);
+            amb.addAttribute(RESPKEYS, resps);
         }
 
-        if (columnNames.contains(INDIRECT_RESPS)) {
+        if (attrToGet.contains(INDIRECT_RESPS)) {
             //add responsibilities
             final List<String> responsibilities = getResponsibilities(id, RESPS_INDIRECT_VIEW, false);
-            bld.addAttribute(INDIRECT_RESPS, responsibilities);
+            amb.addAttribute(INDIRECT_RESPS, responsibilities);
         }
     }
 
@@ -992,29 +993,42 @@ public class ResponsibilityNames {
         final String method = "getResponsibilityNames";
         log.info( method);
 
+        Set<String> atg = getAttributesToGetSet(options);
+        
         //TODO add filter one resp name to the responsibility query
         PreparedStatement st = null;
         ResultSet res = null;
-        StringBuffer b = new StringBuffer();
+        StringBuilder b = new StringBuilder();
 
         b.append("SELECT distinct fndrespvl.responsibility_name ");
         b.append("FROM " + co.app()+ "fnd_responsibility_vl fndrespvl, ");
         b.append(co.app() + "fnd_application_vl fndappvl ");
         b.append("WHERE fndappvl.application_id = fndrespvl.application_id ");
+        
+        if( where.getParams().size() == 1 ) {
+            b.append("and fndrespvl.responsibility_name = ?");
+        }
 
         try {
-            st = co.getConn().prepareStatement(b.toString());
+            st = co.getConn().prepareStatement(b.toString(), where.getParams());
             res = st.executeQuery();
             while (res.next()) {
+                
+                AttributeMergeBuilder amb = new AttributeMergeBuilder(atg);
+                
+                String respName = getColumn(res, 1);
+                amb.addAttribute(Name.NAME, respName);
+                amb.addAttribute(Uid.NAME, respName);
+                amb.addAttribute(NAME, respName);
+                
+                if(where.getParams().size() == 1) {
+                    updateAuditorData(amb, respName);
+                }
+                
                 ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
                 bld.setObjectClass(RESP_NAMES_OC);
-
-                String s = getColumn(res, 1);
-                bld.setName(s);
-                bld.addAttribute(NAME, s);
+                bld.addAttributes(amb.build());
                 
-                
-                //TODO add responsibility details from auditor object, if in attributes to get
                 if (!handler.handle(bld.build())) {
                     break;
                 }
@@ -1309,8 +1323,13 @@ public class ResponsibilityNames {
         
         List<String> auditorRespList = getResponsibilities(id, respLocation, activeRespsOnly);
         for (String respName : auditorRespList) {
-            ConnectorObject auditorData = getAuditorDataObject(respName);
-            if (!handler.handle(auditorData)) {
+            AttributeMergeBuilder amb = new AttributeMergeBuilder(getAttributesToGetSet(options));
+            updateAuditorData(amb, respName);
+
+            ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
+            bld.setObjectClass(AUDITOR_RESPS_OC);
+            bld.addAttributes(amb.build());
+            if (!handler.handle(bld.build())) {
                 break;
             }
         }
@@ -1349,19 +1368,15 @@ public class ResponsibilityNames {
      * readOnlyFormIds readWriteOnlyFormIds readOnlyFunctionIds readWriteOnlyFunctionIds readOnlyFormNames
      * readOnlyUserFormNames readWriteOnlyFormNames readWriteOnlyUserFormNames
      * @param resp 
-     * @return an audit object
      * @throws SQLException 
      * 
      */
-     private ConnectorObject getAuditorDataObject(String respName) {
+     private void updateAuditorData(AttributeMergeBuilder amb, String respName) {
          final String method = "getAuditorDataObject";
          log.info(method);
          // Profile Options used w/SOB and Organization
          String sobOption = "GL Set of Books ID";
          String ouOption = "MO: Operating Unit";
-
-         ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
-         bld.setObjectClass(AUDITOR_RESPS_OC);
 
         String curResp = respName;
         String resp = null;
@@ -1622,25 +1637,25 @@ public class ResponsibilityNames {
         List<String> functionIdsList = new ArrayList<String>(roFunctionIds);
         functionIdsList.addAll(rwFunctionIds);
 
-        bld.addAttribute(USER_MENU_NAMES, menuNames);
-        bld.addAttribute(MENU_IDS, menuIds);
-        bld.addAttribute(USER_FUNCTION_NAMES, userFunctionNames);
-        bld.addAttribute(FUNCTION_IDS, functionIdsList);
-        bld.addAttribute(READ_ONLY_FUNCTIONS_IDS, roFunctionIds);
-        bld.addAttribute(READ_WRITE_ONLY_FUNCTION_IDS, rwFunctionIds);
-        bld.addAttribute(FORM_IDS, formIdList);
-        bld.addAttribute(READ_ONLY_FORM_IDS, roFormIds);
-        bld.addAttribute(READ_WRITE_ONLY_FORM_IDS, rwFormIds);
-        bld.addAttribute(FORM_NAMES, formNameList);
-        bld.addAttribute(READ_ONLY_FORM_NAMES, roFormNames);
-        bld.addAttribute(READ_WRITE_ONLY_FORM_NAMES, rwFormNames);
-        bld.addAttribute(USER_FORM_NAMES, userFormNameList);
-        bld.addAttribute(READ_ONLY_USER_FORM_NAMES, roUserFormNames);
-        bld.addAttribute(READ_WRITE_ONLY_USER_FORM_NAMES, rwUserFormNames);
-        bld.addAttribute(FUNCTION_NAMES, functionNameList);
-        bld.addAttribute(READ_ONLY_FUNCTION_NAMES, roFunctionNames);
-        bld.addAttribute(READ_WRITE_ONLY_FUNCTION_NAMES, rwFunctionNames);
-        bld.addAttribute(RESP_NAMES, resp + "||" + app);
+        amb.addAttribute(USER_MENU_NAMES, menuNames);
+        amb.addAttribute(MENU_IDS, menuIds);
+        amb.addAttribute(USER_FUNCTION_NAMES, userFunctionNames);
+        amb.addAttribute(FUNCTION_IDS, functionIdsList);
+        amb.addAttribute(READ_ONLY_FUNCTIONS_IDS, roFunctionIds);
+        amb.addAttribute(READ_WRITE_ONLY_FUNCTION_IDS, rwFunctionIds);
+        amb.addAttribute(FORM_IDS, formIdList);
+        amb.addAttribute(READ_ONLY_FORM_IDS, roFormIds);
+        amb.addAttribute(READ_WRITE_ONLY_FORM_IDS, rwFormIds);
+        amb.addAttribute(FORM_NAMES, formNameList);
+        amb.addAttribute(READ_ONLY_FORM_NAMES, roFormNames);
+        amb.addAttribute(READ_WRITE_ONLY_FORM_NAMES, rwFormNames);
+        amb.addAttribute(USER_FORM_NAMES, userFormNameList);
+        amb.addAttribute(READ_ONLY_USER_FORM_NAMES, roUserFormNames);
+        amb.addAttribute(READ_WRITE_ONLY_USER_FORM_NAMES, rwUserFormNames);
+        amb.addAttribute(FUNCTION_NAMES, functionNameList);
+        amb.addAttribute(READ_ONLY_FUNCTION_NAMES, roFunctionNames);
+        amb.addAttribute(READ_WRITE_ONLY_FUNCTION_NAMES, rwFunctionNames);
+        amb.addAttribute(RESP_NAMES, resp + "||" + app);
 
         // check to see if SOB/ORGANIZATION is required
         if (co.getCfg().isReturnSobOrgAttrs()) {
@@ -1677,14 +1692,14 @@ public class ResponsibilityNames {
                     if (option != null && option.startsWith(sobOption)) {
                         List<String> values = Arrays.asList(option.split("||"));
                         if (values != null && values.size() == 3) {
-                            bld.addAttribute(SOB_NAME, values.get(1));
-                            bld.addAttribute(SOB_ID, values.get(2));
+                            amb.addAttribute(SOB_NAME, values.get(1));
+                            amb.addAttribute(SOB_ID, values.get(2));
                         }
                     } else if (option != null && option.startsWith(ouOption)) {
                         List<String> values = Arrays.asList(option.split("||"));
                         if (values != null && values.size() == 3) {
-                            bld.addAttribute(OU_NAME, values.get(1));
-                            bld.addAttribute(OU_ID, values.get(2));
+                            amb.addAttribute(OU_NAME, values.get(1));
+                            amb.addAttribute(OU_ID, values.get(2));
                         }
                     }
                 }
@@ -1772,25 +1787,17 @@ public class ResponsibilityNames {
             log.ok(method + "RW_FUNCTION_NAMES " + rwFunctionNames.toString());
         }
          log.ok(method);
-         return bld.build();
      }
 
     /**
-     * @param bld
-     * @param options
-     * @param columnValues
+     * @param amb builder
+     * @param id id of the responsibility
+     * @param options for a attributesToGet 
      */
-    public void buildAuditorDataObject(ConnectorObjectBuilder bld, OperationOptions options,
-            Map<String, SQLParam> columnValues) {
-        //TODO do not know how to build auditor data object
-        final String id = (String) columnValues.get(USER_ID).getValue();
-        
+    public void buildAuditorDataObject(AttributeMergeBuilder amb, String id, OperationOptions options) {
         List<String> activeRespList = getResponsibilities(id, RESPS_TABLE, true);
-        List<Object> auditorList = new ArrayList<Object>(); 
-        for (String activeRespName : activeRespList) {
-            ConnectorObject auditorData = getAuditorDataObject(activeRespName);  
-            auditorList.add(auditorData);
+        for (String activeRespName : activeRespList) {            
+            updateAuditorData(amb, activeRespName);  
         }
-        // TODO invalid, needs to be referenced bld.addAttribute(AUDITOR_OBJECT, auditorList);
     }    
 }

@@ -31,13 +31,10 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
-import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -94,19 +91,17 @@ public class UserSecuringAttrs  {
     }
     
     /**
-     * @param bld
-     * @param columnValues
-     * @param columnNames 
+     * @param amb
+     * @param id 
      */
-    public void buildSecuringAttributesToAccountObject(ConnectorObjectBuilder bld, Map<String, SQLParam> columnValues, Set<String> columnNames) {
+    public void buildSecuringAttributesToAccountObject(AttributeMergeBuilder amb, final String id) {
         if (!co.getCfg().isManageSecuringAttrs()) {
             return;
         }
-        final String id = getStringParamValue(columnValues, USER_ID);
 
         List<String> secAttrs = getSecuringAttrs(id);
         if (secAttrs != null) {
-            bld.addAttribute(SEC_ATTRS, secAttrs);
+            amb.addAttribute(SEC_ATTRS, secAttrs);
         }
     }
     

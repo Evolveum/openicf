@@ -329,9 +329,9 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         //Names
         final String tblname = co.app() + "fnd_user";
         
-        final Set<String> columnNames = accountColumnNamesToGet(options);
+        final Set<String> accountColumnNames = accountColumnNamesToGet(options);
         // For all user query there is no need to replace or quote anything
-        final DatabaseQueryBuilder query = new DatabaseQueryBuilder(tblname, columnNames );
+        final DatabaseQueryBuilder query = new DatabaseQueryBuilder(tblname, accountColumnNames );
         String sqlSelect = query.getSQL();
         
         if(StringUtil.isNotBlank(co.getCfg().getAccountsIncluded())) {
@@ -349,21 +349,27 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             result = statement.executeQuery();
             while (result.next()) {
                 // create the connector object..
-                ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
-                bld.setObjectClass(ObjectClass.ACCOUNT);
+                AttributeMergeBuilder amb = new AttributeMergeBuilder(getAttributesToGetSet(options));
 
                 final Map<String, SQLParam> columnValues = SQLUtil.getColumnValues(result);
+                final String id = (String) columnValues.get(USER_ID).getValue();
                 // get users account attributes
-                this.buildAccountObject(bld, columnValues);
+                this.buildAccountObject(amb, columnValues);
+                
                 // if person_id not null and employee_number in schema, return employee_number
-                this.buildPersonDetails(bld, columnValues, columnNames);
+                final String personId = getStringParamValue(columnValues, EMP_ID);
+                this.buildPersonDetails(amb, personId, options);
                 // get users responsibilities only if if resp || direct_resp in account attribute
-                co.getRespNames().buildResponsibilitiesToAccountObject(bld, columnValues, columnNames);
+                co.getRespNames().buildResponsibilitiesToAccountObject(amb, id, options);
                 // get user's securing attributes
-                co.getSecAttrs().buildSecuringAttributesToAccountObject(bld, columnValues, columnNames);
+                co.getSecAttrs().buildSecuringAttributesToAccountObject(amb, id);
+
+                co.getRespNames().buildAuditorDataObject(amb, id, options);
                 
-                co.getRespNames().buildAuditorDataObject(bld, options, columnValues);
-                
+                // create the connector object..
+                ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
+                bld.setObjectClass(ObjectClass.ACCOUNT);
+                bld.addAttributes(amb.build());
                 if (!handler.handle(bld.build())) {
                     break;
                 }
@@ -646,12 +652,11 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
 
     /**
      * @param bld
-     * @param columnValues
+     * @param personId
      * @param columnNames 
      */
-    private void buildPersonDetails(ConnectorObjectBuilder bld, Map<String, SQLParam> columnValues,
-            Set<String> columnNames) {
-        final String personId = getStringParamValue(columnValues, EMP_ID);
+    private void buildPersonDetails(AttributeMergeBuilder bld, final String personId ,
+            OperationOptions options) {
         if (personId == null) {
             // No personId(employId)
             return;
@@ -659,7 +664,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         
         //Names to get filter
         final String tblname = co.app()+ "PER_PEOPLE_F";
-        final Set<String> personColumns = CollectionUtil.newSet(columnNames);
+        final Set<String> personColumns = CollectionUtil.newSet(options.getAttributesToGet());
         personColumns.retainAll(READ_PEOPLE_COLUMNS);
                 
         log.ok("person Columns {0} To Get", personColumns);
@@ -714,7 +719,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      * @param columnValues 
      * @throws SQLException 
      */
-    void buildAccountObject(ConnectorObjectBuilder bld, Map<String, SQLParam> columnValues) throws SQLException {
+    void buildAccountObject(AttributeMergeBuilder amb, Map<String, SQLParam> columnValues) throws SQLException {
         String uidValue = null;
         for (Map.Entry<String, SQLParam> val : columnValues.entrySet()) {
             final String columnName = val.getKey();
@@ -725,14 +730,14 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                     String msg = "Name cannot be null.";
                     throw new IllegalArgumentException(msg);
                 }
-                bld.setName(param.getValue().toString());
+                amb.addAttribute(Name.NAME, param.getValue().toString());
             } else if (columnName.equalsIgnoreCase(USER_ID)) {
                 if (param == null || param.getValue() == null) {
                     String msg = "Uid cannot be null.";
                     throw new IllegalArgumentException(msg);
                 }
                 uidValue = param.getValue().toString();
-                bld.setUid(uidValue);
+                amb.addAttribute(Uid.NAME, uidValue);
             } else if (columnName.equalsIgnoreCase(UNENCRYPT_PWD)) {
                 // No Password in the result object
             } else if (columnName.equalsIgnoreCase(OWNER)) {
@@ -740,7 +745,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             } else {
                 //Convert the data type and create attribute from it.
                 final Object value = SQLUtil.jdbc2AttributeValue(param.getValue());
-                bld.addAttribute(AttributeBuilder.build(columnName, value));
+                amb.addAttribute(columnName, value);
             }
         }
     
