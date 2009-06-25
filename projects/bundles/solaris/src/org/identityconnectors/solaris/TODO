@@ -17,4 +17,12 @@ HINTS from SolarisRA:
   
   ================================================
   * is it possible to create a user based on a commmon template, or to edit it?
+  ===============
+  
+  Adapter's features:
+  
+  -- SolarisRA indicates if shell is set to a nonexisting type.
+     -- com.waveset.util.WavesetException: An error occurred modifying 
+        user 'roman' on resource 'Solaris'. com.waveset.util.WavesetException: 
+        UX: usermod: ERROR: /bin/ABCDEFsh is not a valid shell. Choose another.
   

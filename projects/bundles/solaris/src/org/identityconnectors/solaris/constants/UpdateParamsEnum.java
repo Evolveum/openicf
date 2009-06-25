@@ -20,7 +20,10 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-package org.identityconnectors.solaris.command;
+package org.identityconnectors.solaris.constants;
+
+import org.omg.CORBA.UNKNOWN;
+
 
 /**
  * Enumeration for command line switches parameters used in update scripts.
@@ -28,6 +31,7 @@ package org.identityconnectors.solaris.command;
  * @author David Adam
  */
 public enum UpdateParamsEnum {
+    /* **** ACCOUNT **** */
     AUTHORIZATION("A"), 
     GROUP("g"), 
     EXPIRE("e"), 
@@ -38,7 +42,10 @@ public enum UpdateParamsEnum {
     COMMENT("c"), 
     SHELL("s"), 
     PROFILE("P"), 
-    DIR("d");
+    DIR("d"),
+    /* **** GROUP **** */
+    //TODO
+    UNKNOWN(null);
 
     private final String commandLineSwitch;
 
@@ -48,6 +55,8 @@ public enum UpdateParamsEnum {
 
     @Override
     public String toString() {
+        if (commandLineSwitch == null)
+            throw new IllegalArgumentException(String.format("No command line switch defined for %s", this));
         return commandLineSwitch;
     }
 }
