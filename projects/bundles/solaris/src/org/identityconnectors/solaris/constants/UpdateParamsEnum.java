@@ -22,7 +22,6 @@
  */
 package org.identityconnectors.solaris.constants;
 
-import org.omg.CORBA.UNKNOWN;
 
 
 /**
