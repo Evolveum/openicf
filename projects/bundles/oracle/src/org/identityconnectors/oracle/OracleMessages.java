@@ -78,9 +78,9 @@ class OracleMessages {
 	static final String MSG_INVALID_SOURCE_TYPE = "oracle.invalid.source.type";
 	static final String MSG_CS_MUST_SPECIFY_ONE_ARRAY_ELEMENT = "oracle.cs.must.specify.one.array.element";
 	static final String MSG_EAP_MUST_SPECIFY_ONE_ARRAY_ELEMENT = "oracle.eap.must.specify.one.array.element";
-	static final String ORACLE_EAP_INVALID_ELEMENTS_IN_MAP = "oracle.eap.invalid.elements.in.map";
-	static final String ORACLE_EAP_CANNOT_RESOLVE_SPI_OPERATION = "oracle.eap.cannot.resolve.spi.operation";
-	
+	static final String MSG_EAP_INVALID_ELEMENTS_IN_MAP = "oracle.eap.invalid.elements.in.map";
+	static final String MSG_EAP_CANNOT_RESOLVE_SPI_OPERATION = "oracle.eap.cannot.resolve.spi.operation";
+	static final String MSG_CANNOT_FIND_USER =  "oracle.cannot.find.user=Cannot find Oracle user [{0}]";
 	
 	
 }

@@ -3,7 +3,6 @@
  */
 package org.identityconnectors.oracle;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import java.sql.SQLException;
@@ -20,6 +19,8 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.junit.Assert;
 import org.junit.Test;
@@ -47,8 +48,8 @@ public class OracleOperationAuthenticateTest extends OracleConnectorAbstractTest
         Attribute privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION");
         Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,passwordAttribute,privileges), null);
     	
-        uid = facade.authenticate(ObjectClass.ACCOUNT, user, password, null);
-        assertNotNull(uid);
+        Uid aUid = facade.authenticate(ObjectClass.ACCOUNT, user, password, null);
+        Assert.assertEquals("Uid returned from authenticate must be same as returned from create ", uid, aUid);
         
         //Invalid password
         try{
@@ -137,32 +138,43 @@ public class OracleOperationAuthenticateTest extends OracleConnectorAbstractTest
 	    	}catch(ConnectorException e){}
     	}
         
-        facade.delete(ObjectClass.ACCOUNT, new Uid(user),null);
+        facade.delete(ObjectClass.ACCOUNT, uid, null);
         
     }
     
-    /** Test that authenticate fails for invalid port connection 
-     * @throws SQLException */
     @Test
-    public void testAuthenticateFail() throws SQLException{
+    public void testReturnUidOnly(){
     	String user = "TESTUSER";
-		OracleConnector testConnector = createTestConnector();
-		try{
-			testConnector.delete(ObjectClass.ACCOUNT, new Uid(user), null);
-		}
-		catch(UnknownUidException e){}
-		GuardedString password = new GuardedString("testPassword".toCharArray());
-		Uid uid = testConnector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(new Name(user),AttributeBuilder.buildPassword(password),AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION")), null);
-		testConnector.authenticate(ObjectClass.ACCOUNT, uid.getUidValue(), password, null);
-		testConnector.getConfiguration().setPort("12345");
-		try{
-			testConnector.authenticate(ObjectClass.ACCOUNT, uid.getUidValue(), password, null);
-			fail("Authenticate must fail for killed connection");
-		}catch(RuntimeException e){}
-		connector.delete(ObjectClass.ACCOUNT, uid, null);
-		testConnector.dispose();
-    	
+    	GuardedString password = new GuardedString("TEST".toCharArray());
+        Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL);
+        Attribute name = new Name(user);
+        Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
+        Attribute privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION");
+    	Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,passwordAttribute,privileges), null);
+    	Uid aUid = facade.authenticate(ObjectClass.ACCOUNT, user, password, null);
+    	Assert.assertEquals("Uid returned from authenticate must be same as returned from create ", uid, aUid);
+    	GuardedString badPassword = new GuardedString("badPassword".toCharArray());
+    	try{
+			facade.authenticate(ObjectClass.ACCOUNT, user, badPassword, null);
+    		fail("Must fail for bad password");
+    	}
+    	catch(ConnectorException e){}
+    	OperationOptions options = new OperationOptionsBuilder().setOption("returnUidOnly", Boolean.TRUE).build();
+    	Uid aUid2 = facade.authenticate(ObjectClass.ACCOUNT, user, badPassword, options);
+    	Assert.assertEquals("Uid returned from authenticate must be same as returned from create ", uid, aUid2);
+    	String invalidUser = "TESTUSER2";
+    	try{
+    		facade.delete(ObjectClass.ACCOUNT, new Uid(invalidUser),null);
+    	}
+    	catch(UnknownUidException e){}
+    	try{
+    		facade.authenticate(ObjectClass.ACCOUNT, invalidUser, password, options);
+    		fail("Authenticate with returnUidOnly must fail for not existing user");
+    	}
+    	catch(InvalidCredentialException e){}
+    	facade.delete(ObjectClass.ACCOUNT, uid,null);
     }
+    
     
     public void testDoExtraConnectionTest(){
     	//TODO

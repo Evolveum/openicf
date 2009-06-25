@@ -85,7 +85,7 @@ final class ExtraAttributesPolicySetupBuilder{
 			i.remove();
 		}
 		if(!elementMap.isEmpty()){
-			throw new IllegalArgumentException(cm.format(ORACLE_EAP_INVALID_ELEMENTS_IN_MAP, null, elementMap));
+			throw new IllegalArgumentException(cm.format(MSG_EAP_INVALID_ELEMENTS_IN_MAP, null, elementMap));
 		}
 	}
 	
@@ -104,7 +104,7 @@ final class ExtraAttributesPolicySetupBuilder{
 				return clazz;
 			}
 		}
-		throw new IllegalArgumentException(cm.format(ORACLE_EAP_CANNOT_RESOLVE_SPI_OPERATION, null, opString));
+		throw new IllegalArgumentException(cm.format(MSG_EAP_CANNOT_RESOLVE_SPI_OPERATION, null, opString));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -121,7 +121,7 @@ final class ExtraAttributesPolicySetupBuilder{
         	i.remove();
         }
         if(!map.isEmpty()){
-        	throw new IllegalArgumentException(cm.format(ORACLE_EAP_INVALID_ELEMENTS_IN_MAP, null, map));
+        	throw new IllegalArgumentException(cm.format(MSG_EAP_INVALID_ELEMENTS_IN_MAP, null, map));
         }
         return this;
 	}

@@ -25,7 +25,7 @@ import org.junit.Test;
  * @author kitko
  *
  */
-public class OracleConnectorImplTest extends OracleConnectorAbstractTest{
+public class OracleConnectorTest extends OracleConnectorAbstractTest{
     
     /**
      * Test method for {@link org.identityconnectors.oracle.OracleConnector#checkAlive()}.

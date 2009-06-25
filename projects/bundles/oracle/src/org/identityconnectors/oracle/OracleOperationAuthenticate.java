@@ -30,6 +30,9 @@ final class OracleOperationAuthenticate extends AbstractOracleOperation implemen
         OracleConnectorHelper.checkObjectClass(objectClass, cfg.getConnectorMessages());
         new LocalizedAssert(cfg.getConnectorMessages()).assertNotBlank(username, "username");
         new LocalizedAssert(cfg.getConnectorMessages()).assertNotNull(password, "password");
+        if(options != null && Boolean.TRUE.equals(options.getOptions().get("returnUidOnly"))){
+        	return findUserByName(username);
+        }
         log.info("Authenticate user: [{0}]", username);
         Connection conn = null;
         try{
@@ -60,6 +63,13 @@ final class OracleOperationAuthenticate extends AbstractOracleOperation implemen
         log.info("User authenticated : [{0}]",username);
         return new Uid(username);
     }
+
+	private Uid findUserByName(String username) {
+		if(new OracleUserReader(adminConn, cfg.getConnectorMessages()).userExist(username)){
+			return new Uid(username);
+		}
+		throw new InvalidCredentialException(cfg.getConnectorMessages().format(OracleMessages.MSG_CANNOT_FIND_USER, null, username));
+	}
 
 	private void doExtraConnectionTest(String username, Connection conn) {
 		try{
