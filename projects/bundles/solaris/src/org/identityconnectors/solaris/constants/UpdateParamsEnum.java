@@ -53,6 +53,7 @@ public enum UpdateParamsEnum {
     }
 
     @Override
+    /** get the command line switch */
     public String toString() {
         if (commandLineSwitch == null)
             throw new IllegalArgumentException(String.format("No command line switch defined for %s", this));

@@ -29,6 +29,7 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
@@ -129,7 +130,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     
     public Uid update(ObjectClass objclass, Uid uid,
             Set<Attribute> replaceAttributes, OperationOptions options) {
-        return new OpUpdateImpl(_configuration, _connection, _log).update(objclass, uid, replaceAttributes, options);
+        return new OpUpdateImpl(_configuration, _connection, _log).update(objclass, uid, AttributeUtil.addUid(replaceAttributes, uid), options);
     }
     
     public void executeQuery(ObjectClass oclass, String query,
