@@ -23,12 +23,17 @@
 package org.identityconnectors.solaris;
 
 import java.io.IOException;
+import java.util.Hashtable;
 
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+
+import com.jcraft.jsch.ChannelShell;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.Session;
 
 import expect4j.Closure;
 import expect4j.Expect4j;
@@ -75,30 +80,78 @@ public class SolarisConnection {
         }
         _configuration = configuration;
 
-        // initialize EXPECT4J
+        final ConnectionType connType = ConnectionType
+                .toConnectionType(_configuration.getConnectionType());
+        
+        switch (connType) {
+        case SSH:
+            _expect4j = createSSHConn(username, password);
+            break;
+        case SSH_PUB_KEY:
+            _expect4j = createSSHPubKeyConn(username, password);
+            break;
+        case TELNET:
+            throw new UnsupportedOperationException("Telnet access not yet implemented: TODO");
+            // _expect4j = ExpectUtils.telnet(_configuration
+            // .getHostNameOrIpAddr(), _configuration
+            // .getPort());
+            //break;
+        }
+    }
+
+    /**
+     * this piece of code is a combination of the adapter's
+     * SSHPubKeyConnection#OpenSession() method and ExpectUtils#SSH()
+     * 
+     * @param username
+     * @param password
+     * @return
+     */
+    private Expect4j createSSHPubKeyConn(final String username, GuardedString password) {
+//        JSch jsch=new JSch();
+//        
+//        ///////////////
+//        byte[] pubKey = "".getBytes(); // TODO fill in password
+//        jsch.addIdentity(name, prvkey, pubkey, passphrase);
+//        ///////////////
+//        
+//        Session session=jsch.getSession(username, hostname, port);
+//        
+//        Hashtable<String, String> config = new Hashtable<String, String>();
+//        config.put("StrictHostKeyChecking", "no");
+//        session.setConfig(config);
+//        session.setDaemonThread(true);
+//        session.connect(3 * 1000); //making a connection with timeout.
+//        
+//        ChannelShell channel = (ChannelShell) session.openChannel("shell");
+//        
+//        channel.setPtyType("vt102");
+//        
+//        Hashtable env=new Hashtable();
+//        channel.setEnv(env);
+//        
+//        Expect4j expect = new Expect4j(channel.getInputStream(), channel.getOutputStream());
+//        channel.connect(5*1000);
+//
+//        return expect;
+        return null;
+    }
+
+    private Expect4j createSSHConn(final String username, GuardedString password) {
+        final Expect4j[] result = new Expect4j[1];
+        
         password.access(new GuardedString.Accessor() {
             public void access(char[] clearChars) {
                 try {
-                    final ConnectionType connType = ConnectionType
-                            .toConnectionType(_configuration
-                                    .getConnectionType());
-
-                    if (connType.equals(ConnectionType.SSH)) {
-                        _expect4j = ExpectUtils.SSH(_configuration
-                                .getHostNameOrIpAddr(), username, new String(
-                                clearChars), _configuration.getPort());
-                    } else if (connType.equals(ConnectionType.TELNET)) {
-                        throw new UnsupportedOperationException(
-                                "Telnet access not yet implemented: TODO");
-                        // _expect4j = ExpectUtils.telnet(_configuration
-                        // .getHostNameOrIpAddr(), _configuration
-                        // .getPort());
-                    }
+                    result[0] = ExpectUtils.SSH(_configuration.getHostNameOrIpAddr(), 
+                            username, new String(clearChars), _configuration.getPort());
                 } catch (Exception e) {
                     throw ConnectorException.wrap(e);
                 }
             }
         });
+
+        return result[0];
     }
 
     /* *************** METHODS ****************** */

@@ -26,7 +26,7 @@ package org.identityconnectors.solaris;
  * selector of connection type
  */
 enum ConnectionType {
-    SSH, TELNET;
+    SSH, SSH_PUB_KEY, TELNET;
     
     public static ConnectionType toConnectionType(String s) {
         return ConnectionType.valueOf(s.toUpperCase());
