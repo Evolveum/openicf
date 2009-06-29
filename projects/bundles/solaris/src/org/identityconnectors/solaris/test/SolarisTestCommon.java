@@ -22,12 +22,18 @@
  */
 package org.identityconnectors.solaris.test;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import junit.framework.Assert;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.api.ConnectorFacadeFactory;
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
+import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.test.common.TestHelpers;
@@ -37,7 +43,7 @@ import org.identityconnectors.test.common.TestHelpers;
  * Create a solaris test configuration (for unit tests only)
  *
  */
-public class SolarisTestCommon {
+class SolarisTestCommon {
     
     /** used to view the ip address of the resource that we are connecting to */
     public static void printIPAddress(SolarisConfiguration config) {
@@ -48,7 +54,7 @@ public class SolarisTestCommon {
      * create a new solaris connector and initialize it with the given configuration
      * @param config the configuration to be used.
      */
-    static SolarisConnector createConnector(SolarisConfiguration config) {
+    public static SolarisConnector createConnector(SolarisConfiguration config) {
         SolarisConnector conn = new SolarisConnector();
         conn.init(config);
         
@@ -71,7 +77,7 @@ public class SolarisTestCommon {
         return getTestProperty(name, true);
     }
 
-    static SolarisConfiguration createConfiguration() {
+    public static SolarisConfiguration createConfiguration() {
         // names of properties in the property file (build.groovy)
         final String PROP_HOST = "host";
         final String PROP_SYSTEM_PASSWORD = "pass";
@@ -100,9 +106,21 @@ public class SolarisTestCommon {
     }
     
     /** for simulating API calls */
-    static ConnectorFacade createConnectorFacade(SolarisConfiguration conf) {
+    public static ConnectorFacade createConnectorFacade(SolarisConfiguration conf) {
         ConnectorFacadeFactory factory = ConnectorFacadeFactory.getInstance();
         APIConfiguration apiCfg = TestHelpers.createTestConfiguration(SolarisConnector.class, conf);
         return factory.newInstance(apiCfg);
+    }
+    
+    /** fill in sample user/password for sample user used in create */
+    public static Set<Attribute> initSampleUser() {
+        Set<Attribute> res = new HashSet<Attribute>();
+        
+        res.add(AttributeBuilder.build(Name.NAME, getTestProperty("sampleUser", true)));
+        
+        String samplePasswd = getTestProperty("samplePasswd", true);
+        res.add(AttributeBuilder.buildPassword(new GuardedString(samplePasswd.toCharArray())));
+        
+        return res;
     }
 }

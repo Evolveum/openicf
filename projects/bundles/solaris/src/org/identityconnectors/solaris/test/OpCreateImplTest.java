@@ -76,7 +76,7 @@ public class OpCreateImplTest {
     @Test
     public void testCreate() {
         // create a new user
-        final Set<Attribute> attrs = initSampleUser();
+        final Set<Attribute> attrs = SolarisTestCommon.initSampleUser();
         // Read only list of attributes
         final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
         final String username = ((Name) attrMap.get(Name.NAME)).getNameValue();
@@ -107,22 +107,7 @@ public class OpCreateImplTest {
     
     @Test (expected=IllegalArgumentException.class)
     public void unknownObjectClass() {
-        final Set<Attribute> attrs = initSampleUser();
+        final Set<Attribute> attrs = SolarisTestCommon.initSampleUser();
         facade.create(new ObjectClass("NONEXISTING_OBJECTCLASS"), attrs, null);
-    }
-    
-    /* ************* AUXILIARY METHODS *********** */
-
-
-    /** fill in sample user/password for sample user used in create */
-    private Set<Attribute> initSampleUser() {
-        Set<Attribute> res = new HashSet<Attribute>();
-        
-        res.add(AttributeBuilder.build(Name.NAME, getTestProperty("sampleUser", true)));
-        
-        String samplePasswd = getTestProperty("samplePasswd", true);
-        res.add(AttributeBuilder.buildPassword(new GuardedString(samplePasswd.toCharArray())));
-        
-        return res;
     }
 }
