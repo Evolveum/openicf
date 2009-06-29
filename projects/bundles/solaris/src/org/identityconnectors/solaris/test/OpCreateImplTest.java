@@ -24,10 +24,7 @@ package org.identityconnectors.solaris.test;
 
 
 
-import static org.identityconnectors.solaris.test.SolarisTestCommon.getTestProperty;
-
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -36,7 +33,6 @@ import junit.framework.Assert;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
