@@ -77,4 +77,15 @@ public class SolarisFilterTranslatorTest {
         exp = sft.createContainsExpression(new ContainsFilter(attr), false);
         Assert.assertTrue("*johnsmith*".equals(exp));
     }
+    
+    @Test
+    public void combinedTranslate() {
+        Attribute attr = AttributeBuilder.build(Name.NAME, "johnsmith");
+        String leftExpression = sft.createStartsWithExpression(new StartsWithFilter(attr), false);
+        attr = AttributeBuilder.build(Name.NAME, "jacob");
+        String rightExpression = sft.createContainsExpression(new ContainsFilter(attr), false);
+        
+        String exp = sft.createAndExpression(leftExpression, rightExpression);
+        Assert.assertTrue("johnsmith* & *jacob*".equals(exp));
+    }
 }
