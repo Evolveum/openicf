@@ -41,7 +41,6 @@ public interface RacfConstants {
     public static final String ATTR_LDAP_LOGON_DAYS            = "racfLogonDays";
     public static final String ATTR_LDAP_LOGON_TIME            = "racfLogonTime";
     public static final String ATTR_LDAP_CLASS_NAME            = "racfClassName";
-    public static final String ATTR_LDAP_CONNECT_GROUP         = "racfConnectGroupName";
     public static final String ATTR_LDAP_SECURITY_LABEL        = "racfSecurityLabel";
     public static final String ATTR_LDAP_DPF_DATA_APP          = "SAFDfpDataApplication";
     public static final String ATTR_LDAP_DPF_DATA_CLASS        = "SAFDfpDataClass";
@@ -52,7 +51,7 @@ public interface RacfConstants {
     public static final String ATTR_LDAP_TSO_DESTINATION       = "SAFDestination";
     public static final String ATTR_LDAP_TSO_MESSAGE_CLASS     = "SAFMessageClass";
     public static final String ATTR_LDAP_TSO_DEFAULT_LOGIN     = "SAFDefaultLoginProc";
-    public static final String ATTR_LDAP_TSO_LOGIN_SIZE        = "SAFLoginSize";
+    public static final String ATTR_LDAP_TSO_LOGON_SIZE        = "SAFLogonSize";
     public static final String ATTR_LDAP_TSO_MAX_REGION_SIZE   = "SAFMaximumRegionSize";
     public static final String ATTR_LDAP_TSO_DEFAULT_SYSOUT    = "SAFDefaultSysoutClass";
     public static final String ATTR_LDAP_TSO_USERDATA          = "SAFUserData";
@@ -142,9 +141,9 @@ public interface RacfConstants {
     // Multi-values read-write attributes
     //
     public static final String ATTR_LDAP_ATTRIBUTES            = "racfAttributes";
-    public static final String ATTR_LDAP_GROUPS                = "ATTR_LDAP_GROUPS";
-    public static final String ATTR_LDAP_GROUP_OWNERS          = "ATTR_LDAP_GROUP_OWNERS";
-    public static final String ATTR_LDAP_MEMBERS               = "ATTR_LDAP_MEMBERS";
+    public static final String ATTR_LDAP_GROUPS                = "racfConnectGroupName";
+    public static final String ATTR_LDAP_SUB_GROUPS            = "racfSubGroupName";
+    public static final String ATTR_LDAP_GROUP_OWNERS          = "racfConnectOwner";
 
     // Read-only Attributes
     //

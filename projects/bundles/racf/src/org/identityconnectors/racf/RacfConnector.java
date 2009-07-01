@@ -39,12 +39,9 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.SearchControls;
-import javax.naming.directory.SearchResult;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
@@ -104,10 +101,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
     private RacfConfiguration           _configuration;
     private CommandLineUtil             _clUtil;
     private LdapUtil                    _ldapUtil;
-    private final SimpleDateFormat      _dateFormat = new SimpleDateFormat("MM/dd/yy");
-    private final SimpleDateFormat      _resumeRevokeFormat = new SimpleDateFormat("MMMM dd, yyyy");
-    private final Pattern               _racfTimestamp = Pattern.compile("(\\d+)\\.(\\d+)(?:/(\\d+):(\\d+):(\\d+))?");
-    private final Pattern               _connectionPattern  = Pattern.compile("racfuserid=([^+]+)\\+racfgroupid=([^,]+),.*");
+    
+    private static final SimpleDateFormat _dateFormat = new SimpleDateFormat("MM/dd/yy");
+    private static final SimpleDateFormat _resumeRevokeFormat = new SimpleDateFormat("MMMM dd, yyyy");
+    private static final Pattern         _racfTimestamp = Pattern.compile("(\\d+)\\.(\\d+)(?:/(\\d+):(\\d+):(\\d+))?");
+    private static final Pattern        _connectionPattern  = Pattern.compile("racfuserid=([^+]+)\\+racfgroupid=([^,]+),.*");
 
     public RacfConnector() {
     }
@@ -384,7 +382,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             if (StringUtil.isBlank(_configuration.getUserName()) && commandLineSize>0)
                 throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.ATTRS_NO_CL));
             
-            SearchControls subTreeControls = new SearchControls(SearchControls.SUBTREE_SCOPE, 4095, 0, ldapAttrs.toArray(new String[0]), true, true);
             for (String name : names) {
                 try {
                     // We can special case getting at most just name
@@ -398,12 +395,14 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
                             builder.setName(name);
                         object = builder.build();
                     } else {
-                        SearchResult searchResult = null;
-                        if (isLdapConnectionAvailable()) {
-                            NamingEnumeration<SearchResult> results = _connection.getDirContext().search(name, "(objectclass=*)", subTreeControls);
-                            searchResult = results.next();
-                        }
-                        object = buildObject(objectClass, searchResult, _clUtil.getAttributesFromCommandLine(objectClass, name, isLdapConnectionAvailable(), commandLineAttrs), attributesToGet, wantUid);
+                        Map<String, Object> ldapValues = new HashMap<String, Object>();
+                        if (ldapSize>0)
+                            ldapValues = _ldapUtil.getAttributesFromLdap(objectClass, name, ldapAttrs);
+                        
+                        Map<String, Object> clValues = new HashMap<String, Object>();
+                        if (commandLineSize>0)
+                            clValues = _clUtil.getAttributesFromCommandLine(objectClass, name, commandLineAttrs);
+                        object = buildObject(objectClass, ldapValues, clValues, attributesToGet, wantUid);
                     }
                     handler.handle(object);
                 } catch (UnknownUidException uue) {
@@ -423,54 +422,52 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
         }
         return results;
     }
+    
+    private boolean isEmpty(Map map) {
+        return (map==null || map.isEmpty());
+    }
 
-    private ConnectorObject buildObject(ObjectClass objectClass, SearchResult user, Map<String, Object> attributesFromCommandLine, Set<String> attributesToGet, boolean wantUid) throws NamingException {
+    private ConnectorObject buildObject(ObjectClass objectClass, Map<String, Object> attributesFromLdap, Map<String, Object> attributesFromCommandLine, Set<String> attributesToGetOrig, boolean wantUid) throws NamingException {
         ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+        Set<String> attributesToGet = CollectionUtil.newCaseInsensitiveSet();
+        attributesToGet.addAll(attributesToGetOrig);
         Uid uid = null;
-        if (user!=null) {
-            uid = new Uid(user.getNameInNamespace());
+        if (!isEmpty(attributesFromLdap)) {
+            uid = (Uid)attributesFromLdap.remove(Uid.NAME);
             builder.setUid(uid);
-            builder.setName(user.getNameInNamespace());
-            Attributes attributes = user.getAttributes();
-            NamingEnumeration<? extends javax.naming.directory.Attribute> attributeEnum = attributes.getAll();
-            while (attributeEnum.hasMore()) {
-                javax.naming.directory.Attribute attribute = attributeEnum.next();
-                Object value = attribute.get();
-                if (includeInAttributes(objectClass, attribute.getID(), attributesToGet)) {
-                    if (value instanceof Collection)
-                        builder.addAttribute(attribute.getID(), (Collection<? extends Object>)value);
-                    else
-                        builder.addAttribute(attribute.getID(), value);
-                }
-            }
-            if (includeInAttributes(objectClass, ATTR_CL_GROUPS, attributesToGet)) {
-                builder.addAttribute(ATTR_CL_GROUPS, getGroupsForUser(user.getNameInNamespace()));
-            }
+            String name = (String)attributesFromLdap.remove(Name.NAME);
+            builder.setName(name);
+            addAttributes(objectClass, attributesFromLdap, attributesToGet, builder);
         }
-        if (attributesFromCommandLine!=null) {
-            if (user==null) {
+        if (!isEmpty(attributesFromCommandLine)) {
+            if (isEmpty(attributesFromLdap)) {
                 String name = (String)attributesFromCommandLine.get(ATTR_CL_USERID);
                 uid = new Uid(name);
                 builder.setUid(uid);
                 builder.setName(name);
             }
-            for (Map.Entry<String, Object> entry : attributesFromCommandLine.entrySet()) {
-                String name = entry.getKey();
-                Object value = entry.getValue();
-                if (includeInAttributes(objectClass, name, attributesToGet)) {
-                    if (value instanceof Collection)
-                        builder.addAttribute(name, (Collection<? extends Object>)value);
-                    else if (value==null)
-                        builder.addAttribute(name);
-                    else
-                        builder.addAttribute(name, value);
-                }
-            }
+            addAttributes(objectClass, attributesFromCommandLine, attributesToGet, builder);
         }
         if (wantUid)
             builder.addAttribute(uid);
         ConnectorObject next = builder.build();
         return next;
+    }
+
+    private void addAttributes(ObjectClass objectClass, Map<String, Object> attributesFromCommandLine,
+            Set<String> attributesToGet, ConnectorObjectBuilder builder) {
+        for (Map.Entry<String, Object> entry : attributesFromCommandLine.entrySet()) {
+            String name = entry.getKey();
+            Object value = entry.getValue();
+            if (includeInAttributes(objectClass, name, attributesToGet)) {
+                if (value instanceof Collection)
+                    builder.addAttribute(name, (Collection<? extends Object>)value);
+                else if (value==null)
+                    builder.addAttribute(name);
+                else
+                    builder.addAttribute(name, value);
+            }
+        }
     }
 
     List<String> getMembersOfGroup(String group) {
@@ -508,7 +505,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
                 String connectionName = createConnectionId(name, (String)newGroup);
                 Set<Attribute> attributes = new HashSet<Attribute>();
                 attributes.add(AttributeBuilder.build(Name.NAME, connectionName));
-                attributes.add(AttributeBuilder.build(ATTR_LDAP_OWNER, newOwner));
+                attributes.add(AttributeBuilder.build(ATTR_LDAP_CONNECT_OWNER, newOwner));
+                attributes.add(AttributeBuilder.build("objectclass", "racfConnect"));
                 create(RACF_CONNECTION, attributes, new OperationOptions(new HashMap<String, Object>()));
             }
         }
@@ -530,6 +528,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
     }
 
     private String createConnectionId(String name, String currentGroup) {
+        name = extractRacfIdFromLdapId(name);
+        currentGroup = extractRacfIdFromLdapId(currentGroup);
         String connectionName = "racfuserid="+name+"+racfgroupid="+
             currentGroup+",profileType=connect,"+_configuration.getSuffix();
         return connectionName;
@@ -560,6 +560,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
                 attributes.add(AttributeBuilder.build(Name.NAME, connectionName));
                 if (newOwner!=null)
                     attributes.add(AttributeBuilder.build(ATTR_LDAP_OWNER, newOwner));
+                attributes.add(AttributeBuilder.build("objectclass", "racfConnect"));
                 create(RACF_CONNECTION, attributes, new OperationOptions(new HashMap<String, Object>()));
             }
         }
@@ -601,15 +602,15 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             return null;
     }
 
-    String extractRacfIdFromLdapId(String uidString) {
+    static String extractRacfIdFromLdapId(String uidString) {
         Matcher matcher = _racfidPattern.matcher(uidString);
         if (matcher.matches())
             return matcher.group(1);
         else
-            return null;
+            return uidString;
     }
 
-    public String[] extractRacfIdAndGroupIdFromLdapId(String uidString) {
+    static String[] extractRacfIdAndGroupIdFromLdapId(String uidString) {
         Matcher matcher = _connectionPattern.matcher(uidString);
         if (matcher.matches())
             return new String[] {matcher.group(1), matcher.group(2)};
@@ -814,7 +815,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LOGON_DAYS,              String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LOGON_TIME,              String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CLASS_NAME,              String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CONNECT_GROUP,           String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SECURITY_LABEL,          String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_APP,            String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_CLASS,          String.class));
@@ -825,7 +825,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_DESTINATION,         String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_MESSAGE_CLASS,       String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_DEFAULT_LOGIN,       String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_LOGIN_SIZE,          String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_LOGON_SIZE,          String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_MAX_REGION_SIZE,     String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_DEFAULT_SYSOUT,      String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_USERDATA,            String.class));
@@ -899,12 +899,16 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             //
             attributes.add(buildMultivaluedAttribute(ATTR_LDAP_ATTRIBUTES,               String.class, false));
             attributes.add(buildReadOnlyMultivaluedAttribute(ATTR_LDAP_GROUPS,           String.class));
+            attributes.add(buildReadOnlyMultivaluedAttribute(ATTR_LDAP_GROUP_OWNERS,     String.class));
     
             // Operational Attributes
             //
+            attributes.add(buildReadonlyAttribute(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, long.class, false));
+            attributes.add(OperationalAttributeInfos.ENABLE);
+            attributes.add(OperationalAttributeInfos.ENABLE_DATE);
+            attributes.add(OperationalAttributeInfos.DISABLE_DATE);
             attributes.add(OperationalAttributeInfos.PASSWORD);
             attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
-            attributes.add(PredefinedAttributeInfos.PASSWORD_CHANGE_INTERVAL);
             attributes.add(PredefinedAttributeInfos.LAST_LOGIN_DATE);
             attributes.add(PredefinedAttributeInfos.LAST_PASSWORD_CHANGE_DATE);
     
@@ -935,7 +939,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             groupAttributes.add(buildMVROAttribute(ATTR_LDAP_SUB_GROUP,                  String.class));
             groupAttributes.add(buildMVROAttribute(ATTR_LDAP_GROUP_USERIDS,              String.class));
     
-            groupAttributes.add(buildNonDefaultMultivaluedAttribute(ATTR_LDAP_MEMBERS,   String.class, false));
             _groupAttributes = AttributeInfoUtil.toMap(groupAttributes);
             schemaBuilder.defineObjectClass(RACF_GROUP_NAME, groupAttributes);
         }
@@ -1056,7 +1059,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
         return builder.build();
     }
     
-    private boolean includeInAttributes(ObjectClass objectClass, String attribute, Collection<String> attributesToGet) {
+    boolean includeInAttributes(ObjectClass objectClass, String attribute, Collection<String> attributesToGet) {
         if (attribute.equalsIgnoreCase(Name.NAME))
             return true;
         if (attributesToGet!=null) {

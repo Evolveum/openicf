@@ -39,6 +39,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.SortedSet;
 
 import junit.framework.Assert;
 
@@ -75,45 +76,36 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-public class RacfConnectorTests {
+public abstract class RacfConnectorTests {
     // Connector Configuration information
     //
-    private static String       HOST_NAME;
-    private static String       SYSTEM_PASSWORD;
-    private static String       SYSTEM_USER;
-    private static String       SYSTEM_USER_LDAP;
-    private static String       SUFFIX;
-    private static String       TEST_USER = "TEST106";
-    private static String       TEST_USER2 = "TEST106A";
-    private static String       TEST_GROUP1 = "IDMGRP01";
-    private static String       TEST_GROUP2 = "IDMGRP02";
-    private static String       TEST_GROUP3 = "IDMGRP03";
-    private static Uid          TEST_USER_UID;
-    private static Uid          TEST_USER_UID2;
-    private static Uid          TEST_GROUP1_UID;
-    private static Uid          TEST_GROUP2_UID;
-    private static Uid          TEST_GROUP3_UID;
+    protected static String       HOST_NAME;
+    protected static String       SYSTEM_PASSWORD;
+    protected static String       SYSTEM_USER;
+    protected static String       SYSTEM_USER_LDAP;
+    protected static String       SUFFIX;
+    protected static String       TEST_USER = "TEST106";
+    protected static String       TEST_USER2 = "TEST106A";
+    protected static String       TEST_GROUP1 = "IDMGRP01";
+    protected static String       TEST_GROUP2 = "IDMGRP02";
+    protected static String       TEST_GROUP3 = "IDMGRP03";
+    protected static Uid          TEST_USER_UID;
+    protected static Uid          TEST_USER_UID2;
+    protected static Uid          TEST_GROUP1_UID;
+    protected static Uid          TEST_GROUP2_UID;
+    protected static Uid          TEST_GROUP3_UID;
 
-    private static final int     HOST_PORT           = 389;
-    private static final int     HOST_TELNET_PORT    = 23;
-    private static final Boolean USE_SSL             = Boolean.FALSE;
+    protected static final int     HOST_LDAP_PORT   = 389;
+    protected static final int     HOST_TELNET_PORT = 23;
+    protected static final Boolean USE_SSL          = Boolean.FALSE;
     
-    private static final String GROUP_RACF_PARSER   = "org/identityconnectors/racf/GroupRacfSegmentParser.xml";
-    private static final String RACF_PARSER         = "org/identityconnectors/racf/RacfSegmentParser.xml";
-    private static final String CICS_PARSER         = "org/identityconnectors/racf/CicsSegmentParser.xml";
-    private static final String OMVS_PARSER         = "org/identityconnectors/racf/OmvsSegmentParser.xml";
-    private static final String TSO_PARSER          = "org/identityconnectors/racf/TsoSegmentParser.xml";
-    private static final String NETVIEW_PARSER      = "org/identityconnectors/racf/NetviewSegmentParser.xml";
-    private static final String CATALOG_PARSER      = "org/identityconnectors/racf/CatalogParser.xml";
-
-    public static void main(String[] args) {
-        RacfConnectorTests tests = new RacfConnectorTests();
-        try {
-            tests.testCreate();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+    protected static final String GROUP_RACF_PARSER   = "org/identityconnectors/racf/GroupRacfSegmentParser.xml";
+    protected static final String RACF_PARSER         = "org/identityconnectors/racf/RacfSegmentParser.xml";
+    protected static final String CICS_PARSER         = "org/identityconnectors/racf/CicsSegmentParser.xml";
+    protected static final String OMVS_PARSER         = "org/identityconnectors/racf/OmvsSegmentParser.xml";
+    protected static final String TSO_PARSER          = "org/identityconnectors/racf/TsoSegmentParser.xml";
+    protected static final String NETVIEW_PARSER      = "org/identityconnectors/racf/NetviewSegmentParser.xml";
+    protected static final String CATALOG_PARSER      = "org/identityconnectors/racf/CatalogParser.xml";
 
     @BeforeClass
     public static void beforeClass() {
@@ -123,11 +115,6 @@ public class RacfConnectorTests {
         SYSTEM_USER       = TestHelpers.getProperty("SYSTEM_USER", null);
        
         SYSTEM_USER_LDAP  = "racfid="+SYSTEM_USER+",profileType=user,"+SUFFIX;
-        TEST_USER_UID     = new Uid(TEST_USER);
-        TEST_USER_UID2    = new Uid(TEST_USER2);
-        TEST_GROUP1_UID   = new Uid(TEST_GROUP1);
-        TEST_GROUP2_UID   = new Uid(TEST_GROUP2);
-        TEST_GROUP3_UID   = new Uid(TEST_GROUP3);
         
         Assert.assertNotNull("HOST_NAME must be specified", HOST_NAME);
         Assert.assertNotNull("SYSTEM_PASSWORD must be specified", SYSTEM_PASSWORD);
@@ -137,6 +124,11 @@ public class RacfConnectorTests {
 
     @Before
     public void before() {
+        TEST_USER_UID     = makeUid(TEST_USER, ObjectClass.ACCOUNT);
+        TEST_USER_UID2    = makeUid(TEST_USER2, ObjectClass.ACCOUNT);
+        TEST_GROUP1_UID   = makeUid(TEST_GROUP1, RacfConnector.RACF_GROUP);
+        TEST_GROUP2_UID   = makeUid(TEST_GROUP2, RacfConnector.RACF_GROUP);
+        TEST_GROUP3_UID   = makeUid(TEST_GROUP3, RacfConnector.RACF_GROUP);
         System.out.println("------------ New Test ---------------");
     }
 
@@ -175,7 +167,19 @@ public class RacfConnectorTests {
             connector.dispose();
         }
     }
-
+/*
+    @Test//@Ignore
+    public void testXXX() throws Exception {
+        RacfConfiguration config = createConfiguration();
+        RacfConnector connector = createConnector(config);
+        try {
+            String output = connector._clUtil.getCommandOutput("HELP ALTUSER");
+            System.out.println(output);
+        } finally {
+            connector.dispose();
+        }
+    }
+*/
     @Test//@Ignore
     public void testListAllUsersNameOnly() throws Exception {
         RacfConfiguration config = createConfiguration();
@@ -242,7 +246,7 @@ public class RacfConnectorTests {
                 TestHelpers.search(connector,ObjectClass.ACCOUNT, new EqualsFilter(TEST_USER_UID2), handler, options);
                 for (ConnectorObject user : handler) {
                     System.out.println(user);
-                    if (TEST_USER_UID2.equals(user.getUid()))
+                    if (equals(TEST_USER_UID2, user.getUid()))
                         found = true;
                     count++;
                 }
@@ -252,7 +256,7 @@ public class RacfConnectorTests {
             {
                 int count = 0;
                 TestHandler handler = new TestHandler();
-                TestHelpers.search(connector,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Name.NAME, TEST_USER2)), handler, options);
+                TestHelpers.search(connector,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Name.NAME, makeUid(TEST_USER2, ObjectClass.ACCOUNT).getUidValue())), handler, options);
                 for (ConnectorObject user : handler) {
                     System.out.println(user);
                     if (TEST_USER_UID2.equals(user.getUid()))
@@ -262,6 +266,7 @@ public class RacfConnectorTests {
                 Assert.assertTrue(found);
                 Assert.assertTrue(count==1);
             }
+            //TODO: these aren't real meaningful for ldap ids...
             {
                 int count = 0;
                 TestHandler handler = new TestHandler();
@@ -312,12 +317,12 @@ public class RacfConnectorTests {
             int count = 0;
             TestHandler handler = new TestHandler();
             Map<String, Object> optionsMap = new HashMap<String, Object>();
-            optionsMap.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] {Name.NAME, ATTR_CL_MEMBERS, ATTR_CL_SUPGROUP, ATTR_CL_OWNER, ATTR_CL_DATA, ATTR_CL_MEMBERS });
+            optionsMap.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] {Name.NAME, getGroupMembersAttributeName(), getSupgroupAttributeName(), getOwnerAttributeName(), getInstallationDataAttributeName() });
             OperationOptions options = new OperationOptions(optionsMap);
             TestHelpers.search(connector,RacfConnector.RACF_GROUP, new EqualsFilter(AttributeBuilder.build(Name.NAME, "SYS1")), handler, options);
             for (ConnectorObject group : handler) {
                 displayConnectorObject(group);
-                if (new Uid("SYS1").equals(group.getUid()))
+                if (equals(makeUid("SYS1", RacfConnector.RACF_GROUP), group.getUid()))
                     found = true;
                 count++;
             }
@@ -328,19 +333,22 @@ public class RacfConnectorTests {
         }
     }
 
+    boolean equals(Uid one, Uid two) {
+        return one.getUidValue().equalsIgnoreCase(two.getUidValue());
+    }
     @Test//@Ignore
     public void testModifyUser() throws Exception {
         RacfConfiguration config = createConfiguration();
         RacfConnector connector = createConnector(config);
         try {
-            displayConnectorObject(getUser("IDM01", connector));
+            displayConnectorObject(getUser(makeUid("IDM01", ObjectClass.ACCOUNT).getUidValue(), connector));
 //            displayUser(getUser("CICSUSER", connector));
             // Delete the user
             deleteUser(TEST_USER_UID, connector);
     
             Set<Attribute> attrs = fillInSampleUser(TEST_USER);
             connector.create(ObjectClass.ACCOUNT, attrs, null);
-            ConnectorObject user = getUser(TEST_USER, connector);
+            ConnectorObject user = getUser(makeUid(TEST_USER, ObjectClass.ACCOUNT).getUidValue(), connector);
             {
                 Set<Attribute> changed = new HashSet<Attribute>();
                 //
@@ -348,11 +356,11 @@ public class RacfConnectorTests {
                 List<Object> attributes = new LinkedList<Object>();
                 attributes.add("SPECIAL");
                 attributes.add("OPERATIONS");
-                Attribute attributesAttr = AttributeBuilder.build("RACF*ATTRIBUTES", attributes);
+                Attribute attributesAttr = AttributeBuilder.build(getAttributesAttributeName(), attributes);
                 changed.add(attributesAttr);
                 changed.add(user.getUid());
                 connector.update(ObjectClass.ACCOUNT, changed, null);
-                ConnectorObject object = getUser(TEST_USER, connector);
+                ConnectorObject object = getUser(makeUid(TEST_USER, ObjectClass.ACCOUNT).getUidValue(), connector);
                 assertAttribute(attributesAttr, object);
             }
             {
@@ -362,17 +370,17 @@ public class RacfConnectorTests {
                 changed.add(disableDate);
                 changed.add(user.getUid());
                 connector.update(ObjectClass.ACCOUNT, changed, null);
-                ConnectorObject object = getUser(TEST_USER, connector);
+                ConnectorObject object = getUser(makeUid(TEST_USER, ObjectClass.ACCOUNT).getUidValue(), connector);
                 assertAttribute(disableDate, object);
             }
             {
                 Set<Attribute> changed = new HashSet<Attribute>();
                 //
-                Attribute size = AttributeBuilder.build(ATTR_CL_TSO_SIZE, new Integer(1000)); 
+                Attribute size = AttributeBuilder.build(getTsoSizeName(), new Integer(1000)); 
                 changed.add(size);
                 changed.add(user.getUid());
                 connector.update(ObjectClass.ACCOUNT, changed, null);
-                ConnectorObject object = getUser(TEST_USER, connector);
+                ConnectorObject object = getUser(makeUid(TEST_USER, ObjectClass.ACCOUNT).getUidValue(), connector);
                 assertAttribute(size, object);
             }
             {
@@ -383,7 +391,7 @@ public class RacfConnectorTests {
                 changed.add(enableDate);
                 changed.add(user.getUid());
                 connector.update(ObjectClass.ACCOUNT, changed, null);
-                ConnectorObject object = getUser(TEST_USER, connector);
+                ConnectorObject object = getUser(makeUid(TEST_USER, ObjectClass.ACCOUNT).getUidValue(), connector);
                 assertAttribute(enableDate, object);
             }
             {
@@ -393,7 +401,7 @@ public class RacfConnectorTests {
                 List<Object> attributes = new LinkedList<Object>();
                 attributes.add("SPECIAL");
                 attributes.add("OPERATOR");
-                changed.add(AttributeBuilder.build("RACF*ATTRIBUTES", attributes));
+                changed.add(AttributeBuilder.build(getAttributesAttributeName(), attributes));
                 changed.add(user.getUid());
                 try {
                     connector.update(ObjectClass.ACCOUNT, changed, null);
@@ -403,19 +411,20 @@ public class RacfConnectorTests {
                 }
             }
     
-            ConnectorObject changedUser = getUser(TEST_USER, connector);
+            ConnectorObject changedUser = getUser(makeUid(TEST_USER, ObjectClass.ACCOUNT).getUidValue(), connector);
             //Attribute racfInstallationData = changedUser.getAttributeByName("racfinstallationdata");
             Attribute racfInstallationData = changedUser.getAttributeByName(getInstallationDataAttributeName());
             displayConnectorObject(changedUser);
             Assert.assertTrue(AttributeUtil.getStringValue(racfInstallationData).trim().equalsIgnoreCase("modified data"));
-            displayConnectorObject(getUser("IDM01", connector));
-            displayConnectorObject(getUser("IDM01", connector));
+            displayConnectorObject(getUser(makeUid("IDM01", ObjectClass.ACCOUNT).getUidValue(), connector));
+            displayConnectorObject(getUser(makeUid("IDM01", ObjectClass.ACCOUNT).getUidValue(), connector));
         } finally {
             connector.dispose();
         }
     }
+    
     void assertAttribute(Attribute attribute, ConnectorObject object) {
-        if (attribute.getName().equals(ATTR_CL_ATTRIBUTES)) {
+        if (attribute.getName().equals(getAttributesAttributeName())) {
             Set<Object> set1 = new HashSet<Object>(attribute.getValue());
             Attribute attribute2 = object.getAttributeByName(attribute.getName());
             Assert.assertNotNull(attribute2);
@@ -435,166 +444,7 @@ public class RacfConnectorTests {
         return buffer.toString()+"\n";
     }
     
-    @Test
-    public void testCicsParser() {
-        String cicsSegment =
-            makeLine(" OPCLASS= 024       023       022       021       020       019       018", 80) +
-            makeLine("          017       016       015       014       013       012       011", 80) +
-            makeLine("          010       009       008       007       006       005       004", 80) +
-            makeLine("          003       002       001", 80) +
-            makeLine(" OPIDENT=", 80) +
-            makeLine(" OPPRTY= 00255", 80) +
-            makeLine(" TIMEOUT= 00:00 (HH:MM)", 80) +
-            makeLine(" XRFSOFF= NOFORCE", 80);
-        
-        try {
-            String cicsParser = loadParserFromFile(CICS_PARSER);
-            MapTransform transform = (MapTransform)Transform.newTransform(cicsParser);
-            Map<String, Object> results = (Map<String, Object>)transform.transform(cicsSegment);
-            for (Map.Entry<String, Object> entry : results.entrySet()) {
-                System.out.println(entry.getKey()+"="+entry.getValue());
-            }
-        } catch (IOException e) {
-            Assert.fail(e.toString());
-        } catch (Exception e) {
-            Assert.fail(e.toString());
-        }
-    }
-    
-    @Test
-    public void testOmvsParser() {
-        String omvsSegment =
-            makeLine(" UID= NONE", 80) +
-            makeLine(" HOME= /u/bmurray", 80) +
-            makeLine(" PROGRAM= /bin/sh", 80) +
-            makeLine(" CPUTIMEMAX= NONE", 80) +
-            makeLine(" ASSIZEMAX= NONE", 80) +
-            makeLine(" FILEPROCMAX= NONE", 80) +
-            makeLine(" PROCUSERMAX= NONE", 80) +
-            makeLine(" THREADSMAX= NONE", 80) +
-            makeLine(" MMAPAREAMAX= NONE", 80);
-        
-        try {
-            String omvsParser = loadParserFromFile(OMVS_PARSER);
-            MapTransform transform = (MapTransform)Transform.newTransform(omvsParser);
-            Map<String, Object> results = (Map<String, Object>)transform.transform(omvsSegment);
-            for (Map.Entry<String, Object> entry : results.entrySet()) {
-                System.out.println(entry.getKey()+"="+entry.getValue());
-            }
-        } catch (IOException e) {
-            Assert.fail(e.toString());
-        } catch (Exception e) {
-            Assert.fail(e.toString());
-        }
-    }
-    
-    @Test
-    public void testTsoParser() {
-        String tsoSegment =
-            makeLine(" ACCTNUM= ACCT#", 80) +
-            makeLine(" HOLDCLASS= X", 80) +
-            makeLine(" JOBCLASS= A", 80) +
-            makeLine(" MSGCLASS= X", 80) +
-            makeLine(" PROC= ISPFPROC", 80) +
-            makeLine(" SIZE= 00006133", 80) +
-            makeLine(" MAXSIZE= 00000000", 80) +
-            makeLine(" SYSOUTCLASS= X", 80) +
-            makeLine(" USERDATA= 0000", 80) +
-            makeLine(" COMMAND= ISPF PANEL(ISR@390)", 80);
-        
-        try {
-            String tsoParser = loadParserFromFile(TSO_PARSER);
-            MapTransform transform = (MapTransform)Transform.newTransform(tsoParser);
-            Map<String, Object> results = (Map<String, Object>)transform.transform(tsoSegment);
-            for (Map.Entry<String, Object> entry : results.entrySet()) {
-                System.out.println(entry.getKey()+"="+entry.getValue());
-            }
-        } catch (IOException e) {
-            Assert.fail(e.toString());
-        } catch (Exception e) {
-            Assert.fail(e.toString());
-        }
-    }
-    
-    @Test
-    public void testGroupRacfParser() {
-        String racfSegment =
-            makeLine(" INFORMATION FOR GROUP DFPADMN", 80) +
-            makeLine("     SUPERIOR GROUP=SYSADMN      OWNER=SYSADMN   CREATED=06.123 ", 80) +
-            makeLine("     NO INSTALLATION DATA", 80) +
-            makeLine("     NO MODEL DATA SET", 80) +
-            makeLine("     TERMUACC", 80) +
-            makeLine("     SUBGROUP(S)= DFPGRP1, DFPGRP2", 80) +
-            makeLine("     USER(S)=      ACCESS=      ACCESS COUNT=     UNIVERSAL ACCESS=", 80) +
-            makeLine("       IBMUSER         JOIN          000000              ALTER", 80) +
-            makeLine("          CONNECT   ATTRIBUTES=NONE", 80) +
-            makeLine("          REVOKE DATE=NONE                 RESUME DATE=NONE", 80) +
-            makeLine("       DSMITH          JOIN          000002              READ", 80) +
-            makeLine("          CONNECT    ATTRIBUTES=NONE", 80) +
-            makeLine("          REVOKE DATE=NONE                  RESUME DATE=NONE", 80) +
-            makeLine("       HOTROD          CONNECT       000004              READ", 80) +
-            makeLine("          CONNECT    ATTRIBUTES=ADSP SPECIAL OPERATIONS", 80) +
-            makeLine("          REVOKE DATE=NONE                  RESUME DATE=NONE", 80) +
-            makeLine("       ESHAW           USE           000000              READ", 80) +
-            makeLine("          CONNECT    ATTRIBUTES=NONE", 80) +
-            makeLine("          REVOKE DATE=NONE                  RESUME DATE=NONE", 80) +
-            makeLine("       PROJECTB        USE           000000              READ", 80) +
-            makeLine("          CONNECT    ATTRIBUTES=NONE", 80) +
-            makeLine("          REVOKE DATE=NONE                  RESUME DATE=NONE", 80) +
-            makeLine("       ADM1            JOIN          000000              READ", 80) +
-            makeLine("          CONNECT    ATTRIBUTES=OPERATIONS", 80) +
-            makeLine("          REVOKE DATE=NONE                  RESUME DATE=NONE", 80) +
-            makeLine("       AEHALL          USE           000000              READ", 80) +
-            makeLine("          CONNECT    ATTRIBUTES=REVOKED", 80) +
-            makeLine("          REVOKE DATE=NONE                  RESUME DATE=NONE", 80) +
-            makeLine("  DFP INFORMATION", 80) +
-            makeLine("     MGMTCLAS= DFP2MGMT", 80) +
-            makeLine("     STORCLAS= DFP2STOR", 80) +
-            makeLine("     DATACLAS= DFP2DATA", 80) +
-            makeLine("     DATAAPPL= DFP2APPL", 80);
-            
-        try {
-            String tsoParser = loadParserFromFile(GROUP_RACF_PARSER);
-            MapTransform transform = (MapTransform)Transform.newTransform(tsoParser);
-            Map<String, Object> results = (Map<String, Object>)transform.transform(racfSegment);
-            for (Map.Entry<String, Object> entry : results.entrySet()) {
-                System.out.println(entry.getKey()+"="+entry.getValue());
-            }
-        } catch (IOException e) {
-            Assert.fail(e.toString());
-        } catch (Exception e) {
-            Assert.fail(e.toString());
-        }
-    }
-    
-    @Test
-    public void testNetviewParser() {
-        String netviewSegment =
-            makeLine(" IC= START", 80) +
-            makeLine(" CONSNAME= DJONES1", 80) +
-            makeLine(" CTL= GLOBAL", 80) +
-            makeLine(" MSGRECVR= YES", 80) +
-            makeLine(" OPCLASS= 1,2", 80) +
-            makeLine(" DOMAINS= D1,D2", 80) +
-            makeLine(" MAXSIZE= 00000000", 80) +
-            makeLine(" NGMFADMN= YES", 80) +
-            makeLine(" NGMFVSPN= VNNN", 80);
-        
-        try {
-            String netviewParser = loadParserFromFile(NETVIEW_PARSER);
-            MapTransform transform = (MapTransform)Transform.newTransform(netviewParser);
-            Map<String, Object> results = (Map<String, Object>)transform.transform(netviewSegment);
-            for (Map.Entry<String, Object> entry : results.entrySet()) {
-                System.out.println(entry.getKey()+"="+entry.getValue());
-            }
-        } catch (IOException e) {
-            Assert.fail(e.toString());
-        } catch (Exception e) {
-            Assert.fail(e.toString());
-        }
-    }
-
-    private String loadParserFromFile(String fileName) throws IOException {
+    protected String loadParserFromFile(String fileName) throws IOException {
         BufferedReader is = new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream(fileName)));
         StringBuffer tsoParser = new StringBuffer();
         String line = null;
@@ -623,7 +473,7 @@ public class RacfConnectorTests {
         //TestHelpers.search(connector,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build("racfid", accountId.getUidValue())), handler, null);
         TestHelpers.search(connector,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Name.NAME, accountId)), handler, null);
         for (ConnectorObject user : handler) {
-            if (accountId.equals(user.getName().getNameValue()))
+            if (accountId.equalsIgnoreCase(user.getName().getNameValue()))
                 return user;
         }
         return null;
@@ -658,8 +508,8 @@ public class RacfConnectorTests {
                     System.out.println("Schema.\""+aInfo.getName()+"\".attribute."+ocInfo.getType()+".oclasses = [");
                     System.out.println("\ttype              : "+aInfo.getType().getName()+".class,");
                     System.out.println("\treadable          : "+aInfo.isReadable()+",");
-                    System.out.println("\tcreatable         : "+aInfo.isCreateable()+",");
-                    System.out.println("\tupdatable         : "+aInfo.isUpdateable()+",");
+                    System.out.println("\tcreateable        : "+aInfo.isCreateable()+",");
+                    System.out.println("\tupdateable        : "+aInfo.isUpdateable()+",");
                     System.out.println("\trequired          : "+aInfo.isRequired()+",");
                     System.out.println("\tmultiValue        : "+aInfo.isMultiValued()+",");
                     System.out.println("\treturnedByDefault : "+aInfo.isReturnedByDefault());
@@ -759,19 +609,19 @@ public class RacfConnectorTests {
             OperationOptions options = new OperationOptions(optionsMap); 
             {
                 Set<Attribute> groupAttrs = new HashSet<Attribute>();
-                groupAttrs.add(new Name(TEST_GROUP1));
+                groupAttrs.add(new Name(TEST_GROUP1_UID.getUidValue()));
                 Uid groupUid = connector.create(RacfConnector.RACF_GROUP, groupAttrs, options);
                 Assert.assertNotNull(groupUid);
             }
             {
                 Set<Attribute> groupAttrs = new HashSet<Attribute>();
-                groupAttrs.add(new Name(TEST_GROUP2));
+                groupAttrs.add(new Name(TEST_GROUP2_UID.getUidValue()));
                 Uid groupUid = connector.create(RacfConnector.RACF_GROUP, groupAttrs, options);
                 Assert.assertNotNull(groupUid);
             }
             {
                 Set<Attribute> groupAttrs = new HashSet<Attribute>();
-                groupAttrs.add(new Name(TEST_GROUP3));
+                groupAttrs.add(new Name(TEST_GROUP3_UID.getUidValue()));
                 Uid groupUid = connector.create(RacfConnector.RACF_GROUP, groupAttrs, options);
                 Assert.assertNotNull(groupUid);
             }
@@ -786,55 +636,57 @@ public class RacfConnectorTests {
                 List<String> groups = new LinkedList<String>();
                 List<String> owners = new LinkedList<String>();
                 List<String> allGroups = new LinkedList<String>();
-                allGroups.add(TEST_GROUP1_UID.getUidValue());
-                allGroups.add(TEST_GROUP2_UID.getUidValue());
+                allGroups.add(TEST_GROUP1_UID.getUidValue().toUpperCase());
+                allGroups.add(TEST_GROUP2_UID.getUidValue().toUpperCase());
                 groups.add(TEST_GROUP2_UID.getUidValue());
-                owners.add(SYSTEM_USER);
+                owners.add(makeUid(SYSTEM_USER, ObjectClass.ACCOUNT).getUidValue());
                 
                 // Groups should not include the default group
                 //
-                attrs.add(AttributeBuilder.build(ATTR_CL_GROUPS, groups));
-                attrs.add(AttributeBuilder.build(ATTR_CL_GROUP_CONN_OWNERS, owners));
+                attrs.add(AttributeBuilder.build(getGroupsAttributeName(), groups));
+                attrs.add(AttributeBuilder.build(getGroupConnOwnersAttributeName(), owners));
                 Uid userUid = connector.create(ObjectClass.ACCOUNT, attrs, options);
                 
-                ConnectorObject user = getUser(TEST_USER2, connector);
-                Attribute groupsAttr = user.getAttributeByName(ATTR_CL_GROUPS);
+                ConnectorObject user = getUser(makeUid(TEST_USER2, ObjectClass.ACCOUNT).getUidValue(), connector);
+                Attribute groupsAttr = user.getAttributeByName(getGroupsAttributeName());
                 Assert.assertNotNull(groupsAttr);
                 List<Object> retrievedGroups = groupsAttr.getValue();
                 Assert.assertTrue(retrievedGroups.size()==2);
-                Assert.assertTrue(allGroups.contains(((String)retrievedGroups.get(0))));
-                Assert.assertTrue(allGroups.contains(((String)retrievedGroups.get(1))));
+                Assert.assertTrue(allGroups.contains(((String)retrievedGroups.get(0)).toUpperCase()));
+                Assert.assertTrue(allGroups.contains(((String)retrievedGroups.get(1)).toUpperCase()));
     
                 Attribute defaultGroupAttr = user.getAttributeByName(getDefaultGroupName());
                 Assert.assertNotNull(defaultGroupAttr);
                 List<Object> defaultGroupAttrValue = defaultGroupAttr.getValue();
-                Assert.assertEquals(defaultGroupAttrValue.get(0), TEST_GROUP1_UID.getUidValue());
+                Assert.assertEquals(defaultGroupAttrValue.get(0).toString().toUpperCase(), TEST_GROUP1_UID.getUidValue().toUpperCase());
             }
             {
-                ConnectorObject user = getUser(TEST_USER2, connector);
+                ConnectorObject user = getUser(makeUid(TEST_USER2, ObjectClass.ACCOUNT).getUidValue(), connector);
                 // Move the user from group2 to group3
                 //
                 Set<Attribute> attrs = new HashSet<Attribute>();
                 List<String> groups = new LinkedList<String>();
                 List<String> owners = new LinkedList<String>();
                 groups.add(TEST_GROUP3_UID.getUidValue());
-                owners.add(SYSTEM_USER);
-                attrs.add(AttributeBuilder.build(ATTR_CL_GROUPS, groups));
-                attrs.add(AttributeBuilder.build(ATTR_CL_GROUP_CONN_OWNERS, owners));
+                owners.add(makeUid(SYSTEM_USER, ObjectClass.ACCOUNT).getUidValue());
+                attrs.add(AttributeBuilder.build(getGroupsAttributeName(), groups));
+                attrs.add(AttributeBuilder.build(getGroupConnOwnersAttributeName(), owners));
                 attrs.add(user.getUid());
                 connector.update(ObjectClass.ACCOUNT, attrs, options);
                 
-                user = getUser(TEST_USER2, connector);
-                Attribute groupsAttr = user.getAttributeByName(ATTR_CL_GROUPS);
+                user = getUser(makeUid(TEST_USER2, ObjectClass.ACCOUNT).getUidValue(), connector);
+                Attribute groupsAttr = user.getAttributeByName(getGroupsAttributeName());
                 Assert.assertNotNull(groupsAttr);
-                List<Object> retrievedGroups = groupsAttr.getValue();
+                SortedSet<String> retrievedGroups = CollectionUtil.newCaseInsensitiveSet();
+                for (Object value : groupsAttr.getValue()) 
+                    retrievedGroups.add((String)value);
                 Assert.assertTrue(retrievedGroups.size()==2);
-                Assert.assertTrue(retrievedGroups.contains(TEST_GROUP3_UID.getUidValue()));
+                Assert.assertTrue(retrievedGroups.contains(TEST_GROUP3_UID.getUidValue().toUpperCase()));
     
                 Attribute defaultGroupAttr = user.getAttributeByName(getDefaultGroupName());
                 Assert.assertNotNull(defaultGroupAttr);
                 List<Object> defaultGroupAttrValue = defaultGroupAttr.getValue();
-                Assert.assertEquals(defaultGroupAttrValue.get(0), TEST_GROUP1_UID.getUidValue());
+                Assert.assertEquals(defaultGroupAttrValue.get(0).toString().toUpperCase(), TEST_GROUP1_UID.getUidValue().toUpperCase());
             }
             
             deleteUser(TEST_USER_UID2, connector);
@@ -867,6 +719,16 @@ public class RacfConnectorTests {
             //
             deleteUser(TEST_USER_UID, connector);
             System.out.println(TEST_USER_UID.getValue()+" deleted");
+            
+            // Second delete should fail
+            //
+            try {
+                connector.delete(ObjectClass.ACCOUNT, TEST_USER_UID, null);
+                Assert.fail("should have thrown");
+            } catch (UnknownUidException uue) {
+                // expected
+            }
+            System.out.println(TEST_USER_UID.getValue()+" deleted");
         } finally {
             connector.dispose();
         }
@@ -874,7 +736,7 @@ public class RacfConnectorTests {
 
     private Set<Attribute> fillInSampleUser(final String testUser) {
         Set<Attribute> attrs = new HashSet<Attribute>();
-        attrs.add(new Name(testUser));
+        attrs.add(new Name(makeUid(testUser, ObjectClass.ACCOUNT).getUidValue()));
         attrs.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString("password".toCharArray())));
         attrs.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME, Boolean.FALSE));
         //attrs.add(AttributeBuilder.build("objectclass", "racfUser"));
@@ -882,21 +744,21 @@ public class RacfConnectorTests {
         return attrs;
     }
 
-    private RacfConnector createConnector(RacfConfiguration config)
+    protected RacfConnector createConnector(RacfConfiguration config)
     throws Exception {
         RacfConnector connector = new RacfConnector();
         connector.init(config);
         return connector;
     }
 
-    private RacfConfiguration createConfiguration() throws IOException {
+    protected RacfConfiguration createConfiguration() throws IOException {
         RacfConfiguration config = new RacfConfiguration();
-        config.setHostNameOrIpAddr(HOST_NAME);
-        //initializeLdapConfiguration(config);
+        initializeLdapConfiguration(config);
         initializeCommandLineConfiguration(config);
         config.validate();
         //TODO: tests expect suffix as part of name
-        config.setSuffix(SUFFIX);
+        if (config.getSuffix()==null)
+            config.setSuffix(SUFFIX);
 
         OurConnectorMessages messages = new OurConnectorMessages();
         Map<Locale, Map<String, String>> catalogs = new HashMap<Locale, Map<String,String>>();
@@ -921,32 +783,6 @@ public class RacfConnectorTests {
         return config;
     }
     
-    private String getLoginScript() {
-        String script =
-            "connection.connect();\n" +
-            "connection.waitFor(\"=====>\", SHORT_WAIT);\n" +
-            "connection.send(\"TSO[enter]\");\n" +
-            "connection.waitFor(\"ENTER USERID -\", SHORT_WAIT);\n" +
-            "connection.send(USERNAME+\"[enter]\");\n" +
-            "connection.waitFor(\"Password  ===>\", SHORT_WAIT);\n" +
-            "connection.send(PASSWORD);\n" +
-            "connection.send(\"[enter]\");\n" +
-            "connection.waitFor(\" \\\\*\\\\*\\\\* \", SHORT_WAIT);\n" +
-            "connection.send(\"[enter]\");\n" +
-            "connection.waitFor(\"Option ===>\", SHORT_WAIT);\n" +
-            "connection.send(\"[pf3]\");\n" +
-            "connection.waitFor(\"READY\\\\s{74}\", SHORT_WAIT);";
-        return script;
-    }
-
-    private String getLogoffScript() {
-        String script = "connection.send(\"LOGOFF[enter]\");\n";
-//            "connection.send(\"LOGOFF[enter]\");\n" +
-//            "connection.waitFor(\"=====>\", SHORT_WAIT);\n" +
-//            "connection.dispose();\n";
-        return script;
-    }
-
     public static class TestHandler implements ResultsHandler, Iterable<ConnectorObject> {
         private List<ConnectorObject> objects = new LinkedList<ConnectorObject>();
 
@@ -982,39 +818,16 @@ public class RacfConnectorTests {
     
     // Override these to do Ldap tests
     //
-    protected void initializeCommandLineConfiguration(RacfConfiguration config) throws IOException {
-        config.setUseSsl(USE_SSL);
-        config.setHostTelnetPortNumber(HOST_TELNET_PORT);
-        config.setConnectScript(getLoginScript());
-        config.setDisconnectScript(getLogoffScript());
-        config.setUserName(SYSTEM_USER );
-        config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
-        config.setScriptingLanguage("GROOVY");
-        config.setSegmentNames(new String[] { 
-                "ACCOUNT.RACF",                     "ACCOUNT.TSO",                  "ACCOUNT.NETVIEW",
-                "ACCOUNT.CICS",                     "ACCOUNT.OMVS",                 "ACCOUNT.CATALOG", 
-                "ACCOUNT.OMVS",                     "GROUP.RACF" });
-        config.setSegmentParsers(new String[] { 
-                loadParserFromFile(RACF_PARSER),    loadParserFromFile(TSO_PARSER), loadParserFromFile(NETVIEW_PARSER), 
-                loadParserFromFile(CICS_PARSER),    loadParserFromFile(OMVS_PARSER), loadParserFromFile(CATALOG_PARSER), 
-                loadParserFromFile(OMVS_PARSER),    loadParserFromFile(GROUP_RACF_PARSER) });
-        //config.setConnectionClassName("org.identityconnectors.rw3270.wrq.WrqConnection");
-        config.setConnectionClassName("org.identityconnectors.rw3270.hod.HodConnection");
-        //config.setConnectionClassName("org.identityconnectors.rw3270.freehost3270.FH3270Connection");
-    }
-    
-    protected void initializeLdapConfiguration(RacfConfiguration config) {
-        config.setHostPortNumber(HOST_PORT);
-        config.setSuffix(SUFFIX);
-        config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
-        config.setUserName(SYSTEM_USER_LDAP);
-    }
-
-    protected String getInstallationDataAttributeName() {
-        return "RACF*DATA";
-    }
-
-    protected String getDefaultGroupName() {
-        return "RACF*DFLTGRP";
-    }
+    protected abstract void initializeCommandLineConfiguration(RacfConfiguration config) throws IOException;
+    protected abstract void initializeLdapConfiguration(RacfConfiguration config);
+    protected abstract String getInstallationDataAttributeName();
+    protected abstract String getDefaultGroupName();
+    protected abstract String getAttributesAttributeName();
+    protected abstract String getOwnerAttributeName();
+    protected abstract String getSupgroupAttributeName();
+    protected abstract String getGroupMembersAttributeName();
+    protected abstract String getGroupsAttributeName();
+    protected abstract String getGroupConnOwnersAttributeName();
+    protected abstract String getTsoSizeName();
+    protected abstract Uid makeUid(String name, ObjectClass objectClass);
 }

@@ -32,6 +32,8 @@
         <delete>
             <fileset dir="${lib}" includes="**/*.jar">
                 <exclude name="expect4j*.jar"/>
+                <exclude name="RWebSDK.jar"/>
+                <exclude name="wrqtls12.jar"/>
                 <exclude name="jakarta-oro-2.0.8.jar"/>
             </fileset>
         </delete>
@@ -46,4 +48,14 @@
             <fileset dir="${3270freehost.dir}/lib" includes="*.jar"/>
         </copy>
     </target>
+	
+    <target name="run-contract-tests" depends="contract-init">
+        <!-- commandline configuration -->
+        <antcall target="contract-dist" inheritAll="false">
+            <param name="configuration" value="commandline"/>
+        </antcall>
+        <antcall target="contract-tests" inheritAll="false">
+            <param name="configuration" value="commandline"/>
+        </antcall>
+        </target>
 </project>

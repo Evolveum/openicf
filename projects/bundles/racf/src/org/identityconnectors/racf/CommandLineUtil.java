@@ -42,7 +42,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.identityconnectors.common.StringUtil;
-import org.identityconnectors.common.script.ScriptExecutorFactory;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
@@ -84,7 +83,6 @@ class CommandLineUtil {
     private static final int            COMMAND_TIMEOUT             = 60000;
     
     private Map<String, MapTransform>   _segmentParsers;
-    private final ScriptExecutorFactory _groovyFactory;
     
     private RacfConnector               _connector;
     private static final List<String>   POSSIBLE_ATTRIBUTES         = Arrays.asList(
@@ -95,7 +93,6 @@ class CommandLineUtil {
     public CommandLineUtil(RacfConnector connector) {
         try {
             _connector = connector;
-            _groovyFactory = ScriptExecutorFactory.newInstance("GROOVY");
             
             // Create a map of segment names to parsers
             //
@@ -768,7 +765,7 @@ class CommandLineUtil {
                     Map<String, Object> map = new HashMap<String, Object>();
                     map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, new String[] { OperationalAttributes.ENABLE_NAME });
                     OperationOptions operationOptions = new OperationOptions(map);
-                    TestHandler handler = new TestHandler();
+                    LocalHandler handler = new LocalHandler();
                     _connector.executeQuery(ObjectClass.ACCOUNT, name, handler, operationOptions);
                     ConnectorObject object = handler.iterator().next();
                     enable = object.getAttributeByName(OperationalAttributes.ENABLE_NAME);
@@ -890,7 +887,7 @@ class CommandLineUtil {
         }
     }
 
-    public Map<String, Object> getAttributesFromCommandLine(ObjectClass objectClass, String racfName, boolean ldapAvailable, Set<String> attributesToGet) {
+    public Map<String, Object> getAttributesFromCommandLine(ObjectClass objectClass, String racfName, Set<String> attributesToGet) {
         String objectClassPrefix = null;
         String listCommand = null;
         if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
@@ -906,11 +903,6 @@ class CommandLineUtil {
         // We use a TreeSet to force an ordering
         //
         Set<String> segmentsNeeded = new TreeSet<String>();
-        
-        // If we have no LDAP, minimally, we need the RACF segment
-        //
-        if (!ldapAvailable)
-            segmentsNeeded.add(RACF);
         
         if (attributesToGet!=null) {
             for (String attributeToGet : attributesToGet) {
@@ -1164,9 +1156,7 @@ class CommandLineUtil {
             _timedOut = false;
             List<Match> matches = new LinkedList<Match>();
             
-            // Match the continue expression, so
-            //  save the partial output
-            //  ask for more output
+            // Match the continue expression
             //
             matches.add(new RegExpMatch(OUTPUT_CONTINUING_PATTERN, new Closure() {
                 public void run(ExpectState state) throws Exception {
@@ -1175,11 +1165,8 @@ class CommandLineUtil {
                 }
             }));
             
-            // Match the command complete expression, so
-            //  if there was an error,
-            //      throw exception
-            //  else
-            //      save the final output
+            // Match the command complete expression
+            //
             matches.add(new RegExpMatch(OUTPUT_COMPLETE_PATTERN, new Closure() {
                 public void run(ExpectState state) throws Exception {
                     handleScreenOfOutput(state);
@@ -1276,7 +1263,7 @@ class CommandLineUtil {
         }
     }
 
-    public static class TestHandler implements ResultsHandler, Iterable<ConnectorObject> {
+    public static class LocalHandler implements ResultsHandler, Iterable<ConnectorObject> {
         private List<ConnectorObject> objects = new LinkedList<ConnectorObject>();
 
         public boolean handle(ConnectorObject object) {
@@ -1293,20 +1280,4 @@ class CommandLineUtil {
         }
     }
 
-    private static class GuardedStringAccessor implements GuardedString.Accessor {
-        private char[] _array;
-        
-        public void access(char[] clearChars) {
-            _array = new char[clearChars.length];
-            System.arraycopy(clearChars, 0, _array, 0, _array.length);
-        }
-        
-        public char[] getArray() {
-            return _array;
-        }
-
-        public void clear() {
-            Arrays.fill(_array, 0, _array.length, ' ');
-        }
-    }
 }

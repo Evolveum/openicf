@@ -25,6 +25,7 @@ package org.identityconnectors.racf;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.AbstractFilterTranslator;
 import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
 import org.identityconnectors.framework.common.objects.filter.EndsWithFilter;
@@ -74,15 +75,17 @@ public class RacfUserFilterTranslator extends AbstractFilterTranslator<String> {
     @Override
     protected String createStartsWithExpression(StartsWithFilter filter,
             boolean not) {
-        if (!not && filter.getAttribute().is(Name.NAME))
-            return "("+getUserFilterAttributeName(filter.getAttribute())+"="+AttributeUtil.getAsStringValue(filter.getAttribute())+"*)";
+        if (!not && isNameAttribute(filter.getAttribute()))
+            return "("+getUserFilterAttributeName(filter.getAttribute())+"="+shorten(AttributeUtil.getAsStringValue(filter.getAttribute()), 7)+"*)";
         else
             return super.createStartsWithExpression(filter, not);
     }
 
     @Override
     protected String createEqualsExpression(EqualsFilter filter, boolean not) {
-        if (!not && isUserFilterAttribute(filter.getAttribute()))
+        if (!not && isNameAttribute(filter.getAttribute()))
+            return "("+getUserFilterAttributeName(filter.getAttribute())+"="+getUidValue(filter.getAttribute())+")";
+        else if (!not && isUserFilterAttribute(filter.getAttribute()))
             return "("+getUserFilterAttributeName(filter.getAttribute())+"="+AttributeUtil.getAsStringValue(filter.getAttribute())+")";
         else
             return super.createEqualsExpression(filter, not);
@@ -90,21 +93,23 @@ public class RacfUserFilterTranslator extends AbstractFilterTranslator<String> {
 
     @Override
     protected String createEndsWithExpression(EndsWithFilter filter, boolean not) {
-        if (!not && filter.getAttribute().is(Name.NAME))
-            return "("+getUserFilterAttributeName(filter.getAttribute())+"=*"+AttributeUtil.getAsStringValue(filter.getAttribute())+")";
+        if (!not && isNameAttribute(filter.getAttribute()))
+            return "("+getUserFilterAttributeName(filter.getAttribute())+"=*"+shorten(AttributeUtil.getAsStringValue(filter.getAttribute()), -7)+")";
         else
             return super.createEndsWithExpression(filter, not);
     }
 
     @Override
     protected String createContainsExpression(ContainsFilter filter, boolean not) {
-        if (!not && filter.getAttribute().is(Name.NAME))
-            return "("+getUserFilterAttributeName(filter.getAttribute())+"=*"+AttributeUtil.getAsStringValue(filter.getAttribute())+"*)";
+        if (!not && isNameAttribute(filter.getAttribute()))
+            return "("+getUserFilterAttributeName(filter.getAttribute())+"=*"+shorten(AttributeUtil.getAsStringValue(filter.getAttribute()), 6)+"*)";
         else
             return super.createContainsExpression(filter, not);
     }
 
     private boolean isUserFilterAttribute(Attribute attribute) {
+        if (attribute.is(Uid.NAME))
+            return true;
         if (attribute.is(Name.NAME))
             return true;
         if (attribute.is(RacfConstants.ATTR_LDAP_NDS_USER_NAME))
@@ -117,9 +122,39 @@ public class RacfUserFilterTranslator extends AbstractFilterTranslator<String> {
             return true;
         return false;
     }
+    
+
+    private String shorten(String string, int length) {
+        if (length > 0) {
+            if (string.length() <= length)
+                return string;
+            else
+                return string.substring(0, length);
+        } else {
+            if (string.length() <= -length)
+                return string;
+            else
+                return string.substring(string.length()+length);
+        }
+    }
+    
+
+    private boolean isNameAttribute(Attribute attribute) {
+        if (attribute.is(Uid.NAME))
+            return true;
+        if (attribute.is(Name.NAME))
+            return true;
+        return false;
+    }
+    
+    private String getUidValue(Attribute attribute) {
+        return RacfConnector.extractRacfIdFromLdapId(AttributeUtil.getStringValue(attribute));
+    }
 
     private String getUserFilterAttributeName(Attribute attribute) {
         if (attribute.is(Name.NAME))
+            return "racfid";
+        else if (attribute.is(Uid.NAME))
             return "racfid";
         else
             return attribute.getName();

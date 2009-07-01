@@ -66,8 +66,9 @@ public class RacfConnection {
         env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
         env.put(Context.PROVIDER_URL, url);
         env.put(Context.SECURITY_PRINCIPAL, _configuration.getLdapUserName());
-        env.put(Context.SECURITY_CREDENTIALS, _configuration.getLdapPassword());
-
+        GuardedStringAccessor accessor = new GuardedStringAccessor();
+        _configuration.getLdapPassword().access(accessor);
+        env.put(Context.SECURITY_CREDENTIALS, new String(accessor.getArray()));
         if (_configuration.getUseSsl()) {
             env.put(Context.SECURITY_PROTOCOL, "ssl");
         }
