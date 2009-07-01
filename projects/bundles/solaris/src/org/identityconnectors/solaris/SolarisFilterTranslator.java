@@ -29,43 +29,34 @@ import org.identityconnectors.framework.common.objects.filter.ContainsAllValuesF
 import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
 import org.identityconnectors.framework.common.objects.filter.EndsWithFilter;
 import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
-import org.identityconnectors.framework.common.objects.filter.GreaterThanFilter;
-import org.identityconnectors.framework.common.objects.filter.GreaterThanOrEqualFilter;
-import org.identityconnectors.framework.common.objects.filter.LessThanFilter;
-import org.identityconnectors.framework.common.objects.filter.LessThanOrEqualFilter;
 import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
 
 public class SolarisFilterTranslator extends
         AbstractFilterTranslator<String> {
 
-    // private ObjectClass objectClass;
-    // private OperationOptions operationOptions;
-
-    // public SolarisFilterTranslator(ObjectClass objectClass,
-    // OperationOptions operationOptions) {
-    // this.objectClass = objectClass;
-    // this.operationOptions = operationOptions;
-    // }
-
     public SolarisFilterTranslator() {
     }
 
+    /**
+     * simple add '&' delimiter to the expression.
+     * 
+     * AND has higher priority than OR
+     */
     @Override
     protected String createAndExpression(String leftExpression,
             String rightExpression) {
-        // anding of two groups is not supported in basic regular expression
-        // defined by POSIX.
-        return super.createAndExpression(leftExpression, rightExpression);
+        return String.format("%s & %s", leftExpression, rightExpression);
     }
 
+    /**
+     * simple add '|' delimiter to the expression.
+     * 
+     * AND has higher priority than OR
+     */
     @Override
     protected String createOrExpression(String leftExpression,
             String rightExpression) {
-        // or-ing works in basic regular expression defined by POSIX:
-        // for example: cat /etc/passwd | grep '\(Donald\)\|\(Gray\)'
-        // matches string: 'Older Donald Smith Gray went to walk.'
-        return String.format("\\(%s\\)\\|\\(%s\\)", leftExpression,
-                        rightExpression);
+        return String.format("%s | %s", leftExpression, rightExpression);
     }
 
     @Override
@@ -112,30 +103,6 @@ public class SolarisFilterTranslator extends
         }
 
         return super.createEqualsExpression(filter, not);
-    }
-
-    @Override
-    protected String createGreaterThanExpression(
-            GreaterThanFilter filter, boolean not) {
-        return super.createGreaterThanExpression(filter, not);
-    }
-
-    @Override
-    protected String createGreaterThanOrEqualExpression(
-            GreaterThanOrEqualFilter filter, boolean not) {
-        return super.createGreaterThanOrEqualExpression(filter, not);
-    }
-
-    @Override
-    protected String createLessThanExpression(LessThanFilter filter,
-            boolean not) {
-        return super.createLessThanExpression(filter, not);
-    }
-
-    @Override
-    protected String createLessThanOrEqualExpression(
-            LessThanOrEqualFilter filter, boolean not) {
-        return super.createLessThanOrEqualExpression(filter, not);
     }
 
     private boolean isNamingAttribute(Attribute attribute) {
