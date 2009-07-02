@@ -146,7 +146,7 @@ class LdapUtil {
                     throw new ConnectorException(e);
             }
         } else {
-            throw new IllegalArgumentException("TODO");
+            throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
         }
     }
 
@@ -278,7 +278,7 @@ class LdapUtil {
         //
         if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
             if (owners || groups) {
-                String user = _connector.extractRacfIdFromLdapId(ldapName);
+                String user = RacfConnector.extractRacfIdFromLdapId(ldapName);
                 // First, get the connections for the user
                 //
                 String query = "profileType=Connect,"+((RacfConfiguration)_connector.getConfiguration()).getSuffix();
@@ -299,9 +299,11 @@ class LdapUtil {
                     Set<String> connectAttributesToGet = new HashSet<String>();
                     connectAttributesToGet.add(ATTR_LDAP_OWNER);
                     for (String group : groupsForUser) {
+                        group = RacfConnector.extractRacfIdFromLdapId(group);
                         String root = "racfuserid="+user+"+racfgroupid="+group+",profileType=Connect,"+((RacfConfiguration)_connector.getConfiguration()).getSuffix();
-                        //TODO: get ATTR_LDAP_OWNER via query against connection
+                        ownersForUser.add(getConnectOwner(root));
                     }
+                    attributesRead.put(ATTR_LDAP_GROUP_OWNERS, ownersForUser);
                 }
             }
         }
@@ -310,14 +312,23 @@ class LdapUtil {
         //
         if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
             if (members || owners) {
+                String group = RacfConnector.extractRacfIdFromLdapId(ldapName);
                 List<String> usersForGroup = getMembersOfGroupViaLdap(ldapObject.getNameInNamespace());
                 if (members)
                     attributesRead.put(ATTR_CL_MEMBERS, usersForGroup);
                 if (owners) {
-                    //TODO: get owner via query
+                    List<String> ownersForGroup = new ArrayList<String>();
+                    Set<String> connectAttributesToGet = new HashSet<String>();
+                    connectAttributesToGet.add(ATTR_LDAP_OWNER);
+                    for (String user : usersForGroup) {
+                        user = RacfConnector.extractRacfIdFromLdapId(user);
+                        String root = "racfuserid="+user+"+racfgroupid="+group+",profileType=Connect,"+((RacfConfiguration)_connector.getConfiguration()).getSuffix();
+                        ownersForGroup.add(getConnectOwner(root));
+                    }
+                    attributesRead.put(ATTR_LDAP_GROUP_OWNERS, ownersForGroup);
                 }
             }
-            //TODO: what about subgroups
+            //TODO: what about subgroups (queried as racfSubgroupName)
         }
         
 
@@ -437,6 +448,14 @@ class LdapUtil {
             }
         }
         return attributesRead;
+    }
+    
+    private String getConnectOwner(String query) throws NamingException {
+        Map<String, Object> attributesRead = CollectionUtil.newCaseInsensitiveMap();
+        Set<String> attributesToGet = new HashSet<String>();
+        attributesToGet.add(ATTR_LDAP_CONNECT_OWNER);
+        getAttributesFromLdap(query, attributesRead, attributesToGet);
+        return (String)attributesRead.get(ATTR_LDAP_CONNECT_OWNER);
     }
 
     private SearchResult getAttributesFromLdap(String ldapName, Map<String, Object> attributesRead,
