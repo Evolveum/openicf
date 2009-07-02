@@ -45,7 +45,7 @@ public class SolarisFilterTranslator extends
     @Override
     protected String createAndExpression(String leftExpression,
             String rightExpression) {
-        return String.format("%s & %s", leftExpression, rightExpression);
+        return String.format("%s&%s", leftExpression, rightExpression);
     }
 
     /**
@@ -56,20 +56,21 @@ public class SolarisFilterTranslator extends
     @Override
     protected String createOrExpression(String leftExpression,
             String rightExpression) {
-        return String.format("%s | %s", leftExpression, rightExpression);
+        return String.format("%s|%s", leftExpression, rightExpression);
     }
 
-    @Override
-    protected String createContainsAllValuesExpression(
-            ContainsAllValuesFilter filter, boolean not) {
-        return super.createContainsAllValuesExpression(filter, not);
-    }
+//    @Override
+//    protected String createContainsAllValuesExpression(
+//            ContainsAllValuesFilter filter, boolean not) {
+//        return super.createContainsAllValuesExpression(filter, not);
+//    }
 
     @Override
     protected String createContainsExpression(ContainsFilter filter,
             boolean not) {
         if (!not && isNamingAttribute(filter.getAttribute())) {
-            return String.format("*%s*", filter.getValue());
+            /* '.*' == zero and more repetitions of any character */
+            return String.format(".*(%s).*", filter.getValue());
         }
 
         return super.createContainsExpression(filter, not);
@@ -79,7 +80,7 @@ public class SolarisFilterTranslator extends
     protected String createEndsWithExpression(EndsWithFilter filter,
             boolean not) {
         if (!not && isNamingAttribute(filter.getAttribute())) {
-            return String.format("*%s", filter.getValue());
+            return String.format(".*%s", filter.getValue());
         }
 
         return super.createEndsWithExpression(filter, not);
@@ -89,7 +90,7 @@ public class SolarisFilterTranslator extends
     protected String createStartsWithExpression(StartsWithFilter filter,
             boolean not) {
         if (!not && isNamingAttribute(filter.getAttribute())) {
-            return String.format("%s*", filter.getValue());
+            return String.format("%s.*", filter.getValue());
         }
 
         return super.createStartsWithExpression(filter, not);
