@@ -102,8 +102,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
     private CommandLineUtil             _clUtil;
     private LdapUtil                    _ldapUtil;
     
-    private static final SimpleDateFormat _dateFormat = new SimpleDateFormat("MM/dd/yy");
-    private static final SimpleDateFormat _resumeRevokeFormat = new SimpleDateFormat("MMMM dd, yyyy");
+    // Dateformats are not threadsafe, so not static
+    //
+    private final SimpleDateFormat      _dateFormat = new SimpleDateFormat("MM/dd/yy");
+    private final SimpleDateFormat      _resumeRevokeFormat = new SimpleDateFormat("MMMM dd, yyyy");
     private static final Pattern         _racfTimestamp = Pattern.compile("(\\d+)\\.(\\d+)(?:/(\\d+):(\\d+):(\\d+))?");
     private static final Pattern        _connectionPattern  = Pattern.compile("racfuserid=([^+]+)\\+racfgroupid=([^,]+),.*");
 
