@@ -106,7 +106,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
     //
     private final SimpleDateFormat      _dateFormat = new SimpleDateFormat("MM/dd/yy");
     private final SimpleDateFormat      _resumeRevokeFormat = new SimpleDateFormat("MMMM dd, yyyy");
-    private static final Pattern         _racfTimestamp = Pattern.compile("(\\d+)\\.(\\d+)(?:/(\\d+):(\\d+):(\\d+))?");
+    private static final Pattern        _racfTimestamp = Pattern.compile("(\\d+)\\.(\\d+)(?:/(\\d+):(\\d+):(\\d+))?");
     private static final Pattern        _connectionPattern  = Pattern.compile("racfuserid=([^+]+)\\+racfgroupid=([^,]+),.*");
 
     public RacfConnector() {
@@ -225,7 +225,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
                     attribute = AttributeBuilder.build(ATTR_CL_RESUME_DATE, dateValue);
             } else if (attribute.is(OperationalAttributes.ENABLE_NAME)) {
                 if (isLdapConnectionAvailable())
-                    ; //TODO: attribute = AttributeBuilder.build(ATTR_LDAP_ENABLED, attribute.getValue());
+                    attribute = AttributeBuilder.build(ATTR_LDAP_ENABLED, attribute.getValue());
                 else
                     attribute = AttributeBuilder.build(ATTR_CL_ENABLED, attribute.getValue());
             } 
@@ -807,7 +807,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DATA,                    String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_MODEL,                   String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OWNER,                   String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_PASSWORD,                String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_PROGRAMMER_NAME,         String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DEFAULT_GROUP,           String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SECURITY_LEVEL,          String.class));
@@ -818,85 +817,111 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LOGON_TIME,              String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CLASS_NAME,              String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SECURITY_LABEL,          String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_APP,            String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_CLASS,          String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_MGMT_CLASS,          String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_STORAGE_CLASS,       String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_ACCOUNT_NUMBER,      String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_DEFAULT_CMD,         String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_DESTINATION,         String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_MESSAGE_CLASS,       String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_DEFAULT_LOGIN,       String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_LOGON_SIZE,          String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_MAX_REGION_SIZE,     String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_DEFAULT_SYSOUT,      String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_USERDATA,            String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_DEFAULT_UNIT,        String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TSO_SECURITY_LABEL,      String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LANG_PRIMARY,            String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LANG_SECONDARY,          String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CICS_OPER_ID,            String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CICS_OPER_CLASS,         String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CICS_OPER_PRIORITY,      String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CICS_OPER_RESIGNON,      String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CICS_TERM_TIMEOUT,       String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_STORAGE,              String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_AUTH,                 String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_MFORM,                String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_LEVEL,                String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_MONITOR,              String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_ROUTCODE,             String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_LOG_CMD_RESPONSE,     String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_MGID,                 String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_DOM,                  String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_KEY,                  String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_CMDSYS,               String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_UD,                   String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_MSCOPE_SYSTEMS,       String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_ALTGROUP,             String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OP_AUTO,                 String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_USER_NAME,            String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_BUILDING,             String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_DEPARTMENT,           String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_ROOM,                 String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_ADDRESS_LINE1,        String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_ADDRESS_LINE2,        String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_ADDRESS_LINE3,        String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_ADDRESS_LINE4,        String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_WA_ACCOUNT_NUMBER,       String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_UID,                String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_HOME,               String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_INIT_PROGRAM,       String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_MAX_CPUTIME,        String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_MAX_ADDR_SPACE,     String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_MAX_FILES,          String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_MAX_THREADS,        String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_MAX_MEMORY_MAP,     String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_NINITIALCMD,          String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_DEFAULT_CONSOLE,      String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_CTL,                  String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_MESSAGE_RECEIVER,     String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_OPERATOR_CLASS,       String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_DOMAINS,              String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_NGMFADM,              String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_DCE_UUID,             String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_DCE_PRINCIPAL,        String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_DCE_HOME_CELL,        String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_DCE_HOME_CELL_UUID,   String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NV_DCE_AUTOLOGIN,        String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OVM_UID,                 String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OVM_HOME,                String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OVM_INITIAL_PROGRAM,     String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OVM_FILESYSTEM_ROOT,     String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LN_SHORT_NAME,           String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_NDS_USER_NAME,           String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_KERB_NAME,               String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_KERB_MAX_TICKET_LIFE,    String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_KERB_ENCRYPT,            String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_PROXY_BINDDN,            String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_PROXY_BINDPW,            String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_PROXY_HOST,              String.class));
-    
+            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_DFP) > 0) {
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_DPF_DATA_APP,            String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_DPF_DATA_CLASS,          String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_DPF_MGMT_CLASS,          String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_DPF_STORAGE_CLASS,       String.class));
+            }
+            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_TSO) > 0) {
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_ACCOUNT_NUMBER,      String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_DEFAULT_CMD,         String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_DESTINATION,         String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_MESSAGE_CLASS,       String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_DEFAULT_LOGIN,       String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_LOGON_SIZE,          String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_MAX_REGION_SIZE,     String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_DEFAULT_SYSOUT,      String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_USERDATA,            String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_DEFAULT_UNIT,        String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_SECURITY_LABEL,      String.class));
+            }
+            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_LANGUAGE) > 0) {
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_LANG_PRIMARY,            String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_LANG_SECONDARY,          String.class));
+            }
+            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_CICS) > 0) {
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_CICS_OPER_ID,            String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_CICS_OPER_CLASS,         String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_CICS_OPER_PRIORITY,      String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_CICS_OPER_RESIGNON,      String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_CICS_TERM_TIMEOUT,       String.class));
+            }
+            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_OPERPARM) > 0) {
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_STORAGE,              String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_AUTH,                 String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_MFORM,                String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_LEVEL,                String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_MONITOR,              String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_ROUTCODE,             String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_LOG_CMD_RESPONSE,     String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_MGID,                 String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_DOM,                  String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_KEY,                  String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_CMDSYS,               String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_UD,                   String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_MSCOPE_SYSTEMS,       String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_ALTGROUP,             String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_AUTO,                 String.class));
+            }
+            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_WORKATTR) > 0) {
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_WA_USER_NAME,            String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_WA_BUILDING,             String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_WA_DEPARTMENT,           String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_WA_ROOM,                 String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_WA_ADDRESS_LINE1,        String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_WA_ADDRESS_LINE2,        String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_WA_ADDRESS_LINE3,        String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_WA_ADDRESS_LINE4,        String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_WA_ACCOUNT_NUMBER,       String.class));
+            }
+            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_OMVS_USER) > 0) {
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_UID,                String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_HOME,               String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_INIT_PROGRAM,       String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_MAX_CPUTIME,        String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_MAX_ADDR_SPACE,     String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_MAX_FILES,          String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_MAX_THREADS,        String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_MAX_MEMORY_MAP,     String.class));
+            }
+            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_NETVIEW) > 0) {
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_INITIALCMD,           String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_DEFAULT_CONSOLE,      String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_CTL,                  String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_MESSAGE_RECEIVER,     String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_OPERATOR_CLASS,       String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_DOMAINS,              String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_NGMFADM,              String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_DCE_UUID,             String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_DCE_PRINCIPAL,        String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_DCE_HOME_CELL,        String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_DCE_HOME_CELL_UUID,   String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_DCE_AUTOLOGIN,        String.class));
+            }
+            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_OVM_USER) > 0) {
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OVM_UID,                 String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OVM_HOME,                String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OVM_INITIAL_PROGRAM,     String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OVM_FILESYSTEM_ROOT,     String.class));
+            }
+            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_LNOTES) > 0) {
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_LN_SHORT_NAME,           String.class));
+            }
+            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_NDS) > 0) {
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NDS_USER_NAME,           String.class));
+            }
+            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_KERB) > 0) {
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_KERB_NAME,               String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_KERB_MAX_TICKET_LIFE,    String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_KERB_ENCRYPT,            String.class));
+            }
+            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_PROXY) > 0) {
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_PROXY_BINDDN,            String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_PROXY_BINDPW,            String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_PROXY_HOST,              String.class));
+            }
+            
             // Multi-valued attributes
             //
             attributes.add(buildMultivaluedAttribute(ATTR_LDAP_ATTRIBUTES,               String.class, false));

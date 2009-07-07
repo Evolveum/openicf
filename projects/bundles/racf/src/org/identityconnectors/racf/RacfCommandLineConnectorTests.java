@@ -50,7 +50,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class RacfCommandLineConnectorTests extends RacfConnectorTests {
+public class RacfCommandLineConnectorTests extends RacfConnectorTestBase {
 
     public static void main(String[] args) {
         RacfCommandLineConnectorTests tests = new RacfCommandLineConnectorTests();
@@ -69,21 +69,11 @@ public class RacfCommandLineConnectorTests extends RacfConnectorTests {
         SYSTEM_USER       = TestHelpers.getProperty("SYSTEM_USER", null);
        
         SYSTEM_USER_LDAP  = "racfid="+SYSTEM_USER+",profileType=user,"+SUFFIX;
-        TEST_USER_UID     = new Uid(TEST_USER);
-        TEST_USER_UID2    = new Uid(TEST_USER2);
-        TEST_GROUP1_UID   = new Uid(TEST_GROUP1);
-        TEST_GROUP2_UID   = new Uid(TEST_GROUP2);
-        TEST_GROUP3_UID   = new Uid(TEST_GROUP3);
         
         Assert.assertNotNull("HOST_NAME must be specified", HOST_NAME);
         Assert.assertNotNull("SYSTEM_PASSWORD must be specified", SYSTEM_PASSWORD);
         Assert.assertNotNull("SYSTEM_USER must be specified", SYSTEM_USER);
         Assert.assertNotNull("SUFFIX must be specified", SUFFIX);
-    }
-
-    @Before
-    public void before() {
-        System.out.println("------------ New Test ---------------");
     }
 
     private String makeLine(String string, int length) {

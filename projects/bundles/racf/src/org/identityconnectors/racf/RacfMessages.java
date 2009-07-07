@@ -37,9 +37,8 @@ public class RacfMessages extends ListResourceBundle {
     public static final String CONNECTION_CLASS_NULL          = "CONNECTION_CLASS_NULL";
     public static final String USERNAMES_NULL                 = "USERNAMES_NULL";
     public static final String PASSWORDS_NULL                 = "PASSWORDS_NULL";
-    public static final String POOLNAMES_NULL                 = "POOLNAMES_NULL";
     public static final String INTERVAL_NULL                  = "INTERVAL_NULL";
-    public static final String PASSWORDS_LENGTH               = "PASSWORDS_LENGTH";
+    public static final String SUPPORTED_SEGMENTS_NULL        = "SUPPORTED_SEGMENTS_NULL";
     public static final String UNINITIALIZED_CONNECTOR        = "UNINITIALIZED_CONNECTOR";
     public static final String MUST_BE_SINGLE_VALUE           = "MUST_BE_SINGLE_VALUE";
     public static final String UNKNOWN_ATTRIBUTE              = "UNKNOWN_ATTRIBUTE";
@@ -82,9 +81,8 @@ public class RacfMessages extends ListResourceBundle {
         { PASSWORD_NULL,           "password may not be null" },
         { CONNECTION_CLASS_NULL,   "connection class may not be null" },
         { PASSWORDS_NULL,          "passwords may not be null" },
-        { POOLNAMES_NULL,          "passwords may not be null" },
         { INTERVAL_NULL,           "interval may not be null" },
-        { PASSWORDS_LENGTH,        "passwords, usernames and poolNames must be the same length" },
+        { SUPPORTED_SEGMENTS_NULL, "supported segments may not be null" },
         { UNINITIALIZED_CONNECTOR, "cannot create a new connection on an LDAP connector that has not been initialized" },
         { MUST_BE_SINGLE_VALUE,    "Must be single values" },
         { UNKNOWN_ATTRIBUTE,       "Unknown Attribute:{0}" },

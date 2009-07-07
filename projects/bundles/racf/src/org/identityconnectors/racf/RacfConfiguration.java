@@ -62,7 +62,29 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     private String         _disconnectScript;
     private String         _connectionClassName;
     
+    private Integer        _supportedSegments;
+    
     private static final String CATALOG = "org.identityconnectors.racf.RacfMessages";
+    
+    // Segments to be supported in Schema
+    //
+    public static final int SEGMENT_CICS =      1;
+    public static final int SEGMENT_DCE =       1<<1;
+    public static final int SEGMENT_DFP =       1<<2;
+    public static final int SEGMENT_KERB =      1<<3;
+    public static final int SEGMENT_LANGUAGE =  1<<4;
+    public static final int SEGMENT_LNOTES =    1<<5;
+    public static final int SEGMENT_NDS =       1<<6;
+    public static final int SEGMENT_NETVIEW =   1<<7;
+    public static final int SEGMENT_OMVS_GROUP =1<<8;
+    public static final int SEGMENT_OMVS_USER = 1<<9;
+    public static final int SEGMENT_OPERPARM =  1<<10;
+    public static final int SEGMENT_OVM_GROUP = 1<<11;
+    public static final int SEGMENT_OVM_USER =  1<<12;
+    public static final int SEGMENT_PROXY =     1<<13;
+    public static final int SEGMENT_TSO =       1<<14;
+    public static final int SEGMENT_WORKATTR =  1<<15;
+
 
     private ResourceBundle getBundle() {
         if (_bundle==null || CurrentLocale.get()!=_lastLocale) {
@@ -166,6 +188,8 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
             throw new IllegalArgumentException(getMessage(RacfMessages.USERNAME_NULL));
         if (!noLdap && isBlank(_ldapPassword))
             throw new IllegalArgumentException(getMessage(RacfMessages.PASSWORD_NULL));
+        if (!noLdap && _supportedSegments==null)
+            throw new IllegalArgumentException(getMessage(RacfMessages.SUPPORTED_SEGMENTS_NULL));
 
         if (!noCommandLine && _hostTelnetPortNumber==null)
             throw new IllegalArgumentException(getMessage(RacfMessages.TELNET_PORT_NULL));
@@ -261,6 +285,23 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
      */
     public void setLdapUserName(String userName) {
         _ldapUserName = userName;
+    }
+
+    /**
+     * Get the supported segment names
+     * @return a mask of supported segment names
+     */
+    @ConfigurationProperty(order=5, displayMessageKey="SupportedSegments", helpMessageKey="SupportedSegmentsHelp")
+    public Integer getSupportedSegments() {
+        return _supportedSegments;
+    }
+
+    /**
+     * Set the supported segment names
+     * @param supportedSegments -- a mask of supported segment names
+     */
+    public void setSupportedSegments(Integer supportedSegments) {
+        _supportedSegments = supportedSegments;
     }
 
     /**

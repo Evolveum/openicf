@@ -22,8 +22,6 @@
  */
 package org.identityconnectors.racf;
 
-import static org.identityconnectors.racf.RacfConstants.*;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -68,15 +66,13 @@ import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
 import org.identityconnectors.framework.common.objects.filter.EndsWithFilter;
 import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
 import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
-import org.identityconnectors.patternparser.MapTransform;
-import org.identityconnectors.patternparser.Transform;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-public abstract class RacfConnectorTests {
+public abstract class RacfConnectorTestBase {
     // Connector Configuration information
     //
     protected static String       HOST_NAME;
@@ -106,21 +102,6 @@ public abstract class RacfConnectorTests {
     protected static final String TSO_PARSER          = "org/identityconnectors/racf/TsoSegmentParser.xml";
     protected static final String NETVIEW_PARSER      = "org/identityconnectors/racf/NetviewSegmentParser.xml";
     protected static final String CATALOG_PARSER      = "org/identityconnectors/racf/CatalogParser.xml";
-
-    @BeforeClass
-    public static void beforeClass() {
-        HOST_NAME         = TestHelpers.getProperty("HOST_NAME", null);
-        SYSTEM_PASSWORD   = TestHelpers.getProperty("SYSTEM_PASSWORD", null);
-        SUFFIX            = TestHelpers.getProperty("SUFFIX", null);
-        SYSTEM_USER       = TestHelpers.getProperty("SYSTEM_USER", null);
-       
-        SYSTEM_USER_LDAP  = "racfid="+SYSTEM_USER+",profileType=user,"+SUFFIX;
-        
-        Assert.assertNotNull("HOST_NAME must be specified", HOST_NAME);
-        Assert.assertNotNull("SYSTEM_PASSWORD must be specified", SYSTEM_PASSWORD);
-        Assert.assertNotNull("SYSTEM_USER must be specified", SYSTEM_USER);
-        Assert.assertNotNull("SUFFIX must be specified", SUFFIX);
-    }
 
     @Before
     public void before() {
@@ -380,7 +361,7 @@ public abstract class RacfConnectorTests {
                 changed.add(size);
                 changed.add(user.getUid());
                 connector.update(ObjectClass.ACCOUNT, changed, null);
-                ConnectorObject object = getUser(makeUid(TEST_USER, ObjectClass.ACCOUNT).getUidValue(), connector);
+                ConnectorObject object = getUser(makeUid(TEST_USER, ObjectClass.ACCOUNT).getUidValue(), connector, new String[] {getTsoSizeName()});
                 assertAttribute(size, object);
             }
             {
@@ -469,9 +450,19 @@ public abstract class RacfConnectorTests {
     }
 
     private ConnectorObject getUser(String accountId, RacfConnector connector) throws Exception  {
+        return getUser(accountId, connector, null);
+    }
+
+    private ConnectorObject getUser(String accountId, RacfConnector connector, String[] attributes) throws Exception  {
         TestHandler handler = new TestHandler();
+        OperationOptions options = null;
+        if (attributes!=null) {
+            Map<String, Object> map = new HashMap<String, Object>();
+            map.put(OperationOptions.OP_ATTRIBUTES_TO_GET, attributes);
+            options = new OperationOptions(map);
+        }
         //TestHelpers.search(connector,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build("racfid", accountId.getUidValue())), handler, null);
-        TestHelpers.search(connector,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Name.NAME, accountId)), handler, null);
+        TestHelpers.search(connector,ObjectClass.ACCOUNT, new EqualsFilter(AttributeBuilder.build(Name.NAME, accountId)), handler, options);
         for (ConnectorObject user : handler) {
             if (accountId.equalsIgnoreCase(user.getName().getNameValue()))
                 return user;
