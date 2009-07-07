@@ -30,6 +30,7 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
@@ -140,6 +141,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
 
     public FilterTranslator<String> createFilterTranslator(
             ObjectClass oclass, OperationOptions options) {
+        // TODO temporarily we expect just ACCOUNTS to be searched However Groups are there too.
         return new SolarisFilterTranslator(/*oclass, options*/);
     }
     
@@ -155,13 +157,14 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         
         // GROUPS
         Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
+        attributes.add(Name.INFO);
         // to adjust the schema: 
         //attributes.add(AttributeInfoBuilder.build(STRING_CONSTANT));
         schemaBuilder.defineObjectClass(ObjectClass.GROUP_NAME, attributes);
         
         // USERS
         attributes = new HashSet<AttributeInfo>();
-        
+        attributes.add(Name.INFO);
         attributes.add(OperationalAttributeInfos.PASSWORD);
         schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
         
