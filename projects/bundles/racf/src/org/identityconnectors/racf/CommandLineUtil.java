@@ -947,7 +947,7 @@ class CommandLineUtil {
                 }
                 Pattern segmentsPattern = Pattern.compile(segmentPatternString.toString()+"$", Pattern.DOTALL);
                 Matcher segmentsMatcher = segmentsPattern.matcher(output);
-                if (segmentsMatcher.matches()) {
+                if (segmentsMatcher.find()) {
                     // Deal with RACF first
                     //
                     int offset = 0;
@@ -1077,6 +1077,11 @@ class CommandLineUtil {
                 attributesFromCommandLine.put(ATTR_CL_GROUP_CONN_OWNERS, new LinkedList<Object>());
             }
         }
+        // If we didn't fetch RACF segment, fill in name
+        //
+        if (!attributesFromCommandLine.containsKey(ATTR_CL_USERID))
+            attributesFromCommandLine.put(ATTR_CL_USERID, racfName);
+        
         return attributesFromCommandLine;
     }
 
