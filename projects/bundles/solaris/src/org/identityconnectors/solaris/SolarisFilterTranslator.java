@@ -25,7 +25,6 @@ package org.identityconnectors.solaris;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.filter.AbstractFilterTranslator;
-import org.identityconnectors.framework.common.objects.filter.ContainsAllValuesFilter;
 import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
 import org.identityconnectors.framework.common.objects.filter.EndsWithFilter;
 import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
@@ -33,20 +32,6 @@ import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
 
 public class SolarisFilterTranslator extends
         AbstractFilterTranslator<String> {
-
-    public SolarisFilterTranslator() {
-    }
-
-    /**
-     * simple add '&' delimiter to the expression.
-     * 
-     * AND has higher priority than OR
-     */
-    @Override
-    protected String createAndExpression(String leftExpression,
-            String rightExpression) {
-        return String.format("%s&%s", leftExpression, rightExpression);
-    }
 
     /**
      * simple add '|' delimiter to the expression.
@@ -58,12 +43,6 @@ public class SolarisFilterTranslator extends
             String rightExpression) {
         return String.format("%s|%s", leftExpression, rightExpression);
     }
-
-//    @Override
-//    protected String createContainsAllValuesExpression(
-//            ContainsAllValuesFilter filter, boolean not) {
-//        return super.createContainsAllValuesExpression(filter, not);
-//    }
 
     @Override
     protected String createContainsExpression(ContainsFilter filter,

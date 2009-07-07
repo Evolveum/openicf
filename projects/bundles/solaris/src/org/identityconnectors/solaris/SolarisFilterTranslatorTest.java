@@ -53,23 +53,32 @@ public class SolarisFilterTranslatorTest {
         sft = null;
     }
     
-    /** AND, OR op. tests */
     @Test
     public void testBasicTranslator() {
-        String exp = sft.createAndExpression("abc", "def");
-        Assert.assertEquals(exp, "abc&def");
-        
-        exp = sft.createOrExpression("(abc)", "(def)");
+        String exp = sft.createOrExpression("(abc)", "(def)");
         matches("abc", exp);
+        matches("def", exp);
+        matches("xef", exp, false);
+        matches("abef", exp, false);
     }
     
     /** @param string the string for matching
      *  @ param exp regular expression to match */
     private void matches(String string, String exp) {
+        matches(string, exp, true);
+    }
+    
+    private void matches(String string, String exp, boolean expectedMatch) {
         Assertions.nullCheck(string, "string");
         Assertions.nullCheck(exp, "exp");
-        String msg = String.format("String '%s' does not match regexp '%s'.", string, exp);
-        Assert.assertTrue(msg, string.matches(exp));
+        String msg = String.format(((expectedMatch) ? "String '%s' does not match regexp '%s'."
+                                : "String '%s' matched regexp '%s', but it should *not*."), string, exp);
+        if (expectedMatch) {
+            Assert.assertTrue(msg, string.matches(exp));
+        } else {
+            Assert.assertFalse(msg, string.matches(exp));
+        }
+        
     }
 
     /** the rest of the ops. */
@@ -78,69 +87,14 @@ public class SolarisFilterTranslatorTest {
         Attribute attr = AttributeBuilder.build(Name.NAME, "sarahsmith");
         String exp = sft.createStartsWithExpression(new StartsWithFilter(attr), false);
         matches("sarahsmithBooBarFoo", exp);
+        matches("abcsarahsmith", exp, false);
         
-        attr = AttributeBuilder.build(Name.NAME, "sarahsmith");
         exp = sft.createEndsWithExpression(new EndsWithFilter(attr), false);
         matches("BooBarFoosarahsmith", exp);
+        matches("sarahsmithx", exp, false);
         
-        attr = AttributeBuilder.build(Name.NAME, "sarahsmith");
         exp = sft.createContainsExpression(new ContainsFilter(attr), false);
         matches("BooBarsarahsmithBazFoo", exp);
-    }
-    
-    @Test
-    public void combinedTranslate() {
-        String[] leftRighExpression = prepareExpressions();
-        
-        String exp = sft.createAndExpression(leftRighExpression[0], leftRighExpression[1]);
-        String expected = "sarahsmithFooBarlilianBazBoo";
-        Assert.assertTrue(String.format("String '%s' doesn't align with regexp: '%s'", expected, exp), evaluateAndExpression(expected, exp));
-        
-        expected = "sarahsmithFooBarBazBoo";
-        Assert.assertFalse(evaluateAndExpression(expected, exp));
-        
-        expected = "sarahFooBarlilianBazBoo";
-        Assert.assertFalse(evaluateAndExpression(expected, exp));
-    }
-
-    private boolean evaluateAndExpression(String string, String exp) {
-        String[] regExpParts = exp.split("&");
-        boolean res = true;
-        for (String regExp : regExpParts) {
-            res &= string.matches(regExp);
-            if (!res) 
-                break;
-        }
-        return res;
-    }
-
-    @Test
-    public void combinedTranslate2() {
-        String[] leftRighExpression = prepareExpressions();
-        
-        String exp = sft.createOrExpression(leftRighExpression[0], leftRighExpression[1]);
-        matches("sarahsmithBooBar", exp);
-        matches("BazBoosarahsmithBoolilianBar", exp);
-    }
-    
-    /**
-     * create two regular expressions:
-     * <ul>
-     * <li>sarahsmith* (starts with)</li>
-     * <li>*lilian* (contains)</li>
-     * </ul>
-     * @return
-     */
-    private String[] prepareExpressions() {
-        Attribute attr = AttributeBuilder.build(Name.NAME, "sarahsmith");
-        String leftExpression = sft.createStartsWithExpression(new StartsWithFilter(attr), false);
-        matches("sarahsmithFooBar", leftExpression);
-        
-        attr = AttributeBuilder.build(Name.NAME, "lilian");
-        String rightExpression = sft.createContainsExpression(new ContainsFilter(attr), false);
-        matches("BazBoolilianFooBar", rightExpression);
-        
-        String[] arr = {leftExpression, rightExpression};
-        return arr;
+        matches("sarahxsmith", exp, false);
     }
 }
