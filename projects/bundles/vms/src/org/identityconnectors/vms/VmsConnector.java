@@ -823,9 +823,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
     }
 
     private List<StringBuffer> updateListAttr(String accountId, Attribute attribute, String name, Collection<String> valueSet) {
+        List<Object> values = null;
         if (attribute.getValue()==null)
-            throw new IllegalArgumentException();
-        List<Object> values = new ArrayList<Object>(attribute.getValue());
+            values = new ArrayList<Object>();
+        else
+            values = new ArrayList<Object>(attribute.getValue());
         updateValues(values, valueSet);
 
         return privsCommand(accountId+"/"+name, values);
