@@ -56,7 +56,7 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
  */
 @ConnectorClass(displayNameKey = "Solaris", configurationClass = SolarisConfiguration.class)
 public class SolarisConnector implements PoolableConnector, AuthenticateOp,
-        SchemaOp, CreateOp, DeleteOp, UpdateOp, SearchOp<String>, TestOp {
+        SchemaOp, CreateOp, DeleteOp, UpdateOp, SearchOp<SolarisFilter>, TestOp {
 
     /**
      * Setup logging for the {@link DatabaseTableConnector}.
@@ -134,12 +134,12 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         return new OpUpdateImpl(_configuration, _connection, _log).update(objclass, uid, AttributeUtil.addUid(replaceAttributes, uid), options);
     }
     
-    public void executeQuery(ObjectClass oclass, String query,
+    public void executeQuery(ObjectClass oclass, SolarisFilter query,
             ResultsHandler handler, OperationOptions options) {
         new OpSearchImpl(_configuration, _connection, _log).executeQuery(oclass, query, handler, options);
     }
 
-    public FilterTranslator<String> createFilterTranslator(
+    public FilterTranslator<SolarisFilter> createFilterTranslator(
             ObjectClass oclass, OperationOptions options) {
         // TODO temporarily we expect just ACCOUNTS to be searched However Groups are there too.
         return new SolarisFilterTranslator(/*oclass, options*/);

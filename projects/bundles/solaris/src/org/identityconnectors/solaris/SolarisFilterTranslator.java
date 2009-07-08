@@ -31,7 +31,7 @@ import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
 import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
 
 public class SolarisFilterTranslator extends
-        AbstractFilterTranslator<String> {
+        AbstractFilterTranslator<SolarisFilter> {
 
     /**
      * simple add '|' delimiter to the expression.
@@ -39,47 +39,51 @@ public class SolarisFilterTranslator extends
      * AND has higher priority than OR
      */
     @Override
-    protected String createOrExpression(String leftExpression,
-            String rightExpression) {
-        return String.format("%s|%s", leftExpression, rightExpression);
+    protected SolarisFilter createOrExpression(SolarisFilter leftExpression,
+            SolarisFilter rightExpression) {
+        String regExp = String.format("%s|%s", leftExpression.getRegExp(), rightExpression.getRegExp());
+        return new SolarisFilter(leftExpression.getAttributeName(), regExp);
     }
 
     @Override
-    protected String createContainsExpression(ContainsFilter filter,
+    protected SolarisFilter createContainsExpression(ContainsFilter filter,
             boolean not) {
         if (!not && isNamingAttribute(filter.getAttribute())) {
             /* '.*' == zero and more repetitions of any character */
-            return String.format(".*(%s).*", filter.getValue());
+            String regExp = String.format(".*(%s).*", filter.getValue());
+            return new SolarisFilter(filter.getName(), regExp);
         }
 
         return super.createContainsExpression(filter, not);
     }
 
     @Override
-    protected String createEndsWithExpression(EndsWithFilter filter,
+    protected SolarisFilter createEndsWithExpression(EndsWithFilter filter,
             boolean not) {
         if (!not && isNamingAttribute(filter.getAttribute())) {
-            return String.format(".*%s", filter.getValue());
+            String regExp = String.format(".*%s", filter.getValue());
+            return new SolarisFilter(filter.getName(), regExp);
         }
 
         return super.createEndsWithExpression(filter, not);
     }
 
     @Override
-    protected String createStartsWithExpression(StartsWithFilter filter,
+    protected SolarisFilter createStartsWithExpression(StartsWithFilter filter,
             boolean not) {
         if (!not && isNamingAttribute(filter.getAttribute())) {
-            return String.format("%s.*", filter.getValue());
+            String regExp = String.format("%s.*", filter.getValue());
+            return new SolarisFilter(filter.getName(), regExp);
         }
 
         return super.createStartsWithExpression(filter, not);
     }
 
     @Override
-    protected String createEqualsExpression(EqualsFilter filter,
+    protected SolarisFilter createEqualsExpression(EqualsFilter filter,
             boolean not) {
-        if (!not && isNamingAttribute(filter.getAttribute())) {
-            return (String) filter.getAttribute().getValue().get(0);
+        if (!not && isNamingAttribute(filter.getAttribute())) { 
+            return new SolarisFilter(filter.getName(), (String) filter.getAttribute().getValue().get(0));
         }
 
         return super.createEqualsExpression(filter, not);

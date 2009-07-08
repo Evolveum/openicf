@@ -55,13 +55,18 @@ public class SolarisFilterTranslatorTest {
     
     @Test
     public void testBasicTranslator() {
-        String exp = sft.createOrExpression("(abc)", "(def)");
+        SolarisFilter expFlt = sft.createOrExpression(createFilter("(abc)"), createFilter("(def)"));
+        String exp = expFlt.getRegExp();
         matches("abc", exp);
         matches("def", exp);
         matches("xef", exp, false);
         matches("abef", exp, false);
     }
     
+    private SolarisFilter createFilter(String string) {
+        return new SolarisFilter(Name.NAME, string);
+    }
+
     /** @param string the string for matching
      *  @ param exp regular expression to match */
     private void matches(String string, String exp) {
@@ -85,15 +90,18 @@ public class SolarisFilterTranslatorTest {
     @Test
     public void testAdvTranslator() {
         Attribute attr = AttributeBuilder.build(Name.NAME, "sarahsmith");
-        String exp = sft.createStartsWithExpression(new StartsWithFilter(attr), false);
+        SolarisFilter expFlt = sft.createStartsWithExpression(new StartsWithFilter(attr), false);
+        String exp = expFlt.getRegExp();
         matches("sarahsmithBooBarFoo", exp);
         matches("abcsarahsmith", exp, false);
         
-        exp = sft.createEndsWithExpression(new EndsWithFilter(attr), false);
+        expFlt = sft.createEndsWithExpression(new EndsWithFilter(attr), false);
+        exp = expFlt.getRegExp();
         matches("BooBarFoosarahsmith", exp);
         matches("sarahsmithx", exp, false);
         
-        exp = sft.createContainsExpression(new ContainsFilter(attr), false);
+        expFlt = sft.createContainsExpression(new ContainsFilter(attr), false);
+        exp = expFlt.getRegExp();
         matches("BooBarsarahsmithBazFoo", exp);
         matches("sarahxsmith", exp, false);
     }

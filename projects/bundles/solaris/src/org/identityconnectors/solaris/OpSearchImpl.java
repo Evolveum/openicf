@@ -50,7 +50,7 @@ public class OpSearchImpl extends AbstractOp {
      *            can contain AND, OR ("&", "|") that represents and-ing and
      *            or-ing the result of matches. AND has priority over OR.
      */
-    public void executeQuery(ObjectClass oclass, String query,
+    public void executeQuery(ObjectClass oclass, SolarisFilter query,
             ResultsHandler handler, OperationOptions options) {
         // if i run the tests separately, the login info is in the expect4j's buffer
         // otherwise (when tests are run in batch), there is empty buffer, so this waitfor will timeout.
@@ -81,7 +81,12 @@ public class OpSearchImpl extends AbstractOp {
      * @param query these filters are applied on the result
      */
     private void filterResult(String output, ResultsHandler handler,
-            List<String> escapeStrings, String query) {
+            List<String> escapeStrings, SolarisFilter query) {
+        
+        // TODO
+        if (query != null && !query.getAttributeName().equals(Name.NAME)) {
+            throw new UnsupportedOperationException("Only filtering by __NAME__ attribute is supported for now.");
+        }
 
         final String[] lines = output.split("\n");
         
@@ -90,7 +95,7 @@ public class OpSearchImpl extends AbstractOp {
             String token = currentLine.trim();
             if (!isEscaped(token, escapeStrings)) {
                 if (query != null) {
-                    if (token.matches(query)) {
+                    if (token.matches(query.getRegExp())) {
                         notifyHandler(handler, token);
                     }
                 } else {
