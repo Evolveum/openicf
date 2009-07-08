@@ -84,7 +84,7 @@ public class OpSearchImpl extends AbstractOp {
             List<String> escapeStrings, SolarisFilter query) {
         
         // TODO
-        if (query != null && !query.getAttributeName().equals(Name.NAME)) {
+        if (query != null && !query.getName().equals(Name.NAME)) {
             throw new UnsupportedOperationException("Only filtering by __NAME__ attribute is supported for now.");
         }
 

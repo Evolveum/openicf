@@ -42,7 +42,7 @@ public class SolarisFilterTranslator extends
     protected SolarisFilter createOrExpression(SolarisFilter leftExpression,
             SolarisFilter rightExpression) {
         String regExp = String.format("%s|%s", leftExpression.getRegExp(), rightExpression.getRegExp());
-        return new SolarisFilter(leftExpression.getAttributeName(), regExp);
+        return new SolarisFilter(leftExpression.getName(), regExp);
     }
 
     @Override

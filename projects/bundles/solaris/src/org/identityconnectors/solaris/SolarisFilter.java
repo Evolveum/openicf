@@ -40,8 +40,8 @@ public class SolarisFilter {
         attributeName = attrName;
     }
 
-    // TODO Refactor to getName()
-    public String getAttributeName() {
+    /** returns the name of attribute */
+    public String getName() {
         return attributeName;
     }
 
@@ -58,7 +58,7 @@ public class SolarisFilter {
     public boolean equals(Object obj) {
         if (obj instanceof SolarisFilter) {
             SolarisFilter other = (SolarisFilter) obj;
-            if (other.getAttributeName().equals(attributeName)) {
+            if (other.getName().equals(attributeName)) {
                 if (other.getRegExp().equals(regExp)) {
                     return true;
                 }
@@ -69,6 +69,6 @@ public class SolarisFilter {
     
     @Override
     public String toString() {
-        return String.format("SolarisFilter[name = '%s'; regExp = '%s']", getAttributeName(), getRegExp());
+        return String.format("SolarisFilter[name = '%s'; regExp = '%s']", getName(), getRegExp());
     }
 }
