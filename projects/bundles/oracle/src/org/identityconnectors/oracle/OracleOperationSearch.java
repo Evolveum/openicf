@@ -115,7 +115,7 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 			if(!found){
 				//This is hack to search case insensitive by name
 		        //If case sensitivity policy does not upper case user names
-		        if(cfg.getCSSetup().getAttributeFormatterAndNormalizer(OracleUserAttribute.USER).isToUpper()){
+		        if(OracleNormalizerName.INPUT_AUTH.equals(cfg.getNormalizerName()) && cfg.getCSSetup().getAttributeFormatterAndNormalizer(OracleUserAttribute.USER).isToUpper()){
 		        	handleCaseInsensitiveNames(pair,attributesToGet,handler,userReader);
 		        }
 			}
