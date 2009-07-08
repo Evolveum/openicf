@@ -30,6 +30,7 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.solaris.constants.ConnectionType;
 
 import com.jcraft.jsch.ChannelShell;
 import com.jcraft.jsch.JSch;
