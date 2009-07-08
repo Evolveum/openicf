@@ -51,7 +51,7 @@ public class SolarisFilter {
     
     @Override
     public int hashCode() {
-        return (attributeName + regExp).hashCode();
+        return (attributeName != null ? attributeName.hashCode() : 0) ^ (regExp != null ? regExp.hashCode() : 0);
     }
 
     @Override
