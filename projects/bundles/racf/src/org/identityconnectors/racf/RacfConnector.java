@@ -452,6 +452,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
         }
         if (wantUid)
             builder.addAttribute(uid);
+        builder.setObjectClass(objectClass);
         ConnectorObject next = builder.build();
         return next;
     }
@@ -952,12 +953,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_MODEL,              String.class));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OWNER,              String.class));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SUP_GROUP,          String.class));
-            groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TERM_UACC,          String.class));
-            groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_UNIVERSAL,          String.class));
-            groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_APP,       String.class));
-            groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_CLASS,     String.class));
-            groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_MGMT_CLASS,     String.class));
-            groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_STORAGE_CLASS,  String.class));
+            //groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TERM_UACC,          String.class));
+            //groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_UNIVERSAL,          String.class));
+            //groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_APP,       String.class));
+            //groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_CLASS,     String.class));
+            //groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_MGMT_CLASS,     String.class));
+            //groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_STORAGE_CLASS,  String.class));
     
             // Read-only Multi-valued Attributes
             //
