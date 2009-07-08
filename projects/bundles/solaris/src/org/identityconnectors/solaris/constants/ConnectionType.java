@@ -20,12 +20,12 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-package org.identityconnectors.solaris;
+package org.identityconnectors.solaris.constants;
 
 /** 
  * selector of connection type
  */
-enum ConnectionType {
+public enum ConnectionType {
     SSH, SSH_PUB_KEY, TELNET;
     
     public static ConnectionType toConnectionType(String s) {
