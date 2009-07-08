@@ -235,25 +235,25 @@ class CommandLineUtil {
         Attribute disableDate = attributes.remove(ATTR_CL_REVOKE_DATE);
         Attribute attributesAttribute = attributes.remove(ATTR_CL_ATTRIBUTES);
 
-        throwErrorIfNull(attributes, "NETVIEW*CTL");
-        throwErrorIfNull(attributes, "NETVIEW*MSGRECVR");
-        throwErrorIfNull(attributes, "NETVIEW*NGMFADMN");
+        _connector.throwErrorIfNull(attributes, "NETVIEW*CTL");
+        _connector.throwErrorIfNull(attributes, "NETVIEW*MSGRECVR");
+        _connector.throwErrorIfNull(attributes, "NETVIEW*NGMFADMN");
 
-        throwErrorIfNull(attributes, "CICS*OPPRTY");
-        throwErrorIfNull(attributes, "CICS*TIMEOUT");
-        throwErrorIfNull(attributes, "CICS*XRFSOFF");
+        _connector.throwErrorIfNull(attributes, "CICS*OPPRTY");
+        _connector.throwErrorIfNull(attributes, "CICS*TIMEOUT");
+        _connector.throwErrorIfNull(attributes, "CICS*XRFSOFF");
         
-        throwErrorIfNull(attributes, "TSO*SIZE");
-        throwErrorIfNull(attributes, "TSO*MAXSIZE");
-        throwErrorIfNull(attributes, "TSO*USERDATA");
+        _connector.throwErrorIfNull(attributes, "TSO*SIZE");
+        _connector.throwErrorIfNull(attributes, "TSO*MAXSIZE");
+        _connector.throwErrorIfNull(attributes, "TSO*USERDATA");
         
-        throwErrorIfNullOrEmpty(name);
-        throwErrorIfNullOrEmpty(uid);
-        throwErrorIfNullOrEmpty(expired);
-        throwErrorIfNullOrEmpty(enabled);
-        throwErrorIfNullOrEmpty(enableDate);
-        throwErrorIfNullOrEmpty(disableDate);
-        throwErrorIfNullOrEmpty(attributesAttribute);
+        _connector.throwErrorIfNullOrEmpty(name);
+        _connector.throwErrorIfNullOrEmpty(uid);
+        _connector.throwErrorIfNullOrEmpty(expired);
+        _connector.throwErrorIfNullOrEmpty(enabled);
+        _connector.throwErrorIfNullOrEmpty(enableDate);
+        _connector.throwErrorIfNullOrEmpty(disableDate);
+        _connector.throwErrorIfNullOrEmpty(attributesAttribute);
         
         // Build up a map containing the segment attribute values
         //
@@ -339,7 +339,7 @@ class CommandLineUtil {
     }
     
     private char[] getAsStringValue(String segmentName, String attributeName, Attribute attribute) {
-        if (isNullOrEmpty(attribute))
+        if (_connector.isNullOrEmpty(attribute))
             return null;
         List<Object> values = attribute.getValue();
         if (values.size()==1 && values.get(0) instanceof GuardedString) {
@@ -380,47 +380,6 @@ class CommandLineUtil {
         }
     }
     
-    private void throwErrorIfNullOrEmpty(Attribute attribute) {
-        throwErrorIfNull(attribute);
-        if (attribute!=null) {
-            List<Object> values = attribute.getValue();
-            if (values==null || values.size()==0)
-                throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.NO_VALUE_FOR_ATTRIBUTE, attribute.getName()));
-        }
-    }
-    
-    private boolean isNullOrEmpty(Attribute attribute) {
-        if (attribute!=null) {
-            List<Object> values = attribute.getValue();
-            if (values==null || values.size()==0)
-                return true;
-        }
-        return false;
-    }
-    
-    private void throwErrorIfNull(Map<String, Attribute> attributes, String name) {
-        Attribute attribute = attributes.get(name);
-        if (attribute!=null)
-            throwErrorIfNull(attribute);
-    }
-    
-    private void throwErrorIfNull(Attribute attribute) {
-        if (attribute!=null) {
-            List<Object> values = attribute.getValue();
-            boolean isNull = values==null;
-            if (!isNull) {
-                for (Object value : values) {
-                    if (value==null) {
-                        isNull = true;
-                        break;
-                    }
-                }
-            }
-            if (isNull)
-                throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.NO_VALUE_FOR_ATTRIBUTE, attribute.getName()));
-        }
-    }
-
     
     public Uid createViaCommandLine(ObjectClass objectClass, Set<Attribute> attrs, OperationOptions options) {
         Map<String, Attribute> attributes = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
@@ -431,9 +390,9 @@ class CommandLineUtil {
             Attribute expired = attributes.remove(ATTR_CL_EXPIRED);
             Attribute password = attributes.get(ATTR_CL_PASSWORD);
 
-            throwErrorIfNull(groups);
-            throwErrorIfNullOrEmpty(expired);
-            throwErrorIfNullOrEmpty(password);
+            _connector.throwErrorIfNull(groups);
+            _connector.throwErrorIfNullOrEmpty(expired);
+            _connector.throwErrorIfNullOrEmpty(password);
             _connector.checkConnectionConsistency(groups, owners);
             if (expired!=null && password==null) 
                 throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
@@ -487,7 +446,7 @@ class CommandLineUtil {
             Attribute accounts = attributes.remove(ATTR_CL_MEMBERS);
             Attribute owners = attributes.remove(ATTR_CL_GROUP_CONN_OWNERS);
 
-            throwErrorIfNull(accounts);
+            _connector.throwErrorIfNull(accounts);
             _connector.checkConnectionConsistency(accounts, owners);
             
             if (groupExists(name))
@@ -718,8 +677,8 @@ class CommandLineUtil {
             Attribute expired = attributes.get(ATTR_CL_EXPIRED);
             Attribute password = attributes.get(ATTR_CL_PASSWORD);
 
-            throwErrorIfNull(groups);
-            throwErrorIfNull(groupOwners);
+            _connector.throwErrorIfNull(groups);
+            _connector.throwErrorIfNull(groupOwners);
 
             // RACF makes it difficult to specify ENABLE_DATE/DISABLE_DATE
             // except in its own command
@@ -818,8 +777,8 @@ class CommandLineUtil {
             Attribute members = attributes.remove(ATTR_CL_MEMBERS);
             Attribute groupOwners = attributes.remove(ATTR_CL_GROUP_CONN_OWNERS);
             
-            throwErrorIfNull(members);
-            throwErrorIfNull(groupOwners);
+            _connector.throwErrorIfNull(members);
+            _connector.throwErrorIfNull(groupOwners);
             
             if (!groupExists(name))
                 throw new UnknownUidException();

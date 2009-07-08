@@ -107,7 +107,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
     private final SimpleDateFormat      _dateFormat = new SimpleDateFormat("MM/dd/yy");
     private final SimpleDateFormat      _resumeRevokeFormat = new SimpleDateFormat("MMMM dd, yyyy");
     private static final Pattern        _racfTimestamp = Pattern.compile("(\\d+)\\.(\\d+)(?:/(\\d+):(\\d+):(\\d+))?");
-    private static final Pattern        _connectionPattern  = Pattern.compile("racfuserid=([^+]+)\\+racfgroupid=([^,]+),.*");
+    private static final Pattern        _connectionPattern  = Pattern.compile("racfuserid=([^+]+)\\+racfgroupid=([^,]+),.*", Pattern.CASE_INSENSITIVE);
 
     public RacfConnector() {
     }
@@ -263,7 +263,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
                     commandLineAttrs.add(ATTR_CL_LAST_ACCESS);
             } else if (attribute.equals(OperationalAttributes.ENABLE_NAME)) {
                 if (isLdapConnectionAvailable())
-                    ldapAttrs.add("TODO");
+                    ldapAttrs.add(OperationalAttributes.ENABLE_NAME);
                 else
                     commandLineAttrs.add(ATTR_CL_ENABLED);
             } else if (attribute.equals(PredefinedAttributes.LAST_PASSWORD_CHANGE_DATE_NAME)) {
@@ -575,7 +575,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             return _clUtil.getGroupsForUserViaCommandLine(user);
         }
     }
-    private final static Pattern            _racfidPattern      = Pattern.compile("racfid=([^,]*),.*");
+    private final static Pattern            _racfidPattern      = Pattern.compile("racfid=([^,]*),.*", Pattern.CASE_INSENSITIVE);
 
 
     /**
@@ -666,7 +666,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
         //
         splitUpOutgoingAttributes(objectClass, attrs, ldapAttrs, commandLineAttrs);
         if (isLdapConnectionAvailable()) {
-            Uid uid = _ldapUtil.updateViaLdap(objectClass, ldapAttrs);
+            Uid uid = _ldapUtil.updateViaLdap(objectClass, ldapAttrs, options);
             if (hasNonSpecialAttributes(commandLineAttrs)) {
                 if (_configuration.getUserName()==null)
                     throw new ConnectorException(_configuration.getMessage(RacfMessages.NEED_COMMAND_LINE));
@@ -757,7 +757,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
     
             // Operational Attributes
             //
-            attributes.add(buildReadonlyAttribute(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, long.class, false));
+            attributes.add(buildReadonlyAttribute(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, long.class));
             attributes.add(OperationalAttributeInfos.ENABLE);
             attributes.add(OperationalAttributeInfos.ENABLE_DATE);
             attributes.add(OperationalAttributeInfos.DISABLE_DATE);
@@ -811,10 +811,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DEFAULT_GROUP,           String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SECURITY_LEVEL,          String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SECURITY_CAT_LIST,       String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_REVOKE_DATE,             String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_RESUME_DATE,             String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LOGON_DAYS,              String.class));
-            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LOGON_TIME,              String.class));
+            //attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LOGON_DAYS,                  String.class));
+            //attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LOGON_TIME,                  String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CLASS_NAME,              String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SECURITY_LABEL,          String.class));
             if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_DFP) > 0) {
@@ -930,7 +928,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
     
             // Operational Attributes
             //
-            attributes.add(buildReadonlyAttribute(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, long.class, false));
+            attributes.add(buildReadonlyAttribute(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, long.class));
             attributes.add(OperationalAttributeInfos.ENABLE);
             attributes.add(OperationalAttributeInfos.ENABLE_DATE);
             attributes.add(OperationalAttributeInfos.DISABLE_DATE);
@@ -1062,11 +1060,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
         return builder.build();
     }
 
-    private AttributeInfo buildReadonlyAttribute(String name, Class<?> clazz, boolean required) {
+    private AttributeInfo buildReadonlyAttribute(String name, Class<?> clazz) {
         AttributeInfoBuilder builder = new AttributeInfoBuilder();
         builder.setName(name);
         builder.setType(clazz);
-        builder.setRequired(required);
+        builder.setRequired(false);
         builder.setMultiValued(false);
         builder.setUpdateable(false);
         builder.setCreateable(false);
@@ -1174,6 +1172,47 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
         }
     }
 
+    boolean isNullOrEmpty(Attribute attribute) {
+        if (attribute!=null) {
+            List<Object> values = attribute.getValue();
+            if (values==null || values.size()==0)
+                return true;
+        }
+        return false;
+    }
+    
+    void throwErrorIfNull(Map<String, Attribute> attributes, String name) {
+        Attribute attribute = attributes.get(name);
+        if (attribute!=null)
+            throwErrorIfNull(attribute);
+    }
+    
+    void throwErrorIfNull(Attribute attribute) {
+        if (attribute!=null) {
+            List<Object> values = attribute.getValue();
+            boolean isNull = values==null;
+            if (!isNull) {
+                for (Object value : values) {
+                    if (value==null) {
+                        isNull = true;
+                        break;
+                    }
+                }
+            }
+            if (isNull)
+                throw new IllegalArgumentException(((RacfConfiguration)getConfiguration()).getMessage(RacfMessages.NO_VALUE_FOR_ATTRIBUTE, attribute.getName()));
+        }
+    }
+
+    void throwErrorIfNullOrEmpty(Attribute attribute) {
+        throwErrorIfNull(attribute);
+        if (attribute!=null) {
+            List<Object> values = attribute.getValue();
+            if (values==null || values.size()==0)
+                throw new IllegalArgumentException(((RacfConfiguration)getConfiguration()).getMessage(RacfMessages.NO_VALUE_FOR_ATTRIBUTE, attribute.getName()));
+        }
+    }
+    
     public void test() {
         // This actually needs to do nothing, because, as a poolable connector,
         // we only get here via
