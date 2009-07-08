@@ -23,13 +23,8 @@
 package org.identityconnectors.racf;
 
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.filter.AbstractFilterTranslator;
-import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
-import org.identityconnectors.framework.common.objects.filter.EndsWithFilter;
-import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
-import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
+import org.identityconnectors.framework.common.objects.Uid;
 
 
 /**
@@ -37,9 +32,9 @@ import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
  * <p>
  * Supported filters for "profileType=group,suffixDN" are:
  * <ul>
- * <li>objectclass=*</li>
- * <li>racfid=&lt;any_value&gt;</li>
- * <li>racfomvsgroupid=&lt;number&gt;</li>
+ *      <li>objectclass=*</li>
+ *      <li>racfid=&lt;any_value&gt;</li>
+ *      <li>racfomvsgroupid=&lt;number&gt;</li>
  * </ul>
  * <p>
  * Complex search filters that 
@@ -53,81 +48,26 @@ import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
  * </pre> 
  * searches for all the groups whose names begin with grp.
  */
-public class RacfGroupFilterTranslator extends AbstractFilterTranslator<String> {
-    @Override
-    protected String createAndExpression(String leftExpression,
-            String rightExpression) {
-        // Although RACF does not support AND, we can use one of the filters,
-        // since we just need to do partial filtering
-        //
-        if (leftExpression!=null)
-            return leftExpression;
-        else if (rightExpression!=null)
-            return rightExpression;
-        else
-            return null;
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected String createStartsWithExpression(StartsWithFilter filter,
-            boolean not) {
-        if (!not && filter.getAttribute().is(Name.NAME))
-            return "("+getGroupFilterAttributeName(filter.getAttribute())+"="+AttributeUtil.getAsStringValue(filter.getAttribute())+"*)";
-        else
-            return super.createStartsWithExpression(filter, not);
-    }
+public class RacfGroupFilterTranslator extends RacfLdapFilterTranslatorBase {
 
-    
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected String createEqualsExpression(EqualsFilter filter, boolean not) {
-        if (!not && isGroupFilterAttribute(filter.getAttribute()))
-            return "("+getGroupFilterAttributeName(filter.getAttribute())+"="+AttributeUtil.getAsStringValue(filter.getAttribute())+")";
-        else
-            return super.createEqualsExpression(filter, not);
-    }
-
-    
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected String createEndsWithExpression(EndsWithFilter filter, boolean not) {
-        if (!not && filter.getAttribute().is(Name.NAME))
-            return "("+getGroupFilterAttributeName(filter.getAttribute())+"=*"+AttributeUtil.getAsStringValue(filter.getAttribute())+")";
-        else
-            return super.createEndsWithExpression(filter, not);
-    }
-
-    
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected String createContainsExpression(ContainsFilter filter, boolean not) {
-        if (!not && filter.getAttribute().is(Name.NAME))
-            return "("+getGroupFilterAttributeName(filter.getAttribute())+"=*"+AttributeUtil.getAsStringValue(filter.getAttribute())+"*)";
-        else
-            return super.createContainsExpression(filter, not);
-    }
-
-    private boolean isGroupFilterAttribute(Attribute attribute) {
+    protected boolean isFilterAttribute(Attribute attribute) {
+        if (attribute.is(Uid.NAME))
+            return true;
         if (attribute.is(Name.NAME))
             return true;
         if (attribute.is(RacfConstants.ATTR_LDAP_OMVS_UID))
             return true;
         return false;
     }
+    
 
-    private String getGroupFilterAttributeName(Attribute attribute) {
+    protected String getFilterAttributeName(Attribute attribute) {
         if (attribute.is(Name.NAME))
+            return "racfid";
+        else if (attribute.is(Uid.NAME))
             return "racfid";
         else
             return attribute.getName();
     }
 }
+
