@@ -26,7 +26,7 @@ package org.identityconnectors.solaris.command;
  * contains utility methods for forming commands for Unix.
  * @author David Adam
  */
-public class CommandUtil {
+class CommandUtil {
 
     /** Maximum number of characters per line in Solaris shells */
     public final static int DEFAULT_LIMIT = 120;

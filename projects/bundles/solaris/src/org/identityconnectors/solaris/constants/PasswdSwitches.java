@@ -20,23 +20,29 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-package org.identityconnectors.solaris.command;
-
+package org.identityconnectors.solaris.constants;
 
 /**
- * Build a command that consists of a command and a list of arguments to append.
+ * command line switches for unix command 'passwd'.
  * @author David Adam
  */
-public class CommandBuilder {
-    public static String build(String command, CharSequence... arguments) {
-        StringBuffer buff = new StringBuffer();
-        buff.append(command);
-        
-        for (CharSequence string : arguments) {
-            buff.append(" ");
-            buff.append(string.toString());
-        }
-        
-        return CommandUtil.limitString(buff);
+public enum PasswdSwitches {
+    PASSWD_FORCE_CHANGE("f"),
+    PASSWD_MAX("x"),
+    PASSWD_MIN("n"),
+    PASSWD_WARN("w"),
+    PASSWD_LOCK("l");
+    
+    private static String commandLineSwitch;
+    
+    private PasswdSwitches(String commandLineSwitch) {
+        commandLineSwitch = String.format("-%s", commandLineSwitch);
+    }
+    
+    /** get the command line switch */
+    public String getCmdSwitch() {
+        if (commandLineSwitch == null)
+            throw new IllegalArgumentException(String.format("No command line switch defined for %s", this));
+        return commandLineSwitch;
     }
 }
