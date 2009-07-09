@@ -118,8 +118,8 @@ public class SolarisConfiguration extends AbstractConfiguration {
      * authorize the user through the sudo utility. Enter a value of TRUE to use
      * sudo or FALSE for standard authorization.
      */
-    //TODO SUDO_AUTH
-    
+    private boolean sudoAuth = false;
+
     /*
      * RA_CONN_TYPE
      * 
@@ -368,6 +368,14 @@ public class SolarisConfiguration extends AbstractConfiguration {
     }
     public void setRootShellPrompt(String rootShellPrompt) {
         this.rootShellPrompt = rootShellPrompt;
+    }
+    
+    public boolean isSudoAuth() {
+        return sudoAuth;
+    }
+    
+    public void setSudoAuth(boolean sudoAuth) {
+        this.sudoAuth = sudoAuth;
     }
 
     

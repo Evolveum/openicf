@@ -31,8 +31,8 @@ class CommandUtil {
     /** Maximum number of characters per line in Solaris shells */
     public final static int DEFAULT_LIMIT = 120;
     
-    private static StringBuffer limitString(StringBuffer data, int limit) {
-        StringBuffer result = new StringBuffer(limit);
+    private static StringBuilder limitString(StringBuilder data, int limit) {
+        StringBuilder result = new StringBuilder(limit);
         if (data.length() > limit) {
             result.append(data.substring(0, limit));
             result.append("\\\n"); // /<newline> separator of Unix command line cmds.
@@ -40,7 +40,7 @@ class CommandUtil {
             final String remainder = data.substring(limit, data.length()); 
             if (remainder.length() > limit) {
                 // TODO performance: might be a more effective way to handle this copying. Maybe skip copying and pass the respective part of stringbuffer directly to the recursive call.
-                StringBuffer sbtmp = new StringBuffer();
+                StringBuilder sbtmp = new StringBuilder();
                 sbtmp.append(remainder);
                 result.append(limitString(sbtmp, limit));
             } else {
@@ -57,14 +57,7 @@ class CommandUtil {
      * @param data
      * @return
      */
-    public static String limitString(String data) {
-        StringBuffer sb = new StringBuffer();
-        sb.append(data);
-        return limitString(sb);
-    }
-    
-    /** see {@link CommandUtil#limitString(String)} */
-    public static String limitString(StringBuffer data) {
+    public static String limitString(StringBuilder data) {
         return limitString(data, DEFAULT_LIMIT /* == max length of line from SolarisResourceAdapter#getUpdateNativeUserScript(), line userattribparams */).toString();
     }
 }

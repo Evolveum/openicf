@@ -28,7 +28,6 @@ import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.solaris.command.CommandBuilder;
 
 public class OpDeleteImpl extends AbstractOp {
 
@@ -53,7 +52,7 @@ public class OpDeleteImpl extends AbstractOp {
         getLog().info("delete(''{0}'')", accountId);
         
         // USERDEL accountId
-        final String command = CommandBuilder.build("userdel", accountId);
+        final String command = getCmdBuilder().build("userdel", accountId);
         
         try {
             String output = null;

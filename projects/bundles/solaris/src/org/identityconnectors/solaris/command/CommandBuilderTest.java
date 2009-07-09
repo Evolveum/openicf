@@ -24,12 +24,16 @@ package org.identityconnectors.solaris.command;
 
 import junit.framework.Assert;
 
+import org.identityconnectors.solaris.SolarisConfiguration;
 import org.junit.Test;
 
-class CommandBuilderTest {
+public class CommandBuilderTest {
     @Test
     public void test() {
-        String actual = CommandBuilder.build("command", "arg1", "arg2", "arg3");
+        SolarisConfiguration config = new SolarisConfiguration();
+        config.setSudoAuth(false);
+        CommandBuilder cmdBld = new CommandBuilder(config);
+        String actual = cmdBld.build("command", "arg1", "arg2", "arg3");
         String expected = "command arg1 arg2 arg3";
         Assert.assertEquals(expected, actual);
     }

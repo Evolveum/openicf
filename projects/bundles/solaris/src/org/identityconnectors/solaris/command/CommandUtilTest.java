@@ -29,11 +29,11 @@ import org.junit.Test;
 class CommandUtilTest {
     @Test
     public void test() {
-        StringBuffer input = new StringBuffer();
+        StringBuilder input = new StringBuilder();
         for (int i = 0; i < 350; i++) {
             input.append("a");
         }
-        String resultStr = CommandUtil.limitString(input.toString());
+        String resultStr = CommandUtil.limitString(input);
         Assert.assertTrue(resultStr.contains("\\"));
         String[] strs = resultStr.split("\n");
         for (String string : strs) {

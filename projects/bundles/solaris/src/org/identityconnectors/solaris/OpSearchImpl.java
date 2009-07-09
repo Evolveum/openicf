@@ -34,7 +34,6 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.solaris.command.CommandBuilder;
 
 
 public class OpSearchImpl extends AbstractOp {
@@ -64,7 +63,7 @@ public class OpSearchImpl extends AbstractOp {
         }
         
         //evaluate if the user exists
-        final String command = CommandBuilder.build("cut", "-d: -f1 /etc/passwd | grep -v \"^[+-]\"");
+        final String command = getCmdBuilder().build("cut", "-d: -f1 /etc/passwd | grep -v \"^[+-]\"");
         String output = executeCommand(command);
         
         List<String> escapeStrings = CollectionUtil.newList(getConfiguration().getRootShellPrompt(), "@"/* TODO */, "#"/* TODO */, "$"/* TODO */, command);

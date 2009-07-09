@@ -24,11 +24,13 @@ package org.identityconnectors.solaris;
 
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.solaris.command.CommandBuilder;
 
 public abstract class AbstractOp {
     private SolarisConfiguration _configuration;
     private SolarisConnection _connection;
     private Log _log;
+    private CommandBuilder _cmdBuilder;
     
     public AbstractOp(SolarisConfiguration config, SolarisConnection connection, Log log) {
         _configuration = (SolarisConfiguration) config;
@@ -36,6 +38,8 @@ public abstract class AbstractOp {
         Assertions.nullCheck(connection, "connection");
         _connection = connection;
         _log = log;
+        
+        _cmdBuilder = new CommandBuilder(_configuration);
     }
 
     public Log getLog() {
@@ -52,5 +56,10 @@ public abstract class AbstractOp {
     
     protected String executeCommand(String command) {
         return getConnection().executeCommand(command);
+    }
+    
+    /** @return the command formatter */
+    protected CommandBuilder getCmdBuilder() {
+        return _cmdBuilder;
     }
 }

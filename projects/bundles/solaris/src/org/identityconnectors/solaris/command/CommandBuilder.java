@@ -22,14 +22,26 @@
  */
 package org.identityconnectors.solaris.command;
 
+import org.identityconnectors.solaris.SolarisConfiguration;
+
+
 
 /**
  * Build a command that consists of a command and a list of arguments to append.
  * @author David Adam
  */
 public class CommandBuilder {
-    public static String build(String command, CharSequence... arguments) {
-        StringBuffer buff = new StringBuffer();
+    private SolarisConfiguration config;
+    
+    public CommandBuilder(SolarisConfiguration config) {
+        this.config = config;
+    }
+    
+    public String build(String command, CharSequence... arguments) {
+        StringBuilder buff = new StringBuilder();
+        if (config.isSudoAuth()) {
+            buff.append("sudo ");
+        }
         buff.append(command);
         
         for (CharSequence string : arguments) {
