@@ -24,10 +24,13 @@ package org.identityconnectors.solaris.command;
 
 /**
  * contains utility methods for forming commands for Unix.
- * @author david
+ * @author David Adam
  */
 public class CommandUtil {
-    final static int DEFAULT_LIMIT = 120;
+
+    /** Maximum number of characters per line in Solaris shells */
+    public final static int DEFAULT_LIMIT = 120;
+    
     private static StringBuffer limitString(StringBuffer data, int limit) {
         StringBuffer result = new StringBuffer(limit);
         if (data.length() > limit) {
@@ -50,13 +53,18 @@ public class CommandUtil {
     }
 
     /**
-     * 
+     * Cut the command into pieces, so it doesn't have a longer line than the given DEFAULT_LIMIT
      * @param data
      * @return
      */
     public static String limitString(String data) {
         StringBuffer sb = new StringBuffer();
         sb.append(data);
-        return limitString(sb, DEFAULT_LIMIT /* == max length of line from SolarisResourceAdapter#getUpdateNativeUserScript(), line userattribparams */).toString();
+        return limitString(sb);
+    }
+    
+    /** see {@link CommandUtil#limitString(String)} */
+    public static String limitString(StringBuffer data) {
+        return limitString(data, DEFAULT_LIMIT /* == max length of line from SolarisResourceAdapter#getUpdateNativeUserScript(), line userattribparams */).toString();
     }
 }

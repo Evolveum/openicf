@@ -34,6 +34,7 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.solaris.command.CommandBuilder;
 
 public class OpCreateImpl extends AbstractOp {
     
@@ -65,7 +66,7 @@ public class OpCreateImpl extends AbstractOp {
          */
         
         // USERADD accountId
-        String command = String.format("useradd %s", accountId);
+        String command = CommandBuilder.build("useradd", accountId);
         //executeCommand(command);
         try {//CONNECTION
             getLog().info("useradd(''{0}'')", accountId);
