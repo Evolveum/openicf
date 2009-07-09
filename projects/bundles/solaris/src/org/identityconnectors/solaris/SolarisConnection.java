@@ -23,7 +23,7 @@
 package org.identityconnectors.solaris;
 
 import java.io.IOException;
-import java.util.Hashtable;
+//import java.util.Hashtable;
 
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.identityconnectors.common.logging.Log;
@@ -32,9 +32,9 @@ import org.identityconnectors.framework.common.exceptions.ConfigurationException
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.solaris.constants.ConnectionType;
 
-import com.jcraft.jsch.ChannelShell;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.Session;
+//import com.jcraft.jsch.ChannelShell;
+//import com.jcraft.jsch.JSch;
+//import com.jcraft.jsch.Session;
 
 import expect4j.Closure;
 import expect4j.Expect4j;

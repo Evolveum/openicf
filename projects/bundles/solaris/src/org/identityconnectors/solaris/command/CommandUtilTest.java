@@ -20,26 +20,25 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-package org.identityconnectors.solaris;
+package org.identityconnectors.solaris.command;
 
 import junit.framework.Assert;
 
 import org.junit.Test;
 
-public class CommandHelperTest {
+public class CommandUtilTest {
     @Test
     public void test() {
         StringBuffer input = new StringBuffer();
         for (int i = 0; i < 350; i++) {
             input.append("a");
         }
-        StringBuffer result = CommandHelper.limitString(input.toString());
-        String resultStr = result.toString();
+        String resultStr = CommandUtil.limitString(input.toString());
         Assert.assertTrue(resultStr.contains("\\"));
         String[] strs = resultStr.split("\n");
         for (String string : strs) {
             
-            final int limit = CommandHelper.DEFAULT_LIMIT + 1;
+            final int limit = CommandUtil.DEFAULT_LIMIT + 1;
             final int trimmedStringLength = string.trim().length();
             
             String msg = String.format("String exceeds the maximal limit '%s', as it is: '%s'", limit , trimmedStringLength);

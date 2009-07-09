@@ -20,10 +20,13 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-package org.identityconnectors.solaris;
+package org.identityconnectors.solaris.command;
 
-
-public class CommandHelper {
+/**
+ * contains utility methods for forming commands for Unix.
+ * @author david
+ */
+public class CommandUtil {
     final static int DEFAULT_LIMIT = 120;
     private static StringBuffer limitString(StringBuffer data, int limit) {
         StringBuffer result = new StringBuffer(limit);
@@ -33,6 +36,7 @@ public class CommandHelper {
             
             final String remainder = data.substring(limit, data.length()); 
             if (remainder.length() > limit) {
+                // TODO performance: might be a more effective way to handle this copying. Maybe skip copying and pass the respective part of stringbuffer directly to the recursive call.
                 StringBuffer sbtmp = new StringBuffer();
                 sbtmp.append(remainder);
                 result.append(limitString(sbtmp, limit));
@@ -45,20 +49,14 @@ public class CommandHelper {
         return result;
     }
 
-    public static StringBuffer limitString(String data) {
+    /**
+     * 
+     * @param data
+     * @return
+     */
+    public static String limitString(String data) {
         StringBuffer sb = new StringBuffer();
         sb.append(data);
-        return limitString(sb, DEFAULT_LIMIT /* == max length of line from SolarisResourceAdapter#getUpdateNativeUserScript(), line userattribparams */);
+        return limitString(sb, DEFAULT_LIMIT /* == max length of line from SolarisResourceAdapter#getUpdateNativeUserScript(), line userattribparams */).toString();
     }
 }
-
-//while (paramsWork.length() > 0) {
-//    if (paramsWork.length() > 120) {
-//        usermodParams.append(paramsWork.substring(0, 120));
-//        usermodParams.append("\\\n");
-//        paramsWork = paramsWork.substring(120, paramsWork.length());
-//    } else {
-//        usermodParams.append(paramsWork);
-//        paramsWork = "";
-//    }
-//}
