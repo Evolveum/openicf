@@ -562,7 +562,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
 		catch(UnknownUidException e){}
 		Uid uid = testConnector.create(ObjectClass.ACCOUNT, Collections.<Attribute>singleton(new Name(TEST_USER)), null);
 		testConnector.delete(ObjectClass.ACCOUNT, uid, null);
-		OracleSpecificsTest.killConnection(connector.getOrCreateAdminConnection(), testConnector.getOrCreateAdminConnection());
+		OracleSpecifics.killConnection(connector.getOrCreateAdminConnection(), testConnector.getOrCreateAdminConnection());
 		try{
 			uid = testConnector.create(ObjectClass.ACCOUNT, Collections.<Attribute>singleton(new Name(TEST_USER)), null);
 			fail("Create must fail for killed connection");

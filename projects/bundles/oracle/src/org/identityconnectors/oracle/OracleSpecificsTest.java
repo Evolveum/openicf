@@ -3,7 +3,6 @@ package org.identityconnectors.oracle;
 import static org.junit.Assert.fail;
 
 import java.sql.*;
-import java.text.MessageFormat;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
@@ -72,7 +71,7 @@ public class OracleSpecificsTest {
     private void testStaleConnection(Connection systemConn,Connection testConn) throws SQLException{
         //Here connection should be ok
         OracleSpecifics.testConnection(testConn);
-        killConnection(systemConn, testConn);
+        OracleSpecifics.killConnection(systemConn, testConn);
         //Here testConn is staled
         try{
         	OracleSpecifics.testConnection(testConn);
@@ -83,14 +82,6 @@ public class OracleSpecificsTest {
         SQLUtil.closeQuietly(systemConn);
         SQLUtil.closeQuietly(testConn);
     }
-    
-    static void killConnection(Connection systemConn,Connection connToKill) throws SQLException{
-        Object sid = SQLUtil.selectSingleValue(connToKill, "SELECT USERENV('SID') FROM DUAL");
-        Object serialNumber = SQLUtil.selectSingleValue(systemConn, "select serial# from v$session where SID  = " +  sid);
-        String killSql = MessageFormat.format("ALTER SYSTEM KILL SESSION {0} ", "'" + sid + "," + serialNumber + "'");
-        SQLUtil.executeUpdateStatement(systemConn, killSql);
-    }
-    
     
     /** Test create new thin driver connection */
     @Test

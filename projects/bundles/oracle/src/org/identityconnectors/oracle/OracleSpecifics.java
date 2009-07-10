@@ -1,6 +1,7 @@
 package org.identityconnectors.oracle;
 
 import java.sql.*;
+import java.text.MessageFormat;
 import java.util.Hashtable;
 
 import org.identityconnectors.common.security.GuardedString;
@@ -155,6 +156,13 @@ abstract class OracleSpecifics {
     		throw new ConnectorException(cm.format(MSG_DATASOURCE_CONNECTION_ERROR, null, getCauseMessage(e)), getCause(e));
     	}
     }
+
+	static void killConnection(Connection systemConn, Connection connToKill) throws SQLException{
+	    Object sid = SQLUtil.selectSingleValue(connToKill, "SELECT USERENV('SID') FROM DUAL");
+	    Object serialNumber = SQLUtil.selectSingleValue(systemConn, "select serial# from v$session where SID  = " +  sid);
+	    String killSql = MessageFormat.format("ALTER SYSTEM KILL SESSION {0} ", "'" + sid + "," + serialNumber + "'");
+	    SQLUtil.executeUpdateStatement(systemConn, killSql);
+	}
     
     
     

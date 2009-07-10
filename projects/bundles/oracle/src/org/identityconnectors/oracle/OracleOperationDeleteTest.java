@@ -96,7 +96,7 @@ public class OracleOperationDeleteTest extends OracleConnectorAbstractTest {
         Uid uid = testConnector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,password), null);
         testConnector.delete(ObjectClass.ACCOUNT, uid, null);
         uid = testConnector.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,password), null);
-        OracleSpecificsTest.killConnection(connector.getOrCreateAdminConnection(), testConnector.getOrCreateAdminConnection());
+        OracleSpecifics.killConnection(connector.getOrCreateAdminConnection(), testConnector.getOrCreateAdminConnection());
         try{
         	testConnector.delete(ObjectClass.ACCOUNT, uid, null);
         	fail("Delete must fail for killed connection");

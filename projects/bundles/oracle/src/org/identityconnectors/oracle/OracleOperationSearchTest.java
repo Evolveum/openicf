@@ -529,7 +529,7 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 		OracleConnector testConnector = createTestConnector();
 		Filter f = createFullFilter(false);
 		TestHelpers.searchToList(testConnector,ObjectClass.ACCOUNT,f);
-		OracleSpecificsTest.killConnection(connector.getOrCreateAdminConnection(), testConnector.getOrCreateAdminConnection());
+		OracleSpecifics.killConnection(connector.getOrCreateAdminConnection(), testConnector.getOrCreateAdminConnection());
 		try{
 			TestHelpers.searchToList(testConnector,ObjectClass.ACCOUNT,f);
 			Assert.fail("Search must fail for killed connection");
