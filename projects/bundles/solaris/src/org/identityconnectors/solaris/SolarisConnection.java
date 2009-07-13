@@ -23,7 +23,6 @@
 package org.identityconnectors.solaris;
 
 import java.io.IOException;
-//import java.util.Hashtable;
 
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.identityconnectors.common.logging.Log;
@@ -33,17 +32,11 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.solaris.command.MatchBuilder;
 import org.identityconnectors.solaris.constants.ConnectionType;
 
-//import com.jcraft.jsch.ChannelShell;
-//import com.jcraft.jsch.JSch;
-//import com.jcraft.jsch.Session;
-
 import expect4j.Closure;
 import expect4j.Expect4j;
 import expect4j.ExpectState;
 import expect4j.ExpectUtils;
 import expect4j.matches.Match;
-import expect4j.matches.RegExpMatch;
-import expect4j.matches.TimeoutMatch;
 
 /**
  * maps functionality of SSHConnection.java
@@ -187,7 +180,7 @@ public class SolarisConnection {
     /** do case insensitive match and wait for
      * {@see SolarisConnection#waitFor(String, int)} 
      */
-    private String waitForCaseInsensitive(final String string, int millis) throws Exception {
+    public String waitForCaseInsensitive(final String string, int millis) throws Exception {
         return waitForImpl(string, millis, true);
     }
 
@@ -228,13 +221,7 @@ public class SolarisConnection {
         } else {
             builder.addClosure(string, successClosure);
         }
-        builder.addTimeoutMatch(millis, new Closure() {
-                    public void run(ExpectState state) {
-                        ConnectorException e = new ConnectorException("TIMEOUT_IN_MATCH");
-                        log.error(e, "timeout in waitFor");
-                        throw e;
-                    }
-                });
+        builder.addTimeoutMatch(millis, String.format("Timeout in waitFor('%s', %s)", string, Integer.toString(millis)));
         
         _expect4j.expect(builder.build());
         
