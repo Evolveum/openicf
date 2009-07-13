@@ -30,6 +30,7 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.solaris.command.MatchBuilder;
 import org.identityconnectors.solaris.constants.ConnectionType;
 
 //import com.jcraft.jsch.ChannelShell;
@@ -174,10 +175,22 @@ public class SolarisConnection {
     /**
      * {@see SolarisConnection#waitFor(String, int)}
      */
-    public void waitFor(String string) throws Exception{
-        waitFor(string, WAIT);
+    public String waitFor(final String string) throws Exception {
+        return waitFor(string, WAIT);
     }
     
+    /** {@see SolarisConnection#waitForCaseInsensitive(String, int)}*/
+    public String waitForCaseInsensitive(final String string) throws Exception {
+        return waitForCaseInsensitive(string, WAIT);
+    }
+    
+    /** do case insensitive match and wait for
+     * {@see SolarisConnection#waitFor(String, int)} 
+     */
+    private String waitForCaseInsensitive(final String string, int millis) throws Exception {
+        return waitForImpl(string, millis, true);
+    }
+
     /** used for very specific matching */
     public void match(Match[] matches) throws MalformedPatternException, Exception {
         _expect4j.expect(matches);
@@ -193,25 +206,37 @@ public class SolarisConnection {
      * @throws Exception
      */
     public String waitFor(final String string, int millis) throws MalformedPatternException, Exception {
-        log.info("waitFor(''{0}'', {1})", string, millis);
-        
+        return waitForImpl(string, millis, false);
+    }
+    
+    private String waitForImpl(final String string, int millis, boolean caseInsensitive) throws MalformedPatternException, Exception {
+        log.info("waitFor(''{0}'', {1}, {2})", string, millis, Boolean.toString(caseInsensitive));
+        /** internal buffer for the Solaris resource's output */
         final StringBuffer buffer = new StringBuffer();
         
-        Match[] matches = {
-                new RegExpMatch(string, new Closure() {
-                    public void run(ExpectState state) {
-                        buffer.append(state.getBuffer());
-                    }
-                }),
-                new TimeoutMatch(millis,  new Closure() {
+        // build the matchers
+        /** in case of successful match this closure is called */
+        Closure successClosure = new Closure() {
+            public void run(ExpectState state) {
+                // save the content of buffer (the response from Solaris resource)
+                buffer.append(state.getBuffer());
+            }
+        };
+        MatchBuilder builder = new MatchBuilder();
+        if (caseInsensitive) {
+            builder.addClosureCaseInsensitive(string, successClosure);
+        } else {
+            builder.addClosure(string, successClosure);
+        }
+        builder.addTimeoutMatch(millis, new Closure() {
                     public void run(ExpectState state) {
                         ConnectorException e = new ConnectorException("TIMEOUT_IN_MATCH");
                         log.error(e, "timeout in waitFor");
                         throw e;
                     }
-                })
-        };
-        _expect4j.expect(matches);
+                });
+        
+        _expect4j.expect(builder.build());
         
         return buffer.toString();
     }
