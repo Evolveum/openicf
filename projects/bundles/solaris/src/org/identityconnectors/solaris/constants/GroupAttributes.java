@@ -55,7 +55,7 @@ public enum GroupAttributes {
         this.attrName = attrName;
         this.cmdSwitch = cmdSwitch;
     }
-    
+
     /**
      * Translate the Group's attribute name to item from list of allowed
      * group attributes.
@@ -80,5 +80,10 @@ public enum GroupAttributes {
     /** @return the command line switch */
     String getCmdSwitch() {
         return cmdSwitch.getCmdSwitch();
+    }
+    
+    /** @return the name of the GROUP attribute */
+    public String getName() {
+        return attrName;
     }
 }

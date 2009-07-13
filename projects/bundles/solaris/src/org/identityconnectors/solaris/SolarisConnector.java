@@ -28,7 +28,9 @@ import java.util.Set;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
+import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -49,6 +51,8 @@ import org.identityconnectors.framework.spi.operations.SchemaOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
+import org.identityconnectors.solaris.constants.AccountAttributes;
+import org.identityconnectors.solaris.constants.GroupAttributes;
 
 /**
  * @author David Adam
@@ -155,17 +159,23 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         
         final SchemaBuilder schemaBuilder = new SchemaBuilder(getClass());
         
-        // GROUPS
+        // GROUP
         Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
-        attributes.add(Name.INFO);
-        // to adjust the schema: 
-        //attributes.add(AttributeInfoBuilder.build(STRING_CONSTANT));
+        //attributes.add(Name.INFO);
+        for (GroupAttributes attr : GroupAttributes.values()) {
+            attributes.add(AttributeInfoBuilder.build(attr.getName()));
+        }
+        
         schemaBuilder.defineObjectClass(ObjectClass.GROUP_NAME, attributes);
         
-        // USERS
+        // ACCOUNT
         attributes = new HashSet<AttributeInfo>();
         attributes.add(Name.INFO);
         attributes.add(OperationalAttributeInfos.PASSWORD);
+        for (AccountAttributes attr : AccountAttributes.values()) {
+            attributes.add(AttributeInfoBuilder.build(attr.getName()));
+        }
+        
         schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
         
         _schema = schemaBuilder.build();

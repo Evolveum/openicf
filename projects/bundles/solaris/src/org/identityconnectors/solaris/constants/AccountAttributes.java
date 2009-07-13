@@ -44,7 +44,10 @@ public enum AccountAttributes {
     EXPIRE("expire", UpdateSwitches.EXPIRE),
     INACTIVE("inactive", UpdateSwitches.INACTIVE),
     COMMENT("comment", UpdateSwitches.COMMENT),
-    TIME_LAST_LOGIN("time_last_login", UpdateSwitches.UNKNOWN);
+    TIME_LAST_LOGIN("time_last_login", UpdateSwitches.UNKNOWN),
+    AUTHORIZATION("authorization", UpdateSwitches.AUTHORIZATION),
+    PROFILE("profile", UpdateSwitches.PROFILE),
+    ROLES("role", UpdateSwitches.ROLE);
     
     private static final Map<String, AccountAttributes> map = CollectionUtil.newCaseInsensitiveMap();
     
@@ -56,6 +59,7 @@ public enum AccountAttributes {
     
     /** name of the attribute, it comes from the adapter's schema (prototype xml) */
     private String attrName;
+
     /** the command line switch used by the solaris connector */
     private UpdateSwitches cmdSwitch;
 
@@ -88,5 +92,10 @@ public enum AccountAttributes {
     /** @return the command line switch */
     String getCmdSwitch() {
         return cmdSwitch.getCmdSwitch();
+    }
+    
+    /** @return the name of the ACCOUNT attribute */
+    public String getName() {
+        return attrName;
     }
 }
