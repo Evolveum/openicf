@@ -31,6 +31,7 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
+import org.identityconnectors.solaris.operation.AbstractOp;
 
 
 /** helper class for Solaris specific operations */

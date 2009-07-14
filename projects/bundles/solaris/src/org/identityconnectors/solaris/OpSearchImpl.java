@@ -34,6 +34,7 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.solaris.operation.AbstractOp;
 
 
 public class OpSearchImpl extends AbstractOp {

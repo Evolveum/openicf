@@ -20,10 +20,12 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-package org.identityconnectors.solaris;
+package org.identityconnectors.solaris.operation;
 
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.solaris.SolarisConfiguration;
+import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.command.CommandBuilder;
 
 public abstract class AbstractOp {
@@ -42,24 +44,32 @@ public abstract class AbstractOp {
         _cmdBuilder = new CommandBuilder(_configuration);
     }
 
-    public Log getLog() {
+    protected final Log getLog() {
         return _log;
     }
 
-    protected SolarisConfiguration getConfiguration() {
+    protected final SolarisConfiguration getConfiguration() {
         return _configuration;
     }
     
-    protected SolarisConnection getConnection() {
+    protected final SolarisConnection getConnection() {
         return _connection;
     }
     
-    protected String executeCommand(String command) {
+    protected final String executeCommand(String command) {
         return getConnection().executeCommand(command);
     }
     
     /** @return the command formatter */
-    protected CommandBuilder getCmdBuilder() {
+    protected final CommandBuilder getCmdBuilder() {
         return _cmdBuilder;
+    }
+    
+    protected final void addSudoStart() {
+        SudoUtil.addSudoStart(getConfiguration(), getConnection());
+    }
+
+    protected final void addSudoReset() {
+        SudoUtil.addSudoReset(getConfiguration(), getConnection());
     }
 }

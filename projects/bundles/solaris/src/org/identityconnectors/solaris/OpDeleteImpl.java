@@ -28,6 +28,7 @@ import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.solaris.operation.AbstractOp;
 
 public class OpDeleteImpl extends AbstractOp {
 
