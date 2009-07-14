@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launchConfiguration type="org.eclipse.jdt.junit.launchconfig">
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/ConnectorOracleERP/src/org/identityconnectors/oracleerp/OracleERPConnectorTests.java"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="1"/>
+</listAttribute>
+<stringAttribute key="org.eclipse.jdt.junit.CONTAINER" value=""/>
+<booleanAttribute key="org.eclipse.jdt.junit.KEEPRUNNING_ATTR" value="false"/>
+<stringAttribute key="org.eclipse.jdt.junit.TESTNAME" value=""/>
+<stringAttribute key="org.eclipse.jdt.junit.TEST_KIND" value="org.eclipse.jdt.junit.loader.junit4"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.identityconnectors.oracleerp.OracleERPConnectorTests"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="ConnectorOracleERP"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dconfiguration=11_5_9&#13;&#10;-Dproject.name=connector-oracleerp&#13;&#10;-DbundleJar=dist/org.identityconnectors.oracleerp-1.0.1.jar&#13;&#10;-DbundleName=org.identityconnectors.oracleerp&#13;&#10;-DbundleVersion=1.0.x"/>
+</launchConfiguration>
