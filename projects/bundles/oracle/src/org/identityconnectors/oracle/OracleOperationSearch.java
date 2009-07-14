@@ -48,14 +48,14 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 	private static final String SQL = "SELECT DISTINCT DBA_USERS.* FROM DBA_USERS";
 	
 	private static final String ADVANCED_SQL1 = SQL + 	" LEFT JOIN DBA_TS_QUOTAS DEF_QUOTA " +
-    													"ON DBA_USERS.USERNAME = DEF_QUOTA.USERNAME AND DBA_USERS.DEFAULT_TABLESPACE=DEF_QUOTA.TABLESPACE_NAME " + 
-    													"LEFT JOIN DBA_TS_QUOTAS TEMP_QUOTA " + 
-    												"ON DBA_USERS.USERNAME = DEF_QUOTA.USERNAME AND DBA_USERS.TEMPORARY_TABLESPACE=TEMP_QUOTA.TABLESPACE_NAME";
+    								"ON DBA_USERS.USERNAME = DEF_QUOTA.USERNAME AND DBA_USERS.DEFAULT_TABLESPACE=DEF_QUOTA.TABLESPACE_NAME " + 
+    								"LEFT JOIN DBA_TS_QUOTAS TEMP_QUOTA " + 
+    								"ON DBA_USERS.USERNAME = DEF_QUOTA.USERNAME AND DBA_USERS.TEMPORARY_TABLESPACE=TEMP_QUOTA.TABLESPACE_NAME";
 	
 	private static final String ADVANCED_SQL2 = ADVANCED_SQL1 + " LEFT JOIN DBA_ROLE_PRIVS " +
-																"ON DBA_USERS.USERNAME=DBA_ROLE_PRIVS.GRANTEE " + 
-																"LEFT JOIN DBA_SYS_PRIVS ON DBA_USERS.USERNAME=DBA_SYS_PRIVS.GRANTEE " + 
-																"LEFT JOIN DBA_TAB_PRIVS ON DBA_USERS.USERNAME=USER_TAB_PRIVS.GRANTEE";
+								    "ON DBA_USERS.USERNAME=DBA_ROLE_PRIVS.GRANTEE " + 
+								    "LEFT JOIN DBA_SYS_PRIVS ON DBA_USERS.USERNAME=DBA_SYS_PRIVS.GRANTEE " + 
+								    "LEFT JOIN DBA_TAB_PRIVS ON DBA_USERS.USERNAME=USER_TAB_PRIVS.GRANTEE";
 
 	
 	static final Collection<String> VALID_ATTRIBUTES_TO_GET;
@@ -244,73 +244,11 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 		private String select = SQL;
 		private final ConnectorMessages cm;
 		private final OracleCaseSensitivitySetup cs;
+		
 		OracleDBFilterTranslator(ObjectClass oclass, OperationOptions options, ConnectorMessages cm, OracleCaseSensitivitySetup cs) {
 			super(oclass, options);
 			this.cm = OracleConnectorHelper.assertNotNull(cm, "cm");
 			this.cs = OracleConnectorHelper.assertNotNull(cs, "cs");
-		}
-
-		
-		protected String getDatabaseColumnName(Attribute attribute, ObjectClass oclass, OperationOptions options) {
-			checkSearchByAttribute(attribute);
-			//format sql column using Formatter for concrete attribute.
-			//Formatter can then e.g surround column with UPPER function 
-			if(attribute.is(Name.NAME)){
-				return cs.formatSQLColumn(OracleUserAttribute.USER, "DBA_USERS.USERNAME");
-			}
-			//we do not normalize UID 
-			else if(attribute.is(Uid.NAME)){
-				return cs.formatSQLColumn(OracleUserAttribute.USER, "DBA_USERS.USERNAME");
-			}
-			else if(attribute.is(OracleConstants.ORACLE_DEF_TS_ATTR_NAME)){
-				return cs.formatSQLColumn(OracleUserAttribute.DEF_TABLESPACE, "DBA_USERS.DEFAULT_TABLESPACE");
-			}
-			else if(attribute.is(OracleConstants.ORACLE_TEMP_TS_ATTR_NAME)){
-				return cs.formatSQLColumn(OracleUserAttribute.TEMP_TABLESPACE, "DBA_USERS.TEMPORARY_TABLESPACE");
-			}
-			else if(attribute.is(OracleConstants.ORACLE_PROFILE_ATTR_NAME)){
-				return cs.formatSQLColumn(OracleUserAttribute.PROFILE, "DBA_USERS.PROFILE");
-			}
-			else if(attribute.is(OracleConstants.ORACLE_GLOBAL_ATTR_NAME)){
-				return cs.formatSQLColumn(OracleUserAttribute.GLOBAL_NAME, "DBA_USERS.EXTERNAL_NAME");
-			}
-			else if(attribute.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
-				return "(CASE WHEN DBA_USERS.ACCOUNT_STATUS LIKE '%EXPIRED%' THEN 'EXPIRED' ELSE 'NOT_EXPIRED' END)";
-			}
-			else if(attribute.is(OperationalAttributes.ENABLE_NAME) || attribute.is(OperationalAttributes.LOCK_OUT_NAME)){
-				return "(CASE WHEN DBA_USERS.ACCOUNT_STATUS LIKE '%LOCKED%' THEN 'LOCKED' ELSE 'NOT_LOCKED' END)";
-			}
-			else if(attribute.is(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME)){
-				return "DBA_USERS.EXPIRY_DATE";
-			}
-			else if(attribute.is(OperationalAttributes.DISABLE_DATE_NAME)){
-				return "DBA_USERS.LOCK_DATE";
-			}
-			else if(attribute.is(OracleConstants.ORACLE_DEF_TS_QUOTA_ATTR_NAME)){
-				if(select == SQL){
-					select = ADVANCED_SQL1;
-				}
-				return "DEF_QUOTA.MAX_BYTES";
-			}
-			else if(attribute.is(OracleConstants.ORACLE_TEMP_TS_QUOTA_ATTR_NAME)){
-				if(select == SQL){
-					select = ADVANCED_SQL1;
-				}
-				return "TEMP_QUOTA.MAX_BYTES";
-			}
-			else if(attribute.is(OracleConstants.ORACLE_ROLES_ATTR_NAME)){
-				select = ADVANCED_SQL2;
-				return cs.formatSQLColumn(OracleUserAttribute.ROLE, "GRANTED_ROLE");
-			}
-			else if(attribute.is(OracleConstants.ORACLE_PRIVS_ATTR_NAME)){
-				select = ADVANCED_SQL2;
-				return cs.formatSQLColumn(OracleUserAttribute.PRIVILEGE, "GRANTED_ROLE");
-			}
-			else if(attribute.is(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME)){
-				return "(CASE WHEN DBA_USERS.PASSWORD='EXTERNAL' THEN 'EXTERNAL' ELSE (CASE WHEN DBA_USERS.EXTERNAL_NAME IS NOT NULL THEN 'GLOBAL' ELSE 'LOCAL' END) END)";
-			}
-			//Should not get here, invalid attributes should be already handled
-			throw new IllegalArgumentException("Cannot map db column for attribute : " + attribute.getName());
 		}
 
 		private void checkSearchByAttribute(Attribute attribute) {
@@ -322,13 +260,62 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 		@Override
 		protected SQLParam getSQLParam(Attribute attribute, ObjectClass oclass, OperationOptions options) {
 			checkSearchByAttribute(attribute);
-			String columnName = getDatabaseColumnName(attribute, oclass, options);
-			// To substitute name null functionality
-			if ( columnName == null ) {
-			    return null;
+			String columnName = null;
+			if(attribute.is(Name.NAME)){
+			    columnName = cs.formatSQLColumn(OracleUserAttribute.USER, "DBA_USERS.USERNAME");
+			    return createSingleVarcharParam(attribute, columnName);
 			}
-			
-			if(attribute.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
+			//we do not normalize UID 
+			else if(attribute.is(Uid.NAME)){
+			    	columnName = cs.formatSQLColumn(OracleUserAttribute.USER, "DBA_USERS.USERNAME");
+				return createSingleVarcharParam(attribute, columnName);
+			}
+			else if(attribute.is(OracleConstants.ORACLE_DEF_TS_ATTR_NAME)){
+			    	columnName = cs.formatSQLColumn(OracleUserAttribute.DEF_TABLESPACE, "DBA_USERS.DEFAULT_TABLESPACE");
+				return createSingleVarcharParam(attribute, columnName);
+			}
+			else if(attribute.is(OracleConstants.ORACLE_TEMP_TS_ATTR_NAME)){
+			    	columnName =  cs.formatSQLColumn(OracleUserAttribute.TEMP_TABLESPACE, "DBA_USERS.TEMPORARY_TABLESPACE");
+				return createSingleVarcharParam(attribute, columnName);
+			}
+			else if(attribute.is(OracleConstants.ORACLE_PROFILE_ATTR_NAME)){
+			    	columnName =  cs.formatSQLColumn(OracleUserAttribute.PROFILE, "DBA_USERS.PROFILE");
+				return createSingleVarcharParam(attribute, columnName);
+			}
+			else if(attribute.is(OracleConstants.ORACLE_GLOBAL_ATTR_NAME)){
+			    	columnName =  cs.formatSQLColumn(OracleUserAttribute.GLOBAL_NAME, "DBA_USERS.EXTERNAL_NAME");
+				return createSingleVarcharParam(attribute, columnName);
+			}
+			else if(attribute.is(OracleConstants.ORACLE_DEF_TS_QUOTA_ATTR_NAME)){
+				if(select == SQL){
+					select = ADVANCED_SQL1;
+				}
+				columnName =  "DEF_QUOTA.MAX_BYTES";
+				return createSingleVarcharParam(attribute, columnName);
+			}
+			else if(attribute.is(OracleConstants.ORACLE_TEMP_TS_QUOTA_ATTR_NAME)){
+				if(select == SQL){
+					select = ADVANCED_SQL1;
+				}
+				columnName =  "TEMP_QUOTA.MAX_BYTES";
+				return createSingleVarcharParam(attribute, columnName);
+			}
+			else if(attribute.is(OracleConstants.ORACLE_ROLES_ATTR_NAME)){
+				select = ADVANCED_SQL2;
+				columnName =  cs.formatSQLColumn(OracleUserAttribute.ROLE, "DBA_ROLE_PRIVS.GRANTED_ROLE");
+				return createSingleVarcharParam(attribute, columnName);
+			}
+			else if(attribute.is(OracleConstants.ORACLE_PRIVS_ATTR_NAME)){
+				select = ADVANCED_SQL2;
+				columnName =  cs.formatSQLColumn(OracleUserAttribute.PRIVILEGE, "DBA_SYS_PRIVS.GRANTED_ROLE");
+				return createSingleVarcharParam(attribute, columnName);
+			}
+			else if(attribute.is(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME)){
+			    	columnName =  "(CASE WHEN DBA_USERS.PASSWORD='EXTERNAL' THEN 'EXTERNAL' ELSE (CASE WHEN DBA_USERS.EXTERNAL_NAME IS NOT NULL THEN 'GLOBAL' ELSE 'LOCAL' END) END)";
+				return createSingleVarcharParam(attribute, columnName);
+			}
+			else if(attribute.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
+			    	columnName = "(CASE WHEN DBA_USERS.ACCOUNT_STATUS LIKE '%EXPIRED%' THEN 'EXPIRED' ELSE 'NOT_EXPIRED' END)";
 				Boolean value = (Boolean) AttributeUtil.getSingleValue(attribute);
 				if(value == null){
 					return null;
@@ -336,6 +323,7 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 				return value ? new SQLParam(columnName, "EXPIRED",Types.VARCHAR) : new SQLParam(columnName, "NOT_EXPIRED",Types.VARCHAR);
 			}
 			else if(attribute.is(OperationalAttributes.ENABLE_NAME)){
+			    	columnName = "(CASE WHEN DBA_USERS.ACCOUNT_STATUS LIKE '%LOCKED%' THEN 'LOCKED' ELSE 'NOT_LOCKED' END)";
 				Boolean value = (Boolean) AttributeUtil.getSingleValue(attribute);
 				if(value == null){
 					return null;
@@ -343,6 +331,7 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 				return value ? new SQLParam(columnName, "NOT_LOCKED",Types.VARCHAR) : new SQLParam(columnName, "LOCKED",Types.VARCHAR);
 			}
 			else if(attribute.is(OperationalAttributes.LOCK_OUT_NAME)){
+			    	columnName = "(CASE WHEN DBA_USERS.ACCOUNT_STATUS LIKE '%LOCKED%' THEN 'LOCKED' ELSE 'NOT_LOCKED' END)";
 				Boolean value = (Boolean) AttributeUtil.getSingleValue(attribute);
 				if(value == null){
 					return null;
@@ -350,6 +339,7 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 				return value ? new SQLParam(columnName, "LOCKED",Types.VARCHAR) : new SQLParam(columnName, "NOT_LOCKED",Types.VARCHAR);
 			}
 			else if(attribute.is(OperationalAttributes.DISABLE_DATE_NAME)){
+			    	columnName = "DBA_USERS.LOCK_DATE";
 				Object date = AttributeUtil.getSingleValue(attribute);
 				if(date instanceof Long){
 					date = new java.sql.Timestamp(((Long)date));
@@ -357,13 +347,19 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 				return new SQLParam(columnName, date,Types.TIMESTAMP);
 			}
 			else if(attribute.is(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME)){
+			    	columnName = "DBA_USERS.EXPIRY_DATE";
 				Object date = AttributeUtil.getSingleValue(attribute);
 				if(date instanceof Long){
 					date = new java.sql.Timestamp(((Long)date));
 				}
 				return new SQLParam(columnName, date,Types.TIMESTAMP);
 			}
-			return new SQLParam(columnName, AttributeUtil.getSingleValue(attribute),Types.VARCHAR);
+			throw new IllegalArgumentException("Cannot map db column for attribute : " + attribute.getName());
+		}
+
+		private SQLParam createSingleVarcharParam(Attribute attribute,
+			String columnName) {
+		    return new SQLParam(columnName, AttributeUtil.getSingleValue(attribute),Types.VARCHAR);
 		}
 		
 		@Override
