@@ -83,7 +83,9 @@ final class OracleOperationAuthenticate extends AbstractOracleOperation implemen
 			//throwing the exception we will force the admin to fix the problem
 			throw new IllegalArgumentException("Connection from DS not killed");
 		}
-		catch(Exception e){}
+		catch(Exception e){
+		    //Expected, the connection test should not succeed  
+		}
 	}
 
 	private Uid findUserByName(String username) {
