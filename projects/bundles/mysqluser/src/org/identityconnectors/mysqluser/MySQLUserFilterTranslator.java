@@ -22,7 +22,8 @@
  */
 package org.identityconnectors.mysqluser;
 
-import static org.identityconnectors.mysqluser.MySQLUserConstants.*;
+import static org.identityconnectors.mysqluser.MySQLUserConstants.MYSQL_USER;
+
 import org.identityconnectors.dbcommon.DatabaseFilterTranslator;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -49,28 +50,19 @@ public class MySQLUserFilterTranslator extends DatabaseFilterTranslator {
     }
 
     /* (non-Javadoc)
-     * @see org.identityconnectors.dbcommon.DatabaseFilterTranslator#getDatabaseColumnName(org.identityconnectors.framework.common.objects.Attribute, org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.OperationOptions)
+     * @see org.identityconnectors.dbcommon.DatabaseFilterTranslator#getDatabaseColumnType(org.identityconnectors.framework.common.objects.Attribute, org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     @Override
-    protected String getDatabaseColumnName(Attribute attribute, ObjectClass oclass, OperationOptions options) {
+    protected SQLParam getSQLParam(Attribute attribute, ObjectClass oclass, OperationOptions options) {
         // check the null values
         if (attribute == null)
             return null;
         //MySQLUser filter a name or uid attribute
         if (attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
-            return MYSQL_USER;
+            return new SQLParam(MYSQL_USER, AttributeUtil.getSingleValue(attribute));
         }
         //Password or other are invalid columns for query, 
         //There could be an exception,but null value would disable this filter 
         return null;
     }
-
-    /* (non-Javadoc)
-     * @see org.identityconnectors.dbcommon.DatabaseFilterTranslator#getDatabaseColumnType(org.identityconnectors.framework.common.objects.Attribute, org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.OperationOptions)
-     */
-    @Override
-    protected SQLParam getSQLParam(Attribute attribute, ObjectClass oclass, OperationOptions options) {
-        return new SQLParam(AttributeUtil.getSingleValue(attribute));
-    }
-
 }

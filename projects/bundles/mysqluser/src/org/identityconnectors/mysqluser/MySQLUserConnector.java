@@ -291,7 +291,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         if(name != null && oldUid.getUidValue() != name.getNameValue()) {
             log.info("Update user {0} to (1)", oldUid.getUidValue(), name.getNameValue());
             updateSet = SQL_SET_USER;
-            values.add(new SQLParam(name.getNameValue(), Types.VARCHAR));
+            values.add(new SQLParam("user", name.getNameValue(), Types.VARCHAR));
             // update the return value to new Uid
             ret = newUid(name.getNameValue());
         }
@@ -303,12 +303,12 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
                 updateSet = updateSet + ", ";
             }
             updateSet = updateSet + SQL_SET_PASSWORD;
-            values.add(new SQLParam(password));
+            values.add(new SQLParam("password", password));
         }
 
         // Finalize update
         String sql = MessageFormat.format(SQL_UPDATE, updateSet);
-        values.add(new SQLParam(oldUid.getUidValue(), Types.CHAR));
+        values.add(new SQLParam("user", oldUid.getUidValue(), Types.CHAR));
         
         try {
             conn.openConnection();
@@ -485,8 +485,8 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         }
         
         List<SQLParam> values = new ArrayList<SQLParam>();
-        values.add(new SQLParam(user, Types.VARCHAR));
-        values.add(new SQLParam(password));
+        values.add(new SQLParam("user", user, Types.VARCHAR));
+        values.add(new SQLParam("password", password));
         
         PreparedStatement stmt = null;
         ResultSet result = null;
@@ -557,8 +557,8 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         try {
             // Create the user
             List<SQLParam> values = new ArrayList<SQLParam>();
-            values.add(new SQLParam(name, Types.VARCHAR));
-            values.add(new SQLParam(password));
+            values.add(new SQLParam("name", name, Types.VARCHAR));
+            values.add(new SQLParam("password", password));
             c1 = conn.prepareStatement(SQL_CREATE_TEMPLATE, values);
             c1.execute();
             log.ok("User {0} created", name);
@@ -586,8 +586,8 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         try {
             // Create the user
             List<SQLParam> values = new ArrayList<SQLParam>();
-            values.add(new SQLParam(name, Types.VARCHAR));
-            values.add(new SQLParam(password));
+            values.add(new SQLParam("name", name, Types.VARCHAR));
+            values.add(new SQLParam("password", password));
             c1 = conn.prepareStatement(SQL_GRANT_TEMPLATE, values);
             c1.execute();
         } catch (SQLException e) {
@@ -607,7 +607,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         PreparedStatement ps = null;
         ResultSet result = null;
         final List<SQLParam> values = new ArrayList<SQLParam>();
-        values.add(new SQLParam(userName, Types.VARCHAR));
+        values.add(new SQLParam("user", userName, Types.VARCHAR));
         final String SQL_SELECT = "SELECT DISTINCT user FROM mysql.user WHERE user = ?";
         log.info("findt User {0}", userName);
         try {

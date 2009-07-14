@@ -22,6 +22,8 @@
  */
 package org.identityconnectors.db2;
 
+import java.sql.Types;
+
 import org.identityconnectors.dbcommon.DatabaseFilterTranslator;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLParam;
@@ -47,16 +49,6 @@ class DB2FilterTranslator extends DatabaseFilterTranslator {
         super(oclass, options);
     }
 
-    @Override
-    protected String getDatabaseColumnName(Attribute attribute, ObjectClass oclass, OperationOptions options) {
-        if(attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
-            return "UPPER(TRIM(GRANTEE))";
-        }
-        //Password or other are invalid columns for query, 
-        //There could be an exception,but null value would disable this filter 
-        return null;
-    }
-    
 	@Override
     protected FilterWhereBuilder createBuilder() {
         return new FilterWhereBuilder();
@@ -72,6 +64,11 @@ class DB2FilterTranslator extends DatabaseFilterTranslator {
 
     @Override
     protected SQLParam getSQLParam(Attribute attribute, ObjectClass oclass, OperationOptions options) {
-        return new SQLParam(AttributeUtil.getSingleValue(attribute));
+        if(attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
+            return new SQLParam("UPPER(TRIM(GRANTEE))",AttributeUtil.getSingleValue(attribute));
+        }
+        //Password or other are invalid columns for query, 
+        //There could be an exception,but null value would disable this filter 
+        return null;        
     }
 }

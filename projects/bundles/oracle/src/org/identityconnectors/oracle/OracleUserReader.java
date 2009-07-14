@@ -8,7 +8,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 
+import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
@@ -91,7 +93,9 @@ final class OracleUserReader {
     
     Long readUserTSQuota(String userName, String tableSpace) throws SQLException{
     	String query =  "select max_bytes from dba_ts_quotas where USERNAME = ? and TABLESPACE_NAME = ?";
-    	BigDecimal bytes = (BigDecimal) SQLUtil.selectSingleValue(adminConn, query, userName, tableSpace); 
+        final SQLParam userNameParm = new SQLParam("USERNAME", userName, Types.VARCHAR);
+        final SQLParam tableSpaceParm = new SQLParam("TABLESPACE_NAME", tableSpace, Types.VARCHAR);
+        BigDecimal bytes = (BigDecimal) SQLUtil.selectSingleValue(adminConn, query, userNameParm, tableSpaceParm); 
     	return bytes == null ? null : bytes.longValue();
     }
     

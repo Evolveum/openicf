@@ -250,7 +250,7 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 			this.cs = OracleConnectorHelper.assertNotNull(cs, "cs");
 		}
 
-		@Override
+		
 		protected String getDatabaseColumnName(Attribute attribute, ObjectClass oclass, OperationOptions options) {
 			checkSearchByAttribute(attribute);
 			//format sql column using Formatter for concrete attribute.
@@ -322,42 +322,48 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 		@Override
 		protected SQLParam getSQLParam(Attribute attribute, ObjectClass oclass, OperationOptions options) {
 			checkSearchByAttribute(attribute);
+			String columnName = getDatabaseColumnName(attribute, oclass, options);
+			// To substitute name null functionality
+			if ( columnName == null ) {
+			    return null;
+			}
+			
 			if(attribute.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)){
 				Boolean value = (Boolean) AttributeUtil.getSingleValue(attribute);
 				if(value == null){
 					return null;
 				}
-				return value ? new SQLParam("EXPIRED",Types.VARCHAR) : new SQLParam("NOT_EXPIRED",Types.VARCHAR);
+				return value ? new SQLParam(columnName, "EXPIRED",Types.VARCHAR) : new SQLParam(columnName, "NOT_EXPIRED",Types.VARCHAR);
 			}
 			else if(attribute.is(OperationalAttributes.ENABLE_NAME)){
 				Boolean value = (Boolean) AttributeUtil.getSingleValue(attribute);
 				if(value == null){
 					return null;
 				}
-				return value ? new SQLParam("NOT_LOCKED",Types.VARCHAR) : new SQLParam("LOCKED",Types.VARCHAR);
+				return value ? new SQLParam(columnName, "NOT_LOCKED",Types.VARCHAR) : new SQLParam(columnName, "LOCKED",Types.VARCHAR);
 			}
 			else if(attribute.is(OperationalAttributes.LOCK_OUT_NAME)){
 				Boolean value = (Boolean) AttributeUtil.getSingleValue(attribute);
 				if(value == null){
 					return null;
 				}
-				return value ? new SQLParam("LOCKED",Types.VARCHAR) : new SQLParam("NOT_LOCKED",Types.VARCHAR);
+				return value ? new SQLParam(columnName, "LOCKED",Types.VARCHAR) : new SQLParam(columnName, "NOT_LOCKED",Types.VARCHAR);
 			}
 			else if(attribute.is(OperationalAttributes.DISABLE_DATE_NAME)){
 				Object date = AttributeUtil.getSingleValue(attribute);
 				if(date instanceof Long){
 					date = new java.sql.Timestamp(((Long)date));
 				}
-				return new SQLParam(date,Types.TIMESTAMP);
+				return new SQLParam(columnName, date,Types.TIMESTAMP);
 			}
 			else if(attribute.is(OperationalAttributes.PASSWORD_EXPIRATION_DATE_NAME)){
 				Object date = AttributeUtil.getSingleValue(attribute);
 				if(date instanceof Long){
 					date = new java.sql.Timestamp(((Long)date));
 				}
-				return new SQLParam(date,Types.TIMESTAMP);
+				return new SQLParam(columnName, date,Types.TIMESTAMP);
 			}
-			return new SQLParam(AttributeUtil.getSingleValue(attribute),Types.VARCHAR);
+			return new SQLParam(columnName, AttributeUtil.getSingleValue(attribute),Types.VARCHAR);
 		}
 		
 		@Override

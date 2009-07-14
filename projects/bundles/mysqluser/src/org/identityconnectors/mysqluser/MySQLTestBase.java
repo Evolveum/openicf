@@ -124,8 +124,8 @@ public abstract class MySQLTestBase {
         MySQLUserConnection conn = null;
         ResultSet result = null;
         final List<SQLParam> values = new ArrayList<SQLParam>();
-        values.add(new SQLParam(userName, Types.VARCHAR));
-        values.add(new SQLParam(testPassword));
+        values.add(new SQLParam("user", userName, Types.VARCHAR));
+        values.add(new SQLParam("password", testPassword));
         final String SQL_CREATE_TEMPLATE = "CREATE USER ? IDENTIFIED BY ?";
         log.info("quitelly Create User {0}", userName);
         try {
@@ -521,8 +521,8 @@ public abstract class MySQLTestBase {
         MySQLUserConnection conn = null;
         ResultSet result = null;
         final List<SQLParam> values = new ArrayList<SQLParam>();
-        values.add(new SQLParam(userName, Types.VARCHAR));
-        values.add(new SQLParam(testPassword));
+        values.add(new SQLParam("user", userName, Types.VARCHAR));
+        values.add(new SQLParam("password", testPassword));
         final String SQL_GRANT_USSAGE = "GRANT USAGE ON *.* TO ?@'localhost' IDENTIFIED BY ?";
         log.info("quitelly Grant Ussage to {0}", userName);
         try {
@@ -550,7 +550,7 @@ public abstract class MySQLTestBase {
         PreparedStatement ps2 = null;
         MySQLUserConnection conn = null;
         final List<SQLParam> values = new ArrayList<SQLParam>();
-        values.add(new SQLParam(userName, Types.VARCHAR));
+        values.add(new SQLParam("user", userName, Types.VARCHAR));
         final String SQL_DELETE_TEMPLATE = "DROP USER ?";
         final String SQL_DELETE_TEMPLATE_LOCAL = "DROP USER ?@'localhost'";
         log.info("quitelly Delete User {0}", userName);
@@ -648,9 +648,9 @@ public abstract class MySQLTestBase {
             for (int i = 0; i < stmts.length; i++) {                
                 sql = stmts[i];
                 final List<SQLParam> values = new ArrayList<SQLParam>();
-                values.add(new SQLParam(userName, Types.VARCHAR));
+                values.add(new SQLParam("user", userName, Types.VARCHAR));
                 if(sql.contains("IDENTIFIED BY ?")) {
-                    values.add(new SQLParam(testPassword));
+                    values.add(new SQLParam("password", testPassword));
                 }
                 log.info("Create User {0} Grants , statement:{1}", userName, sql);
                 conn = MySQLUserConnection.getConnection(newConfiguration());
@@ -687,7 +687,7 @@ public abstract class MySQLTestBase {
         MySQLUserConnection conn = null;
         ResultSet result = null;
         final List<SQLParam> values = new ArrayList<SQLParam>();
-        values.add(new SQLParam(userName, Types.VARCHAR));
+        values.add(new SQLParam("user", userName, Types.VARCHAR));
         final String SQL_SELECT = "SELECT DISTINCT user FROM mysql.user WHERE user = ?";               
         log.info("test User {0} found {1} ", userName, found);   
         try {
