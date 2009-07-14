@@ -184,8 +184,10 @@ public class SolarisConnection {
         return waitForImpl(string, millis, true);
     }
 
-    /** used for very specific matching */
-    public void match(Match[] matches) throws MalformedPatternException, Exception {
+    /** Match a sequence of expected patterns, and invoke the respective actions on them. 
+     * Implementation note: internally uses Expect4j#expect() method. 
+     */
+    public void expect(Match[] matches) throws MalformedPatternException, Exception {
         _expect4j.expect(matches);
     }
     
@@ -217,9 +219,9 @@ public class SolarisConnection {
         };
         MatchBuilder builder = new MatchBuilder();
         if (caseInsensitive) {
-            builder.addClosureCaseInsensitive(string, successClosure);
+            builder.addCaseInsensitiveRegExpMatch(string, successClosure);
         } else {
-            builder.addClosure(string, successClosure);
+            builder.addRegExpMatch(string, successClosure);
         }
         builder.addTimeoutMatch(millis, String.format("Timeout in waitFor('%s', %s)", string, Integer.toString(millis)));
         

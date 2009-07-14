@@ -28,7 +28,7 @@ import java.util.List;
 
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.solaris.TimeoutClosure;
+import org.identityconnectors.solaris.command.closure.TimeoutClosure;
 import org.identityconnectors.solaris.command.pattern.RegExpCaseInsensitiveMatch;
 
 import expect4j.Closure;
@@ -45,7 +45,7 @@ import expect4j.matches.TimeoutMatch;
  * </ul>
  * @author David Adam
  */
-public class MatchBuilder {
+public final class MatchBuilder {
     private List<Match> matches;
 
     public MatchBuilder() {
@@ -54,9 +54,9 @@ public class MatchBuilder {
 
     /**
      * adds a case sensitive matcher. Compare with
-     * {@link MatchBuilder#addClosureCaseInsensitive(String, Closure)}.
+     * {@link MatchBuilder#addCaseInsensitiveRegExpMatch(String, Closure)}.
      */
-    public void addClosure(String regExp, Closure closure) {
+    public void addRegExpMatch(String regExp, Closure closure) {
         try {
             matches.add(new RegExpMatch(regExp, closure));
         } catch (MalformedPatternException ex) {
@@ -66,9 +66,9 @@ public class MatchBuilder {
     
     /**
      * adds a case *insensitive matcher. Compare with
-     * {@link MatchBuilder#addClosure(String, Closure)}
+     * {@link MatchBuilder#addRegExpMatch(String, Closure)}
      */
-    public void addClosureCaseInsensitive(String regExp, Closure closure) {
+    public void addCaseInsensitiveRegExpMatch(String regExp, Closure closure) {
         try {
             matches.add(new RegExpCaseInsensitiveMatch(regExp, closure));
         } catch (MalformedPatternException ex) {
@@ -85,14 +85,17 @@ public class MatchBuilder {
         return matches.toArray(new Match[matches.size()]);
     }
     
-    /** convenience method for building a Matcher with a single match */
-    public static Match[] build(String regExp, Closure closure) {
-        Match[] result = new Match[1];
-        try {
-            result[0] = new RegExpMatch(regExp, closure);
-        } catch (MalformedPatternException ex) {
-            ConnectorException.wrap(ex);
-        }
-        return result;
+    /** convenience method for a single RegExpMatcher */
+    public static Match[] buildRegExpMatch(String regExp, Closure closure) {
+        MatchBuilder mb = new MatchBuilder();
+        mb.addRegExpMatch(regExp, closure);
+        return mb.build();
+    }
+    
+    /** convenience method for a single case insensitive RegExpMatcher */
+    public static Match[] buildCaseInsensitiveRegExpMatch(String regExp, Closure closure) {
+        MatchBuilder mb = new MatchBuilder();
+        mb.addCaseInsensitiveRegExpMatch(regExp, closure);
+        return mb.build();
     }
 }

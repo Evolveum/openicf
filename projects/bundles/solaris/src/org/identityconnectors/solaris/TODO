@@ -2,6 +2,11 @@ This connector is under development, it is not release ready.
 
 TODOs:
 
+QUESTION #1:
+* AccountAttributes: AUTHORIZATION and PROFILE attribute are kind of unknown in the schema (prototype XML).
+QUESTION #2:
+getUpdateUserResult -- there's no processing of Update's result.
+
 *** SolarisConnection
  *** - try out SSHPubKeyAuthentication.
 

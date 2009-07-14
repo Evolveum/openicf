@@ -20,22 +20,19 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-package org.identityconnectors.solaris;
+package org.identityconnectors.solaris.command.closure;
 
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 
 import expect4j.Closure;
 import expect4j.ExpectState;
 
-public class TimeoutClosure implements Closure {
+public class ErrorClosure implements Closure {
     private String msg;
-    
-    public TimeoutClosure(String msg) {
-        this.msg = msg;
+    public ErrorClosure(String message) {
+        msg = message;
     }
-    
-    public void run(ExpectState state) {
-        ConnectorException e = new ConnectorException(msg);
-        throw e;
+    public void run(ExpectState state) throws Exception {
+        throw new ConnectorException(String.format("%s\nBUFFER CONTENT:\n%s", msg, state.getBuffer()));
     }
 }
