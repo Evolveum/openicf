@@ -288,7 +288,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         //The update is changing name. The oldUid is a key and the name will be new uid for mysql.
         Name name = AttributeUtil.getNameFromAttributes(attrs);
         // is there a change in name?
-        if(name != null && oldUid.getUidValue() != name.getNameValue()) {
+        if(name != null && !oldUid.getUidValue().equals(name.getNameValue())) {
             log.info("Update user {0} to (1)", oldUid.getUidValue(), name.getNameValue());
             updateSet = SQL_SET_USER;
             values.add(new SQLParam("user", name.getNameValue(), Types.VARCHAR));
