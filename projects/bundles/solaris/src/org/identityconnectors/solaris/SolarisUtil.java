@@ -34,7 +34,7 @@ import org.identityconnectors.framework.common.objects.OperationalAttributes;
 
 
 /** helper class for Solaris specific operations */
-public class SolarisHelper {
+public class SolarisUtil {
     
     /** helper method for getting the password from an attribute map */
     public static GuardedString getPasswordFromMap(Map<String, Attribute> attrMap) {

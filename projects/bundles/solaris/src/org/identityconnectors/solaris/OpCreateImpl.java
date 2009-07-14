@@ -44,7 +44,7 @@ public class OpCreateImpl extends AbstractOp {
     }
     
     Uid create(ObjectClass oclass, final Set<Attribute> attrs, final OperationOptions options) {
-        SolarisHelper.controlObjectClassValidity(oclass, acceptOC, getClass());
+        SolarisUtil.controlObjectClassValidity(oclass, acceptOC, getClass());
         
         if (oclass.is(ObjectClass.GROUP_NAME)) {
             // TODO
@@ -80,7 +80,7 @@ public class OpCreateImpl extends AbstractOp {
         /*
          * PASSWORD SET
          */
-        final GuardedString password = SolarisHelper.getPasswordFromMap(attrMap);
+        final GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
         try {// CONNECTION
             getLog().info("passwd()");
             // TODO configurable source of password

@@ -39,7 +39,7 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.solaris.SolarisConfiguration;
-import org.identityconnectors.solaris.SolarisHelper;
+import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.test.common.ToListResultsHandler;
 import org.junit.After;
 import org.junit.Before;
@@ -95,7 +95,7 @@ public class OpSearchImplTest {
         final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(
                 AttributeUtil.toMap(attrs));
         String username = ((Name) attrMap.get(Name.NAME)).getNameValue();
-        GuardedString password = SolarisHelper.getPasswordFromMap(attrMap);
+        GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
         try {
             // create a new user
             Uid uid = facade.create(ObjectClass.ACCOUNT, attrs, null);

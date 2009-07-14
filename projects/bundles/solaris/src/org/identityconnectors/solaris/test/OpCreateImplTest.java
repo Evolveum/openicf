@@ -38,7 +38,7 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConfiguration;
-import org.identityconnectors.solaris.SolarisHelper;
+import org.identityconnectors.solaris.SolarisUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -76,7 +76,7 @@ public class OpCreateImplTest {
         // Read only list of attributes
         final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
         final String username = ((Name) attrMap.get(Name.NAME)).getNameValue();
-        final GuardedString password = SolarisHelper.getPasswordFromMap(attrMap);
+        final GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
         
         try {
             Uid uid = facade.create(ObjectClass.ACCOUNT, attrs, null);

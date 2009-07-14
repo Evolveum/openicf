@@ -38,7 +38,7 @@ public class OpAuthenticateImpl extends AbstractOp {
 
     public Uid authenticate(ObjectClass objectClass, String username,
             GuardedString password, OperationOptions options) {
-        SolarisHelper.controlObjectClassValidity(objectClass, acceptOC, getClass());
+        SolarisUtil.controlObjectClassValidity(objectClass, acceptOC, getClass());
         
         SolarisConnection connection = null;
         try {
