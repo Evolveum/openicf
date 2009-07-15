@@ -26,7 +26,7 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-class CommandUtilTest {
+public class CommandUtilTest {
     @Test
     public void test() {
         StringBuilder input = new StringBuilder();
