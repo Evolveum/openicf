@@ -29,6 +29,7 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.solaris.operation.AbstractOp;
 
 public class OpUpdateImpl extends AbstractOp {
 
@@ -41,7 +42,7 @@ public class OpUpdateImpl extends AbstractOp {
 
     public Uid update(ObjectClass objclass, Uid uid,
             Set<Attribute> replaceAttributes, OperationOptions options) {
-        SolarisHelper.controlObjectClassValidity(objclass, acceptOC, getClass());
+        SolarisUtil.controlObjectClassValidity(objclass, acceptOC, getClass());
         
         // Read only list of attributes
 //        final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(
