@@ -33,6 +33,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
 
     // ALL OF CONFIGURATION COMES FROM SVIDResourceAdapter
     
+    public static final long DEFAULT_MUTEX_ACQUIRE_TIMEOUT = 60;
     /*
      * RA_HOST
      */
@@ -185,10 +186,9 @@ public class SolarisConfiguration extends AbstractConfiguration {
     
     /*
      * RA_MUTEX_ACQUIRE_TIMEOUT
-     * 
-     * IMHO Mutex was needed just in earlier versions, see the emails.
-     * @deprecated TODO
+     * Mutex Acquire Timeout
      */
+    private long mutexAcquireTimeout = DEFAULT_MUTEX_ACQUIRE_TIMEOUT;
     
     /*
      * RA_MAKE_DIR
@@ -297,7 +297,6 @@ public class SolarisConfiguration extends AbstractConfiguration {
     //===================================================================================
     
 
-    
     /* ********** CONSTRUCTOR ************ */
     public SolarisConfiguration() {
         // default constructor
@@ -376,6 +375,13 @@ public class SolarisConfiguration extends AbstractConfiguration {
     
     public void setSudoAuth(boolean sudoAuth) {
         this.sudoAuth = sudoAuth;
+    }
+    
+    public long getMutexAcquireTimeout() {
+        return mutexAcquireTimeout;
+    }
+    public void setMutexAcquireTimeout(long mutexAcquireTimeout) {
+        this.mutexAcquireTimeout = mutexAcquireTimeout;
     }
 
     
