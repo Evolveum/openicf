@@ -22,6 +22,8 @@
  */
 package org.identityconnectors.oracleerp;
 
+import java.sql.Types;
+
 import org.identityconnectors.dbcommon.DatabaseFilterTranslator;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -56,18 +58,10 @@ public class OracleERPFilterTranslator extends DatabaseFilterTranslator {
     }
 
     /* (non-Javadoc)
-     * @see org.identityconnectors.dbcommon.DatabaseFilterTranslator#getDatabaseColumnName(org.identityconnectors.framework.common.objects.Attribute, org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.OperationOptions)
-     */
-    @Override
-    protected String getDatabaseColumnName(Attribute attribute, ObjectClass oclass, OperationOptions options) {
-        return cnr.getColumnName(attribute.getName());
-    }
-
-    /* (non-Javadoc)
      * @see org.identityconnectors.dbcommon.DatabaseFilterTranslator#getDatabaseColumnType(org.identityconnectors.framework.common.objects.Attribute, org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     @Override
     protected SQLParam getSQLParam(Attribute attribute, ObjectClass oclass, OperationOptions options) {
-        return new SQLParam(AttributeUtil.getSingleValue(attribute));
+        return new SQLParam(cnr.getColumnName(attribute.getName()), AttributeUtil.getSingleValue(attribute));
     }
 }

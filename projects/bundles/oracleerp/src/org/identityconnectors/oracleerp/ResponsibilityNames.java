@@ -50,12 +50,19 @@ import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
+import org.identityconnectors.framework.spi.operations.AuthenticateOp;
+import org.identityconnectors.framework.spi.operations.CreateOp;
+import org.identityconnectors.framework.spi.operations.DeleteOp;
+import org.identityconnectors.framework.spi.operations.SchemaOp;
+import org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp;
+import org.identityconnectors.framework.spi.operations.ScriptOnResourceOp;
 
 
 /**
@@ -146,7 +153,7 @@ public class ResponsibilityNames {
     public void buildResponsibilitiesToAccountObject(AttributeMergeBuilder amb, final String id,
             OperationOptions options) {
         
-        Set<String> attrToGet = getAttributesToGetSet(options); 
+        Set<String> attrToGet = getAttributesToGet(options); 
         if (attrToGet.contains(RESPS) && !isNewResponsibilityViews()) {
             //add responsibilities
             final List<String> responsibilities = getResponsibilities(id, RESPS_TABLE, false);
@@ -291,8 +298,8 @@ public class ResponsibilityNames {
             final String msg = "Oracle ERP SQL: {0} returned: RESP_ID = {1}, RESP_APPL_ID = {2}";
 
             ArrayList<SQLParam> params = new ArrayList<SQLParam>();
-            params.add(new SQLParam(configUserId));
-            params.add(new SQLParam(auditResponsibility));
+            params.add(new SQLParam("userId", configUserId));
+            params.add(new SQLParam("responsibilityName", auditResponsibility));
             PreparedStatement ps = null;
             ResultSet rs = null;
             try {
@@ -993,7 +1000,7 @@ public class ResponsibilityNames {
         final String method = "getResponsibilityNames";
         log.info( method);
 
-        Set<String> atg = getAttributesToGetSet(options);
+        Set<String> atg = getAttributesToGet(options);
         
         //TODO add filter one resp name to the responsibility query
         PreparedStatement st = null;
@@ -1186,56 +1193,65 @@ public class ResponsibilityNames {
      * @param schemaBld
      */
     public void schema(SchemaBuilder schemaBld) {
-        final EnumSet<Flags> STD_RNA = EnumSet.of(Flags.NOT_UPDATEABLE, Flags.NOT_CREATABLE);
+        final EnumSet<Flags> STD_NC = EnumSet.of(Flags.NOT_CREATABLE);
         
         ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
         oc.setType(RESP_NAMES_OC.getObjectClassValue());
 
         // The Name is supported attribute
-        oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
-        oc.addAttributeInfo(AttributeInfoBuilder.build(NAME, String.class, STD_RNA));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_NC));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(NAME, String.class, STD_NC));
         // name='userMenuNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_MENU_NAMES, String.class, STD_RNA));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_MENU_NAMES, String.class, STD_NC));
         // name='menuIds' type='string' audit='false'    
-        oc.addAttributeInfo(AttributeInfoBuilder.build(MENU_IDS, String.class, STD_RNA));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(MENU_IDS, String.class, STD_NC));
         // name='userFunctionNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_FUNCTION_NAMES, String.class, STD_RNA));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_FUNCTION_NAMES, String.class, STD_NC));
         // name='functionIds' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_IDS, String.class, STD_RNA));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_IDS, String.class, STD_NC));
         // name='formIds' type='string' audit='false'    
-        oc.addAttributeInfo(AttributeInfoBuilder.build(FORM_IDS, String.class, STD_RNA));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(FORM_IDS, String.class, STD_NC));
         // name='formNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(FORM_NAMES, String.class, STD_RNA));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(FORM_NAMES, String.class, STD_NC));
         // name='functionNames' type='string' audit='false'    
-        oc.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_NAMES, String.class, STD_RNA));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_NAMES, String.class, STD_NC));
         // name='userFormNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_FORM_NAMES, String.class, STD_RNA));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_FORM_NAMES, String.class, STD_NC));
         // name='readOnlyFormIds' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_IDS, String.class, STD_RNA));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_IDS, String.class, STD_NC));
         // name='readWriteOnlyFormIds' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_IDS, String.class, STD_RNA));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_IDS, String.class, STD_NC));
         // name='readOnlyFormNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_NAMES, String.class, STD_RNA));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_NAMES, String.class, STD_NC));
         // name='readOnlyFunctionNames' type='string' audit='false'    
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTION_NAMES, String.class, STD_RNA));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTION_NAMES, String.class, STD_NC));
         // name='readOnlyUserFormNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_USER_FORM_NAMES, String.class, STD_RNA));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_USER_FORM_NAMES, String.class, STD_NC));
         // name='readOnlyFunctionIds' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTIONS_IDS, String.class, STD_RNA));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTIONS_IDS, String.class, STD_NC));
         // name='readWriteOnlyFormNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_NAMES, String.class, STD_RNA));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_NAMES, String.class, STD_NC));
         // name='readWriteOnlyUserFormNames' type='string' audit='false'
         oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_USER_FORM_NAMES));
         // name='readWriteOnlyFunctionNames' type='string' audit='false'        
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_NAMES, String.class, STD_RNA));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_NAMES, String.class, STD_NC));
         // name='readWriteOnlyFunctionIds' type='string' audit='false'                 
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_IDS, String.class, STD_RNA));
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_IDS, String.class, STD_NC));
         //Define object class
-        schemaBld.defineObjectClass(oc.build());
+        final ObjectClassInfo respNamesOc = oc.build();
+        schemaBld.defineObjectClass(respNamesOc);
+        schemaBld.removeSupportedObjectClass(AuthenticateOp.class, respNamesOc);
+        schemaBld.removeSupportedObjectClass(DeleteOp.class, respNamesOc);
+        schemaBld.removeSupportedObjectClass(CreateOp.class, respNamesOc);
+        schemaBld.removeSupportedObjectClass(SchemaOp.class, respNamesOc);
+        schemaBld.removeSupportedObjectClass(ScriptOnConnectorOp.class, respNamesOc);
+        schemaBld.removeSupportedObjectClass(ScriptOnResourceOp.class, respNamesOc);        
 
+        /*
         //Auditor responsibilities
         oc = new ObjectClassInfoBuilder();
         oc.setType(AUDITOR_RESPS_OC.getObjectClassValue());
+        final EnumSet<Flags> STD_RNA = EnumSet.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE);
 
         // The Name is supported attribute
         oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
@@ -1277,7 +1293,14 @@ public class ResponsibilityNames {
         oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_IDS, String.class, STD_RNA));
         //Define object class
         schemaBld.defineObjectClass(oc.build());
-        
+        schemaBld.removeSupportedObjectClass(AuthenticateOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(DeleteOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(CreateOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(UpdateOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(SchemaOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(ScriptOnConnectorOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(ScriptOnResourceOp.class, oc.build());        
+
         //Resp object class
         oc = new ObjectClassInfoBuilder();
         oc.setType(RESP_OC.getObjectClassValue()); 
@@ -1285,6 +1308,13 @@ public class ResponsibilityNames {
         oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
         //Define object class
         schemaBld.defineObjectClass(oc.build());
+        schemaBld.removeSupportedObjectClass(AuthenticateOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(DeleteOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(CreateOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(UpdateOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(SchemaOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(ScriptOnConnectorOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(ScriptOnResourceOp.class, oc.build());          
         
         //Resp object class
         oc = new ObjectClassInfoBuilder();
@@ -1293,6 +1323,13 @@ public class ResponsibilityNames {
         oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
         //Define object class
         schemaBld.defineObjectClass(oc.build());
+        schemaBld.removeSupportedObjectClass(AuthenticateOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(DeleteOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(CreateOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(UpdateOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(SchemaOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(ScriptOnConnectorOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(ScriptOnResourceOp.class, oc.build());          
         
         //directResponsibilities object class
         oc = new ObjectClassInfoBuilder();
@@ -1301,6 +1338,13 @@ public class ResponsibilityNames {
         oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
         //Define object class
         schemaBld.defineObjectClass(oc.build());
+        schemaBld.removeSupportedObjectClass(AuthenticateOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(DeleteOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(CreateOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(UpdateOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(SchemaOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(ScriptOnConnectorOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(ScriptOnResourceOp.class, oc.build());          
         
         //directResponsibilities object class
         oc = new ObjectClassInfoBuilder();
@@ -1309,6 +1353,14 @@ public class ResponsibilityNames {
         oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
         //Define object class
         schemaBld.defineObjectClass(oc.build());
+        schemaBld.removeSupportedObjectClass(AuthenticateOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(DeleteOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(CreateOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(UpdateOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(SchemaOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(ScriptOnConnectorOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(ScriptOnResourceOp.class, oc.build());          
+        */
     }
     
     /**
@@ -1323,7 +1375,7 @@ public class ResponsibilityNames {
         
         List<String> auditorRespList = getResponsibilities(id, respLocation, activeRespsOnly);
         for (String respName : auditorRespList) {
-            AttributeMergeBuilder amb = new AttributeMergeBuilder(getAttributesToGetSet(options));
+            AttributeMergeBuilder amb = new AttributeMergeBuilder(getAttributesToGet(options));
             updateAuditorData(amb, respName);
 
             ConnectorObjectBuilder bld = new ConnectorObjectBuilder();

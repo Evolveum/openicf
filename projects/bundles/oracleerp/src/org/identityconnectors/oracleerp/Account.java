@@ -232,7 +232,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
                        
         //Get the person_id and set is it as a employee id
-        final String identity = getId(co, attrs);
+        final String identity = getName(co, attrs);
         final String person_id = getPersonId(identity, co, attrs);
         if (person_id != null) {
             // Person Id as a Employee_Id
@@ -349,10 +349,12 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             result = statement.executeQuery();
             while (result.next()) {
                 // create the connector object..
-                AttributeMergeBuilder amb = new AttributeMergeBuilder(getAttributesToGetSet(options));
+                final Set<String> attributesToGet = getAttributesToGet(options);
+                attributesToGet.addAll(DEFAULT_READ_COLUMNS);
+                AttributeMergeBuilder amb = new AttributeMergeBuilder(attributesToGet);
 
                 final Map<String, SQLParam> columnValues = SQLUtil.getColumnValues(result);
-                final String id = (String) columnValues.get(USER_ID).getValue();
+                final String id = columnValues.get(USER_ID).getValue().toString();
                 // get users account attributes
                 this.buildAccountObject(amb, columnValues);
                 
@@ -467,6 +469,47 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         // name='expirePassword' type='string' required='false' is mapped to PASSWORD_EXPIRED
         oc.addAttributeInfo(OperationalAttributeInfos.PASSWORD_EXPIRED);
         
+        
+        //Optional aggregated user attributes
+        final EnumSet<Flags> STD_NRD = EnumSet.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE, Flags.NOT_RETURNED_BY_DEFAULT);
+
+        // name='userMenuNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_MENU_NAMES, String.class, STD_NRD));
+        // name='menuIds' type='string' audit='false'    
+        oc.addAttributeInfo(AttributeInfoBuilder.build(MENU_IDS, String.class, STD_NRD));
+        // name='userFunctionNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_FUNCTION_NAMES, String.class, STD_NRD));
+        // name='functionIds' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_IDS, String.class, STD_NRD));
+        // name='formIds' type='string' audit='false'    
+        oc.addAttributeInfo(AttributeInfoBuilder.build(FORM_IDS, String.class, STD_NRD));
+        // name='formNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(FORM_NAMES, String.class, STD_NRD));
+        // name='functionNames' type='string' audit='false'    
+        oc.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_NAMES, String.class, STD_NRD));
+        // name='userFormNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_FORM_NAMES, String.class, STD_NRD));
+        // name='readOnlyFormIds' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_IDS, String.class, STD_NRD));
+        // name='readWriteOnlyFormIds' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_IDS, String.class, STD_NRD));
+        // name='readOnlyFormNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_NAMES, String.class, STD_NRD));
+        // name='readOnlyFunctionNames' type='string' audit='false'    
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTION_NAMES, String.class, STD_NRD));
+        // name='readOnlyUserFormNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_USER_FORM_NAMES, String.class, STD_NRD));
+        // name='readOnlyFunctionIds' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTIONS_IDS, String.class, STD_NRD));
+        // name='readWriteOnlyFormNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_NAMES, String.class, STD_NRD));
+        // name='readWriteOnlyUserFormNames' type='string' audit='false'
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_USER_FORM_NAMES));
+        // name='readWriteOnlyFunctionNames' type='string' audit='false'        
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_NAMES, String.class, STD_NRD));
+        // name='readWriteOnlyFunctionIds' type='string' audit='false'                 
+        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_IDS, String.class, STD_NRD));        
+        
         //Define object class
         schemaBld.defineObjectClass(oc.build());
     }
@@ -479,16 +522,14 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         Set<String> columnNamesToGet = DEFAULT_READ_COLUMNS;
         if (options != null && options.getAttributesToGet() != null) {
             columnNamesToGet = CollectionUtil.newCaseInsensitiveSet();
-        } 
-        
-        // Replace attributes to quoted columnNames
-        for (String attributeName : options.getAttributesToGet()) {
-            final String columnName = getColumnName(attributeName);
-            if ( columnName != null) {
-                columnNamesToGet.add(columnName);
+            // Replace attributes to quoted columnNames
+            for (String attributeName : options.getAttributesToGet()) {
+                final String columnName = getColumnName(attributeName);
+                if ( columnName != null) {
+                    columnNamesToGet.add(columnName);
+                }
             }
-        }
-
+        } 
         return columnNamesToGet;
     }
 
@@ -676,7 +717,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         // For all account query there is no need to replace or quote anything
         final DatabaseQueryBuilder query = new DatabaseQueryBuilder(tblname, personColumns);
         final FilterWhereBuilder where = new FilterWhereBuilder();
-        where.addBind(PERSON_ID, "=", new SQLParam(personId, Types.VARCHAR));
+        where.addBind(new SQLParam(PERSON_ID, personId, Types.VARCHAR), "=");
         query.setWhere(where);        
         
         final String sql = query.getSQL();
@@ -850,7 +891,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         }
 
         final Map<String, SQLParam> userValues = CollectionUtil.newCaseInsensitiveMap();
-        final SQLParam currentDate = new SQLParam(new java.sql.Date(System.currentTimeMillis()), Types.DATE);
+        final java.sql.Date currentDate = new java.sql.Date(System.currentTimeMillis());
 
         // At first, couldn't do anything to null fields except make sql call
         // updating tables directly. Bug#9005 forced us to find oracle constants
@@ -864,7 +905,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             if (attr.is(Name.NAME)) {
                 //         cstmt1.setString(1, identity.toUpperCase());
                 final String userName = AttributeUtil.getAsStringValue(attr).toUpperCase();
-                userValues.put(USER_NAME, new SQLParam(userName, Types.VARCHAR));
+                userValues.put(USER_NAME, new SQLParam(USER_NAME, userName, Types.VARCHAR));
                 log.ok("{0} => {1}, Types.VARCHAR", USER_NAME, userName);
             } else {
                 if (attr.is(OperationalAttributes.PASSWORD_NAME)) {
@@ -877,9 +918,9 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                     }*/
                     if (AttributeUtil.getSingleValue(attr) != null) {
                         final GuardedString password = AttributeUtil.getGuardedStringValue(attr);
-                        userValues.put(UNENCRYPT_PWD, new SQLParam(password));
+                        userValues.put(UNENCRYPT_PWD, new SQLParam(UNENCRYPT_PWD, password));
                         log.ok("{0} is a password", UNENCRYPT_PWD);
-                        userValues.put(PWD_DATE, currentDate);
+                        userValues.put(PWD_DATE, new SQLParam(PWD_DATE, currentDate, Types.DATE));
                         log.ok("append also {0} => {1} ,Types.DATE", PWD_DATE ,currentDate);
                     }
 
@@ -920,19 +961,19 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                         passwordExpired = AttributeUtil.getBooleanValue(attr);
                     }
                     if (passwordExpired) {
-                        userValues.put(LAST_LOGON_DATE, new SQLParam(NULL_DATE));
+                        userValues.put(LAST_LOGON_DATE, new SQLParam(LAST_LOGON_DATE, NULL_DATE));
                         log.ok("passwordExpired: {0} => NULL_DATE", LAST_LOGON_DATE);
-                        userValues.put(PWD_DATE, new SQLParam(NULL_DATE));
+                        userValues.put(PWD_DATE, new SQLParam(PWD_DATE, NULL_DATE));
                         log.ok("append also {0} => NULL_DATE", PWD_DATE);
                     } else if (create) {
-                        userValues.put(LAST_LOGON_DATE, currentDate);
+                        userValues.put(LAST_LOGON_DATE,  new SQLParam(LAST_LOGON_DATE, currentDate));
                         log.ok("create account with not expired password {0} => {1}", LAST_LOGON_DATE, currentDate);
                     }
 
                 } else if (attr.is(OWNER)) {
                     //         cstmt1.setString(2, (String)accountAttrChanges.get(OWNER));
                     final String owner = AttributeUtil.getAsStringValue(attr);
-                    userValues.put(OWNER, new SQLParam(owner, Types.VARCHAR));
+                    userValues.put(OWNER, new SQLParam(OWNER, owner, Types.VARCHAR));
                     log.ok("{0} = > {1}, Types.VARCHAR", OWNER, owner);
                 } else if (attr.is(START_DATE)) {
                     /* ------ adapter code ---------- 
@@ -946,7 +987,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                     final String dateString = AttributeUtil.getAsStringValue(attr);
                     if (dateString != null) {
                         Timestamp tms = stringToTimestamp(dateString);// stringToTimestamp(dateString);
-                        userValues.put(START_DATE, new SQLParam(tms, Types.TIMESTAMP));
+                        userValues.put(START_DATE, new SQLParam(START_DATE, tms, Types.TIMESTAMP));
                         log.ok("{0} => {1} , Types.TIMESTAMP", START_DATE, tms);
                     }
 
@@ -965,16 +1006,16 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                     }*/
 
                     if (AttributeUtil.getSingleValue(attr) == null) {
-                        userValues.put(END_DATE, new SQLParam(NULL_DATE));
+                        userValues.put(END_DATE, new SQLParam(END_DATE, NULL_DATE));
                         log.ok("NULL {0} => NULL_DATE : continue", END_DATE);
                     } else {
                         final String dateString = AttributeUtil.getAsStringValue(attr);
                         if (SYSDATE.equalsIgnoreCase(dateString)) {
-                            userValues.put(END_DATE, new SQLParam(SYSDATE));
+                            userValues.put(END_DATE, new SQLParam(END_DATE, SYSDATE));
                             log.ok("sysdate value in {0} => {1} : continue", END_DATE, SYSDATE);
                         } else {
                         Timestamp tms = stringToTimestamp(dateString);
-                        userValues.put(END_DATE, new SQLParam(tms, Types.TIMESTAMP));
+                        userValues.put(END_DATE, new SQLParam(END_DATE, tms, Types.TIMESTAMP));
                         log.ok("{0} => {1}, Types.TIMESTAMP", END_DATE, tms);
                         }
                     }
@@ -990,11 +1031,11 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                     } 
                     */
                     if (AttributeUtil.getSingleValue(attr) == null) {
-                        userValues.put(DESCR, new SQLParam(NULL_CHAR, Types.VARCHAR));
+                        userValues.put(DESCR, new SQLParam(DESCR, NULL_CHAR, Types.VARCHAR));
                         log.ok("NULL {0} => NULL_CHAR", DESCR);
                     } else {
                         final String descr = AttributeUtil.getAsStringValue(attr);
-                        userValues.put(DESCR, new SQLParam(descr, Types.VARCHAR));
+                        userValues.put(DESCR, new SQLParam(DESCR, descr, Types.VARCHAR));
                         log.ok("{0} => {1}, Types.VARCHAR", DESCR, descr);
                     }
 
@@ -1009,11 +1050,11 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                         }
                     }*/
                     if (AttributeUtil.getSingleValue(attr) == null) {
-                        userValues.put(PWD_ACCESSES_LEFT, new SQLParam(NULL_NUMBER, Types.INTEGER));
+                        userValues.put(PWD_ACCESSES_LEFT, new SQLParam(PWD_ACCESSES_LEFT, NULL_NUMBER, Types.INTEGER));
                         log.ok("NULL {0} => NULL_NUMBER", PWD_ACCESSES_LEFT);
                     } else {
                         final Integer accessLeft = AttributeUtil.getIntegerValue(attr);
-                        userValues.put(PWD_ACCESSES_LEFT, new SQLParam(accessLeft, Types.INTEGER));
+                        userValues.put(PWD_ACCESSES_LEFT, new SQLParam(PWD_ACCESSES_LEFT, accessLeft, Types.INTEGER));
                         log.ok("{0} => {1}, Types.INTEGER", DESCR, accessLeft);
                     }
 
@@ -1028,11 +1069,11 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                        }
                     } */
                     if (AttributeUtil.getSingleValue(attr) == null) {
-                        userValues.put(PWD_LIFE_ACCESSES, new SQLParam(NULL_NUMBER, Types.INTEGER));
+                        userValues.put(PWD_LIFE_ACCESSES, new SQLParam(PWD_LIFE_ACCESSES, NULL_NUMBER, Types.INTEGER));
                         log.ok("NULL {0} => NULL_NUMBER", PWD_LIFE_ACCESSES);
                     } else {
                         final Integer lifeAccess = AttributeUtil.getIntegerValue(attr);
-                        userValues.put(PWD_LIFE_ACCESSES, new SQLParam(lifeAccess, Types.INTEGER));
+                        userValues.put(PWD_LIFE_ACCESSES, new SQLParam(PWD_LIFE_ACCESSES, lifeAccess, Types.INTEGER));
                         log.ok("{0} => {1}, Types.INTEGER", PWD_LIFE_ACCESSES, lifeAccess);
                     }
 
@@ -1048,11 +1089,11 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                     } 
                     */
                     if (AttributeUtil.getSingleValue(attr) == null) {
-                        userValues.put(PWD_LIFE_DAYS, new SQLParam(NULL_NUMBER, Types.INTEGER));
+                        userValues.put(PWD_LIFE_DAYS, new SQLParam(PWD_LIFE_DAYS, NULL_NUMBER, Types.INTEGER));
                         log.ok("NULL {0} => NULL_NUMBER", PWD_LIFE_DAYS);
                     } else {
                        final Integer lifeDays = AttributeUtil.getIntegerValue(attr);
-                       userValues.put(PWD_LIFE_DAYS, new SQLParam(lifeDays, Types.INTEGER));
+                       userValues.put(PWD_LIFE_DAYS, new SQLParam(PWD_LIFE_DAYS, lifeDays, Types.INTEGER));
                         log.ok("{0} => {1}, Types.INTEGER", PWD_LIFE_DAYS, lifeDays);
                     }
 
@@ -1068,11 +1109,11 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                     } 
                     */
                     if (AttributeUtil.getSingleValue(attr) == null) {
-                        userValues.put(EMP_ID, new SQLParam(NULL_NUMBER, Types.INTEGER));
+                        userValues.put(EMP_ID, new SQLParam(EMP_ID, NULL_NUMBER, Types.INTEGER));
                         log.ok("NULL {0} => NULL_NUMBER", EMP_ID);
                     } else {
                         final Integer empId = AttributeUtil.getIntegerValue(attr);                        
-                        userValues.put(EMP_ID, new SQLParam(empId, Types.INTEGER));
+                        userValues.put(EMP_ID, new SQLParam(EMP_ID, empId, Types.INTEGER));
                         log.ok("{0} => {1}, Types.INTEGER", EMP_ID, empId);
                     }
 
@@ -1087,11 +1128,11 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                     } 
                     */
                     if (AttributeUtil.getSingleValue(attr) == null) {
-                        userValues.put(EMAIL, new SQLParam(NULL_CHAR, Types.VARCHAR));
+                        userValues.put(EMAIL, new SQLParam(EMAIL, NULL_CHAR, Types.VARCHAR));
                         log.ok("NULL {0} => NULL_CHAR", EMAIL);
                     } else {
                         final String email = AttributeUtil.getAsStringValue(attr);                        
-                        userValues.put(EMAIL, new SQLParam(email, Types.VARCHAR));
+                        userValues.put(EMAIL, new SQLParam(EMAIL, email, Types.VARCHAR));
                         log.ok("{0} => {1}, Types.VARCHAR", EMAIL, email);
                     }
 
@@ -1106,11 +1147,11 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                     } 
                     */
                     if (AttributeUtil.getSingleValue(attr) == null) {
-                        userValues.put(FAX, new SQLParam(NULL_CHAR, Types.VARCHAR));
+                        userValues.put(FAX, new SQLParam(FAX, NULL_CHAR, Types.VARCHAR));
                         log.ok("NULL {0} => NULL_CHAR", FAX);
                     } else {
                         final String fax = AttributeUtil.getAsStringValue(attr);
-                        userValues.put(FAX, new SQLParam(fax, Types.VARCHAR));
+                        userValues.put(FAX, new SQLParam(FAX, fax, Types.VARCHAR));
                         log.ok("{0} => {1}, Types.VARCHAR", FAX, fax);
                     }
 
@@ -1126,11 +1167,11 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                     } 
                     */
                     if (AttributeUtil.getSingleValue(attr) == null) {
-                        userValues.put(CUST_ID, new SQLParam(NULL_NUMBER, Types.VARCHAR));
+                        userValues.put(CUST_ID, new SQLParam(CUST_ID, NULL_NUMBER, Types.VARCHAR));
                         log.ok("NULL {0} => NULL_NUMBER", CUST_ID);
                     } else {
                         final Integer custId = AttributeUtil.getIntegerValue(attr);
-                        userValues.put(CUST_ID, new SQLParam(custId, Types.INTEGER));
+                        userValues.put(CUST_ID, new SQLParam(CUST_ID, custId, Types.INTEGER));
                         log.ok("{0} => {1}, Types.INTEGER", CUST_ID, custId);
                     }
 
@@ -1146,11 +1187,11 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                     } 
                     */
                     if (AttributeUtil.getSingleValue(attr) == null) {
-                        userValues.put(SUPP_ID, new SQLParam(NULL_NUMBER, Types.VARCHAR));
+                        userValues.put(SUPP_ID, new SQLParam(SUPP_ID, NULL_NUMBER, Types.VARCHAR));
                         log.ok("NULL {0} => NULL_NUMBER", SUPP_ID);
                     } else {
                         final Integer suppId = AttributeUtil.getIntegerValue(attr);
-                        userValues.put(SUPP_ID, new SQLParam(suppId, Types.INTEGER));
+                        userValues.put(SUPP_ID, new SQLParam(SUPP_ID, suppId, Types.INTEGER));
                         log.ok("{0} => {1}, Types.INTEGER", SUPP_ID, suppId);
                     }
                 } 
@@ -1234,7 +1275,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                continue; //skip all non setup values
             }
             if (!isDefault(val)) {
-                ret.add(new SQLParam(val));
+                ret.add(val);
             }
         }
         return ret;

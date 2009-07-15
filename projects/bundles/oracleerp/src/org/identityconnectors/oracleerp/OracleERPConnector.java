@@ -440,6 +440,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         // The Responsibilities
         getRespNames().schema(schemaBld);
         
+        // The securing attributes
         getSecAttrs().schema(schemaBld);
         return schemaBld.build();
     }
@@ -485,9 +486,9 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
                 final String msg = "Oracle ERP: {0}FND_GLOBAL.APPS_INITIALIZE({1}, {2}, {3}) called.";
                 log.ok(msg, app(), getConfigUserId(), respId, respApplId);
                 List<SQLParam> pars = new ArrayList<SQLParam>();
-                pars.add(new SQLParam(getConfigUserId(), Types.VARCHAR));
-                pars.add(new SQLParam(respId, Types.VARCHAR));
-                pars.add(new SQLParam(respApplId, Types.VARCHAR));
+                pars.add(new SQLParam("userId", getConfigUserId(), Types.VARCHAR));
+                pars.add(new SQLParam("respId", respId, Types.VARCHAR));
+                pars.add(new SQLParam("respAppId", respApplId, Types.VARCHAR));
 
                 cs = getConn().prepareCall(sql, pars);
                 cs.execute();

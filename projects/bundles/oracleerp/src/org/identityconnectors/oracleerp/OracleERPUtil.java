@@ -305,9 +305,9 @@ public class OracleERPUtil {
      * @param options
      * @return set of attribute names to get
      */
-    public static Set<String> getAttributesToGetSet(OperationOptions options) {
+    public static Set<String> getAttributesToGet(OperationOptions options) {
         SortedSet<String> _attrToGet = CollectionUtil.newCaseInsensitiveSet();
-        if(options != null) {
+        if(options != null && options.getAttributesToGet() != null) {
             for (String toGet : options.getAttributesToGet()) {
                 _attrToGet.add(toGet);
             }

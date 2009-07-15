@@ -22,16 +22,20 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+import static org.identityconnectors.common.StringUtil.isBlank;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.contract.data.DataProvider;
 import org.identityconnectors.contract.test.ConnectorHelper;
@@ -39,7 +43,6 @@ import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.api.ConnectorFacadeFactory;
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeInfoUtil;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
@@ -78,20 +81,10 @@ public class OracleERPConnectorTests {
     
     static  DataProvider dataProvider = null; 
     
-
     // Test facade
     private ConnectorFacade facade = null;
 
     private OracleERPConfiguration config;
-
-    
-    /*
-     * Connector test properties. On your computer, these are defined in: 
-     * "user.home"/.connector/connecotr-oracleerp/build.groovy          ... -Dproject.name=connector-oracleerp
-     * "user.home"/.connector/connecotr-oracleerp/11_5_9/build.groovy   ... -Dconfiguration=11_5_9
-     * "user.home"/.connector/connecotr-oracleerp/11_5_10/build.groovy  ... -Dconfiguration=11_5_10
-     * "user.home"/.connector/connecotr-oracleerp/12_0_2/build.groovy   ... -Dconfiguration=12
-     */  
     
     //set up logging
     private static final Log log = Log.getLog(OracleERPConnectorTests.class);
@@ -159,10 +152,11 @@ public class OracleERPConnectorTests {
     @Test
     public void testConfigurationProperties() {
         assertNotNull(config.getDriver());
-        assertNotNull(config.getPort());
-        assertNotNull(config.getDatabase());
-        assertNotNull(config.getHost());
-        assertNotNull(config.getUser());
+        if(isBlank(config.getUrl())) {
+            assertNotNull(config.getHost());
+            assertNotNull(config.getUser());
+            assertNotNull(config.getPort());
+        }
         assertNotNull(config.getPassword());
         assertNotNull(config.getAccountsIncluded());
         assertFalse(config.isActiveAccountsOnly());
@@ -172,6 +166,9 @@ public class OracleERPConnectorTests {
         assertFalse(config.isReturnSobOrgAttrs());
         assertNotNull(config.getUserActions());        
         assertNotNull(config.getConnectionUrl());
+        
+        
+        
     }
     
     /**
@@ -184,30 +181,54 @@ public class OracleERPConnectorTests {
         conn.test();
     }
 
-
     /**
      * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
      */
-    //@Test
+    @Test
+    public void testCreateRequiredOnly() {
+        assertNotNull(facade);
+        OracleERPConnector c = new OracleERPConnector(); 
+        c.init(this.config);        
+        final Set<Attribute> attrs = dataProvider.getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
+        final Uid uid = c.create(ObjectClass.ACCOUNT, attrs, null);
+        assertNotNull(uid);
+        
+        List<ConnectorObject> results = TestHelpers
+        .searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid));
+        assertTrue("expect 1 connector object", results.size() == 1);
+        System.out.println(results.get(0).getAttributes());
+    }
+    
+    
+    /**
+     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     */
+    @Test
     public void testCreate() {
         assertNotNull(facade);
-        final Set<Attribute> attrs = createAllAccountAttributes();
-        quitellyDeleteUser(AttributeUtil.getNameFromAttributes(attrs).getName());
-        final Uid uid = facade.create(ObjectClass.ACCOUNT, attrs, null);
+        final Set<Attribute> attrs = dataProvider.getAttributeSet(ACCOUNT_ALL_ATTRS);
+        
+        OracleERPConnector c = new OracleERPConnector(); 
+        c.init(this.config);         
+        final Uid uid = c.create(ObjectClass.ACCOUNT, attrs, null);
         assertNotNull(uid);
-        //assertEquals(tstName, uid.getUidValue());
-        //Delete it at the end
-        quitellyDeleteUser(uid.getUidValue());
+
+        List<ConnectorObject> results = TestHelpers
+        .searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid));
+        assertTrue("expect 1 connector object", results.size() == 1);
+        System.out.println(results.get(0).getAttributes());
     }    
     
 
+    
+    
     /**
      * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
      */
     //@Test
     public void testUpdate() {
         assertNotNull(facade);
-        final Set<Attribute> attrs = createAllAccountAttributes();
+        final Set<Attribute> attrs = dataProvider.getAttributeSet(ACCOUNT_ALL_ATTRS);
         final Uid uid = facade.create(ObjectClass.ACCOUNT, attrs, null);
         assertNotNull(uid);
         //assertEquals(tstName, uid.getUidValue());
@@ -222,57 +243,11 @@ public class OracleERPConnectorTests {
     //@Test
     public void testDelete() {
         assertNotNull(facade);
-        final Set<Attribute> attrs = createAllAccountAttributes();
+        final Set<Attribute> attrs = dataProvider.getAttributeSet(ACCOUNT_ALL_ATTRS);
         final Uid uid = facade.create(ObjectClass.ACCOUNT, attrs, null);
         assertNotNull(uid);
     }    
-    
-
-    /**
-     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
-     */
-    @Test
-    public void testCreateNullDefaults() {
-        assertNotNull(facade);
-        OracleERPConnector c = new OracleERPConnector(); 
-        c.init(this.config);        
-        final Set<Attribute> attrs = createNullAccountAttributes();
-        final Uid uid = c.create(ObjectClass.ACCOUNT, attrs, null);
-        assertNotNull(uid);
-        
-        List<ConnectorObject> results = TestHelpers
-        .searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid));
-        assertTrue("expect 1 connector object", results.size() == 1);
- //       assertEquals(tstName, uid.getUidValue());
-        //Delete it at the end
-        quitellyDeleteUser(uid);
-    }
-    
-    /**
-     * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
-     * @throws NoSuchFieldException 
-     * @throws SecurityException 
-     * @throws IllegalAccessException 
-     * @throws IllegalArgumentException 
-     */
-    @Test
-    public void testDefaultConfiguration() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
-        assertNotNull(config.getDriver());
-        assertNotNull(config.getPort());
-        assertNotNull(config.getDatabase());
-        assertNotNull(config.getHost());
-        assertNotNull(config.getUser());
-        assertNotNull(config.getPassword());
-        assertNotNull(config.getAccountsIncluded());
-        assertFalse(config.isActiveAccountsOnly());
-        assertNotNull(config.getAuditResponsibility());
-        assertTrue(config.isManageSecuringAttrs());
-        assertFalse(config.isNoSchemaId());
-        assertFalse(config.isReturnSobOrgAttrs());
-        assertNotNull(config.getUserActions());        
-        assertNotNull(config.getConnectionUrl());       
-    }    
-
+ 
     /**
      * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
      */
@@ -282,63 +257,12 @@ public class OracleERPConnectorTests {
     }
 
     /**
-     * @return
-     */
-    private Set<Attribute> createAllAccountAttributes() {
-        final Set<Attribute> attrs = dataProvider.getAttributeSet(ACCOUNT_ALL_ATTRS);       
-        attrs.add(AttributeBuilder.build(START_DATE, (new Timestamp(System.currentTimeMillis()-10*24*3600000)).toString()));
-        attrs.add(AttributeBuilder.build(END_DATE, (new Timestamp(System.currentTimeMillis()+10*24*3600000)).toString()));        
-        
-        /*        attrs.add(AttributeBuilder.buildPasswordExpired(false));                
-        attrs.add(AttributeBuilder.build(DESCR, "descrip"));
-        attrs.add(AttributeBuilder.build(PWD_ACCESSES_LEFT, 54));
-        attrs.add(AttributeBuilder.build(PWD_LIFE_ACCESSES, 55));
-        attrs.add(AttributeBuilder.build(PWD_LIFE_DAYS, 56));
-        attrs.add(AttributeBuilder.build(EMP_ID, 101));
-        attrs.add(AttributeBuilder.build(EMAIL, "test@google.com"));
-        attrs.add(AttributeBuilder.build(FAX, "12456"));
-        attrs.add(AttributeBuilder.build(CUST_ID, 120));
-        attrs.add(AttributeBuilder.build(SUPP_ID, 130));*/
-        return attrs;
-    }
-    
-    /**
-     * @return
-     */
-    private Set<Attribute> createNullAccountAttributes() {
-        Set<Attribute> attrs = createRequiredAccountAttributes();
-        attrs.add(AttributeBuilder.buildPasswordExpired(false));        
-        attrs.add(AttributeBuilder.build(START_DATE, (String) null));
-        attrs.add(AttributeBuilder.build(DESCR, (String) null));
-        attrs.add(AttributeBuilder.build(END_DATE, (String) null));        
-        attrs.add(AttributeBuilder.build(PWD_ACCESSES_LEFT, (String) null));
-        attrs.add(AttributeBuilder.build(PWD_LIFE_ACCESSES, (String) null));
-        attrs.add(AttributeBuilder.build(PWD_LIFE_DAYS, (String) null));
-        attrs.add(AttributeBuilder.build(EMP_ID, (String) null));
-        attrs.add(AttributeBuilder.build(EMAIL, (String) null));
-        attrs.add(AttributeBuilder.build(FAX, (String) null));
-        attrs.add(AttributeBuilder.build(CUST_ID, (String) null));
-        attrs.add(AttributeBuilder.build(SUPP_ID, (String) null));
-        return attrs;
-    }
-
-    
-    /**
-     * @return
-     */
-    private Set<Attribute> createRequiredAccountAttributes() {
-        final Set<Attribute> attrs = dataProvider.getAttributeSet(ACCOUNT_REQUIRED_ATTRS);       
-        return attrs;
-    }
-    
-    
-    /**
      * @param userName
      * @param testPassword2
      * @return
      */
     private Uid createUser() {
-        Set<Attribute> tuas = dataProvider.getAttributeSet(NEW_USER_ATTRS);
+        Set<Attribute> tuas = dataProvider.getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
         assertNotNull(tuas);
         return facade.create(ObjectClass.ACCOUNT, tuas, null);
     }     
@@ -371,5 +295,73 @@ public class OracleERPConnectorTests {
             log.error(ex, "expected");
             // handle exception
         }         
+    }      
+    
+    
+    /**
+     * @param expected
+     * @param actual
+     */
+    protected void attributeSetsEquals(final Schema schema, Set<Attribute> expected, Set<Attribute> actual, String ... ignore) {
+        attributeSetsEquals(schema, AttributeUtil.toMap(expected), AttributeUtil.toMap(actual), ignore);              
+    }    
+    
+     /**
+     * @param expected
+     * @param actual
+     */
+    protected void attributeSetsEquals(final Schema schema, final Map<String, Attribute> expMap, final Map<String, Attribute> actMap, String ... ignore) {
+        log.ok("attributeSetsEquals");
+        final Set<String> ignoreSet = new HashSet<String>(Arrays.asList(ignore));
+        if(schema != null ) {
+            final ObjectClassInfo oci = schema.findObjectClassInfo(ObjectClass.ACCOUNT_NAME);
+            final Set<AttributeInfo> ais = oci.getAttributeInfo();
+            for (AttributeInfo ai : ais) {
+                //ignore not returned by default
+                if (!ai.isReturnedByDefault()) {
+                    ignoreSet.add(ai.getName());
+                }
+                //ignore not readable attributes
+                if (!ai.isReadable()) {
+                    ignoreSet.add(ai.getName());
+                }
+            }
+        }
+        
+        Set<String> names = CollectionUtil.newCaseInsensitiveSet();
+        names.addAll(expMap.keySet());
+        names.addAll(actMap.keySet());
+        names.removeAll(ignoreSet);
+        names.remove(Uid.NAME);
+        int missing = 0; 
+        List<String> mis = new ArrayList<String>();
+        List<String> extra = new ArrayList<String>();        
+        for (String attrName : names) {
+            final Attribute expAttr = expMap.get(attrName);
+            final Attribute actAttr = actMap.get(attrName);
+            if(expAttr != null && actAttr != null ) {
+                assertEquals(attrName, expAttr, actAttr);
+            } else {
+                missing = missing + 1;
+                if(expAttr != null) {
+                    mis.add(expAttr.getName());
+                }
+                if(actAttr != null) {
+                    extra.add(actAttr.getName());                    
+                }
+            }
+        }
+        assertEquals("missing attriburtes extra "+extra+" , missing "+mis, 0, missing); 
+        log.ok("attributeSets are equal!");
+    }       
+    
+    /**
+     * @param cfg
+     * @return
+     */
+    protected OracleERPConnector getConnector(OracleERPConfiguration cfg) {
+        OracleERPConnector con = new OracleERPConnector();
+        con.init(cfg);
+        return con;
     }      
 }

@@ -46,6 +46,13 @@ import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
+import org.identityconnectors.framework.spi.operations.AuthenticateOp;
+import org.identityconnectors.framework.spi.operations.CreateOp;
+import org.identityconnectors.framework.spi.operations.DeleteOp;
+import org.identityconnectors.framework.spi.operations.SchemaOp;
+import org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp;
+import org.identityconnectors.framework.spi.operations.ScriptOnResourceOp;
+import org.identityconnectors.framework.spi.operations.UpdateOp;
 
 /**
  * Main implementation of the OracleErp Connector
@@ -118,19 +125,37 @@ public class UserSecuringAttrs  {
      * @param schemaBld 
      */
     public void schema(SchemaBuilder schemaBld) {
+        /*
+         Seems to be hidden object class, no contract tests 
+         
         //securityGroups object class
         ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
         oc.setType(SEC_GROUPS_OC.getObjectClassValue()); 
         oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class));
         //Define object class
         schemaBld.defineObjectClass(oc.build());
+        schemaBld.removeSupportedObjectClass(AuthenticateOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(DeleteOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(CreateOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(UpdateOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(SchemaOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(ScriptOnConnectorOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(ScriptOnResourceOp.class, oc.build());  
         
         //securingAttrs object class
         oc = new ObjectClassInfoBuilder();
         oc.setType(SEC_ATTRS_OC.getObjectClassValue()); 
         oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class));
         //Define object class
-        schemaBld.defineObjectClass(oc.build());        
+        schemaBld.defineObjectClass(oc.build());
+        schemaBld.removeSupportedObjectClass(AuthenticateOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(DeleteOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(CreateOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(UpdateOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(SchemaOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(ScriptOnConnectorOp.class, oc.build());
+        schemaBld.removeSupportedObjectClass(ScriptOnResourceOp.class, oc.build());
+        */  
     }
 
 
@@ -283,29 +308,26 @@ public class UserSecuringAttrs  {
             sql = "{ call " + co.app()
                     + "icx_user_sec_attr_pub.create_user_sec_attr(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
             cstmt1 = co.getConn().prepareCall(sql);
-            msg = "Oracle ERP: securing attribute create SQL: " + sql;
-            log.ok(msg);
-            
 
-            cstmt1.setInt(1, 1);
             msg = "Oracle ERP: api_version_number = " + 1;
             log.ok(msg);
+            cstmt1.setInt(1, 1);
             
-            cstmt1.setNull(2, java.sql.Types.VARCHAR);
             msg = "Oracle ERP: init_msg_list = NULL";
             log.ok(msg);
+            cstmt1.setNull(2, java.sql.Types.VARCHAR);
             
-            cstmt1.setNull(3, java.sql.Types.VARCHAR);
             msg = "Oracle ERP: simulate = NULL";
             log.ok(msg);
+            cstmt1.setNull(3, java.sql.Types.VARCHAR);
             
-            cstmt1.setNull(4, java.sql.Types.VARCHAR);
             msg = "Oracle ERP: commit = NULL";
             log.ok(msg);
+            cstmt1.setNull(4, java.sql.Types.VARCHAR);
             
-            cstmt1.setNull(5, java.sql.Types.NUMERIC);
             msg = "Oracle ERP: validation_level = NULL";
             log.ok(msg);
+            cstmt1.setNull(5, java.sql.Types.NUMERIC);
             
             // return_status
             cstmt1.registerOutParameter(6, java.sql.Types.VARCHAR);
@@ -313,84 +335,80 @@ public class UserSecuringAttrs  {
             cstmt1.registerOutParameter(7, java.sql.Types.NUMERIC);
             //msg_data
             cstmt1.registerOutParameter(8, java.sql.Types.VARCHAR);
-            cstmt1.setInt(9, intUserId);
+
             msg = "Oracle ERP: web_user_id = " + intUserId;
             log.ok(msg);
+            cstmt1.setInt(9, intUserId);
             
-            cstmt1.setString(10, attributeCode);
             msg = "Oracle ERP: attribute_code = " + attributeCode;
             log.ok(msg);
+            cstmt1.setString(10, attributeCode);
             
             int attrApplId = 0;
             if (strAttrApplId != null) {
                 attrApplId = new Integer(strAttrApplId).intValue();
             }
-            cstmt1.setInt(11, attrApplId);
             msg = "Oracle ERP: attribute_appl_id = " + strAttrApplId;
             log.ok(msg);
+            cstmt1.setInt(11, attrApplId);
             
             if (dataType.equalsIgnoreCase("VARCHAR2")) {
-                cstmt1.setString(12, value);
                 msg = "Oracle ERP: varchar2_value = " + value;
                 log.ok(msg);
+                cstmt1.setString(12, value);
                 
             } else {
-                cstmt1.setNull(12, Types.VARCHAR);
                 msg = "Oracle ERP: varchar2_value = null";
                 log.ok(msg);
-                
+                cstmt1.setNull(12, Types.VARCHAR);                
             }
 
             if (dataType.equalsIgnoreCase("DATE")) {
-                cstmt1.setTimestamp(13, java.sql.Timestamp.valueOf(value));
                 msg = "Oracle ERP: date_value = " + value;
                 log.ok(msg);
-                
-
+                cstmt1.setTimestamp(13, java.sql.Timestamp.valueOf(value));               
             } else {
-                cstmt1.setNull(13, java.sql.Types.DATE);
                 msg = "Oracle ERP: date_value = NULL";
                 log.ok(msg);
-                
+                cstmt1.setNull(13, java.sql.Types.DATE);                
             }
             if (dataType.equalsIgnoreCase("NUMBER")) {
                 if (value != null) {
                     int intValue = new Integer(value).intValue();
-                    cstmt1.setInt(14, intValue);
                     msg = "Oracle ERP: number_value = " + intValue;
                     log.ok(msg);
-                    
+                    cstmt1.setInt(14, intValue);                   
                 }
             } else {
-                cstmt1.setNull(14, java.sql.Types.NUMERIC);
                 msg = "Oracle ERP: number_value = null";
                 log.ok(msg);
-                
+                cstmt1.setNull(14, java.sql.Types.NUMERIC);
             }
-            cstmt1.setInt(15, getAdminUserId());
             msg = "Oracle ERP: created_by = " + getAdminUserId();
             log.ok(msg);
+            cstmt1.setInt(15, getAdminUserId());
             
             java.sql.Date sqlDate = getCurrentDate();
-            cstmt1.setDate(16, sqlDate);
             msg = "Oracle ERP: creation_date = sysdate";
             log.ok(msg);
+            cstmt1.setDate(16, sqlDate);
             
-            cstmt1.setInt(17, getAdminUserId());
             msg = "Oracle ERP: last_updated_by = " + getAdminUserId();
             log.ok(msg);
+            cstmt1.setInt(17, getAdminUserId());
             
-            cstmt1.setDate(18, sqlDate);
             msg = "Oracle ERP: last_updated_date = sysdate";
             log.ok(msg);
+            cstmt1.setDate(18, sqlDate);
             
-            cstmt1.setInt(19, getAdminUserId());
             msg = "Oracle ERP: last_update_login = " + getAdminUserId();
             log.ok(msg);
+            cstmt1.setInt(19, getAdminUserId());
             
 
             cstmt1.execute();
             // cstmt1 closed in finally below
+            log.ok(method);
 
         } catch (SQLException e) {
             final String msg = "SQL Exception:" + e.getMessage();
@@ -405,7 +423,6 @@ public class UserSecuringAttrs  {
             SQLUtil.closeQuietly(cstmt1);
             cstmt1 = null;
         }
-        log.ok(method);
     } // addSecuringAttr()
 
     /**    PROCEDURE DELETE_USER_SEC_ATTR
