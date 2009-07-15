@@ -32,12 +32,12 @@ import org.identityconnectors.solaris.command.MatchBuilder;
 import org.identityconnectors.solaris.command.closure.ErrorClosure;
 import org.identityconnectors.solaris.command.closure.NullClosure;
 
-public class SudoUtil {
+class SudoUtil {
     private static final String SUDO_START_COMMAND = "sudo -v";
     private static final String SUDO_RESET_COMMAND = "sudo -k";
     
     // purely based on RA, TODO test 
-    public static void addSudoStart(SolarisConfiguration config, final SolarisConnection conn) {
+    public static void doSudoStart(SolarisConfiguration config, final SolarisConnection conn) {
         if (config.isSudoAuth()) {
             try {
                 // 1) send sudo reset command
@@ -73,7 +73,7 @@ public class SudoUtil {
     }
     
     // purely based on RA, TODO test 
-    public static void addSudoReset(SolarisConfiguration config, SolarisConnection conn) {
+    public static void doSudoReset(SolarisConfiguration config, SolarisConnection conn) {
         if (config.isSudoAuth()) {
             // 1) send sudo reset command
             try {

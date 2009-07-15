@@ -65,11 +65,11 @@ public abstract class AbstractOp {
         return _cmdBuilder;
     }
     
-    protected final void addSudoStart() {
-        SudoUtil.addSudoStart(getConfiguration(), getConnection());
+    protected final void doSudoStart() {
+        SudoUtil.doSudoStart(getConfiguration(), getConnection());
     }
 
-    protected final void addSudoReset() {
-        SudoUtil.addSudoReset(getConfiguration(), getConnection());
+    protected final void doSudoReset() {
+        SudoUtil.doSudoReset(getConfiguration(), getConnection());
     }
 }
