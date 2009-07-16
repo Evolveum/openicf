@@ -26,55 +26,49 @@ import java.util.Map;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.Uid;
-
 
 /**
- * List of allowed ACCOUNT attribute names.
- * also take a look at {@link AccountAttributesForPassword}.
+ * Also take a look at {@link AccountAttributes}}.
  * @author David Adam
  */
-public enum AccountAttributes {
-    /** home directory */
-    DIR("dir", UpdateSwitches.DIR), 
-    SHELL("shell", UpdateSwitches.SHELL),
-    /** primary group */
-    GROUP("group", UpdateSwitches.GROUP),
-    SECONDARY_GROUP("secondary_group", UpdateSwitches.SECONDARY_GROUP),
-    UID(Uid.NAME, UpdateSwitches.UID),
-    EXPIRE("expire", UpdateSwitches.EXPIRE),
-    INACTIVE("inactive", UpdateSwitches.INACTIVE),
-    COMMENT("comment", UpdateSwitches.COMMENT),
-    TIME_LAST_LOGIN("time_last_login", UpdateSwitches.UNKNOWN),
-    AUTHORIZATION("authorization", UpdateSwitches.AUTHORIZATION),
-    PROFILE("profile", UpdateSwitches.PROFILE),
-    ROLES("role", UpdateSwitches.ROLE);
+public enum AccountAttributesForPassword {
+    /*
+     * note: this is *not* in the schema OR resource adapter's prototype xml
+     */
+    FORCE_CHANGE("force_change", PasswdSwitches.PASSWD_FORCE_CHANGE),
+    /*
+     * ACCOUNT ATTRIBUTES
+     */
+    MAX("max", PasswdSwitches.PASSWD_MAX),
+    MIN("min", PasswdSwitches.PASSWD_MIN),
+    WARN("warn", PasswdSwitches.PASSWD_WARN),
+    LOCK("lock", PasswdSwitches.PASSWD_LOCK);
     
-    private static final Map<String, AccountAttributes> map = CollectionUtil.newCaseInsensitiveMap();
+    private static final Map<String, AccountAttributesForPassword> map = CollectionUtil.newCaseInsensitiveMap();
     
     static {
-        for (AccountAttributes value : AccountAttributes.values()) {
+        for (AccountAttributesForPassword value : AccountAttributesForPassword.values()) {
             map.put(value.attrName, value);
         }
     }
     
     /** name of the attribute, it comes from the adapter's schema (prototype xml) */
     private String attrName;
-
+    
     /** the command line switch used by the solaris connector */
-    private UpdateSwitches cmdSwitch;
-
-    private AccountAttributes(String attrName, UpdateSwitches cmdSwitch) {
+    private PasswdSwitches cmdSwitch;
+    
+    private AccountAttributesForPassword(String attrName, PasswdSwitches cmdSwitch) {
         this.attrName = attrName;
         this.cmdSwitch = cmdSwitch;
     }
     
     /**
      * Translate the Account's attribute name to item from list of allowed
-     * account attributes.
+     * (password-related) account attributes.
      * @return the name of attribute, or null if it doesn't exist.
      */
-    private static AccountAttributes fromAttributeName(String s) {
+    private static AccountAttributesForPassword fromAttributeName(String s) {
         return map.get(s);
     }
     
@@ -91,7 +85,7 @@ public enum AccountAttributes {
     }
     
     /** @return the command line switch */
-    public String getCmdSwitch() {
+    String getCmdSwitch() {
         return cmdSwitch.getCmdSwitch();
     }
     

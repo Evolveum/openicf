@@ -51,6 +51,7 @@ import org.identityconnectors.framework.spi.operations.SearchOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
 import org.identityconnectors.solaris.constants.AccountAttributes;
+import org.identityconnectors.solaris.constants.AccountAttributesForPassword;
 import org.identityconnectors.solaris.constants.GroupAttributes;
 
 /**
@@ -172,6 +173,9 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         attributes.add(Name.INFO);
         attributes.add(OperationalAttributeInfos.PASSWORD);
         for (AccountAttributes attr : AccountAttributes.values()) {
+            attributes.add(AttributeInfoBuilder.build(attr.getName()));
+        }
+        for (AccountAttributesForPassword attr : AccountAttributesForPassword.values()) {
             attributes.add(AttributeInfoBuilder.build(attr.getName()));
         }
         

@@ -45,6 +45,7 @@ import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class OpUpdateImplTest {
@@ -121,7 +122,7 @@ public class OpUpdateImplTest {
         }
     }
     
-    @Test (expected=IllegalArgumentException.class)
+    @Test (expected=IllegalArgumentException.class) @Ignore
     public void unknownObjectClass() {
         String username = config.getUserName();
         Set<Attribute> replaceAttributes = new HashSet<Attribute>();
@@ -134,7 +135,7 @@ public class OpUpdateImplTest {
                 username), replaceAttributes, null);
     }
     
-    @Test (expected=UnknownUidException.class)
+    @Test (expected=UnknownUidException.class) @Ignore
     public void testUpdateUnknownUid() {
         Set<Attribute> replaceAttributes = new HashSet<Attribute>();
         final String newPassword = getTestProperty("modified.samplePasswd");
