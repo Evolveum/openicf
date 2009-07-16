@@ -24,9 +24,11 @@ package org.identityconnectors.solaris;
 
 import static org.identityconnectors.solaris.SolarisMessages.MSG_NOT_SUPPORTED_OBJECTCLASS;
 
+import java.io.IOException;
 import java.util.Map;
 
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -58,5 +60,17 @@ public class SolarisUtil {
         
         throw new IllegalArgumentException(String.format(
                 MSG_NOT_SUPPORTED_OBJECTCLASS, oclass, operation.getName()));
+    }
+    
+    public static void sendPassword(GuardedString passwd, final SolarisConnection conn) {
+        passwd.access(new GuardedString.Accessor() {
+            public void access(char[] clearChars) {
+                try {
+                    conn.send(new String(clearChars));
+                } catch (IOException e) {
+                    ConnectorException.wrap(e);
+                }
+            }
+        });
     }
 }

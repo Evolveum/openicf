@@ -88,21 +88,11 @@ public class OpCreateImpl extends AbstractOp {
             command = String.format("passwd -r files %s", accountId);
             getConnection().send(command);
             
-            password.access(new GuardedString.Accessor() {
-                public void access(char[] clearChars) {
-                    String realPasswd = new String(clearChars);
-                    try {
-                        getConnection().waitFor("New Password:");
-                        getConnection().send(realPasswd);
-                        getConnection().waitFor("Re-enter new Password:");
-                        getConnection().send(realPasswd);
-                        getConnection().waitFor(String.format("passwd: password successfully changed for %s", accountId));
-                    } catch (Exception ex) {
-                        getLog().error(ex, null);
-                    }
-                }
-            });
-
+            getConnection().waitFor("New Password:");
+            SolarisUtil.sendPassword(password, getConnection());
+            getConnection().waitFor("Re-enter new Password:");
+            SolarisUtil.sendPassword(password, getConnection());
+            getConnection().waitFor(String.format("passwd: password successfully changed for %s", accountId));
         } catch (Exception ex) {
             getLog().error(ex, null);
         } // EOF CONNECTION

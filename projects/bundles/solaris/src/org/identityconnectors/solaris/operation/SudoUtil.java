@@ -22,12 +22,11 @@
  */
 package org.identityconnectors.solaris.operation;
 
-import java.io.IOException;
-
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
+import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.command.MatchBuilder;
 import org.identityconnectors.solaris.command.closure.ErrorClosure;
 import org.identityconnectors.solaris.command.closure.NullClosure;
@@ -49,15 +48,7 @@ class SudoUtil {
                 conn.waitForCaseInsensitive("assword:");
                 // TODO evaluate which password should be used:
                 GuardedString passwd = config.getPassword();
-                passwd.access(new GuardedString.Accessor() {
-                    public void access(char[] clearChars) {
-                        try {
-                            conn.send(new String(clearChars));
-                        } catch (IOException e) {
-                            ConnectorException.wrap(e);
-                        }
-                    }
-                });
+                SolarisUtil.sendPassword(passwd, conn);
                 
                 // 3) wait for the end of sudo operation
                 MatchBuilder builder = new MatchBuilder();

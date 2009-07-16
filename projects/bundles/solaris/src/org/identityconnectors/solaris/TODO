@@ -2,37 +2,38 @@ This connector is under development, it is not release ready.
 
 TODOs:
 
-QUESTION #1:
-* AccountAttributes: AUTHORIZATION and PROFILE attribute are kind of unknown in the schema (prototype XML).
-QUESTION #2:
-getUpdateUserResult -- there's no processing of Update's result.
+* UPDATE:
+  - clarify meaning of 'newName' attribute sent into SRA#getUpdateNativeUserScript() and implement it. 
 
 *** SolarisConnection
  *** - try out SSHPubKeyAuthentication.
-
-
+ 
 * DELETE: handle the option, whe the user is logged in, at it can't be deleted:
      root@prgvm8092:~# userdel sample
      UX: userdel: ERROR: sample is in use.  Cannot remove it.
-* support deletion of groups - is this inclusive delete? (the accounts of that group should be deleted?) 
+  * support deletion of groups - is this inclusive delete? (the accounts of that group should be deleted?) 
+
 * consider issuing an echo "abc" before every command is started.
      
  low priority:
 * getConnectorMessages() -- organize message propeties, so they are optimal for localization
 
+====================================
 HINTS from SolarisRA:
 * // Depending on the amount of data to modify, userAttribParams
   // could push the input beyond what the shell can handle so
   // we break up the input to allow for this.
   
-  ================================================
-  * is it possible to create a user based on a commmon template, or to edit it?
-  ===============
-  
-  Adapter's features:
+* is it possible to create a user based on a commmon template, or to edit it?
+
+====================================  
+Adapter's features:
   
   -- SolarisRA indicates if shell is set to a nonexisting type.
      -- com.waveset.util.WavesetException: An error occurred modifying 
         user 'roman' on resource 'Solaris'. com.waveset.util.WavesetException: 
         UX: usermod: ERROR: /bin/ABCDEFsh is not a valid shell. Choose another.
-  
+  -- **VERY GOOD FEATURE** -- SolarisRA's ScriptedConnection#refreshUnprocessedInput()
+        provides returning of unprocessed input from the resource. This way, if you put
+        a breakpoint at WavesetException and try to set a nonsense shell /bin/bbbsh 
+        ScriptedConnection *directly* warns you about his fact. VERY COOL! Can I have this in Connector + Expect4J?  

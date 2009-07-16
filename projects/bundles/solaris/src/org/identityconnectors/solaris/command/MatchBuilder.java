@@ -80,6 +80,13 @@ public final class MatchBuilder {
     public void addTimeoutMatch(long millis, String message) {
         matches.add(new TimeoutMatch(millis, new TimeoutClosure(message)));
     }
+    
+    /** concatenate all the given matches with existing ones. */
+    public void addMatches(Match[] matches) {
+        for (Match match : matches) {
+            this.matches.add(match);
+        }
+    }
 
     public Match[] build() {
         return matches.toArray(new Match[matches.size()]);
