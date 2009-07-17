@@ -813,8 +813,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DEFAULT_GROUP,           String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SECURITY_LEVEL,          String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SECURITY_CAT_LIST,       String.class));
-            //attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LOGON_DAYS,                  String.class));
-            //attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LOGON_TIME,                  String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LOGON_DAYS,                  String.class));
+            attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LOGON_TIME,                  String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CLASS_NAME,              String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SECURITY_LABEL,          String.class));
             if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_DFP) > 0) {
