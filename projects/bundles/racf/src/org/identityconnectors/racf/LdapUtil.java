@@ -560,23 +560,40 @@ class LdapUtil {
         NamingEnumeration<? extends javax.naming.directory.Attribute> attributeEnum = attributes.getAll();
         while (attributeEnum.hasMore()) {
             javax.naming.directory.Attribute attribute = attributeEnum.next();
-            Object value = attribute.get();
             // Some attributes expect Lists, but may return a singleton,
             // these must be mapped back into Lists
             //
             if (ATTR_LDAP_GROUPS.equalsIgnoreCase(attribute.getID())) {
-                if (!(value instanceof Collection)) {
-                    List newValue = new ArrayList();
+                Object value = getValueFromAttribute(attribute);
+                if (!(value instanceof List)) {
+                    List newValue = new LinkedList();
                     newValue.add(value);
                     value = newValue;
                 }
-            }
-            if (value instanceof Collection)
-                attributesRead.put(attribute.getID(), (Collection<? extends Object>)value);
-            else
                 attributesRead.put(attribute.getID(), value);
+            } else {
+                attributesRead.put(attribute.getID(), getValueFromAttribute(attribute));
+            }
         }
         return ldapObject;
+    }
+    
+    private Object getValueFromAttribute(javax.naming.directory.Attribute attribute) throws NamingException {
+        switch (attribute.size()) {
+        case 0:
+            return null;
+        case 1:
+            return attribute.get();
+        default:
+        {
+            List<Object> values = new LinkedList<Object>();
+            NamingEnumeration ne = attribute.getAll();
+            while (ne.hasMore()) {
+                values.add(ne.next());
+            }
+            return values;
+        }
+        }
     }
 
     public Uid updateViaLdap(ObjectClass objectClass, Set<Attribute> attrs, OperationOptions options) {
