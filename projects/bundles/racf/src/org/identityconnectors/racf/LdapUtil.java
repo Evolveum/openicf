@@ -679,61 +679,6 @@ class LdapUtil {
         List<Object> racfAttributes = new LinkedList<Object>();
         boolean setRacfAttributes = false;
         
-        //?? See if we can make tests work
-        //
-        attributes.remove(ATTR_LDAP_NV_CTL);
-        attributes.remove(ATTR_LDAP_NV_DCE_AUTOLOGIN);
-        attributes.remove(ATTR_LDAP_NV_DCE_HOME_CELL);
-        attributes.remove(ATTR_LDAP_NV_DCE_HOME_CELL_UUID);
-        attributes.remove(ATTR_LDAP_NV_DCE_PRINCIPAL);
-        attributes.remove(ATTR_LDAP_NV_DCE_UUID);
-        attributes.remove(ATTR_LDAP_NV_DEFAULT_CONSOLE);
-        attributes.remove(ATTR_LDAP_NV_DOMAINS);
-        attributes.remove(ATTR_LDAP_NV_MESSAGE_RECEIVER);
-        attributes.remove(ATTR_LDAP_NV_NGMFADM);
-        attributes.remove(ATTR_LDAP_NV_INITIALCMD);
-        attributes.remove(ATTR_LDAP_NV_OPERATOR_CLASS);
-        // R001030 Entry contained attribute type not allowed by schema: krbprincipalname.
-        attributes.remove(ATTR_LDAP_KERB_NAME);
-        attributes.remove(ATTR_LDAP_KERB_MAX_TICKET_LIFE);
-        attributes.remove(ATTR_LDAP_KERB_ENCRYPT);
-        attributes.remove(ATTR_LDAP_KERB_KEY_VERSION);
-        // R001030 Entry contained attribute type not allowed by schema: racfaddressline1
-        attributes.remove(ATTR_LDAP_WA_ADDRESS_LINE1);
-        attributes.remove(ATTR_LDAP_WA_ADDRESS_LINE2);
-        attributes.remove(ATTR_LDAP_WA_ADDRESS_LINE3);
-        attributes.remove(ATTR_LDAP_WA_ADDRESS_LINE4);
-        attributes.remove(ATTR_LDAP_WA_ACCOUNT_NUMBER);
-        attributes.remove(ATTR_LDAP_WA_BUILDING);
-        attributes.remove(ATTR_LDAP_WA_DEPARTMENT);
-        attributes.remove(ATTR_LDAP_WA_ROOM);
-        attributes.remove(ATTR_LDAP_WA_USER_NAME);
-        // R001030 Entry contained attribute type not allowed by schema: racfaltgroupkeyword
-        attributes.remove(ATTR_LDAP_OP_ALTGROUP);
-        attributes.remove(ATTR_LDAP_OP_AUTH);
-        attributes.remove(ATTR_LDAP_OP_AUTO);
-        attributes.remove(ATTR_LDAP_OP_CMDSYS);
-        attributes.remove(ATTR_LDAP_OP_DOM);
-        attributes.remove(ATTR_LDAP_OP_KEY);
-        attributes.remove(ATTR_LDAP_OP_LEVEL);
-        attributes.remove(ATTR_LDAP_OP_LOG_CMD_RESPONSE);
-        attributes.remove(ATTR_LDAP_OP_MFORM);
-        attributes.remove(ATTR_LDAP_OP_MGID);
-        attributes.remove(ATTR_LDAP_OP_MONITOR);
-        attributes.remove(ATTR_LDAP_OP_MSCOPE_SYSTEMS);
-        attributes.remove(ATTR_LDAP_OP_ROUTCODE);
-        attributes.remove(ATTR_LDAP_OP_STORAGE);
-        attributes.remove(ATTR_LDAP_OP_UD);
-        // R001030 Entry contained attribute type not allowed by schema: racfldapbinddn
-        attributes.remove(ATTR_LDAP_PROXY_BINDDN);
-        attributes.remove(ATTR_LDAP_PROXY_BINDPW);
-        attributes.remove(ATTR_LDAP_PROXY_HOST);
-        // R001030 Entry contained attribute type not allowed by schema: racflnotesshortname.
-        attributes.remove(ATTR_LDAP_LN_SHORT_NAME);
-        // R001030 Entry contained attribute type not allowed by schema: racfndsusername
-        attributes.remove(ATTR_LDAP_NDS_USER_NAME);
-        
-        
         for (Attribute attribute : attributes.values()) {
             String attributeName = attribute.getName().toLowerCase();
             if (attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
@@ -763,14 +708,10 @@ class LdapUtil {
                 // Ignore current password
                 //
             } else if (attribute.is(ATTR_LDAP_EXPIRED)) {
-                Attribute password = attributes.get(ATTR_LDAP_PASSWORD);
-                if (password==null) {
-                    // TODO: throw error, I expect
-                }
                 if (AttributeUtil.getBooleanValue(attribute))
-                    racfAttributes.add("noExpired");
-                else
                     racfAttributes.add("Expired");
+                else
+                    racfAttributes.add("noExpired");
                 setRacfAttributes = true;
             } else if (attribute.is(ATTR_LDAP_RESUME_DATE) || attribute.is(ATTR_LDAP_REVOKE_DATE)) {
                 basicAttributes.put(attribute.getName(), AttributeUtil.getStringValue(attribute));
