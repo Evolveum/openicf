@@ -392,7 +392,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
                     if (getNameOnly || getNothing) {
                         ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
                         builder.setObjectClass(objectClass);
-                        builder.setUid(name);
+                        builder.setUid(name.toUpperCase());
                         if (getNameOnly)
                             builder.setName(name);
                         object = builder.build();
@@ -444,7 +444,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
         if (!isEmpty(attributesFromCommandLine)) {
             if (isEmpty(attributesFromLdap)) {
                 String name = (String)attributesFromCommandLine.get(ATTR_CL_USERID);
-                uid = new Uid(name);
+                uid = new Uid(name.toUpperCase());
                 builder.setUid(uid);
                 builder.setName(name);
             }
