@@ -84,7 +84,7 @@ class LdapUtil {
                 Name name = AttributeUtil.getNameFromAttributes(attrs);
                 Map<String, Attribute> newAttributes = AttributeUtil.toMap(attrs);
                 ((RacfConnection)_connector.getConnection()).getDirContext().createSubcontext(name.getNameValue(), createLdapAttributesFromConnectorAttributes(newAttributes));
-                return new Uid(name.getNameValue());
+                return new Uid(name.getNameValue().toUpperCase());
             } catch (NamingException e) {
                 throw new ConnectorException(e);
             }
@@ -92,7 +92,7 @@ class LdapUtil {
             Name name = AttributeUtil.getNameFromAttributes(attrs);
             try {
                 Attribute groups = attributes.remove(ATTR_LDAP_GROUPS);
-                Attribute owners = attributes.remove(ATTR_LDAP_GROUP_OWNERS);
+                Attribute owners = attributes.remove(ATTR_LDAP_CONNECT_OWNER);
                 Attribute expired = attributes.remove(ATTR_LDAP_EXPIRED);
                 Attribute password = attributes.get(ATTR_LDAP_PASSWORD);
 
@@ -111,10 +111,10 @@ class LdapUtil {
                 Attribute enable      = attributes.remove(ATTR_LDAP_ENABLED);
                 Attribute enableDate  = attributes.remove(ATTR_LDAP_RESUME_DATE);
                 Attribute disableDate = attributes.remove(ATTR_LDAP_REVOKE_DATE);
-                if (expired!=null) {
+                if (expired!=null)
                     changes.add(expired);
+                if (password!=null)
                     changes.add(password);
-                }
                 if (enable!=null)
                     changes.add(enable);
                 if (enableDate!=null)
@@ -123,7 +123,7 @@ class LdapUtil {
                     changes.add(disableDate);
                 
                 String id = name.getNameValue();
-                Uid uid = new Uid(id);
+                Uid uid = new Uid(id.toUpperCase());
                 Map<String, Attribute> newAttributes = CollectionUtil.newCaseInsensitiveMap();
                 newAttributes.putAll(attributes);
                 addObjectClass(objectClass, newAttributes);
@@ -147,10 +147,10 @@ class LdapUtil {
             Name name = AttributeUtil.getNameFromAttributes(attrs);
             try {
                 Attribute members = attributes.remove(ATTR_LDAP_GROUP_USERIDS);
-                Attribute groupOwners = attributes.remove(ATTR_LDAP_GROUP_OWNERS);
+                Attribute groupOwners = attributes.remove(ATTR_LDAP_CONNECT_OWNER);
 
                 String id = name.getNameValue();
-                Uid uid = _connector.createUidFromName(objectClass, id);
+                Uid uid = new Uid(id.toUpperCase());
                 Map<String, Attribute> newAttributes = new HashMap<String, Attribute>(attributes);
                 addObjectClass(objectClass, newAttributes);
                 ((RacfConnection)_connector.getConnection()).getDirContext().createSubcontext(id, createLdapAttributesFromConnectorAttributes(objectClass, newAttributes));
@@ -263,7 +263,8 @@ class LdapUtil {
             //TODO: cope with this
             throw ConnectorException.wrap(e);
         } catch (NamingException e) {
-            throw new ConnectorException(e);
+            if (!e.toString().contains("NO ENTRIES MEET SEARCH CRITERIA"))
+                throw new ConnectorException(e);
         }
         return groupNames;
     }
@@ -291,7 +292,7 @@ class LdapUtil {
         
         // A few attributes need to be done via a separate LDAP query, so we save them
         //
-        boolean owners = attributesToGet.remove(ATTR_LDAP_OWNER);
+        boolean owners = attributesToGet.remove(ATTR_LDAP_CONNECT_OWNER);
         boolean groups = attributesToGet.remove(ATTR_LDAP_GROUPS);
         boolean members = attributesToGet.remove(ATTR_LDAP_GROUP_USERIDS);
         
@@ -303,7 +304,7 @@ class LdapUtil {
             attributesToGet.add(ATTR_LDAP_ATTRIBUTES);
         
         SearchResult ldapObject = getAttributesFromLdap(ldapName, attributesRead, attributesToGet);
-        Uid uid = new Uid(ldapObject.getNameInNamespace());
+        Uid uid = new Uid(ldapObject.getNameInNamespace().toUpperCase());
         attributesRead.put(Uid.NAME, uid);
         attributesRead.put(Name.NAME, ldapObject.getNameInNamespace());
         
@@ -331,13 +332,13 @@ class LdapUtil {
                 if (owners) {
                     List<String> ownersForUser = new ArrayList<String>();
                     Set<String> connectAttributesToGet = new HashSet<String>();
-                    connectAttributesToGet.add(ATTR_LDAP_OWNER);
+                    connectAttributesToGet.add(ATTR_LDAP_CONNECT_OWNER);
                     for (String group : groupsForUser) {
                         group = RacfConnector.extractRacfIdFromLdapId(group);
                         String root = "racfuserid="+user+"+racfgroupid="+group+",profileType=Connect,"+((RacfConfiguration)_connector.getConfiguration()).getSuffix();
                         ownersForUser.add(getConnectOwner(root));
                     }
-                    attributesRead.put(ATTR_LDAP_GROUP_OWNERS, ownersForUser);
+                    attributesRead.put(ATTR_LDAP_CONNECT_OWNER, ownersForUser);
                 }
             }
         }
@@ -359,7 +360,7 @@ class LdapUtil {
                         String root = "racfuserid="+user+"+racfgroupid="+group+",profileType=Connect,"+((RacfConfiguration)_connector.getConfiguration()).getSuffix();
                         ownersForGroup.add(getConnectOwner(root));
                     }
-                    attributesRead.put(ATTR_LDAP_GROUP_OWNERS, ownersForGroup);
+                    attributesRead.put(ATTR_LDAP_CONNECT_OWNER, ownersForGroup);
                 }
             }
             //TODO: what about subgroups (queried as racfSubgroupName)
@@ -445,15 +446,53 @@ class LdapUtil {
                 else
                     attributesRead.put(OperationalAttributes.ENABLE_DATE_NAME, converted);
             }
+            // Groups must be upcased
+            //
+            if (attributesRead.containsKey(ATTR_LDAP_GROUPS)) {
+                Object value = attributesRead.get(ATTR_LDAP_GROUPS);
+                if (value instanceof List) {
+                    List list = (List)value;
+                    for (int i=0; i<list.size(); i++)
+                        list.set(i, list.get(i).toString().toUpperCase());
+                }
+                attributesRead.put(ATTR_LDAP_GROUPS, new LinkedList<Object>());
+            }
             // Groups must be filled in if null
             //
             if (!attributesRead.containsKey(ATTR_LDAP_GROUPS)) {
                 attributesRead.put(ATTR_LDAP_GROUPS, new LinkedList<Object>());
             }
+            // Default Group must be upcased
+            //
+            if (attributesRead.containsKey(ATTR_LDAP_DEFAULT_GROUP)) {
+                Object value = attributesRead.get(ATTR_LDAP_DEFAULT_GROUP);
+                if (value!=null)
+                    value = value.toString().toUpperCase();
+                attributesRead.put(ATTR_LDAP_DEFAULT_GROUP, value);
+            }
+            // Owner Group must be upcased
+            //
+            if (attributesRead.containsKey(ATTR_LDAP_OWNER)) {
+                Object value = attributesRead.get(ATTR_LDAP_OWNER);
+                if (value!=null)
+                    value = value.toString().toUpperCase();
+                attributesRead.put(ATTR_LDAP_OWNER, value);
+            }
+            // Group Owners must be upcased
+            //
+            if (attributesRead.containsKey(ATTR_LDAP_CONNECT_OWNER)) {
+                Object value = attributesRead.get(ATTR_LDAP_CONNECT_OWNER);
+                if (value instanceof List) {
+                    List list = (List)value;
+                    for (int i=0; i<list.size(); i++)
+                        list.set(i, list.get(i).toString().toUpperCase());
+                }
+                attributesRead.put(ATTR_LDAP_CONNECT_OWNER, new LinkedList<Object>());
+            }
             // Group Owners must be filled in if null
             //
-            if (!attributesRead.containsKey(ATTR_LDAP_GROUP_OWNERS)) {
-                attributesRead.put(ATTR_LDAP_GROUP_OWNERS, new LinkedList<Object>());
+            if (!attributesRead.containsKey(ATTR_LDAP_CONNECT_OWNER)) {
+                attributesRead.put(ATTR_LDAP_CONNECT_OWNER, new LinkedList<Object>());
             }
         }
 
@@ -465,10 +504,29 @@ class LdapUtil {
                 if ("NONE".equals(value))
                     attributesRead.put(ATTR_LDAP_SUP_GROUP, null);
             }
+            // Owner Group must be upcased
+            //
+            if (attributesRead.containsKey(ATTR_LDAP_OWNER)) {
+                Object value = attributesRead.get(ATTR_LDAP_OWNER);
+                if (value!=null)
+                    value = value.toString().toUpperCase();
+                attributesRead.put(ATTR_LDAP_OWNER, value);
+            }
             // Groups must be filled in if null
             //
             if (!attributesRead.containsKey(ATTR_LDAP_SUB_GROUPS)) {
                 attributesRead.put(ATTR_LDAP_SUB_GROUPS, new LinkedList<Object>());
+            }
+            // Members must be upcased
+            //
+            if (attributesRead.containsKey(ATTR_LDAP_GROUP_USERIDS)) {
+                Object value = attributesRead.get(ATTR_LDAP_GROUP_USERIDS);
+                if (value instanceof List) {
+                    List list = (List)value;
+                    for (int i=0; i<list.size(); i++)
+                        list.set(i, list.get(i).toString().toUpperCase());
+                }
+                attributesRead.put(ATTR_LDAP_GROUP_USERIDS, new LinkedList<Object>());
             }
             // Members must be filled in if null
             //
@@ -477,8 +535,8 @@ class LdapUtil {
             }
             // Group Owners must be filled in if null
             //
-            if (!attributesRead.containsKey(ATTR_LDAP_GROUP_OWNERS)) {
-                attributesRead.put(ATTR_LDAP_GROUP_OWNERS, new LinkedList<Object>());
+            if (!attributesRead.containsKey(ATTR_LDAP_CONNECT_OWNER)) {
+                attributesRead.put(ATTR_LDAP_CONNECT_OWNER, new LinkedList<Object>());
             }
         }
         return attributesRead;
@@ -530,7 +588,7 @@ class LdapUtil {
             if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
                 try {
                     Attribute groups = attributes.remove(ATTR_LDAP_GROUPS);
-                    Attribute groupOwners = attributes.remove(ATTR_LDAP_GROUP_OWNERS);
+                    Attribute groupOwners = attributes.remove(ATTR_LDAP_CONNECT_OWNER);
                     Attribute expired = attributes.get(ATTR_LDAP_EXPIRED);
                     Attribute password = attributes.get(ATTR_LDAP_PASSWORD);
 
@@ -578,7 +636,7 @@ class LdapUtil {
             } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
                 try {
                     Attribute members = attributes.remove(ATTR_LDAP_GROUP_USERIDS);
-                    Attribute groupOwners = attributes.remove(ATTR_LDAP_GROUP_OWNERS);
+                    Attribute groupOwners = attributes.remove(ATTR_LDAP_CONNECT_OWNER);
                     
                     ((RacfConnection)_connector.getConnection()).getDirContext().modifyAttributes(uid.getUidValue(), DirContext.REPLACE_ATTRIBUTE, 
                             createLdapAttributesFromConnectorAttributes(objectClass, attributes));

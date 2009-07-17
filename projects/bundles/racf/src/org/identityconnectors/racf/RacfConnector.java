@@ -485,7 +485,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
         checkConnectionConsistency(groupsAttribute, ownersAttribute);
 
         List<Object> groups = groupsAttribute.getValue();
-        List<Object> owners = ownersAttribute.getValue();
+        List<Object> owners = ownersAttribute==null?null:ownersAttribute.getValue();
         
         List<String> currentGroups = getGroupsForUser(name);
         String defaultGroup = currentGroups.get(0);
@@ -501,14 +501,15 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
 
         for (int i=0; i<groups.size(); i++) {
             Object newGroup = groups.get(i);
-            Object newOwner = owners.get(i);
+            Object newOwner = ownersAttribute==null?null:owners.get(i);
             if (!currentGroups.contains(newGroup)) {
                 // Group is being added
                 //
                 String connectionName = createConnectionId(name, (String)newGroup);
                 Set<Attribute> attributes = new HashSet<Attribute>();
                 attributes.add(AttributeBuilder.build(Name.NAME, connectionName));
-                attributes.add(AttributeBuilder.build(ATTR_LDAP_CONNECT_OWNER, newOwner));
+                if (newOwner!=null)
+                    attributes.add(AttributeBuilder.build(ATTR_LDAP_CONNECT_OWNER, newOwner));
                 attributes.add(AttributeBuilder.build("objectclass", "racfConnect"));
                 create(RACF_CONNECTION, attributes, new OperationOptions(new HashMap<String, Object>()));
             }
@@ -562,7 +563,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
                 Set<Attribute> attributes = new HashSet<Attribute>();
                 attributes.add(AttributeBuilder.build(Name.NAME, connectionName));
                 if (newOwner!=null)
-                    attributes.add(AttributeBuilder.build(ATTR_LDAP_OWNER, newOwner));
+                    attributes.add(AttributeBuilder.build(ATTR_LDAP_CONNECT_OWNER, newOwner));
                 attributes.add(AttributeBuilder.build("objectclass", "racfConnect"));
                 create(RACF_CONNECTION, attributes, new OperationOptions(new HashMap<String, Object>()));
             }
@@ -925,14 +926,14 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             //
             attributes.add(buildMultivaluedAttribute(ATTR_LDAP_ATTRIBUTES,               String.class, false));
             attributes.add(buildReadOnlyMultivaluedAttribute(ATTR_LDAP_GROUPS,           String.class));
-            attributes.add(buildReadOnlyMultivaluedAttribute(ATTR_LDAP_GROUP_OWNERS,     String.class));
+            attributes.add(buildReadOnlyMultivaluedAttribute(ATTR_LDAP_CONNECT_OWNER,    String.class));
     
             // Operational Attributes
             //
             attributes.add(buildReadonlyAttribute(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, long.class));
-            attributes.add(OperationalAttributeInfos.ENABLE);
-            attributes.add(OperationalAttributeInfos.ENABLE_DATE);
-            attributes.add(OperationalAttributeInfos.DISABLE_DATE);
+            //attributes.add(OperationalAttributeInfos.ENABLE);
+            //attributes.add(OperationalAttributeInfos.ENABLE_DATE);
+            //attributes.add(OperationalAttributeInfos.DISABLE_DATE);
             attributes.add(OperationalAttributeInfos.PASSWORD);
             attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
             attributes.add(PredefinedAttributeInfos.LAST_LOGIN_DATE);

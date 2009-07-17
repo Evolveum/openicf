@@ -72,13 +72,13 @@ public class RacfLdapConnectorTests extends RacfConnectorTestBase {
         return ATTR_LDAP_GROUPS;
     }
     protected String getGroupConnOwnersAttributeName(){
-        return ATTR_LDAP_GROUP_OWNERS;
+        return ATTR_LDAP_CONNECT_OWNER;
     }
     protected String getTsoSizeName(){
         return ATTR_LDAP_TSO_LOGON_SIZE;
     }
     protected Uid makeUid(String name, ObjectClass objectClass) {
-        return new Uid("racfid="+name+",profileType="+(objectClass.is(ObjectClass.ACCOUNT_NAME)?"USER":"GROUP")+","+"dc=zos1578,dc=exemple,dc=fr");
+        return new Uid("racfid="+name+",profileType="+(objectClass.is(ObjectClass.ACCOUNT_NAME)?"USER,":"GROUP,")+SUFFIX);
     }
 
 }
