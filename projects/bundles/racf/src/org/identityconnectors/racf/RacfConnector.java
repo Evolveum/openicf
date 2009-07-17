@@ -437,14 +437,14 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
         if (!isEmpty(attributesFromLdap)) {
             uid = (Uid)attributesFromLdap.remove(Uid.NAME);
             builder.setUid(uid);
-            String name = (String)attributesFromLdap.remove(Name.NAME);
+            String name = ((String)attributesFromLdap.remove(Name.NAME)).toUpperCase();
             builder.setName(name);
             addAttributes(objectClass, attributesFromLdap, attributesToGet, builder);
         }
         if (!isEmpty(attributesFromCommandLine)) {
             if (isEmpty(attributesFromLdap)) {
-                String name = (String)attributesFromCommandLine.get(ATTR_CL_USERID);
-                uid = new Uid(name.toUpperCase());
+                String name = ((String)attributesFromCommandLine.get(ATTR_CL_USERID)).toUpperCase();
+                uid = new Uid(name);
                 builder.setUid(uid);
                 builder.setName(name);
             }
