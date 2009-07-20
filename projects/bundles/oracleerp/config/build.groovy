@@ -36,17 +36,29 @@ connector{
 
 /* account configurations */  
 configuration{
-    init.driver="oracle.jdbc.driver.OracleDriver"    
-    init.url="java:oracle:thin:@idm149.central.sun.com:1521:PROD"
-    init.user="APPS"
-    init.password=new GuardedString("APPS".toCharArray());
-    init.accountsIncluded=""
-    init.activeAccountsOnly=false
-    init.auditResponsibility=""
-    init.manageSecuringAttrs=true
-    init.noSchemaId=false
-    init.returnSobOrgAttrs=false
-    init.userActions=""
+    tst.driver="oracle.jdbc.driver.OracleDriver"    
+    tst.url="java:oracle:thin:@idm149.central.sun.com:1521:PROD"
+    tst.user="APPS"
+    tst.password=new GuardedString("APPS".toCharArray());
+    tst.accountsIncluded=""
+    tst.activeAccountsOnly=false
+    tst.auditResponsibility=""
+    tst.manageSecuringAttrs=false
+    tst.noSchemaId=false
+    tst.returnSobOrgAttrs=false
+    tst.userActions=""
+    
+    sysadm.driver="oracle.jdbc.driver.OracleDriver"    
+    sysadm.url="java:oracle:thin:@idm149.central.sun.com:1521:PROD"
+    sysadm.user="APPS"
+    sysadm.password=new GuardedString("APPS".toCharArray());
+    sysadm.accountsIncluded=""
+    sysadm.activeAccountsOnly=false
+    sysadm.auditResponsibility="System Administrator"
+    sysadm.manageSecuringAttrs=true
+    sysadm.noSchemaId=false
+    sysadm.returnSobOrgAttrs=true
+    sysadm.userActions=""    
 }
 
 account{
@@ -55,35 +67,59 @@ account{
     required.owner="CUST"
     
     all.__NAME__="TST-USER-" + currentTimeMillis()
-    all.__PASSWORD__=new GuardedString("passwd".toCharArray());
-    all.__PASSWORD_EXPIRED__=false
+    all.owner="CUST"
+    all.session_number=6
+
     all.start_date=stringDate(-10*24*3600000)
     all.end_date=stringDate(+10*24*3600000)
-    all.responsibilities="Cash Forecasting||Cash Management||Standard||2004-04-12 00:00:00.0||null"
+    all.last_logon_date=stringDate(-4*24*3600000)
+    all.description="Connector test user"
+
+    all.__PASSWORD__=new GuardedString("passwd".toCharArray());
+    all.__PASSWORD_EXPIRED__=false
+    all.password_date=stringDate(+10*24*3600000)
+    
     all.password_accesses_left=56
     all.password_lifespan_accesses=5
     all.password_lifespan_days=30
-    // all.employee_id=5
-    all.description="Test Description"
-    all.owner="CUST"
+    
+    //all.employee_id=5 
+    all.employee_number=5
+    all.person_fullname="Connector Test person full name"
+    //all.npw_number=4
     all.email_address="person@somewhere.com"
     all.fax="555-555-5555"
     //all.customer_id=11223344
     //all.supplier_id=102
-    all.securingAttrs="TO_PERSON_ID||Self-Service Web Applications||110"
+    
+    all.directResponsibilities="Cash Forecasting||Cash Management||Standard||2004-04-12 00:00:00.0||null"
+    all.responsibilityKeys=""
+    all.securingAttrs="TO_PERSON_ID||Self-Service Web Applications||114"
         
 
     modify.__NAME__="TST-MOD-USER-" + currentTimeMillis()
     modify.__PASSWORD__=new GuardedString("modpasswd".toCharArray());
     modify.email_address="person1@somewhere.com"
     modify.fax="666-666-6666"
-    modify.responsibilities="Cash Forecasting||Oracle Cash Management||Standard||Test Description||2004-04-12 00:00:00.0||null"
-    modify.responsibilities1="Purchasing Receiver||Oracle Purchasing||Standard||Test Description1||2004-04-12 00:00:00.0||null"
+    modify.directResponsibilities=["Cash Forecasting||Cash Management||Standard||2004-04-12 00:00:00.0||null","Purchasing Receiver||Purchasing||Standard||2004-04-12 00:00:00.0||null"]
     modify.password_lifespan_days=31
     modify.description="New Test Description"
     modify.owner="CUST"
-    modify.securingAttrs="TO_PERSON_ID||Oracle Self-Service Web Applications||112"    
+    modify.securingAttrs=["TO_PERSON_ID||Self-Service Web Applications||112","ICX_HR_PERSON_ID||Self-Service Web Applications||114"]    
  /*   modify.securingAttrs1="ICX_HR_PERSON_ID||Oracle Self-Service Web Applications||114"    */
+ 
+    options.responsibility="Cash Forecasting"
+    options.application="Cash Management"
+    options.searchPattern="%_PERSON_ID"
+    options.activeRespsOnly=true;
+    
+    auditor.auditorResps="Cash Forecasting||Cash Management"
+    auditor.userMenuNames="CE_DESCRIPTIVE_FLEXFIELDS,CE_FORECAST,CE_FORECAST_SETUP,CE_OTHER,Requests Menu - Other Responsibilities"
+    auditor.menuIds="67617,67850,68361,68364,68781"
+    auditor.userFunctionNames="Concurrent Requests: View,Define External Forecast Sources,Define Templates,Descriptive Flexfield Segments,Descriptive Flexfield Values,Maintain Forecasts,Profile User Values,Request Sets (User Mode),Requests: Submit,View All Concurrent Requests,View Cash Forecasts"
+    auditor.formIds="10397,20423,20648,51614,51615,54570,54571,54572,54952"
+    auditor.formNames="CEFFCAST,CEFFCDFN,CEFFCOPI,CEFQFCST,FNDFFMDC,FNDFFMSV,FNDPOMSV,FNDRSRUN,FNDRSSET"
+    auditor.userFormNames="Administer Report Sets,Define Descriptive Flexfield Segments,Define External Forecast Sources,Define Segment Values,Define Templates,Inquire Forecasts,Maintain Forecasts,Run Reports,Update Personal Profile Values"
 }
 
 
