@@ -50,5 +50,5 @@ public interface OracleERPColumnNameResolver {
      * @param attributeName name to translate to columnName
      * @return the column Name
      */
-    String getColumnName(String attributeName);
+    String getFilterColumnName(String attributeName);
 }

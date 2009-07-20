@@ -22,8 +22,6 @@
  */
 package org.identityconnectors.oracleerp;
 
-import java.sql.Types;
-
 import org.identityconnectors.dbcommon.DatabaseFilterTranslator;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -62,6 +60,6 @@ public class OracleERPFilterTranslator extends DatabaseFilterTranslator {
      */
     @Override
     protected SQLParam getSQLParam(Attribute attribute, ObjectClass oclass, OperationOptions options) {
-        return new SQLParam(cnr.getColumnName(attribute.getName()), AttributeUtil.getSingleValue(attribute));
+        return new SQLParam(cnr.getFilterColumnName(attribute.getName()), AttributeUtil.getSingleValue(attribute));
     }
 }

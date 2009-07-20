@@ -33,13 +33,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 
-import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -93,6 +93,7 @@ public class OracleERPUtil {
     // Unrelated account attribute names
     static final String EMP_NUM = "employee_number";
     static final String PERSON_FULLNAME = "person_fullname";
+    static final String FULL_NAME = "full_name";
     static final String NPW_NUM = "npw_number";
     static final String PERSON_ID = "person_id";    
 
@@ -237,44 +238,41 @@ public class OracleERPUtil {
      */
     public static final int ORACLE_TIMEOUT = 1800;
 
-    static final String CURLY_BEGIN = "{ ";
-    static final String CURLY_END = " }";    
-
     /**
+     * @param con 
      * @param userName
      * @return The UserId string value
      * @throws SQLException
      */
-    static String getUserId(OracleERPConnector con, String userName) {
+    public static String getUserId(OracleERPConnector con, String userName) {
         final OracleERPConnection conn = con.getConn();
-
-        String ret = null;
-            log.info("get UserId for {0}", userName);        
-            final String sql = "select "+USER_ID+" from "+con.app()+"FND_USER where upper(user_name) = ?";
-            PreparedStatement ps = null;
-            ResultSet rs = null;
-            try {
-                ps = conn.prepareStatement(sql);
-                ps.setString(1, userName.toUpperCase());
-                rs = ps.executeQuery();
-                if (rs != null) {
-                    if ( rs.next()) {
-                        ret = rs.getString(1);
-                    }
-                    // rs closed in finally below
+        final String msg = "getUserId ''{0}'' -> ''{1}''";
+        String userId = null;
+        log.info("get UserId for {0}", userName);
+        final String sql = "select " + USER_ID + " from " + con.app() + "FND_USER where upper(user_name) = ?";
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, userName.toUpperCase());
+            rs = ps.executeQuery();
+            if (rs != null) {
+                if (rs.next()) {
+                    userId = rs.getString(1);
                 }
-            } catch (SQLException e) {
-                log.error(e, sql);
-                throw ConnectorException.wrap(e);
-            } finally {
-                SQLUtil.closeQuietly(ps);
-                SQLUtil.closeQuietly(rs);
+                // rs closed in finally below
             }
-            
-            // pstmt closed in finally below
-            Assertions.nullCheck(ret, "userId");       
-        log.info("UserId is :{0}, for :{0}", ret, userName);
-        return ret;
+        } catch (SQLException e) {
+            log.error(e, sql);
+            throw ConnectorException.wrap(e);
+        } finally {
+            SQLUtil.closeQuietly(rs);
+            SQLUtil.closeQuietly(ps);
+        }
+
+        // pstmt closed in finally below
+        log.info(msg, userName, userId);
+        return userId;
     }    
 
     
@@ -283,7 +281,9 @@ public class OracleERPUtil {
      * @param attrs attributes
      * @return the identity
      */
-    public static String getName(OracleERPConnector con, Set<Attribute> attrs) {
+    public static String getName(Set<Attribute> attrs) {
+        final String method = "getName";
+        log.info(method);
         final Name nameAttr = AttributeUtil.getNameFromAttributes(attrs);
         return nameAttr.getNameValue();
     }    
@@ -295,25 +295,48 @@ public class OracleERPUtil {
      * @param attrs attributes
      * @return the identity
      */
-    public static String getId(OracleERPConnector con, Set<Attribute> attrs) {
+    public static String getId(Set<Attribute> attrs) {
+        final String method = "getId";
+        log.info(method);
         final Uid uid = AttributeUtil.getUidAttribute(attrs);
         return uid.getUidValue();
     }        
     
+
+    
+    /**
+     * Get default attributes to get from schema
+     * @param ais attribute info set
+     * @return set of the 
+     */
+    public static Set<String> getDefaultAttributesToGet(Set<AttributeInfo> ais) {
+        Set<String> ret = CollectionUtil.newCaseInsensitiveSet();
+        for (AttributeInfo ai : ais) {
+            if (ai.isReturnedByDefault() && ai.isReadable()) {
+                ret.add(ai.getName());
+            }
+        }
+        return ret;
+    }    
+    
     /**
      * Get attributes to get list
      * @param options
-     * @return set of attribute names to get
+     * @param defAttrs 
+     * @return set of attribute names to get or empty set, when not defined
      */
-    public static Set<String> getAttributesToGet(OperationOptions options) {
+    public static Set<String> getAttributesToGet(OperationOptions options, Set<String> defAttrs) {
+        final String msg = "getAttributesToGet ''{0}''";
         SortedSet<String> _attrToGet = CollectionUtil.newCaseInsensitiveSet();
         if(options != null && options.getAttributesToGet() != null) {
             for (String toGet : options.getAttributesToGet()) {
                 _attrToGet.add(toGet);
             }
         }
+        //Make sure, that the name and uid are always present
         _attrToGet.add(Name.NAME);
-        _attrToGet.add(Uid.NAME);        
+        _attrToGet.add(Uid.NAME);
+        log.info(msg, _attrToGet);
         return _attrToGet;
     }    
     
@@ -324,22 +347,27 @@ public class OracleERPUtil {
      * @param attrs attributes 
      * @return personid the id of the person
      */
-    public static String getPersonId(String id, OracleERPConnector con, Set<Attribute> attrs) {
-        String ret = null;
+    public static Integer getPersonId(String id, OracleERPConnector con, Set<Attribute> attrs) {  
+        log.info("getPersonId for userId: ''{0}''", id);
+        Integer ret = null;
         int num = 0;
         String columnName = null;
         final Attribute empAttr = AttributeUtil.find(EMP_NUM, attrs);
         final Attribute npwAttr = AttributeUtil.find(NPW_NUM, attrs);
         if ( empAttr != null ) {
             num = AttributeUtil.getIntegerValue(empAttr);
-            columnName = EMP_NUM;
+            columnName = EMP_NUM;   
+            log.info("{0} present with value ''{1}''",columnName, num);
         } else if ( npwAttr != null ){
             num = AttributeUtil.getIntegerValue(npwAttr);
             columnName = NPW_NUM;            
+            log.info("{0} present with value ''{1}''",columnName, num);
         } else {
+            log.info("neither {0} not {1} attributes for personId are present", EMP_NUM, NPW_NUM);
             return null;
         }
         
+        log.ok("clomunName ''{0}''", columnName);
         final String sql = "select "+PERSON_ID+" from "+con.app()+"PER_PEOPLE_F where "+columnName+" = ?";
         ResultSet rs = null; // SQL query on person_id
         PreparedStatement ps = null; // statement that generates the query
@@ -350,7 +378,7 @@ public class OracleERPUtil {
             ps.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
             rs = ps.executeQuery();
             if (rs.next()) {
-                ret = rs.getString(1);
+                ret = rs.getInt(1);
             }
             log.ok("Oracle ERP: PERSON_ID return from {0} = {1}", sql, ret);
             
@@ -359,6 +387,9 @@ public class OracleERPUtil {
                 log.error(msg);
                 throw new ConnectorException(msg);
             }
+
+            log.ok("getPersonId for userId: ''{0}'' -> ''{1}''", id, ret);
+            return ret;
         } catch (SQLException e) {
             log.error(e, sql);
             throw ConnectorException.wrap(e);
@@ -368,7 +399,6 @@ public class OracleERPUtil {
             SQLUtil.closeQuietly(ps);
             ps = null;
         }
-        return ret;
     }
     
     
@@ -428,6 +458,7 @@ public class OracleERPUtil {
      * @return normalized date
      */
     public static String normalizeStrDate(String strDate) {
+        final String method = "normalizeStrDate ''{0}'' -> ''{1}''";      
         String retDate = strDate;
         if ((strDate == null) || strDate.equalsIgnoreCase("null")) {
             retDate = "null";
@@ -436,6 +467,7 @@ public class OracleERPUtil {
         } else if (strDate.length() > 10) {
             retDate = strDate.substring(0, 10); // truncate to only date i.e.,yyyy-mm-dd 
         }
+        log.ok(method, strDate, retDate);
         return retDate;
     } // normalizeStrDate()
     
@@ -444,8 +476,10 @@ public class OracleERPUtil {
      * 
      */
     public static java.sql.Date getCurrentDate() {
+        final String method = "getCurrentDate ''{0}''";      
         Calendar rightNow = Calendar.getInstance();
         java.util.Date utilDate = rightNow.getTime();
+        log.ok(method, utilDate);  
         return new java.sql.Date(utilDate.getTime());
     }
     
@@ -458,6 +492,8 @@ public class OracleERPUtil {
      * @param s string to be quoted
      */
     public static void addQuoted(StringBuffer b, String s) {
+        final String method = "addQuoted ''{0}''";
+        log.info(method, s);
         b.append("'");
         if (s != null) {
             for (int i = 0; i < s.length(); i++) {
@@ -477,6 +513,8 @@ public class OracleERPUtil {
      * @return the String parameter
      */
     public static String getStringParamValue(final Map<String, SQLParam> userParamMap, final String paramName) {
+        final String method = "getStringParamValue ''{0}''";
+        log.info(method, paramName);
         final SQLParam param = userParamMap.get(paramName);
         if (param == null)
             return null;
@@ -491,6 +529,8 @@ public class OracleERPUtil {
      * @return list of strings
      */
     public static List<String> convertToListString(List<Object> from) {
+        final String method = "convertToListString";
+        log.info(method);
         //Convert to list of Strings
         final List<String> ret = new ArrayList<String>();
         for (Object obj : from) {
@@ -504,6 +544,8 @@ public class OracleERPUtil {
      * @return The string value
      */
     public static String listToCommaDelimitedString(List<String> list) {
+        final String method = "listToCommaDelimitedString";
+        log.info(method);
         StringBuilder ret = new StringBuilder();
         boolean first = true;
         for (String val : list) {

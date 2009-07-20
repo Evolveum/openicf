@@ -54,15 +54,8 @@ import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
-import org.identityconnectors.framework.common.objects.SchemaBuilder;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
-import org.identityconnectors.framework.spi.operations.AuthenticateOp;
-import org.identityconnectors.framework.spi.operations.CreateOp;
-import org.identityconnectors.framework.spi.operations.DeleteOp;
-import org.identityconnectors.framework.spi.operations.SchemaOp;
-import org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp;
-import org.identityconnectors.framework.spi.operations.ScriptOnResourceOp;
 
 
 /**
@@ -106,6 +99,16 @@ public class ResponsibilityNames {
      * if description field exists in responsibility views.
      */
     private boolean newResponsibilityViews = false;
+    
+    /**
+     * The schema objectClass builder cache 
+     */
+    private ObjectClassInfo oci = null;
+    
+    /**
+     * Set of the attributes returned by default
+     */
+    private Set<String> attributesByDefault = null;     
 
     /**
      * Accessor for the descrExists property
@@ -147,23 +150,22 @@ public class ResponsibilityNames {
 
     /**
      * @param amb builder
-     * @param id id of the user
-     * @param options 
+     * @param userName of the user
+     * @param attrToGet
      */
-    public void buildResponsibilitiesToAccountObject(AttributeMergeBuilder amb, final String id,
-            OperationOptions options) {
-        
-        Set<String> attrToGet = getAttributesToGet(options); 
+    public void buildResponsibilitiesToAccountObject(AttributeMergeBuilder amb, final String userName,
+            Set<String> attrToGet) {
+         
         if (attrToGet.contains(RESPS) && !isNewResponsibilityViews()) {
             //add responsibilities
-            final List<String> responsibilities = getResponsibilities(id, RESPS_TABLE, false);
+            final List<String> responsibilities = getResponsibilities(userName, RESPS_TABLE, false);
             amb.addAttribute(RESPS, responsibilities);
 
             //add resps list
             final List<String> resps = getResps(responsibilities, RESP_FMT_KEYS);
             amb.addAttribute(RESPKEYS, resps);
         } else if (attrToGet.contains(DIRECT_RESPS)) {
-            final List<String> responsibilities = getResponsibilities(id, RESPS_DIRECT_VIEW, false);
+            final List<String> responsibilities = getResponsibilities(userName, RESPS_DIRECT_VIEW, false);
             amb.addAttribute(DIRECT_RESPS, responsibilities);
 
             //add resps list
@@ -173,7 +175,7 @@ public class ResponsibilityNames {
 
         if (attrToGet.contains(INDIRECT_RESPS)) {
             //add responsibilities
-            final List<String> responsibilities = getResponsibilities(id, RESPS_INDIRECT_VIEW, false);
+            final List<String> responsibilities = getResponsibilities(userName, RESPS_INDIRECT_VIEW, false);
             amb.addAttribute(INDIRECT_RESPS, responsibilities);
         }
     }
@@ -193,7 +195,7 @@ public class ResponsibilityNames {
             res = ps.executeQuery();
             log.ok(sql);
             if (res != null && res.next()) {
-                log.ok("ResponsibilityViews exists");
+                log.ok("newResponsibilityViews: true");
                 return true;
             }
         } catch (SQLException e) {
@@ -205,7 +207,7 @@ public class ResponsibilityNames {
             SQLUtil.closeQuietly(ps);
             ps = null;
         }
-        log.ok("ResponsibilityViews does not exists");
+        log.ok("newResponsibilityViews: true");
         return false;
     }
 
@@ -273,6 +275,7 @@ public class ResponsibilityNames {
      *            configUserId
      */
     public void initResponsibilities(final String configUserId) {
+        log.info("initResponsibilities");
         this.newResponsibilityViews = getNewResponsibilityViews();
 
         if (isNewResponsibilityViews()) {
@@ -281,21 +284,20 @@ public class ResponsibilityNames {
 
         // three pieces of data need for apps_initialize()
         final String auditResponsibility = co.getCfg().getAuditResponsibility();
+        log.info("auditResponsibility = {0}", auditResponsibility);
+        
+        if (StringUtil.isNotBlank(auditResponsibility) && StringUtil.isNotBlank(configUserId)) {
+            co.getSecAttrs().initAdminUserId(configUserId);
 
-        if (StringUtil.isNotBlank(auditResponsibility)) {
-            if (StringUtil.isNotBlank(configUserId)) {
-                co.getSecAttrs().initAdminUserId(configUserId);
-            }
-
-            final String view = co.app()
-                    + ((isNewResponsibilityViews()) ? OracleERPUtil.RESPS_ALL_VIEW : OracleERPUtil.RESPS_TABLE);
+            final String view = co.app() + ((isNewResponsibilityViews()) ? OracleERPUtil.RESPS_ALL_VIEW : OracleERPUtil.RESPS_TABLE);
             final String sql = "select responsibility_id, responsibility_application_id from "
                     + view
                     + " where user_id = ? and "
                     + "(responsibility_id,responsibility_application_id) = (select responsibility_id,application_id from "
-                    + "{0}fnd_responsibility_vl where responsibility_name = ?)";
+                    + co.app()
+                    + "fnd_responsibility_vl where responsibility_name = ?)";
 
-            final String msg = "Oracle ERP SQL: {0} returned: RESP_ID = {1}, RESP_APPL_ID = {2}";
+            final String msg = "Oracle ERP SQL: RESP_ID = {1}, RESP_APPL_ID = {2}";
 
             ArrayList<SQLParam> params = new ArrayList<SQLParam>();
             params.add(new SQLParam("userId", configUserId));
@@ -314,9 +316,9 @@ public class ResponsibilityNames {
                     }
                 }
 
-                log.ok(msg, sql, respId, respApplId);
+                log.ok(msg, respId, respApplId);
             } catch (SQLException e) {
-                log.error(e, msg, sql, respId, respApplId);
+                log.error(e, msg, respId, respApplId);
             } finally {
                 // close everything in case we had an exception in the middle of something
                 SQLUtil.closeQuietly(rs);
@@ -330,7 +332,7 @@ public class ResponsibilityNames {
     /**
      * getResponsibilities
      * 
-     * @param id
+     * @param userName
      *            user id
      * @param respLocation
      *            The responsibilities table
@@ -338,7 +340,7 @@ public class ResponsibilityNames {
      *            select active only
      * @return list of strings of multivalued attribute
      */
-    private List<String> getResponsibilities(String id, String respLocation, boolean activeOnly) {
+    private List<String> getResponsibilities(String userName, String respLocation, boolean activeOnly) {
 
         final String method = "getResponsibilities";
         log.info(method);
@@ -349,7 +351,7 @@ public class ResponsibilityNames {
         b.append("fndsecgvl.Security_group_name ");
         // descr may not be available in view or in native ui with new resp views
         // bug#15492 - do not include user tables in query if id not specified, does not return allr responsibilities
-        if (id != null) {
+        if (userName != null) {
             if (!isNewResponsibilityViews() || (isDescrExists() && respLocation.equalsIgnoreCase(RESPS_DIRECT_VIEW))) {
                 b.append(", fnduserg.DESCRIPTION");
             }
@@ -358,14 +360,14 @@ public class ResponsibilityNames {
         b.append("FROM " + co.app() + "fnd_responsibility_vl fndrespvl, ");
         b.append(co.app() + "fnd_application_vl fndappvl, ");
         // bug#15492 - don't include this join if no id is specified.
-        if (id != null) {
+        if (userName != null) {
             b.append(co.app() + "fnd_user fnduser, ");
             b.append(co.app() + respLocation + " fnduserg, ");
         }
         b.append(co.app() + "fnd_security_groups_vl fndsecgvl ");
         b.append("WHERE fndappvl.application_id = fndrespvl.application_id ");
         // bug#15492 - don't include this join if no id is specified.
-        if (id != null) {
+        if (userName != null) {
             b.append("AND fnduser.user_id = fnduserg.user_id ");
             b.append("AND fndrespvl.RESPONSIBILITY_ID = fnduserg.RESPONSIBILITY_ID ");
             b.append("AND fndrespvl.APPLICATION_ID = fnduserg.RESPONSIBILITY_APPLICATION_ID ");
@@ -373,7 +375,7 @@ public class ResponsibilityNames {
             b.append("AND fndsecgvl.security_group_id = fnduserg.security_group_id ");
         }
         if (activeOnly) {
-            if (id != null) {
+            if (userName != null) {
                 b.append(" AND fnduserg.START_DATE - SYSDATE <= 0 "
                         + "AND (fnduserg.END_DATE IS NULL OR fnduserg.END_DATE - SysDate > 0)");
             }
@@ -386,8 +388,8 @@ public class ResponsibilityNames {
         try {
             log.info("sql select {0}", sql);
             st = co.getConn().prepareStatement(sql);
-            if (id != null) {
-                st.setString(1, id.toUpperCase());
+            if (userName != null) {
+                st.setString(1, userName.toUpperCase());
             }
             res = st.executeQuery();
             while (res.next()) {
@@ -404,19 +406,19 @@ public class ResponsibilityNames {
                 s = getColumn(res, 3); // fndsecgvl.Security_group_name
                 sb.append(s);
                 sb.append("||");
-                if (id != null) {
+                if (userName != null) {
                     s = getColumn(res, 4); // fnduserg.DESCRIPTION or fnduserg.START_DATE
                     sb.append(s);
                 }
                 sb.append("||");
-                if (id != null) {
+                if (userName != null) {
                     s = getColumn(res, 5); // fnduserg.START_DATE or fnduserg.END_DATE
                     sb.append(s);
                 }
                 if (!isNewResponsibilityViews()
                         || (isDescrExists() && respLocation.equalsIgnoreCase(RESPS_DIRECT_VIEW))) {
                     sb.append("||");
-                    if (id != null) {
+                    if (userName != null) {
                         s = getColumn(res, 6); // fnduserg.END_DATE
                         sb.append(s);
                     }
@@ -1000,7 +1002,7 @@ public class ResponsibilityNames {
         final String method = "getResponsibilityNames";
         log.info( method);
 
-        Set<String> atg = getAttributesToGet(options);
+        Set<String> atg = getRespNamesAttributesToGet(options);
         
         //TODO add filter one resp name to the responsibility query
         PreparedStatement st = null;
@@ -1190,62 +1192,61 @@ public class ResponsibilityNames {
 
 
     /**
-     * @param schemaBld
+     * The object class info
+     * @return the info class
      */
-    public void schema(SchemaBuilder schemaBld) {
-        final EnumSet<Flags> STD_NC = EnumSet.of(Flags.NOT_CREATABLE);
-        
-        ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
-        oc.setType(RESP_NAMES_OC.getObjectClassValue());
+    public ObjectClassInfo getObjectClassInfo() {
+        if (oci == null) {
+            ObjectClassInfoBuilder ocib = new ObjectClassInfoBuilder();
 
-        // The Name is supported attribute
-        oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_NC));
-        oc.addAttributeInfo(AttributeInfoBuilder.build(NAME, String.class, STD_NC));
-        // name='userMenuNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_MENU_NAMES, String.class, STD_NC));
-        // name='menuIds' type='string' audit='false'    
-        oc.addAttributeInfo(AttributeInfoBuilder.build(MENU_IDS, String.class, STD_NC));
-        // name='userFunctionNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_FUNCTION_NAMES, String.class, STD_NC));
-        // name='functionIds' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_IDS, String.class, STD_NC));
-        // name='formIds' type='string' audit='false'    
-        oc.addAttributeInfo(AttributeInfoBuilder.build(FORM_IDS, String.class, STD_NC));
-        // name='formNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(FORM_NAMES, String.class, STD_NC));
-        // name='functionNames' type='string' audit='false'    
-        oc.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_NAMES, String.class, STD_NC));
-        // name='userFormNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_FORM_NAMES, String.class, STD_NC));
-        // name='readOnlyFormIds' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_IDS, String.class, STD_NC));
-        // name='readWriteOnlyFormIds' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_IDS, String.class, STD_NC));
-        // name='readOnlyFormNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_NAMES, String.class, STD_NC));
-        // name='readOnlyFunctionNames' type='string' audit='false'    
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTION_NAMES, String.class, STD_NC));
-        // name='readOnlyUserFormNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_USER_FORM_NAMES, String.class, STD_NC));
-        // name='readOnlyFunctionIds' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTIONS_IDS, String.class, STD_NC));
-        // name='readWriteOnlyFormNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_NAMES, String.class, STD_NC));
-        // name='readWriteOnlyUserFormNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_USER_FORM_NAMES));
-        // name='readWriteOnlyFunctionNames' type='string' audit='false'        
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_NAMES, String.class, STD_NC));
-        // name='readWriteOnlyFunctionIds' type='string' audit='false'                 
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_IDS, String.class, STD_NC));
-        //Define object class
-        final ObjectClassInfo respNamesOc = oc.build();
-        schemaBld.defineObjectClass(respNamesOc);
-        schemaBld.removeSupportedObjectClass(AuthenticateOp.class, respNamesOc);
-        schemaBld.removeSupportedObjectClass(DeleteOp.class, respNamesOc);
-        schemaBld.removeSupportedObjectClass(CreateOp.class, respNamesOc);
-        schemaBld.removeSupportedObjectClass(SchemaOp.class, respNamesOc);
-        schemaBld.removeSupportedObjectClass(ScriptOnConnectorOp.class, respNamesOc);
-        schemaBld.removeSupportedObjectClass(ScriptOnResourceOp.class, respNamesOc);        
+            final EnumSet<Flags> STD_NC = EnumSet.of(Flags.NOT_CREATABLE);
+
+            ocib = new ObjectClassInfoBuilder();
+            ocib.setType(RESP_NAMES_OC.getObjectClassValue());
+
+            ocib.addAttributeInfo(Name.INFO);
+            // The Name is supported attribute
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(NAME, String.class, STD_NC));
+            // name='userMenuNames' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_MENU_NAMES, String.class, STD_NC));
+            // name='menuIds' type='string' audit='false'    
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(MENU_IDS, String.class, STD_NC));
+            // name='userFunctionNames' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_FUNCTION_NAMES, String.class, STD_NC));
+            // name='functionIds' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_IDS, String.class, STD_NC));
+            // name='formIds' type='string' audit='false'    
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(FORM_IDS, String.class, STD_NC));
+            // name='formNames' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(FORM_NAMES, String.class, STD_NC));
+            // name='functionNames' type='string' audit='false'    
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_NAMES, String.class, STD_NC));
+            // name='userFormNames' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_FORM_NAMES, String.class, STD_NC));
+            // name='readOnlyFormIds' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_IDS, String.class, STD_NC));
+            // name='readWriteOnlyFormIds' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_IDS, String.class, STD_NC));
+            // name='readOnlyFormNames' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_NAMES, String.class, STD_NC));
+            // name='readOnlyFunctionNames' type='string' audit='false'    
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTION_NAMES, String.class, STD_NC));
+            // name='readOnlyUserFormNames' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_USER_FORM_NAMES, String.class, STD_NC));
+            // name='readOnlyFunctionIds' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTIONS_IDS, String.class, STD_NC));
+            // name='readWriteOnlyFormNames' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_NAMES, String.class, STD_NC));
+            // name='readWriteOnlyUserFormNames' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_USER_FORM_NAMES));
+            // name='readWriteOnlyFunctionNames' type='string' audit='false'        
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_NAMES, String.class, STD_NC));
+            // name='readWriteOnlyFunctionIds' type='string' audit='false'                 
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_IDS, String.class, STD_NC));
+
+            oci = ocib.build();
+        }
+        return oci;
 
         /*
         //Auditor responsibilities
@@ -1375,7 +1376,7 @@ public class ResponsibilityNames {
         
         List<String> auditorRespList = getResponsibilities(id, respLocation, activeRespsOnly);
         for (String respName : auditorRespList) {
-            AttributeMergeBuilder amb = new AttributeMergeBuilder(getAttributesToGet(options));
+            AttributeMergeBuilder amb = new AttributeMergeBuilder(getRespNamesAttributesToGet(options));
             updateAuditorData(amb, respName);
 
             ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
@@ -1386,7 +1387,26 @@ public class ResponsibilityNames {
             }
         }
     }
+    
+    /**
+     * @param options
+     * @return
+     */
+    private Set<String> getRespNamesAttributesToGet(OperationOptions options) {
+        Set<String> attributesToGet = getAttributesToGet(options, getRespNamesAttributesByDefault());
+        return attributesToGet;
+    }    
 
+    /**
+     * The account attributes returned by default
+     * @return The set of attribute names
+     */
+    private Set<String> getRespNamesAttributesByDefault() {
+        if (attributesByDefault == null) {
+            attributesByDefault = getDefaultAttributesToGet(getObjectClassInfo().getAttributeInfo());
+        }
+        return attributesByDefault;
+    }    
     /**
      * @param options
      * @return
@@ -1843,11 +1863,12 @@ public class ResponsibilityNames {
 
     /**
      * @param amb builder
-     * @param id id of the responsibility
-     * @param options for a attributesToGet 
+     * @param userName id of the responsibility
+     * @param attributesToGet for a attributesToGet 
      */
-    public void buildAuditorDataObject(AttributeMergeBuilder amb, String id, OperationOptions options) {
-        List<String> activeRespList = getResponsibilities(id, RESPS_TABLE, true);
+    public void buildAuditorDataObject(AttributeMergeBuilder amb, String userName, Set<String> attributesToGet) {
+        log.info("buildAuditorDataObject for uid: {0}", userName);
+        List<String> activeRespList = getResponsibilities(userName, RESPS_TABLE, true);
         for (String activeRespName : activeRespList) {            
             updateAuditorData(amb, activeRespName);  
         }

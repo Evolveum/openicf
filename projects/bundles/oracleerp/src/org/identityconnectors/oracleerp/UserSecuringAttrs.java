@@ -38,21 +38,11 @@ import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
-import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
-import org.identityconnectors.framework.spi.operations.AuthenticateOp;
-import org.identityconnectors.framework.spi.operations.CreateOp;
-import org.identityconnectors.framework.spi.operations.DeleteOp;
-import org.identityconnectors.framework.spi.operations.SchemaOp;
-import org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp;
-import org.identityconnectors.framework.spi.operations.ScriptOnResourceOp;
-import org.identityconnectors.framework.spi.operations.UpdateOp;
 
 /**
  * Main implementation of the OracleErp Connector
@@ -99,14 +89,14 @@ public class UserSecuringAttrs  {
     
     /**
      * @param amb
-     * @param id 
+     * @param userName 
      */
-    public void buildSecuringAttributesToAccountObject(AttributeMergeBuilder amb, final String id) {
+    public void buildSecuringAttributesToAccountObject(AttributeMergeBuilder amb, final String userName) {
         if (!co.getCfg().isManageSecuringAttrs()) {
             return;
         }
 
-        List<String> secAttrs = getSecuringAttrs(id);
+        List<String> secAttrs = getSecuringAttrs(userName);
         if (secAttrs != null) {
             amb.addAttribute(SEC_ATTRS, secAttrs);
         }
@@ -604,11 +594,11 @@ public class UserSecuringAttrs  {
 
     /**
      * Get Securing Attributes
-     * @param id 
+     * @param userName 
      * @param options 
      * @return list of strings
      */
-    private List<String> getSecuringAttrs(String id) {
+    private List<String> getSecuringAttrs(String userName) {
         final String method = "getSecAttrs";
         log.info(method);
         PreparedStatement st = null;
@@ -617,7 +607,7 @@ public class UserSecuringAttrs  {
         //default value
         String pattern = "%";
         b.append("SELECT distinct akattrvl.NAME, fndappvl.APPLICATION_NAME ");
-        if (id != null) {
+        if (userName != null) {
             b.append(", akwebsecattr.VARCHAR2_VALUE, akwebsecattr.DATE_VALUE, akwebsecattr.NUMBER_VALUE ");
         }
         b.append("FROM " + co.app() + "AK_ATTRIBUTES_VL akattrvl, " + co.app()
@@ -644,7 +634,7 @@ public class UserSecuringAttrs  {
         try {
             log.info("execute sql {0}", sql);
             st = co.getConn().prepareStatement(sql);
-            st.setString(1, id.toUpperCase());
+            st.setString(1, userName.toUpperCase());
             res = st.executeQuery();
             while (res.next()) {
 

@@ -5,10 +5,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedSet;
+import java.util.Set;
 import java.util.Map.Entry;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
@@ -20,25 +21,25 @@ import org.identityconnectors.framework.common.objects.ConnectorObject;
  */
 public final class AttributeMergeBuilder {
 
-    private SortedSet<String> _attrToGet = CollectionUtil.newCaseInsensitiveSet();
-    private Map<String, List<Object>> _attrs;
+    private static final Log log = Log.getLog(AttributeMergeBuilder.class);
+    private Set<String> _attrToGet = null;
+    private Map<String, List<Object>> _attrs = new HashMap<String, List<Object>>();
 
     /**
      * @param attrToGet  the attribute merge filter
      */
     public AttributeMergeBuilder(Collection<String> attrToGet) {
-        if(attrToGet != null) {
-            if ( attrToGet instanceof SortedSet) {
-                _attrToGet = (SortedSet<String>) attrToGet;
-            } else {
-                for (String toGet :  attrToGet) {
-                    _attrToGet.add(toGet);
-                }                            
-            }
-        }
-        //append default attributes to get, needed to be always there
-        _attrs = new HashMap<String, List<Object>>();
+        initAttributesToGet(attrToGet);
     }
+
+
+    /**
+     * 
+     */
+    public AttributeMergeBuilder() {
+        //empty
+    }
+    
 
     /**
      * Adds each object in the collection.
@@ -70,7 +71,7 @@ public final class AttributeMergeBuilder {
      * @param merge
      */
     private void mergeValue(String name, Collection<?> merge) {
-        if (!_attrToGet.contains(name)) {
+        if (skipAttribute(name)) {
             return;
         }
         List<Object> old = _attrs.get(name);
@@ -88,7 +89,7 @@ public final class AttributeMergeBuilder {
             _attrs.put(name, null);
         }
     }
-
+    
     /**
      * Builds a 'List<Attribute>' .
      * 
@@ -101,9 +102,51 @@ public final class AttributeMergeBuilder {
         }
         final List<Attribute> attrs = CollectionUtil.newList();
         for (Entry<String, List<Object>> entry : _attrs.entrySet()) {
-            final Attribute attr = AttributeBuilder.build(entry.getKey(), entry.getValue());
+            final String name = entry.getKey();
+            final List<Object> value = entry.getValue();
+            if (skipAttribute(name)) {
+                continue;
+            }            
+            final Attribute attr = AttributeBuilder.build(name, value);
             attrs.add(attr);
         }
         return attrs;
+    }    
+    
+    /**
+     * 
+     * @param name
+     * @return
+     */
+    private boolean skipAttribute(String name) {
+        if (_attrToGet != null &&  !_attrToGet.contains(name)) {
+            log.info("Skip merge attribute {0}, it is not in attributesToGet", name);
+            return true;
+        }    
+        return false;
     }
+
+    /**
+     * Builds a 'List<Attribute>' .
+     * @param attrToGet 
+     * 
+     * @return the list
+     */
+    public List<Attribute> build(Collection<String> attrToGet) {
+        initAttributesToGet(attrToGet);
+        return build();
+    }
+    
+
+    /**
+     * @param attrToGet
+     */
+    private void initAttributesToGet(Collection<String> attrToGet) {
+        if(attrToGet != null) {
+            _attrToGet = CollectionUtil.newCaseInsensitiveSet();
+            for (String toGet :  attrToGet) {
+                _attrToGet.add(toGet);
+            }                            
+        }
+    }    
 }

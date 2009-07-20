@@ -49,6 +49,7 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.InvalidPasswordException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
@@ -79,7 +80,7 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
  */
 @ConnectorClass(displayNameKey = "oracleerp.connector.display", configurationClass = OracleERPConfiguration.class)
 public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, SearchOp<FilterWhereBuilder>,
-        UpdateOp, CreateOp, TestOp, SchemaOp, ScriptOnConnectorOp, ScriptOnResourceOp {
+        UpdateOp, CreateOp, TestOp, SchemaOp, ScriptOnConnectorOp {
 
     /**
      * Setup logging for the {@link OracleERPConnector}.
@@ -334,16 +335,17 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         log.info("Init using configuration {0}", cfg);
         this.cfg = (OracleERPConfiguration) cfg;
         this.conn = OracleERPConnection.createOracleERPConnection(getCfg());
-
+        log.info("createOracleERPConnection");
+        
         /*  
          * RA: startConnection(): 
          *  setNewRespView();
          *  initFndGlobal();
          */
         configUserId = OracleERPUtil.getUserId(this, getCfg().getUser());
-        log.info("Init Responsibilities for config user {0}", configUserId);
-        getRespNames().initResponsibilities(getConfigUserId());
-        log.info("Init global");
+        log.info("Init: for user {0} the configUserId is {1}", getCfg().getUser(), configUserId);
+        
+        getRespNames().initResponsibilities(configUserId);        
         initFndGlobal();
         log.ok("init");
     }
@@ -354,43 +356,8 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
     public Object runScriptOnConnector(ScriptContext request, OperationOptions options) {
         final ClassLoader loader = getClass().getClassLoader();
 
-        String scriptLanguage = request.getScriptLanguage();
-        if (StringUtil.isBlank(scriptLanguage) || !"GROOVY".equals(scriptLanguage)) {
-            throw new IllegalArgumentException("invalid script language. The GROOVY is only supported");
-        }
-
         /*
-         * Build the actionContext to pass to script
-         */
-        final Map<String, Object> scriptArguments = request.getScriptArguments();
-
-        final ScriptExecutorFactory scriptExFact = ScriptExecutorFactory.newInstance(scriptLanguage);
-        final ScriptExecutor scripEx = scriptExFact.newScriptExecutor(loader, request.getScriptText(), true);
-        try {
-            //openConnection();
-            scriptArguments.put("conn", getConn().getConnection()); //The real connection
-            return scripEx.execute(scriptArguments);
-        } catch (Exception e) {
-            throw ConnectorException.wrap(e);
-        } finally {
-            //closeConnection();    
-        }
-
-    }
-
-    /* (non-Javadoc)
-     * @see org.identityconnectors.framework.spi.operations.ScriptOnResourceOp#runScriptOnResource(org.identityconnectors.framework.common.objects.ScriptContext, org.identityconnectors.framework.common.objects.OperationOptions)
-     */
-    public Object runScriptOnResource(ScriptContext request, OperationOptions options) {
-        final ClassLoader loader = getClass().getClassLoader();
-
-        String scriptLanguage = request.getScriptLanguage();
-        if (StringUtil.isBlank(scriptLanguage) || !"GROOVY".equals(scriptLanguage)) {
-            throw new IllegalArgumentException("invalid script");
-        }
-
-        /*
-         * Build the actionContext to pass to script
+         * Build the actionContext to pass it to the script according the documentation
          */
         final Map<String, Object> actionContext = new HashMap<String, Object>();
         final Map<String, Object> scriptArguments = request.getScriptArguments();
@@ -401,8 +368,6 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         actionContext.put("action", scriptArguments.get("operation")); // The action is the operation name createUser/updateUser/deleteUser/disableUser/enableUser
         actionContext.put("timing", scriptArguments.get("timing")); // The timming before / after
         actionContext.put("attributes", scriptArguments.get("attributes")); // The attributes
-        // TODO actionContext.put("currentAttributes", scriptArguments.get("attributes"));  // The attributes
-        // TODO actionContext.put("changedAttributes", scriptArguments.get("attributes"));  // The attributes
         actionContext.put("id", nameValue); // The user name
         if (password != null) {
             password.access(new GuardedString.Accessor() {
@@ -418,6 +383,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         Map<String, Object> inputMap = new HashMap<String, Object>();
         inputMap.put("actionContext", actionContext);
 
+        final String scriptLanguage = request.getScriptLanguage();
         final ScriptExecutorFactory scriptExFact = ScriptExecutorFactory.newInstance(scriptLanguage);
         final ScriptExecutor scripEx = scriptExFact.newScriptExecutor(loader, request.getScriptText(), true);
         try {
@@ -427,6 +393,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         }
     }
 
+
     /*
      * (non-Javadoc)
      * 
@@ -435,13 +402,18 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
     public Schema schema() {
         // Use SchemaBuilder to build the schema.
         SchemaBuilder schemaBld = new SchemaBuilder(getClass());
-        getAccount().schema(schemaBld);
+        schemaBld.defineObjectClass(getAccount().getObjectClassInfo());
 
         // The Responsibilities
-        getRespNames().schema(schemaBld);
-        
-        // The securing attributes
-        getSecAttrs().schema(schemaBld);
+        final ObjectClassInfo respNamesOc = getRespNames().getObjectClassInfo();
+        schemaBld.defineObjectClass(respNamesOc);
+        schemaBld.removeSupportedObjectClass(AuthenticateOp.class, respNamesOc);
+        schemaBld.removeSupportedObjectClass(DeleteOp.class, respNamesOc);
+        schemaBld.removeSupportedObjectClass(CreateOp.class, respNamesOc);
+        schemaBld.removeSupportedObjectClass(SchemaOp.class, respNamesOc);
+        schemaBld.removeSupportedObjectClass(ScriptOnConnectorOp.class, respNamesOc);
+        schemaBld.removeSupportedObjectClass(ScriptOnResourceOp.class, respNamesOc);      
+
         return schemaBld.build();
     }
 
@@ -477,6 +449,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
     private void initFndGlobal() {
         final String respId = getRespNames().getRespId();        
         final String respApplId = getRespNames().getRespApplId();
+        log.info("Init global respId={0}, respApplId={1}", respId ,respApplId);
         //Real initialize call
         if (StringUtil.isNotBlank(getConfigUserId()) && StringUtil.isNotBlank(respId)
                 && StringUtil.isNotBlank(respApplId)) {

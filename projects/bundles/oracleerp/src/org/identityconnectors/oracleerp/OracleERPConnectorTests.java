@@ -22,11 +22,10 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.common.StringUtil.isBlank;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+import static org.identityconnectors.common.StringUtil.*;
+import static org.junit.Assert.*;
+
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,14 +50,12 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
-import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.test.common.TestHelpers;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -73,18 +70,20 @@ import org.junit.Test;
  */
 public class OracleERPConnectorTests { 
 
-    static final String DEFAULT_CONFIGURATINON = "configuration.init";
+    static final String CONFIG_SYSADM = "configuration.sysadm";
+    static final String CONFIG_TST = "configuration.tst";
     static final String ACCOUNT_ALL_ATTRS = "account.all";
     static final String ACCOUNT_REQUIRED_ATTRS = "account.required";
     static final String ACCOUNT_MODIFY_ATTRS = "account.modify";
-    static final String NEW_USER_ATTRS = "account.required";
-    
-    static  DataProvider dataProvider = null; 
-    
-    // Test facade
-    private ConnectorFacade facade = null;
+    static final String ACCOUNT_USER_ATTRS = "account.required";
+    static final String ACCOUNT_OPTIONS = "account.options";
+    static final String ACCOUNT_AUDITOR = "account.auditor";
 
-    private OracleERPConfiguration config;
+    /**
+     * Load configurations and attibuteSets Data provides 
+     */
+    static  DataProvider dataProvider = null; 
+
     
     //set up logging
     private static final Log log = Log.getLog(OracleERPConnectorTests.class);
@@ -98,49 +97,35 @@ public class OracleERPConnectorTests {
     public static void setUpClass() { 
         dataProvider = ConnectorHelper.createDataProvider();
     }
-
-
-    /**
-     * Setup  the test
-     * @throws Exception
-     */
-    @Before
-    public void setup() throws Exception {
-        // attempt to create the database in the directory..
-        config = new OracleERPConfiguration();        
-        dataProvider.loadConfiguration(DEFAULT_CONFIGURATINON, config); 
-        assertNotNull(config);
-        facade = getFacade(config);
-        assertNotNull(facade);
-    }
     
+
     /**
-     * Tear down class
+     * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
      */
-    @After
-    public void tearDown() {
-        config=null;
-        facade=null;
+    @Test
+    public void testValidateSysConfiguration() {
+        final OracleERPConfiguration config = getConfiguration(CONFIG_TST);
+        assertNotNull(config);
+        config.validate();
     }    
 
     /**
      * Test method for {@link OracleERPConnector#schema()}.
      */
-    //Test
-    public void testConfig() {
-        Schema schema = facade.schema();
+    @Test
+    public void testSchema() {
+        Schema schema = getFacade(getConfiguration(CONFIG_SYSADM)).schema();
         // Schema should not be null
         assertNotNull(schema);
         Set<ObjectClassInfo> objectInfos = schema.getObjectClassInfo();
         assertNotNull(objectInfos);
-        assertEquals(1, objectInfos.size());
+        assertEquals(2, objectInfos.size());
         ObjectClassInfo objectInfo = (ObjectClassInfo) objectInfos.toArray()[0];
         assertNotNull(objectInfo);
         // the object class has to ACCOUNT_NAME
         assertTrue(objectInfo.is(ObjectClass.ACCOUNT_NAME));
         // iterate through AttributeInfo Set
-        Set<AttributeInfo> attInfos = objectInfo.getAttributeInfo();
-        
+        Set<AttributeInfo> attInfos = objectInfo.getAttributeInfo();        
         assertNotNull(AttributeInfoUtil.find(Name.NAME, attInfos));
         assertNotNull(AttributeInfoUtil.find(OperationalAttributes.PASSWORD_NAME, attInfos));
     }
@@ -150,8 +135,11 @@ public class OracleERPConnectorTests {
      * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
      */
     @Test
-    public void testConfigurationProperties() {
-        assertNotNull(config.getDriver());
+    public void testConfig() {
+        final OracleERPConfiguration config = getConfiguration(CONFIG_SYSADM);
+        assertNotNull(config);
+        
+        assertNotNull(config.getDriver());        
         if(isBlank(config.getUrl())) {
             assertNotNull(config.getHost());
             assertNotNull(config.getUser());
@@ -163,12 +151,9 @@ public class OracleERPConnectorTests {
         assertNotNull(config.getAuditResponsibility());
         assertTrue(config.isManageSecuringAttrs());
         assertFalse(config.isNoSchemaId());
-        assertFalse(config.isReturnSobOrgAttrs());
+        assertTrue(config.isReturnSobOrgAttrs());
         assertNotNull(config.getUserActions());        
         assertNotNull(config.getConnectionUrl());
-        
-        
-        
     }
     
     /**
@@ -176,8 +161,13 @@ public class OracleERPConnectorTests {
      */
     @Test
     public void testConnectorTest() {
+        final OracleERPConfiguration config = getConfiguration(CONFIG_SYSADM);
+        assertNotNull(config);
         config.validate();
-        ConnectorFacade conn = getFacade(config);
+        ConnectorFacade facade = getFacade(config);
+        assertNotNull(facade);
+        facade.test();
+        OracleERPConnector conn = getConnector(CONFIG_SYSADM);
         conn.test();
     }
 
@@ -186,10 +176,9 @@ public class OracleERPConnectorTests {
      */
     @Test
     public void testCreateRequiredOnly() {
-        assertNotNull(facade);
-        OracleERPConnector c = new OracleERPConnector(); 
-        c.init(this.config);        
-        final Set<Attribute> attrs = dataProvider.getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
+        final OracleERPConnector c = getConnector(CONFIG_SYSADM); 
+       
+        final Set<Attribute> attrs = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
         final Uid uid = c.create(ObjectClass.ACCOUNT, attrs, null);
         assertNotNull(uid);
         
@@ -205,56 +194,118 @@ public class OracleERPConnectorTests {
      */
     @Test
     public void testCreate() {
-        assertNotNull(facade);
-        final Set<Attribute> attrs = dataProvider.getAttributeSet(ACCOUNT_ALL_ATTRS);
+        final OracleERPConnector c = getConnector(CONFIG_SYSADM);
+        final Set<Attribute> attrs = getAttributeSet(ACCOUNT_ALL_ATTRS);
         
-        OracleERPConnector c = new OracleERPConnector(); 
-        c.init(this.config);         
+        
         final Uid uid = c.create(ObjectClass.ACCOUNT, attrs, null);
         assertNotNull(uid);
 
         List<ConnectorObject> results = TestHelpers
         .searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid));
         assertTrue("expect 1 connector object", results.size() == 1);
-        System.out.println(results.get(0).getAttributes());
+        final ConnectorObject co = results.get(0);
+        final Set<Attribute> returned = co.getAttributes();
+        System.out.println(returned);
+        
+        attributeSetsEquals(attrs, returned);
     }    
-    
-
     
     
     /**
      * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
      */
-    //@Test
+    @Test
+    public void testQueryAuditorData() {
+        final OracleERPConnector c = getConnector(CONFIG_SYSADM);
+        final Set<Attribute> attrs = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
+        final Set<Attribute> attrsOpt = getAttributeSet(ACCOUNT_OPTIONS);
+        final Set<Attribute> expectedAttr = getAttributeSet(ACCOUNT_AUDITOR);
+        
+        final OperationOptionsBuilder oob = new OperationOptionsBuilder();
+        addAuditorDataOptions(oob, attrsOpt);
+        addAllAttributesToGet(oob, c.getAccount().getObjectClassInfo().getAttributeInfo());
+        
+        final Uid uid = c.create(ObjectClass.ACCOUNT, attrs, null);
+        assertNotNull(uid);
+
+        List<ConnectorObject> results = TestHelpers.searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid), oob.build());
+        assertTrue("expect 1 connector object", results.size() == 1);
+        final ConnectorObject co = results.get(0);
+        final Set<Attribute> returned = co.getAttributes();
+        System.out.println(returned);
+        
+        attributeSetsEquals(attrs, returned);
+    }    
+
+    /**
+     * 
+     * @param oob
+     * @param attrsOpt
+     */
+    private void addAuditorDataOptions(OperationOptionsBuilder oob, Set<Attribute> attrsOpt) {
+        for (Attribute attr : attrsOpt) {
+            oob.setOption(attr.getName(), AttributeUtil.getSingleValue(attr));
+        }
+    }
+
+    /**
+     * 
+     * @param oob
+     * @param attrsOpt
+     */
+    private void addAllAttributesToGet(OperationOptionsBuilder oob, Set<AttributeInfo> attrInfos) {
+        Set<String> attrNames = CollectionUtil.newCaseInsensitiveSet();
+        for (AttributeInfo ai : attrInfos) {
+            if(ai.isReadable()) {
+                attrNames.add(ai.getName());
+            }
+        }
+        oob.setAttributesToGet(attrNames);
+    }
+
+    /**
+     * 
+     * @param oob
+     * @param attrsOpt
+     */
+    private void addDefaultAttributesToGet(OperationOptionsBuilder oob, Set<AttributeInfo> attrInfos) {
+        Set<String> attrNames = CollectionUtil.newCaseInsensitiveSet();
+        for (AttributeInfo ai : attrInfos) {
+            if(ai.isReadable() && ai.isReturnedByDefault()) {
+                attrNames.add(ai.getName());
+            }
+        }
+        oob.setAttributesToGet(attrNames);
+    }    
+    
+    /**
+     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     */
+    @Test
     public void testUpdate() {
-        assertNotNull(facade);
-        final Set<Attribute> attrs = dataProvider.getAttributeSet(ACCOUNT_ALL_ATTRS);
+        final ConnectorFacade facade = getFacade(CONFIG_SYSADM);
+        
+        final Set<Attribute> attrs = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
         final Uid uid = facade.create(ObjectClass.ACCOUNT, attrs, null);
         assertNotNull(uid);
         //assertEquals(tstName, uid.getUidValue());
-        //Delete it at the end
-        quitellyDeleteUser(uid.getUidValue());
+        
     }    
     
 
     /**
      * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
      */
-    //@Test
+    @Test
     public void testDelete() {
-        assertNotNull(facade);
-        final Set<Attribute> attrs = dataProvider.getAttributeSet(ACCOUNT_ALL_ATTRS);
+        final ConnectorFacade facade = getFacade(CONFIG_SYSADM);
+        
+        final Set<Attribute> attrs = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
         final Uid uid = facade.create(ObjectClass.ACCOUNT, attrs, null);
         assertNotNull(uid);
     }    
  
-    /**
-     * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
-     */
-    @Test
-    public void testValidateConfiguration() {
-        config.validate();
-    }
 
     /**
      * @param userName
@@ -262,33 +313,27 @@ public class OracleERPConnectorTests {
      * @return
      */
     private Uid createUser() {
-        Set<Attribute> tuas = dataProvider.getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
+        final ConnectorFacade facade = getFacade(CONFIG_SYSADM);
+        
+        Set<Attribute> tuas = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
         assertNotNull(tuas);
         return facade.create(ObjectClass.ACCOUNT, tuas, null);
     }     
-    
-    
-    /**
-     * @return
-     */
-    private ConnectorFacade getFacade(Configuration config) {
-        ConnectorFacadeFactory factory = ConnectorFacadeFactory.getInstance();
-        // **test only**
-        APIConfiguration impl = TestHelpers.createTestConfiguration(OracleERPConnector.class, config);
-        return factory.newInstance(impl);
-    }
+
 
     /**
      * @param userName
      */
-    private void quitellyDeleteUser(String name) {
+    protected void quitellyDeleteUser(String name) {
         quitellyDeleteUser(new Uid(name));
     }     
     
     /**
      * @param userName
      */
-    private void quitellyDeleteUser(Uid uid) {
+    protected void quitellyDeleteUser(Uid uid) {
+        final ConnectorFacade facade = getFacade(CONFIG_SYSADM);
+
         try{
             facade.delete(ObjectClass.ACCOUNT, uid, null);
         } catch (Exception ex) {
@@ -302,17 +347,19 @@ public class OracleERPConnectorTests {
      * @param expected
      * @param actual
      */
-    protected void attributeSetsEquals(final Schema schema, Set<Attribute> expected, Set<Attribute> actual, String ... ignore) {
-        attributeSetsEquals(schema, AttributeUtil.toMap(expected), AttributeUtil.toMap(actual), ignore);              
+    protected void attributeSetsEquals(Set<Attribute> expected, Set<Attribute> actual, String ... ignore) {
+        attributeSetsEquals(AttributeUtil.toMap(expected), AttributeUtil.toMap(actual), ignore);              
     }    
     
      /**
      * @param expected
      * @param actual
      */
-    protected void attributeSetsEquals(final Schema schema, final Map<String, Attribute> expMap, final Map<String, Attribute> actMap, String ... ignore) {
+    protected void attributeSetsEquals(final Map<String, Attribute> expMap, final Map<String, Attribute> actMap, String ... ignore) {
         log.ok("attributeSetsEquals");
         final Set<String> ignoreSet = new HashSet<String>(Arrays.asList(ignore));
+        
+        /*
         if(schema != null ) {
             final ObjectClassInfo oci = schema.findObjectClassInfo(ObjectClass.ACCOUNT_NAME);
             final Set<AttributeInfo> ais = oci.getAttributeInfo();
@@ -326,7 +373,7 @@ public class OracleERPConnectorTests {
                     ignoreSet.add(ai.getName());
                 }
             }
-        }
+        }*/
         
         Set<String> names = CollectionUtil.newCaseInsensitiveSet();
         names.addAll(expMap.keySet());
@@ -356,12 +403,99 @@ public class OracleERPConnectorTests {
     }       
     
     /**
-     * @param cfg
+     * 
+     * @param setName
      * @return
      */
-    protected OracleERPConnector getConnector(OracleERPConfiguration cfg) {
+    protected  Set<Attribute> getAttributeSet(String setName) {
+        return dataProvider.getAttributeSet(setName);
+    }
+    
+    /**
+     * 
+     * @param configName
+     * @return
+     */
+    protected ConnectorFacade getFacade(String configName) {
+        OracleERPConfiguration config = getConfiguration(configName);
+        assertNotNull(config);
+        return getFacade(config); 
+    } 
+    
+    /**
+     * 
+     * @param config
+     * @return
+     */
+    protected ConnectorFacade getFacade(OracleERPConfiguration config) {
+        final ConnectorFacadeFactory factory = ConnectorFacadeFactory.getInstance();
+        assertNotNull(factory);
+        final APIConfiguration impl = TestHelpers.createTestConfiguration(OracleERPConnector.class, config);
+        assertNotNull(impl);
+        final ConnectorFacade facade = factory.newInstance(impl);
+        assertNotNull(facade);
+        return facade;
+    }    
+    
+    /**
+     * 
+     * @param config
+     * @return
+     */
+    protected OracleERPConnector getConnector(OracleERPConfiguration config) {
+        assertNotNull(config);
         OracleERPConnector con = new OracleERPConnector();
-        con.init(cfg);
+        assertNotNull(con);
+        con.init(config);
         return con;
     }      
+
+    
+    /**
+     * 
+     * @param configName
+     * @return
+     */
+    protected OracleERPConnector getConnector(String configName) {
+        OracleERPConfiguration config = getConfiguration(configName);
+        assertNotNull(config);
+        return getConnector(config);
+    }     
+    
+    /**
+     * 
+     * @param configName
+     * @return
+     */
+    protected OracleERPConfiguration getConfiguration(String configName) {
+        OracleERPConfiguration config = new OracleERPConfiguration();
+        try {
+            dataProvider.loadConfiguration(configName, config);
+        } catch (Exception e) {            
+            fail("load configuration "+configName+" error:"+ e.getMessage());
+        }
+        assertNotNull(config);
+        return config;
+    }    
+    
+    /**
+     * Helper function to compare lists
+     * @param vals
+     * @return
+     */
+    private String attrToSortedStr(String vals) {
+        final String delim = ",";
+        StringBuilder bld = new StringBuilder();
+        if (vals != null)  {
+          String [] valArray = vals.split(delim);
+          Arrays.sort(valArray);          
+          for (String i: valArray) {
+              if ( bld.length()!=0 ) {
+                  bld.append(i);
+              }
+              bld.append(delim);              
+          }
+        }
+        return bld.toString();
+    } // attrToSortStr()  
 }

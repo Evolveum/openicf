@@ -24,6 +24,7 @@ package org.identityconnectors.oracleerp;
 
 import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
+import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -39,6 +40,7 @@ import java.util.Set;
 
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.Pair;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
@@ -56,12 +58,12 @@ import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
-import org.identityconnectors.framework.common.objects.SchemaBuilder;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
@@ -80,104 +82,71 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
 public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp, DeleteOp, SearchOp<FilterWhereBuilder> {
 
     /**
-     * The column names
-     */
-    static final String[] CN = {
-            USER_ID, //0 not createble, updatable 
-            USER_NAME, //1
-            OWNER,  //2   write only   
-            UNENCRYPT_PWD, //3 write only      
-            SESS_NUM,  //4     
-            START_DATE,  //5     
-            END_DATE, //6     
-            LAST_LOGON_DATE, //7     
-            DESCR, //8     
-            PWD_DATE, //9     
-            PWD_ACCESSES_LEFT, //10     
-            PWD_LIFE_ACCESSES, //11    
-            PWD_LIFE_DAYS, //12     
-            EMP_ID, //13     
-            EMAIL, //14     
-            FAX, //15     
-            CUST_ID, //16     
-            SUPP_ID, //17     
-            PERSON_PARTY_ID, //18   not createble, updatable  
-            PERSON_FULLNAME, //19     
-            NPW_NUM, NPW_NUM, //20
-            RESPS, //22
-            EMP_NUM, //21     
-            RESPKEYS, //23     
-            SEC_ATTRS, //24     
-            EXP_PWD, //25  
-    };
-
-    /**
-     * The map of column name parameters mapping
-     */
-    static final Map<String, String> CPM = CollectionUtil.<String> newCaseInsensitiveMap();
-    
-    /**
-     * The column names to get
-     */
-    static final Set<String> DEFAULT_READ_COLUMNS = CollectionUtil.newCaseInsensitiveSet();          
- 
-    /**
      * Setup logging.
      */
     static final Log log = Log.getLog(Account.class);
 
+    // The SQL call update function SQL template
+    static final String FND_USER_CALL = "fnd_user_pkg.";
+
+    /**
+     * The map of column name parameters mapping
+     */
+    static final List<Pair<String, String>> CALL_PARAMS = new ArrayList<Pair<String,String>>();
+
     /**
      * The column names to get
      */
-    static final Set<String> READ_PEOPLE_COLUMNS = CollectionUtil.newCaseInsensitiveSet();
+    static final Set<String> FND_USER_COLS = CollectionUtil.newCaseInsensitiveSet();
 
-    
-    // The SQL call update function SQL template
-    static final String SQL_CALL = "call {0}fnd_user_pkg.{1} ( {2} )"; // {0} .. "APPL.", {1} .. "CreateUser"/"UpdateUser"      
+    /**
+     * The column names to get
+     */
+    static final Set<String> PER_PEOPLE_COLS = CollectionUtil.newCaseInsensitiveSet();
 
     /**
      * Initialization of the map
      */
     static {       
-        DEFAULT_READ_COLUMNS.add(USER_ID); //0 not createble, updatable 
-        DEFAULT_READ_COLUMNS.add(USER_NAME);//1
-        DEFAULT_READ_COLUMNS.add(SESS_NUM); //4     
-        DEFAULT_READ_COLUMNS.add(START_DATE); //5     
-        DEFAULT_READ_COLUMNS.add(END_DATE); //6     
-        DEFAULT_READ_COLUMNS.add(LAST_LOGON_DATE); //7     
-        DEFAULT_READ_COLUMNS.add(DESCR); //8     
-        DEFAULT_READ_COLUMNS.add(PWD_DATE);//9     
-        DEFAULT_READ_COLUMNS.add(PWD_ACCESSES_LEFT); //10     
-        DEFAULT_READ_COLUMNS.add(PWD_LIFE_ACCESSES); //11    
-        DEFAULT_READ_COLUMNS.add(PWD_LIFE_DAYS); //12     
-        DEFAULT_READ_COLUMNS.add(EMP_ID); //13     
-        DEFAULT_READ_COLUMNS.add(EMAIL); //14     
-        DEFAULT_READ_COLUMNS.add(FAX); //15     
-        DEFAULT_READ_COLUMNS.add(CUST_ID); //16     
-        DEFAULT_READ_COLUMNS.add(SUPP_ID); //17     
-        DEFAULT_READ_COLUMNS.add(PERSON_PARTY_ID); //18);
+        FND_USER_COLS.add(USER_ID); //0 not createble, updatable 
+        FND_USER_COLS.add(USER_NAME);//1
+        FND_USER_COLS.add(SESS_NUM); //4     
+        FND_USER_COLS.add(START_DATE); //5     
+        FND_USER_COLS.add(END_DATE); //6     
+        FND_USER_COLS.add(LAST_LOGON_DATE); //7     
+        FND_USER_COLS.add(DESCR); //8     
+        FND_USER_COLS.add(PWD_DATE);//9     
+        FND_USER_COLS.add(PWD_ACCESSES_LEFT); //10     
+        FND_USER_COLS.add(PWD_LIFE_ACCESSES); //11    
+        FND_USER_COLS.add(PWD_LIFE_DAYS); //12     
+        FND_USER_COLS.add(EMP_ID); //13     
+        FND_USER_COLS.add(EMAIL); //14     
+        FND_USER_COLS.add(FAX); //15     
+        FND_USER_COLS.add(CUST_ID); //16     
+        FND_USER_COLS.add(SUPP_ID); //17     
+        FND_USER_COLS.add(PERSON_PARTY_ID); //18);
         
-        READ_PEOPLE_COLUMNS.add(EMP_NUM);
-        READ_PEOPLE_COLUMNS.add(NPW_NUM);
-        READ_PEOPLE_COLUMNS.add(PERSON_FULLNAME);
+        PER_PEOPLE_COLS.add(EMP_NUM);
+        PER_PEOPLE_COLS.add(NPW_NUM);
+        PER_PEOPLE_COLS.add(FULL_NAME);
 
-        CPM.put(USER_NAME, "x_user_name => {0}"); //1
-        CPM.put(OWNER, "x_owner => upper({0})"); //2   write only   
-        CPM.put(UNENCRYPT_PWD, "x_unencrypted_password => {0}");//3 write only      
-        CPM.put(SESS_NUM, "x_session_number => {0}"); //4     
-        CPM.put(START_DATE, "x_start_date => {0}"); //5     
-        CPM.put(END_DATE, "x_end_date => {0}"); //6     
-        CPM.put(LAST_LOGON_DATE, "x_last_logon_date => {0}"); //7     
-        CPM.put(DESCR, "x_description => {0}"); //8     
-        CPM.put(PWD_DATE, "x_password_date => {0}"); //9     
-        CPM.put(PWD_ACCESSES_LEFT, "x_password_accesses_left => {0}"); //10     
-        CPM.put(PWD_LIFE_ACCESSES, "x_password_lifespan_accesses => {0}"); //11    
-        CPM.put(PWD_LIFE_DAYS, "x_password_lifespan_days => {0}"); //12     
-        CPM.put(EMP_ID, "x_employee_id => {0}"); //13     
-        CPM.put(EMAIL, "x_email_address => {0}"); //14     
-        CPM.put(FAX, "x_fax => {0}"); //15     
-        CPM.put(CUST_ID, "x_customer_id => {0}"); //16     
-        CPM.put(SUPP_ID, "x_supplier_id => {0}"); //17          
+        CALL_PARAMS.add( new Pair<String, String>(USER_NAME, "x_user_name => {0}")); //1
+        CALL_PARAMS.add( new Pair<String, String>(OWNER, "x_owner => upper({0})")); //2   write only   
+        CALL_PARAMS.add( new Pair<String, String>(UNENCRYPT_PWD, "x_unencrypted_password => {0}"));//3 write only      
+        CALL_PARAMS.add( new Pair<String, String>(SESS_NUM, "x_session_number => {0}")); //4     
+        CALL_PARAMS.add( new Pair<String, String>(START_DATE, "x_start_date => {0}")); //5     
+        CALL_PARAMS.add( new Pair<String, String>(END_DATE, "x_end_date => {0}")); //6     
+        CALL_PARAMS.add( new Pair<String, String>(LAST_LOGON_DATE, "x_last_logon_date => {0}")); //7     
+        CALL_PARAMS.add( new Pair<String, String>(DESCR, "x_description => {0}")); //8     
+        CALL_PARAMS.add( new Pair<String, String>(PWD_DATE, "x_password_date => {0}")); //9     
+        CALL_PARAMS.add( new Pair<String, String>(PWD_ACCESSES_LEFT, "x_password_accesses_left => {0}")); //10     
+        CALL_PARAMS.add( new Pair<String, String>(PWD_LIFE_ACCESSES, "x_password_lifespan_accesses => {0}")); //11    
+        CALL_PARAMS.add( new Pair<String, String>(PWD_LIFE_DAYS, "x_password_lifespan_days => {0}")); //12     
+        CALL_PARAMS.add( new Pair<String, String>(EMP_ID, "x_employee_id => {0}")); //13     
+        CALL_PARAMS.add( new Pair<String, String>(EMAIL, "x_email_address => {0}")); //14     
+        CALL_PARAMS.add( new Pair<String, String>(FAX, "x_fax => {0}")); //15     
+        CALL_PARAMS.add( new Pair<String, String>(CUST_ID, "x_customer_id => {0}")); //16     
+        CALL_PARAMS.add( new Pair<String, String>(SUPP_ID, "x_supplier_id => {0}")); //17          
     }
     
     /**
@@ -193,6 +162,17 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      * The instance or the parent object
      */
     private OracleERPConnector co = null;
+    
+    
+    /**
+     * The schema objectClass builder cache 
+     */
+    private ObjectClassInfo oci = null;
+    
+    /**
+     * Set of the attributes returned by default
+     */
+    private Set<String> attributesByDefault = null; 
     
     /**
      * The account
@@ -230,10 +210,10 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      * @param options OperationOptions
      */
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
-                       
+        log.ok("create");               
         //Get the person_id and set is it as a employee id
-        final String identity = getName(co, attrs);
-        final String person_id = getPersonId(identity, co, attrs);
+        final String identity = getName(attrs);
+        final Integer person_id = getPersonId(identity, co, attrs);
         if (person_id != null) {
             // Person Id as a Employee_Id
             attrs.add(AttributeBuilder.build(EMP_ID, person_id));
@@ -253,9 +233,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             try {
                 // Create the user
                 cs = co.getConn().prepareCall(sql, userSQLParams);
-                cs.execute();
-                
-                co.getConn().commit();                
+                cs.execute();                              
             } catch (SQLException e) {
                 log.error(e, user_name, sql);
                 SQLUtil.rollbackQuietly(co.getConn());
@@ -278,10 +256,10 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         if ( secAttr != null ) {
             co.getSecAttrs().updateUserSecuringAttrs(secAttr, identity);
         }
-
         
         //Return new UID
         final String userId=getUserId(co, identity);
+        co.getConn().commit();     
         return new Uid(userId);
     }
     
@@ -328,10 +306,16 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         final String method = "executeQuery";
         //Names
         final String tblname = co.app() + "fnd_user";
+        // create the connector object..
+        final Set<String> attributesToGet = getAttributesToGet(options);        
+        final Set<String> fndUserColumnNames = getColumnNamesToGet(attributesToGet);
+        final Set<String> perPeopleColumnNames = CollectionUtil.newSet(fndUserColumnNames);
+
+        fndUserColumnNames.retainAll(FND_USER_COLS);
+        perPeopleColumnNames.retainAll(PER_PEOPLE_COLS);
         
-        final Set<String> accountColumnNames = accountColumnNamesToGet(options);
         // For all user query there is no need to replace or quote anything
-        final DatabaseQueryBuilder query = new DatabaseQueryBuilder(tblname, accountColumnNames );
+        final DatabaseQueryBuilder query = new DatabaseQueryBuilder(tblname, fndUserColumnNames );
         String sqlSelect = query.getSQL();
         
         if(StringUtil.isNotBlank(co.getCfg().getAccountsIncluded())) {
@@ -348,25 +332,29 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             statement = co.getConn().prepareStatement(query);
             result = statement.executeQuery();
             while (result.next()) {
-                // create the connector object..
-                final Set<String> attributesToGet = getAttributesToGet(options);
-                attributesToGet.addAll(DEFAULT_READ_COLUMNS);
                 AttributeMergeBuilder amb = new AttributeMergeBuilder(attributesToGet);
-
                 final Map<String, SQLParam> columnValues = SQLUtil.getColumnValues(result);
-                final String id = columnValues.get(USER_ID).getValue().toString();
+                final SQLParam userNameParm = columnValues.get(USER_NAME);
+                final SQLParam userIdParm = columnValues.get(USER_ID);
+                final String userName = (String) userNameParm.getValue();
+                final boolean getAuditorData = where.getParams().contains( userIdParm );                
                 // get users account attributes
                 this.buildAccountObject(amb, columnValues);
                 
                 // if person_id not null and employee_number in schema, return employee_number
-                final String personId = getStringParamValue(columnValues, EMP_ID);
-                this.buildPersonDetails(amb, personId, options);
+                final BigDecimal personId = (BigDecimal) columnValues.get(EMP_ID).getValue();
+                buildPersonDetails(amb, personId, perPeopleColumnNames);
+                
                 // get users responsibilities only if if resp || direct_resp in account attribute
-                co.getRespNames().buildResponsibilitiesToAccountObject(amb, id, options);
+                co.getRespNames().buildResponsibilitiesToAccountObject(amb, userName, attributesToGet);
                 // get user's securing attributes
-                co.getSecAttrs().buildSecuringAttributesToAccountObject(amb, id);
+                co.getSecAttrs().buildSecuringAttributesToAccountObject(amb, userName);
 
-                co.getRespNames().buildAuditorDataObject(amb, id, options);
+                //Auditor data for get user only
+                log.info("get auditor data: {0}", getAuditorData);
+                if (getAuditorData) {
+                    co.getRespNames().buildAuditorDataObject(amb, userName, attributesToGet);
+                }
                 
                 // create the connector object..
                 ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
@@ -390,148 +378,197 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      * @param attributeName
      * @return the columnName
      */
-    public String getColumnName(String attributeName) {
+    public String getFilterColumnName(String attributeName) {
         if(Name.NAME.equalsIgnoreCase(attributeName)) { 
             return USER_NAME;
         } else if (Uid.NAME.equalsIgnoreCase(attributeName)) { 
             return USER_ID;
-        } 
-        //We need to filter just a known kolumns
-        if ( READ_PEOPLE_COLUMNS.contains(attributeName)) {
+        }
+        //We need to filter just a known columns
+        if ( FND_USER_COLS.contains(attributeName)) {
             return attributeName;
         }
+
         return null;
+    }    
+    
+    /**
+     * @param attributeName
+     * @return the columnName
+     */
+    private String getColumnName(String attributeName) {
+        if (attributeName.equalsIgnoreCase(PERSON_FULLNAME)) {
+            return FULL_NAME;
+        }
+        //We need to filter just a known columns
+        if ( PER_PEOPLE_COLS.contains(attributeName)) {
+            return attributeName;
+        }       
+
+        return getFilterColumnName(attributeName);
+    }    
+    
+    /**
+     * The account attributes returned by default
+     * @return The set of attribute names
+     */
+    private Set<String> getAttributesByDefault() {
+        if (attributesByDefault == null) {
+            attributesByDefault = getDefaultAttributesToGet(getObjectClassInfo().getAttributeInfo());
+        }          
+        return attributesByDefault;
+    }
+
+    /**
+     * @param options
+     * @return
+     */
+    private Set<String> getAttributesToGet(OperationOptions options) {
+        Set<String> attributesToGet = OracleERPUtil.getAttributesToGet(options, getAttributesByDefault());
+        return attributesToGet;
+    }
+
+    /**
+     * @param attributesToGet from application
+     * @return the set of the column names
+     */
+    private Set<String> getColumnNamesToGet(Set<String> attributesToGet) {        
+        Set<String> columnNamesToGet = CollectionUtil.newCaseInsensitiveSet();
+
+        // Replace attributes to quoted columnNames
+        for (String attributeName :  attributesToGet) {
+            final String columnName = getColumnName(attributeName);
+            if ( columnName != null) {
+                columnNamesToGet.add(columnName);
+            }            
+        }
+
+        log.ok("columnNamesToGet {0}", columnNamesToGet);
+        return columnNamesToGet;
     }
 
     /**
      * Get the Account Object Class Info
      * @param schemaBld 
+     * @return The cached object class info
      */
-    public void schema(SchemaBuilder schemaBld) {
-        ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
-        oc.setType(ObjectClass.ACCOUNT_NAME);
+     ObjectClassInfo getObjectClassInfo() {
+        if (oci == null) {
+            ObjectClassInfoBuilder ocib = new ObjectClassInfoBuilder();
+            ocib.setType(ObjectClass.ACCOUNT_NAME);
 
-        // The Name is supported attribute
-        oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, EnumSet.of(Flags.REQUIRED)));
-        // name='owner' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(OWNER, String.class, EnumSet.of(Flags.NOT_READABLE)));
-        // name='session_number' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(SESS_NUM, String.class, EnumSet.of(
-                Flags.NOT_UPDATEABLE, Flags.NOT_CREATABLE)));
-        // name='start_date' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(START_DATE, String.class));
-        // name='end_date' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(END_DATE, String.class));
-        // name='last_logon_date' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(LAST_LOGON_DATE, String.class, EnumSet.of(
-                Flags.NOT_UPDATEABLE, Flags.NOT_CREATABLE)));
-        // name='description' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(DESCR, String.class));
-        // <Views><String>Enable</String></Views>
-        oc.addAttributeInfo(OperationalAttributeInfos.ENABLE);
-        // <Views><String>Password</String><String>Reset</String></Views>
-        //aoc.addAttributeInfo(OperationalAttributeInfos.RESET_PASSWORD); 
-        // reset is implemented as change password
-        // name='Password',  Password is mapped to operationalAttribute
-        oc.addAttributeInfo(OperationalAttributeInfos.PASSWORD);
-        // name='password_accesses_left' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(PWD_DATE, String.class));
-        // name='password_accesses_left' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(PWD_ACCESSES_LEFT, String.class));
-        // name='password_lifespan_accesses' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(PWD_LIFE_ACCESSES, String.class));
-        // name='password_lifespan_days' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(PWD_LIFE_DAYS, String.class));
-        // name='employee_id' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(EMP_ID, String.class));
-        // name='employee_number' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(EMP_NUM, Integer.class));
-        // name='person_fullname' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(PERSON_FULLNAME, String.class));
-        // name='npw_number' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(NPW_NUM, Integer.class));
-        // name='email_address' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(EMAIL, String.class));
-        // name='fax' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(FAX, String.class));
-        // name='customer_id' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(CUST_ID, String.class));
-        // name='supplier_id' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(SUPP_ID, String.class));
-        // name='person_party_id' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(PERSON_PARTY_ID, String.class));
-        // name='RESP' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(RESPS, String.class, EnumSet.of(Flags.MULTIVALUED)));
-        // name='RESPKEYS' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(RESPKEYS, String.class, EnumSet.of(Flags.MULTIVALUED)));
-        // name='SEC_ATTRS' type='string' required='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(SEC_ATTRS, String.class, EnumSet.of(Flags.MULTIVALUED)));
-        // name='expirePassword' type='string' required='false' is mapped to PASSWORD_EXPIRED
-        oc.addAttributeInfo(OperationalAttributeInfos.PASSWORD_EXPIRED);
-        
-        
-        //Optional aggregated user attributes
-        final EnumSet<Flags> STD_NRD = EnumSet.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE, Flags.NOT_RETURNED_BY_DEFAULT);
-
-        // name='userMenuNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_MENU_NAMES, String.class, STD_NRD));
-        // name='menuIds' type='string' audit='false'    
-        oc.addAttributeInfo(AttributeInfoBuilder.build(MENU_IDS, String.class, STD_NRD));
-        // name='userFunctionNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_FUNCTION_NAMES, String.class, STD_NRD));
-        // name='functionIds' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_IDS, String.class, STD_NRD));
-        // name='formIds' type='string' audit='false'    
-        oc.addAttributeInfo(AttributeInfoBuilder.build(FORM_IDS, String.class, STD_NRD));
-        // name='formNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(FORM_NAMES, String.class, STD_NRD));
-        // name='functionNames' type='string' audit='false'    
-        oc.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_NAMES, String.class, STD_NRD));
-        // name='userFormNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_FORM_NAMES, String.class, STD_NRD));
-        // name='readOnlyFormIds' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_IDS, String.class, STD_NRD));
-        // name='readWriteOnlyFormIds' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_IDS, String.class, STD_NRD));
-        // name='readOnlyFormNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_NAMES, String.class, STD_NRD));
-        // name='readOnlyFunctionNames' type='string' audit='false'    
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTION_NAMES, String.class, STD_NRD));
-        // name='readOnlyUserFormNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_USER_FORM_NAMES, String.class, STD_NRD));
-        // name='readOnlyFunctionIds' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTIONS_IDS, String.class, STD_NRD));
-        // name='readWriteOnlyFormNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_NAMES, String.class, STD_NRD));
-        // name='readWriteOnlyUserFormNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_USER_FORM_NAMES));
-        // name='readWriteOnlyFunctionNames' type='string' audit='false'        
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_NAMES, String.class, STD_NRD));
-        // name='readWriteOnlyFunctionIds' type='string' audit='false'                 
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_IDS, String.class, STD_NRD));        
-        
-        //Define object class
-        schemaBld.defineObjectClass(oc.build());
-    }
-
-    /**
-     * @param options from application
-     * @return the set of the column names
-     */
-    public Set<String> accountColumnNamesToGet(OperationOptions options) {
-        Set<String> columnNamesToGet = DEFAULT_READ_COLUMNS;
-        if (options != null && options.getAttributesToGet() != null) {
-            columnNamesToGet = CollectionUtil.newCaseInsensitiveSet();
-            // Replace attributes to quoted columnNames
-            for (String attributeName : options.getAttributesToGet()) {
-                final String columnName = getColumnName(attributeName);
-                if ( columnName != null) {
-                    columnNamesToGet.add(columnName);
-                }
+            // The Name is supported attribute
+            ocib.addAttributeInfo(Name.INFO);
+            // name='owner' type='string' required='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(OWNER, String.class, EnumSet.of(Flags.REQUIRED, Flags.NOT_READABLE, Flags.NOT_RETURNED_BY_DEFAULT)));
+            // name='session_number' type='string' required='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(SESS_NUM, String.class, EnumSet.of(Flags.NOT_UPDATEABLE,
+                    Flags.NOT_CREATABLE)));
+            // name='start_date' type='string' required='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(START_DATE, String.class));
+            // name='end_date' type='string' required='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(END_DATE, String.class));
+            // name='last_logon_date' type='string' required='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(LAST_LOGON_DATE, String.class, EnumSet.of(
+                    Flags.NOT_UPDATEABLE, Flags.NOT_CREATABLE)));
+            // name='description' type='string' required='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(DESCR, String.class));
+            // <Views><String>Enable</String></Views>
+            ocib.addAttributeInfo(OperationalAttributeInfos.ENABLE);
+            // <Views><String>Password</String><String>Reset</String></Views>
+            //aoc.addAttributeInfo(OperationalAttributeInfos.RESET_PASSWORD); 
+            // reset is implemented as change password
+            // name='Password',  Password is mapped to operationalAttribute
+            ocib.addAttributeInfo(OperationalAttributeInfos.PASSWORD);
+            // name='password_accesses_left' type='string' required='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(PWD_DATE, String.class));
+            // name='password_accesses_left' type='string' required='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(PWD_ACCESSES_LEFT, String.class));
+            // name='password_lifespan_accesses' type='string' required='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(PWD_LIFE_ACCESSES, String.class));
+            // name='password_lifespan_days' type='string' required='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(PWD_LIFE_DAYS, String.class));
+            // name='employee_id' type='string' required='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(EMP_ID, String.class));
+            // name='employee_number' type='string' required='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(EMP_NUM, Integer.class));
+            // name='person_fullname' type='string' required='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(PERSON_FULLNAME, String.class));
+            // name='npw_number' type='string' required='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(NPW_NUM, Integer.class));
+            // name='email_address' type='string' required='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(EMAIL, String.class));
+            // name='fax' type='string' required='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(FAX, String.class));
+            // name='customer_id' type='string' required='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(CUST_ID, String.class));
+            // name='supplier_id' type='string' required='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(SUPP_ID, String.class));
+            // name='person_party_id' type='string' required='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(PERSON_PARTY_ID, String.class));
+            
+            if ( co.getRespNames().isNewResponsibilityViews() ) {
+                // name='DIRECT_RESPS' type='string' required='false'
+                ocib.addAttributeInfo(AttributeInfoBuilder.build(DIRECT_RESPS, String.class, EnumSet.of(Flags.MULTIVALUED)));
+                // name='INDIRECT_RESPS' type='string' required='false'
+                ocib.addAttributeInfo(AttributeInfoBuilder.build(INDIRECT_RESPS, String.class, EnumSet.of(Flags.MULTIVALUED)));
+            } else {
+                // name='RESPS' type='string' required='false'
+                ocib.addAttributeInfo(AttributeInfoBuilder.build(RESPS, String.class, EnumSet.of(Flags.MULTIVALUED)));                
             }
-        } 
-        return columnNamesToGet;
+            // name='RESPKEYS' type='string' required='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RESPKEYS, String.class, EnumSet.of(Flags.MULTIVALUED)));
+            // name='SEC_ATTRS' type='string' required='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(SEC_ATTRS, String.class, EnumSet.of(Flags.MULTIVALUED)));
+            // name='expirePassword' type='string' required='false' is mapped to PASSWORD_EXPIRED
+            ocib.addAttributeInfo(OperationalAttributeInfos.PASSWORD_EXPIRED);
+
+            //Optional aggregated user attributes
+            final EnumSet<Flags> STD_NRD = EnumSet.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE,
+                    Flags.NOT_RETURNED_BY_DEFAULT);
+
+            // name='userMenuNames' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_MENU_NAMES, String.class, STD_NRD));
+            // name='menuIds' type='string' audit='false'    
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(MENU_IDS, String.class, STD_NRD));
+            // name='userFunctionNames' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_FUNCTION_NAMES, String.class, STD_NRD));
+            // name='functionIds' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_IDS, String.class, STD_NRD));
+            // name='formIds' type='string' audit='false'    
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(FORM_IDS, String.class, STD_NRD));
+            // name='formNames' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(FORM_NAMES, String.class, STD_NRD));
+            // name='functionNames' type='string' audit='false'    
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_NAMES, String.class, STD_NRD));
+            // name='userFormNames' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_FORM_NAMES, String.class, STD_NRD));
+            // name='readOnlyFormIds' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_IDS, String.class, STD_NRD));
+            // name='readWriteOnlyFormIds' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_IDS, String.class, STD_NRD));
+            // name='readOnlyFormNames' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_NAMES, String.class, STD_NRD));
+            // name='readOnlyFunctionNames' type='string' audit='false'    
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTION_NAMES, String.class, STD_NRD));
+            // name='readOnlyUserFormNames' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_USER_FORM_NAMES, String.class, STD_NRD));
+            // name='readOnlyFunctionIds' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTIONS_IDS, String.class, STD_NRD));
+            // name='readWriteOnlyFormNames' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_NAMES, String.class, STD_NRD));
+            // name='readWriteOnlyUserFormNames' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_USER_FORM_NAMES));
+            // name='readWriteOnlyFunctionNames' type='string' audit='false'        
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_NAMES, String.class, STD_NRD));
+            // name='readWriteOnlyFunctionIds' type='string' audit='false'                 
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_IDS, String.class, STD_NRD));
+            
+            oci = ocib.build();
+        }   
+        return oci;
     }
+
 
     /**
      * The Update Account helper class
@@ -562,7 +599,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      * @param options OperationOptions
      */
     public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
-        final String identity = getId(co, attrs);
+        final String identity = getId(attrs);
         // update securing attributes
         
         
@@ -690,34 +727,46 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         }
 
     }
+    
+
+    /**
+     * @param schemaId
+     * @param fn
+     * @param body
+     * @return
+     */
+    private String createCallSQL(String schemaId, final String fn, StringBuilder body) {
+        return "{ call " + schemaId + FND_USER_CALL + fn + " ( "+ body.toString() + " ) }";
+    }    
 
     /**
      * @param bld
      * @param personId
      * @param columnNames 
      */
-    private void buildPersonDetails(AttributeMergeBuilder bld, final String personId ,
-            OperationOptions options) {
+    private void buildPersonDetails(AttributeMergeBuilder bld, final BigDecimal personId ,
+            Set<String> personColumns) {
         if (personId == null) {
             // No personId(employId)
+            log.ok("buildPersonDetails: No personId(employId)");
             return;
         }
+        log.info("buildPersonDetails for personId: {0}", personId );
         
         //Names to get filter
         final String tblname = co.app()+ "PER_PEOPLE_F";
-        final Set<String> personColumns = CollectionUtil.newSet(options.getAttributesToGet());
-        personColumns.retainAll(READ_PEOPLE_COLUMNS);
-                
-        log.ok("person Columns {0} To Get", personColumns);
+
         if (personColumns.isEmpty()) {
             // No persons column required
+            log.ok("No persons column To Get");
             return;
         }
+        log.ok("personColumns {0} To Get", personColumns);
         
         // For all account query there is no need to replace or quote anything
         final DatabaseQueryBuilder query = new DatabaseQueryBuilder(tblname, personColumns);
         final FilterWhereBuilder where = new FilterWhereBuilder();
-        where.addBind(new SQLParam(PERSON_ID, personId, Types.VARCHAR), "=");
+        where.addBind(new SQLParam(PERSON_ID, personId, Types.DECIMAL), "=");
         query.setWhere(where);        
         
         final String sql = query.getSQL();
@@ -760,10 +809,12 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      * @param columnValues 
      * @throws SQLException 
      */
-    void buildAccountObject(AttributeMergeBuilder amb, Map<String, SQLParam> columnValues) throws SQLException {
+    private void buildAccountObject(AttributeMergeBuilder amb, Map<String, SQLParam> columnValues) throws SQLException {
+        final String method = "buildAccountObject";
+        log.info(method);
         String uidValue = null;
         for (Map.Entry<String, SQLParam> val : columnValues.entrySet()) {
-            final String columnName = val.getKey();
+            final String columnName = val.getKey().toLowerCase();
             final SQLParam param = val.getValue();
             // Map the special
             if (columnName.equalsIgnoreCase(USER_NAME)) {
@@ -786,13 +837,12 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             } else {
                 //Convert the data type and create attribute from it.
                 final Object value = SQLUtil.jdbc2AttributeValue(param.getValue());
-                amb.addAttribute(columnName, value);
+                if (columnName.equalsIgnoreCase(FULL_NAME)) {
+                    amb.addAttribute(PERSON_FULLNAME, value);
+                } else {
+                    amb.addAttribute(columnName, value);
+                }
             }
-        }
-    
-        // To be sure that uid and name are present
-        if(uidValue == null) {
-            throw new IllegalStateException("The uid value is missing in query");
         }
     }
 
@@ -811,22 +861,20 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         final String fn = (create) ? CREATE_FNC : UPDATE_FNC;
         StringBuilder body = new StringBuilder();
         boolean first = true;
-        for (String columnName : CN) {
-            final String parameterExpress = CPM.get(columnName);
-            if (parameterExpress == null) {
-                continue; //skip all non call parameterName values                    
-            }    
+        for (Pair<String, String>  par : CALL_PARAMS) {
+            final String columnName = par.first;
+
             if (!first)
                 body.append(", ");
-            body.append(Q); // All values will be binded
+            body.append( columnName == null ? "" : Q); // All values will be binded
             first = false;
         }
 
-        final String sql = CURLY_BEGIN + MessageFormat.format(SQL_CALL, schemaId, fn, body.toString())
-                + CURLY_END;
+        final String sql = createCallSQL(schemaId, fn, body);
         log.ok("getSQL {0}", sql);
         return sql;
     }
+
 
     /**
      * Return the userAccount create/update parameters (all fields)
@@ -838,32 +886,13 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
     List<SQLParam> getAllSQLParams(Map<String, SQLParam> userValues) {
         final List<SQLParam> ret = new ArrayList<SQLParam>();
 
-        for (String columnName : CN) {
-            final String parameterExpress = CPM.get(columnName);
-            if (parameterExpress == null) {
-                continue; //skip all non call parameterName values                    
-            }    
+        for (Pair<String, String>  par : CALL_PARAMS) {
+            final String columnName = par.first;
+
             final SQLParam val = userValues.get(columnName);
             ret.add(val);
         }
         return ret;
-    }    
-    
-
-    /**
-     * 
-     * @param cn
-     * @return
-     */
-    String getAttributeName(String cn) {
-        if(USER_NAME.equalsIgnoreCase(cn)) { //Name 
-            return Name.NAME;
-        } else if (OWNER.equalsIgnoreCase(cn)) { //2   write only 
-            return null;
-        } else if (UNENCRYPT_PWD.equalsIgnoreCase(cn)) { //3 write only
-            return null;
-        }
-        return cn;        
     }    
     
     
@@ -1226,31 +1255,28 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         log.info("getUserCallSQL: {0}", fn);
         StringBuilder body = new StringBuilder();
         boolean first = true;
-        for (String columnName : CN) {
-            final String parameterExpress = CPM.get(columnName);
-            if (parameterExpress == null) {
-                continue; //skip all non call parameterName values                    
-            }            
+        for (Pair<String, String>  par : CALL_PARAMS) {
+            final String columnName = par.first;
+            final String parameterExpress = par.second;
+              
             SQLParam val = userValues.get(columnName);
             if (val == null) {
-                log.ok("skip empty value for {0}",columnName);
+                log.ok("skip empty value for {0}", columnName);
                 continue; //skip all non setup values
             }
             if (!first)
                 body.append(", ");
             if (isDefault(val)) {
                 body.append(MessageFormat.format(parameterExpress, val.getValue()));
-                log.ok("append {0} default value {1}",parameterExpress, val.getValue());
             } else {
                 body.append(MessageFormat.format(parameterExpress, Q)); // Non default values will be binded
-                log.ok("append {0} value binding ?",parameterExpress);
             }
             first = false;
         }
 
-        final String sql = CURLY_BEGIN + MessageFormat.format(SQL_CALL, schemaId, fn, body.toString())
-                + CURLY_END;
-        log.ok("getSQL {0}", sql);
+        final String sql = createCallSQL(schemaId, fn, body);
+
+        log.ok("getUserCallSQL {0}", sql);
         return sql;
     }
 
@@ -1264,14 +1290,12 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
     List<SQLParam> getUserSQLParams(Map<String, SQLParam> userValues) {
         final List<SQLParam> ret = new ArrayList<SQLParam>();
 
-        for (String columnName : CN) {
-            final String parameterExpress = CPM.get(columnName);
-            if (parameterExpress == null) {
-                continue; //skip all non call parameterName values                    
-            }    
+        for (Pair<String, String>  par : CALL_PARAMS) {
+            final String columnName = par.first;
+
             final SQLParam val = userValues.get(columnName);
             if (val == null) {
-                log.ok("skip empty value for {0}",columnName);
+               // log.ok("skip empty value for {0}",columnName);
                continue; //skip all non setup values
             }
             if (!isDefault(val)) {
@@ -1308,12 +1332,11 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      */
     String getUserUpdateNullsSQL(Map<String, SQLParam> userValues, String schemaId) {
         StringBuilder body = new StringBuilder("x_user_name => ?, x_owner => upper(?)");
-        for (String columnName : CN) {
-            final String parameterExpress = CPM.get(columnName);
-            if (parameterExpress == null) {
-                continue; //skip all non call parameterName values                    
-            }    
+        for (Pair<String, String>  par : CALL_PARAMS) {
+            final String columnName = par.first;
+            final String parameterExpress = par.second;
             SQLParam val = userValues.get(columnName);
+            
             if (val == null) {
                 log.ok("skip empty value for {0}",columnName);
                 continue; //skip all non setup values
@@ -1324,9 +1347,8 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             }
         }
 
-        final String sql = CURLY_BEGIN
-                + MessageFormat.format(SQL_CALL, schemaId, UPDATE_FNC, body.toString())
-                + CURLY_END;
+        final String sql = createCallSQL(schemaId, UPDATE_FNC, body);
+
         log.ok("getUpdateDefaultsSQL {0}", sql);
         return sql;
     }
@@ -1335,7 +1357,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      * @param val
      * @return true/false if predefined default value
      */
-    boolean isDefault(SQLParam val) {
+    private boolean isDefault(SQLParam val) {
         return SYSDATE.equals(val.getValue()) 
                 || NULL_NUMBER.equals(val.getValue()) 
                 || NULL_DATE.equals(val.getValue())
@@ -1357,4 +1379,5 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         }
         return false;
     }
+  
 }
