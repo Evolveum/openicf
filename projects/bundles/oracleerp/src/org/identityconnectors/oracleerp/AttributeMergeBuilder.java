@@ -148,5 +148,20 @@ public final class AttributeMergeBuilder {
                 _attrToGet.add(toGet);
             }                            
         }
-    }    
+    }
+
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        StringBuilder bld = new StringBuilder();
+        bld.append("Atttribute map:");
+        bld.append(_attrs);
+        bld.append(", active filter:");
+        bld.append(_attrToGet);
+        return bld.toString();
+    } 
+    
 }

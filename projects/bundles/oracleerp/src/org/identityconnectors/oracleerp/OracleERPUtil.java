@@ -31,7 +31,6 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
@@ -122,16 +121,16 @@ public class OracleERPUtil {
     static final String FORM_NAMES = "formNames";
     static final String FUNCTION_NAMES = "functionNames";
     static final String USER_FORM_NAMES = "userFormNames";
-    static final String READ_ONLY_FORM_IDS = "readOnlyFormIds";
-    static final String READ_WRITE_ONLY_FORM_IDS = "readWriteOnlyFormIds";
-    static final String READ_ONLY_FORM_NAMES = "readOnlyFormNames";
-    static final String READ_ONLY_FUNCTION_NAMES = "readOnlyFunctionNames";
-    static final String READ_ONLY_USER_FORM_NAMES = "readOnlyUserFormNames";
-    static final String READ_ONLY_FUNCTIONS_IDS = "readOnlyFunctionIds";
-    static final String READ_WRITE_ONLY_FORM_NAMES = "readWriteOnlyFormNames";
-    static final String READ_WRITE_ONLY_USER_FORM_NAMES = "readWriteOnlyUserFormNames";
-    static final String READ_WRITE_ONLY_FUNCTION_NAMES = "readWriteOnlyFunctionNames";
-    static final String READ_WRITE_ONLY_FUNCTION_IDS = "readWriteOnlyFunctionIds";
+    static final String RO_FORM_IDS = "readOnlyFormIds";
+    static final String RW_ONLY_FORM_IDS = "readWriteOnlyFormIds";
+    static final String RO_FORM_NAMES = "readOnlyFormNames";
+    static final String RO_FUNCTION_NAMES = "readOnlyFunctionNames";
+    static final String RO_USER_FORM_NAMES = "readOnlyUserFormNames";
+    static final String RO_FUNCTIONS_IDS = "readOnlyFunctionIds";
+    static final String RW_FORM_NAMES = "readWriteOnlyFormNames";
+    static final String RW_USER_FORM_NAMES = "readWriteOnlyUserFormNames";
+    static final String RW_FUNCTION_NAMES = "readWriteOnlyFunctionNames";
+    static final String RW_FUNCTION_IDS = "readWriteOnlyFunctionIds";
 
     // format flags for processing responsibilities strings, used by getResp() and getResps() methods
     static final int RESP_FMT_KEYS = 0; // return responsibilities with keys only.
@@ -327,8 +326,9 @@ public class OracleERPUtil {
      */
     public static Set<String> getAttributesToGet(OperationOptions options, Set<String> defAttrs) {
         final String msg = "getAttributesToGet ''{0}''";
-        SortedSet<String> _attrToGet = CollectionUtil.newCaseInsensitiveSet();
+        Set<String> _attrToGet = CollectionUtil.newSet(defAttrs);
         if(options != null && options.getAttributesToGet() != null) {
+            _attrToGet = CollectionUtil.newCaseInsensitiveSet();
             for (String toGet : options.getAttributesToGet()) {
                 _attrToGet.add(toGet);
             }

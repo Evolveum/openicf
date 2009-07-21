@@ -1224,25 +1224,25 @@ public class ResponsibilityNames {
             // name='userFormNames' type='string' audit='false'
             ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_FORM_NAMES, String.class, STD_NC));
             // name='readOnlyFormIds' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_IDS, String.class, STD_NC));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RO_FORM_IDS, String.class, STD_NC));
             // name='readWriteOnlyFormIds' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_IDS, String.class, STD_NC));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_ONLY_FORM_IDS, String.class, STD_NC));
             // name='readOnlyFormNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_NAMES, String.class, STD_NC));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RO_FORM_NAMES, String.class, STD_NC));
             // name='readOnlyFunctionNames' type='string' audit='false'    
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTION_NAMES, String.class, STD_NC));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RO_FUNCTION_NAMES, String.class, STD_NC));
             // name='readOnlyUserFormNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_USER_FORM_NAMES, String.class, STD_NC));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RO_USER_FORM_NAMES, String.class, STD_NC));
             // name='readOnlyFunctionIds' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTIONS_IDS, String.class, STD_NC));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RO_FUNCTIONS_IDS, String.class, STD_NC));
             // name='readWriteOnlyFormNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_NAMES, String.class, STD_NC));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_FORM_NAMES, String.class, STD_NC));
             // name='readWriteOnlyUserFormNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_USER_FORM_NAMES));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_USER_FORM_NAMES));
             // name='readWriteOnlyFunctionNames' type='string' audit='false'        
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_NAMES, String.class, STD_NC));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_FUNCTION_NAMES, String.class, STD_NC));
             // name='readWriteOnlyFunctionIds' type='string' audit='false'                 
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_IDS, String.class, STD_NC));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_FUNCTION_IDS, String.class, STD_NC));
 
             oci = ocib.build();
         }
@@ -1713,21 +1713,23 @@ public class ResponsibilityNames {
         amb.addAttribute(MENU_IDS, menuIds);
         amb.addAttribute(USER_FUNCTION_NAMES, userFunctionNames);
         amb.addAttribute(FUNCTION_IDS, functionIdsList);
-        amb.addAttribute(READ_ONLY_FUNCTIONS_IDS, roFunctionIds);
-        amb.addAttribute(READ_WRITE_ONLY_FUNCTION_IDS, rwFunctionIds);
+        amb.addAttribute(RO_FUNCTIONS_IDS, roFunctionIds);
+        amb.addAttribute(RW_FUNCTION_IDS, rwFunctionIds);
         amb.addAttribute(FORM_IDS, formIdList);
-        amb.addAttribute(READ_ONLY_FORM_IDS, roFormIds);
-        amb.addAttribute(READ_WRITE_ONLY_FORM_IDS, rwFormIds);
+        amb.addAttribute(RO_FORM_IDS, roFormIds);
+        amb.addAttribute(RW_ONLY_FORM_IDS, rwFormIds);
         amb.addAttribute(FORM_NAMES, formNameList);
-        amb.addAttribute(READ_ONLY_FORM_NAMES, roFormNames);
-        amb.addAttribute(READ_WRITE_ONLY_FORM_NAMES, rwFormNames);
+        amb.addAttribute(RO_FORM_NAMES, roFormNames);
+        amb.addAttribute(RW_FORM_NAMES, rwFormNames);
         amb.addAttribute(USER_FORM_NAMES, userFormNameList);
-        amb.addAttribute(READ_ONLY_USER_FORM_NAMES, roUserFormNames);
-        amb.addAttribute(READ_WRITE_ONLY_USER_FORM_NAMES, rwUserFormNames);
+        amb.addAttribute(RO_USER_FORM_NAMES, roUserFormNames);
+        amb.addAttribute(RW_USER_FORM_NAMES, rwUserFormNames);
         amb.addAttribute(FUNCTION_NAMES, functionNameList);
-        amb.addAttribute(READ_ONLY_FUNCTION_NAMES, roFunctionNames);
-        amb.addAttribute(READ_WRITE_ONLY_FUNCTION_NAMES, rwFunctionNames);
-        amb.addAttribute(RESP_NAMES, resp + "||" + app);
+        amb.addAttribute(RO_FUNCTION_NAMES, roFunctionNames);
+        amb.addAttribute(RW_FUNCTION_NAMES, rwFunctionNames);
+        final String respNameConn = resp + "||" + app;
+        amb.addAttribute(RESP_NAMES, respNameConn);
+        amb.addAttribute(AUDITOR_RESPS, respNameConn);
 
         // check to see if SOB/ORGANIZATION is required
         if (co.getCfg().isReturnSobOrgAttrs()) {
@@ -1868,7 +1870,7 @@ public class ResponsibilityNames {
      */
     public void buildAuditorDataObject(AttributeMergeBuilder amb, String userName, Set<String> attributesToGet) {
         log.info("buildAuditorDataObject for uid: {0}", userName);
-        List<String> activeRespList = getResponsibilities(userName, RESPS_TABLE, true);
+        List<String> activeRespList = getResponsibilities(userName, getRespLocation(), false);
         for (String activeRespName : activeRespList) {            
             updateAuditorData(amb, activeRespName);  
         }

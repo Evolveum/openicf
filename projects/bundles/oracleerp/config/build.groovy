@@ -68,7 +68,7 @@ account{
     
     all.__NAME__="TST-USER-" + currentTimeMillis()
     all.owner="CUST"
-    all.session_number=6
+    all.session_number=0
 
     all.start_date=stringDate(-10*24*3600000)
     all.end_date=stringDate(+10*24*3600000)
@@ -85,7 +85,7 @@ account{
     
     //all.employee_id=5 
     all.employee_number=5
-    all.person_fullname="Connector Test person full name"
+    all.person_fullname="Monster, Cookie"
     //all.npw_number=4
     all.email_address="person@somewhere.com"
     all.fax="555-555-5555"
@@ -93,7 +93,7 @@ account{
     //all.supplier_id=102
     
     all.directResponsibilities="Cash Forecasting||Cash Management||Standard||2004-04-12 00:00:00.0||null"
-    all.responsibilityKeys=""
+    all.responsibilityKeys="Cash Forecasting||Cash Management||Standard"
     all.securingAttrs="TO_PERSON_ID||Self-Service Web Applications||114"
         
 
@@ -114,12 +114,12 @@ account{
     options.activeRespsOnly=true;
     
     auditor.auditorResps="Cash Forecasting||Cash Management"
-    auditor.userMenuNames="CE_DESCRIPTIVE_FLEXFIELDS,CE_FORECAST,CE_FORECAST_SETUP,CE_OTHER,Requests Menu - Other Responsibilities"
-    auditor.menuIds="67617,67850,68361,68364,68781"
-    auditor.userFunctionNames="Concurrent Requests: View,Define External Forecast Sources,Define Templates,Descriptive Flexfield Segments,Descriptive Flexfield Values,Maintain Forecasts,Profile User Values,Request Sets (User Mode),Requests: Submit,View All Concurrent Requests,View Cash Forecasts"
-    auditor.formIds="10397,20423,20648,51614,51615,54570,54571,54572,54952"
-    auditor.formNames="CEFFCAST,CEFFCDFN,CEFFCOPI,CEFQFCST,FNDFFMDC,FNDFFMSV,FNDPOMSV,FNDRSRUN,FNDRSSET"
-    auditor.userFormNames="Administer Report Sets,Define Descriptive Flexfield Segments,Define External Forecast Sources,Define Segment Values,Define Templates,Inquire Forecasts,Maintain Forecasts,Run Reports,Update Personal Profile Values"
+    auditor.userMenuNames="CE_OTHER, Requests Menu - Other Responsibilities, CE_FORECAST, CE_FORECAST_SETUP, CE_DESCRIPTIVE_FLEXFIELDS"
+    auditor.menuIds="67617, 67850, 68361, 68364, 68781"
+    auditor.userFunctionNames="Concurrent Requests: View, Define External Forecast Sources, Define Templates, Descriptive Flexfield Segments, Descriptive Flexfield Values, Maintain Forecasts, Profile User Values, Request Sets (User Mode), Requests: Submit, View All Concurrent Requests, View Cash Forecasts"
+    auditor.formIds="54952, 54572, 20423, 10397, 54570, 20648, 51615, 51614, 51614, 54571"
+    auditor.formNames="CEFFCOPI, CEFFCDFN, FNDFFMDC, FNDFFMSV, CEFFCAST, FNDPOMSV, FNDRSSET, FNDRSRUN, FNDRSRUN, CEFQFCST"
+    auditor.userFormNames="Define External Forecast Sources, Define Templates, Define Descriptive Flexfield Segments, Define Segment Values, Maintain Forecasts, Update Personal Profile Values, Administer Report Sets, Run Reports, Run Reports, Inquire Forecasts"
 }
 
 

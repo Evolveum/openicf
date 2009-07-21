@@ -66,7 +66,6 @@ import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
 import org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp;
-import org.identityconnectors.framework.spi.operations.ScriptOnResourceOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
@@ -412,7 +411,6 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         schemaBld.removeSupportedObjectClass(CreateOp.class, respNamesOc);
         schemaBld.removeSupportedObjectClass(SchemaOp.class, respNamesOc);
         schemaBld.removeSupportedObjectClass(ScriptOnConnectorOp.class, respNamesOc);
-        schemaBld.removeSupportedObjectClass(ScriptOnResourceOp.class, respNamesOc);      
 
         return schemaBld.build();
     }

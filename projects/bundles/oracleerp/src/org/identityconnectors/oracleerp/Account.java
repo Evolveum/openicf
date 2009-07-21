@@ -304,12 +304,18 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder where, ResultsHandler handler,
             OperationOptions options) {
         final String method = "executeQuery";
-        //Names
+        
         final String tblname = co.app() + "fnd_user";
-        // create the connector object..
         final Set<String> attributesToGet = getAttributesToGet(options);        
         final Set<String> fndUserColumnNames = getColumnNamesToGet(attributesToGet);
         final Set<String> perPeopleColumnNames = CollectionUtil.newSet(fndUserColumnNames);
+        String filterId = null;
+        for (SQLParam sqlp : where.getParams()) {
+            if ( sqlp.getName().equalsIgnoreCase(USER_ID)) {
+                filterId = sqlp.getValue().toString();
+            }
+        }
+
 
         fndUserColumnNames.retainAll(FND_USER_COLS);
         perPeopleColumnNames.retainAll(PER_PEOPLE_COLS);
@@ -337,13 +343,12 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                 final SQLParam userNameParm = columnValues.get(USER_NAME);
                 final SQLParam userIdParm = columnValues.get(USER_ID);
                 final String userName = (String) userNameParm.getValue();
-                final boolean getAuditorData = where.getParams().contains( userIdParm );                
+                final boolean getAuditorData = userIdParm.getValue().toString().equals(filterId);               
                 // get users account attributes
                 this.buildAccountObject(amb, columnValues);
                 
                 // if person_id not null and employee_number in schema, return employee_number
-                final BigDecimal personId = (BigDecimal) columnValues.get(EMP_ID).getValue();
-                buildPersonDetails(amb, personId, perPeopleColumnNames);
+                buildPersonDetails(amb, columnValues, perPeopleColumnNames);
                 
                 // get users responsibilities only if if resp || direct_resp in account attribute
                 co.getRespNames().buildResponsibilitiesToAccountObject(amb, userName, attributesToGet);
@@ -365,6 +370,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                 }
             }
             co.getConn().commit();
+            log.ok(method);
         } catch (SQLException e) {
             log.error(e, method);
             throw ConnectorException.wrap(e);
@@ -452,7 +458,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      * @param schemaBld 
      * @return The cached object class info
      */
-     ObjectClassInfo getObjectClassInfo() {
+     public ObjectClassInfo getObjectClassInfo() {
         if (oci == null) {
             ObjectClassInfoBuilder ocib = new ObjectClassInfoBuilder();
             ocib.setType(ObjectClass.ACCOUNT_NAME);
@@ -528,6 +534,10 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                     Flags.NOT_RETURNED_BY_DEFAULT);
 
             // name='userMenuNames' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RESP_NAMES, String.class, STD_NRD));
+            // name='userMenuNames' type='string' audit='false'
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(AUDITOR_RESPS, String.class, STD_NRD));
+            // name='userMenuNames' type='string' audit='false'
             ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_MENU_NAMES, String.class, STD_NRD));
             // name='menuIds' type='string' audit='false'    
             ocib.addAttributeInfo(AttributeInfoBuilder.build(MENU_IDS, String.class, STD_NRD));
@@ -544,25 +554,25 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             // name='userFormNames' type='string' audit='false'
             ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_FORM_NAMES, String.class, STD_NRD));
             // name='readOnlyFormIds' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_IDS, String.class, STD_NRD));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RO_FORM_IDS, String.class, STD_NRD));
             // name='readWriteOnlyFormIds' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_IDS, String.class, STD_NRD));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_ONLY_FORM_IDS, String.class, STD_NRD));
             // name='readOnlyFormNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_NAMES, String.class, STD_NRD));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RO_FORM_NAMES, String.class, STD_NRD));
             // name='readOnlyFunctionNames' type='string' audit='false'    
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTION_NAMES, String.class, STD_NRD));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RO_FUNCTION_NAMES, String.class, STD_NRD));
             // name='readOnlyUserFormNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_USER_FORM_NAMES, String.class, STD_NRD));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RO_USER_FORM_NAMES, String.class, STD_NRD));
             // name='readOnlyFunctionIds' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTIONS_IDS, String.class, STD_NRD));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RO_FUNCTIONS_IDS, String.class, STD_NRD));
             // name='readWriteOnlyFormNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_NAMES, String.class, STD_NRD));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_FORM_NAMES, String.class, STD_NRD));
             // name='readWriteOnlyUserFormNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_USER_FORM_NAMES));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_USER_FORM_NAMES));
             // name='readWriteOnlyFunctionNames' type='string' audit='false'        
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_NAMES, String.class, STD_NRD));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_FUNCTION_NAMES, String.class, STD_NRD));
             // name='readWriteOnlyFunctionIds' type='string' audit='false'                 
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_IDS, String.class, STD_NRD));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_FUNCTION_IDS, String.class, STD_NRD));
             
             oci = ocib.build();
         }   
@@ -741,14 +751,20 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
 
     /**
      * @param bld
-     * @param personId
+     * @param columnValues
      * @param columnNames 
      */
-    private void buildPersonDetails(AttributeMergeBuilder bld, final BigDecimal personId ,
+    private void buildPersonDetails(AttributeMergeBuilder bld, final Map<String, SQLParam> columnValues ,
             Set<String> personColumns) {
-        if (personId == null) {
+        
+        if (columnValues == null || columnValues.get(EMP_ID) == null) {
             // No personId(employId)
             log.ok("buildPersonDetails: No personId(employId)");
+            return;
+        }
+        final BigDecimal personId = (BigDecimal) columnValues.get(EMP_ID).getValue();
+        if (personId == null ) {
+            log.ok("buildPersonDetails: Null personId(employId)");
             return;
         }
         log.info("buildPersonDetails for personId: {0}", personId );
@@ -787,7 +803,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                         log.ok("Person values {0} from result set ", personValues);
                     }
                 }
-                co.getConn().commit();
+               
             } catch (SQLException e) {
                 String emsg = e.getMessage();
                 msg = "Caught SQLException when executing: ''{0}'': {1}";
