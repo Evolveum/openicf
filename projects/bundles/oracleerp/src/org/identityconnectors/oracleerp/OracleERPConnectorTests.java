@@ -41,9 +41,11 @@ import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.api.ConnectorFacadeFactory;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
+import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.OperationOptions;
@@ -181,7 +183,7 @@ public class OracleERPConnectorTests {
         final Set<Attribute> returned = co.getAttributes();
         System.out.println(returned);
         
-        attributeSetsEquals(attrs, returned, OperationalAttributes.PASSWORD_NAME, OWNER);
+        testAttrSet(attrs, returned, OperationalAttributes.PASSWORD_NAME, OWNER);
     }
     
     
@@ -205,7 +207,7 @@ public class OracleERPConnectorTests {
         System.out.println(returned);
         
         // Date text representations are not the same, skiped due to extra test
-        attributeSetsEquals(attrs, returned, OperationalAttributes.PASSWORD_NAME,
+        testAttrSet(attrs, returned, OperationalAttributes.PASSWORD_NAME,
                 OperationalAttributes.PASSWORD_EXPIRED_NAME, OWNER, END_DATE, LAST_LOGON_DATE, PWD_DATE, START_DATE);
     }    
     
@@ -233,7 +235,7 @@ public class OracleERPConnectorTests {
         final Set<Attribute> returned = co.getAttributes();
         System.out.println(returned);
         
-        attributeSetsEquals(expectedAttr, returned);
+        testAttrSet(expectedAttr, returned);
     }    
 
     /**
@@ -342,46 +344,62 @@ public class OracleERPConnectorTests {
     
     
     /**
+     * 
      * @param expected
      * @param actual
+     * @param ignore
      */
-    protected void attributeSetsEquals(Set<Attribute> expected, Set<Attribute> actual, String ... ignore) {
-        attributeSetsEquals(AttributeUtil.toMap(expected), AttributeUtil.toMap(actual), ignore);              
+    protected void testAttrSet(Set<Attribute> expected, Set<Attribute> actual, String ... ignore) {
+        testAttrSet(AttributeUtil.toMap(expected), AttributeUtil.toMap(actual), false, new HashSet<String>(Arrays.asList(ignore)));              
     }    
     
-     /**
+       
+    /**
+     * 
      * @param expected
      * @param actual
+     * @param fullMatch
+     * @param ignore
      */
-    protected void attributeSetsEquals(final Map<String, Attribute> expMap, final Map<String, Attribute> actMap, String ... ignore) {
+    protected void testAttrSet(Set<Attribute> expected, Set<Attribute> actual, boolean fullMatch, String ... ignore) {
+        testAttrSet(AttributeUtil.toMap(expected), AttributeUtil.toMap(actual), fullMatch, new HashSet<String>(Arrays.asList(ignore)));              
+    }      
+    
+    /**
+     * S
+     * @param expMap
+     * @param currMap
+     * @param fullMatch
+     * @param ignoreSet
+     */
+    protected void testAttrSet(final Map<String, Attribute> expMap, final Map<String, Attribute> currMap, boolean fullMatch, Set<String> ignoreSet) {
         log.ok("attributeSetsEquals");
-        final Set<String> ignoreSet = new HashSet<String>(Arrays.asList(ignore));
-        
         Set<String> names = CollectionUtil.newCaseInsensitiveSet();
         names.addAll(expMap.keySet());
-        // names.addAll(actMap.keySet());
+        if(fullMatch) {
+            names.addAll(currMap.keySet());
+        }
         names.removeAll(ignoreSet);
         names.remove(Uid.NAME);
-        int missing = 0; 
         List<String> mis = new ArrayList<String>();
-        List<String> extra = new ArrayList<String>();        
+        List<String> ext = new ArrayList<String>();        
         for (String attrName : names) {
             final Attribute expAttr = expMap.get(attrName);
-            final Attribute actAttr = actMap.get(attrName);
-            if(expAttr != null && actAttr != null ) {                
-                assertEquals(attrName, expAttr.getValue().toString(), actAttr.getValue().toString());
+            final Attribute currAttr = currMap.get(attrName);
+            if(expAttr != null && currAttr != null ) {                
+                assertEquals(attrName, expAttr.getValue().toString(), currAttr.getValue().toString());
             } else {
-                missing = missing + 1;
-                if(expAttr != null) {
+                if(currAttr == null) {
                     mis.add(expAttr.getName());
                 }
-                if(actAttr != null) {
-                    extra.add(actAttr.getName());                    
+                if(expAttr == null) {
+                    ext.add(currAttr.getName());                    
                 }
             }
         }
-        assertEquals("missing attriburtes extra "+extra+" , missing "+mis, 0, missing); 
-        log.ok("attributeSets are equal!");
+        assertEquals("missing attriburtes "+mis, 0, mis.size()); 
+        assertEquals("extra attriburtes "+ext, 0, ext.size()); 
+        log.ok("expected attributes are equal to current");
     }       
     
     /**
@@ -390,7 +408,15 @@ public class OracleERPConnectorTests {
      * @return
      */
     protected  Set<Attribute> getAttributeSet(String setName) {
-        return CollectionUtil.newSet(dataProvider.getAttributeSet(setName));
+        Set<Attribute> ret = CollectionUtil.newSet(dataProvider.getAttributeSet(setName));
+        Name attr = AttributeUtil.getNameFromAttributes(ret);
+        if (attr != null) {
+            final String value = AttributeUtil.getStringValue(attr) + System.currentTimeMillis();
+            Attribute add = AttributeBuilder.build(Name.NAME, value );
+            ret.remove(attr);
+            ret.add(add);
+        }
+        return ret;
     }
     
     /**
