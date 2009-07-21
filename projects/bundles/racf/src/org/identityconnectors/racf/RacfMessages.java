@@ -68,6 +68,8 @@ public class RacfMessages extends ListResourceBundle {
     public static final String OWNER_INCONSISTENT             = "OWNER_INCONSISTENT";
     public static final String BAD_CONNECTION_INFO            = "BAD_CONNECTION_INFO";
     public static final String BAD_NAME_FILTER                = "BAD_NAME_FILTER";
+    public static final String BAD_ATTRIBUTE_VALUE            = "BAD_ATTRIBUTE_VALUE";
+    
 
     private static final String[][] _contents = {
         { SUFFIX_NULL,             "suffix may not be null" },
@@ -111,7 +113,8 @@ public class RacfMessages extends ListResourceBundle {
         { ATTRIBUTE_NOT_UPDATEABLE, "Attribute ''{0}'' is not updateable" },
         { OWNER_INCONSISTENT,      "The owner and relationship target attributes must be the same size" },
         { BAD_CONNECTION_INFO,     "Either LDAP or Command Line connection information must be specified" },
-        { BAD_NAME_FILTER,         "''{0}'' is not a valid filter value" }
+        { BAD_NAME_FILTER,         "''{0}'' is not a valid filter value" },
+        { BAD_ATTRIBUTE_VALUE,     "''{0}'' is not a valid ATTRIBUTE value" },
     };
 
     @Override

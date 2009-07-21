@@ -67,6 +67,16 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.racf.CommandLineUtil.LocalHandler;
 
 class LdapUtil {
+    
+    private static final String[] ATTRIBUTE_VALUES_ARRAY = {
+        "ADSP", "SPECIAL", "OPERATIONS", "GRPACC", "AUDITOR", "OIDCARD"
+    };
+    private static final Set<String> ATTRIBUTE_VALUES = CollectionUtil.newCaseInsensitiveSet();
+    static {
+        for (String value : ATTRIBUTE_VALUES_ARRAY)
+            ATTRIBUTE_VALUES.add(value);
+    }
+    
     private final Pattern               _connectionPattern  = Pattern.compile("racfuserid=(.*)\\+racfgroupid=([^,]*),.*");
 
     private RacfConnector               _connector;
@@ -671,15 +681,45 @@ class LdapUtil {
 
     protected void addObjectClass(ObjectClass objectClass, Map<String, Attribute> attrs) {
         List<Object> values = new ArrayList<Object>();
-        //TODO: need to run off a saved set of objectClasses
-        // racfUser, racfGroup, SAFDfpSegment, racfGroupOmvsSegment, racfGroupOvmSegment, 
-        // racfUserOmvsSegment, racfUserOvmSegment, SAFTsoSegment, racfCicsSegment, racfOperparmSegment, 
-        // racfLanguageSegment, racfWorkAttrSegment, racfNetviewSegment, racfDCESegment, 
+        int supportedSegments = ((RacfConfiguration)_connector.getConfiguration()).getSupportedSegments();
         if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
             values.add("racfUser");
-            values.add("SAFTsoSegment");
+            if ((supportedSegments & RacfConfiguration.SEGMENT_CICS)>0)
+                values.add("racfCicsSegment");
+            if ((supportedSegments & RacfConfiguration.SEGMENT_DCE)>0)
+                values.add("racfDCESegment");
+            if ((supportedSegments & RacfConfiguration.SEGMENT_DFP)>0)
+                values.add("SAFDfpSegment");
+            if ((supportedSegments & RacfConfiguration.SEGMENT_KERB)>0)
+                values.add("racfKerberosInfo");
+            if ((supportedSegments & RacfConfiguration.SEGMENT_LANGUAGE)>0)
+                values.add("racfLanguageSegment");
+            if ((supportedSegments & RacfConfiguration.SEGMENT_LNOTES)>0)
+                values.add("racfLNotesSegment");
+            if ((supportedSegments & RacfConfiguration.SEGMENT_NDS)>0)
+                values.add("racfNDSSegment");
+            if ((supportedSegments & RacfConfiguration.SEGMENT_NETVIEW)>0)
+                values.add("racfNetviewSegment");
+            if ((supportedSegments & RacfConfiguration.SEGMENT_OMVS_USER)>0)
+                values.add("racfUserOmvsSegment");
+            if ((supportedSegments & RacfConfiguration.SEGMENT_OPERPARM)>0)
+                values.add("racfOperparmSegment");
+            if ((supportedSegments & RacfConfiguration.SEGMENT_OVM_USER)>0)
+                values.add("racfUserOvmSegment");
+            if ((supportedSegments & RacfConfiguration.SEGMENT_PROXY)>0)
+                values.add("racfProxySegment");
+            if ((supportedSegments & RacfConfiguration.SEGMENT_TSO)>0)
+                values.add("SAFTsoSegment");
+            if ((supportedSegments & RacfConfiguration.SEGMENT_WORKATTR)>0)
+                values.add("racfWorkAttrSegment");
         } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
             values.add("racfGroup");
+            if ((supportedSegments & RacfConfiguration.SEGMENT_OVM_GROUP)>0)
+                values.add("racfGroupOvmSegment");
+            if ((supportedSegments & RacfConfiguration.SEGMENT_OMVS_GROUP)>0)
+                values.add("racfGroupOmvsSegment");
+            if ((supportedSegments & RacfConfiguration.SEGMENT_DFP)>0)
+                values.add("SAFDfpSegment");
         }
         attrs.put("objectclass", AttributeBuilder.build("objectclass", values));
     }
@@ -693,8 +733,9 @@ class LdapUtil {
                 accountInfo = objectClassInfo;
         }
         Set<AttributeInfo> attributeInfos = accountInfo.getAttributeInfo();
-        List<Object> racfAttributes = new LinkedList<Object>();
+        Set<String> racfAttributes = CollectionUtil.newCaseInsensitiveSet();
         boolean setRacfAttributes = false;
+        boolean negateAttributes = false;
         
         for (Attribute attribute : attributes.values()) {
             String attributeName = attribute.getName().toLowerCase();
@@ -707,7 +748,18 @@ class LdapUtil {
                     objectClassAttribute.add(value);
                 basicAttributes.put(objectClassAttribute);
             } else if (attribute.is(ATTR_LDAP_ATTRIBUTES)) {
-                racfAttributes.addAll(attribute.getValue());
+                for (Object value : attribute.getValue()) {
+                    if (value==null) {
+                        throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, null));
+                    } else {
+                        String string = value.toString();
+                        if (!ATTRIBUTE_VALUES.contains(string))
+                            throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, string));
+                        else
+                            racfAttributes.add(string);
+                    }
+                }
+                negateAttributes = true;
                 setRacfAttributes = true;
             } else if (attribute.is(ATTR_LDAP_AUTHORIZATION_DATE) ||
                     attribute.is(ATTR_LDAP_PASSWORD_INTERVAL) ||
@@ -758,7 +810,23 @@ class LdapUtil {
             }
         }
         if (setRacfAttributes) {
-            basicAttributes.put(makeBasicAttribute(ATTR_LDAP_ATTRIBUTES, racfAttributes));
+            // Since RACF LDAP does't obey replace semantics, we need to patch in
+            // any values that should be removed
+            //
+            //TODO: an alternative implementation would be to read the user object
+            //      and get the set of current values for ATTRIBUTE. This has the
+            //      advantage of getting the exact set of values, but the disadvantage
+            //      that it requires an extra read of the user.
+            //TODO: this probably also applies to 'RacfConnectAttributes', which we
+            //      are not currently supporting
+            List<Object> finalValue = new LinkedList<Object>();
+            if (negateAttributes) {
+                for (String attrValue : ATTRIBUTE_VALUES)
+                    if (!racfAttributes.contains(attrValue))
+                        finalValue.add("NO"+attrValue);
+            }
+            finalValue.addAll(racfAttributes);
+            basicAttributes.put(makeBasicAttribute(ATTR_LDAP_ATTRIBUTES, finalValue));
         }
 
         return basicAttributes;
@@ -772,8 +840,6 @@ class LdapUtil {
             if (attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
                 // Ignore Name, Uid
                 //
-            } else if (attribute.is("objectclass")) {
-                basicAttributes.put("objectclass", AttributeUtil.getSingleValue(attribute));
             } else {
                 if (attribute.getValue() instanceof Collection) {
                     basicAttributes.put(makeBasicAttribute(attributeName, attribute.getValue()));
