@@ -464,8 +464,8 @@ class LdapUtil {
                     List list = (List)value;
                     for (int i=0; i<list.size(); i++)
                         list.set(i, list.get(i).toString().toUpperCase());
+                    attributesRead.put(ATTR_LDAP_GROUPS, list);
                 }
-                attributesRead.put(ATTR_LDAP_GROUPS, new LinkedList<Object>());
             }
             // Groups must be filled in if null
             //
@@ -496,8 +496,8 @@ class LdapUtil {
                     List list = (List)value;
                     for (int i=0; i<list.size(); i++)
                         list.set(i, list.get(i).toString().toUpperCase());
+                    attributesRead.put(ATTR_LDAP_CONNECT_OWNER, list);
                 }
-                attributesRead.put(ATTR_LDAP_CONNECT_OWNER, new LinkedList<Object>());
             }
             // Group Owners must be filled in if null
             //

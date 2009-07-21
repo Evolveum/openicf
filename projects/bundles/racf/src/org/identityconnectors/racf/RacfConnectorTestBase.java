@@ -435,7 +435,7 @@ public abstract class RacfConnectorTestBase {
         return tsoParser.toString();
     }
 
-    private void displayConnectorObject(ConnectorObject user) {
+    protected void displayConnectorObject(ConnectorObject user) {
         Set<Attribute> attributes = user.getAttributes();
         for (Attribute attribute : attributes) {
             System.out.println(attribute.getName());
@@ -449,11 +449,11 @@ public abstract class RacfConnectorTestBase {
         }
     }
 
-    private ConnectorObject getUser(String accountId, RacfConnector connector) throws Exception  {
+    protected ConnectorObject getUser(String accountId, RacfConnector connector) throws Exception  {
         return getUser(accountId, connector, null);
     }
 
-    private ConnectorObject getUser(String accountId, RacfConnector connector, String[] attributes) throws Exception  {
+    protected ConnectorObject getUser(String accountId, RacfConnector connector, String[] attributes) throws Exception  {
         TestHandler handler = new TestHandler();
         OperationOptions options = null;
         if (attributes!=null) {
@@ -569,7 +569,7 @@ public abstract class RacfConnectorTestBase {
         }
     }
 
-    private void deleteUser(final Uid testUser, RacfConnector connector) {
+    protected void deleteUser(final Uid testUser, RacfConnector connector) {
         try {
             connector.delete(ObjectClass.ACCOUNT, testUser, null);
         } catch (UnknownUidException rte) {
@@ -577,7 +577,7 @@ public abstract class RacfConnectorTestBase {
         }
     }
 
-    private void deleteGroup(final Uid group, RacfConnector connector) {
+    protected void deleteGroup(final Uid group, RacfConnector connector) {
         try {
             connector.delete(RacfConnector.RACF_GROUP, group, null);
         } catch (UnknownUidException rte) {
@@ -725,7 +725,7 @@ public abstract class RacfConnectorTestBase {
         }
     }
 
-    private Set<Attribute> fillInSampleUser(final String testUser) {
+    protected Set<Attribute> fillInSampleUser(final String testUser) {
         Set<Attribute> attrs = new HashSet<Attribute>();
         attrs.add(new Name(makeUid(testUser, ObjectClass.ACCOUNT).getUidValue()));
         attrs.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString("password".toCharArray())));
