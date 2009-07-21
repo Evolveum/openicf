@@ -160,15 +160,8 @@ public class OpUpdateImpl extends AbstractOp {
             builder.addRegExpMatch("Permission denied", ClosureFactory.newConnectorException("permission denied when executing passwd"));
             builder.addRegExpMatch("command not found", ClosureFactory.newConnectorException("passwd command not found"));
             builder.addRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException("user is not allowed to execute passwd"));
-            //for nonexisting UID:
-//            builder.addRegExpMatch("User unknown", new Closure() {
-//
-//                public void run(ExpectState state) throws Exception {
-//                    // TODO Auto-generated method stub
-//                    
-//                }
-//                
-//            })
+            //for nonexisting UID (note: match not present in the adapter)
+            builder.addCaseInsensitiveRegExpMatch("User unknown", ClosureFactory.newUnknownUidException(String.format("Unknown Uid: '%s'", accountId)));
 
             getConnection().send(getCmdBuilder().build("passwd", "-r", "files", accountId));
             getConnection().expect(builder.build());
