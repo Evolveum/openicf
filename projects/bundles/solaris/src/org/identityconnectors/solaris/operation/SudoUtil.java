@@ -28,8 +28,7 @@ import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.command.MatchBuilder;
-import org.identityconnectors.solaris.command.closure.ErrorClosure;
-import org.identityconnectors.solaris.command.closure.NullClosure;
+import org.identityconnectors.solaris.command.closure.ClosureFactory;
 
 class SudoUtil {
     private static final String SUDO_START_COMMAND = "sudo -v";
@@ -41,7 +40,7 @@ class SudoUtil {
             try {
                 // 1) send sudo reset command
                 conn.send(SUDO_RESET_COMMAND); // TODO CommandBuilder might be user for this
-                conn.expect(MatchBuilder.buildRegExpMatch("not found", new ErrorClosure("Sudo command is not found")));
+                conn.expect(MatchBuilder.buildRegExpMatch("not found", ClosureFactory.newConnectorException("Sudo command is not found")));
 
                 // 2) send sudo start command
                 conn.send(SUDO_START_COMMAND); // TODO CommandBuilder might be user for this
@@ -52,10 +51,10 @@ class SudoUtil {
                 
                 // 3) wait for the end of sudo operation
                 MatchBuilder builder = new MatchBuilder();
-                builder.addRegExpMatch(config.getRootShellPrompt(), new NullClosure());// TODO possibly replace NullClosure with null.
+                builder.addRegExpMatch(config.getRootShellPrompt(), ClosureFactory.newNullClosure());// TODO possibly replace NullClosure with null.
                 // signs of password reject:
-                builder.addRegExpMatch("may not run", new ErrorClosure("Not sufficient permissions")); // TODO improve error msg
-                builder.addRegExpMatch("not allowed to execute", new ErrorClosure("Not sufficient permissions"));// TODO improve error msg
+                builder.addRegExpMatch("may not run", ClosureFactory.newConnectorException("Not sufficient permissions")); // TODO improve error msg
+                builder.addRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException("Not sufficient permissions"));// TODO improve error msg
                 conn.expect(builder.build());
             } catch (Exception e) {
                 ConnectorException.wrap(e);

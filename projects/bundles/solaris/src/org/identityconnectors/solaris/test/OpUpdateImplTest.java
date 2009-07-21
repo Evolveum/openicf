@@ -33,7 +33,6 @@ import junit.framework.Assert;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.ConnectorFacade;
-import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
@@ -45,7 +44,6 @@ import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class OpUpdateImplTest {
@@ -122,7 +120,7 @@ public class OpUpdateImplTest {
         }
     }
     
-    @Test (expected=IllegalArgumentException.class) @Ignore
+    @Test (expected=IllegalArgumentException.class) 
     public void unknownObjectClass() {
         String username = config.getUserName();
         Set<Attribute> replaceAttributes = new HashSet<Attribute>();
@@ -135,15 +133,20 @@ public class OpUpdateImplTest {
                 username), replaceAttributes, null);
     }
     
-    @Test (expected=UnknownUidException.class) @Ignore
+    @Test /*(expected=UnknownUidException.class)*/ 
     public void testUpdateUnknownUid() {
-        Set<Attribute> replaceAttributes = new HashSet<Attribute>();
-        final String newPassword = getTestProperty("modified.samplePasswd");
-        Attribute chngPasswdAttribute = AttributeBuilder
-                .buildPassword(new GuardedString(newPassword.toCharArray()));
-        replaceAttributes.add(chngPasswdAttribute);
+        try {
+            Set<Attribute> replaceAttributes = new HashSet<Attribute>();
+            final String newPassword = getTestProperty("modified.samplePasswd");
+            Attribute chngPasswdAttribute = AttributeBuilder
+                    .buildPassword(new GuardedString(newPassword.toCharArray()));
+            replaceAttributes.add(chngPasswdAttribute);
 
-        facade.update(ObjectClass.ACCOUNT, new Uid("NONEXISTING_UID___"), replaceAttributes, null);
+            facade.update(ObjectClass.ACCOUNT, new Uid("NONEXISTING_UID___"),
+                    replaceAttributes, null);
+        } catch (Exception ex) {
+            System.out.println(ex);
+        }
     }
     
     /* ************* AUXILIARY METHODS *********** */

@@ -28,7 +28,7 @@ import java.util.List;
 
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.solaris.command.closure.TimeoutClosure;
+import org.identityconnectors.solaris.command.closure.ClosureFactory;
 import org.identityconnectors.solaris.command.pattern.RegExpCaseInsensitiveMatch;
 
 import expect4j.Closure;
@@ -78,7 +78,7 @@ public final class MatchBuilder {
     
     /** add a timeout match with given 'millis' period. */
     public void addTimeoutMatch(long millis, String message) {
-        matches.add(new TimeoutMatch(millis, new TimeoutClosure(message)));
+        matches.add(new TimeoutMatch(millis, ClosureFactory.newConnectorException(message)));
     }
     
     /** concatenate all the given matches with existing ones. */

@@ -35,8 +35,7 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.command.MatchBuilder;
-import org.identityconnectors.solaris.command.closure.ErrorClosure;
-import org.identityconnectors.solaris.command.closure.NullClosure;
+import org.identityconnectors.solaris.command.closure.ClosureFactory;
 import org.identityconnectors.solaris.constants.AccountAttributes;
 import org.identityconnectors.solaris.operation.AbstractOp;
 
@@ -73,7 +72,7 @@ public class OpUpdateImpl extends AbstractOp {
         Uid name = (Uid) attrMap.get(Uid.NAME);
         final String accountId = name.getUidValue();
 
-        String output = null;
+        /*String output = null;*/
 
         // if i run the tests separately, the login info is in the expect4j's
         // buffer
@@ -102,18 +101,17 @@ public class OpUpdateImpl extends AbstractOp {
                     getConnection().send(getAcquireMutexScript());
                     MatchBuilder builder = new MatchBuilder();
                     builder.addRegExpMatch(getConfiguration()
-                            .getRootShellPrompt(), new NullClosure());
-                    builder.addRegExpMatch("ERROR", new ErrorClosure(
-                            "acquiring mutex failed"));
+                            .getRootShellPrompt(), ClosureFactory.newNullClosure());
+                    builder.addRegExpMatch("ERROR", ClosureFactory.newConnectorException("acquiring mutex failed"));
 
                     getConnection().expect(builder.build());
 
                     // perform the UPDATE
                     builder = new MatchBuilder();
-                    builder.addRegExpMatch(getConfiguration().getRootShellPrompt(), new NullClosure());
-                    builder.addRegExpMatch("ERROR", new ErrorClosure("ERROR occured during update [usermod]"));
-                    builder.addRegExpMatch("command not found", new ErrorClosure("usermod command is not found"));
-                    builder.addRegExpMatch("not allowed to execute", new ErrorClosure("not allowed to execute usermod"));
+                    builder.addRegExpMatch(getConfiguration().getRootShellPrompt(), ClosureFactory.newNullClosure());
+                    builder.addRegExpMatch("ERROR", ClosureFactory.newConnectorException("ERROR occured during update [usermod]"));
+                    builder.addRegExpMatch("command not found", ClosureFactory.newConnectorException("usermod command is not found"));
+                    builder.addRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException("not allowed to execute usermod"));
 
                     getConnection().send(getCmdBuilder().build("usermod", commandSwitches, accountId));
                     getConnection().expect(builder.build());
@@ -158,10 +156,19 @@ public class OpUpdateImpl extends AbstractOp {
     private void handlePasswdUpdate(String accountId, GuardedString passwd) {
         try {
             MatchBuilder builder = new MatchBuilder();
-            builder.addCaseInsensitiveRegExpMatch("ew password:", new NullClosure());
-            builder.addRegExpMatch("Permission denied", new ErrorClosure("permission denied when executing passwd"));
-            builder.addRegExpMatch("command not found", new ErrorClosure("passwd command not found"));
-            builder.addRegExpMatch("not allowed to execute", new ErrorClosure("user is not allowed to execute passwd"));
+            builder.addCaseInsensitiveRegExpMatch("ew password:", ClosureFactory.newNullClosure());
+            builder.addRegExpMatch("Permission denied", ClosureFactory.newConnectorException("permission denied when executing passwd"));
+            builder.addRegExpMatch("command not found", ClosureFactory.newConnectorException("passwd command not found"));
+            builder.addRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException("user is not allowed to execute passwd"));
+            //for nonexisting UID:
+//            builder.addRegExpMatch("User unknown", new Closure() {
+//
+//                public void run(ExpectState state) throws Exception {
+//                    // TODO Auto-generated method stub
+//                    
+//                }
+//                
+//            })
 
             getConnection().send(getCmdBuilder().build("passwd", "-r", "files", accountId));
             getConnection().expect(builder.build());
@@ -173,7 +180,7 @@ public class OpUpdateImpl extends AbstractOp {
 
             getConnection().waitFor(getConfiguration().getRootShellPrompt());
         } catch (Exception e) {
-            ConnectorException.wrap(e);
+            throw ConnectorException.wrap(e);
         }
     }
 
@@ -253,8 +260,8 @@ public class OpUpdateImpl extends AbstractOp {
 
             try {
                 command.append(AccountAttributes.formatCommandSwitch(attribute));
-            } catch (IllegalArgumentException ex) {
-                getLog().warn("Invalid attribute name sent to Update: ''{0}''. Skipping it.", attribute.getName());
+            } catch (Exception ex) {
+                // OK ignoring attribute
             } // try
         }// for
 
