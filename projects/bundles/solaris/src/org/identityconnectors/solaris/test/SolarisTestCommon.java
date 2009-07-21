@@ -114,9 +114,14 @@ class SolarisTestCommon {
     
     /** fill in sample user/password for sample user used in create */
     public static Set<Attribute> initSampleUser() {
+        return initSampleUser(getTestProperty("sampleUser", true));
+    }
+    
+    /** {@link SolarisTestCommon#initSampleUser()}*/
+    public static Set<Attribute> initSampleUser(String username) {
         Set<Attribute> res = new HashSet<Attribute>();
         
-        res.add(AttributeBuilder.build(Name.NAME, getTestProperty("sampleUser", true)));
+        res.add(AttributeBuilder.build(Name.NAME, username));
         
         String samplePasswd = getTestProperty("samplePasswd", true);
         res.add(AttributeBuilder.buildPassword(new GuardedString(samplePasswd.toCharArray())));

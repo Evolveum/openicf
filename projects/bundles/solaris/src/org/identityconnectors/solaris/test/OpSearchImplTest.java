@@ -22,6 +22,7 @@
  */
 package org.identityconnectors.solaris.test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,7 @@ import java.util.Set;
 
 import junit.framework.Assert;
 
+import org.identityconnectors.common.Pair;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -46,6 +48,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class OpSearchImplTest {
+    private static final String USERNAME_BASE = "sampleFooBar";
     private SolarisConfiguration config;
     private ConnectorFacade facade;
 
@@ -73,17 +76,76 @@ public class OpSearchImplTest {
      */
     @Test
     public void testSearchNullFilter() {
-        ToListResultsHandler handler = new ToListResultsHandler();
-        facade.search(ObjectClass.ACCOUNT, /*filter*/ null, handler, null);
-        
-        //print
-//        final List<ConnectorObject> l = handler.getObjects();
-//        for (ConnectorObject connectorObject : l) {
-//            Attribute attr = connectorObject.getAttributeByName(Name.NAME);
-//            System.out.println(attr.getValue().get(0));
-//        }
+        final int NR_OF_USERS = 3;
+        List<Pair<String, GuardedString>> pairs = null;
+        try {
+            // create users
+            pairs = createUsers(NR_OF_USERS);
+            
+            ToListResultsHandler handler = new ToListResultsHandler();
+            facade.search(ObjectClass.ACCOUNT, /* filter */null, handler, null);
+            final List<ConnectorObject> l = handler.getObjects();
+            final boolean[] found = new boolean[NR_OF_USERS];
+            int cntr = 0;
+            for (Pair<String, GuardedString> pair : pairs) {
+                for (ConnectorObject connectorObject : l) {
+                    if (pair.first.equals(connectorObject.getName().getNameValue())) {
+                        found[cntr] = true;
+                    }
+                }
+                cntr++;
+            }
+            
+            cntr = 0;
+            for (boolean b : found) {
+                String msg = String.format("created user '%s' was not found on the resource.", pairs.get(cntr).first);
+                Assert.assertTrue(msg, b);
+                cntr++;
+            }
+        } finally {
+            // cleanup users
+            if (pairs != null) {
+                cleanupUsers(NR_OF_USERS, pairs);
+            }
+        }
     }
+
+    private List<Pair<String, GuardedString>> createUsers(int nrOfUsers) {
+        List<Pair<String, GuardedString>> pairs = new ArrayList<Pair<String, GuardedString>>();
+        
+        for (int i = 0; i < nrOfUsers; i++) {
+            final Set<Attribute> attrs = SolarisTestCommon.initSampleUser(nameFormatter(i));
+            final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
+            final String username = ((Name) attrMap.get(Name.NAME)).getNameValue();
+            final GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
+            pairs.add(new Pair<String, GuardedString>(username, password));
+            
+            facade.create(ObjectClass.ACCOUNT, attrs, null);
+        }
+        return pairs;
+    }
+
+    private String nameFormatter(int i) {
+        return USERNAME_BASE + i;
+    }
+
+    private void cleanupUsers(int nrOfUsers, List<Pair<String, GuardedString>> list) {
+        int i = 0;
+        for (Pair<String, GuardedString> pair : list) {
+            facade.delete(ObjectClass.ACCOUNT, new Uid(pair.first), null);
+            try {
+                facade.authenticate(ObjectClass.ACCOUNT, pair.first, pair.second, null);
+                Assert.fail(String.format("Account was not cleaned up: '%s'", pair.first));
+            } catch (RuntimeException ex) {
+                // OK
+            }
+
+            i++;
+        }//for
+    }
+
     
+
     /**
      * Searching using filter
      */
@@ -103,19 +165,19 @@ public class OpSearchImplTest {
 
             ToListResultsHandler handler = new ToListResultsHandler();
             // attribute that we search for:
-            Attribute attr = (Name) attrMap.get(Name.NAME);
+            Attribute usernameAttrToSearch = (Name) attrMap.get(Name.NAME);
 
             // perform search
-            facade.search(ObjectClass.ACCOUNT, FilterBuilder.equalTo(attr),
+            facade.search(ObjectClass.ACCOUNT, FilterBuilder.equalTo(usernameAttrToSearch),
                     handler, null);
             final List<ConnectorObject> l = handler.getObjects();
             String msg = String.format(
                     "Size of results is less than expected: %s", l.size());
             Assert.assertTrue(msg, l.size() == 1);
             
-            //print
-            System.out.println(l.get(0));
-            
+            final String returnedUsername = l.get(0).getName().getNameValue();
+            msg = String.format("The returned username '%s', differs from the expected '%s'", returnedUsername, username);
+            Assert.assertTrue(msg, returnedUsername.equals(username));
         } finally {
             if (username != null && password != null) {
                 // cleanup the new user
