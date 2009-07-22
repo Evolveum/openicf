@@ -65,6 +65,7 @@ account{
     required.__NAME__="TST-USER"
     required.__PASSWORD__=new GuardedString("passwd".toCharArray());
     required.owner="CUST"
+    required.start_date=stringDate(-10*24*3600000)
     
     all.__NAME__="TST-USER"
     all.owner="CUST"

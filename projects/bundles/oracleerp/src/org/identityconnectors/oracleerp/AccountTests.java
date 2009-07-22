@@ -145,7 +145,7 @@ public class AccountTests {
         //test sql
         Assert.assertEquals("Invalid SQL",
                 "{ call APPS.fnd_user_pkg.CreateUser ( x_user_name => ?, x_owner => upper(?), "+
-                "x_unencrypted_password => ?, x_end_date => FND_USER_PKG.null_date, "+
+                "x_unencrypted_password => ?, x_start_date => ?, x_end_date => FND_USER_PKG.null_date, "+
                 "x_last_logon_date => ?, x_description => FND_USER_PKG.null_char, "+
                 "x_password_date => ?, x_password_accesses_left => FND_USER_PKG.null_number, "+
                 "x_password_lifespan_accesses => FND_USER_PKG.null_number, "+
@@ -154,7 +154,7 @@ public class AccountTests {
                 "x_customer_id => FND_USER_PKG.null_number, x_supplier_id => FND_USER_PKG.null_number ) }",
                 account.getUserCallSQL(userValues, true, SCHEMA_PREFIX));
         //session is always null, so 16 params
-        Assert.assertEquals("Invalid number of  SQL Params", 5, account.getUserSQLParams(userValues).size());    
+        Assert.assertEquals("Invalid number of  SQL Params", 6, account.getUserSQLParams(userValues).size());    
     }
     
     /**
@@ -167,7 +167,7 @@ public class AccountTests {
         //test sql
         Assert.assertEquals("Invalid SQL",
                 "{ call APPS.fnd_user_pkg.UpdateUser ( x_user_name => ?, x_owner => upper(?), "+
-                "x_unencrypted_password => ?, x_end_date => FND_USER_PKG.null_date, "+
+                "x_unencrypted_password => ?, x_start_date => ?, x_end_date => FND_USER_PKG.null_date, "+
                 "x_description => FND_USER_PKG.null_char, "+
                 "x_password_date => ?, x_password_accesses_left => FND_USER_PKG.null_number, "+
                 "x_password_lifespan_accesses => FND_USER_PKG.null_number, "+
@@ -176,7 +176,7 @@ public class AccountTests {
                 "x_customer_id => FND_USER_PKG.null_number, x_supplier_id => FND_USER_PKG.null_number ) }",
                 account.getUserCallSQL(userValues, false, SCHEMA_PREFIX));
         //session is always null, so 16 params
-        Assert.assertEquals("Invalid number of  SQL Params", 4, account.getUserSQLParams(userValues).size());    
+        Assert.assertEquals("Invalid number of  SQL Params", 5, account.getUserSQLParams(userValues).size());    
     }    
 
     /**
@@ -250,7 +250,7 @@ public class AccountTests {
     static public Set<Attribute> createNullAccountAttributes() {
         Set<Attribute> attrs = createRequiredAccountAttributes();
         attrs.add(AttributeBuilder.buildPasswordExpired(false));        
-        attrs.add(AttributeBuilder.build(START_DATE, (String) null));
+        attrs.add(AttributeBuilder.build(START_DATE, new java.sql.Timestamp(System.currentTimeMillis()).toString()));
         attrs.add(AttributeBuilder.build(END_DATE, (String) null));        
         attrs.add(AttributeBuilder.build(RESPS, (String) null));
         attrs.add(AttributeBuilder.build(PWD_ACCESSES_LEFT, (String) null));

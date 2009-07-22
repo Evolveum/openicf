@@ -40,7 +40,6 @@ import java.util.Set;
 
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.CollectionUtil;
-import org.identityconnectors.common.Pair;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
@@ -92,7 +91,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
     /**
      * The map of column name parameters mapping
      */
-    static final List<Pair<String, String>> CALL_PARAMS = new ArrayList<Pair<String,String>>();
+    static final List<CallParam> CALL_PARAMS = new ArrayList<CallParam>();
 
     /**
      * The column names to get
@@ -130,23 +129,23 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         PER_PEOPLE_COLS.add(NPW_NUM);
         PER_PEOPLE_COLS.add(FULL_NAME);
 
-        CALL_PARAMS.add( new Pair<String, String>(USER_NAME, "x_user_name => {0}")); //1
-        CALL_PARAMS.add( new Pair<String, String>(OWNER, "x_owner => upper({0})")); //2   write only   
-        CALL_PARAMS.add( new Pair<String, String>(UNENCRYPT_PWD, "x_unencrypted_password => {0}"));//3 write only      
-        CALL_PARAMS.add( new Pair<String, String>(SESS_NUM, "x_session_number => {0}")); //4     
-        CALL_PARAMS.add( new Pair<String, String>(START_DATE, "x_start_date => {0}")); //5     
-        CALL_PARAMS.add( new Pair<String, String>(END_DATE, "x_end_date => {0}")); //6     
-        CALL_PARAMS.add( new Pair<String, String>(LAST_LOGON_DATE, "x_last_logon_date => {0}")); //7     
-        CALL_PARAMS.add( new Pair<String, String>(DESCR, "x_description => {0}")); //8     
-        CALL_PARAMS.add( new Pair<String, String>(PWD_DATE, "x_password_date => {0}")); //9     
-        CALL_PARAMS.add( new Pair<String, String>(PWD_ACCESSES_LEFT, "x_password_accesses_left => {0}")); //10     
-        CALL_PARAMS.add( new Pair<String, String>(PWD_LIFE_ACCESSES, "x_password_lifespan_accesses => {0}")); //11    
-        CALL_PARAMS.add( new Pair<String, String>(PWD_LIFE_DAYS, "x_password_lifespan_days => {0}")); //12     
-        CALL_PARAMS.add( new Pair<String, String>(EMP_ID, "x_employee_id => {0}")); //13     
-        CALL_PARAMS.add( new Pair<String, String>(EMAIL, "x_email_address => {0}")); //14     
-        CALL_PARAMS.add( new Pair<String, String>(FAX, "x_fax => {0}")); //15     
-        CALL_PARAMS.add( new Pair<String, String>(CUST_ID, "x_customer_id => {0}")); //16     
-        CALL_PARAMS.add( new Pair<String, String>(SUPP_ID, "x_supplier_id => {0}")); //17          
+        CALL_PARAMS.add(new CallParam(USER_NAME, "x_user_name => {0}", Types.VARCHAR)); //1
+        CALL_PARAMS.add(new CallParam(OWNER, "x_owner => upper({0})", Types.VARCHAR)); //2   write only   
+        CALL_PARAMS.add(new CallParam(UNENCRYPT_PWD, "x_unencrypted_password => {0}", Types.VARCHAR));//3 write only      
+        CALL_PARAMS.add(new CallParam(SESS_NUM, "x_session_number => {0}", Types.NUMERIC)); //4     
+        CALL_PARAMS.add(new CallParam(START_DATE, "x_start_date => {0}", Types.DATE)); //5     
+        CALL_PARAMS.add(new CallParam(END_DATE, "x_end_date => {0}", Types.DATE)); //6     
+        CALL_PARAMS.add(new CallParam(LAST_LOGON_DATE, "x_last_logon_date => {0}", Types.DATE)); //7     
+        CALL_PARAMS.add(new CallParam(DESCR, "x_description => {0}", Types.VARCHAR)); //8     
+        CALL_PARAMS.add(new CallParam(PWD_DATE, "x_password_date => {0}", Types.DATE)); //9     
+        CALL_PARAMS.add(new CallParam(PWD_ACCESSES_LEFT, "x_password_accesses_left => {0}", Types.NUMERIC)); //10     
+        CALL_PARAMS.add(new CallParam(PWD_LIFE_ACCESSES, "x_password_lifespan_accesses => {0}", Types.NUMERIC)); //11    
+        CALL_PARAMS.add(new CallParam(PWD_LIFE_DAYS, "x_password_lifespan_days => {0}", Types.NUMERIC)); //12     
+        CALL_PARAMS.add(new CallParam(EMP_ID, "x_employee_id => {0}", Types.NUMERIC)); //13     
+        CALL_PARAMS.add(new CallParam(EMAIL, "x_email_address => {0}", Types.VARCHAR)); //14     
+        CALL_PARAMS.add(new CallParam(FAX, "x_fax => {0}", Types.VARCHAR)); //15     
+        CALL_PARAMS.add(new CallParam(CUST_ID, "x_customer_id => {0}", Types.NUMERIC)); //16     
+        CALL_PARAMS.add(new CallParam(SUPP_ID, "x_supplier_id => {0}", Types.NUMERIC)); //17          
     }
     
     /**
@@ -172,8 +171,15 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
     /**
      * Set of the attributes returned by default
      */
-    private Set<String> attributesByDefault = null; 
+    private Set<String> attributesByDefault = null;
     
+    
+    /**
+     * This is create attributes normalizer
+     */
+    boolean createNormalizer = true;
+
+
     /**
      * The account
      */
@@ -225,21 +231,46 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         
         if ( !userValues.isEmpty() ) {
             CallableStatement cs = null;
-            final String sql = getUserCallSQL(userValues, true, co.app());
-            final List<SQLParam> userSQLParams = getUserSQLParams(userValues);
+            CallableStatement csAll = null;
+            CallableStatement csUpdate = null;
+            
+            String sql = null;
+            List<SQLParam> userSQLParams = null;
+            boolean isUpdateNeeded = false;
+
             final String msg = "Create user account {0} : {1}";
             final String user_name = getStringParamValue(userValues, USER_NAME);
             log.ok(msg, user_name, sql);
             try {
                 // Create the user
-                cs = co.getConn().prepareCall(sql, userSQLParams);
-                cs.execute();                              
+                if (isCreateNormalizer()) {
+                    sql = getUserCallSQL(userValues, true, co.app());
+                    userSQLParams = getUserSQLParams(userValues);
+                    cs = co.getConn().prepareCall(sql, userSQLParams);
+                    cs.execute();
+                } else {
+                    sql = getAllSQL(userValues, true, co.app());
+                    userSQLParams = getAllSQLParams(userValues);                    
+                    //create all
+                    csAll = co.getConn().prepareCall(sql, userSQLParams);
+                    csAll.execute();
+
+                    isUpdateNeeded = isUpdateNeeded(userValues);
+                    if (isUpdateNeeded) {
+                        sql = getUserUpdateNullsSQL(userValues, co.app());
+                        userSQLParams = getUserUpdateNullsParams(userValues);
+                        csUpdate = co.getConn().prepareCall(sql, userSQLParams);
+                        csUpdate.execute();
+                    }
+                }
             } catch (SQLException e) {
                 log.error(e, user_name, sql);
                 SQLUtil.rollbackQuietly(co.getConn());
                 throw new AlreadyExistsException(e);
             } finally {
                 SQLUtil.closeQuietly(cs);
+                SQLUtil.closeQuietly(csAll);
+                SQLUtil.closeQuietly(csUpdate);
             }
         }
                 
@@ -471,7 +502,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             ocib.addAttributeInfo(AttributeInfoBuilder.build(SESS_NUM, String.class, EnumSet.of(Flags.NOT_UPDATEABLE,
                     Flags.NOT_CREATABLE)));
             // name='start_date' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(START_DATE, String.class));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(START_DATE, String.class, EnumSet.of(Flags.REQUIRED)));
             // name='end_date' type='string' required='false'
             ocib.addAttributeInfo(AttributeInfoBuilder.build(END_DATE, String.class));
             // name='last_logon_date' type='string' required='false'
@@ -877,8 +908,8 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         final String fn = (create) ? CREATE_FNC : UPDATE_FNC;
         StringBuilder body = new StringBuilder();
         boolean first = true;
-        for (Pair<String, String>  par : CALL_PARAMS) {
-            final String columnName = par.first;
+        for (CallParam par : CALL_PARAMS) {
+            final String columnName = par.name;
 
             if (!first)
                 body.append(", ");
@@ -902,10 +933,15 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
     List<SQLParam> getAllSQLParams(Map<String, SQLParam> userValues) {
         final List<SQLParam> ret = new ArrayList<SQLParam>();
 
-        for (Pair<String, String>  par : CALL_PARAMS) {
-            final String columnName = par.first;
+        for ( CallParam par : CALL_PARAMS ) {
+            final String columnName = par.name;
+            Integer sqlType = par.sqlType;
 
-            final SQLParam val = userValues.get(columnName);
+            SQLParam val = userValues.get(columnName);
+            //null default values
+            if( val == null || isDefault(val)) {                
+                val = new SQLParam(columnName, null, sqlType);
+            }
             ret.add(val);
         }
         return ret;
@@ -1244,8 +1280,11 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         }
         //Check required attributes
         Assertions.nullCheck(userValues.get(USER_NAME), Name.NAME);
-        Assertions.nullCheck(userValues.get(UNENCRYPT_PWD), OperationalAttributes.PASSWORD_NAME);
         Assertions.nullCheck(userValues.get(OWNER), OWNER);
+        if (create) {
+            Assertions.nullCheck(userValues.get(UNENCRYPT_PWD), OperationalAttributes.PASSWORD_NAME);
+            Assertions.nullCheck(userValues.get(START_DATE), START_DATE);
+        }
         log.ok("Account ParamsMap created");
         return userValues;
     }
@@ -1271,9 +1310,9 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         log.info("getUserCallSQL: {0}", fn);
         StringBuilder body = new StringBuilder();
         boolean first = true;
-        for (Pair<String, String>  par : CALL_PARAMS) {
-            final String columnName = par.first;
-            final String parameterExpress = par.second;
+        for ( CallParam par : CALL_PARAMS ) {
+            final String columnName = par.name;
+            final String parameterExpress = par.expression;
               
             SQLParam val = userValues.get(columnName);
             if (val == null) {
@@ -1306,8 +1345,8 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
     List<SQLParam> getUserSQLParams(Map<String, SQLParam> userValues) {
         final List<SQLParam> ret = new ArrayList<SQLParam>();
 
-        for (Pair<String, String>  par : CALL_PARAMS) {
-            final String columnName = par.first;
+        for (CallParam par : CALL_PARAMS) {
+            final String columnName = par.name;
 
             final SQLParam val = userValues.get(columnName);
             if (val == null) {
@@ -1348,9 +1387,9 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      */
     String getUserUpdateNullsSQL(Map<String, SQLParam> userValues, String schemaId) {
         StringBuilder body = new StringBuilder("x_user_name => ?, x_owner => upper(?)");
-        for (Pair<String, String>  par : CALL_PARAMS) {
-            final String columnName = par.first;
-            final String parameterExpress = par.second;
+        for (CallParam par : CALL_PARAMS) {
+            final String columnName = par.name;
+            final String parameterExpress = par.expression;
             SQLParam val = userValues.get(columnName);
             
             if (val == null) {
@@ -1395,5 +1434,47 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         }
         return false;
     }
+
+    
+    /**
+     * Accessor for the createNormalizer property
+     * @return the createNormalizer
+     */
+    public boolean isCreateNormalizer() {
+        return createNormalizer;
+    }
+
+    /**
+     * Setter for the createNormalizer property.
+     * @param createNormalizer the createNormalizer to set
+     */
+    public void setCreateNormalizer(boolean createNormalizer) {
+        this.createNormalizer = createNormalizer;
+    }    
   
+    /**
+     * Call param class
+     * @author Petr Jung
+     * @version $Revision 1.0$
+     * @since 1.0
+     */
+    public static final class CallParam {
+        /** name */
+        final public String name;
+        /** expression */
+        final public String expression;
+        /** sqlType */
+        final public int sqlType; 
+        /**
+         * Construcrot of final class 
+         * @param name
+         * @param expression
+         * @param sqlType
+         */
+        public CallParam(String name, String expression, int sqlType) {
+            this.name = name;
+            this.expression = expression;
+            this.sqlType = sqlType;
+        }
+    }
 }
