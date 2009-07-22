@@ -62,11 +62,11 @@ configuration{
 }
 
 account{
-    required.__NAME__="TST-REG-USER-" + currentTimeMillis()
+    required.__NAME__="TST-USER"
     required.__PASSWORD__=new GuardedString("passwd".toCharArray());
     required.owner="CUST"
     
-    all.__NAME__="TST-USER-" + currentTimeMillis()
+    all.__NAME__="TST-USER"
     all.owner="CUST"
     all.session_number=0
 
@@ -97,7 +97,7 @@ account{
     all.securingAttrs="TO_PERSON_ID||Self-Service Web Applications||114"
         
 
-    modify.__NAME__="TST-MOD-USER-" + currentTimeMillis()
+    modify.__NAME__="TST-USER"
     modify.__PASSWORD__=new GuardedString("modpasswd".toCharArray());
     modify.email_address="person1@somewhere.com"
     modify.fax="666-666-6666"
