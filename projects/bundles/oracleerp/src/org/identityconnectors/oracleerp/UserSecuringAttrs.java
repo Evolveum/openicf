@@ -793,10 +793,10 @@ public class UserSecuringAttrs  {
      */
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder where, ResultsHandler handler,
             OperationOptions options) {
-        if (oclass.equals(OracleERPUtil.SEC_GROUPS)) {
+        if (oclass.equals(OracleERPUtil.SEC_GROUPS_OC)) {
             getSecGroups(where, handler, options);
             return;
-        } else if (oclass.equals(OracleERPUtil.SEC_ATTRS)) { //OK
+        } else if (oclass.equals(OracleERPUtil.SEC_ATTRS_OC)) { //OK
             getSecuringAttrsResult(where, handler,options);
             return;
         } 

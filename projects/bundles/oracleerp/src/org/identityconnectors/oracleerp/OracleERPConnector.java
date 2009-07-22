@@ -409,6 +409,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         schemaBld.removeSupportedObjectClass(AuthenticateOp.class, respNamesOc);
         schemaBld.removeSupportedObjectClass(DeleteOp.class, respNamesOc);
         schemaBld.removeSupportedObjectClass(CreateOp.class, respNamesOc);
+        schemaBld.removeSupportedObjectClass(UpdateOp.class, respNamesOc);
         schemaBld.removeSupportedObjectClass(SchemaOp.class, respNamesOc);
         schemaBld.removeSupportedObjectClass(ScriptOnConnectorOp.class, respNamesOc);
 
