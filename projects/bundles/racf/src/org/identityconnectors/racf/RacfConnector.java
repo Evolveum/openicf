@@ -26,6 +26,7 @@ import static org.identityconnectors.racf.RacfConstants.*;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -86,7 +87,10 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
                              "org.identityconnectors.rw3270.freehost3270.Messages"})
 public class RacfConnector implements Connector, CreateOp, PoolableConnector,
 DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
-
+    
+    static final List<String>   POSSIBLE_ATTRIBUTES         = Arrays.asList(
+            "ADSP", "AUDITOR", "SPECIAL", "GRPACC", "OIDCARD", "OPERATIONS");
+    
     public static final String         SEPARATOR           ="*";
     public static final String         SEPARATOR_REGEX     ="\\*";
     public static final String         RACF_GROUP_NAME     ="RacfGroup";

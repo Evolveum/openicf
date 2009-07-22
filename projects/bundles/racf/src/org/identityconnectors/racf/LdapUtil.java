@@ -67,16 +67,7 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.racf.CommandLineUtil.LocalHandler;
 
 class LdapUtil {
-    
-    private static final String[] ATTRIBUTE_VALUES_ARRAY = {
-        "ADSP", "SPECIAL", "OPERATIONS", "GRPACC", "AUDITOR", "OIDCARD"
-    };
-    private static final Set<String> ATTRIBUTE_VALUES = CollectionUtil.newCaseInsensitiveSet();
-    static {
-        for (String value : ATTRIBUTE_VALUES_ARRAY)
-            ATTRIBUTE_VALUES.add(value);
-    }
-    
+
     private final Pattern               _connectionPattern  = Pattern.compile("racfuserid=(.*)\\+racfgroupid=([^,]*),.*");
 
     private RacfConnector               _connector;
@@ -753,7 +744,7 @@ class LdapUtil {
                         throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, null));
                     } else {
                         String string = value.toString();
-                        if (!ATTRIBUTE_VALUES.contains(string))
+                        if (!RacfConnector.POSSIBLE_ATTRIBUTES.contains(string))
                             throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, string));
                         else
                             racfAttributes.add(string);
@@ -821,7 +812,7 @@ class LdapUtil {
             //      are not currently supporting
             List<Object> finalValue = new LinkedList<Object>();
             if (negateAttributes) {
-                for (String attrValue : ATTRIBUTE_VALUES)
+                for (String attrValue : RacfConnector.POSSIBLE_ATTRIBUTES)
                     if (!racfAttributes.contains(attrValue))
                         finalValue.add("NO"+attrValue);
             }

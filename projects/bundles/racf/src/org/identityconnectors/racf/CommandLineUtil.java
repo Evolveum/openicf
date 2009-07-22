@@ -85,8 +85,6 @@ class CommandLineUtil {
     private Map<String, MapTransform>   _segmentParsers;
     
     private RacfConnector               _connector;
-    private static final List<String>   POSSIBLE_ATTRIBUTES         = Arrays.asList(
-                    "ADSP", "AUDITOR", "SPECIAL", "GRPACC", "OIDCARD", "OPERATIONS");
     
     private boolean _debug = false;
 
@@ -299,7 +297,7 @@ class CommandLineUtil {
         // The various ATTRIBUTES are specified individually on the command line,
         // not as part of a larger value
         // TODO: docs list "UAUDIT", but our RACF doesn't support this 
-        List<String> possibleAttributes = new LinkedList<String>(POSSIBLE_ATTRIBUTES);
+        List<String> possibleAttributes = new LinkedList<String>(RacfConnector.POSSIBLE_ATTRIBUTES);
         if (attributesAttribute!=null) {
             for (Object attributeValue : attributesAttribute.getValue()) {
                 commandAttributes.append(" "+attributeValue);
