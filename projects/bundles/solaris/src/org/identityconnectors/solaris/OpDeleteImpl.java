@@ -43,7 +43,7 @@ public class OpDeleteImpl extends AbstractOp {
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
         SolarisUtil.controlObjectClassValidity(objClass, acceptOC, getClass());
         
-        if (objClass.equals(ObjectClass.GROUP_NAME)) {
+        if (objClass.is(ObjectClass.GROUP_NAME)) {
             throw new UnsupportedOperationException();
         }
         

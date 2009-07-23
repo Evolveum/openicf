@@ -46,10 +46,10 @@ public enum UpdateSwitches {
     //TODO
     UNKNOWN(null);
 
-    private static String commandLineSwitch;
+    private String commandLineSwitch;
 
     private UpdateSwitches(String commandLineSwitch) {
-        commandLineSwitch = String.format("-%s", commandLineSwitch);
+        this.commandLineSwitch = String.format("-%s", commandLineSwitch);
     }
 
     /** get the command line switch */
