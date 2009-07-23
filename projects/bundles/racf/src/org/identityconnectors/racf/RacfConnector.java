@@ -1220,6 +1220,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
     }
     
     public void test() {
+        _configuration.validate();
         // This actually needs to do nothing, because, as a poolable connector,
         // we only get here via
         //  - creating a new connector, and running init
@@ -1228,22 +1229,3 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
     }
     
 }
-/*
-private void processPasswordInterval(Map map) {
-String interval = (String)map.get(PASSWORD_INTERVAL);
-if ((interval != null) && interval.trim().equals("N/A")) {
-  map.put(PASSWORD_INTERVAL, "NOINTERVAL");
-}
-}
-
-private void addExpiredAttr(Map map) {
-String passdate = (String)map.get("PASSDATE");
-if ((passdate != null) && passdate.equals("00.000")) {
-  map.put(EXPIRED, Boolean.valueOf(true));
-} else {
-  map.put(EXPIRED, Boolean.valueOf(false));
-}
-}
-
-     
-*/
