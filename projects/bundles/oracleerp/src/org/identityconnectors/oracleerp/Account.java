@@ -382,14 +382,14 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                 buildPersonDetails(amb, columnValues, perPeopleColumnNames);
                 
                 // get users responsibilities only if if resp || direct_resp in account attribute
-                co.getRespNames().buildResponsibilitiesToAccountObject(amb, userName, attributesToGet);
+                co.getRespNames().buildResponsibilitiesToAccountObject(amb, userName);
                 // get user's securing attributes
                 co.getSecAttrs().buildSecuringAttributesToAccountObject(amb, userName);
 
                 //Auditor data for get user only
                 log.info("get auditor data: {0}", getAuditorData);
                 if (getAuditorData) {
-                    co.getRespNames().buildAuditorDataObject(amb, userName, attributesToGet);
+                    co.getRespNames().buildAuditorDataObject(amb, userName);
                 }
                 
                 // create the connector object..

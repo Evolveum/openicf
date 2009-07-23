@@ -96,9 +96,11 @@ public class UserSecuringAttrs  {
             return;
         }
 
-        List<String> secAttrs = getSecuringAttrs(userName);
-        if (secAttrs != null) {
-            amb.addAttribute(SEC_ATTRS, secAttrs);
+        if ( amb.isRequired(SEC_ATTRS) ) {
+            List<String> secAttrs = getSecuringAttrs(userName);
+            if (secAttrs != null) {
+                amb.addAttribute(SEC_ATTRS, secAttrs);
+            }
         }
     }
     
@@ -688,8 +690,10 @@ public class UserSecuringAttrs  {
         //default value
         String pattern = "%";
         if (options != null && options.getOptions() != null) {
-            pattern = (String) options.getOptions().get(PATTERN);
+            Object _patt = options.getOptions().get(PATTERN);
+            pattern = _patt == null ? pattern : (String) _patt;
         }
+        
         b.append("SELECT distinct akattrvl.NAME, fndappvl.APPLICATION_NAME ");
 
         b.append("FROM " + co.app() + "AK_ATTRIBUTES_VL akattrvl, " + co.app()
@@ -719,7 +723,7 @@ public class UserSecuringAttrs  {
                 bld.setObjectClass(SEC_ATTRS_OC);
 
                 bld.setName(sb.toString());
-                bld.addAttribute(NAME, sb.toString());
+                bld.setUid(sb.toString());
                 
                 if (!handler.handle(bld.build())) {
                     break;
@@ -766,7 +770,7 @@ public class UserSecuringAttrs  {
 
                 String s = getColumn(res, 1);
                 bld.setName(s);
-                bld.addAttribute(NAME, s);
+                bld.setUid(s);
                 
                 if (!handler.handle(bld.build())) {
                     break;

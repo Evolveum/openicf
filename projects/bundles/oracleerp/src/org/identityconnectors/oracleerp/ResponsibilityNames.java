@@ -151,12 +151,10 @@ public class ResponsibilityNames {
     /**
      * @param amb builder
      * @param userName of the user
-     * @param attrToGet
      */
-    public void buildResponsibilitiesToAccountObject(AttributeMergeBuilder amb, final String userName,
-            Set<String> attrToGet) {
+    public void buildResponsibilitiesToAccountObject(AttributeMergeBuilder amb, final String userName) {
          
-        if (attrToGet.contains(RESPS) && !isNewResponsibilityViews()) {
+        if (!isNewResponsibilityViews() && amb.isRequired(RESPS)) {
             //add responsibilities
             final List<String> responsibilities = getResponsibilities(userName, RESPS_TABLE, false);
             amb.addAttribute(RESPS, responsibilities);
@@ -164,7 +162,7 @@ public class ResponsibilityNames {
             //add resps list
             final List<String> resps = getResps(responsibilities, RESP_FMT_KEYS);
             amb.addAttribute(RESPKEYS, resps);
-        } else if (attrToGet.contains(DIRECT_RESPS)) {
+        } else if (amb.isRequired(DIRECT_RESPS)) {
             final List<String> responsibilities = getResponsibilities(userName, RESPS_DIRECT_VIEW, false);
             amb.addAttribute(DIRECT_RESPS, responsibilities);
 
@@ -173,7 +171,7 @@ public class ResponsibilityNames {
             amb.addAttribute(RESPKEYS, resps);
         }
 
-        if (attrToGet.contains(INDIRECT_RESPS)) {
+        if (amb.isRequired(INDIRECT_RESPS)) {
             //add responsibilities
             final List<String> responsibilities = getResponsibilities(userName, RESPS_INDIRECT_VIEW, false);
             amb.addAttribute(INDIRECT_RESPS, responsibilities);
@@ -1028,7 +1026,6 @@ public class ResponsibilityNames {
                 String respName = getColumn(res, 1);
                 amb.addAttribute(Name.NAME, respName);
                 amb.addAttribute(Uid.NAME, respName);
-                amb.addAttribute(NAME, respName);
                 
                 if(where.getParams().size() == 1) {
                     updateAuditorData(amb, respName);
@@ -1114,7 +1111,7 @@ public class ResponsibilityNames {
             ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
             bld.setObjectClass(oclass);
             bld.setName(respName);
-            bld.addAttribute(NAME, respName);
+            bld.setUid(respName);
             if (!handler.handle(bld.build())) {
                 break;
             }
@@ -1171,7 +1168,7 @@ public class ResponsibilityNames {
 
                 String s = getColumn(res, 1);
                 bld.setName(s);
-                bld.addAttribute(NAME, s);
+                bld.setUid(s);
                 
                 if (!handler.handle(bld.build())) {
                     break;
@@ -1205,8 +1202,6 @@ public class ResponsibilityNames {
             ocib.setType(RESP_NAMES_OC.getObjectClassValue());
 
             ocib.addAttributeInfo(Name.INFO);
-            // The Name is supported attribute
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(NAME, String.class, STD_NC));
             // name='userMenuNames' type='string' audit='false'
             ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_MENU_NAMES, String.class, STD_NC));
             // name='menuIds' type='string' audit='false'    
@@ -1866,9 +1861,8 @@ public class ResponsibilityNames {
     /**
      * @param amb builder
      * @param userName id of the responsibility
-     * @param attributesToGet for a attributesToGet 
      */
-    public void buildAuditorDataObject(AttributeMergeBuilder amb, String userName, Set<String> attributesToGet) {
+    public void buildAuditorDataObject(AttributeMergeBuilder amb, String userName) {
         log.info("buildAuditorDataObject for uid: {0}", userName);
         List<String> activeRespList = getResponsibilities(userName, getRespLocation(), false);
         for (String activeRespName : activeRespList) {            
