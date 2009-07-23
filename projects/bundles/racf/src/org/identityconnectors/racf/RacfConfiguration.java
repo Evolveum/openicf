@@ -169,8 +169,8 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
         // It's OK for all LDAP or all CommandLine connection info to be missing
         // but not both
         //
-        boolean noLdap = (StringUtil.isBlank(_suffix) && _hostLdapPortNumber==null && isBlank(_ldapPassword) && StringUtil.isBlank(_ldapUserName));
-        boolean noCommandLine = StringUtil.isBlank(_userName) && isBlank(_password);
+        boolean noLdap = (StringUtil.isBlank(_suffix) || _hostLdapPortNumber==null || isBlank(_ldapPassword) || StringUtil.isBlank(_ldapUserName));
+        boolean noCommandLine = StringUtil.isBlank(_userName) || isBlank(_password);
         
         if (noLdap && noCommandLine)
             throw new IllegalArgumentException(getMessage(RacfMessages.BAD_CONNECTION_INFO));
