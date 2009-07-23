@@ -79,7 +79,8 @@ class LdapUtil {
     }
 
     public Uid createViaLdap(ObjectClass objectClass, Set<Attribute> attrs, OperationOptions options) {
-        Map<String, Attribute> attributes = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
+        Map<String, Attribute> attributes = CollectionUtil.newCaseInsensitiveMap();
+        attributes.putAll(AttributeUtil.toMap(attrs));
         if (objectClass.is(RacfConnector.RACF_CONNECTION_NAME)) {
             try {
                 Name name = AttributeUtil.getNameFromAttributes(attrs);
@@ -101,6 +102,7 @@ class LdapUtil {
                 _connector.throwErrorIfNullOrEmpty(expired);
                 _connector.throwErrorIfNullOrEmpty(password);
                 _connector.checkConnectionConsistency(groups, owners);
+                
                 if (expired!=null && password==null) 
                     throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
                 if (userExists(name.getNameValue()))
@@ -598,7 +600,8 @@ class LdapUtil {
     }
 
     public Uid updateViaLdap(ObjectClass objectClass, Set<Attribute> attrs, OperationOptions options) {
-        Map<String, Attribute> attributes = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
+        Map<String, Attribute> attributes = CollectionUtil.newCaseInsensitiveMap();
+        attributes.putAll(AttributeUtil.toMap(attrs));
         Uid uid = AttributeUtil.getUidAttribute(attrs);
         String query = "(racfid="+RacfConnector.extractRacfIdFromLdapId(uid.getUidValue())+")";
         
@@ -649,7 +652,10 @@ class LdapUtil {
                                 createLdapAttributesFromConnectorAttributes(objectClass, disableAttributes));
                     }
                 } catch (NamingException e) {
-                    throw new ConnectorException(e);
+                    if (e.toString().contains("INVALID USER"))
+                        throw new AlreadyExistsException();
+                    else
+                        throw new ConnectorException(e);
                 }
             } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
                 try {
@@ -661,7 +667,10 @@ class LdapUtil {
                     if (members!=null)
                         _connector.setGroupMembershipsForGroups(uid.getUidValue(), members, groupOwners);
                 } catch (NamingException e) {
-                    throw new ConnectorException(e);
+                    if (e.toString().contains("INVALID GROUP"))
+                        throw new AlreadyExistsException();
+                    else
+                        throw new ConnectorException(e);
                 }
             } else {
                 throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNSUPPORTED_OBJECT_CLASS, objectClass));
@@ -730,6 +739,8 @@ class LdapUtil {
         
         for (Attribute attribute : attributes.values()) {
             String attributeName = attribute.getName().toLowerCase();
+            if (attribute.getValue()==null)
+                throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, null));
             if (attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
                 // Ignore Name, Uid
                 //
