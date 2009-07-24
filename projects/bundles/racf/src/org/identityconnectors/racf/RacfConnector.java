@@ -1118,19 +1118,20 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
     public Attribute normalizeAttribute(ObjectClass oclass, Attribute attribute) {
         List<Object> values = attribute.getValue();
         List<Object> newValues = new LinkedList<Object>();
+        String name = attribute.getName().toUpperCase();
         if (values==null)
-            return AttributeBuilder.build(attribute.getName().toUpperCase());
+            return AttributeBuilder.build(name);
         for (Object value : values)
             if (value instanceof String)
                 newValues.add(((String)value).toUpperCase());
             else
                 newValues.add(value);
         if (attribute instanceof Name)
-            return new Name(((String)newValues.get(0)).toUpperCase());
+            return new Name(((String)newValues.get(0)));
         else if (attribute instanceof Uid)
-            return new Uid(((String)newValues.get(0)).toUpperCase());
+            return new Uid(((String)newValues.get(0)));
         else
-            return AttributeBuilder.build(attribute.getName().toUpperCase(), newValues);
+            return AttributeBuilder.build(name, newValues);
     }
 
     Long convertFromResumeRevokeFormat(Object value) {

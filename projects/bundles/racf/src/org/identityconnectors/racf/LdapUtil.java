@@ -451,47 +451,26 @@ class LdapUtil {
             }
             // Groups must be upcased
             //
-            if (attributesRead.containsKey(ATTR_LDAP_GROUPS)) {
-                Object value = attributesRead.get(ATTR_LDAP_GROUPS);
-                if (value instanceof List) {
-                    List list = (List)value;
-                    for (int i=0; i<list.size(); i++)
-                        list.set(i, list.get(i).toString().toUpperCase());
-                    attributesRead.put(ATTR_LDAP_GROUPS, list);
-                }
-            }
+            upcaseAttribute(attributesRead, ATTR_LDAP_GROUPS);
+
             // Groups must be filled in if null
             //
             if (!attributesRead.containsKey(ATTR_LDAP_GROUPS)) {
                 attributesRead.put(ATTR_LDAP_GROUPS, new LinkedList<Object>());
             }
+            
             // Default Group must be upcased
             //
-            if (attributesRead.containsKey(ATTR_LDAP_DEFAULT_GROUP)) {
-                Object value = attributesRead.get(ATTR_LDAP_DEFAULT_GROUP);
-                if (value!=null)
-                    value = value.toString().toUpperCase();
-                attributesRead.put(ATTR_LDAP_DEFAULT_GROUP, value);
-            }
+            upcaseAttribute(attributesRead, ATTR_LDAP_DEFAULT_GROUP);
+
             // Owner Group must be upcased
             //
-            if (attributesRead.containsKey(ATTR_LDAP_OWNER)) {
-                Object value = attributesRead.get(ATTR_LDAP_OWNER);
-                if (value!=null)
-                    value = value.toString().toUpperCase();
-                attributesRead.put(ATTR_LDAP_OWNER, value);
-            }
+            upcaseAttribute(attributesRead, ATTR_LDAP_OWNER);
+
             // Group Owners must be upcased
             //
-            if (attributesRead.containsKey(ATTR_LDAP_CONNECT_OWNER)) {
-                Object value = attributesRead.get(ATTR_LDAP_CONNECT_OWNER);
-                if (value instanceof List) {
-                    List list = (List)value;
-                    for (int i=0; i<list.size(); i++)
-                        list.set(i, list.get(i).toString().toUpperCase());
-                    attributesRead.put(ATTR_LDAP_CONNECT_OWNER, list);
-                }
-            }
+            upcaseAttribute(attributesRead, ATTR_LDAP_CONNECT_OWNER);
+            
             // Group Owners must be filled in if null
             //
             if (!attributesRead.containsKey(ATTR_LDAP_CONNECT_OWNER)) {
@@ -507,14 +486,14 @@ class LdapUtil {
                 if ("NONE".equals(value))
                     attributesRead.put(ATTR_LDAP_SUP_GROUP, null);
             }
+            // Superior Group must be upcased
+            //
+            upcaseAttribute(attributesRead, ATTR_LDAP_SUP_GROUP);
+            
             // Owner Group must be upcased
             //
-            if (attributesRead.containsKey(ATTR_LDAP_OWNER)) {
-                Object value = attributesRead.get(ATTR_LDAP_OWNER);
-                if (value!=null)
-                    value = value.toString().toUpperCase();
-                attributesRead.put(ATTR_LDAP_OWNER, value);
-            }
+            upcaseAttribute(attributesRead, ATTR_LDAP_OWNER);
+
             // Groups must be filled in if null
             //
             if (!attributesRead.containsKey(ATTR_LDAP_SUB_GROUPS)) {
@@ -522,20 +501,14 @@ class LdapUtil {
             }
             // Members must be upcased
             //
-            if (attributesRead.containsKey(ATTR_LDAP_GROUP_USERIDS)) {
-                Object value = attributesRead.get(ATTR_LDAP_GROUP_USERIDS);
-                if (value instanceof List) {
-                    List list = (List)value;
-                    for (int i=0; i<list.size(); i++)
-                        list.set(i, list.get(i).toString().toUpperCase());
-                }
-                attributesRead.put(ATTR_LDAP_GROUP_USERIDS, new LinkedList<Object>());
-            }
+            upcaseAttribute(attributesRead, ATTR_LDAP_GROUP_USERIDS);
+            
             // Members must be filled in if null
             //
             if (!attributesRead.containsKey(ATTR_LDAP_GROUP_USERIDS)) {
                 attributesRead.put(ATTR_LDAP_GROUP_USERIDS, new LinkedList<Object>());
             }
+            
             // Group Owners must be filled in if null
             //
             if (!attributesRead.containsKey(ATTR_LDAP_CONNECT_OWNER)) {
@@ -543,6 +516,19 @@ class LdapUtil {
             }
         }
         return attributesRead;
+    }
+    
+    private void upcaseAttribute(Map<String, Object> attributesRead, String attributename) {
+        if (attributesRead.containsKey(attributename)) {
+            Object value = attributesRead.get(attributename);
+            if (value instanceof List) {
+                List list = (List)value;
+                for (int i=0; i<list.size(); i++)
+                    list.set(i, list.get(i).toString().toUpperCase());
+            } else if (value!=null)
+                value = value.toString().toUpperCase();
+            attributesRead.put(attributename, value);
+        }
     }
     
     private String getConnectOwner(String query) throws NamingException {
