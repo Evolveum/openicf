@@ -26,6 +26,8 @@ import java.util.Map;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.Uid;
 
 /**
  * List of allowed GROUP attribute names.
@@ -34,7 +36,7 @@ import org.identityconnectors.framework.common.objects.Attribute;
 public enum GroupAttributes {
  // TODO add command line switches that are used for altering these
  // attributes
-    GROUPNAME("groupName", UpdateSwitches.UNKNOWN),
+    GROUPNAME(Name.NAME/* TODO decide of we should preserve groupName */, UpdateSwitches.UNKNOWN), 
     GID("gid", UpdateSwitches.UNKNOWN),
     USERS("users", UpdateSwitches.UNKNOWN);
 

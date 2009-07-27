@@ -26,6 +26,7 @@ import java.util.Map;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.Uid;
 
 
@@ -41,7 +42,8 @@ public enum AccountAttributes {
     /** primary group */
     GROUP("group", UpdateSwitches.GROUP),
     SECONDARY_GROUP("secondary_group", UpdateSwitches.SECONDARY_GROUP),
-    UID(Uid.NAME, UpdateSwitches.UID),
+    UID("uid", UpdateSwitches.UID),
+    NAME(Name.NAME, UpdateSwitches.UNKNOWN),
     EXPIRE("expire", UpdateSwitches.EXPIRE),
     INACTIVE("inactive", UpdateSwitches.INACTIVE),
     COMMENT("comment", UpdateSwitches.COMMENT),

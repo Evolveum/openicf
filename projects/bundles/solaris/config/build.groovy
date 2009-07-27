@@ -32,9 +32,9 @@ testsuite {
   Schema {
     oclasses = ['__ACCOUNT__', '__GROUP__']
     attributes {
-      __GROUP__.oclasses = ['__NAME__' /* TODO, not yet decided wether to use the adapter's 'groupName' or rather the Framework's constant. */, '__UID__', 'gid', 'users']
+      __GROUP__.oclasses = ['__NAME__' /* TODO, not yet decided wether to use the adapter's 'groupName' or rather the Framework's constant. */, 'gid', 'users']
       __ACCOUNT__.oclasses = ['__NAME__', 'dir', 'shell', 'group', 'secondary_group',
-        '__UID__', 'expire', 'inactive', 'comment', 'time_last_login',
+        'uid', 'expire', 'inactive', 'comment', 'time_last_login',
         'authorization', 'profile', 'role', 'max', 'min', 'warn', 'lock', 
         '__PASSWORD__' /* TODO extra attribute that wasn't in the schema of Adatper -- is it OK? */, 
          'force_change'
@@ -70,12 +70,22 @@ testsuite {
       multiValue: false,
       returnedByDefault: false
     ]
+
+    attrNotRequiredNotReturnedTemplate = [
+      type: String.class,
+      readable: true,
+      createable: true,
+      updateable: true,
+      required: false,
+      multiValue: false,
+      returnedByDefault: false
+    ]
+
   
 
     gid.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     __NAME__.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     users.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
-    __UID__.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
 
     inactive.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     min.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
@@ -87,7 +97,7 @@ testsuite {
     warn.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     dir.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     comment.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
-    __UID__.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
+    uid.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrNotRequiredNotReturnedTemplate")
     lock.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     time_last_login.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     authorization.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
@@ -97,7 +107,18 @@ testsuite {
     force_change.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     shell.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
 
-    //TODO operations = []...
+    operations = [
+      AuthenticationApiOp: ['__ACCOUNT__'],
+      GetApiOp: ['__ACCOUNT__', '__GROUP__'],
+      SchemaApiOp: ['__ACCOUNT__', '__GROUP__'],
+      ValidateApiOp: ['__ACCOUNT__', '__GROUP__'],
+      CreateApiOp: ['__ACCOUNT__', '__GROUP__'],
+      SearchApiOp: ['__ACCOUNT__', '__GROUP__'],
+      DeleteApiOp: ['__ACCOUNT__', '__GROUP__'],
+      ScriptOnConnectorApiOp: ['__ACCOUNT__', '__GROUP__'],
+      TestApiOp: ['__ACCOUNT__', '__GROUP__'],
+      UpdateApiOp: ['__ACCOUNT__', '__GROUP__']
+    ]//operations
   } //Schema
 
 }// testsuite

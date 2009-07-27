@@ -22,6 +22,7 @@
  */
 package org.identityconnectors.solaris;
 
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -31,14 +32,15 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.ConnectorClass;
@@ -159,7 +161,9 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         
         final SchemaBuilder schemaBuilder = new SchemaBuilder(getClass());
         
-        // GROUP
+        /* 
+         * GROUP
+         */
         Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
         //attributes.add(Name.INFO);
         for (GroupAttributes attr : GroupAttributes.values()) {
@@ -168,12 +172,29 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         
         schemaBuilder.defineObjectClass(ObjectClass.GROUP_NAME, attributes);
         
-        // ACCOUNT
+        //GROUP supports no authentication:
+        ObjectClassInfoBuilder ociB = new ObjectClassInfoBuilder();
+        ociB.setType(ObjectClass.GROUP_NAME);
+        ociB.addAllAttributeInfo(attributes);
+        schemaBuilder.removeSupportedObjectClass(AuthenticateOp.class, ociB.build());
+        
+        /*
+         * ACCOUNT
+         */
         attributes = new HashSet<AttributeInfo>();
-        attributes.add(Name.INFO);
         attributes.add(OperationalAttributeInfos.PASSWORD);
         for (AccountAttributes attr : AccountAttributes.values()) {
-            attributes.add(AttributeInfoBuilder.build(attr.getName()));
+            AttributeInfo newAttr = null;
+            
+            if (!attr.equals(AccountAttributes.UID)) {
+                newAttr = AttributeInfoBuilder.build(attr.getName());
+            } else {
+                // 'uid' is not returned by default, as __NAME__ already contains this information. 
+                // This attribute is there just for sake of backward compatibility.
+                newAttr = AttributeInfoBuilder.build(attr.getName(), String.class, EnumSet.of(Flags.NOT_RETURNED_BY_DEFAULT));
+            }
+            
+            attributes.add(newAttr);
         }
         for (AccountAttributesForPassword attr : AccountAttributesForPassword.values()) {
             attributes.add(AttributeInfoBuilder.build(attr.getName()));
