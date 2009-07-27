@@ -11,11 +11,11 @@ import org.identityconnectors.common.security.GuardedString;
 /* Connector configuration */    
 connector{
     driver="oracle.jdbc.driver.OracleDriver"    
-    hostName="idm149.central.sun.com"
-    port="1521"
+    hostName="__configureme__"
+    port="__configureme__"
     databaseName="PROD"
-    user="APPS"
-    password=new GuardedString("APPS".toCharArray());
+    user="__configureme__"
+    password=new GuardedString("__configureme__".toCharArray());
     accountsIncluded=false
     activeAccountsOnly=false
     auditResponsibility="test"
@@ -37,11 +37,11 @@ connector{
 /* account configurations */  
 configuration{
     tst.driver="oracle.jdbc.driver.OracleDriver"    
-    tst.url="java:oracle:thin:@idm149.central.sun.com:1521:PROD"
-    tst.user="APPS"
-    tst.password=new GuardedString("APPS".toCharArray());
+    tst.url="__configureme__"
+    tst.user="__configureme__"
+    tst.password=new GuardedString("__configureme__".toCharArray());
     tst.accountsIncluded=""
-    tst.activeAccountsOnly=false
+    tst.activeAccountsOnly=true
     tst.auditResponsibility=""
     tst.manageSecuringAttrs=false
     tst.noSchemaId=false
@@ -49,9 +49,9 @@ configuration{
     tst.userActions=""
     
     sysadm.driver="oracle.jdbc.driver.OracleDriver"    
-    sysadm.url="java:oracle:thin:@idm149.central.sun.com:1521:PROD"
-    sysadm.user="APPS"
-    sysadm.password=new GuardedString("APPS".toCharArray());
+    sysadm.url="__configureme__"
+    sysadm.user="__configureme__"
+    sysadm.password=new GuardedString("__configureme__".toCharArray());
     sysadm.accountsIncluded=""
     sysadm.activeAccountsOnly=false
     sysadm.auditResponsibility="System Administrator"
@@ -73,12 +73,12 @@ account{
 
     all.start_date=stringDate(-10*24*3600000)
     all.end_date=stringDate(+10*24*3600000)
-    all.last_logon_date=stringDate(-4*24*3600000)
+    all.last_logon_date=stringDate(0)
     all.description="Connector test user"
 
     all.__PASSWORD__=new GuardedString("passwd".toCharArray());
     all.__PASSWORD_EXPIRED__=false
-    all.password_date=stringDate(+10*24*3600000)
+    all.password_date=stringDate(0)
     
     all.password_accesses_left=56
     all.password_lifespan_accesses=5
@@ -98,16 +98,17 @@ account{
     all.securingAttrs="TO_PERSON_ID||Self-Service Web Applications||114"
         
 
-    modify.__NAME__="TST-USER"
+    modify.__NAME__="TST-USER-MOD"
     modify.__PASSWORD__=new GuardedString("modpasswd".toCharArray());
     modify.email_address="person1@somewhere.com"
     modify.fax="666-666-6666"
     modify.directResponsibilities=["Cash Forecasting||Cash Management||Standard||2004-04-12 00:00:00.0||null","Purchasing Receiver||Purchasing||Standard||2004-04-12 00:00:00.0||null"]
-    modify.password_lifespan_days=31
+    modify.password_accesses_left=58
+    modify.password_lifespan_accesses=6
+    modify.password_lifespan_days=31    
     modify.description="New Test Description"
     modify.owner="CUST"
-    modify.securingAttrs=["TO_PERSON_ID||Self-Service Web Applications||112","ICX_HR_PERSON_ID||Self-Service Web Applications||114"]    
- /*   modify.securingAttrs1="ICX_HR_PERSON_ID||Oracle Self-Service Web Applications||114"    */
+    modify.securingAttrs=["ICX_HR_PERSON_ID||Self-Service Web Applications||114", "TO_PERSON_ID||Self-Service Web Applications||112"]
  
     options.responsibility="Cash Forecasting"
     options.application="Cash Management"
@@ -115,12 +116,12 @@ account{
     options.activeRespsOnly=true;
     
     auditor.auditorResps="Cash Forecasting||Cash Management"
-    auditor.userMenuNames="CE_OTHER, Requests Menu - Other Responsibilities, CE_FORECAST, CE_FORECAST_SETUP, CE_DESCRIPTIVE_FLEXFIELDS"
-    auditor.menuIds="67617, 67850, 68361, 68364, 68781"
-    auditor.userFunctionNames="Concurrent Requests: View, Define External Forecast Sources, Define Templates, Descriptive Flexfield Segments, Descriptive Flexfield Values, Maintain Forecasts, Profile User Values, Request Sets (User Mode), Requests: Submit, View All Concurrent Requests, View Cash Forecasts"
-    auditor.formIds="54952, 54572, 20423, 10397, 54570, 20648, 51615, 51614, 51614, 54571"
-    auditor.formNames="CEFFCOPI, CEFFCDFN, FNDFFMDC, FNDFFMSV, CEFFCAST, FNDPOMSV, FNDRSSET, FNDRSRUN, FNDRSRUN, CEFQFCST"
-    auditor.userFormNames="Define External Forecast Sources, Define Templates, Define Descriptive Flexfield Segments, Define Segment Values, Maintain Forecasts, Update Personal Profile Values, Administer Report Sets, Run Reports, Run Reports, Inquire Forecasts"
+    auditor.userMenuNames=["CE_OTHER", "Requests Menu - Other Responsibilities", "CE_FORECAST", "CE_FORECAST_SETUP", "CE_DESCRIPTIVE_FLEXFIELDS"]
+    auditor.menuIds=["67617", "67850", "68361", "68364", "68781"]
+    auditor.userFunctionNames=["Concurrent Requests: View", "Define External Forecast Sources", "Define Templates", "Descriptive Flexfield Segments", "Descriptive Flexfield Values", "Maintain Forecasts", "Profile User Values", "Request Sets (User Mode)", "Requests: Submit", "View All Concurrent Requests", "View Cash Forecasts"]
+    auditor.formIds=["54952", "54572", "20423", "10397", "54570", "20648", "51615", "51614", "51614", "54571"]
+    auditor.formNames=["CEFFCOPI", "CEFFCDFN", "FNDFFMDC", "FNDFFMSV", "CEFFCAST", "FNDPOMSV", "FNDRSSET", "FNDRSRUN", "FNDRSRUN", "CEFQFCST"]
+    auditor.userFormNames=["Define External Forecast Sources", "Define Templates", "Define Descriptive Flexfield Segments", "Define Segment Values", "Maintain Forecasts", "Update Personal Profile Values", "Administer Report Sets", "Run Reports", "Run Reports", "Inquire Forecasts"]
 }
 
 

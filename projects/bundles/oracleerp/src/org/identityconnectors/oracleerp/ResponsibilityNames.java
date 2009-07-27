@@ -198,6 +198,7 @@ public class ResponsibilityNames {
             }
         } catch (SQLException e) {
             log.error(e, sql);
+            SQLUtil.rollbackQuietly(co.getConn());
             throw ConnectorException.wrap(e);
         } finally {
             SQLUtil.closeQuietly(res);
@@ -316,6 +317,7 @@ public class ResponsibilityNames {
 
                 log.ok(msg, respId, respApplId);
             } catch (SQLException e) {
+                SQLUtil.rollbackQuietly(co.getConn());
                 log.error(e, msg, respId, respApplId);
             } finally {
                 // close everything in case we had an exception in the middle of something
@@ -426,6 +428,7 @@ public class ResponsibilityNames {
             }
         } catch (SQLException e) {
             log.error(e, method);
+            SQLUtil.rollbackQuietly(co.getConn());
             throw ConnectorException.wrap(e);
         } finally {
             SQLUtil.closeQuietly(res);
@@ -679,6 +682,7 @@ public class ResponsibilityNames {
             } else {
                 final String msg = "Can not execute the sql " + sql;
                 log.error(e, msg);
+                SQLUtil.rollbackQuietly(co.getConn());
                 throw new ConnectorException(msg, e);
             }
         } finally {
@@ -708,6 +712,7 @@ public class ResponsibilityNames {
                 } else {
                     final String msg = "Can not execute the sql " + sql;
                     log.error(e, msg);
+                    SQLUtil.rollbackQuietly(co.getConn());
                     throw new ConnectorException(msg, e);
                 }
             } finally {
@@ -840,6 +845,7 @@ public class ResponsibilityNames {
             } else {
                 final String msg = "Can not execute the sql " + sql;
                 log.error(e, msg);
+                SQLUtil.rollbackQuietly(co.getConn());
                 throw new ConnectorException(msg, e);
             }
         } finally {
@@ -952,6 +958,7 @@ public class ResponsibilityNames {
             } else {
                 final String msg = "Error in sql :" + sql;
                 log.error(e, msg);
+                SQLUtil.rollbackQuietly(co.getConn());
                 throw new ConnectorException(msg, e);
             }
         } finally {
@@ -980,6 +987,7 @@ public class ResponsibilityNames {
                 } else {
                     final String msg = "Can not execute the sql " + sql;
                     log.error(e, msg);
+                    SQLUtil.rollbackQuietly(co.getConn());
                     throw new ConnectorException(msg, e);
                 }
             } finally {
@@ -1042,6 +1050,7 @@ public class ResponsibilityNames {
         }
         catch (SQLException e) {
             log.error(e, method);
+            SQLUtil.rollbackQuietly(co.getConn());
             throw ConnectorException.wrap(e);
         } finally {
             SQLUtil.closeQuietly(res);
@@ -1618,6 +1627,7 @@ public class ResponsibilityNames {
             // no catch, just use finally to ensure closes happen
         } catch (SQLException e) {
             log.error(e, method);
+            SQLUtil.rollbackQuietly(co.getConn());
             throw ConnectorException.wrap(e);
         } finally {
             SQLUtil.closeQuietly(res);
@@ -1683,7 +1693,8 @@ public class ResponsibilityNames {
                 // no catch, just use finally to ensure closes happen
             } catch (SQLException e) {
                 log.error(e, method);
-                throw ConnectorException.wrap(e);
+                SQLUtil.rollbackQuietly(co.getConn());
+               throw ConnectorException.wrap(e);
             } finally {
                 SQLUtil.closeQuietly(res);
                 res = null;
@@ -1774,6 +1785,7 @@ public class ResponsibilityNames {
                 }
             } catch (SQLException e) {
                 log.error(e, method);
+                SQLUtil.rollbackQuietly(co.getConn());
                 throw ConnectorException.wrap(e);
             } finally {
                 SQLUtil.closeQuietly(res);

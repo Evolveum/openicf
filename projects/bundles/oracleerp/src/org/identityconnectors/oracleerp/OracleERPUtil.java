@@ -67,6 +67,7 @@ public class OracleERPUtil {
 
 
     // The predefined attribute names
+    static final String USER_ID = "user_id";
     static final String USER_NAME = "user_name";
     static final String OWNER = "owner";
     static final String UNENCRYPT_PWD = "unencrypted_password";
@@ -97,7 +98,7 @@ public class OracleERPUtil {
     static final String PERSON_ID = "person_id";    
 
     //Special attributes
-    static final String USER_ID = "user_id";
+
     static final String PERSON_PARTY_ID = "person_party_id";
     static final String EXP_PWD = "expirePassword";
 
@@ -147,6 +148,10 @@ public class OracleERPUtil {
     static final String MSG_DRIVER_NOT_FOUND = "msg.jdbc.driver.not.found";
     static final String MSG_UNKNOWN_OPERATION_TYPE = "msg.unknown.operation.type";
     static final String MSG_HR_LINKING_ERROR="msg.hr.linking.error";
+    static final String MSG_USER_NOT_FOUND="msg.user.not.found";
+    static final String MSG_COULD_NOT_ENABLE_USER="msg.could.not.enable.user";
+    static final String MSG_COULD_NOT_RENAME_USER="msg.could.not.rename.user";
+    static final String MSG_ACCOUNT_NOT_UPDATE="msg.account.not.update";
 
     //Not yet used
     static final String MSG_ACCOUNT_OBJECT_CLASS_REQUIRED = "msg.acount.object.class.required";
@@ -158,7 +163,6 @@ public class OracleERPUtil {
     static final String MSG_ACCOUNT_NOT_CREATE="msg.account.not.create";    
     static final String MSG_ACCOUNT_NOT_DELETE="msg.account.not.delete";
     static final String MSG_ACCOUNT_NOT_READ="msg.account.not.read";
-    static final String MSG_ACCOUNT_NOT_UPDATE="msg.account.not.update";
     
     
     /**
@@ -268,27 +272,16 @@ public class OracleERPUtil {
             SQLUtil.closeQuietly(rs);
             SQLUtil.closeQuietly(ps);
         }
-
+        if (userId == null || userId == "") {
+            final String emsg = con.getCfg().getMessage(MSG_USER_NOT_FOUND, userName);
+            log.error(emsg);
+            throw new IllegalStateException(emsg);
+        }    
         // pstmt closed in finally below
         log.info(msg, userName, userId);
         return userId;
     }    
 
-    
-    /**
-     * @param con conector 
-     * @param attrs attributes
-     * @return the identity
-     */
-    public static String getName(Set<Attribute> attrs) {
-        final String method = "getName";
-        log.info(method);
-        final Name nameAttr = AttributeUtil.getNameFromAttributes(attrs);
-        return nameAttr.getNameValue();
-    }    
-    
-    
-    
     /**
      * @param con conector 
      * @param attrs attributes
@@ -342,13 +335,13 @@ public class OracleERPUtil {
     
     /**
      * Get The personId from employeNumber or NPW number
-     * @param id user identity
+     * @param name user identity
      * @param con connector
      * @param attrs attributes 
      * @return personid the id of the person
      */
-    public static Integer getPersonId(String id, OracleERPConnector con, Set<Attribute> attrs) {  
-        log.info("getPersonId for userId: ''{0}''", id);
+    public static Integer getPersonId(String name, OracleERPConnector con, Set<Attribute> attrs) {  
+        log.info("getPersonId for userId: ''{0}''", name);
         Integer ret = null;
         int num = 0;
         String columnName = null;
@@ -383,12 +376,12 @@ public class OracleERPUtil {
             log.ok("Oracle ERP: PERSON_ID return from {0} = {1}", sql, ret);
             
             if( ret == null ) {
-                final String msg =  con.getCfg().getMessage(MSG_HR_LINKING_ERROR, num, id);
+                final String msg =  con.getCfg().getMessage(MSG_HR_LINKING_ERROR, num, name);
                 log.error(msg);
                 throw new ConnectorException(msg);
             }
 
-            log.ok("getPersonId for userId: ''{0}'' -> ''{1}''", id, ret);
+            log.ok("getPersonId for userId: ''{0}'' -> ''{1}''", name, ret);
             return ret;
         } catch (SQLException e) {
             log.error(e, sql);

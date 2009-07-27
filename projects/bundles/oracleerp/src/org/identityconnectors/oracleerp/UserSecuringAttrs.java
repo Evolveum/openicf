@@ -169,7 +169,7 @@ public class UserSecuringAttrs  {
      * 
      * 
      * @param secAttr
-     * @param identity
+     * @param name
      * @param userId 
      * @throws WavesetException
      * 
@@ -179,17 +179,17 @@ public class UserSecuringAttrs  {
      *             Since there is no available key, we will delete all and add all new ones
      * 
      */
-    public void updateUserSecuringAttrs(final Attribute secAttr, String identity) {
+    public void updateUserSecuringAttrs(final Attribute secAttr, String name) {
         final String method = "updateUserSecuringAttrs";
         log.info(method);
 
-        final String userId=getUserId(co, identity);
+        final String userId=getUserId(co, name);
 
         //Convert to list of Strings
         final List<String> secAttrList = convertToListString(secAttr.getValue());
 
         // get Users Securing Attrs
-        List<String> oldSecAttrs = getSecuringAttrs(identity);
+        List<String> oldSecAttrs = getSecuringAttrs(name);
 
         // add new attrs
         for (String secAttribute : secAttrList) {
@@ -663,6 +663,7 @@ public class UserSecuringAttrs  {
         } catch (SQLException e) {
             final String msg = "could not get Securing attributes";
             log.error(e, msg);
+            SQLUtil.rollbackQuietly(co.getConn());
             throw new ConnectorException(msg, e);
         } finally {
             SQLUtil.closeQuietly(res);
@@ -732,6 +733,7 @@ public class UserSecuringAttrs  {
         } catch (SQLException e) {
             final String msg = "could not get Securing attributes";
             log.error(e, msg);
+            SQLUtil.rollbackQuietly(co.getConn());
             throw new ConnectorException(msg, e);
         } finally {
             SQLUtil.closeQuietly(res);
@@ -779,6 +781,7 @@ public class UserSecuringAttrs  {
         }
         catch (SQLException e) {
             log.error(e, method);
+            SQLUtil.rollbackQuietly(co.getConn());
             throw ConnectorException.wrap(e);
         } finally {
             SQLUtil.closeQuietly(res);
