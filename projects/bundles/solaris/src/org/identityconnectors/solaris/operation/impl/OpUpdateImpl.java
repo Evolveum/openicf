@@ -37,9 +37,9 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisUtil;
+import org.identityconnectors.solaris.command.CommandUtil;
 import org.identityconnectors.solaris.command.MatchBuilder;
 import org.identityconnectors.solaris.command.closure.ClosureFactory;
-import org.identityconnectors.solaris.constants.AccountAttributes;
 import org.identityconnectors.solaris.operation.AbstractOp;
 
 /**
@@ -95,8 +95,7 @@ public class OpUpdateImpl extends AbstractOp {
          * ACCOUNT
          */
         if (objclass.is(ObjectClass.ACCOUNT_NAME)) {
-            final CharSequence commandSwitches = prepareCommand(uid,
-                    replaceAttributes);
+            final String commandSwitches = CommandUtil.prepareCommand(replaceAttributes);
 
             if (commandSwitches.length() > 0) {
                 try {
@@ -245,22 +244,5 @@ public class OpUpdateImpl extends AbstractOp {
               "fi; " +
             "fi";
         return pidMutexReleaseScript;
-    }
-
-    /** prepares the update command including values */
-    private CharSequence prepareCommand(Uid uid,
-            Set<Attribute> replaceAttributes) {
-        StringBuffer command = new StringBuffer();
-
-        for (Attribute attribute : replaceAttributes) {
-
-            try {
-                command.append(AccountAttributes.formatCommandSwitch(attribute));
-            } catch (Exception ex) {
-                // OK ignoring attribute
-            } // try
-        }// for
-
-        return command;
     }
 }

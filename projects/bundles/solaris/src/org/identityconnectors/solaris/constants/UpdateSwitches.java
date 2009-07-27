@@ -34,6 +34,11 @@ public enum UpdateSwitches {
     AUTHORIZATION("A"), 
     GROUP("g"), 
     EXPIRE("e"), 
+    /**
+     * INACTIVE Solaris manpage says: The maximum number of days allowed between
+     * uses of a login ID before that ID is declared invalid. Normal values are
+     * positive integers. A value of 0 defeats the status.
+     */
     INACTIVE("f"), 
     UID("u"), 
     SECONDARY_GROUP("G"), 
@@ -43,7 +48,8 @@ public enum UpdateSwitches {
     PROFILE("P"), 
     DIR("d"),
     /* **** GROUP **** */
-    //TODO
+    //TODO group flags differ?
+    
     UNKNOWN(null);
 
     private String commandLineSwitch;

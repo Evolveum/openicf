@@ -22,8 +22,14 @@
  */
 package org.identityconnectors.solaris.command;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import junit.framework.Assert;
 
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
+import org.identityconnectors.solaris.constants.AccountAttributes;
 import org.junit.Test;
 
 public class CommandUtilTest {
@@ -44,5 +50,15 @@ public class CommandUtilTest {
             String msg = String.format("String exceeds the maximal limit '%s', as it is: '%s'", limit , trimmedStringLength);
             Assert.assertTrue(msg, trimmedStringLength <= limit);
         }
+    }
+    
+    @Test
+    public void testPrepareCommand() {
+        Set<Attribute> replaceAttributes = new HashSet<Attribute>();
+        final String attrValue = "dummy";
+        replaceAttributes.add(AttributeBuilder.build(AccountAttributes.UID.getName(), attrValue));
+        final String cmd = CommandUtil.prepareCommand(replaceAttributes);
+        final String expected = String.format("%s \"%s\"", AccountAttributes.UID.getCmdSwitch(), attrValue);
+        Assert.assertTrue(cmd.equals(expected));
     }
 }

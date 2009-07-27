@@ -23,6 +23,7 @@
 package org.identityconnectors.solaris.constants;
 
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
 
 class AttributeHelper {
     /** 
@@ -33,7 +34,7 @@ class AttributeHelper {
     public static String formatCommandSwitch(Attribute argument, String cmdSwitch) {
         return formatParam(
                     cmdSwitch, 
-                    argument.getValue().toString()
+                    AttributeUtil.getStringValue(argument)
                );
     }
     

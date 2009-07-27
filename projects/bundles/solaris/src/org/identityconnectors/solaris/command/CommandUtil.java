@@ -22,14 +22,20 @@
  */
 package org.identityconnectors.solaris.command;
 
+import java.util.Set;
+
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.solaris.constants.AccountAttributes;
+
 /**
  * contains utility methods for forming commands for Unix.
  * @author David Adam
  */
-class CommandUtil {
+public class CommandUtil {
 
     /** Maximum number of characters per line in Solaris shells */
-    public final static int DEFAULT_LIMIT = 120;
+    final static int DEFAULT_LIMIT = 120;
     
     private static StringBuilder limitString(StringBuilder data, int limit) {
         StringBuilder result = new StringBuilder(limit);
@@ -57,7 +63,27 @@ class CommandUtil {
      * @param data
      * @return
      */
-    public static String limitString(StringBuilder data) {
+    static String limitString(StringBuilder data) {
         return limitString(data, DEFAULT_LIMIT /* == max length of line from SolarisResourceAdapter#getUpdateNativeUserScript(), line userattribparams */).toString();
+    }
+    
+    /** 
+     * use the attributes to generate the argument of a Solaris command.
+     * 
+     * @param attributes Attributes, whose *value* and *name* is used.
+     */
+    public static String prepareCommand(Set<Attribute> attributes) {
+        StringBuffer command = new StringBuffer();
+
+        for (Attribute attr : attributes) {
+
+            try {
+                command.append(AccountAttributes.formatCommandSwitch(attr));
+            } catch (Exception ex) {
+                // OK ignoring attribute
+            } // try
+        }// for
+
+        return command.toString();
     }
 }
