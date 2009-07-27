@@ -25,7 +25,7 @@ package org.identityconnectors.solaris.command;
 import java.util.Set;
 
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.solaris.constants.AccountAttributes;
 
 /**
@@ -76,7 +76,10 @@ public class CommandUtil {
         StringBuffer command = new StringBuffer();
 
         for (Attribute attr : attributes) {
-
+            // skip special attributes such as __PASSWORD__ or __NAME__
+            if (AttributeUtil.isSpecial(attr))
+                continue;
+            
             try {
                 command.append(AccountAttributes.formatCommandSwitch(attr));
             } catch (Exception ex) {
