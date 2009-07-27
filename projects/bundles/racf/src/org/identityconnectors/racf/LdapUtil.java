@@ -667,7 +667,7 @@ class LdapUtil {
         for (Attribute attribute : attributes.values()) {
             String attributeName = attribute.getName().toLowerCase();
             if (attribute.getValue()==null)
-                throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, null));
+                throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, (String)null));
             if (attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
                 // Ignore Name, Uid
                 //
@@ -679,7 +679,7 @@ class LdapUtil {
             } else if (attribute.is(ATTR_LDAP_ATTRIBUTES)) {
                 for (Object value : attribute.getValue()) {
                     if (value==null) {
-                        throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, null));
+                        throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.BAD_ATTRIBUTE_VALUE, (String)null));
                     } else {
                         String string = value.toString();
                         if (!RacfConnector.POSSIBLE_ATTRIBUTES.contains(string))
