@@ -136,7 +136,7 @@ public class RacfLdapConnectorTests extends RacfConnectorTestBase {
             {
                 Set<Attribute> changed = new HashSet<Attribute>();
                 //
-                Attribute size = AttributeBuilder.build(getTsoSizeName(), new Integer(1000)); 
+                Attribute size = AttributeBuilder.build(getTsoSizeName(), Integer.valueOf(1000)); 
                 changed.add(size);
                 changed.add(user.getUid());
                 connector.update(ObjectClass.ACCOUNT, changed, null);

@@ -192,11 +192,11 @@ class LdapUtil {
     }
 
     public List<String> getGroupsForUserViaLdap(String user) {
-        return getConnectionInfo("racfuserid="+_connector.extractRacfIdFromLdapId(user), 2);
+        return getConnectionInfo("racfuserid="+RacfConnector.extractRacfIdFromLdapId(user), 2);
     }
 
     public List<String> getMembersOfGroupViaLdap(String group) {
-        return getConnectionInfo("racfgroupid="+_connector.extractRacfIdFromLdapId(group), 1);
+        return getConnectionInfo("racfgroupid="+RacfConnector.extractRacfIdFromLdapId(group), 1);
     }
 
     private List<String> getConnectionInfo(String query, int index) {
@@ -734,14 +734,7 @@ class LdapUtil {
                 AttributeInfo attributeInfo = getAttributeInfo(attributeInfos, attributeName);
                 if (attributeInfo==null)
                     throw new IllegalArgumentException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNKNOWN_ATTRIBUTE, attributeName));
-                if (attribute.getValue() instanceof Collection) {
-                    basicAttributes.put(makeBasicAttribute(attributeName, attribute.getValue()));
-                } else {
-                    Object value = AttributeUtil.getSingleValue(attribute);
-                    if (value !=null)
-                        value = value.toString();
-                    basicAttributes.put(attributeName, value);
-                }
+                basicAttributes.put(makeBasicAttribute(attributeName, attribute.getValue()));
             }
         }
         if (setRacfAttributes) {
@@ -776,14 +769,7 @@ class LdapUtil {
                 // Ignore Name, Uid
                 //
             } else {
-                if (attribute.getValue() instanceof Collection) {
-                    basicAttributes.put(makeBasicAttribute(attributeName, attribute.getValue()));
-                } else {
-                    Object value = AttributeUtil.getSingleValue(attribute);
-                    if (value !=null)
-                        value = value.toString();
-                    basicAttributes.put(attributeName, value);
-                }
+                basicAttributes.put(makeBasicAttribute(attributeName, attribute.getValue()));
             }
         }
         return basicAttributes;

@@ -85,11 +85,11 @@ public abstract class RacfConnectorTestBase {
     protected static String       TEST_GROUP1 = "IDMGRP01";
     protected static String       TEST_GROUP2 = "IDMGRP02";
     protected static String       TEST_GROUP3 = "IDMGRP03";
-    protected static Uid          TEST_USER_UID;
-    protected static Uid          TEST_USER_UID2;
-    protected static Uid          TEST_GROUP1_UID;
-    protected static Uid          TEST_GROUP2_UID;
-    protected static Uid          TEST_GROUP3_UID;
+    protected Uid                 TEST_USER_UID;
+    protected Uid                 TEST_USER_UID2;
+    protected Uid                 TEST_GROUP1_UID;
+    protected Uid                 TEST_GROUP2_UID;
+    protected Uid                 TEST_GROUP3_UID;
 
     protected static final int     HOST_LDAP_PORT   = 389;
     protected static final int     HOST_TELNET_PORT = 23;
@@ -357,7 +357,7 @@ public abstract class RacfConnectorTestBase {
             {
                 Set<Attribute> changed = new HashSet<Attribute>();
                 //
-                Attribute size = AttributeBuilder.build(getTsoSizeName(), new Integer(1000)); 
+                Attribute size = AttributeBuilder.build(getTsoSizeName(), Integer.valueOf(1000)); 
                 changed.add(size);
                 changed.add(user.getUid());
                 connector.update(ObjectClass.ACCOUNT, changed, null);
@@ -427,12 +427,16 @@ public abstract class RacfConnectorTestBase {
     
     protected String loadParserFromFile(String fileName) throws IOException {
         BufferedReader is = new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream(fileName)));
-        StringBuffer tsoParser = new StringBuffer();
-        String line = null;
-        while ((line=is.readLine())!=null) {
-            tsoParser.append(line+"\n");
+        try {
+            StringBuffer tsoParser = new StringBuffer();
+            String line = null;
+            while ((line=is.readLine())!=null) {
+                tsoParser.append(line+"\n");
+            }
+            return tsoParser.toString();
+        } finally {
+            is.close();
         }
-        return tsoParser.toString();
     }
 
     protected void displayConnectorObject(ConnectorObject user) {

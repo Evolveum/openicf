@@ -336,7 +336,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
      */
     public void executeQuery(ObjectClass objectClass, String query, ResultsHandler handler, OperationOptions options) {
         System.out.println("executeQuery:"+query);
-        List<String> names = new LinkedList<String>();
+        List<String> names = null;
 
         if (objectClass.is(ObjectClass.ACCOUNT_NAME))
             names = getUsers(query);
@@ -346,7 +346,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             throw new ConnectorException(_configuration.getMessage(RacfMessages.UNSUPPORTED_OBJECT_CLASS, objectClass));
         
         try {
-            TreeSet<String> attributesToGet = null;
+            TreeSet<String> attributesToGet = new TreeSet<String>();
             schema();
 
             if (options!=null && options.getAttributesToGet()!=null) {
@@ -489,7 +489,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
         String defaultGroup = currentGroups.get(0);
         
         for (String currentGroup : currentGroups) {
-            if (!groups.contains(currentGroup) && currentGroup!=defaultGroup) {
+            if (!groups.contains(currentGroup) && !currentGroup.equals(defaultGroup)) {
                 // Group is being eliminated
                 //
                 String connectionName = createConnectionId(name, currentGroup);

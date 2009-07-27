@@ -133,12 +133,16 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     
     private String loadParserFromFile(String fileName) throws IOException {
         BufferedReader is = new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream(fileName)));
-        StringBuffer parser = new StringBuffer();
-        String line = null;
-        while ((line=is.readLine())!=null) {
-            parser.append(line+"\n");
+        try {
+            StringBuffer parser = new StringBuffer();
+            String line = null;
+            while ((line=is.readLine())!=null) {
+                parser.append(line+"\n");
+            }
+            return parser.toString();
+        } finally {
+            is.close();
         }
-        return parser.toString();
     }
     
     private String getLoginScript() {
@@ -293,7 +297,7 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
      */
     @ConfigurationProperty(order=5, displayMessageKey="UserObjectClasses", helpMessageKey="UserObjectClassesHelp")
     public String[] getUserObjectClasses() {
-        return _userObjectClasses;
+        return arrayCopy(_userObjectClasses);
     }
 
     /**
@@ -301,7 +305,7 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
      * @param userObjectClasses -- an array of object class names
      */
     public void setUserObjectClasses(String[] userObjectClasses) {
-        _userObjectClasses = userObjectClasses;
+        _userObjectClasses = arrayCopy(userObjectClasses);
     }
 
     /**
@@ -310,7 +314,7 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
      */
     @ConfigurationProperty(order=5, displayMessageKey="GroupObjectClasses", helpMessageKey="GroupObjectClassesHelp")
     public String[] getGroupObjectClasses() {
-        return _groupObjectClasses;
+        return arrayCopy(_groupObjectClasses);
     }
 
     /**
@@ -318,7 +322,7 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
      * @param groupObjectClasses -- an array of object class names
      */
     public void setGroupObjectClasses(String[] groupObjectClasses) {
-        _groupObjectClasses = groupObjectClasses;
+        _groupObjectClasses = arrayCopy(groupObjectClasses);
     }
 
     /**
