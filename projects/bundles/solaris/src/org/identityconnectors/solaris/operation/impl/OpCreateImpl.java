@@ -20,7 +20,7 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-package org.identityconnectors.solaris;
+package org.identityconnectors.solaris.operation.impl;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,6 +34,9 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.solaris.SolarisConfiguration;
+import org.identityconnectors.solaris.SolarisConnection;
+import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.operation.AbstractOp;
 
 public class OpCreateImpl extends AbstractOp {
@@ -44,7 +47,7 @@ public class OpCreateImpl extends AbstractOp {
         super(configuration, connection, log);
     }
     
-    Uid create(ObjectClass oclass, final Set<Attribute> attrs, final OperationOptions options) {
+    public Uid create(ObjectClass oclass, final Set<Attribute> attrs, final OperationOptions options) {
         SolarisUtil.controlObjectClassValidity(oclass, acceptOC, getClass());
         
         if (oclass.is(ObjectClass.GROUP_NAME)) {

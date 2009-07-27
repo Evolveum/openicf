@@ -20,7 +20,7 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-package org.identityconnectors.solaris;
+package org.identityconnectors.solaris.operation.impl;
 
 import java.util.List;
 
@@ -34,6 +34,9 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.solaris.SolarisConfiguration;
+import org.identityconnectors.solaris.SolarisConnection;
+import org.identityconnectors.solaris.SolarisFilter;
 import org.identityconnectors.solaris.operation.AbstractOp;
 
 

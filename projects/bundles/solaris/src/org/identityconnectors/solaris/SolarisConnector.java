@@ -55,6 +55,11 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
 import org.identityconnectors.solaris.constants.AccountAttributes;
 import org.identityconnectors.solaris.constants.AccountAttributesForPassword;
 import org.identityconnectors.solaris.constants.GroupAttributes;
+import org.identityconnectors.solaris.operation.impl.OpAuthenticateImpl;
+import org.identityconnectors.solaris.operation.impl.OpCreateImpl;
+import org.identityconnectors.solaris.operation.impl.OpDeleteImpl;
+import org.identityconnectors.solaris.operation.impl.OpSearchImpl;
+import org.identityconnectors.solaris.operation.impl.OpUpdateImpl;
 
 /**
  * @author David Adam

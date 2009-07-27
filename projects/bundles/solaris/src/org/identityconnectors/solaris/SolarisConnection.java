@@ -45,7 +45,7 @@ import expect4j.matches.Match;
  */
 public class SolarisConnection {
     /** set the timeout for waiting on reply. */
-    static final int WAIT = 12000;
+    public static final int WAIT = 12000;
 
     
     //TODO might be a configuration property
@@ -260,7 +260,7 @@ public class SolarisConnection {
     }
 
     /** once connection is disposed it won't be used at all. */
-    void dispose() {
+    public void dispose() {
         log.info("dispose()");
         if (_expect4j != null) {
             _expect4j.close();
