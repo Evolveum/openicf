@@ -53,7 +53,9 @@ public class RacfLdapConnectorTests extends RacfConnectorTestBase {
     }
     
     protected void initializeLdapConfiguration(RacfConfiguration config) {
-        config.setSupportedSegments(RacfConfiguration.SEGMENT_TSO);
+        config.setUserObjectClasses(new String[]{"racfUser", "SAFTsoSegment"});
+        config.setGroupObjectClasses(new String[]{"racfGroup"});
+
         config.setHostNameOrIpAddr(HOST_NAME);
         config.setUseSsl(USE_SSL);
         config.setHostPortNumber(HOST_LDAP_PORT);

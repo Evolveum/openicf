@@ -126,6 +126,8 @@ public interface RacfConstants {
     public static final String ATTR_LDAP_SUP_GROUP             = "racfSuperiorGroup";
     public static final String ATTR_LDAP_TERM_UACC             = "racfGroupNoTermUAC";
     public static final String ATTR_LDAP_UNIVERSAL             = "racfGroupUniversal";
+    public static final String ATTR_LDAP_OVM_GROUP_ID          = "racfOvmGroupId";
+    public static final String ATTR_LDAP_OMVS_GROUP_ID         = "racfOmvsGroupId";
     
     // Attributes on Connection
     //

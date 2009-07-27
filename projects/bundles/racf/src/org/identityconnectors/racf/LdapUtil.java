@@ -589,7 +589,6 @@ class LdapUtil {
         Map<String, Attribute> attributes = CollectionUtil.newCaseInsensitiveMap();
         attributes.putAll(AttributeUtil.toMap(attrs));
         Uid uid = AttributeUtil.getUidAttribute(attrs);
-        String query = "(racfid="+RacfConnector.extractRacfIdFromLdapId(uid.getUidValue())+")";
         
         if (uid!=null) {
             if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
@@ -602,17 +601,6 @@ class LdapUtil {
                     _connector.throwErrorIfNull(groups);
                     _connector.throwErrorIfNull(groupOwners);
 
-                    // RACF makes it difficult to specify ENABLE_DATE/DISABLE_DATE
-                    // except in its own command
-                    //
-                    Attribute enable      = attributes.remove(ATTR_LDAP_ENABLED);
-                    Attribute enableDate  = attributes.remove(ATTR_LDAP_RESUME_DATE);
-                    Attribute disableDate = attributes.remove(ATTR_LDAP_REVOKE_DATE);
-                    
-                    if (enableDate!=null && disableDate!=null)
-                        attributes.remove(ATTR_CL_ENABLED);
-
-                    
                     if (expired!=null && password==null) 
                         throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
                     
@@ -623,20 +611,6 @@ class LdapUtil {
 
                     if (groups!=null)
                         _connector.setGroupMembershipsForUser(uid.getUidValue(), groups, groupOwners);
-
-                    if (enableDate!=null) {
-                        Map<String, Attribute> enableAttributes = new HashMap<String, Attribute>();
-                        enableAttributes.put(ATTR_LDAP_RESUME_DATE, enableDate);
-                        ((RacfConnection)_connector.getConnection()).getDirContext().modifyAttributes(uid.getUidValue(), DirContext.REPLACE_ATTRIBUTE, 
-                                createLdapAttributesFromConnectorAttributes(objectClass, enableAttributes));
-                    }
-                    
-                    if (disableDate!=null) {
-                        Map<String, Attribute> disableAttributes = new HashMap<String, Attribute>();
-                        disableAttributes.put(ATTR_LDAP_REVOKE_DATE, disableDate);
-                        ((RacfConnection)_connector.getConnection()).getDirContext().modifyAttributes(uid.getUidValue(), DirContext.REPLACE_ATTRIBUTE, 
-                                createLdapAttributesFromConnectorAttributes(objectClass, disableAttributes));
-                    }
                 } catch (NamingException e) {
                     if (e.toString().contains("INVALID USER"))
                         throw new AlreadyExistsException();
@@ -667,45 +641,12 @@ class LdapUtil {
 
     protected void addObjectClass(ObjectClass objectClass, Map<String, Attribute> attrs) {
         List<Object> values = new ArrayList<Object>();
-        int supportedSegments = ((RacfConfiguration)_connector.getConfiguration()).getSupportedSegments();
         if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
-            values.add("racfUser");
-            if ((supportedSegments & RacfConfiguration.SEGMENT_CICS)>0)
-                values.add("racfCicsSegment");
-            if ((supportedSegments & RacfConfiguration.SEGMENT_DCE)>0)
-                values.add("racfDCESegment");
-            if ((supportedSegments & RacfConfiguration.SEGMENT_DFP)>0)
-                values.add("SAFDfpSegment");
-            if ((supportedSegments & RacfConfiguration.SEGMENT_KERB)>0)
-                values.add("racfKerberosInfo");
-            if ((supportedSegments & RacfConfiguration.SEGMENT_LANGUAGE)>0)
-                values.add("racfLanguageSegment");
-            if ((supportedSegments & RacfConfiguration.SEGMENT_LNOTES)>0)
-                values.add("racfLNotesSegment");
-            if ((supportedSegments & RacfConfiguration.SEGMENT_NDS)>0)
-                values.add("racfNDSSegment");
-            if ((supportedSegments & RacfConfiguration.SEGMENT_NETVIEW)>0)
-                values.add("racfNetviewSegment");
-            if ((supportedSegments & RacfConfiguration.SEGMENT_OMVS_USER)>0)
-                values.add("racfUserOmvsSegment");
-            if ((supportedSegments & RacfConfiguration.SEGMENT_OPERPARM)>0)
-                values.add("racfOperparmSegment");
-            if ((supportedSegments & RacfConfiguration.SEGMENT_OVM_USER)>0)
-                values.add("racfUserOvmSegment");
-            if ((supportedSegments & RacfConfiguration.SEGMENT_PROXY)>0)
-                values.add("racfProxySegment");
-            if ((supportedSegments & RacfConfiguration.SEGMENT_TSO)>0)
-                values.add("SAFTsoSegment");
-            if ((supportedSegments & RacfConfiguration.SEGMENT_WORKATTR)>0)
-                values.add("racfWorkAttrSegment");
+            for (String userObjectClass : ((RacfConfiguration)_connector.getConfiguration()).getUserObjectClasses())
+                values.add(userObjectClass);
         } else if (objectClass.is(RacfConnector.RACF_GROUP_NAME)) {
-            values.add("racfGroup");
-            if ((supportedSegments & RacfConfiguration.SEGMENT_OVM_GROUP)>0)
-                values.add("racfGroupOvmSegment");
-            if ((supportedSegments & RacfConfiguration.SEGMENT_OMVS_GROUP)>0)
-                values.add("racfGroupOmvsSegment");
-            if ((supportedSegments & RacfConfiguration.SEGMENT_DFP)>0)
-                values.add("SAFDfpSegment");
+            for (String groupObjectClass : ((RacfConfiguration)_connector.getConfiguration()).getGroupObjectClasses())
+                values.add(groupObjectClass);
         }
         attrs.put("objectclass", AttributeBuilder.build("objectclass", values));
     }
@@ -769,6 +710,12 @@ class LdapUtil {
                     racfAttributes.add("Expired");
                 else
                     racfAttributes.add("noExpired");
+                setRacfAttributes = true;
+            } else if (attribute.is(ATTR_LDAP_ENABLED)) {
+                if (AttributeUtil.getBooleanValue(attribute))
+                    racfAttributes.add("RESUME");
+                else
+                    racfAttributes.add("REVOKE");
                 setRacfAttributes = true;
             } else if (attribute.is(ATTR_LDAP_RESUME_DATE) || attribute.is(ATTR_LDAP_REVOKE_DATE)) {
                 basicAttributes.put(attribute.getName(), AttributeUtil.getStringValue(attribute));

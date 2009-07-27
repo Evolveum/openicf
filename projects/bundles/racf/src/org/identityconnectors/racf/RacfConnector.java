@@ -100,6 +100,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
 
     private Map<String, AttributeInfo>  _accountAttributes = null;
     private Map<String, AttributeInfo>  _groupAttributes = null;
+    
 
     private RacfConnection              _connection;
     private RacfConfiguration           _configuration;
@@ -135,6 +136,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
      * {@inheritDoc}
      */
     public void init(Configuration configuration) {
+        _accountAttributes = null;
+        _groupAttributes = null;
         try {
             System.out.println("initializing connector");
             _configuration = (RacfConfiguration)configuration;
@@ -216,22 +219,13 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             } else if (attribute.is(OperationalAttributes.DISABLE_DATE_NAME)) {
                 Date date = new Date(AttributeUtil.getLongValue(disableDate));
                 String dateValue = _dateFormat.format(date);
-                if (isLdapConnectionAvailable())
-                    attribute = AttributeBuilder.build(ATTR_LDAP_REVOKE_DATE, dateValue);
-                else
-                    attribute = AttributeBuilder.build(ATTR_CL_REVOKE_DATE, dateValue);
+                attribute = AttributeBuilder.build(ATTR_CL_REVOKE_DATE, dateValue);
             } else if (attribute.is(OperationalAttributes.ENABLE_DATE_NAME)) {
                 Date date = new Date(AttributeUtil.getLongValue(enableDate));
                 String dateValue = _dateFormat.format(date);
-                if (isLdapConnectionAvailable())
-                    attribute = AttributeBuilder.build(ATTR_LDAP_RESUME_DATE, dateValue);
-                else
-                    attribute = AttributeBuilder.build(ATTR_CL_RESUME_DATE, dateValue);
+                attribute = AttributeBuilder.build(ATTR_CL_RESUME_DATE, dateValue);
             } else if (attribute.is(OperationalAttributes.ENABLE_NAME)) {
-                if (isLdapConnectionAvailable())
-                    attribute = AttributeBuilder.build(ATTR_LDAP_ENABLED, attribute.getValue());
-                else
-                    attribute = AttributeBuilder.build(ATTR_CL_ENABLED, attribute.getValue());
+               attribute = AttributeBuilder.build(ATTR_CL_ENABLED, attribute.getValue());
             } 
 
             // Put the attribute on the appropriate attribute list(s)
@@ -798,6 +792,17 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
     private Schema ldapSchema() {
         final SchemaBuilder schemaBuilder = new SchemaBuilder(getClass());
 
+        Set<String>                 userObjectClasses;
+        Set<String>                 groupObjectClasses;
+        
+        userObjectClasses = CollectionUtil.newCaseInsensitiveSet();
+        for (String userObjectClass : _configuration.getUserObjectClasses())
+            userObjectClasses.add(userObjectClass);
+        
+        groupObjectClasses = CollectionUtil.newCaseInsensitiveSet();
+        for (String groupObjectClass : _configuration.getGroupObjectClasses())
+            groupObjectClasses.add(groupObjectClass);
+
         // RACF Users
         //
         {
@@ -821,13 +826,13 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_LOGON_TIME,                  String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_CLASS_NAME,              String.class));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SECURITY_LABEL,          String.class));
-            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_DFP) > 0) {
+            if (userObjectClasses.contains("SAFDfpSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_DPF_DATA_APP,            String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_DPF_DATA_CLASS,          String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_DPF_MGMT_CLASS,          String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_DPF_STORAGE_CLASS,       String.class));
             }
-            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_TSO) > 0) {
+            if (userObjectClasses.contains("SAFTsoSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_ACCOUNT_NUMBER,      String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_DEFAULT_CMD,         String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_DESTINATION,         String.class));
@@ -840,18 +845,18 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_DEFAULT_UNIT,        String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_SECURITY_LABEL,      String.class));
             }
-            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_LANGUAGE) > 0) {
+            if (userObjectClasses.contains("SAFDfpSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_LANG_PRIMARY,            String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_LANG_SECONDARY,          String.class));
             }
-            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_CICS) > 0) {
+            if (userObjectClasses.contains("racfLanguageSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_CICS_OPER_ID,            String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_CICS_OPER_CLASS,         String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_CICS_OPER_PRIORITY,      String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_CICS_OPER_RESIGNON,      String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_CICS_TERM_TIMEOUT,       String.class));
             }
-            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_OPERPARM) > 0) {
+            if (userObjectClasses.contains("racfOperparmSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_STORAGE,              String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_AUTH,                 String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_MFORM,                String.class));
@@ -868,7 +873,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_ALTGROUP,             String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OP_AUTO,                 String.class));
             }
-            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_WORKATTR) > 0) {
+            if (userObjectClasses.contains("racfWorkAttrSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_WA_USER_NAME,            String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_WA_BUILDING,             String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_WA_DEPARTMENT,           String.class));
@@ -879,7 +884,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_WA_ADDRESS_LINE4,        String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_WA_ACCOUNT_NUMBER,       String.class));
             }
-            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_OMVS_USER) > 0) {
+            if (userObjectClasses.contains("racfUserOmvsSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_UID,                String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_HOME,               String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_INIT_PROGRAM,       String.class));
@@ -889,7 +894,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_MAX_THREADS,        String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_MAX_MEMORY_MAP,     String.class));
             }
-            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_NETVIEW) > 0) {
+            if (userObjectClasses.contains("racfNetviewSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_INITIALCMD,           String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_DEFAULT_CONSOLE,      String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_CTL,                  String.class));
@@ -903,24 +908,24 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_DCE_HOME_CELL_UUID,   String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NV_DCE_AUTOLOGIN,        String.class));
             }
-            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_OVM_USER) > 0) {
+            if (userObjectClasses.contains("racfUserOvmSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OVM_UID,                 String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OVM_HOME,                String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OVM_INITIAL_PROGRAM,     String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OVM_FILESYSTEM_ROOT,     String.class));
             }
-            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_LNOTES) > 0) {
+            if (userObjectClasses.contains("racfLNotesSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_LN_SHORT_NAME,           String.class));
             }
-            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_NDS) > 0) {
+            if (userObjectClasses.contains("racfNDSSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_NDS_USER_NAME,           String.class));
             }
-            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_KERB) > 0) {
+            if (userObjectClasses.contains("racfKerberosInfo")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_KERB_NAME,               String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_KERB_MAX_TICKET_LIFE,    String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_KERB_ENCRYPT,            String.class));
             }
-            if ((_configuration.getSupportedSegments() & RacfConfiguration.SEGMENT_PROXY) > 0) {
+            if (userObjectClasses.contains("racfProxySegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_PROXY_BINDDN,            String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_PROXY_BINDPW,            String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_PROXY_HOST,              String.class));
@@ -935,9 +940,15 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             // Operational Attributes
             //
             attributes.add(buildReadonlyAttribute(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, long.class));
-            //attributes.add(OperationalAttributeInfos.ENABLE);
-            //attributes.add(OperationalAttributeInfos.ENABLE_DATE);
-            //attributes.add(OperationalAttributeInfos.DISABLE_DATE);
+            if (_configuration.getUserName()!=null) {
+                attributes.add(OperationalAttributeInfos.ENABLE);
+                attributes.add(OperationalAttributeInfos.ENABLE_DATE);
+                attributes.add(OperationalAttributeInfos.DISABLE_DATE);
+            } else {
+                attributes.add(buildReadonlyAttribute(OperationalAttributes.ENABLE_NAME, OperationalAttributeInfos.ENABLE.getType()));
+                attributes.add(buildReadonlyAttribute(OperationalAttributes.ENABLE_DATE_NAME, OperationalAttributeInfos.ENABLE_DATE.getType()));
+                attributes.add(buildReadonlyAttribute(OperationalAttributes.DISABLE_DATE_NAME, OperationalAttributeInfos.DISABLE_DATE.getType()));
+            }
             attributes.add(OperationalAttributeInfos.PASSWORD);
             attributes.add(OperationalAttributeInfos.PASSWORD_EXPIRED);
             attributes.add(PredefinedAttributeInfos.LAST_LOGIN_DATE);
@@ -958,12 +969,20 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_MODEL,              String.class));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OWNER,              String.class));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_SUP_GROUP,          String.class));
-            //groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TERM_UACC,          String.class));
-            //groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_UNIVERSAL,          String.class));
-            //groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_APP,       String.class));
-            //groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_CLASS,     String.class));
-            //groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_MGMT_CLASS,     String.class));
-            //groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_STORAGE_CLASS,  String.class));
+            groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_TERM_UACC,          String.class));
+            groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_UNIVERSAL,          String.class));
+            if (groupObjectClasses.contains("racfGroupOvmSegment")) {
+                groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OVM_GROUP_ID,   String.class));
+            }
+            if (groupObjectClasses.contains("racfGroupOmvsSegment")) {
+                groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_OMVS_GROUP_ID,  String.class));
+            }
+            if (groupObjectClasses.contains("SAFDfpSegment")) {
+                groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_APP,       String.class));
+                groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_DATA_CLASS,     String.class));
+                groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_MGMT_CLASS,     String.class));
+                groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DPF_STORAGE_CLASS,  String.class));
+            }
     
             // Read-only Multi-valued Attributes
             //
@@ -975,6 +994,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
         }
         return schemaBuilder.build();
     }
+    
 
     /**
      * {@inheritDoc}
