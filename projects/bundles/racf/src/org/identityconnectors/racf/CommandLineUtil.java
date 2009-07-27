@@ -80,7 +80,6 @@ class CommandLineUtil {
     private static final String         NO_ENTRIES                  = "NO ENTRIES MEET SEARCH CRITERIA";
     private static final String         NAME_NOT_FOUND              = "NAME NOT FOUND";
     private static final String         UNABLE_TO_LOCATE_USER       = "UNABLE TO LOCATE USER";
-    private static final int            COMMAND_TIMEOUT             = 60000;
     
     private Map<String, MapTransform>   _segmentParsers;
     
@@ -167,7 +166,7 @@ class CommandLineUtil {
             System.out.println("execute:"+new String(command));
             connection.send(command);
             connection.send("[enter]");
-            waitFor(COMMAND_TIMEOUT);
+            waitFor(((RacfConfiguration)_connector.getConfiguration()).getCommandTimeout());
             String output = _buffer.toString();
             // Strip command from start, if present
             //

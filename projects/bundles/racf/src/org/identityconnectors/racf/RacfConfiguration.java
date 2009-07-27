@@ -48,6 +48,7 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     private String         _hostNameOrIpAddr;
     private Integer        _hostLdapPortNumber;
     private Integer        _hostTelnetPortNumber;
+    private Integer        _commandTimeout;
 
     private ResourceBundle _bundle = null; 
     private Locale         _lastLocale = null; 
@@ -197,6 +198,8 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
 
         if (!noCommandLine && _hostTelnetPortNumber==null)
             throw new IllegalArgumentException(getMessage(RacfMessages.TELNET_PORT_NULL));
+        if (!noCommandLine && _commandTimeout==null)
+            throw new IllegalArgumentException(getMessage(RacfMessages.COMMAND_TIMEOUT_NULL));
         if (_hostTelnetPortNumber!=null && (_hostTelnetPortNumber<1 || _hostTelnetPortNumber>65536))
             throw new IllegalArgumentException(getMessage(RacfMessages.ILLEGAL_TELNET_PORT, _hostTelnetPortNumber));
         if (!noCommandLine && StringUtil.isBlank(_userName))
@@ -457,6 +460,21 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
      */
     public void setDisconnectScript(String script) {
         _disconnectScript = script;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    
+    @ConfigurationProperty(order=14)
+    public Integer getCommandTimeout() {
+        return _commandTimeout;
+    }
+    /**
+     * {@inheritDoc}
+     */
+    public void setCommandTimeout(Integer commandTimeout) {
+        _commandTimeout = commandTimeout;
     }
 
     /**

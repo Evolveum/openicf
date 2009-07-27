@@ -30,6 +30,7 @@ public class RacfMessages extends ListResourceBundle {
     public static final String LDAP_PORT_NULL                 = "LDAP_PORT_NULL";
     public static final String ILLEGAL_LDAP_PORT              = "ILLEGAL_LDAP_PORT";
     public static final String TELNET_PORT_NULL               = "TELNET_PORT_NULL";
+    public static final String COMMAND_TIMEOUT_NULL           = "COMMAND_TIMEOUT_NULL";
     public static final String ILLEGAL_TELNET_PORT            = "ILLEGAL_TELNET_PORT";
     public static final String SSL_NULL                       = "SSL_NULL";
     public static final String USERNAME_NULL                  = "USERNAME_NULL";
@@ -77,6 +78,7 @@ public class RacfMessages extends ListResourceBundle {
         { LDAP_PORT_NULL,          "ldap port may not be null" },
         { ILLEGAL_LDAP_PORT,       "the value ''{0}'' is not a legal value for ldap port" },
         { TELNET_PORT_NULL,        "telnet port may not be null" },
+        { COMMAND_TIMEOUT_NULL,    "command timeout may not be null" },
         { ILLEGAL_TELNET_PORT,     "the value ''{0}'' is not a legal value for telnet port" },
         { SSL_NULL,                "ssl may not be null" },
         { USERNAME_NULL,           "user name may not be null" },

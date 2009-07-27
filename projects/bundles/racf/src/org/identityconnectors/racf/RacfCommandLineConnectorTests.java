@@ -288,18 +288,18 @@ public class RacfCommandLineConnectorTests extends RacfConnectorTestBase {
     private String getLoginScript() {
         String script =
             "connection.connect();\n" +
-            "connection.waitFor(\"=====>\", SHORT_WAIT);\n" +
+            "connection.waitFor(\"====> \", 20000);\n" +
             "connection.send(\"TSO[enter]\");\n" +
-            "connection.waitFor(\"ENTER USERID -\", SHORT_WAIT);\n" +
+            "connection.waitFor(\"ENTER USERID -\", 20000);\n" +
             "connection.send(USERNAME+\"[enter]\");\n" +
-            "connection.waitFor(\"Password  ===>\", SHORT_WAIT);\n" +
+            "connection.waitFor(\"Password  ===>\", 20000);\n" +
             "connection.send(PASSWORD);\n" +
             "connection.send(\"[enter]\");\n" +
-            "connection.waitFor(\" \\\\*\\\\*\\\\* \", SHORT_WAIT);\n" +
+            "connection.waitFor(\" \\\\*\\\\*\\\\* \", 20000);\n" +
             "connection.send(\"[enter]\");\n" +
-            "connection.waitFor(\"Option ===>\", SHORT_WAIT);\n" +
+            "connection.waitFor(\"Option ===>\", 20000);\n" +
             "connection.send(\"[pf3]\");\n" +
-            "connection.waitFor(\"READY\\\\s{74}\", SHORT_WAIT);";
+            "connection.waitFor(\"READY\\\\s{74}\", 20000);";
         return script;
     }
 
@@ -315,6 +315,7 @@ public class RacfCommandLineConnectorTests extends RacfConnectorTestBase {
         config.setHostNameOrIpAddr(HOST_NAME);
         config.setUseSsl(USE_SSL);
         config.setHostTelnetPortNumber(HOST_TELNET_PORT);
+        config.setCommandTimeout(60000);
         config.setConnectScript(getLoginScript());
         config.setDisconnectScript(getLogoffScript());
         config.setUserName(SYSTEM_USER );
