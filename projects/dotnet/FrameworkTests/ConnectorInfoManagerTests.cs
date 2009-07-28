@@ -60,6 +60,11 @@ namespace FrameworkTests
             }
             return null;
         }
+
+        [TearDown]
+        public void TearDown() {
+            ShutdownConnnectorInfoManager();
+        }
         
         [Test]
         public void TestClassLoading() {
@@ -86,8 +91,6 @@ namespace FrameworkTests
             ICollection<ConnectorAttribute> attrs = new HashSet<ConnectorAttribute>();
             Assert.AreEqual("1.0", facade1.Create(ObjectClass.ACCOUNT,attrs,null).GetUidValue());
             Assert.AreEqual("2.0", facade2.Create(ObjectClass.ACCOUNT,attrs,null).GetUidValue());
-
-            ShutdownConnnectorInfoManager();
         }
     
         [Test]
@@ -136,7 +139,6 @@ namespace FrameworkTests
             ConnectorFacade facade = facf.NewInstance(api);
             // call the various create/update/delete commands..
             facade.Schema();
-            ShutdownConnnectorInfoManager();        
         }
         
         [Test]
@@ -174,11 +176,8 @@ namespace FrameworkTests
             catch (ConnectorException e) {
                 Assert.AreEqual("validation failed es", e.Message);
             }
-            ShutdownConnnectorInfoManager();
         }
 
-        
-        
         /**
          * Main purpose of this is to test searching with
          * many results and that we can properly handle
@@ -240,8 +239,6 @@ namespace FrameworkTests
                 Assert.AreEqual(i.ToString(),
                         obj.Uid.GetUidValue());
             }
-            
-            ShutdownConnnectorInfoManager();
         }
         /**
          * Main purpose of this is to test sync with
@@ -306,8 +303,6 @@ namespace FrameworkTests
                 Assert.AreEqual(i.ToString(),
                         obj.Uid.GetUidValue());
             }
-            
-            ShutdownConnnectorInfoManager();
         }
         
         [Test]
@@ -358,7 +353,6 @@ namespace FrameworkTests
             Assert.AreEqual("5", facade1.Create(ObjectClass.ACCOUNT,attrs,options).GetUidValue());
             Assert.AreEqual("5", facade1.Create(ObjectClass.ACCOUNT,attrs,options).GetUidValue());
             Assert.AreEqual("5", facade1.Create(ObjectClass.ACCOUNT,attrs,options).GetUidValue());
-            ShutdownConnnectorInfoManager();
         }
         
         [Test]
@@ -437,7 +431,6 @@ namespace FrameworkTests
                 ConnectorAttribute attr = (ConnectorAttribute) facade.RunScriptOnConnector(builder.Build(), null);
                 Assert.AreEqual("myattr", attr.Name);
             }
-            ShutdownConnnectorInfoManager();
         }
 
         protected virtual ConnectorInfoManager GetConnectorInfoManager() {
@@ -447,7 +440,7 @@ namespace FrameworkTests
         }
     
         protected virtual void ShutdownConnnectorInfoManager() {
-            
+            ConnectorFacadeFactory.GetInstance().Dispose();
         }
     }
     
@@ -458,8 +451,6 @@ namespace FrameworkTests
         
         protected override ConnectorInfoManager GetConnectorInfoManager() {
             TestUtil.InitializeLogging();
-            
-            ShutdownConnnectorInfoManager();
             
             GuardedString str = new GuardedString();
             str.AppendChar('c');
@@ -526,7 +517,6 @@ namespace FrameworkTests
         protected override ConnectorInfoManager GetConnectorInfoManager() {
             TestUtil.InitializeLogging();
             
-            ShutdownConnnectorInfoManager();
             GuardedString str = new GuardedString();
             str.AppendChar('c');
             str.AppendChar('h');
