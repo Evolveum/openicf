@@ -240,20 +240,31 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
         
         public static Configuration 
         CreateBean(ConfigurationPropertiesImpl properties,
-        SafeType<Configuration> config) {
-            Configuration rv = config.CreateInstance();
+        SafeType<Configuration> configType) {
+            Configuration rv = configType.CreateInstance();
             rv.ConnectorMessages=properties.Parent.ConnectorInfo.Messages;
-            IDictionary<string,PropertyInfo> descriptors =
-                GetFilteredProperties(config);
-            foreach (ConfigurationPropertyImpl property in properties.Properties) {
+            MergeIntoBean(properties, rv);
+            return rv;
+        }
+
+        public static void
+        MergeIntoBean(ConfigurationPropertiesImpl properties,
+        Configuration config) {
+            SafeType<Configuration> configType =
+                SafeType<Configuration>.Get(config);
+            IDictionary<string, PropertyInfo> descriptors =
+                GetFilteredProperties(configType);
+            foreach (ConfigurationPropertyImpl property in properties.Properties)
+            {
                 String name = property.Name;
-                PropertyInfo desc = 
-                    CollectionUtil.GetValue(descriptors,name,null);
-                if ( desc == null ) {
-                    String FMT = 
+                PropertyInfo desc =
+                    CollectionUtil.GetValue(descriptors, name, null);
+                if (desc == null)
+                {
+                    String FMT =
                         "Class ''{0}'' does not have a property ''{1}''.";
-                    String MSG = String.Format(FMT, 
-                            config.RawType.Name,
+                    String MSG = String.Format(FMT,
+                            configType.RawType.Name,
                             name);
                     throw new ArgumentException(MSG);
                 }
@@ -262,9 +273,8 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                 //are mutable. make sure the config object
                 //has its own copy
                 val = SerializerUtil.CloneObject(val);
-                desc.SetValue(rv,val,null);
+                desc.SetValue(config, val, null);
             }
-            return rv;
         }
         
         private static IDictionary<string,PropertyInfo> 

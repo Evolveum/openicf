@@ -20,6 +20,8 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
+using System.Collections.Generic;
+
 using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Framework.Api;
 using Org.IdentityConnectors.Framework.Common.Objects;
@@ -37,7 +39,10 @@ namespace Org.IdentityConnectors.Test.Common.Spi
     
         APIConfiguration CreateTestConfiguration(SafeType<Connector> clazz,
                 Configuration config);
-                
+        
+        void FillConfiguration(Configuration config,
+                IDictionary<string, object> configData);
+
         void Search<T>(SearchOp<T> search,
                 ObjectClass oclass, 
                 Filter filter, 

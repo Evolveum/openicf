@@ -21,6 +21,8 @@
  * ====================
  */
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 using Org.IdentityConnectors.Common;
@@ -67,6 +69,26 @@ namespace Org.IdentityConnectors.Framework.Impl.Test
             return rv;
         }
                 
+        public void FillConfiguration(Configuration config, IDictionary<string, object> configData) {
+            IDictionary<string, object> configDataCopy = new Dictionary<string, object>(configData);
+            ConfigurationPropertiesImpl configProps =
+                CSharpClassProperties.CreateConfigurationProperties(config);
+            foreach (string propName in configProps.PropertyNames) {
+                object value;
+                if (configDataCopy.TryGetValue(propName, out value)) {
+                    // Remove the entry from the config map, so that at the end
+                    // the map only contains entries that were not assigned to a config property.
+                    configDataCopy.Remove(propName);
+                    configProps.SetPropertyValue(propName, value);
+                }
+            }
+            // The config map now contains entries that were not assigned to a config property.
+            foreach (string propName in configDataCopy.Keys) {
+                Trace.TraceWarning("Configuration property {0} does not exist!", propName);
+            }
+            CSharpClassProperties.MergeIntoBean(configProps, config);
+        }
+
         private static bool IsConnectorPoolingSupported(SafeType<Connector> clazz) {
             return ReflectionUtil.IsParentTypeOf(typeof(PoolableConnector),clazz.RawType);
         }

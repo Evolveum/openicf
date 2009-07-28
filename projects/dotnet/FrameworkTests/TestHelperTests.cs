@@ -28,6 +28,8 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using NUnit.Framework.SyntaxHelpers;
 
+using Org.IdentityConnectors.Framework.Common.Objects;
+using Org.IdentityConnectors.Framework.Spi;
 using Org.IdentityConnectors.Test.Common;
 
 namespace FrameworkTests
@@ -67,6 +69,43 @@ namespace FrameworkTests
         [Test]
         public void testGetProperties() {
             Assert.IsTrue(TestHelpers.GetProperty("Help", null).Equals("Me"));
+        }
+
+        [Test]
+        public void testFillConfiguration() {
+            TestConfiguration testConfig = new TestConfiguration();
+            // There is no "Foo" property in the config bean. We want to ensure
+            // that TestHelpers.FillConfiguration() does not fail for unknown properties.
+            IDictionary<string, object> configData = new Dictionary<string, object>();
+            configData["Host"] = "example.com";
+            configData["Port"] = 1234;
+            configData["Foo"] = "bar";
+            TestHelpers.FillConfiguration(testConfig, configData);
+
+            Assert.AreEqual("example.com", testConfig.Host);
+            Assert.AreEqual(1234, testConfig.Port);
+        }
+
+        public class TestConfiguration : Configuration {
+
+            public ConnectorMessages ConnectorMessages {
+                get {
+                    return null;
+                }
+                set {
+                    Assert.Fail("Should not set ConnectorMessages");
+                }
+            }
+
+            public void Validate() {
+                Assert.Fail("Should not call Validate()");
+            }
+
+            public String Host { get; set; }
+
+            public int Port { get; set; }
+
+            public String Unused { get; set; }
         }
     }
 }
