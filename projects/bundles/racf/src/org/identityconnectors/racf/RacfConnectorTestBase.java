@@ -754,21 +754,27 @@ public abstract class RacfConnectorTestBase {
         //TODO: tests expect suffix as part of name
         if (config.getSuffix()==null)
             config.setSuffix(SUFFIX);
-
         OurConnectorMessages messages = new OurConnectorMessages();
         Map<Locale, Map<String, String>> catalogs = new HashMap<Locale, Map<String,String>>();
         Map<String, String> foo = new HashMap<String, String>();
-        ResourceBundle messagesBundle = ResourceBundle.getBundle("org.identityconnectors.rw3270.Messages");
-        Enumeration<String> enumeration = messagesBundle.getKeys();
-        while (enumeration.hasMoreElements()) {
-            String key = enumeration.nextElement();
-            foo.put(key, messagesBundle.getString(key));
-        }
+        addBundle(foo, "org.identityconnectors.racf.Messages");
+        addBundle(foo, "org.identityconnectors.racf.Messages"); 
+        addBundle(foo, "org.identityconnectors.rw3270.Messages"); 
+        addBundle(foo, "org.identityconnectors.rw3270.hod.Messages");
         catalogs.put(Locale.getDefault(), foo);
         messages.setCatalogs(catalogs);
         config.setConnectorMessages(messages);
         
         return config;
+    }
+
+    private void addBundle(Map<String, String> foo, String bundle) {
+        ResourceBundle messagesBundle = ResourceBundle.getBundle(bundle);
+        Enumeration<String> enumeration = messagesBundle.getKeys();
+        while (enumeration.hasMoreElements()) {
+            String key = enumeration.nextElement();
+            foo.put(key, messagesBundle.getString(key));
+        }
     }
 
     private RacfConfiguration createUserConfiguration() throws IOException {

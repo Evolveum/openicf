@@ -66,26 +66,14 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     private String         _disconnectScript;
     private String         _connectionClassName;
     
-    private static final String CATALOG = "org.identityconnectors.racf.RacfMessages";
-   
-    private ResourceBundle getBundle() {
-        if (_bundle==null || CurrentLocale.get()!=_lastLocale) {
-            _lastLocale = CurrentLocale.get();
-            if (_lastLocale==null)
-                _lastLocale = Locale.getDefault();
-            _bundle = ResourceBundle.getBundle(CATALOG, _lastLocale); 
-        }
-        return _bundle;
+    public String getMessage(String key) {
+        return getConnectorMessages().format(key, key);
     }
 
-    String getMessage(String key) {
-        return getBundle().getString(key);
+    public String getMessage(String key, Object... objects) {
+        return getConnectorMessages().format(key, key, objects);
     }
 
-    String getMessage(String key, Object... objects) {
-        return MessageFormat.format(getBundle().getString(key), objects);
-    }
-    
     private static final String GROUP_RACF_PARSER   = "org/identityconnectors/racf/GroupRacfSegmentParser.xml";
     private static final String RACF_PARSER         = "org/identityconnectors/racf/RacfSegmentParser.xml";
     private static final String CICS_PARSER         = "org/identityconnectors/racf/CicsSegmentParser.xml";
