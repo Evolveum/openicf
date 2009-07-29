@@ -57,42 +57,44 @@ public class UserSecuringAttrs  {
      */
     static final Log log = Log.getLog(UserSecuringAttrs.class);
     
-
-
     /**
      * The get Instance method
-     * @param connector parent
+     * @param conn
+     * @param cfg 
      * @return the account
      */
-    public static UserSecuringAttrs getInstance(OracleERPConnector connector) {
-       return new UserSecuringAttrs(connector);
+    public static UserSecuringAttrs getInstance(OracleERPConnection conn, OracleERPConfiguration cfg) {
+       return new UserSecuringAttrs(conn, cfg);
     }
 
-    /**
-     * used for adminUserId for calling storing procedures
-     */
-    private int adminUserId = 0;
-
-   
-    /**
-     * The parent connector
-     */
-    private OracleERPConnector co;
     
     /**
+     * The instance or the parent object
+     */
+    private OracleERPConnection conn = null;
+    
+    /**
+     * The instance or the parent object
+     */
+    private OracleERPConfiguration cfg = null;    
+
+    /**
      * The account
+     * @param conn 
+     * @param cfg 
      * @param connector parent
      */
-    private UserSecuringAttrs(OracleERPConnector connector) {
-        this.co = connector;
-    }
+    public UserSecuringAttrs(OracleERPConnection conn, OracleERPConfiguration cfg) {
+        this.conn = conn;
+        this.cfg = cfg;
+    }    
     
     /**
      * @param amb
      * @param userName 
      */
     public void buildSecuringAttributesToAccountObject(AttributeMergeBuilder amb, final String userName) {
-        if (!co.getCfg().isManageSecuringAttrs()) {
+        if (!cfg.isManageSecuringAttrs()) {
             return;
         }
 
@@ -102,14 +104,6 @@ public class UserSecuringAttrs  {
                 amb.addAttribute(SEC_ATTRS, secAttrs);
             }
         }
-    }
-    
-    /**
-     * Accessor for the adminUserId property
-     * @return the adminUserId
-     */
-    public int getAdminUserId() {
-        return adminUserId;
     }
 
     /**
@@ -150,21 +144,6 @@ public class UserSecuringAttrs  {
         */  
     }
 
-
-
-    /**
-     * @param userId
-     */
-    public void initAdminUserId(String userId) {
-        try {
-            adminUserId = new Integer(userId).intValue();
-            log.ok("The adminUserId is : {0} ", userId);
-        } catch (Exception ex) {
-            log.error(ex, "The User Id String {0} is not a number", userId);
-        }
-    }    
-    
-
     /**
      * 
      * 
@@ -183,7 +162,7 @@ public class UserSecuringAttrs  {
         final String method = "updateUserSecuringAttrs";
         log.info(method);
 
-        final String userId=getUserId(co, name);
+        final String userId=getUserId(conn, cfg, name);
 
         //Convert to list of Strings
         final List<String> secAttrList = convertToListString(secAttr.getValue());
@@ -283,7 +262,7 @@ public class UserSecuringAttrs  {
             log.info(msg, sql);
             
 
-            pstmt = co.getConn().prepareStatement(sql);
+            pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, attributeName);
             pstmt.setString(2, applicationName);
             rs = pstmt.executeQuery();
@@ -297,9 +276,9 @@ public class UserSecuringAttrs  {
             }
             // pstmt closed in finally below
 
-            sql = "{ call " + co.app()
+            sql = "{ call " + cfg.app()
                     + "icx_user_sec_attr_pub.create_user_sec_attr(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
-            cstmt1 = co.getConn().prepareCall(sql);
+            cstmt1 = conn.prepareCall(sql);
 
             msg = "Oracle ERP: api_version_number = " + 1;
             log.ok(msg);
@@ -376,26 +355,26 @@ public class UserSecuringAttrs  {
                 log.ok(msg);
                 cstmt1.setNull(14, java.sql.Types.NUMERIC);
             }
-            msg = "Oracle ERP: created_by = " + getAdminUserId();
+            msg = "Oracle ERP: created_by = " + cfg.getAdminUserId();
             log.ok(msg);
-            cstmt1.setInt(15, getAdminUserId());
+            cstmt1.setInt(15, cfg.getAdminUserId());
             
             java.sql.Date sqlDate = getCurrentDate();
             msg = "Oracle ERP: creation_date = sysdate";
             log.ok(msg);
             cstmt1.setDate(16, sqlDate);
             
-            msg = "Oracle ERP: last_updated_by = " + getAdminUserId();
+            msg = "Oracle ERP: last_updated_by = " + cfg.getAdminUserId();
             log.ok(msg);
-            cstmt1.setInt(17, getAdminUserId());
+            cstmt1.setInt(17, cfg.getAdminUserId());
             
             msg = "Oracle ERP: last_updated_date = sysdate";
             log.ok(msg);
             cstmt1.setDate(18, sqlDate);
             
-            msg = "Oracle ERP: last_update_login = " + getAdminUserId();
+            msg = "Oracle ERP: last_update_login = " + cfg.getAdminUserId();
             log.ok(msg);
-            cstmt1.setInt(19, getAdminUserId());
+            cstmt1.setInt(19, cfg.getAdminUserId());
             
 
             cstmt1.execute();
@@ -405,7 +384,7 @@ public class UserSecuringAttrs  {
         } catch (SQLException e) {
             final String msg = "SQL Exception:" + e.getMessage();
             log.error(e, msg);
-            SQLUtil.rollbackQuietly(co.getConn());
+            SQLUtil.rollbackQuietly(conn);
             throw new ConnectorException(msg, e);
         } finally {
             SQLUtil.closeQuietly(rs);
@@ -481,7 +460,7 @@ public class UserSecuringAttrs  {
             String msg = "execute sql = ''{0}''";
             log.info(msg, sql);
 
-            pstmt = co.getConn().prepareStatement(sql);
+            pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, attributeName);
             pstmt.setString(2, applicationName);
             rs = pstmt.executeQuery();
@@ -494,8 +473,8 @@ public class UserSecuringAttrs  {
                 // rs closed in finally below
             }
             // pstmt closed in finally below
-            sql = "{ call " + co.app() + "icx_user_sec_attr_pub.delete_user_sec_attr(?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
-            cstmt1 = co.getConn().prepareCall(sql);
+            sql = "{ call " + cfg.app() + "icx_user_sec_attr_pub.delete_user_sec_attr(?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
+            cstmt1 = conn.prepareCall(sql);
 
             cstmt1.setInt(1, 1);
             msg = "Oracle ERP: api_version_number = " + 1;
@@ -578,7 +557,7 @@ public class UserSecuringAttrs  {
             // cstmt1 closed in finally below
 
         } catch (SQLException e) {
-            SQLUtil.rollbackQuietly(co.getConn());
+            SQLUtil.rollbackQuietly(conn);
 
             final String msg = "error in statement";
             log.error(e, msg);
@@ -612,13 +591,13 @@ public class UserSecuringAttrs  {
         if (userName != null) {
             b.append(", akwebsecattr.VARCHAR2_VALUE, akwebsecattr.DATE_VALUE, akwebsecattr.NUMBER_VALUE ");
         }
-        b.append("FROM " + co.app() + "AK_ATTRIBUTES_VL akattrvl, " + co.app()
+        b.append("FROM " + cfg.app() + "AK_ATTRIBUTES_VL akattrvl, " + cfg.app()
                 + "FND_APPLICATION_VL fndappvl ");
         // conditionalize including AK_WEB_USER_SEC_ATTR_VALUES in the FROM
         // list, has significant performance impact when present but not
         // referenced.
-        b.append(", " + co.app() + "AK_WEB_USER_SEC_ATTR_VALUES akwebsecattr, ");
-        b.append(co.app() + "FND_USER fnduser ");
+        b.append(", " + cfg.app() + "AK_WEB_USER_SEC_ATTR_VALUES akwebsecattr, ");
+        b.append(cfg.app() + "FND_USER fnduser ");
 
         b.append("WHERE akattrvl.ATTRIBUTE_APPLICATION_ID = fndappvl.APPLICATION_ID ");
 
@@ -635,7 +614,7 @@ public class UserSecuringAttrs  {
         final String sql = b.toString();
         try {
             log.info("execute sql {0}", sql);
-            st = co.getConn().prepareStatement(sql);
+            st = conn.prepareStatement(sql);
             st.setString(1, userName.toUpperCase());
             res = st.executeQuery();
             while (res.next()) {
@@ -663,7 +642,7 @@ public class UserSecuringAttrs  {
         } catch (SQLException e) {
             final String msg = "could not get Securing attributes";
             log.error(e, msg);
-            SQLUtil.rollbackQuietly(co.getConn());
+            SQLUtil.rollbackQuietly(conn);
             throw new ConnectorException(msg, e);
         } finally {
             SQLUtil.closeQuietly(res);
@@ -697,7 +676,7 @@ public class UserSecuringAttrs  {
         
         b.append("SELECT distinct akattrvl.NAME, fndappvl.APPLICATION_NAME ");
 
-        b.append("FROM " + co.app() + "AK_ATTRIBUTES_VL akattrvl, " + co.app()
+        b.append("FROM " + cfg.app() + "AK_ATTRIBUTES_VL akattrvl, " + cfg.app()
                 + "FND_APPLICATION_VL fndappvl ");
 
 
@@ -711,7 +690,7 @@ public class UserSecuringAttrs  {
         final String sql = b.toString();
         try {
             log.info("execute sql {0}", sql);
-            st = co.getConn().prepareStatement(sql);
+            st = conn.prepareStatement(sql);
             res = st.executeQuery();
             while (res.next()) {
 
@@ -733,7 +712,7 @@ public class UserSecuringAttrs  {
         } catch (SQLException e) {
             final String msg = "could not get Securing attributes";
             log.error(e, msg);
-            SQLUtil.rollbackQuietly(co.getConn());
+            SQLUtil.rollbackQuietly(conn);
             throw new ConnectorException(msg, e);
         } finally {
             SQLUtil.closeQuietly(res);
@@ -760,10 +739,10 @@ public class UserSecuringAttrs  {
         StringBuffer b = new StringBuffer();
 
         b.append("SELECT distinct fndsecgvl.security_group_name ");
-        b.append("FROM " + co.app() + "fnd_security_groups_vl fndsecgvl ");
+        b.append("FROM " + cfg.app() + "fnd_security_groups_vl fndsecgvl ");
 
         try {
-            st = co.getConn().prepareStatement(b.toString());
+            st = conn.prepareStatement(b.toString());
             res = st.executeQuery();
             while (res.next()) {
                 
@@ -781,7 +760,7 @@ public class UserSecuringAttrs  {
         }
         catch (SQLException e) {
             log.error(e, method);
-            SQLUtil.rollbackQuietly(co.getConn());
+            SQLUtil.rollbackQuietly(conn);
             throw ConnectorException.wrap(e);
         } finally {
             SQLUtil.closeQuietly(res);
@@ -807,7 +786,7 @@ public class UserSecuringAttrs  {
             getSecuringAttrsResult(where, handler,options);
             return;
         } 
-        throw new IllegalArgumentException(co.getCfg().getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
+        throw new IllegalArgumentException(cfg.getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
         
     }    
 }

@@ -22,6 +22,8 @@
  */
 package org.identityconnectors.oracleerp;
 
+import java.util.Set;
+
 import org.identityconnectors.dbcommon.DatabaseFilterTranslator;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -44,15 +46,20 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
  */
 public class OracleERPFilterTranslator extends DatabaseFilterTranslator {
 
-    OracleERPColumnNameResolver cnr = null;
+    ColumnNameResolver cnr = null;
+    private Set<String> columnNames = null;
+    
+    
     /**
      * @param oclass
      * @param options
+     * @param columnNames 
      * @param cnr 
      */
-    public OracleERPFilterTranslator(ObjectClass oclass, OperationOptions options, OracleERPColumnNameResolver cnr) {
+    public OracleERPFilterTranslator(ObjectClass oclass, OperationOptions options, Set<String> columnNames, ColumnNameResolver cnr) {
         super(oclass, options);
         this.cnr = cnr;
+        this.columnNames  = columnNames;
     }
 
     /* (non-Javadoc)
@@ -60,6 +67,11 @@ public class OracleERPFilterTranslator extends DatabaseFilterTranslator {
      */
     @Override
     protected SQLParam getSQLParam(Attribute attribute, ObjectClass oclass, OperationOptions options) {
-        return new SQLParam(cnr.getFilterColumnName(attribute.getName()), AttributeUtil.getSingleValue(attribute));
+        final String attributeName = attribute.getName();
+        final String columnName = cnr.getColumnName(attributeName);
+        if ( columnNames.contains(columnName)) {
+            return new SQLParam( columnName, AttributeUtil.getSingleValue(attribute));
+        }
+        return null;
     }
 }

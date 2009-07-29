@@ -34,6 +34,7 @@ import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
@@ -42,7 +43,9 @@ import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.Uid;
 
 /**
@@ -152,7 +155,9 @@ public class OracleERPUtil {
     static final String MSG_COULD_NOT_ENABLE_USER="msg.could.not.enable.user";
     static final String MSG_COULD_NOT_RENAME_USER="msg.could.not.rename.user";
     static final String MSG_ACCOUNT_NOT_UPDATE="msg.account.not.update";
-
+    static final String MSG_ACCOUNT_NAME_REQUIRED="msg.acount.name.required";
+    static final String MSG_ACCOUNT_UID_REQUIRED="msg.acount.uid.required";
+    
     //Not yet used
     static final String MSG_ACCOUNT_OBJECT_CLASS_REQUIRED = "msg.acount.object.class.required";
     static final String MSG_AUTHENTICATE_OP_NOT_SUPPORTED = "msg.auth.op.not.supported";
@@ -163,6 +168,7 @@ public class OracleERPUtil {
     static final String MSG_ACCOUNT_NOT_CREATE="msg.account.not.create";    
     static final String MSG_ACCOUNT_NOT_DELETE="msg.account.not.delete";
     static final String MSG_ACCOUNT_NOT_READ="msg.account.not.read";
+
     
     
     /**
@@ -240,19 +246,24 @@ public class OracleERPUtil {
      * 
      */
     public static final int ORACLE_TIMEOUT = 1800;
+    
+    /**
+     * 
+     */
+    public static final String CUST = "CUST";
 
     /**
-     * @param con 
+     * @param conn connection 
+     * @param cfg configuration
      * @param userName
      * @return The UserId string value
      * @throws SQLException
      */
-    public static String getUserId(OracleERPConnector con, String userName) {
-        final OracleERPConnection conn = con.getConn();
+    public static String getUserId(OracleERPConnection conn, OracleERPConfiguration cfg, String userName) {
         final String msg = "getUserId ''{0}'' -> ''{1}''";
         String userId = null;
         log.info("get UserId for {0}", userName);
-        final String sql = "select " + USER_ID + " from " + con.app() + "FND_USER where upper(user_name) = ?";
+        final String sql = "select " + USER_ID + " from " + cfg.app() + "FND_USER where upper(user_name) = ?";
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
@@ -273,7 +284,7 @@ public class OracleERPUtil {
             SQLUtil.closeQuietly(ps);
         }
         if (userId == null || userId == "") {
-            final String emsg = con.getCfg().getMessage(MSG_USER_NOT_FOUND, userName);
+            final String emsg = cfg.getMessage(MSG_USER_NOT_FOUND, userName);
             log.error(emsg);
             throw new IllegalStateException(emsg);
         }    
@@ -304,7 +315,35 @@ public class OracleERPUtil {
     public static Set<String> getDefaultAttributesToGet(Set<AttributeInfo> ais) {
         Set<String> ret = CollectionUtil.newCaseInsensitiveSet();
         for (AttributeInfo ai : ais) {
-            if (ai.isReturnedByDefault() && ai.isReadable()) {
+            if (ai.isReturnedByDefault()) {
+                ret.add(ai.getName());
+            }
+        }
+        return ret;
+    }
+
+    /**
+     * @param schema
+     * @param type
+     * @return The attribute info set
+     */
+    public static Set<AttributeInfo> getAttributeInfos(Schema schema, String type) {
+        ObjectClassInfo oci = schema.findObjectClassInfo(type);
+        if  ( oci == null) {
+            throw new IllegalStateException("Unknown object type");
+        }
+        return oci.getAttributeInfo();
+    }    
+    
+    /**
+     * Get default attributes to get from schema
+     * @param ais attribute info set
+     * @return set of the 
+     */
+    public static Set<String> getCreatableAttributes(Set<AttributeInfo> ais) {
+        Set<String> ret = CollectionUtil.newCaseInsensitiveSet();
+        for (AttributeInfo ai : ais) {
+            if (ai.isCreateable()) {
                 ret.add(ai.getName());
             }
         }
@@ -312,19 +351,84 @@ public class OracleERPUtil {
     }    
     
     /**
+     * Get default attributes to get from schema
+     * @param ais attribute info set
+     * @return set of the 
+     */
+    public static Set<String> getRequiredAttributes(Set<AttributeInfo> ais) {
+        Set<String> ret = CollectionUtil.newCaseInsensitiveSet();
+        for (AttributeInfo ai : ais) {
+            if (ai.isRequired()) {
+                ret.add(ai.getName());
+            }
+        }
+        return ret;
+    }
+    
+    /**
+     * Get default attributes to get from schema
+     * @param ais attribute info set
+     * @return set of the 
+     */
+    public static Set<String> getUpdatableAttributes(Set<AttributeInfo> ais) {
+        Set<String> ret = CollectionUtil.newCaseInsensitiveSet();
+        for (AttributeInfo ai : ais) {
+            if (ai.isUpdateable()) {
+                ret.add(ai.getName());
+            }
+        }
+        return ret;
+    }
+    
+    
+    /**
+     * Get default attributes to get from schema
+     * @param ais attribute info set
+     * @return set of the 
+     */
+    public static Set<String> getReadableAttributes(Set<AttributeInfo> ais) {
+        Set<String> ret = CollectionUtil.newCaseInsensitiveSet();
+        for (AttributeInfo ai : ais) {
+            if (ai.isReadable()) {
+                ret.add(ai.getName());
+            }
+        }
+        return ret;
+    }
+        
+    /**
+     * Get default attributes to get from schema
+     * @param ais attribute info set
+     * @return set of the 
+     */
+    public static Set<String> getAllAttributes(Set<AttributeInfo> ais) {
+        Set<String> ret = CollectionUtil.newCaseInsensitiveSet();
+        for (AttributeInfo ai : ais) {
+            ret.add(ai.getName());
+        }
+        return ret;
+    }    
+    /**
      * Get attributes to get list
      * @param options
-     * @param defAttrs 
+     * @param ais Attribute info set 
      * @return set of attribute names to get or empty set, when not defined
      */
-    public static Set<String> getAttributesToGet(OperationOptions options, Set<String> defAttrs) {
+    public static Set<String> getAttributesToGet(OperationOptions options, Set<AttributeInfo> ais) {
         final String msg = "getAttributesToGet ''{0}''";
-        Set<String> _attrToGet = CollectionUtil.newSet(defAttrs);
+        Set<String> allAttributes = getAllAttributes(ais);
+        Set<String> _attrToGet;
         if(options != null && options.getAttributesToGet() != null) {
             _attrToGet = CollectionUtil.newCaseInsensitiveSet();
             for (String toGet : options.getAttributesToGet()) {
+                if(allAttributes.contains(toGet) ) {
                 _attrToGet.add(toGet);
+                } else {
+                    throw new IllegalArgumentException("Invalid attribute to get"+toGet);
+                }
             }
+        } else {
+            _attrToGet = getDefaultAttributesToGet(ais); 
         }
         //Make sure, that the name and uid are always present
         _attrToGet.add(Name.NAME);
@@ -336,11 +440,12 @@ public class OracleERPUtil {
     /**
      * Get The personId from employeNumber or NPW number
      * @param name user identity
-     * @param con connector
+     * @param conn connector
+     * @param cfg configuration
      * @param attrs attributes 
      * @return personid the id of the person
      */
-    public static Integer getPersonId(String name, OracleERPConnector con, Set<Attribute> attrs) {  
+    public static Integer getPersonId(String name, OracleERPConnection conn, OracleERPConfiguration cfg, Set<Attribute> attrs) {  
         log.info("getPersonId for userId: ''{0}''", name);
         Integer ret = null;
         int num = 0;
@@ -361,12 +466,12 @@ public class OracleERPUtil {
         }
         
         log.ok("clomunName ''{0}''", columnName);
-        final String sql = "select "+PERSON_ID+" from "+con.app()+"PER_PEOPLE_F where "+columnName+" = ?";
+        final String sql = "select "+PERSON_ID+" from "+cfg.app()+"PER_PEOPLE_F where "+columnName+" = ?";
         ResultSet rs = null; // SQL query on person_id
         PreparedStatement ps = null; // statement that generates the query
         log.ok(sql);
         try {
-            ps = con.getConn().prepareStatement(sql);
+            ps = conn.prepareStatement(sql);
             ps.setInt(1, num);
             ps.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
             rs = ps.executeQuery();
@@ -376,7 +481,7 @@ public class OracleERPUtil {
             log.ok("Oracle ERP: PERSON_ID return from {0} = {1}", sql, ret);
             
             if( ret == null ) {
-                final String msg =  con.getCfg().getMessage(MSG_HR_LINKING_ERROR, num, name);
+                final String msg =  cfg.getMessage(MSG_HR_LINKING_ERROR, num, name);
                 log.error(msg);
                 throw new ConnectorException(msg);
             }
@@ -548,4 +653,33 @@ public class OracleERPUtil {
         }
         return ret.toString();        
     }
+    
+    /**
+     * @param where
+     * @return the id from the current statement 
+     */
+    public static String getFilterId(FilterWhereBuilder where) {
+        String filterId = null;
+        if (where != null) {
+            for (SQLParam sqlp : where.getParams()) {
+                if (sqlp.getName().equalsIgnoreCase(USER_NAME)) {
+                    filterId = sqlp.getValue().toString();
+                }
+            }
+        }
+        return filterId;
+    }    
+
+    // The SQL call update function SQL template
+    private static final String FND_USER_CALL = "fnd_user_pkg.";
+
+    /**
+     * @param schemaId
+     * @param fn
+     * @param body
+     * @return The SQL string
+     */
+    public static String createCallSQL(String schemaId, final String fn, StringBuilder body) {
+        return "{ call " + schemaId + FND_USER_CALL + fn + " ( "+ body.toString() + " ) }";
+    }    
 }

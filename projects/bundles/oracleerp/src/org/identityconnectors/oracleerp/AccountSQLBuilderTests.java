@@ -25,11 +25,9 @@ package org.identityconnectors.oracleerp;
 import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.sql.Timestamp;
-import java.util.Map;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
-import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.Name;
@@ -46,13 +44,8 @@ import org.junit.Test;
  * @version 1.0
  * @since 1.0
  */
-public class AccountTests { 
-    
-    /**
-     * The account instance
-     */
-    private static final Account account = Account.getInstance(null);
-    
+public class AccountSQLBuilderTests { 
+       
     //Schema id
     private static String SCHEMA_PREFIX="APPS.";
 
@@ -62,7 +55,7 @@ public class AccountTests {
     @Test
     public void testCreateUserCall() {
         final Set<Attribute> attrs = createAllAccountAttributes();
-        final Map<String, SQLParam> userValues =  account.getParamsMap(ObjectClass.ACCOUNT, attrs, null, true);
+        final AccountSQLBuilder asb =  new AccountSQLBuilder(SCHEMA_PREFIX, true).build(ObjectClass.ACCOUNT, attrs, null);
 
         //test sql
         Assert.assertEquals("Invalid SQL",
@@ -72,10 +65,10 @@ public class AccountTests {
                         "x_password_accesses_left => ?, x_password_lifespan_accesses => ?, "+
                         "x_password_lifespan_days => ?, x_employee_id => ?, x_email_address => ?, "+
                         "x_fax => ?, x_customer_id => ?, x_supplier_id => ? ) }",
-                        account.getUserCallSQL(userValues, true, SCHEMA_PREFIX));
+                        asb.getUserCallSQL());
         //session is always null, so 16 params
-        Assert.assertEquals("Invalid number of  SQL Params", 16, account.getUserSQLParams(userValues).size());
-        Assert.assertFalse("Is update needed", account.isUpdateNeeded(userValues));
+        Assert.assertEquals("Invalid number of  SQL Params", 16, asb.getUserSQLParams().size());
+        Assert.assertFalse("Is update needed", asb.isUpdateNeeded());
     }    
     
     /**
@@ -84,7 +77,7 @@ public class AccountTests {
     @Test
     public void testUpdateUserCall() {
         final Set<Attribute> attrs = createAllAccountAttributes();
-        final Map<String, SQLParam> userValues =  account.getParamsMap(ObjectClass.ACCOUNT, attrs, null, false);
+        final AccountSQLBuilder asb =  new AccountSQLBuilder(SCHEMA_PREFIX, false).build(ObjectClass.ACCOUNT, attrs, null);
 
         //test sql
         Assert.assertEquals("Invalid SQL",
@@ -93,10 +86,10 @@ public class AccountTests {
                         "x_description => ?, x_password_date => ?, x_password_accesses_left => ?, "+
                         "x_password_lifespan_accesses => ?, x_password_lifespan_days => ?, x_employee_id => ?, "+
                         "x_email_address => ?, x_fax => ?, x_customer_id => ?, x_supplier_id => ? ) }",
-                        account.getUserCallSQL(userValues, false, SCHEMA_PREFIX));
+                        asb.getUserCallSQL());
         //session is always null, so 15 params
-        Assert.assertEquals("Invalid number of  SQL Params", 15, account.getUserSQLParams(userValues).size());
-        Assert.assertFalse("Is update needed", account.isUpdateNeeded(userValues));
+        Assert.assertEquals("Invalid number of  SQL Params", 15, asb.getUserSQLParams().size());
+        Assert.assertFalse("Is update needed", asb.isUpdateNeeded());
     }        
     
     /**
@@ -105,16 +98,16 @@ public class AccountTests {
     @Test
     public void testCreateUserCreateUserAll() {
         final Set<Attribute> attrs = createAllAccountAttributes();
-        final Map<String, SQLParam> userValues =  account.getParamsMap(ObjectClass.ACCOUNT, attrs, null, true);
+        final AccountSQLBuilder asb =  new AccountSQLBuilder(SCHEMA_PREFIX, true).build(ObjectClass.ACCOUNT, attrs, null);
         
         //Old style of creating user
         Assert.assertEquals("Invalid All SQL",
                 "{ call APPS.fnd_user_pkg.CreateUser ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ) }",
-                account.getAllSQL(userValues, true, SCHEMA_PREFIX));
+                asb.getAllSQL());
         
         //all 17 params
-        Assert.assertEquals("Invalid number of  SQL Params", 17, account.getAllSQLParams(userValues).size());
-        Assert.assertFalse("Is update needed", account.isUpdateNeeded(userValues));
+        Assert.assertEquals("Invalid number of  SQL Params", 17, asb.getAllSQLParams().size());
+        Assert.assertFalse("Is update needed", asb.isUpdateNeeded());
     }     
     
     /**
@@ -123,16 +116,16 @@ public class AccountTests {
     @Test
     public void testUpdateUserCreateUserAll() {
         final Set<Attribute> attrs = createAllAccountAttributes();
-        final Map<String, SQLParam> userValues =  account.getParamsMap(ObjectClass.ACCOUNT, attrs, null, false);
+        final AccountSQLBuilder asb =  new AccountSQLBuilder(SCHEMA_PREFIX, false).build(ObjectClass.ACCOUNT, attrs, null);
         
         //Old style of creating user
         Assert.assertEquals("Invalid All SQL",
                 "{ call APPS.fnd_user_pkg.UpdateUser ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ) }",
-                account.getAllSQL(userValues, false, SCHEMA_PREFIX));
+                asb.getAllSQL());
         
         //all 17 params
-        Assert.assertEquals("Invalid number of  SQL Params", 17, account.getAllSQLParams(userValues).size());
-        Assert.assertFalse("Is update needed", account.isUpdateNeeded(userValues));
+        Assert.assertEquals("Invalid number of  SQL Params", 17, asb.getAllSQLParams().size());
+        Assert.assertFalse("Is update needed", asb.isUpdateNeeded());
     }     
     
     /**
@@ -141,7 +134,7 @@ public class AccountTests {
     @Test
     public void testCreateUserCallNulls() {
         final Set<Attribute> attrs = createNullAccountAttributes();
-        final Map<String, SQLParam> userValues =  account.getParamsMap(ObjectClass.ACCOUNT, attrs, null, true);
+        final AccountSQLBuilder asb = new AccountSQLBuilder(SCHEMA_PREFIX, true).build(ObjectClass.ACCOUNT, attrs, null);
         //test sql
         Assert.assertEquals("Invalid SQL",
                 "{ call APPS.fnd_user_pkg.CreateUser ( x_user_name => ?, x_owner => upper(?), "+
@@ -152,9 +145,9 @@ public class AccountTests {
                 "x_password_lifespan_days => FND_USER_PKG.null_number, x_employee_id => FND_USER_PKG.null_number, "+
                 "x_email_address => FND_USER_PKG.null_char, x_fax => FND_USER_PKG.null_char, "+
                 "x_customer_id => FND_USER_PKG.null_number, x_supplier_id => FND_USER_PKG.null_number ) }",
-                account.getUserCallSQL(userValues, true, SCHEMA_PREFIX));
+                asb.getUserCallSQL());
         //session is always null, so 16 params
-        Assert.assertEquals("Invalid number of  SQL Params", 6, account.getUserSQLParams(userValues).size());    
+        Assert.assertEquals("Invalid number of  SQL Params", 6, asb.getUserSQLParams().size());    
     }
     
     /**
@@ -163,7 +156,7 @@ public class AccountTests {
     @Test
     public void testUpdateUserCallNulls() {
         final Set<Attribute> attrs = createNullAccountAttributes();
-        final Map<String, SQLParam> userValues =  account.getParamsMap(ObjectClass.ACCOUNT, attrs, null, false);
+        final AccountSQLBuilder asb = new AccountSQLBuilder(SCHEMA_PREFIX, false).build(ObjectClass.ACCOUNT, attrs, null);
         //test sql
         Assert.assertEquals("Invalid SQL",
                 "{ call APPS.fnd_user_pkg.UpdateUser ( x_user_name => ?, x_owner => upper(?), "+
@@ -174,9 +167,9 @@ public class AccountTests {
                 "x_password_lifespan_days => FND_USER_PKG.null_number, x_employee_id => FND_USER_PKG.null_number, "+
                 "x_email_address => FND_USER_PKG.null_char, x_fax => FND_USER_PKG.null_char, "+
                 "x_customer_id => FND_USER_PKG.null_number, x_supplier_id => FND_USER_PKG.null_number ) }",
-                account.getUserCallSQL(userValues, false, SCHEMA_PREFIX));
+                asb.getUserCallSQL());
         //session is always null, so 16 params
-        Assert.assertEquals("Invalid number of  SQL Params", 5, account.getUserSQLParams(userValues).size());    
+        Assert.assertEquals("Invalid number of  SQL Params", 5, asb.getUserSQLParams().size());    
     }    
 
     /**
@@ -185,15 +178,15 @@ public class AccountTests {
     @Test
     public void testCreateUserCallAllNulls() {
         final Set<Attribute> attrs = createNullAccountAttributes();
-        final Map<String, SQLParam> userValues =  account.getParamsMap(ObjectClass.ACCOUNT, attrs, null, true);
+        final AccountSQLBuilder asb =  new AccountSQLBuilder(SCHEMA_PREFIX, true).build(ObjectClass.ACCOUNT, attrs, null);
 
         //Test Old style of creating user
         Assert.assertEquals("Invalid All SQL",
                 "{ call APPS.fnd_user_pkg.CreateUser ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ) }",
-                account.getAllSQL(userValues, true, SCHEMA_PREFIX));       
+                asb.getAllSQL());       
         //all 17 params
-        Assert.assertEquals("Invalid number of  SQL Params", 17, account.getAllSQLParams(userValues).size());
-        Assert.assertTrue("Is update needed", account.isUpdateNeeded(userValues)); 
+        Assert.assertEquals("Invalid number of  SQL Params", 17, asb.getAllSQLParams().size());
+        Assert.assertTrue("Is update needed", asb.isUpdateNeeded()); 
     }
     
     /**
@@ -202,9 +195,9 @@ public class AccountTests {
     @Test
     public void tesUpdateUserCallAllNulls() {
         final Set<Attribute> attrs = createNullAccountAttributes();
-        final Map<String, SQLParam> userValues =  account.getParamsMap(ObjectClass.ACCOUNT, attrs, null, true);
+        final AccountSQLBuilder asb =  new AccountSQLBuilder(SCHEMA_PREFIX, true).build(ObjectClass.ACCOUNT, attrs, null);
 
-        Assert.assertTrue("Is update needed", account.isUpdateNeeded(userValues));
+        Assert.assertTrue("Is update needed", asb.isUpdateNeeded());
 
         Assert.assertEquals("Invalid All SQL",
                 "{ call APPS.fnd_user_pkg.UpdateUser ( x_user_name => ?, x_owner => upper(?), "+
@@ -214,10 +207,10 @@ public class AccountTests {
                 "x_password_lifespan_days => FND_USER_PKG.null_number, x_employee_id => FND_USER_PKG.null_number, "+
                 "x_email_address => FND_USER_PKG.null_char, x_fax => FND_USER_PKG.null_char, "+
                 "x_customer_id => FND_USER_PKG.null_number, x_supplier_id => FND_USER_PKG.null_number ) }",
-                account.getUserUpdateNullsSQL(userValues, SCHEMA_PREFIX));
+                asb.getUserUpdateNullsSQL());
         
         //the required user name and owner
-        Assert.assertEquals("Invalid number of update SQL Params", 2, account.getUserUpdateNullsParams(userValues).size());        
+        Assert.assertEquals("Invalid number of update SQL Params", 2, asb.getUserUpdateNullsParams().size());        
     }    
     
     

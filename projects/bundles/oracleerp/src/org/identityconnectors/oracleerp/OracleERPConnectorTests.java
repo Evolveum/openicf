@@ -71,15 +71,19 @@ public class OracleERPConnectorTests {
 
     //set up logging
     private static final Log log = Log.getLog(OracleERPConnectorTests.class);
+
+    static final String CONFIG_SYSADM = "configuration.sysadm";
+    static final String CONFIG_TST = "configuration.tst"; 
+    static final String CONFIG_USER = "configuration.user"; 
+
+    
     static final String ACCOUNT_ALL_ATTRS = "account.all";
     static final String ACCOUNT_AUDITOR = "account.auditor";
     static final String ACCOUNT_MODIFY_ATTRS = "account.modify";
     static final String ACCOUNT_OPTIONS = "account.options";
     static final String ACCOUNT_REQUIRED_ATTRS = "account.required";
     static final String ACCOUNT_USER_ATTRS = "account.required";
-    static final String CONFIG_SYSADM = "configuration.sysadm";
 
-    static final String CONFIG_TST = "configuration.tst"; 
 
     
     /**
@@ -102,43 +106,114 @@ public class OracleERPConnectorTests {
      * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
      */
     @Test
-    public void testConfig() {
+    public void testConfigSysadm() {
         final OracleERPConfiguration config = getConfiguration(CONFIG_SYSADM);
-        assertNotNull(config);
+        assertNotNull("null config", config);
         
-        assertNotNull(config.getDriver());        
+        assertNotNull("null driver", config.getDriver());        
         if(isBlank(config.getUrl())) {
-            assertNotNull(config.getHost());
-            assertNotNull(config.getUser());
-            assertNotNull(config.getPort());
+            assertNotNull("null host", config.getHost());
+            assertNotNull("null user", config.getUser());
+            assertNotNull("null port", config.getPort());
         }
-        assertNotNull(config.getPassword());
-        assertNotNull(config.getAccountsIncluded());
-        assertFalse(config.isActiveAccountsOnly());
-        assertNotNull(config.getAuditResponsibility());
-        assertTrue(config.isManageSecuringAttrs());
-        assertFalse(config.isNoSchemaId());
-        assertTrue(config.isReturnSobOrgAttrs());
-        assertNotNull(config.getUserActions());        
-        assertNotNull(config.getConnectionUrl());
+        assertNotNull("null password", config.getPassword());
+        assertNotNull("null account includede", config.getAccountsIncluded());
+        assertFalse("isActiveAccountsOnl", config.isActiveAccountsOnly());
+        assertNotNull("getAuditResponsibility", config.getAuditResponsibility());
+        assertTrue("isManageSecuringAttrs", config.isManageSecuringAttrs());
+        assertFalse("isNoSchemaId", config.isNoSchemaId());
+        assertTrue("isReturnSobOrgAttrs", config.isReturnSobOrgAttrs());
+        assertNotNull("null getUserActions", config.getUserAfterActions());        
+        assertNotNull("null getConnectionUrl", config.getConnectionUrl());
+        
+        config.validate();
     }    
+    
+    /**
+     * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
+     */
+    @Test
+    public void testConfigTst() {
+        final OracleERPConfiguration config = getConfiguration(CONFIG_TST);
+        assertNotNull("null config", config);
+        
+        assertNotNull("null driver", config.getDriver());        
+        if(isBlank(config.getUrl())) {
+            assertNotNull("null host", config.getHost());
+            assertNotNull("null user", config.getUser());
+            assertNotNull("null port", config.getPort());
+        }
+        assertNotNull("null password", config.getPassword());
+        assertNotNull("null account includede", config.getAccountsIncluded());
+        assertTrue("isActiveAccountsOnl", config.isActiveAccountsOnly());
+        assertNotNull("getAuditResponsibility", config.getAuditResponsibility());
+        assertFalse("isManageSecuringAttrs", config.isManageSecuringAttrs());
+        assertFalse("isNoSchemaId", config.isNoSchemaId());
+        assertFalse("isReturnSobOrgAttrs", config.isReturnSobOrgAttrs());
+        assertNotNull("null getUserActions", config.getUserAfterActions());        
+        assertNotNull("null getConnectionUrl", config.getConnectionUrl());
+        
+        config.validate();
+    }      
+
 
     /**
      * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
      */
     @Test
-    public void testConnectorTest() {
-        final OracleERPConfiguration config = getConfiguration(CONFIG_SYSADM);
-        assertNotNull(config);
+    public void testConfigUser() {
+        final OracleERPConfiguration config = getConfiguration(CONFIG_USER);
+        assertNotNull("null config", config);
+        
+        assertNotNull("null driver", config.getDriver());        
+        if(isBlank(config.getUrl())) {
+            assertNotNull("null host", config.getHost());
+            assertNotNull("null user", config.getUser());
+            assertNotNull("null port", config.getPort());
+        }
+        assertNotNull("null password", config.getPassword());
+        assertNotNull("null account includede", config.getAccountsIncluded());
+        assertFalse("isActiveAccountsOnl", config.isActiveAccountsOnly());
+        assertNotNull("getAuditResponsibility", config.getAuditResponsibility());
+        assertTrue("isManageSecuringAttrs", config.isManageSecuringAttrs());
+        assertFalse("isNoSchemaId", config.isNoSchemaId());
+        assertFalse("isReturnSobOrgAttrs", config.isReturnSobOrgAttrs());
+        assertNotNull("null getUserActions", config.getUserAfterActions());        
+        assertNotNull("null getConnectionUrl", config.getConnectionUrl());
+        
         config.validate();
-        ConnectorFacade facade = getFacade(config);
-        assertNotNull(facade);
-        facade.test();
+    }       
+
+    /**
+     * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
+     */
+    @Test
+    public void testConnectorSysadm() {
         OracleERPConnector conn = getConnector(CONFIG_SYSADM);
+        assertNotNull("null connector instance", conn);        
         conn.test();
     }
 
+    /**
+     * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
+     */
+    @Test
+    public void testConnectorTst() {
+        OracleERPConnector conn = getConnector(CONFIG_TST);
+        assertNotNull("null connector instance",conn);        
+        conn.test();
+    }
 
+    /**
+     * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
+     */
+    @Test
+    public void testConnectorUser() {
+        OracleERPConnector conn = getConnector(CONFIG_USER);
+        assertNotNull("null connector instance",conn);        
+        conn.test();
+    }
+    
     /**
      * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
      */
@@ -176,7 +251,7 @@ public class OracleERPConnectorTests {
         assertNotNull(uid);
         
         final OperationOptionsBuilder oob = new OperationOptionsBuilder();
-        addAllAttributesToGet(oob, c.getAccount().getObjectClassInfo().getAttributeInfo());
+        addAllAttributesToGet(oob, getAttributeInfos(c.schema(), ObjectClass.ACCOUNT_NAME));
        
         List<ConnectorObject> results = TestHelpers
         .searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid), oob.build());
@@ -206,7 +281,7 @@ public class OracleERPConnectorTests {
         attrs.add(AttributeBuilder.build(FAX));
         attrs.add(AttributeBuilder.build(CUST_ID));
         final OperationOptionsBuilder oob = new OperationOptionsBuilder();
-        addAllAttributesToGet(oob, c.getAccount().getObjectClassInfo().getAttributeInfo());
+        addAllAttributesToGet(oob, getAttributeInfos(c.schema(), ObjectClass.ACCOUNT_NAME));
         
         
         final Uid uid = c.create(ObjectClass.ACCOUNT, attrs, null);
@@ -219,8 +294,8 @@ public class OracleERPConnectorTests {
         final Set<Attribute> returned = co.getAttributes();
         System.out.println(returned);
         
-        //Create without normalizing
-        c.getAccount().setCreateNormalizer(false);
+        //Create without normalizing, non public property
+        c.getCfg().setCreateNormalizer(false);
         generateNameAttribute(attrs); // need new name
         final Uid uid2 = c.create(ObjectClass.ACCOUNT, attrs, null);
         assertNotNull(uid2);
@@ -255,7 +330,7 @@ public class OracleERPConnectorTests {
         c.delete(ObjectClass.ACCOUNT, uid, null);
         
         final OperationOptionsBuilder oob = new OperationOptionsBuilder();
-        addDefaultAttributesToGet(oob, c.getAccount().getObjectClassInfo().getAttributeInfo());        
+        addDefaultAttributesToGet(oob, getAttributeInfos(c.schema(), ObjectClass.ACCOUNT_NAME));        
         List<ConnectorObject> r2 = TestHelpers
         .searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid), oob.build());
         //is not deleted, till end of the day
@@ -278,7 +353,7 @@ public class OracleERPConnectorTests {
         
         final OperationOptionsBuilder oob = new OperationOptionsBuilder();
         addAuditorDataOptions(oob, attrsOpt);
-        addAllAttributesToGet(oob, c.getAccount().getObjectClassInfo().getAttributeInfo());
+        addAllAttributesToGet(oob, getAttributeInfos(c.schema(), ObjectClass.ACCOUNT_NAME));
         
         final Uid uid = c.create(ObjectClass.ACCOUNT, attrs, null);
         assertNotNull(uid);

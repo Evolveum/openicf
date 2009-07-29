@@ -30,7 +30,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,23 +38,18 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
-import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
+import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.ObjectClassInfo;
-import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
 
 
 /**
@@ -71,82 +65,34 @@ public class ResponsibilityNames {
      * Setup logging.
      */
     static final Log log = Log.getLog(ResponsibilityNames.class);
-
-    /**
-     * The get Instance method
-     * 
-     * @param connector
-     *            parent
-     * @return the account
-     */
-    public static ResponsibilityNames getInstance(OracleERPConnector connector) {
-        return new ResponsibilityNames(connector);
-    }
-
-    /**
-     * The parent connector
-     */
-    private OracleERPConnector co;
-
-    /**
-     * If 11.5.10, determine if description field exists in responsibility views. Default to true
-     */
-    private boolean descrExists = true;
-
-    /**
-     * Check to see which responsibility account attribute is sent. Version 11.5.9 only supports responsibilities, and
-     * 11.5.10 only supports directResponsibilities and indirectResponsibilities Default to false If 11.5.10, determine
-     * if description field exists in responsibility views.
-     */
-    private boolean newResponsibilityViews = false;
     
     /**
-     * The schema objectClass builder cache 
+     * The instance or the parent object
      */
-    private ObjectClassInfo oci = null;
+    private OracleERPConnection conn = null;
     
     /**
-     * Set of the attributes returned by default
+     * The instance or the parent object
      */
-    private Set<String> attributesByDefault = null;     
+    private OracleERPConfiguration cfg = null;
 
     /**
-     * Accessor for the descrExists property
-     * 
-     * @return the descrExists
+     * Temp connector instance
      */
-    public boolean isDescrExists() {
-        return descrExists;
-    }
-
-    /**
-     * Accessor for the newResponsibilityViews property
-     * 
-     * @return the newResponsibilityViews
-     */
-    public boolean isNewResponsibilityViews() {
-        return newResponsibilityViews;
-    }
-
-    /**
-     * Responsibility Application Id
-     */
-    private String respApplId = "";
-
-    /**
-     * Responsibility Id
-     */
-    private String respId = "";
+    private OracleERPConnector co;        
+     
 
     /**
      * The ResponsibilityNames
-     * 
-     * @param connector
-     *            parent
+     * @param conn 
+     * @param cfg 
+     * @param co 
      */
-    private ResponsibilityNames(OracleERPConnector connector) {
-        this.co = connector;
-    }
+    public ResponsibilityNames(OracleERPConnection conn, OracleERPConfiguration cfg, OracleERPConnector co) {
+        this.conn = conn;
+        this.cfg = cfg;
+        this.co = co;
+    }    
 
     /**
      * @param amb builder
@@ -154,7 +100,7 @@ public class ResponsibilityNames {
      */
     public void buildResponsibilitiesToAccountObject(AttributeMergeBuilder amb, final String userName) {
          
-        if (!isNewResponsibilityViews() && amb.isRequired(RESPS)) {
+        if (!cfg.isNewResponsibilityViews() && amb.isRequired(RESPS)) {
             //add responsibilities
             final List<String> responsibilities = getResponsibilities(userName, RESPS_TABLE, false);
             amb.addAttribute(RESPS, responsibilities);
@@ -178,37 +124,6 @@ public class ResponsibilityNames {
         }
     }
 
-    /**
-     * The New responsibility format there
-     * 
-     * @return true/false
-     */
-    public boolean getNewResponsibilityViews() {
-        final String sql = "select * from " + co.app()
-                + "fnd_views where VIEW_NAME = 'FND_USER_RESP_GROUPS_DIRECT' and APPLICATION_ID = '0'";
-        PreparedStatement ps = null;
-        ResultSet res = null;
-        try {
-            ps = co.getConn().prepareStatement(sql);
-            res = ps.executeQuery();
-            log.ok(sql);
-            if (res != null && res.next()) {
-                log.ok("newResponsibilityViews: true");
-                return true;
-            }
-        } catch (SQLException e) {
-            log.error(e, sql);
-            SQLUtil.rollbackQuietly(co.getConn());
-            throw ConnectorException.wrap(e);
-        } finally {
-            SQLUtil.closeQuietly(res);
-            res = null;
-            SQLUtil.closeQuietly(ps);
-            ps = null;
-        }
-        log.ok("newResponsibilityViews: true");
-        return false;
-    }
 
     /**
      * bug#13889 : Added method to create a responsibility string with dates normalized. respFmt: RESP_FMT_KEYS: get
@@ -235,7 +150,7 @@ public class ResponsibilityNames {
             if (respFmt != RESP_FMT_KEYS) {
                 key.append("||");
                 // descr possibly not available in ui version 11.5.10
-                if (!isNewResponsibilityViews() || isDescrExists()) {
+                if (!cfg.isNewResponsibilityViews() || cfg.isDescrExists()) {
                     key.append(tok.nextToken()); // description
                 }
                 key.append("||");
@@ -248,86 +163,6 @@ public class ResponsibilityNames {
         log.ok(method);
         return strRespRet;
     } // getRespWithNormalizeDates()  
-
-    /**
-     * Accessor for the respApplId property
-     * 
-     * @return the respApplId
-     */
-    public String getRespApplId() {
-        return respApplId;
-    }
-
-    /**
-     * Accessor for the respId property
-     * 
-     * @return the respId
-     */
-    public String getRespId() {
-        return respId;
-    }
-
-    /**
-     * Init the responsibilities
-     * 
-     * @param configUserId
-     *            configUserId
-     */
-    public void initResponsibilities(final String configUserId) {
-        log.info("initResponsibilities");
-        this.newResponsibilityViews = getNewResponsibilityViews();
-
-        if (isNewResponsibilityViews()) {
-            this.descrExists = getDescriptionExiests();
-        }
-
-        // three pieces of data need for apps_initialize()
-        final String auditResponsibility = co.getCfg().getAuditResponsibility();
-        log.info("auditResponsibility = {0}", auditResponsibility);
-        
-        if (StringUtil.isNotBlank(auditResponsibility) && StringUtil.isNotBlank(configUserId)) {
-            co.getSecAttrs().initAdminUserId(configUserId);
-
-            final String view = co.app() + ((isNewResponsibilityViews()) ? OracleERPUtil.RESPS_ALL_VIEW : OracleERPUtil.RESPS_TABLE);
-            final String sql = "select responsibility_id, responsibility_application_id from "
-                    + view
-                    + " where user_id = ? and "
-                    + "(responsibility_id,responsibility_application_id) = (select responsibility_id,application_id from "
-                    + co.app()
-                    + "fnd_responsibility_vl where responsibility_name = ?)";
-
-            final String msg = "Oracle ERP SQL: RESP_ID = {1}, RESP_APPL_ID = {2}";
-
-            ArrayList<SQLParam> params = new ArrayList<SQLParam>();
-            params.add(new SQLParam("userId", configUserId));
-            params.add(new SQLParam("responsibilityName", auditResponsibility));
-            PreparedStatement ps = null;
-            ResultSet rs = null;
-            try {
-                log.info("Select responsibility for user_id: {0}, and audit responsibility {1}", configUserId,
-                        auditResponsibility);
-                ps = co.getConn().prepareStatement(sql, params);
-                rs = ps.executeQuery();
-                if (rs != null) {
-                    if (rs.next()) {
-                        respId = rs.getString(1);
-                        respApplId = rs.getString(2);
-                    }
-                }
-
-                log.ok(msg, respId, respApplId);
-            } catch (SQLException e) {
-                SQLUtil.rollbackQuietly(co.getConn());
-                log.error(e, msg, respId, respApplId);
-            } finally {
-                // close everything in case we had an exception in the middle of something
-                SQLUtil.closeQuietly(rs);
-                rs = null;
-                SQLUtil.closeQuietly(ps);
-                ps = null;
-            }
-        }
-    }
 
     /**
      * getResponsibilities
@@ -352,19 +187,19 @@ public class ResponsibilityNames {
         // descr may not be available in view or in native ui with new resp views
         // bug#15492 - do not include user tables in query if id not specified, does not return allr responsibilities
         if (userName != null) {
-            if (!isNewResponsibilityViews() || (isDescrExists() && respLocation.equalsIgnoreCase(RESPS_DIRECT_VIEW))) {
+            if (!cfg.isNewResponsibilityViews() || (cfg.isDescrExists() && respLocation.equalsIgnoreCase(RESPS_DIRECT_VIEW))) {
                 b.append(", fnduserg.DESCRIPTION");
             }
             b.append(", fnduserg.START_DATE, fnduserg.END_DATE ");
         }
-        b.append("FROM " + co.app() + "fnd_responsibility_vl fndrespvl, ");
-        b.append(co.app() + "fnd_application_vl fndappvl, ");
+        b.append("FROM " + cfg.app() + "fnd_responsibility_vl fndrespvl, ");
+        b.append(cfg.app() + "fnd_application_vl fndappvl, ");
         // bug#15492 - don't include this join if no id is specified.
         if (userName != null) {
-            b.append(co.app() + "fnd_user fnduser, ");
-            b.append(co.app() + respLocation + " fnduserg, ");
+            b.append(cfg.app() + "fnd_user fnduser, ");
+            b.append(cfg.app() + respLocation + " fnduserg, ");
         }
-        b.append(co.app() + "fnd_security_groups_vl fndsecgvl ");
+        b.append(cfg.app() + "fnd_security_groups_vl fndsecgvl ");
         b.append("WHERE fndappvl.application_id = fndrespvl.application_id ");
         // bug#15492 - don't include this join if no id is specified.
         if (userName != null) {
@@ -387,7 +222,7 @@ public class ResponsibilityNames {
         final String sql = b.toString();
         try {
             log.info("sql select {0}", sql);
-            st = co.getConn().prepareStatement(sql);
+            st = conn.prepareStatement(sql);
             if (userName != null) {
                 st.setString(1, userName.toUpperCase());
             }
@@ -415,8 +250,8 @@ public class ResponsibilityNames {
                     s = getColumn(res, 5); // fnduserg.START_DATE or fnduserg.END_DATE
                     sb.append(s);
                 }
-                if (!isNewResponsibilityViews()
-                        || (isDescrExists() && respLocation.equalsIgnoreCase(RESPS_DIRECT_VIEW))) {
+                if (!cfg.isNewResponsibilityViews()
+                        || (cfg.isDescrExists() && respLocation.equalsIgnoreCase(RESPS_DIRECT_VIEW))) {
                     sb.append("||");
                     if (userName != null) {
                         s = getColumn(res, 6); // fnduserg.END_DATE
@@ -428,7 +263,7 @@ public class ResponsibilityNames {
             }
         } catch (SQLException e) {
             log.error(e, method);
-            SQLUtil.rollbackQuietly(co.getConn());
+            SQLUtil.rollbackQuietly(conn);
             throw ConnectorException.wrap(e);
         } finally {
             SQLUtil.closeQuietly(res);
@@ -486,7 +321,7 @@ public class ResponsibilityNames {
 
         // get Users Current Responsibilties
         List<String> oldResp = null;
-        if (!isNewResponsibilityViews()) {
+        if (!cfg.isNewResponsibilityViews()) {
             oldResp = getResponsibilities(identity, RESPS_TABLE, false);
         } else {
             // can only update directly assigned resps; indirect resps are readonly
@@ -668,7 +503,7 @@ public class ResponsibilityNames {
         String sql = b.toString();
         try {
             log.info("execute statement ''{0}''", sql);
-            st = co.getConn().prepareStatement(sql);
+            st = conn.prepareStatement(sql);
             st.execute();
         } catch (SQLException e) {
             //
@@ -682,7 +517,7 @@ public class ResponsibilityNames {
             } else {
                 final String msg = "Can not execute the sql " + sql;
                 log.error(e, msg);
-                SQLUtil.rollbackQuietly(co.getConn());
+                SQLUtil.rollbackQuietly(conn);
                 throw new ConnectorException(msg, e);
             }
         } finally {
@@ -702,7 +537,7 @@ public class ResponsibilityNames {
             sql = b.toString();
             try {
                 log.info("execute statement ''{0}''", sql);
-                st = co.getConn().prepareStatement(sql);
+                st = conn.prepareStatement(sql);
                 st.execute();
 
             } catch (SQLException e) {
@@ -712,7 +547,7 @@ public class ResponsibilityNames {
                 } else {
                     final String msg = "Can not execute the sql " + sql;
                     log.error(e, msg);
-                    SQLUtil.rollbackQuietly(co.getConn());
+                    SQLUtil.rollbackQuietly(conn);
                     throw new ConnectorException(msg, e);
                 }
             } finally {
@@ -720,7 +555,7 @@ public class ResponsibilityNames {
                 st = null;
             }
         }
-        co.getConn().commit();
+        conn.commit();
         log.ok(method);
     }
 
@@ -750,22 +585,22 @@ public class ResponsibilityNames {
         }
         b.append("; ");
         b.append("SELECT responsibility_id, application_id INTO resp_id, app_id ");
-        b.append("FROM " + co.app() + "fnd_responsibility_vl ");
+        b.append("FROM " + cfg.app() + "fnd_responsibility_vl ");
         b.append("WHERE responsibility_name = responsibility_long_name");
         if (respAppName != null) {
             b.append(" AND application_id = ");
-            b.append("(SELECT application_id FROM " + co.app() + "fnd_application_vl ");
+            b.append("(SELECT application_id FROM " + cfg.app() + "fnd_application_vl ");
             b.append("WHERE application_name = responsibility_app_name)");
         }
         b.append("; ");
         b.append("SELECT user_id INTO user_id_num ");
-        b.append("FROM " + co.app() + "fnd_user ");
+        b.append("FROM " + cfg.app() + "fnd_user ");
         b.append("WHERE USER_NAME = user; ");
         b.append("SELECT security_group_id INTO sec_group_id ");
-        b.append("FROM " + co.app() + "fnd_security_groups_vl ");
+        b.append("FROM " + cfg.app() + "fnd_security_groups_vl ");
         b.append("WHERE SECURITY_GROUP_KEY = security_group; ");
 
-        b.append(co.app());
+        b.append(cfg.app());
         if (doInsert) {
             b.append("fnd_user_resp_groups_api.Insert_Assignment (user_id_num, resp_id, app_id, sec_group_id, ");
         } else {
@@ -817,26 +652,26 @@ public class ResponsibilityNames {
         b.append("; responsibility_app_name := ");
         addQuoted(b, respAppName);
         b.append("; SELECT  fndsecg.security_group_key INTO resp_sec_g_key ");
-        b.append("FROM " + co.app() + "fnd_security_groups fndsecg, " + co.app() + "fnd_security_groups_vl fndsecgvl ");
+        b.append("FROM " + cfg.app() + "fnd_security_groups fndsecg, " + cfg.app() + "fnd_security_groups_vl fndsecgvl ");
         b.append("WHERE fndsecg.security_group_id = fndsecgvl.security_group_id ");
         b.append("AND fndsecgvl.security_group_name = security_group; ");
         b.append("SELECT fndapp.application_short_name, fndresp.responsibility_key, ");
         b.append("fndrespvl.description INTO resp_app, resp_key, description ");
-        b.append("FROM " + co.app() + "fnd_responsibility_vl fndrespvl, " + co.app() + "fnd_responsibility fndresp, ");
-        b.append(co.app() + "fnd_application_vl fndappvl, " + co.app() + "fnd_application fndapp ");
+        b.append("FROM " + cfg.app() + "fnd_responsibility_vl fndrespvl, " + cfg.app() + "fnd_responsibility fndresp, ");
+        b.append(cfg.app() + "fnd_application_vl fndappvl, " + cfg.app() + "fnd_application fndapp ");
         b.append("WHERE fndappvl.application_id = fndrespvl.application_id ");
         b.append("AND fndappvl.APPLICATION_ID = fndapp.APPLICATION_ID ");
         b.append("AND fndappvl.APPLICATION_NAME = responsibility_app_name ");
         b.append("AND fndrespvl.RESPONSIBILITY_NAME = responsibility_long_name ");
         b.append("AND fndrespvl.RESPONSIBILITY_ID = fndresp.RESPONSIBILITY_ID ");
         b.append("AND fndrespvl.APPLICATION_ID = fndresp.APPLICATION_ID; ");
-        b.append(co.app() + "fnd_user_pkg.DelResp (user_id, resp_app, resp_key, resp_sec_g_key); ");
+        b.append(cfg.app() + "fnd_user_pkg.DelResp (user_id, resp_app, resp_key, resp_sec_g_key); ");
         b.append("COMMIT; END;");
 
         final String sql = b.toString();
         try {
             log.info("execute statement ''{0}''", sql);
-            st = co.getConn().prepareStatement(sql);
+            st = conn.prepareStatement(sql);
             st.execute();
         } catch (SQLException e) {
             if (e.getErrorCode() == ORA_01403) {
@@ -845,7 +680,7 @@ public class ResponsibilityNames {
             } else {
                 final String msg = "Can not execute the sql " + sql;
                 log.error(e, msg);
-                SQLUtil.rollbackQuietly(co.getConn());
+                SQLUtil.rollbackQuietly(conn);
                 throw new ConnectorException(msg, e);
             }
         } finally {
@@ -855,30 +690,6 @@ public class ResponsibilityNames {
         log.ok(method);
     }
 
-    /**
-     * @return
-     */
-    private boolean getDescriptionExiests() {
-        final String sql = "select user_id, description from " + co.app()
-                + "fnd_user_resp_groups_direct where USER_ID = '9999999999'";
-        PreparedStatement ps = null;
-        ResultSet res = null;
-        try {
-            ps = co.getConn().prepareStatement(sql);
-            res = ps.executeQuery();
-            log.ok("description exists");
-            return true;
-        } catch (SQLException e) {
-            //log.error(e, sql);
-            log.ok("description does not exists");
-        } finally {
-            SQLUtil.closeQuietly(res);
-            res = null;
-            SQLUtil.closeQuietly(ps);
-            ps = null;
-        }
-        return false;
-    }
 
     private void updateUserResponsibility(String identity, String resp, List<String> errors) {
         final String method = "updateUserResponsibility";
@@ -944,7 +755,7 @@ public class ResponsibilityNames {
         String sql = b.toString();
         try {
             log.info("sql select {0}", sql);
-            st = co.getConn().prepareStatement(sql);
+            st = conn.prepareStatement(sql);
             st.execute();
         } catch (SQLException e) {
             //
@@ -958,7 +769,7 @@ public class ResponsibilityNames {
             } else {
                 final String msg = "Error in sql :" + sql;
                 log.error(e, msg);
-                SQLUtil.rollbackQuietly(co.getConn());
+                SQLUtil.rollbackQuietly(conn);
                 throw new ConnectorException(msg, e);
             }
         } finally {
@@ -978,7 +789,7 @@ public class ResponsibilityNames {
             sql = b.toString();
             try {
                 log.info("sql select {0}", sql);
-                st = co.getConn().prepareStatement(sql);
+                st = conn.prepareStatement(sql);
                 st.execute();
             } catch (SQLException e) {
                 if (e.getErrorCode() == ORA_01403) {
@@ -987,7 +798,7 @@ public class ResponsibilityNames {
                 } else {
                     final String msg = "Can not execute the sql " + sql;
                     log.error(e, msg);
-                    SQLUtil.rollbackQuietly(co.getConn());
+                    SQLUtil.rollbackQuietly(conn);
                     throw new ConnectorException(msg, e);
                 }
             } finally {
@@ -1008,7 +819,8 @@ public class ResponsibilityNames {
         final String method = "getResponsibilityNames";
         log.info( method);
 
-        Set<String> atg = getRespNamesAttributesToGet(options);
+        final Set<AttributeInfo> ais = getAttributeInfos(cfg.getSchema(), RESP_NAMES);
+        final Set<String> atg = getAttributesToGet(options, ais);
         
         //TODO add filter one resp name to the responsibility query
         PreparedStatement st = null;
@@ -1016,8 +828,8 @@ public class ResponsibilityNames {
         StringBuilder b = new StringBuilder();
 
         b.append("SELECT distinct fndrespvl.responsibility_name ");
-        b.append("FROM " + co.app()+ "fnd_responsibility_vl fndrespvl, ");
-        b.append(co.app() + "fnd_application_vl fndappvl ");
+        b.append("FROM " + cfg.app()+ "fnd_responsibility_vl fndrespvl, ");
+        b.append(cfg.app() + "fnd_application_vl fndappvl ");
         b.append("WHERE fndappvl.application_id = fndrespvl.application_id ");
         
         if( where.getParams().size() == 1 ) {
@@ -1025,7 +837,7 @@ public class ResponsibilityNames {
         }
 
         try {
-            st = co.getConn().prepareStatement(b.toString(), where.getParams());
+            st = conn.prepareStatement(b.toString(), where.getParams());
             res = st.executeQuery();
             while (res.next()) {
                 
@@ -1050,7 +862,7 @@ public class ResponsibilityNames {
         }
         catch (SQLException e) {
             log.error(e, method);
-            SQLUtil.rollbackQuietly(co.getConn());
+            SQLUtil.rollbackQuietly(conn);
             throw ConnectorException.wrap(e);
         } finally {
             SQLUtil.closeQuietly(res);
@@ -1090,7 +902,7 @@ public class ResponsibilityNames {
             auditorResponsibilities(where, handler, options);
             return;
         }
-        throw new IllegalArgumentException(co.getCfg().getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
+        throw new IllegalArgumentException(cfg.getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
     }
 
     /**
@@ -1132,7 +944,7 @@ public class ResponsibilityNames {
      */
     private String getRespLocation() {
         String respLocation = RESPS_TABLE;
-        if (isNewResponsibilityViews()) {
+        if (cfg.isNewResponsibilityViews()) {
             respLocation = RESPS_ALL_VIEW;
         }
         return respLocation;
@@ -1162,13 +974,13 @@ public class ResponsibilityNames {
         }
         
         b.append("SELECT distinct fndappvl.application_name ");
-        b.append("FROM " + co.app() + "fnd_responsibility_vl fndrespvl, ");
-        b.append(co.app() + "fnd_application_vl fndappvl ");
+        b.append("FROM " + cfg.app() + "fnd_responsibility_vl fndrespvl, ");
+        b.append(cfg.app() + "fnd_application_vl fndappvl ");
         b.append("WHERE fndappvl.application_id = fndrespvl.application_id ");
         b.append("AND fndrespvl.responsibility_name = ?");
 
         try {
-            st = co.getConn().prepareStatement(b.toString());
+            st = conn.prepareStatement(b.toString());
             st.setString(1, respName);
             res = st.executeQuery();
             while (res.next()) {
@@ -1197,176 +1009,6 @@ public class ResponsibilityNames {
 }
 
 
-    /**
-     * The object class info
-     * @return the info class
-     */
-    public ObjectClassInfo getObjectClassInfo() {
-        if (oci == null) {
-            ObjectClassInfoBuilder ocib = new ObjectClassInfoBuilder();
-
-            final EnumSet<Flags> STD_NC = EnumSet.of(Flags.NOT_CREATABLE);
-
-            ocib = new ObjectClassInfoBuilder();
-            ocib.setType(RESP_NAMES_OC.getObjectClassValue());
-
-            ocib.addAttributeInfo(Name.INFO);
-            // name='userMenuNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_MENU_NAMES, String.class, STD_NC));
-            // name='menuIds' type='string' audit='false'    
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(MENU_IDS, String.class, STD_NC));
-            // name='userFunctionNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_FUNCTION_NAMES, String.class, STD_NC));
-            // name='functionIds' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_IDS, String.class, STD_NC));
-            // name='formIds' type='string' audit='false'    
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(FORM_IDS, String.class, STD_NC));
-            // name='formNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(FORM_NAMES, String.class, STD_NC));
-            // name='functionNames' type='string' audit='false'    
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_NAMES, String.class, STD_NC));
-            // name='userFormNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_FORM_NAMES, String.class, STD_NC));
-            // name='readOnlyFormIds' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RO_FORM_IDS, String.class, STD_NC));
-            // name='readWriteOnlyFormIds' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_ONLY_FORM_IDS, String.class, STD_NC));
-            // name='readOnlyFormNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RO_FORM_NAMES, String.class, STD_NC));
-            // name='readOnlyFunctionNames' type='string' audit='false'    
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RO_FUNCTION_NAMES, String.class, STD_NC));
-            // name='readOnlyUserFormNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RO_USER_FORM_NAMES, String.class, STD_NC));
-            // name='readOnlyFunctionIds' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RO_FUNCTIONS_IDS, String.class, STD_NC));
-            // name='readWriteOnlyFormNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_FORM_NAMES, String.class, STD_NC));
-            // name='readWriteOnlyUserFormNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_USER_FORM_NAMES));
-            // name='readWriteOnlyFunctionNames' type='string' audit='false'        
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_FUNCTION_NAMES, String.class, STD_NC));
-            // name='readWriteOnlyFunctionIds' type='string' audit='false'                 
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_FUNCTION_IDS, String.class, STD_NC));
-
-            oci = ocib.build();
-        }
-        return oci;
-
-        /*
-        //Auditor responsibilities
-        oc = new ObjectClassInfoBuilder();
-        oc.setType(AUDITOR_RESPS_OC.getObjectClassValue());
-        final EnumSet<Flags> STD_RNA = EnumSet.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE);
-
-        // The Name is supported attribute
-        oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
-        // name='userMenuNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_MENU_NAMES, String.class, STD_RNA));
-        // name='menuIds' type='string' audit='false'    
-        oc.addAttributeInfo(AttributeInfoBuilder.build(MENU_IDS, String.class, STD_RNA));
-        // name='userFunctionNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_FUNCTION_NAMES, String.class, STD_RNA));
-        // name='functionIds' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_IDS, String.class, STD_RNA));
-        // name='formIds' type='string' audit='false'    
-        oc.addAttributeInfo(AttributeInfoBuilder.build(FORM_IDS, String.class, STD_RNA));
-        // name='formNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(FORM_NAMES, String.class, STD_RNA));
-        // name='functionNames' type='string' audit='false'    
-        oc.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_NAMES, String.class, STD_RNA));
-        // name='userFormNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(USER_FORM_NAMES, String.class, STD_RNA));
-        // name='readOnlyFormIds' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_IDS, String.class, STD_RNA));
-        // name='readWriteOnlyFormIds' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_IDS, String.class, STD_RNA));
-        // name='readOnlyFormNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FORM_NAMES, String.class, STD_RNA));
-        // name='readOnlyFunctionNames' type='string' audit='false'    
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTION_NAMES, String.class, STD_RNA));
-        // name='readOnlyUserFormNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_USER_FORM_NAMES, String.class, STD_RNA));
-        // name='readOnlyFunctionIds' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_ONLY_FUNCTIONS_IDS, String.class, STD_RNA));
-        // name='readWriteOnlyFormNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FORM_NAMES, String.class, STD_RNA));
-        // name='readWriteOnlyUserFormNames' type='string' audit='false'
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_USER_FORM_NAMES));
-        // name='readWriteOnlyFunctionNames' type='string' audit='false'        
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_NAMES, String.class, STD_RNA));
-        // name='readWriteOnlyFunctionIds' type='string' audit='false'                 
-        oc.addAttributeInfo(AttributeInfoBuilder.build(READ_WRITE_ONLY_FUNCTION_IDS, String.class, STD_RNA));
-        //Define object class
-        schemaBld.defineObjectClass(oc.build());
-        schemaBld.removeSupportedObjectClass(AuthenticateOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(DeleteOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(CreateOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(UpdateOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(SchemaOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(ScriptOnConnectorOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(ScriptOnResourceOp.class, oc.build());        
-
-        //Resp object class
-        oc = new ObjectClassInfoBuilder();
-        oc.setType(RESP_OC.getObjectClassValue()); 
-        oc.setContainer(true);
-        oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
-        //Define object class
-        schemaBld.defineObjectClass(oc.build());
-        schemaBld.removeSupportedObjectClass(AuthenticateOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(DeleteOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(CreateOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(UpdateOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(SchemaOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(ScriptOnConnectorOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(ScriptOnResourceOp.class, oc.build());          
-        
-        //Resp object class
-        oc = new ObjectClassInfoBuilder();
-        oc.setType(DIRECT_RESP_OC.getObjectClassValue()); 
-        oc.setContainer(true);
-        oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
-        //Define object class
-        schemaBld.defineObjectClass(oc.build());
-        schemaBld.removeSupportedObjectClass(AuthenticateOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(DeleteOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(CreateOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(UpdateOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(SchemaOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(ScriptOnConnectorOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(ScriptOnResourceOp.class, oc.build());          
-        
-        //directResponsibilities object class
-        oc = new ObjectClassInfoBuilder();
-        oc.setType(INDIRECT_RESP_OC.getObjectClassValue()); 
-        oc.setContainer(true);
-        oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
-        //Define object class
-        schemaBld.defineObjectClass(oc.build());
-        schemaBld.removeSupportedObjectClass(AuthenticateOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(DeleteOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(CreateOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(UpdateOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(SchemaOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(ScriptOnConnectorOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(ScriptOnResourceOp.class, oc.build());          
-        
-        //directResponsibilities object class
-        oc = new ObjectClassInfoBuilder();
-        oc.setType(APPS_OC.getObjectClassValue()); 
-        oc.setContainer(true);
-        oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, STD_RNA));
-        //Define object class
-        schemaBld.defineObjectClass(oc.build());
-        schemaBld.removeSupportedObjectClass(AuthenticateOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(DeleteOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(CreateOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(UpdateOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(SchemaOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(ScriptOnConnectorOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(ScriptOnResourceOp.class, oc.build());          
-        */
-    }
     
     /**
      * @param where
@@ -1380,7 +1022,8 @@ public class ResponsibilityNames {
         
         List<String> auditorRespList = getResponsibilities(id, respLocation, activeRespsOnly);
         for (String respName : auditorRespList) {
-            AttributeMergeBuilder amb = new AttributeMergeBuilder(getRespNamesAttributesToGet(options));
+            final Set<AttributeInfo> ais = getAttributeInfos(cfg.getSchema(), RESP_NAMES);
+            final AttributeMergeBuilder amb = new AttributeMergeBuilder(getAttributesToGet(options, ais));
             updateAuditorData(amb, respName);
 
             ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
@@ -1391,26 +1034,7 @@ public class ResponsibilityNames {
             }
         }
     }
-    
-    /**
-     * @param options
-     * @return
-     */
-    private Set<String> getRespNamesAttributesToGet(OperationOptions options) {
-        Set<String> attributesToGet = getAttributesToGet(options, getRespNamesAttributesByDefault());
-        return attributesToGet;
-    }    
-
-    /**
-     * The account attributes returned by default
-     * @return The set of attribute names
-     */
-    private Set<String> getRespNamesAttributesByDefault() {
-        if (attributesByDefault == null) {
-            attributesByDefault = getDefaultAttributesToGet(getObjectClassInfo().getAttributeInfo());
-        }
-        return attributesByDefault;
-    }    
+  
     /**
      * @param options
      * @return
@@ -1530,7 +1154,7 @@ public class ResponsibilityNames {
 
         try {
 
-            st = co.getConn().prepareStatement(b.toString());
+            st = conn.prepareStatement(b.toString());
             st.setString(1, resp);
             st.setString(2, app);
             st.setString(3, resp);
@@ -1627,7 +1251,7 @@ public class ResponsibilityNames {
             // no catch, just use finally to ensure closes happen
         } catch (SQLException e) {
             log.error(e, method);
-            SQLUtil.rollbackQuietly(co.getConn());
+            SQLUtil.rollbackQuietly(conn);
             throw ConnectorException.wrap(e);
         } finally {
             SQLUtil.closeQuietly(res);
@@ -1653,7 +1277,7 @@ public class ResponsibilityNames {
             b.append(") )");
             log.info(method + ", SQL statement (Post Processing): " + b.toString());
             try {
-                st = co.getConn().prepareStatement(b.toString());
+                st = conn.prepareStatement(b.toString());
                 res = st.executeQuery();
                 while (res != null && res.next()) {
                     // get each functionId and use as key to find associated rw objects
@@ -1693,7 +1317,7 @@ public class ResponsibilityNames {
                 // no catch, just use finally to ensure closes happen
             } catch (SQLException e) {
                 log.error(e, method);
-                SQLUtil.rollbackQuietly(co.getConn());
+                SQLUtil.rollbackQuietly(conn);
                throw ConnectorException.wrap(e);
             } finally {
                 SQLUtil.closeQuietly(res);
@@ -1738,17 +1362,17 @@ public class ResponsibilityNames {
         amb.addAttribute(AUDITOR_RESPS, respNameConn);
 
         // check to see if SOB/ORGANIZATION is required
-        if (co.getCfg().isReturnSobOrgAttrs()) {
+        if (cfg.isReturnSobOrgAttrs()) {
             b = new StringBuffer();
             // query for SOB / Organization
             b.append("Select distinct ");
             b.append("decode(fpo1.user_profile_option_name, '");
             b.append(sobOption + "', fpo1.user_profile_option_name||'||'||gsob.name||'||'||gsob.set_of_books_id, '");
             b.append(ouOption + "', fpo1.user_profile_option_name||'||'||hou1.name||'||'||hou1.organization_id)");
-            b.append(" from " + co.app() + "fnd_responsibility_vl fr, " + co.app() + "fnd_profile_option_values fpov, "
-                    + co.app() + "fnd_profile_options fpo");
-            b.append(" , " + co.app() + "fnd_profile_options_vl fpo1, " + co.app() + "hr_organization_units hou1, "
-                    + co.app() + "gl_sets_of_books gsob");
+            b.append(" from " + cfg.app() + "fnd_responsibility_vl fr, " + cfg.app() + "fnd_profile_option_values fpov, "
+                    + cfg.app() + "fnd_profile_options fpo");
+            b.append(" , " + cfg.app() + "fnd_profile_options_vl fpo1, " + cfg.app() + "hr_organization_units hou1, "
+                    + cfg.app() + "gl_sets_of_books gsob");
             b
                     .append(" where fr.responsibility_id = fpov.level_value and gsob.set_of_books_id = fpov.profile_option_value");
             b
@@ -1763,7 +1387,7 @@ public class ResponsibilityNames {
             log.info(method + ", Resp: " + curResp);
 
             try {
-                st = co.getConn().prepareStatement(b.toString());
+                st = conn.prepareStatement(b.toString());
                 st.setString(1, resp);
                 res = st.executeQuery();
 
@@ -1785,7 +1409,7 @@ public class ResponsibilityNames {
                 }
             } catch (SQLException e) {
                 log.error(e, method);
-                SQLUtil.rollbackQuietly(co.getConn());
+                SQLUtil.rollbackQuietly(conn);
                 throw ConnectorException.wrap(e);
             } finally {
                 SQLUtil.closeQuietly(res);

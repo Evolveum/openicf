@@ -40,15 +40,18 @@
 package org.identityconnectors.oracleerp;
 
 
+
 /**
+ * Used in the filter
  * @author Petr Jung
  * @version $Revision 1.0$
  * @since 1.0
  */
-public interface OracleERPColumnNameResolver {
+public interface ColumnNameResolver {
+
     /**
-     * @param attributeName name to translate to columnName
-     * @return the column Name
+     * @param attributeName String name of the attribute
+     * @return String the mapped column name
      */
-    String getFilterColumnName(String attributeName);
+    String getColumnName(String attributeName);
 }

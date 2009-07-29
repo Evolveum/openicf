@@ -29,43 +29,33 @@ import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
-import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.contract.exceptions.ObjectNotFoundException;
 import org.identityconnectors.dbcommon.DatabaseQueryBuilder;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
-import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
-import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
+import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.ObjectClassInfo;
-import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
@@ -79,114 +69,39 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
  * @version 1.0
  * @since 1.0
  */
-public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp, DeleteOp, SearchOp<FilterWhereBuilder> {
+public class Account implements CreateOp, UpdateOp, DeleteOp, SearchOp<FilterWhereBuilder>, ColumnNameResolver {
 
     /**
      * Setup logging.
      */
     static final Log log = Log.getLog(Account.class);
-
-    // The SQL call update function SQL template
-    static final String FND_USER_CALL = "fnd_user_pkg.";
-
-    /**
-     * The map of column name parameters mapping
-     */
-    static final List<CallParam> CALL_PARAMS = new ArrayList<CallParam>();
-
-    /**
-     * The column names to get
-     */
-    static final Set<String> FND_USER_COLS = CollectionUtil.newCaseInsensitiveSet();
-
-    /**
-     * The column names to get
-     */
-    static final Set<String> PER_PEOPLE_COLS = CollectionUtil.newCaseInsensitiveSet();
-
-    /**
-     * Initialization of the map
-     */
-    static {       
-        FND_USER_COLS.add(USER_ID); //0 not createble, updatable 
-        FND_USER_COLS.add(USER_NAME);//1
-        FND_USER_COLS.add(SESS_NUM); //4     
-        FND_USER_COLS.add(START_DATE); //5     
-        FND_USER_COLS.add(END_DATE); //6     
-        FND_USER_COLS.add(LAST_LOGON_DATE); //7     
-        FND_USER_COLS.add(DESCR); //8     
-        FND_USER_COLS.add(PWD_DATE);//9     
-        FND_USER_COLS.add(PWD_ACCESSES_LEFT); //10     
-        FND_USER_COLS.add(PWD_LIFE_ACCESSES); //11    
-        FND_USER_COLS.add(PWD_LIFE_DAYS); //12     
-        FND_USER_COLS.add(EMP_ID); //13     
-        FND_USER_COLS.add(EMAIL); //14     
-        FND_USER_COLS.add(FAX); //15     
-        FND_USER_COLS.add(CUST_ID); //16     
-        FND_USER_COLS.add(SUPP_ID); //17     
-        FND_USER_COLS.add(PERSON_PARTY_ID); //18);
-        
-        PER_PEOPLE_COLS.add(EMP_NUM);
-        PER_PEOPLE_COLS.add(NPW_NUM);
-        PER_PEOPLE_COLS.add(FULL_NAME);
-
-        CALL_PARAMS.add(new CallParam(USER_NAME, "x_user_name => {0}", Types.VARCHAR)); //1
-        CALL_PARAMS.add(new CallParam(OWNER, "x_owner => upper({0})", Types.VARCHAR)); //2   write only   
-        CALL_PARAMS.add(new CallParam(UNENCRYPT_PWD, "x_unencrypted_password => {0}", Types.VARCHAR));//3 write only      
-        CALL_PARAMS.add(new CallParam(SESS_NUM, "x_session_number => {0}", Types.NUMERIC)); //4     
-        CALL_PARAMS.add(new CallParam(START_DATE, "x_start_date => {0}", Types.DATE)); //5     
-        CALL_PARAMS.add(new CallParam(END_DATE, "x_end_date => {0}", Types.DATE)); //6     
-        CALL_PARAMS.add(new CallParam(LAST_LOGON_DATE, "x_last_logon_date => {0}", Types.DATE)); //7     
-        CALL_PARAMS.add(new CallParam(DESCR, "x_description => {0}", Types.VARCHAR)); //8     
-        CALL_PARAMS.add(new CallParam(PWD_DATE, "x_password_date => {0}", Types.DATE)); //9     
-        CALL_PARAMS.add(new CallParam(PWD_ACCESSES_LEFT, "x_password_accesses_left => {0}", Types.NUMERIC)); //10     
-        CALL_PARAMS.add(new CallParam(PWD_LIFE_ACCESSES, "x_password_lifespan_accesses => {0}", Types.NUMERIC)); //11    
-        CALL_PARAMS.add(new CallParam(PWD_LIFE_DAYS, "x_password_lifespan_days => {0}", Types.NUMERIC)); //12     
-        CALL_PARAMS.add(new CallParam(EMP_ID, "x_employee_id => {0}", Types.NUMERIC)); //13     
-        CALL_PARAMS.add(new CallParam(EMAIL, "x_email_address => {0}", Types.VARCHAR)); //14     
-        CALL_PARAMS.add(new CallParam(FAX, "x_fax => {0}", Types.VARCHAR)); //15     
-        CALL_PARAMS.add(new CallParam(CUST_ID, "x_customer_id => {0}", Types.NUMERIC)); //16     
-        CALL_PARAMS.add(new CallParam(SUPP_ID, "x_supplier_id => {0}", Types.NUMERIC)); //17          
-    }
-    
-    /**
-     * The get Instance method
-     * @param connector the connector instance
-     * @return the account
-     */
-    public static Account getInstance(OracleERPConnector connector) {
-       return new Account(connector);
-    }
     
     /**
      * The instance or the parent object
      */
-    private OracleERPConnector co = null;
-    
-    
-    /**
-     * The schema objectClass builder cache 
-     */
-    private ObjectClassInfo oci = null;
+    private OracleERPConnection conn = null;
     
     /**
-     * Set of the attributes returned by default
+     * The instance or the parent object
      */
-    private Set<String> attributesByDefault = null;
-    
-    
-    /**
-     * This is create attributes normalizer
-     */
-    boolean createNormalizer = true;
+    private OracleERPConfiguration cfg = null;    
+      
 
+    /**
+     * Temp oracle connector
+     */
+    private OracleERPConnector co;
 
     /**
      * The account
+     * @param conn 
+     * @param cfg 
+     * @param co 
      */
-    private Account(OracleERPConnector connector) {
-        this.co = connector;
-        //No public
+    public Account(OracleERPConnection conn, OracleERPConfiguration cfg, OracleERPConnector co) {
+        this.conn = conn;
+        this.cfg = cfg;
+        this.co = co;
     }    
     
     /**
@@ -218,57 +133,65 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      */
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
         log.ok("create");               
-        //Get the person_id and set is it as a employee id
         final Name nameAttr = AttributeUtil.getNameFromAttributes(attrs);
+        if( nameAttr == null || nameAttr.getNameValue() == null) {
+            throw new IllegalArgumentException(cfg.getMessage(MSG_ACCOUNT_NAME_REQUIRED));
+        }        
         final String name = nameAttr.getNameValue();
-        final Integer person_id = getPersonId(name, co, attrs);
+
+        attrs = CollectionUtil.newSet(attrs); //modifiable set       
+        if (AttributeUtil.find(OWNER, attrs) == null) {
+            attrs.add(AttributeBuilder.build(OWNER, CUST));
+        }
+        
+        //Get the person_id and set is it as a employee id
+        final Integer person_id = getPersonId(name, conn, cfg, attrs);
         if (person_id != null) {
             // Person Id as a Employee_Id
             attrs.add(AttributeBuilder.build(EMP_ID, person_id));
         }
         
         // Get the User values
-        final Map<String, SQLParam> userValues = getParamsMap(oclass, attrs, options, true);        
+        final AccountSQLBuilder asb = new AccountSQLBuilder(cfg.app(), true)
+                                            .build(oclass, attrs, options);        
         // Run the create call, new style is using the defaults
         
-        if ( !userValues.isEmpty() ) {
+        if ( !asb.isEmpty() ) {
             CallableStatement cs = null;
             CallableStatement csAll = null;
             CallableStatement csUpdate = null;
             
             String sql = null;
-            List<SQLParam> userSQLParams = null;
             boolean isUpdateNeeded = false;
 
             final String msg = "Create user account {0} : {1}";
-            final String user_name = getStringParamValue(userValues, USER_NAME);
-            log.ok(msg, user_name, sql);
+            log.ok(msg, name, sql);
             try {
                 // Create the user
-                if (isCreateNormalizer()) {
-                    sql = getUserCallSQL(userValues, true, co.app());
-                    userSQLParams = getUserSQLParams(userValues);
-                    cs = co.getConn().prepareCall(sql, userSQLParams);
+                if (cfg.isCreateNormalizer()) {
+                    sql = asb.getUserCallSQL();
+                    final List<SQLParam> userSQLParams = asb.getUserSQLParams();
+                    cs = conn.prepareCall(sql, userSQLParams);
                     cs.execute();
                 } else {
-                    sql = getAllSQL(userValues, true, co.app());
-                    userSQLParams = getAllSQLParams(userValues);                    
+                    sql = asb.getAllSQL();
+                    final List<SQLParam> userSQLParams = asb.getAllSQLParams();                    
                     //create all
-                    csAll = co.getConn().prepareCall(sql, userSQLParams);
+                    csAll = conn.prepareCall(sql, userSQLParams);
                     csAll.execute();
 
-                    isUpdateNeeded = isUpdateNeeded(userValues);
+                    isUpdateNeeded = asb.isUpdateNeeded();
                     if (isUpdateNeeded) {
-                        sql = getUserUpdateNullsSQL(userValues, co.app());
-                        userSQLParams = getUserUpdateNullsParams(userValues);
-                        csUpdate = co.getConn().prepareCall(sql, userSQLParams);
+                        sql = asb.getUserUpdateNullsSQL();
+                        final List<SQLParam> updateSQLParams = asb.getUserUpdateNullsParams();
+                        csUpdate = conn.prepareCall(sql, updateSQLParams);
                         csUpdate.execute();
                     }
                 }
             } catch (SQLException e) {
-                log.error(e, user_name, sql);
-                SQLUtil.rollbackQuietly(co.getConn());
-                throw new AlreadyExistsException(e);
+                log.error(e, name, sql);
+                SQLUtil.rollbackQuietly(conn);
+                throw new IllegalStateException(cfg.getMessage(MSG_ACCOUNT_NOT_CREATE, name), e);
             } finally {
                 SQLUtil.closeQuietly(cs);
                 SQLUtil.closeQuietly(csAll);
@@ -290,7 +213,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             co.getSecAttrs().updateUserSecuringAttrs(secAttr, name);
         }
         
-        co.getConn().commit();     
+        conn.commit();     
         return new Uid(name);
     }
     
@@ -298,28 +221,29 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      * @see org.identityconnectors.framework.spi.operations.SearchOp#createFilterTranslator(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public FilterTranslator<FilterWhereBuilder> createFilterTranslator(ObjectClass oclass, OperationOptions options) {
-        return new OracleERPFilterTranslator(oclass, options, this);
+        //TODO possibly create other account ColumnNameResolver
+        return new OracleERPFilterTranslator(oclass, options, AccountSQL.FND_USER_COLS, this);
     }
 
     /* (non-Javadoc)
      * @see org.identityconnectors.framework.spi.operations.DeleteOp#delete(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.Uid, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {       
-        final String sql = "{ call "+co.app()+"fnd_user_pkg.disableuser(?) }";
+        final String sql = "{ call "+cfg.app()+"fnd_user_pkg.disableuser(?) }";
         log.info("delete");
         CallableStatement cs = null;
         try {
-            cs = co.getConn().prepareCall(sql);
+            cs = conn.prepareCall(sql);
             final String identity = AttributeUtil.getAsStringValue(uid).toUpperCase();
             cs.setString(1, identity);
             cs.execute();
             
-            co.getConn().commit();
+            conn.commit();
             // No Result ??
         } catch (SQLException e) {
             if (e.getErrorCode() == 20001 || e.getErrorCode() == 1403) {
                 final String msg = "SQL Exception trying to delete Oracle user '{0}' ";
-                SQLUtil.rollbackQuietly(co.getConn());
+                SQLUtil.rollbackQuietly(conn);
                 throw new IllegalArgumentException(MessageFormat.format(msg, uid),e);
             } else {
               throw new UnknownUidException(uid, objClass);
@@ -337,27 +261,23 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             OperationOptions options) {
         final String method = "executeQuery";
         
-        final String tblname = co.app() + "fnd_user";
-        final Set<String> attributesToGet = getAttributesToGet(options);        
+        final String tblname = cfg.app() + "fnd_user";
+        final Set<AttributeInfo> ais = getAttributeInfos(cfg.getSchema(), ObjectClass.ACCOUNT_NAME);
+        final Set<String> attributesToGet = getAttributesToGet(options, ais);        
         final Set<String> fndUserColumnNames = getColumnNamesToGet(attributesToGet);
         final Set<String> perPeopleColumnNames = CollectionUtil.newSet(fndUserColumnNames);
-        String filterId = null;
-        for (SQLParam sqlp : where.getParams()) {
-            if ( sqlp.getName().equalsIgnoreCase(USER_NAME)) {
-                filterId = sqlp.getValue().toString();
-            }
-        }
+        final String filterId = getFilterId(where);
 
-        fndUserColumnNames.retainAll(FND_USER_COLS);
-        perPeopleColumnNames.retainAll(PER_PEOPLE_COLS);
+        fndUserColumnNames.retainAll(AccountSQL.FND_USER_COLS);
+        perPeopleColumnNames.retainAll(AccountSQL.PER_PEOPLE_COLS);
         
         // For all user query there is no need to replace or quote anything
         final DatabaseQueryBuilder query = new DatabaseQueryBuilder(tblname, fndUserColumnNames );
         String sqlSelect = query.getSQL();
         
-        if(StringUtil.isNotBlank(co.getCfg().getAccountsIncluded())) {
-            sqlSelect += whereAnd(sqlSelect, co.getCfg().getAccountsIncluded());
-        } else if( co.getCfg().isActiveAccountsOnly()) {
+        if(StringUtil.isNotBlank(cfg.getAccountsIncluded())) {
+            sqlSelect += whereAnd(sqlSelect, cfg.getAccountsIncluded());
+        } else if( cfg.isActiveAccountsOnly()) {
             sqlSelect += whereAnd(sqlSelect, ACTIVE_ACCOUNTS_ONLY_WHERE_CLAUSE);
         }
         
@@ -366,7 +286,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         ResultSet result = null;
         PreparedStatement statement = null;
         try {
-            statement = co.getConn().prepareStatement(query);
+            statement = conn.prepareStatement(query);
             result = statement.executeQuery();
             while (result.next()) {
                 AttributeMergeBuilder amb = new AttributeMergeBuilder(attributesToGet);
@@ -399,7 +319,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                     break;
                 }
             }
-            co.getConn().commit();
+            conn.commit();
             log.ok(method);
         } catch (SQLException e) {
             log.error(e, method);
@@ -408,6 +328,22 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             SQLUtil.closeQuietly(result);
             SQLUtil.closeQuietly(statement);
         }
+    }
+
+    /**
+     * @param where
+     * @return
+     */
+    private String getFilterId(FilterWhereBuilder where) {
+        String filterId = null;
+        if (where != null) {
+            for (SQLParam sqlp : where.getParams()) {
+                if (sqlp.getName().equalsIgnoreCase(USER_NAME)) {
+                    filterId = sqlp.getValue().toString();
+                }
+            }
+        }
+        return filterId;
     }
     
     /**
@@ -421,7 +357,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             return USER_NAME;
         }
         //We need to filter just a known columns
-        if ( FND_USER_COLS.contains(attributeName)) {
+        if ( AccountSQL.FND_USER_COLS.contains(attributeName)) {
             return attributeName;
         }
 
@@ -432,37 +368,17 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      * @param attributeName
      * @return the columnName
      */
-    private String getColumnName(String attributeName) {
+    public String getColumnName(String attributeName) {
         if (attributeName.equalsIgnoreCase(PERSON_FULLNAME)) {
             return FULL_NAME;
         }
         //We need to filter just a known columns
-        if ( PER_PEOPLE_COLS.contains(attributeName)) {
+        if ( AccountSQL.PER_PEOPLE_COLS.contains(attributeName)) {
             return attributeName;
         }       
 
         return getFilterColumnName(attributeName);
     }    
-    
-    /**
-     * The account attributes returned by default
-     * @return The set of attribute names
-     */
-    private Set<String> getAttributesByDefault() {
-        if (attributesByDefault == null) {
-            attributesByDefault = getDefaultAttributesToGet(getObjectClassInfo().getAttributeInfo());
-        }          
-        return attributesByDefault;
-    }
-
-    /**
-     * @param options
-     * @return
-     */
-    private Set<String> getAttributesToGet(OperationOptions options) {
-        Set<String> attributesToGet = OracleERPUtil.getAttributesToGet(options, getAttributesByDefault());
-        return attributesToGet;
-    }
 
     /**
      * @param attributesToGet from application
@@ -483,135 +399,6 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
 
         log.ok("columnNamesToGet {0}", columnNamesToGet);
         return columnNamesToGet;
-    }
-
-    /**
-     * Get the Account Object Class Info
-     * @param schemaBld 
-     * @return The cached object class info
-     */
-     public ObjectClassInfo getObjectClassInfo() {
-        if (oci == null) {
-            ObjectClassInfoBuilder ocib = new ObjectClassInfoBuilder();
-            ocib.setType(ObjectClass.ACCOUNT_NAME);
-
-            // The Name is supported attribute
-            ocib.addAttributeInfo(Name.INFO);
-            // name='owner' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(OWNER, String.class, EnumSet.of(Flags.REQUIRED, Flags.NOT_READABLE, Flags.NOT_RETURNED_BY_DEFAULT)));
-            // name='session_number' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(SESS_NUM, String.class, EnumSet.of(Flags.NOT_UPDATEABLE,
-                    Flags.NOT_CREATABLE)));
-            // name='start_date' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(START_DATE, String.class, EnumSet.of(Flags.REQUIRED)));
-            // name='end_date' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(END_DATE, String.class));
-            // name='last_logon_date' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(LAST_LOGON_DATE, String.class, EnumSet.of(
-                    Flags.NOT_UPDATEABLE, Flags.NOT_CREATABLE)));
-            // name='description' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(DESCR, String.class));
-            // <Views><String>Enable</String></Views>
-            ocib.addAttributeInfo(OperationalAttributeInfos.ENABLE);
-            // <Views><String>Password</String><String>Reset</String></Views>
-            //aoc.addAttributeInfo(OperationalAttributeInfos.RESET_PASSWORD); 
-            // reset is implemented as change password
-            // name='Password',  Password is mapped to operationalAttribute
-            ocib.addAttributeInfo(OperationalAttributeInfos.PASSWORD);
-            // name='password_accesses_left' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(PWD_DATE, String.class));
-            // name='password_accesses_left' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(PWD_ACCESSES_LEFT, String.class));
-            // name='password_lifespan_accesses' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(PWD_LIFE_ACCESSES, String.class));
-            // name='password_lifespan_days' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(PWD_LIFE_DAYS, String.class));
-            // name='employee_id' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(EMP_ID, String.class));
-            // name='employee_number' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(EMP_NUM, Integer.class));
-            // name='person_fullname' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(PERSON_FULLNAME, String.class));
-            // name='npw_number' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(NPW_NUM, Integer.class));
-            // name='email_address' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(EMAIL, String.class));
-            // name='fax' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(FAX, String.class));
-            // name='customer_id' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(CUST_ID, String.class));
-            // name='supplier_id' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(SUPP_ID, String.class));
-            // name='person_party_id' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(PERSON_PARTY_ID, String.class));
-
-            //user_id
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_ID, String.class, EnumSet.of(Flags.NOT_RETURNED_BY_DEFAULT, Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE)));
-            
-            if ( co.getRespNames().isNewResponsibilityViews() ) {
-                // name='DIRECT_RESPS' type='string' required='false'
-                ocib.addAttributeInfo(AttributeInfoBuilder.build(DIRECT_RESPS, String.class, EnumSet.of(Flags.MULTIVALUED)));
-                // name='INDIRECT_RESPS' type='string' required='false'
-                ocib.addAttributeInfo(AttributeInfoBuilder.build(INDIRECT_RESPS, String.class, EnumSet.of(Flags.MULTIVALUED)));
-            } else {
-                // name='RESPS' type='string' required='false'
-                ocib.addAttributeInfo(AttributeInfoBuilder.build(RESPS, String.class, EnumSet.of(Flags.MULTIVALUED)));                
-            }
-            // name='RESPKEYS' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RESPKEYS, String.class, EnumSet.of(Flags.MULTIVALUED)));
-            // name='SEC_ATTRS' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(SEC_ATTRS, String.class, EnumSet.of(Flags.MULTIVALUED)));
-            // name='expirePassword' type='string' required='false' is mapped to PASSWORD_EXPIRED
-            ocib.addAttributeInfo(OperationalAttributeInfos.PASSWORD_EXPIRED);
-
-            //Optional aggregated user attributes
-            final EnumSet<Flags> STD_NRD = EnumSet.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE,
-                    Flags.NOT_RETURNED_BY_DEFAULT);
-
-            // name='userMenuNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RESP_NAMES, String.class, STD_NRD));
-            // name='userMenuNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(AUDITOR_RESPS, String.class, STD_NRD));
-            // name='userMenuNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_MENU_NAMES, String.class, STD_NRD));
-            // name='menuIds' type='string' audit='false'    
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(MENU_IDS, String.class, STD_NRD));
-            // name='userFunctionNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_FUNCTION_NAMES, String.class, STD_NRD));
-            // name='functionIds' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_IDS, String.class, STD_NRD));
-            // name='formIds' type='string' audit='false'    
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(FORM_IDS, String.class, STD_NRD));
-            // name='formNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(FORM_NAMES, String.class, STD_NRD));
-            // name='functionNames' type='string' audit='false'    
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(FUNCTION_NAMES, String.class, STD_NRD));
-            // name='userFormNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_FORM_NAMES, String.class, STD_NRD));
-            // name='readOnlyFormIds' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RO_FORM_IDS, String.class, STD_NRD));
-            // name='readWriteOnlyFormIds' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_ONLY_FORM_IDS, String.class, STD_NRD));
-            // name='readOnlyFormNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RO_FORM_NAMES, String.class, STD_NRD));
-            // name='readOnlyFunctionNames' type='string' audit='false'    
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RO_FUNCTION_NAMES, String.class, STD_NRD));
-            // name='readOnlyUserFormNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RO_USER_FORM_NAMES, String.class, STD_NRD));
-            // name='readOnlyFunctionIds' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RO_FUNCTIONS_IDS, String.class, STD_NRD));
-            // name='readWriteOnlyFormNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_FORM_NAMES, String.class, STD_NRD));
-            // name='readWriteOnlyUserFormNames' type='string' audit='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_USER_FORM_NAMES));
-            // name='readWriteOnlyFunctionNames' type='string' audit='false'        
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_FUNCTION_NAMES, String.class, STD_NRD));
-            // name='readWriteOnlyFunctionIds' type='string' audit='false'                 
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_FUNCTION_IDS, String.class, STD_NRD));
-            
-            oci = ocib.build();
-        }   
-        return oci;
     }
 
 
@@ -644,15 +431,37 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      * @param options OperationOptions
      */
     public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
-        String oldName = uid.getUidValue();
+        final String name = uid.getUidValue();
+        
+        if ( uid == null || uid.getUidValue() == null ) {
+            throw new IllegalArgumentException(cfg.getMessage(MSG_ACCOUNT_UID_REQUIRED));
+        }
+        
+        attrs = CollectionUtil.newSet(attrs); //modifiable set       
+        
+        //Name is not present
         final Name nameAttr = AttributeUtil.getNameFromAttributes(attrs);
-        final String newName = nameAttr.getNameValue();
-         
-        if(!oldName.equalsIgnoreCase(newName)) {
-            changeName(oldName, newName);
-            oldName = newName;
+        if (nameAttr == null) {
+            attrs.add(AttributeBuilder.build(Name.NAME, name));
+        } else {
+            //Cannot rename user
+            if (nameAttr.getNameValue() != null) {
+                final String newName = nameAttr.getNameValue();
+                if (!name.equalsIgnoreCase(newName)) {
+                    final String emsg = cfg.getMessage(MSG_COULD_NOT_RENAME_USER, name, newName);
+                    throw new IllegalStateException(emsg);
+                }
+            } else {
+               //empty name, replace using UID
+                attrs.remove(nameAttr);                
+                attrs.add(AttributeBuilder.build(Name.NAME, name));
+            }
         }
 
+        //Add default owner
+        if (AttributeUtil.find(OWNER, attrs) == null) {
+            attrs.add(AttributeBuilder.build(OWNER, CUST));
+        }        
         
         // Enable/dissable user
         final Attribute enableAttr = AttributeUtil.find(OperationalAttributes.ENABLE_NAME, attrs);
@@ -660,27 +469,27 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             boolean enable =AttributeUtil.getBooleanValue(enableAttr);
             if ( enable ) {
                 //delete user is the same as dissable
-                disable(objclass, oldName, options);
+                disable(objclass, name, options);
             } else {
-                enable(objclass, oldName, options);
+                enable(objclass, name, options);
             }
         }
         
         // Get the User values
-        final Map<String, SQLParam> userValues = getParamsMap(objclass, attrs, options, false);
-        if ( !userValues.isEmpty() ) {
+        final AccountSQLBuilder asb = new AccountSQLBuilder(cfg.app(), false).build(objclass, attrs, options);
+        if ( !asb.isEmpty() ) {
             // Run the create call, new style is using the defaults
             CallableStatement cs = null;
-            final String sql = getUserCallSQL(userValues, false, co.app());
+            final String sql = asb.getUserCallSQL();
             final String msg = "Update user account {0} : {1}";
-            log.ok(msg, oldName, sql);
+            log.ok(msg, name, sql);
             try {
                 // Create the user
-                cs = co.getConn().prepareCall(sql, getUserSQLParams(userValues));
+                cs = conn.prepareCall(sql, asb.getUserSQLParams());
                 cs.execute();
             } catch (SQLException e) {
-                log.error(e, msg, oldName, sql);
-                SQLUtil.rollbackQuietly(co.getConn());
+                log.error(e, msg, name, sql);
+                SQLUtil.rollbackQuietly(conn);
                 throw new ObjectNotFoundException(e);
             } finally {
                 SQLUtil.closeQuietly(cs);
@@ -691,55 +500,19 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         final Attribute resp = AttributeUtil.find(RESPS, attrs);
         final Attribute directResp = AttributeUtil.find(DIRECT_RESPS, attrs);
         if ( resp != null ) {
-            co.getRespNames().updateUserResponsibilities( resp, oldName);
+            co.getRespNames().updateUserResponsibilities( resp, name);
         } else if ( directResp != null ) {
-            co.getRespNames().updateUserResponsibilities( directResp, oldName);
+            co.getRespNames().updateUserResponsibilities( directResp, name);
         }
 
         final Attribute secAttr = AttributeUtil.find(SEC_ATTRS, attrs);
         if ( secAttr != null ) {
-            co.getSecAttrs().updateUserSecuringAttrs(secAttr, oldName);
+            co.getSecAttrs().updateUserSecuringAttrs(secAttr, name);
         }
 
-        co.getConn().commit();
+        conn.commit();
         //Return new UID
-        return new Uid(newName);
-    }
-
-    /**
-     * @param oldName
-     * @param newName
-     */
-    private void changeName(String oldName, String newName) {
-        final String msg = "changeName ''{0}'' -> ''{1}''";
-        log.info(msg, oldName, newName);
-        
-        final String emsg = co.getCfg().getMessage(MSG_COULD_NOT_RENAME_USER, oldName, newName);        
-        throw new IllegalStateException(emsg);
-        /*
-        final OracleERPConnection conn = co.getConn();
-        String userId = getUserId(co, oldName);
-        final String sql = "update "+ co.app() + "FND_USER set user_name = ? WHERE user_id = ?";
-        PreparedStatement ps = null;
-        try {
-            ps = conn.prepareStatement(sql);
-            ps.setString(1, newName.toUpperCase());
-            ps.setString(2, userId);
-            if ( ps.executeUpdate() != 1 ) {
-                final String emsg = co.getCfg().getMessage(MSG_COULD_NOT_RENAME_USER, oldName, newName);
-                log.error(emsg);
-                throw new IllegalStateException(emsg);                
-            }
-        } catch (SQLException e) {
-            log.error(e, sql);
-            SQLUtil.rollbackQuietly(co.getConn());
-            throw ConnectorException.wrap(e);
-        } finally {
-            SQLUtil.closeQuietly(ps);
-        }
-        // pstmt closed in finally below
-        log.info(msg, oldName, newName);
-        */
+        return new Uid(name);
     }
 
     /**
@@ -758,7 +531,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         PreparedStatement st = null;
         try {
             StringBuilder b = new StringBuilder();
-            b.append("{ call " + co.app() + "fnd_user_pkg.updateuser(x_user_name => ?");
+            b.append("{ call " + cfg.app() + "fnd_user_pkg.updateuser(x_user_name => ?");
             b.append(",x_owner => upper(?),x_end_date => FND_USER_PKG.null_date");
             b.append(") }");
             
@@ -766,14 +539,14 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             final String sql = b.toString();
             log.info( msg, sql);
 
-            st = co.getConn().prepareStatement(sql);
+            st = conn.prepareStatement(sql);
             st.setString(1, userName.toUpperCase());
-            st.setString(2, co.getCfg().getUser());
+            st.setString(2, cfg.getUser());
             st.execute();
         } catch (SQLException e) {
-            final String msg = co.getCfg().getMessage(MSG_COULD_NOT_ENABLE_USER, userName);
+            final String msg = cfg.getMessage(MSG_COULD_NOT_ENABLE_USER, userName);
             log.error(e, msg);
-            SQLUtil.rollbackQuietly(co.getConn());
+            SQLUtil.rollbackQuietly(conn);
             throw new ConnectorException(msg, e);
         } finally {
             SQLUtil.closeQuietly(st);
@@ -788,17 +561,17 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
      * @param options
      */
     private void disable(ObjectClass objclass, String name, OperationOptions options) {
-        final String sql = "{ call "+co.app()+"fnd_user_pkg.disableuser(?) }";
+        final String sql = "{ call "+cfg.app()+"fnd_user_pkg.disableuser(?) }";
         log.info(sql);
         CallableStatement cs = null;
         try {
-            cs = co.getConn().prepareCall(sql);
+            cs = conn.prepareCall(sql);
             cs.setString(1, name);
             cs.execute();
             // No Result ??
         } catch (SQLException e) {
             final String msg = "SQL Exception trying to disable Oracle user '{0}' ";
-            SQLUtil.rollbackQuietly(co.getConn());
+            SQLUtil.rollbackQuietly(conn);
             throw new IllegalArgumentException(MessageFormat.format(msg, name),e);
         } finally {
             SQLUtil.closeQuietly(cs);
@@ -807,16 +580,6 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
 
     }
     
-
-    /**
-     * @param schemaId
-     * @param fn
-     * @param body
-     * @return
-     */
-    private String createCallSQL(String schemaId, final String fn, StringBuilder body) {
-        return "{ call " + schemaId + FND_USER_CALL + fn + " ( "+ body.toString() + " ) }";
-    }    
 
     /**
      * @param bld
@@ -839,7 +602,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
         log.info("buildPersonDetails for personId: {0}", personId );
         
         //Names to get filter
-        final String tblname = co.app()+ "PER_PEOPLE_F";
+        final String tblname = cfg.app()+ "PER_PEOPLE_F";
 
         if (personColumns.isEmpty()) {
             // No persons column required
@@ -861,7 +624,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
             ResultSet result = null; // SQL query on person_id
             PreparedStatement statement = null; // statement that generates the query
             try {
-                statement = co.getConn().prepareStatement(query);
+                statement = conn.prepareStatement(query);
                 result = statement.executeQuery();
                 if (result != null) {
                     log.ok("executeQuery {0}", query.getSQL());
@@ -877,7 +640,7 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                 String emsg = e.getMessage();
                 msg = "Caught SQLException when executing: ''{0}'': {1}";
                 log.error(msg, sql, emsg);
-                SQLUtil.rollbackQuietly(co.getConn());
+                SQLUtil.rollbackQuietly(conn);
                 throw new ConnectorException(msg, e);
             } finally {
                 SQLUtil.closeQuietly(result);
@@ -922,591 +685,6 @@ public class Account implements OracleERPColumnNameResolver, CreateOp, UpdateOp,
                     amb.addAttribute(columnName, value);
                 }
             }
-        }
-    }
-
-    /**
-     * Return the userAccount create/update sql full syntax (all fields)
-     * 
-     * @param userValues
-     *            the Map of user values
-     * @param create
-     *            true for create/false update
-     * @param schemaId
-     *            the configuration schema id
-     * @return a <CODE>String</CODE> sql string
-     */
-    String getAllSQL(Map<String, SQLParam> userValues, boolean create, String schemaId) {
-        final String fn = (create) ? CREATE_FNC : UPDATE_FNC;
-        StringBuilder body = new StringBuilder();
-        boolean first = true;
-        for (CallParam par : CALL_PARAMS) {
-            final String columnName = par.name;
-
-            if (!first)
-                body.append(", ");
-            body.append( columnName == null ? "" : Q); // All values will be binded
-            first = false;
-        }
-
-        final String sql = createCallSQL(schemaId, fn, body);
-        log.ok("getSQL {0}", sql);
-        return sql;
-    }
-
-
-    /**
-     * Return the userAccount create/update parameters (all fields)
-     * 
-     * @param userValues
-     *            the Map of user values
-     * @return a <CODE>List</CODE> object list
-     */
-    List<SQLParam> getAllSQLParams(Map<String, SQLParam> userValues) {
-        final List<SQLParam> ret = new ArrayList<SQLParam>();
-
-        for ( CallParam par : CALL_PARAMS ) {
-            final String columnName = par.name;
-            Integer sqlType = par.sqlType;
-
-            SQLParam val = userValues.get(columnName);
-            //null default values
-            if( val == null || isDefault(val)) {                
-                val = new SQLParam(columnName, null, sqlType);
-            }
-            ret.add(val);
-        }
-        return ret;
-    }    
-    
-    
-    /**
-     * Evaluate the User Values Map
-     * 
-     * @param oclass
-     *  
-     *            the object class
-     * @param attrs
-     *            the set of attributes
-     * @param options
-     *            the operation options
-     * @param create
-     *            true/false for create/update
-     * @return a map of userValues
-     */
-    Map<String, SQLParam> getParamsMap(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options,
-            boolean create) {
-        log.info("Account: getParamsMap");
-        
-        if (oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
-            throw new IllegalArgumentException(
-                    "Create operation requires an 'ObjectClass' attribute of type 'Account'.");
-        }
-
-        final Map<String, SQLParam> userValues = CollectionUtil.newCaseInsensitiveMap();
-        final java.sql.Date currentDate = new java.sql.Date(System.currentTimeMillis());
-
-        // At first, couldn't do anything to null fields except make sql call
-        // updating tables directly. Bug#9005 forced us to find oracle constants
-        // to do this.
-        // I couldn't null out fields with Oracle constants thru callablestatement,
-        // instead, collect all null fields and make a preparedstatement call to
-        // api with null fields.        
-
-        // Handle the special attributes first to use them in decission later
-        for (Attribute attr : attrs) {
-            if (attr.is(Name.NAME)) {
-                //         cstmt1.setString(1, identity.toUpperCase());
-                final String userName = AttributeUtil.getAsStringValue(attr).toUpperCase();
-                userValues.put(USER_NAME, new SQLParam(USER_NAME, userName, Types.VARCHAR));
-                log.ok("{0} => {1}, Types.VARCHAR", USER_NAME, userName);
-            } else {
-                if (attr.is(OperationalAttributes.PASSWORD_NAME)) {
-                    /*
-                    cstmt1.setString(3, (String)accountAttrChanges.get(UNENCRYPT_PWD));
-                    //only set 'password_date' if password changed
-                    if ((String)accountAttrChanges.get(UNENCRYPT_PWD) != null) {
-                        cstmt1.setDate(9, new java.sql.Date(
-                                (new java.util.Date().getTime()) ));
-                    }*/
-                    if (AttributeUtil.getSingleValue(attr) != null) {
-                        final GuardedString password = AttributeUtil.getGuardedStringValue(attr);
-                        userValues.put(UNENCRYPT_PWD, new SQLParam(UNENCRYPT_PWD, password));
-                        log.ok("{0} is a password", UNENCRYPT_PWD);
-                        userValues.put(PWD_DATE, new SQLParam(PWD_DATE, currentDate, Types.DATE));
-                        log.ok("append also {0} => {1} ,Types.DATE", PWD_DATE ,currentDate);
-                    }
-
-                } else if (attr.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)) {
-                    /* ------ adapter code ----------
-                    Boolean expirePassword = null;
-                    if ( ((String)accountAttrChanges.get("OPERATION")).equalsIgnoreCase("CREATE") ) {
-                        if (accountAttrChanges.containsKey(EXP_PWD)) {
-                            expirePassword = ((Boolean)accountAttrChanges.get(EXP_PWD));
-                            if (expirePassword.booleanValue()) {
-                                nullFields.append(",x_last_logon_date => FND_USER_PKG.null_date");                    
-                                nullFields.append(",x_password_date => FND_USER_PKG.null_date");
-                            } else {
-                                cstmt1.setDate(7, new java.sql.Date(
-                                                        (new java.util.Date().getTime()) ));
-                            }
-                        } else {
-                            cstmt1.setDate(7, new java.sql.Date(
-                                                    (new java.util.Date().getTime()) ));
-                        }
-                    } else if ( ((String)accountAttrChanges.get("OPERATION")).equalsIgnoreCase("UPDATE") ) {
-                        if (accountAttrChanges.containsKey(EXP_PWD)) {
-                            expirePassword = ((Boolean)accountAttrChanges.get(EXP_PWD));
-                            if (expirePassword.booleanValue()) {
-                                nullFields.append(",x_last_logon_date => FND_USER_PKG.null_date");                    
-                                nullFields.append(",x_password_date => FND_USER_PKG.null_date");                    
-                            } 
-                        } 
-                    }*/
-                    /*
-                     * On create if expirePassword is false/null, set last_logon_date to today
-                     * On update if expirePassword is false/null, do nothing
-                     * On both is if expirePassword is true, null out last_logon_date, and password_date 
-                     * Handle expiring password differently in create vs update
-                     */
-                    boolean passwordExpired = false;
-                    if (AttributeUtil.getSingleValue(attr) != null) {
-                        passwordExpired = AttributeUtil.getBooleanValue(attr);
-                    }
-                    if (passwordExpired) {
-                        userValues.put(LAST_LOGON_DATE, new SQLParam(LAST_LOGON_DATE, NULL_DATE));
-                        log.ok("passwordExpired: {0} => NULL_DATE", LAST_LOGON_DATE);
-                        userValues.put(PWD_DATE, new SQLParam(PWD_DATE, NULL_DATE));
-                        log.ok("append also {0} => NULL_DATE", PWD_DATE);
-                    } else if (create) {
-                        userValues.put(LAST_LOGON_DATE,  new SQLParam(LAST_LOGON_DATE, currentDate));
-                        log.ok("create account with not expired password {0} => {1}", LAST_LOGON_DATE, currentDate);
-                    }
-
-                } else if (attr.is(OWNER)) {
-                    //         cstmt1.setString(2, (String)accountAttrChanges.get(OWNER));
-                    final String owner = AttributeUtil.getAsStringValue(attr);
-                    userValues.put(OWNER, new SQLParam(OWNER, owner, Types.VARCHAR));
-                    log.ok("{0} = > {1}, Types.VARCHAR", OWNER, owner);
-                } else if (attr.is(START_DATE)) {
-                    /* ------ adapter code ---------- 
-                    // start_date 'not null' type
-                    if (accountAttrChanges.containsKey(START_DATE)) {
-                        if (accountAttrChanges.get(START_DATE) != null) {
-                            cstmt1.setTimestamp(5, java.sql.Timestamp.valueOf((String)accountAttrChanges.get(START_DATE)) );
-                        }
-                    }
-                     */
-                    final String dateString = AttributeUtil.getAsStringValue(attr);
-                    if (dateString != null) {
-                        Timestamp tms = stringToTimestamp(dateString);// stringToTimestamp(dateString);
-                        userValues.put(START_DATE, new SQLParam(START_DATE, tms, Types.TIMESTAMP));
-                        log.ok("{0} => {1} , Types.TIMESTAMP", START_DATE, tms);
-                    }
-
-                } else if (attr.is(END_DATE)) {
-                    /* ------ adapter code ----------
-                    if (accountAttrChanges.containsKey(END_DATE)) {
-                       if (accountAttrChanges.get(END_DATE) == null) {
-                           nullFields.append(",x_end_date => FND_USER_PKG.null_date");                
-                       } else if ( ((String)accountAttrChanges.get(END_DATE)).equalsIgnoreCase(SYSDATE)) {
-                           // force sysdate into end_date
-                           nullFields.append(",x_end_date => sysdate");
-                       } else {
-                           cstmt1.setTimestamp(6, java.sql.Timestamp.valueOf(
-                                   (String)accountAttrChanges.get(END_DATE)) );
-                       }
-                    }*/
-
-                    if (AttributeUtil.getSingleValue(attr) == null) {
-                        userValues.put(END_DATE, new SQLParam(END_DATE, NULL_DATE));
-                        log.ok("NULL {0} => NULL_DATE : continue", END_DATE);
-                    } else {
-                        final String dateString = AttributeUtil.getAsStringValue(attr);
-                        if (SYSDATE.equalsIgnoreCase(dateString)) {
-                            userValues.put(END_DATE, new SQLParam(END_DATE, SYSDATE));
-                            log.ok("sysdate value in {0} => {1} : continue", END_DATE, SYSDATE);
-                        } else {
-                        Timestamp tms = stringToTimestamp(dateString);
-                        userValues.put(END_DATE, new SQLParam(END_DATE, tms, Types.TIMESTAMP));
-                        log.ok("{0} => {1}, Types.TIMESTAMP", END_DATE, tms);
-                        }
-                    }
-                } else if (attr.is(DESCR)) {
-                    /*  ------ adapter code ----------
-                    if (accountAttrChanges.containsKey(DESCR)) {
-                        if (accountAttrChanges.get(DESCR) == null) {
-                            nullFields.append(",x_description => FND_USER_PKG.null_char");                    
-                            
-                        } else {
-                            cstmt1.setString(8, (String)accountAttrChanges.get(DESCR));               
-                        }
-                    } 
-                    */
-                    if (AttributeUtil.getSingleValue(attr) == null) {
-                        userValues.put(DESCR, new SQLParam(DESCR, NULL_CHAR, Types.VARCHAR));
-                        log.ok("NULL {0} => NULL_CHAR", DESCR);
-                    } else {
-                        final String descr = AttributeUtil.getAsStringValue(attr);
-                        userValues.put(DESCR, new SQLParam(DESCR, descr, Types.VARCHAR));
-                        log.ok("{0} => {1}, Types.VARCHAR", DESCR, descr);
-                    }
-
-                } else if (attr.is(PWD_ACCESSES_LEFT)) {
-                    /*  ------ adapter code ----------
-                    if (accountAttrChanges.containsKey(PWD_ACCESSES_LEFT)) {
-                        if ( (accountAttrChanges.get(PWD_ACCESSES_LEFT) == null) ||
-                        ( ((String)accountAttrChanges.get(PWD_ACCESSES_LEFT)).length() == 0) ) {
-                            nullFields.append(",x_password_accesses_left => FND_USER_PKG.null_number");                               
-                        } else {
-                            cstmt1.setInt(10, (new Integer((String)accountAttrChanges.get(PWD_ACCESSES_LEFT)).intValue()) );
-                        }
-                    }*/
-                    if (AttributeUtil.getSingleValue(attr) == null) {
-                        userValues.put(PWD_ACCESSES_LEFT, new SQLParam(PWD_ACCESSES_LEFT, NULL_NUMBER, Types.INTEGER));
-                        log.ok("NULL {0} => NULL_NUMBER", PWD_ACCESSES_LEFT);
-                    } else {
-                        final Integer accessLeft = AttributeUtil.getIntegerValue(attr);
-                        userValues.put(PWD_ACCESSES_LEFT, new SQLParam(PWD_ACCESSES_LEFT, accessLeft, Types.INTEGER));
-                        log.ok("{0} => {1}, Types.INTEGER", DESCR, accessLeft);
-                    }
-
-                } else if (attr.is(PWD_LIFE_ACCESSES)) {
-                    /*  ------ adapter code ----------
-                    if (accountAttrChanges.containsKey(PWD_LIFE_ACCESSES)) {
-                       if ( (accountAttrChanges.get(PWD_LIFE_ACCESSES) == null)  ||
-                       ( ((String)accountAttrChanges.get(PWD_LIFE_ACCESSES)).length() == 0) ) {
-                           nullFields.append(",x_password_lifespan_accesses => FND_USER_PKG.null_number");                                
-                       } else {
-                           cstmt1.setInt(11, (new Integer((String)accountAttrChanges.get(PWD_LIFE_ACCESSES)).intValue()) );
-                       }
-                    } */
-                    if (AttributeUtil.getSingleValue(attr) == null) {
-                        userValues.put(PWD_LIFE_ACCESSES, new SQLParam(PWD_LIFE_ACCESSES, NULL_NUMBER, Types.INTEGER));
-                        log.ok("NULL {0} => NULL_NUMBER", PWD_LIFE_ACCESSES);
-                    } else {
-                        final Integer lifeAccess = AttributeUtil.getIntegerValue(attr);
-                        userValues.put(PWD_LIFE_ACCESSES, new SQLParam(PWD_LIFE_ACCESSES, lifeAccess, Types.INTEGER));
-                        log.ok("{0} => {1}, Types.INTEGER", PWD_LIFE_ACCESSES, lifeAccess);
-                    }
-
-                } else if (attr.is(PWD_LIFE_DAYS)) {
-                    /*  ------ adapter code ----------
-                    if (accountAttrChanges.containsKey(PWD_LIFE_DAYS)) {
-                        if ( (accountAttrChanges.get(PWD_LIFE_DAYS) == null) ||
-                        ( ((String)accountAttrChanges.get(PWD_LIFE_DAYS)).length() == 0) ) {
-                            nullFields.append(",x_password_lifespan_days => FND_USER_PKG.null_number");                
-                        } else {
-                            cstmt1.setInt(12, (new Integer((String)accountAttrChanges.get(PWD_LIFE_DAYS)).intValue()) );
-                        }
-                    } 
-                    */
-                    if (AttributeUtil.getSingleValue(attr) == null) {
-                        userValues.put(PWD_LIFE_DAYS, new SQLParam(PWD_LIFE_DAYS, NULL_NUMBER, Types.INTEGER));
-                        log.ok("NULL {0} => NULL_NUMBER", PWD_LIFE_DAYS);
-                    } else {
-                       final Integer lifeDays = AttributeUtil.getIntegerValue(attr);
-                       userValues.put(PWD_LIFE_DAYS, new SQLParam(PWD_LIFE_DAYS, lifeDays, Types.INTEGER));
-                        log.ok("{0} => {1}, Types.INTEGER", PWD_LIFE_DAYS, lifeDays);
-                    }
-
-                } else if (attr.is(EMP_ID)) {
-                    /*  ------ adapter code ----------
-                    if (accountAttrChanges.containsKey(EMP_ID)) {
-                        if ( (accountAttrChanges.get(EMP_ID) == null)  ||
-                        ( ((String)accountAttrChanges.get(EMP_ID)).length() == 0) ) {
-                            nullFields.append(",x_employee_id => FND_USER_PKG.null_number");               
-                        } else {
-                            cstmt1.setInt(13, (new Integer((String)accountAttrChanges.get(EMP_ID)).intValue()) );
-                        }
-                    } 
-                    */
-                    if (AttributeUtil.getSingleValue(attr) == null) {
-                        userValues.put(EMP_ID, new SQLParam(EMP_ID, NULL_NUMBER, Types.INTEGER));
-                        log.ok("NULL {0} => NULL_NUMBER", EMP_ID);
-                    } else {
-                        final Integer empId = AttributeUtil.getIntegerValue(attr);                        
-                        userValues.put(EMP_ID, new SQLParam(EMP_ID, empId, Types.INTEGER));
-                        log.ok("{0} => {1}, Types.INTEGER", EMP_ID, empId);
-                    }
-
-                } else if (attr.is(EMAIL)) {
-                    /*  ------ adapter code ----------
-                    if (accountAttrChanges.containsKey(EMAIL)) {
-                        if (accountAttrChanges.get(EMAIL) == null) {
-                            nullFields.append(",x_email_address => FND_USER_PKG.null_char");                
-                        } else {
-                            cstmt1.setString(14, (String)accountAttrChanges.get(EMAIL));
-                        }
-                    } 
-                    */
-                    if (AttributeUtil.getSingleValue(attr) == null) {
-                        userValues.put(EMAIL, new SQLParam(EMAIL, NULL_CHAR, Types.VARCHAR));
-                        log.ok("NULL {0} => NULL_CHAR", EMAIL);
-                    } else {
-                        final String email = AttributeUtil.getAsStringValue(attr);                        
-                        userValues.put(EMAIL, new SQLParam(EMAIL, email, Types.VARCHAR));
-                        log.ok("{0} => {1}, Types.VARCHAR", EMAIL, email);
-                    }
-
-                } else if (attr.is(FAX)) {
-                    /*  ------ adapter code ----------
-                    if (accountAttrChanges.containsKey(FAX)) {
-                        if (accountAttrChanges.get(FAX) == null) {
-                            nullFields.append(",x_fax => FND_USER_PKG.null_char");                
-                        } else {
-                            cstmt1.setString(15, (String)accountAttrChanges.get(FAX));
-                        }
-                    } 
-                    */
-                    if (AttributeUtil.getSingleValue(attr) == null) {
-                        userValues.put(FAX, new SQLParam(FAX, NULL_CHAR, Types.VARCHAR));
-                        log.ok("NULL {0} => NULL_CHAR", FAX);
-                    } else {
-                        final String fax = AttributeUtil.getAsStringValue(attr);
-                        userValues.put(FAX, new SQLParam(FAX, fax, Types.VARCHAR));
-                        log.ok("{0} => {1}, Types.VARCHAR", FAX, fax);
-                    }
-
-                } else if (attr.is(CUST_ID)) {
-                    /*  ------ adapter code ----------
-                    if (accountAttrChanges.containsKey(CUST_ID)) {
-                       if ( (accountAttrChanges.get(CUST_ID) == null) ||
-                       ( ((String)accountAttrChanges.get(CUST_ID)).length() == 0) ) {
-                           nullFields.append(",x_customer_id => FND_USER_PKG.null_number");                
-                       } else {
-                           cstmt1.setInt(16, (new Integer((String)accountAttrChanges.get(CUST_ID)).intValue()) );
-                       }
-                    } 
-                    */
-                    if (AttributeUtil.getSingleValue(attr) == null) {
-                        userValues.put(CUST_ID, new SQLParam(CUST_ID, NULL_NUMBER, Types.VARCHAR));
-                        log.ok("NULL {0} => NULL_NUMBER", CUST_ID);
-                    } else {
-                        final Integer custId = AttributeUtil.getIntegerValue(attr);
-                        userValues.put(CUST_ID, new SQLParam(CUST_ID, custId, Types.INTEGER));
-                        log.ok("{0} => {1}, Types.INTEGER", CUST_ID, custId);
-                    }
-
-                } else if (attr.is(SUPP_ID)) {
-                    /*  ------ adapter code ----------
-                    if (accountAttrChanges.containsKey(SUPP_ID)) {
-                        if ( (accountAttrChanges.get(SUPP_ID) == null) ||
-                        ( ((String)accountAttrChanges.get(SUPP_ID)).length() == 0) ) {
-                            nullFields.append(",x_supplier_id => FND_USER_PKG.null_number");                
-                        } else {
-                            cstmt1.setInt(17, (new Integer((String)accountAttrChanges.get(SUPP_ID)).intValue()) );
-                        }
-                    } 
-                    */
-                    if (AttributeUtil.getSingleValue(attr) == null) {
-                        userValues.put(SUPP_ID, new SQLParam(SUPP_ID, NULL_NUMBER, Types.VARCHAR));
-                        log.ok("NULL {0} => NULL_NUMBER", SUPP_ID);
-                    } else {
-                        final Integer suppId = AttributeUtil.getIntegerValue(attr);
-                        userValues.put(SUPP_ID, new SQLParam(SUPP_ID, suppId, Types.INTEGER));
-                        log.ok("{0} => {1}, Types.INTEGER", SUPP_ID, suppId);
-                    }
-                } 
-            }
-        }
-        //Check required attributes
-        Assertions.nullCheck(userValues.get(USER_NAME), Name.NAME);
-        Assertions.nullCheck(userValues.get(OWNER), OWNER);
-        if (create) {
-            Assertions.nullCheck(userValues.get(UNENCRYPT_PWD), OperationalAttributes.PASSWORD_NAME);
-            Assertions.nullCheck(userValues.get(START_DATE), START_DATE);
-        }
-        log.ok("Account ParamsMap created");
-        return userValues;
-    }
-    
-    /* (non-Javadoc)
-     * @see org.identityconnectors.framework.spi.operations.DeleteOp#delete(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.Uid, org.identityconnectors.framework.common.objects.OperationOptions)
-     */
-    
-    /**
-     * Return the userAccount create/update sql with defaults
-     * 
-     * @param userValues
-     *            the Map of user values
-     * @param create
-     *            true for create/false update
-     * @param schemaId
-     *            the configuration schema id
-     * 
-     * @return a <CODE>String</CODE> sql string
-     */
-    String getUserCallSQL(Map<String, SQLParam> userValues, boolean create, String schemaId) {
-        final String fn = (create) ? CREATE_FNC : UPDATE_FNC;
-        log.info("getUserCallSQL: {0}", fn);
-        StringBuilder body = new StringBuilder();
-        boolean first = true;
-        for ( CallParam par : CALL_PARAMS ) {
-            final String columnName = par.name;
-            final String parameterExpress = par.expression;
-              
-            SQLParam val = userValues.get(columnName);
-            if (val == null) {
-                log.ok("skip empty value for {0}", columnName);
-                continue; //skip all non setup values
-            }
-            if (!first)
-                body.append(", ");
-            if (isDefault(val)) {
-                body.append(MessageFormat.format(parameterExpress, val.getValue()));
-            } else {
-                body.append(MessageFormat.format(parameterExpress, Q)); // Non default values will be binded
-            }
-            first = false;
-        }
-
-        final String sql = createCallSQL(schemaId, fn, body);
-
-        log.ok("getUserCallSQL {0}", sql);
-        return sql;
-    }
-
-    /**
-     * Return the create/update parameters
-     * 
-     * @param userValues
-     *            the Map of user values
-     * @return a <CODE>List</CODE> sql object list
-     */
-    List<SQLParam> getUserSQLParams(Map<String, SQLParam> userValues) {
-        final List<SQLParam> ret = new ArrayList<SQLParam>();
-
-        for (CallParam par : CALL_PARAMS) {
-            final String columnName = par.name;
-
-            final SQLParam val = userValues.get(columnName);
-            if (val == null) {
-               // log.ok("skip empty value for {0}",columnName);
-               continue; //skip all non setup values
-            }
-            if (!isDefault(val)) {
-                ret.add(val);
-            }
-        }
-        return ret;
-    }
-
-
-    /**
-     * Return the create/update parameters
-     * S
-     * @param userValues
-     *            the Map of user values
-     * 
-     * @return a <CODE>List</CODE> sql object list
-     */
-    List<SQLParam> getUserUpdateNullsParams(Map<String, SQLParam> userValues) {
-        final List<SQLParam> ret = new ArrayList<SQLParam>();
-        ret.add(userValues.get(USER_NAME)); //1
-        ret.add(userValues.get(OWNER)); //2
-        return ret;
-    }
-
-    /**
-     * Return the userAccount create/update sql null updates
-     * 
-     * @param userValues
-     *            the Map of user values
-     * @param schemaId
-     *            the configuration schema id
-     * @return a <CODE>String</CODE> sql string
-     */
-    String getUserUpdateNullsSQL(Map<String, SQLParam> userValues, String schemaId) {
-        StringBuilder body = new StringBuilder("x_user_name => ?, x_owner => upper(?)");
-        for (CallParam par : CALL_PARAMS) {
-            final String columnName = par.name;
-            final String parameterExpress = par.expression;
-            SQLParam val = userValues.get(columnName);
-            
-            if (val == null) {
-                log.ok("skip empty value for {0}",columnName);
-                continue; //skip all non setup values
-            }
-            if (isDefault(val)) {
-                body.append(", ");
-                body.append(MessageFormat.format(parameterExpress, val.getValue())); // Update just default 
-            }
-        }
-
-        final String sql = createCallSQL(schemaId, UPDATE_FNC, body);
-
-        log.ok("getUpdateDefaultsSQL {0}", sql);
-        return sql;
-    }
-
-    /**
-     * @param val
-     * @return true/false if predefined default value
-     */
-    private boolean isDefault(SQLParam val) {
-        return SYSDATE.equals(val.getValue()) 
-                || NULL_NUMBER.equals(val.getValue()) 
-                || NULL_DATE.equals(val.getValue())
-                || NULL_CHAR.equals(val.getValue());
-    }
-    
-    /**
-     * Test for null attribute values
-     * 
-     * @param userValues
-     *            the Map of user values
-     * @return <code>boolean<code> true if the update null attributes is needed
-     */
-    boolean isUpdateNeeded(Map<String, SQLParam> userValues) {
-        for (SQLParam value : userValues.values()) {
-            if (isDefault(value)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    
-    /**
-     * Accessor for the createNormalizer property
-     * @return the createNormalizer
-     */
-    public boolean isCreateNormalizer() {
-        return createNormalizer;
-    }
-
-    /**
-     * Setter for the createNormalizer property.
-     * @param createNormalizer the createNormalizer to set
-     */
-    public void setCreateNormalizer(boolean createNormalizer) {
-        this.createNormalizer = createNormalizer;
-    }    
-  
-    /**
-     * Call param class
-     * @author Petr Jung
-     * @version $Revision 1.0$
-     * @since 1.0
-     */
-    public static final class CallParam {
-        /** name */
-        final public String name;
-        /** expression */
-        final public String expression;
-        /** sqlType */
-        final public int sqlType; 
-        /**
-         * Construcrot of final class 
-         * @param name
-         * @param expression
-         * @param sqlType
-         */
-        public CallParam(String name, String expression, int sqlType) {
-            this.name = name;
-            this.expression = expression;
-            this.sqlType = sqlType;
         }
     }
 }

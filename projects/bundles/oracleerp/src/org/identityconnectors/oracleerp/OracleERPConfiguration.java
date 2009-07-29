@@ -30,6 +30,7 @@ import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.JNDIUtil;
+import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
@@ -472,23 +473,23 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * name="GetUser Actions"  type="string" multi="false" required="false"
      * displayName="GETUSER_AFTER_ACTION" description="GETUSER_AFTER_ACTION_HELP"
      */     
-    private String userActions = "";
+    private String userAfterActions = "";
 
     /**
-     * Getter for the userActions attribute.
-     * @return userActions attribute
+     * Getter for the userAfterActions attribute.
+     * @return userAfterActions attribute
      */
-    public String getUserActions() {
-        return userActions;
+    public String getUserAfterActions() {
+        return userAfterActions;
     }
 
     /**
-     * Setter for the userActions attribute.
-     * @param userActions attribute.
+     * Setter for the userAfterActions attribute.
+     * @param userAfterActions attribute.
      */
     @ConfigurationProperty(order=15 ,displayMessageKey="AFTER_ACTION_DISPLAY", helpMessageKey="AFTER_ACTION_HELP")
-    public void setUserActions(String userActions) {
-        this.userActions = userActions;
+    public void setUserAfterActions(String userAfterActions) {
+        this.userAfterActions = userAfterActions;
     }    
     
     /**
@@ -519,6 +520,178 @@ public class OracleERPConfiguration extends AbstractConfiguration {
     public void setNoSchemaId(boolean noSchemaId) {
         this.noSchemaId = noSchemaId;
     }
+    
+    
+    /**
+     * Responsibility Id
+     */
+    private String respId = "";
+    
+    /**
+     * Accessor for the respId property
+     * 
+     * @return the respId
+     */
+    public String getRespId() {
+        return respId;
+    }    
+
+    /**
+     * Setter for the respId property.
+     * @param respId the respId to set
+     */
+    void setRespId(String respId) {
+        this.respId = respId;
+    }
+    
+    /**
+     * Responsibility Application Id
+     */
+    private String respApplId = "";
+
+    /**
+     * Accessor for the respApplId property
+     * 
+     * @return the respApplId
+     */
+    public String getRespApplId() {
+        return respApplId;
+    }    
+
+    
+    /**
+     * Setter for the respApplId property.
+     * @param respApplId the respApplId to set
+     */
+    void setRespApplId(String respApplId) {
+        this.respApplId = respApplId;
+    }
+    
+    /**
+     * If 12, determine if description field exists in responsibility views. Default to true
+     */
+    private boolean descrExists = true;
+
+    /**
+     * Accessor for the descrExists property
+     * 
+     * @return the descrExists
+     */
+    public boolean isDescrExists() {
+        return descrExists;
+    }
+    
+    /**
+     * Setter for the descrExists property.
+     * @param descrExists the descrExists to set
+     */
+    void setDescrExists(boolean descrExists) {
+        this.descrExists = descrExists;
+    }
+
+
+    /**
+     * Check to see which responsibility account attribute is sent. Version 11.5.9 only supports responsibilities, and
+     * 11.5.10 only supports directResponsibilities and indirectResponsibilities Default to false If 11.5.10, determine
+     * if description field exists in responsibility views.
+     */
+    private boolean newResponsibilityViews = false;
+  
+    /**
+     * Accessor for the newResponsibilityViews property
+     * 
+     * @return the newResponsibilityViews
+     */
+    public boolean isNewResponsibilityViews() {
+        return newResponsibilityViews;
+    }    
+    
+    /**
+     * Setter for the newResponsibilityViews property.
+     * @param newResponsibilityViews the newResponsibilityViews to set
+     */
+    void setNewResponsibilityViews(boolean newResponsibilityViews) {
+        this.newResponsibilityViews = newResponsibilityViews;
+    }
+    
+
+    /**
+     * User id from cfg.User
+     */
+    String userId = "";   
+    
+    /**
+     * Accessor for the userId property
+     * @return the userId
+     */
+    public String getUserId() {
+        return userId;
+    }
+
+    /**
+     * @param userId
+     */
+    void setUserId(String userId) {
+       this.userId = userId;
+    }    
+    
+    /**
+     * Accessor for the adminUserId property
+     * @return the adminUserId
+     */
+    public int getAdminUserId() {
+        try {
+            log.ok("The adminUserId is : {0} ", userId);
+            return new Integer(userId).intValue();
+        } catch (Exception ex) {
+            log.error(ex, "The User Id String {0} is not a number", userId);
+            return 0;
+        }
+    }
+    
+    /**
+     * The cached schema
+     */
+    private Schema schema;
+    
+    /**
+     * Accessor for the schema property
+     * @return the schema
+     */
+    public Schema getSchema() {
+        return schema;
+    }
+
+    /**
+     * Setter for the schema property.
+     * @param schema the schema to set
+     */
+    void setSchema(Schema schema) {
+        this.schema = schema;
+    }
+
+    
+    /**
+     * This is create attributes normalizer
+     */
+    boolean createNormalizer = true;
+    
+    
+    /**
+     * Accessor for the createNormalizer property
+     * @return the createNormalizer
+     */
+    public boolean isCreateNormalizer() {
+        return createNormalizer;
+    }
+
+    /**
+     * Setter for the createNormalizer property.
+     * @param createNormalizer the createNormalizer to set
+     */
+    void setCreateNormalizer(boolean createNormalizer) {
+        this.createNormalizer = createNormalizer;
+    } 
     
     /**
      * Constructor
@@ -605,4 +778,13 @@ public class OracleERPConfiguration extends AbstractConfiguration {
         return fmt;
     }    
     
+    /**
+     * The application id from the user
+     * see the bug id. 19352
+     * @return The "APPL." or empty, if noSchemaId is true
+     */
+    public String app() {
+        if(isNoSchemaId()) return "";
+        return getUser().trim().toUpperCase()+".";
+    }   
 }
