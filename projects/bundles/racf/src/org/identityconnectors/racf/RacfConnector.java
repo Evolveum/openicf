@@ -1127,11 +1127,23 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
      * {@inheritDoc}
      */
     public void checkAlive() {
-        _connection.test();
-        if (false && !StringUtil.isBlank(_configuration.getUserName())) {
-            String output = _clUtil.getCommandOutput("TIME");
-            if (!output.contains("IJK"))
-                throw new ConnectorException(_configuration.getMessage(RacfMessages.CONNECTION_DEAD));
+        // Check command line connection
+        //
+        if (!StringUtil.isBlank(_configuration.getUserName())) {
+            try {
+                _clUtil.getUsersViaCommandLine("DUMMY");
+            } catch (UnknownUidException uue) {
+                // ignore this error
+            }
+        }
+        // Check LDAP connection
+        //
+        if (!StringUtil.isBlank(_configuration.getLdapUserName())) {
+            try {
+                _ldapUtil.getUsersViaLdap("racfid=DUMMY,profileType=User,"+_configuration.getSuffix());
+            } catch (UnknownUidException uue) {
+                // ignore this error
+            }
         }
     }
 

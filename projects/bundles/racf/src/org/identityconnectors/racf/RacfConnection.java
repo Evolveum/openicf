@@ -89,10 +89,6 @@ public class RacfConnection {
             _racfConnection.dispose();
     }
 
-    public void test() {
-        // TODO Auto-generated method stub
-    }
-    
     public RW3270Connection getRacfConnection() {
         return _racfConnection;
     }
