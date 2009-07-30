@@ -58,7 +58,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * name="dataSource" type="string" multi="false" value="jdbc/SampleDataSourceName"
      * displayName="DATA_SOURCE_NAME" description="HELP_393"
      */
-    String dataSource="";
+    private String dataSource="";
 
     /**
      * Getter for the driver dataSource.
@@ -96,7 +96,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * @param value
      */
     @ConfigurationProperty(order = 2,displayMessageKey="JNDI_PROPERTIES_DISPLAY", helpMessageKey="JNDI_PROPERTIES_DISPLAY")
-    public void setJndiProperties(String[] value) {
+    public void setJndiProperties(final String[] value) {
         this.jndiProperties = value;
     }
     
@@ -618,7 +618,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
     /**
      * User id from cfg.User
      */
-    String userId = "";   
+    private String userId = "";   
     
     /**
      * Accessor for the userId property
@@ -674,7 +674,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
     /**
      * This is create attributes normalizer
      */
-    boolean createNormalizer = true;
+    private boolean createNormalizer = true;
     
     
     /**

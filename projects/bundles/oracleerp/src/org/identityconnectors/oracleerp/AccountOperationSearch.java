@@ -29,6 +29,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -59,29 +60,31 @@ import org.identityconnectors.framework.spi.operations.SearchOp;
  * @version $Revision 1.0$
  * @since 1.0
  */
-final class AccountOperationSearch extends Operation implements SearchOp<FilterWhereBuilder>, ColumnNameResolver {
+final class AccountOperationSearch extends Operation implements SearchOp<FilterWhereBuilder> {
 
     /**
      * Setup logging.
      */
     static final Log log = Log.getLog(AccountOperationSearch.class);
 
-    OracleERPConnector co;
+    /**
+     * Name translation
+     */
+    private NameResolver nr = new AccountNameResolver();
 
     /**
      * @param conn
      * @param cfg
      */
-    protected AccountOperationSearch(OracleERPConnection conn, OracleERPConfiguration cfg, OracleERPConnector co) {
+    protected AccountOperationSearch(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
-        this.co = co;
     }
 
     /* (non-Javadoc)
      * @see org.identityconnectors.framework.spi.operations.SearchOp#createFilterTranslator(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public FilterTranslator<FilterWhereBuilder> createFilterTranslator(ObjectClass oclass, OperationOptions options) {
-        return new OracleERPFilterTranslator(oclass, options, AccountSQL.FND_USER_COLS, this);
+        return new OracleERPFilterTranslator(oclass, options, AccountOperations.FND_USER_COLS, nr);
     }
 
     /* (non-Javadoc)
@@ -98,8 +101,8 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         final Set<String> perPeopleColumnNames = CollectionUtil.newSet(fndUserColumnNames);
         final String filterId = getFilterId(where);
 
-        fndUserColumnNames.retainAll(AccountSQL.FND_USER_COLS);
-        perPeopleColumnNames.retainAll(AccountSQL.PER_PEOPLE_COLS);
+        fndUserColumnNames.retainAll(AccountOperations.FND_USER_COLS);
+        perPeopleColumnNames.retainAll(AccountOperations.PER_PEOPLE_COLS);
 
         // For all user query there is no need to replace or quote anything
         final DatabaseQueryBuilder query = new DatabaseQueryBuilder(tblname, fndUserColumnNames);
@@ -131,14 +134,14 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
                 buildPersonDetails(amb, columnValues, perPeopleColumnNames);
 
                 // get users responsibilities only if if resp || direct_resp in account attribute
-                co.getRespNames().buildResponsibilitiesToAccountObject(amb, userName);
+                buildResponsibilitiesToAccountObject(amb, userName);
                 // get user's securing attributes
-                co.getSecAttrs().buildSecuringAttributesToAccountObject(amb, userName);
+                buildSecuringAttributesToAccountObject(amb, userName);
 
                 //Auditor data for get user only
                 log.info("get auditor data: {0}", getAuditorData);
                 if (getAuditorData) {
-                    co.getRespNames().buildAuditorDataObject(amb, userName);
+                    buildAuditorDataObject(amb, userName);
                 }
 
                 // create the connector object..
@@ -170,7 +173,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
 
         // Replace attributes to quoted columnNames
         for (String attributeName : attributesToGet) {
-            final String columnName = getColumnName(attributeName);
+            final String columnName = nr.getColumnName(attributeName);
             if (columnName != null) {
                 columnNamesToGet.add(columnName);
             }
@@ -294,7 +297,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
     private void mergeAttribute(AttributeMergeBuilder amb, final SQLParam param) throws SQLException {
         final String columnName = param.getName();
         //Convert the data type and create attribute from it.
-        final String attributeName = getAttributeName(columnName);
+        final String attributeName = nr.getAttributeName(columnName);
         final Set<String> readable = getReadableAttributes(getAttributeInfos(cfg.getSchema(), ObjectClass.ACCOUNT_NAME));
         //  Add only readable attributes
         if (readable.contains(attributeName)) {
@@ -304,29 +307,65 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
     }
     
     /**
-     * @param columnName
-     * @return the columnName
+     * @param amb builder
+     * @param userName of the user
      */
-    private String getAttributeName(String columnName) {
-        if (FULL_NAME.equalsIgnoreCase(columnName)) {
-            return PERSON_FULLNAME;
-        }
-        return columnName;
-    }
+    private void buildResponsibilitiesToAccountObject(AttributeMergeBuilder amb, final String userName) {
+         
+        if (!cfg.isNewResponsibilityViews() && amb.isInAttributesToGet(RESPS)) {
+            //add responsibilities
+            final List<String> responsibilities = new ResponsibilitiesOperations(conn, cfg).getResponsibilities(userName, RESPS_TABLE, false);
+            amb.addAttribute(RESPS, responsibilities);
 
+            //add resps list
+            final List<String> resps = new ResponsibilitiesOperations(conn, cfg).getResps(responsibilities, RESP_FMT_KEYS);
+            amb.addAttribute(RESPKEYS, resps);
+        } else if (amb.isInAttributesToGet(DIRECT_RESPS)) {
+            final List<String> responsibilities = new ResponsibilitiesOperations(conn, cfg).getResponsibilities(userName, RESPS_DIRECT_VIEW, false);
+            amb.addAttribute(DIRECT_RESPS, responsibilities);
+
+            //add resps list
+            final List<String> resps = new ResponsibilitiesOperations(conn, cfg).getResps(responsibilities, RESP_FMT_KEYS);
+            amb.addAttribute(RESPKEYS, resps);
+        }
+
+        if (amb.isInAttributesToGet(INDIRECT_RESPS)) {
+            //add responsibilities
+            final List<String> responsibilities = new ResponsibilitiesOperations(conn, cfg).getResponsibilities(userName, RESPS_INDIRECT_VIEW, false);
+            amb.addAttribute(INDIRECT_RESPS, responsibilities);
+        }
+    }
+    
+    
     /**
-     * @param attributeName
-     * @return the columnName
+     * @param amb
+     * @param userName 
      */
-    public String getColumnName(String attributeName) {
-        if (Name.NAME.equalsIgnoreCase(attributeName)) {
-            return USER_NAME;
-        } else if (Uid.NAME.equalsIgnoreCase(attributeName)) {
-            return USER_NAME;
-        } else if (PERSON_FULLNAME.equalsIgnoreCase(attributeName)) {
-            return FULL_NAME;
+    private void buildSecuringAttributesToAccountObject(AttributeMergeBuilder amb, final String userName) {
+        if (!cfg.isManageSecuringAttrs()) {
+            return;
         }
-        return attributeName;
-    }
 
+        if ( amb.isInAttributesToGet(SEC_ATTRS) ) {
+            List<String> secAttrs = new SecuringAttributesOperations(conn, cfg).getSecuringAttrs(userName);
+            if (secAttrs != null) {
+                amb.addAttribute(SEC_ATTRS, secAttrs);
+            }
+        }
+    }
+    
+    /**
+     * @param amb
+     *            builder
+     * @param userName
+     *            id of the responsibility
+     */
+    public void buildAuditorDataObject(AttributeMergeBuilder amb, String userName) {
+        log.info("buildAuditorDataObject for uid: {0}", userName);
+        List<String> activeRespList = new ResponsibilitiesOperations(conn, cfg).getResponsibilities(userName,
+                new ResponsibilitiesOperations(conn, cfg).getRespLocation(), false);
+        for (String activeRespName : activeRespList) {
+            new AuditorOperations(conn, cfg).updateAuditorData(amb, activeRespName);
+        }
+    }   
 }

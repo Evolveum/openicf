@@ -34,114 +34,31 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import org.identityconnectors.common.logging.Log;
-import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.ResultsHandler;
-import org.identityconnectors.framework.common.objects.SchemaBuilder;
+
 
 /**
- * Main implementation of the OracleErp Connector
- * 
- * @author petr
- * @version 1.0
+ * The Account User Responsibilities Update
+ *  
+ * @author Petr Jung
+ * @version $Revision 1.0$
  * @since 1.0
  */
-public class UserSecuringAttrs  {
+final class SecuringAttributesOperations extends Operation {
+
     /**
      * Setup logging.
      */
-    static final Log log = Log.getLog(UserSecuringAttrs.class);
+    static final Log log = Log.getLog(SecuringAttributesOperations.class);
     
     /**
-     * The get Instance method
      * @param conn
-     * @param cfg 
-     * @return the account
+     * @param cfg
      */
-    public static UserSecuringAttrs getInstance(OracleERPConnection conn, OracleERPConfiguration cfg) {
-       return new UserSecuringAttrs(conn, cfg);
-    }
-
-    
-    /**
-     * The instance or the parent object
-     */
-    private OracleERPConnection conn = null;
-    
-    /**
-     * The instance or the parent object
-     */
-    private OracleERPConfiguration cfg = null;    
-
-    /**
-     * The account
-     * @param conn 
-     * @param cfg 
-     * @param connector parent
-     */
-    public UserSecuringAttrs(OracleERPConnection conn, OracleERPConfiguration cfg) {
-        this.conn = conn;
-        this.cfg = cfg;
-    }    
-    
-    /**
-     * @param amb
-     * @param userName 
-     */
-    public void buildSecuringAttributesToAccountObject(AttributeMergeBuilder amb, final String userName) {
-        if (!cfg.isManageSecuringAttrs()) {
-            return;
-        }
-
-        if ( amb.isRequired(SEC_ATTRS) ) {
-            List<String> secAttrs = getSecuringAttrs(userName);
-            if (secAttrs != null) {
-                amb.addAttribute(SEC_ATTRS, secAttrs);
-            }
-        }
-    }
-
-    /**
-     * Get the Account Object Class Info
-     * @param schemaBld 
-     */
-    public void schema(SchemaBuilder schemaBld) {
-        /*
-         Seems to be hidden object class, no contract tests 
-         
-        //securityGroups object class
-        ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
-        oc.setType(SEC_GROUPS_OC.getObjectClassValue()); 
-        oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class));
-        //Define object class
-        schemaBld.defineObjectClass(oc.build());
-        schemaBld.removeSupportedObjectClass(AuthenticateOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(DeleteOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(CreateOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(UpdateOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(SchemaOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(ScriptOnConnectorOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(ScriptOnResourceOp.class, oc.build());  
-        
-        //securingAttrs object class
-        oc = new ObjectClassInfoBuilder();
-        oc.setType(SEC_ATTRS_OC.getObjectClassValue()); 
-        oc.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class));
-        //Define object class
-        schemaBld.defineObjectClass(oc.build());
-        schemaBld.removeSupportedObjectClass(AuthenticateOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(DeleteOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(CreateOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(UpdateOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(SchemaOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(ScriptOnConnectorOp.class, oc.build());
-        schemaBld.removeSupportedObjectClass(ScriptOnResourceOp.class, oc.build());
-        */  
+    protected SecuringAttributesOperations(OracleERPConnection conn, OracleERPConfiguration cfg) {
+        super(conn, cfg);
     }
 
     /**
@@ -579,7 +496,7 @@ public class UserSecuringAttrs  {
      * @param options 
      * @return list of strings
      */
-    private List<String> getSecuringAttrs(String userName) {
+    public List<String> getSecuringAttrs(String userName) {
         final String method = "getSecAttrs";
         log.info(method);
         PreparedStatement st = null;
@@ -654,139 +571,5 @@ public class UserSecuringAttrs  {
         return arrayList;
     }
     
-    
-    /**
-     * Get Securing Attributes for list of all results
-     * @param where 
-     * @param handler 
-     * @param options 
-     */
-    public void getSecuringAttrsResult(FilterWhereBuilder where, ResultsHandler handler, OperationOptions options) {
-        final String method = "getSecAttrs";
-        log.info(method);
-        PreparedStatement st = null;
-        ResultSet res = null;
-        StringBuffer b = new StringBuffer();
-        //default value
-        String pattern = "%";
-        if (options != null && options.getOptions() != null) {
-            Object _patt = options.getOptions().get(PATTERN);
-            pattern = _patt == null ? pattern : (String) _patt;
-        }
-        
-        b.append("SELECT distinct akattrvl.NAME, fndappvl.APPLICATION_NAME ");
 
-        b.append("FROM " + cfg.app() + "AK_ATTRIBUTES_VL akattrvl, " + cfg.app()
-                + "FND_APPLICATION_VL fndappvl ");
-
-
-        b.append("WHERE akattrvl.ATTRIBUTE_APPLICATION_ID = fndappvl.APPLICATION_ID ");
-
-        b.append(" AND akattrvl.NAME LIKE '");
-        b.append(pattern);
-        b.append("' ");
-        b.append("ORDER BY akattrvl.NAME");
-
-        final String sql = b.toString();
-        try {
-            log.info("execute sql {0}", sql);
-            st = conn.prepareStatement(sql);
-            res = st.executeQuery();
-            while (res.next()) {
-
-                StringBuffer sb = new StringBuffer();
-                sb.append(getColumn(res, 1));
-                sb.append("||");
-                sb.append(getColumn(res, 2));
-                
-                ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
-                bld.setObjectClass(SEC_ATTRS_OC);
-
-                bld.setName(sb.toString());
-                bld.setUid(sb.toString());
-                
-                if (!handler.handle(bld.build())) {
-                    break;
-                }                
-            }
-        } catch (SQLException e) {
-            final String msg = "could not get Securing attributes";
-            log.error(e, msg);
-            SQLUtil.rollbackQuietly(conn);
-            throw new ConnectorException(msg, e);
-        } finally {
-            SQLUtil.closeQuietly(res);
-            res = null;
-            SQLUtil.closeQuietly(st);
-            st = null;
-        }
-        log.ok(method);
-    }
-    
-    /**
-     * Get securing Groups for appName 
-     * @param where 
-     * @param handler 
-     * @param options 
-     * @param appName
-     */
-    public void getSecGroups(FilterWhereBuilder where, ResultsHandler handler, OperationOptions options) {
-        final String method = "getSecGroups";
-        log.info( method);
-        
-        PreparedStatement st = null;
-        ResultSet res = null;
-        StringBuffer b = new StringBuffer();
-
-        b.append("SELECT distinct fndsecgvl.security_group_name ");
-        b.append("FROM " + cfg.app() + "fnd_security_groups_vl fndsecgvl ");
-
-        try {
-            st = conn.prepareStatement(b.toString());
-            res = st.executeQuery();
-            while (res.next()) {
-                
-                ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
-                bld.setObjectClass(SEC_GROUPS_OC);
-
-                String s = getColumn(res, 1);
-                bld.setName(s);
-                bld.setUid(s);
-                
-                if (!handler.handle(bld.build())) {
-                    break;
-                }                
-            }
-        }
-        catch (SQLException e) {
-            log.error(e, method);
-            SQLUtil.rollbackQuietly(conn);
-            throw ConnectorException.wrap(e);
-        } finally {
-            SQLUtil.closeQuietly(res);
-            res = null;
-            SQLUtil.closeQuietly(st);
-            st = null;
-        }
-        log.ok(method);
-    }
-
-    /**
-     * @param oclass
-     * @param where
-     * @param handler
-     * @param options
-     */
-    public void executeQuery(ObjectClass oclass, FilterWhereBuilder where, ResultsHandler handler,
-            OperationOptions options) {
-        if (oclass.equals(OracleERPUtil.SEC_GROUPS_OC)) {
-            getSecGroups(where, handler, options);
-            return;
-        } else if (oclass.equals(OracleERPUtil.SEC_ATTRS_OC)) { //OK
-            getSecuringAttrsResult(where, handler,options);
-            return;
-        } 
-        throw new IllegalArgumentException(cfg.getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
-        
-    }    
 }

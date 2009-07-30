@@ -47,11 +47,17 @@ package org.identityconnectors.oracleerp;
  * @version $Revision 1.0$
  * @since 1.0
  */
-public interface ColumnNameResolver {
+public interface NameResolver {
 
     /**
      * @param attributeName String name of the attribute
      * @return String the mapped column name
      */
     String getColumnName(String attributeName);
+    
+    /**
+     * @param columnName
+     * @return
+     */
+    String getAttributeName(String columnName);
 }

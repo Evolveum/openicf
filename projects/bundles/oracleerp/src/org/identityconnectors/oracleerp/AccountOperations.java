@@ -32,13 +32,13 @@ import java.util.Set;
 import org.identityconnectors.common.CollectionUtil;
 
 /**
- * Main implementation of the AccountSQLBuilder Class
+ * Account Names
  * 
  * @author petr
  * @version 1.0
  * @since 1.0
  */
-public class AccountSQL  {
+public class AccountOperations  {
 
     /**
      * The map of column name parameters mapping
@@ -103,7 +103,7 @@ public class AccountSQL  {
     /**
      * The account
      */
-    private AccountSQL() {
+    private AccountOperations() {
         //Not instanceable
         throw new AssertionError();
     }

@@ -46,7 +46,7 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
  */
 public class OracleERPFilterTranslator extends DatabaseFilterTranslator {
 
-    ColumnNameResolver cnr = null;
+    NameResolver cnr = null;
     private Set<String> columnNames = null;
     
     
@@ -56,7 +56,7 @@ public class OracleERPFilterTranslator extends DatabaseFilterTranslator {
      * @param columnNames 
      * @param cnr 
      */
-    public OracleERPFilterTranslator(ObjectClass oclass, OperationOptions options, Set<String> columnNames, ColumnNameResolver cnr) {
+    public OracleERPFilterTranslator(ObjectClass oclass, OperationOptions options, Set<String> columnNames, NameResolver cnr) {
         super(oclass, options);
         this.cnr = cnr;
         this.columnNames  = columnNames;

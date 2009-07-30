@@ -71,7 +71,7 @@ public final class AttributeMergeBuilder {
      * @param merge
      */
     private void mergeValue(String name, Collection<?> merge) {
-        if (!isRequired(name)) {
+        if (!isInAttributesToGet(name)) {
             log.info("Skip merge attribute {0}, it is not in attributesToGet", name);
             return;
         }
@@ -105,7 +105,7 @@ public final class AttributeMergeBuilder {
         for (Entry<String, List<Object>> entry : _attrs.entrySet()) {
             final String name = entry.getKey();
             final List<Object> value = entry.getValue();
-            if (!isRequired(name)) {
+            if (!isInAttributesToGet(name)) {
                 log.info("Skip attribute {0}, it is not in attributesToGet", name);
                 continue;
             }            
@@ -120,7 +120,7 @@ public final class AttributeMergeBuilder {
      * @param name
      * @return boolean the attribute will be skipped
      */
-    public boolean isRequired(String name) {
+    public boolean isInAttributesToGet(String name) {
         if (_attrToGet == null || _attrToGet.contains(name)) {
              return true;
         }    

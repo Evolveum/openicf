@@ -52,15 +52,12 @@ final class AccountOperationDelete extends Operation implements DeleteOp {
      */
     static final Log log = Log.getLog(AccountOperationDelete.class);
     
-    OracleERPConnector co;
-    
     /**
      * @param conn
      * @param cfg
      */
-    protected AccountOperationDelete(OracleERPConnection conn, OracleERPConfiguration cfg, OracleERPConnector co) {
+    protected AccountOperationDelete(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
-        this.co = co;
     }
 
     /* (non-Javadoc)

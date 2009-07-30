@@ -81,15 +81,12 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
      */
     static final Log log = Log.getLog(AccountOperationUpdate.class);
     
-    OracleERPConnector co;
-    
     /**
      * @param conn
      * @param cfg
      */
-    protected AccountOperationUpdate(OracleERPConnection conn, OracleERPConfiguration cfg, OracleERPConnector co) {
+    protected AccountOperationUpdate(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
-        this.co = co;
     }
 
     /* (non-Javadoc)
@@ -160,14 +157,14 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
         final Attribute resp = AttributeUtil.find(RESPS, attrs);
         final Attribute directResp = AttributeUtil.find(DIRECT_RESPS, attrs);
         if ( resp != null ) {
-            co.getRespNames().updateUserResponsibilities( resp, name);
+            new ResponsibilitiesOperations(conn, cfg).updateUserResponsibilities( resp, name);
         } else if ( directResp != null ) {
-            co.getRespNames().updateUserResponsibilities( directResp, name);
+            new ResponsibilitiesOperations(conn, cfg).updateUserResponsibilities( directResp, name);
         }
 
         final Attribute secAttr = AttributeUtil.find(SEC_ATTRS, attrs);
         if ( secAttr != null ) {
-            co.getSecAttrs().updateUserSecuringAttrs(secAttr, name);
+            new SecuringAttributesOperations(conn, cfg).updateUserSecuringAttrs(secAttr, name);
         }
 
         conn.commit();

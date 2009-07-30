@@ -91,86 +91,26 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
     private OracleERPConfiguration cfg;
 
     /**
-     * Accessor for the cfg property
-     * 
-     * @return the cfg
-     */
-    public OracleERPConfiguration getCfg() {
-        return this.cfg;
-    }
-
-    /**
      * Gets the Configuration context for this connector.
+     * @return connector configuration
      */
     public Configuration getConfiguration() {
         return this.cfg;
     }
-
+    /**
+     * getter method
+     * @return OracleERPConfiguration
+     */
+    public OracleERPConfiguration getCfg() {
+        return cfg;
+    }    
 
     /**
      * Place holder for the {@link Connection} passed into the setConnection() callback
      * {@link ConnectionFactory#setConnection(Connection)}.
      */
-    private OracleERPConnection conn;
-    
-    /**
-     * Accessor for the conn property
-     * 
-     * @return the conn
-     */
-    public OracleERPConnection getConn() {
-        return this.conn;
-    }    
-    /**
-     * The account delegate instance
-     *
-    private Account account = null;
-
-
-    /**
-     * Accessor for the account property
-     * @return the account
-     *
-    public Account getAccount() {
-        if (account == null) {
-            account = new Account(this.getConn(), this.getCfg(), this);
-        }
-        return account;
-    }
-    
-    /**
-     * The responsibility names delegate instance
-     */
-    private ResponsibilityNames respNames = null;
-
-    /**
-     * Accessor for the respNames property
-     * @return the respNames
-     */
-    public ResponsibilityNames getRespNames() {
-        if (respNames == null) {
-            respNames = new ResponsibilityNames(this.getConn(), this.getCfg(), this);
-        }
-        return respNames;
-    }
-
-    /**
-     * The UserSecuringAttrs delegate instance
-     */
-    private UserSecuringAttrs secAttrs = null;
-
-
-    /**
-     * Accessor for the userSecuringAttrs property
-     * @return the userSecuringAttrs
-     */
-    public UserSecuringAttrs getSecAttrs() {
-        if (secAttrs == null) {
-            secAttrs = new UserSecuringAttrs(this.getConn(), this.getCfg());
-        }
-        return secAttrs;
-    }
-    
+    private OracleERPConnection conn; 
+ 
     /* (non-Javadoc)
      * @see org.identityconnectors.framework.spi.operations.AuthenticateOp#authenticate(java.lang.String, org.identityconnectors.common.security.GuardedString, org.identityconnectors.framework.common.objects.OperationOptions)
      */
@@ -202,12 +142,12 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         //doBeforeCreateActionScripts(oclass, attrs, options);
 
         if (oclass.is(ObjectClass.ACCOUNT_NAME)) {            
-            return new AccountOperationCreate(conn, cfg, this).create(oclass, attrs, options);
+            return new AccountOperationCreate(conn, cfg).create(oclass, attrs, options);
         } else if (oclass.is(RESP_NAMES)) {
         // TODO create resp names
         }
 
-        throw new IllegalArgumentException(getCfg().getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
+        throw new IllegalArgumentException(cfg.getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
 
     }
 
@@ -218,28 +158,29 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
 
         Assertions.nullCheck(oclass, "oclass");
 
-        if (oclass.equals(ObjectClass.ACCOUNT)) {
-            return new AccountOperationSearch(conn, cfg, this).createFilterTranslator(oclass, options);
-        } else if (oclass.equals(OracleERPUtil.RESP_NAMES_OC)) {
-            // TODO define some filter
-        } else if (oclass.equals(OracleERPUtil.RESP_OC)) { //OK
-            //
-        } else if (oclass.equals(OracleERPUtil.DIRECT_RESP_OC)) { //OK
-            //
-        } else if (oclass.equals(OracleERPUtil.INDIRECT_RESP_OC)) { //OK
-            //
-        } else if (oclass.equals(OracleERPUtil.APPS_OC)) {
-            //
-        } else if (oclass.equals(OracleERPUtil.AUDITOR_RESPS_OC)) { // ok
-            //
-        } else if (oclass.equals(OracleERPUtil.SEC_GROUPS_OC)) {
-            //
-        } else if (oclass.equals(OracleERPUtil.SEC_ATTRS_OC)) {
-            //
+        if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
+            return new AccountOperationSearch(conn, cfg).createFilterTranslator(oclass, options);
+        } else if (oclass.is(OracleERPUtil.RESP_NAMES)) {
+            return new RespNamesOperationSearch(conn, cfg).createFilterTranslator(oclass, options);
+        } else if (oclass.is(OracleERPUtil.RESP_NAMES)) {
+            return new ResponsibilitiesOperationSearch(conn, cfg).createFilterTranslator(oclass, options);
+        } else if (oclass.is(OracleERPUtil.DIRECT_RESPS)) {
+            return new ResponsibilitiesOperationSearch(conn, cfg).createFilterTranslator(oclass, options);
+        } else if (oclass.is(OracleERPUtil.INDIRECT_RESPS)) {
+            return new ResponsibilitiesOperationSearch(conn, cfg).createFilterTranslator(oclass, options);
+        } else if (oclass.is(OracleERPUtil.APPS)) {
+            return new ApplicationOperationSearch(conn, cfg).createFilterTranslator(oclass, options);
+        } else if (oclass.is(OracleERPUtil.AUDITOR_RESPS)) {
+            return new AuditorOperationSearch(conn, cfg).createFilterTranslator(oclass, options);
+        } else if (oclass.is(OracleERPUtil.SEC_GROUPS)) {
+            return new SecuringGroupsOperationSearch(conn, cfg).createFilterTranslator(oclass, options);
+        } else if (oclass.is(OracleERPUtil.SEC_ATTRS)) {
+            return new SecuringAttributesOperationSearch(conn, cfg).createFilterTranslator(oclass, options);
         }
-        
-        throw new IllegalArgumentException(getCfg().getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
+
+        throw new IllegalArgumentException(cfg.getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
     }
+
 
     /* (non-Javadoc)
      * @see org.identityconnectors.framework.spi.operations.DeleteOp#delete(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.Uid, org.identityconnectors.framework.common.objects.OperationOptions)
@@ -254,13 +195,13 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         }   
         
         if (objClass.is(ObjectClass.ACCOUNT_NAME)) {
-            new AccountOperationDelete(conn, cfg, this).delete(objClass, uid, options);
+            new AccountOperationDelete(conn, cfg).delete(objClass, uid, options);
             return;
         }  else if (objClass.is(RESP_NAMES)) {
             // TODO delete rsp names
         }
 
-        throw new IllegalArgumentException(getCfg().getMessage(MSG_UNKNOWN_OPERATION_TYPE, objClass.toString()));
+        throw new IllegalArgumentException(cfg.getMessage(MSG_UNKNOWN_OPERATION_TYPE, objClass.toString()));
     }
 
     /**
@@ -272,8 +213,6 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         conn.dispose();
         cfg = null;
         conn = null;
-        respNames = null;
-        secAttrs = null;
     }
 
     /* (non-Javadoc)
@@ -285,32 +224,36 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         Assertions.nullCheck(oclass, "oclass");
         Assertions.nullCheck(handler, "handler");
 
-        if (oclass.equals(ObjectClass.ACCOUNT)) {
-            new AccountOperationSearch(conn, cfg, this).executeQuery(oclass, where, handler, options);
-            return;    
-        } else if (oclass.equals(OracleERPUtil.RESP_NAMES_OC)) {
-            getRespNames().executeQuery(oclass, where, handler,options);
+        if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
+            new AccountOperationSearch(conn, cfg).executeQuery(oclass, where, handler, options);
             return;
-        } else if (oclass.equals(OracleERPUtil.RESP_OC)) { //OK
-            getRespNames().executeQuery(oclass, where, handler,options);
+        } else if (oclass.is(OracleERPUtil.RESP_NAMES)) {
+            new RespNamesOperationSearch(conn, cfg).executeQuery(oclass, where, handler, options);
             return;
-        } else if (oclass.equals(OracleERPUtil.DIRECT_RESP_OC)) { //OK
-            getRespNames().executeQuery(oclass, where, handler,options);
+        } else if (oclass.is(OracleERPUtil.RESPS)) {
+            new ResponsibilitiesOperationSearch(conn, cfg).executeQuery(oclass, where, handler, options);
             return;
-        } else if (oclass.equals(OracleERPUtil.INDIRECT_RESP_OC)) { //OK
-            getRespNames().executeQuery(oclass, where, handler,options);
+        } else if (oclass.is(OracleERPUtil.DIRECT_RESPS)) {
+            new ResponsibilitiesOperationSearch(conn, cfg).executeQuery(oclass, where, handler, options);
             return;
-        } else if (oclass.equals(OracleERPUtil.APPS_OC)) {
-            getRespNames().executeQuery(oclass, where, handler,options);
-        } else if (oclass.equals(OracleERPUtil.AUDITOR_RESPS_OC)) { // ok
-            getRespNames().executeQuery(oclass, where, handler,options);
-        } else if (oclass.equals(OracleERPUtil.SEC_GROUPS_OC)) {
-            getSecAttrs().executeQuery(oclass, where, handler,options);
-        } else if (oclass.equals(OracleERPUtil.SEC_ATTRS_OC)) {
-            getSecAttrs().executeQuery(oclass, where, handler,options);
+        } else if (oclass.is(OracleERPUtil.INDIRECT_RESPS)) {
+            new ResponsibilitiesOperationSearch(conn, cfg).executeQuery(oclass, where, handler, options);
+            return;
+        } else if (oclass.is(OracleERPUtil.APPS)) {
+            new ApplicationOperationSearch(conn, cfg).executeQuery(oclass, where, handler, options);
+            return;
+        } else if (oclass.is(OracleERPUtil.AUDITOR_RESPS)) {
+            new AuditorOperationSearch(conn, cfg).executeQuery(oclass, where, handler, options);
+            return;
+        } else if (oclass.is(OracleERPUtil.SEC_GROUPS)) {
+            new SecuringGroupsOperationSearch(conn, cfg).executeQuery(oclass, where, handler, options);
+            return;
+        } else if (oclass.is(OracleERPUtil.SEC_ATTRS)) {
+            new SecuringAttributesOperationSearch(conn, cfg).executeQuery(oclass, where, handler, options);
+            return;
         }
-        
-        throw new IllegalArgumentException(getCfg().getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
+
+        throw new IllegalArgumentException(cfg.getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
     }
 
     /* (non-Javadoc)
@@ -327,7 +270,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         final String nameValue = ((Uid) scriptArguments.get(Uid.NAME)).getUidValue();
         final GuardedString password = ((GuardedString) scriptArguments.get(OperationalAttributes.PASSWORD_NAME));
 
-        actionContext.put("conn", getConn().getConnection()); //The real connection
+        actionContext.put("conn", conn.getConnection()); //The real connection
         actionContext.put("action", scriptArguments.get("operation")); // The action is the operation name createUser/updateUser/deleteUser/disableUser/enableUser
         actionContext.put("timing", scriptArguments.get("timing")); // The timming before / after
         actionContext.put("attributes", scriptArguments.get("attributes")); // The attributes
@@ -374,8 +317,8 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      * @see org.identityconnectors.framework.spi.operations.TestOp#test()
      */
     public void test() {
-        getCfg().validate();
-        getConn().test();
+        cfg.validate();
+        conn.test();
     }
 
     /* (non-Javadoc)
@@ -394,12 +337,12 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         }        
 
         if (objClass.is(ObjectClass.ACCOUNT_NAME)) {
-            return new AccountOperationUpdate(conn, cfg, this).update(objClass, uid, replaceAttributes, options);
+            return new AccountOperationUpdate(conn, cfg).update(objClass, uid, replaceAttributes, options);
         } else if (objClass.is(RESP_NAMES)) {
             // TODO update resp names
         }
 
-        throw new IllegalArgumentException(getCfg().getMessage(MSG_UNKNOWN_OPERATION_TYPE, objClass.toString()));
+        throw new IllegalArgumentException(cfg.getMessage(MSG_UNKNOWN_OPERATION_TYPE, objClass.toString()));
     }
 
 
@@ -417,11 +360,11 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
          */
         log.info("Init using configuration {0}", configuration);
         this.cfg = (OracleERPConfiguration) configuration;
-        this.conn = OracleERPConnection.createOracleERPConnection(getCfg());
+        this.conn = OracleERPConnection.createOracleERPConnection(cfg);
         log.info("createOracleERPConnection");
         
-        cfg.setUserId(OracleERPUtil.getUserId(getConn(), getCfg(), getCfg().getUser()));
-        log.info("Init: for user {0} the configUserId is {1}", getCfg().getUser(), cfg.getUserId());
+        cfg.setUserId(OracleERPUtil.getUserId(conn, cfg, cfg.getUser()));
+        log.info("Init: for user {0} the configUserId is {1}", cfg.getUser(), cfg.getUserId());
         
         initResponsibilities();        
         initFndGlobal();
@@ -450,7 +393,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
                 pars.add(new SQLParam("respId", respId, Types.VARCHAR));
                 pars.add(new SQLParam("respAppId", respApplId, Types.VARCHAR));
 
-                cs = getConn().prepareCall(sql, pars);
+                cs = conn.prepareCall(sql, pars);
                 cs.execute();
                 // Result ?
                 // cstmt1 closed in finally below
@@ -584,5 +527,5 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         }
         log.ok("newResponsibilityViews: true");
         return false;
-    }    
+    }
 }

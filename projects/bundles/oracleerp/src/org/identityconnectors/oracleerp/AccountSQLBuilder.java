@@ -22,7 +22,7 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.AccountSQL.CALL_PARAMS;
+import static org.identityconnectors.oracleerp.AccountOperations.CALL_PARAMS;
 import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.sql.Timestamp;
@@ -45,7 +45,7 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.oracleerp.AccountSQL.CallParam;
+import org.identityconnectors.oracleerp.AccountOperations.CallParam;
 
 /**
  * Main implementation of the AccountSQLBuilder Class
