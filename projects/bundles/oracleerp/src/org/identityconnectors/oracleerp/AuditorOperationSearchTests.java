@@ -26,13 +26,13 @@ package org.identityconnectors.oracleerp;
 
 
 /**
- * Attempts to test the {@link OracleERPConnector} with the framework.
+ * Attempts to test the {@link AuditorOperationSearch}.
  * 
  * @author petr
  * @version 1.0
  * @since 1.0
  */
-public class OracleERPConnectorTests extends OracleERPTestsBase { 
+public class AuditorOperationSearchTests extends OracleERPTestsBase { 
 
-    //TODO add more connector related tests
+    // TODO add the Authenticate test
 }

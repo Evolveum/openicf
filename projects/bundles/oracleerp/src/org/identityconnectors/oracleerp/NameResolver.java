@@ -57,7 +57,7 @@ public interface NameResolver {
     
     /**
      * @param columnName
-     * @return
+     * @return String attribute name
      */
     String getAttributeName(String columnName);
 }

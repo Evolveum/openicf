@@ -22,6 +22,14 @@
  */
 package org.identityconnectors.oracleerp;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import java.util.Set;
+
+import org.identityconnectors.framework.common.objects.ObjectClassInfo;
+import org.identityconnectors.framework.common.objects.Schema;
+import org.junit.Test;
 
 
 
@@ -32,7 +40,18 @@ package org.identityconnectors.oracleerp;
  * @version 1.0
  * @since 1.0
  */
-public class OracleERPConnectorTests extends OracleERPTestsBase { 
+public class OracleERPOperationSchemaTests extends OracleERPTestsBase { 
 
-    //TODO add more connector related tests
+    /**
+     * Test method for {@link OracleERPConnector#schema()}.
+     */
+    @Test
+    public void testSchema() {
+        Schema schema = getFacade(getConfiguration(CONFIG_SYSADM)).schema();
+        // Schema should not be null
+        assertNotNull(schema);
+        Set<ObjectClassInfo> objectInfos = schema.getObjectClassInfo();
+        assertNotNull(objectInfos);
+        assertEquals(2, objectInfos.size());
+    }    
 }

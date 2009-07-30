@@ -32,7 +32,7 @@ package org.identityconnectors.oracleerp;
  * @version 1.0
  * @since 1.0
  */
-public class OracleERPConnectorTests extends OracleERPTestsBase { 
+public class AccountOperationAutenticateTests extends OracleERPTestsBase { 
 
-    //TODO add more connector related tests
+    // TODO add the Authenticate test
 }
