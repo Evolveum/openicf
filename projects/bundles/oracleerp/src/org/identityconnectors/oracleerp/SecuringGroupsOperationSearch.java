@@ -86,7 +86,7 @@ public class SecuringGroupsOperationSearch extends Operation implements SearchOp
 
         PreparedStatement st = null;
         ResultSet res = null;
-        StringBuffer b = new StringBuffer();
+        StringBuilder b = new StringBuilder();
 
         b.append("SELECT distinct fndsecgvl.security_group_name ");
         b.append("FROM " + cfg.app() + "fnd_security_groups_vl fndsecgvl ");

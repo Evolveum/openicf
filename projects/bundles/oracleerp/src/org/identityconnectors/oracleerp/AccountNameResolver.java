@@ -31,9 +31,7 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.Uid;
 
 /**
- * The Account CreateOp implementation of the SPI Select attributes from fnd_user table, add person details from
- * PER_PEOPLE_F table add responsibility names add auditor data add securing attributes all filtered according
- * attributes to get
+ * The Account Name Resolver tries to convert Account column names to attribute names.
  * 
  * @author Petr Jung
  * @version $Revision 1.0$

@@ -106,7 +106,7 @@ final class AuditorOperations extends Operation {
                 app = tok.nextToken();
             }
         }
-        StringBuffer b = new StringBuffer();
+        StringBuilder b = new StringBuilder();
 
         //one query 
         b.append("SELECT DISTINCT 'N/A' userMenuName, 0 menuID, fffv.function_id,");
@@ -283,7 +283,7 @@ final class AuditorOperations extends Operation {
         // The results of this query are additional roFunctionIds by following logic
         // in bug#13405.
         if (roFunctionIds != null && roFunctionIds.size() > 0) {
-            b = new StringBuffer();
+            b = new StringBuilder();
             b.append("SELECT function_id from fnd_compiled_menu_functions ");
             b.append("WHERE menu_id IN ");
             b.append("( SELECT sub_menu_id from fnd_menu_entries ");
@@ -381,7 +381,7 @@ final class AuditorOperations extends Operation {
 
         // check to see if SOB/ORGANIZATION is required
         if (cfg.isReturnSobOrgAttrs()) {
-            b = new StringBuffer();
+            b = new StringBuilder();
             // query for SOB / Organization
             b.append("Select distinct ");
             b.append("decode(fpo1.user_profile_option_name, '");

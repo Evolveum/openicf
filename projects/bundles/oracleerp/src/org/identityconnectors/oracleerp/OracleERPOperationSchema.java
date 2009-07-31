@@ -110,13 +110,13 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         // The Name is supported attribute
         ocib.addAttributeInfo(Name.INFO);
         // name='owner' type='string' required='false'
-        ocib.addAttributeInfo(AttributeInfoBuilder.build(OWNER, String.class, EnumSet.of(Flags.NOT_READABLE,
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(OWNER, String.class, EnumSet.of(Flags.NOT_READABLE, 
                 Flags.NOT_RETURNED_BY_DEFAULT)));
         // name='session_number' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(SESS_NUM, String.class, EnumSet.of(Flags.NOT_UPDATEABLE,
                 Flags.NOT_CREATABLE)));
         // name='start_date' type='string' required='false'
-        ocib.addAttributeInfo(AttributeInfoBuilder.build(START_DATE, String.class, EnumSet.of(Flags.REQUIRED)));
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(START_DATE, String.class ));
         // name='end_date' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(END_DATE, String.class));
         // name='last_logon_date' type='string' required='false'
@@ -157,7 +157,6 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         ocib.addAttributeInfo(AttributeInfoBuilder.build(SUPP_ID, Integer.class));
         // name='person_party_id' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(PERSON_PARTY_ID, Integer.class));
-
         //user_id
         ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_ID, String.class, EnumSet.of(
                 Flags.NOT_RETURNED_BY_DEFAULT, Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE)));
@@ -169,13 +168,13 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
                             .of(Flags.MULTIVALUED)));
             // name='INDIRECT_RESPS' type='string' required='false'
             ocib.addAttributeInfo(AttributeInfoBuilder.build(INDIRECT_RESPS, String.class, EnumSet
-                    .of(Flags.MULTIVALUED)));
+                    .of(Flags.MULTIVALUED, Flags.NOT_UPDATEABLE, Flags.NOT_CREATABLE)));
         } else {
             // name='RESPS' type='string' required='false'
             ocib.addAttributeInfo(AttributeInfoBuilder.build(RESPS, String.class, EnumSet.of(Flags.MULTIVALUED)));
         }
         // name='RESPKEYS' type='string' required='false'
-        ocib.addAttributeInfo(AttributeInfoBuilder.build(RESPKEYS, String.class, EnumSet.of(Flags.MULTIVALUED)));
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(RESPKEYS, String.class, EnumSet.of(Flags.MULTIVALUED, Flags.NOT_UPDATEABLE, Flags.NOT_CREATABLE)));
         // name='SEC_ATTRS' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(SEC_ATTRS, String.class, EnumSet.of(Flags.MULTIVALUED)));
 

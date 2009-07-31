@@ -136,6 +136,37 @@ public class OracleERPUtil {
     static final String RW_FUNCTION_NAMES = "readWriteOnlyFunctionNames";
     static final String RW_FUNCTION_IDS = "readWriteOnlyFunctionIds";
 
+    /** The search pattern operation options key */
+    static final String PATTERN = "searchPattern";
+    
+    /** Default OracleRP driver */
+    static final String DEFAULT_DRIVER="oracle.jdbc.driver.OracleDriver";
+    
+    /** Default OracleRP admin user */ 
+    static final String DEFAULT_USER_NAME = "APPL"; // Default user name           
+      
+    
+    /**
+     * Name attribute, old name attribute, TODO should I support both?
+     */
+    static final String NAME = "name";
+
+    /**
+     * 
+     */
+    public static final int ORACLE_TIMEOUT = 1800;
+    
+    /**
+     * 
+     */
+    public static final String CUST = "CUST";
+    
+    // Auditor Data Object
+    static final String AUDITOR_RESPS = "auditorResps";
+    static final String AUDITOR_RESP = "auditorResp";
+    static final String AUDITOR_OBJECT = "auditorObject";
+
+    
     // format flags for processing responsibilities strings, used by getResp() and getResps() methods
     static final int RESP_FMT_KEYS = 0; // return responsibilities with keys only.
     static final int RESP_FMT_NORMALIZE_DATES = 1; // return whole responsibilities with time data removed from date columns.
@@ -207,15 +238,6 @@ public class OracleERPUtil {
     /** Object Class name */
     public static final ObjectClass SEC_ATTRS_OC = new ObjectClass(SEC_ATTRS); 
     
-    
-    static final String PATTERN = "searchPattern";
-   
-
-    // Auditor Data Object
-    static final String AUDITOR_RESPS = "auditorResps";
-    static final String AUDITOR_RESP = "auditorResp";
-    static final String AUDITOR_OBJECT = "auditorObject";
-
 
     /**
      * Auditor responsibilities has menus, forms, functions, 
@@ -228,29 +250,13 @@ public class OracleERPUtil {
     static final String SOB_ID = "setOfBooksId";
     static final String OU_NAME = "organizationalUnitName";
     static final String OU_ID = "organizationalUnitId";
-    
-    static final String DEFAULT_USER_NAME = "APPL"; // Default user name           
-    
+
     // new version 11.5.10 does not use responsibility table, it uses 2 new views
     static final String RESPS_TABLE = "fnd_user_resp_groups";    
     static final String RESPS_DIRECT_VIEW = "fnd_user_resp_groups_direct";
     static final String RESPS_INDIRECT_VIEW = "fnd_user_resp_groups_indirect";
     static final String RESPS_ALL_VIEW = "fnd_user_resp_groups_all";    
-    
-    /**
-     * Name attribute, old name attribute, TODO should I support both?
-     */
-    static final String NAME = "name";
 
-    /**
-     * 
-     */
-    public static final int ORACLE_TIMEOUT = 1800;
-    
-    /**
-     * 
-     */
-    public static final String CUST = "CUST";
 
     /**
      * @param conn connection 
@@ -589,7 +595,7 @@ public class OracleERPUtil {
      * @param b buffer
      * @param s string to be quoted
      */
-    public static void addQuoted(StringBuffer b, String s) {
+    public static void addQuoted(StringBuilder b, String s) {
         final String method = "addQuoted ''{0}''";
         log.info(method, s);
         b.append("'");

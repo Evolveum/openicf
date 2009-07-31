@@ -95,7 +95,7 @@ public class ApplicationOperationSearch extends Operation implements SearchOp<Fi
 
         PreparedStatement st = null;
         ResultSet res = null;
-        StringBuffer b = new StringBuffer();
+        StringBuilder b = new StringBuilder();
         String respName = null;
         if(options != null && options.getOptions() != null) {
             respName = (String) options.getOptions().get(RESP_NAME);

@@ -94,7 +94,7 @@ public class SecuringAttributesOperationSearch extends Operation implements Sear
         log.info(method);
         PreparedStatement st = null;
         ResultSet res = null;
-        StringBuffer b = new StringBuffer();
+        StringBuilder b = new StringBuilder();
         //default value
         String pattern = "%";
         if (options != null && options.getOptions() != null) {
@@ -122,7 +122,7 @@ public class SecuringAttributesOperationSearch extends Operation implements Sear
             res = st.executeQuery();
             while (res.next()) {
 
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 sb.append(getColumn(res, 1));
                 sb.append("||");
                 sb.append(getColumn(res, 2));

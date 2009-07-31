@@ -178,10 +178,9 @@ public class AccountSQLBuilder {
         }
         //Check required columns
         Assertions.nullCheck(sqlParamsMap.get(USER_NAME), Name.NAME);
-        Assertions.nullCheck(sqlParamsMap.get(OWNER), OWNER);
+        //Assertions.nullCheck(sqlParamsMap.get(OWNER), OWNER);
         if (create) {
             Assertions.nullCheck(sqlParamsMap.get(UNENCRYPT_PWD), OperationalAttributes.PASSWORD_NAME);
-            Assertions.nullCheck(sqlParamsMap.get(START_DATE), START_DATE);
         }
         log.ok("init");
         return this;

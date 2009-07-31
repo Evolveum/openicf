@@ -12,5 +12,5 @@
 <stringAttribute key="org.eclipse.jdt.junit.TEST_KIND" value="org.eclipse.jdt.junit.loader.junit4"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.identityconnectors.oracleerp.OracleERPConnectorTests"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="ConnectorOracleERP"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dconfiguration=11_5_10&#13;&#10;-Dproject.name=connector-oracleerp&#13;&#10;-DbundleJar=dist/org.identityconnectors.oracleerp-1.0.1.jar&#13;&#10;-DbundleName=org.identityconnectors.oracleerp&#13;&#10;-DbundleVersion=1.0.1"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-DtestConfig=11_5_10&#13;&#10;-Dproject.name=connector-oracleerp&#13;&#10;-Ddata-provider=org.identityconnectors.contract.data.GroovyDataProvider&#13;&#10;-DbundleJar=dist/org.identityconnectors.oracleerp-1.0.1.jar&#13;&#10;-DbundleName=org.identityconnectors.oracleerp&#13;&#10;-DbundleVersion=1.0.1"/>
 </launchConfiguration>

@@ -42,9 +42,9 @@ configuration{
 
 account{
     required.__NAME__="TST-USER"
-    required.__PASSWORD__=new GuardedString("passwd".toCharArray());
-    required.owner="CUST"
-    required.start_date=stringDate(-10*24*3600000)
+    required.__PASSWORD__="password"
+   // required.owner="CUST"
+  //  required.start_date=stringDate(-10*24*3600000)
     
     all.__NAME__="TST-USER"
     all.owner="CUST"
@@ -55,7 +55,7 @@ account{
     all.last_logon_date=stringDate(0)
     all.description="Connector test user"
 
-    all.__PASSWORD__=new GuardedString("passwd".toCharArray());
+    all.__PASSWORD__="password"
     all.__PASSWORD_EXPIRED__=false
     all.password_date=stringDate(0)
     
@@ -78,7 +78,7 @@ account{
         
 
     modify.__NAME__="TST-USER-MOD"
-    modify.__PASSWORD__=new GuardedString("modpasswd".toCharArray());
+    modify.__PASSWORD__="modpasswd"
     modify.email_address="person1@somewhere.com"
     modify.fax="666-666-6666"
     modify.directResponsibilities=["Cash Forecasting||Cash Management||Standard||2004-04-12 00:00:00.0||null","Purchasing Receiver||Purchasing||Standard||2004-04-12 00:00:00.0||null"]
@@ -116,7 +116,7 @@ connector{
     user="__configureme__"
     password=new GuardedString("__configureme__".toCharArray());
     accountsIncluded=""
-    activeAccountsOnly=false
+    activeAccountsOnly=true
     auditResponsibility="System Administrator"
     manageSecuringAttrs=true
     noSchemaId=false

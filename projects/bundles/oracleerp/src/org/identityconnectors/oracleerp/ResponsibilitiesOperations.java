@@ -230,7 +230,7 @@ final class ResponsibilitiesOperations extends Operation {
         final String method = "getResponsibilities";
         log.info(method);
 
-        StringBuffer b = new StringBuffer();
+        StringBuilder b = new StringBuilder();
 
         b.append("SELECT fndappvl.application_name, fndrespvl.responsibility_name, ");
         b.append("fndsecgvl.Security_group_name ");
@@ -281,7 +281,7 @@ final class ResponsibilitiesOperations extends Operation {
 
                 // six columns with old resp table, 5 with new views - 
                 // no description available
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 String s = getColumn(res, 2); // fndrespvl.responsibility_name
                 sb.append(s);
                 sb.append("||");
@@ -368,7 +368,7 @@ final class ResponsibilitiesOperations extends Operation {
         String strRespRet = null;
         StringTokenizer tok = new StringTokenizer(strResp, "||", false);
         if (tok != null && tok.countTokens() > 2) {
-            StringBuffer key = new StringBuffer();
+            StringBuilder key = new StringBuilder();
             key.append(tok.nextToken()); // responsiblity name
             key.append("||");
             key.append(tok.nextToken()); // application name
@@ -446,7 +446,7 @@ final class ResponsibilitiesOperations extends Operation {
             toDate = "to_date('" + toDate.substring(0, toDate.length() - 2) + "', 'yyyy-mm-dd hh24:mi:ss')";
         }
 
-        StringBuffer b = buildUserRespStatement(identity.toUpperCase(), securityGroup.toUpperCase(), respName,
+        StringBuilder b = buildUserRespStatement(identity.toUpperCase(), securityGroup.toUpperCase(), respName,
                 respAppName, fromDate, toDate, description, true /* doing an insert */);
 
         boolean doRetryWithoutAppname = false;
@@ -512,10 +512,10 @@ final class ResponsibilitiesOperations extends Operation {
     /**
      * This method is shared by addUserResponsibility and updateUserResponsibility to build their PL/SQL statements.
      */
-    private StringBuffer buildUserRespStatement(String user, String secGroup, String respName, String respAppName,
+    private StringBuilder buildUserRespStatement(String user, String secGroup, String respName, String respAppName,
             String fromDate, String toDate, String description, boolean doInsert) {
 
-        StringBuffer b = new StringBuffer();
+        StringBuilder b = new StringBuilder();
         b.append("DECLARE user varchar2(300); security_group varchar2(300); ");
         b.append("responsibility_long_name varchar2(300); ");
         if (respAppName != null) {
@@ -586,7 +586,7 @@ final class ResponsibilitiesOperations extends Operation {
             throw new ConnectorException(msg);
         }
 
-        StringBuffer b = new StringBuffer();
+        StringBuilder b = new StringBuilder();
 
         b.append("DECLARE user_id varchar2(300); security_group varchar2(300); ");
         b.append("responsibility_long_name varchar2(300); responsibility_app_name ");
@@ -698,7 +698,7 @@ final class ResponsibilitiesOperations extends Operation {
             toDate = "to_date('" + toDate.substring(0, toDate.length() - 2) + "', 'yyyy-mm-dd hh24:mi:ss')";
         }
 
-        StringBuffer b = buildUserRespStatement(identity.toUpperCase(), securityGroup.toUpperCase(), respName,
+        StringBuilder b = buildUserRespStatement(identity.toUpperCase(), securityGroup.toUpperCase(), respName,
                 respAppName, fromDate, toDate, description, false /* not doing an insert, doing an update */);
 
         boolean doRetryWithoutAppname = false;

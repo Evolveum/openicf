@@ -501,7 +501,7 @@ final class SecuringAttributesOperations extends Operation {
         log.info(method);
         PreparedStatement st = null;
         ResultSet res = null;
-        StringBuffer b = new StringBuffer();
+        StringBuilder b = new StringBuilder();
         //default value
         String pattern = "%";
         b.append("SELECT distinct akattrvl.NAME, fndappvl.APPLICATION_NAME ");
@@ -536,7 +536,7 @@ final class SecuringAttributesOperations extends Operation {
             res = st.executeQuery();
             while (res.next()) {
 
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 sb.append(getColumn(res, 1));
                 sb.append("||");
                 sb.append(getColumn(res, 2));

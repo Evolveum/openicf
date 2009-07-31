@@ -39,9 +39,9 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
+import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,6 +67,7 @@ import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.BeforeClass;
+
 
 /**
  * @author Petr Jung
@@ -174,14 +175,16 @@ abstract public class OracleERPTestsBase {
      * 
      * @param ret
      */
-    protected void generateNameAttribute(Set<Attribute> ret) {
+    protected String generateNameAttribute(Set<Attribute> ret) {
         Name attr = AttributeUtil.getNameFromAttributes(ret);
+        String value = null;
         if (attr != null) {
             ret.remove(attr);
-            final String value = AttributeUtil.getStringValue(attr) + System.currentTimeMillis();
+            value = AttributeUtil.getStringValue(attr) + System.currentTimeMillis();
             Attribute add = AttributeBuilder.build(Name.NAME, value );
             ret.add(add);
         }
+        return value;
     }
 
     /**
@@ -221,6 +224,12 @@ abstract public class OracleERPTestsBase {
             fail("load configuration "+configName+" error:"+ e.getMessage());
         }
         assertNotNull(config);
+        assertEquals("The driver is not defined, the dataprovider is not initialized. Set up:" +
+        		     "-Dproject.name=connector-oracleerp "+
+                     "-Ddata-provider=org.identityconnectors.contract.data.GroovyDataProvider"+
+                     "-DbundleJar=dist/org.identityconnectors.oracleerp-1.0.1.jar"+
+                     "-DbundleName=org.identityconnectors.oracleerp"+
+                     "-DbundleVersion=1.0.1 ", DEFAULT_DRIVER, config.getDriver());
         config.setConnectorMessages(TestHelpers.createDummyMessages());
         return config;
     }

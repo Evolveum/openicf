@@ -96,9 +96,10 @@ final class AccountOperationCreate extends Operation implements CreateOp {
         }        
         final String name = nameAttr.getNameValue();
 
-        attrs = CollectionUtil.newSet(attrs); //modifiable set       
+        attrs = CollectionUtil.newSet(attrs); //modifiable set
+        //add required owner, if missing
         if (AttributeUtil.find(OWNER, attrs) == null) {
-            attrs.add(AttributeBuilder.build(OWNER, CUST));
+            attrs.add(AttributeBuilder.build(OWNER, cfg.getUser() ));
         }
         
         //Get the person_id and set is it as a employee id

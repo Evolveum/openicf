@@ -99,9 +99,6 @@ public class OracleERPConfiguration extends AbstractConfiguration {
     public void setJndiProperties(final String[] value) {
         this.jndiProperties = value;
     }
-    
-    /** */
-    private static final String DEFAULT_DRIVER = "oracle.jdbc.driver.OracleDriver";
 
     /**
      * Driver attribute,
@@ -248,9 +245,6 @@ public class OracleERPConfiguration extends AbstractConfiguration {
         this.database = database;
     }
     
-    /** */
-    private static final String DEFAULT_USER = "APPS";
-    
     /**
      * User attribute
      * 
@@ -258,7 +252,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * name="user" displayName="USER" type="string" multi="false"
      * description="HELP_286"  value="APPL"
      */
-    private String user = DEFAULT_USER;
+    private String user = DEFAULT_USER_NAME;
 
     /**
      * Getter for the user attribute. 
