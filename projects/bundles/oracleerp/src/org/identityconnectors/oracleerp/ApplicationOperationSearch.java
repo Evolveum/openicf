@@ -39,9 +39,7 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.APPS_OC;
-import static org.identityconnectors.oracleerp.OracleERPUtil.RESP_NAME;
-import static org.identityconnectors.oracleerp.OracleERPUtil.getColumn;
+import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -52,6 +50,7 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
@@ -64,12 +63,12 @@ import org.identityconnectors.framework.spi.operations.SearchOp;
  * @version $Revision 1.0$
  * @since 1.0
  */
-public class ApplicationOperationSearch extends Operation implements SearchOp<FilterWhereBuilder>{
+public class ApplicationOperationSearch extends Operation implements SearchOp<FilterWhereBuilder> {
     /**
      * Setup logging.
      */
     static final Log log = Log.getLog(ApplicationOperationSearch.class);
-        
+
     /**
      * @param conn
      * @param cfg
@@ -82,7 +81,8 @@ public class ApplicationOperationSearch extends Operation implements SearchOp<Fi
      * @see org.identityconnectors.framework.spi.operations.SearchOp#createFilterTranslator(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public FilterTranslator<FilterWhereBuilder> createFilterTranslator(ObjectClass oclass, OperationOptions options) {
-        return new OracleERPFilterTranslator(oclass, options, CollectionUtil.newSet( new String[] {OracleERPUtil.NAME}) , new BasicNameResolver());
+        return new OracleERPFilterTranslator(oclass, options, CollectionUtil
+                .newSet(new String[] { OracleERPUtil.NAME }), new BasicNameResolver());
     }
 
     /* (non-Javadoc)
@@ -91,19 +91,19 @@ public class ApplicationOperationSearch extends Operation implements SearchOp<Fi
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder query, ResultsHandler handler,
             OperationOptions options) {
         final String method = "getApplications";
-        log.info( method);
+        log.info(method);
 
         PreparedStatement st = null;
         ResultSet res = null;
         StringBuilder b = new StringBuilder();
         String respName = null;
-        if(options != null && options.getOptions() != null) {
+        if (options != null && options.getOptions() != null) {
             respName = (String) options.getOptions().get(RESP_NAME);
         } else {
-            //TODO do I support where there?
+            //TODO add the query support for applications
             return;
         }
-        
+
         b.append("SELECT distinct fndappvl.application_name ");
         b.append("FROM " + cfg.app() + "fnd_responsibility_vl fndrespvl, ");
         b.append(cfg.app() + "fnd_application_vl fndappvl ");
@@ -115,19 +115,17 @@ public class ApplicationOperationSearch extends Operation implements SearchOp<Fi
             st.setString(1, respName);
             res = st.executeQuery();
             while (res.next()) {
+                String s = getColumn(res, 1);
                 ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
                 bld.setObjectClass(APPS_OC);
-
-                String s = getColumn(res, 1);
+                bld.addAttribute(AttributeBuilder.build(NAME, s));
                 bld.setName(s);
                 bld.setUid(s);
-                
                 if (!handler.handle(bld.build())) {
                     break;
                 }
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             log.error(e, method);
             throw ConnectorException.wrap(e);
         } finally {
@@ -137,7 +135,5 @@ public class ApplicationOperationSearch extends Operation implements SearchOp<Fi
             st = null;
         }
         log.ok(method);
-
     }
-
 }

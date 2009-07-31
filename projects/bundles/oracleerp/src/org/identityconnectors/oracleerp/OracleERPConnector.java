@@ -144,7 +144,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         if (oclass.is(ObjectClass.ACCOUNT_NAME)) {            
             return new AccountOperationCreate(conn, cfg).create(oclass, attrs, options);
         } else if (oclass.is(RESP_NAMES)) {
-        // TODO create resp names
+        // TODO add create "respNames" function
         }
 
         throw new IllegalArgumentException(cfg.getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
@@ -198,7 +198,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
             new AccountOperationDelete(conn, cfg).delete(objClass, uid, options);
             return;
         }  else if (objClass.is(RESP_NAMES)) {
-            // TODO delete rsp names
+            // TODO ad delete RespNames Function
         }
 
         throw new IllegalArgumentException(cfg.getMessage(MSG_UNKNOWN_OPERATION_TYPE, objClass.toString()));
@@ -354,7 +354,8 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
     public void init(Configuration configuration) {
         /*  
          * RA: startConnection(): 
-         * TODO: convert _dbu = new OracleDBUtil(); _dbu.setUpArgs(_resource)
+         * TODO Compile the "get user after" script in init 
+         *  convert _dbu = new OracleDBUtil(); _dbu.setUpArgs(_resource)
          *  initUserName(), is implemented in OracleERPConfiguration: getSchemaId
          *  _ctx = makeConnection(result);
          */

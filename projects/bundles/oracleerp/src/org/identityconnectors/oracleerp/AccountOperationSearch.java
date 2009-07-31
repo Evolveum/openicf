@@ -43,11 +43,9 @@ import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
-import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
-import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 
@@ -62,22 +60,31 @@ import org.identityconnectors.framework.spi.operations.SearchOp;
  */
 final class AccountOperationSearch extends Operation implements SearchOp<FilterWhereBuilder> {
 
-    /**
-     * Setup logging.
-     */
+    /** Setup logging. */
     static final Log log = Log.getLog(AccountOperationSearch.class);
 
-    /**
-     * Name translation
-     */
+    /** Name translation */
     private NameResolver nr = new AccountNameResolver();
 
+    
+    /** ResOps */
+    private ResponsibilitiesOperations respOps;
+
+    /** Audit Operations */
+    private AuditorOperations auditOps;
+    
+    /** Securing Attributes Operations */
+    private SecuringAttributesOperations secAttrOps;
+    
     /**
      * @param conn
      * @param cfg
      */
     protected AccountOperationSearch(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
+        respOps = new ResponsibilitiesOperations(conn, cfg);
+        auditOps = new AuditorOperations(conn, cfg);
+        secAttrOps = new SecuringAttributesOperations(conn, cfg);
     }
 
     /* (non-Javadoc)
@@ -128,7 +135,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
                 final String userName = (String) userNameParm.getValue();
                 final boolean getAuditorData = userNameParm.getValue().toString().equals(filterId);
                 // get users account attributes
-                buildAccountObject(amb, columnValues);
+                merrgeAllAttributes(amb, columnValues);
 
                 // if person_id not null and employee_number in schema, return employee_number
                 buildPersonDetails(amb, columnValues, perPeopleColumnNames);
@@ -146,8 +153,12 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
 
                 // create the connector object..
                 ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
+                
+                // TODO add all special attributes to account
                 bld.setObjectClass(ObjectClass.ACCOUNT);
                 bld.addAttributes(amb.build());
+                bld.setName(userName);
+                bld.setUid(userName);
                 if (!handler.handle(bld.build())) {
                     break;
                 }
@@ -235,7 +246,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
                 if (result.next()) {
                     final Map<String, SQLParam> personValues = SQLUtil.getColumnValues(result);
                     // get users account attributes
-                    this.buildAccountObject(bld, personValues);
+                    this.merrgeAllAttributes(bld, personValues);
                     log.ok("Person values {0} from result set ", personValues);
                 }
             }
@@ -254,35 +265,19 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         }
     }
 
+  
     /**
-     * Construct a connector object
-     * <p>
-     * Taking care about special attributes
-     * </p>
-     * 
-     * @param attributeSet
-     *            from the database table
-     * @param columnValues
+     * Merge all attribute . Translate column name to attribute name and convert the value
+     * Add only readable attributes
+     * @param amb the attribute merger
+     * @param columnValues the column value map
      * @throws SQLException
      */
-    private void buildAccountObject(AttributeMergeBuilder amb, Map<String, SQLParam> columnValues) throws SQLException {
+    private void merrgeAllAttributes(AttributeMergeBuilder amb, Map<String, SQLParam> columnValues) throws SQLException {
         final String method = "buildAccountObject";
         log.info(method);
         for (Map.Entry<String, SQLParam> val : columnValues.entrySet()) {
-            final SQLParam param = val.getValue();
-            final String columnName = param.getName();
-            // Map the special attribute
-            // TODO add all special attributes to account
-            if (columnName.equalsIgnoreCase(USER_NAME)) {
-                if (param == null || param.getValue() == null) {
-                    String msg = "Name cannot be null.";
-                    throw new IllegalArgumentException(msg);
-                }
-                amb.addAttribute(Name.NAME, param.getValue().toString());
-                amb.addAttribute(Uid.NAME, param.getValue().toString());
-            } else {
-                mergeAttribute(amb, param);
-            }
+            mergeAttribute(amb, val.getValue());
         }
     }
 
@@ -314,24 +309,24 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
          
         if (!cfg.isNewResponsibilityViews() && amb.isInAttributesToGet(RESPS)) {
             //add responsibilities
-            final List<String> responsibilities = new ResponsibilitiesOperations(conn, cfg).getResponsibilities(userName, RESPS_TABLE, false);
+            final List<String> responsibilities = respOps.getResponsibilities(userName, RESPS_TABLE, false);
             amb.addAttribute(RESPS, responsibilities);
 
             //add resps list
-            final List<String> resps = new ResponsibilitiesOperations(conn, cfg).getResps(responsibilities, RESP_FMT_KEYS);
+            final List<String> resps = respOps.getResps(responsibilities, RESP_FMT_KEYS);
             amb.addAttribute(RESPKEYS, resps);
         } else if (amb.isInAttributesToGet(DIRECT_RESPS)) {
-            final List<String> responsibilities = new ResponsibilitiesOperations(conn, cfg).getResponsibilities(userName, RESPS_DIRECT_VIEW, false);
+            final List<String> responsibilities = respOps.getResponsibilities(userName, RESPS_DIRECT_VIEW, false);
             amb.addAttribute(DIRECT_RESPS, responsibilities);
 
             //add resps list
-            final List<String> resps = new ResponsibilitiesOperations(conn, cfg).getResps(responsibilities, RESP_FMT_KEYS);
+            final List<String> resps = respOps.getResps(responsibilities, RESP_FMT_KEYS);
             amb.addAttribute(RESPKEYS, resps);
         }
 
         if (amb.isInAttributesToGet(INDIRECT_RESPS)) {
             //add responsibilities
-            final List<String> responsibilities = new ResponsibilitiesOperations(conn, cfg).getResponsibilities(userName, RESPS_INDIRECT_VIEW, false);
+            final List<String> responsibilities = respOps.getResponsibilities(userName, RESPS_INDIRECT_VIEW, false);
             amb.addAttribute(INDIRECT_RESPS, responsibilities);
         }
     }
@@ -347,7 +342,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         }
 
         if ( amb.isInAttributesToGet(SEC_ATTRS) ) {
-            List<String> secAttrs = new SecuringAttributesOperations(conn, cfg).getSecuringAttrs(userName);
+            List<String> secAttrs = secAttrOps.getSecuringAttrs(userName);
             if (secAttrs != null) {
                 amb.addAttribute(SEC_ATTRS, secAttrs);
             }
@@ -362,10 +357,9 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
      */
     public void buildAuditorDataObject(AttributeMergeBuilder amb, String userName) {
         log.info("buildAuditorDataObject for uid: {0}", userName);
-        List<String> activeRespList = new ResponsibilitiesOperations(conn, cfg).getResponsibilities(userName,
-                new ResponsibilitiesOperations(conn, cfg).getRespLocation(), false);
+        List<String> activeRespList = respOps.getResponsibilities(userName, respOps.getRespLocation(), false);
         for (String activeRespName : activeRespList) {
-            new AuditorOperations(conn, cfg).updateAuditorData(amb, activeRespName);
+            auditOps.updateAuditorData(amb, activeRespName);
         }
     }   
 }

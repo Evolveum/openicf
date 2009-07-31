@@ -39,6 +39,7 @@
  */
 package org.identityconnectors.oracleerp;
 
+import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 import static org.identityconnectors.oracleerp.OracleERPUtil.DIRECT_RESP_OC;
 import static org.identityconnectors.oracleerp.OracleERPUtil.INDIRECT_RESP_OC;
 import static org.identityconnectors.oracleerp.OracleERPUtil.RESPS_DIRECT_VIEW;
@@ -49,6 +50,7 @@ import java.util.List;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
@@ -67,12 +69,16 @@ public class ResponsibilitiesOperationSearch extends Operation implements Search
      */
     static final Log log = Log.getLog(ResponsibilitiesOperationSearch.class);
     
+    /** Resp operations*/
+    private ResponsibilitiesOperations respOps;
+    
     /**
      * @param conn
      * @param cfg
      */
     protected ResponsibilitiesOperationSearch(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
+        respOps = new ResponsibilitiesOperations(conn, cfg);
     }
 
     /* (non-Javadoc)
@@ -89,8 +95,8 @@ public class ResponsibilitiesOperationSearch extends Operation implements Search
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder query, ResultsHandler handler,
             OperationOptions options) {
 
-        final boolean activeRespsOnly = new ResponsibilitiesOperations(conn, cfg).isActiveRespOnly(options);
-        final String id = new ResponsibilitiesOperations(conn, cfg).getOptionId(options);
+        final boolean activeRespsOnly = respOps.isActiveRespOnly(options);
+        final String id = respOps.getOptionId(options);
 
         String respLocation = null;
         if (oclass.equals(DIRECT_RESP_OC)) { //OK
@@ -98,16 +104,17 @@ public class ResponsibilitiesOperationSearch extends Operation implements Search
         } else if (oclass.equals(INDIRECT_RESP_OC)) { //OK
             respLocation = RESPS_INDIRECT_VIEW;
         } else {
-            respLocation = new ResponsibilitiesOperations(conn, cfg).getRespLocation();
+            respLocation = respOps.getRespLocation();
         }
 
-        List<String> objectList = new ResponsibilitiesOperations(conn, cfg).getResponsibilities(id, respLocation, activeRespsOnly);
+        List<String> objectList = respOps.getResponsibilities(id, respLocation, activeRespsOnly);
 
         for (String respName : objectList) {
             ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
             bld.setObjectClass(oclass);
             bld.setName(respName);
             bld.setUid(respName);
+            bld.addAttribute(AttributeBuilder.build(NAME, respName));
             if (!handler.handle(bld.build())) {
                 break;
             }

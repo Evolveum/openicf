@@ -23,7 +23,6 @@
 package org.identityconnectors.oracleerp;
 
 import org.identityconnectors.common.Assertions;
-import org.identityconnectors.framework.common.objects.Schema;
 
 
 
@@ -44,12 +43,7 @@ abstract class Operation {
     /**
      * The instance or the parent object
      */
-    protected OracleERPConfiguration cfg = null;        
-
-    /**
-     * The instance or the parent object
-     */
-    protected Schema schema = null;        
+    protected OracleERPConfiguration cfg = null;     
 
  
     /**

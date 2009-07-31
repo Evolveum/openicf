@@ -145,19 +145,18 @@ public class OracleERPUtil {
     /** Default OracleRP admin user */ 
     static final String DEFAULT_USER_NAME = "APPL"; // Default user name           
       
-    
     /**
-     * Name attribute, old name attribute, TODO should I support both?
+     * Name attribute, old name attribute
      */
     static final String NAME = "name";
 
     /**
-     * 
+     * Timeout
      */
     public static final int ORACLE_TIMEOUT = 1800;
     
     /**
-     * 
+     * Default customer
      */
     public static final String CUST = "CUST";
     

@@ -39,10 +39,7 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.AUDITOR_RESPS_OC;
-import static org.identityconnectors.oracleerp.OracleERPUtil.RESP_NAMES;
-import static org.identityconnectors.oracleerp.OracleERPUtil.getAttributeInfos;
-import static org.identityconnectors.oracleerp.OracleERPUtil.getAttributesToGet;
+import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.util.List;
 import java.util.Set;
@@ -68,13 +65,22 @@ public class AuditorOperationSearch extends Operation implements SearchOp<Filter
      * Setup logging.
      */
     static final Log log = Log.getLog(AuditorOperationSearch.class);
+    /**
+     * REsp Operations
+     */
+    private ResponsibilitiesOperations respOps;
 
+    /** Audit Operations */
+    private AuditorOperations auditOps;
+    
     /**
      * @param conn
      * @param cfg
      */
     protected AuditorOperationSearch(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
+        respOps = new ResponsibilitiesOperations(conn, cfg);
+        auditOps = new AuditorOperations(conn, cfg);        
     }
 
     /* (non-Javadoc)
@@ -90,20 +96,22 @@ public class AuditorOperationSearch extends Operation implements SearchOp<Filter
      */
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder query, ResultsHandler handler,
             OperationOptions options) {
-        final String id = new ResponsibilitiesOperations(conn, cfg).getOptionId(options);
-        final boolean activeRespsOnly = new ResponsibilitiesOperations(conn, cfg).isActiveRespOnly(options);
-        final String respLocation = new ResponsibilitiesOperations(conn, cfg).getRespLocation();
+        final String id = respOps.getOptionId(options);
+        final boolean activeRespsOnly = respOps.isActiveRespOnly(options);
+        final String respLocation = respOps.getRespLocation();
 
-        List<String> auditorRespList = new ResponsibilitiesOperations(conn, cfg).getResponsibilities(id, respLocation,
+        List<String> auditorRespList = respOps.getResponsibilities(id, respLocation,
                 activeRespsOnly);
         for (String respName : auditorRespList) {
-            final Set<AttributeInfo> ais = getAttributeInfos(cfg.getSchema(), RESP_NAMES);
+            final Set<AttributeInfo> ais = getAttributeInfos(cfg.getSchema(), AUDITOR_RESPS);
             final AttributeMergeBuilder amb = new AttributeMergeBuilder(getAttributesToGet(options, ais));
-            new AuditorOperations(conn, cfg).updateAuditorData(amb, respName);
+            auditOps.updateAuditorData(amb, respName);
 
             ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
             bld.setObjectClass(AUDITOR_RESPS_OC);
             bld.addAttributes(amb.build());
+            bld.setName(respName);
+            bld.setUid(respName);
             if (!handler.handle(bld.build())) {
                 break;
             }

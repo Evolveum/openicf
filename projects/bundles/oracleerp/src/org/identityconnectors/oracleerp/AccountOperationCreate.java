@@ -77,12 +77,20 @@ final class AccountOperationCreate extends Operation implements CreateOp {
      */
     static final Log log = Log.getLog(AccountOperationCreate.class);
     
+    /** ResOps */
+    private ResponsibilitiesOperations respOps;
+
+    /** SecuringAttributes Operations */
+    private SecuringAttributesOperations secAttrOps;
+    
     /**
      * @param conn
      * @param cfg
      */
     protected AccountOperationCreate(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
+        respOps = new ResponsibilitiesOperations(conn, cfg);
+        secAttrOps = new SecuringAttributesOperations(conn, cfg);
     }
 
     /* (non-Javadoc)
@@ -161,14 +169,14 @@ final class AccountOperationCreate extends Operation implements CreateOp {
         final Attribute resp = AttributeUtil.find(RESPS, attrs);
         final Attribute directResp = AttributeUtil.find(DIRECT_RESPS, attrs);
         if ( resp != null ) {
-            new ResponsibilitiesOperations(conn, cfg).updateUserResponsibilities( resp, name);
+            respOps.updateUserResponsibilities( resp, name);
         } else if ( directResp != null ) {
-            new ResponsibilitiesOperations(conn, cfg).updateUserResponsibilities( directResp, name);
+            respOps.updateUserResponsibilities( directResp, name);
         }
         // update securing attributes
         final Attribute secAttr = AttributeUtil.find(SEC_ATTRS, attrs);
         if ( secAttr != null ) {
-            new SecuringAttributesOperations(conn, cfg).updateUserSecuringAttrs(secAttr, name);
+            secAttrOps.updateUserSecuringAttrs(secAttr, name);
         }
         
         conn.commit();     

@@ -22,6 +22,23 @@
  */
 package org.identityconnectors.oracleerp;
 
+import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+import static org.junit.Assert.*;
+
+import java.util.List;
+import java.util.Set;
+
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
+import org.identityconnectors.framework.common.objects.ConnectorObject;
+import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
+import org.identityconnectors.framework.common.objects.filter.Filter;
+import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
+import org.identityconnectors.test.common.TestHelpers;
+import org.junit.Test;
+
 
 
 
@@ -34,5 +51,20 @@ package org.identityconnectors.oracleerp;
  */
 public class ApplicationOperationSearchTests extends OracleERPTestsBase { 
 
-    // TODO add the Authenticate test
+    /**
+     * Test method for
+     * {@link ApplicationOperationSearch#executeQuery(ObjectClass, org.identityconnectors.dbcommon.FilterWhereBuilder, org.identityconnectors.framework.common.objects.ResultsHandler, OperationOptions)}
+     */
+    @Test
+    public void testApplicationSearch() {
+        final OracleERPConnector c = getConnector(CONFIG_SYSADM);
+        final Set<Attribute> attrsOpt = getAttributeSet(ACCOUNT_OPTIONS);
+        final OperationOptionsBuilder oob = new OperationOptionsBuilder();
+        addAuditorDataOptions(oob, attrsOpt);
+
+        final Filter filter = FilterBuilder.equalTo(AttributeBuilder.build(NAME, "Does no mather, not null"));
+        List<ConnectorObject> results = TestHelpers.searchToList(c, APPS_OC, filter, oob.build());
+        System.out.println(results);
+        assertTrue("expect 1 connector object", results.size() == 1);
+    }
 }

@@ -241,10 +241,10 @@ abstract public class OracleERPTestsBase {
      */
     protected OracleERPConnector getConnector(OracleERPConfiguration config) {
         assertNotNull(config);
-        OracleERPConnector con = new OracleERPConnector();
-        assertNotNull(con);
-        con.init(config);
-        return con;
+        OracleERPConnector c = new OracleERPConnector();
+        assertNotNull(c);
+        c.init(config);
+        return c;
     }
 
     /**
@@ -329,11 +329,11 @@ abstract public class OracleERPTestsBase {
             if(expAttr != null && currAttr != null ) {      
                 testAttribute(attrName, expAttr, currAttr);
             } else {
-                if(currAttr == null) {
-                    mis.add(expAttr.getName());
-                }
                 if(expAttr == null) {
-                    ext.add(currAttr.getName());                    
+                    mis.add(currAttr.getName());
+                }
+                if(currAttr == null) {
+                    ext.add(expAttr.getName());                    
                 }
             }
         }

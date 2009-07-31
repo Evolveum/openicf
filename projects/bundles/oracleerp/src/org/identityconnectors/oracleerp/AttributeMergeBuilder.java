@@ -32,6 +32,14 @@ public final class AttributeMergeBuilder {
         initAttributesToGet(attrToGet);
     }
 
+    /**
+     * @param names names attributes to get
+     * @param attrToGet  the attribute merge filter
+     */
+    public AttributeMergeBuilder(String ...names) {
+        initAttributesToGet(Arrays.asList(names));
+    }
+
 
     /**
      * 
@@ -97,10 +105,6 @@ public final class AttributeMergeBuilder {
      * @return the list
      */
     public List<Attribute> build() {
-        // check that there are attributes to return..
-        if (_attrs.size() == 0) {
-            throw new IllegalStateException("No attributes set!");
-        }
         final List<Attribute> attrs = CollectionUtil.newList();
         for (Entry<String, List<Object>> entry : _attrs.entrySet()) {
             final String name = entry.getKey();

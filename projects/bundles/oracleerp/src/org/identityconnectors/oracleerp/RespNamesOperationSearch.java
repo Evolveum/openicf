@@ -53,11 +53,9 @@ import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
-import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
-import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 
@@ -72,12 +70,16 @@ public class RespNamesOperationSearch extends Operation implements SearchOp<Filt
      */
     static final Log log = Log.getLog(RespNamesOperationSearch.class);
     
+    /** Audit Operations */
+    private AuditorOperations auditOps;
+    
     /**
      * @param conn
      * @param cfg
      */
     public RespNamesOperationSearch(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
+        auditOps = new AuditorOperations(conn, cfg);
     }
 
     /* (non-Javadoc)
@@ -99,7 +101,6 @@ public class RespNamesOperationSearch extends Operation implements SearchOp<Filt
         final Set<AttributeInfo> ais = getAttributeInfos(cfg.getSchema(), RESP_NAMES);
         final Set<String> atg = getAttributesToGet(options, ais);
         
-        //TODO add filter one resp name to the responsibility query
         PreparedStatement st = null;
         ResultSet res = null;
         StringBuilder b = new StringBuilder();
@@ -109,6 +110,7 @@ public class RespNamesOperationSearch extends Operation implements SearchOp<Filt
         b.append(cfg.app() + "fnd_application_vl fndappvl ");
         b.append("WHERE fndappvl.application_id = fndrespvl.application_id ");
         
+        // Query support
         if( where.getParams().size() == 1 ) {
             b.append("and fndrespvl.responsibility_name = ?");
         }
@@ -120,18 +122,17 @@ public class RespNamesOperationSearch extends Operation implements SearchOp<Filt
                
                 String respName = getColumn(res, 1);
                 AttributeMergeBuilder amb = new AttributeMergeBuilder(atg);
-                amb.addAttribute(Name.NAME, respName);
-                amb.addAttribute(Uid.NAME, respName);
                 amb.addAttribute(NAME, respName);
                 
                 if(where.getParams().size() == 1) {
-                    new AuditorOperations(conn, cfg).updateAuditorData(amb, respName);
+                    auditOps.updateAuditorData(amb, respName);
                 }
                 
                 ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
                 bld.setObjectClass(RESP_NAMES_OC);
                 bld.addAttributes(amb.build());
-                
+                bld.setName(respName);
+                bld.setUid(respName);
                 if (!handler.handle(bld.build())) {
                     break;
                 }

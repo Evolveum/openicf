@@ -22,7 +22,7 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_AUTH_FAILED;
 
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
@@ -38,7 +38,6 @@ import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
-import org.identityconnectors.framework.common.exceptions.InvalidPasswordException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
@@ -105,6 +104,8 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
         List<SQLParam> params = new ArrayList<SQLParam>();
         params.add(new SQLParam("user", username));
         params.add(new SQLParam("password", password));
+        
+        // TODO add test expired passwords, to the authenticate functionality if current not enough 
         try {
             ps = conn.prepareCall(sql, params);
             rs = ps.executeQuery();

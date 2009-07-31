@@ -76,10 +76,11 @@ public class AttributeMergeBuilderTest {
     /**
      * Test method for {@link org.identityconnectors.oracleerp.AttributeMergeBuilder#AttributeMergeBuilder()}.
      */
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testEmptyBuild() {
         AttributeMergeBuilder bld = new AttributeMergeBuilder(TO_GET_SET);
         assertNotNull("null builder", bld.build());
+        assertTrue("null builder", bld.build().size() == 0);
     }
 
     /**

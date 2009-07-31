@@ -39,9 +39,7 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.PATTERN;
-import static org.identityconnectors.oracleerp.OracleERPUtil.SEC_ATTRS_OC;
-import static org.identityconnectors.oracleerp.OracleERPUtil.getColumn;
+import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -52,6 +50,7 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
@@ -132,6 +131,7 @@ public class SecuringAttributesOperationSearch extends Operation implements Sear
 
                 bld.setName(sb.toString());
                 bld.setUid(sb.toString());
+                bld.addAttribute(AttributeBuilder.build(NAME, sb.toString()));
                 
                 if (!handler.handle(bld.build())) {
                     break;

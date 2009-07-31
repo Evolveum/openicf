@@ -82,11 +82,18 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
     static final Log log = Log.getLog(AccountOperationUpdate.class);
     
     /**
+     * Resp Operations 
+     */
+    private ResponsibilitiesOperations respOps;
+
+    
+    /**
      * @param conn
      * @param cfg
      */
     protected AccountOperationUpdate(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
+        respOps = new ResponsibilitiesOperations(conn, cfg);
     }
 
     /* (non-Javadoc)
@@ -157,9 +164,9 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
         final Attribute resp = AttributeUtil.find(RESPS, attrs);
         final Attribute directResp = AttributeUtil.find(DIRECT_RESPS, attrs);
         if ( resp != null ) {
-            new ResponsibilitiesOperations(conn, cfg).updateUserResponsibilities( resp, name);
+            respOps.updateUserResponsibilities( resp, name);
         } else if ( directResp != null ) {
-            new ResponsibilitiesOperations(conn, cfg).updateUserResponsibilities( directResp, name);
+            respOps.updateUserResponsibilities( directResp, name);
         }
 
         final Attribute secAttr = AttributeUtil.find(SEC_ATTRS, attrs);

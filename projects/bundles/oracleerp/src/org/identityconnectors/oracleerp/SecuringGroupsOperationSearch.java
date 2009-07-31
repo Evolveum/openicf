@@ -39,8 +39,7 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.SEC_GROUPS_OC;
-import static org.identityconnectors.oracleerp.OracleERPUtil.getColumn;
+import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -51,6 +50,7 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
@@ -100,6 +100,7 @@ public class SecuringGroupsOperationSearch extends Operation implements SearchOp
                 bld.setObjectClass(SEC_GROUPS_OC);
 
                 String s = getColumn(res, 1);
+                bld.addAttribute(AttributeBuilder.build(NAME, s));
                 bld.setName(s);
                 bld.setUid(s);
 
