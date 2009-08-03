@@ -371,7 +371,7 @@ public class AccountSQLBuilder {
                 log.ok("append also {0} => {1} ,Types.DATE", PWD_DATE, currentDate);
             }
 
-        } else if (attr.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)) {
+        } else if (attr.is(OperationalAttributes.PASSWORD_EXPIRED_NAME) || attr.is(EXP_PWD)) {
             /* ------ adapter code ----------
             Boolean expirePassword = null;
             if ( ((String)accountAttrChanges.get("OPERATION")).equalsIgnoreCase("CREATE") ) {
@@ -426,7 +426,7 @@ public class AccountSQLBuilder {
             ret = new SQLParam(OWNER, owner, Types.VARCHAR);
             sqlParams.add(ret);
             log.ok("{0} = > {1}, Types.VARCHAR", OWNER, owner);
-        } else if (attr.is(START_DATE)) {
+        } else if (attr.is(START_DATE) || attr.is(OperationalAttributes.ENABLE_DATE_NAME)) {
             /* ------ adapter code ---------- 
             // start_date 'not null' type
             if (accountAttrChanges.containsKey(START_DATE)) {
@@ -443,7 +443,7 @@ public class AccountSQLBuilder {
                 log.ok("{0} => {1} , Types.TIMESTAMP", START_DATE, tms);
             }
 
-        } else if (attr.is(END_DATE)) {
+        } else if (attr.is(END_DATE) || attr.is(OperationalAttributes.DISABLE_DATE_NAME)) {
             /* ------ adapter code ----------
             if (accountAttrChanges.containsKey(END_DATE)) {
                if (accountAttrChanges.get(END_DATE) == null) {
@@ -517,47 +517,47 @@ public class AccountSQLBuilder {
                 log.ok("{0} => {1}, Types.INTEGER", DESCR, accessLeft);
             }
 
-        } else if (attr.is(PWD_LIFE_ACCESSES)) {
+        } else if (attr.is(PWD_LIFESPAN_ACCESSES)) {
             /*  ------ adapter code ----------
-            if (accountAttrChanges.containsKey(PWD_LIFE_ACCESSES)) {
-               if ( (accountAttrChanges.get(PWD_LIFE_ACCESSES) == null)  ||
-               ( ((String)accountAttrChanges.get(PWD_LIFE_ACCESSES)).length() == 0) ) {
+            if (accountAttrChanges.containsKey(PWD_LIFESPAN_ACCESSES)) {
+               if ( (accountAttrChanges.get(PWD_LIFESPAN_ACCESSES) == null)  ||
+               ( ((String)accountAttrChanges.get(PWD_LIFESPAN_ACCESSES)).length() == 0) ) {
                    nullFields.append(",x_password_lifespan_accesses => FND_USER_PKG.null_number");                                
                } else {
-                   cstmt1.setInt(11, (new Integer((String)accountAttrChanges.get(PWD_LIFE_ACCESSES)).intValue()) );
+                   cstmt1.setInt(11, (new Integer((String)accountAttrChanges.get(PWD_LIFESPAN_ACCESSES)).intValue()) );
                }
             } */
             if (AttributeUtil.getSingleValue(attr) == null) {
-                ret = new SQLParam(PWD_LIFE_ACCESSES, NULL_NUMBER, Types.INTEGER);
+                ret = new SQLParam(PWD_LIFESPAN_ACCESSES, NULL_NUMBER, Types.INTEGER);
                 sqlParams.add(ret);
-                log.ok("NULL {0} => NULL_NUMBER", PWD_LIFE_ACCESSES);
+                log.ok("NULL {0} => NULL_NUMBER", PWD_LIFESPAN_ACCESSES);
             } else {
                 final Integer lifeAccess = AttributeUtil.getIntegerValue(attr);
-                ret = new SQLParam(PWD_LIFE_ACCESSES, lifeAccess, Types.INTEGER);
+                ret = new SQLParam(PWD_LIFESPAN_ACCESSES, lifeAccess, Types.INTEGER);
                 sqlParams.add(ret);
-                log.ok("{0} => {1}, Types.INTEGER", PWD_LIFE_ACCESSES, lifeAccess);
+                log.ok("{0} => {1}, Types.INTEGER", PWD_LIFESPAN_ACCESSES, lifeAccess);
             }
 
-        } else if (attr.is(PWD_LIFE_DAYS)) {
+        } else if (attr.is(PWD_LIFESPAN_DAYS)) {
             /*  ------ adapter code ----------
-            if (accountAttrChanges.containsKey(PWD_LIFE_DAYS)) {
-                if ( (accountAttrChanges.get(PWD_LIFE_DAYS) == null) ||
-                ( ((String)accountAttrChanges.get(PWD_LIFE_DAYS)).length() == 0) ) {
+            if (accountAttrChanges.containsKey(PWD_LIFESPAN_DAYS)) {
+                if ( (accountAttrChanges.get(PWD_LIFESPAN_DAYS) == null) ||
+                ( ((String)accountAttrChanges.get(PWD_LIFESPAN_DAYS)).length() == 0) ) {
                     nullFields.append(",x_password_lifespan_days => FND_USER_PKG.null_number");                
                 } else {
-                    cstmt1.setInt(12, (new Integer((String)accountAttrChanges.get(PWD_LIFE_DAYS)).intValue()) );
+                    cstmt1.setInt(12, (new Integer((String)accountAttrChanges.get(PWD_LIFESPAN_DAYS)).intValue()) );
                 }
             } 
             */
             if (AttributeUtil.getSingleValue(attr) == null) {
-                ret = new SQLParam(PWD_LIFE_DAYS, NULL_NUMBER, Types.INTEGER);
+                ret = new SQLParam(PWD_LIFESPAN_DAYS, NULL_NUMBER, Types.INTEGER);
                 sqlParams.add(ret);
-                log.ok("NULL {0} => NULL_NUMBER", PWD_LIFE_DAYS);
+                log.ok("NULL {0} => NULL_NUMBER", PWD_LIFESPAN_DAYS);
             } else {
                 final Integer lifeDays = AttributeUtil.getIntegerValue(attr);
-                ret = new SQLParam(PWD_LIFE_DAYS, lifeDays, Types.INTEGER);
+                ret = new SQLParam(PWD_LIFESPAN_DAYS, lifeDays, Types.INTEGER);
                 sqlParams.add(ret);
-                log.ok("{0} => {1}, Types.INTEGER", PWD_LIFE_DAYS, lifeDays);
+                log.ok("{0} => {1}, Types.INTEGER", PWD_LIFESPAN_DAYS, lifeDays);
             }
 
         } else if (attr.is(EMP_ID)) {

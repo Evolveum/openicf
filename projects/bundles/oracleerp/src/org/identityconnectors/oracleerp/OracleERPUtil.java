@@ -81,8 +81,8 @@ public class OracleERPUtil {
     static final String DESCR = "description";
     static final String PWD_DATE = "password_date";
     static final String PWD_ACCESSES_LEFT = "password_accesses_left";
-    static final String PWD_LIFE_ACCESSES = "password_lifespan_accesses";
-    static final String PWD_LIFE_DAYS = "password_lifespan_days";
+    static final String PWD_LIFESPAN_ACCESSES = "password_lifespan_accesses";
+    static final String PWD_LIFESPAN_DAYS = "password_lifespan_days";
     static final String EMP_ID = "employee_id";
     static final String EMAIL = "email_address";
     static final String FAX = "fax";
@@ -564,7 +564,7 @@ public class OracleERPUtil {
         final String method = "normalizeStrDate ''{0}'' -> ''{1}''";      
         String retDate = strDate;
         if ((strDate == null) || strDate.equalsIgnoreCase("null")) {
-            retDate = "null";
+            retDate = null;
         } else if (strDate.length() == 10) {
             retDate = strDate;
         } else if (strDate.length() > 10) {

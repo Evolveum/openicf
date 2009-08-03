@@ -114,8 +114,8 @@ public class AccountOperationCreateTests extends OracleERPTestsBase {
         attrs.add(AttributeBuilder.build(END_DATE));
         attrs.add(AttributeBuilder.build(DESCR));
         attrs.add(AttributeBuilder.build(PWD_ACCESSES_LEFT));
-        attrs.add(AttributeBuilder.build(PWD_LIFE_ACCESSES));
-        attrs.add(AttributeBuilder.build(PWD_LIFE_DAYS));
+        attrs.add(AttributeBuilder.build(PWD_LIFESPAN_ACCESSES));
+        attrs.add(AttributeBuilder.build(PWD_LIFESPAN_DAYS));
         attrs.add(AttributeBuilder.build(EMP_ID));
         attrs.add(AttributeBuilder.build(EMAIL));
         attrs.add(AttributeBuilder.build(FAX));

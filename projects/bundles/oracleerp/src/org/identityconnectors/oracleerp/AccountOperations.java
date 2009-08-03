@@ -68,8 +68,8 @@ public class AccountOperations  {
         FND_USER_COLS.add(DESCR); //8     
         FND_USER_COLS.add(PWD_DATE);//9     
         FND_USER_COLS.add(PWD_ACCESSES_LEFT); //10     
-        FND_USER_COLS.add(PWD_LIFE_ACCESSES); //11    
-        FND_USER_COLS.add(PWD_LIFE_DAYS); //12     
+        FND_USER_COLS.add(PWD_LIFESPAN_ACCESSES); //11    
+        FND_USER_COLS.add(PWD_LIFESPAN_DAYS); //12     
         FND_USER_COLS.add(EMP_ID); //13     
         FND_USER_COLS.add(EMAIL); //14     
         FND_USER_COLS.add(FAX); //15     
@@ -91,8 +91,8 @@ public class AccountOperations  {
         CALL_PARAMS.add(new CallParam(DESCR, "x_description => {0}", Types.VARCHAR)); //8     
         CALL_PARAMS.add(new CallParam(PWD_DATE, "x_password_date => {0}", Types.DATE)); //9     
         CALL_PARAMS.add(new CallParam(PWD_ACCESSES_LEFT, "x_password_accesses_left => {0}", Types.NUMERIC)); //10     
-        CALL_PARAMS.add(new CallParam(PWD_LIFE_ACCESSES, "x_password_lifespan_accesses => {0}", Types.NUMERIC)); //11    
-        CALL_PARAMS.add(new CallParam(PWD_LIFE_DAYS, "x_password_lifespan_days => {0}", Types.NUMERIC)); //12     
+        CALL_PARAMS.add(new CallParam(PWD_LIFESPAN_ACCESSES, "x_password_lifespan_accesses => {0}", Types.NUMERIC)); //11    
+        CALL_PARAMS.add(new CallParam(PWD_LIFESPAN_DAYS, "x_password_lifespan_days => {0}", Types.NUMERIC)); //12     
         CALL_PARAMS.add(new CallParam(EMP_ID, "x_employee_id => {0}", Types.NUMERIC)); //13     
         CALL_PARAMS.add(new CallParam(EMAIL, "x_email_address => {0}", Types.VARCHAR)); //14     
         CALL_PARAMS.add(new CallParam(FAX, "x_fax => {0}", Types.VARCHAR)); //15     

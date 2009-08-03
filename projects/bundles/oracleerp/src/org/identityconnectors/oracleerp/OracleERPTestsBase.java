@@ -85,6 +85,7 @@ abstract public class OracleERPTestsBase {
     protected static final String ACCOUNT_OPTIONS = "account.options";
     protected static final String ACCOUNT_REQUIRED_ATTRS = "account.required";
     protected static final String ACCOUNT_USER_ATTRS = "account.required";
+    protected static final String ACCOUNT_ENABLED = "account.enabled";
     
     protected static final String CONFIG_SYSADM = "configuration.sysadm";
     protected static final String CONFIG_TST = "configuration.tst";

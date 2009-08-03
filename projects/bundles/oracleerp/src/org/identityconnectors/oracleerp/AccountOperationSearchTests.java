@@ -22,9 +22,8 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.getAttributeInfos;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+import static org.junit.Assert.*;
 
 import java.util.List;
 import java.util.Set;
@@ -34,6 +33,7 @@ import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.test.common.TestHelpers;
@@ -59,7 +59,6 @@ public class AccountOperationSearchTests extends OracleERPTestsBase {
         final Set<Attribute> attrs = getAttributeSet(ACCOUNT_ALL_ATTRS);
         generateNameAttribute(attrs);
         final Set<Attribute> attrsOpt = getAttributeSet(ACCOUNT_OPTIONS);
-        final Set<Attribute> expectedAttr = getAttributeSet(ACCOUNT_AUDITOR);
         
         final OperationOptionsBuilder oob = new OperationOptionsBuilder();
         addAuditorDataOptions(oob, attrsOpt);
@@ -74,7 +73,39 @@ public class AccountOperationSearchTests extends OracleERPTestsBase {
         final Set<Attribute> returned = co.getAttributes();
         System.out.println(returned);
         
-        testAttrSet(expectedAttr, returned);
+        testAttrSet(attrs, returned, OperationalAttributes.PASSWORD_NAME, OWNER);
+        
+        final Set<Attribute> auditorAttr = getAttributeSet(ACCOUNT_AUDITOR);
+        testAttrSet(auditorAttr, returned);
     }      
     
+    //TODO add test search invalid account
+    
+    /**
+     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     */
+    @Test
+    public void testSearchValidAccount() {
+        final OracleERPConnector c = getConnector(CONFIG_USER);
+        final Set<Attribute> attrs = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
+        generateNameAttribute(attrs);
+        final Set<Attribute> attrsOpt = getAttributeSet(ACCOUNT_OPTIONS);
+        
+        final OperationOptionsBuilder oob = new OperationOptionsBuilder();
+        addAuditorDataOptions(oob, attrsOpt);
+        addAllAttributesToGet(oob, getAttributeInfos(c.schema(), ObjectClass.ACCOUNT_NAME));
+        
+        final Uid uid = c.create(ObjectClass.ACCOUNT, attrs, null);
+        assertNotNull(uid);
+
+        List<ConnectorObject> results = TestHelpers.searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid), oob.build());
+        assertTrue("expect 1 connector object", results.size() == 1);
+        final ConnectorObject co = results.get(0);
+        final Set<Attribute> returned = co.getAttributes();
+        System.out.println(returned);
+        
+        testAttrSet(attrs, returned, OperationalAttributes.PASSWORD_NAME);
+        final Set<Attribute> enabledAttr = getAttributeSet(ACCOUNT_ENABLED);
+        testAttrSet(enabledAttr, returned, OperationalAttributes.ENABLE_DATE_NAME);
+    }     
 }

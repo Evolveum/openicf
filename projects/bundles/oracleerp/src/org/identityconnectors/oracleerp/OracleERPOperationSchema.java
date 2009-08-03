@@ -33,6 +33,7 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
+import org.identityconnectors.framework.common.objects.PredefinedAttributeInfos;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
 import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
@@ -166,8 +167,13 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         ocib.addAttributeInfo(AttributeInfoBuilder.build(DESCR, String.class));
         // <Views><String>Enable</String></Views>
         ocib.addAttributeInfo(OperationalAttributeInfos.ENABLE);
+        ocib.addAttributeInfo(OperationalAttributeInfos.ENABLE_DATE);        
+        ocib.addAttributeInfo(OperationalAttributeInfos.DISABLE_DATE);        
+        ocib.addAttributeInfo(PredefinedAttributeInfos.LAST_LOGIN_DATE);        
+        
         // name='expirePassword' type='string' required='false' is mapped to PASSWORD_EXPIRED
         ocib.addAttributeInfo(OperationalAttributeInfos.PASSWORD_EXPIRED);
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(EXP_PWD, Boolean.class, NCUD));
         // reset is implemented as change password
         // name='Password',  Password is mapped to operationalAttribute
         ocib.addAttributeInfo(OperationalAttributeInfos.PASSWORD);
@@ -176,9 +182,9 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         // name='password_accesses_left' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(PWD_ACCESSES_LEFT, String.class));
         // name='password_lifespan_accesses' type='string' required='false'
-        ocib.addAttributeInfo(AttributeInfoBuilder.build(PWD_LIFE_ACCESSES, String.class));
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(PWD_LIFESPAN_ACCESSES, String.class));
         // name='password_lifespan_days' type='string' required='false'
-        ocib.addAttributeInfo(AttributeInfoBuilder.build(PWD_LIFE_DAYS, String.class));
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(PWD_LIFESPAN_DAYS, String.class));
         // name='employee_id' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(EMP_ID, Integer.class));
         // name='employee_number' type='string' required='false'
@@ -198,17 +204,13 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         // name='person_party_id' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(PERSON_PARTY_ID, Integer.class));
         //user_id
-        ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_ID, String.class, EnumSet.of(
-                Flags.NOT_RETURNED_BY_DEFAULT, Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE)));
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_ID, String.class, NCUD));
 
         if (cfg.isNewResponsibilityViews()) {
             // name='DIRECT_RESPS' type='string' required='false'
-            ocib
-                    .addAttributeInfo(AttributeInfoBuilder.build(DIRECT_RESPS, String.class, EnumSet
-                            .of(Flags.MULTIVALUED)));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(DIRECT_RESPS, String.class, M));
             // name='INDIRECT_RESPS' type='string' required='false'
-            ocib.addAttributeInfo(AttributeInfoBuilder.build(INDIRECT_RESPS, String.class, EnumSet
-                    .of(Flags.MULTIVALUED, Flags.NOT_UPDATEABLE, Flags.NOT_CREATABLE)));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(INDIRECT_RESPS, String.class, MNCU));
         } else {
             // name='RESPS' type='string' required='false'
             ocib.addAttributeInfo(AttributeInfoBuilder.build(RESPS, String.class, M));

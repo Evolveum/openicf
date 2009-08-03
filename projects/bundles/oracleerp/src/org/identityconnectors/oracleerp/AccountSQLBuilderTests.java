@@ -225,8 +225,8 @@ public class AccountSQLBuilderTests {
         attrs.add(AttributeBuilder.build(END_DATE, (new Timestamp(System.currentTimeMillis()+10*24*3600000)).toString()));        
         attrs.add(AttributeBuilder.build(RESPS, "Cash Forecasting||Oracle Cash Management||Standard||Test Description||2004-04-12 00:00:00.0||null"));
         attrs.add(AttributeBuilder.build(PWD_ACCESSES_LEFT, 56));
-        attrs.add(AttributeBuilder.build(PWD_LIFE_ACCESSES, 5));
-        attrs.add(AttributeBuilder.build(PWD_LIFE_DAYS, 5));
+        attrs.add(AttributeBuilder.build(PWD_LIFESPAN_ACCESSES, 5));
+        attrs.add(AttributeBuilder.build(PWD_LIFESPAN_DAYS, 5));
         attrs.add(AttributeBuilder.build(EMP_ID, 5));
         attrs.add(AttributeBuilder.build(DESCR, "Test Description"));        
         attrs.add(AttributeBuilder.build(EMAIL, "person@somewhere.com"));
@@ -247,8 +247,8 @@ public class AccountSQLBuilderTests {
         attrs.add(AttributeBuilder.build(END_DATE, (String) null));        
         attrs.add(AttributeBuilder.build(RESPS, (String) null));
         attrs.add(AttributeBuilder.build(PWD_ACCESSES_LEFT, (String) null));
-        attrs.add(AttributeBuilder.build(PWD_LIFE_ACCESSES, (String) null));
-        attrs.add(AttributeBuilder.build(PWD_LIFE_DAYS, (String) null));
+        attrs.add(AttributeBuilder.build(PWD_LIFESPAN_ACCESSES, (String) null));
+        attrs.add(AttributeBuilder.build(PWD_LIFESPAN_DAYS, (String) null));
         attrs.add(AttributeBuilder.build(EMP_ID, (String) null));
         attrs.add(AttributeBuilder.build(DESCR, (String) null));        
         attrs.add(AttributeBuilder.build(EMAIL, (String) null));

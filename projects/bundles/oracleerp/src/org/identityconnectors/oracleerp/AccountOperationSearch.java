@@ -25,10 +25,12 @@ package org.identityconnectors.oracleerp;
 import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +43,7 @@ import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -152,13 +155,63 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
                 }
 
                 // create the connector object..
+                final Date dateNow = new Date(System.currentTimeMillis());
+                final Date lastLogonDate =  (Date) columnValues.get(PWD_DATE).getValue();
+                if (lastLogonDate != null) {
+                    amb.addAttribute(AttributeBuilder.buildLastLoginDate(lastLogonDate));
+                }
+                
+                final Date end_date = (Date) columnValues.get(END_DATE).getValue();
+                //disable date
+                if(end_date != null) {
+                    amb.addAttribute(AttributeBuilder.buildDisableDate(end_date));                    
+                }
+                
+                //enable date
+                final Date start_date =  (Date) columnValues.get(START_DATE).getValue();
+                if(start_date != null) {
+                    amb.addAttribute(AttributeBuilder.buildEnableDate(start_date));                    
+                }
+                
+                //enable
+                if(end_date != null && start_date != null) {
+                    boolean enable =  dateNow.compareTo(end_date) <= 0 && dateNow.compareTo(start_date) > 0;
+                    amb.addAttribute(AttributeBuilder.buildEnabled(enable));                    
+                } else if (end_date != null) {
+                    boolean enable =  dateNow.compareTo(end_date) <= 0;
+                    amb.addAttribute(AttributeBuilder.buildEnabled(enable));                                        
+                } else if (start_date != null) {
+                    boolean enable =  dateNow.compareTo(start_date) > 0;
+                    amb.addAttribute(AttributeBuilder.buildEnabled(enable));                                        
+                } else {
+                    //bld.addAttribute(AttributeBuilder.buildEnabled(false));                        
+                }
+                
+                // password expired
+                BigDecimal access_left = (BigDecimal) columnValues.get(PWD_ACCESSES_LEFT).getValue();
+                BigDecimal lifespan_days = (BigDecimal) columnValues.get(PWD_LIFESPAN_DAYS).getValue();
+                if( access_left != null && access_left.intValue() <=0)  {
+                    amb.addAttribute(AttributeBuilder.buildPasswordExpired(true));                                                            
+                } else if (lifespan_days != null && lastLogonDate != null){
+                    Calendar cal = Calendar.getInstance();
+                    cal.setTime(lastLogonDate);
+                    cal.add(Calendar.DAY_OF_MONTH, lifespan_days.intValue());
+                    boolean expired =  cal.after(dateNow);
+                    amb.addAttribute(AttributeBuilder.buildPasswordExpired(expired));
+                } else {
+                    amb.addAttribute(AttributeBuilder.buildPasswordExpired(false));                                                                                
+                }                
+                
                 ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
                 
-                // TODO add all special attributes to account
+                // add all special attributes to account
                 bld.setObjectClass(ObjectClass.ACCOUNT);
                 bld.addAttributes(amb.build());
                 bld.setName(userName);
                 bld.setUid(userName);
+                
+
+                
                 if (!handler.handle(bld.build())) {
                     break;
                 }
@@ -190,7 +243,13 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             }
         }
         //We always wont to have user id and user name
-        columnNamesToGet.add(USER_NAME);
+        columnNamesToGet.add(USER_NAME); //User id
+        columnNamesToGet.add(START_DATE); //Enable Date
+        columnNamesToGet.add(END_DATE); // Disable date
+        columnNamesToGet.add(PWD_ACCESSES_LEFT); // Disable date
+        columnNamesToGet.add(PWD_DATE); // Last logon date
+        columnNamesToGet.add(PWD_LIFESPAN_DAYS); // Alloved days from last logon
+        
 
         log.ok("columnNamesToGet {0}", columnNamesToGet);
         return columnNamesToGet;

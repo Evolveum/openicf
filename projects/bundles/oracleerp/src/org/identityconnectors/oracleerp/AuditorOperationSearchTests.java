@@ -34,6 +34,7 @@ import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
+import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.Filter;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.test.common.TestHelpers;
@@ -57,11 +58,21 @@ public class AuditorOperationSearchTests extends OracleERPTestsBase {
      */
     @Test
     public void testAuditorSearch() {
-        final OracleERPConnector c = getConnector(CONFIG_SYSADM);
-        final Set<Attribute> attrsOpt = getAttributeSet(ACCOUNT_OPTIONS);
-        final OperationOptionsBuilder oob = new OperationOptionsBuilder();
-        addAuditorDataOptions(oob, attrsOpt);
+        final OracleERPConnector c = getConnector(CONFIG_TST);
 
+
+        final Set<Attribute> attrs = getAttributeSet(ACCOUNT_ALL_ATTRS);
+        generateNameAttribute(attrs);
+        
+        final Uid uid = c.create(ObjectClass.ACCOUNT, attrs, null);
+        assertNotNull(uid);
+        
+        final OperationOptionsBuilder oob = new OperationOptionsBuilder();
+        final Set<Attribute> attrsOpt = getAttributeSet(ACCOUNT_OPTIONS);
+        attrsOpt.add(AttributeBuilder.build("id",uid.getUidValue()));
+        addAuditorDataOptions(oob, attrsOpt);
+        
+        
         final Filter filter = FilterBuilder.equalTo(AttributeBuilder.build(NAME, "Does no mather, not null"));
         List<ConnectorObject> results = TestHelpers.searchToList(c, AUDITOR_RESPS_OC, filter, oob.build());
         System.out.println(results);

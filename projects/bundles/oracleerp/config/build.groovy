@@ -1,4 +1,4 @@
-/*  +---------------------------------------------------+
+import java.math.BigInteger/*  +---------------------------------------------------+
  *  ----------- Contract Tests configuration ------------
  *  +---------------------------------------------------+ 
  */
@@ -44,14 +44,14 @@ account{
     required.__NAME__="TST-USER"
     required.__PASSWORD__="password"
    // required.owner="CUST"
-  //  required.start_date=stringDate(-10*24*3600000)
+    required.start_date=stringDate(-10)
     
     all.__NAME__="TST-USER"
     all.owner="CUST"
     all.session_number=0
 
-    all.start_date=stringDate(-10*24*3600000)
-    all.end_date=stringDate(+10*24*3600000)
+    all.start_date=stringDate(-10)
+    all.end_date=stringDate(+10)
     all.last_logon_date=stringDate(0)
     all.description="Connector test user"
 
@@ -101,6 +101,11 @@ account{
     auditor.formIds=["54952", "54572", "20423", "10397", "54570", "20648", "51615", "51614", "51614", "54571"]
     auditor.formNames=["CEFFCOPI", "CEFFCDFN", "FNDFFMDC", "FNDFFMSV", "CEFFCAST", "FNDPOMSV", "FNDRSSET", "FNDRSRUN", "FNDRSRUN", "CEFQFCST"]
     auditor.userFormNames=["Define External Forecast Sources", "Define Templates", "Define Descriptive Flexfield Segments", "Define Segment Values", "Maintain Forecasts", "Update Personal Profile Values", "Administer Report Sets", "Run Reports", "Run Reports", "Inquire Forecasts"]
+    
+    enabled.__PASSWORD_EXPIRED__=false
+//   enabled.__ENABLE_DATE__=getDt(-10)
+//   enabled.__LAST_LOGIN_DATE__=getDt(0)//   enabled.__DISSABLE_DATE__=getDt(+10)
+    enabled.__ENABLE__=true
 }
 
 
@@ -218,8 +223,8 @@ testsuite {
 owner="CUST"
 session_number=0
 
-start_date=stringDate(-10*24*3600000)
-end_date=stringDate(+10*24*3600000)
+start_date=stringDate(-10)
+end_date=stringDate(+10)
 last_logon_date=stringDate(0)
 description="Connector test user"
 
@@ -247,8 +252,12 @@ def currentTimeMillis(){
 }
 
 def stringDate( dife ){
-    return new java.sql.Timestamp(System.currentTimeMillis() - dife ).toString()
+    return new java.sql.Timestamp(System.currentTimeMillis() + dife*24*3600000 ).toString()
 }    
+
+def getDt( dife ){    Calendar cal = Calendar.getInstance()    cal.setTimeInMillis(System.currentTimeMillis())    cal.add(Calendar.DAY_OF_MONTH, dife)   
+    return cal.getTimeInMillis()
+}  
 
 def empty() {
     return new ObjectNotFoundException()

@@ -47,7 +47,19 @@ public final class AttributeMergeBuilder {
     public AttributeMergeBuilder() {
         //empty
     }
-    
+
+
+    /**
+     * @param attr 
+     * @param buildLastLoginDate
+     * @return this
+     */
+    public AttributeMergeBuilder addAttribute(Attribute attr) {
+        if (attr != null) {
+            mergeValue(attr.getName(), attr.getValue());
+        }
+        return this;
+    }     
 
     /**
      * Adds each object in the collection.
@@ -167,6 +179,7 @@ public final class AttributeMergeBuilder {
         bld.append(", active filter:");
         bld.append(_attrToGet);
         return bld.toString();
-    } 
+    }
+
     
 }
