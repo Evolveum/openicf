@@ -22,9 +22,7 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.FULL_NAME;
-import static org.identityconnectors.oracleerp.OracleERPUtil.PERSON_FULLNAME;
-import static org.identityconnectors.oracleerp.OracleERPUtil.USER_NAME;
+import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.Name;
@@ -53,7 +51,7 @@ final class AccountNameResolver implements NameResolver {
     public String getAttributeName(String columnName) {
         if (FULL_NAME.equalsIgnoreCase(columnName)) {
             return PERSON_FULLNAME;
-        }
+        } 
         return columnName;
     }
 

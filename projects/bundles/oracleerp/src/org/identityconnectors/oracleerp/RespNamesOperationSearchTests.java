@@ -26,9 +26,7 @@ import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 import static org.junit.Assert.*;
 
 import java.util.List;
-import java.util.Set;
 
-import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ObjectClass;

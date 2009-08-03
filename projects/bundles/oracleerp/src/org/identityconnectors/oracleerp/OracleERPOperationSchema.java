@@ -159,24 +159,24 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         ocib.addAttributeInfo(AttributeInfoBuilder.build(SESS_NUM, String.class, OracleERPOperationSchema.NCU));
         // name='start_date' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(START_DATE, String.class ));
+        ocib.addAttributeInfo(OperationalAttributeInfos.ENABLE_DATE);        
         // name='end_date' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(END_DATE, String.class));
+        ocib.addAttributeInfo(OperationalAttributeInfos.DISABLE_DATE);        
         // name='last_logon_date' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(LAST_LOGON_DATE, String.class, OracleERPOperationSchema.NCU));
         // name='description' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(DESCR, String.class));
         // <Views><String>Enable</String></Views>
         ocib.addAttributeInfo(OperationalAttributeInfos.ENABLE);
-        ocib.addAttributeInfo(OperationalAttributeInfos.ENABLE_DATE);        
-        ocib.addAttributeInfo(OperationalAttributeInfos.DISABLE_DATE);        
-        ocib.addAttributeInfo(PredefinedAttributeInfos.LAST_LOGIN_DATE);        
-        
         // name='expirePassword' type='string' required='false' is mapped to PASSWORD_EXPIRED
-        ocib.addAttributeInfo(OperationalAttributeInfos.PASSWORD_EXPIRED);
         ocib.addAttributeInfo(AttributeInfoBuilder.build(EXP_PWD, Boolean.class, NCUD));
+        ocib.addAttributeInfo(OperationalAttributeInfos.PASSWORD_EXPIRED);
         // reset is implemented as change password
         // name='Password',  Password is mapped to operationalAttribute
         ocib.addAttributeInfo(OperationalAttributeInfos.PASSWORD);
+        ocib.addAttributeInfo(PredefinedAttributeInfos.LAST_LOGIN_DATE);        
+        ocib.addAttributeInfo(PredefinedAttributeInfos.LAST_PASSWORD_CHANGE_DATE);                
         // name='password_accesses_left' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(PWD_DATE, String.class));
         // name='password_accesses_left' type='string' required='false'

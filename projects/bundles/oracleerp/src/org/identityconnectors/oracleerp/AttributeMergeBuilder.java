@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -179,6 +180,21 @@ public final class AttributeMergeBuilder {
         bld.append(", active filter:");
         bld.append(_attrToGet);
         return bld.toString();
+    }
+
+    /**
+     * @param name
+     * @param index 
+     * @param value 
+     * @return internal list
+     */
+    public boolean isExpected(String name, int index, Object value) {
+        Assertions.nullCheck(_attrs, "_attrs");        
+        final List<Object> list = _attrs.get(name);
+        if(list  == null || list.get(index) == null) {
+            throw new IllegalStateException("null list or value");
+        }
+        return list.get(index).equals(value);
     }
 
     

@@ -88,7 +88,7 @@ public class AccountOperationSearchTests extends OracleERPTestsBase {
      */
     @Test
     public void testSearchValidAccount() {
-        final OracleERPConnector c = getConnector(CONFIG_USER);
+        final OracleERPConnector c = getConnector(CONFIG_TST);
         final Set<Attribute> attrs = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
         generateNameAttribute(attrs);
         final Set<Attribute> attrsOpt = getAttributeSet(ACCOUNT_OPTIONS);

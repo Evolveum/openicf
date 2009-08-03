@@ -123,9 +123,9 @@ connector{
     accountsIncluded=""
     activeAccountsOnly=true
     auditResponsibility="System Administrator"
-    manageSecuringAttrs=true
+    manageSecuringAttrs=false
     noSchemaId=false
-    returnSobOrgAttrs=true
+    returnSobOrgAttrs=false
     userActions=""  
   
     /* WRONG configuration for ValidateApiOpTests */  
@@ -236,7 +236,7 @@ password_lifespan_days=30
 
 employee_id=empty()
 employee_number=5
-person_fullname="Monster, Cookie"
+person_fullname="Monster, Cookie"person_party_id=3044
 npw_number=empty()
 email_address="person@somewhere.com"
 fax="555-555-5555"

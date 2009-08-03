@@ -108,6 +108,14 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         final Set<AttributeInfo> ais = getAttributeInfos(cfg.getSchema(), ObjectClass.ACCOUNT_NAME);
         final Set<String> attributesToGet = getAttributesToGet(options, ais);
         final Set<String> fndUserColumnNames = getColumnNamesToGet(attributesToGet);
+        //We always wont to have user id and user name
+        fndUserColumnNames.add(USER_NAME); //User id
+        fndUserColumnNames.add(START_DATE); //Enable Date
+        fndUserColumnNames.add(END_DATE); // Disable date
+        fndUserColumnNames.add(PWD_ACCESSES_LEFT); // Disable date
+        fndUserColumnNames.add(PWD_DATE); // Last logon date
+        fndUserColumnNames.add(PWD_LIFESPAN_DAYS); // Alloved days from last logon
+        
         final Set<String> perPeopleColumnNames = CollectionUtil.newSet(fndUserColumnNames);
         final String filterId = getFilterId(where);
 
@@ -153,54 +161,8 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
                 if (getAuditorData) {
                     buildAuditorDataObject(amb, userName);
                 }
-
-                // create the connector object..
-                final Date dateNow = new Date(System.currentTimeMillis());
-                final Date lastLogonDate =  (Date) columnValues.get(PWD_DATE).getValue();
-                if (lastLogonDate != null) {
-                    amb.addAttribute(AttributeBuilder.buildLastLoginDate(lastLogonDate));
-                }
-                
-                final Date end_date = (Date) columnValues.get(END_DATE).getValue();
-                //disable date
-                if(end_date != null) {
-                    amb.addAttribute(AttributeBuilder.buildDisableDate(end_date));                    
-                }
-                
-                //enable date
-                final Date start_date =  (Date) columnValues.get(START_DATE).getValue();
-                if(start_date != null) {
-                    amb.addAttribute(AttributeBuilder.buildEnableDate(start_date));                    
-                }
-                
-                //enable
-                if(end_date != null && start_date != null) {
-                    boolean enable =  dateNow.compareTo(end_date) <= 0 && dateNow.compareTo(start_date) > 0;
-                    amb.addAttribute(AttributeBuilder.buildEnabled(enable));                    
-                } else if (end_date != null) {
-                    boolean enable =  dateNow.compareTo(end_date) <= 0;
-                    amb.addAttribute(AttributeBuilder.buildEnabled(enable));                                        
-                } else if (start_date != null) {
-                    boolean enable =  dateNow.compareTo(start_date) > 0;
-                    amb.addAttribute(AttributeBuilder.buildEnabled(enable));                                        
-                } else {
-                    //bld.addAttribute(AttributeBuilder.buildEnabled(false));                        
-                }
-                
-                // password expired
-                BigDecimal access_left = (BigDecimal) columnValues.get(PWD_ACCESSES_LEFT).getValue();
-                BigDecimal lifespan_days = (BigDecimal) columnValues.get(PWD_LIFESPAN_DAYS).getValue();
-                if( access_left != null && access_left.intValue() <=0)  {
-                    amb.addAttribute(AttributeBuilder.buildPasswordExpired(true));                                                            
-                } else if (lifespan_days != null && lastLogonDate != null){
-                    Calendar cal = Calendar.getInstance();
-                    cal.setTime(lastLogonDate);
-                    cal.add(Calendar.DAY_OF_MONTH, lifespan_days.intValue());
-                    boolean expired =  cal.after(dateNow);
-                    amb.addAttribute(AttributeBuilder.buildPasswordExpired(expired));
-                } else {
-                    amb.addAttribute(AttributeBuilder.buildPasswordExpired(false));                                                                                
-                }                
+                //build special attributes
+                buildSpecialAttributes(amb, columnValues);
                 
                 ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
                 
@@ -228,6 +190,91 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
     }
 
     /**
+     * Transform the columns to special attributes
+     * @param amb
+     * @param columnValues
+     */
+    public void buildSpecialAttributes(final AttributeMergeBuilder amb, final Map<String, SQLParam> columnValues) {
+        // create the connector object..
+        final Date dateNow = new Date(System.currentTimeMillis());
+        final SQLParam end_date_param = columnValues.get(END_DATE);
+        Date end_date = null;
+        //disable date
+        if (end_date_param != null) {
+            end_date = (Date) end_date_param.getValue();
+            if( end_date != null ) {
+                amb.addAttribute(AttributeBuilder.buildDisableDate(end_date));
+            }
+        }
+
+        //enable date
+        final SQLParam start_date_param = columnValues.get(START_DATE);
+        Date start_date = null;
+        if (start_date_param != null) {
+            start_date = (Date) start_date_param.getValue();
+            if ( start_date != null) {
+                amb.addAttribute(AttributeBuilder.buildEnableDate(start_date));
+            }
+        }
+
+        //enable
+        if (end_date != null && start_date != null) {
+            boolean enable = dateNow.compareTo(end_date) <= 0 && dateNow.compareTo(start_date) > 0;
+            amb.addAttribute(AttributeBuilder.buildEnabled(enable));
+        } else if (end_date != null) {
+            boolean enable = dateNow.compareTo(end_date) <= 0;
+            amb.addAttribute(AttributeBuilder.buildEnabled(enable));
+        } else if (start_date != null) {
+            boolean enable = dateNow.compareTo(start_date) > 0;
+            amb.addAttribute(AttributeBuilder.buildEnabled(enable));
+        } else {
+            //bld.addAttribute(AttributeBuilder.buildEnabled(false));                        
+        }
+        
+        final SQLParam lastLogonDateParam = columnValues.get(LAST_LOGON_DATE);
+        if (lastLogonDateParam != null) {
+            final Date lastLogonDate = (Date) lastLogonDateParam.getValue();   
+            if ( lastLogonDate != null ) {
+                amb.addAttribute(AttributeBuilder.buildLastLoginDate(lastLogonDate));
+            }
+        }        
+
+        // password expired
+        final SQLParam pwdDateParam = columnValues.get(PWD_DATE);
+        Date pwdDate = null;
+        if (pwdDateParam != null) {
+            pwdDate = (Date) columnValues.get(PWD_DATE).getValue();
+            if( pwdDate != null ) {
+                amb.addAttribute(AttributeBuilder.buildLastPasswordChangeDate(pwdDate));
+            }
+        }
+        
+        final SQLParam access_left_param = columnValues.get(PWD_ACCESSES_LEFT);
+        BigDecimal access_left = null;
+        if( access_left_param != null ) {
+            access_left = (BigDecimal) columnValues.get(PWD_ACCESSES_LEFT).getValue();
+        }
+        final SQLParam lifespan_days_param = columnValues.get(PWD_LIFESPAN_DAYS);
+        BigDecimal lifespan_days = null;
+        if ( lifespan_days_param != null ) {
+            lifespan_days = (BigDecimal) columnValues.get(PWD_LIFESPAN_DAYS).getValue();
+        }        
+        if (access_left != null && access_left.intValue() <= 0) {
+            amb.addAttribute(AttributeBuilder.buildPasswordExpired(true));
+        } else if (lifespan_days != null && pwdDate != null) {
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(pwdDate);
+            cal.add(Calendar.DAY_OF_MONTH, lifespan_days.intValue());
+            boolean expired = cal.after(dateNow);
+            amb.addAttribute(AttributeBuilder.buildPasswordExpired(expired));
+        } else if ( pwdDate == null){
+            amb.addAttribute(AttributeBuilder.buildPasswordExpired(true));
+        } else {
+            amb.addAttribute(AttributeBuilder.buildPasswordExpired(false));
+        }
+    }
+    
+    /**
      * @param attributesToGet
      *            from application
      * @return the set of the column names
@@ -241,15 +288,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             if (columnName != null) {
                 columnNamesToGet.add(columnName);
             }
-        }
-        //We always wont to have user id and user name
-        columnNamesToGet.add(USER_NAME); //User id
-        columnNamesToGet.add(START_DATE); //Enable Date
-        columnNamesToGet.add(END_DATE); // Disable date
-        columnNamesToGet.add(PWD_ACCESSES_LEFT); // Disable date
-        columnNamesToGet.add(PWD_DATE); // Last logon date
-        columnNamesToGet.add(PWD_LIFESPAN_DAYS); // Alloved days from last logon
-        
+        }      
 
         log.ok("columnNamesToGet {0}", columnNamesToGet);
         return columnNamesToGet;
