@@ -111,8 +111,10 @@ public class RespNamesOperationSearch extends Operation implements SearchOp<Filt
         b.append("WHERE fndappvl.application_id = fndrespvl.application_id ");
         
         // Query support
-        if( where.getParams().size() == 1 ) {
+        if ( where != null && where.getParams().size() == 1) {
             b.append("and fndrespvl.responsibility_name = ?");
+        } else {
+            where = new FilterWhereBuilder();
         }
 
         try {
