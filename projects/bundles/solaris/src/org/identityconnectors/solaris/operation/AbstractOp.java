@@ -24,8 +24,10 @@ package org.identityconnectors.solaris.operation;
 
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
+import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.command.CommandBuilder;
 
 public abstract class AbstractOp {
@@ -33,15 +35,20 @@ public abstract class AbstractOp {
     private SolarisConnection _connection;
     private Log _log;
     private CommandBuilder _cmdBuilder;
+    private SolarisConnector _connector;
     
-    public AbstractOp(SolarisConfiguration config, SolarisConnection connection, Log log) {
-        _configuration = (SolarisConfiguration) config;
+    public AbstractOp(Log log, SolarisConnector conn) {
+        _connector = conn;
+        _configuration = (SolarisConfiguration) conn.getConfiguration();
         
+        final SolarisConnection connection = conn.getConnection();
         Assertions.nullCheck(connection, "connection");
         _connection = connection;
-        _log = log;
         
+        // TODO introduce separate logs for every operation.
+        _log = log;
         _cmdBuilder = new CommandBuilder(_configuration);
+        
     }
 
     protected final Log getLog() {
@@ -71,5 +78,9 @@ public abstract class AbstractOp {
 
     protected final void doSudoReset() {
         SudoUtil.doSudoReset(getConfiguration(), getConnection());
+    }
+    
+    protected final Schema getSchema() {
+        return _connector.schema();
     }
 }

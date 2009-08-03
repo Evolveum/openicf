@@ -20,7 +20,7 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-package org.identityconnectors.solaris.operation.impl;
+package org.identityconnectors.solaris.operation;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,19 +34,19 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.solaris.SolarisConfiguration;
-import org.identityconnectors.solaris.SolarisConnection;
+import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
-import org.identityconnectors.solaris.operation.AbstractOp;
+import org.identityconnectors.solaris.command.CommandUtil;
+import org.identityconnectors.solaris.constants.AccountAttributes;
 
 public class OpCreateImpl extends AbstractOp {
     
     final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT, ObjectClass.GROUP};
     
-    public OpCreateImpl(SolarisConfiguration configuration, SolarisConnection connection, Log log) {
-        super(configuration, connection, log);
+    public OpCreateImpl(Log log, SolarisConnector conn) {
+        super(log, conn);
     }
-    
+
     public Uid create(ObjectClass oclass, final Set<Attribute> attrs, final OperationOptions options) {
         SolarisUtil.controlObjectClassValidity(oclass, acceptOC, getClass());
         
@@ -67,16 +67,14 @@ public class OpCreateImpl extends AbstractOp {
         /*
          * CREATE A NEW ACCOUNT
          */
-        
+        final String commandSwitches = CommandUtil.prepareCommand(attrs);
         // USERADD accountId
-        String command = getCmdBuilder().build("useradd", accountId);
-        //executeCommand(command);
+        String command = getCmdBuilder().build("useradd", commandSwitches, accountId);
         try {//CONNECTION
             getLog().info("useradd(''{0}'')", accountId);
             
             getConnection().send(command);
             getConnection().waitFor(getConfiguration().getRootShellPrompt());
-            
         } catch (Exception ex) {
             getLog().error(ex, null);
         } //EOF CONNECTION
@@ -85,7 +83,7 @@ public class OpCreateImpl extends AbstractOp {
          * PASSWORD SET
          */
         final GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
-        try {// CONNECTION
+        try {
             getLog().info("passwd()");
             // TODO configurable source of password
             command = String.format("passwd -r files %s", accountId);
@@ -98,8 +96,16 @@ public class OpCreateImpl extends AbstractOp {
             getConnection().waitFor(String.format("passwd: password successfully changed for %s", accountId));
         } catch (Exception ex) {
             getLog().error(ex, null);
-        } // EOF CONNECTION
-        // PASSWD password
+        }
+        
+        /*
+         * INACTIVE attribute
+         */
+        Attribute inactive = attrMap.get(AccountAttributes.INACTIVE);
+        if (inactive != null) {
+            
+        }
+        
         
         return new Uid(accountId);
     }

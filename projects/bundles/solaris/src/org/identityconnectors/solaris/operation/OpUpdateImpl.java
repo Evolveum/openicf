@@ -20,7 +20,7 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-package org.identityconnectors.solaris.operation.impl;
+package org.identityconnectors.solaris.operation;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,11 +36,11 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
+import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.command.CommandUtil;
 import org.identityconnectors.solaris.command.MatchBuilder;
 import org.identityconnectors.solaris.command.closure.ClosureFactory;
-import org.identityconnectors.solaris.operation.AbstractOp;
 
 /**
  * Implementation of update SPI operation
@@ -57,9 +57,8 @@ public class OpUpdateImpl extends AbstractOp {
     /** These objectclasses are valid for update operation. */
     final ObjectClass[] acceptOC = { ObjectClass.ACCOUNT, ObjectClass.GROUP };
 
-    public OpUpdateImpl(SolarisConfiguration configuration,
-            SolarisConnection connection, Log log) {
-        super(configuration, connection, log);
+    public OpUpdateImpl(Log log, SolarisConnector conn) {
+        super(log, conn);
     }
 
     /** main update method */
