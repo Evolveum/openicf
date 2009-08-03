@@ -133,9 +133,9 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
             boolean enable =AttributeUtil.getBooleanValue(enableAttr);
             if ( enable ) {
                 //delete user is the same as dissable
-                disable(objclass, name, options);
-            } else {
                 enable(objclass, name, options);
+            } else {
+                disable(objclass, name, options);
             }
         }
         
@@ -185,7 +185,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
      * @param options
      */
     private void enable(ObjectClass objclass, String userName, OperationOptions options) {
-        final String method = "realEnable";
+        final String method = "enable";
         log.info( method);
         //Map attrs = _actionUtil.getAccountAttributes(user, JActionUtil.OP_ENABLE_USER);
 
@@ -226,7 +226,8 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
      */
     private void disable(ObjectClass objclass, String name, OperationOptions options) {
         final String sql = "{ call "+cfg.app()+"fnd_user_pkg.disableuser(?) }";
-        log.info(sql);
+        final String method = "disable";
+        log.info( method);
         CallableStatement cs = null;
         try {
             cs = conn.prepareCall(sql);

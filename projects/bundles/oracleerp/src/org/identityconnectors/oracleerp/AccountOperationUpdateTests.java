@@ -22,14 +22,15 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.OWNER;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+import static org.junit.Assert.*;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
@@ -113,5 +114,83 @@ public class AccountOperationUpdateTests extends OracleERPTestsBase {
         // Date text representations are not the same, skiped due to extra test
         testAttrSet(update, returned, OperationalAttributes.PASSWORD_NAME, OWNER);
         */
+    }    
+    
+    
+    /**
+     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     */
+    @Test
+    public void testUpdateDissable() {
+        final OracleERPConnector c = getConnector(CONFIG_SYSADM);
+        
+        final Set<Attribute> create = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
+        generateNameAttribute(create);
+        Uid uid = c.create(ObjectClass.ACCOUNT, create, null);
+        assertNotNull(uid);
+        
+        final Set<Attribute> update = new HashSet<Attribute>();       
+        
+        
+        //Dissable
+        update.add(uid);
+        update.add(AttributeBuilder.buildEnabled(false));
+        uid = c.update(ObjectClass.ACCOUNT, uid, update, null);
+        assertNotNull(uid);
+        
+        List<ConnectorObject> results = TestHelpers
+        .searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid));
+        assertTrue("expect 1 connector object", results.size() == 1);
+        
+        final ConnectorObject co = results.get(0);
+        final Set<Attribute> returned = co.getAttributes();
+        System.out.println(returned);
+        
+        final Set<Attribute> enabledAttr = getAttributeSet(ACCOUNT_DISSABLED);
+        testAttrSet(enabledAttr, returned);
+    }
+    
+    /**
+     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     */
+    @Test
+    public void testUpdateEnable() {
+        final OracleERPConnector c = getConnector(CONFIG_SYSADM);
+        
+        final Set<Attribute> create = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
+        generateNameAttribute(create);
+        Uid uid = c.create(ObjectClass.ACCOUNT, create, null);
+        assertNotNull(uid);
+        
+        final Set<Attribute> dissable = new HashSet<Attribute>();       
+        dissable.add(uid);
+        dissable.add(AttributeBuilder.buildEnabled(false));
+        uid = c.update(ObjectClass.ACCOUNT, uid, dissable, null);
+        assertNotNull(uid);
+        
+        List<ConnectorObject> results = TestHelpers
+        .searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid));
+        assertTrue("expect 1 connector object", results.size() == 1);
+        
+        final ConnectorObject co = results.get(0);
+        final Set<Attribute> returned = co.getAttributes();
+        System.out.println(returned);
+        
+        final Set<Attribute> enable = new HashSet<Attribute>();       
+        enable.add(uid);
+        enable.add(AttributeBuilder.buildEnabled(true));
+        uid = c.update(ObjectClass.ACCOUNT, uid, enable, null);
+        assertNotNull(uid);
+        
+        List<ConnectorObject> results2 = TestHelpers
+        .searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid));
+        assertTrue("expect 1 connector object", results2.size() == 1);
+        
+        final ConnectorObject co2 = results2.get(0);
+        final Set<Attribute> returned2 = co2.getAttributes();
+        System.out.println(returned2);
+        
+        final Set<Attribute> enabledAttr = getAttributeSet(ACCOUNT_ENABLED);
+        testAttrSet(enabledAttr, returned2);        
     }    
 }

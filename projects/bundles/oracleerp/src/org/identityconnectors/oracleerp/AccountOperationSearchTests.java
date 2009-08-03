@@ -80,6 +80,8 @@ public class AccountOperationSearchTests extends OracleERPTestsBase {
     }      
     
     //TODO add test search invalid account
+    //TODO add test search dissabled/enabled account
+    //TODO add password expired tests    
     
     /**
      * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.

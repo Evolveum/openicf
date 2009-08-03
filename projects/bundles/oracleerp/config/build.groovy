@@ -105,8 +105,8 @@ account{
     enabled.__PASSWORD_EXPIRED__=false
 //   enabled.__ENABLE_DATE__=getDt(-10)
 //   enabled.__LAST_LOGIN_DATE__=getDt(0)//   enabled.__DISSABLE_DATE__=getDt(+10)
-    enabled.__ENABLE__=true
-}
+    enabled.__ENABLE__=true        dissabled.__PASSWORD_EXPIRED__=false
+    dissabled.__ENABLE__=false}
 
 
 
