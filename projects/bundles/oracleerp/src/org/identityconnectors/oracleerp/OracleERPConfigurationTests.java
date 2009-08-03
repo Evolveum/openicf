@@ -120,38 +120,7 @@ public class OracleERPConfigurationTests extends OracleERPTestsBase {
         assertNotNull("null getConnectionUrl", config.getConnectionUrl());
         
         config.validate();
-    }       
-
-    /**
-     * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
-     */
-    @Test
-    public void testConnectorSysadm() {
-        OracleERPConnector conn = getConnector(CONFIG_SYSADM);
-        assertNotNull("null connector instance", conn);        
-        conn.test();
-    }
-
-    /**
-     * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
-     */
-    @Test
-    public void testConnectorTst() {
-        OracleERPConnector conn = getConnector(CONFIG_TST);
-        assertNotNull("null connector instance",conn);        
-        conn.test();
-    }
-
-    /**
-     * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
-     */
-    @Test
-    public void testConnectorUser() {
-        OracleERPConnector conn = getConnector(CONFIG_USER);
-        assertNotNull("null connector instance",conn);        
-        conn.test();
-    }
-    
+    }          
  
     /**
      * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
