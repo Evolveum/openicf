@@ -117,8 +117,6 @@ public class PatternBuilderTest {
                 DELIMITER, token);
         
         String result = PatternBuilder.buildPattern(5, DELIMITER, 2, 4);
-        System.out.println(result);
-        System.out.println(pattern);
         Assert.assertEquals(pattern, result);
     }
 }

@@ -34,7 +34,7 @@ import org.identityconnectors.framework.common.objects.Name;
  * also take a look at {@link AccountAttributesForPassword}.
  * @author David Adam
  */
-public enum AccountAttributes {
+public enum AccountAttributes implements SolarisAttribute {
     /** home directory */
     DIR("dir", UpdateSwitches.DIR), 
     SHELL("shell", UpdateSwitches.SHELL),
@@ -64,10 +64,20 @@ public enum AccountAttributes {
 
     /** the command line switch used by the solaris connector */
     private UpdateSwitches cmdSwitch;
+    /** command that is used to acquire the raw data for the attribute */
+    private String command;
+    /** regular expression to extract Uid and Attribute from the raw data gathered by {@link GroupAttributes#command} */
+    private String regexp;
 
     private AccountAttributes(String attrName, UpdateSwitches cmdSwitch) {
+        this(attrName, cmdSwitch, null, null);
+    }
+    
+    private AccountAttributes(String attrName, UpdateSwitches cmdSwitch, String command, String regexp) {
         this.attrName = attrName;
         this.cmdSwitch = cmdSwitch;
+        this.command = command;
+        this.regexp = regexp;
     }
     
     /**
@@ -99,5 +109,19 @@ public enum AccountAttributes {
     /** @return the name of the ACCOUNT attribute */
     public String getName() {
         return attrName;
+    }
+
+    /**
+     * {@see SolarisAttribute#getCommand()}
+     */
+    public String getCommand() {
+        return command;
+    }
+
+    /**
+     * {@see SolarisAttribute#getRegExpForUidAndAttribute()}
+     */
+    public String getRegExpForUidAndAttribute() {
+        return regexp;
     }
 }

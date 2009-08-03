@@ -32,7 +32,7 @@ import org.identityconnectors.framework.common.objects.Name;
  * List of allowed GROUP attribute names.
  * @author David Adam
  */
-public enum GroupAttributes {
+public enum GroupAttributes implements SolarisAttribute {
  // TODO add command line switches that are used for altering these
  // attributes
     GROUPNAME(Name.NAME/* TODO decide of we should preserve groupName */, UpdateSwitches.UNKNOWN), 
@@ -51,10 +51,20 @@ public enum GroupAttributes {
     private String attrName;
     /** the command line switch used by the solaris connector */
     private UpdateSwitches cmdSwitch;
+    /** command that is used to acquire the raw data for the attribute */
+    private String command;
+    /** regular expression to extract Uid and Attribute from the raw data gathered by {@link GroupAttributes#command} */
+    private String regexp;
     
     private GroupAttributes(String attrName, UpdateSwitches cmdSwitch) {
+        this(attrName, cmdSwitch, null, null);
+    }
+    
+    private GroupAttributes(String attrName, UpdateSwitches cmdSwitch, String command, String regexp) {
         this.attrName = attrName;
         this.cmdSwitch = cmdSwitch;
+        this.command = command;
+        this.regexp = regexp;
     }
 
     /**
@@ -83,8 +93,24 @@ public enum GroupAttributes {
         return cmdSwitch.getCmdSwitch();
     }
     
-    /** @return the name of the GROUP attribute */
+    /**
+     * {@see org.identityconnectors.solaris.constants.SolarisAttribute#getName()}
+     */
     public String getName() {
         return attrName;
+    }
+
+    /**
+     * {@see SolarisAttribute#getCommand()}
+     */
+    public String getCommand() {
+        return command;
+    }
+
+    /**
+     * {@see SolarisAttribute#getRegExpForUidAndAttribute()}
+     */
+    public String getRegExpForUidAndAttribute() {
+        return regexp;
     }
 }
