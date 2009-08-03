@@ -42,7 +42,7 @@ public class PatternBuilder {
         this(nrOfColumns, DEFAULT_DELIMITER);
     }
     
-    private PatternBuilder(int nrOfColumns, String delimiter) {
+    public PatternBuilder(int nrOfColumns, String delimiter) {
         this.nrOfColumns = nrOfColumns; 
         this.delimiter = delimiter;
     }
@@ -87,6 +87,11 @@ public class PatternBuilder {
 
     public static String buildPattern(int nrOfColumns, int... columnSelector) {
         PatternBuilder pb = new PatternBuilder(nrOfColumns);
+        return pb.build(columnSelector);
+    }
+    
+    public static String buildPattern(int nrOfColumns, String delimiter, int... columnSelector) {
+        PatternBuilder pb = new PatternBuilder(nrOfColumns, delimiter);
         return pb.build(columnSelector);
     }
     
