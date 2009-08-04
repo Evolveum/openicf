@@ -22,10 +22,6 @@
  */
 package org.identityconnectors.solaris.operation.search;
 
-import java.util.Set;
-
-import org.identityconnectors.common.CollectionUtil;
-import org.identityconnectors.framework.common.objects.Uid;
 /**
  * OR of two node values. 
  * Note: in implementation this translated to union of satisfying {@see Uid}-s (left/right expressions).
@@ -35,11 +31,5 @@ public class OrFilter extends BinaryOpNode {
     
     public OrFilter(Node left, Node right) {
         super(left, right);
-    }
-
-    public Set<Uid> getSatisfyingUids() {
-        Set<Uid> leftUids = getLeft().getSatisfyingUids();
-        Set<Uid> rightUids = getRight().getSatisfyingUids();
-        return CollectionUtil.union(leftUids, rightUids);
     }
 }
