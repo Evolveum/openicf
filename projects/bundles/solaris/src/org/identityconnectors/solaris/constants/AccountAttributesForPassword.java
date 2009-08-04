@@ -35,14 +35,14 @@ public enum AccountAttributesForPassword implements SolarisAttribute  {
     /*
      * note: this is *not* in the schema OR resource adapter's prototype xml
      */
-    FORCE_CHANGE("force_change", PasswdSwitches.PASSWD_FORCE_CHANGE),
+    FORCE_CHANGE("force_change", PasswdSwitches.PASSWD_FORCE_CHANGE, null, null /* TODO */),
     /*
      * ACCOUNT ATTRIBUTES
      */
-    MAX("max", PasswdSwitches.PASSWD_MAX),
-    MIN("min", PasswdSwitches.PASSWD_MIN),
-    WARN("warn", PasswdSwitches.PASSWD_WARN),
-    LOCK("lock", PasswdSwitches.PASSWD_LOCK);
+    MAX("max", PasswdSwitches.PASSWD_MAX, null, null /* TODO */),
+    MIN("min", PasswdSwitches.PASSWD_MIN, null, null /* TODO */),
+    WARN("warn", PasswdSwitches.PASSWD_WARN, null, null /* TODO */),
+    LOCK("lock", PasswdSwitches.PASSWD_LOCK, null, null /* TODO */);
     
     private static final Map<String, AccountAttributesForPassword> map = CollectionUtil.newCaseInsensitiveMap();
     
@@ -62,10 +62,22 @@ public enum AccountAttributesForPassword implements SolarisAttribute  {
     /** regular expression to extract Uid and Attribute from the raw data gathered by {@link GroupAttributes#command} */
     private String regexp;
     
-    private AccountAttributesForPassword(String attrName, PasswdSwitches cmdSwitch) {
-        this(attrName, cmdSwitch, null, null);
-    }
-    
+    /**
+     * initialize the constants for objectclass __ACCOUNT__'s attributes
+     * 
+     * @param attrName
+     *            the name of attribute (most of the time identical with one
+     *            defined in adapter
+     * @param cmdSwitch
+     *            the command line switch generated for this attribute, when set
+     *            in create/update operations
+     * @param command
+     *            the command that is used in search to get value/uid pairs of
+     *            this attribute
+     * @param regexp
+     *            the regular expression used for parsing the command's output,
+     *            to get the respective columns.
+     */
     private AccountAttributesForPassword(String attrName, PasswdSwitches cmdSwitch, String command, String regexp) {
         this.attrName = attrName;
         this.cmdSwitch = cmdSwitch;
@@ -78,7 +90,7 @@ public enum AccountAttributesForPassword implements SolarisAttribute  {
      * (password-related) account attributes.
      * @return the name of attribute, or null if it doesn't exist.
      */
-    private static AccountAttributesForPassword fromAttributeName(String s) {
+    public static AccountAttributesForPassword fromAttributeName(String s) {
         return map.get(s);
     }
     
@@ -105,16 +117,16 @@ public enum AccountAttributesForPassword implements SolarisAttribute  {
     }
 
     /**
-     * {@see SolarisAttributes#getCommand()}
-     */
-    public String getCommand() {
-        return command;
-    }
-
-    /**
      * {@see SolarisAttribute#getRegExpForUidAndAttribute()}
      */
     public String getRegExpForUidAndAttribute() {
         return regexp;
+    }
+    
+    /**
+     * {@see SolarisAttribute#getCommand(String...)}
+     */
+    public String getCommand(String... fillInAttributes) {
+        return AttributeHelper.fillInCommand(command, fillInAttributes);
     }
 }

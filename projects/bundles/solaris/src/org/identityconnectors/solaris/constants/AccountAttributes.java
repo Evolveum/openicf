@@ -27,6 +27,7 @@ import java.util.Map;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.solaris.operation.search.PatternBuilder;
 
 
 /**
@@ -34,22 +35,22 @@ import org.identityconnectors.framework.common.objects.Name;
  * also take a look at {@link AccountAttributesForPassword}.
  * @author David Adam
  */
-public enum AccountAttributes implements SolarisAttribute {
+public enum AccountAttributes implements SolarisAttribute {    
     /** home directory */
-    DIR("dir", UpdateSwitches.DIR), 
-    SHELL("shell", UpdateSwitches.SHELL),
+    DIR("dir", UpdateSwitches.DIR, null, null /* TODO */), 
+    SHELL("shell", UpdateSwitches.SHELL, null, null /* TODO */),
     /** primary group */
-    GROUP("group", UpdateSwitches.GROUP),
-    SECONDARY_GROUP("secondary_group", UpdateSwitches.SECONDARY_GROUP),
-    UID("uid", UpdateSwitches.UID),
-    NAME(Name.NAME, UpdateSwitches.UNKNOWN),
-    EXPIRE("expire", UpdateSwitches.EXPIRE),
-    INACTIVE("inactive", UpdateSwitches.INACTIVE),
-    COMMENT("comment", UpdateSwitches.COMMENT),
-    TIME_LAST_LOGIN("time_last_login", UpdateSwitches.UNKNOWN),
-    AUTHORIZATION("authorization", UpdateSwitches.AUTHORIZATION),
-    PROFILE("profile", UpdateSwitches.PROFILE),
-    ROLES("role", UpdateSwitches.ROLE);
+    GROUP("group", UpdateSwitches.GROUP, null, null /* TODO */),
+    SECONDARY_GROUP("secondary_group", UpdateSwitches.SECONDARY_GROUP, null, null /* TODO */),
+    UID("uid", UpdateSwitches.UID, null, null /* TODO */),
+    NAME(Name.NAME, UpdateSwitches.UNKNOWN, null, null /* TODO */),
+    EXPIRE("expire", UpdateSwitches.EXPIRE, null, null /* TODO */),
+    INACTIVE("inactive", UpdateSwitches.INACTIVE, "logins -oxma -l", PatternBuilder.buildPattern(14, 1/*uid*/, 13/*inactive col.*/)), 
+    COMMENT("comment", UpdateSwitches.COMMENT, null, null /* TODO */),
+    TIME_LAST_LOGIN("time_last_login", UpdateSwitches.UNKNOWN, null, null /* TODO */),
+    AUTHORIZATION("authorization", UpdateSwitches.AUTHORIZATION, null, null /* TODO */),
+    PROFILE("profile", UpdateSwitches.PROFILE, null, null /* TODO */),
+    ROLES("role", UpdateSwitches.ROLE, null, null /* TODO */);
     
     private static final Map<String, AccountAttributes> map = CollectionUtil.newCaseInsensitiveMap();
     
@@ -69,10 +70,23 @@ public enum AccountAttributes implements SolarisAttribute {
     /** regular expression to extract Uid and Attribute from the raw data gathered by {@link GroupAttributes#command} */
     private String regexp;
 
-    private AccountAttributes(String attrName, UpdateSwitches cmdSwitch) {
-        this(attrName, cmdSwitch, null, null);
-    }
     
+    /**
+     * initialize the constants for objectclass __ACCOUNT__'s attributes
+     * 
+     * @param attrName
+     *            the name of attribute (most of the time identical with one
+     *            defined in adapter
+     * @param cmdSwitch
+     *            the command line switch generated for this attribute, when set
+     *            in create/update operations
+     * @param command
+     *            the command that is used in search to get value/uid pairs of
+     *            this attribute
+     * @param regexp
+     *            the regular expression used for parsing the command's output,
+     *            to get the respective columns.
+     */
     private AccountAttributes(String attrName, UpdateSwitches cmdSwitch, String command, String regexp) {
         this.attrName = attrName;
         this.cmdSwitch = cmdSwitch;
@@ -85,7 +99,7 @@ public enum AccountAttributes implements SolarisAttribute {
      * account attributes.
      * @return the name of attribute, or null if it doesn't exist.
      */
-    private static AccountAttributes fromAttributeName(String s) {
+    public static AccountAttributes fromAttributeName(String s) {
         return map.get(s);
     }
     
@@ -110,18 +124,18 @@ public enum AccountAttributes implements SolarisAttribute {
     public String getName() {
         return attrName;
     }
-
-    /**
-     * {@see SolarisAttribute#getCommand()}
-     */
-    public String getCommand() {
-        return command;
-    }
-
+    
     /**
      * {@see SolarisAttribute#getRegExpForUidAndAttribute()}
      */
     public String getRegExpForUidAndAttribute() {
         return regexp;
+    }
+
+    /**
+     * {@see SolarisAttribute#getCommand(String...)}
+     */
+    public String getCommand(String... fillInAttributes) {
+        return AttributeHelper.fillInCommand(command, fillInAttributes);
     }
 }

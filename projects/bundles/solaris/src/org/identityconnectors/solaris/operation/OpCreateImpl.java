@@ -67,7 +67,7 @@ public class OpCreateImpl extends AbstractOp {
         /*
          * CREATE A NEW ACCOUNT
          */
-        final String commandSwitches = CommandUtil.prepareCommand(attrs);
+        final String commandSwitches = CommandUtil.prepareCommand(attrs, ObjectClass.ACCOUNT);
         // USERADD accountId
         String command = getCmdBuilder().build("useradd", commandSwitches, accountId);
         try {//CONNECTION

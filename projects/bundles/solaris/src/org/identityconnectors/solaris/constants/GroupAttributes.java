@@ -35,9 +35,9 @@ import org.identityconnectors.framework.common.objects.Name;
 public enum GroupAttributes implements SolarisAttribute {
  // TODO add command line switches that are used for altering these
  // attributes
-    GROUPNAME(Name.NAME/* TODO decide of we should preserve groupName */, UpdateSwitches.UNKNOWN), 
-    GID("gid", UpdateSwitches.UNKNOWN),
-    USERS("users", UpdateSwitches.UNKNOWN);
+    GROUPNAME(Name.NAME/* TODO decide of we should preserve groupName */, UpdateSwitches.UNKNOWN, null, null /* TODO */), 
+    GID("gid", UpdateSwitches.UNKNOWN, null, null /* TODO */),
+    USERS("users", UpdateSwitches.UNKNOWN, null, null /* TODO */);
 
     private static final Map<String, GroupAttributes> map = CollectionUtil.newCaseInsensitiveMap();
     
@@ -56,10 +56,22 @@ public enum GroupAttributes implements SolarisAttribute {
     /** regular expression to extract Uid and Attribute from the raw data gathered by {@link GroupAttributes#command} */
     private String regexp;
     
-    private GroupAttributes(String attrName, UpdateSwitches cmdSwitch) {
-        this(attrName, cmdSwitch, null, null);
-    }
-    
+    /**
+     * initialize the constants for objectclass __ACCOUNT__'s attributes
+     * 
+     * @param attrName
+     *            the name of attribute (most of the time identical with one
+     *            defined in adapter
+     * @param cmdSwitch
+     *            the command line switch generated for this attribute, when set
+     *            in create/update operations
+     * @param command
+     *            the command that is used in search to get value/uid pairs of
+     *            this attribute
+     * @param regexp
+     *            the regular expression used for parsing the command's output,
+     *            to get the respective columns.
+     */
     private GroupAttributes(String attrName, UpdateSwitches cmdSwitch, String command, String regexp) {
         this.attrName = attrName;
         this.cmdSwitch = cmdSwitch;
@@ -101,16 +113,16 @@ public enum GroupAttributes implements SolarisAttribute {
     }
 
     /**
-     * {@see SolarisAttribute#getCommand()}
-     */
-    public String getCommand() {
-        return command;
-    }
-
-    /**
      * {@see SolarisAttribute#getRegExpForUidAndAttribute()}
      */
     public String getRegExpForUidAndAttribute() {
         return regexp;
+    }
+
+    /**
+     * {@see SolarisAttribute#getCommand(String...)}
+     */
+    public String getCommand(String... fillInAttributes) {
+        return AttributeHelper.fillInCommand(command, fillInAttributes);
     }
 }

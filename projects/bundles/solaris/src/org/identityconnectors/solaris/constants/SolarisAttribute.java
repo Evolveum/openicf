@@ -22,6 +22,8 @@
  */
 package org.identityconnectors.solaris.constants;
 
+import org.identityconnectors.framework.common.objects.Uid;
+
 
 /**
  * abstraction of all Solaris Object type attributes (including GROUP, ACCOUNT).
@@ -32,16 +34,16 @@ public interface SolarisAttribute {
     public abstract String getName();
 
     /**
-     * get the command to acquire the Attribute. Executing this command tends to
-     * return a CSV like text structure, that fruther needed to be parsed by
-     * some regular expression, {@link SolarisAttribute#getRegEx()}
+     * get command for acquiring the {@link Uid}-s and the given attribute from
+     * Solaris OS.
+     * 
+     * @param fillInAttributes
+     *            optional attributes that are filled in the command. (it
+     *            depends on a certain attribute's unix get command, if they'll
+     *            be used). Placeholders for attributes to fill in are marked
+     *            with "__AttributeName__" marker in the command.
+     * @return a command that just needs a few insertions and then can be
+     *         executed.
      */
-    public abstract String getCommand();
-
-    /**
-     * the regular expression that is used for parsing the result of the
-     * command, {@link SolarisAttribute#getCommand()}. It extracts the Uid and the 
-     * filtered Attribute in this particular order.
-     */
-    public abstract String getRegExpForUidAndAttribute();
+    public abstract String getCommand(String... fillInAttributes);
 }

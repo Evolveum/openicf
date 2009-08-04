@@ -94,7 +94,7 @@ public class OpUpdateImpl extends AbstractOp {
          * ACCOUNT
          */
         if (objclass.is(ObjectClass.ACCOUNT_NAME)) {
-            final String commandSwitches = CommandUtil.prepareCommand(replaceAttributes);
+            final String commandSwitches = CommandUtil.prepareCommand(replaceAttributes, ObjectClass.ACCOUNT);
 
             if (commandSwitches.length() > 0) {
                 try {
@@ -164,7 +164,7 @@ public class OpUpdateImpl extends AbstractOp {
             //for nonexisting UID (note: match not present in the adapter)
             builder.addCaseInsensitiveRegExpMatch("User unknown", ClosureFactory.newUnknownUidException(String.format("Unknown Uid: '%s'", accountId)));
 
-            getConnection().send(getCmdBuilder().build("passwd", "-r", "files", accountId));
+            getConnection().send(getCmdBuilder().build("passwd -r files", accountId));
             getConnection().expect(builder.build());
 
             SolarisUtil.sendPassword(passwd, getConnection());

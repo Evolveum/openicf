@@ -59,7 +59,7 @@ public abstract class AbstractOp {
         return _configuration;
     }
     
-    protected final SolarisConnection getConnection() {
+    public final SolarisConnection getConnection() {
         return _connection;
     }
     
