@@ -45,7 +45,7 @@ public enum AccountAttributes implements SolarisAttribute {
     UID("uid", UpdateSwitches.UID, null, null /* TODO */),
     NAME(Name.NAME, UpdateSwitches.UNKNOWN, null, null /* TODO */),
     EXPIRE("expire", UpdateSwitches.EXPIRE, null, null /* TODO */),
-    INACTIVE("inactive", UpdateSwitches.INACTIVE, "logins -oxma -l", PatternBuilder.buildPattern(14, 1/*uid*/, 13/*inactive col.*/)), 
+    INACTIVE("inactive", UpdateSwitches.INACTIVE, "logins -oxma -l __username__", PatternBuilder.buildPattern(14, 1/*uid*/, 13/*inactive col.*/)), 
     COMMENT("comment", UpdateSwitches.COMMENT, null, null /* TODO */),
     TIME_LAST_LOGIN("time_last_login", UpdateSwitches.UNKNOWN, null, null /* TODO */),
     AUTHORIZATION("authorization", UpdateSwitches.AUTHORIZATION, null, null /* TODO */),

@@ -43,7 +43,7 @@ import org.identityconnectors.test.common.TestHelpers;
  * Create a solaris test configuration (for unit tests only)
  *
  */
-class SolarisTestCommon {
+public class SolarisTestCommon {
     
     /** used to view the ip address of the resource that we are connecting to */
     public static void printIPAddress(SolarisConfiguration config) {

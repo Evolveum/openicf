@@ -23,10 +23,11 @@
 package org.identityconnectors.solaris.constants;
 
 import org.identityconnectors.framework.common.objects.Uid;
-
+import org.identityconnectors.solaris.operation.search.PatternBuilder;
 
 /**
  * abstraction of all Solaris Object type attributes (including GROUP, ACCOUNT).
+ * 
  * @author David Adam
  */
 public interface SolarisAttribute {
@@ -46,4 +47,13 @@ public interface SolarisAttribute {
      *         executed.
      */
     public abstract String getCommand(String... fillInAttributes);
+
+    /**
+     * @return regular expression that extracts from the output of command
+     *         {@link SolarisAttribute#getCommand(String...)} the required Uid
+     *         and attribute in this order.
+     *         
+     * Note: This regular expression is built by {@link PatternBuilder}.
+     */
+    public abstract String getRegExpForUidAndAttribute();
 }

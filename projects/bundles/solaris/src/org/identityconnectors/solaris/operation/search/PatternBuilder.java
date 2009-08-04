@@ -22,17 +22,37 @@
  */
 package org.identityconnectors.solaris.operation.search;
 
+
 /**
- * This class builds regular expression patterns for matching one or more 
- * columns in a delimited data string. 
+ * This class builds regular expression patterns for matching one or more
+ * columns in a delimited data string.
  * 
  * For example we have a line with data:
- * "john:smith:123456789:john.smith@foo.com"
- * So the patt
+ * "john:smith:123456789:john.smith@foo.com" So the pattern builder creates a
+ * regular expression for extracting a number of columns.
+ * 
+ * USAGE:
+ * 
+ * <pre>
+ * String[] matches(String result, String input) {
+ *     Pattern p = Pattern.compile(result);
+ * 
+ *     Matcher matcher = p.matcher(input);
+ *     List&lt;String&gt; res = new ArrayList&lt;String&gt;();
+ *     if (matcher.matches()) {
+ *         for (int i = 1; i &lt;= matcher.groupCount(); i++) {
+ *             res.add(matcher.group(i));
+ *         }
+ *         return res.toArray(new String[0]);
+ *     }
+ *     return null;
+ * }
+ * </pre>
+ * 
  * @author David Adam
  */
 public class PatternBuilder {
-    
+
     private static final String DEFAULT_DELIMITER = ":";
     private int nrOfColumns;
 
@@ -41,20 +61,20 @@ public class PatternBuilder {
     public PatternBuilder(int nrOfColumns) {
         this(nrOfColumns, DEFAULT_DELIMITER);
     }
-    
+
     public PatternBuilder(int nrOfColumns, String delimiter) {
-        this.nrOfColumns = nrOfColumns; 
+        this.nrOfColumns = nrOfColumns;
         this.delimiter = delimiter;
     }
-    
+
     public String build(int... columnSelector) {
         checkValidity(columnSelector);
-        
+
         StringBuffer sb = new StringBuffer();
-        
+
         String token = String.format("[^%s]*", delimiter, delimiter);
         String groupToken = String.format("(%s)", token);
-        
+
         for (int i = 1; i <= nrOfColumns; i++) {
             boolean found = false;
             for (int currSelector : columnSelector) {
@@ -64,17 +84,17 @@ public class PatternBuilder {
                     break;
                 }
             }
-            
+
             if (!found) {
                 sb.append(token);
             }
             if (i != nrOfColumns)
                 sb.append(delimiter);
         }
-        
+
         return sb.toString();
     }
-    
+
     private void checkValidity(int[] columnSelector) {
         for (int i : columnSelector) {
             if (i > nrOfColumns || i <= 0) {
@@ -89,12 +109,13 @@ public class PatternBuilder {
         PatternBuilder pb = new PatternBuilder(nrOfColumns);
         return pb.build(columnSelector);
     }
-    
-    public static String buildPattern(int nrOfColumns, String delimiter, int... columnSelector) {
+
+    public static String buildPattern(int nrOfColumns, String delimiter,
+            int... columnSelector) {
         PatternBuilder pb = new PatternBuilder(nrOfColumns, delimiter);
         return pb.build(columnSelector);
     }
-    
+
     public int getNrOfColumns() {
         return nrOfColumns;
     }
