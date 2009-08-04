@@ -41,4 +41,23 @@ class AttributeHelper {
     private static String formatParam(String key, String value) {
         return String.format("%s \"%s\"", key, value);
     }
+    
+    /**
+     * <code>"__Attribute__"</code> denotes special parts of the command, that will be filled in.
+     * @param command
+     * @param fillInAttributes
+     * @return
+     */
+    public static String fillInCommand(String command, String... fillInAttributes) {
+        if (fillInAttributes.length == 0) {
+            return command;
+        } else {
+            // try to fill in the spaces with the given arguments.
+            String result = new String(command);
+            for (String value : fillInAttributes) {
+                result = result.replaceFirst("__[^_]+__", value);
+            }
+            return result;
+        }
+    }
 }

@@ -27,16 +27,16 @@ package org.identityconnectors.solaris.constants;
  * @author David Adam
  */
 public enum PasswdSwitches {
-    PASSWD_FORCE_CHANGE("f"),
-    PASSWD_MAX("x"),
-    PASSWD_MIN("n"),
-    PASSWD_WARN("w"),
-    PASSWD_LOCK("l");
+    PASSWD_FORCE_CHANGE("-f"),
+    PASSWD_MAX("-x"),
+    PASSWD_MIN("-n"),
+    PASSWD_WARN("-w"),
+    PASSWD_LOCK("-l");
     
     private String commandLineSwitch;
     
     private PasswdSwitches(String commandLineSwitch) {
-        this.commandLineSwitch = String.format("-%s", commandLineSwitch);
+        this.commandLineSwitch = commandLineSwitch;
     }
     
     /** get the command line switch */

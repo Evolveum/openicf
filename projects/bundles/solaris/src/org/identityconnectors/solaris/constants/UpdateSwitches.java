@@ -31,22 +31,22 @@ package org.identityconnectors.solaris.constants;
  */
 public enum UpdateSwitches {
     /* **** ACCOUNT **** */
-    AUTHORIZATION("A"), 
-    GROUP("g"), 
-    EXPIRE("e"), 
+    AUTHORIZATION("-A"), 
+    GROUP("-g"), 
+    EXPIRE("-e"), 
     /**
      * INACTIVE Solaris manpage says: The maximum number of days allowed between
      * uses of a login ID before that ID is declared invalid. Normal values are
      * positive integers. A value of 0 defeats the status.
      */
-    INACTIVE("f"), 
-    UID("u"), 
-    SECONDARY_GROUP("G"), 
-    ROLE("R"), 
-    COMMENT("c"), 
-    SHELL("s"), 
-    PROFILE("P"), 
-    DIR("d"),
+    INACTIVE("-f"), 
+    UID("-u"), 
+    SECONDARY_GROUP("-G"), 
+    ROLE("-R"), 
+    COMMENT("-c"), 
+    SHELL("-s"), 
+    PROFILE("-P"), 
+    DIR("-d"),
     /* **** GROUP **** */
     //TODO group flags differ?
     
@@ -55,7 +55,7 @@ public enum UpdateSwitches {
     private String commandLineSwitch;
 
     private UpdateSwitches(String commandLineSwitch) {
-        this.commandLineSwitch = String.format("-%s", commandLineSwitch);
+        this.commandLineSwitch = commandLineSwitch;
     }
 
     /** get the command line switch */
