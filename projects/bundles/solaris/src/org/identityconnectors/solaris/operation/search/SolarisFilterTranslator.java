@@ -22,8 +22,7 @@
  */
 package org.identityconnectors.solaris.operation.search;
 
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.Name;
+
 import org.identityconnectors.framework.common.objects.filter.AbstractFilterTranslator;
 import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
 import org.identityconnectors.framework.common.objects.filter.EndsWithFilter;
@@ -33,24 +32,24 @@ import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
 public class SolarisFilterTranslator extends
         AbstractFilterTranslator<Node> {
 
-    /**
-     * simple add '|' delimiter to the expression.
-     * 
-     * AND has higher priority than OR
-     */
     @Override
     protected Node createOrExpression(Node leftExpression,
             Node rightExpression) {
-        return new Node(leftExpression.getName(), regExp);
+        return new OrFilter(leftExpression, rightExpression);
     }
+    
+    @Override
+    protected Node createAndExpression(Node leftExpression, Node rightExpression) {
+        return new AndFilter(leftExpression, rightExpression);
+    } 
 
     @Override
     protected Node createContainsExpression(ContainsFilter filter,
             boolean not) {
-        if (!not && isNamingAttribute(filter.getAttribute())) {
+        if (!not) {
             /* '.*' == zero and more repetitions of any character */
             String regExp = String.format(".*(%s).*", filter.getValue());
-            return new Node(filter.getName(), regExp);
+            return new AttributeFilter(filter.getName(), regExp);
         }
 
         return super.createContainsExpression(filter, not);
@@ -59,9 +58,9 @@ public class SolarisFilterTranslator extends
     @Override
     protected Node createEndsWithExpression(EndsWithFilter filter,
             boolean not) {
-        if (!not && isNamingAttribute(filter.getAttribute())) {
+        if (!not) {
             String regExp = String.format(".*%s", filter.getValue());
-            return new Node(filter.getName(), regExp);
+            return new AttributeFilter(filter.getName(), regExp);
         }
 
         return super.createEndsWithExpression(filter, not);
@@ -70,9 +69,9 @@ public class SolarisFilterTranslator extends
     @Override
     protected Node createStartsWithExpression(StartsWithFilter filter,
             boolean not) {
-        if (!not && isNamingAttribute(filter.getAttribute())) {
+        if (!not) {
             String regExp = String.format("%s.*", filter.getValue());
-            return new Node(filter.getName(), regExp);
+            return new AttributeFilter(filter.getName(), regExp);
         }
 
         return super.createStartsWithExpression(filter, not);
@@ -81,18 +80,10 @@ public class SolarisFilterTranslator extends
     @Override
     protected Node createEqualsExpression(EqualsFilter filter,
             boolean not) {
-        if (!not && isNamingAttribute(filter.getAttribute())) { 
-            return new Node(filter.getName(), (String) filter.getAttribute().getValue().get(0));
+        if (!not) { 
+            return new AttributeFilter(filter.getName(), (String) filter.getAttribute().getValue().get(0));
         }
 
         return super.createEqualsExpression(filter, not);
-    }
-
-    private boolean isNamingAttribute(Attribute attribute) {
-        if (attribute.is(Name.NAME)) {
-            return true;
-        }
-
-        return false;
     }
 }

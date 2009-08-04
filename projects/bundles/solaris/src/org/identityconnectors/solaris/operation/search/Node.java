@@ -22,10 +22,8 @@
  */
 package org.identityconnectors.solaris.operation.search;
 
-import java.util.Set;
-
-import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.common.Pair;
 
 public interface Node {
-    public abstract Set<Uid> getSatisfyingUids();
+    public abstract Pair<Node, Node> getChild();
 }

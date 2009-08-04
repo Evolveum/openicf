@@ -22,28 +22,41 @@
  */
 package org.identityconnectors.solaris.operation.search;
 
-import java.util.Set;
-
-import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.common.Pair;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.constants.SolarisAttribute;
+
 /**
  * encapsulates matching of a single attribute by a regular expression.
+ * 
  * @author David Adam
  */
-public abstract class AttributeFilter implements Node {
+public class AttributeFilter implements Node {
 
     private String regex;
+
     private SolarisAttribute attr;
 
-    /** 
-     * @param attributeName the attribute name that is filtered
-     * @param regex the regular expression that is used to filter 
+    /**
+     * @param attributeName
+     *            the attribute name that is filtered
+     * @param regex
+     *            the regular expression that is used to filter
      */
     public AttributeFilter(String attributeName, String regex) {
         attr = SolarisUtil.getAttributeBasedOnName(attributeName);
         this.regex = regex;
     }
 
-    public abstract Set<Uid> getSatisfyingUids();
+    public Pair<Node, Node> getChild() {
+        return new Pair<Node, Node>(this, null);
+    }
+
+    public String getRegex() {
+        return regex;
+    }
+
+    public SolarisAttribute getAttr() {
+        return attr;
+    }
 }
