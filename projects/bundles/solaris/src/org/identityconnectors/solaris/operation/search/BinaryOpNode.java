@@ -39,6 +39,4 @@ public abstract class BinaryOpNode implements Node {
     public Node getRight() {
         return right;
     }
-    
-    public abstract boolean evaluate();
 }

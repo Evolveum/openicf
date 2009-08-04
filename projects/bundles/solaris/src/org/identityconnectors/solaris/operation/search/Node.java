@@ -22,6 +22,10 @@
  */
 package org.identityconnectors.solaris.operation.search;
 
+import java.util.Set;
+
+import org.identityconnectors.framework.common.objects.Uid;
+
 public interface Node {
-    public abstract boolean evaluate();
+    public abstract Set<Uid> getSatisfyingUids();
 }
