@@ -33,6 +33,10 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
+import org.identityconnectors.solaris.constants.AccountAttributes;
+import org.identityconnectors.solaris.constants.AccountAttributesForPassword;
+import org.identityconnectors.solaris.constants.GroupAttributes;
+import org.identityconnectors.solaris.constants.SolarisAttribute;
 import org.identityconnectors.solaris.operation.AbstractOp;
 
 
@@ -72,5 +76,25 @@ public class SolarisUtil {
                 }
             }
         });
+    }
+    
+    /**
+     * Acquire the metadata (commands, switches, etc.) for the given attribute.
+     * @param attrName the attribute name
+     * @return the {@link SolarisAttribute} that we search for.
+     */
+    public static SolarisAttribute getAttributeBasedOnName(String attrName) {
+        SolarisAttribute result = null;
+        try {
+            result = AccountAttributes.fromAttributeName(attrName);
+        } catch (Exception ex) {
+            // if attribute constant not found, retry the other contants:
+            try {
+                result = AccountAttributesForPassword.fromAttributeName(attrName);
+            } catch (Exception exc) {
+                result = GroupAttributes.fromGroupName(attrName);
+            }
+        }
+        return result;
     }
 }
