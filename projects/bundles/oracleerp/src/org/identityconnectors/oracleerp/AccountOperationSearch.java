@@ -178,8 +178,6 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
                     break;
                 }
             }
-            conn.commit();
-            log.ok(method);
         } catch (SQLException e) {
             log.error(e, method);
             throw ConnectorException.wrap(e);
@@ -187,6 +185,8 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             SQLUtil.closeQuietly(result);
             SQLUtil.closeQuietly(statement);
         }
+        conn.commit();
+        log.ok(method);        
     }
 
     /**

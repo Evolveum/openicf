@@ -86,7 +86,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
         ResultSet rs = null;
 
         
-        final String sqlAccount = "select user_name, password_accesses_left,"
+        final String sqlAccount = "select user_name, start_date, end_date, password_accesses_left,"
                     + " password_date, password_lifespan_days from "
                     + cfg.app() + "fnd_user where upper(user_name) = ?";
         
@@ -105,9 +105,16 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
             //build special attributes
             new AccountOperationSearch(conn, cfg).buildSpecialAttributes(amb, columnValues);
             
+            //The password is expired
             if (amb.isExpected(OperationalAttributes.PASSWORD_EXPIRED_NAME, 0, Boolean.TRUE)) {
                 throw new PasswordExpiredException(cfg.getMessage(MSG_AUTH_FAILED, username));
             } 
+            
+            //The account is disabled
+            if (amb.isExpected(OperationalAttributes.ENABLE_NAME, 0, Boolean.FALSE)) {
+                throw new InvalidCredentialException(cfg.getMessage(MSG_AUTH_FAILED, username));
+            }                            
+            
         } catch (SQLException ex) {
             log.error(ex, sqlAccount);
             SQLUtil.rollbackQuietly(conn);
@@ -119,11 +126,12 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
             ps = null;
         }
 
+        // Verify the account is enabled by function call
         // add password param
         List<SQLParam> params = new ArrayList<SQLParam>();
         params.add(new SQLParam(USER_NAME, username));
         params.add(new SQLParam("password", password));       
-        
+                
         final String sql = "select wavesetValidateFunc1(? , ?) from dual";
         try {
             ps = conn.prepareCall(sql, params);

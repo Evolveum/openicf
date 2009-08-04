@@ -90,7 +90,7 @@ public class ApplicationOperationSearch extends Operation implements SearchOp<Fi
      */
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder query, ResultsHandler handler,
             OperationOptions options) {
-        final String method = "getApplications";
+        final String method = "executeQuery";
         log.info(method);
 
         PreparedStatement st = null;
@@ -127,6 +127,7 @@ public class ApplicationOperationSearch extends Operation implements SearchOp<Fi
             }
         } catch (SQLException e) {
             log.error(e, method);
+            SQLUtil.rollbackQuietly(conn);
             throw ConnectorException.wrap(e);
         } finally {
             SQLUtil.closeQuietly(res);
@@ -134,6 +135,7 @@ public class ApplicationOperationSearch extends Operation implements SearchOp<Fi
             SQLUtil.closeQuietly(st);
             st = null;
         }
+        conn.commit();
         log.ok(method);
     }
 }

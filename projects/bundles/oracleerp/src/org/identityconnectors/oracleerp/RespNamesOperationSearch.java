@@ -150,6 +150,7 @@ public class RespNamesOperationSearch extends Operation implements SearchOp<Filt
             SQLUtil.closeQuietly(st);
             st = null;
         }
+        conn.commit();
         log.ok(method);
     }
 }

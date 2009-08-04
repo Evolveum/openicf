@@ -94,7 +94,9 @@ public class ResponsibilitiesOperationSearch extends Operation implements Search
      */
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder query, ResultsHandler handler,
             OperationOptions options) {
-
+        final String method = "executeQuery";
+        log.info( method);
+        
         final boolean activeRespsOnly = respOps.isActiveRespOnly(options);
         final String id = respOps.getOptionId(options);
 
@@ -119,6 +121,8 @@ public class ResponsibilitiesOperationSearch extends Operation implements Search
                 break;
             }
         }
+        conn.commit();
+        log.ok(method);
     }
 
 }

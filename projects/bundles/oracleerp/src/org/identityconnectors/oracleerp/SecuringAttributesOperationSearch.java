@@ -148,6 +148,7 @@ public class SecuringAttributesOperationSearch extends Operation implements Sear
             SQLUtil.closeQuietly(st);
             st = null;
         }
+        conn.commit();
         log.ok(method);
     }
 }

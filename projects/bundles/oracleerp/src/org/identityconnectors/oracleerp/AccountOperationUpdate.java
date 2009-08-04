@@ -99,7 +99,8 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
     /* (non-Javadoc)
      * @see org.identityconnectors.framework.spi.operations.UpdateOp#update(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.Uid, java.util.Set, org.identityconnectors.framework.common.objects.OperationOptions)
      */
-    public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {       
+    public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
+        final String method = "update";
         final String name = uid.getUidValue();        
         attrs = CollectionUtil.newSet(attrs); //modifiable set       
         
@@ -176,6 +177,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
 
         conn.commit();
         //Return new UID
+        log.ok( method); 
         return new Uid(name);
     }
     
@@ -242,5 +244,6 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
             SQLUtil.closeQuietly(cs);
             cs = null;
         }
+        log.ok( method); 
     }    
 }

@@ -118,6 +118,7 @@ public class SecuringGroupsOperationSearch extends Operation implements SearchOp
             SQLUtil.closeQuietly(st);
             st = null;
         }
+        conn.commit();
         log.ok(method);
     }
 

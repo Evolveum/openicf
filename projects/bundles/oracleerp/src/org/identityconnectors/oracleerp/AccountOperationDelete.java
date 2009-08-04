@@ -73,7 +73,6 @@ final class AccountOperationDelete extends Operation implements DeleteOp {
             cs.setString(1, identity);
             cs.execute();
             
-            conn.commit();
             // No Result ??
         } catch (SQLException e) {
             if (e.getErrorCode() == 20001 || e.getErrorCode() == 1403) {
@@ -87,5 +86,6 @@ final class AccountOperationDelete extends Operation implements DeleteOp {
             SQLUtil.closeQuietly(cs);
             cs = null;
         }
+        conn.commit();
     }
 }

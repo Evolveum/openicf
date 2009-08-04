@@ -22,9 +22,7 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_ACCOUNT_UID_REQUIRED;
-import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_UNKNOWN_OPERATION_TYPE;
-import static org.identityconnectors.oracleerp.OracleERPUtil.RESP_NAMES;
+import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -33,16 +31,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
-import org.identityconnectors.common.script.ScriptExecutor;
-import org.identityconnectors.common.script.ScriptExecutorFactory;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLParam;
@@ -51,7 +45,6 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.ScriptContext;
@@ -260,43 +253,11 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      * @see org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp#runScriptOnConnector(org.identityconnectors.framework.common.objects.ScriptContext, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public Object runScriptOnConnector(ScriptContext request, OperationOptions options) {
-        final ClassLoader loader = getClass().getClassLoader();
-
-        /*
-         * Build the actionContext to pass it to the script according the documentation
-         */
-        final Map<String, Object> actionContext = new HashMap<String, Object>();
-        final Map<String, Object> scriptArguments = request.getScriptArguments();
-        final String nameValue = ((Uid) scriptArguments.get(Uid.NAME)).getUidValue();
-        final GuardedString password = ((GuardedString) scriptArguments.get(OperationalAttributes.PASSWORD_NAME));
-
-        actionContext.put("conn", conn.getConnection()); //The real connection
-        actionContext.put("action", scriptArguments.get("operation")); // The action is the operation name createUser/updateUser/deleteUser/disableUser/enableUser
-        actionContext.put("timing", scriptArguments.get("timing")); // The timming before / after
-        actionContext.put("attributes", scriptArguments.get("attributes")); // The attributes
-        actionContext.put("id", nameValue); // The user name
-        if (password != null) {
-            password.access(new GuardedString.Accessor() {
-                public void access(char[] clearChars) {
-                    actionContext.put("password", new String(clearChars)); //The password
-                }
-            });
-        }
-        actionContext.put("trace", log); //The loging
-        List<String> errorList = new ArrayList<String>();
-        actionContext.put("errors", errorList); // The error list
-
-        Map<String, Object> inputMap = new HashMap<String, Object>();
-        inputMap.put("actionContext", actionContext);
-
-        final String scriptLanguage = request.getScriptLanguage();
-        final ScriptExecutorFactory scriptExFact = ScriptExecutorFactory.newInstance(scriptLanguage);
-        final ScriptExecutor scripEx = scriptExFact.newScriptExecutor(loader, request.getScriptText(), true);
-        try {
-            return scripEx.execute(inputMap);
-        } catch (Exception e) {
-            throw ConnectorException.wrap(e);
-        }
+ 
+        Assertions.nullCheck(request, "request");
+        Assertions.nullCheck(options, "options");        
+        return new OracleERPOperationRunScriptOnConnector(conn, cfg).runScriptOnConnector(request, options);
+        
     }
 
 
