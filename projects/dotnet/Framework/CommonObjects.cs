@@ -178,12 +178,13 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
         }
 
         /**
-         * Get the single value from the ConnectorAttribute.
+         * Get the single value from the ConnectorAttribute. Return
+         * null if the attribute's list of values is null or empty.
          */
         public static object GetSingleValue(ConnectorAttribute attr) {
             Object ret = null;
             IList<Object> val = attr.Value;
-            if (val != null) {
+            if (val != null && val.Count > 0) {
                 // make sure this only called for single value..
                 if (val.Count > 1) {
                     const string MSG = "The method is only for single value attributes.";

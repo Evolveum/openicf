@@ -20,6 +20,9 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
+using System;
+using System.Collections.Generic;
+
 using NUnit.Framework;
 using Org.IdentityConnectors.Framework.Common.Objects;
 
@@ -33,6 +36,27 @@ namespace FrameworkTests
         public void TestNamesEqual()
         {
             Assert.IsTrue(ConnectorAttributeUtil.NamesEqual("givenName", "givenname"));
+        }
+
+        [Test]
+        [ExpectedException(typeof(ArgumentException))]
+        public void TestGetSingleValue()
+        {
+            object TEST_VALUE = 1L;
+            ConnectorAttribute attr = ConnectorAttributeBuilder.Build("long", TEST_VALUE);
+            object value = ConnectorAttributeUtil.GetSingleValue(attr);
+            Assert.AreEqual(TEST_VALUE, value);
+
+            // test null
+            attr = ConnectorAttributeBuilder.Build("long");
+            value = ConnectorAttributeUtil.GetSingleValue(attr);
+            Assert.IsNull(value);
+            // test empty
+            attr = ConnectorAttributeBuilder.Build("long", new List<object>());
+            value = ConnectorAttributeUtil.GetSingleValue(attr);
+            Assert.IsNull(value);
+            // test illegal argument exception
+            ConnectorAttributeUtil.GetSingleValue(ConnectorAttributeBuilder.Build("bob", 1, 2, 3));
         }
     }
 }
