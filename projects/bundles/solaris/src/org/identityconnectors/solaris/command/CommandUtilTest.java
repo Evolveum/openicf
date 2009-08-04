@@ -29,6 +29,7 @@ import junit.framework.Assert;
 
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
+import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.solaris.constants.AccountAttributes;
 import org.junit.Test;
 
@@ -57,7 +58,7 @@ public class CommandUtilTest {
         Set<Attribute> replaceAttributes = new HashSet<Attribute>();
         final String attrValue = "dummy";
         replaceAttributes.add(AttributeBuilder.build(AccountAttributes.UID.getName(), attrValue));
-        final String cmd = CommandUtil.prepareCommand(replaceAttributes);
+        final String cmd = CommandUtil.prepareCommand(replaceAttributes, ObjectClass.ACCOUNT);
         final String expected = String.format("%s \"%s\"", AccountAttributes.UID.getCmdSwitch(), attrValue);
         Assert.assertTrue(cmd.equals(expected));
     }

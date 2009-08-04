@@ -26,7 +26,10 @@ import java.util.Set;
 
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.solaris.constants.AccountAttributes;
+import org.identityconnectors.solaris.constants.AccountAttributesForPassword;
+import org.identityconnectors.solaris.constants.GroupAttributes;
 
 /**
  * contains utility methods for forming commands for Unix.
@@ -71,8 +74,9 @@ public class CommandUtil {
      * use the attributes to generate the argument of a Solaris command.
      * 
      * @param attributes Attributes, whose *value* and *name* is used.
+     * @param oclass the objectclass, whose attributes are scanned for matching.
      */
-    public static String prepareCommand(Set<Attribute> attributes) {
+    public static String prepareCommand(Set<Attribute> attributes, ObjectClass oclass) {
         StringBuffer command = new StringBuffer();
 
         for (Attribute attr : attributes) {
@@ -81,7 +85,13 @@ public class CommandUtil {
                 continue;
             
             try {
-                command.append(AccountAttributes.formatCommandSwitch(attr));
+                if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
+
+                    command.append(AccountAttributes.formatCommandSwitch(attr));
+                    command.append(AccountAttributesForPassword.formatCommandSwitch(attr));
+                } else if (oclass.is(ObjectClass.GROUP_NAME)) {
+                    command.append(GroupAttributes.formatCommandSwitch(attr));
+                } else throw new IllegalArgumentException("unknown objectClass: '" + oclass.getDisplayNameKey() + "'");
             } catch (Exception ex) {
                 // OK ignoring attribute
             } // try

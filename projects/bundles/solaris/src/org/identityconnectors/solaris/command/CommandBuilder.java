@@ -37,6 +37,15 @@ public class CommandBuilder {
         this.config = config;
     }
     
+    /**
+     * @param command
+     *            the command can be a chain of strings separated by spaces. In
+     *            case for some reason we want to delegate the chaining to this
+     *            builder, we can use the additional arguments parameter.
+     * @param arguments
+     *            optional parameter for chaining extra arguments at the end of
+     *            command.
+     */
     public String build(String command, CharSequence... arguments) {
         StringBuilder buff = new StringBuilder();
         if (config.isSudoAuth()) {
