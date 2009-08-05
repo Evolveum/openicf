@@ -22,7 +22,9 @@
  */
 package org.identityconnectors.solaris.operation.search;
 
-import org.identityconnectors.common.Pair;
+import java.util.Set;
+
+import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.constants.SolarisAttribute;
 
@@ -37,26 +39,21 @@ public class AttributeFilter implements Node {
 
     private SolarisAttribute attr;
 
+    private SearchPerformer sp;
+
     /**
      * @param attributeName
      *            the attribute name that is filtered
      * @param regex
      *            the regular expression that is used to filter
      */
-    public AttributeFilter(String attributeName, String regex) {
+    public AttributeFilter(String attributeName, String regex, SearchPerformer sp) {
         attr = SolarisUtil.getAttributeBasedOnName(attributeName);
         this.regex = regex;
+        this.sp = sp;
     }
 
-    public Pair<Node, Node> getChild() {
-        return new Pair<Node, Node>(this, null);
-    }
-
-    public String getRegex() {
-        return regex;
-    }
-
-    public SolarisAttribute getAttr() {
-        return attr;
+    public Set<Uid> evaluate() {
+        return sp.performSearch(attr, regex);
     }
 }

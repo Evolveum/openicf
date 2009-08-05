@@ -34,7 +34,6 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
-import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.constants.SolarisAttribute;
 
 /**
@@ -46,18 +45,16 @@ import org.identityconnectors.solaris.constants.SolarisAttribute;
  * 
  * @author David Adam
  */
-class SearchPerformer {
+public class SearchPerformer {
     /** first string denotes the command, the second denotes the output. */
     private Map<String, String[]> cachedCommands;
-    private SolarisConnection conn;
-    private String username;
-    private SolarisConnector connector;
+    private SolarisConnection connection;
+    private SolarisConfiguration configuration;
 
-    public SearchPerformer(SolarisConnector connector, String username) {
+    public SearchPerformer(SolarisConfiguration configuration, SolarisConnection connection) {
         cachedCommands = new HashMap<String, String[]>();
-        conn = connector.getConnection();
-        this.connector = connector;
-        this.username = username;
+        this.connection = connection;
+        this.configuration = configuration;
     }
 
     public Set<Uid> performSearch(SolarisAttribute attribute) {
@@ -78,7 +75,7 @@ class SearchPerformer {
      */
     public Set<Uid> performSearch(SolarisAttribute attribute, String searchRegExp) {
         // try to substitute username if needed in the command.
-        final String command = attribute.getCommand(username);
+        final String command = attribute.getCommand();
         final String[] output = cacheRequest(command);
         Pattern p = Pattern.compile(attribute.getRegExpForUidAndAttribute());
         Set<Uid> result = new HashSet<Uid>();
@@ -133,14 +130,14 @@ class SearchPerformer {
             // otherwise (when tests are run in batch), there is empty buffer, so
             // this waitfor will timeout.
             try {
-                /* output = */connector.getConnection().waitFor(
-                        ((SolarisConfiguration) connector.getConfiguration()).getRootShellPrompt(),
+                /* output = */connection.waitFor(
+                        configuration.getRootShellPrompt(),
                         SolarisConnection.WAIT);
             } catch (Exception ex) {
                 // OK
             }
 
-            output = conn.executeCommand(command);
+            output = connection.executeCommand(command);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }

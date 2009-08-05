@@ -22,7 +22,6 @@
  */
 package org.identityconnectors.solaris.operation.search;
 
-import org.identityconnectors.common.Pair;
 
 
 public abstract class BinaryOpNode implements Node {
@@ -41,9 +40,5 @@ public abstract class BinaryOpNode implements Node {
     
     public Node getRight() {
         return right;
-    }
-    
-    public Pair<Node, Node> getChild() {
-        return new Pair<Node, Node>(getLeft(), getRight());
     }
 }

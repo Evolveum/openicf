@@ -42,6 +42,7 @@ import org.identityconnectors.solaris.constants.SolarisAttribute;
 import org.identityconnectors.solaris.test.SolarisTestCommon;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class SearchPerfomerTest {
@@ -82,21 +83,19 @@ public class SearchPerfomerTest {
         attrs = null;
     }
 
-    @Test
+    @Test 
     public void test() {
         Uid uid = connector.create(ObjectClass.ACCOUNT, attrs, null);
         Assert.assertNotNull(uid);
 
-        SearchPerformer sp = new SearchPerformer(connector, username);
+        SearchPerformer sp = new SearchPerformer((SolarisConfiguration) connector.getConfiguration(), connector.getConnection());
         SolarisAttribute attribute = AccountAttributes.INACTIVE;
-        Set<Uid> result = sp.performSearch(attribute);
-        Assert.assertEquals(1, result.size());
+        Set<Uid> result = sp.performSearch(attribute, "-1" /* default value of inactive attribute */);
+        Assert.assertTrue(result.size() >= 1);
+        boolean b = false;
         for (Uid uidx : result) {
-            Assert.assertTrue(uidx.getUidValue().equals(username));
+            b = b | uidx.getUidValue().equals(username);
         }
-        
-        sp = new SearchPerformer(connector, "nonexistingUserName");
-        result = sp.performSearch(attribute);
-        Assert.assertEquals(0, result.size());
+        Assert.assertTrue(b);
     }
 }

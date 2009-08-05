@@ -22,6 +22,11 @@
  */
 package org.identityconnectors.solaris.operation.search;
 
+import java.util.Set;
+
+import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.framework.common.objects.Uid;
+
 /** 
  * AND of two node values. 
  * Note: in implementation this translated to intersection of satisfying {@see Uid}-s (left/right expressions).
@@ -30,5 +35,9 @@ public class AndFilter extends BinaryOpNode {
     
     public AndFilter(Node left, Node right) {
         super(left, right);
+    }
+
+    public Set<Uid> evaluate() {
+        return CollectionUtil.intersection(getLeft().evaluate(), getRight().evaluate());
     }
 }

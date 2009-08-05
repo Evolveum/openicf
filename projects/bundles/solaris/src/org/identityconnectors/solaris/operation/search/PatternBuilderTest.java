@@ -94,7 +94,7 @@ public class PatternBuilderTest {
      *            the input text to match
      * @return true if the match is correct, false otherwise
      */
-    private String[] matches(String result, String input) {
+    static String[] matches(String result, String input) {
         Pattern p = Pattern.compile(result);
 
         Matcher matcher = p.matcher(input);

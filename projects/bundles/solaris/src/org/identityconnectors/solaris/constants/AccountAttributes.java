@@ -35,17 +35,24 @@ import org.identityconnectors.solaris.operation.search.PatternBuilder;
  * also take a look at {@link AccountAttributesForPassword}.
  * @author David Adam
  */
-public enum AccountAttributes implements SolarisAttribute {    
+public enum AccountAttributes implements SolarisAttribute {
+    
+    /*
+     * NOTE:
+     * "logins -oxa" 
+     * -oxma gives the full set of groups 
+     */
+    
     /** home directory */
     DIR("dir", UpdateSwitches.DIR, null, null /* TODO */), 
-    SHELL("shell", UpdateSwitches.SHELL, null, null /* TODO */),
+    SHELL("shell", UpdateSwitches.SHELL, "logins -oxa", PatternBuilder.buildPattern(14, 1/*uid*/, 7/*shell col.*/)),
     /** primary group */
     GROUP("group", UpdateSwitches.GROUP, null, null /* TODO */),
     SECONDARY_GROUP("secondary_group", UpdateSwitches.SECONDARY_GROUP, null, null /* TODO */),
     UID("uid", UpdateSwitches.UID, null, null /* TODO */),
     NAME(Name.NAME, UpdateSwitches.UNKNOWN, null, null /* TODO */),
     EXPIRE("expire", UpdateSwitches.EXPIRE, null, null /* TODO */),
-    INACTIVE("inactive", UpdateSwitches.INACTIVE, "logins -oxma -l __username__", PatternBuilder.buildPattern(14, 1/*uid*/, 13/*inactive col.*/)), 
+    INACTIVE("inactive", UpdateSwitches.INACTIVE, "logins -oxa", PatternBuilder.buildPattern(14, 1/*uid*/, 13/*inactive col.*/)), 
     COMMENT("comment", UpdateSwitches.COMMENT, null, null /* TODO */),
     TIME_LAST_LOGIN("time_last_login", UpdateSwitches.UNKNOWN, null, null /* TODO */),
     AUTHORIZATION("authorization", UpdateSwitches.AUTHORIZATION, null, null /* TODO */),

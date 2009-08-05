@@ -55,11 +55,14 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
 import org.identityconnectors.solaris.constants.AccountAttributes;
 import org.identityconnectors.solaris.constants.AccountAttributesForPassword;
 import org.identityconnectors.solaris.constants.GroupAttributes;
-import org.identityconnectors.solaris.operation.impl.OpAuthenticateImpl;
-import org.identityconnectors.solaris.operation.impl.OpCreateImpl;
-import org.identityconnectors.solaris.operation.impl.OpDeleteImpl;
-import org.identityconnectors.solaris.operation.impl.OpSearchImpl;
-import org.identityconnectors.solaris.operation.impl.OpUpdateImpl;
+import org.identityconnectors.solaris.operation.OpAuthenticateImpl;
+import org.identityconnectors.solaris.operation.OpCreateImpl;
+import org.identityconnectors.solaris.operation.OpDeleteImpl;
+import org.identityconnectors.solaris.operation.OpUpdateImpl;
+import org.identityconnectors.solaris.operation.search.Node;
+import org.identityconnectors.solaris.operation.search.OpSearchImpl;
+import org.identityconnectors.solaris.operation.search.SearchPerformer;
+import org.identityconnectors.solaris.operation.search.SolarisFilterTranslator;
 
 /**
  * @author David Adam
@@ -67,7 +70,7 @@ import org.identityconnectors.solaris.operation.impl.OpUpdateImpl;
  */
 @ConnectorClass(displayNameKey = "Solaris", configurationClass = SolarisConfiguration.class)
 public class SolarisConnector implements PoolableConnector, AuthenticateOp,
-        SchemaOp, CreateOp, DeleteOp, UpdateOp, SearchOp<SolarisFilter>, TestOp {
+        SchemaOp, CreateOp, DeleteOp, UpdateOp, SearchOp<Node>, TestOp {
 
     /**
      * Setup logging for the {@link DatabaseTableConnector}.
@@ -123,7 +126,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      */
     public Uid authenticate(ObjectClass objectClass, String username,
             GuardedString password, OperationOptions options) {
-        return new OpAuthenticateImpl(_configuration, _connection, _log).authenticate(objectClass, username, password, options);
+        return new OpAuthenticateImpl(_log, this).authenticate(objectClass, username, password, options);
         
     }
 
@@ -131,29 +134,28 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     public Uid create(ObjectClass oclass, Set<Attribute> attrs,
             OperationOptions options) {
         
-        return new OpCreateImpl(_configuration, _connection, _log).create(oclass, attrs, options);
+        return new OpCreateImpl(_log, this).create(oclass, attrs, options);
     }
     
     /** {@inheritDoc} */
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
         
-        new OpDeleteImpl(_configuration, _connection, _log).delete(objClass, uid, options);
+        new OpDeleteImpl(_log, this).delete(objClass, uid, options);
     }
     
     public Uid update(ObjectClass objclass, Uid uid,
             Set<Attribute> replaceAttributes, OperationOptions options) {
-        return new OpUpdateImpl(_configuration, _connection, _log).update(objclass, uid, AttributeUtil.addUid(replaceAttributes, uid), options);
+        return new OpUpdateImpl(_log, this).update(objclass, uid, AttributeUtil.addUid(replaceAttributes, uid), options);
     }
     
-    public void executeQuery(ObjectClass oclass, SolarisFilter query,
+    public void executeQuery(ObjectClass oclass, Node query,
             ResultsHandler handler, OperationOptions options) {
-        new OpSearchImpl(_configuration, _connection, _log).executeQuery(oclass, query, handler, options);
+        new OpSearchImpl(_log, this).executeQuery(oclass, query, handler, options);
     }
 
-    public FilterTranslator<SolarisFilter> createFilterTranslator(
+    public FilterTranslator<Node> createFilterTranslator(
             ObjectClass oclass, OperationOptions options) {
-        // TODO temporarily we expect just ACCOUNTS to be searched However Groups are there too.
-        return new SolarisFilterTranslator(/*oclass, options*/);
+        return new SolarisFilterTranslator(new SearchPerformer(_configuration, getConnection()));
     }
     
     /**

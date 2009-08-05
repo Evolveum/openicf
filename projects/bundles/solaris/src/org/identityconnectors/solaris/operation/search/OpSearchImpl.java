@@ -22,12 +22,10 @@
  */
 package org.identityconnectors.solaris.operation.search;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
@@ -42,9 +40,6 @@ import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
-import org.identityconnectors.solaris.SolarisFilter;
-import org.identityconnectors.solaris.command.CommandBuilder;
-import org.identityconnectors.solaris.constants.AccountAttributes;
 import org.identityconnectors.solaris.operation.AbstractOp;
 
 
@@ -64,7 +59,7 @@ public class OpSearchImpl extends AbstractOp {
      *            can contain AND, OR ("&", "|") that represents and-ing and
      *            or-ing the result of matches. AND has priority over OR.
      */
-    public void executeQuery(ObjectClass oclass, SolarisFilter query,
+    public void executeQuery(ObjectClass oclass, Node query,
             ResultsHandler handler, OperationOptions options) {
         this.options = options;
         this.oclass = oclass;
@@ -79,57 +74,13 @@ public class OpSearchImpl extends AbstractOp {
             // OK
         }
         
-        //evaluate if the user exists
-        final String command = getCmdBuilder().build("cut", "-d: -f1 /etc/passwd | grep -v \"^[+-]\"");
-        String output = executeCommand(command);
-        
-        List<String> escapeStrings = CollectionUtil.newList(getConfiguration().getRootShellPrompt(), "@"/* TODO */, "#"/* TODO */, "$"/* TODO */, command);
-        /* TODO: replace hard-coded constants, see the previous line. */
-        
-        filterResult(output, handler, escapeStrings, query);
-    }
-
-    /**
-     * filters the output using various constraints (query, escapeStrings...).
-     * By default return RETURNED_BY_DEFAULT attributes
-     * 
-     * @param output
-     *            the output of list user command that should be filtered. It
-     *            contains command line prompt + prompt for the next command
-     *            that should be erased.
-     * @param handler
-     *            it is called when a result is returned
-     * @param escapeStrings
-     *            these items should not appear in the result
-     * @param query
-     *            these filters are applied on the result
-     */
-    private void filterResult(String output, ResultsHandler handler,
-            List<String> escapeStrings, SolarisFilter query) {
-        
-        // TODO
-        if (query != null && !query.getName().equals(Name.NAME)) {
-            throw new UnsupportedOperationException("Only filtering by __NAME__ attribute is supported for now.");
+        //traverse through the tree of search query:
+        Set<Uid> result = query.evaluate();
+        for (Uid uid : result) {
+            notifyHandler(handler, uid.getUidValue());
         }
-
-        final String[] lines = output.split("\n");
-        
-        for (String currentLine : lines) {
-            /** token can contain username or other data in single column. */
-            String token = currentLine.trim();
-            if (!isEscaped(token, escapeStrings)) {
-                if (query != null) {
-                    if (token.matches(query.getRegExp())) {
-                        notifyHandler(handler, token);
-                    }
-                } else {
-                    // Null query, return all results
-                    notifyHandler(handler, token);
-                }
-            }
-        }//for
     }
-    
+
     /** calls handler with given string */
     private void notifyHandler(ResultsHandler handler, String uid) {
         // TODO this could be more complicated, when other than Name attributes arrive.
@@ -147,17 +98,9 @@ public class OpSearchImpl extends AbstractOp {
             attrsToGet = getReturnedByDefaultAttrs(getSchema());
         }
         
-        for (String attrName : attrsToGet) {
-            if (attrName.equals(AccountAttributes.INACTIVE.getName())) {
-                try {
-                    getConnection().send(getCmdBuilder().build("logins", "-oxma", "-l", ));
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-            // TODO fill the other attributes
-        }
+        //for (String attrName : attrsToGet) {
+        //  // TODO fill the other attributes
+        //}
         
         handler.handle(co);
     }
@@ -182,14 +125,5 @@ public class OpSearchImpl extends AbstractOp {
         }
         
         return result.toArray(new String[0]);
-    }
-
-    /** checks if given 'string' is on the list of items to escape. */
-    private boolean isEscaped(String string, List<String> escapeStrings) {
-        for (String str : escapeStrings) {
-            if (string.contains(str))
-                return true;
-        }
-        return false;
     }
 }
