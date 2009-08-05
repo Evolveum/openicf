@@ -22,12 +22,14 @@
  */
 package org.identityconnectors.oracleerp;
 
+import java.math.BigInteger;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.sql.Types;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -35,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
@@ -509,7 +510,7 @@ public class OracleERPUtil {
         }
     }
     
-    
+        
     
     /**
      * @param dateString
@@ -520,9 +521,39 @@ public class OracleERPUtil {
         try {
             tms = Timestamp.valueOf(dateString);
         } catch (IllegalArgumentException expected) {
-            tms = new Timestamp(new Long(dateString));
+            try {
+                tms = new Timestamp(new Long(dateString));
+            } catch (Exception e) {
+                tms = new Timestamp(stringToDate(dateString).getTime());
+            }
         }
         return tms;
+    }
+    
+    /**
+     * @param dateString
+     * @return the timestamp
+     */
+    public static Date stringToDate(final String dateString) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Date date = null;
+
+        try {
+            date = sdf.parse(dateString);
+        } catch (ParseException e1) {
+            try {
+                date = Timestamp.valueOf(dateString);
+            } catch (IllegalArgumentException expected) {
+                try {
+                    date = DateFormat.getDateInstance().parse(dateString);
+                } catch (ParseException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return date;
     }
     
     /**
@@ -558,25 +589,6 @@ public class OracleERPUtil {
     }
     
     /**
-     * Read one row from database result set and convert a columns to attribute set.  
-     * @param resultSet database data
-     * @return The transformed attribute set
-     * @throws SQLException 
-     */
-    public static Map<String, SQLParam> getStringColumnValues(ResultSet resultSet) throws SQLException {
-        Assertions.nullCheck(resultSet,"resultSet");
-        Map<String, SQLParam> ret = CollectionUtil.<SQLParam>newCaseInsensitiveMap();
-        final ResultSetMetaData meta = resultSet.getMetaData();
-        int count = meta.getColumnCount();
-        for (int i = 1; i <= count; i++) {
-            final String name = meta.getColumnName(i);
-            final SQLParam param = SQLUtil.getSQLParam(resultSet, i, name, Types.VARCHAR);            
-            ret.put(name, param);
-        }
-        return ret;
-    }
-    
-    /**
      * @param name
      * @param columnValues
      * @return long  value
@@ -584,10 +596,27 @@ public class OracleERPUtil {
     public static Long extractLong(String name, Map<String, SQLParam> columnValues) {
         //enable date
         final SQLParam param = columnValues.get(name);
-        if (param == null || param.getValue() == null || !(param.getValue() instanceof String)) {
+        if (param == null) {
             return null;
         }
-        final Long ret = new Long((String) param.getValue());
+        final Object value = param.getValue();
+        if (value == null) {
+            return null;
+        }
+        Long ret = null;
+        if ( value instanceof String) {
+            ret = new Long((String) value);
+        } else if ( value instanceof Long) {
+            ret = (Long) value;
+        } else if ( value instanceof BigInteger) {
+            ret = ((BigInteger) value).longValue();
+        } else {
+            try {
+                ret = new Long(value.toString());
+            } catch (NumberFormatException e) {
+                // expected
+            }
+        }
         return ret;
     }  
     
@@ -599,10 +628,19 @@ public class OracleERPUtil {
     public static Date extractDate(String name, Map<String, SQLParam> columnValues) {
         //enable date
         final SQLParam param = columnValues.get(name);
-        if (param == null || param.getValue() == null || !(param.getValue() instanceof String)) {
+        if (param == null) {
             return null;
         }
-        final Date ret = stringToTimestamp((String) param.getValue());
+        final Object value = param.getValue();
+        if (value == null) {
+            return null;
+        }
+        Date ret = null;
+        if (value instanceof String) {
+           ret = stringToDate((String) value);
+        } else if (value instanceof Date) {
+           ret = (Date) value; 
+        }
         return ret;
     }  
   

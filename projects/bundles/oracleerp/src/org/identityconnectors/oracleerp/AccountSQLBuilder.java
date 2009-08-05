@@ -22,7 +22,7 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.AccountOperations.CALL_PARAMS;
+import static org.identityconnectors.oracleerp.AccountOperations.*;
 import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.sql.Timestamp;

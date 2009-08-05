@@ -24,10 +24,9 @@ package org.identityconnectors.oracleerp;
 
 import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
-import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Calendar;
@@ -36,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
@@ -112,6 +110,8 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         final String tblname = cfg.app() + "fnd_user";
         final Set<AttributeInfo> ais = getAttributeInfos(cfg.getSchema(), ObjectClass.ACCOUNT_NAME);
         final Set<String> attributesToGet = getAttributesToGet(options, ais);
+        final Set<String> readable = getReadableAttributes(getAttributeInfos(cfg.getSchema(), ObjectClass.ACCOUNT_NAME));
+
         final Set<String> fndUserColumnNames = getColumnNamesToGet(attributesToGet);
         //We always wont to have user id and user name
         fndUserColumnNames.add(USER_NAME); //User id
@@ -139,22 +139,22 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
 
         query.setWhere(where);
 
-        ResultSet result = null;
+        ResultSet resultSet = null;
         PreparedStatement statement = null;
         try {
             statement = conn.prepareStatement(query);
-            result = statement.executeQuery();
-            while (result.next()) {
+            resultSet = statement.executeQuery();
+            while (resultSet.next()) {
                 AttributeMergeBuilder amb = new AttributeMergeBuilder(attributesToGet);
-                final Map<String, SQLParam> columnValues = getStringColumnValues(result);
+                final Map<String, SQLParam> columnValues = SQLUtil.getColumnValues(resultSet);
                 final SQLParam userNameParm = columnValues.get(USER_NAME);
                 final String userName = (String) userNameParm.getValue();
                 final boolean getAuditorData = userNameParm.getValue().toString().equals(filterId);
                 // get users account attributes
-                merrgeAllAttributes(amb, columnValues);
+                buildAttributes(amb, columnValues, readable);
 
                 // if person_id not null and employee_number in schema, return employee_number
-                buildPersonDetails(amb, columnValues, perPeopleColumnNames);
+                buildPersonDetails(amb, columnValues, perPeopleColumnNames, readable);
 
                 // get users responsibilities only if if resp || direct_resp in account attribute
                 buildResponsibilitiesToAccountObject(amb, userName);
@@ -188,7 +188,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             SQLUtil.rollbackQuietly(conn);
             throw ConnectorException.wrap(e);
         } finally {
-            SQLUtil.closeQuietly(result);
+            SQLUtil.closeQuietly(resultSet);
             SQLUtil.closeQuietly(statement);
         }
         conn.commit();
@@ -285,8 +285,8 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
      * @param columnValues
      * @param columnNames
      */
-    private void buildPersonDetails(AttributeMergeBuilder bld, final Map<String, SQLParam> columnValues,
-            Set<String> personColumns) {
+    private void buildPersonDetails(final AttributeMergeBuilder bld, final Map<String, SQLParam> columnValues,
+            final Set<String> personColumns, final Set<String> readable) {
         final String method = "buildPersonDetails";
         log.info(method);
         if (columnValues == null || columnValues.get(EMP_ID) == null) {
@@ -294,7 +294,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             log.info("buildPersonDetails: No personId(employId)");
             return;
         }
-        final String personId = (String) columnValues.get(EMP_ID).getValue();
+        final Long personId = extractLong(EMP_ID, columnValues);
         if (personId == null) {
             log.info("buildPersonDetails: Null personId(employId)");
             return;
@@ -314,7 +314,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         // For all account query there is no need to replace or quote anything
         final DatabaseQueryBuilder query = new DatabaseQueryBuilder(tblname, personColumns);
         final FilterWhereBuilder where = new FilterWhereBuilder();
-        where.addBind(new SQLParam(PERSON_ID, personId, Types.VARCHAR), "=");
+        where.addBind(new SQLParam(PERSON_ID, personId, Types.NUMERIC), "=");
         query.setWhere(where);
 
         final String sql = query.getSQL();
@@ -331,7 +331,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
                 if (result.next()) {
                     final Map<String, SQLParam> personValues = SQLUtil.getColumnValues(result);
                     // get users account attributes
-                    this.merrgeAllAttributes(bld, personValues);
+                    this.buildAttributes(bld, personValues, readable);
                     log.info("Person values {0} from result set ", personValues);
                 }
             }
@@ -352,15 +352,19 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
 
   
     /**
-     * Merge all attribute . Translate column name to attribute name and convert the value
+     * Build all attributes . Translate column name to attribute name and convert the value
      * Add only readable attributes
      * @param amb the attribute merger
      * @param columnValues the column value map
      * @throws SQLException
      */
-    private void merrgeAllAttributes(AttributeMergeBuilder amb, Map<String, SQLParam> columnValues) throws SQLException {
+    private void buildAttributes(final AttributeMergeBuilder amb, final Map<String, SQLParam> columnValues, final Set<String> readable) throws SQLException {
         for (Map.Entry<String, SQLParam> val : columnValues.entrySet()) {
-            mergeAttribute(amb, val.getValue());
+            final SQLParam param = val.getValue();
+            if(param == null ) {
+                continue;
+            }
+            buildAttribute(amb, param, readable);
         }
     }
 
@@ -372,14 +376,21 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
      * @throws SQLException
      *             if something wrong
      */
-    private void mergeAttribute(AttributeMergeBuilder amb, final SQLParam param) throws SQLException {
+    private void buildAttribute(final AttributeMergeBuilder amb, final SQLParam param, final Set<String> readable) throws SQLException {
         final String columnName = param.getName();
         //Convert the data type and create attribute from it.
         final String attributeName = nr.getAttributeName(columnName);
-        final Set<String> readable = getReadableAttributes(getAttributeInfos(cfg.getSchema(), ObjectClass.ACCOUNT_NAME));
         //  Add only readable attributes
         if (readable.contains(attributeName)) {
-            final Object value = SQLUtil.jdbc2AttributeValue(param.getValue());
+            final Object origValue = param.getValue();
+            Object value = null;
+            if (origValue instanceof BigInteger) {
+                value =  origValue.toString();
+            } else if (origValue instanceof Long) {
+                value =  origValue.toString();
+            } else {
+                value = SQLUtil.jdbc2AttributeValue(origValue);
+            }
             amb.addAttribute(attributeName, value);
         }
     }

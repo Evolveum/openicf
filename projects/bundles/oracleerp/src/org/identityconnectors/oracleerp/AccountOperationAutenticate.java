@@ -99,7 +99,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
                 //not found
                 throw new InvalidCredentialException(cfg.getMessage(MSG_AUTH_FAILED, username));
             }
-            final Map<String, SQLParam> columnValues = getStringColumnValues(rs);
+            final Map<String, SQLParam> columnValues = SQLUtil.getColumnValues(rs);
             //build special attributes
             new AccountOperationSearch(conn, cfg).buildSpecialAttributes(amb, columnValues);
             
