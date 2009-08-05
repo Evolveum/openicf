@@ -142,6 +142,11 @@ public class SecuringAttributesOperationSearch extends Operation implements Sear
             log.error(e, msg);
             SQLUtil.rollbackQuietly(conn);
             throw new ConnectorException(msg, e);
+        } catch (Exception ex) {
+            final String msg = "Can not execute the sql " + sql;
+            log.error(ex, msg);
+            SQLUtil.rollbackQuietly(conn);
+            throw new ConnectorException(msg, ex);
         } finally {
             SQLUtil.closeQuietly(res);
             res = null;
@@ -149,6 +154,6 @@ public class SecuringAttributesOperationSearch extends Operation implements Sear
             st = null;
         }
         conn.commit();
-        log.ok(method);
+        log.info(method + " ok");
     }
 }

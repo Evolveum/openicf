@@ -24,14 +24,18 @@ package org.identityconnectors.oracleerp;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
@@ -143,7 +147,7 @@ public class OracleERPUtil {
     static final String DEFAULT_DRIVER="oracle.jdbc.driver.OracleDriver";
     
     /** Default OracleRP admin user */ 
-    static final String DEFAULT_USER_NAME = "APPL"; // Default user name           
+    static final String DEFAULT_USER_NAME = "APPS"; // Default user name           
       
     /**
      * Name attribute, old name attribute
@@ -183,6 +187,7 @@ public class OracleERPUtil {
     static final String MSG_HR_LINKING_ERROR="msg.hr.linking.error";
     static final String MSG_USER_NOT_FOUND="msg.user.not.found";
     static final String MSG_COULD_NOT_ENABLE_USER="msg.could.not.enable.user";
+    static final String MSG_COULD_NOT_DISABLE_USER="msg.could.not.disable.user";
     static final String MSG_COULD_NOT_RENAME_USER="msg.could.not.rename.user";
     static final String MSG_ACCOUNT_NOT_UPDATE="msg.account.not.update";
     static final String MSG_ACCOUNT_NAME_REQUIRED="msg.acount.name.required";
@@ -281,7 +286,7 @@ public class OracleERPUtil {
                 }
                 // rs closed in finally below
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error(e, sql);
             throw ConnectorException.wrap(e);
         } finally {
@@ -470,11 +475,11 @@ public class OracleERPUtil {
             return null;
         }
         
-        log.ok("clomunName ''{0}''", columnName);
+        log.info("clomunName ''{0}''", columnName);
         final String sql = "select "+PERSON_ID+" from "+cfg.app()+"PER_PEOPLE_F where "+columnName+" = ?";
         ResultSet rs = null; // SQL query on person_id
         PreparedStatement ps = null; // statement that generates the query
-        log.ok(sql);
+        log.info(sql);
         try {
             ps = conn.prepareStatement(sql);
             ps.setInt(1, num);
@@ -483,7 +488,7 @@ public class OracleERPUtil {
             if (rs.next()) {
                 ret = rs.getInt(1);
             }
-            log.ok("Oracle ERP: PERSON_ID return from {0} = {1}", sql, ret);
+            log.info("Oracle ERP: PERSON_ID return from {0} = {1}", sql, ret);
             
             if( ret == null ) {
                 final String msg =  cfg.getMessage(MSG_HR_LINKING_ERROR, num, name);
@@ -491,7 +496,7 @@ public class OracleERPUtil {
                 throw new ConnectorException(msg);
             }
 
-            log.ok("getPersonId for userId: ''{0}'' -> ''{1}''", name, ret);
+            log.info("getPersonId for userId: ''{0}'' -> ''{1}''", name, ret);
             return ret;
         } catch (SQLException e) {
             log.error(e, sql);
@@ -552,8 +557,56 @@ public class OracleERPUtil {
         return s;
     }
     
-
-
+    /**
+     * Read one row from database result set and convert a columns to attribute set.  
+     * @param resultSet database data
+     * @return The transformed attribute set
+     * @throws SQLException 
+     */
+    public static Map<String, SQLParam> getStringColumnValues(ResultSet resultSet) throws SQLException {
+        Assertions.nullCheck(resultSet,"resultSet");
+        Map<String, SQLParam> ret = CollectionUtil.<SQLParam>newCaseInsensitiveMap();
+        final ResultSetMetaData meta = resultSet.getMetaData();
+        int count = meta.getColumnCount();
+        for (int i = 1; i <= count; i++) {
+            final String name = meta.getColumnName(i);
+            final SQLParam param = SQLUtil.getSQLParam(resultSet, i, name, Types.VARCHAR);            
+            ret.put(name, param);
+        }
+        return ret;
+    }
+    
+    /**
+     * @param name
+     * @param columnValues
+     * @return long  value
+     */
+    public static Long extractLong(String name, Map<String, SQLParam> columnValues) {
+        //enable date
+        final SQLParam param = columnValues.get(name);
+        if (param == null || param.getValue() == null || !(param.getValue() instanceof String)) {
+            return null;
+        }
+        final Long ret = new Long((String) param.getValue());
+        return ret;
+    }  
+    
+    /**
+     * @param name
+     * @param columnValues
+     * @return date value
+     */
+    public static Date extractDate(String name, Map<String, SQLParam> columnValues) {
+        //enable date
+        final SQLParam param = columnValues.get(name);
+        if (param == null || param.getValue() == null || !(param.getValue() instanceof String)) {
+            return null;
+        }
+        final Date ret = stringToTimestamp((String) param.getValue());
+        return ret;
+    }  
+  
+    
     /**
      * Takes a date in string format and returns a normalized version of the date i.e., removing time data. null dates
      * are returned as string "null".
@@ -570,7 +623,7 @@ public class OracleERPUtil {
         } else if (strDate.length() > 10) {
             retDate = strDate.substring(0, 10); // truncate to only date i.e.,yyyy-mm-dd 
         }
-        log.ok(method, strDate, retDate);
+        log.info(method, strDate, retDate);
         return retDate;
     } // normalizeStrDate()
     
@@ -582,7 +635,7 @@ public class OracleERPUtil {
         final String method = "getCurrentDate ''{0}''";      
         Calendar rightNow = Calendar.getInstance();
         java.util.Date utilDate = rightNow.getTime();
-        log.ok(method, utilDate);  
+        log.info(method, utilDate);  
         return new java.sql.Date(utilDate.getTime());
     }
     
@@ -619,7 +672,7 @@ public class OracleERPUtil {
         final String method = "getStringParamValue ''{0}''";
         log.info(method, paramName);
         final SQLParam param = userParamMap.get(paramName);
-        if (param == null)
+        if (param == null || !(param.getValue() instanceof String))
             return null;
         final String ret = (String) param.getValue();
         return ret;
@@ -686,5 +739,7 @@ public class OracleERPUtil {
      */
     public static String createCallSQL(String schemaId, final String fn, StringBuilder body) {
         return "{ call " + schemaId + FND_USER_CALL + fn + " ( "+ body.toString() + " ) }";
-    }    
+    }
+
+
 }

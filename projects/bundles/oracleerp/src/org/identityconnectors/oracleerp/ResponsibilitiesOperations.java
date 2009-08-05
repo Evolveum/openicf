@@ -211,7 +211,7 @@ final class ResponsibilitiesOperations extends Operation {
             log.error(error.toString());
             throw new ConnectorException(error.toString());
         }
-        log.ok(method);
+        log.info(method);
     }
     
     /**
@@ -311,7 +311,7 @@ final class ResponsibilitiesOperations extends Operation {
 
                 arrayList.add(sb.toString());
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error(e, method);
             SQLUtil.rollbackQuietly(conn);
             throw ConnectorException.wrap(e);
@@ -322,7 +322,7 @@ final class ResponsibilitiesOperations extends Operation {
             st = null;
         }
 
-        log.ok(method);
+        log.info(method);
         return arrayList;
     }
 
@@ -336,7 +336,7 @@ final class ResponsibilitiesOperations extends Operation {
      * @return list of Sting
      */
     public List<String> getResps(List<String> resps, int respFmt) {
-        final String method = "getResps(ArrayList, int)";
+        final String method = "getResps";
         log.info(method + " respFmt=" + respFmt);
         List<String> respKeys = null;
         if (resps != null) {
@@ -347,7 +347,7 @@ final class ResponsibilitiesOperations extends Operation {
                 respKeys.add(strRespReformatted);
             }
         }
-        log.ok(method);
+        log.info(method);
         return respKeys;
     } // getResps()  
     
@@ -387,7 +387,7 @@ final class ResponsibilitiesOperations extends Operation {
             }
             strRespRet = key.toString();
         }
-        log.ok(method);
+        log.info(method);
         return strRespRet;
     } // getRespWithNormalizeDates()  
     
@@ -470,6 +470,11 @@ final class ResponsibilitiesOperations extends Operation {
                 SQLUtil.rollbackQuietly(conn);
                 throw new ConnectorException(msg, e);
             }
+        } catch (Exception ex) {
+            final String msg = "Can not execute the sql " + sql;
+            log.error(ex, msg);
+            SQLUtil.rollbackQuietly(conn);
+            throw new ConnectorException(msg, ex);
         } finally {
             SQLUtil.closeQuietly(st);
             st = null;
@@ -500,13 +505,18 @@ final class ResponsibilitiesOperations extends Operation {
                     SQLUtil.rollbackQuietly(conn);
                     throw new ConnectorException(msg, e);
                 }
+            } catch (Exception ex) {
+                final String msg = "Can not execute the sql " + sql;
+                log.error(ex, msg);
+                SQLUtil.rollbackQuietly(conn);
+                throw new ConnectorException(msg, ex);
             } finally {
                 SQLUtil.closeQuietly(st);
                 st = null;
             }
         }
         conn.commit();
-        log.ok(method);
+        log.info(method);
     }
 
     /**
@@ -633,11 +643,16 @@ final class ResponsibilitiesOperations extends Operation {
                 SQLUtil.rollbackQuietly(conn);
                 throw new ConnectorException(msg, e);
             }
+        } catch (Exception ex) {
+            final String msg = "Can not execute the sql " + sql;
+            log.error(ex, msg);
+            SQLUtil.rollbackQuietly(conn);
+            throw new ConnectorException(msg, ex);
         } finally {
             SQLUtil.closeQuietly(st);
             st = null;
         }
-        log.ok(method);
+        log.info(method);
     }
 
 
@@ -722,6 +737,11 @@ final class ResponsibilitiesOperations extends Operation {
                 SQLUtil.rollbackQuietly(conn);
                 throw new ConnectorException(msg, e);
             }
+        } catch (Exception ex) {
+            final String msg = "Can not execute the sql " + sql;
+            log.error(ex, msg);
+            SQLUtil.rollbackQuietly(conn);
+            throw new ConnectorException(msg, ex);
         } finally {
             SQLUtil.closeQuietly(st);
             st = null;
@@ -751,12 +771,17 @@ final class ResponsibilitiesOperations extends Operation {
                     SQLUtil.rollbackQuietly(conn);
                     throw new ConnectorException(msg, e);
                 }
+            } catch (Exception ex) {
+                final String msg = "Can not execute the sql " + sql;
+                log.error(ex, msg);
+                SQLUtil.rollbackQuietly(conn);
+                throw new ConnectorException(msg, ex);
             } finally {
                 SQLUtil.closeQuietly(st);
                 st = null;
             }
         }
-        log.ok(method);
+        log.info(method);
     }    
     
     /**

@@ -635,7 +635,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      */
     public int getAdminUserId() {
         try {
-            log.ok("The adminUserId is : {0} ", userId);
+            log.info("The adminUserId is : {0} ", userId);
             return new Integer(userId).intValue();
         } catch (Exception ex) {
             log.error(ex, "The User Id String {0} is not a number", userId);
@@ -725,11 +725,11 @@ public class OracleERPConfiguration extends AbstractConfiguration {
                     throw new IllegalArgumentException(getMessage(MSG_DATABASE_BLANK));
                 }
             }
-            log.ok("driver configuration is ok");                
+            log.info("driver configuration is ok");                
         } else {
             //Validate the JNDI properties
             JNDIUtil.arrayToHashtable(getJndiProperties(), getConnectorMessages());           
-            log.ok("dataSource configuration is ok");                
+            log.info("dataSource configuration is ok");                
         }
     }
 
@@ -756,7 +756,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      */
     public String getMessage(String key) {
         final String fmt = getConnectorMessages().format(key, key);
-        log.ok("Get for a key {0} connector message {1}", key, fmt);        
+        log.info("Get for a key {0} connector message {1}", key, fmt);        
         return fmt;
     }
     
@@ -768,7 +768,7 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      */
     public String getMessage(String key, Object... objects) {
         final String fmt = getConnectorMessages().format(key, key, objects);
-        log.ok("Get for a key {0} connector message {1}", key, fmt);        
+        log.info("Get for a key {0} connector message {1}", key, fmt);        
         return fmt;
     }    
     

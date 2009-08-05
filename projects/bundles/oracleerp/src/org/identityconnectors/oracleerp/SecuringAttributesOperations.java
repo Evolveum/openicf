@@ -105,7 +105,7 @@ final class SecuringAttributesOperations extends Operation {
             }
         }
 
-        log.ok(method);
+        log.info(method);
     }
 
     /**
@@ -198,23 +198,23 @@ final class SecuringAttributesOperations extends Operation {
             cstmt1 = conn.prepareCall(sql);
 
             msg = "Oracle ERP: api_version_number = " + 1;
-            log.ok(msg);
+            log.info(msg);
             cstmt1.setInt(1, 1);
             
             msg = "Oracle ERP: init_msg_list = NULL";
-            log.ok(msg);
+            log.info(msg);
             cstmt1.setNull(2, java.sql.Types.VARCHAR);
             
             msg = "Oracle ERP: simulate = NULL";
-            log.ok(msg);
+            log.info(msg);
             cstmt1.setNull(3, java.sql.Types.VARCHAR);
             
             msg = "Oracle ERP: commit = NULL";
-            log.ok(msg);
+            log.info(msg);
             cstmt1.setNull(4, java.sql.Types.VARCHAR);
             
             msg = "Oracle ERP: validation_level = NULL";
-            log.ok(msg);
+            log.info(msg);
             cstmt1.setNull(5, java.sql.Types.NUMERIC);
             
             // return_status
@@ -225,11 +225,11 @@ final class SecuringAttributesOperations extends Operation {
             cstmt1.registerOutParameter(8, java.sql.Types.VARCHAR);
 
             msg = "Oracle ERP: web_user_id = " + intUserId;
-            log.ok(msg);
+            log.info(msg);
             cstmt1.setInt(9, intUserId);
             
             msg = "Oracle ERP: attribute_code = " + attributeCode;
-            log.ok(msg);
+            log.info(msg);
             cstmt1.setString(10, attributeCode);
             
             int attrApplId = 0;
@@ -237,72 +237,77 @@ final class SecuringAttributesOperations extends Operation {
                 attrApplId = new Integer(strAttrApplId).intValue();
             }
             msg = "Oracle ERP: attribute_appl_id = " + strAttrApplId;
-            log.ok(msg);
+            log.info(msg);
             cstmt1.setInt(11, attrApplId);
             
             if (dataType.equalsIgnoreCase("VARCHAR2")) {
                 msg = "Oracle ERP: varchar2_value = " + value;
-                log.ok(msg);
+                log.info(msg);
                 cstmt1.setString(12, value);
                 
             } else {
                 msg = "Oracle ERP: varchar2_value = null";
-                log.ok(msg);
+                log.info(msg);
                 cstmt1.setNull(12, Types.VARCHAR);                
             }
 
             if (dataType.equalsIgnoreCase("DATE")) {
                 msg = "Oracle ERP: date_value = " + value;
-                log.ok(msg);
+                log.info(msg);
                 cstmt1.setTimestamp(13, java.sql.Timestamp.valueOf(value));               
             } else {
                 msg = "Oracle ERP: date_value = NULL";
-                log.ok(msg);
+                log.info(msg);
                 cstmt1.setNull(13, java.sql.Types.DATE);                
             }
             if (dataType.equalsIgnoreCase("NUMBER")) {
                 if (value != null) {
                     int intValue = new Integer(value).intValue();
                     msg = "Oracle ERP: number_value = " + intValue;
-                    log.ok(msg);
+                    log.info(msg);
                     cstmt1.setInt(14, intValue);                   
                 }
             } else {
                 msg = "Oracle ERP: number_value = null";
-                log.ok(msg);
+                log.info(msg);
                 cstmt1.setNull(14, java.sql.Types.NUMERIC);
             }
             msg = "Oracle ERP: created_by = " + cfg.getAdminUserId();
-            log.ok(msg);
+            log.info(msg);
             cstmt1.setInt(15, cfg.getAdminUserId());
             
             java.sql.Date sqlDate = getCurrentDate();
             msg = "Oracle ERP: creation_date = sysdate";
-            log.ok(msg);
+            log.info(msg);
             cstmt1.setDate(16, sqlDate);
             
             msg = "Oracle ERP: last_updated_by = " + cfg.getAdminUserId();
-            log.ok(msg);
+            log.info(msg);
             cstmt1.setInt(17, cfg.getAdminUserId());
             
             msg = "Oracle ERP: last_updated_date = sysdate";
-            log.ok(msg);
+            log.info(msg);
             cstmt1.setDate(18, sqlDate);
             
             msg = "Oracle ERP: last_update_login = " + cfg.getAdminUserId();
-            log.ok(msg);
+            log.info(msg);
             cstmt1.setInt(19, cfg.getAdminUserId());
             
 
             cstmt1.execute();
             // cstmt1 closed in finally below
-            log.ok(method);
+            log.info(method);
 
         } catch (SQLException e) {
             final String msg = "SQL Exception:" + e.getMessage();
             log.error(e, msg);
             SQLUtil.rollbackQuietly(conn);
             throw new ConnectorException(msg, e);
+        } catch (Exception ex) {
+            final String msg = "Can not execute";
+            log.error(ex, msg);
+            SQLUtil.rollbackQuietly(conn);
+            throw new ConnectorException(msg, ex);
         } finally {
             SQLUtil.closeQuietly(rs);
             rs = null;
@@ -395,23 +400,23 @@ final class SecuringAttributesOperations extends Operation {
 
             cstmt1.setInt(1, 1);
             msg = "Oracle ERP: api_version_number = " + 1;
-            log.ok(msg);
+            log.info(msg);
 
             cstmt1.setNull(2, java.sql.Types.VARCHAR);
             msg = "Oracle ERP: init_msg_list = NULL";
-            log.ok(msg);
+            log.info(msg);
 
             cstmt1.setNull(3, java.sql.Types.VARCHAR);
             msg = "Oracle ERP: simulate = NULL";
-            log.ok(msg);
+            log.info(msg);
 
             cstmt1.setNull(4, java.sql.Types.VARCHAR);
             msg = "Oracle ERP: commit = NULL";
-            log.ok(msg);
+            log.info(msg);
 
             cstmt1.setNull(5, java.sql.Types.NUMERIC);
             msg = "Oracle ERP: validation_level = NULL";
-            log.ok(msg);
+            log.info(msg);
 
             // return_status
             cstmt1.registerOutParameter(6, java.sql.Types.VARCHAR);
@@ -422,11 +427,11 @@ final class SecuringAttributesOperations extends Operation {
 
             cstmt1.setInt(9, intUserId);
             msg = "Oracle ERP: web_user_id = {0}";
-            log.ok(msg, intUserId);
+            log.info(msg, intUserId);
 
             cstmt1.setString(10, attributeCode);
             msg = "Oracle ERP: attribute_code = {0}";
-            log.ok(msg, attributeCode);
+            log.info(msg, attributeCode);
 
             int attrApplId = 0;
             if (strAttrApplId != null) {
@@ -434,41 +439,41 @@ final class SecuringAttributesOperations extends Operation {
             }
             cstmt1.setInt(11, attrApplId);
             msg = "Oracle ERP: attribute_appl_id = {0}";
-            log.ok(msg, strAttrApplId);
+            log.info(msg, strAttrApplId);
 
             if (dataType.equalsIgnoreCase("VARCHAR2")) {
                 cstmt1.setString(12, value);
                 msg = "Oracle ERP: varchar2_value  = {0}";
-                log.ok(msg, value);
+                log.info(msg, value);
 
             } else {
                 cstmt1.setNull(12, Types.VARCHAR);
                 msg = "Oracle ERP: varchar2_value = null";
-                log.ok(msg);
+                log.info(msg);
 
             }
 
             if (dataType.equalsIgnoreCase("DATE")) {
                 cstmt1.setTimestamp(13, java.sql.Timestamp.valueOf(value));
                 msg = "Oracle ERP: date_value  = {0}";
-                log.ok(msg, value);
+                log.info(msg, value);
 
             } else {
                 cstmt1.setNull(13, java.sql.Types.DATE);
                 msg = "Oracle ERP: date_value = NULL";
-                log.ok(msg);
+                log.info(msg);
             }
             if (dataType.equalsIgnoreCase("NUMBER")) {
                 if (value != null) {
                     int intValue = new Integer(value).intValue();
                     cstmt1.setInt(14, intValue);
                     msg = "Oracle ERP: number_value = " + intValue;
-                    log.ok(msg, value);
+                    log.info(msg, value);
                 }
             } else {
                 cstmt1.setNull(14, java.sql.Types.NUMERIC);
                 msg = "Oracle ERP: number_value = null";
-                log.ok(msg);
+                log.info(msg);
             }
             cstmt1.execute();
             // cstmt1 closed in finally below
@@ -479,6 +484,11 @@ final class SecuringAttributesOperations extends Operation {
             final String msg = "error in statement";
             log.error(e, msg);
             throw new ConnectorException(msg, e);
+        } catch (Exception ex) {
+            final String msg = "Can not execute";
+            log.error(ex, msg);
+            SQLUtil.rollbackQuietly(conn);
+            throw new ConnectorException(msg, ex);
         } finally {
             SQLUtil.closeQuietly(rs);
             rs = null;
@@ -487,7 +497,7 @@ final class SecuringAttributesOperations extends Operation {
             SQLUtil.closeQuietly(cstmt1);
             cstmt1 = null;
         }
-        log.ok(method);
+        log.info(method);
     }
 
     /**
@@ -561,13 +571,18 @@ final class SecuringAttributesOperations extends Operation {
             log.error(e, msg);
             SQLUtil.rollbackQuietly(conn);
             throw new ConnectorException(msg, e);
+        } catch (Exception ex) {
+            final String msg = "Can not execute the sql " + sql;
+            log.error(ex, msg);
+            SQLUtil.rollbackQuietly(conn);
+            throw new ConnectorException(msg, ex);
         } finally {
             SQLUtil.closeQuietly(res);
             res = null;
             SQLUtil.closeQuietly(st);
             st = null;
         }
-        log.ok(method);
+        log.info(method);
         return arrayList;
     }
     

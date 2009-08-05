@@ -25,16 +25,18 @@ package org.identityconnectors.oracleerp;
 import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
@@ -43,6 +45,7 @@ import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
@@ -50,6 +53,7 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
+import org.identityconnectors.framework.spi.AttributeNormalizer;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 
 /**
@@ -61,13 +65,13 @@ import org.identityconnectors.framework.spi.operations.SearchOp;
  * @version $Revision 1.0$
  * @since 1.0
  */
-final class AccountOperationSearch extends Operation implements SearchOp<FilterWhereBuilder> {
+final class AccountOperationSearch extends Operation implements SearchOp<FilterWhereBuilder>, AttributeNormalizer {
 
     /** Setup logging. */
     static final Log log = Log.getLog(AccountOperationSearch.class);
 
     /** Name translation */
-    private NameResolver nr = new AccountNameResolver();
+    private AccountNameResolver nr = new AccountNameResolver();
 
     
     /** ResOps */
@@ -103,6 +107,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder where, ResultsHandler handler,
             OperationOptions options) {
         final String method = "executeQuery";
+        log.info(method);
 
         final String tblname = cfg.app() + "fnd_user";
         final Set<AttributeInfo> ais = getAttributeInfos(cfg.getSchema(), ObjectClass.ACCOUNT_NAME);
@@ -141,7 +146,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             result = statement.executeQuery();
             while (result.next()) {
                 AttributeMergeBuilder amb = new AttributeMergeBuilder(attributesToGet);
-                final Map<String, SQLParam> columnValues = SQLUtil.getColumnValues(result);
+                final Map<String, SQLParam> columnValues = getStringColumnValues(result);
                 final SQLParam userNameParm = columnValues.get(USER_NAME);
                 final String userName = (String) userNameParm.getValue();
                 final boolean getAuditorData = userNameParm.getValue().toString().equals(filterId);
@@ -178,16 +183,18 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
                     break;
                 }
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error(e, method);
+            SQLUtil.rollbackQuietly(conn);
             throw ConnectorException.wrap(e);
         } finally {
             SQLUtil.closeQuietly(result);
             SQLUtil.closeQuietly(statement);
         }
         conn.commit();
-        log.ok(method);        
+        log.info(method + " ok");        
     }
+   
 
     /**
      * Transform the columns to special attributes
@@ -197,24 +204,16 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
     public void buildSpecialAttributes(final AttributeMergeBuilder amb, final Map<String, SQLParam> columnValues) {
         // create the connector object..
         final Date dateNow = new Date(System.currentTimeMillis());
-        final SQLParam end_date_param = columnValues.get(END_DATE);
-        Date end_date = null;
+        final Date end_date = OracleERPUtil.extractDate(END_DATE, columnValues); 
         //disable date
-        if (end_date_param != null) {
-            end_date = (Date) end_date_param.getValue();
-            if( end_date != null ) {
-                amb.addAttribute(AttributeBuilder.buildDisableDate(end_date));
-            }
+        if( end_date != null ) {
+            amb.addAttribute(AttributeBuilder.buildDisableDate(end_date));
         }
 
         //enable date
-        final SQLParam start_date_param = columnValues.get(START_DATE);
-        Date start_date = null;
-        if (start_date_param != null) {
-            start_date = (Date) start_date_param.getValue();
-            if ( start_date != null) {
-                amb.addAttribute(AttributeBuilder.buildEnableDate(start_date));
-            }
+        final Date start_date = OracleERPUtil.extractDate(START_DATE, columnValues);
+        if ( start_date != null) {
+            amb.addAttribute(AttributeBuilder.buildEnableDate(start_date));
         }
 
         //enable
@@ -231,34 +230,21 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             //bld.addAttribute(AttributeBuilder.buildEnabled(false));                        
         }
         
-        final SQLParam lastLogonDateParam = columnValues.get(LAST_LOGON_DATE);
-        if (lastLogonDateParam != null) {
-            final Date lastLogonDate = (Date) lastLogonDateParam.getValue();   
-            if ( lastLogonDate != null ) {
-                amb.addAttribute(AttributeBuilder.buildLastLoginDate(lastLogonDate));
-            }
-        }        
+        final Date lastLogonDate = OracleERPUtil.extractDate(LAST_LOGON_DATE, columnValues);
+        if ( lastLogonDate != null ) {
+            amb.addAttribute(AttributeBuilder.buildLastLoginDate(lastLogonDate));
+        }
 
         // password expired
-        final SQLParam pwdDateParam = columnValues.get(PWD_DATE);
-        Date pwdDate = null;
-        if (pwdDateParam != null) {
-            pwdDate = (Date) columnValues.get(PWD_DATE).getValue();
-            if( pwdDate != null ) {
-                amb.addAttribute(AttributeBuilder.buildLastPasswordChangeDate(pwdDate));
-            }
+        final Date pwdDate = OracleERPUtil.extractDate(PWD_DATE, columnValues);
+        if( pwdDate != null ) {
+            amb.addAttribute(AttributeBuilder.buildLastPasswordChangeDate(pwdDate));
         }
         
-        final SQLParam access_left_param = columnValues.get(PWD_ACCESSES_LEFT);
-        BigDecimal access_left = null;
-        if( access_left_param != null ) {
-            access_left = (BigDecimal) columnValues.get(PWD_ACCESSES_LEFT).getValue();
-        }
-        final SQLParam lifespan_days_param = columnValues.get(PWD_LIFESPAN_DAYS);
-        BigDecimal lifespan_days = null;
-        if ( lifespan_days_param != null ) {
-            lifespan_days = (BigDecimal) columnValues.get(PWD_LIFESPAN_DAYS).getValue();
-        }        
+        final Long access_left = OracleERPUtil.extractLong(PWD_ACCESSES_LEFT, columnValues);
+        
+        final Long lifespan_days = OracleERPUtil.extractLong(PWD_LIFESPAN_DAYS, columnValues);
+      
         if (access_left != null && access_left.intValue() <= 0) {
             amb.addAttribute(AttributeBuilder.buildPasswordExpired(true));
         } else if (lifespan_days != null && pwdDate != null) {
@@ -290,7 +276,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             }
         }      
 
-        log.ok("columnNamesToGet {0}", columnNamesToGet);
+        log.info("columnNamesToGet {0}", columnNamesToGet);
         return columnNamesToGet;
     }
 
@@ -301,15 +287,16 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
      */
     private void buildPersonDetails(AttributeMergeBuilder bld, final Map<String, SQLParam> columnValues,
             Set<String> personColumns) {
-
+        final String method = "buildPersonDetails";
+        log.info(method);
         if (columnValues == null || columnValues.get(EMP_ID) == null) {
             // No personId(employId)
-            log.ok("buildPersonDetails: No personId(employId)");
+            log.info("buildPersonDetails: No personId(employId)");
             return;
         }
-        final BigDecimal personId = (BigDecimal) columnValues.get(EMP_ID).getValue();
+        final String personId = (String) columnValues.get(EMP_ID).getValue();
         if (personId == null) {
-            log.ok("buildPersonDetails: Null personId(employId)");
+            log.info("buildPersonDetails: Null personId(employId)");
             return;
         }
         log.info("buildPersonDetails for personId: {0}", personId);
@@ -319,15 +306,15 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
 
         if (personColumns.isEmpty()) {
             // No persons column required
-            log.ok("No persons column To Get");
+            log.info("No persons column To Get");
             return;
         }
-        log.ok("personColumns {0} To Get", personColumns);
+        log.info("personColumns {0} To Get", personColumns);
 
         // For all account query there is no need to replace or quote anything
         final DatabaseQueryBuilder query = new DatabaseQueryBuilder(tblname, personColumns);
         final FilterWhereBuilder where = new FilterWhereBuilder();
-        where.addBind(new SQLParam(PERSON_ID, personId, Types.DECIMAL), "=");
+        where.addBind(new SQLParam(PERSON_ID, personId, Types.VARCHAR), "=");
         query.setWhere(where);
 
         final String sql = query.getSQL();
@@ -340,16 +327,16 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             statement = conn.prepareStatement(query);
             result = statement.executeQuery();
             if (result != null) {
-                log.ok("executeQuery {0}", query.getSQL());
+                log.info("executeQuery {0}", query.getSQL());
                 if (result.next()) {
                     final Map<String, SQLParam> personValues = SQLUtil.getColumnValues(result);
                     // get users account attributes
                     this.merrgeAllAttributes(bld, personValues);
-                    log.ok("Person values {0} from result set ", personValues);
+                    log.info("Person values {0} from result set ", personValues);
                 }
             }
 
-        } catch (SQLException e) {
+        } catch (Exception e) {
             String emsg = e.getMessage();
             msg = "Caught SQLException when executing: ''{0}'': {1}";
             log.error(msg, sql, emsg);
@@ -372,8 +359,6 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
      * @throws SQLException
      */
     private void merrgeAllAttributes(AttributeMergeBuilder amb, Map<String, SQLParam> columnValues) throws SQLException {
-        final String method = "buildAccountObject";
-        log.info(method);
         for (Map.Entry<String, SQLParam> val : columnValues.entrySet()) {
             mergeAttribute(amb, val.getValue());
         }
@@ -459,5 +444,14 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         for (String activeRespName : activeRespList) {
             auditOps.updateAuditorData(amb, activeRespName);
         }
+    }
+
+    /**
+     * @param oclass
+     * @param attribute
+     * @return the normalized attribute
+     */
+    public Attribute normalizeAttribute(ObjectClass oclass, Attribute attribute) {
+        return nr.normalizeAttribute(oclass, attribute);
     }   
 }

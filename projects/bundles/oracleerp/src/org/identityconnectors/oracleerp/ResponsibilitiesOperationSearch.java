@@ -122,7 +122,7 @@ public class ResponsibilitiesOperationSearch extends Operation implements Search
             }
         }
         conn.commit();
-        log.ok(method);
+        log.info(method + " ok");
     }
 
 }

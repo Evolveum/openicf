@@ -112,6 +112,11 @@ public class SecuringGroupsOperationSearch extends Operation implements SearchOp
             log.error(e, method);
             SQLUtil.rollbackQuietly(conn);
             throw ConnectorException.wrap(e);
+        } catch (Exception ex) {
+            final String msg = "Can not execute";
+            log.error(ex, msg);
+            SQLUtil.rollbackQuietly(conn);
+            throw new ConnectorException(msg, ex);
         } finally {
             SQLUtil.closeQuietly(res);
             res = null;
@@ -119,7 +124,7 @@ public class SecuringGroupsOperationSearch extends Operation implements SearchOp
             st = null;
         }
         conn.commit();
-        log.ok(method);
+        log.info(method + " ok");
     }
 
     /* (non-Javadoc)

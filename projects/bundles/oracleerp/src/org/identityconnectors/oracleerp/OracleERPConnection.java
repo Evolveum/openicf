@@ -105,7 +105,7 @@ public class OracleERPConnection extends DatabaseConnection {
                 if( !oracleConn.getIncludeSynonyms() ) {
                     log.info("setIncludeSynonyms on ORACLE");
                     oracleConn.setIncludeSynonyms(true);
-                    log.ok("setIncludeSynonyms success");
+                    log.info("setIncludeSynonyms success");
                 }
             } catch (Exception e) {
                 log.error(e, "setIncludeSynonyms on ORACLE exception");
@@ -116,7 +116,7 @@ public class OracleERPConnection extends DatabaseConnection {
                 if ( oracleConn.getDefaultRowPrefetch()!=DEFAULT_ROW_PREFETCH) {
                     log.info("setDefaultRowPrefetch on ORACLE");
                     oracleConn.setDefaultRowPrefetch(DEFAULT_ROW_PREFETCH);
-                    log.ok("setDefaultRowPrefetch success");
+                    log.info("setDefaultRowPrefetch success");
                 }
             } catch (SQLException expected) {
                 //expected

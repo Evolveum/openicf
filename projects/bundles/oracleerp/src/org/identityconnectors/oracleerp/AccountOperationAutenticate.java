@@ -23,12 +23,10 @@
 package org.identityconnectors.oracleerp;
 
 import static org.identityconnectors.oracleerp.OracleERPUtil.*;
-import static org.identityconnectors.oracleerp.OracleERPUtil.MSG_AUTH_FAILED;
 
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +71,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
      * @see org.identityconnectors.framework.spi.operations.AuthenticateOp#authenticate(org.identityconnectors.framework.common.objects.ObjectClass, java.lang.String, org.identityconnectors.common.security.GuardedString, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public Uid authenticate(ObjectClass objectClass, String username, GuardedString password, OperationOptions options) {
-        log.ok("authenticate user ''{0}''", username);
+        log.info("authenticate user ''{0}''", username);
         
         Assertions.nullCheck(objectClass, "objectClass");
         Assertions.nullCheck(username, "username");
@@ -101,7 +99,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
                 //not found
                 throw new InvalidCredentialException(cfg.getMessage(MSG_AUTH_FAILED, username));
             }
-            final Map<String, SQLParam> columnValues = SQLUtil.getColumnValues(rs);
+            final Map<String, SQLParam> columnValues = getStringColumnValues(rs);
             //build special attributes
             new AccountOperationSearch(conn, cfg).buildSpecialAttributes(amb, columnValues);
             
@@ -115,7 +113,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
                 throw new InvalidCredentialException(cfg.getMessage(MSG_AUTH_FAILED, username));
             }                            
             
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             log.error(ex, sqlAccount);
             SQLUtil.rollbackQuietly(conn);
             throw ConnectorException.wrap(ex);
@@ -129,7 +127,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
         // Verify the account is enabled by function call
         // add password param
         List<SQLParam> params = new ArrayList<SQLParam>();
-        params.add(new SQLParam(USER_NAME, username));
+        params.add(new SQLParam(USER_NAME, username.toUpperCase()));
         params.add(new SQLParam("password", password));       
                 
         final String sql = "select wavesetValidateFunc1(? , ?) from dual";
@@ -144,7 +142,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
                 throw new InvalidCredentialException(cfg.getMessage(MSG_AUTH_FAILED, username));
                 // password or user name
             }                
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             log.error(ex, sql);
             SQLUtil.rollbackQuietly(conn);
             throw ConnectorException.wrap(ex);
@@ -156,7 +154,8 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
         }
         
         conn.commit();
-        return new Uid(username);
+        log.info("authenticate user ''{0}'' ok", username);        
+        return new Uid(username.toUpperCase());
     }
 
     /**
@@ -177,7 +176,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
         try {
             st = conn.prepareCall(b.toString());
             st.execute();
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             log.error(ex, b.toString());
             throw ConnectorException.wrap(ex);
         } finally {

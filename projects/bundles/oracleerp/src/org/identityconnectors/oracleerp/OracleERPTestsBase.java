@@ -315,7 +315,7 @@ abstract public class OracleERPTestsBase {
      * @param ignoreSet
      */
     protected void testAttrSet(final Map<String, Attribute> expMap, final Map<String, Attribute> currMap, boolean fullMatch, Set<String> ignoreSet) {
-        log.ok("attributeSetsEquals");
+        log.info("attributeSetsEquals");
         Set<String> names = CollectionUtil.newCaseInsensitiveSet();
         names.addAll(expMap.keySet());
         if(fullMatch) {
@@ -341,7 +341,7 @@ abstract public class OracleERPTestsBase {
         }
         assertEquals("missing attriburtes "+mis, 0, mis.size()); 
         assertEquals("extra attriburtes "+ext, 0, ext.size()); 
-        log.ok("expected attributes are equal to current");
+        log.info("expected attributes are equal to current");
     }
 
     /**
@@ -360,9 +360,8 @@ abstract public class OracleERPTestsBase {
             }
             String exp = expVals.get(i).toString();
             String curr = currVals.get(i).toString();
-            if(attrName.contains("date")) {
-                int min = Math.min(exp.length(), curr.length());
-                assertEquals(attrName+":["+i+"]", exp.substring(0, min), curr.substring(0, min));
+            if(attrName.contains("date")) {                
+                assertEquals(attrName+":["+i+"]", OracleERPUtil.normalizeStrDate(exp) , OracleERPUtil.normalizeStrDate(curr));
             } else {
                 assertEquals(attrName+":["+i+"]", exp, curr);
             }

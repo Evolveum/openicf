@@ -25,7 +25,6 @@ package org.identityconnectors.oracleerp;
 import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.sql.CallableStatement;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
 
@@ -97,12 +96,12 @@ final class AccountOperationCreate extends Operation implements CreateOp {
      * @see org.identityconnectors.framework.spi.operations.CreateOp#create(org.identityconnectors.framework.common.objects.ObjectClass, java.util.Set, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
-        log.ok("create");               
         final Name nameAttr = AttributeUtil.getNameFromAttributes(attrs);
         if( nameAttr == null || nameAttr.getNameValue() == null) {
             throw new IllegalArgumentException(cfg.getMessage(MSG_ACCOUNT_NAME_REQUIRED));
         }        
-        final String name = nameAttr.getNameValue();
+        final String name = nameAttr.getNameValue().toUpperCase();
+        log.info("create user ''{0}''", name);               
 
         attrs = CollectionUtil.newSet(attrs); //modifiable set
         //add required owner, if missing
@@ -131,7 +130,7 @@ final class AccountOperationCreate extends Operation implements CreateOp {
             boolean isUpdateNeeded = false;
 
             final String msg = "Create user account {0} : {1}";
-            log.ok(msg, name, sql);
+            log.info(msg, name, sql);
             try {
                 // Create the user
                 if (cfg.isCreateNormalizer()) {
@@ -154,7 +153,7 @@ final class AccountOperationCreate extends Operation implements CreateOp {
                         csUpdate.execute();
                     }
                 }
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 log.error(e, name, sql);
                 SQLUtil.rollbackQuietly(conn);
                 throw new IllegalStateException(cfg.getMessage(MSG_ACCOUNT_NOT_CREATE, name), e);
@@ -179,7 +178,8 @@ final class AccountOperationCreate extends Operation implements CreateOp {
             secAttrOps.updateUserSecuringAttrs(secAttr, name);
         }
         
-        conn.commit();     
+        conn.commit();  
+        log.info("create user ''{0}'' ok", name);               
         return new Uid(name);
     }
 }

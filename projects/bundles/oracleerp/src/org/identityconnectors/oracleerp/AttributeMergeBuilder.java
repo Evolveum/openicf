@@ -10,7 +10,6 @@ import java.util.Map.Entry;
 
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.CollectionUtil;
-import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
@@ -22,7 +21,6 @@ import org.identityconnectors.framework.common.objects.ConnectorObject;
  */
 public final class AttributeMergeBuilder {
 
-    private static final Log log = Log.getLog(AttributeMergeBuilder.class);
     private Set<String> _attrToGet = null;
     private Map<String, List<Object>> _attrs = new HashMap<String, List<Object>>();
 
@@ -93,7 +91,6 @@ public final class AttributeMergeBuilder {
      */
     private void mergeValue(String name, Collection<?> merge) {
         if (!isInAttributesToGet(name)) {
-            log.info("Skip merge attribute {0}, it is not in attributesToGet", name);
             return;
         }
         List<Object> old = _attrs.get(name);
@@ -123,7 +120,6 @@ public final class AttributeMergeBuilder {
             final String name = entry.getKey();
             final List<Object> value = entry.getValue();
             if (!isInAttributesToGet(name)) {
-                log.info("Skip attribute {0}, it is not in attributesToGet", name);
                 continue;
             }            
             final Attribute attr = AttributeBuilder.build(name, value);

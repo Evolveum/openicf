@@ -22,6 +22,8 @@
  */
 package org.identityconnectors.oracleerp;
 
+import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+
 import java.util.Set;
 
 import org.identityconnectors.dbcommon.DatabaseFilterTranslator;
@@ -69,7 +71,9 @@ public class OracleERPFilterTranslator extends DatabaseFilterTranslator {
     protected SQLParam getSQLParam(Attribute attribute, ObjectClass oclass, OperationOptions options) {
         final String attributeName = attribute.getName();
         final String columnName = cnr.getColumnName(attributeName);
-        if ( columnNames.contains(columnName)) {
+        if ( columnName.equalsIgnoreCase(USER_NAME)) {
+            return new SQLParam( columnName, AttributeUtil.getStringValue(attribute).toUpperCase());
+        } else if ( columnNames.contains(columnName)) {
             return new SQLParam( columnName, AttributeUtil.getSingleValue(attribute));
         }
         return null;

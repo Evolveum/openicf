@@ -50,6 +50,7 @@ import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.ScriptContext;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
+import org.identityconnectors.framework.spi.AttributeNormalizer;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.Connector;
 import org.identityconnectors.framework.spi.ConnectorClass;
@@ -71,7 +72,7 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
  */
 @ConnectorClass(displayNameKey = "oracleerp.connector.display", configurationClass = OracleERPConfiguration.class)
 public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, SearchOp<FilterWhereBuilder>,
-        UpdateOp, CreateOp, TestOp, SchemaOp, ScriptOnConnectorOp {
+        UpdateOp, CreateOp, TestOp, SchemaOp, ScriptOnConnectorOp, AttributeNormalizer {
 
     /**
      * Setup logging for the {@link OracleERPConnector}.
@@ -88,6 +89,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      * @return connector configuration
      */
     public Configuration getConfiguration() {
+        log.info("getConfiguration");
         return this.cfg;
     }
     /**
@@ -109,6 +111,8 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      */
     public Uid authenticate(ObjectClass objectClass, final String username, final GuardedString password,
             final OperationOptions options) {
+        log.info("authenticate");
+        
         Assertions.nullCheck(objectClass, "objectClass");
         Assertions.nullCheck(username, "username");        
         Assertions.nullCheck(password, "password");
@@ -126,6 +130,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      ******************/
 
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
+        log.info("create");
         Assertions.nullCheck(oclass, "oclass");
         Assertions.nullCheck(attrs, "attrs");
         if (attrs.isEmpty()) {
@@ -148,6 +153,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      * @see org.identityconnectors.framework.spi.operations.SearchOp#createFilterTranslator(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public FilterTranslator<FilterWhereBuilder> createFilterTranslator(ObjectClass oclass, OperationOptions options) {
+        log.info("createFilterTranslator");
 
         Assertions.nullCheck(oclass, "oclass");
 
@@ -179,6 +185,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      * @see org.identityconnectors.framework.spi.operations.DeleteOp#delete(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.Uid, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
+        log.info("delete");
         Assertions.nullCheck(objClass, "oclass");
         Assertions.nullCheck(uid, "uid");
           
@@ -203,6 +210,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      * @see Connector#dispose()
      */
     public void dispose() {
+        log.info("dispose");
         conn.dispose();
         cfg = null;
         conn = null;
@@ -213,6 +221,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      */
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder where, ResultsHandler handler,
             OperationOptions options) {
+        log.info("executeQuery");
 
         Assertions.nullCheck(oclass, "oclass");
         Assertions.nullCheck(handler, "handler");
@@ -248,11 +257,43 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
 
         throw new IllegalArgumentException(cfg.getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
     }
+    
+    /* (non-Javadoc)
+     * @see org.identityconnectors.framework.spi.AttributeNormalizer#normalizeAttribute(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.Attribute)
+     */
+    public Attribute normalizeAttribute(ObjectClass oclass, Attribute attribute) {
+        //log.info("normalizeAttribute"); 
+        Assertions.nullCheck(oclass, "oclass");
+        Assertions.nullCheck(attribute, "attribute");
+
+        if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
+            return new AccountOperationSearch(conn, cfg).normalizeAttribute(oclass, attribute);
+        } else if (oclass.is(OracleERPUtil.RESP_NAMES)) {
+            return attribute;
+        } else if (oclass.is(OracleERPUtil.RESPS)) {
+            return attribute;
+        } else if (oclass.is(OracleERPUtil.DIRECT_RESPS)) {
+            return attribute;
+        } else if (oclass.is(OracleERPUtil.INDIRECT_RESPS)) {
+            return attribute;
+        } else if (oclass.is(OracleERPUtil.APPS)) {
+            return attribute;
+        } else if (oclass.is(OracleERPUtil.AUDITOR_RESPS)) {
+            return attribute;
+        } else if (oclass.is(OracleERPUtil.SEC_GROUPS)) {
+            return attribute;
+        } else if (oclass.is(OracleERPUtil.SEC_ATTRS)) {
+            return attribute;
+        }
+
+        throw new IllegalArgumentException(cfg.getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
+    }    
 
     /* (non-Javadoc)
      * @see org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp#runScriptOnConnector(org.identityconnectors.framework.common.objects.ScriptContext, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public Object runScriptOnConnector(ScriptContext request, OperationOptions options) {
+        log.info("runScriptOnConnector");
  
         Assertions.nullCheck(request, "request");
         Assertions.nullCheck(options, "options");        
@@ -267,6 +308,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      * @see org.identityconnectors.framework.spi.operations.SchemaOp#schema()
      */
     public Schema schema() {
+        log.info("schema");
         if (cfg.getSchema() == null) {
             cfg.setSchema(new OracleERPOperationSchema(conn, cfg).schema());
         }
@@ -278,6 +320,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      * @see org.identityconnectors.framework.spi.operations.TestOp#test()
      */
     public void test() {
+        log.info("test");
         cfg.validate();
         conn.test();
     }
@@ -285,11 +328,12 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
     /* (non-Javadoc)
      * @see org.identityconnectors.framework.spi.operations.UpdateOp#update(org.identityconnectors.framework.common.objects.ObjectClass, java.util.Set, org.identityconnectors.framework.common.objects.OperationOptions)
      */
-    public Uid update(ObjectClass objClass, Uid uid, Set<Attribute> replaceAttributes, OperationOptions options) {
+    public Uid update(ObjectClass objClass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
+        log.info("update");
         Assertions.nullCheck(objClass, "oclass");
         Assertions.nullCheck(uid, "uid");
-        Assertions.nullCheck(replaceAttributes, "replaceAttributes");
-        if (replaceAttributes.isEmpty()) {
+        Assertions.nullCheck(attrs, "replaceAttributes");
+        if (attrs.isEmpty()) {
             throw new IllegalArgumentException("Invalid attributes provided to a create operation.");
         }
         
@@ -298,7 +342,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         }        
 
         if (objClass.is(ObjectClass.ACCOUNT_NAME)) {
-            return new AccountOperationUpdate(conn, cfg).update(objClass, uid, replaceAttributes, options);
+            return new AccountOperationUpdate(conn, cfg).update(objClass, uid, attrs, options);
         } else if (objClass.is(RESP_NAMES)) {
             // TODO update resp names
         }
@@ -320,7 +364,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
          *  initUserName(), is implemented in OracleERPConfiguration: getSchemaId
          *  _ctx = makeConnection(result);
          */
-        log.info("Init using configuration {0}", configuration);
+        log.info("Init using configuration");
         this.cfg = (OracleERPConfiguration) configuration;
         this.conn = OracleERPConnection.createOracleERPConnection(cfg);
         log.info("createOracleERPConnection");
@@ -331,7 +375,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         initResponsibilities();        
         initFndGlobal();
         schema();
-        log.ok("init");
+        log.info("init done");
     }
     
     
@@ -349,7 +393,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
             try {
                 final String sql = "call " + cfg.app() + "FND_GLOBAL.APPS_INITIALIZE(?,?,?)";
                 final String msg = "Oracle ERP: {0}FND_GLOBAL.APPS_INITIALIZE({1}, {2}, {3}) called.";
-                log.ok(msg, cfg.app(), cfg.getUserId(), respId, respApplId);
+                log.info(msg, cfg.app(), cfg.getUserId(), respId, respApplId);
                 List<SQLParam> pars = new ArrayList<SQLParam>();
                 pars.add(new SQLParam("userId", cfg.getUserId(), Types.VARCHAR));
                 pars.add(new SQLParam("respId", respId, Types.VARCHAR));
@@ -369,7 +413,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
                 cs = null;
             }
         } else {
-            log.ok("Oracle ERP: {0}FND_GLOBAL.APPS_INITIALIZE() NOT called.", cfg.app());
+            log.info("Oracle ERP: {0}FND_GLOBAL.APPS_INITIALIZE() NOT called.", cfg.app());
         }
     }
     
@@ -419,7 +463,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
                     }
                 }
 
-                log.ok(msg, cfg.getRespId(), cfg.getRespApplId());
+                log.info(msg, cfg.getRespId(), cfg.getRespApplId());
             } catch (SQLException e) {
                 SQLUtil.rollbackQuietly(conn);
                 log.error(e, msg, cfg.getRespId(), cfg.getRespApplId());
@@ -431,6 +475,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
                 ps = null;
             }
         }
+        log.info("initResponsibilities doneS");
     }    
     
 
@@ -445,11 +490,11 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         try {
             ps = conn.prepareStatement(sql);
             res = ps.executeQuery();
-            log.ok("description exists");
+            log.info("description exists");
             return true;
         } catch (SQLException e) {
             //log.error(e, sql);
-            log.ok("description does not exists");
+            log.info("description does not exists");
         } finally {
             SQLUtil.closeQuietly(res);
             res = null;
@@ -472,9 +517,9 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         try {
             ps = conn.prepareStatement(sql);
             res = ps.executeQuery();
-            log.ok(sql);
+            log.info(sql);
             if (res != null && res.next()) {
-                log.ok("newResponsibilityViews: true");
+                log.info("newResponsibilityViews: true");
                 return true;
             }
         } catch (SQLException e) {
@@ -487,7 +532,8 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
             SQLUtil.closeQuietly(ps);
             ps = null;
         }
-        log.ok("newResponsibilityViews: true");
+        log.info("newResponsibilityViews: true");
         return false;
     }
+
 }

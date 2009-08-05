@@ -43,7 +43,6 @@ import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
@@ -140,7 +139,7 @@ public class RespNamesOperationSearch extends Operation implements SearchOp<Filt
                 }
             }
         }
-        catch (SQLException e) {
+        catch (Exception e) {
             log.error(e, method);
             SQLUtil.rollbackQuietly(conn);
             throw ConnectorException.wrap(e);
@@ -151,6 +150,6 @@ public class RespNamesOperationSearch extends Operation implements SearchOp<Filt
             st = null;
         }
         conn.commit();
-        log.ok(method);
+        log.info(method + " ok");
     }
 }

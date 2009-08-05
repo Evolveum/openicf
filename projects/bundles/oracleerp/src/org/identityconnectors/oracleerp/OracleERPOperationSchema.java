@@ -22,6 +22,7 @@
  */
 package org.identityconnectors.oracleerp;
 
+import static org.identityconnectors.framework.common.objects.OperationalAttributeInfos.*;
 import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.util.EnumSet;
@@ -33,7 +34,6 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
-import org.identityconnectors.framework.common.objects.PredefinedAttributeInfos;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
 import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
@@ -81,6 +81,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
 	}
 
 	public Schema schema() {
+        log.info("schema");
 
         // Use SchemaBuilder to build the schema.
         SchemaBuilder schemaBld = new SchemaBuilder(OracleERPConnector.class);
@@ -120,8 +121,10 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         // The IndirectResponsibilities for listing 
         final ObjectClassInfo secGrpsOci = getSecurngGroupsObjectClassInfo();
         addSearchableOnlyOC(schemaBld, secGrpsOci);  
-        
-        return schemaBld.build();
+
+        final Schema schema = schemaBld.build();
+        log.info("schema done");
+        return schema;
 	}
 
     /**
@@ -159,24 +162,14 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         ocib.addAttributeInfo(AttributeInfoBuilder.build(SESS_NUM, String.class, OracleERPOperationSchema.NCU));
         // name='start_date' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(START_DATE, String.class ));
-        ocib.addAttributeInfo(OperationalAttributeInfos.ENABLE_DATE);        
         // name='end_date' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(END_DATE, String.class));
-        ocib.addAttributeInfo(OperationalAttributeInfos.DISABLE_DATE);        
         // name='last_logon_date' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(LAST_LOGON_DATE, String.class, OracleERPOperationSchema.NCU));
         // name='description' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(DESCR, String.class));
-        // <Views><String>Enable</String></Views>
-        ocib.addAttributeInfo(OperationalAttributeInfos.ENABLE);
         // name='expirePassword' type='string' required='false' is mapped to PASSWORD_EXPIRED
-        ocib.addAttributeInfo(AttributeInfoBuilder.build(EXP_PWD, Boolean.class, NCUD));
-        ocib.addAttributeInfo(OperationalAttributeInfos.PASSWORD_EXPIRED);
-        // reset is implemented as change password
-        // name='Password',  Password is mapped to operationalAttribute
-        ocib.addAttributeInfo(OperationalAttributeInfos.PASSWORD);
-        ocib.addAttributeInfo(PredefinedAttributeInfos.LAST_LOGIN_DATE);        
-        ocib.addAttributeInfo(PredefinedAttributeInfos.LAST_PASSWORD_CHANGE_DATE);                
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(EXP_PWD, Boolean.class, NCUD));            
         // name='password_accesses_left' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(PWD_DATE, String.class));
         // name='password_accesses_left' type='string' required='false'
@@ -186,23 +179,23 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         // name='password_lifespan_days' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(PWD_LIFESPAN_DAYS, String.class));
         // name='employee_id' type='string' required='false'
-        ocib.addAttributeInfo(AttributeInfoBuilder.build(EMP_ID, Integer.class));
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(EMP_ID, String.class));
         // name='employee_number' type='string' required='false'
-        ocib.addAttributeInfo(AttributeInfoBuilder.build(EMP_NUM, Integer.class));
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(EMP_NUM, String.class));
         // name='person_fullname' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(PERSON_FULLNAME, String.class));
         // name='npw_number' type='string' required='false'
-        ocib.addAttributeInfo(AttributeInfoBuilder.build(NPW_NUM, Integer.class));
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(NPW_NUM, String.class));
         // name='email_address' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(EMAIL, String.class));
         // name='fax' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(FAX, String.class));
         // name='customer_id' type='string' required='false'
-        ocib.addAttributeInfo(AttributeInfoBuilder.build(CUST_ID, Integer.class));
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(CUST_ID, String.class));
         // name='supplier_id' type='string' required='false'
-        ocib.addAttributeInfo(AttributeInfoBuilder.build(SUPP_ID, Integer.class));
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(SUPP_ID, String.class));
         // name='person_party_id' type='string' required='false'
-        ocib.addAttributeInfo(AttributeInfoBuilder.build(PERSON_PARTY_ID, Integer.class));
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(PERSON_PARTY_ID, String.class));
         //user_id
         ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_ID, String.class, NCUD));
 
@@ -261,6 +254,17 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         // name='readWriteOnlyFunctionIds' type='string' audit='false'                 
         ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_FUNCTION_IDS, String.class, MNCUD));
 
+        
+        ocib.addAttributeInfo(OperationalAttributeInfos.ENABLE_DATE);        
+        ocib.addAttributeInfo(OperationalAttributeInfos.DISABLE_DATE);        
+        // <Views><String>Enable</String></Views>
+        ocib.addAttributeInfo(ENABLE);
+        ocib.addAttributeInfo(OperationalAttributeInfos.PASSWORD_EXPIRED);
+        // reset is implemented as change password
+        // name='Password',  Password is mapped to operationalAttribute
+        ocib.addAttributeInfo(OperationalAttributeInfos.PASSWORD);
+
+        
         return ocib.build();
     }	
 

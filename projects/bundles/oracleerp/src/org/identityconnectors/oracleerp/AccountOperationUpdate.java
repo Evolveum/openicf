@@ -26,15 +26,14 @@ import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
-import org.identityconnectors.contract.exceptions.ObjectNotFoundException;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
@@ -100,8 +99,9 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
      * @see org.identityconnectors.framework.spi.operations.UpdateOp#update(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.Uid, java.util.Set, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
-        final String method = "update";
-        final String name = uid.getUidValue();        
+        final String name = uid.getUidValue().toUpperCase();      
+        log.info("update user ''{0}''", name );
+        
         attrs = CollectionUtil.newSet(attrs); //modifiable set       
         
         //Name is not present
@@ -147,15 +147,15 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
             CallableStatement cs = null;
             final String sql = asb.getUserCallSQL();
             final String msg = "Update user account {0} : {1}";
-            log.ok(msg, name, sql);
+            log.info(msg, name, sql);
             try {
                 // Create the user
                 cs = conn.prepareCall(sql, asb.getUserSQLParams());
                 cs.execute();
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 log.error(e, msg, name, sql);
                 SQLUtil.rollbackQuietly(conn);
-                throw new ObjectNotFoundException(e);
+                throw new UnknownUidException(e);
             } finally {
                 SQLUtil.closeQuietly(cs);
             }            
@@ -177,7 +177,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
 
         conn.commit();
         //Return new UID
-        log.ok( method); 
+        log.info( "update user ''{0}'' ok", name );
         return new Uid(name);
     }
     
@@ -209,7 +209,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
             st.setString(1, userName.toUpperCase());
             st.setString(2, cfg.getUser());
             st.execute();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             final String msg = cfg.getMessage(MSG_COULD_NOT_ENABLE_USER, userName);
             log.error(e, msg);
             SQLUtil.rollbackQuietly(conn);
@@ -218,7 +218,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
             SQLUtil.closeQuietly(st);
             st = null;
         }
-        log.ok( method); 
+        log.info( method); 
     }
 
     /**
@@ -226,24 +226,24 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
      * @param uid
      * @param options
      */
-    private void disable(ObjectClass objclass, String name, OperationOptions options) {
+    private void disable(ObjectClass objclass, String userName, OperationOptions options) {
         final String sql = "{ call "+cfg.app()+"fnd_user_pkg.disableuser(?) }";
         final String method = "disable";
         log.info( method);
         CallableStatement cs = null;
         try {
             cs = conn.prepareCall(sql);
-            cs.setString(1, name);
+            cs.setString(1, userName);
             cs.execute();
             // No Result ??
-        } catch (SQLException e) {
-            final String msg = "SQL Exception trying to disable Oracle user '{0}' ";
+        } catch (Exception e) {
+            final String msg = cfg.getMessage(MSG_COULD_NOT_DISABLE_USER, userName);
             SQLUtil.rollbackQuietly(conn);
-            throw new IllegalArgumentException(MessageFormat.format(msg, name),e);
+            throw new IllegalArgumentException(MessageFormat.format(msg, userName),e);
         } finally {
             SQLUtil.closeQuietly(cs);
             cs = null;
         }
-        log.ok( method); 
+        log.info( method); 
     }    
 }

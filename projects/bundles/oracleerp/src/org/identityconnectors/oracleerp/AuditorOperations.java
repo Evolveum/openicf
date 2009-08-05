@@ -90,7 +90,7 @@ final class AuditorOperations extends Operation {
      * 
      */
      public void updateAuditorData(AttributeMergeBuilder amb, String respName) {
-         final String method = "getAuditorDataObject";
+         final String method = "updateAuditorData";
          log.info(method);
          // Profile Options used w/SOB and Organization
          String sobOption = "GL Set of Books ID";
@@ -145,7 +145,7 @@ final class AuditorOperations extends Operation {
         b.append("CONNECT BY prior sub_menu_id=menu_id) ORDER BY 2,4");
         // one query
         log.info(method + ": SQL statement: " + b.toString());
-        log.ok(method + ": Resp: " + curResp);
+        log.info(method + ": Resp: " + curResp);
 
         PreparedStatement st = null;
         ResultSet res = null;
@@ -267,7 +267,7 @@ final class AuditorOperations extends Operation {
                 }// end-if (qo)
             }// end-while
             // no catch, just use finally to ensure closes happen
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error(e, method);
             SQLUtil.rollbackQuietly(conn);
             throw ConnectorException.wrap(e);
@@ -333,7 +333,7 @@ final class AuditorOperations extends Operation {
                 }// end while
 
                 // no catch, just use finally to ensure closes happen
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 log.error(e, method);
                 SQLUtil.rollbackQuietly(conn);
                throw ConnectorException.wrap(e);
@@ -425,7 +425,7 @@ final class AuditorOperations extends Operation {
                         }
                     }
                 }
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 log.error(e, method);
                 SQLUtil.rollbackQuietly(conn);
                 throw ConnectorException.wrap(e);
@@ -439,76 +439,76 @@ final class AuditorOperations extends Operation {
 
         if (menuNames != null) {
             Collections.sort(menuNames);
-            log.ok(method + "USER_MENU_NAMES " + menuNames.toString());
+            log.info(method + "USER_MENU_NAMES " + menuNames.toString());
         }
         if (menuIds != null) {
             Collections.sort(menuIds);
-            log.ok(method + "MENU_IDS " + menuIds.toString());
+            log.info(method + "MENU_IDS " + menuIds.toString());
         }
         if (userFunctionNames != null) {
             Collections.sort(userFunctionNames);
-            log.ok(method + "USER_FUNCTION_NAMES " + userFunctionNames.toString());
+            log.info(method + "USER_FUNCTION_NAMES " + userFunctionNames.toString());
         }
         if (functionIdsList != null) {
             Collections.sort(functionIdsList);
-            log.ok(method + "FUNCTION_IDS " + functionIdsList.toString());
+            log.info(method + "FUNCTION_IDS " + functionIdsList.toString());
         }
         if (roFunctionIds != null) {
             Collections.sort(roFunctionIds);
-            log.ok(method + "RO_FUNCTION_IDS " + roFunctionIds.toString());
+            log.info(method + "RO_FUNCTION_IDS " + roFunctionIds.toString());
         }
         if (rwFunctionIds != null) {
             Collections.sort(rwFunctionIds);
-            log.ok(method + "RW_FUNCTION_IDS " + rwFunctionIds.toString());
+            log.info(method + "RW_FUNCTION_IDS " + rwFunctionIds.toString());
         }
         if (formIdList != null) {
             Collections.sort(formIdList);
-            log.ok(method + "APP_ID_FORM_IDS " + formIdList.toString());
+            log.info(method + "APP_ID_FORM_IDS " + formIdList.toString());
         }
         if (roFormIds != null) {
             Collections.sort(roFormIds);
-            log.ok(method + "RO_APP_ID_FORM_IDS " + roFormIds.toString());
+            log.info(method + "RO_APP_ID_FORM_IDS " + roFormIds.toString());
         }
         if (rwFormIds != null) {
             Collections.sort(rwFormIds);
-            log.ok(method + "RW_APP_ID_FORM_IDS " + rwFormIds.toString());
+            log.info(method + "RW_APP_ID_FORM_IDS " + rwFormIds.toString());
         }
         if (formNameList != null) {
             Collections.sort(formNameList);
-            log.ok(method + "FORM_NAMES " + formNameList.toString());
+            log.info(method + "FORM_NAMES " + formNameList.toString());
         }
         if (roFormNames != null) {
             Collections.sort(roFormNames);
-            log.ok(method + "RO_FORM_NAMES " + roFormNames.toString());
+            log.info(method + "RO_FORM_NAMES " + roFormNames.toString());
         }
         if (rwFormNames != null) {
             Collections.sort(rwFormNames);
-            log.ok(method + "RW_FORM_NAMES " + rwFormNames.toString());
+            log.info(method + "RW_FORM_NAMES " + rwFormNames.toString());
         }
         if (userFormNameList != null) {
             Collections.sort(userFormNameList);
-            log.ok(method + "USER_FORM_NAMES " + userFormNameList.toString());
+            log.info(method + "USER_FORM_NAMES " + userFormNameList.toString());
         }
         if (roUserFormNames != null) {
             Collections.sort(roUserFormNames);
-            log.ok(method + "RO_USER_FORM_NAMES " + roUserFormNames.toString());
+            log.info(method + "RO_USER_FORM_NAMES " + roUserFormNames.toString());
         }
         if (rwUserFormNames != null) {
             Collections.sort(rwUserFormNames);
-            log.ok(method + "RW_USER_FORM_NAMES " + rwUserFormNames.toString());
+            log.info(method + "RW_USER_FORM_NAMES " + rwUserFormNames.toString());
         }
         if (functionNameList != null) {
             Collections.sort(functionNameList);
-            log.ok(method + "FUNCTION_NAMES " + functionNameList.toString());
+            log.info(method + "FUNCTION_NAMES " + functionNameList.toString());
         }
         if (roFunctionNames != null) {
             Collections.sort(roFunctionNames);
-            log.ok(method + "RO_FUNCTION_NAMES " + roFunctionNames.toString());
+            log.info(method + "RO_FUNCTION_NAMES " + roFunctionNames.toString());
         }
         if (rwFunctionNames != null) {
             Collections.sort(rwFunctionNames);
-            log.ok(method + "RW_FUNCTION_NAMES " + rwFunctionNames.toString());
+            log.info(method + "RW_FUNCTION_NAMES " + rwFunctionNames.toString());
         }
-         log.ok(method);
+         log.info(method);
      }
 }

@@ -25,8 +25,13 @@ package org.identityconnectors.oracleerp;
 import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.spi.AttributeNormalizer;
 
 /**
  * The Account Name Resolver tries to convert Account column names to attribute names.
@@ -35,7 +40,7 @@ import org.identityconnectors.framework.common.objects.Uid;
  * @version $Revision 1.0$
  * @since 1.0
  */
-final class AccountNameResolver implements NameResolver {
+final class AccountNameResolver implements NameResolver, AttributeNormalizer {
 
     /**
      * Setup logging.
@@ -70,6 +75,22 @@ final class AccountNameResolver implements NameResolver {
             return FULL_NAME;
         }
         return attributeName;
+    }
+
+    /* (non-Javadoc)
+     * @see org.identityconnectors.framework.spi.AttributeNormalizer#normalizeAttribute(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.Attribute)
+     */
+    public Attribute normalizeAttribute(ObjectClass oclass, Attribute attribute) {
+        if (attribute instanceof Name) {
+            return new Name(((Name) attribute).getNameValue().toUpperCase());
+        } else if (attribute instanceof Uid) {
+            return new Uid(((Uid) attribute).getUidValue().toUpperCase());
+        } else if (USER_NAME.equalsIgnoreCase(attribute.getName())) {
+            return AttributeBuilder.build(USER_NAME, AttributeUtil.getAsStringValue(attribute).toUpperCase());
+        } else if (NAME.equalsIgnoreCase(attribute.getName())) {
+            return AttributeBuilder.build(NAME, AttributeUtil.getAsStringValue(attribute).toUpperCase());
+        }
+        return attribute;
     }
 
 }

@@ -118,6 +118,6 @@ public class AuditorOperationSearch extends Operation implements SearchOp<Filter
             }
         }
         conn.commit();    
-        log.ok(method);        
+        log.info(method + "ok");        
     }
 }

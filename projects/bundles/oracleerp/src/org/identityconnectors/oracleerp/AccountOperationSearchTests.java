@@ -110,4 +110,29 @@ public class AccountOperationSearchTests extends OracleERPTestsBase {
         final Set<Attribute> enabledAttr = getAttributeSet(ACCOUNT_ENABLED);
         testAttrSet(enabledAttr, returned, OperationalAttributes.ENABLE_DATE_NAME);
     }     
+    
+    /**
+     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     */
+    @Test
+    public void testSearchLowerCaseValidAccount() {
+        final OracleERPConnector c = getConnector(CONFIG_TST);
+        final Set<Attribute> attrs = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
+        generateNameAttribute(attrs);
+        
+        final Uid uid = c.create(ObjectClass.ACCOUNT, attrs, null);
+        assertNotNull(uid);
+
+        List<ConnectorObject> results = TestHelpers.searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid), null);
+        assertTrue("expect 1 connector object", results.size() == 1);
+
+        List<ConnectorObject> results1 = TestHelpers.searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(new Uid(uid.getUidValue().toLowerCase()) ), null);
+        assertTrue("expect 1 connector object", results1.size() == 1);
+
+        final ConnectorObject co = results1.get(0);
+        final Set<Attribute> returned = co.getAttributes();
+        System.out.println(returned);
+        
+        testAttrSet(attrs, returned, OperationalAttributes.PASSWORD_NAME);
+    }     
 }
