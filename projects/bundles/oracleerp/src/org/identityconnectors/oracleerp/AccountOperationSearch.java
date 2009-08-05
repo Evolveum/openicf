@@ -129,24 +129,24 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
 
         // For all user query there is no need to replace or quote anything
         final DatabaseQueryBuilder query = new DatabaseQueryBuilder(tblname, fndUserColumnNames);
+        query.setWhere(where);
         String sqlSelect = query.getSQL();
 
+        // Add active accounts and the accounts included filter
         if (StringUtil.isNotBlank(cfg.getAccountsIncluded())) {
-            sqlSelect += whereAnd(sqlSelect, cfg.getAccountsIncluded());
+            sqlSelect = whereAnd(sqlSelect, cfg.getAccountsIncluded());
         } else if (cfg.isActiveAccountsOnly()) {
-            sqlSelect += whereAnd(sqlSelect, ACTIVE_ACCOUNTS_ONLY_WHERE_CLAUSE);
+            sqlSelect = whereAnd(sqlSelect, ACTIVE_ACCOUNTS_ONLY_WHERE_CLAUSE);
         }
-
-        query.setWhere(where);
 
         ResultSet resultSet = null;
         PreparedStatement statement = null;
         try {
-            statement = conn.prepareStatement(query);
+            statement = conn.prepareStatement(sqlSelect, query.getParams());
             resultSet = statement.executeQuery();
             while (resultSet.next()) {
                 AttributeMergeBuilder amb = new AttributeMergeBuilder(attributesToGet);
-                final Map<String, SQLParam> columnValues = SQLUtil.getColumnValues(resultSet);
+                final Map<String, SQLParam> columnValues = getColumnValues(resultSet);
                 final SQLParam userNameParm = columnValues.get(USER_NAME);
                 final String userName = (String) userNameParm.getValue();
                 final boolean getAuditorData = userNameParm.getValue().toString().equals(filterId);
@@ -329,7 +329,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             if (result != null) {
                 log.info("executeQuery {0}", query.getSQL());
                 if (result.next()) {
-                    final Map<String, SQLParam> personValues = SQLUtil.getColumnValues(result);
+                    final Map<String, SQLParam> personValues = getColumnValues(result);
                     // get users account attributes
                     this.buildAttributes(bld, personValues, readable);
                     log.info("Person values {0} from result set ", personValues);

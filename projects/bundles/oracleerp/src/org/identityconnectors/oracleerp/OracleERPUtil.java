@@ -25,8 +25,10 @@ package org.identityconnectors.oracleerp;
 import java.math.BigInteger;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -37,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
@@ -563,7 +566,7 @@ public class OracleERPUtil {
      */
     public static String whereAnd(String sqlSelect, String whereAnd) {
         int iofw = sqlSelect.toUpperCase().indexOf("WHERE");
-        return (iofw == -1) ? sqlSelect + " WHERE " + whereAnd : sqlSelect.substring(0, iofw) + "WHERE ("+sqlSelect.substring(iofw + 5) +") AND ( " + whereAnd + " )";
+        return (iofw == -1) ? sqlSelect + " WHERE " + whereAnd : sqlSelect.substring(0, iofw) + "WHERE ( "+sqlSelect.substring(iofw + 5) +" ) AND ( " + whereAnd + " )";
     }
     
     /**
@@ -573,6 +576,34 @@ public class OracleERPUtil {
         "(START_DATE - SYSDATE <= 0) AND ((END_DATE IS NULL) OR (END_DATE - SYSDATE > 0))";
     
 
+    /**
+     * Read one row from database result set and convert a columns to attribute set.  
+     * @param resultSet database data
+     * @return The transformed attribute set
+     * @throws SQLException 
+     */
+    public static Map<String, SQLParam> getColumnValues(ResultSet resultSet) throws SQLException {
+        Assertions.nullCheck(resultSet,"resultSet");
+        Map<String, SQLParam> ret = CollectionUtil.<SQLParam>newCaseInsensitiveMap();
+        final ResultSetMetaData meta = resultSet.getMetaData();
+        int count = meta.getColumnCount();
+        for (int i = 1; i <= count; i++) {
+            final String name = meta.getColumnName(i);
+            SQLParam param = null;
+            int sqlType = meta.getColumnType(i);
+            if ( name.toLowerCase().endsWith("date")) {
+                //All dates needs to be fetched as a dates
+                param = SQLUtil.getSQLParam(resultSet, i, name, Types.TIMESTAMP);
+            } else {
+                param = SQLUtil.getSQLParam(resultSet, i, name, sqlType);                            
+            }
+            
+            
+            ret.put(name, param);
+        }
+        return ret;
+    }    
+    
     /**
      * Get a string from a result set, trimming trailing blanks.
      * 
