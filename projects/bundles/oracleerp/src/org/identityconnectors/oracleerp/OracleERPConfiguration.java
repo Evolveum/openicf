@@ -699,36 +699,36 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      */
     @Override
     public void validate() {
-        if(StringUtil.isBlank(getUser())){
+        if(StringUtil.isBlank(user)){
             throw new IllegalArgumentException(getMessage(MSG_USER_BLANK));
         }
         if (StringUtil.isBlank(dataSource)) {
             if(getPassword()==null){
                 throw new IllegalArgumentException(getMessage(MSG_PASSWORD_BLANK));
             }
-            if(StringUtil.isBlank(getDriver())){
+            if(StringUtil.isBlank(driver)){
                 throw new IllegalArgumentException(getMessage(MSG_DRIVER_BLANK));
             }                 
             try {
-                Class.forName(getDriver());
+                Class.forName(driver);
             } catch (ClassNotFoundException e) {
                 throw new IllegalArgumentException(getMessage(MSG_DRIVER_NOT_FOUND));
             }
             if(StringUtil.isBlank(url)) {
-                if(StringUtil.isBlank(getHost())){
+                if(StringUtil.isBlank(host)){
                     throw new IllegalArgumentException(getMessage(MSG_HOST_BLANK));
                 }
-                if(StringUtil.isBlank(getPort())){
+                if(StringUtil.isBlank(port)){
                     throw new IllegalArgumentException(getMessage(MSG_PORT_BLANK));
                 }
-                if(StringUtil.isBlank(getDatabase())){
+                if(StringUtil.isBlank(database)){
                     throw new IllegalArgumentException(getMessage(MSG_DATABASE_BLANK));
                 }
             }
             log.info("driver configuration is ok");                
         } else {
             //Validate the JNDI properties
-            JNDIUtil.arrayToHashtable(getJndiProperties(), getConnectorMessages());           
+            JNDIUtil.arrayToHashtable(jndiProperties, getConnectorMessages());           
             log.info("dataSource configuration is ok");                
         }
     }
@@ -755,8 +755,12 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * @return return the formated message
      */
     public String getMessage(String key) {
-        final String fmt = getConnectorMessages().format(key, key);
-        log.info("Get for a key {0} connector message {1}", key, fmt);        
+        String fmt = key;
+        try {
+            fmt = getConnectorMessages().format(key, key);
+        } catch (Exception e) {
+           log.error(e, "getMessage error");
+        }
         return fmt;
     }
     
@@ -767,8 +771,12 @@ public class OracleERPConfiguration extends AbstractConfiguration {
      * @return the localized message string
      */
     public String getMessage(String key, Object... objects) {
-        final String fmt = getConnectorMessages().format(key, key, objects);
-        log.info("Get for a key {0} connector message {1}", key, fmt);        
+        String fmt = key;
+        try {
+            fmt = getConnectorMessages().format(key, key, objects);
+        } catch (Exception e) {
+           log.error(e, "getMessage error");
+        }
         return fmt;
     }    
     
