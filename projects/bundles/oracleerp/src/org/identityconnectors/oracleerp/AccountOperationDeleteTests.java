@@ -22,10 +22,8 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.OWNER;
-import static org.identityconnectors.oracleerp.OracleERPUtil.getAttributeInfos;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+import static org.junit.Assert.*;
 
 import java.util.List;
 import java.util.Set;
@@ -35,7 +33,6 @@ import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
-import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.test.common.TestHelpers;
@@ -74,11 +71,11 @@ public class AccountOperationDeleteTests extends OracleERPTestsBase {
         addDefaultAttributesToGet(oob, getAttributeInfos(c.schema(), ObjectClass.ACCOUNT_NAME));        
         List<ConnectorObject> r2 = TestHelpers
         .searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid), oob.build());
-        //is not deleted, till end of the day
-        //assertTrue("expect 0 connector object", r2.size() == 0);
-        assertTrue("expect 1 connector object", r2.size() == 1);
-        Set<Attribute> returned = r2.get(0).getAttributes();
-        testAttrSet(attrs, returned, OperationalAttributes.PASSWORD_NAME, OWNER);
+        //it is deleted, when active_accounts_only .. set up in CONFIG_TST now
+        assertTrue("expect 0 connector object", r2.size() == 0);
+        //assertTrue("expect 1 connector object", r2.size() == 1);
+        //Set<Attribute> returned = r2.get(0).getAttributes();
+        //testAttrSet(attrs, returned, OperationalAttributes.PASSWORD_NAME, OWNER);
     }    
     
  }
