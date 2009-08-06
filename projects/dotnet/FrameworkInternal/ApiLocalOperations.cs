@@ -1275,7 +1275,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
                 OperationOptions options)
         {
             // check that this connector supports Search..
-            if (ReflectionUtil.FindInHierarchyOf(typeof(SearchOp<>),GetConnector().GetType()) != null) {
+            if (ReflectionUtil.FindInHierarchyOf(typeof(SearchOp<>),GetConnector().GetType()) == null) {
                 String MSG = "Connector must support search";
                 throw new InvalidOperationException(MSG);
             }
