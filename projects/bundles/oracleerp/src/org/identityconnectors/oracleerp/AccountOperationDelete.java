@@ -22,6 +22,7 @@
  */
 package org.identityconnectors.oracleerp;
 
+import static org.identityconnectors.oracleerp.OracleERPUtil.*; 
 import java.sql.CallableStatement;
 import java.sql.SQLException;
 import java.text.MessageFormat;
@@ -76,7 +77,7 @@ final class AccountOperationDelete extends Operation implements DeleteOp {
             // No Result ??
         } catch (SQLException e) {
             if (e.getErrorCode() == 20001 || e.getErrorCode() == 1403) {
-                final String msg = MessageFormat.format(OracleERPUtil.MSG_ACCOUNT_NOT_DELETE, uid.getUidValue());
+                final String msg = MessageFormat.format(MSG_ACCOUNT_NOT_DELETE, uid.getUidValue());
                 SQLUtil.rollbackQuietly(conn);
                 log.error(e, msg);
                 throw new IllegalArgumentException(msg, e);

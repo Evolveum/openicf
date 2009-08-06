@@ -211,7 +211,9 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      */
     public void dispose() {
         log.info("dispose");
-        conn.dispose();
+        if (conn != null) {
+            conn.dispose();
+        }
         cfg = null;
         conn = null;
     }

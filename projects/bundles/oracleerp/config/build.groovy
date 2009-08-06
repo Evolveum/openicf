@@ -130,9 +130,9 @@ connector{
   
     /* WRONG configuration for ValidateApiOpTests */  
     i1.wrong.host=""
-    i2.wrong.login=""
+    i2.wrong.user=""
     i3.wrong.password=""
-    i4.wrong.databaseName=""
+    i4.wrong.database=""
     i53.wrong.driver=""
 }
 

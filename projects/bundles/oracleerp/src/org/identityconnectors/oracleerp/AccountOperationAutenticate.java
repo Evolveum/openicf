@@ -27,6 +27,7 @@ import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,9 @@ import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
+import org.identityconnectors.framework.common.exceptions.InvalidPasswordException;
 import org.identityconnectors.framework.common.exceptions.PasswordExpiredException;
+import org.identityconnectors.framework.common.exceptions.PermissionDeniedException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
@@ -92,12 +95,13 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
         par1.add(new SQLParam(USER_NAME, username.toUpperCase()));
         // expired passwords, to the authenticate functionality 
         AttributeMergeBuilder amb = new AttributeMergeBuilder();
+        final Uid uid = new Uid(username.toUpperCase());
         try {
             ps = conn.prepareCall(sqlAccount, par1);
             rs = ps.executeQuery();
             if (rs == null || !rs.next()) {
                 //not found
-                throw new InvalidCredentialException(cfg.getMessage(MSG_AUTH_FAILED, username));
+                throw new PasswordExpiredException(cfg.getMessage(MSG_AUTH_FAILED, username)).initUid(uid);
             }
             final Map<String, SQLParam> columnValues = getColumnValues(rs);
             //build special attributes
@@ -105,16 +109,16 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
             
             //The password is expired
             if (amb.isExpected(OperationalAttributes.PASSWORD_EXPIRED_NAME, 0, Boolean.TRUE)) {
-                throw new PasswordExpiredException(cfg.getMessage(MSG_AUTH_FAILED, username));
+                throw new PasswordExpiredException(cfg.getMessage(MSG_AUTH_FAILED, username)).initUid(uid);
             } 
             
             //The account is disabled
             if (amb.isExpected(OperationalAttributes.ENABLE_NAME, 0, Boolean.FALSE)) {
-                throw new InvalidCredentialException(cfg.getMessage(MSG_AUTH_FAILED, username));
+                throw new PermissionDeniedException(cfg.getMessage(MSG_AUTH_FAILED, username));
             }                            
             
         } catch (Exception ex) {
-            log.error(ex, sqlAccount);
+            log.error(ex, "autenticate exception");
             SQLUtil.rollbackQuietly(conn);
             throw ConnectorException.wrap(ex);
         } finally {
@@ -139,11 +143,11 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
             }            
             final boolean valid = (rs.getInt(1) == 1);
             if (!valid) {
-                throw new InvalidCredentialException(cfg.getMessage(MSG_AUTH_FAILED, username));
+                throw new InvalidPasswordException(cfg.getMessage(MSG_AUTH_FAILED, username));
                 // password or user name
             }                
         } catch (Exception ex) {
-            log.error(ex, sql);
+            log.error(ex, "autenticate exception");
             SQLUtil.rollbackQuietly(conn);
             throw ConnectorException.wrap(ex);
         } finally {
@@ -155,7 +159,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
         
         conn.commit();
         log.info("authenticate user ''{0}'' done", username);        
-        return new Uid(username.toUpperCase());
+        return uid;
     }
 
     /**
