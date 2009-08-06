@@ -43,7 +43,6 @@ import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
@@ -108,15 +107,11 @@ public class SecuringGroupsOperationSearch extends Operation implements SearchOp
                     break;
                 }
             }
-        } catch (SQLException e) {
-            log.error(e, method);
+        } catch (Exception e) {
+            final String msg1 = cfg.getMessage(MSG_COULD_NOT_EXECUTE, e.getMessage());
+            log.error(e, msg1);
             SQLUtil.rollbackQuietly(conn);
-            throw ConnectorException.wrap(e);
-        } catch (Exception ex) {
-            final String msg = "Can not execute";
-            log.error(ex, msg);
-            SQLUtil.rollbackQuietly(conn);
-            throw new ConnectorException(msg, ex);
+            throw new ConnectorException(msg1, e);
         } finally {
             SQLUtil.closeQuietly(res);
             res = null;
@@ -124,7 +119,7 @@ public class SecuringGroupsOperationSearch extends Operation implements SearchOp
             st = null;
         }
         conn.commit();
-        log.info(method + " ok");
+        log.info(method + " done");
     }
 
     /* (non-Javadoc)

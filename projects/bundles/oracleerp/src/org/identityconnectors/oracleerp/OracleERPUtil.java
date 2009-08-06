@@ -196,17 +196,18 @@ public class OracleERPUtil {
     static final String MSG_ACCOUNT_NOT_UPDATE="msg.account.not.update";
     static final String MSG_ACCOUNT_NAME_REQUIRED="msg.acount.name.required";
     static final String MSG_ACCOUNT_UID_REQUIRED="msg.acount.uid.required";
-    
-    //Not yet used
-    static final String MSG_ACCOUNT_OBJECT_CLASS_REQUIRED = "msg.acount.object.class.required";
-    static final String MSG_AUTHENTICATE_OP_NOT_SUPPORTED = "msg.auth.op.not.supported";
-    static final String MSG_AUTH_FAILED = "msg.auth.op.failed";
-    static final String MSG_INVALID_ATTRIBUTE_SET = "msg.invalid.attribute.set";
-    static final String MSG_UID_BLANK = "msg.uid.blank";
-    static final String MSG_RESULT_HANDLER_NULL = "msg.result.handler.null";  
+    static final String MSG_COULD_NOT_READ = "msg.could.not.read";
     static final String MSG_ACCOUNT_NOT_CREATE="msg.account.not.create";    
     static final String MSG_ACCOUNT_NOT_DELETE="msg.account.not.delete";
     static final String MSG_ACCOUNT_NOT_READ="msg.account.not.read";
+    static final String MSG_ACCOUNT_OBJECT_CLASS_REQUIRED = "msg.acount.object.class.required";
+    static final String MSG_AUTH_FAILED = "msg.auth.op.failed";
+    static final String MSG_INVALID_RESPONSIBILITY = "msg.invalid.responsibility";
+    static final String MSG_COULD_NOT_EXECUTE = "msg.could.not.execute";
+    static final String MSG_FAILED_ADD_RESP = "msg.failed.add.responsibility";
+    static final String MSG_FAILED_DELETE_RESP = "msg.failed.delete.responsibility";
+    static final String MSG_FAILED_UPDATE_RESP = "msg.failed.update.responsibility";
+    static final String MSG_INVALID_SECURING_ATTRIBUTE = "msg.invalid.securing.attribute";
 
     
     
@@ -276,7 +277,7 @@ public class OracleERPUtil {
     public static String getUserId(OracleERPConnection conn, OracleERPConfiguration cfg, String userName) {
         final String msg = "getUserId ''{0}'' -> ''{1}''";
         String userId = null;
-        log.info("get UserId for {0}", userName);
+        log.ok("get UserId for {0}", userName);
         final String sql = "select " + USER_ID + " from " + cfg.app() + "FND_USER where upper(user_name) = ?";
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -303,7 +304,7 @@ public class OracleERPUtil {
             throw new IllegalStateException(emsg);
         }    
         // pstmt closed in finally below
-        log.info(msg, userName, userId);
+        log.ok(msg, userName, userId);
         return userId;
     }    
 
@@ -314,7 +315,7 @@ public class OracleERPUtil {
      */
     public static String getId(Set<Attribute> attrs) {
         final String method = "getId";
-        log.info(method);
+        log.ok(method);
         final Uid uid = AttributeUtil.getUidAttribute(attrs);
         return uid.getUidValue();
     }        
@@ -429,7 +430,7 @@ public class OracleERPUtil {
      * @return set of attribute names to get or empty set, when not defined
      */
     public static Set<String> getAttributesToGet(OperationOptions options, Set<AttributeInfo> ais) {
-        final String msg = "getAttributesToGet ''{0}''";
+        final String msg = "getAttributesToGet";
         Set<String> allAttributes = getAllAttributes(ais);
         Set<String> _attrToGet;
         if(options != null && options.getAttributesToGet() != null) {
@@ -447,7 +448,7 @@ public class OracleERPUtil {
         //Make sure, that the name and uid are always present
         _attrToGet.add(Name.NAME);
         _attrToGet.add(Uid.NAME);
-        log.info(msg, _attrToGet);
+        log.ok(msg);
         return _attrToGet;
     }    
     
@@ -460,7 +461,7 @@ public class OracleERPUtil {
      * @return personid the id of the person
      */
     public static Integer getPersonId(String name, OracleERPConnection conn, OracleERPConfiguration cfg, Set<Attribute> attrs) {  
-        log.info("getPersonId for userId: ''{0}''", name);
+        log.ok("getPersonId for userId: ''{0}''", name);
         Integer ret = null;
         int num = 0;
         String columnName = null;
@@ -469,21 +470,20 @@ public class OracleERPUtil {
         if ( empAttr != null ) {
             num = AttributeUtil.getIntegerValue(empAttr);
             columnName = EMP_NUM;   
-            log.info("{0} present with value ''{1}''",columnName, num);
+            log.ok("{0} present with value ''{1}''",columnName, num);
         } else if ( npwAttr != null ){
             num = AttributeUtil.getIntegerValue(npwAttr);
             columnName = NPW_NUM;            
-            log.info("{0} present with value ''{1}''",columnName, num);
+            log.ok("{0} present with value ''{1}''",columnName, num);
         } else {
-            log.info("neither {0} not {1} attributes for personId are present", EMP_NUM, NPW_NUM);
+            log.ok("neither {0} not {1} attributes for personId are present", EMP_NUM, NPW_NUM);
             return null;
         }
         
-        log.info("clomunName ''{0}''", columnName);
+        log.ok("clomunName ''{0}''", columnName);
         final String sql = "select "+PERSON_ID+" from "+cfg.app()+"PER_PEOPLE_F where "+columnName+" = ?";
         ResultSet rs = null; // SQL query on person_id
         PreparedStatement ps = null; // statement that generates the query
-        log.info(sql);
         try {
             ps = conn.prepareStatement(sql);
             ps.setInt(1, num);
@@ -492,7 +492,7 @@ public class OracleERPUtil {
             if (rs.next()) {
                 ret = rs.getInt(1);
             }
-            log.info("Oracle ERP: PERSON_ID return from {0} = {1}", sql, ret);
+            log.ok("Oracle ERP: PERSON_ID return from {0} = {1}", sql, ret);
             
             if( ret == null ) {
                 final String msg =  cfg.getMessage(MSG_HR_LINKING_ERROR, num, name);
@@ -500,7 +500,7 @@ public class OracleERPUtil {
                 throw new ConnectorException(msg);
             }
 
-            log.info("getPersonId for userId: ''{0}'' -> ''{1}''", name, ret);
+            log.ok("getPersonId for userId: ''{0}'' -> ''{1}''", name, ret);
             return ret;
         } catch (SQLException e) {
             log.error(e, sql);
@@ -692,7 +692,7 @@ public class OracleERPUtil {
         } else if (strDate.length() > 10) {
             retDate = strDate.substring(0, 10); // truncate to only date i.e.,yyyy-mm-dd 
         }
-        log.info(method, strDate, retDate);
+        log.ok(method, strDate, retDate);
         return retDate;
     } // normalizeStrDate()
     
@@ -704,7 +704,7 @@ public class OracleERPUtil {
         final String method = "getCurrentDate ''{0}''";      
         Calendar rightNow = Calendar.getInstance();
         java.util.Date utilDate = rightNow.getTime();
-        log.info(method, utilDate);  
+        log.ok(method, utilDate);  
         return new java.sql.Date(utilDate.getTime());
     }
     
@@ -718,7 +718,7 @@ public class OracleERPUtil {
      */
     public static void addQuoted(StringBuilder b, String s) {
         final String method = "addQuoted ''{0}''";
-        log.info(method, s);
+        log.ok(method, s);
         b.append("'");
         if (s != null) {
             for (int i = 0; i < s.length(); i++) {
@@ -739,7 +739,7 @@ public class OracleERPUtil {
      */
     public static String getStringParamValue(final Map<String, SQLParam> userParamMap, final String paramName) {
         final String method = "getStringParamValue ''{0}''";
-        log.info(method, paramName);
+        log.ok(method, paramName);
         final SQLParam param = userParamMap.get(paramName);
         if (param == null || !(param.getValue() instanceof String))
             return null;
@@ -755,7 +755,7 @@ public class OracleERPUtil {
      */
     public static List<String> convertToListString(List<Object> from) {
         final String method = "convertToListString";
-        log.info(method);
+        log.ok(method);
         //Convert to list of Strings
         final List<String> ret = new ArrayList<String>();
         for (Object obj : from) {
@@ -770,7 +770,7 @@ public class OracleERPUtil {
      */
     public static String listToCommaDelimitedString(List<String> list) {
         final String method = "listToCommaDelimitedString";
-        log.info(method);
+        log.ok(method);
         StringBuilder ret = new StringBuilder();
         boolean first = true;
         for (String val : list) {

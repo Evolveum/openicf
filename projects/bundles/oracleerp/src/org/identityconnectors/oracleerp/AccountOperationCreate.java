@@ -129,8 +129,8 @@ final class AccountOperationCreate extends Operation implements CreateOp {
             String sql = null;
             boolean isUpdateNeeded = false;
 
-            final String msg = "Create user account {0} : {1}";
-            log.info(msg, name, sql);
+            final String msg = "Create user account {0}";
+            log.ok(msg, name);
             try {
                 // Create the user
                 if (cfg.isCreateNormalizer()) {
@@ -154,9 +154,10 @@ final class AccountOperationCreate extends Operation implements CreateOp {
                     }
                 }
             } catch (Exception e) {
-                log.error(e, name, sql);
                 SQLUtil.rollbackQuietly(conn);
-                throw new IllegalStateException(cfg.getMessage(MSG_ACCOUNT_NOT_CREATE, name), e);
+                final String message = cfg.getMessage(MSG_ACCOUNT_NOT_CREATE, name);
+                log.error(e, message);
+                throw new IllegalStateException(message, e);
             } finally {
                 SQLUtil.closeQuietly(cs);
                 SQLUtil.closeQuietly(csAll);
@@ -179,7 +180,7 @@ final class AccountOperationCreate extends Operation implements CreateOp {
         }
         
         conn.commit();  
-        log.info("create user ''{0}'' ok", name);               
+        log.info("create user ''{0}'' done", name);               
         return new Uid(name);
     }
 }

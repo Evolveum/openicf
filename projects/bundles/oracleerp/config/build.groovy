@@ -41,12 +41,12 @@ configuration{
 }
 
 account{
-    required.__NAME__="TST-USER"
+    required.__NAME__="JTU-"
     required.__PASSWORD__="password"
    // required.owner="CUST"
     required.start_date=stringDate(-10)
     
-    all.__NAME__="TST-USER"
+    all.__NAME__="JTU-"
     all.owner="CUST"
     all.session_number=0
 
@@ -72,16 +72,16 @@ account{
     //all.customer_id=11223344
     //all.supplier_id=102
     
-    all.directResponsibilities="Cash Forecasting||Cash Management||Standard||2004-04-12 00:00:00.0||null"
+    all.directResponsibilities="Cash Forecasting||Cash Management||Standard||2004-04-12||null"
     all.responsibilityKeys="Cash Forecasting||Cash Management||Standard"
     all.securingAttrs="TO_PERSON_ID||Self-Service Web Applications||114"
         
 
-    modify.__NAME__="TST-USER-MOD"
+    modify.__NAME__="JTUM-"
     modify.__PASSWORD__="modpasswd"
     modify.email_address="person1@somewhere.com"
     modify.fax="666-666-6666"
-    modify.directResponsibilities=["Cash Forecasting||Cash Management||Standard||2004-04-12 00:00:00.0||null","Purchasing Receiver||Purchasing||Standard||2004-04-12 00:00:00.0||null"]
+    modify.directResponsibilities=["Cash Forecasting||Cash Management||Standard||2004-04-12||2010-01-01","Purchasing Receiver||Purchasing||Standard||2004-04-12||null"]
     modify.password_accesses_left=58
     modify.password_lifespan_accesses=6
     modify.password_lifespan_days=31    
@@ -219,7 +219,7 @@ testsuite {
      [ password : "NonExistingPassword_foo_bar_boo" ]
   ]
 }
-
+__NAME__="CTU-" + Lazy.random("AAAAAA######")__PASSWORD__="password"
 owner="CUST"
 session_number=0
 
@@ -243,7 +243,7 @@ fax="555-555-5555"
 customer_id=empty()
 supplier_id=empty()
 
-directResponsibilities="Cash Forecasting||Cash Management||Standard||2004-04-12 00:00:00.0||null"
+directResponsibilities="Cash Forecasting||Cash Management||Standard||2004-04-12||null"
 responsibilityKeys="Cash Forecasting||Cash Management||Standard"
 securingAttrs="TO_PERSON_ID||Self-Service Web Applications||114"
 

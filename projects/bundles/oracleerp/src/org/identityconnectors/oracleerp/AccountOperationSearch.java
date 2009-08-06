@@ -149,23 +149,21 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
                 final Map<String, SQLParam> columnValues = getColumnValues(resultSet);
                 final SQLParam userNameParm = columnValues.get(USER_NAME);
                 final String userName = (String) userNameParm.getValue();
-                final boolean getAuditorData = userNameParm.getValue().toString().equals(filterId);
                 // get users account attributes
-                buildAttributes(amb, columnValues, readable);
+                buildAccountAttributes(amb, columnValues, readable);
 
                 // if person_id not null and employee_number in schema, return employee_number
                 buildPersonDetails(amb, columnValues, perPeopleColumnNames, readable);
 
                 // get users responsibilities only if if resp || direct_resp in account attribute
-                buildResponsibilitiesToAccountObject(amb, userName);
+                buildResponsibilities(amb, userName);
+                
                 // get user's securing attributes
-                buildSecuringAttributesToAccountObject(amb, userName);
+                buildSecuringAttributes(amb, userName);
 
                 //Auditor data for get user only
-                log.info("get auditor data: {0}", getAuditorData);
-                if (getAuditorData) {
-                    buildAuditorDataObject(amb, userName);
-                }
+                buildAuditorDataObject(amb, userName, filterId);
+                
                 //build special attributes
                 buildSpecialAttributes(amb, columnValues);
                 
@@ -184,15 +182,30 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
                 }
             }
         } catch (Exception e) {
-            log.error(e, method);
+            final String msg = cfg.getMessage(MSG_ACCOUNT_NOT_READ, filterId == null ? "" : filterId );
+            log.error(e, msg);
             SQLUtil.rollbackQuietly(conn);
-            throw ConnectorException.wrap(e);
+            throw new ConnectorException(msg, e);
         } finally {
             SQLUtil.closeQuietly(resultSet);
             SQLUtil.closeQuietly(statement);
         }
         conn.commit();
         log.info(method + " ok");        
+    }
+
+    /**
+     * @param amb 
+     * @return
+     */
+    private boolean isAuditorDataRequired(final AttributeMergeBuilder amb) {
+        for (String knownAttribute : ResponsibilitiesOperations.AUDITOR_ATTRIBUTE_NAMES) {
+            if ( amb.isInAttributesToGet(knownAttribute) ) {
+                return true;
+            }
+        }
+        log.ok("isAuditorDataRequired: no auditor attributes are in attribute to get");
+        return  false;
     }
    
 
@@ -276,7 +289,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             }
         }      
 
-        log.info("columnNamesToGet {0}", columnNamesToGet);
+        log.ok("columnNamesToGet done");
         return columnNamesToGet;
     }
 
@@ -288,38 +301,28 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
     private void buildPersonDetails(final AttributeMergeBuilder bld, final Map<String, SQLParam> columnValues,
             final Set<String> personColumns, final Set<String> readable) {
         final String method = "buildPersonDetails";
-        log.info(method);
-        if (columnValues == null || columnValues.get(EMP_ID) == null) {
-            // No personId(employId)
-            log.info("buildPersonDetails: No personId(employId)");
+        log.ok(method);
+
+        if (personColumns.isEmpty()) {
+            // No persons column required
+            log.info("No persons AttributesToGet, skip");
             return;
         }
+        
         final Long personId = extractLong(EMP_ID, columnValues);
         if (personId == null) {
             log.info("buildPersonDetails: Null personId(employId)");
             return;
         }
-        log.info("buildPersonDetails for personId: {0}", personId);
+        log.ok("buildPersonDetails for personId: {0}", personId);
 
         //Names to get filter
         final String tblname = cfg.app() + "PER_PEOPLE_F";
-
-        if (personColumns.isEmpty()) {
-            // No persons column required
-            log.info("No persons column To Get");
-            return;
-        }
-        log.info("personColumns {0} To Get", personColumns);
-
         // For all account query there is no need to replace or quote anything
         final DatabaseQueryBuilder query = new DatabaseQueryBuilder(tblname, personColumns);
         final FilterWhereBuilder where = new FilterWhereBuilder();
         where.addBind(new SQLParam(PERSON_ID, personId, Types.NUMERIC), "=");
         query.setWhere(where);
-
-        final String sql = query.getSQL();
-        String msg = "Oracle ERP: sql = ''{0}''";
-        log.info(msg, sql);
 
         ResultSet result = null; // SQL query on person_id
         PreparedStatement statement = null; // statement that generates the query
@@ -327,19 +330,17 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             statement = conn.prepareStatement(query);
             result = statement.executeQuery();
             if (result != null) {
-                log.info("executeQuery {0}", query.getSQL());
                 if (result.next()) {
                     final Map<String, SQLParam> personValues = getColumnValues(result);
                     // get users account attributes
-                    this.buildAttributes(bld, personValues, readable);
-                    log.info("Person values {0} from result set ", personValues);
+                    this.buildAccountAttributes(bld, personValues, readable);
+                    log.ok("Person values {0} from result set ", personValues);
                 }
             }
 
         } catch (Exception e) {
-            String emsg = e.getMessage();
-            msg = "Caught SQLException when executing: ''{0}'': {1}";
-            log.error(msg, sql, emsg);
+            final String msg = cfg.getMessage(MSG_ACCOUNT_NOT_READ, personId);
+            log.error(e, msg);
             SQLUtil.rollbackQuietly(conn);
             throw new ConnectorException(msg, e);
         } finally {
@@ -352,13 +353,13 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
 
   
     /**
-     * Build all attributes . Translate column name to attribute name and convert the value
+     * Build account attributes . Translate column name to attribute name and convert the value
      * Add only readable attributes
      * @param amb the attribute merger
      * @param columnValues the column value map
      * @throws SQLException
      */
-    private void buildAttributes(final AttributeMergeBuilder amb, final Map<String, SQLParam> columnValues, final Set<String> readable) throws SQLException {
+    private void buildAccountAttributes(final AttributeMergeBuilder amb, final Map<String, SQLParam> columnValues, final Set<String> readable) throws SQLException {
         for (Map.Entry<String, SQLParam> val : columnValues.entrySet()) {
             final SQLParam param = val.getValue();
             if(param == null ) {
@@ -399,9 +400,10 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
      * @param amb builder
      * @param userName of the user
      */
-    private void buildResponsibilitiesToAccountObject(AttributeMergeBuilder amb, final String userName) {
+    private void buildResponsibilities(AttributeMergeBuilder amb, final String userName) {
          
         if (!cfg.isNewResponsibilityViews() && amb.isInAttributesToGet(RESPS)) {
+            log.info("buildResponsibilities from "+RESPS_TABLE);
             //add responsibilities
             final List<String> responsibilities = respOps.getResponsibilities(userName, RESPS_TABLE, false);
             amb.addAttribute(RESPS, responsibilities);
@@ -410,6 +412,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             final List<String> resps = respOps.getResps(responsibilities, RESP_FMT_KEYS);
             amb.addAttribute(RESPKEYS, resps);
         } else if (amb.isInAttributesToGet(DIRECT_RESPS)) {
+            log.info("buildResponsibilities from "+RESPS_DIRECT_VIEW);
             final List<String> responsibilities = respOps.getResponsibilities(userName, RESPS_DIRECT_VIEW, false);
             amb.addAttribute(DIRECT_RESPS, responsibilities);
 
@@ -419,6 +422,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         }
 
         if (amb.isInAttributesToGet(INDIRECT_RESPS)) {
+            log.info("buildResponsibilities from "+RESPS_INDIRECT_VIEW);
             //add responsibilities
             final List<String> responsibilities = respOps.getResponsibilities(userName, RESPS_INDIRECT_VIEW, false);
             amb.addAttribute(INDIRECT_RESPS, responsibilities);
@@ -430,7 +434,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
      * @param amb
      * @param userName 
      */
-    private void buildSecuringAttributesToAccountObject(AttributeMergeBuilder amb, final String userName) {
+    private void buildSecuringAttributes(AttributeMergeBuilder amb, final String userName) {
         if (!cfg.isManageSecuringAttrs()) {
             return;
         }
@@ -448,13 +452,20 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
      *            builder
      * @param userName
      *            id of the responsibility
+     * @param filterId 
      */
-    public void buildAuditorDataObject(AttributeMergeBuilder amb, String userName) {
-        log.info("buildAuditorDataObject for uid: {0}", userName);
-        List<String> activeRespList = respOps.getResponsibilities(userName, respOps.getRespLocation(), false);
-        for (String activeRespName : activeRespList) {
-            auditOps.updateAuditorData(amb, activeRespName);
+    public void buildAuditorDataObject(AttributeMergeBuilder amb, String userName, String filterId) {
+        if (filterId == null) {
+            return;            
         }
+        final boolean auditorDataRequired = isAuditorDataRequired(amb);
+        if (auditorDataRequired) {
+            log.info("buildAuditorDataObject  for uid: {0}", auditorDataRequired);
+            List<String> activeRespList = respOps.getResponsibilities(userName, respOps.getRespLocation(), false);
+            for (String activeRespName : activeRespList) {
+                auditOps.updateAuditorData(amb, activeRespName);
+            }            
+        }        
     }
 
     /**

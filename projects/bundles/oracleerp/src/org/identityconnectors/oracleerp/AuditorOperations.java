@@ -29,7 +29,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -144,8 +143,7 @@ final class AuditorOperations extends Operation {
         b.append("AND fa.application_name=?) ");
         b.append("CONNECT BY prior sub_menu_id=menu_id) ORDER BY 2,4");
         // one query
-        log.info(method + ": SQL statement: " + b.toString());
-        log.info(method + ": Resp: " + curResp);
+        log.ok(method + ": Resp = " + curResp);
 
         PreparedStatement st = null;
         ResultSet res = null;
@@ -268,9 +266,10 @@ final class AuditorOperations extends Operation {
             }// end-while
             // no catch, just use finally to ensure closes happen
         } catch (Exception e) {
-            log.error(e, method);
+            final String msg = cfg.getMessage(MSG_COULD_NOT_READ);
+            log.error(e, msg);
             SQLUtil.rollbackQuietly(conn);
-            throw ConnectorException.wrap(e);
+            throw new ConnectorException(msg, e);
         } finally {
             SQLUtil.closeQuietly(res);
             res = null;
@@ -293,7 +292,6 @@ final class AuditorOperations extends Operation {
             b.append("AND sub_menu_id IN (");
             b.append(listToCommaDelimitedString(menuIds));
             b.append(") )");
-            log.info(method + ", SQL statement (Post Processing): " + b.toString());
             try {
                 st = conn.prepareStatement(b.toString());
                 res = st.executeQuery();
@@ -334,9 +332,10 @@ final class AuditorOperations extends Operation {
 
                 // no catch, just use finally to ensure closes happen
             } catch (Exception e) {
-                log.error(e, method);
+                final String msg = cfg.getMessage(MSG_COULD_NOT_READ);
+                log.error(e, msg);
                 SQLUtil.rollbackQuietly(conn);
-               throw ConnectorException.wrap(e);
+                throw new ConnectorException(msg, e);
             } finally {
                 SQLUtil.closeQuietly(res);
                 res = null;
@@ -401,8 +400,7 @@ final class AuditorOperations extends Operation {
             b.append(" and  fr.responsibility_name = ?");
             b.append(" order by 1");
 
-            log.info(method + ",SQL statement: " + b.toString());
-            log.info(method + ", Resp: " + curResp);
+            log.info(method + ": Resp = " + curResp);
 
             try {
                 st = conn.prepareStatement(b.toString());
@@ -426,9 +424,9 @@ final class AuditorOperations extends Operation {
                     }
                 }
             } catch (Exception e) {
-                log.error(e, method);
+                final String msg = cfg.getMessage(MSG_COULD_NOT_READ);
+                log.error(e, msg);
                 SQLUtil.rollbackQuietly(conn);
-                throw ConnectorException.wrap(e);
             } finally {
                 SQLUtil.closeQuietly(res);
                 res = null;
@@ -437,78 +435,6 @@ final class AuditorOperations extends Operation {
             }
         }
 
-        if (menuNames != null) {
-            Collections.sort(menuNames);
-            log.info(method + "USER_MENU_NAMES " + menuNames.toString());
-        }
-        if (menuIds != null) {
-            Collections.sort(menuIds);
-            log.info(method + "MENU_IDS " + menuIds.toString());
-        }
-        if (userFunctionNames != null) {
-            Collections.sort(userFunctionNames);
-            log.info(method + "USER_FUNCTION_NAMES " + userFunctionNames.toString());
-        }
-        if (functionIdsList != null) {
-            Collections.sort(functionIdsList);
-            log.info(method + "FUNCTION_IDS " + functionIdsList.toString());
-        }
-        if (roFunctionIds != null) {
-            Collections.sort(roFunctionIds);
-            log.info(method + "RO_FUNCTION_IDS " + roFunctionIds.toString());
-        }
-        if (rwFunctionIds != null) {
-            Collections.sort(rwFunctionIds);
-            log.info(method + "RW_FUNCTION_IDS " + rwFunctionIds.toString());
-        }
-        if (formIdList != null) {
-            Collections.sort(formIdList);
-            log.info(method + "APP_ID_FORM_IDS " + formIdList.toString());
-        }
-        if (roFormIds != null) {
-            Collections.sort(roFormIds);
-            log.info(method + "RO_APP_ID_FORM_IDS " + roFormIds.toString());
-        }
-        if (rwFormIds != null) {
-            Collections.sort(rwFormIds);
-            log.info(method + "RW_APP_ID_FORM_IDS " + rwFormIds.toString());
-        }
-        if (formNameList != null) {
-            Collections.sort(formNameList);
-            log.info(method + "FORM_NAMES " + formNameList.toString());
-        }
-        if (roFormNames != null) {
-            Collections.sort(roFormNames);
-            log.info(method + "RO_FORM_NAMES " + roFormNames.toString());
-        }
-        if (rwFormNames != null) {
-            Collections.sort(rwFormNames);
-            log.info(method + "RW_FORM_NAMES " + rwFormNames.toString());
-        }
-        if (userFormNameList != null) {
-            Collections.sort(userFormNameList);
-            log.info(method + "USER_FORM_NAMES " + userFormNameList.toString());
-        }
-        if (roUserFormNames != null) {
-            Collections.sort(roUserFormNames);
-            log.info(method + "RO_USER_FORM_NAMES " + roUserFormNames.toString());
-        }
-        if (rwUserFormNames != null) {
-            Collections.sort(rwUserFormNames);
-            log.info(method + "RW_USER_FORM_NAMES " + rwUserFormNames.toString());
-        }
-        if (functionNameList != null) {
-            Collections.sort(functionNameList);
-            log.info(method + "FUNCTION_NAMES " + functionNameList.toString());
-        }
-        if (roFunctionNames != null) {
-            Collections.sort(roFunctionNames);
-            log.info(method + "RO_FUNCTION_NAMES " + roFunctionNames.toString());
-        }
-        if (rwFunctionNames != null) {
-            Collections.sort(rwFunctionNames);
-            log.info(method + "RW_FUNCTION_NAMES " + rwFunctionNames.toString());
-        }
-         log.info(method);
+        log.info(method + " done");
      }
 }

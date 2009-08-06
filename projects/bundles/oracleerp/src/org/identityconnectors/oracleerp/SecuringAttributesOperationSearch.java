@@ -43,7 +43,6 @@ import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
@@ -137,16 +136,11 @@ public class SecuringAttributesOperationSearch extends Operation implements Sear
                     break;
                 }                
             }
-        } catch (SQLException e) {
-            final String msg = "could not get Securing attributes";
-            log.error(e, msg);
+        } catch (Exception e) {
+            final String msg1 = cfg.getMessage(MSG_COULD_NOT_EXECUTE, e.getMessage());
+            log.error(e, msg1);
             SQLUtil.rollbackQuietly(conn);
-            throw new ConnectorException(msg, e);
-        } catch (Exception ex) {
-            final String msg = "Can not execute the sql " + sql;
-            log.error(ex, msg);
-            SQLUtil.rollbackQuietly(conn);
-            throw new ConnectorException(msg, ex);
+            throw new ConnectorException(msg1, e);
         } finally {
             SQLUtil.closeQuietly(res);
             res = null;
@@ -154,6 +148,6 @@ public class SecuringAttributesOperationSearch extends Operation implements Sear
             st = null;
         }
         conn.commit();
-        log.info(method + " ok");
+        log.info(method + " done");
     }
 }

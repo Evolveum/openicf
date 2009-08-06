@@ -89,7 +89,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
      * @return connector configuration
      */
     public Configuration getConfiguration() {
-        log.info("getConfiguration");
+        log.ok("getConfiguration");
         return this.cfg;
     }
     /**
@@ -364,13 +364,13 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
          *  initUserName(), is implemented in OracleERPConfiguration: getSchemaId
          *  _ctx = makeConnection(result);
          */
-        log.info("Init using configuration");
+        log.info("init");
         this.cfg = (OracleERPConfiguration) configuration;
         this.conn = OracleERPConnection.createOracleERPConnection(cfg);
-        log.info("createOracleERPConnection");
+        log.ok("createOracleERPConnection");
         
         cfg.setUserId(OracleERPUtil.getUserId(conn, cfg, cfg.getUser()));
-        log.info("Init: for user {0} the configUserId is {1}", cfg.getUser(), cfg.getUserId());
+        log.ok("Init: for user {0} the configUserId is {1}", cfg.getUser(), cfg.getUserId());
         
         initResponsibilities();        
         initFndGlobal();
@@ -385,7 +385,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
     private void initFndGlobal() {
         final String respId = cfg.getRespId();
         final String respApplId = cfg.getRespApplId();
-        log.info("Init global respId={0}, respApplId={1}", respId, respApplId);
+        log.ok("Init global respId={0}, respApplId={1}", respId, respApplId);
         //Real initialize call
         if (StringUtil.isNotBlank(cfg.getUserId()) && StringUtil.isNotBlank(respId)
                 && StringUtil.isNotBlank(respApplId)) {
@@ -393,7 +393,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
             try {
                 final String sql = "call " + cfg.app() + "FND_GLOBAL.APPS_INITIALIZE(?,?,?)";
                 final String msg = "Oracle ERP: {0}FND_GLOBAL.APPS_INITIALIZE({1}, {2}, {3}) called.";
-                log.info(msg, cfg.app(), cfg.getUserId(), respId, respApplId);
+                log.ok(msg, cfg.app(), cfg.getUserId(), respId, respApplId);
                 List<SQLParam> pars = new ArrayList<SQLParam>();
                 pars.add(new SQLParam("userId", cfg.getUserId(), Types.VARCHAR));
                 pars.add(new SQLParam("respId", respId, Types.VARCHAR));
@@ -433,7 +433,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
 
         // three pieces of data need for apps_initialize()
         final String auditResponsibility = cfg.getAuditResponsibility();
-        log.info("auditResponsibility = {0}", auditResponsibility);
+        log.ok("auditResponsibility = {0}", auditResponsibility);
         
         if (StringUtil.isNotBlank(auditResponsibility) && StringUtil.isNotBlank(cfg.getUserId())) {
             final String view = cfg.app() + ((cfg.isNewResponsibilityViews()) ? OracleERPUtil.RESPS_ALL_VIEW : OracleERPUtil.RESPS_TABLE);
@@ -452,7 +452,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
             PreparedStatement ps = null;
             ResultSet rs = null;
             try {
-                log.info("Select responsibility for user_id: {0}, and audit responsibility {1}", cfg.getUserId(),
+                log.ok("Select responsibility for user_id: {0}, and audit responsibility {1}", cfg.getUserId(),
                         auditResponsibility);
                 ps = conn.prepareStatement(sql, params);
                 rs = ps.executeQuery();
@@ -475,7 +475,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
                 ps = null;
             }
         }
-        log.info("initResponsibilities doneS");
+        log.info("initResponsibilities done");
     }    
     
 
@@ -517,7 +517,6 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         try {
             ps = conn.prepareStatement(sql);
             res = ps.executeQuery();
-            log.info(sql);
             if (res != null && res.next()) {
                 log.info("newResponsibilityViews: true");
                 return true;
@@ -532,7 +531,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
             SQLUtil.closeQuietly(ps);
             ps = null;
         }
-        log.info("newResponsibilityViews: true");
+        log.info("newResponsibilityViews: false");
         return false;
     }
 

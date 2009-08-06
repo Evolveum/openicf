@@ -154,7 +154,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
         }
         
         conn.commit();
-        log.info("authenticate user ''{0}'' ok", username);        
+        log.info("authenticate user ''{0}'' done", username);        
         return new Uid(username.toUpperCase());
     }
 
@@ -162,6 +162,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
      * 
      */
     private void createCheckValidateFunction() {
+        log.ok("createCheckValidateFunction");        
         StringBuilder b = new StringBuilder();
         b.append("create or replace function wavesetValidateFunc1 (username IN varchar2, password IN varchar2) ");
         b.append("RETURN NUMBER is ");

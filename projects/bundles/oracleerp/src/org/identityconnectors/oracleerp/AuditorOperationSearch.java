@@ -97,6 +97,7 @@ public class AuditorOperationSearch extends Operation implements SearchOp<Filter
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder query, ResultsHandler handler,
             OperationOptions options) {
         final String method = "executeQuery";
+        log.info(method);
         final String id = respOps.getOptionId(options);
         final boolean activeRespsOnly = respOps.isActiveRespOnly(options);
         final String respLocation = respOps.getRespLocation();

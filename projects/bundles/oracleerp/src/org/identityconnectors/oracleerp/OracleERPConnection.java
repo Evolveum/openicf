@@ -82,7 +82,7 @@ public class OracleERPConnection extends DatabaseConnection {
         final GuardedString password = config.getPassword();
         final String datasource = config.getDataSource();
         if (StringUtil.isNotBlank(datasource)) {
-            log.info("Create datasource connection {0}", datasource);
+            log.ok("Create datasource connection {0}", datasource);
             final String[] jndiProperties = config.getJndiProperties();
             final ConnectorMessages connectorMessages = config.getConnectorMessages();
             final Hashtable<String, String> prop = JNDIUtil.arrayToHashtable(jndiProperties, connectorMessages);
@@ -94,7 +94,7 @@ public class OracleERPConnection extends DatabaseConnection {
         } else {
             final String driver = config.getDriver();
             final String connectionUrl = config.getConnectionUrl();
-            log.info("Create driver connectionUrl {0}", connectionUrl);
+            log.ok("Create driver connectionUrl {0}", connectionUrl);
             connection = SQLUtil.getDriverMangerConnection(driver, connectionUrl, user, password);
         }
 
@@ -105,7 +105,7 @@ public class OracleERPConnection extends DatabaseConnection {
                 if( !oracleConn.getIncludeSynonyms() ) {
                     log.info("setIncludeSynonyms on ORACLE");
                     oracleConn.setIncludeSynonyms(true);
-                    log.info("setIncludeSynonyms success");
+                    log.ok("setIncludeSynonyms success");
                 }
             } catch (Exception e) {
                 log.error(e, "setIncludeSynonyms on ORACLE exception");
@@ -116,7 +116,7 @@ public class OracleERPConnection extends DatabaseConnection {
                 if ( oracleConn.getDefaultRowPrefetch()!=DEFAULT_ROW_PREFETCH) {
                     log.info("setDefaultRowPrefetch on ORACLE");
                     oracleConn.setDefaultRowPrefetch(DEFAULT_ROW_PREFETCH);
-                    log.info("setDefaultRowPrefetch success");
+                    log.ok("setDefaultRowPrefetch success");
                 }
             } catch (SQLException expected) {
                 //expected
@@ -128,7 +128,7 @@ public class OracleERPConnection extends DatabaseConnection {
         //Disable auto-commit mode
         try {
             if ( connection.getAutoCommit() ) {
-                log.info("setAutoCommit(false)");
+                log.ok("setAutoCommit(false)");
                 connection.setAutoCommit(false);
             }
         } catch (SQLException expected) {
@@ -161,7 +161,7 @@ public class OracleERPConnection extends DatabaseConnection {
      */
     public void closeConnection() {
         if( getConnection() != null && StringUtil.isNotBlank(config.getDataSource()) /*&& this.conn.getConnection() instanceof PooledConnection */) {
-            log.info("Close the pooled connection");
+            log.ok("Close the pooled connection");
             dispose();
         }
     }
@@ -172,7 +172,7 @@ public class OracleERPConnection extends DatabaseConnection {
      */
     public void openConnection() throws SQLException {
         if( getConnection() == null || getConnection().isClosed() ) {
-            log.info("Get new connection, it is closed");
+            log.ok("Get new connection, it is closed");
             setConnection( getNativeConnection(config) );
         }
     }
@@ -184,7 +184,7 @@ public class OracleERPConnection extends DatabaseConnection {
      * @throws SQLException an exception in statement
      */
     public CallableStatement prepareCall(final String sql) throws SQLException {
-        log.info("Prepare SQL Calls : {0}", sql);        
+        log.info("prepareCall");        
         final CallableStatement cs = getConnection().prepareCall(sql);
         cs.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
         return cs;
@@ -199,7 +199,7 @@ public class OracleERPConnection extends DatabaseConnection {
      */
     @Override
     public CallableStatement prepareCall(final String sql, final List<SQLParam> params) throws SQLException {
-        log.info("Prepare SQL Calls : {0}", sql);        
+        log.info("prepareCall");        
         final CallableStatement cs = super.prepareCall(sql, params);
         cs.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
         return cs;
@@ -225,7 +225,7 @@ public class OracleERPConnection extends DatabaseConnection {
      * @throws SQLException 
      */
     public PreparedStatement prepareStatement(String sql) throws SQLException {
-        log.info("Prepare SQL Statement : {0}", sql);        
+        log.info("prepareStatement");        
         PreparedStatement ps = getConnection().prepareStatement(sql);
         ps.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
         return ps;
@@ -239,7 +239,7 @@ public class OracleERPConnection extends DatabaseConnection {
      */
     @Override
     public PreparedStatement prepareStatement(final String sql, final List<SQLParam> params) throws SQLException {
-        log.info("Prepare SQL Statement : {0}", sql);        
+        log.info("prepareStatement");        
         final PreparedStatement ps = super.prepareStatement(sql, params);
         ps.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
         return ps;

@@ -114,7 +114,7 @@ public class AccountSQLBuilder {
         }
 
         final String sql = createCallSQL(schemaId, fn, body);
-        log.info("getSQL {0}", sql);
+        log.ok("getAllSQL done");
         return sql;
     }
 
@@ -153,7 +153,7 @@ public class AccountSQLBuilder {
      * @return self
      */
     public AccountSQLBuilder build(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
-        log.info("init");
+        log.ok("build");
         
         if (oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
             throw new IllegalArgumentException(
@@ -182,7 +182,7 @@ public class AccountSQLBuilder {
         if (create) {
             Assertions.nullCheck(sqlParamsMap.get(UNENCRYPT_PWD), OperationalAttributes.PASSWORD_NAME);
         }
-        log.info("init");
+        log.ok("build done");
         return this;
     }
     
@@ -202,7 +202,7 @@ public class AccountSQLBuilder {
      */
     public String getUserCallSQL() {
         final String fn = (create) ? CREATE_FNC : UPDATE_FNC;
-        log.info("getUserCallSQL: {0}", fn);
+        log.ok("getUserCallSQL: {0}", fn);
         StringBuilder body = new StringBuilder();
         boolean first = true;
         for ( CallParam par : CALL_PARAMS ) {
@@ -211,7 +211,7 @@ public class AccountSQLBuilder {
               
             SQLParam val = sqlParamsMap.get(columnName);
             if (val == null) {
-                log.info("skip empty value for {0}", columnName);
+                log.ok("skip empty value for {0}", columnName);
                 continue; //skip all non setup values
             }
             if (!first)
@@ -226,7 +226,7 @@ public class AccountSQLBuilder {
 
         final String sql = createCallSQL(schemaId, fn, body);
 
-        log.info("getUserCallSQL {0}", sql);
+        log.ok("getUserCallSQL done");
         return sql;
     }
 
@@ -236,19 +236,21 @@ public class AccountSQLBuilder {
      */
     public List<SQLParam> getUserSQLParams() {
         final List<SQLParam> ret = new ArrayList<SQLParam>();
-
+        log.ok("getUserSQLParams"); 
+        
         for (CallParam par : CALL_PARAMS) {
             final String columnName = par.name;
 
             final SQLParam val = sqlParamsMap.get(columnName);
             if (val == null) {
-               // log.info("skip empty value for {0}",columnName);
+               log.ok("skip empty value for {0}",columnName);
                continue; //skip all non setup values
             }
             if (!isPredefinedValue(val)) {
                 ret.add(val);
             }
         }
+        log.ok("getUserSQLParams done");        
         return ret;
     }
 
@@ -269,6 +271,7 @@ public class AccountSQLBuilder {
      * @return a <CODE>String</CODE> sql string
      */
     public String getUserUpdateNullsSQL() {
+        log.ok("getUserUpdateNullsSQL"); 
         StringBuilder body = new StringBuilder("x_user_name => ?, x_owner => upper(?)");
         for (CallParam par : CALL_PARAMS) {
             final String columnName = par.name;
@@ -276,7 +279,7 @@ public class AccountSQLBuilder {
             SQLParam val = sqlParamsMap.get(columnName);
             
             if (val == null) {
-                log.info("skip empty value for {0}",columnName);
+                log.ok("skip empty value for {0}",columnName);
                 continue; //skip all non setup values
             }
             if (isPredefinedValue(val)) {
@@ -287,7 +290,7 @@ public class AccountSQLBuilder {
 
         final String sql = createCallSQL(schemaId, UPDATE_FNC, body);
 
-        log.info("getUpdateDefaultsSQL {0}", sql);
+        log.ok("getUserUpdateNullsSQL");
         return sql;
     }
 
@@ -322,7 +325,7 @@ public class AccountSQLBuilder {
      * @param options
      */
     public void addSQLParam(Attribute attr, ObjectClass oclass, OperationOptions options) {
-        log.info("Account: getSQLParam");
+        log.ok("Account: getSQLParam");
 
         if (oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
             throw new IllegalArgumentException(
@@ -346,13 +349,13 @@ public class AccountSQLBuilder {
             final String userName = AttributeUtil.getAsStringValue(attr).toUpperCase();
             ret = new SQLParam(USER_NAME, userName, Types.VARCHAR);
             sqlParams.add(ret);
-            log.info("{0} => {1}, Types.VARCHAR", USER_NAME, userName);
+            log.ok("{0} => {1}, Types.VARCHAR", USER_NAME, userName);
         } else if (attr.is(Uid.NAME)) {
             //         cstmt1.setString(1, identity.toUpperCase());
             final String userName = AttributeUtil.getAsStringValue(attr).toUpperCase();
             ret = new SQLParam(USER_NAME, userName, Types.VARCHAR);
             sqlParams.add(ret);
-            log.info("{0} => {1}, Types.VARCHAR", USER_NAME, userName);
+            log.ok("{0} => {1}, Types.VARCHAR", USER_NAME, userName);
         } else if (attr.is(OperationalAttributes.PASSWORD_NAME)) {
             /*
             cstmt1.setString(3, (String)accountAttrChanges.get(UNENCRYPT_PWD));
@@ -365,10 +368,10 @@ public class AccountSQLBuilder {
                 final GuardedString password = AttributeUtil.getGuardedStringValue(attr);
                 ret = new SQLParam(UNENCRYPT_PWD, password);
                 sqlParams.add(ret);
-                log.info("{0} is a password", UNENCRYPT_PWD);
+                log.ok("{0} is a password", UNENCRYPT_PWD);
                 final SQLParam add = new SQLParam(PWD_DATE, currentDate, Types.DATE);
                 sqlParams.add(add);
-                log.info("append also {0} => {1} ,Types.DATE", PWD_DATE, currentDate);
+                log.ok("append also {0} => {1} ,Types.DATE", PWD_DATE, currentDate);
             }
 
         } else if (attr.is(OperationalAttributes.PASSWORD_EXPIRED_NAME) || attr.is(EXP_PWD)) {
@@ -410,14 +413,14 @@ public class AccountSQLBuilder {
             if (passwordExpired) {
                 ret = new SQLParam(LAST_LOGON_DATE, NULL_DATE);
                 sqlParams.add(ret);
-                log.info("passwordExpired: {0} => NULL_DATE", LAST_LOGON_DATE);
+                log.ok("passwordExpired: {0} => NULL_DATE", LAST_LOGON_DATE);
                 final SQLParam add = new SQLParam(PWD_DATE, NULL_DATE);
                 sqlParams.add(add);
-                log.info("append also {0} => NULL_DATE", PWD_DATE);
+                log.ok("append also {0} => NULL_DATE", PWD_DATE);
             } else if (create) {
                 ret = new SQLParam(LAST_LOGON_DATE, currentDate);
                 sqlParams.add(ret);
-                log.info("create account with not expired password {0} => {1}", LAST_LOGON_DATE, currentDate);
+                log.ok("create account with not expired password {0} => {1}", LAST_LOGON_DATE, currentDate);
             }
 
         } else if (attr.is(OWNER)) {
@@ -425,7 +428,7 @@ public class AccountSQLBuilder {
             final String owner = AttributeUtil.getAsStringValue(attr);
             ret = new SQLParam(OWNER, owner, Types.VARCHAR);
             sqlParams.add(ret);
-            log.info("{0} = > {1}, Types.VARCHAR", OWNER, owner);
+            log.ok("{0} = > {1}, Types.VARCHAR", OWNER, owner);
         } else if (attr.is(START_DATE) || attr.is(OperationalAttributes.ENABLE_DATE_NAME)) {
             /* ------ adapter code ---------- 
             // start_date 'not null' type
@@ -440,7 +443,7 @@ public class AccountSQLBuilder {
                 Timestamp tms = stringToTimestamp(dateString);// stringToTimestamp(dateString);
                 ret = new SQLParam(START_DATE, tms, Types.TIMESTAMP);
                 sqlParams.add(ret);
-                log.info("{0} => {1} , Types.TIMESTAMP", START_DATE, tms);
+                log.ok("{0} => {1} , Types.TIMESTAMP", START_DATE, tms);
             }
 
         } else if (attr.is(END_DATE) || attr.is(OperationalAttributes.DISABLE_DATE_NAME)) {
@@ -460,18 +463,18 @@ public class AccountSQLBuilder {
             if (AttributeUtil.getSingleValue(attr) == null) {
                 ret = new SQLParam(END_DATE, NULL_DATE);
                 sqlParams.add(ret);
-                log.info("NULL {0} => NULL_DATE : continue", END_DATE);
+                log.ok("NULL {0} => NULL_DATE : continue", END_DATE);
             } else {
                 final String dateString = AttributeUtil.getAsStringValue(attr);
                 if (SYSDATE.equalsIgnoreCase(dateString)) {
                     ret = new SQLParam(END_DATE, SYSDATE);
                     sqlParams.add(ret);
-                    log.info("sysdate value in {0} => {1} : continue", END_DATE, SYSDATE);
+                    log.ok("sysdate value in {0} => {1} : continue", END_DATE, SYSDATE);
                 } else {
                     Timestamp tms = stringToTimestamp(dateString);
                     ret = new SQLParam(END_DATE, tms, Types.TIMESTAMP);
                     sqlParams.add(ret);
-                    log.info("{0} => {1}, Types.TIMESTAMP", END_DATE, tms);
+                    log.ok("{0} => {1}, Types.TIMESTAMP", END_DATE, tms);
                 }
             }
         } else if (attr.is(DESCR)) {
@@ -488,12 +491,12 @@ public class AccountSQLBuilder {
             if (AttributeUtil.getSingleValue(attr) == null) {
                 ret = new SQLParam(DESCR, NULL_CHAR, Types.VARCHAR);
                 sqlParams.add(ret);
-                log.info("NULL {0} => NULL_CHAR", DESCR);
+                log.ok("NULL {0} => NULL_CHAR", DESCR);
             } else {
                 final String descr = AttributeUtil.getAsStringValue(attr);
                 ret = new SQLParam(DESCR, descr, Types.VARCHAR);
                 sqlParams.add(ret);
-                log.info("{0} => {1}, Types.VARCHAR", DESCR, descr);
+                log.ok("{0} => {1}, Types.VARCHAR", DESCR, descr);
             }
 
         } else if (attr.is(PWD_ACCESSES_LEFT)) {
@@ -509,12 +512,12 @@ public class AccountSQLBuilder {
             if (AttributeUtil.getSingleValue(attr) == null) {
                 ret = new SQLParam(PWD_ACCESSES_LEFT, NULL_NUMBER, Types.INTEGER);
                 sqlParams.add(ret);
-                log.info("NULL {0} => NULL_NUMBER", PWD_ACCESSES_LEFT);
+                log.ok("NULL {0} => NULL_NUMBER", PWD_ACCESSES_LEFT);
             } else {
                 final String accessLeft = AttributeUtil.getAsStringValue(attr);
                 ret = new SQLParam(PWD_ACCESSES_LEFT, new Integer(accessLeft), Types.INTEGER);
                 sqlParams.add(ret);
-                log.info("{0} => {1}, Types.INTEGER", DESCR, accessLeft);
+                log.ok("{0} => {1}, Types.INTEGER", DESCR, accessLeft);
             }
 
         } else if (attr.is(PWD_LIFESPAN_ACCESSES)) {
@@ -530,12 +533,12 @@ public class AccountSQLBuilder {
             if (AttributeUtil.getSingleValue(attr) == null) {
                 ret = new SQLParam(PWD_LIFESPAN_ACCESSES, NULL_NUMBER, Types.INTEGER);
                 sqlParams.add(ret);
-                log.info("NULL {0} => NULL_NUMBER", PWD_LIFESPAN_ACCESSES);
+                log.ok("NULL {0} => NULL_NUMBER", PWD_LIFESPAN_ACCESSES);
             } else {
                 final String lifeAccess = AttributeUtil.getAsStringValue(attr);
                 ret = new SQLParam(PWD_LIFESPAN_ACCESSES, new Integer(lifeAccess), Types.INTEGER);
                 sqlParams.add(ret);
-                log.info("{0} => {1}, Types.INTEGER", PWD_LIFESPAN_ACCESSES, lifeAccess);
+                log.ok("{0} => {1}, Types.INTEGER", PWD_LIFESPAN_ACCESSES, lifeAccess);
             }
 
         } else if (attr.is(PWD_LIFESPAN_DAYS)) {
@@ -552,12 +555,12 @@ public class AccountSQLBuilder {
             if (AttributeUtil.getSingleValue(attr) == null) {
                 ret = new SQLParam(PWD_LIFESPAN_DAYS, NULL_NUMBER, Types.INTEGER);
                 sqlParams.add(ret);
-                log.info("NULL {0} => NULL_NUMBER", PWD_LIFESPAN_DAYS);
+                log.ok("NULL {0} => NULL_NUMBER", PWD_LIFESPAN_DAYS);
             } else {
                 final String lifeDays = AttributeUtil.getAsStringValue(attr);
                 ret = new SQLParam(PWD_LIFESPAN_DAYS, new Integer(lifeDays), Types.INTEGER);
                 sqlParams.add(ret);
-                log.info("{0} => {1}, Types.INTEGER", PWD_LIFESPAN_DAYS, lifeDays);
+                log.ok("{0} => {1}, Types.INTEGER", PWD_LIFESPAN_DAYS, lifeDays);
             }
 
         } else if (attr.is(EMP_ID)) {
@@ -574,12 +577,12 @@ public class AccountSQLBuilder {
             if (AttributeUtil.getSingleValue(attr) == null) {
                 ret = new SQLParam(EMP_ID, NULL_NUMBER, Types.INTEGER);
                 sqlParams.add(ret);
-                log.info("NULL {0} => NULL_NUMBER", EMP_ID);
+                log.ok("NULL {0} => NULL_NUMBER", EMP_ID);
             } else {
                 final String empId = AttributeUtil.getAsStringValue(attr);
                 ret = new SQLParam(EMP_ID, new Integer(empId), Types.INTEGER);
                 sqlParams.add(ret);
-                log.info("{0} => {1}, Types.INTEGER", EMP_ID, empId);
+                log.ok("{0} => {1}, Types.INTEGER", EMP_ID, empId);
             }
 
         } else if (attr.is(EMAIL)) {
@@ -595,12 +598,12 @@ public class AccountSQLBuilder {
             if (AttributeUtil.getSingleValue(attr) == null) {
                 ret = new SQLParam(EMAIL, NULL_CHAR, Types.VARCHAR);
                 sqlParams.add(ret);
-                log.info("NULL {0} => NULL_CHAR", EMAIL);
+                log.ok("NULL {0} => NULL_CHAR", EMAIL);
             } else {
                 final String email = AttributeUtil.getAsStringValue(attr);
                 ret = new SQLParam(EMAIL, email, Types.VARCHAR);
                 sqlParams.add(ret);
-                log.info("{0} => {1}, Types.VARCHAR", EMAIL, email);
+                log.ok("{0} => {1}, Types.VARCHAR", EMAIL, email);
             }
 
         } else if (attr.is(FAX)) {
@@ -616,12 +619,12 @@ public class AccountSQLBuilder {
             if (AttributeUtil.getSingleValue(attr) == null) {
                 ret = new SQLParam(FAX, NULL_CHAR, Types.VARCHAR);
                 sqlParams.add(ret);
-                log.info("NULL {0} => NULL_CHAR", FAX);
+                log.ok("NULL {0} => NULL_CHAR", FAX);
             } else {
                 final String fax = AttributeUtil.getAsStringValue(attr);
                 ret = new SQLParam(FAX, fax, Types.VARCHAR);
                 sqlParams.add(ret);
-                log.info("{0} => {1}, Types.VARCHAR", FAX, fax);
+                log.ok("{0} => {1}, Types.VARCHAR", FAX, fax);
             }
 
         } else if (attr.is(CUST_ID)) {
@@ -638,12 +641,12 @@ public class AccountSQLBuilder {
             if (AttributeUtil.getSingleValue(attr) == null) {
                 ret = new SQLParam(CUST_ID, NULL_NUMBER, Types.VARCHAR);
                 sqlParams.add(ret);
-                log.info("NULL {0} => NULL_NUMBER", CUST_ID);
+                log.ok("NULL {0} => NULL_NUMBER", CUST_ID);
             } else {
                 final String custId = AttributeUtil.getAsStringValue(attr);
                 ret = new SQLParam(CUST_ID, new Integer(custId), Types.INTEGER);
                 sqlParams.add(ret);
-                log.info("{0} => {1}, Types.INTEGER", CUST_ID, custId);
+                log.ok("{0} => {1}, Types.INTEGER", CUST_ID, custId);
             }
 
         } else if (attr.is(SUPP_ID)) {
@@ -660,12 +663,12 @@ public class AccountSQLBuilder {
             if (AttributeUtil.getSingleValue(attr) == null) {
                 ret = new SQLParam(SUPP_ID, NULL_NUMBER, Types.VARCHAR);
                 sqlParams.add(ret);
-                log.info("NULL {0} => NULL_NUMBER", SUPP_ID);
+                log.ok("NULL {0} => NULL_NUMBER", SUPP_ID);
             } else {
                 final String suppId = AttributeUtil.getAsStringValue(attr);
                 ret = new SQLParam(SUPP_ID, new Integer(suppId), Types.INTEGER);
                 sqlParams.add(ret);
-                log.info("{0} => {1}, Types.INTEGER", SUPP_ID, suppId);
+                log.ok("{0} => {1}, Types.INTEGER", SUPP_ID, suppId);
             }
         }
     }

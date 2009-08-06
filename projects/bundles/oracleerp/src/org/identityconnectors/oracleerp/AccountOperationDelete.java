@@ -76,9 +76,10 @@ final class AccountOperationDelete extends Operation implements DeleteOp {
             // No Result ??
         } catch (SQLException e) {
             if (e.getErrorCode() == 20001 || e.getErrorCode() == 1403) {
-                final String msg = "SQL Exception trying to delete Oracle user '{0}' ";
+                final String msg = MessageFormat.format(OracleERPUtil.MSG_ACCOUNT_NOT_DELETE, uid.getUidValue());
                 SQLUtil.rollbackQuietly(conn);
-                throw new IllegalArgumentException(MessageFormat.format(msg, uid),e);
+                log.error(e, msg);
+                throw new IllegalArgumentException(msg, e);
             } else {
               throw new UnknownUidException(uid, objClass);
             }
@@ -86,7 +87,7 @@ final class AccountOperationDelete extends Operation implements DeleteOp {
             SQLUtil.closeQuietly(cs);
             cs = null;
         }
-        log.info("delete user ''{0}'' ok", uid.getUidValue());
+        log.info("delete user ''{0}'' done", uid.getUidValue());
         conn.commit();
     }
 }

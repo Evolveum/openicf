@@ -33,7 +33,6 @@ import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
@@ -146,16 +145,17 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
             // Run the create call, new style is using the defaults
             CallableStatement cs = null;
             final String sql = asb.getUserCallSQL();
-            final String msg = "Update user account {0} : {1}";
-            log.info(msg, name, sql);
+            final String msg = "Update user account {0}";
+            log.ok(msg, name);
             try {
                 // Create the user
                 cs = conn.prepareCall(sql, asb.getUserSQLParams());
                 cs.execute();
             } catch (Exception e) {
-                log.error(e, msg, name, sql);
+                String message = cfg.getMessage(MSG_ACCOUNT_NOT_UPDATE, name);
+                log.error(e, message);
                 SQLUtil.rollbackQuietly(conn);
-                throw new UnknownUidException(e);
+                throw new ConnectorException(message, e);
             } finally {
                 SQLUtil.closeQuietly(cs);
             }            
@@ -177,7 +177,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
 
         conn.commit();
         //Return new UID
-        log.info( "update user ''{0}'' ok", name );
+        log.info( "update user ''{0}'' done", name );
         return new Uid(name);
     }
     
@@ -201,10 +201,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
             b.append(",x_owner => upper(?),x_end_date => FND_USER_PKG.null_date");
             b.append(") }");
             
-            String msg = "Oracle ERP: realEnable sql: {0}";
             final String sql = b.toString();
-            log.info( msg, sql);
-
             st = conn.prepareStatement(sql);
             st.setString(1, userName.toUpperCase());
             st.setString(2, cfg.getUser());

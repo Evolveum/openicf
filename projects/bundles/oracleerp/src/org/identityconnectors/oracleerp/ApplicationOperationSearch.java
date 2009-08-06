@@ -125,9 +125,10 @@ public class ApplicationOperationSearch extends Operation implements SearchOp<Fi
                 }
             }
         } catch (Exception e) {
-            log.error(e, method);
+            final String msg =cfg.getMessage(MSG_COULD_NOT_READ);
+            log.error(e, msg);
             SQLUtil.rollbackQuietly(conn);
-            throw ConnectorException.wrap(e);
+            throw new ConnectorException( msg, e);
         } finally {
             SQLUtil.closeQuietly(res);
             res = null;
