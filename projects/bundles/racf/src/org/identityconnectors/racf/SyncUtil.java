@@ -22,6 +22,7 @@
  */
 package org.identityconnectors.racf;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -114,10 +115,8 @@ public class SyncUtil {
         //
         List<String> nameFilter = null;
         String[] attr = ((RacfConfiguration)_connector.getConfiguration()).getActiveSyncFilterChangesBy();
-        if (attr != null) {
-            if (attr != null && attr.length > 0)
-                nameFilter = Arrays.asList(attr);
-        }
+        if (attr != null && attr.length > 0)
+            nameFilter = Arrays.asList(attr);
 
         // Search Context
         //
@@ -214,8 +213,7 @@ public class SyncUtil {
     private Map<String, Object> getRootDSE()  {
         try {
             SearchControls subTreeControls = new SearchControls(SearchControls.OBJECT_SCOPE, 4095, 0, null, true, true);
-            NamingEnumeration<SearchResult> connections = ((RacfConnection)_connector.getConnection()).getDirContext().search("", "(objectClass=*)", subTreeControls);
-
+           
             Set<String> attributesToGet = new HashSet<String>();
             attributesToGet.add("changelog");
             attributesToGet.add("firstchangenumber");
@@ -454,7 +452,7 @@ public class SyncUtil {
         return i;
     }
 
-    static public class StringComparator implements java.util.Comparator {
+    static public class StringComparator implements java.util.Comparator, Serializable {
         public int compare(Object o1, Object o2) {
             String key1 = (String)o1;
             String key2 = (String)o2;

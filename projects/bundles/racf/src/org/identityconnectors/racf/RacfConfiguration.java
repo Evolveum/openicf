@@ -501,29 +501,29 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     
     @ConfigurationProperty
     public String[] getActiveSyncCertificate() {
-        return _asCertificate;
+        return arrayCopy(_asCertificate);
     }
     
     public void setActiveSyncCertificate(String[] certificate) {
-        _asCertificate = certificate;
+        _asCertificate = arrayCopy(certificate);
     }
     
     @ConfigurationProperty
     public String[] getActiveSyncPrivateKey() {
-        return _asPrivateKey;
+        return arrayCopy(_asPrivateKey);
     }
 
     public void setActiveSyncPrivateKey(String[] privateKey) {
-        _asPrivateKey = privateKey;
+        _asPrivateKey = arrayCopy(privateKey);
     }
     
     @ConfigurationProperty
     public String[] getActiveSyncFilterChangesBy() {
-        return _asFilterChangesBy;
+        return arrayCopy(_asFilterChangesBy);
     }
 
     public void setActiveSyncFilterChangesBy(String[] filterChangesBy) {
-        _asFilterChangesBy = filterChangesBy;
+        _asFilterChangesBy = arrayCopy(filterChangesBy);
     }
     
     @ConfigurationProperty
