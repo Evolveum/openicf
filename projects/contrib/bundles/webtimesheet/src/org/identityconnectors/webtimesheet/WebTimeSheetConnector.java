@@ -52,6 +52,8 @@ public class WebTimeSheetConnector implements PoolableConnector, CreateOp, Schem
     public static final java.lang.String ATTR_INTERNAL_EMAIL = "InternalEmail";
     public static final java.lang.String ATTR_PARENT_ID = "ParentDepartmentId";
     public static final java.lang.String ATTR_DEPARTMENT = "DepartmentId";
+    public static final java.lang.String ATTR_DOMAIN = "Domain";
+    public static final java.lang.String ATTR_AUTH_TYPE = "AuthenticationType";
     public static final java.lang.String OBCLASS_DEPARTMENT_NAME = "Department";
     /**
      * Setup logging for the {@link WebTimeSheetConnector}.
@@ -121,7 +123,9 @@ public class WebTimeSheetConnector implements PoolableConnector, CreateOp, Schem
                     a.findString(ATTR_DEPARTMENT),
                     a.findString(ATTR_INTERNAL_EMAIL),
                     a.findString(ATTR_EMPLOYEE_ID),
-                    a.getEnabled(true));
+                    a.getEnabled(true),
+                    a.findString(ATTR_DOMAIN),
+                    a.findString(ATTR_AUTH_TYPE));
         } else if (objClass.is(OBCLASS_DEPARTMENT_NAME)) {
             throw new IllegalArgumentException("Creation of Departments not yet implimented");
         } else {
@@ -175,6 +179,8 @@ public class WebTimeSheetConnector implements PoolableConnector, CreateOp, Schem
         attributes.add(AttributeInfoBuilder.build(ATTR_DEPARTMENT));
         attributes.add(AttributeInfoBuilder.build(ATTR_EMPLOYEE_ID));
         attributes.add(AttributeInfoBuilder.build(ATTR_INTERNAL_EMAIL));
+        attributes.add(AttributeInfoBuilder.build(ATTR_DOMAIN));
+        attributes.add(AttributeInfoBuilder.build(ATTR_AUTH_TYPE));
 
         // Operational attributes
         //
@@ -262,7 +268,9 @@ public class WebTimeSheetConnector implements PoolableConnector, CreateOp, Schem
                     a.findString(ATTR_DEPARTMENT),
                     a.findString(ATTR_INTERNAL_EMAIL),
                     a.findString(ATTR_EMPLOYEE_ID),
-                    a.getEnabled(true));
+                    a.getEnabled(true),
+                    a.findString(ATTR_DOMAIN),
+                    a.findString(ATTR_AUTH_TYPE));
         } else if (objclass.is(OBCLASS_DEPARTMENT_NAME)) {
             throw new IllegalArgumentException("Modifications to Departments not yet implimented");
         } else {
@@ -300,7 +308,7 @@ public class WebTimeSheetConnector implements PoolableConnector, CreateOp, Schem
                     builder.addAttribute(AttributeBuilder.build(attrElement.getNodeName(), attrElement.getTextContent()));
                 } else if (attrElement.getNodeName().equalsIgnoreCase("Enabled")) {
                     builder.addAttribute(AttributeBuilder.build("__ENABLED__", attrElement.getTextContent()));
-                
+
                 } else {
                     builder.addAttribute(AttributeBuilder.build(attrElement.getNodeName(), attrElement.getTextContent()));
                 }
@@ -352,6 +360,7 @@ public class WebTimeSheetConnector implements PoolableConnector, CreateOp, Schem
         }
         final StringBuffer buf = new StringBuffer();
         password.access(new GuardedString.Accessor() {
+
             public void access(char[] clearChars) {
                 buf.append(clearChars);
             }
