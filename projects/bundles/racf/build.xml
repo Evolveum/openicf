@@ -31,6 +31,8 @@
     <target name="-pre-clean-extra">
         <delete>
             <fileset dir="${lib}" includes="**/*.jar">
+                <exclude name="bcmail-jdk14-*.jar"/>
+                <exclude name="bcprov-jdk14-*.jar"/>
                 <exclude name="expect4j*.jar"/>
                 <exclude name="RWebSDK.jar"/>
                 <exclude name="wrqtls12.jar"/>
@@ -52,10 +54,7 @@
     <target name="run-contract-tests" depends="contract-init">
         <!-- commandline configuration -->
         <antcall target="contract-dist" inheritAll="false">
-            <param name="configuration" value="commandline"/>
-        </antcall>
-        <antcall target="contract-tests" inheritAll="false">
-            <param name="configuration" value="commandline"/>
+            <param name="testConfiguration" value="commandline"/>
         </antcall>
         </target>
 </project>
