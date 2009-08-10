@@ -5,7 +5,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorDatabaseCommon"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-HEAD"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorTestCommon-HEAD"/>
-	<classpathentry kind="var" path="USER_HOME/.ant/lib/junit-4.5.jar"/>
 	<classpathentry exported="true" kind="var" path="USER_HOME/.connectors/connector-oracle/lib/ojdbc14.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="ide-build"/>
 </classpath>
