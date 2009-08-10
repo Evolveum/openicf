@@ -212,8 +212,6 @@ public class SyncUtil {
 
     private Map<String, Object> getRootDSE()  {
         try {
-            SearchControls subTreeControls = new SearchControls(SearchControls.OBJECT_SCOPE, 4095, 0, null, true, true);
-           
             Set<String> attributesToGet = new HashSet<String>();
             attributesToGet.add("changelog");
             attributesToGet.add("firstchangenumber");

@@ -119,8 +119,9 @@ public class BouncyCastlePEUtilities extends RACFPasswordEnvelopeUtilities {
     }
 
     public String getPassword(byte[] envelope) {
+        ASN1InputStream aIn = null;
         try {
-            ASN1InputStream aIn = new ASN1InputStream(envelope);
+            aIn = new ASN1InputStream(envelope);
             Object o = null;
             DEROctetString oString = null;
 
@@ -142,7 +143,8 @@ public class BouncyCastlePEUtilities extends RACFPasswordEnvelopeUtilities {
                     }
                 }
             }
-
+            aIn.close();
+            aIn = null;
             String pw = null;
             if ( oString != null ) {
                 aIn = new ASN1InputStream(oString.getOctets());
@@ -150,9 +152,16 @@ public class BouncyCastlePEUtilities extends RACFPasswordEnvelopeUtilities {
                 if ( seq.getObjectAt(2) instanceof DERUTF8String ) {
                     pw = ((DERUTF8String) seq.getObjectAt(2)).getString();
                 }
+                aIn.close();
+                aIn = null;
             }
             return pw;
         } catch (IOException e) {
+            try {
+                if (aIn!=null)
+                    aIn.close();
+            } catch (IOException e2) {
+            }
             throw ConnectorException.wrap(e);
         }
     }
