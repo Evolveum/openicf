@@ -72,6 +72,7 @@ public class RacfConnection {
         if (_configuration.getUseSsl()) {
             env.put(Context.SECURITY_PROTOCOL, "ssl");
         }
+        env.put("java.naming.ldap.attributes.binary", "racfPasswordEnvelope");
 
         return env;
     }

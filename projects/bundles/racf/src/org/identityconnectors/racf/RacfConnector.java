@@ -56,6 +56,8 @@ import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.ObjectClassInfo;
+import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
@@ -64,6 +66,8 @@ import org.identityconnectors.framework.common.objects.PredefinedAttributes;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
+import org.identityconnectors.framework.common.objects.SyncResultsHandler;
+import org.identityconnectors.framework.common.objects.SyncToken;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.AttributeNormalizer;
@@ -75,6 +79,7 @@ import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
+import org.identityconnectors.framework.spi.operations.SyncOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
 
@@ -86,7 +91,7 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
                              "org.identityconnectors.rw3270.wrq.Messages",  
                              "org.identityconnectors.rw3270.freehost3270.Messages"})
 public class RacfConnector implements Connector, CreateOp, PoolableConnector,
-DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
+DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormalizer {
     
     static final List<String>   POSSIBLE_ATTRIBUTES         = Arrays.asList(
             "ADSP", "AUDITOR", "SPECIAL", "GRPACC", "OIDCARD", "OPERATIONS");
@@ -106,6 +111,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
     private RacfConfiguration           _configuration;
     private CommandLineUtil             _clUtil;
     private LdapUtil                    _ldapUtil;
+    private SyncUtil                    _syncUtil;
     
     // Dateformats are not threadsafe, so not static
     //
@@ -279,6 +285,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
                     ldapAttrs.add(ATTR_LDAP_RESUME_DATE);
                 else
                     commandLineAttrs.add(ATTR_CL_RESUME_DATE);
+            } else if (attribute.equals(OperationalAttributes.PASSWORD_NAME)) {
+                if (isLdapConnectionAvailable())
+                    ldapAttrs.add("racfPasswordEnvelope");
+                else
+                    throw new ConnectorException("TODO");
             } else if (attribute.equals(OperationalAttributes.PASSWORD_NAME)) {
                 throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.ATTRIBUTE_NOT_READABLE, OperationalAttributes.PASSWORD_NAME));
             } else if (attribute.equals(OperationalAttributes.PASSWORD_EXPIRED_NAME)) {
@@ -767,7 +778,16 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             attributes.add(PredefinedAttributeInfos.LAST_PASSWORD_CHANGE_DATE);
     
             _accountAttributes = AttributeInfoUtil.toMap(attributes);
-            schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
+            
+            ObjectClassInfoBuilder bld = new ObjectClassInfoBuilder();
+            bld.setType(ObjectClass.ACCOUNT_NAME);
+            bld.addAllAttributeInfo(attributes);
+            ObjectClassInfo objectClassInfo = bld.build();
+            schemaBuilder.defineObjectClass(objectClassInfo);
+            
+            // Sync is not supported for Command-Line connector
+            //
+            schemaBuilder.removeSupportedObjectClass(SyncOp.class, objectClassInfo);
         }
         //----------------------------------------------------------------------
 
@@ -783,7 +803,16 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             groupAttributes.add(buildMVROAttribute(ATTR_CL_GROUPS,                           String.class));
     
             _groupAttributes = AttributeInfoUtil.toMap(groupAttributes);
-            schemaBuilder.defineObjectClass(RACF_GROUP_NAME, groupAttributes);
+            
+            ObjectClassInfoBuilder bld = new ObjectClassInfoBuilder();
+            bld.setType(RACF_GROUP_NAME);
+            bld.addAllAttributeInfo(groupAttributes);
+            ObjectClassInfo objectClassInfo = bld.build();
+            schemaBuilder.defineObjectClass(objectClassInfo);
+            
+            // Sync is not supported for Command-Line connector
+            //
+            schemaBuilder.removeSupportedObjectClass(SyncOp.class, objectClassInfo);
         }
 
         return schemaBuilder.build();
@@ -955,7 +984,19 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             attributes.add(PredefinedAttributeInfos.LAST_PASSWORD_CHANGE_DATE);
     
             _accountAttributes = AttributeInfoUtil.toMap(attributes);
-            schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
+            ObjectClassInfoBuilder bld = new ObjectClassInfoBuilder();
+            bld.setType(ObjectClass.ACCOUNT_NAME);
+            bld.addAllAttributeInfo(attributes);
+            ObjectClassInfo objectClassInfo = bld.build();
+            schemaBuilder.defineObjectClass(objectClassInfo);
+            
+            // Sync is only supported if there is a changelog
+            //
+            try {
+                getLatestSyncToken(ObjectClass.ACCOUNT);
+            } catch (Exception e) {
+                schemaBuilder.removeSupportedObjectClass(SyncOp.class, objectClassInfo);
+            }
         }
         
         //----------------------------------------------------------------------
@@ -990,7 +1031,16 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
             groupAttributes.add(buildMVROAttribute(ATTR_LDAP_GROUP_USERIDS,              String.class));
     
             _groupAttributes = AttributeInfoUtil.toMap(groupAttributes);
-            schemaBuilder.defineObjectClass(RACF_GROUP_NAME, groupAttributes);
+            
+            ObjectClassInfoBuilder bld = new ObjectClassInfoBuilder();
+            bld.setType(RACF_GROUP_NAME);
+            bld.addAllAttributeInfo(groupAttributes);
+            ObjectClassInfo objectClassInfo = bld.build();
+            schemaBuilder.defineObjectClass(objectClassInfo);
+            
+            // Sync is not supported for Group
+            //
+            schemaBuilder.removeSupportedObjectClass(SyncOp.class, objectClassInfo);
         }
         return schemaBuilder.build();
     }
@@ -1259,6 +1309,29 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, TestOp, AttributeNormalizer {
         //  - creating a new connector, and running init
         //  - pulling a connector from the pool, and running isAlive()
         // Either of these guarantees a working connection
+    }
+
+    public SyncToken getLatestSyncToken(ObjectClass objClass) {
+        if (_syncUtil==null)
+            _syncUtil = new SyncUtil(this);
+        
+        if (isLdapConnectionAvailable()) {
+            return _syncUtil.getLatestSyncToken(objClass);
+        } else {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public void sync(ObjectClass objClass, SyncToken token,
+            SyncResultsHandler handler, OperationOptions options) {
+        if (_syncUtil==null)
+            _syncUtil = new SyncUtil(this);
+        
+        if (isLdapConnectionAvailable()) {
+            _syncUtil.sync(objClass, token, handler, options);
+        } else {
+            throw new UnsupportedOperationException();
+        }
     }
     
 }

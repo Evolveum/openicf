@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="com/sun/openconnectors/racf/rw3270/wrq/RacfWrqConnection.java" kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/PatternParser"/>
@@ -12,5 +11,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/3270wrq"/>
 	<classpathentry kind="lib" path="lib/expect4j-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/jakarta-oro-2.0.8.jar"/>
+	<classpathentry kind="lib" path="lib/bcmail-jdk14-137.jar"/>
+	<classpathentry kind="lib" path="lib/bcprov-jdk14-137.jar"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>

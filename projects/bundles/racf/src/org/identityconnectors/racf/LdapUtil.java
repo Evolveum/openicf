@@ -25,7 +25,6 @@ package org.identityconnectors.racf;
 import static org.identityconnectors.racf.RacfConstants.*;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,7 +54,6 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
@@ -64,18 +62,34 @@ import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.PredefinedAttributes;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.racf.CommandLineUtil.LocalHandler;
 
 class LdapUtil {
+    private final Pattern                   _connectionPattern  = Pattern.compile("racfuserid=(.*)\\+racfgroupid=([^,]*),.*");
 
-    private final Pattern               _connectionPattern  = Pattern.compile("racfuserid=(.*)\\+racfgroupid=([^,]*),.*");
-
-    private RacfConnector               _connector;
-    private Schema                      _schema;
+    private RacfConnector                   _connector;
+    private Schema                          _schema;
+    private RACFPasswordEnvelopeUtilities   _passwdEnvDecrypter;
 
     public LdapUtil(RacfConnector connector) {
         _connector = connector;
         _schema = _connector.schema();
+
+        StringBuffer pemcert = loadBuffer(((RacfConfiguration)_connector.getConfiguration()).getActiveSyncCertificate());
+        StringBuffer pemkey = loadBuffer(((RacfConfiguration)_connector.getConfiguration()).getActiveSyncPrivateKey());
+        String decryptorClass = ((RacfConfiguration)_connector.getConfiguration()).getActiveSyncPasswordDecryptorClass();
+        if (pemcert.length()>0 && pemkey.length()>0)
+            _passwdEnvDecrypter = RACFPasswordEnvelopeUtilities.newRACFPasswordEnvelopeDecryptor(decryptorClass, pemcert.toString(), pemkey.toString());
+    }
+
+    private StringBuffer loadBuffer(String[] vals) {
+        StringBuffer buffer = new StringBuffer();
+        if (vals != null) {
+            for (int i = 0; i < vals.length; i++) {
+                buffer.append((String) vals[i]);
+                buffer.append("\n");
+            }
+        }
+        return buffer;
     }
 
     public Uid createViaLdap(ObjectClass objectClass, Set<Attribute> attrs, OperationOptions options) {
@@ -102,7 +116,7 @@ class LdapUtil {
                 _connector.throwErrorIfNullOrEmpty(expired);
                 _connector.throwErrorIfNullOrEmpty(password);
                 _connector.checkConnectionConsistency(groups, owners);
-                
+
                 if (expired!=null && password==null) 
                     throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
                 if (userExists(name.getNameValue()))
@@ -124,7 +138,7 @@ class LdapUtil {
                     changes.add(enableDate);
                 if (disableDate!=null)
                     changes.add(disableDate);
-                
+
                 String id = name.getNameValue();
                 Uid uid = new Uid(id.toUpperCase());
                 Map<String, Attribute> newAttributes = CollectionUtil.newCaseInsensitiveMap();
@@ -224,6 +238,9 @@ class LdapUtil {
         }
     }
 
+    //TODO: implement partitioned query for all
+    //
+
     public List<String> getUsersViaLdap(String query) {
         SearchControls subTreeControls = new SearchControls(SearchControls.ONELEVEL_SCOPE, 4095, 0, null, true, true);
         List<String> userNames = new LinkedList<String>(); 
@@ -292,25 +309,25 @@ class LdapUtil {
     public Map<String, Object> getAttributesFromLdap(ObjectClass objectClass, String ldapName, Set<String> originalAttributesToGet) throws NamingException {
         Map<String, Object> attributesRead = CollectionUtil.newCaseInsensitiveMap();
         Set<String> attributesToGet = new HashSet<String>(originalAttributesToGet);
-        
+
         // A few attributes need to be done via a separate LDAP query, so we save them
         //
         boolean owners = attributesToGet.remove(ATTR_LDAP_CONNECT_OWNER);
         boolean groups = attributesToGet.remove(ATTR_LDAP_GROUPS);
         boolean members = attributesToGet.remove(ATTR_LDAP_GROUP_USERIDS);
-        
+
         // Since Enable is indicated by ATTRIBUTES attribute containing REVOKE
         // we must ensure we fetch the Attribute
         //
         boolean enable = attributesToGet.remove(OperationalAttributes.ENABLE_NAME);
         if (enable && !attributesToGet.contains(ATTR_LDAP_ATTRIBUTES))
             attributesToGet.add(ATTR_LDAP_ATTRIBUTES);
-        
+
         SearchResult ldapObject = getAttributesFromLdap(ldapName, attributesRead, attributesToGet);
         Uid uid = new Uid(ldapObject.getNameInNamespace().toUpperCase());
         attributesRead.put(Uid.NAME, uid);
         attributesRead.put(Name.NAME, ldapObject.getNameInNamespace());
-        
+
         // For Users, we need to do a separate query against the connections to pick up
         // Connection info
         //
@@ -366,9 +383,7 @@ class LdapUtil {
                     attributesRead.put(ATTR_LDAP_CONNECT_OWNER, ownersForGroup);
                 }
             }
-            //TODO: what about subgroups (queried as racfSubgroupName)
         }
-        
 
         // Remap ACCOUNT attributes as needed
         //
@@ -409,6 +424,19 @@ class LdapUtil {
                 Object value = attributesRead.get(ATTR_LDAP_TSO_LOGON_SIZE);
                 Integer converted = Integer.parseInt((String)value);
                 attributesRead.put(ATTR_LDAP_TSO_LOGON_SIZE, converted);
+            }
+            // password envelope must be converted
+            //
+            if (attributesRead.containsKey(ATTR_LDAP_PASSWORD_ENVELOPE)) {
+                Object value = attributesRead.get(ATTR_LDAP_PASSWORD_ENVELOPE);
+                byte[] encrypted = (byte[])value;
+                if (_passwdEnvDecrypter!=null) {
+                    byte[] decrypted = _passwdEnvDecrypter.decrypt(encrypted);
+                    String pw = _passwdEnvDecrypter.getPassword(decrypted);
+                    if (pw != null) {
+                        attributesRead.put(OperationalAttributes.PASSWORD_NAME, AttributeBuilder.buildPassword(pw.toCharArray()).getValue().get(0));
+                    }
+                }
             }
             // TSO MAXSIZE must be converted
             //
@@ -458,7 +486,7 @@ class LdapUtil {
             if (!attributesRead.containsKey(ATTR_LDAP_GROUPS)) {
                 attributesRead.put(ATTR_LDAP_GROUPS, new LinkedList<Object>());
             }
-            
+
             // Default Group must be upcased
             //
             upcaseAttribute(attributesRead, ATTR_LDAP_DEFAULT_GROUP);
@@ -470,7 +498,7 @@ class LdapUtil {
             // Group Owners must be upcased
             //
             upcaseAttribute(attributesRead, ATTR_LDAP_CONNECT_OWNER);
-            
+
             // Group Owners must be filled in if null
             //
             if (!attributesRead.containsKey(ATTR_LDAP_CONNECT_OWNER)) {
@@ -489,7 +517,7 @@ class LdapUtil {
             // Superior Group must be upcased
             //
             upcaseAttribute(attributesRead, ATTR_LDAP_SUP_GROUP);
-            
+
             // Owner Group must be upcased
             //
             upcaseAttribute(attributesRead, ATTR_LDAP_OWNER);
@@ -502,13 +530,13 @@ class LdapUtil {
             // Members must be upcased
             //
             upcaseAttribute(attributesRead, ATTR_LDAP_GROUP_USERIDS);
-            
+
             // Members must be filled in if null
             //
             if (!attributesRead.containsKey(ATTR_LDAP_GROUP_USERIDS)) {
                 attributesRead.put(ATTR_LDAP_GROUP_USERIDS, new LinkedList<Object>());
             }
-            
+
             // Group Owners must be filled in if null
             //
             if (!attributesRead.containsKey(ATTR_LDAP_CONNECT_OWNER)) {
@@ -517,7 +545,7 @@ class LdapUtil {
         }
         return attributesRead;
     }
-    
+
     private void upcaseAttribute(Map<String, Object> attributesRead, String attributename) {
         if (attributesRead.containsKey(attributename)) {
             Object value = attributesRead.get(attributename);
@@ -530,7 +558,7 @@ class LdapUtil {
             attributesRead.put(attributename, value);
         }
     }
-    
+
     private String getConnectOwner(String query) throws NamingException {
         Map<String, Object> attributesRead = CollectionUtil.newCaseInsensitiveMap();
         Set<String> attributesToGet = new HashSet<String>();
@@ -566,8 +594,8 @@ class LdapUtil {
         }
         return ldapObject;
     }
-    
-    private Object getValueFromAttribute(javax.naming.directory.Attribute attribute) throws NamingException {
+
+    static Object getValueFromAttribute(javax.naming.directory.Attribute attribute) throws NamingException {
         switch (attribute.size()) {
         case 0:
             return null;
@@ -589,7 +617,7 @@ class LdapUtil {
         Map<String, Attribute> attributes = CollectionUtil.newCaseInsensitiveMap();
         attributes.putAll(AttributeUtil.toMap(attrs));
         Uid uid = AttributeUtil.getUidAttribute(attrs);
-        
+
         if (uid!=null) {
             if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
                 try {
@@ -603,10 +631,10 @@ class LdapUtil {
 
                     if (expired!=null && password==null) 
                         throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.EXPIRED_NO_PASSWORD));
-                    
+
                     if (!userExists(uid.getUidValue()))
                         throw new UnknownUidException();
-                    
+
                     ((RacfConnection)_connector.getConnection()).getDirContext().modifyAttributes(uid.getUidValue(), DirContext.REPLACE_ATTRIBUTE, createLdapAttributesFromConnectorAttributes(objectClass, attributes));
 
                     if (groups!=null)
@@ -621,7 +649,7 @@ class LdapUtil {
                 try {
                     Attribute members = attributes.remove(ATTR_LDAP_GROUP_USERIDS);
                     Attribute groupOwners = attributes.remove(ATTR_LDAP_CONNECT_OWNER);
-                    
+
                     ((RacfConnection)_connector.getConnection()).getDirContext().modifyAttributes(uid.getUidValue(), DirContext.REPLACE_ATTRIBUTE, 
                             createLdapAttributesFromConnectorAttributes(objectClass, attributes));
                     if (members!=null)
@@ -663,7 +691,7 @@ class LdapUtil {
         Set<String> racfAttributes = CollectionUtil.newCaseInsensitiveSet();
         boolean setRacfAttributes = false;
         boolean negateAttributes = false;
-        
+
         for (Attribute attribute : attributes.values()) {
             String attributeName = attribute.getName().toLowerCase();
             if (attribute.getValue()==null)
@@ -745,7 +773,7 @@ class LdapUtil {
             //      and get the set of current values for ATTRIBUTE. This has the
             //      advantage of getting the exact set of values, but the disadvantage
             //      that it requires an extra read of the user.
-            //TODO: this probably also applies to 'RacfConnectAttributes', which we
+            //NOTE: this probably also applies to 'RacfConnectAttributes', which we
             //      are not currently supporting
             List<Object> finalValue = new LinkedList<Object>();
             if (negateAttributes) {
@@ -762,7 +790,7 @@ class LdapUtil {
 
     private Attributes createLdapAttributesFromConnectorAttributes(Map<String, Attribute> attributes) {
         Attributes basicAttributes = new BasicAttributes();
-        
+
         for (Attribute attribute : attributes.values()) {
             String attributeName = attribute.getName().toLowerCase();
             if (attribute.is(Name.NAME) || attribute.is(Uid.NAME)) {
@@ -792,4 +820,6 @@ class LdapUtil {
         }
         return null;
     }
+
+
 }

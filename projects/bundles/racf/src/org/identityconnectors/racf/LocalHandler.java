@@ -22,23 +22,26 @@
  */
 package org.identityconnectors.racf;
 
-import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
-import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.objects.ConnectorObject;
+import org.identityconnectors.framework.common.objects.ResultsHandler;
 
-public class GuardedStringAccessor implements GuardedString.Accessor {
-    private char[] _array;
-    
-    public void access(char[] clearChars) {
-        _array = new char[clearChars.length];
-        System.arraycopy(clearChars, 0, _array, 0, _array.length);
+public class LocalHandler implements ResultsHandler, Iterable<ConnectorObject> {
+    private List<ConnectorObject> objects = new LinkedList<ConnectorObject>();
+
+    public boolean handle(ConnectorObject object) {
+        objects.add(object);
+        return true;
     }
-    
-    public char[] getArray() {
-        return _array;
+
+    public Iterator<ConnectorObject> iterator() {
+        return objects.iterator();
     }
 
-    public void clear() {
-        Arrays.fill(_array, 0, _array.length, ' ');
+    public int size() {
+        return objects.size();
     }
 }

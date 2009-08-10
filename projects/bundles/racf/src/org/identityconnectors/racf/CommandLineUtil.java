@@ -1224,21 +1224,6 @@ class CommandLineUtil {
         }
     }
 
-    public static class LocalHandler implements ResultsHandler, Iterable<ConnectorObject> {
-        private List<ConnectorObject> objects = new LinkedList<ConnectorObject>();
 
-        public boolean handle(ConnectorObject object) {
-            objects.add(object);
-            return true;
-        }
-
-        public Iterator<ConnectorObject> iterator() {
-            return objects.iterator();
-        }
-
-        public int size() {
-            return objects.size();
-        }
-    }
 
 }

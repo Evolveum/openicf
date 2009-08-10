@@ -26,13 +26,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Array;
-import java.text.MessageFormat;
 import java.util.Arrays;
-import java.util.Locale;
-import java.util.ResourceBundle;
 
 import org.identityconnectors.common.StringUtil;
-import org.identityconnectors.common.l10n.CurrentLocale;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
@@ -50,9 +46,6 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     private Integer        _hostTelnetPortNumber;
     private Integer        _commandTimeout;
 
-    private ResourceBundle _bundle = null; 
-    private Locale         _lastLocale = null; 
-    
     private String[]       _userObjectClasses;
     private String[]       _groupObjectClasses;
 
@@ -65,6 +58,16 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     private String         _connectScript;
     private String         _disconnectScript;
     private String         _connectionClassName;
+    
+
+    private Boolean        _asResetToday;
+    private Boolean        _asFilterUseOrSearch;
+    private Boolean        _asRemoveOCFromFilter;
+    private String         _asBlockSize;
+    private String         _asDecryptorClass;
+    private String[]       _asCertificate;
+    private String[]       _asPrivateKey;
+    private String[]       _asFilterChangesBy;
     
     public String getMessage(String key) {
         return getConnectorMessages().format(key, key);
@@ -495,4 +498,77 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     public void setScriptingLanguage(String language) {
         _scriptingLanguage = language;
     }
+    
+    @ConfigurationProperty
+    public String[] getActiveSyncCertificate() {
+        return _asCertificate;
+    }
+    
+    public void setActiveSyncCertificate(String[] certificate) {
+        _asCertificate = certificate;
+    }
+    
+    @ConfigurationProperty
+    public String[] getActiveSyncPrivateKey() {
+        return _asPrivateKey;
+    }
+
+    public void setActiveSyncPrivateKey(String[] privateKey) {
+        _asPrivateKey = privateKey;
+    }
+    
+    @ConfigurationProperty
+    public String[] getActiveSyncFilterChangesBy() {
+        return _asFilterChangesBy;
+    }
+
+    public void setActiveSyncFilterChangesBy(String[] filterChangesBy) {
+        _asFilterChangesBy = filterChangesBy;
+    }
+    
+    @ConfigurationProperty
+    public String getActiveSyncBlocksize() {
+        return _asBlockSize;
+    }
+
+    public void getActiveSyncBlocksize(String blockSize) {
+        _asBlockSize = blockSize;
+    }
+    
+    @ConfigurationProperty
+    public Boolean getActiveSyncResetToToday() {
+        return _asResetToday;
+    }
+        
+    public void setActiveSyncResetToToday(Boolean asResetToday) {
+        _asResetToday = asResetToday;
+    }
+    
+    @ConfigurationProperty
+    public Boolean getActiveSyncFilterUseOrSearch() {
+        return _asFilterUseOrSearch;
+    }
+
+    public void setActiveSyncFilterUseOrSearch(Boolean useOrSearch) {
+        _asFilterUseOrSearch = useOrSearch;
+    }
+    
+    @ConfigurationProperty
+    public Boolean getActiveSyncRemoveOCFromFilter() {
+        return _asRemoveOCFromFilter;
+    }
+
+    public void setActiveSyncRemoveOCFromFilter(Boolean removeOCFromFilter) {
+        _asRemoveOCFromFilter = removeOCFromFilter;
+    }
+    
+    @ConfigurationProperty
+    public String getActiveSyncPasswordDecryptorClass() {
+        return _asDecryptorClass;
+    }
+
+    public void setActiveSyncPasswordDecryptorClass(String decryptorClass) {
+        _asDecryptorClass = decryptorClass;
+    }
+    
 }

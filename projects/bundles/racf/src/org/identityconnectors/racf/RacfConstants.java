@@ -32,6 +32,7 @@ public interface RacfConstants {
     public static final String ATTR_LDAP_MODEL                 = "racfDatasetModel";
     public static final String ATTR_LDAP_OWNER                 = "racfOwner";
     public static final String ATTR_LDAP_PASSWORD              = "racfPassword";
+    public static final String ATTR_LDAP_PASSWORD_ENVELOPE     = "racfPasswordEnvelope";
     public static final String ATTR_LDAP_PROGRAMMER_NAME       = "racfProgrammerName";
     public static final String ATTR_LDAP_DEFAULT_GROUP         = "racfDefaultGroup";
     public static final String ATTR_LDAP_SECURITY_LEVEL        = "racfSecurityLevel";
