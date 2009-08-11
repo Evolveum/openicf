@@ -43,7 +43,7 @@ configuration{
 
 account{
     required.__NAME__="JTU-"
-    required.__PASSWORD__="password"
+    required.__PASSWORD__= new GuardedString("password".toCharArray())
    // required.owner="CUST"
     required.start_date=stringDate(-10)
     
@@ -56,7 +56,7 @@ account{
     all.last_logon_date=stringDate(0)
     all.description="Connector test user"
 
-    all.__PASSWORD__="password"
+    all.__PASSWORD__= new GuardedString("password".toCharArray())
     all.__PASSWORD_EXPIRED__=false
     all.password_date=stringDate(0)
     
@@ -79,7 +79,7 @@ account{
         
 
     modify.__NAME__="JTUM-"
-    modify.__PASSWORD__="modpasswd"
+    modify.__PASSWORD__= new GuardedString("modpasswd".toCharArray())
     modify.email_address="person1@somewhere.com"
     modify.fax="666-666-6666"
     modify.directResponsibilities=["Cash Forecasting||Cash Management||Standard||2004-04-12||2010-01-01","Purchasing Receiver||Purchasing||Standard||2004-04-12||null"]
@@ -225,7 +225,7 @@ testsuite {
 }
 
 __NAME__="CTU-" + Lazy.random("AAAAAA######")
-__PASSWORD__="password"
+__PASSWORD__= new GuardedString("password".toCharArray())
 owner="CUST"
 session_number=0
 

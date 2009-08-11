@@ -123,3 +123,4 @@ testsuite {
 
 }// testsuite
 
+__ACCOUNT__.inactive = "0"
