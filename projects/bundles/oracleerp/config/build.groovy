@@ -1,4 +1,5 @@
-import java.math.BigInteger/*  +---------------------------------------------------+
+import java.math.BigInteger
+/*  +---------------------------------------------------+
  *  ----------- Contract Tests configuration ------------
  *  +---------------------------------------------------+ 
  */
@@ -104,9 +105,12 @@ account{
     
     enabled.__PASSWORD_EXPIRED__=false
 //   enabled.__ENABLE_DATE__=getDt(-10)
-//   enabled.__LAST_LOGIN_DATE__=getDt(0)//   enabled.__DISSABLE_DATE__=getDt(+10)
-    enabled.__ENABLE__=true        dissabled.__PASSWORD_EXPIRED__=false
-    dissabled.__ENABLE__=false}
+//   enabled.__LAST_LOGIN_DATE__=getDt(0)
+//   enabled.__DISSABLE_DATE__=getDt(+10)
+    enabled.__ENABLE__=true
+    dissabled.__PASSWORD_EXPIRED__=false
+    dissabled.__ENABLE__=false
+}
 
 
 
@@ -219,7 +223,9 @@ testsuite {
      [ password : "NonExistingPassword_foo_bar_boo" ]
   ]
 }
-__NAME__="CTU-" + Lazy.random("AAAAAA######")__PASSWORD__="password"
+
+__NAME__="CTU-" + Lazy.random("AAAAAA######")
+__PASSWORD__="password"
 owner="CUST"
 session_number=0
 
@@ -236,7 +242,8 @@ password_lifespan_days=30
 
 employee_id=empty()
 employee_number=5
-person_fullname="Monster, Cookie"person_party_id=3044
+person_fullname="Monster, Cookie"
+person_party_id=3044
 npw_number=empty()
 email_address="person@somewhere.com"
 fax="555-555-5555"
@@ -255,7 +262,10 @@ def stringDate( dife ){
     return new java.sql.Timestamp(System.currentTimeMillis() + dife*24*3600000 ).toString()
 }    
 
-def getDt( dife ){    Calendar cal = Calendar.getInstance()    cal.setTimeInMillis(System.currentTimeMillis())    cal.add(Calendar.DAY_OF_MONTH, dife)   
+def getDt( dife ){
+    Calendar cal = Calendar.getInstance()
+    cal.setTimeInMillis(System.currentTimeMillis())
+    cal.add(Calendar.DAY_OF_MONTH, dife)   
     return cal.getTimeInMillis()
 }  
 
