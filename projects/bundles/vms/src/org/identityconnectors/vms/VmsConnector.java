@@ -1846,7 +1846,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
      * {@inheritDoc}
      */
     public void init(Configuration cfg) {
-        _configuration = new VmsConfiguration((VmsConfiguration)cfg);
+        _configuration = (VmsConfiguration)cfg;
         _vmsDateFormatWithSecs = new SimpleDateFormat(_configuration.getVmsDateFormatWithSecs(), new Locale(_configuration.getVmsLocale()));
         TimeZone timeZone = TimeZone.getTimeZone(_configuration.getVmsTimeZone());
         _vmsDateFormatWithSecs.setTimeZone(timeZone);
