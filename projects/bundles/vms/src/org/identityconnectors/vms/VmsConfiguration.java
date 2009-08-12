@@ -72,6 +72,8 @@ public class VmsConfiguration extends AbstractConfiguration {
         _isSSH = other._isSSH;
         _supportsLongCommands = other._supportsLongCommands;
         _disableUserLogins = other._disableUserLogins;
+        
+        setConnectorMessages(other.getConnectorMessages());
     }
 
     public void validate() {
@@ -101,6 +103,7 @@ public class VmsConfiguration extends AbstractConfiguration {
             throw new IllegalArgumentException(getMessage(VmsMessages.USERNAME_NULL));
         if (isNull(_password))
             throw new IllegalArgumentException(getMessage(VmsMessages.PASSWORD_NULL));
+        
     }
 
     private boolean isNull(String string) {
