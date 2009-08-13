@@ -22,13 +22,16 @@
  */
 package org.identityconnectors.solaris.operation.search;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.Pair;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Uid;
@@ -58,9 +61,17 @@ public class SearchPerformer {
     }
 
     public Set<Uid> performSearch(SolarisAttribute attribute) {
-        return performSearch(attribute, ".*" /* universal regular expression TODO might be something more efficient */);
+        return performSearch(attribute, ".*"/* universal regular expression TODO might be something more efficient */, null);
     }
     
+    public Set<Uid> performSearch(SolarisAttribute attribute, String searchRegExp) {
+        return performSearch(attribute, searchRegExp, null);
+    }
+    
+    public Set<Uid> performSearch(SolarisAttribute attribute, Uid uid) {
+        return performSearch(attribute, ".*", uid.getUidValue());
+    }
+
     /**
      * search for given attribute, and apply the given regular expression
      * pattern to the values to filter them.
@@ -71,14 +82,44 @@ public class SearchPerformer {
      *            search.
      * @param attribute
      *            the attribute that we are looking for
+     * @param uid
+     *            the uid used to filter the search result (it might be depend
+     *            on presence of __placeholders__ in the
+     *            {@link SolarisAttribute#getCommand(String...)}
      * @return list of attribute values, that satisfy the criteria.
      */
-    public Set<Uid> performSearch(SolarisAttribute attribute, String searchRegExp) {
+    public Set<Uid> performSearch(SolarisAttribute attribute, String searchRegExp, String uid) {
         // try to substitute username if needed in the command.
-        final String command = attribute.getCommand();
+        final String command = ((uid == null) ? attribute.getCommand() : attribute.getCommand(uid));
         final String[] output = cacheRequest(command);
         Pattern p = Pattern.compile(attribute.getRegExpForUidAndAttribute());
         Set<Uid> result = new HashSet<Uid>();
+        for (String line : output) {
+            Pair<Uid, String> grepResult = null;
+
+            grepResult = getUidAndAttr(line, p);
+
+            // in case there's a match with the searched regular expression:
+            if (grepResult != null) {
+                if (grepResult.second != null
+                        && grepResult.second.matches(searchRegExp)) {
+                    result.add(grepResult.first);
+                } else if (grepResult.second == null) {
+                    result.add(grepResult.first);
+                }
+            }
+        }
+
+        return result;
+    }
+    
+    public List<String> performValueSearch(SolarisAttribute attribute, String searchRegExp, String uid) {
+        // try to substitute username if needed in the command.
+        Assertions.nullCheck(uid, "uid");
+        final String command = attribute.getCommand(uid);
+        final String[] output = cacheRequest(command);
+        Pattern p = Pattern.compile(attribute.getRegExpForUidAndAttribute());
+        List<String> result = new ArrayList<String>();
         for (String line : output) {
             Pair<Uid, String> grepResult = null;
             
@@ -86,11 +127,11 @@ public class SearchPerformer {
              
             // in case there's a match with the searched regular expression:
             if (grepResult != null && grepResult.second.matches(searchRegExp)) {
-                result.add(grepResult.first);
+                result.add(grepResult.second);
             }
         }
         
-        return result;// TODO
+        return result;
     }
 
     /** @return null if no match, and a pair otherwise. */
@@ -99,11 +140,23 @@ public class SearchPerformer {
         
         Matcher matcher = pattern.matcher(line);
         if (matcher.matches()) {
-            assert matcher.groupCount() == 2 : "group count should exactly 2 -- Uid and the given Attribute should be selected.";
-            
-            pair = new Pair<Uid, String>();
-            pair.first = new Uid(matcher.group(1));
-            pair.second = matcher.group(2);
+            final int groupCnt = matcher.groupCount();
+            switch (groupCnt) {
+            case 1:
+                pair = new Pair<Uid, String>();
+                // assuming that a single column is always Uid.
+                pair.first = new Uid(matcher.group(1));
+                pair.second = null;
+                break;
+            case 2:
+                pair = new Pair<Uid, String>();
+                pair.first = new Uid(matcher.group(1));
+                pair.second = matcher.group(2);
+                break;
+            default:
+                pair = null;
+                break;
+            }//switch
         } 
         return pair;
     }

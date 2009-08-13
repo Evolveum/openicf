@@ -42,10 +42,9 @@ import org.identityconnectors.solaris.constants.SolarisAttribute;
 import org.identityconnectors.solaris.test.SolarisTestCommon;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
-public class SearchPerfomerTest {
+public class SearchPerformerTest {
     private SolarisConfiguration config;
     private SolarisConnector connector;
     private String username;
