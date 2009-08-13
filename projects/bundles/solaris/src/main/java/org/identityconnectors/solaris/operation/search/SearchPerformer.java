@@ -113,10 +113,21 @@ public class SearchPerformer {
         return result;
     }
     
-    public List<String> performValueSearch(SolarisAttribute attribute, String searchRegExp, String uid) {
+    /**
+     * Search the value of given attribute for an Account identified by given Uid.
+     * @param attribute searched attribute
+     * @param searchRegExp the regular expression to pick the [uid, attributevalue] pair from raw input
+     * @param uid that we are interested in.
+     * @return the value of the attribute.
+     */
+    public List<String> performValueSearchForUid(SolarisAttribute attribute, String searchRegExp, String uid) {
         // try to substitute username if needed in the command.
         Assertions.nullCheck(uid, "uid");
         final String command = attribute.getCommand(uid);
+        if (command == null) {
+            return null;
+        }
+        
         final String[] output = cacheRequest(command);
         Pattern p = Pattern.compile(attribute.getRegExpForUidAndAttribute());
         List<String> result = new ArrayList<String>();
@@ -125,9 +136,9 @@ public class SearchPerformer {
             
             grepResult = getUidAndAttr(line, p);
              
-            // in case there's a match with the searched regular expression:
-            if (grepResult != null && grepResult.second.matches(searchRegExp)) {
+            if (grepResult != null && grepResult.first.getUidValue().equals(uid)) {
                 result.add(grepResult.second);
+                break; // expecting to match only a single line.
             }
         }
         
@@ -146,7 +157,7 @@ public class SearchPerformer {
                 pair = new Pair<Uid, String>();
                 // assuming that a single column is always Uid.
                 pair.first = new Uid(matcher.group(1));
-                pair.second = null;
+                pair.second = pair.first.getUidValue();// fixme
                 break;
             case 2:
                 pair = new Pair<Uid, String>();
@@ -177,16 +188,14 @@ public class SearchPerformer {
     private String[] performCmd(String command) {
         String output = null;
         try {
-            
             // if i run the tests separately, the login info is in the expect4j's
             // buffer
             // otherwise (when tests are run in batch), there is empty buffer, so
             // this waitfor will timeout.
             try {
-                /* output = */connection.waitFor(
-                        configuration.getRootShellPrompt(),
+                connection.waitFor(configuration.getRootShellPrompt(),
                         SolarisConnection.WAIT);
-            } catch (Exception ex) {
+            } catch (Exception e) {
                 // OK
             }
 

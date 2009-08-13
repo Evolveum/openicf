@@ -115,8 +115,9 @@ public class PatternBuilder {
         PatternBuilder pb = new PatternBuilder(nrOfColumns, delimiter);
         return pb.build(columnSelector);
     }
-
-    public int getNrOfColumns() {
-        return nrOfColumns;
+    
+    /** create a pattern that matches any string */
+    public static String buildAcceptAllPattern() {
+        return ".*";
     }
 }

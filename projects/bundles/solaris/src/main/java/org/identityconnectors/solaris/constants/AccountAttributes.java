@@ -27,6 +27,7 @@ import java.util.Map;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.operation.search.PatternBuilder;
 
 
@@ -44,20 +45,23 @@ public enum AccountAttributes implements SolarisAttribute {
      */
     
     /** home directory */
-    DIR("dir", UpdateSwitches.DIR, null, null /* TODO */), 
+    DIR("dir", UpdateSwitches.DIR, "logins -oxa", PatternBuilder.buildPattern(14, 1/*uid*/, 6/*dir col.*/)), 
     SHELL("shell", UpdateSwitches.SHELL, "logins -oxa", PatternBuilder.buildPattern(14, 1/*uid*/, 7/*shell col.*/)),
     /** primary group */
     GROUP("group", UpdateSwitches.GROUP, null, null /* TODO */),
     SECONDARY_GROUP("secondary_group", UpdateSwitches.SECONDARY_GROUP, null, null /* TODO */),
-    UID("uid", UpdateSwitches.UID, null, null /* TODO */),
-    NAME(Name.NAME, UpdateSwitches.UNKNOWN, null, null /* TODO */),
+    /** ! this is the solaris native 'uid', *NOT* the one defined by the framework. */
+    UID("uid", UpdateSwitches.UID, "logins -oxa", PatternBuilder.buildPattern(14, 1/*__UID__*/, 2/*solaris uid*/)),
+    NAME(Name.NAME, UpdateSwitches.UNKNOWN, "logins -oxa",  PatternBuilder.buildPattern(14, 1/*uid*/)),
+    /** ! this is the UID defined by the framework */
+    FRAMEWORK_UID(Uid.NAME, AccountAttributes.NAME),    
     EXPIRE("expire", UpdateSwitches.EXPIRE, null, null /* TODO */),
     INACTIVE("inactive", UpdateSwitches.INACTIVE, "logins -oxa", PatternBuilder.buildPattern(14, 1/*uid*/, 13/*inactive col.*/)), 
     COMMENT("comment", UpdateSwitches.COMMENT, null, null /* TODO */),
     TIME_LAST_LOGIN("time_last_login", UpdateSwitches.UNKNOWN, null, null /* TODO */),
     AUTHORIZATION("authorization", UpdateSwitches.AUTHORIZATION, null, null /* TODO */),
     PROFILE("profile", UpdateSwitches.PROFILE, null, null /* TODO */),
-    ROLES("role", UpdateSwitches.ROLE, null, null /* TODO */);
+    ROLES("role", UpdateSwitches.ROLE, "roles __user__", PatternBuilder.buildAcceptAllPattern() /* TODO */);
     
     private static final Map<String, AccountAttributes> map = CollectionUtil.newCaseInsensitiveMap();
     
@@ -99,6 +103,17 @@ public enum AccountAttributes implements SolarisAttribute {
         this.cmdSwitch = cmdSwitch;
         this.command = command;
         this.regexp = regexp;
+    }
+    
+    /** 
+     * copy an existing constant, just use a different name. 
+     * {@see AccountAttributes#AccountAttributes(String, UpdateSwitches, String, String)}
+     * 
+     * @param attrName
+     * @param attrToClone
+     */
+    private AccountAttributes(String attrName, AccountAttributes attrToClone) {
+        this(attrName, attrToClone.cmdSwitch, attrToClone.command, attrToClone.regexp);
     }
     
     /**

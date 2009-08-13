@@ -46,6 +46,8 @@ public class AttributeFilter implements Node {
      *            the attribute name that is filtered
      * @param regex
      *            the regular expression that is used to filter
+     * @param sp
+     *            the search performer for doing the search
      */
     public AttributeFilter(String attributeName, String regex, SearchPerformer sp) {
         attr = SolarisUtil.getAttributeBasedOnName(attributeName);

@@ -49,6 +49,10 @@ class AttributeHelper {
      * @return
      */
     public static String fillInCommand(String command, String... fillInAttributes) {
+        // Fixme [final implementation] this if is useless, when command is defined, in the final solution it should throw IllegalArgumentException.
+        if (command == null) {
+            return null;
+        }
         if (fillInAttributes.length == 0) {
             return command;
         } else {

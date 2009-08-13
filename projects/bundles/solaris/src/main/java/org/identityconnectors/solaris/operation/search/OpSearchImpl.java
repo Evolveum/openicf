@@ -40,6 +40,9 @@ import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
+import org.identityconnectors.solaris.SolarisUtil;
+import org.identityconnectors.solaris.constants.AccountAttributes;
+import org.identityconnectors.solaris.constants.SolarisAttribute;
 import org.identityconnectors.solaris.operation.AbstractOp;
 
 
@@ -47,6 +50,7 @@ public class OpSearchImpl extends AbstractOp {
     
     private OperationOptions options;
     private ObjectClass oclass;
+    final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT, ObjectClass.GROUP};
     
     public OpSearchImpl(Log log, SolarisConnector conn) {
         super(log, conn);
@@ -61,6 +65,13 @@ public class OpSearchImpl extends AbstractOp {
      */
     public void executeQuery(ObjectClass oclass, Node query,
             ResultsHandler handler, OperationOptions options) {
+        SolarisUtil.controlObjectClassValidity(oclass, acceptOC, getClass());
+        
+        if (oclass.is(ObjectClass.GROUP_NAME)) {
+            // TODO
+            throw new UnsupportedOperationException();
+        }
+        
         this.options = options;
         this.oclass = oclass;
         
@@ -74,8 +85,15 @@ public class OpSearchImpl extends AbstractOp {
             // OK
         }
         
+        // TODO 
+        if (query == null) {
+            // NULL filter, return all results
+            query = new AttributeFilter(AccountAttributes.NAME.getName(), ".*", new SearchPerformer(getConfiguration(), getConnection()) /* TODO works just for __ACCOUNT__ */);
+        }
+        
         //traverse through the tree of search query:
         Set<Uid> result = query.evaluate();
+        
         for (Uid uid : result) {
             notifyHandler(handler, uid.getUidValue());
         }
@@ -87,7 +105,7 @@ public class OpSearchImpl extends AbstractOp {
         ConnectorObjectBuilder builder = new ConnectorObjectBuilder()
                 .addAttribute(AttributeBuilder.build(Name.NAME, uid))
                 .addAttribute(new Uid(uid));
-        ConnectorObject co = builder.build();
+        
         
         /*
          * return RETURNED_BY_DEFAULT attributes + attrsToGet
@@ -95,14 +113,44 @@ public class OpSearchImpl extends AbstractOp {
         /** attributes to get */
         String[] attrsToGet = options.getAttributesToGet();
         if (attrsToGet == null) {
+            // if no attributes to get, return all RETURNED_BY_DEFAULT attributes
             attrsToGet = getReturnedByDefaultAttrs(getSchema());
         }
         
-        //for (String attrName : attrsToGet) {
-        //  // TODO fill the other attributes
-        //}
+        final SearchPerformer sp = new SearchPerformer(getConfiguration(), getConnection());
+        for (String attrName : attrsToGet) {
+            // acquire the attribute's value:
+            final List<String> attrValue = getValueForUid(uid, attrName, sp);
+            
+            // set it in the returned connector object:
+            if (attrValue != null) {
+                builder.addAttribute(AttributeBuilder.build(attrName, attrValue));
+            }
+        }
+        
+        ConnectorObject co = builder.build();
         
         handler.handle(co);
+    }
+
+    /**
+     * Acquire a given attribute for a uid.
+     * 
+     * @param uid
+     *            the uid which is queried for all attributes
+     * @param attrName
+     *            the selected attribute, whose value is returned
+     * @param sp 
+     * @return the attribute's value
+     */
+    private List<String> getValueForUid(String uid, String attrName, SearchPerformer sp) {
+        final SolarisAttribute attrType = SolarisUtil.getAttributeBasedOnName(attrName);
+        if (attrType == null) {
+            return null;
+        }
+        final List<String> result = sp.performValueSearchForUid(attrType, attrType.getRegExpForUidAndAttribute(), uid);
+        
+        return result;
     }
 
     /**
