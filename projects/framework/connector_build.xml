@@ -51,10 +51,15 @@
     <property name="ConnectorBundle-Version" 
         value="${MAJOR}.${MINOR}.${SVN_REVISION}"/>
     <!-- set default properties for this build -->
-    <property name="src" value="src" />
+    <property name="srcmainjava" value="src/main/java" />
+    <property name="srctestjava" value="src/test/java" />
+    <property name="srcmainresources" value="src/main/java" />
+    <property name="srctestresources" value="src/test/java" />
     <property name="lib" value="lib" />
     <property name="dist" value="dist" />
     <property name="build" value="build" />
+    <property name="buildmain" value="build/classes" />
+    <property name="buildtest" value="build/test-classes" />
     <property name="reports" value="reports" />
     <property name="instrumented" value="instrumented" />
     <property name="java.debug" value="true" />
@@ -145,7 +150,7 @@
             excludes="connector-framework-internal*.jar" />
     </path>
     <path id="test.path">
-        <pathelement location="${src}" />
+        <pathelement location="${srctestresources}" />
         <fileset refid="test.libs" />
         <fileset dir="${framework.dir}/dist" 
             includes="connector-framework-internal*.jar" />
@@ -170,23 +175,67 @@
     </echo>
 
     <target name="-pre-compile-extra" description="Override this for pre-compile."/>
+    <target name="-pre-compile-extra-test" description="Override this for pre-compile-test."/>
 
     <!--
        Base Compile Target
     -->
-    <target name="compile" depends="-pre-compile-extra" 
-        description="compile all source and test files">
-        <mkdir dir="${build}" />
+
+    <target name="compile-check">
+	    <condition property="srcmainjava.exists">
+		<available type="dir" file="${srcmainjava}"/>
+	    </condition>
+
+            <fail unless="srcmainjava.exists" message="Source folder ${srcmainjava} does not exist. You may be using the old source layout, in which the Java source files are in a directory named src. In that case, import the toolkit's connector_build_old.xml and consider modifying your source layout according to http://identityconnectors.dev.java.net/issues/show_bug.cgi?id=395.
+	    "/>		
+    </target>		
+
+    <target name="compile-main" depends="compile-check,-pre-compile-extra"
+        description="compile all main files">
+        <mkdir dir="${buildmain}" />
         <javac
             debug="${java.debug}" 
-            srcdir="${src}" destdir="${build}" 
+            srcdir="${srcmainjava}" destdir="${buildmain}" 
             target="${java.target}" source="${java.source}">
             <classpath>
                 <path refid="build.path"/>
                 <fileset refid="user.libs"/>
             </classpath>
         </javac>
+	<copy todir="${buildmain}">
+		<fileset dir="${srcmainresources}">
+			<patternset refid="exclude.javasrc" />
+		</fileset>
+	</copy>
     </target>
+
+    <target name="compile-test">
+	    <condition property="srctestjava.exists">
+		<available type="dir" file="${srctestjava}"/>
+	    </condition>
+	    <antcall target="compile-test-internal" inheritRefs="true" inheritAll="true"/>
+    </target>	
+
+    <target name="compile-test-internal" depends="-pre-compile-extra-test" if="srctestjava.exists"
+        description="compile all test files">
+        <mkdir dir="${buildtest}" />
+        <javac
+            debug="${java.debug}" 
+            srcdir="${srctestjava}" destdir="${buildtest}" 
+            target="${java.target}" source="${java.source}">
+            <classpath>
+                <path refid="build.path"/>
+		<pathelement path="${buildmain}"/>
+                <fileset refid="user.libs"/>
+            </classpath>
+        </javac>
+	<copy todir="${buildtest}">
+		<fileset dir="${srctestresources}">
+			<patternset refid="exclude.javasrc" />
+		</fileset>
+	</copy>
+    </target>
+
     <!--
        Bundle Building Target
     -->
@@ -196,18 +245,12 @@
         <move file="${zip.file}" todir="${dist}"/>
     </target>
 
-    <target name="jar" depends="compile">
+    <target name="jar" depends="compile-main, compile-test">
         <!-- Create the distribution directory -->
         <mkdir dir="${dist}" />
         <jar jarfile="${jar.file}" index="true">
-            <!-- exclude all source -->
-            <fileset dir="${src}">
-                <patternset refid="exclude.javasrc" />
-                <patternset refid="exclude.test" />
-                <patternset refid="exclude.user" />
-            </fileset>
             <!-- include all compiled classes -->
-            <fileset dir="${build}">
+            <fileset dir="${buildmain}">
                 <patternset refid="exclude.test" />
             </fileset>
             <!-- include all 3rd party deps -->
@@ -235,12 +278,6 @@
        Base Clean Target
     -->
     <target name="clean" depends="-pre-clean-extra" description="clean up">
-        <!-- delete all the compiled classes -->
-        <delete>
-            <fileset dir="${src}">
-                <include name="**/*.class" />
-            </fileset>
-        </delete>
         <delete dir="${dist}" />
         <delete dir="${build}" />
         <delete dir="${reports}" />
@@ -280,7 +317,7 @@
                 <fileset refid="user.libs"/>
             </auxClassPath>
             <sourcePath>
-                <pathelement location="${src}"/>
+                <pathelement location="${srcmainjava}"/>
             </sourcePath>
             <!-- core jar files -->
             <class location="${jar.file}"/>
@@ -313,7 +350,7 @@
         <delete dir="${instrumented}" />
         <mkdir dir="${instrumented}" />
         <cobertura-instrument todir="${instrumented}">
-            <fileset dir="${build}">
+            <fileset dir="${buildmain}">
                 <patternset refid="exclude.test"/>
             </fileset>
         </cobertura-instrument>
@@ -324,8 +361,8 @@
         depends="build-testclasspath-with-coverage">
         <path id="test-classpath">
             <path refid="test.path" />
-            <pathelement location="${src}" />
-            <pathelement location="${build}" />
+            <pathelement location="${buildtest}" />
+            <pathelement location="${buildmain}" />
         </path>
     </target>
     <target name="build-testclasspath-with-coverage" if="useCobertura">
@@ -340,11 +377,11 @@
             <path refid="cobertura.classpath" />
             <pathelement location="${instrumented}" />
             <path refid="test.path" />
-            <pathelement location="${src}" />
-            <pathelement location="${build}" />
+            <pathelement location="${buildtest}" />
+            <pathelement location="${buildmain}" />
         </path>
     </target>
-    <target name="run-unit-tests" depends="test-init, instrument, build-testclasspath">
+    <target name="run-unit-tests" depends="test-init, instrument, build-testclasspath" if="srctestjava.exists">
         <!-- run all the junits -->
         <junit fork="yes" forkmode="once" dir="${basedir}" showoutput="true"
             failureProperty="test.failed" printsummary="true">
@@ -371,7 +408,7 @@
             <!-- turn full assertions -->
             <assertions enableSystemAssertions="true" />
             <batchtest todir="${reports}/junit">
-                <fileset dir="${src}">
+                <fileset dir="${srctestjava}">
                     <include name="**/*Test.java" />
                     <include name="**/*Tests.java" />
                     <exclude name="**/AllTests.java" />
@@ -391,7 +428,7 @@
             <isset property="useExternalReporting" />
         </condition>
         <cobertura-report format="${cobertura-format}" 
-            destdir="${reports}${cobertura-directory}" srcdir="${src}" />
+            destdir="${reports}${cobertura-directory}" srcdir="${srctestjava}" />
     </target>
 
     <target name="report-junits" unless="useExternalReporting"> 
@@ -490,12 +527,12 @@
     <target name="javadoc" description="generates javadoc">
         <delete dir="${dist}/javadoc" />
         <mkdir dir="${dist}/javadoc" />
-        <javadoc overview="${src}/overview.html"
+        <javadoc overview="${srcmainjava}/overview.html"
             author="true" version="true" source="1.5"
             classpathref="build.path" destdir="${dist}/javadoc" 
             sourcepath="${framework.dir}/framework/src/main/java"
             excludepackagenames="org.identityconnectors.framework.*,org.identityconnectors.common.*">
-            <fileset dir="${src}" includes="**/*.java" excludes="**/*Test*"/>
+            <fileset dir="${srcmainjava}" includes="**/*.java" excludes="**/*Test*"/>
         </javadoc>
     </target>
     <target name="all" depends="clean, dist, findbugs, test"/>

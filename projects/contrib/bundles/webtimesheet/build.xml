@@ -22,5 +22,5 @@
 -->
 <project name="connector-webtimesheet" default="all"> 
     <property name="framework.dir" value="/Users/rjackson/Downloads/connector_toolkit-1.0.4709"/>
-    <import file="${framework.dir}/connector_build.xml"/>
+    <import file="${framework.dir}/connector_build_old.xml"/>
 </project>

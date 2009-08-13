@@ -37,5 +37,5 @@
 -->
 <project name="connector-googleapps" default="all"> 
     <property name="framework.dir" value="/Users/warrenstrange/src/packages/connector_toolkit"/>
-    <import file="${framework.dir}/connector_build.xml"/>
+    <import file="${framework.dir}/connector_build_old.xml"/>
 </project>
