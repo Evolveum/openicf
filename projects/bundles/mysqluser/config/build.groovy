@@ -48,6 +48,19 @@
 import org.identityconnectors.contract.data.groovy.Lazy;
 import org.identityconnectors.common.security.GuardedString
 
+/* Junit Connector configuration */    
+configuration{
+    host="__configureme__"
+    user="__configureme__"
+    password=__configureme__
+    port="3306"
+    driver="com.mysql.jdbc.Driver"
+    usermodel="BasicModel"
+    testpassword="testpwd"  
+  
+}
+
+
 /* Connector configuration */    
 connector{
     host="__configureme__"

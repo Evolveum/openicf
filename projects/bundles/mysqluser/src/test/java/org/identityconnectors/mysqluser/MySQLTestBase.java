@@ -53,6 +53,7 @@ import java.util.Set;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.dbcommon.DatabaseConnection;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.api.APIConfiguration;
@@ -94,6 +95,23 @@ public abstract class MySQLTestBase {
      */
     private static final Log log = Log.getLog(MySQLTestBase.class);
     
+    /**
+     * Setup logging for the {@link DatabaseConnection}.
+     */
+    protected static final String CFG_BASE = "configuration.";
+    protected static final String MSG = " must be configured for running unit test";
+    protected static final String HOST = CFG_BASE + "host";
+    protected static final String USER = CFG_BASE + "user";
+    protected static final String PASSWD = CFG_BASE + "password";
+    protected static final String PORT = CFG_BASE + "port";
+    protected static final String DRIVER = CFG_BASE + "driver";
+    protected static final String USER_MODEL = CFG_BASE + "usermodel";
+    protected static final String TEST_PASSWD = CFG_BASE + "testpassword";    
+
+    /**
+     * The model user should be created once for all tests, lazy creation check 
+     */
+    protected static boolean modelUserCreated = false;
     
     protected static String idmDriver = null;
     protected static String idmHost = null;

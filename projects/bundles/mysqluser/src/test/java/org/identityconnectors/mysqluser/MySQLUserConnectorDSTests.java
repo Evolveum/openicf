@@ -53,12 +53,8 @@ import org.junit.Test;
  * Attempts to test the Connector with the framework.
  */
 public class MySQLUserConnectorDSTests extends MySQLTestBase {
-    /**
-     * Setup logging for the {@link DatabaseConnection}.
-     */
-    static final Log log = Log.getLog(DatabaseConnection.class);
-    static boolean modelUserCreated = false;
-   
+    static final Log log = Log.getLog(MySQLUserConnectorDSTests.class);
+    
     /**
      * Derby's embedded ds.
      */
@@ -73,32 +69,24 @@ public class MySQLUserConnectorDSTests extends MySQLTestBase {
      */
     @BeforeClass
     public static void setUpClass() throws Exception {
-        final String MSG = " must be configured for running unit test";
-        final String HOST = "connector.host";
         idmHost = TestHelpers.getProperty(HOST, null);
         assertNotNull(HOST + MSG, idmHost);
 
-        final String USER = "connector.user";
         idmUser = TestHelpers.getProperty(USER, null);
         assertNotNull(USER + MSG, idmUser);
 
-        final String PASSWD = "connector.password";
         idmPassword = new GuardedString(TestHelpers.getProperty(PASSWD, null).toCharArray());
         assertNotNull(PASSWD + MSG, idmPassword);
 
-        final String PORT = "connector.port";
         idmPort = TestHelpers.getProperty(PORT, null);
         assertNotNull(PORT + MSG, idmPort);
 
-        final String DRIVER = "connector.driver";
         idmDriver = TestHelpers.getProperty(DRIVER, null);
         assertNotNull(DRIVER + MSG, idmDriver);
 
-        final String USER_MODEL = "connector.usermodel";
         idmModelUser = TestHelpers.getProperty(USER_MODEL, null);
         assertNotNull(USER_MODEL + MSG, idmModelUser);
 
-        final String TEST_PASSWD = "connector.testpassword";
         final String passwd = TestHelpers.getProperty(TEST_PASSWD, null);
         assertNotNull(TEST_PASSWD + MSG, passwd);
         testPassword = new GuardedString(passwd.toCharArray());       
