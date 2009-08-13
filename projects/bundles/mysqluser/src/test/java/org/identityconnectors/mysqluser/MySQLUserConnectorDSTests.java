@@ -22,8 +22,7 @@
  */
 package org.identityconnectors.mysqluser;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -38,15 +37,10 @@ import javax.sql.DataSource;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.dbcommon.DatabaseConnection;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.api.ConnectorFacadeFactory;
 import org.identityconnectors.test.common.TestHelpers;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 
 /**
@@ -75,7 +69,7 @@ public class MySQLUserConnectorDSTests extends MySQLTestBase {
         idmUser = TestHelpers.getProperty(USER, null);
         assertNotNull(USER + MSG, idmUser);
 
-        idmPassword = new GuardedString(TestHelpers.getProperty(PASSWD, null).toCharArray());
+        idmPassword = new GuardedString(TestHelpers.getProperty(PASSWD, "").toCharArray());
         assertNotNull(PASSWD + MSG, idmPassword);
 
         idmPort = TestHelpers.getProperty(PORT, null);

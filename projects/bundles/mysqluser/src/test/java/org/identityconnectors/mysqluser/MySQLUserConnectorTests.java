@@ -59,7 +59,7 @@ public class MySQLUserConnectorTests extends MySQLTestBase {
         idmUser = TestHelpers.getProperty(USER, null);
         assertNotNull(USER + MSG, idmUser);
 
-        idmPassword = new GuardedString(TestHelpers.getProperty(PASSWD, null).toCharArray());
+        idmPassword = new GuardedString(TestHelpers.getProperty(PASSWD, "").toCharArray());
         assertNotNull(PASSWD + MSG, idmPassword);
 
         idmPort = TestHelpers.getProperty(PORT, null);

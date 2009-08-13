@@ -62,21 +62,7 @@ import org.identityconnectors.framework.api.ConnectorFacadeFactory;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeBuilder;
-import org.identityconnectors.framework.common.objects.AttributeInfo;
-import org.identityconnectors.framework.common.objects.AttributeInfoUtil;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.ConnectorObject;
-import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
-import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.ObjectClassInfo;
-import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.OperationalAttributes;
-import org.identityconnectors.framework.common.objects.ResultsHandler;
-import org.identityconnectors.framework.common.objects.Schema;
-import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
 import org.identityconnectors.framework.common.objects.filter.EndsWithFilter;
 import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
@@ -562,6 +548,7 @@ public abstract class MySQLTestBase {
 
     /**
      * Delete not deleted User and test it was deleted
+     * @param userName 
      */
     protected void quitellyDeleteUser(String userName) {
         PreparedStatement ps1 = null;
@@ -639,6 +626,8 @@ public abstract class MySQLTestBase {
     }
 
     /**
+     * @param modelUser 
+     * @param testPassword 
      * 
      */
     protected void createTestModelUser(final String modelUser, GuardedString testPassword) {
@@ -650,7 +639,8 @@ public abstract class MySQLTestBase {
     /**
      * 
      */
-    private void createUserGrants(final String userName, GuardedString testPassword) {
+    private void createUserGrants(final String userName,
+            GuardedString testPassword) {
         final String SQL1 = "GRANT SELECT, INSERT, UPDATE, DELETE ON *.* TO ?@'%' IDENTIFIED BY ?";
         final String SQL2 = "GRANT SELECT, INSERT, UPDATE, DELETE ON *.* TO ?@'localhost' IDENTIFIED BY ?";
         final String SQL3 = "GRANT CREATE, DROP ON `mysql`.* TO ?@'%'";
@@ -660,29 +650,31 @@ public abstract class MySQLTestBase {
         final String[] stmts = { SQL1, SQL2, SQL3, SQL4, SQL5, SQL6 };
         log.info("Creating the Test Model User {0}", userName);
         PreparedStatement ps = null;
-        MySQLUserConnection conn = null;
-        String sql = null;    
-        try {
-            for (int i = 0; i < stmts.length; i++) {                
+        MySQLUserConnection conn = MySQLUserConnection.getConnection(newConfiguration());
+        String sql = null;
+        for (int i = 0; i < stmts.length; i++) {
+            try {
+                conn = MySQLUserConnection.getConnection(newConfiguration());
                 sql = stmts[i];
                 final List<SQLParam> values = new ArrayList<SQLParam>();
                 values.add(new SQLParam("user", userName, Types.VARCHAR));
-                if(sql.contains("IDENTIFIED BY ?")) {
+                if (sql.contains("IDENTIFIED BY ?")) {
                     values.add(new SQLParam("password", testPassword));
                 }
-                log.info("Create User {0} Grants , statement:{1}", userName, sql);
-                conn = MySQLUserConnection.getConnection(newConfiguration());
-                ps = conn.prepareStatement(sql,values);
+                log.info("Create User {0} Grants , statement:{1}", userName,
+                        sql);
+                ps = conn.prepareStatement(sql, values);
                 ps.execute();
+            } catch (SQLException ex) {
+                log.error(ex, "Fail to create User {0} Grants , statement:{1}",
+                        userName, sql);
+                fail(ex.getMessage());
+            } finally {
+                SQLUtil.closeQuietly(ps);
+                SQLUtil.closeQuietly(conn);
             }
-            conn.commit();
-        } catch (SQLException ex) {
-            log.error(ex, "Fail to create User {0} Grants , statement:{1}", userName, sql);
-            fail(ex.getMessage());
-        } finally {
-            SQLUtil.closeQuietly(ps);
-            SQLUtil.closeQuietly(conn);
         }
+        conn.commit();
         testUserFound(userName, true);
         log.ok("The User {0} Grants created", userName);
     }
