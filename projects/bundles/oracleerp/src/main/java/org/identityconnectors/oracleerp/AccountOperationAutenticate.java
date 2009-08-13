@@ -27,7 +27,6 @@ import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -37,11 +36,7 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
-import org.identityconnectors.framework.common.exceptions.InvalidPasswordException;
-import org.identityconnectors.framework.common.exceptions.PasswordExpiredException;
-import org.identityconnectors.framework.common.exceptions.PermissionDeniedException;
+import org.identityconnectors.framework.common.exceptions.*;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
@@ -108,13 +103,13 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
             new AccountOperationSearch(conn, cfg).buildSpecialAttributes(amb, columnValues);
             
             //The password is expired
-            if (amb.isExpected(OperationalAttributes.PASSWORD_EXPIRED_NAME, 0, Boolean.TRUE)) {
+            if (amb.hasExpectedValue(OperationalAttributes.PASSWORD_EXPIRED_NAME, 0, Boolean.TRUE)) {
                 throw new PasswordExpiredException(cfg.getMessage(MSG_AUTH_FAILED, username)).initUid(uid);
             } 
             
             //The account is disabled
-            if (amb.isExpected(OperationalAttributes.ENABLE_NAME, 0, Boolean.FALSE)) {
-                throw new PermissionDeniedException(cfg.getMessage(MSG_AUTH_FAILED, username));
+            if (amb.hasExpectedValue(OperationalAttributes.ENABLE_NAME, 0, Boolean.FALSE)) {
+                throw new InvalidCredentialException(cfg.getMessage(MSG_AUTH_FAILED, username));
             }                            
             
         } catch (Exception ex) {

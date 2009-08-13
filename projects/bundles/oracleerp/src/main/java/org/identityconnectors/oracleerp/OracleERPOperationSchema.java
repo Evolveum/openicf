@@ -255,8 +255,10 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_FUNCTION_IDS, String.class, MNCUD));
 
         
-        ocib.addAttributeInfo(OperationalAttributeInfos.ENABLE_DATE);        
-        ocib.addAttributeInfo(OperationalAttributeInfos.DISABLE_DATE);        
+        // ocib.addAttributeInfo(OperationalAttributeInfos.ENABLE_DATE);        
+        // ocib.addAttributeInfo(OperationalAttributeInfos.DISABLE_DATE);        
+        // ocib.addAttributeInfo(PredefinedAttributeInfos.LAST_LOGIN_DATE);        
+        // ocib.addAttributeInfo(PredefinedAttributeInfos.LAST_PASSWORD_CHANGE_DATE);                
         // <Views><String>Enable</String></Views>
         ocib.addAttributeInfo(ENABLE);
         ocib.addAttributeInfo(OperationalAttributeInfos.PASSWORD_EXPIRED);

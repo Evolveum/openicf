@@ -25,21 +25,14 @@ package org.identityconnectors.oracleerp;
 import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.sql.CallableStatement;
-import java.util.List;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
-import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeBuilder;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.spi.operations.CreateOp;
+import org.identityconnectors.oracleerp.AccountSQLCall.AccountSQLCallBuilder;
 
 
 /**
@@ -117,42 +110,23 @@ final class AccountOperationCreate extends Operation implements CreateOp {
         }
         
         // Get the User values
-        final AccountSQLBuilder asb = new AccountSQLBuilder(cfg.app(), true)
-                                            .build(oclass, attrs, options);        
+        final AccountSQLCallBuilder asb = new AccountSQLCallBuilder(cfg.app(), true);        
+        for (Attribute attr : attrs) {
+            asb.addAttribute(oclass, attr, options);
+        }
         // Run the create call, new style is using the defaults
         
         if ( !asb.isEmpty() ) {
-            CallableStatement cs = null;
-            CallableStatement csAll = null;
-            CallableStatement csUpdate = null;
-            
-            String sql = null;
-            boolean isUpdateNeeded = false;
+            CallableStatement cs = null;            
+            AccountSQLCall aSql = asb.build();
 
             final String msg = "Create user account {0}";
             log.ok(msg, name);
             try {
                 // Create the user
-                if (cfg.isCreateNormalizer()) {
-                    sql = asb.getUserCallSQL();
-                    final List<SQLParam> userSQLParams = asb.getUserSQLParams();
-                    cs = conn.prepareCall(sql, userSQLParams);
-                    cs.execute();
-                } else {
-                    sql = asb.getAllSQL();
-                    final List<SQLParam> userSQLParams = asb.getAllSQLParams();                    
-                    //create all
-                    csAll = conn.prepareCall(sql, userSQLParams);
-                    csAll.execute();
+                cs = conn.prepareCall(aSql.callSql, aSql.sqlParams);
+                cs.execute();
 
-                    isUpdateNeeded = asb.isUpdateNeeded();
-                    if (isUpdateNeeded) {
-                        sql = asb.getUserUpdateNullsSQL();
-                        final List<SQLParam> updateSQLParams = asb.getUserUpdateNullsParams();
-                        csUpdate = conn.prepareCall(sql, updateSQLParams);
-                        csUpdate.execute();
-                    }
-                }
             } catch (Exception e) {
                 SQLUtil.rollbackQuietly(conn);
                 final String message = cfg.getMessage(MSG_ACCOUNT_NOT_CREATE, name);
@@ -160,8 +134,6 @@ final class AccountOperationCreate extends Operation implements CreateOp {
                 throw new IllegalStateException(message, e);
             } finally {
                 SQLUtil.closeQuietly(cs);
-                SQLUtil.closeQuietly(csAll);
-                SQLUtil.closeQuietly(csUpdate);
             }
         }
                 

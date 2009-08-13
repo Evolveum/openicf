@@ -29,14 +29,8 @@ import java.util.Set;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
-import org.identityconnectors.framework.common.exceptions.PasswordExpiredException;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeBuilder;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.OperationalAttributes;
-import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.exceptions.InvalidPasswordException;
+import org.identityconnectors.framework.common.objects.*;
 import org.junit.Test;
 
 
@@ -94,7 +88,7 @@ public class AccountOperationAutenticateTests extends OracleERPTestsBase {
     /**
      * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
      */
-    @Test(expected=PasswordExpiredException.class)
+    @Test(expected=InvalidPasswordException.class)
     public void testAuthenticateExpired() {
         final OracleERPConnector c = getConnector(CONFIG_TST); 
        

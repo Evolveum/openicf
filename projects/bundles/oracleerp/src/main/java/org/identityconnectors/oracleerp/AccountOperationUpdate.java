@@ -33,15 +33,9 @@ import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeBuilder;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.OperationalAttributes;
-import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
+import org.identityconnectors.oracleerp.AccountSQLCall.AccountSQLCallBuilder;
 
 
 /**
@@ -140,16 +134,20 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
         }
         
         // Get the User values
-        final AccountSQLBuilder asb = new AccountSQLBuilder(cfg.app(), false).build(objclass, attrs, options);
+        final AccountSQLCallBuilder asb = new AccountSQLCallBuilder(cfg.app(), false);        
+        for (Attribute attr : attrs) {
+            asb.addAttribute(objclass, attr, options);
+        }
+        
         if ( !asb.isEmpty() ) {
             // Run the create call, new style is using the defaults
             CallableStatement cs = null;
-            final String sql = asb.getUserCallSQL();
+            final AccountSQLCall aSql = asb.build();
             final String msg = "Update user account {0}";
             log.ok(msg, name);
             try {
                 // Create the user
-                cs = conn.prepareCall(sql, asb.getUserSQLParams());
+                cs = conn.prepareCall(aSql.callSql, aSql.sqlParams);
                 cs.execute();
             } catch (Exception e) {
                 String message = cfg.getMessage(MSG_ACCOUNT_NOT_UPDATE, name);

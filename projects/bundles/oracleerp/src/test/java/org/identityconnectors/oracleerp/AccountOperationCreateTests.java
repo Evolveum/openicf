@@ -23,21 +23,12 @@
 package org.identityconnectors.oracleerp;
 
 import static org.identityconnectors.oracleerp.OracleERPUtil.*;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.List;
 import java.util.Set;
 
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeBuilder;
-import org.identityconnectors.framework.common.objects.ConnectorObject;
-import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
-import org.identityconnectors.framework.common.objects.OperationalAttributes;
-import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.Test;
@@ -101,53 +92,5 @@ public class AccountOperationCreateTests extends OracleERPTestsBase {
         System.out.println(returned);
         
         testAttrSet(attrs, returned, OperationalAttributes.PASSWORD_NAME, OWNER);
-    }
-
-    /**
-     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
-     */
-    @Test
-    public void testCreateUserBackCompatibility() {
-        final OracleERPConnector c = getConnector(CONFIG_SYSADM);
-        final Set<Attribute> attrs = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
-        generateNameAttribute(attrs);
-        attrs.add(AttributeBuilder.build(END_DATE));
-        attrs.add(AttributeBuilder.build(DESCR));
-        attrs.add(AttributeBuilder.build(PWD_ACCESSES_LEFT));
-        attrs.add(AttributeBuilder.build(PWD_LIFESPAN_ACCESSES));
-        attrs.add(AttributeBuilder.build(PWD_LIFESPAN_DAYS));
-        attrs.add(AttributeBuilder.build(EMP_ID));
-        attrs.add(AttributeBuilder.build(EMAIL));
-        attrs.add(AttributeBuilder.build(FAX));
-        attrs.add(AttributeBuilder.build(CUST_ID));
-        final OperationOptionsBuilder oob = new OperationOptionsBuilder();
-        addAllAttributesToGet(oob, getAttributeInfos(c.schema(), ObjectClass.ACCOUNT_NAME));
-        
-        
-        final Uid uid = c.create(ObjectClass.ACCOUNT, attrs, null);
-        assertNotNull(uid);
-
-        List<ConnectorObject> results = TestHelpers
-        .searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid), oob.build());
-        assertTrue("expect 1 connector object", results.size() == 1);
-        final ConnectorObject co = results.get(0);
-        final Set<Attribute> returned = co.getAttributes();
-        System.out.println(returned);
-        
-        //Create without normalizing, non public property
-        c.getCfg().setCreateNormalizer(false);
-        generateNameAttribute(attrs); // need new name
-        final Uid uid2 = c.create(ObjectClass.ACCOUNT, attrs, null);
-        assertNotNull(uid2);
-
-        List<ConnectorObject> results2 = TestHelpers
-        .searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid2), oob.build());
-        assertTrue("expect 1 connector object", results2.size() == 1);
-        final ConnectorObject co2 = results2.get(0);
-        final Set<Attribute> returned2 = co2.getAttributes();
-        System.out.println(returned2);        
-        
-        // The returned attribute set should be equal except name attribute
-        testAttrSet(returned, returned2, true, Name.NAME, USER_ID);
     }
 }

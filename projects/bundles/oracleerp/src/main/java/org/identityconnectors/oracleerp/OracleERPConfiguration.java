@@ -664,29 +664,6 @@ public class OracleERPConfiguration extends AbstractConfiguration {
         this.schema = schema;
     }
 
-    
-    /**
-     * This is create attributes normalizer
-     */
-    private boolean createNormalizer = true;
-    
-    
-    /**
-     * Accessor for the createNormalizer property
-     * @return the createNormalizer
-     */
-    public boolean isCreateNormalizer() {
-        return createNormalizer;
-    }
-
-    /**
-     * Setter for the createNormalizer property.
-     * @param createNormalizer the createNormalizer to set
-     */
-    void setCreateNormalizer(boolean createNormalizer) {
-        this.createNormalizer = createNormalizer;
-    } 
-    
     /**
      * Constructor
      */

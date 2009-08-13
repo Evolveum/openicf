@@ -1,15 +1,15 @@
 import java.math.BigInteger
 /*  +---------------------------------------------------+
  *  ----------- Contract Tests configuration ------------
- *  +---------------------------------------------------+ 
+ *  +---------------------------------------------------+
  */
 import org.identityconnectors.contract.data.groovy.Lazy;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.contract.exceptions.ObjectNotFoundException;
 
-/* JUNIT tests configurations */  
+/* JUNIT tests configurations */
 configuration{
-    tst.driver="oracle.jdbc.driver.OracleDriver"    
+    tst.driver="oracle.jdbc.driver.OracleDriver"
     tst.url="__configureme__"
     tst.user="__configureme__"
     tst.password=new GuardedString("__configureme__".toCharArray());
@@ -21,7 +21,7 @@ configuration{
     tst.returnSobOrgAttrs=false
     tst.userActions=""
     
-    sysadm.driver="oracle.jdbc.driver.OracleDriver"    
+    sysadm.driver="oracle.jdbc.driver.OracleDriver"
     sysadm.url="__configureme__"
     sysadm.user="__configureme__"
     sysadm.password=new GuardedString("__configureme__".toCharArray());
@@ -33,12 +33,12 @@ configuration{
     sysadm.returnSobOrgAttrs=true
     sysadm.userActions=""
     
-    user.driver="oracle.jdbc.driver.OracleDriver"    
+    user.driver="oracle.jdbc.driver.OracleDriver"
     user.user="__configureme__"
     user.password=new GuardedString("__configureme__".toCharArray());
     user.host="__configureme__"
     user.database="PROD"
-    user.port="1521"    
+    user.port="1521"
 }
 
 account{
@@ -50,12 +50,12 @@ account{
     all.__NAME__="JTU-"
     all.owner="CUST"
     all.session_number=0
-
+    
     all.start_date=stringDate(-10)
     all.end_date=stringDate(+10)
     all.last_logon_date=stringDate(0)
     all.description="Connector test user"
-
+    
     all.__PASSWORD__= new GuardedString("password".toCharArray())
     all.__PASSWORD_EXPIRED__=false
     all.password_date=stringDate(0)
@@ -64,7 +64,7 @@ account{
     all.password_lifespan_accesses=5
     all.password_lifespan_days=30
     
-    //all.employee_id=5 
+    //all.employee_id=5
     all.employee_number=5
     all.person_fullname="Monster, Cookie"
     //all.npw_number=4
@@ -76,8 +76,7 @@ account{
     all.directResponsibilities="Cash Forecasting||Cash Management||Standard||2004-04-12||null"
     all.responsibilityKeys="Cash Forecasting||Cash Management||Standard"
     all.securingAttrs="TO_PERSON_ID||Self-Service Web Applications||114"
-        
-
+    
     modify.__NAME__="JTUM-"
     modify.__PASSWORD__= new GuardedString("modpasswd".toCharArray())
     modify.email_address="person1@somewhere.com"
@@ -85,11 +84,11 @@ account{
     modify.directResponsibilities=["Cash Forecasting||Cash Management||Standard||2004-04-12||2010-01-01","Purchasing Receiver||Purchasing||Standard||2004-04-12||null"]
     modify.password_accesses_left=58
     modify.password_lifespan_accesses=6
-    modify.password_lifespan_days=31    
+    modify.password_lifespan_days=31
     modify.description="New Test Description"
     modify.owner="CUST"
     modify.securingAttrs=["ICX_HR_PERSON_ID||Self-Service Web Applications||114", "TO_PERSON_ID||Self-Service Web Applications||112"]
- 
+    
     options.responsibility="Cash Forecasting"
     options.application="Cash Management"
     options.searchPattern="%_PERSON_ID"
@@ -112,13 +111,9 @@ account{
     dissabled.__ENABLE__=false
 }
 
-
-
-
-
-/* Connector contract tests configuration */    
+/* Connector contract tests configuration */
 connector{
-    driver="oracle.jdbc.driver.OracleDriver"    
+    driver="oracle.jdbc.driver.OracleDriver"
     host="__configureme__"
     port="1521"
     database="PROD"
@@ -130,9 +125,8 @@ connector{
     manageSecuringAttrs=false
     noSchemaId=false
     returnSobOrgAttrs=false
-    userActions=""  
-  
-    /* WRONG configuration for ValidateApiOpTests */  
+    userActions=""
+    /* WRONG configuration for ValidateApiOpTests */
     i1.wrong.host=""
     i2.wrong.user=""
     i3.wrong.password=""
@@ -140,29 +134,27 @@ connector{
     i53.wrong.driver=""
 }
 
-
 testsuite {
-
     /* path to bundle jar - property 'connector-jar' is set by ant */
     bundleJar=System.getProperty("bundleJar")
     bundleName=System.getProperty("bundleName")
     bundleVersion=System.getProperty("bundleVersion")
     connectorName="org.identityconnectors.oracleerp.OracleERPConnector"
-  
+    
     Search.disable.caseinsensitive=true // skip insensitive test
-  
+    
     /* AuthenticationApiOpTests: */
     Authentication.__ACCOUNT__.username=Lazy.get("i0.Authentication.__ACCOUNT__.__NAME__")
     Authentication.__ACCOUNT__.wrong.password="__configureme__"
-  
-    /* SchemaApiOpTests: */      
+    /* SchemaApiOpTests: */
+    
     /* declared object classes */
     Schema.oclasses=[ "__ACCOUNT__", "responsibilityNames" ]
     
     /* list of attributes which contains object class "__ACCOUNT__" */
     Schema.attributes.__ACCOUNT__.oclasses=[ "__NAME__", "__PASSWORD__" ]
+    // many attributes have similar values
     
-    // many attributes have similar values                                                
     Schema.common.attribute=[
         type: java.lang.String.class,
         readable: true,
@@ -171,8 +163,8 @@ testsuite {
         required: false,
         multiValue: false,
         returnedByDefault: true
-    ]                                        
-
+    ]
+    
     Schema.nrbd.attribute=[
                              type: java.lang.String.class,
                              readable: true,
@@ -181,43 +173,40 @@ testsuite {
                              required: false,
                              multiValue: false,
                              returnedByDefault: false
-                         ]                                        
-    
+                         ]
+                         
     /* attributes of "__NAME__" */
-    Schema.__NAME__.attribute.__ACCOUNT__.oclasses=[type:"java.lang.String", readable:"true", updateable:"true", createable:"true",   
+    Schema.__NAME__.attribute.__ACCOUNT__.oclasses=[type:"java.lang.String", readable:"true", updateable:"true", createable:"true",
                                                     required:"true", multiValue:"false", returnedByDefault:"true"]
-                                                                                                            
-    /* attributes of "__PASSWORD__" */                                                        
-    Schema.__PASSWORD__.attribute.__ACCOUNT__.oclasses=[type:"org.identityconnectors.common.security.GuardedString", readable:"false",   updateable:"true", 
+    /* attributes of "__PASSWORD__" */
+    Schema.__PASSWORD__.attribute.__ACCOUNT__.oclasses=[type:"org.identityconnectors.common.security.GuardedString", readable:"false",   updateable:"true",
+    
                                                         createable:"true", required:"true", multiValue:"false", returnedByDefault:"true"]
-
-    Schema.MIDDLENAME.attribute.__ACCOUNT__.oclasses=testsuite.Schema.common.attribute         
-
+    Schema.MIDDLENAME.attribute.__ACCOUNT__.oclasses=testsuite.Schema.common.attribute
     
     /* object classes supported by operation */
     Schema.operations=[
-        GetApiOp:["__ACCOUNT__"], 
-        SchemaApiOp:["__ACCOUNT__"], 
-        ValidateApiOp:["__ACCOUNT__"], 
-        TestApiOp:["__ACCOUNT__"],   
-        CreateApiOp:["__ACCOUNT__"], 
-        SearchApiOp:["__ACCOUNT__"], 
-        DeleteApiOp:["__ACCOUNT__"], 
-        ScriptOnConnectorApiOp:["__ACCOUNT__"], 
-        UpdateApiOp:["__ACCOUNT__"],   
+        GetApiOp:["__ACCOUNT__"],
+        SchemaApiOp:["__ACCOUNT__"],
+        ValidateApiOp:["__ACCOUNT__"],
+        TestApiOp:["__ACCOUNT__"],
+        CreateApiOp:["__ACCOUNT__"],
+        SearchApiOp:["__ACCOUNT__"],
+        DeleteApiOp:["__ACCOUNT__"],
+        ScriptOnConnectorApiOp:["__ACCOUNT__"],
+        UpdateApiOp:["__ACCOUNT__"],
         AuthenticationApiOp:["__ACCOUNT__"]
      ]
-    
-
+     
 //  Connector WRONG configuration for ValidateApiOpTests
   Validate.invalidConfig = [
-     [ host : "" ], 
+     [ host : "" ],
      [ login : "" ],
      [ password : "" ],
      [ databaseName : "" ],
      [ driver : "" ]
   ]
-
+  
 //  Connector WRONG configuration for TestApiOpTests
   Test.invalidConfig = [
      [ password : "NonExistingPassword_foo_bar_boo" ]
@@ -260,14 +249,14 @@ def currentTimeMillis(){
 
 def stringDate( dife ){
     return new java.sql.Timestamp(System.currentTimeMillis() + dife*24*3600000 ).toString()
-}    
+}
 
 def getDt( dife ){
     Calendar cal = Calendar.getInstance()
     cal.setTimeInMillis(System.currentTimeMillis())
-    cal.add(Calendar.DAY_OF_MONTH, dife)   
+    cal.add(Calendar.DAY_OF_MONTH, dife)
     return cal.getTimeInMillis()
-}  
+}
 
 def empty() {
     return new ObjectNotFoundException()

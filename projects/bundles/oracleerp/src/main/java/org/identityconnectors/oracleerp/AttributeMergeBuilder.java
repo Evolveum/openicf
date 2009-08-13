@@ -184,7 +184,7 @@ public final class AttributeMergeBuilder {
      * @param value 
      * @return internal list
      */
-    public boolean isExpected(String name, int index, Object value) {
+    public boolean hasExpectedValue(String name, int index, Object value) {
         Assertions.nullCheck(_attrs, "_attrs");        
         final List<Object> list = _attrs.get(name);
         if(list  == null || list.get(index) == null) {

@@ -574,7 +574,6 @@ public class OracleERPUtil {
      */
     public static final String ACTIVE_ACCOUNTS_ONLY_WHERE_CLAUSE =
         "(START_DATE - SYSDATE <= 0) AND ((END_DATE IS NULL) OR (END_DATE - SYSDATE > 0))";
-    
 
     /**
      * Read one row from database result set and convert a columns to attribute set.  

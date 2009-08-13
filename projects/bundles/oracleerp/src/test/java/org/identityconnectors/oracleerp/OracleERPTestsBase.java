@@ -39,16 +39,10 @@
  */
 package org.identityconnectors.oracleerp;
 
+import static org.identityconnectors.oracleerp.OracleERPUtil.DEFAULT_DRIVER;
 import static org.junit.Assert.*;
-import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
@@ -57,14 +51,7 @@ import org.identityconnectors.contract.test.ConnectorHelper;
 import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.api.ConnectorFacadeFactory;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeBuilder;
-import org.identityconnectors.framework.common.objects.AttributeInfo;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
-import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.BeforeClass;
 
@@ -308,39 +295,42 @@ abstract public class OracleERPTestsBase {
     }
 
     /**
-     * S
-     * @param expMap
-     * @param currMap
-     * @param fullMatch
-     * @param ignoreSet
+     * Test two attribute sets
+     * 
+     * @param expMap expected
+     * @param currMap current
+     * @param fullMatch true for both side match, false for test those in expected are exist and equal in actual
+     * @param ignoreSet {@link Set} attribute names being ignores
      */
-    protected void testAttrSet(final Map<String, Attribute> expMap, final Map<String, Attribute> currMap, boolean fullMatch, Set<String> ignoreSet) {
+    protected void testAttrSet(final Map<String, Attribute> expMap,
+            final Map<String, Attribute> currMap, boolean fullMatch,
+            Set<String> ignoreSet) {
         log.info("attributeSetsEquals");
         Set<String> names = CollectionUtil.newCaseInsensitiveSet();
         names.addAll(expMap.keySet());
-        if(fullMatch) {
+        if (fullMatch) {
             names.addAll(currMap.keySet());
         }
         names.removeAll(ignoreSet);
         names.remove(Uid.NAME);
         List<String> mis = new ArrayList<String>();
-        List<String> ext = new ArrayList<String>();        
+        List<String> ext = new ArrayList<String>();
         for (String attrName : names) {
             final Attribute expAttr = expMap.get(attrName);
             final Attribute currAttr = currMap.get(attrName);
-            if(expAttr != null && currAttr != null ) {      
+            if (expAttr != null && currAttr != null) {
                 testAttribute(attrName, expAttr, currAttr);
             } else {
-                if(expAttr == null) {
+                if (expAttr == null && currAttr != null) {
                     mis.add(currAttr.getName());
                 }
-                if(currAttr == null) {
-                    ext.add(expAttr.getName());                    
+                if (currAttr == null && expAttr != null) {
+                    ext.add(expAttr.getName());
                 }
             }
         }
-        assertEquals("missing attriburtes "+mis, 0, mis.size()); 
-        assertEquals("extra attriburtes "+ext, 0, ext.size()); 
+        assertEquals("missing attriburtes " + mis, 0, mis.size());
+        assertEquals("extra attriburtes " + ext, 0, ext.size());
         log.info("expected attributes are equal to current");
     }
 

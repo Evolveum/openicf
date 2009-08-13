@@ -27,6 +27,7 @@ import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
@@ -45,6 +46,12 @@ public class AccountOperations  {
      */
     public static final List<CallParam> CALL_PARAMS = new ArrayList<CallParam>();
 
+    /**
+     * The map of column name parameters mapping
+     */
+    public static final Map<String, CallParam> PARAM_MAP = CollectionUtil.<CallParam>newCaseInsensitiveMap();
+
+    
     /**
      * The column names to get
      */
@@ -83,21 +90,26 @@ public class AccountOperations  {
 
         CALL_PARAMS.add(new CallParam(USER_NAME, "x_user_name => {0}", Types.VARCHAR)); //1
         CALL_PARAMS.add(new CallParam(OWNER, "x_owner => upper({0})", Types.VARCHAR)); //2   write only   
-        CALL_PARAMS.add(new CallParam(UNENCRYPT_PWD, "x_unencrypted_password => {0}", Types.VARCHAR));//3 write only      
-        CALL_PARAMS.add(new CallParam(SESS_NUM, "x_session_number => {0}", Types.NUMERIC)); //4     
-        CALL_PARAMS.add(new CallParam(START_DATE, "x_start_date => {0}", Types.DATE)); //5     
-        CALL_PARAMS.add(new CallParam(END_DATE, "x_end_date => {0}", Types.DATE)); //6     
+        CALL_PARAMS.add(new CallParam(UNENCRYPT_PWD, "x_unencrypted_password => {0}", Types.NULL));//3 write only      
+        CALL_PARAMS.add(new CallParam(SESS_NUM, "x_session_number => {0}", Types.INTEGER)); //4     
+        CALL_PARAMS.add(new CallParam(START_DATE, "x_start_date => {0}", Types.TIMESTAMP)); //5     
+        CALL_PARAMS.add(new CallParam(END_DATE, "x_end_date => {0}", Types.TIMESTAMP)); //6     
         CALL_PARAMS.add(new CallParam(LAST_LOGON_DATE, "x_last_logon_date => {0}", Types.DATE)); //7     
         CALL_PARAMS.add(new CallParam(DESCR, "x_description => {0}", Types.VARCHAR)); //8     
         CALL_PARAMS.add(new CallParam(PWD_DATE, "x_password_date => {0}", Types.DATE)); //9     
-        CALL_PARAMS.add(new CallParam(PWD_ACCESSES_LEFT, "x_password_accesses_left => {0}", Types.NUMERIC)); //10     
-        CALL_PARAMS.add(new CallParam(PWD_LIFESPAN_ACCESSES, "x_password_lifespan_accesses => {0}", Types.NUMERIC)); //11    
-        CALL_PARAMS.add(new CallParam(PWD_LIFESPAN_DAYS, "x_password_lifespan_days => {0}", Types.NUMERIC)); //12     
-        CALL_PARAMS.add(new CallParam(EMP_ID, "x_employee_id => {0}", Types.NUMERIC)); //13     
+        CALL_PARAMS.add(new CallParam(PWD_ACCESSES_LEFT, "x_password_accesses_left => {0}", Types.INTEGER)); //10     
+        CALL_PARAMS.add(new CallParam(PWD_LIFESPAN_ACCESSES, "x_password_lifespan_accesses => {0}", Types.INTEGER)); //11    
+        CALL_PARAMS.add(new CallParam(PWD_LIFESPAN_DAYS, "x_password_lifespan_days => {0}", Types.INTEGER)); //12     
+        CALL_PARAMS.add(new CallParam(EMP_ID, "x_employee_id => {0}", Types.INTEGER)); //13     
         CALL_PARAMS.add(new CallParam(EMAIL, "x_email_address => {0}", Types.VARCHAR)); //14     
         CALL_PARAMS.add(new CallParam(FAX, "x_fax => {0}", Types.VARCHAR)); //15     
-        CALL_PARAMS.add(new CallParam(CUST_ID, "x_customer_id => {0}", Types.NUMERIC)); //16     
-        CALL_PARAMS.add(new CallParam(SUPP_ID, "x_supplier_id => {0}", Types.NUMERIC)); //17          
+        CALL_PARAMS.add(new CallParam(CUST_ID, "x_customer_id => {0}", Types.INTEGER)); //16     
+        CALL_PARAMS.add(new CallParam(SUPP_ID, "x_supplier_id => {0}", Types.INTEGER)); //17
+        
+        // Init call map
+        for (CallParam cp : CALL_PARAMS) {
+            PARAM_MAP.put(cp.name, cp);
+        }
     }
  
     /**
