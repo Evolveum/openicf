@@ -1,4 +1,4 @@
-/*
+﻿/*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
@@ -96,22 +96,22 @@ final class AccountOperationCreate extends Operation implements CreateOp {
         final String name = nameAttr.getNameValue().toUpperCase();
         log.info("create user ''{0}''", name);
 
-        attrs = CollectionUtil.newSet(attrs); //modifiable set
+        Set<Attribute> attrsMod = CollectionUtil.newSet(attrs); //modifiable set
         //add required owner, if missing
-        if (AttributeUtil.find(OWNER, attrs) == null) {
-            attrs.add(AttributeBuilder.build(OWNER, cfg.getUser() ));
+        if (AttributeUtil.find(OWNER, attrsMod) == null) {
+            attrsMod.add(AttributeBuilder.build(OWNER, cfg.getUser() ));
         }
 
         //Get the person_id and set is it as a employee id
-        final Integer person_id = getPersonId(name, conn, cfg, attrs);
+        final Integer person_id = getPersonId(name, conn, cfg, attrsMod);
         if (person_id != null) {
             // Person Id as a Employee_Id
-            attrs.add(AttributeBuilder.build(EMP_ID, person_id));
+            attrsMod.add(AttributeBuilder.build(EMP_ID, person_id));
         }
 
         // Get the User values
         final AccountSQLCallBuilder asb = new AccountSQLCallBuilder(cfg.app(), true);
-        for (Attribute attr : attrs) {
+        for (Attribute attr : attrsMod) {
             asb.addAttribute(oclass, attr, options);
         }
         // Run the create call, new style is using the defaults
@@ -138,15 +138,15 @@ final class AccountOperationCreate extends Operation implements CreateOp {
         }
 
         // Update responsibilities
-        final Attribute resp = AttributeUtil.find(RESPS, attrs);
-        final Attribute directResp = AttributeUtil.find(DIRECT_RESPS, attrs);
+        final Attribute resp = AttributeUtil.find(RESPS, attrsMod);
+        final Attribute directResp = AttributeUtil.find(DIRECT_RESPS, attrsMod);
         if ( resp != null ) {
             respOps.updateUserResponsibilities( resp, name);
         } else if ( directResp != null ) {
             respOps.updateUserResponsibilities( directResp, name);
         }
         // update securing attributes
-        final Attribute secAttr = AttributeUtil.find(SEC_ATTRS, attrs);
+        final Attribute secAttr = AttributeUtil.find(SEC_ATTRS, attrsMod);
         if ( secAttr != null ) {
             secAttrOps.updateUserSecuringAttrs(secAttr, name);
         }

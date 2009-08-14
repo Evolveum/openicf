@@ -1,4 +1,4 @@
-/*
+﻿/*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
@@ -23,8 +23,6 @@
 package org.identityconnectors.oracleerp;
 
 import org.identityconnectors.common.Assertions;
-
-
 
 /**
  * Main implementation of the Operation

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
@@ -22,7 +22,7 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.framework.common.objects.OperationalAttributeInfos.*;
+import static org.identityconnectors.framework.common.objects.OperationalAttributeInfos.ENABLE;
 import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.util.EnumSet;
@@ -44,7 +44,6 @@ import org.identityconnectors.framework.spi.operations.SchemaOp;
 import org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
 
-
 /**
  * The schema implementation of the SPI
  * @author Petr Jung
@@ -52,8 +51,6 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
  * @since 1.0
  */
 final class OracleERPOperationSchema extends Operation implements SchemaOp {
-
-
 
     /**
      * Setup logging.
@@ -65,7 +62,6 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
 
     static final EnumSet<Flags> NCU = EnumSet.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE);
 
-
     static final EnumSet<Flags> MNCUD = EnumSet.of(Flags.MULTIVALUED, Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE,
             Flags.NOT_RETURNED_BY_DEFAULT);
 
@@ -76,11 +72,11 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
 
     static final EnumSet<Flags> M = EnumSet.of(Flags.MULTIVALUED);
 
-	OracleERPOperationSchema(OracleERPConnection conn, OracleERPConfiguration cfg) {
-		super(conn, cfg);
-	}
+    OracleERPOperationSchema(OracleERPConnection conn, OracleERPConfiguration cfg) {
+        super(conn, cfg);
+    }
 
-	public Schema schema() {
+    public Schema schema() {
         log.info("schema");
 
         // Use SchemaBuilder to build the schema.
@@ -125,7 +121,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         final Schema schema = schemaBld.build();
         log.info("schema done");
         return schema;
-	}
+    }
 
     /**
      * Add only searchable object class
@@ -141,7 +137,6 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         schemaBld.removeSupportedObjectClass(SchemaOp.class, oci);
         schemaBld.removeSupportedObjectClass(ScriptOnConnectorOp.class, oci);
     }
-	
 
     /**
      * Get the Account Object Class Info
@@ -161,7 +156,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         // name='session_number' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(SESS_NUM, String.class, OracleERPOperationSchema.NCU));
         // name='start_date' type='string' required='false'
-        ocib.addAttributeInfo(AttributeInfoBuilder.build(START_DATE, String.class ));
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(START_DATE, String.class));
         // name='end_date' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(END_DATE, String.class));
         // name='last_logon_date' type='string' required='false'
@@ -254,7 +249,6 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         // name='readWriteOnlyFunctionIds' type='string' audit='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(RW_FUNCTION_IDS, String.class, MNCUD));
 
-
         // ocib.addAttributeInfo(OperationalAttributeInfos.ENABLE_DATE);
         // ocib.addAttributeInfo(OperationalAttributeInfos.DISABLE_DATE);
         // ocib.addAttributeInfo(PredefinedAttributeInfos.LAST_LOGIN_DATE);
@@ -266,9 +260,8 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         // name='Password',  Password is mapped to operationalAttribute
         ocib.addAttributeInfo(OperationalAttributeInfos.PASSWORD);
 
-
         return ocib.build();
-    }	
+    }
 
     /**
      * The object class info
@@ -322,6 +315,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
 
         return ocib.build();
     }
+
     /**
      * The object class info
      * @return the info class
@@ -380,7 +374,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
      * @return the info class
      */
     public ObjectClassInfo getResponsibilitiesObjectClassInfo() {
-    ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
+        ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
         //Resp object class
         oc = new ObjectClassInfoBuilder();
         oc.setType(RESP_OC.getObjectClassValue());

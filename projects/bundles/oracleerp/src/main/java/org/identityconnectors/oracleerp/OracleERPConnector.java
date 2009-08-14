@@ -1,4 +1,4 @@
-/*
+﻿/*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
@@ -71,8 +71,8 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
  * @since 1.0
  */
 @ConnectorClass(displayNameKey = "oracleerp.connector.display", configurationClass = OracleERPConfiguration.class)
-public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, SearchOp<FilterWhereBuilder>,
-        UpdateOp, CreateOp, TestOp, SchemaOp, ScriptOnConnectorOp, AttributeNormalizer {
+public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, SearchOp<FilterWhereBuilder>, UpdateOp,
+        CreateOp, TestOp, SchemaOp, ScriptOnConnectorOp, AttributeNormalizer {
 
     /**
      * Setup logging for the {@link OracleERPConnector}.
@@ -92,6 +92,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         log.ok("getConfiguration");
         return this.cfg;
     }
+
     /**
      * getter method
      * @return OracleERPConfiguration
@@ -142,7 +143,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
             return new AccountOperationCreate(conn, cfg).create(oclass, attrs, options);
         } else if (oclass.is(RESP_NAMES)) {
-        // TODO add create "respNames" function
+            // TODO add create "respNames" function
         }
 
         throw new IllegalArgumentException(cfg.getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
@@ -180,7 +181,6 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         throw new IllegalArgumentException(cfg.getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
     }
 
-
     /* (non-Javadoc)
      * @see org.identityconnectors.framework.spi.operations.DeleteOp#delete(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.Uid, org.identityconnectors.framework.common.objects.OperationOptions)
      */
@@ -189,15 +189,14 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         Assertions.nullCheck(objClass, "oclass");
         Assertions.nullCheck(uid, "uid");
 
-
-        if ( uid == null || uid.getUidValue() == null ) {
+        if (uid == null || uid.getUidValue() == null) {
             throw new IllegalArgumentException(cfg.getMessage(MSG_ACCOUNT_UID_REQUIRED));
         }
 
         if (objClass.is(ObjectClass.ACCOUNT_NAME)) {
             new AccountOperationDelete(conn, cfg).delete(objClass, uid, options);
             return;
-        }  else if (objClass.is(RESP_NAMES)) {
+        } else if (objClass.is(RESP_NAMES)) {
             // TODO ad delete RespNames Function
         }
 
@@ -303,7 +302,6 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
 
     }
 
-
     /*
      * (non-Javadoc)
      *
@@ -316,7 +314,6 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         }
         return cfg.getSchema();
     }
-
 
     /* (non-Javadoc)
      * @see org.identityconnectors.framework.spi.operations.TestOp#test()
@@ -339,7 +336,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
             throw new IllegalArgumentException("Invalid attributes provided to a create operation.");
         }
 
-        if ( uid == null || uid.getUidValue() == null ) {
+        if (uid == null || uid.getUidValue() == null) {
             throw new IllegalArgumentException(cfg.getMessage(MSG_ACCOUNT_UID_REQUIRED));
         }
 
@@ -351,7 +348,6 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
 
         throw new IllegalArgumentException(cfg.getMessage(MSG_UNKNOWN_OPERATION_TYPE, objClass.toString()));
     }
-
 
     /**
      * Callback method to receive the {@link Configuration}.
@@ -379,7 +375,6 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         schema();
         log.info("init done");
     }
-
 
     /**
      * Init connector`s call
@@ -438,13 +433,13 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         log.ok("auditResponsibility = {0}", auditResponsibility);
 
         if (StringUtil.isNotBlank(auditResponsibility) && StringUtil.isNotBlank(cfg.getUserId())) {
-            final String view = cfg.app() + ((cfg.isNewResponsibilityViews()) ? OracleERPUtil.RESPS_ALL_VIEW : OracleERPUtil.RESPS_TABLE);
+            final String view = cfg.app()
+                    + ((cfg.isNewResponsibilityViews()) ? OracleERPUtil.RESPS_ALL_VIEW : OracleERPUtil.RESPS_TABLE);
             final String sql = "select responsibility_id, responsibility_application_id from "
                     + view
                     + " where user_id = ? and "
                     + "(responsibility_id,responsibility_application_id) = (select responsibility_id,application_id from "
-                    + cfg.app()
-                    + "fnd_responsibility_vl where responsibility_name = ?)";
+                    + cfg.app() + "fnd_responsibility_vl where responsibility_name = ?)";
 
             final String msg = "Oracle ERP SQL: RESP_ID = {1}, RESP_APPL_ID = {2}";
 
@@ -479,7 +474,6 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         }
         log.info("initResponsibilities done");
     }
-
 
     /**
      * @return the boolean value

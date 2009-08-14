@@ -1,4 +1,4 @@
-/*
+﻿/*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  * 
@@ -60,12 +60,12 @@ public class AccountOperationUpdateTests extends OracleERPTestsBase {
         final OracleERPConnector c = getConnector(CONFIG_SYSADM);
         
         final Set<Attribute> create = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
-        generateNameAttribute(create);
+        replaceNameByRandom(create);
         Uid uid = c.create(ObjectClass.ACCOUNT, create, null);
         assertNotNull(uid);
         
         final Set<Attribute> update = getAttributeSet(ACCOUNT_MODIFY_ATTRS);
-        replaceNameAttribute(update, uid.getUidValue());
+        replaceNameByValue(update, uid.getUidValue());
         uid = c.update(ObjectClass.ACCOUNT, uid, update, null);
         assertNotNull(uid);
         
@@ -90,13 +90,13 @@ public class AccountOperationUpdateTests extends OracleERPTestsBase {
         final OracleERPConnector c = getConnector(CONFIG_SYSADM);
         
         final Set<Attribute> create = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
-        generateNameAttribute(create);
+        replaceNameByRandom(create);
         Uid uid = c.create(ObjectClass.ACCOUNT, create, null);
         assertNotNull(uid);
         
         final Set<Attribute> update = getAttributeSet(ACCOUNT_MODIFY_ATTRS);
         // Name is generated to the new name
-        generateNameAttribute(update);
+        replaceNameByRandom(update);
         uid = c.update(ObjectClass.ACCOUNT, uid, update, null);
         /*
          * This should work, after right renaming the account
@@ -125,7 +125,7 @@ public class AccountOperationUpdateTests extends OracleERPTestsBase {
         final OracleERPConnector c = getConnector(CONFIG_SYSADM);
         
         final Set<Attribute> create = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
-        generateNameAttribute(create);
+        replaceNameByRandom(create);
         Uid uid = c.create(ObjectClass.ACCOUNT, create, null);
         assertNotNull(uid);
         
@@ -158,7 +158,7 @@ public class AccountOperationUpdateTests extends OracleERPTestsBase {
         final OracleERPConnector c = getConnector(CONFIG_SYSADM);
         
         final Set<Attribute> create = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
-        generateNameAttribute(create);
+        replaceNameByRandom(create);
         Uid uid = c.create(ObjectClass.ACCOUNT, create, null);
         assertNotNull(uid);
         

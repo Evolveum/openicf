@@ -1,4 +1,4 @@
-/*
+﻿/*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
@@ -24,8 +24,12 @@ package org.identityconnectors.oracleerp;
 
 import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
-import org.identityconnectors.common.logging.Log;
-import org.identityconnectors.framework.common.objects.*;
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.Uid;
 
 /**
  * The Account Name Resolver tries to convert Account column names to attribute names.
@@ -35,11 +39,6 @@ import org.identityconnectors.framework.common.objects.*;
  * @since 1.0
  */
 final class AccountNameResolver extends BasicNameResolver {
-
-    /**
-     * Setup logging.
-     */
-    static final Log log = Log.getLog(AccountNameResolver.class);
 
     /**
      * Map column name to attribute name, special attributes are handed separated

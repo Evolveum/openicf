@@ -1,4 +1,4 @@
-/*
+﻿/*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  * 
@@ -62,7 +62,7 @@ public class AuditorOperationSearchTests extends OracleERPTestsBase {
 
 
         final Set<Attribute> attrs = getAttributeSet(ACCOUNT_ALL_ATTRS);
-        generateNameAttribute(attrs);
+        replaceNameByRandom(attrs);
         
         final Uid uid = c.create(ObjectClass.ACCOUNT, attrs, null);
         assertNotNull(uid);

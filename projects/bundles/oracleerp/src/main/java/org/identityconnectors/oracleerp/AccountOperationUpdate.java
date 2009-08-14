@@ -1,4 +1,4 @@
-/*
+﻿/*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
@@ -95,12 +95,12 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
         final String name = uid.getUidValue().toUpperCase();
         log.info("update user ''{0}''", name );
 
-        attrs = CollectionUtil.newSet(attrs); //modifiable set
+        Set<Attribute> attrsMod = CollectionUtil.newSet(attrs); //modifiable set
 
         //Name is not present
-        final Name nameAttr = AttributeUtil.getNameFromAttributes(attrs);
+        final Name nameAttr = AttributeUtil.getNameFromAttributes(attrsMod);
         if (nameAttr == null) {
-            attrs.add(AttributeBuilder.build(Name.NAME, name));
+            attrsMod.add(AttributeBuilder.build(Name.NAME, name));
         } else {
             //Cannot rename user
             if (nameAttr.getNameValue() != null) {
@@ -111,18 +111,18 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
                 }
             } else {
                //empty name, replace using UID
-                attrs.remove(nameAttr);
-                attrs.add(AttributeBuilder.build(Name.NAME, name));
+                attrsMod.remove(nameAttr);
+                attrsMod.add(AttributeBuilder.build(Name.NAME, name));
             }
         }
 
         //Add default owner
-        if (AttributeUtil.find(OWNER, attrs) == null) {
-            attrs.add(AttributeBuilder.build(OWNER, CUST));
+        if (AttributeUtil.find(OWNER, attrsMod) == null) {
+            attrsMod.add(AttributeBuilder.build(OWNER, CUST));
         }
 
         // Enable/dissable user
-        final Attribute enableAttr = AttributeUtil.find(OperationalAttributes.ENABLE_NAME, attrs);
+        final Attribute enableAttr = AttributeUtil.find(OperationalAttributes.ENABLE_NAME, attrsMod);
         if ( enableAttr != null ) {
             boolean enable =AttributeUtil.getBooleanValue(enableAttr);
             if ( enable ) {
@@ -135,7 +135,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
 
         // Get the User values
         final AccountSQLCallBuilder asb = new AccountSQLCallBuilder(cfg.app(), false);
-        for (Attribute attr : attrs) {
+        for (Attribute attr : attrsMod) {
             asb.addAttribute(objclass, attr, options);
         }
 
@@ -160,15 +160,15 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
         }
 
         // Update responsibilities
-        final Attribute resp = AttributeUtil.find(RESPS, attrs);
-        final Attribute directResp = AttributeUtil.find(DIRECT_RESPS, attrs);
+        final Attribute resp = AttributeUtil.find(RESPS, attrsMod);
+        final Attribute directResp = AttributeUtil.find(DIRECT_RESPS, attrsMod);
         if ( resp != null ) {
             respOps.updateUserResponsibilities( resp, name);
         } else if ( directResp != null ) {
             respOps.updateUserResponsibilities( directResp, name);
         }
 
-        final Attribute secAttr = AttributeUtil.find(SEC_ATTRS, attrs);
+        final Attribute secAttr = AttributeUtil.find(SEC_ATTRS, attrsMod);
         if ( secAttr != null ) {
             new SecuringAttributesOperations(conn, cfg).updateUserSecuringAttrs(secAttr, name);
         }

@@ -1,3 +1,44 @@
+// -- START LICENSE
+// Copyright 2008 Sun Microsystems, Inc. All rights reserved.
+// 
+// U.S. Government Rights - Commercial software. Government users 
+// are subject to the Sun Microsystems, Inc. standard license agreement
+// and applicable provisions of the FAR and its supplements.
+// 
+// Use is subject to license terms.
+// 
+// This distribution may include materials developed by third parties.
+// Sun, Sun Microsystems, the Sun logo, Java and Project Identity 
+// Connectors are trademarks or registered trademarks of Sun 
+// Microsystems, Inc. or its subsidiaries in the U.S. and other
+// countries.
+// 
+// UNIX is a registered trademark in the U.S. and other countries,
+// exclusively licensed through X/Open Company, Ltd. 
+// 
+// -----------
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+// 
+// Copyright 2008 Sun Microsystems, Inc. All rights reserved. 
+// 
+// The contents of this file are subject to the terms of the Common Development
+// and Distribution License(CDDL) (the License).  You may not use this file
+// except in  compliance with the License. 
+// 
+// You can obtain a copy of the License at
+// http://identityconnectors.dev.java.net/CDDLv1.0.html
+// See the License for the specific language governing permissions and 
+// limitations under the License.  
+// 
+// When distributing the Covered Code, include this CDDL Header Notice in each
+// file and include the License file at identityconnectors/legal/license.txt.
+// If applicable, add the following below this CDDL Header, with the fields 
+// enclosed by brackets [] replaced by your own identifying information: 
+// "Portions Copyrighted [year] [name of copyright owner]"
+// -----------
+// -- END LICENSE
+//
+
 import java.math.BigInteger
 /*  +---------------------------------------------------+
  *  ----------- Contract Tests configuration ------------
@@ -122,7 +163,7 @@ connector{
     accountsIncluded=""
     activeAccountsOnly=true
     auditResponsibility="System Administrator"
-    manageSecuringAttrs=false
+    manageSecuringAttrs=true
     noSchemaId=false
     returnSobOrgAttrs=false
     userActions=""
@@ -213,36 +254,50 @@ testsuite {
   ]
 }
 
-__NAME__="CTU-" + Lazy.random("AAAAAA######")
-__PASSWORD__= new GuardedString("password".toCharArray())
-owner="CUST"
-session_number=0
+         __NAME__="CTU-" + Lazy.random("AAAAAA######")
+         __PASSWORD__= new GuardedString("password".toCharArray())
+modified.__PASSWORD__= new GuardedString("modpasswd".toCharArray())
+         owner="CUST"
+         session_number=0
 
-start_date=stringDate(-10)
-end_date=stringDate(+10)
-last_logon_date=stringDate(0)
-description="Connector test user"
+         start_date=stringDate(-10)
+modified.start_date=stringDate(-99)
+         end_date=stringDate(+10)
+modified.end_date=stringDate(+99)
+         last_logon_date=stringDate(0)
+         description="Connector test user"
+modified.description="Connector test user mod"
 
-password_date=stringDate(0)
+         password_date=stringDate(0)
 
-password_accesses_left=56
-password_lifespan_accesses=5
-password_lifespan_days=30
+         password_accesses_left=56
+modified.password_accesses_left=30
+         password_lifespan_accesses=5
+modified.password_lifespan_accesses=10
+         password_lifespan_days=30
+modified.password_lifespan_days=20
 
-employee_id=empty()
-employee_number=5
-person_fullname="Monster, Cookie"
-person_party_id=3044
-npw_number=empty()
-email_address="person@somewhere.com"
-fax="555-555-5555"
-customer_id=empty()
-supplier_id=empty()
+         employee_id=empty()
+         employee_number=5
+         person_fullname="Monster, Cookie"
+         person_party_id=3044
+         npw_number=empty()
+         email_address="person@somewhere.com"
+modified.email_address="person1@somewhere.com"
+         fax="555-555-5555"
+modified.fax="666-666-6666"
+         customer_id=empty()
+         supplier_id=empty()
 
-directResponsibilities="Cash Forecasting||Cash Management||Standard||2004-04-12||null"
-responsibilityKeys="Cash Forecasting||Cash Management||Standard"
-securingAttrs="TO_PERSON_ID||Self-Service Web Applications||114"
+         directResponsibilities=["Cash Forecasting||Cash Management||Standard||2004-04-12||null"]
+modified.directResponsibilities=["Cash Forecasting||Cash Management||Standard||2004-04-12||2010-01-01","Purchasing Receiver||Purchasing||Standard||2004-04-12||null"]             
+         responsibilityKeys=["Cash Forecasting||Cash Management"]
+modified.responsibilityKeys=["Cash Forecasting||Cash Management","Purchasing Receiver||Purchasing"]
+         securingAttrs=["TO_PERSON_ID||Self-Service Web Applications||114"]
+modified.securingAttrs=["ICX_HR_PERSON_ID||Self-Service Web Applications||114", "TO_PERSON_ID||Self-Service Web Applications||112"]
 
+
+/* Define tests functions */
 def currentTimeMillis(){
     return System.currentTimeMillis()
 }

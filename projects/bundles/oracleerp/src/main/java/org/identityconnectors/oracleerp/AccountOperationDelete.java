@@ -1,4 +1,4 @@
-/*
+﻿/*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
@@ -82,11 +82,10 @@ final class AccountOperationDelete extends Operation implements DeleteOp {
                 log.error(e, msg);
                 // TODO There should be just a could not delete - informational message instead of throwing an exception
                 throw new UnknownUidException(uid, objClass);
-            } else {
-              SQLUtil.rollbackQuietly(conn);
-              log.error(e, msg);
-              throw new UnknownUidException(uid, objClass);
-            }
+            } 
+            SQLUtil.rollbackQuietly(conn);
+            log.error(e, msg);
+            throw new UnknownUidException(uid, objClass);            
         } finally {
             SQLUtil.closeQuietly(cs);
             cs = null;

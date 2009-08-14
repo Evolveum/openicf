@@ -1,4 +1,4 @@
-/*
+﻿/*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  * 
@@ -52,7 +52,7 @@ public class AccountOperationAutenticateTests extends OracleERPTestsBase {
         final OracleERPConnector c = getConnector(CONFIG_TST); 
        
         final Set<Attribute> attrs = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
-        generateNameAttribute(attrs);
+        replaceNameByRandom(attrs);
         final GuardedString password = AttributeUtil.getGuardedStringValue(AttributeUtil.find(OperationalAttributes.PASSWORD_NAME, attrs));
         final Uid uid = c.create(ObjectClass.ACCOUNT, attrs, null);
         assertNotNull(uid);
@@ -68,7 +68,7 @@ public class AccountOperationAutenticateTests extends OracleERPTestsBase {
         final OracleERPConnector c = getConnector(CONFIG_TST); 
        
         final Set<Attribute> attrs = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
-        generateNameAttribute(attrs);
+        replaceNameByRandom(attrs);
         final GuardedString password = AttributeUtil.getGuardedStringValue(AttributeUtil.find(OperationalAttributes.PASSWORD_NAME, attrs));
         Uid uid = c.create(ObjectClass.ACCOUNT, attrs, null);
         assertNotNull(uid);
@@ -93,7 +93,7 @@ public class AccountOperationAutenticateTests extends OracleERPTestsBase {
         final OracleERPConnector c = getConnector(CONFIG_TST); 
        
         final Set<Attribute> attrs = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
-        generateNameAttribute(attrs);
+        replaceNameByRandom(attrs);
         final GuardedString password = AttributeUtil.getGuardedStringValue(AttributeUtil.find(OperationalAttributes.PASSWORD_NAME, attrs));
         Uid uid = c.create(ObjectClass.ACCOUNT, attrs, null);
         assertNotNull(uid);

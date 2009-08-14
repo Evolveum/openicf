@@ -1,41 +1,24 @@
-/*
- * Copyright 2008 Sun Microsystems, Inc. All rights reserved.
- * 
- * U.S. Government Rights - Commercial software. Government users 
- * are subject to the Sun Microsystems, Inc. standard license agreement
- * and applicable provisions of the FAR and its supplements.
- * 
- * Use is subject to license terms.
- * 
- * This distribution may include materials developed by third parties.
- * Sun, Sun Microsystems, the Sun logo, Java and Project Identity 
- * Connectors are trademarks or registered trademarks of Sun 
- * Microsystems, Inc. or its subsidiaries in the U.S. and other
- * countries.
- * 
- * UNIX is a registered trademark in the U.S. and other countries,
- * exclusively licensed through X/Open Company, Ltd. 
- * 
- * -----------
+﻿/*
+ * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  * 
- * Copyright 2008 Sun Microsystems, Inc. All rights reserved. 
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
  * 
- * The contents of this file are subject to the terms of the Common Development
- * and Distribution License(CDDL) (the License).  You may not use this file
- * except in  compliance with the License. 
+ * The contents of this file are subject to the terms of the Common Development 
+ * and Distribution License("CDDL") (the "License").  You may not use this file 
+ * except in compliance with the License.
  * 
- * You can obtain a copy of the License at
- * http://identityconnectors.dev.java.net/CDDLv1.0.html
- * See the License for the specific language governing permissions and 
- * limitations under the License.  
+ * You can obtain a copy of the License at 
+ * http://IdentityConnectors.dev.java.net/legal/license.txt
+ * See the License for the specific language governing permissions and limitations 
+ * under the License. 
  * 
- * When distributing the Covered Code, include this CDDL Header Notice in each
- * file and include the License file at identityconnectors/legal/license.txt.
+ * When distributing the Covered Code, include this CDDL Header Notice in each file
+ * and include the License file at identityconnectors/legal/license.txt.
  * If applicable, add the following below this CDDL Header, with the fields 
  * enclosed by brackets [] replaced by your own identifying information: 
  * "Portions Copyrighted [year] [name of copyright owner]"
- * -----------
+ * ====================
  */
 package org.identityconnectors.oracleerp;
 
@@ -52,6 +35,7 @@ import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.api.ConnectorFacadeFactory;
 import org.identityconnectors.framework.common.objects.*;
+import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.BeforeClass;
 
@@ -101,7 +85,7 @@ abstract public class OracleERPTestsBase {
     /**
      * 
      * @param oob
-     * @param attrsOpt
+     * @param attrInfos
      */
     protected void addAllAttributesToGet(OperationOptionsBuilder oob, Set<AttributeInfo> attrInfos) {
         Set<String> attrNames = CollectionUtil.newCaseInsensitiveSet();
@@ -114,9 +98,9 @@ abstract public class OracleERPTestsBase {
     }
 
     /**
-     * 
-     * @param oob
-     * @param attrsOpt
+     * Add one option converted from the attribute set
+     * @param oob option builder {@link OperationOptionsBuilder}
+     * @param attrsOpt the attribute {@link Attribute} set
      */
     protected void addAuditorDataOptions(OperationOptionsBuilder oob, Set<Attribute> attrsOpt) {
         for (Attribute attr : attrsOpt) {
@@ -125,9 +109,10 @@ abstract public class OracleERPTestsBase {
     }
 
     /**
-     * 
-     * @param oob
-     * @param attrsOpt
+     * Add default attribute to get to operation option builder from the attribute info set
+     * It select all attributes with are {@link Flags} readable and returned by default
+     * @param oob oob option builder {@link OperationOptionsBuilder}
+     * @param attrInfos The attribute {@link AttributeInfo} info set from the schema {@link Schema}
      */
     protected void addDefaultAttributesToGet(OperationOptionsBuilder oob, Set<AttributeInfo> attrInfos) {
         Set<String> attrNames = CollectionUtil.newCaseInsensitiveSet();
@@ -137,42 +122,22 @@ abstract public class OracleERPTestsBase {
             }
         }
         oob.setAttributesToGet(attrNames);
-    }
+    }  
 
     /**
-     * Helper function to compare lists
-     * @param vals
-     * @return
+     * Replace name attribute in the attribute set by generated value
+     * @param attrs a set of attributes {@link Attribute}
+     * @return 
      */
-    protected String attrToSortedStr(String vals) {
-        final String delim = ",";
-        StringBuilder bld = new StringBuilder();
-        if (vals != null)  {
-          String [] valArray = vals.split(delim);
-          Arrays.sort(valArray);          
-          for (String i: valArray) {
-              if ( bld.length()!=0 ) {
-                  bld.append(i);
-              }
-              bld.append(delim);              
-          }
-        }
-        return bld.toString();
-    } // attrToSortStr()       
-
-    /**
-     * 
-     * @param ret
-     */
-    protected String generateNameAttribute(Set<Attribute> ret) {
-        Name attr = AttributeUtil.getNameFromAttributes(ret);
+    protected String replaceNameByRandom(Set<Attribute> attrs) {
+        Name attr = AttributeUtil.getNameFromAttributes(attrs);
         String value = null;
         if (attr != null) {
-            ret.remove(attr);
+            attrs.remove(attr);
             value = AttributeUtil.getStringValue(attr) + System.currentTimeMillis();
             Attribute add = AttributeBuilder.build(Name.NAME, value );
-            ret.add(add);
-        }
+            attrs.add(add);
+        } 
         return value;
     }
 
@@ -181,7 +146,7 @@ abstract public class OracleERPTestsBase {
      * @param ret
      * @param value
      */
-    protected void replaceNameAttribute(Set<Attribute> ret, String value) {
+    protected void replaceNameByValue(Set<Attribute> ret, String value) {
         Name attr = AttributeUtil.getNameFromAttributes(ret);
         if (attr != null) {
             ret.remove(attr);
@@ -274,27 +239,6 @@ abstract public class OracleERPTestsBase {
     }
 
     /**
-     * @param userName
-     */
-    protected void quitellyDeleteUser(String name) {
-        quitellyDeleteUser(new Uid(name));
-    }
-
-    /**
-     * @param userName
-     */
-    protected void quitellyDeleteUser(Uid uid) {
-        final ConnectorFacade facade = getFacade(CONFIG_SYSADM);
-    
-        try{
-            facade.delete(ObjectClass.ACCOUNT, uid, null);
-        } catch (Exception ex) {
-            log.error(ex, "expected");
-            // handle exception
-        }         
-    }
-
-    /**
      * Test two attribute sets
      * 
      * @param expMap expected
@@ -379,19 +323,4 @@ abstract public class OracleERPTestsBase {
     protected void testAttrSet(Set<Attribute> expected, Set<Attribute> actual, String ... ignore) {
         testAttrSet(AttributeUtil.toMap(expected), AttributeUtil.toMap(actual), false, new HashSet<String>(Arrays.asList(ignore)));              
     }
-
-    /**
-     * @param userName
-     * @param testPassword2
-     * @return
-     */
-    protected Uid createUser() {
-        final ConnectorFacade facade = getFacade(CONFIG_SYSADM);
-        
-        Set<Attribute> tuas = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
-        generateNameAttribute(tuas);
-        assertNotNull(tuas);
-        return facade.create(ObjectClass.ACCOUNT, tuas, null);
-    }         
-
 }

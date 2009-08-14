@@ -1,4 +1,4 @@
-/*
+﻿/*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  * 
@@ -57,7 +57,7 @@ public class AccountOperationSearchTests extends OracleERPTestsBase {
     public void testQueryAuditorData() {
         final OracleERPConnector c = getConnector(CONFIG_SYSADM);
         final Set<Attribute> attrs = getAttributeSet(ACCOUNT_ALL_ATTRS);
-        generateNameAttribute(attrs);
+        replaceNameByRandom(attrs);
         final Set<Attribute> attrsOpt = getAttributeSet(ACCOUNT_OPTIONS);
         
         final OperationOptionsBuilder oob = new OperationOptionsBuilder();
@@ -90,7 +90,7 @@ public class AccountOperationSearchTests extends OracleERPTestsBase {
     public void testSearchValidAccount() {
         final OracleERPConnector c = getConnector(CONFIG_TST);
         final Set<Attribute> attrs = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
-        generateNameAttribute(attrs);
+        replaceNameByRandom(attrs);
         final Set<Attribute> attrsOpt = getAttributeSet(ACCOUNT_OPTIONS);
         
         final OperationOptionsBuilder oob = new OperationOptionsBuilder();
@@ -118,7 +118,7 @@ public class AccountOperationSearchTests extends OracleERPTestsBase {
     public void testSearchLowerCaseValidAccount() {
         final OracleERPConnector c = getConnector(CONFIG_TST);
         final Set<Attribute> attrs = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
-        generateNameAttribute(attrs);
+        replaceNameByRandom(attrs);
         
         final Uid uid = c.create(ObjectClass.ACCOUNT, attrs, null);
         assertNotNull(uid);

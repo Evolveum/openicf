@@ -1,4 +1,4 @@
-/*
+﻿/*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
@@ -42,7 +42,6 @@ import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
-
 
 /**
  * The Account User Responsibilities Update
@@ -107,7 +106,6 @@ final class ResponsibilitiesOperations extends Operation {
         }
         return respLocation;
     }
-
 
     /**
      *
@@ -185,15 +183,17 @@ final class ResponsibilitiesOperations extends Operation {
         // if new key is not in old list add it and remove from respList
         // after adding
 
-            // make copy of array to itereate through because we will be
+        // make copy of array to itereate through because we will be
         // modifying the respList
-        List<String> resps = new ArrayList<String>(respList);
-        for (String resp : resps) {
-            String respKey = getResp(resp, RESP_FMT_KEYS);
-            if (!resp.equalsIgnoreCase("") && !oldRespKeys.contains(respKey)) {
-                addUserResponsibility(identity, resp, errors);
-                respList.remove(resp);
-                log.ok("added responsibility: '" + resp + "' for " + identity);
+        if (oldRespKeys != null) {
+            List<String> resps = new ArrayList<String>(respList);
+            for (String resp : resps) {
+                String respKey = getResp(resp, RESP_FMT_KEYS);
+                if (!resp.equalsIgnoreCase("") && !oldRespKeys.contains(respKey)) {
+                    addUserResponsibility(identity, resp, errors);
+                    respList.remove(resp);
+                    log.ok("added responsibility: '" + resp + "' for " + identity);
+                }
             }
         }
 
@@ -270,7 +270,8 @@ final class ResponsibilitiesOperations extends Operation {
         b.append("SELECT fndrespvl.responsibility_name, fndappvl.application_name, fndsecgvl.Security_group_name ");
         // descr may not be available in view or in native ui with new resp views
         // bug#15492 - do not include user tables in query if id not specified, does not return allr responsibilities
-        final boolean isDescription = !cfg.isNewResponsibilityViews() || (cfg.isDescrExists() && respLocation.equalsIgnoreCase(RESPS_DIRECT_VIEW));
+        final boolean isDescription = !cfg.isNewResponsibilityViews()
+                || (cfg.isDescrExists() && respLocation.equalsIgnoreCase(RESPS_DIRECT_VIEW));
         if (userName != null) {
             if (isDescription) {
                 b.append(", fnduserg.DESCRIPTION");
@@ -373,9 +374,8 @@ final class ResponsibilitiesOperations extends Operation {
     public List<String> getResps(List<String> resps, int respFmt) {
         final String method = "getResps";
         log.info(method + " respFmt=" + respFmt);
-        List<String> respKeys = null;
+        List<String> respKeys = new ArrayList<String>();
         if (resps != null) {
-            respKeys = new ArrayList<String>();
             for (String strResp : resps) {
                 String strRespReformatted = getResp(strResp, respFmt);
                 respKeys.add(strRespReformatted);
@@ -384,7 +384,6 @@ final class ResponsibilitiesOperations extends Operation {
         log.info(method + " done");
         return respKeys;
     } // getResps()
-
 
     /**
      * bug#13889 : Added method to create a responsibility string with dates normalized. respFmt: RESP_FMT_KEYS: get
@@ -648,12 +647,15 @@ final class ResponsibilitiesOperations extends Operation {
         b.append("; responsibility_app_name := ");
         addQuoted(b, respAppName);
         b.append("; SELECT  fndsecg.security_group_key INTO resp_sec_g_key ");
-        b.append("FROM " + cfg.app() + "fnd_security_groups fndsecg, " + cfg.app() + "fnd_security_groups_vl fndsecgvl ");
+        b.append("FROM " + cfg.app() + "fnd_security_groups fndsecg, " + cfg.app()
+                + "fnd_security_groups_vl fndsecgvl ");
         b.append("WHERE fndsecg.security_group_id = fndsecgvl.security_group_id ");
         b.append("AND fndsecgvl.security_group_name = security_group; ");
         b.append("SELECT fndapp.application_short_name, fndresp.responsibility_key, ");
         b.append("fndrespvl.description INTO resp_app, resp_key, description ");
-        b.append("FROM " + cfg.app() + "fnd_responsibility_vl fndrespvl, " + cfg.app() + "fnd_responsibility fndresp, ");
+        b
+                .append("FROM " + cfg.app() + "fnd_responsibility_vl fndrespvl, " + cfg.app()
+                        + "fnd_responsibility fndresp, ");
         b.append(cfg.app() + "fnd_application_vl fndappvl, " + cfg.app() + "fnd_application fndapp ");
         b.append("WHERE fndappvl.application_id = fndrespvl.application_id ");
         b.append("AND fndappvl.APPLICATION_ID = fndapp.APPLICATION_ID ");
@@ -690,7 +692,6 @@ final class ResponsibilitiesOperations extends Operation {
         }
         log.info(method + " done");
     }
-
 
     private void updateUserResponsibility(String identity, String resp, List<String> errors) {
         final String method = "updateUserResponsibility";
@@ -854,19 +855,17 @@ final class ResponsibilitiesOperations extends Operation {
         }
     }
 
-
     /**
      * @param options
      * @return boolean true/false is active
      */
     public boolean isActiveRespOnly(OperationOptions options) {
         boolean activeRespsOnly = false;
-        if ( options != null && options.getOptions() != null) {
+        if (options != null && options.getOptions() != null) {
             activeRespsOnly = Boolean.TRUE.equals(options.getOptions().get(ACTIVE_RESPS_ONLY)) ? true : false;
         }
         return activeRespsOnly;
     }
-
 
     /**
      * @param options

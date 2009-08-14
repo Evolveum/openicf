@@ -1,4 +1,4 @@
-/*
+﻿/*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
@@ -214,19 +214,19 @@ final class SecuringAttributesOperations extends Operation {
             }
             cstmt1.setInt(11, attrApplId);
 
-            if (dataType.equalsIgnoreCase("VARCHAR2")) {
+            if ("VARCHAR2".equalsIgnoreCase(dataType)) {
                 cstmt1.setString(12, value);
 
             } else {
                 cstmt1.setNull(12, Types.VARCHAR);
             }
 
-            if (dataType.equalsIgnoreCase("DATE")) {
+            if ("DATE".equalsIgnoreCase(dataType)) {
                 cstmt1.setTimestamp(13, java.sql.Timestamp.valueOf(value));
             } else {
                 cstmt1.setNull(13, java.sql.Types.DATE);
             }
-            if (dataType.equalsIgnoreCase("NUMBER")) {
+            if ("NUMBER".equalsIgnoreCase(dataType)) {
                 if (value != null) {
                     int intValue = new Integer(value).intValue();
                     cstmt1.setInt(14, intValue);
@@ -357,19 +357,19 @@ final class SecuringAttributesOperations extends Operation {
                 attrApplId = new Integer(strAttrApplId).intValue();
             }
             cstmt1.setInt(11, attrApplId);
-            if (dataType.equalsIgnoreCase("VARCHAR2")) {
+            if ("VARCHAR2".equalsIgnoreCase(dataType)) {
                 cstmt1.setString(12, value);
             } else {
                 cstmt1.setNull(12, Types.VARCHAR);
             }
 
-            if (dataType.equalsIgnoreCase("DATE")) {
+            if ("DATE".equalsIgnoreCase(dataType)) {
                 cstmt1.setTimestamp(13, java.sql.Timestamp.valueOf(value));
 
             } else {
                 cstmt1.setNull(13, java.sql.Types.DATE);
             }
-            if (dataType.equalsIgnoreCase("NUMBER")) {
+            if ("NUMBER".equalsIgnoreCase(dataType)) {
                 if (value != null) {
                     int intValue = new Integer(value).intValue();
                     cstmt1.setInt(14, intValue);
@@ -419,15 +419,19 @@ final class SecuringAttributesOperations extends Operation {
         // conditionalize including AK_WEB_USER_SEC_ATTR_VALUES in the FROM
         // list, has significant performance impact when present but not
         // referenced.
-        b.append(", " + cfg.app() + "AK_WEB_USER_SEC_ATTR_VALUES akwebsecattr, ");
-        b.append(cfg.app() + "FND_USER fnduser ");
+        if (userName !=  null) {
+            b.append(", " + cfg.app() + "AK_WEB_USER_SEC_ATTR_VALUES akwebsecattr, ");
+            b.append(cfg.app() + "FND_USER fnduser ");
+        }
 
         b.append("WHERE akattrvl.ATTRIBUTE_APPLICATION_ID = fndappvl.APPLICATION_ID ");
 
-        b.append("AND akwebsecattr.WEB_USER_ID = fnduser.USER_ID ");
-        b.append("AND akattrvl.ATTRIBUTE_APPLICATION_ID = akwebsecattr.ATTRIBUTE_APPLICATION_ID ");
-        b.append("AND akattrvl.ATTRIBUTE_CODE = akwebsecattr.ATTRIBUTE_CODE ");
-        b.append("AND fnduser.USER_NAME = ?");
+        if (userName != null) {
+            b.append("AND akwebsecattr.WEB_USER_ID = fnduser.USER_ID ");
+            b.append("AND akattrvl.ATTRIBUTE_APPLICATION_ID = akwebsecattr.ATTRIBUTE_APPLICATION_ID ");
+            b.append("AND akattrvl.ATTRIBUTE_CODE = akwebsecattr.ATTRIBUTE_CODE ");
+            b.append("AND fnduser.USER_NAME = ?");
+        }
         b.append(" AND akattrvl.NAME LIKE '");
         b.append(pattern);
         b.append("' ");
@@ -437,7 +441,9 @@ final class SecuringAttributesOperations extends Operation {
         final String sql = b.toString();
         try {
             st = conn.prepareStatement(sql);
-            st.setString(1, userName.toUpperCase());
+            if ( userName != null) {
+                st.setString(1, userName.toUpperCase());
+            }
             res = st.executeQuery();
             while (res.next()) {
 
