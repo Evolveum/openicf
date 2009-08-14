@@ -51,6 +51,8 @@ public class OpSearchImpl extends AbstractOp {
     private OperationOptions options;
     private ObjectClass oclass;
     final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT, ObjectClass.GROUP};
+    /** names of returned by default attributes (given by schema, it is static during lifetime of the connector */
+    private static String[] returnedByDefaultAttributeNames; // todo possibly this could be acquired right from connector attribute structures.
     
     public OpSearchImpl(Log log, SolarisConnector conn) {
         super(log, conn);
@@ -88,25 +90,25 @@ public class OpSearchImpl extends AbstractOp {
         // TODO 
         if (query == null) {
             // NULL filter, return all results
-            query = new AttributeFilter(AccountAttributes.NAME.getName(), ".*", new SearchPerformer(getConfiguration(), getConnection()) /* TODO works just for __ACCOUNT__ */);
+            query = new AttributeFilter(AccountAttributes.NAME.getName(), ".*");
         }
         
+        final SearchPerformer sp = new SearchPerformer(getConfiguration(), getConnection());
         //traverse through the tree of search query:
-        Set<Uid> result = query.evaluate();
+        Set<Uid> result = query.evaluate(sp);
         
         for (Uid uid : result) {
-            notifyHandler(handler, uid.getUidValue());
+            notifyHandler(handler, uid.getUidValue(), sp);
         }
     }
 
-    /** calls handler with given string */
-    private void notifyHandler(ResultsHandler handler, String uid) {
+    /** calls handler with given string 
+     * @param sp TODO*/
+    private void notifyHandler(ResultsHandler handler, String uid, SearchPerformer sp) {
         // TODO this could be more complicated, when other than Name attributes arrive.
         ConnectorObjectBuilder builder = new ConnectorObjectBuilder()
                 .addAttribute(AttributeBuilder.build(Name.NAME, uid))
                 .addAttribute(new Uid(uid));
-        
-        
         /*
          * return RETURNED_BY_DEFAULT attributes + attrsToGet
          */
@@ -117,7 +119,6 @@ public class OpSearchImpl extends AbstractOp {
             attrsToGet = getReturnedByDefaultAttrs(getSchema());
         }
         
-        final SearchPerformer sp = new SearchPerformer(getConfiguration(), getConnection());
         for (String attrName : attrsToGet) {
             // acquire the attribute's value:
             final List<String> attrValue = getValueForUid(uid, attrName, sp);
@@ -162,6 +163,10 @@ public class OpSearchImpl extends AbstractOp {
      * @return set of attribute names that are returned by default
      */
     private String[] getReturnedByDefaultAttrs(Schema schema) {
+        // return the cached names
+        if (returnedByDefaultAttributeNames != null)
+            return returnedByDefaultAttributeNames;
+        
         List<String> result = new ArrayList<String>();
         
         ObjectClassInfo ocinfo = schema.findObjectClassInfo(oclass.getObjectClassValue());
@@ -172,6 +177,9 @@ public class OpSearchImpl extends AbstractOp {
             }
         }
         
-        return result.toArray(new String[0]);
+        //cache the names
+        returnedByDefaultAttributeNames = result.toArray(new String[0]);
+        
+        return returnedByDefaultAttributeNames;
     }
 }

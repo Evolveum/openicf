@@ -84,17 +84,23 @@ public class SearchPerformerTest {
 
     @Test 
     public void test() {
-        Uid uid = connector.create(ObjectClass.ACCOUNT, attrs, null);
-        Assert.assertNotNull(uid);
+        Uid uid = null;
+        try {
+            uid = connector.create(ObjectClass.ACCOUNT, attrs, null);
+                    Assert.assertNotNull(uid);
 
-        SearchPerformer sp = new SearchPerformer((SolarisConfiguration) connector.getConfiguration(), connector.getConnection());
-        SolarisAttribute attribute = AccountAttributes.INACTIVE;
-        Set<Uid> result = sp.performSearch(attribute, "-1" /* default value of inactive attribute */);
-        Assert.assertTrue(result.size() >= 1);
-        boolean b = false;
-        for (Uid uidx : result) {
-            b = b | uidx.getUidValue().equals(username);
+            SearchPerformer sp = new SearchPerformer((SolarisConfiguration) connector.getConfiguration(), connector.getConnection());
+            SolarisAttribute attribute = AccountAttributes.INACTIVE;
+            Set<Uid> result = sp.performSearch(attribute, "-1" /* default value of inactive attribute */);
+            Assert.assertTrue(result.size() >= 1);
+            boolean b = false;
+            for (Uid uidx : result) {
+                b = b | uidx.getUidValue().equals(username);
+            }
+            Assert.assertTrue(b);
+        } finally {
+            if (uid != null)
+                connector.delete(ObjectClass.ACCOUNT, uid, null);
         }
-        Assert.assertTrue(b);
     }
 }

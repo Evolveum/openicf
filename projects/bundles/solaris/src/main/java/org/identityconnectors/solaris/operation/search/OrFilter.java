@@ -38,7 +38,7 @@ public class OrFilter extends BinaryOpNode {
         super(left, right);
     }
 
-    public Set<Uid> evaluate() {
-        return CollectionUtil.union(getLeft().evaluate(), getRight().evaluate());
+    public Set<Uid> evaluate(SearchPerformer sp) {
+        return CollectionUtil.union(getLeft().evaluate(sp), getRight().evaluate(sp));
     }
 }

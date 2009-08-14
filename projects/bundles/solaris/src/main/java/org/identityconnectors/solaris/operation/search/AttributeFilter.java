@@ -39,23 +39,18 @@ public class AttributeFilter implements Node {
 
     private SolarisAttribute attr;
 
-    private SearchPerformer sp;
-
     /**
      * @param attributeName
      *            the attribute name that is filtered
      * @param regex
      *            the regular expression that is used to filter
-     * @param sp
-     *            the search performer for doing the search
      */
-    public AttributeFilter(String attributeName, String regex, SearchPerformer sp) {
+    public AttributeFilter(String attributeName, String regex) {
         attr = SolarisUtil.getAttributeBasedOnName(attributeName);
         this.regex = regex;
-        this.sp = sp;
     }
 
-    public Set<Uid> evaluate() {
+    public Set<Uid> evaluate(SearchPerformer sp) {
         return sp.performSearch(attr, regex);
     }
 }

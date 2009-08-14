@@ -3,7 +3,34 @@ This connector is under development, it is not release ready.
 TODOs:
 
 * UPDATE:
-  - clarify meaning of 'newName' attribute sent into SRA#getUpdateNativeUserScript() and implement it. 
+  - clarify meaning of 'newName' attribute sent into SRA#getUpdateNativeUserScript() and implement it.
+  -------------------
+  I believe that the RegExp would wind up matching before the normal expected matches. You'd need to do your normal matching, and then (as a separate expect() call) see what was left in the input stream.
+> Hi George,
+>
+> I think VMS/Solaris's Connection can be a lot inspired by /ScriptedConnection/ in IDM.
+>
+> What is special about this class?
+> It automatically throws an exception if some unmatched extra _input_ had left:
+>
+> <code> ScriptedConnection#refreshUnprocessedInput(int, int, String, boolean) </code>
+>
+> Now thinking aloud: the same principle can be employed in Expect4J#expect(Match[]).
+> Implementation would involve adding a universal RegExpMatcher (for example "*"),
+> that would match anything, and a new ErrorClosure for throwing the remainder of input:
+>
+> <pseudo-code>
+> ec = new ErrorClosure() implements expect4j.Closure {
+>    public void action(context) {
+>         throw new ConnectorException(context.getBuffer())
+>    }
+> }
+> </pseudo-code>
+>
+> Comments?
+>
+> Thanks, David. 
+------------------------------------------ 
 
 *** SolarisConnection
  *** - try out SSHPubKeyAuthentication.
@@ -36,4 +63,6 @@ Adapter's features:
   -- **VERY GOOD FEATURE** -- SolarisRA's ScriptedConnection#refreshUnprocessedInput()
         provides returning of unprocessed input from the resource. This way, if you put
         a breakpoint at WavesetException and try to set a nonsense shell /bin/bbbsh 
-        ScriptedConnection *directly* warns you about his fact. VERY COOL! Can I have this in Connector + Expect4J?  
+        ScriptedConnection *directly* warns you about his fact. VERY COOL! Can I have this in Connector + Expect4J?
+        
+        

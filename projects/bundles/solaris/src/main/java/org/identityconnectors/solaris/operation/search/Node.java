@@ -27,5 +27,5 @@ import java.util.Set;
 import org.identityconnectors.framework.common.objects.Uid;
 
 public interface Node {
-    public abstract Set<Uid> evaluate();
+    public abstract Set<Uid> evaluate(SearchPerformer sp);
 }

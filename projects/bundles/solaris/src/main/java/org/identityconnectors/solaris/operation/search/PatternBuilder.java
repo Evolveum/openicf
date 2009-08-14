@@ -53,7 +53,8 @@ package org.identityconnectors.solaris.operation.search;
  */
 public class PatternBuilder {
 
-    private static final String DEFAULT_DELIMITER = ":";
+    private static final String ACCEPT_ALL_PATTERN = ".*";
+    private static final String DEFAULT_DELIMITER = ":"; 
     private int nrOfColumns;
 
     private String delimiter;
@@ -118,6 +119,6 @@ public class PatternBuilder {
     
     /** create a pattern that matches any string */
     public static String buildAcceptAllPattern() {
-        return ".*";
+        return ACCEPT_ALL_PATTERN;
     }
 }

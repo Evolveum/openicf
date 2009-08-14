@@ -37,7 +37,7 @@ public class AndFilter extends BinaryOpNode {
         super(left, right);
     }
 
-    public Set<Uid> evaluate() {
-        return CollectionUtil.intersection(getLeft().evaluate(), getRight().evaluate());
+    public Set<Uid> evaluate(SearchPerformer sp) {
+        return CollectionUtil.intersection(getLeft().evaluate(sp), getRight().evaluate(sp));
     }
 }

@@ -52,16 +52,16 @@ public class SearchPerformer {
     /** first string denotes the command, the second denotes the output. */
     private Map<String, String[]> cachedCommands;
     private SolarisConnection connection;
-    private SolarisConfiguration configuration;
+    //private SolarisConfiguration configuration;
 
     public SearchPerformer(SolarisConfiguration configuration, SolarisConnection connection) {
         cachedCommands = new HashMap<String, String[]>();
         this.connection = connection;
-        this.configuration = configuration;
+        //this.configuration = configuration;
     }
 
     public Set<Uid> performSearch(SolarisAttribute attribute) {
-        return performSearch(attribute, ".*"/* universal regular expression TODO might be something more efficient */, null);
+        return performSearch(attribute, PatternBuilder.buildAcceptAllPattern()/* TODO more efficient regexp */, null);
     }
     
     public Set<Uid> performSearch(SolarisAttribute attribute, String searchRegExp) {
@@ -69,7 +69,7 @@ public class SearchPerformer {
     }
     
     public Set<Uid> performSearch(SolarisAttribute attribute, Uid uid) {
-        return performSearch(attribute, ".*", uid.getUidValue());
+        return performSearch(attribute, PatternBuilder.buildAcceptAllPattern(), uid.getUidValue());
     }
 
     /**
@@ -164,9 +164,6 @@ public class SearchPerformer {
                 pair.first = new Uid(matcher.group(1));
                 pair.second = matcher.group(2);
                 break;
-            default:
-                pair = null;
-                break;
             }//switch
         } 
         return pair;
@@ -192,12 +189,13 @@ public class SearchPerformer {
             // buffer
             // otherwise (when tests are run in batch), there is empty buffer, so
             // this waitfor will timeout.
-            try {
-                connection.waitFor(configuration.getRootShellPrompt(),
-                        SolarisConnection.WAIT);
-            } catch (Exception e) {
-                // OK
-            }
+            /* FIXME erase this, it substantially slows down the process */
+//            try {
+//                connection.waitFor(configuration.getRootShellPrompt(),
+//                        SolarisConnection.WAIT);
+//            } catch (Exception e) {
+//                // OK
+//            }
 
             output = connection.executeCommand(command);
         } catch (Exception e) {

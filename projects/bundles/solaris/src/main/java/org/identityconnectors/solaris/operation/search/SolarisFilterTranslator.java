@@ -31,11 +31,8 @@ import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
 
 public class SolarisFilterTranslator extends
         AbstractFilterTranslator<Node> {
-    
-    private SearchPerformer sp;
 
-    public SolarisFilterTranslator(SearchPerformer sp) {
-        this.sp = sp;
+    public SolarisFilterTranslator() {
     }
 
     @Override
@@ -55,7 +52,7 @@ public class SolarisFilterTranslator extends
         if (!not) {
             /* '.*' == zero and more repetitions of any character */
             String regExp = String.format(".*(%s).*", filter.getValue());
-            return new AttributeFilter(filter.getName(), regExp, sp);
+            return new AttributeFilter(filter.getName(), regExp);
         }
 
         return super.createContainsExpression(filter, not);
@@ -66,7 +63,7 @@ public class SolarisFilterTranslator extends
             boolean not) {
         if (!not) {
             String regExp = String.format(".*%s", filter.getValue());
-            return new AttributeFilter(filter.getName(), regExp, sp);
+            return new AttributeFilter(filter.getName(), regExp);
         }
 
         return super.createEndsWithExpression(filter, not);
@@ -77,7 +74,7 @@ public class SolarisFilterTranslator extends
             boolean not) {
         if (!not) {
             String regExp = String.format("%s.*", filter.getValue());
-            return new AttributeFilter(filter.getName(), regExp, sp);
+            return new AttributeFilter(filter.getName(), regExp);
         }
 
         return super.createStartsWithExpression(filter, not);
@@ -87,7 +84,7 @@ public class SolarisFilterTranslator extends
     protected Node createEqualsExpression(EqualsFilter filter,
             boolean not) {
         if (!not) { 
-            return new AttributeFilter(filter.getName(), (String) filter.getAttribute().getValue().get(0), sp);
+            return new AttributeFilter(filter.getName(), (String) filter.getAttribute().getValue().get(0));
         }
 
         return super.createEqualsExpression(filter, not);

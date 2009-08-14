@@ -61,7 +61,6 @@ import org.identityconnectors.solaris.operation.OpDeleteImpl;
 import org.identityconnectors.solaris.operation.OpUpdateImpl;
 import org.identityconnectors.solaris.operation.search.Node;
 import org.identityconnectors.solaris.operation.search.OpSearchImpl;
-import org.identityconnectors.solaris.operation.search.SearchPerformer;
 import org.identityconnectors.solaris.operation.search.SolarisFilterTranslator;
 
 /**
@@ -81,7 +80,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
 
     private SolarisConfiguration _configuration;
 
-    private Schema _schema;
+    private static Schema _schema;
 
     /**
      * {@see
@@ -155,7 +154,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
 
     public FilterTranslator<Node> createFilterTranslator(
             ObjectClass oclass, OperationOptions options) {
-        return new SolarisFilterTranslator(new SearchPerformer(_configuration, getConnection()));
+        return new SolarisFilterTranslator();
     }
     
     /**
