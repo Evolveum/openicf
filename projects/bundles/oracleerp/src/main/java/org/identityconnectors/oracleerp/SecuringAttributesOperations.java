@@ -1,22 +1,22 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
+ *
+ * You can obtain a copy of the License at
  * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
  * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
@@ -40,7 +40,7 @@ import org.identityconnectors.framework.common.objects.Attribute;
 
 /**
  * The Account User Responsibilities Update
- *  
+ *
  * @author Petr Jung
  * @version $Revision 1.0$
  * @since 1.0
@@ -51,7 +51,7 @@ final class SecuringAttributesOperations extends Operation {
      * Setup logging.
      */
     static final Log log = Log.getLog(SecuringAttributesOperations.class);
-    
+
     /**
      * @param conn
      * @param cfg
@@ -61,18 +61,18 @@ final class SecuringAttributesOperations extends Operation {
     }
 
     /**
-     * 
-     * 
+     *
+     *
      * @param secAttr
      * @param name
-     * @param userId 
+     * @param userId
      * @throws WavesetException
-     * 
+     *
      *             Interesting thing here is that a user can have exact duplicate securing attributes, as crazy as that
      *             sounds, they just show up multiple times in the native gui.
-     * 
+     *
      *             Since there is no available key, we will delete all and add all new ones
-     * 
+     *
      */
     public void updateUserSecuringAttrs(final Attribute secAttr, String name) {
         final String method = "updateUserSecuringAttrs";
@@ -94,9 +94,9 @@ final class SecuringAttributesOperations extends Operation {
                 oldSecAttrs.remove(secAttribute);
             } else {
                 addSecuringAttr(userId, secAttribute);
-            }            
+            }
         }
-        
+
         // delete old attrs
         if (oldSecAttrs != null) {
             for (String secAttribute : oldSecAttrs) {
@@ -129,8 +129,8 @@ final class SecuringAttributesOperations extends Operation {
         P_CREATION_DATE     DATE            IN
         P_LAST_UPDATED_BY       NUMBER          IN
         P_LAST_UPDATE_DATE      DATE            IN
-        P_LAST_UPDATE_LOGIN     NUMBER          IN            
-    */    
+        P_LAST_UPDATE_LOGIN     NUMBER          IN
+    */
     private void addSecuringAttr(String userId, String secAttr) {
         final String method = "addUserSecuringAttrs";
         log.info(method);
@@ -173,7 +173,7 @@ final class SecuringAttributesOperations extends Operation {
                     + " AK_ATTRIBUTES_VL akattrvl, AK_ATTRIBUTES akattr WHERE akattrvl.NAME = ?"
                     + " AND fndapplvl.application_name = ? AND akattrvl.attribute_code = akattr.attribute_code "
                     + " AND akattr.ATTRIBUTE_APPLICATION_ID = fndapplvl.application_id";
-            
+
             pstmt = conn.prepareStatement(sqlSelect);
             pstmt.setString(1, attributeName);
             pstmt.setString(2, applicationName);
@@ -197,7 +197,7 @@ final class SecuringAttributesOperations extends Operation {
             cstmt1.setNull(3, java.sql.Types.VARCHAR);
             cstmt1.setNull(4, java.sql.Types.VARCHAR);
             cstmt1.setNull(5, java.sql.Types.NUMERIC);
-            
+
             // return_status
             cstmt1.registerOutParameter(6, java.sql.Types.VARCHAR);
             //msg_count
@@ -207,40 +207,40 @@ final class SecuringAttributesOperations extends Operation {
 
             cstmt1.setInt(9, intUserId);
             cstmt1.setString(10, attributeCode);
-            
+
             int attrApplId = 0;
             if (strAttrApplId != null) {
                 attrApplId = new Integer(strAttrApplId).intValue();
             }
             cstmt1.setInt(11, attrApplId);
-            
+
             if (dataType.equalsIgnoreCase("VARCHAR2")) {
                 cstmt1.setString(12, value);
-                
+
             } else {
-                cstmt1.setNull(12, Types.VARCHAR);                
+                cstmt1.setNull(12, Types.VARCHAR);
             }
 
             if (dataType.equalsIgnoreCase("DATE")) {
-                cstmt1.setTimestamp(13, java.sql.Timestamp.valueOf(value));               
+                cstmt1.setTimestamp(13, java.sql.Timestamp.valueOf(value));
             } else {
-                cstmt1.setNull(13, java.sql.Types.DATE);                
+                cstmt1.setNull(13, java.sql.Types.DATE);
             }
             if (dataType.equalsIgnoreCase("NUMBER")) {
                 if (value != null) {
                     int intValue = new Integer(value).intValue();
-                    cstmt1.setInt(14, intValue);                   
+                    cstmt1.setInt(14, intValue);
                 }
             } else {
                 cstmt1.setNull(14, java.sql.Types.NUMERIC);
             }
-            cstmt1.setInt(15, cfg.getAdminUserId());            
+            cstmt1.setInt(15, cfg.getAdminUserId());
             java.sql.Date sqlDate = getCurrentDate();
-            cstmt1.setDate(16, sqlDate);            
-            cstmt1.setInt(17, cfg.getAdminUserId());            
-            cstmt1.setDate(18, sqlDate);            
+            cstmt1.setDate(16, sqlDate);
+            cstmt1.setInt(17, cfg.getAdminUserId());
+            cstmt1.setDate(18, sqlDate);
             cstmt1.setInt(19, cfg.getAdminUserId());
-            
+
 
             cstmt1.execute();
             // cstmt1 closed in finally below
@@ -398,8 +398,8 @@ final class SecuringAttributesOperations extends Operation {
 
     /**
      * Get Securing Attributes
-     * @param userName 
-     * @param options 
+     * @param userName
+     * @param options
      * @return list of strings
      */
     public List<String> getSecuringAttrs(String userName) {
@@ -475,6 +475,6 @@ final class SecuringAttributesOperations extends Operation {
         log.info(method + " done");
         return arrayList;
     }
-    
+
 
 }

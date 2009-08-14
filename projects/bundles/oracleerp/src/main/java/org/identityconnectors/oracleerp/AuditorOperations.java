@@ -1,22 +1,22 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
+ *
+ * You can obtain a copy of the License at
  * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
  * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
@@ -43,7 +43,7 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 
 /**
  * The Account User Responsibilities Update
- *  
+ *
  * @author Petr Jung
  * @version $Revision 1.0$
  * @since 1.0
@@ -54,7 +54,7 @@ final class AuditorOperations extends Operation {
      * Setup logging.
      */
     static final Log log = Log.getLog(AuditorOperations.class);
-    
+
     /**
      * @param conn
      * @param cfg
@@ -64,29 +64,29 @@ final class AuditorOperations extends Operation {
     }
 
     /**
-     * 
+     *
      * Return Object of Auditor Data
-     * 
-     * List auditorResps (GO) 
-     * userMenuNames 
-     * menuIds 
-     * userFunctionNames 
-     * functionIds formIds 
-     * formNames 
+     *
+     * List auditorResps (GO)
+     * userMenuNames
+     * menuIds
+     * userFunctionNames
+     * functionIds formIds
+     * formNames
      * userFormNames
-     * readOnlyFormIds 
-     * readWriteOnlyFormIds 
-     * readOnlyFunctionIds 
-     * readWriteOnlyFunctionIds 
+     * readOnlyFormIds
+     * readWriteOnlyFormIds
+     * readOnlyFunctionIds
+     * readWriteOnlyFunctionIds
      * readOnlyFormNames
-     * readOnlyUserFormNames 
-     * readWriteOnlyFormNames 
+     * readOnlyUserFormNames
+     * readWriteOnlyFormNames
      * readWriteOnlyUserFormNames
-     * 
+     *
      * @param amb AttributeMergeBuilder
-     * @param respName String 
-     * @throws SQLException 
-     * 
+     * @param respName String
+     * @throws SQLException
+     *
      */
      public void updateAuditorData(AttributeMergeBuilder amb, String respName) {
          final String method = "updateAuditorData";
@@ -107,7 +107,7 @@ final class AuditorOperations extends Operation {
         }
         StringBuilder b = new StringBuilder();
 
-        //one query 
+        //one query
         b.append("SELECT DISTINCT 'N/A' userMenuName, 0 menuID, fffv.function_id,");
         b.append("fffv.user_function_name , ffv.form_id, ffv.form_name, ffv.user_form_name, ");
         b.append("fffv.function_name, ");
@@ -277,7 +277,7 @@ final class AuditorOperations extends Operation {
             st = null;
         }
 
-        // Post Process Results looking for false-positive (misidentified rw objects) only if 
+        // Post Process Results looking for false-positive (misidentified rw objects) only if
         // there are any read only functions (roFunctionIds != null)
         // The results of this query are additional roFunctionIds by following logic
         // in bug#13405.
@@ -327,7 +327,7 @@ final class AuditorOperations extends Operation {
                                 roUserFormNames.add(rwUserFormName);
                             }
                         }// if idObj ! null
-                    }// if functionId != null                    
+                    }// if functionId != null
                 }// end while
 
                 // no catch, just use finally to ensure closes happen
@@ -342,7 +342,7 @@ final class AuditorOperations extends Operation {
                 SQLUtil.closeQuietly(st);
                 st = null;
             }
-        } // end-if roFunctionIds has contents              
+        } // end-if roFunctionIds has contents
 
         // create objects and load auditor data
         List<String> userFormNameList = new ArrayList<String>(roUserFormNames);

@@ -1,22 +1,22 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
+ *
+ * You can obtain a copy of the License at
  * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
  * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
@@ -29,11 +29,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.StringUtil;
@@ -43,27 +39,20 @@ import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeBuilder;
-import org.identityconnectors.framework.common.objects.AttributeInfo;
-import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.ResultsHandler;
+import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
-import org.identityconnectors.framework.spi.AttributeNormalizer;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 
 /**
  * The Account CreateOp implementation of the SPI Select attributes from fnd_user table, add person details from
  * PER_PEOPLE_F table add responsibility names add auditor data add securing attributes all filtered according
  * attributes to get
- * 
+ *
  * @author Petr Jung
  * @version $Revision 1.0$
  * @since 1.0
  */
-final class AccountOperationSearch extends Operation implements SearchOp<FilterWhereBuilder>, AttributeNormalizer {
+final class AccountOperationSearch extends Operation implements SearchOp<FilterWhereBuilder> {
 
     /** Setup logging. */
     static final Log log = Log.getLog(AccountOperationSearch.class);
@@ -71,16 +60,16 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
     /** Name translation */
     private AccountNameResolver nr = new AccountNameResolver();
 
-    
+
     /** ResOps */
     private ResponsibilitiesOperations respOps;
 
     /** Audit Operations */
     private AuditorOperations auditOps;
-    
+
     /** Securing Attributes Operations */
     private SecuringAttributesOperations secAttrOps;
-    
+
     /**
      * @param conn
      * @param cfg
@@ -120,7 +109,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         fndUserColumnNames.add(PWD_ACCESSES_LEFT); // Disable date
         fndUserColumnNames.add(PWD_DATE); // Last logon date
         fndUserColumnNames.add(PWD_LIFESPAN_DAYS); // Alloved days from last logon
-        
+
         final Set<String> perPeopleColumnNames = CollectionUtil.newSet(fndUserColumnNames);
         final String filterId = getFilterId(where);
 
@@ -157,26 +146,26 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
 
                 // get users responsibilities only if if resp || direct_resp in account attribute
                 buildResponsibilities(amb, userName);
-                
+
                 // get user's securing attributes
                 buildSecuringAttributes(amb, userName);
 
                 //Auditor data for get user only
                 buildAuditorDataObject(amb, userName, filterId);
-                
+
                 //build special attributes
                 buildSpecialAttributes(amb, columnValues);
-                
+
                 ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
-                
+
                 // add all special attributes to account
                 bld.setObjectClass(ObjectClass.ACCOUNT);
                 bld.addAttributes(amb.build());
                 bld.setName(userName);
                 bld.setUid(userName);
-                
 
-                
+
+
                 if (!handler.handle(bld.build())) {
                     break;
                 }
@@ -191,11 +180,11 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             SQLUtil.closeQuietly(statement);
         }
         conn.commit();
-        log.info(method + " ok");        
+        log.info(method + " ok");
     }
 
     /**
-     * @param amb 
+     * @param amb
      * @return
      */
     private boolean isAuditorDataRequired(final AttributeMergeBuilder amb) {
@@ -207,7 +196,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         log.ok("isAuditorDataRequired: no auditor attributes are in attribute to get");
         return  false;
     }
-   
+
 
     /**
      * Transform the columns to special attributes
@@ -217,7 +206,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
     public void buildSpecialAttributes(final AttributeMergeBuilder amb, final Map<String, SQLParam> columnValues) {
         // create the connector object..
         final Date dateNow = new Date(System.currentTimeMillis());
-        final Date end_date = OracleERPUtil.extractDate(END_DATE, columnValues); 
+        final Date end_date = OracleERPUtil.extractDate(END_DATE, columnValues);
         //disable date
         if( end_date != null ) {
             amb.addAttribute(AttributeBuilder.buildDisableDate(end_date));
@@ -240,9 +229,9 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             boolean enable = dateNow.compareTo(start_date) > 0;
             amb.addAttribute(AttributeBuilder.buildEnabled(enable));
         } else {
-            //bld.addAttribute(AttributeBuilder.buildEnabled(false));                        
+            //bld.addAttribute(AttributeBuilder.buildEnabled(false));
         }
-        
+
         final Date lastLogonDate = OracleERPUtil.extractDate(LAST_LOGON_DATE, columnValues);
         if ( lastLogonDate != null ) {
             amb.addAttribute(AttributeBuilder.buildLastLoginDate(lastLogonDate));
@@ -253,11 +242,11 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         if( pwdDate != null ) {
             amb.addAttribute(AttributeBuilder.buildLastPasswordChangeDate(pwdDate));
         }
-        
+
         final Long access_left = OracleERPUtil.extractLong(PWD_ACCESSES_LEFT, columnValues);
-        
+
         final Long lifespan_days = OracleERPUtil.extractLong(PWD_LIFESPAN_DAYS, columnValues);
-      
+
         if (access_left != null && access_left.intValue() <= 0) {
             amb.addAttribute(AttributeBuilder.buildPasswordExpired(true));
         } else if (lifespan_days != null && pwdDate != null) {
@@ -272,7 +261,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             amb.addAttribute(AttributeBuilder.buildPasswordExpired(false));
         }
     }
-    
+
     /**
      * @param attributesToGet
      *            from application
@@ -287,7 +276,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             if (columnName != null) {
                 columnNamesToGet.add(columnName);
             }
-        }      
+        }
 
         log.ok("columnNamesToGet done");
         return columnNamesToGet;
@@ -308,7 +297,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             log.info("No persons AttributesToGet, skip");
             return;
         }
-        
+
         final Long personId = extractLong(EMP_ID, columnValues);
         if (personId == null) {
             log.info("buildPersonDetails: Null personId(employId)");
@@ -351,7 +340,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         }
     }
 
-  
+
     /**
      * Build account attributes . Translate column name to attribute name and convert the value
      * Add only readable attributes
@@ -395,13 +384,13 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             amb.addAttribute(attributeName, value);
         }
     }
-    
+
     /**
      * @param amb builder
      * @param userName of the user
      */
     private void buildResponsibilities(AttributeMergeBuilder amb, final String userName) {
-         
+
         if (!cfg.isNewResponsibilityViews() && amb.isInAttributesToGet(RESPS)) {
             log.info("buildResponsibilities from "+RESPS_TABLE);
             //add responsibilities
@@ -428,11 +417,11 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             amb.addAttribute(INDIRECT_RESPS, responsibilities);
         }
     }
-    
-    
+
+
     /**
      * @param amb
-     * @param userName 
+     * @param userName
      */
     private void buildSecuringAttributes(AttributeMergeBuilder amb, final String userName) {
         if (!cfg.isManageSecuringAttrs()) {
@@ -446,17 +435,17 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             }
         }
     }
-    
+
     /**
      * @param amb
      *            builder
      * @param userName
      *            id of the responsibility
-     * @param filterId 
+     * @param filterId
      */
     public void buildAuditorDataObject(AttributeMergeBuilder amb, String userName, String filterId) {
         if (filterId == null) {
-            return;            
+            return;
         }
         final boolean auditorDataRequired = isAuditorDataRequired(amb);
         if (auditorDataRequired) {
@@ -464,16 +453,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             List<String> activeRespList = respOps.getResponsibilities(userName, respOps.getRespLocation(), false);
             for (String activeRespName : activeRespList) {
                 auditOps.updateAuditorData(amb, activeRespName);
-            }            
-        }        
+            }
+        }
     }
-
-    /**
-     * @param oclass
-     * @param attribute
-     * @return the normalized attribute
-     */
-    public Attribute normalizeAttribute(ObjectClass oclass, Attribute attribute) {
-        return nr.normalizeAttribute(oclass, attribute);
-    }   
 }

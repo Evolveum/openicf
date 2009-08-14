@@ -1,22 +1,22 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
+ *
+ * You can obtain a copy of the License at
  * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
  * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
@@ -40,28 +40,28 @@ import org.identityconnectors.oracleerp.AccountSQLCall.AccountSQLCallBuilder;
 
 /**
  * The Account CreateOp implementation of the SPI
- * 
+ *
  * { call {0}fnd_user_pkg.{1} ( {2} ) } // {0} .. "APPL.", {1} .. "UpdateUser"
- * {2} ...  is an array of 
- * x_user_name => ?, 
- * x_owner => ?, 
- * x_unencrypted_password => ?, 
- * x_session_number => ?, 
+ * {2} ...  is an array of
+ * x_user_name => ?,
+ * x_owner => ?,
+ * x_unencrypted_password => ?,
+ * x_session_number => ?,
  * x_start_date => ?,
- * x_end_date => ?, 
- * x_last_logon_date => ?, 
- * x_description => ?, 
- * x_password_date => ?, 
+ * x_end_date => ?,
+ * x_last_logon_date => ?,
+ * x_description => ?,
+ * x_password_date => ?,
  * x_password_accesses_left => ?,
- * x_password_lifespan_accesses => ?, 
- * x_password_lifespan_days => ?, 
- * x_employee_id => ?, 
- * x_email_address => ?, 
- * x_fax => ?, 
+ * x_password_lifespan_accesses => ?,
+ * x_password_lifespan_days => ?,
+ * x_employee_id => ?,
+ * x_email_address => ?,
+ * x_fax => ?,
  * x_customer_id => ?,
  * x_supplier_id => ? ) };
- *  
- *  
+ *
+ *
  * @author Petr Jung
  * @version $Revision 1.0$
  * @since 1.0
@@ -72,13 +72,13 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
      * Setup logging.
      */
     static final Log log = Log.getLog(AccountOperationUpdate.class);
-    
+
     /**
-     * Resp Operations 
+     * Resp Operations
      */
     private ResponsibilitiesOperations respOps;
 
-    
+
     /**
      * @param conn
      * @param cfg
@@ -92,11 +92,11 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
      * @see org.identityconnectors.framework.spi.operations.UpdateOp#update(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.Uid, java.util.Set, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
-        final String name = uid.getUidValue().toUpperCase();      
+        final String name = uid.getUidValue().toUpperCase();
         log.info("update user ''{0}''", name );
-        
-        attrs = CollectionUtil.newSet(attrs); //modifiable set       
-        
+
+        attrs = CollectionUtil.newSet(attrs); //modifiable set
+
         //Name is not present
         final Name nameAttr = AttributeUtil.getNameFromAttributes(attrs);
         if (nameAttr == null) {
@@ -111,7 +111,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
                 }
             } else {
                //empty name, replace using UID
-                attrs.remove(nameAttr);                
+                attrs.remove(nameAttr);
                 attrs.add(AttributeBuilder.build(Name.NAME, name));
             }
         }
@@ -119,8 +119,8 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
         //Add default owner
         if (AttributeUtil.find(OWNER, attrs) == null) {
             attrs.add(AttributeBuilder.build(OWNER, CUST));
-        }        
-        
+        }
+
         // Enable/dissable user
         final Attribute enableAttr = AttributeUtil.find(OperationalAttributes.ENABLE_NAME, attrs);
         if ( enableAttr != null ) {
@@ -132,13 +132,13 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
                 disable(objclass, name, options);
             }
         }
-        
+
         // Get the User values
-        final AccountSQLCallBuilder asb = new AccountSQLCallBuilder(cfg.app(), false);        
+        final AccountSQLCallBuilder asb = new AccountSQLCallBuilder(cfg.app(), false);
         for (Attribute attr : attrs) {
             asb.addAttribute(objclass, attr, options);
         }
-        
+
         if ( !asb.isEmpty() ) {
             // Run the create call, new style is using the defaults
             CallableStatement cs = null;
@@ -156,9 +156,9 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
                 throw new ConnectorException(message, e);
             } finally {
                 SQLUtil.closeQuietly(cs);
-            }            
+            }
         }
-                        
+
         // Update responsibilities
         final Attribute resp = AttributeUtil.find(RESPS, attrs);
         final Attribute directResp = AttributeUtil.find(DIRECT_RESPS, attrs);
@@ -178,7 +178,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
         log.info( "update user ''{0}'' done", name );
         return new Uid(name);
     }
-    
+
     /**
      * @param objclass
      * @param userName
@@ -198,7 +198,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
             b.append("{ call " + cfg.app() + "fnd_user_pkg.updateuser(x_user_name => ?");
             b.append(",x_owner => upper(?),x_end_date => FND_USER_PKG.null_date");
             b.append(") }");
-            
+
             final String sql = b.toString();
             st = conn.prepareStatement(sql);
             st.setString(1, userName.toUpperCase());
@@ -213,7 +213,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
             SQLUtil.closeQuietly(st);
             st = null;
         }
-        log.info( method); 
+        log.info( method);
     }
 
     /**
@@ -239,6 +239,6 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
             SQLUtil.closeQuietly(cs);
             cs = null;
         }
-        log.info( method); 
-    }    
+        log.info( method);
+    }
 }

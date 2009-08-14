@@ -1,22 +1,22 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
+ *
+ * You can obtain a copy of the License at
  * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
  * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
@@ -68,14 +68,14 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
          * Build the actionContext to pass it to the script according the documentation
          */
         final Map<String, Object> actionContext = new HashMap<String, Object>();
-        final Map<String, Object> scriptArguments = request.getScriptArguments();        
+        final Map<String, Object> scriptArguments = request.getScriptArguments();
         Assertions.nullCheck(scriptArguments, "scriptArguments");
-        
+
         //Name
         final Object nameArg = scriptArguments.get(Name.NAME);
-        Assertions.nullCheck(nameArg, Name.NAME);        
+        Assertions.nullCheck(nameArg, Name.NAME);
         final String nameValue = ((Name) nameArg).getNameValue();
-        
+
         //Password
         final Object pwdArg = scriptArguments.get(OperationalAttributes.PASSWORD_NAME);
         Assertions.nullCheck(pwdArg, OperationalAttributes.PASSWORD_NAME);
@@ -104,7 +104,7 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
         Map<String, Object> inputMap = new HashMap<String, Object>();
         inputMap.put("actionContext", actionContext);
 
-        
+
         /*
          * Build the script executor and run the script
          */

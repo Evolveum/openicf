@@ -1,22 +1,22 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
+ *
+ * You can obtain a copy of the License at
  * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
  * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
@@ -46,7 +46,7 @@ import org.identityconnectors.framework.common.objects.ResultsHandler;
 
 /**
  * The Account User Responsibilities Update
- *  
+ *
  * @author Petr Jung
  * @version $Revision 1.0$
  * @since 1.0
@@ -61,7 +61,7 @@ final class ResponsibilitiesOperations extends Operation {
     /**
      * Initialization of the map
      */
-    static {       
+    static {
         AUDITOR_ATTRIBUTE_NAMES.add(USER_MENU_NAMES);
         AUDITOR_ATTRIBUTE_NAMES.add(MENU_IDS);
         AUDITOR_ATTRIBUTE_NAMES.add(USER_FUNCTION_NAMES);
@@ -81,14 +81,14 @@ final class ResponsibilitiesOperations extends Operation {
         AUDITOR_ATTRIBUTE_NAMES.add(RO_FUNCTION_NAMES);
         AUDITOR_ATTRIBUTE_NAMES.add(RW_FUNCTION_NAMES);
         AUDITOR_ATTRIBUTE_NAMES.add(RESP_NAMES);
-        AUDITOR_ATTRIBUTE_NAMES.add(AUDITOR_RESPS);    
+        AUDITOR_ATTRIBUTE_NAMES.add(AUDITOR_RESPS);
     }
 
     /**
      * Setup logging.
      */
     static final Log log = Log.getLog(ResponsibilitiesOperations.class);
-    
+
     /**
      * @param conn
      * @param cfg
@@ -107,10 +107,10 @@ final class ResponsibilitiesOperations extends Operation {
         }
         return respLocation;
     }
-    
-    
+
+
     /**
-     * 
+     *
      * @param attr
      *            resp attribute
      * @param identity
@@ -133,7 +133,7 @@ final class ResponsibilitiesOperations extends Operation {
             oldResp = getResponsibilities(identity, RESPS_TABLE, false);
         } else {
             // can only update directly assigned resps; indirect resps are readonly
-            // thru ui            
+            // thru ui
             oldResp = getResponsibilities(identity, RESPS_DIRECT_VIEW, false);
         }
         //preserve the previous behavior where oldResp is never null.
@@ -152,7 +152,7 @@ final class ResponsibilitiesOperations extends Operation {
             int index = 0;
             for (String resp : oldRespKeys) {
                 if (!newRespKeys.contains(resp)) {
-                    // bug#9637 check to see if resp is already 
+                    // bug#9637 check to see if resp is already
                     // endDated (disabled), if so, ignore, if not,
                     // delete resp from User
                     java.util.Date curDate = getCurrentDate();
@@ -203,7 +203,7 @@ final class ResponsibilitiesOperations extends Operation {
             // bug#13889 -  do not update all responsibilities
             //              only update the ones that changed.
             //              Updating all responsibilities every time masks the audit records.
-            //              Added check to see if oldResp list 
+            //              Added check to see if oldResp list
             //              contains the current entire responsibility
             //              string.
             if (resp != null) {
@@ -248,10 +248,10 @@ final class ResponsibilitiesOperations extends Operation {
         }
         log.info(method + "done");
     }
-    
+
     /**
      * getResponsibilities
-     * 
+     *
      * @param userName
      *            user id
      * @param respLocation
@@ -313,7 +313,7 @@ final class ResponsibilitiesOperations extends Operation {
             res = st.executeQuery();
             while (res.next()) {
 
-                // six columns with old resp table, 5 with new views - 
+                // six columns with old resp table, 5 with new views -
                 // no description available
                 StringBuilder sb = new StringBuilder();
                 String s = getColumn(res, 1); // fndrespvl.responsibility_name
@@ -365,7 +365,7 @@ final class ResponsibilitiesOperations extends Operation {
      * bug#13889 : Added method to create a responsibilities list with dates normalized. RESP_FMT_KEYS: get
      * responsibility keys (resp_name, app_name, sec_group) RESP_FMT_NORMALIZE_DATES: get responsibility keys
      * (resp_name, app_name, sec_group, description, start_date, end_date)
-     * 
+     *
      * @param resps
      * @param respFmt
      * @return list of Sting
@@ -383,15 +383,15 @@ final class ResponsibilitiesOperations extends Operation {
         }
         log.info(method + " done");
         return respKeys;
-    } // getResps()  
-    
+    } // getResps()
+
 
     /**
      * bug#13889 : Added method to create a responsibility string with dates normalized. respFmt: RESP_FMT_KEYS: get
      * responsibility keys (resp_name, app_name, sec_group) RESP_FMT_NORMALIZE_DATES: get responsibility string
      * (resp_name, app_name, sec_group, description, start_date, end_date) start_date, end_date (no time data, allow
      * nulls)
-     * 
+     *
      * @param strResp
      * @param respFmt
      * @return normalized resps string
@@ -425,8 +425,8 @@ final class ResponsibilitiesOperations extends Operation {
         }
         log.info(method + " done");
         return strRespRet;
-    } // getRespWithNormalizeDates()  
-    
+    } // getRespWithNormalizeDates()
+
     private void addUserResponsibility(String identity, String resp, List<String> errors) {
         final String method = "addUserResponsibility";
         log.info(method);
@@ -672,7 +672,7 @@ final class ResponsibilitiesOperations extends Operation {
             if (e.getErrorCode() == ORA_01403) {
                 // bug#16656: delay error handling for missing responsibilities
                 final String msg = cfg.getMessage(MSG_FAILED_DELETE_RESP, resp, e.getMessage());
-                errors.add(msg);                
+                errors.add(msg);
             } else {
                 final String msg = cfg.getMessage(MSG_COULD_NOT_EXECUTE, e.getMessage());
                 log.error(e, msg);
@@ -800,7 +800,7 @@ final class ResponsibilitiesOperations extends Operation {
                 if (e.getErrorCode() == ORA_01403) {
                     // bug#16656: delay error handling for missing responsibilities
                     final String msg = cfg.getMessage(MSG_FAILED_UPDATE_RESP, resp, e.getMessage());
-                    errors.add(msg);                            
+                    errors.add(msg);
                 } else {
                     final String msg = cfg.getMessage(MSG_COULD_NOT_EXECUTE, e.getMessage());
                     log.error(e, msg);
@@ -818,8 +818,8 @@ final class ResponsibilitiesOperations extends Operation {
             }
         }
         log.info(method + " done");
-    }    
-    
+    }
+
     /**
      * @param oclass
      * @param where
@@ -852,7 +852,7 @@ final class ResponsibilitiesOperations extends Operation {
                 break;
             }
         }
-    }    
+    }
 
 
     /**
@@ -865,12 +865,12 @@ final class ResponsibilitiesOperations extends Operation {
             activeRespsOnly = Boolean.TRUE.equals(options.getOptions().get(ACTIVE_RESPS_ONLY)) ? true : false;
         }
         return activeRespsOnly;
-    }    
-    
-    
+    }
+
+
     /**
      * @param options
-     * @return String id from options 
+     * @return String id from options
      */
     public String getOptionId(OperationOptions options) {
         String id = null;

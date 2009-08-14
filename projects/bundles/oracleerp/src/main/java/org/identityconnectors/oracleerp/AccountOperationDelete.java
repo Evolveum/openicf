@@ -1,28 +1,28 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
+ *
+ * You can obtain a copy of the License at
  * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
  * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.*; 
+import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 import java.sql.CallableStatement;
 import java.sql.SQLException;
 import java.text.MessageFormat;
@@ -39,9 +39,9 @@ import org.identityconnectors.framework.spi.operations.DeleteOp;
 
 /**
  * The Account CreateOp implementation of the SPI
- * 
+ *
  * { call "+cfg.app()+"fnd_user_pkg.disableuser(?) }
- *  
+ *
  * @author Petr Jung
  * @version $Revision 1.0$
  * @since 1.0
@@ -52,7 +52,7 @@ final class AccountOperationDelete extends Operation implements DeleteOp {
      * Setup logging.
      */
     static final Log log = Log.getLog(AccountOperationDelete.class);
-    
+
     /**
      * @param conn
      * @param cfg
@@ -73,15 +73,18 @@ final class AccountOperationDelete extends Operation implements DeleteOp {
             final String identity = AttributeUtil.getAsStringValue(uid).toUpperCase();
             cs.setString(1, identity);
             cs.execute();
-            
+
             // No Result ??
         } catch (SQLException e) {
+            final String msg = MessageFormat.format(MSG_ACCOUNT_NOT_DELETE, uid.getUidValue());
             if (e.getErrorCode() == 20001 || e.getErrorCode() == 1403) {
-                final String msg = MessageFormat.format(MSG_ACCOUNT_NOT_DELETE, uid.getUidValue());
                 SQLUtil.rollbackQuietly(conn);
                 log.error(e, msg);
-                throw new IllegalArgumentException(msg, e);
+                // TODO There should be just a could not delete - informational message instead of throwing an exception
+                throw new UnknownUidException(uid, objClass);
             } else {
+              SQLUtil.rollbackQuietly(conn);
+              log.error(e, msg);
               throw new UnknownUidException(uid, objClass);
             }
         } finally {

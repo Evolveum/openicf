@@ -1,22 +1,22 @@
 /*
  * ====================
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
- * 
- * The contents of this file are subject to the terms of the Common Development 
- * and Distribution License("CDDL") (the "License").  You may not use this file 
+ *
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Common Development
+ * and Distribution License("CDDL") (the "License").  You may not use this file
  * except in compliance with the License.
- * 
- * You can obtain a copy of the License at 
+ *
+ * You can obtain a copy of the License at
  * http://IdentityConnectors.dev.java.net/legal/license.txt
- * See the License for the specific language governing permissions and limitations 
- * under the License. 
- * 
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+ *
  * When distributing the Covered Code, include this CDDL Header Notice in each file
  * and include the License file at identityconnectors/legal/license.txt.
- * If applicable, add the following below this CDDL Header, with the fields 
- * enclosed by brackets [] replaced by your own identifying information: 
+ * If applicable, add the following below this CDDL Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
@@ -41,7 +41,7 @@ import org.identityconnectors.oracleerp.AccountOperations.CallParam;
 
 /**
  * Main implementation of the AccountSQLBuilder Class
- * 
+ *
  * @author petr
  * @version 1.0
  * @since 1.0
@@ -69,9 +69,9 @@ public class AccountSQLCall {
 
     /**
      * Builder class for accountSQLCall
-     * 
+     *
      * @author petr
-     * 
+     *
      */
     public static class AccountSQLCallBuilder {
 
@@ -105,7 +105,7 @@ public class AccountSQLCall {
 
         /**
          * The account
-         * 
+         *
          * @param create
          *            true/false for create/update
          * @param schemaId
@@ -117,24 +117,14 @@ public class AccountSQLCall {
             this.schemaId = schemaId;
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see
-         * org.identityconnectors.framework.spi.operations.DeleteOp#delete(org
-         * .identityconnectors.framework.common.objects.ObjectClass,
-         * org.identityconnectors.framework.common.objects.Uid,
-         * org.identityconnectors.framework.common.objects.OperationOptions)
-         */
-
         /**
          * Return the userAccount create/update sql with defaults
-         * 
+         *
          * @param sqlParamsMap
          *            the Map of user values
          * @param create
          *            true for create/false update
-         * 
+         *
          * @return a <CODE>String</CODE> sql string
          */
         public AccountSQLCall build() {
@@ -165,12 +155,7 @@ public class AccountSQLCall {
                     body.append(", ");
                 if (val != null) {
                     // exact value has advantage
-                    body.append(MessageFormat.format(parameterExpress, Q)); // Non
-                                                                            // default
-                                                                            // values
-                                                                            // will
-                                                                            // be
-                                                                            // binded
+                    body.append(MessageFormat.format(parameterExpress, Q));
                     sqlParams.add(val);
                 } else if (nullParam != null) {
                     body.append(MessageFormat.format(parameterExpress,
@@ -189,7 +174,7 @@ public class AccountSQLCall {
 
         /**
          * Add the attribute to the builder
-         * 
+         *
          * @param oclass
          * @param attr
          * @param options
@@ -198,19 +183,14 @@ public class AccountSQLCall {
                 OperationOptions options) {
             log.ok("Account: getSQLParam");
 
-            // At first, couldn't do anything to null fields except make sql
-            // call
-            // updating tables directly. Bug#9005 forced us to find oracle
-            // constants
+            // At first, couldn't do anything to null fields except make sql call
+            // updating tables directly. Bug#9005 forced us to find oracle constants
             // to do this.
-            // I couldn't null out fields with Oracle constants thru
-            // callablestatement,
-            // instead, collect all null fields and make a preparedstatement
-            // call to
+            // I couldn't null out fields with Oracle constants thru callablestatement,
+            // instead, collect all null fields and make a preparedstatement call to
             // api with null fields.
 
-            // Handle the special attributes first to use them in decission
-            // later
+            // Handle the special attributes first to use them in decission later
 
             if (attr.is(Name.NAME)) {
                 // cstmt1.setString(1, identity.toUpperCase());
@@ -224,12 +204,11 @@ public class AccountSQLCall {
                 addSqlValue(USER_NAME, userName);
             } else if (attr.is(OperationalAttributes.PASSWORD_NAME)) {
                 /*
-                 * cstmt1.setString(3,
-                 * (String)accountAttrChanges.get(UNENCRYPT_PWD)); //only set
-                 * 'password_date' if password changed if
-                 * ((String)accountAttrChanges.get(UNENCRYPT_PWD) != null) {
-                 * cstmt1.setDate(9, new java.sql.Date( (new
-                 * java.util.Date().getTime()) )); }
+                 * cstmt1.setString(3, (String)accountAttrChanges.get(UNENCRYPT_PWD));
+                 * only set 'password_date' if password changed
+                 * if ((String)accountAttrChanges.get(UNENCRYPT_PWD) != null) {
+                 *   cstmt1.setDate(9, new java.sql.Date(
+                 *                    (new java.util.Date().getTime()) ));
                  */
                 if (AttributeUtil.getSingleValue(attr) != null) {
                     final GuardedString password = AttributeUtil
@@ -240,30 +219,32 @@ public class AccountSQLCall {
 
             } else if (attr.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)
                     || attr.is(EXP_PWD)) {
-                /*
-                 * ------ adapter code ---------- Boolean expirePassword = null;
-                 * if (
-                 * ((String)accountAttrChanges.get("OPERATION")).equalsIgnoreCase
-                 * ("CREATE") ) { if (accountAttrChanges.containsKey(EXP_PWD)) {
-                 * expirePassword = ((Boolean)accountAttrChanges.get(EXP_PWD));
-                 * if (expirePassword.booleanValue()) {
-                 * nullFields.append(",x_last_logon_date => FND_USER_PKG.null_date"
-                 * );
-                 * nullFields.append(",x_password_date => FND_USER_PKG.null_date"
-                 * ); } else { cstmt1.setDate(7, new java.sql.Date( (new
-                 * java.util.Date().getTime()) )); } } else { cstmt1.setDate(7,
-                 * new java.sql.Date( (new java.util.Date().getTime()) )); } }
-                 * else if (
-                 * ((String)accountAttrChanges.get("OPERATION")).equalsIgnoreCase
-                 * ("UPDATE") ) { if (accountAttrChanges.containsKey(EXP_PWD)) {
-                 * expirePassword = ((Boolean)accountAttrChanges.get(EXP_PWD));
-                 * if (expirePassword.booleanValue()) {
-                 * nullFields.append(",x_last_logon_date => FND_USER_PKG.null_date"
-                 * );
-                 * nullFields.append(",x_password_date => FND_USER_PKG.null_date"
-                 * ); } } }
-                 */
-                /*
+                /* ------ adapter code ----------
+                 * Boolean expirePassword = null;
+                 * if ( ((String)accountAttrChanges.get("OPERATION")).equalsIgnoreCase("CREATE") ) {
+                 *    if (accountAttrChanges.containsKey(EXP_PWD)) {
+                 *      expirePassword = ((Boolean)accountAttrChanges.get(EXP_PWD));
+                 *      if (expirePassword.booleanValue()) {
+                 *          nullFields.append(",x_last_logon_date => FND_USER_PKG.null_date");
+                 *          nullFields.append(",x_password_date => FND_USER_PKG.null_date");
+                 *      } else {
+                 *          cstmt1.setDate(7, new java.sql.Date(
+                 *                               (new java.util.Date().getTime()) ));
+                 *      }
+                 *    } else {
+                 *      cstmt1.setDate(7, new java.sql.Date(
+                 *                              (new java.util.Date().getTime()) ));
+                 *    }
+                 * } else if ( ((String)accountAttrChanges.get("OPERATION")).equalsIgnoreCase("UPDATE") ) {
+                 *   if (accountAttrChanges.containsKey(EXP_PWD)) {
+                 *      expirePassword = ((Boolean)accountAttrChanges.get(EXP_PWD));
+                 *      if (expirePassword.booleanValue()) {
+                 *          nullFields.append(",x_last_logon_date => FND_USER_PKG.null_date");
+                 *          nullFields.append(",x_password_date => FND_USER_PKG.null_date");
+                 *      }
+                 *    }
+                 * }
+                 *
                  * On create if expirePassword is false/null, set
                  * last_logon_date to today On update if expirePassword is
                  * false/null, do nothing On both is if expirePassword is true,
@@ -296,13 +277,13 @@ public class AccountSQLCall {
                 log.ok("{0} = > {1}, Types.VARCHAR", OWNER, owner);
             } else if (attr.is(START_DATE)
                     || attr.is(OperationalAttributes.ENABLE_DATE_NAME)) {
-                /*
-                 * ------ adapter code ---------- // start_date 'not null' type
-                 * if (accountAttrChanges.containsKey(START_DATE)) { if
-                 * (accountAttrChanges.get(START_DATE) != null) {
-                 * cstmt1.setTimestamp(5,
-                 * java.sql.Timestamp.valueOf((String)accountAttrChanges
-                 * .get(START_DATE)) ); } }
+                /* ------ adapter code ----------
+                 * start_date 'not null' type
+                 * if (accountAttrChanges.containsKey(START_DATE)) {
+                 *   if (accountAttrChanges.get(START_DATE) != null) {
+                 *      cstmt1.setTimestamp(5, java.sql.Timestamp.valueOf((String)accountAttrChanges.get(START_DATE)) );
+                 *   }
+                 * }
                  */
                 final String dateString = AttributeUtil.getAsStringValue(attr);
                 if (dateString != null) {
@@ -313,19 +294,19 @@ public class AccountSQLCall {
 
             } else if (attr.is(END_DATE)
                     || attr.is(OperationalAttributes.DISABLE_DATE_NAME)) {
-                /*
-                 * ------ adapter code ---------- if
-                 * (accountAttrChanges.containsKey(END_DATE)) { if
-                 * (accountAttrChanges.get(END_DATE) == null) {
-                 * nullFields.append(",x_end_date => FND_USER_PKG.null_date"); }
-                 * else if (
-                 * ((String)accountAttrChanges.get(END_DATE)).equalsIgnoreCase
-                 * (SYSDATE)) { // force sysdate into end_date
-                 * nullFields.append(",x_end_date => sysdate"); } else {
-                 * cstmt1.setTimestamp(6, java.sql.Timestamp.valueOf(
-                 * (String)accountAttrChanges.get(END_DATE)) ); } }
+                /* ------ adapter code ----------
+                 * if (accountAttrChanges.containsKey(END_DATE)) {
+                 *   if (accountAttrChanges.get(END_DATE) == null) {
+                 *     nullFields.append(",x_end_date => FND_USER_PKG.null_date");
+                 *   } else if ( ((String)accountAttrChanges.get(END_DATE)).equalsIgnoreCase(SYSDATE)) {
+                 *    // force sysdate into end_date
+                 *     nullFields.append(",x_end_date => sysdate");
+                 *  } else {
+                 *     cstmt1.setTimestamp(6, java.sql.Timestamp.valueOf(
+                 *             (String)accountAttrChanges.get(END_DATE)) );
+                 *  }
+                 * }
                  */
-
                 if (AttributeUtil.getSingleValue(attr) == null) {
                     addNullValue(END_DATE, NULL_DATE);
                     log.ok("NULL {0} => NULL_DATE : continue", END_DATE);
@@ -343,15 +324,14 @@ public class AccountSQLCall {
                     }
                 }
             } else if (attr.is(DESCR)) {
-                /*
-                 * ------ adapter code ---------- if
-                 * (accountAttrChanges.containsKey(DESCR)) { if
-                 * (accountAttrChanges.get(DESCR) == null) {
-                 * nullFields.append(",x_description => FND_USER_PKG.null_char"
-                 * );
-                 * 
-                 * } else { cstmt1.setString(8,
-                 * (String)accountAttrChanges.get(DESCR)); } }
+                /*  ------ adapter code ----------
+                 * if (accountAttrChanges.containsKey(DESCR)) {
+                 *   if (accountAttrChanges.get(DESCR) == null) {
+                 *      nullFields.append(",x_description => FND_USER_PKG.null_char");
+                 *   } else {
+                 *      cstmt1.setString(8, (String)accountAttrChanges.get(DESCR));
+                 *   }
+                 * }
                  */
                 if (AttributeUtil.getSingleValue(attr) == null) {
                     addNullValue(DESCR, NULL_CHAR);
@@ -363,16 +343,15 @@ public class AccountSQLCall {
                 }
 
             } else if (attr.is(PWD_ACCESSES_LEFT)) {
-                /*
-                 * ------ adapter code ---------- if
-                 * (accountAttrChanges.containsKey(PWD_ACCESSES_LEFT)) { if (
-                 * (accountAttrChanges.get(PWD_ACCESSES_LEFT) == null) || (
-                 * ((String)accountAttrChanges.get(PWD_ACCESSES_LEFT)).length()
-                 * == 0) ) {nullFields.append(
-                 * ",x_password_accesses_left => FND_USER_PKG.null_number"); }
-                 * else { cstmt1.setInt(10, (new
-                 * Integer((String)accountAttrChanges
-                 * .get(PWD_ACCESSES_LEFT)).intValue()) ); } }
+                /*  ------ adapter code ----------
+                 * if (accountAttrChanges.containsKey(PWD_ACCESSES_LEFT)) {
+                 *   if ( (accountAttrChanges.get(PWD_ACCESSES_LEFT) == null) ||
+                 *      ( ((String)accountAttrChanges.get(PWD_ACCESSES_LEFT)).length() == 0) ) {
+                 *      nullFields.append(",x_password_accesses_left => FND_USER_PKG.null_number");
+                 *   } else {
+                 *      cstmt1.setInt(10, (new Integer((String)accountAttrChanges.get(PWD_ACCESSES_LEFT)).intValue()) );
+                 *   }
+                 * }
                  */
                 if (AttributeUtil.getSingleValue(attr) == null) {
                     addNullValue(PWD_ACCESSES_LEFT, NULL_NUMBER);
@@ -385,17 +364,15 @@ public class AccountSQLCall {
                 }
 
             } else if (attr.is(PWD_LIFESPAN_ACCESSES)) {
-                /*
-                 * ------ adapter code ---------- if
-                 * (accountAttrChanges.containsKey(PWD_LIFESPAN_ACCESSES)) { if
-                 * ( (accountAttrChanges.get(PWD_LIFESPAN_ACCESSES) == null) ||
-                 * (
-                 * ((String)accountAttrChanges.get(PWD_LIFESPAN_ACCESSES)).length
-                 * () == 0) ) {nullFields.append(
-                 * ",x_password_lifespan_accesses => FND_USER_PKG.null_number");
-                 * } else { cstmt1.setInt(11, (new
-                 * Integer((String)accountAttrChanges
-                 * .get(PWD_LIFESPAN_ACCESSES)).intValue()) ); } }
+                /*  ------ adapter code ----------
+                 * if (accountAttrChanges.containsKey(PWD_LIFESPAN_ACCESSES)) {
+                 *      if ( (accountAttrChanges.get(PWD_LIFESPAN_ACCESSES) == null)  ||
+                 *          ( ((String)accountAttrChanges.get(PWD_LIFESPAN_ACCESSES)).length() == 0) ) {
+                 *           nullFields.append(",x_password_lifespan_accesses => FND_USER_PKG.null_number");
+                 *      } else {
+                 *          cstmt1.setInt(11, (new Integer((String)accountAttrChanges.get(PWD_LIFESPAN_ACCESSES)).intValue()) );
+                 *      }
+                 * }
                  */
                 if (AttributeUtil.getSingleValue(attr) == null) {
                     addNullValue(PWD_LIFESPAN_ACCESSES, NULL_NUMBER);
@@ -409,16 +386,15 @@ public class AccountSQLCall {
                 }
 
             } else if (attr.is(PWD_LIFESPAN_DAYS)) {
-                /*
-                 * ------ adapter code ---------- if
-                 * (accountAttrChanges.containsKey(PWD_LIFESPAN_DAYS)) { if (
-                 * (accountAttrChanges.get(PWD_LIFESPAN_DAYS) == null) || (
-                 * ((String)accountAttrChanges.get(PWD_LIFESPAN_DAYS)).length()
-                 * == 0) ) {nullFields.append(
-                 * ",x_password_lifespan_days => FND_USER_PKG.null_number"); }
-                 * else { cstmt1.setInt(12, (new
-                 * Integer((String)accountAttrChanges
-                 * .get(PWD_LIFESPAN_DAYS)).intValue()) ); } }
+                /*  ------ adapter code ----------
+                 * if (accountAttrChanges.containsKey(PWD_LIFESPAN_DAYS)) {
+                 *   if ( (accountAttrChanges.get(PWD_LIFESPAN_DAYS) == null) ||
+                 *      ( ((String)accountAttrChanges.get(PWD_LIFESPAN_DAYS)).length() == 0) ) {
+                 *          nullFields.append(",x_password_lifespan_days => FND_USER_PKG.null_number");
+                 *      } else {
+                 *          cstmt1.setInt(12, (new Integer((String)accountAttrChanges.get(PWD_LIFESPAN_DAYS)).intValue()) );
+                 *   }
+                 * }
                  */
                 if (AttributeUtil.getSingleValue(attr) == null) {
                     addNullValue(PWD_LIFESPAN_DAYS, NULL_NUMBER);
@@ -432,16 +408,15 @@ public class AccountSQLCall {
                 }
 
             } else if (attr.is(EMP_ID)) {
-                /*
-                 * ------ adapter code ---------- if
-                 * (accountAttrChanges.containsKey(EMP_ID)) { if (
-                 * (accountAttrChanges.get(EMP_ID) == null) || (
-                 * ((String)accountAttrChanges.get(EMP_ID)).length() == 0) ) {
-                 * nullFields
-                 * .append(",x_employee_id => FND_USER_PKG.null_number"); } else
-                 * { cstmt1.setInt(13, (new
-                 * Integer((String)accountAttrChanges.get(EMP_ID)).intValue())
-                 * ); } }
+                /*  ------ adapter code ----------
+                 * if (accountAttrChanges.containsKey(EMP_ID)) {
+                 *  if ( (accountAttrChanges.get(EMP_ID) == null)  ||
+                 *      ( ((String)accountAttrChanges.get(EMP_ID)).length() == 0) ) {
+                 *          nullFields.append(",x_employee_id => FND_USER_PKG.null_number");
+                 *      } else {
+                 *          cstmt1.setInt(13, (new Integer((String)accountAttrChanges.get(EMP_ID)).intValue()) );
+                 *      }
+                 *  }
                  */
                 if (AttributeUtil.getSingleValue(attr) == null) {
                     addNullValue(EMP_ID, NULL_NUMBER);
@@ -453,13 +428,14 @@ public class AccountSQLCall {
                 }
 
             } else if (attr.is(EMAIL)) {
-                /*
-                 * ------ adapter code ---------- if
-                 * (accountAttrChanges.containsKey(EMAIL)) { if
-                 * (accountAttrChanges.get(EMAIL) == null) {
-                 * nullFields.append(",x_email_address => FND_USER_PKG.null_char"
-                 * ); } else { cstmt1.setString(14,
-                 * (String)accountAttrChanges.get(EMAIL)); } }
+                /*  ------ adapter code ----------
+                 * if (accountAttrChanges.containsKey(EMAIL)) {
+                 *   if (accountAttrChanges.get(EMAIL) == null) {
+                 *      nullFields.append(",x_email_address => FND_USER_PKG.null_char");
+                 *   } else {
+                 *      cstmt1.setString(14, (String)accountAttrChanges.get(EMAIL));
+                 *   }
+                 * }
                  */
                 if (AttributeUtil.getSingleValue(attr) == null) {
                     addNullValue(EMAIL, NULL_CHAR);
@@ -471,13 +447,14 @@ public class AccountSQLCall {
                 }
 
             } else if (attr.is(FAX)) {
-                /*
-                 * ------ adapter code ---------- if
-                 * (accountAttrChanges.containsKey(FAX)) { if
-                 * (accountAttrChanges.get(FAX) == null) {
-                 * nullFields.append(",x_fax => FND_USER_PKG.null_char"); } else
-                 * { cstmt1.setString(15, (String)accountAttrChanges.get(FAX));
-                 * } }
+                /*  ------ adapter code ----------
+                 * if (accountAttrChanges.containsKey(FAX)) {
+                 *   if (accountAttrChanges.get(FAX) == null) {
+                 *      nullFields.append(",x_fax => FND_USER_PKG.null_char");
+                 *   } else {
+                 *      cstmt1.setString(15, (String)accountAttrChanges.get(FAX));
+                 *   }
+                 *  }
                  */
                 if (AttributeUtil.getSingleValue(attr) == null) {
                     addNullValue(FAX, NULL_CHAR);
@@ -489,16 +466,15 @@ public class AccountSQLCall {
                 }
 
             } else if (attr.is(CUST_ID)) {
-                /*
-                 * ------ adapter code ---------- if
-                 * (accountAttrChanges.containsKey(CUST_ID)) { if (
-                 * (accountAttrChanges.get(CUST_ID) == null) || (
-                 * ((String)accountAttrChanges.get(CUST_ID)).length() == 0) ) {
-                 * nullFields
-                 * .append(",x_customer_id => FND_USER_PKG.null_number"); } else
-                 * { cstmt1.setInt(16, (new
-                 * Integer((String)accountAttrChanges.get(CUST_ID)).intValue())
-                 * ); } }
+                /*  ------ adapter code ----------
+                 * if (accountAttrChanges.containsKey(CUST_ID)) {
+                 *  if ( (accountAttrChanges.get(CUST_ID) == null) ||
+                 *   ( ((String)accountAttrChanges.get(CUST_ID)).length() == 0) ) {
+                 *     nullFields.append(",x_customer_id => FND_USER_PKG.null_number");
+                 *  } else {
+                 *     cstmt1.setInt(16, (new Integer((String)accountAttrChanges.get(CUST_ID)).intValue()) );
+                 *  }
+                 * }
                  */
                 if (AttributeUtil.getSingleValue(attr) == null) {
                     addNullValue(CUST_ID, NULL_NUMBER);
@@ -510,16 +486,15 @@ public class AccountSQLCall {
                 }
 
             } else if (attr.is(SUPP_ID)) {
-                /*
-                 * ------ adapter code ---------- if
-                 * (accountAttrChanges.containsKey(SUPP_ID)) { if (
-                 * (accountAttrChanges.get(SUPP_ID) == null) || (
-                 * ((String)accountAttrChanges.get(SUPP_ID)).length() == 0) ) {
-                 * nullFields
-                 * .append(",x_supplier_id => FND_USER_PKG.null_number"); } else
-                 * { cstmt1.setInt(17, (new
-                 * Integer((String)accountAttrChanges.get(SUPP_ID)).intValue())
-                 * ); } }
+                /*  ------ adapter code ----------
+                 * if (accountAttrChanges.containsKey(SUPP_ID)) {
+                 *   if ( (accountAttrChanges.get(SUPP_ID) == null) ||
+                 *   ( ((String)accountAttrChanges.get(SUPP_ID)).length() == 0) ) {
+                 *       nullFields.append(",x_supplier_id => FND_USER_PKG.null_number");
+                 *   } else {
+                 *       cstmt1.setInt(17, (new Integer((String)accountAttrChanges.get(SUPP_ID)).intValue()) );
+                 *   }
+                 * }
                  */
                 if (AttributeUtil.getSingleValue(attr) == null) {
                     addNullValue(SUPP_ID, NULL_NUMBER);
@@ -534,7 +509,7 @@ public class AccountSQLCall {
 
         /**
          * Add parameter, if exist, it must be the same value
-         * 
+         *
          * @param columnName
          * @param value
          */
@@ -565,7 +540,7 @@ public class AccountSQLCall {
 
         /**
          * Add parameter, if exist, it must be the same value
-         * 
+         *
          * @param columnName
          * @param value
          */
@@ -597,7 +572,7 @@ public class AccountSQLCall {
 
         /**
          * Get the sql param
-         * 
+         *
          * @param columnName
          * @return sqlParam value
          */
@@ -621,7 +596,7 @@ public class AccountSQLCall {
 
         /**
          * Get the sql param
-         * 
+         *
          * @param columnName
          * @return sqlParam value
          */
