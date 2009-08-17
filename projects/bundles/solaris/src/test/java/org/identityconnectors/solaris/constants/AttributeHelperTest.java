@@ -17,5 +17,6 @@ public class AttributeHelperTest {
         Assert.assertEquals("cmd -foo -bar -baz", AttributeHelper.fillInCommand("cmd -foo -bar -baz"));
         Assert.assertEquals("cmd -foo -bar -baz", AttributeHelper.fillInCommand("cmd -foo -bar -baz", "fooToFillIn"));
         Assert.assertEquals("cmd -foo -bar -baz fooToFillIn", AttributeHelper.fillInCommand("cmd -foo -bar -baz __fillHere__", "fooToFillIn"));
+        Assert.assertEquals("cmd -foo -bar fooToFillIn -baz secondFillIn", AttributeHelper.fillInCommand("cmd -foo -bar __fillHere1__ -baz __fillHere__", "fooToFillIn", "secondFillIn"));
     }
 }

@@ -52,12 +52,12 @@ public class SearchPerformer {
     /** first string denotes the command, the second denotes the output. */
     private Map<String, String[]> cachedCommands;
     private SolarisConnection connection;
-    //private SolarisConfiguration configuration;
+    private SolarisConfiguration configuration;
 
     public SearchPerformer(SolarisConfiguration configuration, SolarisConnection connection) {
         cachedCommands = new HashMap<String, String[]>();
         this.connection = connection;
-        //this.configuration = configuration;
+        this.configuration = configuration;
     }
 
     public Set<Uid> performSearch(SolarisAttribute attribute) {
@@ -190,12 +190,12 @@ public class SearchPerformer {
             // otherwise (when tests are run in batch), there is empty buffer, so
             // this waitfor will timeout.
             /* FIXME erase this, it substantially slows down the process */
-//            try {
-//                connection.waitFor(configuration.getRootShellPrompt(),
-//                        SolarisConnection.WAIT);
-//            } catch (Exception e) {
-//                // OK
-//            }
+            try {
+                connection.waitFor(configuration.getRootShellPrompt(),
+                        SolarisConnection.WAIT);
+            } catch (Exception e) {
+                // OK
+            }
 
             output = connection.executeCommand(command);
         } catch (Exception e) {

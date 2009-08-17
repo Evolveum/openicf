@@ -73,7 +73,7 @@ public class PatternBuilder {
 
         StringBuffer sb = new StringBuffer();
 
-        String token = String.format("[^%s]*", delimiter, delimiter);
+        String token = String.format("[^%s]*", delimiter);
         String groupToken = String.format("(%s)", token);
 
         for (int i = 1; i <= nrOfColumns; i++) {

@@ -49,7 +49,6 @@ class AttributeHelper {
      * @return
      */
     public static String fillInCommand(String command, String... fillInAttributes) {
-        // Fixme [final implementation] this if is useless, when command is defined, in the final solution it should throw IllegalArgumentException.
         if (command == null) {
             return null;
         }
@@ -57,7 +56,7 @@ class AttributeHelper {
             return command;
         } else {
             // try to fill in the spaces with the given arguments.
-            String result = new String(command);
+            String result = command;
             for (String value : fillInAttributes) {
                 result = result.replaceFirst("__[^_]+__", value);
             }
