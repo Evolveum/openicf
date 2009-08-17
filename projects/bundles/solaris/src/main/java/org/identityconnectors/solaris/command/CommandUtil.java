@@ -24,12 +24,15 @@ package org.identityconnectors.solaris.command;
 
 import java.util.Set;
 
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.solaris.constants.AccountAttributes;
 import org.identityconnectors.solaris.constants.AccountAttributesForPassword;
 import org.identityconnectors.solaris.constants.GroupAttributes;
+
+import sun.java2d.pipe.NullPipe;
 
 /**
  * contains utility methods for forming commands for Unix.
@@ -86,15 +89,22 @@ public class CommandUtil {
             
             try {
                 if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
-
-                    command.append(AccountAttributes.formatCommandSwitch(attr));
-                    command.append(AccountAttributesForPassword.formatCommandSwitch(attr));
+                    try {
+                        command.append(AccountAttributes.formatCommandSwitch(attr));
+                    } catch (NullPointerException npe) {
+                        try {
+                            command.append(AccountAttributesForPassword.formatCommandSwitch(attr));
+                        } catch (NullPointerException npe2) {
+                            throw ConnectorException.wrap(npe2);
+                        }
+                    }
                 } else if (oclass.is(ObjectClass.GROUP_NAME)) {
                     command.append(GroupAttributes.formatCommandSwitch(attr));
                 } else throw new IllegalArgumentException("unknown objectClass: '" + oclass.getDisplayNameKey() + "'");
             } catch (Exception ex) {
                 // OK ignoring attribute
             } // try
+            command.append(" ");
         }// for
 
         return command.toString();

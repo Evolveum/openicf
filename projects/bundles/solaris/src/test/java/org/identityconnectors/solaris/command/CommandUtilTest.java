@@ -58,8 +58,38 @@ public class CommandUtilTest {
         Set<Attribute> replaceAttributes = new HashSet<Attribute>();
         final String attrValue = "dummy";
         replaceAttributes.add(AttributeBuilder.build(AccountAttributes.UID.getName(), attrValue));
-        final String cmd = CommandUtil.prepareCommand(replaceAttributes, ObjectClass.ACCOUNT);
-        final String expected = String.format("%s \"%s\"", AccountAttributes.UID.getCmdSwitch(), attrValue);
-        Assert.assertTrue(cmd.equals(expected));
+        String cmd = CommandUtil.prepareCommand(replaceAttributes, ObjectClass.ACCOUNT);
+        String expected = String.format("%s \"%s\"", AccountAttributes.UID.getCmdSwitch(), attrValue);
+        Assert.assertEquals(expected, cmd.trim());
+        
+        // try multiple commands
+        final String attrValue2 = "foobar";
+        replaceAttributes.add(AttributeBuilder.build(AccountAttributes.COMMENT.getName(), attrValue2));
+        expected = String.format("%s \"%s\" %s \"%s\"", AccountAttributes.UID.getCmdSwitch(), attrValue, AccountAttributes.COMMENT.getCmdSwitch(), attrValue2);
+        cmd = CommandUtil.prepareCommand(replaceAttributes, ObjectClass.ACCOUNT);
+        Assert.assertTrue(cmd.split(" ").length == 4);
+        
+        
+        String[] tokens = cmd.split(" ");
+        controlCmdParam(attrValue, tokens, AccountAttributes.UID.getCmdSwitch());
+        controlCmdParam(attrValue2, tokens, AccountAttributes.COMMENT.getCmdSwitch());
+    }
+
+    private void controlCmdParam(final String attrValue, String[] tokens,
+            String cmdSwitchParam) {
+        boolean found = false;
+        for (int i = 0; i < tokens.length; i++) {
+            if (tokens[i].equals(cmdSwitchParam)) {
+                Assert.assertTrue("argument missing: " + attrValue, i + 1 < tokens.length);
+                Assert.assertEquals(quote(attrValue), tokens[i + 1]);
+                found = true;
+                break;
+            }
+        }
+        Assert.assertTrue("command switch missing: " + cmdSwitchParam, found);
+    }
+
+    private Object quote(String string) {
+        return String.format("\"%s\"", string);
     }
 }
