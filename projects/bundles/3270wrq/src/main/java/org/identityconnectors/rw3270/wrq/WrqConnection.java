@@ -111,7 +111,7 @@ public class WrqConnection extends RW3270BaseConnection implements ECLPSListener
     }
 
     public void connect() {
-        Properties p = new Properties();
+        Properties p = new Properties(_config.getConnectionProperties());
         p.put(ECLSession.SESSION_HOST, _config.getHostNameOrIpAddr()+":"+_config.getHostTelnetPortNumber());
         p.put(ECLSession.SESSION_OWNER_IS_APPLICATION, ECLSession.SESSION_ON);
         p.put("SESSION_QUIETMODE", "true");

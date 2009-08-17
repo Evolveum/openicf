@@ -31,6 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 import java.util.ResourceBundle;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -298,7 +299,7 @@ public class FH3270ConnectionTests {
         OurConfiguration config = new OurConfiguration();
         config.setHostNameOrIpAddr(HOST_NAME);
         config.setHostTelnetPortNumber(HOST_TELNET_PORT);
-        config.setUseSsl(USE_SSL);
+        config.setConnectionProperties(null);
         config.setConnectScript(getLoginScript());
         config.setDisconnectScript(getLogoffScript());
         config.setScriptingLanguage("GROOVY");
@@ -367,6 +368,7 @@ public class FH3270ConnectionTests {
         }
     }
 
+
     public static class OurConfiguration extends AbstractConfiguration implements RW3270Configuration {
         private String _connectScript;
         private String _disconnectScript;
@@ -377,7 +379,7 @@ public class FH3270ConnectionTests {
         private String _userName;
         private Integer _evictionInterval;
         private String _connectClass;
-        private Boolean _useSsl ;
+        private Properties _connectionProperties;
 
         public String getConnectScript() {
             return _connectScript;
@@ -403,8 +405,12 @@ public class FH3270ConnectionTests {
             return _password;
         }
 
-        public Boolean getUseSsl() {
-            return _useSsl;
+        public String getScriptingLanguage() {
+            return _language;
+        }
+
+        public Properties getConnectionProperties() {
+            return _connectionProperties;
         }
 
         public String getUserName() {
@@ -435,35 +441,31 @@ public class FH3270ConnectionTests {
             _password = password;
         }
 
-        public void setUseSsl(Boolean useSsl) {
-            _useSsl = useSsl;
+        public void setScriptingLanguage(String language) {
+            _language = language;
+        }
+
+        public void setConnectionProperties(Properties connectionProperties) {
+            _connectionProperties = connectionProperties;
         }
 
         public void setUserName(String userName) {
             _userName = userName;
         }
-
+        
         public Integer getEvictionInterval() {
             return _evictionInterval;
         }
-
+        
         public void setEvictionInterval(Integer interval) {
             _evictionInterval = interval;
         }
-
+        
         public void validate() {
-
-        }
-
-        public String getScriptingLanguage() {
-            return _language;
-        }
-
-        public void setScriptingLanguage(String language) {
-            _language = language;
+            
         }
     }
-
+    
     public class OurConnectorMessages implements ConnectorMessages {
         private Map<Locale, Map<String, String>> _catalogs = new HashMap<Locale, Map<String, String>>();
 

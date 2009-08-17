@@ -30,6 +30,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 import java.util.ResourceBundle;
 
 import javax.naming.NamingException;
@@ -205,7 +206,7 @@ public class RW3270ConnectionTests {
         OurConfiguration config = new OurConfiguration();
         config.setHostNameOrIpAddr(HOST_NAME);
         config.setHostTelnetPortNumber(HOST_TELNET_PORT);
-        config.setUseSsl(USE_SSL);
+        config.setConnectionProperties(null);
         config.setConnectScript(getLoginScript());
         config.setDisconnectScript(getLogoffScript());
         config.setUserName(SYSTEM_USER);
@@ -335,7 +336,7 @@ public class RW3270ConnectionTests {
         private String _userName;
         private Integer _evictionInterval;
         private String _connectClass;
-        private Boolean _useSsl ;
+        private Properties _connectionProperties;
 
         public String getConnectScript() {
             return _connectScript;
@@ -365,8 +366,8 @@ public class RW3270ConnectionTests {
             return _language;
         }
 
-        public Boolean getUseSsl() {
-            return _useSsl;
+        public Properties getConnectionProperties() {
+            return _connectionProperties;
         }
 
         public String getUserName() {
@@ -401,8 +402,8 @@ public class RW3270ConnectionTests {
             _language = language;
         }
 
-        public void setUseSsl(Boolean useSsl) {
-            _useSsl = useSsl;
+        public void setConnectionProperties(Properties connectionProperties) {
+            _connectionProperties = connectionProperties;
         }
 
         public void setUserName(String userName) {
