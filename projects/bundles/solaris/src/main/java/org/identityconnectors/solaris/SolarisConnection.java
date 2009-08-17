@@ -159,13 +159,6 @@ public class SolarisConnection {
     }
     
     /**
-     * {@see SolarisConnection#send(String)}
-     */
-    public void send(StringBuffer string) throws IOException {
-        send(string.toString());
-    }
-    
-    /**
      * {@see SolarisConnection#waitFor(String, int)}
      */
     public String waitFor(final String string) throws Exception {
@@ -207,7 +200,7 @@ public class SolarisConnection {
     private String waitForImpl(final String string, int millis, boolean caseInsensitive) throws MalformedPatternException, Exception {
         log.info("waitFor(''{0}'', {1}, {2})", string, millis, Boolean.toString(caseInsensitive));
         /** internal buffer for the Solaris resource's output */
-        final StringBuffer buffer = new StringBuffer();
+        final StringBuilder buffer = new StringBuilder();
         
         // build the matchers
         /** in case of successful match this closure is called */

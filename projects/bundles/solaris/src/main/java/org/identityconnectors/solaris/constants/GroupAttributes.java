@@ -85,7 +85,7 @@ public enum GroupAttributes implements SolarisAttribute {
      * @return the name of attribute, or null if it doesn't exist.
      */
     public static GroupAttributes fromGroupName(String s) {
-        return map.get(s);
+        return AttributeHelper.getFromMap(map, s, "GroupAttributes");
     }
     
     /** 

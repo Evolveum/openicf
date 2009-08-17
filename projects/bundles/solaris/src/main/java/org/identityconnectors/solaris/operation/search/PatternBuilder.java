@@ -71,7 +71,7 @@ public class PatternBuilder {
     public String build(int... columnSelector) {
         checkValidity(columnSelector);
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         String token = String.format("[^%s]*", delimiter);
         String groupToken = String.format("(%s)", token);

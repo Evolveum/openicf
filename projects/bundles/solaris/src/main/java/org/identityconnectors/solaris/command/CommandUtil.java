@@ -32,8 +32,6 @@ import org.identityconnectors.solaris.constants.AccountAttributes;
 import org.identityconnectors.solaris.constants.AccountAttributesForPassword;
 import org.identityconnectors.solaris.constants.GroupAttributes;
 
-import sun.java2d.pipe.NullPipe;
-
 /**
  * contains utility methods for forming commands for Unix.
  * @author David Adam
@@ -80,7 +78,7 @@ public class CommandUtil {
      * @param oclass the objectclass, whose attributes are scanned for matching.
      */
     public static String prepareCommand(Set<Attribute> attributes, ObjectClass oclass) {
-        StringBuffer command = new StringBuffer();
+        StringBuilder command = new StringBuilder();
 
         for (Attribute attr : attributes) {
             // skip special attributes such as __PASSWORD__ or __NAME__
