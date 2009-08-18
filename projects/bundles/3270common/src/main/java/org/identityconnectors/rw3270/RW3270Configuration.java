@@ -22,7 +22,6 @@
  */
 package org.identityconnectors.rw3270;
 
-import java.util.Properties;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.spi.Configuration;
@@ -52,12 +51,12 @@ public interface RW3270Configuration extends Configuration {
      * Get the set of properties needed to configure the connection
      * @return the set of properties needed to configure the connection
      */
-    public Properties getConnectionProperties();
+    public String[] getConnectionProperties();
     /**
      * Set the set of properties needed to configure the connection
      * @param properties -- the set of properties needed to configure the connection
      */
-    public void setConnectionProperties(Properties properties);
+    public void setConnectionProperties(String[] properties);
     /**
      * RW3270 connections are defined as a pair:
      * <ul>

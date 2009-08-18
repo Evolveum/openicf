@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -385,5 +386,14 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
         public void clear() {
             Arrays.fill(_array, 0, _array.length, ' ');
         }
+    }
+    
+    protected Properties asProperties(String[] array) {
+        if (array==null)
+            return null;
+        Properties properties = new Properties();
+        for (int i=0; i<array.length; i+=2)
+            properties.put(array[i], array[i+1]);
+        return properties;
     }
 }

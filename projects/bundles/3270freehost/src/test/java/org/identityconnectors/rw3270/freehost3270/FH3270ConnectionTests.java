@@ -31,7 +31,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Properties;
 import java.util.ResourceBundle;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -379,7 +378,7 @@ public class FH3270ConnectionTests {
         private String _userName;
         private Integer _evictionInterval;
         private String _connectClass;
-        private Properties _connectionProperties;
+        private String[] _connectionProperties;
 
         public String getConnectScript() {
             return _connectScript;
@@ -409,7 +408,7 @@ public class FH3270ConnectionTests {
             return _language;
         }
 
-        public Properties getConnectionProperties() {
+        public String[] getConnectionProperties() {
             return _connectionProperties;
         }
 
@@ -445,7 +444,7 @@ public class FH3270ConnectionTests {
             _language = language;
         }
 
-        public void setConnectionProperties(Properties connectionProperties) {
+        public void setConnectionProperties(String[] connectionProperties) {
             _connectionProperties = connectionProperties;
         }
 

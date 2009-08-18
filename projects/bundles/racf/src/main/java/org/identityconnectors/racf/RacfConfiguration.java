@@ -26,8 +26,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Array;
-import java.util.Arrays;
-import java.util.Properties;
 
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
@@ -59,7 +57,7 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     private String         _connectScript;
     private String         _disconnectScript;
     private String         _connectionClassName;
-    private Properties     _connectionProperties;
+    private String[]       _connectionProperties;
 
     private Boolean        _asResetToday;
     private Boolean        _asFilterUseOrSearch;
@@ -391,11 +389,11 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     }
 
     @ConfigurationProperty(order=19, confidential=true)
-    public Properties getConnectionProperties() {
+    public String[] getConnectionProperties() {
         return _connectionProperties;
     }
 
-    public void setConnectionProperties(Properties properties) {
+    public void setConnectionProperties(String[] properties) {
         _connectionProperties = properties;
     }
 
