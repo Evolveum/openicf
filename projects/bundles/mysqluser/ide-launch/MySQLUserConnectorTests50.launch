@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.jdt.junit.launchconfig">
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
-<listEntry value="/ConnectorMySQLUser/src/org/identityconnectors/mysqluser/MySQLUserConnectorTests.java"/>
+<listEntry value="/ConnectorMySQLUser/src/test/java/org/identityconnectors/mysqluser/MySQLUserConnectorTests.java"/>
 </listAttribute>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
 <listEntry value="1"/>
@@ -13,5 +13,5 @@
 <stringAttribute key="org.eclipse.jdt.junit.TEST_KIND" value="org.eclipse.jdt.junit.loader.junit4"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.identityconnectors.mysqluser.MySQLUserConnectorTests"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="ConnectorMySQLUser"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dproject.name=connector-mysqluser&#13;&#10;-Dconfiguration=l50&#13;&#10;-DbundleJar=dist/org.identityconnectors.mysqluser-1.0.1.jar&#13;&#10;-DbundleName=org.identityconnectors.mysqluser&#13;&#10;-DbundleVersion=1.0.1"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dproject.name=connector-mysqluser&#13;&#10;-Dconfiguration=50&#13;&#10;-DbundleJar=dist/org.identityconnectors.mysqluser-1.0.1.jar&#13;&#10;-DbundleName=org.identityconnectors.mysqluser&#13;&#10;-DbundleVersion=1.0.1"/>
 </launchConfiguration>

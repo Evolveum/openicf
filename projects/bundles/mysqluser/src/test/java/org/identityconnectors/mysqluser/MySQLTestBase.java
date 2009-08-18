@@ -94,10 +94,7 @@ public abstract class MySQLTestBase {
     protected static final String USER_MODEL = CFG_BASE + "usermodel";
     protected static final String TEST_PASSWD = CFG_BASE + "testpassword";    
 
-    /**
-     * The model user should be created once for all tests, lazy creation check 
-     */
-    protected static boolean modelUserCreated = false;
+
     
     protected static String idmDriver = null;
     protected static String idmHost = null;
@@ -637,10 +634,11 @@ public abstract class MySQLTestBase {
     }
 
     /**
-     * 
+     * Create the new user test grants
+     * @param userName String user name
+     * @param testPassword String user password
      */
-    private void createUserGrants(final String userName,
-            GuardedString testPassword) {
+    private void createUserGrants(final String userName, GuardedString testPassword) {
         final String SQL1 = "GRANT SELECT, INSERT, UPDATE, DELETE ON *.* TO ?@'%' IDENTIFIED BY ?";
         final String SQL2 = "GRANT SELECT, INSERT, UPDATE, DELETE ON *.* TO ?@'localhost' IDENTIFIED BY ?";
         final String SQL3 = "GRANT CREATE, DROP ON `mysql`.* TO ?@'%'";
@@ -650,31 +648,34 @@ public abstract class MySQLTestBase {
         final String[] stmts = { SQL1, SQL2, SQL3, SQL4, SQL5, SQL6 };
         log.info("Creating the Test Model User {0}", userName);
         PreparedStatement ps = null;
-        MySQLUserConnection conn = MySQLUserConnection.getConnection(newConfiguration());
+        MySQLUserConnection conn = null;
         String sql = null;
-        for (int i = 0; i < stmts.length; i++) {
-            try {
-                conn = MySQLUserConnection.getConnection(newConfiguration());
+        try {
+            for (int i = 0; i < stmts.length; i++) {
                 sql = stmts[i];
                 final List<SQLParam> values = new ArrayList<SQLParam>();
                 values.add(new SQLParam("user", userName, Types.VARCHAR));
                 if (sql.contains("IDENTIFIED BY ?")) {
                     values.add(new SQLParam("password", testPassword));
                 }
-                log.info("Create User {0} Grants , statement:{1}", userName,
-                        sql);
-                ps = conn.prepareStatement(sql, values);
-                ps.execute();
-            } catch (SQLException ex) {
-                log.error(ex, "Fail to create User {0} Grants , statement:{1}",
-                        userName, sql);
-                fail(ex.getMessage());
-            } finally {
-                SQLUtil.closeQuietly(ps);
-                SQLUtil.closeQuietly(conn);
+                log.info("Create User {0} Grants , statement:{1}", userName, sql);
+                conn = MySQLUserConnection.getConnection(newConfiguration());
+                if (conn != null) {
+                    ps = conn.prepareStatement(sql, values);
+                    ps.execute();
+                }
             }
+            if (conn != null) {
+                conn.commit();
+            }
+        } catch (SQLException ex) {
+            log.error(ex, "Fail to create User {0} Grants , statement:{1}", userName, sql);
+            SQLUtil.rollbackQuietly(conn);
+            fail(ex.getMessage());
+        } finally {
+            SQLUtil.closeQuietly(ps);
+            SQLUtil.closeQuietly(conn);
         }
-        conn.commit();
         testUserFound(userName, true);
         log.ok("The User {0} Grants created", userName);
     }

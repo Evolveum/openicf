@@ -53,6 +53,11 @@ public class MySQLUserConnectorDSTests extends MySQLTestBase {
      * Derby's embedded ds.
      */
     static final String TEST_DS="testDS";
+    
+    /**
+     * The model user should be created once for all tests, lazy creation check 
+     */
+    static boolean modelUserCreated = false;
 
     //jndi for datasource
     static final String[] JNDI_PROPERTIES = new String[]{"java.naming.factory.initial=" + MockContextFactory.class.getName()};    
