@@ -111,11 +111,9 @@ final class ResponsibilitiesOperations extends Operation {
      *
      * @param attr
      *            resp attribute
-     * @param identity
-     * @param result
-     * @throws WavesetException
+     * @param userName
      */
-    public void updateUserResponsibilities(final Attribute attr, final String identity) {
+    public void updateUserResponsibilities(final Attribute attr, final String userName) {
         final String method = "updateUserResponsibilities";
         log.info(method);
 
@@ -128,11 +126,11 @@ final class ResponsibilitiesOperations extends Operation {
         // get Users Current Responsibilties
         List<String> oldResp = null;
         if (!cfg.isNewResponsibilityViews()) {
-            oldResp = getResponsibilities(identity, RESPS_TABLE, false);
+            oldResp = getResponsibilities(userName, RESPS_TABLE, false);
         } else {
             // can only update directly assigned resps; indirect resps are readonly
             // thru ui
-            oldResp = getResponsibilities(identity, RESPS_DIRECT_VIEW, false);
+            oldResp = getResponsibilities(userName, RESPS_DIRECT_VIEW, false);
         }
         //preserve the previous behavior where oldResp is never null.
         if (oldResp == null) {
@@ -173,8 +171,8 @@ final class ResponsibilitiesOperations extends Operation {
                         }
                     }
                     if (delResp) {
-                        deleteUserResponsibility(identity, resp, errors);
-                        log.ok("deleted, (end_dated), responsibility: '" + resp + "' for " + identity);
+                        deleteUserResponsibility(userName, resp, errors);
+                        log.ok("deleted, (end_dated), responsibility: '" + resp + "' for " + userName);
                     }
                 }
                 index++;
@@ -190,9 +188,9 @@ final class ResponsibilitiesOperations extends Operation {
             for (String resp : resps) {
                 String respKey = getResp(resp, RESP_FMT_KEYS);
                 if (!resp.equalsIgnoreCase("") && !oldRespKeys.contains(respKey)) {
-                    addUserResponsibility(identity, resp, errors);
+                    addUserResponsibility(userName, resp, errors);
                     respList.remove(resp);
-                    log.ok("added responsibility: '" + resp + "' for " + identity);
+                    log.ok("added responsibility: '" + resp + "' for " + userName);
                 }
             }
         }
@@ -207,7 +205,7 @@ final class ResponsibilitiesOperations extends Operation {
             //              contains the current entire responsibility
             //              string.
             if (resp != null) {
-                log.ok("checking if update required for responsibility: '" + resp + "' for " + identity);
+                log.ok("checking if update required for responsibility: '" + resp + "' for " + userName);
             } else {
                 log.ok(" resp=NULL while processing updates");
             }
@@ -226,9 +224,9 @@ final class ResponsibilitiesOperations extends Operation {
                 if ((oldRespsWithNormalizedDates != null) && respWithNormalizedDates != null
                         && !respWithNormalizedDates.equalsIgnoreCase("")
                         && !oldRespsWithNormalizedDates.contains(respWithNormalizedDates)) {
-                    updateUserResponsibility(identity, resp, errors);
+                    updateUserResponsibility(userName, resp, errors);
 
-                    String msg = "updated responsibility: '" + resp + "' for " + identity;
+                    String msg = "updated responsibility: '" + resp + "' for " + userName;
                     log.ok(msg);
                 }
             }

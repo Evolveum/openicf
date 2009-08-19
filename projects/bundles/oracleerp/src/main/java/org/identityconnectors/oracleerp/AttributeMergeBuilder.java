@@ -21,6 +21,7 @@
  * ====================
  */
 package org.identityconnectors.oracleerp;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -49,7 +50,6 @@ public final class AttributeMergeBuilder {
     }
     /**
      * @param names names attributes to get
-     * @param attrToGet  the attribute merge filter
      */
     public AttributeMergeBuilder(String... names) {
         initAttributesToGet(Arrays.asList(names));
@@ -60,9 +60,46 @@ public final class AttributeMergeBuilder {
     public AttributeMergeBuilder() {
         //empty
     }
+    
     /**
      * @param attr 
-     * @param buildLastLoginDate
+     * @return this
+     */
+    public AttributeMergeBuilder setAttribute(Attribute attr) {
+        if (attr != null) {
+            _attrs.put(attr.getName(), attr.getValue());
+        }
+        return this;
+    }
+    /**
+     * Adds each object in the collection.
+     * 
+     * @param name
+     * @param obj
+     * @return the builder
+     */
+    public AttributeMergeBuilder setAttribute(String name, Collection<?> obj) {
+        if (obj != null) {
+            _attrs.put(name, new ArrayList<Object>(obj));
+        }
+        return this;
+    }
+    /**
+     * Adds values to the attribute.
+     * 
+     * @param name
+     * @param objs
+     * @return the builder
+     */
+    public AttributeMergeBuilder setAttribute(String name, Object... objs) {
+        if (objs != null) {
+            _attrs.put(name, objs == null ? null : Arrays.asList(objs));
+        }
+        return this;
+    }    
+    
+    /**
+     * @param attr 
      * @return this
      */
     public AttributeMergeBuilder addAttribute(Attribute attr) {

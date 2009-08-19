@@ -141,8 +141,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
     /**
      * Get the Account Object Class Info
      *
-     * @param schemaBld
-     * @return The cached object class info
+     * @return objectClass {@link ObjectClassInfo} info
      */
     public ObjectClassInfo getAccountObjectClassInfo() {
 

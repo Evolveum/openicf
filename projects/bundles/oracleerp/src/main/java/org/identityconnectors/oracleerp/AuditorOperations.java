@@ -26,7 +26,6 @@ import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -85,7 +84,6 @@ final class AuditorOperations extends Operation {
      *
      * @param amb AttributeMergeBuilder
      * @param respName String
-     * @throws SQLException
      *
      */
      public void updateAuditorData(AttributeMergeBuilder amb, String respName) {

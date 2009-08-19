@@ -28,18 +28,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
-import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.script.ScriptExecutor;
 import org.identityconnectors.common.script.ScriptExecutorFactory;
-import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.OperationalAttributes;
-import org.identityconnectors.framework.common.objects.ScriptContext;
-import org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 
 
 /**
@@ -48,55 +44,34 @@ import org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp;
  * @version $Revision 1.0$
  * @since 1.0
  */
-final class OracleERPOperationRunScriptOnConnector extends Operation implements ScriptOnConnectorOp {
+final class AccountOperationGetUserAfterAction extends Operation {
 
     /**
      * @param conn
      * @param cfg
      */
-    protected OracleERPOperationRunScriptOnConnector(OracleERPConnection conn, OracleERPConfiguration cfg) {
+    protected AccountOperationGetUserAfterAction(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
     }
 
-    /* (non-Javadoc)
-     * @see org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp#runScriptOnConnector(org.identityconnectors.framework.common.objects.ScriptContext, org.identityconnectors.framework.common.objects.OperationOptions)
-     */
-    public Object runScriptOnConnector(ScriptContext request, OperationOptions options) {
+
+    public ConnectorObjectBuilder runScriptOnConnector(Object userName, ConnectorObjectBuilder cob) {
         final ClassLoader loader = getClass().getClassLoader();
 
         /*
          * Build the actionContext to pass it to the script according the documentation
          */
-        final Map<String, Object> scriptArguments = request.getScriptArguments();
+        final Map<String, Object> changedAttributes = new HashMap<String, Object>();
         final Map<String, Object> actionContext = new HashMap<String, Object>();
         final Map<String, Object> inputMap = new HashMap<String, Object>();
-        final Object attributes = scriptArguments.get(ATTRIBUTES);
         final List<String> errorList = new ArrayList<String>();
-        
-        Assertions.nullCheck(scriptArguments, "scriptArguments");
-
-        //Name
-        final Object userNameArg = scriptArguments.get(Name.NAME);
-        Assertions.nullCheck(userNameArg, Name.NAME);
-        final String userName = ((Name) userNameArg).getNameValue();
-
-        //Password
-        final Object pwdArg = scriptArguments.get(OperationalAttributes.PASSWORD_NAME);
 
         //Connection
         actionContext.put(CONN, conn.getConnection()); //The real connection
-        actionContext.put(ACTION, scriptArguments.get(ACTION)); // The action is the operation name createUser/updateUser/deleteUser/disableUser/enableUser
-        actionContext.put(TIMING, scriptArguments.get(TIMING)); // The timing before / after
-        actionContext.put(ATTRIBUTES, attributes); // The attributes
+        actionContext.put(ACTION, OP_GET_USER); // The action is the operation name createUser/updateUser/deleteUser/disableUser/enableUser
+        actionContext.put("currentAttributes", AttributeUtil.toMap(cob.build().getAttributes())); // The attributes
+        actionContext.put("changedAttributes", changedAttributes); // The attributes
         actionContext.put(ID, userName); // The user name
-        if (pwdArg != null) {
-            final GuardedString password = ((GuardedString) pwdArg);
-            password.access(new GuardedString.Accessor() {
-                public void access(char[] clearChars) {
-                    actionContext.put(PASSWORD, new String(clearChars)); //The password
-                }
-            });
-        }
         actionContext.put("trace", log); //The loging
         actionContext.put("errors", errorList); // The error list
 
@@ -106,19 +81,35 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
         /*
          * Build the script executor and run the script
          */
-        final String scriptLanguage = request.getScriptLanguage();
+        final String scriptLanguage = cfg.getActionScriptLanguage();
         final ScriptExecutorFactory scriptExFact = ScriptExecutorFactory.newInstance(scriptLanguage);
-        final ScriptExecutor scripEx = scriptExFact.newScriptExecutor(loader, request.getScriptText(), true);
-        Object ret;
+        final ScriptExecutor scripEx = scriptExFact.newScriptExecutor(loader, cfg.getUserAfterActionScript(), true);
         try {
-            ret = scripEx.execute(inputMap);
+            scripEx.execute(inputMap);
+            
+            //Go through the errors and throw first one 
+            //TODO implement the warning set return, when possible
+            StringBuilder errorBld = new StringBuilder();
+            for (String s : errorList) {
+                errorBld.append(s);
+                errorBld.append("; ");
+            }
+            //Any errors, warnings?
+            if (errorBld.length() != 0) {
+                throw new IllegalStateException(errorBld.toString());
+            }
+            //Make sure, the connection is commit
+            conn.commit();
         } catch (Exception e) {
             log.error(e, "error in script");
             SQLUtil.rollbackQuietly(conn);
             throw ConnectorException.wrap(e);
         }
-        conn.commit();
-        return ret;
+        // add the attributes to the connector object builder
+        for (Entry<String, Object> entry : changedAttributes.entrySet()) {
+            cob.addAttribute(entry.getKey(), entry.getValue());
+        }
+        return cob;
     }
 
 

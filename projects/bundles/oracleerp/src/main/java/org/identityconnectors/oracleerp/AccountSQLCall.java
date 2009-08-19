@@ -118,14 +118,8 @@ public class AccountSQLCall {
         }
 
         /**
-         * Return the userAccount create/update sql with defaults
-         *
-         * @param sqlParamsMap
-         *            the Map of user values
-         * @param create
-         *            true for create/false update
-         *
-         * @return a <CODE>String</CODE> sql string
+         * Build the AccountSQLCall object
+         * @return a AccountSQLCall
          */
         public AccountSQLCall build() {
             final List<SQLParam> sqlParams = new ArrayList<SQLParam>();

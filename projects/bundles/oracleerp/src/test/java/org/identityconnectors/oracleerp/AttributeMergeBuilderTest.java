@@ -65,6 +65,28 @@ public class AttributeMergeBuilderTest {
         assertNotNull("null builder", bld.build());
         assertTrue("null builder", bld.build().size() == 0);
     }
+    
+    /**
+     * Test method for
+     * {@link org.identityconnectors.oracleerp.AttributeMergeBuilder#addAttribute(java.lang.String, java.util.Collection)}
+     * .
+     */
+    @Test
+    public void testSetAttributeStringCollectionOfObject() {
+        final Attribute attrR2 = AttributeBuilder.build(TEST_NAME2, (Object[]) TEST_VALUE2);
+        final Attribute attrR3 = AttributeBuilder.build(TEST_NAME3, (Object[]) TEST_VALUE3);
+        final AttributeMergeBuilder bld = new AttributeMergeBuilder(TO_GET_SET);
+        bld.setAttribute(TEST_NAME2, CollectionUtil.newReadOnlyList(TEST_VALUE3));
+        bld.setAttribute(TEST_NAME3, CollectionUtil.newReadOnlyList(TEST_VALUE2));
+        //Last win
+        bld.setAttribute(TEST_NAME2, CollectionUtil.newReadOnlyList(TEST_VALUE2));
+        bld.setAttribute(TEST_NAME3, CollectionUtil.newReadOnlyList(TEST_VALUE3));
+        final List<Attribute> actualList = bld.build();
+        assertNotNull("null builder", actualList);
+        assertEquals("size", 2, actualList.size());
+        assertTrue(TEST_NAME2, actualList.contains(attrR2));
+        assertTrue(TEST_NAME3, actualList.contains(attrR3));
+    }    
 
     /**
      * Test method for
@@ -78,6 +100,7 @@ public class AttributeMergeBuilderTest {
         final AttributeMergeBuilder bld = new AttributeMergeBuilder(TO_GET_SET);
         bld.addAttribute(TEST_NAME2, CollectionUtil.newReadOnlyList(TEST_VALUE2));
         bld.addAttribute(TEST_NAME3, CollectionUtil.newReadOnlyList(TEST_VALUE3));
+        //add attribute values
         bld.addAttribute(TEST_NAME2, CollectionUtil.newReadOnlyList(TEST_VALUE3));
         bld.addAttribute(TEST_NAME3, CollectionUtil.newReadOnlyList(TEST_VALUE2));
         final List<Attribute> actualList = bld.build();
@@ -86,6 +109,28 @@ public class AttributeMergeBuilderTest {
         assertTrue(TEST_NAME2, actualList.contains(attrR2));
         assertTrue(TEST_NAME3, actualList.contains(attrR3));
     }
+    
+    /**
+     * Test method for
+     * {@link org.identityconnectors.oracleerp.AttributeMergeBuilder#addAttribute(java.lang.String, java.lang.Object[])}
+     * .
+     */
+    @Test
+    public void testSetAttributeStringObjectArray() {
+        final Attribute attrR2 = AttributeBuilder.build(TEST_NAME2, (Object[]) TEST_VALUE2);
+        final Attribute attrR3 = AttributeBuilder.build(TEST_NAME3, (Object[]) TEST_VALUE3);
+        final AttributeMergeBuilder bld = new AttributeMergeBuilder(TO_GET_SET);
+        bld.setAttribute(TEST_NAME2, (Object[]) TEST_VALUE3);
+        bld.setAttribute(TEST_NAME3, (Object[]) TEST_VALUE2);
+        //last win
+        bld.setAttribute(TEST_NAME2, (Object[]) TEST_VALUE2);
+        bld.setAttribute(TEST_NAME3, (Object[]) TEST_VALUE3);
+        final List<Attribute> actualList = bld.build();
+        assertNotNull("null builder", actualList);
+        assertEquals("size", 2, actualList.size());
+        assertTrue(TEST_NAME2, actualList.contains(attrR2));
+        assertTrue(TEST_NAME3, actualList.contains(attrR3));
+    }    
 
     /**
      * Test method for

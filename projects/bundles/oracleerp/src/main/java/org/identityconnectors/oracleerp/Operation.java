@@ -45,9 +45,9 @@ abstract class Operation {
 
 
     /**
+     * The base of all operation
      * @param conn
      * @param cfg
-     * @param schema
      */
     protected Operation(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super();

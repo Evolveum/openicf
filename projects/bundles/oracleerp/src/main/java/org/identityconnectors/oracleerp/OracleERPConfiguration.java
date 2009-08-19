@@ -515,6 +515,47 @@ public class OracleERPConfiguration extends AbstractConfiguration {
         this.noSchemaId = noSchemaId;
     }
 
+    /**
+     * This should be replaced by script attributes
+     */
+    private String userAfterActionScript;    
+
+    
+    public String getUserAfterActionScript() {
+        return userAfterActionScript;
+    }
+    
+    /**
+     * Set the user after action script 
+     * @param userGetUserAfterActionScript
+     */
+    @ConfigurationProperty(order=17 ,displayMessageKey="USER_AFTER_ACTION_SCRIPT_DISPLAY", helpMessageKey="USER_AFTER_ACTION_SCRIPT_HELP")
+    public void setUserAfterActionScript(String userGetUserAfterActionScript) {
+        this.userAfterActionScript = userGetUserAfterActionScript;
+    }
+    
+    /**
+     * This property will be integrated by script attribute
+     */
+    private String actionScriptLanguage = GROOVY;
+    
+    /**
+     * The action script language setter
+     * @return String 
+     */
+    public String getActionScriptLanguage() {
+        return actionScriptLanguage;
+    }
+
+    /**
+     * Action script language setter
+     * @param actionScriptLanguage
+     */
+    @ConfigurationProperty(order=18 ,displayMessageKey="ACTION_SCRIPT_LANGUAGE_DISPLAY", helpMessageKey="ACTION_SCRIPT_LANGUAGE_HELP")
+    public void setActionScriptLanguage(String actionScriptLanguage) {
+        this.actionScriptLanguage = actionScriptLanguage;
+    }
+
 
     /**
      * Responsibility Id

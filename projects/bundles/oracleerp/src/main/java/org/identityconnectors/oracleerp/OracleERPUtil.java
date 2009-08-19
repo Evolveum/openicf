@@ -259,13 +259,26 @@ public class OracleERPUtil {
     static final String RESPS_DIRECT_VIEW = "fnd_user_resp_groups_direct";
     static final String RESPS_INDIRECT_VIEW = "fnd_user_resp_groups_indirect";
     static final String RESPS_ALL_VIEW = "fnd_user_resp_groups_all";
+    
+    /**
+     * Scripting support
+     * The default shell language
+     */
+    public static final String GROOVY="GROOVY";
+    
+    public static final String CONN = "conn";
+    public static final String ID = "id";
+    public static final String ATTRIBUTES = "attributes";
+    public static final String TIMING = "timing";
+    public static final String ACTION = "action";
+    public static final String OP_GET_USER = "getUser";
+    public static final String PASSWORD = "password";
 
     /**
      * @param conn connection 
      * @param cfg configuration
      * @param userName
      * @return The UserId string value
-     * @throws SQLException
      */
     public static String getUserId(OracleERPConnection conn, OracleERPConfiguration cfg, String userName) {
         final String msg = "getUserId ''{0}'' -> ''{1}''";
@@ -299,18 +312,6 @@ public class OracleERPUtil {
         // pstmt closed in finally below
         log.ok(msg, userName, userId);
         return userId;
-    }
-
-    /**
-     * @param con conector 
-     * @param attrs attributes
-     * @return the identity
-     */
-    public static String getId(Set<Attribute> attrs) {
-        final String method = "getId";
-        log.ok(method);
-        final Uid uid = AttributeUtil.getUidAttribute(attrs);
-        return uid.getUidValue();
     }
 
     /**

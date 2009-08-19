@@ -93,14 +93,15 @@ public class RespNamesOperationSearch extends Operation implements SearchOp<Filt
         b.append("WHERE fndappvl.application_id = fndrespvl.application_id ");
 
         // Query support
-        if (where != null && where.getParams().size() == 1) {
+        FilterWhereBuilder  whereFilter = where;        
+        if (whereFilter != null && whereFilter.getParams().size() == 1) {
             b.append("and fndrespvl.responsibility_name = ?");
         } else {
-            where = new FilterWhereBuilder();
+            whereFilter = new FilterWhereBuilder();
         }
 
         try {
-            st = conn.prepareStatement(b.toString(), where.getParams());
+            st = conn.prepareStatement(b.toString(), whereFilter.getParams());
             res = st.executeQuery();
             while (res.next()) {
 
@@ -108,7 +109,7 @@ public class RespNamesOperationSearch extends Operation implements SearchOp<Filt
                 AttributeMergeBuilder amb = new AttributeMergeBuilder(atg);
                 amb.addAttribute(NAME, respName);
 
-                if (where.getParams().size() == 1) {
+                if (whereFilter.getParams().size() == 1) {
                     auditOps.updateAuditorData(amb, respName);
                 }
 

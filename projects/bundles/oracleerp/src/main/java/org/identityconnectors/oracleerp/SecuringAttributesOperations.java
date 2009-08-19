@@ -64,9 +64,7 @@ final class SecuringAttributesOperations extends Operation {
      *
      *
      * @param secAttr
-     * @param name
-     * @param userId
-     * @throws WavesetException
+     * @param userName
      *
      *             Interesting thing here is that a user can have exact duplicate securing attributes, as crazy as that
      *             sounds, they just show up multiple times in the native gui.
@@ -74,17 +72,17 @@ final class SecuringAttributesOperations extends Operation {
      *             Since there is no available key, we will delete all and add all new ones
      *
      */
-    public void updateUserSecuringAttrs(final Attribute secAttr, String name) {
+    public void updateUserSecuringAttrs(final Attribute secAttr, String userName) {
         final String method = "updateUserSecuringAttrs";
         log.info(method);
 
-        final String userId=getUserId(conn, cfg, name);
+        final String userId=getUserId(conn, cfg, userName);
 
         //Convert to list of Strings
         final List<String> secAttrList = convertToListString(secAttr.getValue());
 
         // get Users Securing Attrs
-        List<String> oldSecAttrs = getSecuringAttrs(name);
+        List<String> oldSecAttrs = getSecuringAttrs(userName);
 
         // add new attrs
         for (String secAttribute : secAttrList) {
@@ -399,7 +397,6 @@ final class SecuringAttributesOperations extends Operation {
     /**
      * Get Securing Attributes
      * @param userName
-     * @param options
      * @return list of strings
      */
     public List<String> getSecuringAttrs(String userName) {

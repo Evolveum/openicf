@@ -63,7 +63,7 @@ public class OracleERPConnection extends DatabaseConnection {
      * Test enabled create connection function
      * 
      * @param config
-     * @return a new {@link DatabaseTableConnection} connection
+     * @return a new {@link OracleERPConnection} connection wrapper
      */
     static OracleERPConnection createOracleERPConnection(OracleERPConfiguration config) {
         final Connection connection = getNativeConnection(config);
@@ -72,7 +72,7 @@ public class OracleERPConnection extends DatabaseConnection {
 
     /**
      * @param config
-     * @return
+     * @return native {@link Connection} connection
      */
     static Connection getNativeConnection(OracleERPConfiguration config) {
         Connection connection;
