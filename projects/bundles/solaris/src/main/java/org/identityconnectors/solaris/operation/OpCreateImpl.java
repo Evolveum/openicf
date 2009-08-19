@@ -28,6 +28,7 @@ import java.util.Set;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
@@ -37,11 +38,34 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.command.CommandUtil;
+import org.identityconnectors.solaris.command.MatchBuilder;
+import org.identityconnectors.solaris.command.closure.ClosureFactory;
 import org.identityconnectors.solaris.constants.AccountAttributes;
+
+import expect4j.Closure;
+import expect4j.ExpectState;
+import expect4j.matches.Match;
 
 public class OpCreateImpl extends AbstractOp {
     
     final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT, ObjectClass.GROUP};
+    private final static Match[] errorsUseradd;
+    static {
+        MatchBuilder builder = new MatchBuilder();
+        builder.addCaseInsensitiveRegExpMatch("invalid", ClosureFactory.newConnectorException("ERROR during execution of 'useradd' -- invalid command"));
+        builder.addCaseInsensitiveRegExpMatch("ERROR", ClosureFactory.newConnectorException("ERROR during execution of 'useradd'"));
+        builder.addCaseInsensitiveRegExpMatch("command not found", ClosureFactory.newConnectorException("'useradd' command is missing"));
+        builder.addCaseInsensitiveRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException("Not allowed to execute the 'useradd' command."));
+        errorsUseradd = builder.build();
+    }
+    private final static Match[] errorsPasswd;
+    static {
+        MatchBuilder builder = new MatchBuilder();
+        builder.addCaseInsensitiveRegExpMatch("Permission denied", ClosureFactory.newConnectorException("Permission denied when executing 'passwd'"));
+        builder.addCaseInsensitiveRegExpMatch("command not found", ClosureFactory.newConnectorException("'passwd' command not found"));
+        builder.addCaseInsensitiveRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException("current user is not allowed to execute 'passwd' command"));
+        errorsPasswd = builder.build();
+    }
     
     public OpCreateImpl(Log log, SolarisConnector conn) {
         super(log, conn);
@@ -64,17 +88,24 @@ public class OpCreateImpl extends AbstractOp {
 
         getLog().info("~~~~~~~ create(''{0}'') ~~~~~~~", accountId);
         
+        if (accountExists(accountId)) {
+            throw new ConnectorException("Account '" + accountId + "' already exists on the resource. The same user cannot be created multiple times.");
+        }
+        
         /*
          * CREATE A NEW ACCOUNT
          */
         final String commandSwitches = CommandUtil.prepareCommand(attrs, ObjectClass.ACCOUNT);
         // USERADD accountId
         String command = getCmdBuilder().build("useradd", commandSwitches, accountId);
+        
+        Match[] matches = prepareMatches(getConfiguration().getRootShellPrompt(), errorsUseradd);
+        
         try {//CONNECTION
             getLog().info("useradd(''{0}'')", accountId);
             
             getConnection().send(command);
-            getConnection().waitFor(getConfiguration().getRootShellPrompt());
+            getConnection().expect(matches);
         } catch (Exception ex) {
             getLog().error(ex, null);
         } //EOF CONNECTION
@@ -82,17 +113,23 @@ public class OpCreateImpl extends AbstractOp {
         /*
          * PASSWORD SET
          */
+        
         final GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
         try {
             getLog().info("passwd()");
-            // TODO configurable source of password
+            // TODO configurable source of password (NIS and other resources?)
             command = String.format("passwd -r files %s", accountId);
             getConnection().send(command);
             
-            getConnection().waitFor("New Password:");
+            matches = prepareMatches("New Password", errorsPasswd);
+            getConnection().expect(matches);
             SolarisUtil.sendPassword(password, getConnection());
-            getConnection().waitFor("Re-enter new Password:");
+            
+            matches = prepareMatches("Re-enter new Password:", errorsPasswd);
+            getConnection().expect(matches);
             SolarisUtil.sendPassword(password, getConnection());
+            
+            //TODO what if something else happens?
             getConnection().waitFor(String.format("passwd: password successfully changed for %s", accountId));
         } catch (Exception ex) {
             getLog().error(ex, null);
@@ -108,5 +145,40 @@ public class OpCreateImpl extends AbstractOp {
         
         
         return new Uid(accountId);
+    }
+
+    /** checks if the account already exists on the resource. */
+    private boolean accountExists(String name) {
+        final boolean[] exists = new boolean[1];
+        exists[0] = true;
+        
+        //TODO is this waitFor needed?
+        try {
+            // eliminate the output of previous commands
+            getConnection().waitFor(getConfiguration().getRootShellPrompt());
+        } catch (Exception e) {
+            //OK
+        }
+        try {
+            // FIXME find a more solid command that works for both NIS and normal passwords
+            getConnection().send(getCmdBuilder().build(String.format("logins -l %s", name)));
+            getConnection().expect(MatchBuilder.buildRegExpMatch(String.format("%s was not found", name), new Closure() {
+                public void run(ExpectState state) throws Exception {
+                    exists[0] = false; 
+                }
+            }));
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }
+        
+        return exists[0];
+    }
+
+    private Match[] prepareMatches(String string, Match[] commonErrMatches) {
+        MatchBuilder builder = new MatchBuilder();
+        builder.addNoActionMatch(string);
+        builder.addMatches(commonErrMatches);
+        
+        return builder.build();
     }
 }

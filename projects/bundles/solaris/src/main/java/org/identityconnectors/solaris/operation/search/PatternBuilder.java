@@ -22,6 +22,8 @@
  */
 package org.identityconnectors.solaris.operation.search;
 
+import org.identityconnectors.solaris.constants.AccountAttributes;
+
 
 /**
  * This class builds regular expression patterns for matching one or more
@@ -54,19 +56,20 @@ package org.identityconnectors.solaris.operation.search;
 public class PatternBuilder {
 
     private static final String ACCEPT_ALL_PATTERN = ".*";
-    private static final String DEFAULT_DELIMITER = ":"; 
+    private static final String DEFAULT_DELIMITER = AccountAttributes.CommandConstants.Logins.DEFAULT_OUTPUT_DELIMITER/*":"*/; 
     private int nrOfColumns;
 
     private String delimiter;
 
     public PatternBuilder(int nrOfColumns) {
-        this(nrOfColumns, DEFAULT_DELIMITER);
+        this.nrOfColumns = nrOfColumns;
+//        this(nrOfColumns, DEFAULT_DELIMITER);
     }
 
-    public PatternBuilder(int nrOfColumns, String delimiter) {
-        this.nrOfColumns = nrOfColumns;
-        this.delimiter = delimiter;
-    }
+//    public PatternBuilder(int nrOfColumns, String delimiter) {
+//        this.nrOfColumns = nrOfColumns;
+//        this.delimiter = delimiter;
+//    }
 
     public String build(int... columnSelector) {
         checkValidity(columnSelector);
@@ -111,11 +114,12 @@ public class PatternBuilder {
         return pb.build(columnSelector);
     }
 
-    public static String buildPattern(int nrOfColumns, String delimiter,
-            int... columnSelector) {
-        PatternBuilder pb = new PatternBuilder(nrOfColumns, delimiter);
-        return pb.build(columnSelector);
-    }
+//    /* this method has no present usage yet, might be useful for future */
+//    public static String buildPattern(int nrOfColumns, String delimiter,
+//            int... columnSelector) {
+//        PatternBuilder pb = new PatternBuilder(nrOfColumns, delimiter);
+//        return pb.build(columnSelector);
+//    }
     
     /** create a pattern that matches any string */
     public static String buildAcceptAllPattern() {

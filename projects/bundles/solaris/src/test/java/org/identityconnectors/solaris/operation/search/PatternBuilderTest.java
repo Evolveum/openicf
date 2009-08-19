@@ -108,15 +108,15 @@ public class PatternBuilderTest {
         return null;
     }
     
-    @Test
-    public void testDifferentDelim() {
-        final String DELIMITER = "%";
-        final String token = String.format("[^%s]*", DELIMITER);
-        final String pattern = String.format("%s%s(%s)%s%s%s(%s)%s%s", token,
-                DELIMITER, token, DELIMITER, token, DELIMITER, token,
-                DELIMITER, token);
-        
-        String result = PatternBuilder.buildPattern(5, DELIMITER, 2, 4);
-        Assert.assertEquals(pattern, result);
-    }
+//    @Test
+//    public void testDifferentDelim() {
+//        final String DELIMITER = "%";
+//        final String token = String.format("[^%s]*", DELIMITER);
+//        final String pattern = String.format("%s%s(%s)%s%s%s(%s)%s%s", token,
+//                DELIMITER, token, DELIMITER, token, DELIMITER, token,
+//                DELIMITER, token);
+//        
+//        String result = PatternBuilder.buildPattern(5, DELIMITER, 2, 4);
+//        Assert.assertEquals(pattern, result);
+//    }
 }

@@ -59,19 +59,40 @@ public class SearchPerformer {
         this.connection = connection;
         this.configuration = configuration;
     }
-
-    public Set<Uid> performSearch(SolarisAttribute attribute) {
-        return performSearch(attribute, PatternBuilder.buildAcceptAllPattern()/* TODO more efficient regexp */, null);
-    }
     
     public Set<Uid> performSearch(SolarisAttribute attribute, String searchRegExp) {
         return performSearch(attribute, searchRegExp, null);
     }
-    
-    public Set<Uid> performSearch(SolarisAttribute attribute, Uid uid) {
-        return performSearch(attribute, PatternBuilder.buildAcceptAllPattern(), uid.getUidValue());
-    }
 
+    /**
+     * {@see SearchPerformer#performValueSearchForUid(SolarisAttribute, String, String)}
+     * @param callback this interface is called back to filter output of the unix command that acquires the search attribute.
+     * @return list of attribute values, that satisfy the criteria.
+     */
+    private Set<Uid> performSearch(SolarisAttribute attribute, String searchRegExp, String uid, SearchCallback callback) {
+        // try to substitute username if needed in the command.
+        final String command = ((uid == null) ? attribute.getCommand() : attribute.getCommand(uid));
+        final String[] output = cacheRequest(command);
+        Pattern p = Pattern.compile(attribute.getRegExpForUidAndAttribute());
+        Set<Uid> result = new HashSet<Uid>();
+        for (String line : output) {
+            // PAIR: Uid + attributeValue for the searched attribute
+            Pair<Uid, String> grepResult = null;
+
+            grepResult = callback.getUidAndAttr(line, p); //getUidAndAttr(line, p);
+
+            // in case there's a match with the searched regular expression:
+            if (grepResult != null) {
+                if (grepResult.second != null
+                        && grepResult.second.matches(searchRegExp)) {
+                    result.add(grepResult.first);
+                } 
+            }
+        }
+
+        return result;
+    }
+    
     /**
      * search for given attribute, and apply the given regular expression
      * pattern to the values to filter them.
@@ -89,28 +110,12 @@ public class SearchPerformer {
      * @return list of attribute values, that satisfy the criteria.
      */
     public Set<Uid> performSearch(SolarisAttribute attribute, String searchRegExp, String uid) {
-        // try to substitute username if needed in the command.
-        final String command = ((uid == null) ? attribute.getCommand() : attribute.getCommand(uid));
-        final String[] output = cacheRequest(command);
-        Pattern p = Pattern.compile(attribute.getRegExpForUidAndAttribute());
-        Set<Uid> result = new HashSet<Uid>();
-        for (String line : output) {
-            Pair<Uid, String> grepResult = null;
-
-            grepResult = getUidAndAttr(line, p);
-
-            // in case there's a match with the searched regular expression:
-            if (grepResult != null) {
-                if (grepResult.second != null
-                        && grepResult.second.matches(searchRegExp)) {
-                    result.add(grepResult.first);
-                } else if (grepResult.second == null) {
-                    result.add(grepResult.first);
-                }
-            }
-        }
-
-        return result;
+         return performSearch(attribute, searchRegExp, uid,
+                new SearchCallback() {
+                    public Pair<Uid, String> getUidAndAttr(String line, Pattern pattern) {
+                        return getUidAndAttr(line, pattern);
+                    }
+                });
     }
     
     /**
@@ -118,9 +123,10 @@ public class SearchPerformer {
      * @param attribute searched attribute
      * @param searchRegExp the regular expression to pick the [uid, attributevalue] pair from raw input
      * @param uid that we are interested in.
+     * @param callback this interface is called back to filter output of the unix command that acquires the search attribute.
      * @return the value of the attribute.
      */
-    public List<String> performValueSearchForUid(SolarisAttribute attribute, String searchRegExp, String uid) {
+    public List<String> performValueSearchForUid(SolarisAttribute attribute, String searchRegExp, String uid, SearchCallback callback) {
         // try to substitute username if needed in the command.
         Assertions.nullCheck(uid, "uid");
         final String command = attribute.getCommand(uid);
@@ -134,7 +140,7 @@ public class SearchPerformer {
         for (String line : output) {
             Pair<Uid, String> grepResult = null;
             
-            grepResult = getUidAndAttr(line, p);
+            grepResult = callback.getUidAndAttr(line, p);
              
             if (grepResult != null && grepResult.first.getUidValue().equals(uid)) {
                 result.add(grepResult.second);
@@ -144,9 +150,24 @@ public class SearchPerformer {
         
         return result;
     }
+ 
+    /**
+     * A more simple version of search for an attribute based on Uid.
+     * {@see SearchPerformer#performValueSearchForUid(SolarisAttribute, String, String)}
+     */
+    public List<String> performValueSearchForUid(SolarisAttribute attribute, String searchRegExp, String uid) {
+        return performValueSearchForUid(attribute, searchRegExp, uid,
+                new SearchCallback() {
+                    public Pair<Uid, String> getUidAndAttr(String line, Pattern pattern) {
+                        return getUidAndAttr(line, pattern);
+                    }
+                });
+    }
 
     /** @return null if no match, and a pair otherwise. */
+    @SuppressWarnings("unused") // the method is used in interfaces in this class.
     private Pair<Uid, String> getUidAndAttr(String line, Pattern pattern) {
+        // PAIR: Uid + attributeValue for the searched attribute
         Pair<Uid, String> pair = null;
         
         Matcher matcher = pattern.matcher(line);
@@ -185,12 +206,8 @@ public class SearchPerformer {
     private String[] performCmd(String command) {
         String output = null;
         try {
-            // if i run the tests separately, the login info is in the expect4j's
-            // buffer
-            // otherwise (when tests are run in batch), there is empty buffer, so
-            // this waitfor will timeout.
-            /* FIXME erase this, it substantially slows down the process */
             try {
+                // this cleans expect4j's buffer from previous output.
                 connection.waitFor(configuration.getRootShellPrompt(),
                         SolarisConnection.WAIT);
             } catch (Exception e) {
@@ -202,5 +219,9 @@ public class SearchPerformer {
             throw ConnectorException.wrap(e);
         }
         return output.split("\n");
+    }
+    
+    public interface SearchCallback {
+        public Pair<Uid, String> getUidAndAttr(String line, Pattern pattern);
     }
 }

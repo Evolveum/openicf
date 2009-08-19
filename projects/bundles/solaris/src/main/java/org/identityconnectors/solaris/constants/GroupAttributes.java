@@ -27,6 +27,7 @@ import java.util.Map;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.solaris.operation.search.SearchPerformer.SearchCallback;
 
 /**
  * List of allowed GROUP attribute names.
@@ -55,6 +56,9 @@ public enum GroupAttributes implements SolarisAttribute {
     private String command;
     /** regular expression to extract Uid and Attribute from the raw data gathered by {@link GroupAttributes#command} */
     private String regexp;
+    /** a callback method that is used for special search, that requires to parse multiple attributes.
+     * Mostly this attribute is really optional. */
+    private SearchCallback callback;
     
     /**
      * initialize the constants for objectclass __ACCOUNT__'s attributes
@@ -77,6 +81,17 @@ public enum GroupAttributes implements SolarisAttribute {
         this.cmdSwitch = cmdSwitch;
         this.command = command;
         this.regexp = regexp;
+    }
+    
+    /** {@see GroupAttributes#GroupAttributes(String, UpdateSwitches, String, String)}
+     * @param callback an optional attribute that is used for special searches.
+     */
+    private GroupAttributes(String attrName, UpdateSwitches cmdSwitch, String command, String regexp, SearchCallback callback) {
+        this.attrName = attrName;
+        this.cmdSwitch = cmdSwitch;
+        this.command = command;
+        this.regexp = regexp;
+        this.callback = callback;
     }
 
     /**
@@ -124,5 +139,12 @@ public enum GroupAttributes implements SolarisAttribute {
      */
     public String getCommand(String... fillInAttributes) {
         return AttributeHelper.fillInCommand(command, fillInAttributes);
+    }
+
+    /**
+     * {@see SolarisAttribute#getCallbackMethod()}
+     */
+    public SearchCallback getCallbackMethod() {
+        return callback;
     }
 }

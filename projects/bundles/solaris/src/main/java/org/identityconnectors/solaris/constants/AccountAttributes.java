@@ -29,6 +29,7 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.operation.search.PatternBuilder;
+import org.identityconnectors.solaris.operation.search.SearchPerformer.SearchCallback;
 
 
 /**
@@ -49,7 +50,7 @@ public enum AccountAttributes implements SolarisAttribute {
     SHELL("shell", UpdateSwitches.SHELL, CommandConstants.Logins.CMD, PatternBuilder.buildPattern(CommandConstants.Logins.COL_COUNT, CommandConstants.Logins.UID_COL, 7/*shell col.*/)),
     /** primary group */
     GROUP("group", UpdateSwitches.GROUP, null, null /* TODO */),
-    SECONDARY_GROUP("secondary_group", UpdateSwitches.SECONDARY_GROUP, null, null /* TODO */),
+    SECONDARY_GROUP("secondary_group", UpdateSwitches.SECONDARY_GROUP, CommandConstants.Logins.CMD_EXTENDED, null /* TODO */),
     /** ! this is the solaris native 'uid', *NOT* the one defined by the framework. */
     UID("uid", UpdateSwitches.UID, CommandConstants.Logins.CMD, PatternBuilder.buildPattern(CommandConstants.Logins.COL_COUNT, CommandConstants.Logins.UID_COL, 2/*solaris uid*/)),
     NAME(Name.NAME, UpdateSwitches.UNKNOWN, CommandConstants.Logins.CMD,  PatternBuilder.buildPattern(CommandConstants.Logins.COL_COUNT, CommandConstants.Logins.UID_COL)),
@@ -80,6 +81,9 @@ public enum AccountAttributes implements SolarisAttribute {
     private String command;
     /** regular expression to extract Uid and Attribute from the raw data gathered by {@link GroupAttributes#command} */
     private String regexp;
+    /** a callback method that is used for special search, that requires to parse multiple attributes.
+     * Mostly this attribute is really optional. */
+    private SearchCallback callback;
 
     
     /**
@@ -99,10 +103,7 @@ public enum AccountAttributes implements SolarisAttribute {
      *            to get the respective columns.
      */
     private AccountAttributes(String attrName, UpdateSwitches cmdSwitch, String command, String regexp) {
-        this.attrName = attrName;
-        this.cmdSwitch = cmdSwitch;
-        this.command = command;
-        this.regexp = regexp;
+        this(attrName, cmdSwitch, command, regexp, null);
     }
     
     /** 
@@ -114,6 +115,18 @@ public enum AccountAttributes implements SolarisAttribute {
      */
     private AccountAttributes(String attrName, AccountAttributes attrToClone) {
         this(attrName, attrToClone.cmdSwitch, attrToClone.command, attrToClone.regexp);
+    }
+    
+    /**
+     * {@see AccountAttributes#AccountAttributes(String, UpdateSwitches, String, String)}
+     * @param callback an optional attribute that is used for special searches.
+     */
+    private AccountAttributes(String attrName, UpdateSwitches cmdSwitch, String command, String regexp, SearchCallback callback) {
+        this.attrName = attrName;
+        this.cmdSwitch = cmdSwitch;
+        this.command = command;
+        this.regexp = regexp;
+        this.callback = callback;
     }
     
     /**
@@ -162,17 +175,35 @@ public enum AccountAttributes implements SolarisAttribute {
     }
     
     /** holds the commands that are executed to acquire the attribute */
-    private static class CommandConstants {
+    public static class CommandConstants {
         /**
          * logins command
          */
-        private static class Logins {
+        public static class Logins {
+            /*
+             * comparison of 'logins' command's switches: root@prgvm8092:~#
+             * #logins -oxa -l root
+             * > root:0:root:0:Super-User:/root:/usr/bin/bash:PS:092408:-1:-1:-1:-1:0 
+             * # logins -oxma -l root
+             * root:0:root:0:Super-User:other:1:bin:2:sys:3:adm:4:uucp:5:mail:6:tty
+             * :7:lp:8:nuucp:9:daemon:12:/root:/usr/bin/bash:PS:092408:-1:-1:-1:-1:0
+             */
             /** the command that is executed to acquire the attributes. */
-            private static final String CMD = "logins -oxa";
+            static final String CMD = "logins -oxa";
+            /** extended version of logins command */
+            static final String CMD_EXTENDED = "logins -oxma";
             /** the total number of columns in output of the command (delimited by ":") */
-            private static final int COL_COUNT = 14;
+            static final int COL_COUNT = 14;
             /** the column which contains the UID */
-            private static final int UID_COL = 1;
+            static final int UID_COL = 1;
+            public static final String DEFAULT_OUTPUT_DELIMITER = ":";
         }
+    }
+    
+    /**
+     * {@see SolarisAttribute#getCallbackMethod()}
+     */
+    public SearchCallback getCallbackMethod() {
+        return callback;
     }
 }
