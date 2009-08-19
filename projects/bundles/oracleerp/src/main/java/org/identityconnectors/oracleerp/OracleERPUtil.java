@@ -261,6 +261,13 @@ public class OracleERPUtil {
     static final String RESPS_ALL_VIEW = "fnd_user_resp_groups_all";
     
     /**
+     * Only accounts where clause
+     */
+    public static final String ACTIVE_ACCOUNTS_ONLY_WHERE_CLAUSE = "(START_DATE - SYSDATE <= 0) AND ((END_DATE IS NULL) OR (END_DATE - SYSDATE > 0))";
+    public static final String ACTIVE_PEOPLE_ONLY_WHERE_CLAUSE = "(EFFECTIVE_START_DATE - SYSDATE <= 0) and ((EFFECTIVE_END_DATE IS NULL) or (EFFECTIVE_END_DATE - SYSDATE > 0))";
+
+    
+    /**
      * Scripting support
      * The default shell language
      */
@@ -474,7 +481,8 @@ public class OracleERPUtil {
         }
 
         log.ok("clomunName ''{0}''", columnName);
-        final String sql = "select " + PERSON_ID + " from " + cfg.app() + "PER_PEOPLE_F where " + columnName + " = ?";
+        String sql = "select " + PERSON_ID + " from " + cfg.app() + "PER_PEOPLE_F where " + columnName + " = ?";        
+        sql = whereAnd(sql, ACTIVE_PEOPLE_ONLY_WHERE_CLAUSE);
         ResultSet rs = null; // SQL query on person_id
         PreparedStatement ps = null; // statement that generates the query
         try {
@@ -560,12 +568,7 @@ public class OracleERPUtil {
         return (iofw == -1) ? sqlSelect + " WHERE " + whereAnd : sqlSelect.substring(0, iofw) + "WHERE ( "
                 + sqlSelect.substring(iofw + 5) + " ) AND ( " + whereAnd + " )";
     }
-
-    /**
-     * Only accounts where clause
-     */
-    public static final String ACTIVE_ACCOUNTS_ONLY_WHERE_CLAUSE = "(START_DATE - SYSDATE <= 0) AND ((END_DATE IS NULL) OR (END_DATE - SYSDATE > 0))";
-
+    
     /**
      * Read one row from database result set and convert a columns to attribute set.  
      * @param resultSet database data

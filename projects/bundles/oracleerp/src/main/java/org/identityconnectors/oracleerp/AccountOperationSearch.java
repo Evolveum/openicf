@@ -320,11 +320,15 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         final FilterWhereBuilder whereFilter = new FilterWhereBuilder();
         whereFilter.addBind(new SQLParam(PERSON_ID, personId, Types.NUMERIC), "=");
         query.setWhere(whereFilter);
+        
+        String sqlSelect = query.getSQL();
+        sqlSelect = whereAnd(sqlSelect, ACTIVE_PEOPLE_ONLY_WHERE_CLAUSE);
+      
 
         ResultSet result = null; // SQL query on person_id
         PreparedStatement statement = null; // statement that generates the query
         try {
-            statement = conn.prepareStatement(query);
+            statement = conn.prepareStatement(sqlSelect, query.getParams());
             result = statement.executeQuery();
             if (result != null) {
                 if (result.next()) {
