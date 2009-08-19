@@ -87,6 +87,15 @@ public final class MatchBuilder {
             this.matches.add(match);
         }
     }
+    
+    /** add a match with no action upon match. */
+    public void addNoActionMatch(String matchingRegExp) {
+        try {
+            matches.add(new RegExpCaseInsensitiveMatch(matchingRegExp, ClosureFactory.newNullClosure()));
+        } catch (MalformedPatternException e) {
+            ConnectorException.wrap(e);
+        }
+    }
 
     public Match[] build() {
         return matches.toArray(new Match[matches.size()]);
