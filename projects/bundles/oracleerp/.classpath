@@ -3,14 +3,14 @@
 	<classpathentry excluding="**/.svn/*" kind="src" path="src/main/java"/>
 	<classpathentry excluding="**/.svn/*" kind="src" path="src/test/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorDatabaseCommon"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-HEAD"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorFramework-Internal-HEAD"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorContractTests"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Common Database Library"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Connector Framework"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Connector Framework - Internal"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Connector Contract Tests"/>
 	<classpathentry kind="var" path="USER_HOME/.connectors/connector-oracleerp/lib/ojdbc14.jar"/>
 	<classpathentry exported="true" kind="con" path="GROOVY_SUPPORT"/>
-	<classpathentry kind="lib" path="/ConnectorContractTests/src"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/ConnectorTestCommon-HEAD"/>
+	<classpathentry kind="lib" path="/Connector Contract Tests/src"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Connector Common Test Library"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="ide-build"/>
 </classpath>
