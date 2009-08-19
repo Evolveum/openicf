@@ -30,6 +30,7 @@ import junit.framework.Assert;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -82,25 +83,61 @@ public class SearchPerformerTest {
         attrs = null;
     }
 
-    @Test 
-    public void test() {
-        Uid uid = null;
-        try {
-            uid = connector.create(ObjectClass.ACCOUNT, attrs, null);
-                    Assert.assertNotNull(uid);
-
-            SearchPerformer sp = new SearchPerformer((SolarisConfiguration) connector.getConfiguration(), connector.getConnection());
-            SolarisAttribute attribute = AccountAttributes.INACTIVE;
-            Set<Uid> result = sp.performSearch(attribute, "-1" /* default value of inactive attribute */);
-            Assert.assertTrue(result.size() >= 1);
-            boolean b = false;
-            for (Uid uidx : result) {
-                b = b | uidx.getUidValue().equals(username);
-            }
-            Assert.assertTrue(b);
-        } finally {
-            if (uid != null)
-                connector.delete(ObjectClass.ACCOUNT, uid, null);
+    @Test
+    public void testSimpleSearchByInactiveAttribute() {
+        Uid uid = connector.create(ObjectClass.ACCOUNT, attrs, null);
+        Assert.assertNotNull(uid);
+        SearchPerformer sp = new SearchPerformer((SolarisConfiguration) connector.getConfiguration(), connector.getConnection());
+        SolarisAttribute attribute = AccountAttributes.INACTIVE;
+        
+        Set<Uid> result = sp.performSearch(attribute, "-1" /*
+                                                            * default value of
+                                                            * inactive attribute
+                                                            */);
+        
+        Assert.assertTrue(result.size() >= 1);
+        boolean b = false;
+        for (Uid uidx : result) {
+            b = b | uidx.getUidValue().equals(username);
         }
+        Assert.assertTrue(b);
+    }
+    
+    @Test
+    public void testSearchByUserShell() {
+        final String USER_SHELL_TYPE = "/bin/ksh";
+        attrs.add(AttributeBuilder.build("shell", USER_SHELL_TYPE)); // selecting Korn shell on purpose
+        Uid uid = connector.create(ObjectClass.ACCOUNT, attrs, null);
+        Assert.assertNotNull(uid);
+        SearchPerformer sp = new SearchPerformer((SolarisConfiguration) connector.getConfiguration(), connector.getConnection());
+        SolarisAttribute attribute = AccountAttributes.SHELL;
+        
+        Set<Uid> result = sp.performSearch(attribute, USER_SHELL_TYPE);
+        
+        Assert.assertTrue(result.size() >= 1);
+        boolean b = false;
+        for (Uid uidx : result) {
+            b = b | uidx.getUidValue().equals(username);
+        }
+        Assert.assertTrue(b);
+    }
+    
+    @Test
+    public void testSearchByUidOnly() {
+        Uid uid = connector.create(ObjectClass.ACCOUNT, attrs, null);
+        Assert.assertNotNull(uid);
+        SearchPerformer sp = new SearchPerformer((SolarisConfiguration) connector.getConfiguration(), connector.getConnection());
+        SolarisAttribute attribute = AccountAttributes.FRAMEWORK_UID;
+        
+        Set<Uid> result = sp.performSearch(attribute, username);
+        
+        Assert.assertTrue(result.size() == 1);
+        Uid[] resultArray = result.toArray(new Uid[0]);
+        Assert.assertEquals(username, resultArray[0].getUidValue());
+        boolean b = false;
+        for (Uid uidx : result) {
+            b = b | uidx.getUidValue().equals(username);
+        }
+        Assert.assertTrue(b);
     }
 }

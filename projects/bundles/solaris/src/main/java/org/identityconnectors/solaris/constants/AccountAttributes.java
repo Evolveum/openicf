@@ -45,18 +45,18 @@ public enum AccountAttributes implements SolarisAttribute {
      */
     
     /** home directory */
-    DIR("dir", UpdateSwitches.DIR, "logins -oxa", PatternBuilder.buildPattern(14, 1/*uid*/, 6/*dir col.*/)), 
-    SHELL("shell", UpdateSwitches.SHELL, "logins -oxa", PatternBuilder.buildPattern(14, 1/*uid*/, 7/*shell col.*/)),
+    DIR("dir", UpdateSwitches.DIR, CommandConstants.Logins.CMD, PatternBuilder.buildPattern(CommandConstants.Logins.COL_COUNT, CommandConstants.Logins.UID_COL, 6/*dir col.*/)), 
+    SHELL("shell", UpdateSwitches.SHELL, CommandConstants.Logins.CMD, PatternBuilder.buildPattern(CommandConstants.Logins.COL_COUNT, CommandConstants.Logins.UID_COL, 7/*shell col.*/)),
     /** primary group */
     GROUP("group", UpdateSwitches.GROUP, null, null /* TODO */),
     SECONDARY_GROUP("secondary_group", UpdateSwitches.SECONDARY_GROUP, null, null /* TODO */),
     /** ! this is the solaris native 'uid', *NOT* the one defined by the framework. */
-    UID("uid", UpdateSwitches.UID, "logins -oxa", PatternBuilder.buildPattern(14, 1/*__UID__*/, 2/*solaris uid*/)),
-    NAME(Name.NAME, UpdateSwitches.UNKNOWN, "logins -oxa",  PatternBuilder.buildPattern(14, 1/*uid*/)),
+    UID("uid", UpdateSwitches.UID, CommandConstants.Logins.CMD, PatternBuilder.buildPattern(CommandConstants.Logins.COL_COUNT, CommandConstants.Logins.UID_COL, 2/*solaris uid*/)),
+    NAME(Name.NAME, UpdateSwitches.UNKNOWN, CommandConstants.Logins.CMD,  PatternBuilder.buildPattern(CommandConstants.Logins.COL_COUNT, CommandConstants.Logins.UID_COL)),
     /** ! this is the UID defined by the framework */
     FRAMEWORK_UID(Uid.NAME, AccountAttributes.NAME),    
     EXPIRE("expire", UpdateSwitches.EXPIRE, null, null /* TODO */),
-    INACTIVE("inactive", UpdateSwitches.INACTIVE, "logins -oxa", PatternBuilder.buildPattern(14, 1/*uid*/, 13/*inactive col.*/)), 
+    INACTIVE("inactive", UpdateSwitches.INACTIVE, CommandConstants.Logins.CMD, PatternBuilder.buildPattern(CommandConstants.Logins.COL_COUNT, CommandConstants.Logins.UID_COL, 13/*inactive col.*/)), 
     COMMENT("comment", UpdateSwitches.COMMENT, null, null /* TODO */),
     TIME_LAST_LOGIN("time_last_login", UpdateSwitches.UNKNOWN, null, null /* TODO */),
     AUTHORIZATION("authorization", UpdateSwitches.AUTHORIZATION, null, null /* TODO */),
@@ -159,5 +159,20 @@ public enum AccountAttributes implements SolarisAttribute {
      */
     public String getCommand(String... fillInAttributes) {
         return AttributeHelper.fillInCommand(command, fillInAttributes);
+    }
+    
+    /** holds the commands that are executed to acquire the attribute */
+    private static class CommandConstants {
+        /**
+         * logins command
+         */
+        private static class Logins {
+            /** the command that is executed to acquire the attributes. */
+            private static final String CMD = "logins -oxa";
+            /** the total number of columns in output of the command (delimited by ":") */
+            private static final int COL_COUNT = 14;
+            /** the column which contains the UID */
+            private static final int UID_COL = 1;
+        }
     }
 }
