@@ -72,7 +72,7 @@ public class SolarisUtil {
                 try {
                     conn.send(new String(clearChars));
                 } catch (IOException e) {
-                    ConnectorException.wrap(e);
+                    throw ConnectorException.wrap(e);
                 }
             }
         });

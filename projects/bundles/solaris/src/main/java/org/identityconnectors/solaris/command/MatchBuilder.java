@@ -93,7 +93,7 @@ public final class MatchBuilder {
         try {
             matches.add(new RegExpCaseInsensitiveMatch(matchingRegExp, ClosureFactory.newNullClosure()));
         } catch (MalformedPatternException e) {
-            ConnectorException.wrap(e);
+            throw ConnectorException.wrap(e);
         }
     }
 

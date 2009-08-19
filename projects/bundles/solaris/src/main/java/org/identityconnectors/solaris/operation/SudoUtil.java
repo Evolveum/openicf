@@ -60,7 +60,7 @@ class SudoUtil {
                 builder.addRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException("Not sufficient permissions"));// TODO improve error msg
                 conn.expect(builder.build());
             } catch (Exception e) {
-                ConnectorException.wrap(e);
+                throw ConnectorException.wrap(e);
             }
         }
     }
@@ -73,7 +73,7 @@ class SudoUtil {
                 conn.send(SUDO_RESET_COMMAND);
                 conn.waitFor(config.getRootShellPrompt());
             } catch (Exception e) {
-                ConnectorException.wrap(e);
+                throw ConnectorException.wrap(e);
             }
         }
     }
