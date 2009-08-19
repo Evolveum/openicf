@@ -67,6 +67,25 @@ public class SearchPerformerTest {
 
     @After
     public void tearDown() {
+        config = null;
+        username = null;
+        password = null;
+        connector = null;
+        attrs = null;
+    }
+
+    /*
+     * note: if this code would make its way into the tearDown() passage, 
+     * the information about Already existing account (an exception) could be lost. 
+     */
+    private void doCleanup() {
+        try {
+            // if account already is deleted, return from the test.
+            connector.authenticate(ObjectClass.ACCOUNT, username, password, null);
+        } catch (RuntimeException ex) {
+            return;
+        }
+        
         // cleanup the new user
         connector.delete(ObjectClass.ACCOUNT, new Uid(username), null);
         try {
@@ -75,12 +94,6 @@ public class SearchPerformerTest {
         } catch (RuntimeException ex) {
             // OK
         }
-
-        config = null;
-        username = null;
-        password = null;
-        connector = null;
-        attrs = null;
     }
 
     @Test
@@ -101,6 +114,7 @@ public class SearchPerformerTest {
             b = b | uidx.getUidValue().equals(username);
         }
         Assert.assertTrue(b);
+        doCleanup();
     }
     
     @Test
@@ -120,24 +134,6 @@ public class SearchPerformerTest {
             b = b | uidx.getUidValue().equals(username);
         }
         Assert.assertTrue(b);
-    }
-    
-    @Test
-    public void testSearchByUidOnly() {
-        Uid uid = connector.create(ObjectClass.ACCOUNT, attrs, null);
-        Assert.assertNotNull(uid);
-        SearchPerformer sp = new SearchPerformer((SolarisConfiguration) connector.getConfiguration(), connector.getConnection());
-        SolarisAttribute attribute = AccountAttributes.FRAMEWORK_UID;
-        
-        Set<Uid> result = sp.performSearch(attribute, username);
-        
-        Assert.assertTrue(result.size() == 1);
-        Uid[] resultArray = result.toArray(new Uid[0]);
-        Assert.assertEquals(username, resultArray[0].getUidValue());
-        boolean b = false;
-        for (Uid uidx : result) {
-            b = b | uidx.getUidValue().equals(username);
-        }
-        Assert.assertTrue(b);
+        doCleanup();
     }
 }
