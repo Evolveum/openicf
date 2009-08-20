@@ -33,6 +33,8 @@ import org.identityconnectors.framework.common.objects.Uid;
 
 /**
  * The Account Name Resolver tries to convert Account column names to attribute names.
+ * Also is can normalize the valuse
+ * This class is strategy class , thread safe, with nodata
  *
  * @author Petr Jung
  * @version $Revision 1.0$

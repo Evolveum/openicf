@@ -31,7 +31,6 @@ import java.util.Set;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
@@ -51,7 +50,7 @@ import org.junit.Test;
 public class AccountOperationSearchTests extends OracleERPTestsBase { 
 
     /**
-     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     * Test method .
      */
     @Test
     public void testQueryAuditorData() {
@@ -84,7 +83,7 @@ public class AccountOperationSearchTests extends OracleERPTestsBase {
     //TODO add password expired tests    
     
     /**
-     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     * Test method .
      */
     @Test
     public void testSearchValidAccount() {
@@ -112,7 +111,7 @@ public class AccountOperationSearchTests extends OracleERPTestsBase {
     }     
     
     /**
-     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     * Test method .
      */
     @Test
     public void testSearchLowerCaseValidAccount() {

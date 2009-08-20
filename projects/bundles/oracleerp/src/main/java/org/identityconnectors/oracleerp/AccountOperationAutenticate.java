@@ -56,7 +56,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
      * @param conn
      * @param cfg
      */
-    protected AccountOperationAutenticate(OracleERPConnection conn, OracleERPConfiguration cfg) {
+    AccountOperationAutenticate(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
     }
 
@@ -84,7 +84,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
 
         final String sqlAccount = "select user_name, start_date, end_date, password_accesses_left,"
                     + " password_date, password_lifespan_days from "
-                    + cfg.app() + "fnd_user where upper(user_name) = ?";
+                    + getCfg().app() + "fnd_user where upper(user_name) = ?";
 
         List<SQLParam> par1 = new ArrayList<SQLParam>();
         par1.add(new SQLParam(USER_NAME, username.toUpperCase()));
@@ -92,30 +92,30 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
         AttributeMergeBuilder amb = new AttributeMergeBuilder();
         final Uid uid = new Uid(username.toUpperCase());
         try {
-            ps = conn.prepareCall(sqlAccount, par1);
+            ps = getConn().prepareCall(sqlAccount, par1);
             rs = ps.executeQuery();
             if (rs == null || !rs.next()) {
                 //account not found
-                throw new InvalidCredentialException(cfg.getMessage(MSG_AUTH_FAILED, username));
+                throw new InvalidCredentialException(getCfg().getMessage(MSG_AUTH_FAILED, username));
             }
             final Map<String, SQLParam> columnValues = getColumnValues(rs);
             //build special attributes
-            new AccountOperationSearch(conn, cfg).buildSpecialAttributes(amb, columnValues);
+            new AccountOperationSearch(getConn(), getCfg()).buildSpecialAttributes(amb, columnValues);
 
             //The password is expired
             if (amb.hasExpectedValue(OperationalAttributes.PASSWORD_EXPIRED_NAME, 0, Boolean.TRUE)) {
-                throw new PasswordExpiredException(cfg.getMessage(MSG_AUTH_FAILED, username)).initUid(uid);
+                throw new PasswordExpiredException(getCfg().getMessage(MSG_AUTH_FAILED, username)).initUid(uid);
             }
 
             //The account is disabled
             // TODO validate that there is not better InvalidCredentialException or ExpiredPassword
             if (amb.hasExpectedValue(OperationalAttributes.ENABLE_NAME, 0, Boolean.FALSE)) {
-                throw new PasswordExpiredException(cfg.getMessage(MSG_AUTH_FAILED, username)).initUid(uid);
+                throw new PasswordExpiredException(getCfg().getMessage(MSG_AUTH_FAILED, username)).initUid(uid);
             }
 
         } catch (Exception ex) {
             log.error(ex, "autenticate exception");
-            SQLUtil.rollbackQuietly(conn);
+            SQLUtil.rollbackQuietly(getConn());
             throw ConnectorException.wrap(ex);
         } finally {
             SQLUtil.closeQuietly(rs);
@@ -132,20 +132,20 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
 
         final String sql = "select wavesetValidateFunc1(? , ?) from dual";
         try {
-            ps = conn.prepareCall(sql, params);
+            ps = getConn().prepareCall(sql, params);
             rs = ps.executeQuery();
             if (rs == null || !rs.next()) {
                 // user name is wrong, no result
-                throw new InvalidCredentialException(cfg.getMessage(MSG_AUTH_FAILED, username));
+                throw new InvalidCredentialException(getCfg().getMessage(MSG_AUTH_FAILED, username));
             }
             final boolean valid = (rs.getInt(1) == 1);
             if (!valid) {
                 // password is wrong
-                throw new PasswordExpiredException(cfg.getMessage(MSG_AUTH_FAILED, username));
+                throw new PasswordExpiredException(getCfg().getMessage(MSG_AUTH_FAILED, username));
             }
         } catch (Exception ex) {
             log.error(ex, "autenticate exception");
-            SQLUtil.rollbackQuietly(conn);
+            SQLUtil.rollbackQuietly(getConn());
             throw ConnectorException.wrap(ex);
         } finally {
             SQLUtil.closeQuietly(rs);
@@ -154,7 +154,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
             ps = null;
         }
 
-        conn.commit();
+        getConn().commit();
         log.info("authenticate user ''{0}'' done", username);
         return uid;
     }
@@ -168,7 +168,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
         b.append("create or replace function wavesetValidateFunc1 (username IN varchar2, password IN varchar2) ");
         b.append("RETURN NUMBER is ");
         b.append("BEGIN ");
-        b.append("IF (" +cfg.app() + "FND_USER_PKG.ValidateLogin(username, password) = TRUE ) THEN RETURN 1; ");
+        b.append("IF (" +getCfg().app() + "FND_USER_PKG.ValidateLogin(username, password) = TRUE ) THEN RETURN 1; ");
         b.append("ELSE RETURN 0; ");
         b.append("END IF; ");
         b.append("END;");
@@ -176,7 +176,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
         //make sure the function exist
         CallableStatement st = null;
         try {
-            st = conn.prepareCall(b.toString());
+            st = getConn().prepareCall(b.toString());
             st.execute();
         } catch (Exception ex) {
             log.error(ex, b.toString());

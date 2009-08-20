@@ -57,7 +57,7 @@ final class AccountOperationDelete extends Operation implements DeleteOp {
      * @param conn
      * @param cfg
      */
-    protected AccountOperationDelete(OracleERPConnection conn, OracleERPConfiguration cfg) {
+    AccountOperationDelete(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
     }
 
@@ -65,11 +65,11 @@ final class AccountOperationDelete extends Operation implements DeleteOp {
      * @see org.identityconnectors.framework.spi.operations.DeleteOp#delete(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.Uid, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
-        final String sql = "{ call "+cfg.app()+"fnd_user_pkg.disableuser(?) }";
+        final String sql = "{ call "+getCfg().app()+"fnd_user_pkg.disableuser(?) }";
         log.info("delete user ''{0}''", uid.getUidValue());
         CallableStatement cs = null;
         try {
-            cs = conn.prepareCall(sql);
+            cs = getConn().prepareCall(sql);
             final String identity = AttributeUtil.getAsStringValue(uid).toUpperCase();
             cs.setString(1, identity);
             cs.execute();
@@ -78,12 +78,12 @@ final class AccountOperationDelete extends Operation implements DeleteOp {
         } catch (SQLException e) {
             final String msg = MessageFormat.format(MSG_ACCOUNT_NOT_DELETE, uid.getUidValue());
             if (e.getErrorCode() == 20001 || e.getErrorCode() == 1403) {
-                SQLUtil.rollbackQuietly(conn);
+                SQLUtil.rollbackQuietly(getConn());
                 log.error(e, msg);
                 // TODO There should be just a could not delete - informational message instead of throwing an exception
                 throw new UnknownUidException(uid, objClass);
             } 
-            SQLUtil.rollbackQuietly(conn);
+            SQLUtil.rollbackQuietly(getConn());
             log.error(e, msg);
             throw new UnknownUidException(uid, objClass);            
         } finally {
@@ -91,6 +91,6 @@ final class AccountOperationDelete extends Operation implements DeleteOp {
             cs = null;
         }
         log.info("delete user ''{0}'' done", uid.getUidValue());
-        conn.commit();
+        getConn().commit();
     }
 }

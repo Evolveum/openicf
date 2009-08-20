@@ -46,7 +46,7 @@ public class AccountOperationCreateTests extends OracleERPTestsBase {
 
 
     /**
-     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     * Test method .
      */
     @Test
     public void testCreate() {
@@ -70,7 +70,7 @@ public class AccountOperationCreateTests extends OracleERPTestsBase {
     }
     
     /**
-     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     * Test method .
      */
     @Test
     public void testCreateRequiredOnly() {

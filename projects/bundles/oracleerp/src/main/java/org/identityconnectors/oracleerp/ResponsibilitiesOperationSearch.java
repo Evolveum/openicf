@@ -42,7 +42,7 @@ import org.identityconnectors.framework.spi.operations.SearchOp;
  * @version $Revision 1.0$
  * @since 1.0
  */
-public class ResponsibilitiesOperationSearch extends Operation implements SearchOp<FilterWhereBuilder> {
+final class ResponsibilitiesOperationSearch extends Operation implements SearchOp<FilterWhereBuilder> {
     /**
      * Setup logging.
      */
@@ -55,7 +55,7 @@ public class ResponsibilitiesOperationSearch extends Operation implements Search
      * @param conn
      * @param cfg
      */
-    protected ResponsibilitiesOperationSearch(OracleERPConnection conn, OracleERPConfiguration cfg) {
+    ResponsibilitiesOperationSearch(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
         respOps = new ResponsibilitiesOperations(conn, cfg);
     }
@@ -100,7 +100,7 @@ public class ResponsibilitiesOperationSearch extends Operation implements Search
                 break;
             }
         }
-        conn.commit();
+        getConn().commit();
         log.info(method + " done");
     }
 

@@ -39,7 +39,7 @@ import org.identityconnectors.framework.common.objects.ConnectorObject;
  * 
  * Merge is done by joining the attribute unique values list
  */
-public final class AttributeMergeBuilder {
+final class AttributeMergeBuilder {
     private Set<String> _attrToGet = null;
     private Map<String, List<Object>> _attrs = new HashMap<String, List<Object>>();
     /**

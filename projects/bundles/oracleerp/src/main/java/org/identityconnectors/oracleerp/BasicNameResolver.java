@@ -31,15 +31,14 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.spi.AttributeNormalizer;
 
 /**
- * The Account CreateOp implementation of the SPI Select attributes from fnd_user table, add person details from
- * PER_PEOPLE_F table add responsibility names add auditor data add securing attributes all filtered according
- * attributes to get
+ * To convert the attribute names to column name 
+ * This class is strategy implementation, thread safe with no data
  *
  * @author Petr Jung
  * @version $Revision 1.0$
  * @since 1.0
  */
-public class BasicNameResolver implements  NameResolver, AttributeNormalizer {
+class BasicNameResolver implements  NameResolver, AttributeNormalizer {
 
     /**
      * Map column name to attribute name, special attributes are handed separated

@@ -54,7 +54,7 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
      * @param conn
      * @param cfg
      */
-    protected OracleERPOperationRunScriptOnConnector(OracleERPConnection conn, OracleERPConfiguration cfg) {
+    OracleERPOperationRunScriptOnConnector(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
     }
 
@@ -84,7 +84,7 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
         final Object pwdArg = scriptArguments.get(OperationalAttributes.PASSWORD_NAME);
 
         //Connection
-        actionContext.put(CONN, conn.getConnection()); //The real connection
+        actionContext.put(CONN, getConn().getConnection()); //The real connection
         actionContext.put(ACTION, scriptArguments.get(ACTION)); // The action is the operation name createUser/updateUser/deleteUser/disableUser/enableUser
         actionContext.put(TIMING, scriptArguments.get(TIMING)); // The timing before / after
         actionContext.put(ATTRIBUTES, attributes); // The attributes
@@ -114,10 +114,10 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
             ret = scripEx.execute(inputMap);
         } catch (Exception e) {
             log.error(e, "error in script");
-            SQLUtil.rollbackQuietly(conn);
+            SQLUtil.rollbackQuietly(getConn());
             throw ConnectorException.wrap(e);
         }
-        conn.commit();
+        getConn().commit();
         return ret;
     }
 

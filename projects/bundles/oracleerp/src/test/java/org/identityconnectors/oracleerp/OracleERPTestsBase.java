@@ -127,7 +127,7 @@ abstract public class OracleERPTestsBase {
     /**
      * Replace name attribute in the attribute set by generated value
      * @param attrs a set of attributes {@link Attribute}
-     * @return 
+     * @return replaced String name
      */
     protected String replaceNameByRandom(Set<Attribute> attrs) {
         Name attr = AttributeUtil.getNameFromAttributes(attrs);
@@ -158,7 +158,7 @@ abstract public class OracleERPTestsBase {
     /**
      * 
      * @param setName
-     * @return
+     * @return attribute Set
      */
     protected Set<Attribute> getAttributeSet(String setName) {
         Set<Attribute> ret = CollectionUtil.newSet(dataProvider.getAttributeSet(setName));
@@ -168,7 +168,7 @@ abstract public class OracleERPTestsBase {
     /**
      * 
      * @param configName
-     * @return
+     * @return OracleERPConfiguration
      */
     protected OracleERPConfiguration getConfiguration(String configName) {
         OracleERPConfiguration config = new OracleERPConfiguration();
@@ -191,7 +191,7 @@ abstract public class OracleERPTestsBase {
     /**
      * 
      * @param config
-     * @return
+     * @return OracleERPConnector
      */
     protected OracleERPConnector getConnector(OracleERPConfiguration config) {
         assertNotNull(config);
@@ -204,7 +204,7 @@ abstract public class OracleERPTestsBase {
     /**
      * 
      * @param configName
-     * @return
+     * @return OracleERPConnector
      */
     protected OracleERPConnector getConnector(String configName) {
         OracleERPConfiguration config = getConfiguration(configName);
@@ -215,7 +215,7 @@ abstract public class OracleERPTestsBase {
     /**
      * 
      * @param config
-     * @return
+     * @return ConnectorFacade
      */
     protected ConnectorFacade getFacade(OracleERPConfiguration config) {
         final ConnectorFacadeFactory factory = ConnectorFacadeFactory.getInstance();
@@ -230,7 +230,7 @@ abstract public class OracleERPTestsBase {
     /**
      * 
      * @param configName
-     * @return
+     * @return ConnectorFacade
      */
     protected ConnectorFacade getFacade(String configName) {
         OracleERPConfiguration config = getConfiguration(configName);

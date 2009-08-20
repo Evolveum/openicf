@@ -22,7 +22,7 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+import static org.identityconnectors.oracleerp.OracleERPUtil.OWNER;
 import static org.junit.Assert.*;
 
 import java.util.HashSet;
@@ -33,7 +33,6 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
@@ -53,7 +52,7 @@ public class AccountOperationUpdateTests extends OracleERPTestsBase {
 
 
     /**
-     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     * Test method .
      */
     @Test
     public void testUpdateWithoutName() {
@@ -83,7 +82,7 @@ public class AccountOperationUpdateTests extends OracleERPTestsBase {
     }
     
     /**
-     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     * Test method .
      */
     @Test(expected=IllegalStateException.class)
     public void testUpdate() {
@@ -118,7 +117,7 @@ public class AccountOperationUpdateTests extends OracleERPTestsBase {
     
     
     /**
-     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     * Test method .
      */
     @Test
     public void testUpdateDissable() {
@@ -151,7 +150,7 @@ public class AccountOperationUpdateTests extends OracleERPTestsBase {
     }
     
     /**
-     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     * Test method .
      */
     @Test
     public void testUpdateEnable() {

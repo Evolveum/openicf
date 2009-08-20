@@ -49,8 +49,7 @@ import org.junit.Test;
  */
 public class SecuringAttributesOperationSearchTests extends OracleERPTestsBase { 
     /**
-     * Test method for
-     * {@link SecuringAttributesOperation#executeQuery(ObjectClass, org.identityconnectors.dbcommon.FilterWhereBuilder, org.identityconnectors.framework.common.objects.ResultsHandler, OperationOptions)}
+     * Test method
      */
     @Test
     public void testSecuringAttributesOperationSearch() {

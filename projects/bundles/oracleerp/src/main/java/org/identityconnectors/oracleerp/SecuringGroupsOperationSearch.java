@@ -45,7 +45,7 @@ import org.identityconnectors.framework.spi.operations.SearchOp;
  * @version $Revision 1.0$
  * @since 1.0
  */
-public class SecuringGroupsOperationSearch extends Operation implements SearchOp<FilterWhereBuilder> {
+final class SecuringGroupsOperationSearch extends Operation implements SearchOp<FilterWhereBuilder> {
     /**
      * Setup logging.
      */
@@ -54,7 +54,7 @@ public class SecuringGroupsOperationSearch extends Operation implements SearchOp
      * @param conn
      * @param cfg
      */
-    protected SecuringGroupsOperationSearch(OracleERPConnection conn, OracleERPConfiguration cfg) {
+    SecuringGroupsOperationSearch(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
     }
 
@@ -71,10 +71,10 @@ public class SecuringGroupsOperationSearch extends Operation implements SearchOp
         StringBuilder b = new StringBuilder();
 
         b.append("SELECT distinct fndsecgvl.security_group_name ");
-        b.append("FROM " + cfg.app() + "fnd_security_groups_vl fndsecgvl ");
+        b.append("FROM " + getCfg().app() + "fnd_security_groups_vl fndsecgvl ");
 
         try {
-            st = conn.prepareStatement(b.toString());
+            st = getConn().prepareStatement(b.toString());
             res = st.executeQuery();
             while (res.next()) {
 
@@ -91,9 +91,9 @@ public class SecuringGroupsOperationSearch extends Operation implements SearchOp
                 }
             }
         } catch (Exception e) {
-            final String msg1 = cfg.getMessage(MSG_COULD_NOT_EXECUTE, e.getMessage());
+            final String msg1 = getCfg().getMessage(MSG_COULD_NOT_EXECUTE, e.getMessage());
             log.error(e, msg1);
-            SQLUtil.rollbackQuietly(conn);
+            SQLUtil.rollbackQuietly(getConn());
             throw new ConnectorException(msg1, e);
         } finally {
             SQLUtil.closeQuietly(res);
@@ -101,7 +101,7 @@ public class SecuringGroupsOperationSearch extends Operation implements SearchOp
             SQLUtil.closeQuietly(st);
             st = null;
         }
-        conn.commit();
+        getConn().commit();
         log.info(method + " done");
     }
 

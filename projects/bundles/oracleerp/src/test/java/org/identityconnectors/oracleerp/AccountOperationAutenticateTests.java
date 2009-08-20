@@ -45,7 +45,7 @@ import org.junit.Test;
  */
 public class AccountOperationAutenticateTests extends OracleERPTestsBase { 
     /**
-     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     * Test method .
      */
     @Test
     public void testAuthenticate() {
@@ -61,7 +61,7 @@ public class AccountOperationAutenticateTests extends OracleERPTestsBase {
     }
     
     /**
-     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     * Test method .
      */
     @Test(expected=InvalidCredentialException.class)
     public void testAuthenticateDissabled() {
@@ -86,7 +86,7 @@ public class AccountOperationAutenticateTests extends OracleERPTestsBase {
     }   
     
     /**
-     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     * Test method .
      */
     @Test(expected=InvalidPasswordException.class)
     public void testAuthenticateExpired() {

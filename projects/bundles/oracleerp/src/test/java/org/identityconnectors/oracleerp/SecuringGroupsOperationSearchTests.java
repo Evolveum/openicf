@@ -23,7 +23,7 @@
 package org.identityconnectors.oracleerp;
 
 import static org.identityconnectors.oracleerp.OracleERPUtil.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 import java.util.Set;
@@ -31,8 +31,6 @@ import java.util.Set;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
 import org.identityconnectors.framework.common.objects.filter.Filter;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
@@ -51,8 +49,7 @@ import org.junit.Test;
  */
 public class SecuringGroupsOperationSearchTests extends OracleERPTestsBase { 
     /**
-     * Test method for
-     * {@link SecuringGroupsOperation#executeQuery(ObjectClass, org.identityconnectors.dbcommon.FilterWhereBuilder, org.identityconnectors.framework.common.objects.ResultsHandler, OperationOptions)}
+     * Test method 
      */
     @Test
     public void testSecuringGroupsOperationSearch() {

@@ -46,7 +46,7 @@ public class AccountOperationDeleteTests extends OracleERPTestsBase {
 
 
     /**
-     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     * Test method .
      */
     @Test
     public void testDeleteActiveOnly() {
@@ -71,7 +71,7 @@ public class AccountOperationDeleteTests extends OracleERPTestsBase {
     }
     
     /**
-     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     * Test method .
      */
     @Test
     public void testDelete() {

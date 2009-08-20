@@ -39,7 +39,7 @@ import org.identityconnectors.common.CollectionUtil;
  * @version 1.0
  * @since 1.0
  */
-public class AccountOperations  {
+class AccountOperations  {
 
     /**
      * The map of column name parameters mapping

@@ -143,7 +143,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
      *
      * @return objectClass {@link ObjectClassInfo} info
      */
-    public ObjectClassInfo getAccountObjectClassInfo() {
+    private ObjectClassInfo getAccountObjectClassInfo() {
 
         ObjectClassInfoBuilder ocib = new ObjectClassInfoBuilder();
         ocib.setType(ObjectClass.ACCOUNT_NAME);
@@ -193,7 +193,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         //user_id
         ocib.addAttributeInfo(AttributeInfoBuilder.build(USER_ID, String.class, NCUD));
 
-        if (cfg.isNewResponsibilityViews()) {
+        if (getCfg().isNewResponsibilityViews()) {
             // name='DIRECT_RESPS' type='string' required='false'
             ocib.addAttributeInfo(AttributeInfoBuilder.build(DIRECT_RESPS, String.class, M));
             // name='INDIRECT_RESPS' type='string' required='false'
@@ -266,7 +266,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
      * The object class info
      * @return the info class
      */
-    public ObjectClassInfo getRespNamesObjectClassInfo() {
+    private ObjectClassInfo getRespNamesObjectClassInfo() {
         ObjectClassInfoBuilder ocib = new ObjectClassInfoBuilder();
 
         ocib = new ObjectClassInfoBuilder();
@@ -319,7 +319,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
      * The object class info
      * @return the info class
      */
-    public ObjectClassInfo getAuditorResponsibilitiesObjectClassInfo() {
+    private ObjectClassInfo getAuditorResponsibilitiesObjectClassInfo() {
         ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
 
         //Auditor responsibilities
@@ -372,7 +372,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
      * The object class info
      * @return the info class
      */
-    public ObjectClassInfo getResponsibilitiesObjectClassInfo() {
+    private ObjectClassInfo getResponsibilitiesObjectClassInfo() {
         ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
         //Resp object class
         oc = new ObjectClassInfoBuilder();
@@ -388,7 +388,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
      *
      * @return the info class
      */
-    public ObjectClassInfo getDirectResponsibilitiesObjectClassInfo() {
+    private ObjectClassInfo getDirectResponsibilitiesObjectClassInfo() {
         ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
 
         //Resp object class
@@ -405,7 +405,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
      *
      * @return the info class
      */
-    public ObjectClassInfo getIndirectResponsibilitiesObjectClassInfo() {
+    private ObjectClassInfo getIndirectResponsibilitiesObjectClassInfo() {
         ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
         //directResponsibilities object class
         oc = new ObjectClassInfoBuilder();
@@ -421,7 +421,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
      *
      * @return the info class
      */
-    public ObjectClassInfo getApplicationsObjectClassInfo() {
+    private ObjectClassInfo getApplicationsObjectClassInfo() {
         ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
         //Applications object class
         oc = new ObjectClassInfoBuilder();
@@ -438,7 +438,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
      *
      * @return the info class
      */
-    public ObjectClassInfo getSecurngGroupsObjectClassInfo() {
+    private ObjectClassInfo getSecurngGroupsObjectClassInfo() {
         //securityGroups object class
         ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
         oc.setType(SEC_GROUPS_OC.getObjectClassValue());
@@ -453,7 +453,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
      *
      * @return the info class
      */
-    public ObjectClassInfo getSecuringAttrsGroupObjectClassInfo() {
+    private ObjectClassInfo getSecuringAttrsGroupObjectClassInfo() {
         //securingAttrs object class
         ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
         oc.setType(SEC_ATTRS_OC.getObjectClassValue());

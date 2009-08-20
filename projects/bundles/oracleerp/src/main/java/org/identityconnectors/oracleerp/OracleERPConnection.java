@@ -49,7 +49,7 @@ import org.identityconnectors.framework.spi.Configuration;
  * @version 1.0
  * @since 1.0
  */
-public class OracleERPConnection extends DatabaseConnection {
+final class OracleERPConnection extends DatabaseConnection {
     /**
      * The default row prefetch
      */
@@ -60,12 +60,12 @@ public class OracleERPConnection extends DatabaseConnection {
     static final Log log = Log.getLog(OracleERPConnector.class);
 
     /**
-     * Test enabled create connection function
+     * Create connection the instance creation method
      * 
      * @param config
      * @return a new {@link OracleERPConnection} connection wrapper
      */
-    static OracleERPConnection createOracleERPConnection(OracleERPConfiguration config) {
+    static OracleERPConnection createConnection(OracleERPConfiguration config) {
         final Connection connection = getNativeConnection(config);
         return new OracleERPConnection(connection, config);
     }
@@ -144,7 +144,7 @@ public class OracleERPConnection extends DatabaseConnection {
      * @throws RuntimeException
      *             if there is a problem creating a {@link java.sql.Connection}.
      */
-    public OracleERPConnection(Connection conn, OracleERPConfiguration config) {
+    private OracleERPConnection(Connection conn, OracleERPConfiguration config) {
         super(conn);
         this.config = config;
     }

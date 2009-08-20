@@ -66,10 +66,10 @@ public class AccountSQLBuilderTests {
                         "x_password_accesses_left => ?, x_password_lifespan_accesses => ?, "+
                         "x_password_lifespan_days => ?, x_employee_id => ?, x_email_address => ?, "+
                         "x_fax => ?, x_customer_id => ?, x_supplier_id => ? ) }",
-                        asc.callSql);
+                        asc.getCallSql());
         //session is always null, so 16 params
         
-        Assert.assertEquals("Invalid number of  SQL Params", 16, asc.sqlParams.size());
+        Assert.assertEquals("Invalid number of  SQL Params", 16, asc.getSqlParams().size());
     }
  
     
@@ -89,9 +89,9 @@ public class AccountSQLBuilderTests {
                         "x_description => ?, x_password_date => ?, x_password_accesses_left => ?, "+
                         "x_password_lifespan_accesses => ?, x_password_lifespan_days => ?, x_employee_id => ?, "+
                         "x_email_address => ?, x_fax => ?, x_customer_id => ?, x_supplier_id => ? ) }",
-                        asc.callSql);
+                        asc.getCallSql());
         //session is always null, so 15 params
-        Assert.assertEquals("Invalid number of  SQL Params", 15, asc.sqlParams.size());
+        Assert.assertEquals("Invalid number of  SQL Params", 15, asc.getSqlParams().size());
     }        
     
     /**
@@ -111,9 +111,9 @@ public class AccountSQLBuilderTests {
                 "x_password_lifespan_days => FND_USER_PKG.null_number, x_employee_id => FND_USER_PKG.null_number, "+
                 "x_email_address => FND_USER_PKG.null_char, x_fax => FND_USER_PKG.null_char, "+
                 "x_customer_id => FND_USER_PKG.null_number, x_supplier_id => FND_USER_PKG.null_number ) }",
-                asc.callSql);
+                asc.getCallSql());
         //session is always null, so 16 params
-        Assert.assertEquals("Invalid number of  SQL Params", 6, asc.sqlParams.size());    
+        Assert.assertEquals("Invalid number of  SQL Params", 6, asc.getSqlParams().size());    
     }
     
     /**
@@ -133,9 +133,9 @@ public class AccountSQLBuilderTests {
                 "x_password_lifespan_days => FND_USER_PKG.null_number, x_employee_id => FND_USER_PKG.null_number, "+
                 "x_email_address => FND_USER_PKG.null_char, x_fax => FND_USER_PKG.null_char, "+
                 "x_customer_id => FND_USER_PKG.null_number, x_supplier_id => FND_USER_PKG.null_number ) }",
-                asc.callSql);
+                asc.getCallSql());
         //session is always null, so 16 params
-        Assert.assertEquals("Invalid number of  SQL Params", 5, asc.sqlParams.size());    
+        Assert.assertEquals("Invalid number of  SQL Params", 5, asc.getSqlParams().size());    
     }       
     
     /**

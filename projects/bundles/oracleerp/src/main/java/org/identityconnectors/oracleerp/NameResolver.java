@@ -27,7 +27,7 @@ package org.identityconnectors.oracleerp;
  * @version $Revision 1.0$
  * @since 1.0
  */
-public interface NameResolver {
+interface NameResolver {
     /**
      * @param attributeName String name of the attribute
      * @return String the mapped column name

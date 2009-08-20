@@ -25,11 +25,15 @@ package org.identityconnectors.oracleerp;
 import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.oracleerp.AccountSQLCall.AccountSQLCallBuilder;
@@ -79,10 +83,10 @@ final class AccountOperationCreate extends Operation implements CreateOp {
      * @param conn
      * @param cfg
      */
-    protected AccountOperationCreate(OracleERPConnection conn, OracleERPConfiguration cfg) {
+    AccountOperationCreate(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
-        respOps = new ResponsibilitiesOperations(conn, cfg);
-        secAttrOps = new SecuringAttributesOperations(conn, cfg);
+        respOps = new ResponsibilitiesOperations(getConn(), getCfg());
+        secAttrOps = new SecuringAttributesOperations(getConn(), getCfg());
     }
 
     /* (non-Javadoc)
@@ -91,7 +95,7 @@ final class AccountOperationCreate extends Operation implements CreateOp {
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
         final Name nameAttr = AttributeUtil.getNameFromAttributes(attrs);
         if( nameAttr == null || nameAttr.getNameValue() == null) {
-            throw new IllegalArgumentException(cfg.getMessage(MSG_ACCOUNT_NAME_REQUIRED));
+            throw new IllegalArgumentException(getCfg().getMessage(MSG_ACCOUNT_NAME_REQUIRED));
         }
         final String name = nameAttr.getNameValue().toUpperCase();
         log.info("create user ''{0}''", name);
@@ -99,18 +103,18 @@ final class AccountOperationCreate extends Operation implements CreateOp {
         Set<Attribute> attrsMod = CollectionUtil.newSet(attrs); //modifiable set
         //add required owner, if missing
         if (AttributeUtil.find(OWNER, attrsMod) == null) {
-            attrsMod.add(AttributeBuilder.build(OWNER, cfg.getUser() ));
+            attrsMod.add(AttributeBuilder.build(OWNER, getCfg().getUser() ));
         }
 
         //Get the person_id and set is it as a employee id
-        final Integer person_id = getPersonId(name, conn, cfg, attrsMod);
+        final Integer person_id = getPersonId(name, attrsMod);
         if (person_id != null) {
             // Person Id as a Employee_Id
             attrsMod.add(AttributeBuilder.build(EMP_ID, person_id));
         }
 
         // Get the User values
-        final AccountSQLCallBuilder asb = new AccountSQLCallBuilder(cfg.app(), true);
+        final AccountSQLCallBuilder asb = new AccountSQLCallBuilder(getCfg().app(), true);
         for (Attribute attr : attrsMod) {
             asb.addAttribute(oclass, attr, options);
         }
@@ -124,12 +128,12 @@ final class AccountOperationCreate extends Operation implements CreateOp {
             log.ok(msg, name);
             try {
                 // Create the user
-                cs = conn.prepareCall(aSql.callSql, aSql.sqlParams);
+                cs = getConn().prepareCall(aSql.getCallSql(), aSql.getSqlParams());
                 cs.execute();
 
             } catch (Exception e) {
-                SQLUtil.rollbackQuietly(conn);
-                final String message = cfg.getMessage(MSG_ACCOUNT_NOT_CREATE, name);
+                SQLUtil.rollbackQuietly(getConn());
+                final String message = getCfg().getMessage(MSG_ACCOUNT_NOT_CREATE, name);
                 log.error(e, message);
                 throw new IllegalStateException(message, e);
             } finally {
@@ -151,8 +155,68 @@ final class AccountOperationCreate extends Operation implements CreateOp {
             secAttrOps.updateUserSecuringAttrs(secAttr, name);
         }
 
-        conn.commit();
+        getConn().commit();
         log.info("create user ''{0}'' done", name);
         return new Uid(name);
     }
+    
+    /**
+     * Get The personId from employeNumber or NPW number
+     * @param name user identity
+     * @param attrs attributes 
+     * @return personid the id of the person
+     */
+    private Integer getPersonId(String name, Set<Attribute> attrs) {
+        log.ok("getPersonId for userId: ''{0}''", name);
+        Integer ret = null;
+        int num = 0;
+        String columnName = null;
+        final Attribute empAttr = AttributeUtil.find(EMP_NUM, attrs);
+        final Attribute npwAttr = AttributeUtil.find(NPW_NUM, attrs);
+        if (empAttr != null) {
+            num = AttributeUtil.getIntegerValue(empAttr);
+            columnName = EMP_NUM;
+            log.ok("{0} present with value ''{1}''", columnName, num);
+        } else if (npwAttr != null) {
+            num = AttributeUtil.getIntegerValue(npwAttr);
+            columnName = NPW_NUM;
+            log.ok("{0} present with value ''{1}''", columnName, num);
+        } else {
+            log.ok("neither {0} not {1} attributes for personId are present", EMP_NUM, NPW_NUM);
+            return null;
+        }
+
+        log.ok("clomunName ''{0}''", columnName);
+        String sql = "select " + PERSON_ID + " from " + getCfg().app() + "PER_PEOPLE_F where " + columnName + " = ?";        
+        sql = whereAnd(sql, ACTIVE_PEOPLE_ONLY_WHERE_CLAUSE);
+        ResultSet rs = null; // SQL query on person_id
+        PreparedStatement ps = null; // statement that generates the query
+        try {
+            ps = getConn().prepareStatement(sql);
+            ps.setInt(1, num);
+            ps.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                ret = rs.getInt(1);
+            }
+            log.ok("Oracle ERP: PERSON_ID return from {0} = {1}", sql, ret);
+
+            if (ret == null) {
+                final String msg = getCfg().getMessage(MSG_HR_LINKING_ERROR, num, name);
+                log.error(msg);
+                throw new ConnectorException(msg);
+            }
+
+            log.ok("getPersonId for userId: ''{0}'' -> ''{1}''", name, ret);
+            return ret;
+        } catch (SQLException e) {
+            log.error(e, sql);
+            throw ConnectorException.wrap(e);
+        } finally {
+            SQLUtil.closeQuietly(rs);
+            rs = null;
+            SQLUtil.closeQuietly(ps);
+            ps = null;
+        }
+    }    
 }

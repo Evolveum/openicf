@@ -106,7 +106,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
             if (nameAttr.getNameValue() != null) {
                 final String newName = nameAttr.getNameValue();
                 if (!name.equalsIgnoreCase(newName)) {
-                    final String emsg = cfg.getMessage(MSG_COULD_NOT_RENAME_USER, name, newName);
+                    final String emsg = getCfg().getMessage(MSG_COULD_NOT_RENAME_USER, name, newName);
                     throw new IllegalStateException(emsg);
                 }
             } else {
@@ -134,7 +134,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
         }
 
         // Get the User values
-        final AccountSQLCallBuilder asb = new AccountSQLCallBuilder(cfg.app(), false);
+        final AccountSQLCallBuilder asb = new AccountSQLCallBuilder(getCfg().app(), false);
         for (Attribute attr : attrsMod) {
             asb.addAttribute(objclass, attr, options);
         }
@@ -147,12 +147,12 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
             log.ok(msg, name);
             try {
                 // Create the user
-                cs = conn.prepareCall(aSql.callSql, aSql.sqlParams);
+                cs = getConn().prepareCall(aSql.getCallSql(), aSql.getSqlParams());
                 cs.execute();
             } catch (Exception e) {
-                String message = cfg.getMessage(MSG_ACCOUNT_NOT_UPDATE, name);
+                String message = getCfg().getMessage(MSG_ACCOUNT_NOT_UPDATE, name);
                 log.error(e, message);
-                SQLUtil.rollbackQuietly(conn);
+                SQLUtil.rollbackQuietly(getConn());
                 throw new ConnectorException(message, e);
             } finally {
                 SQLUtil.closeQuietly(cs);
@@ -170,10 +170,10 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
 
         final Attribute secAttr = AttributeUtil.find(SEC_ATTRS, attrsMod);
         if ( secAttr != null ) {
-            new SecuringAttributesOperations(conn, cfg).updateUserSecuringAttrs(secAttr, name);
+            new SecuringAttributesOperations(getConn(), getCfg()).updateUserSecuringAttrs(secAttr, name);
         }
 
-        conn.commit();
+        getConn().commit();
         //Return new UID
         log.info( "update user ''{0}'' done", name );
         return new Uid(name);
@@ -195,19 +195,19 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
         PreparedStatement st = null;
         try {
             StringBuilder b = new StringBuilder();
-            b.append("{ call " + cfg.app() + "fnd_user_pkg.updateuser(x_user_name => ?");
+            b.append("{ call " + getCfg().app() + "fnd_user_pkg.updateuser(x_user_name => ?");
             b.append(",x_owner => upper(?),x_end_date => FND_USER_PKG.null_date");
             b.append(") }");
 
             final String sql = b.toString();
-            st = conn.prepareStatement(sql);
+            st = getConn().prepareStatement(sql);
             st.setString(1, userName.toUpperCase());
-            st.setString(2, cfg.getUser());
+            st.setString(2, getCfg().getUser());
             st.execute();
         } catch (Exception e) {
-            final String msg = cfg.getMessage(MSG_COULD_NOT_ENABLE_USER, userName);
+            final String msg = getCfg().getMessage(MSG_COULD_NOT_ENABLE_USER, userName);
             log.error(e, msg);
-            SQLUtil.rollbackQuietly(conn);
+            SQLUtil.rollbackQuietly(getConn());
             throw new ConnectorException(msg, e);
         } finally {
             SQLUtil.closeQuietly(st);
@@ -222,18 +222,18 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
      * @param options
      */
     private void disable(ObjectClass objclass, String userName, OperationOptions options) {
-        final String sql = "{ call "+cfg.app()+"fnd_user_pkg.disableuser(?) }";
+        final String sql = "{ call "+getCfg().app()+"fnd_user_pkg.disableuser(?) }";
         final String method = "disable";
         log.info( method);
         CallableStatement cs = null;
         try {
-            cs = conn.prepareCall(sql);
+            cs = getConn().prepareCall(sql);
             cs.setString(1, userName);
             cs.execute();
             // No Result ??
         } catch (Exception e) {
-            final String msg = cfg.getMessage(MSG_COULD_NOT_DISABLE_USER, userName);
-            SQLUtil.rollbackQuietly(conn);
+            final String msg = getCfg().getMessage(MSG_COULD_NOT_DISABLE_USER, userName);
+            SQLUtil.rollbackQuietly(getConn());
             throw new IllegalArgumentException(MessageFormat.format(msg, userName),e);
         } finally {
             SQLUtil.closeQuietly(cs);

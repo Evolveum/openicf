@@ -50,7 +50,7 @@ final class AccountOperationGetUserAfterAction extends Operation {
      * @param conn
      * @param cfg
      */
-    protected AccountOperationGetUserAfterAction(OracleERPConnection conn, OracleERPConfiguration cfg) {
+    AccountOperationGetUserAfterAction(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
     }
 
@@ -67,7 +67,7 @@ final class AccountOperationGetUserAfterAction extends Operation {
         final List<String> errorList = new ArrayList<String>();
 
         //Connection
-        actionContext.put(CONN, conn.getConnection()); //The real connection
+        actionContext.put(CONN, getConn().getConnection()); //The real connection
         actionContext.put(ACTION, OP_GET_USER); // The action is the operation name createUser/updateUser/deleteUser/disableUser/enableUser
         actionContext.put("currentAttributes", AttributeUtil.toMap(cob.build().getAttributes())); // The attributes
         actionContext.put("changedAttributes", changedAttributes); // The attributes
@@ -81,9 +81,9 @@ final class AccountOperationGetUserAfterAction extends Operation {
         /*
          * Build the script executor and run the script
          */
-        final String scriptLanguage = cfg.getActionScriptLanguage();
+        final String scriptLanguage = getCfg().getActionScriptLanguage();
         final ScriptExecutorFactory scriptExFact = ScriptExecutorFactory.newInstance(scriptLanguage);
-        final ScriptExecutor scripEx = scriptExFact.newScriptExecutor(loader, cfg.getUserAfterActionScript(), true);
+        final ScriptExecutor scripEx = scriptExFact.newScriptExecutor(loader, getCfg().getUserAfterActionScript(), true);
         try {
             scripEx.execute(inputMap);
             
@@ -99,10 +99,10 @@ final class AccountOperationGetUserAfterAction extends Operation {
                 throw new IllegalStateException(errorBld.toString());
             }
             //Make sure, the connection is commit
-            conn.commit();
+            getConn().commit();
         } catch (Exception e) {
             log.error(e, "error in script");
-            SQLUtil.rollbackQuietly(conn);
+            SQLUtil.rollbackQuietly(getConn());
             throw ConnectorException.wrap(e);
         }
         // add the attributes to the connector object builder

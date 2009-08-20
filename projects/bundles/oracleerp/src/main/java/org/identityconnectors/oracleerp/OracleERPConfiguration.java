@@ -42,7 +42,7 @@ import org.identityconnectors.framework.spi.ConfigurationProperty;
  * @version 1.0
  * @since 1.0
  */
-public class OracleERPConfiguration extends AbstractConfiguration {
+final public class OracleERPConfiguration extends AbstractConfiguration {
 
 
     /**

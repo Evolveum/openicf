@@ -45,7 +45,7 @@ import org.identityconnectors.framework.spi.operations.SearchOp;
  * @version $Revision 1.0$
  * @since 1.0
  */
-public class ApplicationOperationSearch extends Operation implements SearchOp<FilterWhereBuilder> {
+final class ApplicationOperationSearch extends Operation implements SearchOp<FilterWhereBuilder> {
     /**
      * Setup logging.
      */
@@ -54,9 +54,10 @@ public class ApplicationOperationSearch extends Operation implements SearchOp<Fi
      * @param conn
      * @param cfg
      */
-    protected ApplicationOperationSearch(OracleERPConnection conn, OracleERPConfiguration cfg) {
+    ApplicationOperationSearch(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
     }
+    
     /* (non-Javadoc)
      * @see org.identityconnectors.framework.spi.operations.SearchOp#createFilterTranslator(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.OperationOptions)
      */
@@ -64,6 +65,7 @@ public class ApplicationOperationSearch extends Operation implements SearchOp<Fi
         return new OracleERPFilterTranslator(oclass, options, CollectionUtil
         .newSet(new String[] { OracleERPUtil.NAME }), new BasicNameResolver());
     }
+    
     /* (non-Javadoc)
      * @see org.identityconnectors.framework.spi.operations.SearchOp#executeQuery(org.identityconnectors.framework.common.objects.ObjectClass, java.lang.Object, org.identityconnectors.framework.common.objects.ResultsHandler, org.identityconnectors.framework.common.objects.OperationOptions)
      */
@@ -82,12 +84,12 @@ public class ApplicationOperationSearch extends Operation implements SearchOp<Fi
             return;
         }
         b.append("SELECT distinct fndappvl.application_name ");
-        b.append("FROM " + cfg.app() + "fnd_responsibility_vl fndrespvl, ");
-        b.append(cfg.app() + "fnd_application_vl fndappvl ");
+        b.append("FROM " + getCfg().app() + "fnd_responsibility_vl fndrespvl, ");
+        b.append(getCfg().app() + "fnd_application_vl fndappvl ");
         b.append("WHERE fndappvl.application_id = fndrespvl.application_id ");
         b.append("AND fndrespvl.responsibility_name = ?");
         try {
-            st = conn.prepareStatement(b.toString());
+            st = getConn().prepareStatement(b.toString());
             st.setString(1, respName);
             res = st.executeQuery();
             while (res.next()) {
@@ -102,9 +104,9 @@ public class ApplicationOperationSearch extends Operation implements SearchOp<Fi
                 }
             }
         } catch (Exception e) {
-            final String msg = cfg.getMessage(MSG_COULD_NOT_READ);
+            final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
             log.error(e, msg);
-            SQLUtil.rollbackQuietly(conn);
+            SQLUtil.rollbackQuietly(getConn());
             throw new ConnectorException(msg, e);
         } finally {
             SQLUtil.closeQuietly(res);
@@ -112,7 +114,7 @@ public class ApplicationOperationSearch extends Operation implements SearchOp<Fi
             SQLUtil.closeQuietly(st);
             st = null;
         }
-        conn.commit();
+        getConn().commit();
         log.info(method + " ok");
     }
 }

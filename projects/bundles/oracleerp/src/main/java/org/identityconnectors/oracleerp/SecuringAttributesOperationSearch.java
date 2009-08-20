@@ -41,7 +41,7 @@ import org.identityconnectors.framework.spi.operations.SearchOp;
  * @version $Revision 1.0$
  * @since 1.0
  */
-public class SecuringAttributesOperationSearch extends Operation implements SearchOp<FilterWhereBuilder> {
+final class SecuringAttributesOperationSearch extends Operation implements SearchOp<FilterWhereBuilder> {
     /**
      * Setup logging.
      */
@@ -50,9 +50,10 @@ public class SecuringAttributesOperationSearch extends Operation implements Sear
      * @param conn
      * @param cfg
      */
-    protected SecuringAttributesOperationSearch(OracleERPConnection conn, OracleERPConfiguration cfg) {
+    SecuringAttributesOperationSearch(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
     }
+    
     /* (non-Javadoc)
      * @see org.identityconnectors.framework.spi.operations.SearchOp#createFilterTranslator(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.OperationOptions)
      */
@@ -60,6 +61,7 @@ public class SecuringAttributesOperationSearch extends Operation implements Sear
         return new OracleERPFilterTranslator(oclass, options, CollectionUtil
         .newSet(new String[] { OracleERPUtil.NAME }), new BasicNameResolver());
     }
+    
     /* (non-Javadoc)
      * @see org.identityconnectors.framework.spi.operations.SearchOp#executeQuery(org.identityconnectors.framework.common.objects.ObjectClass, java.lang.Object, org.identityconnectors.framework.common.objects.ResultsHandler, org.identityconnectors.framework.common.objects.OperationOptions)
      */
@@ -77,7 +79,7 @@ public class SecuringAttributesOperationSearch extends Operation implements Sear
             pattern = _patt == null ? pattern : (String) _patt;
         }
         b.append("SELECT distinct akattrvl.NAME, fndappvl.APPLICATION_NAME ");
-        b.append("FROM " + cfg.app() + "AK_ATTRIBUTES_VL akattrvl, " + cfg.app()
+        b.append("FROM " + getCfg().app() + "AK_ATTRIBUTES_VL akattrvl, " + getCfg().app()
         + "FND_APPLICATION_VL fndappvl ");
         b.append("WHERE akattrvl.ATTRIBUTE_APPLICATION_ID = fndappvl.APPLICATION_ID ");
         b.append(" AND akattrvl.NAME LIKE '");
@@ -87,7 +89,7 @@ public class SecuringAttributesOperationSearch extends Operation implements Sear
         final String sql = b.toString();
         try {
             log.info("execute sql {0}", sql);
-            st = conn.prepareStatement(sql);
+            st = getConn().prepareStatement(sql);
             res = st.executeQuery();
             while (res.next()) {
                 StringBuilder sb = new StringBuilder();
@@ -104,9 +106,9 @@ public class SecuringAttributesOperationSearch extends Operation implements Sear
                 }
             }
         } catch (Exception e) {
-            final String msg1 = cfg.getMessage(MSG_COULD_NOT_EXECUTE, e.getMessage());
+            final String msg1 = getCfg().getMessage(MSG_COULD_NOT_EXECUTE, e.getMessage());
             log.error(e, msg1);
-            SQLUtil.rollbackQuietly(conn);
+            SQLUtil.rollbackQuietly(getConn());
             throw new ConnectorException(msg1, e);
         } finally {
             SQLUtil.closeQuietly(res);
@@ -114,7 +116,7 @@ public class SecuringAttributesOperationSearch extends Operation implements Sear
             SQLUtil.closeQuietly(st);
             st = null;
         }
-        conn.commit();
+        getConn().commit();
         log.info(method + " done");
     }
 }

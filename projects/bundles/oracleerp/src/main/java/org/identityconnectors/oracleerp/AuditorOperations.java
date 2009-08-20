@@ -58,7 +58,7 @@ final class AuditorOperations extends Operation {
      * @param conn
      * @param cfg
      */
-    protected AuditorOperations(OracleERPConnection conn, OracleERPConfiguration cfg) {
+    AuditorOperations(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
     }
 
@@ -168,7 +168,7 @@ final class AuditorOperations extends Operation {
 
         try {
 
-            st = conn.prepareStatement(b.toString());
+            st = getConn().prepareStatement(b.toString());
             st.setString(1, resp);
             st.setString(2, app);
             st.setString(3, resp);
@@ -264,9 +264,9 @@ final class AuditorOperations extends Operation {
             }// end-while
             // no catch, just use finally to ensure closes happen
         } catch (Exception e) {
-            final String msg = cfg.getMessage(MSG_COULD_NOT_READ);
+            final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
             log.error(e, msg);
-            SQLUtil.rollbackQuietly(conn);
+            SQLUtil.rollbackQuietly(getConn());
             throw new ConnectorException(msg, e);
         } finally {
             SQLUtil.closeQuietly(res);
@@ -291,7 +291,7 @@ final class AuditorOperations extends Operation {
             b.append(listToCommaDelimitedString(menuIds));
             b.append(") )");
             try {
-                st = conn.prepareStatement(b.toString());
+                st = getConn().prepareStatement(b.toString());
                 res = st.executeQuery();
                 while (res != null && res.next()) {
                     // get each functionId and use as key to find associated rw objects
@@ -330,9 +330,9 @@ final class AuditorOperations extends Operation {
 
                 // no catch, just use finally to ensure closes happen
             } catch (Exception e) {
-                final String msg = cfg.getMessage(MSG_COULD_NOT_READ);
+                final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
                 log.error(e, msg);
-                SQLUtil.rollbackQuietly(conn);
+                SQLUtil.rollbackQuietly(getConn());
                 throw new ConnectorException(msg, e);
             } finally {
                 SQLUtil.closeQuietly(res);
@@ -377,17 +377,17 @@ final class AuditorOperations extends Operation {
         amb.addAttribute(AUDITOR_RESPS, respNameConn);
 
         // check to see if SOB/ORGANIZATION is required
-        if (cfg.isReturnSobOrgAttrs()) {
+        if (getCfg().isReturnSobOrgAttrs()) {
             b = new StringBuilder();
             // query for SOB / Organization
             b.append("Select distinct ");
             b.append("decode(fpo1.user_profile_option_name, '");
             b.append(sobOption + "', fpo1.user_profile_option_name||'||'||gsob.name||'||'||gsob.set_of_books_id, '");
             b.append(ouOption + "', fpo1.user_profile_option_name||'||'||hou1.name||'||'||hou1.organization_id)");
-            b.append(" from " + cfg.app() + "fnd_responsibility_vl fr, " + cfg.app() + "fnd_profile_option_values fpov, "
-                    + cfg.app() + "fnd_profile_options fpo");
-            b.append(" , " + cfg.app() + "fnd_profile_options_vl fpo1, " + cfg.app() + "hr_organization_units hou1, "
-                    + cfg.app() + "gl_sets_of_books gsob");
+            b.append(" from " + getCfg().app() + "fnd_responsibility_vl fr, " + getCfg().app() + "fnd_profile_option_values fpov, "
+                    + getCfg().app() + "fnd_profile_options fpo");
+            b.append(" , " + getCfg().app() + "fnd_profile_options_vl fpo1, " + getCfg().app() + "hr_organization_units hou1, "
+                    + getCfg().app() + "gl_sets_of_books gsob");
             b
                     .append(" where fr.responsibility_id = fpov.level_value and gsob.set_of_books_id = fpov.profile_option_value");
             b
@@ -401,7 +401,7 @@ final class AuditorOperations extends Operation {
             log.info(method + ": Resp = " + curResp);
 
             try {
-                st = conn.prepareStatement(b.toString());
+                st = getConn().prepareStatement(b.toString());
                 st.setString(1, resp);
                 res = st.executeQuery();
 
@@ -422,9 +422,9 @@ final class AuditorOperations extends Operation {
                     }
                 }
             } catch (Exception e) {
-                final String msg = cfg.getMessage(MSG_COULD_NOT_READ);
+                final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
                 log.error(e, msg);
-                SQLUtil.rollbackQuietly(conn);
+                SQLUtil.rollbackQuietly(getConn());
             } finally {
                 SQLUtil.closeQuietly(res);
                 res = null;

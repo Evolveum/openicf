@@ -74,7 +74,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
      * @param conn
      * @param cfg
      */
-    protected AccountOperationSearch(OracleERPConnection conn, OracleERPConfiguration cfg) {
+    AccountOperationSearch(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
         respOps = new ResponsibilitiesOperations(conn, cfg);
         auditOps = new AuditorOperations(conn, cfg);
@@ -96,10 +96,10 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         final String method = "executeQuery";
         log.info(method);
 
-        final String tblname = cfg.app() + "fnd_user";
-        final Set<AttributeInfo> ais = getAttributeInfos(cfg.getSchema(), ObjectClass.ACCOUNT_NAME);
+        final String tblname = getCfg().app() + "fnd_user";
+        final Set<AttributeInfo> ais = getAttributeInfos(getCfg().getSchema(), ObjectClass.ACCOUNT_NAME);
         final Set<String> attributesToGet = getAttributesToGet(options, ais);
-        final Set<String> readable = getReadableAttributes(getAttributeInfos(cfg.getSchema(), ObjectClass.ACCOUNT_NAME));
+        final Set<String> readable = getReadableAttributes(getAttributeInfos(getCfg().getSchema(), ObjectClass.ACCOUNT_NAME));
         FilterWhereBuilder  whereFilter = where;
         // Where support
         if (whereFilter == null ) {
@@ -127,16 +127,16 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         String sqlSelect = query.getSQL();
 
         // Add active accounts and the accounts included filter
-        if (StringUtil.isNotBlank(cfg.getAccountsIncluded())) {
-            sqlSelect = whereAnd(sqlSelect, cfg.getAccountsIncluded());
-        } else if (cfg.isActiveAccountsOnly()) {
+        if (StringUtil.isNotBlank(getCfg().getAccountsIncluded())) {
+            sqlSelect = whereAnd(sqlSelect, getCfg().getAccountsIncluded());
+        } else if (getCfg().isActiveAccountsOnly()) {
             sqlSelect = whereAnd(sqlSelect, ACTIVE_ACCOUNTS_ONLY_WHERE_CLAUSE);
         }
 
         ResultSet resultSet = null;
         PreparedStatement statement = null;
         try {
-            statement = conn.prepareStatement(sqlSelect, query.getParams());
+            statement = getConn().prepareStatement(sqlSelect, query.getParams());
             resultSet = statement.executeQuery();
             while (resultSet.next()) {
                 AttributeMergeBuilder amb = new AttributeMergeBuilder(attributesToGet);
@@ -170,8 +170,8 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
                 bld.setUid(userName);
 
                 //get after user action
-                if (StringUtil.isNotBlank(cfg.getUserAfterActionScript())) {
-                    bld = new AccountOperationGetUserAfterAction(conn, cfg).runScriptOnConnector(userName, bld);
+                if (StringUtil.isNotBlank(getCfg().getUserAfterActionScript())) {
+                    bld = new AccountOperationGetUserAfterAction(getConn(), getCfg()).runScriptOnConnector(userName, bld);
                 }
 
                 if (!handler.handle(bld.build())) {
@@ -179,15 +179,15 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
                 }
             }
         } catch (Exception e) {
-            final String msg = cfg.getMessage(MSG_ACCOUNT_NOT_READ, filterId == null ? "" : filterId );
+            final String msg = getCfg().getMessage(MSG_ACCOUNT_NOT_READ, filterId == null ? "" : filterId );
             log.error(e, msg);
-            SQLUtil.rollbackQuietly(conn);
+            SQLUtil.rollbackQuietly(getConn());
             throw new ConnectorException(msg, e);
         } finally {
             SQLUtil.closeQuietly(resultSet);
             SQLUtil.closeQuietly(statement);
         }
-        conn.commit();
+        getConn().commit();
         log.info(method + " ok");
     }
 
@@ -314,7 +314,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         log.ok("buildPersonDetails for personId: {0}", personId);
 
         //Names to get filter
-        final String tblname = cfg.app() + "PER_PEOPLE_F";
+        final String tblname = getCfg().app() + "PER_PEOPLE_F";
         // For all account query there is no need to replace or quote anything
         final DatabaseQueryBuilder query = new DatabaseQueryBuilder(tblname, personColumns);
         final FilterWhereBuilder whereFilter = new FilterWhereBuilder();
@@ -328,7 +328,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         ResultSet result = null; // SQL query on person_id
         PreparedStatement statement = null; // statement that generates the query
         try {
-            statement = conn.prepareStatement(sqlSelect, query.getParams());
+            statement = getConn().prepareStatement(sqlSelect, query.getParams());
             result = statement.executeQuery();
             if (result != null) {
                 if (result.next()) {
@@ -340,9 +340,9 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             }
 
         } catch (Exception e) {
-            final String msg = cfg.getMessage(MSG_ACCOUNT_NOT_READ, personId);
+            final String msg = getCfg().getMessage(MSG_ACCOUNT_NOT_READ, personId);
             log.error(e, msg);
-            SQLUtil.rollbackQuietly(conn);
+            SQLUtil.rollbackQuietly(getConn());
             throw new ConnectorException(msg, e);
         } finally {
             SQLUtil.closeQuietly(result);
@@ -403,7 +403,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
      */
     private void buildResponsibilities(AttributeMergeBuilder amb, final String userName) {
 
-        if (!cfg.isNewResponsibilityViews() && amb.isInAttributesToGet(RESPS)) {
+        if (!getCfg().isNewResponsibilityViews() && amb.isInAttributesToGet(RESPS)) {
             log.info("buildResponsibilities from "+RESPS_TABLE);
             //add responsibilities
             final List<String> responsibilities = respOps.getResponsibilities(userName, RESPS_TABLE, false);
@@ -436,7 +436,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
      * @param userName
      */
     private void buildSecuringAttributes(AttributeMergeBuilder amb, final String userName) {
-        if (!cfg.isManageSecuringAttrs()) {
+        if (!getCfg().isManageSecuringAttrs()) {
             return;
         }
 
@@ -447,7 +447,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             }
         }
     }
-
+    
     /**
      * @param amb
      *            builder
@@ -455,7 +455,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
      *            id of the responsibility
      * @param filterId
      */
-    public void buildAuditorDataObject(AttributeMergeBuilder amb, String userName, String filterId) {
+    private void buildAuditorDataObject(AttributeMergeBuilder amb, String userName, String filterId) {
         if (filterId == null) {
             return;
         }
@@ -467,5 +467,6 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
                 auditOps.updateAuditorData(amb, activeRespName);
             }
         }
-    }
+    }    
+
 }

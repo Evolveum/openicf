@@ -46,7 +46,7 @@ import org.identityconnectors.framework.spi.operations.SearchOp;
  * @version $Revision 1.0$
  * @since 1.0
  */
-public class RespNamesOperationSearch extends Operation implements SearchOp<FilterWhereBuilder> {
+final class RespNamesOperationSearch extends Operation implements SearchOp<FilterWhereBuilder> {
     /**
      * Setup logging.
      */
@@ -59,7 +59,7 @@ public class RespNamesOperationSearch extends Operation implements SearchOp<Filt
      * @param conn
      * @param cfg
      */
-    public RespNamesOperationSearch(OracleERPConnection conn, OracleERPConfiguration cfg) {
+    RespNamesOperationSearch(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
         auditOps = new AuditorOperations(conn, cfg);
     }
@@ -80,7 +80,7 @@ public class RespNamesOperationSearch extends Operation implements SearchOp<Filt
         final String method = "executeQuery";
         log.info(method);
 
-        final Set<AttributeInfo> ais = getAttributeInfos(cfg.getSchema(), RESP_NAMES);
+        final Set<AttributeInfo> ais = getAttributeInfos(getCfg().getSchema(), RESP_NAMES);
         final Set<String> atg = getAttributesToGet(options, ais);
 
         PreparedStatement st = null;
@@ -88,8 +88,8 @@ public class RespNamesOperationSearch extends Operation implements SearchOp<Filt
         StringBuilder b = new StringBuilder();
 
         b.append("SELECT distinct fndrespvl.responsibility_name ");
-        b.append("FROM " + cfg.app() + "fnd_responsibility_vl fndrespvl, ");
-        b.append(cfg.app() + "fnd_application_vl fndappvl ");
+        b.append("FROM " + getCfg().app() + "fnd_responsibility_vl fndrespvl, ");
+        b.append(getCfg().app() + "fnd_application_vl fndappvl ");
         b.append("WHERE fndappvl.application_id = fndrespvl.application_id ");
 
         // Query support
@@ -101,7 +101,7 @@ public class RespNamesOperationSearch extends Operation implements SearchOp<Filt
         }
 
         try {
-            st = conn.prepareStatement(b.toString(), whereFilter.getParams());
+            st = getConn().prepareStatement(b.toString(), whereFilter.getParams());
             res = st.executeQuery();
             while (res.next()) {
 
@@ -123,9 +123,9 @@ public class RespNamesOperationSearch extends Operation implements SearchOp<Filt
                 }
             }
         } catch (Exception e) {
-            final String msg = cfg.getMessage(MSG_COULD_NOT_READ);
+            final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
             log.error(e, msg);
-            SQLUtil.rollbackQuietly(conn);
+            SQLUtil.rollbackQuietly(getConn());
             throw new ConnectorException(msg, e);
         } finally {
             SQLUtil.closeQuietly(res);
@@ -133,7 +133,7 @@ public class RespNamesOperationSearch extends Operation implements SearchOp<Filt
             SQLUtil.closeQuietly(st);
             st = null;
         }
-        conn.commit();
+        getConn().commit();
         log.info(method + " ok");
     }
 }

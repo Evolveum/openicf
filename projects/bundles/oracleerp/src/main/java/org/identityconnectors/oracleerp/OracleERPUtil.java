@@ -1,7 +1,5 @@
 /*
-
  * ====================
-
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  * 
  * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.     
@@ -25,7 +23,6 @@
 package org.identityconnectors.oracleerp;
 
 import java.math.BigInteger;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -47,10 +44,7 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
@@ -63,7 +57,7 @@ import org.identityconnectors.framework.common.objects.Uid;
  * @version $Revision 1.0$
  * @since 1.0
  */
-public class OracleERPUtil {
+class OracleERPUtil {
 
     /**
      * Setup logging.
@@ -159,12 +153,12 @@ public class OracleERPUtil {
     /**
      * Timeout
      */
-    public static final int ORACLE_TIMEOUT = 1800;
+    static final int ORACLE_TIMEOUT = 1800;
 
     /**
      * Default customer
      */
-    public static final String CUST = "CUST";
+    static final String CUST = "CUST";
 
     // Auditor Data Object
     static final String AUDITOR_RESPS = "auditorResps";
@@ -263,70 +257,30 @@ public class OracleERPUtil {
     /**
      * Only accounts where clause
      */
-    public static final String ACTIVE_ACCOUNTS_ONLY_WHERE_CLAUSE = "(START_DATE - SYSDATE <= 0) AND ((END_DATE IS NULL) OR (END_DATE - SYSDATE > 0))";
-    public static final String ACTIVE_PEOPLE_ONLY_WHERE_CLAUSE = "(EFFECTIVE_START_DATE - SYSDATE <= 0) and ((EFFECTIVE_END_DATE IS NULL) or (EFFECTIVE_END_DATE - SYSDATE > 0))";
+    static final String ACTIVE_ACCOUNTS_ONLY_WHERE_CLAUSE = "(START_DATE - SYSDATE <= 0) AND ((END_DATE IS NULL) OR (END_DATE - SYSDATE > 0))";
+    static final String ACTIVE_PEOPLE_ONLY_WHERE_CLAUSE = "(EFFECTIVE_START_DATE - SYSDATE <= 0) and ((EFFECTIVE_END_DATE IS NULL) or (EFFECTIVE_END_DATE - SYSDATE > 0))";
 
     
     /**
      * Scripting support
      * The default shell language
      */
-    public static final String GROOVY="GROOVY";
+    static final String GROOVY="GROOVY";
     
-    public static final String CONN = "conn";
-    public static final String ID = "id";
-    public static final String ATTRIBUTES = "attributes";
-    public static final String TIMING = "timing";
-    public static final String ACTION = "action";
-    public static final String OP_GET_USER = "getUser";
-    public static final String PASSWORD = "password";
-
-    /**
-     * @param conn connection 
-     * @param cfg configuration
-     * @param userName
-     * @return The UserId string value
-     */
-    public static String getUserId(OracleERPConnection conn, OracleERPConfiguration cfg, String userName) {
-        final String msg = "getUserId ''{0}'' -> ''{1}''";
-        String userId = null;
-        log.ok("get UserId for {0}", userName);
-        final String sql = "select " + USER_ID + " from " + cfg.app() + "FND_USER where upper(user_name) = ?";
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            ps = conn.prepareStatement(sql);
-            ps.setString(1, userName.toUpperCase());
-            rs = ps.executeQuery();
-            if (rs != null) {
-                if (rs.next()) {
-                    userId = rs.getString(1);
-                }
-                // rs closed in finally below
-            }
-        } catch (Exception e) {
-            log.error(e, sql);
-            throw ConnectorException.wrap(e);
-        } finally {
-            SQLUtil.closeQuietly(rs);
-            SQLUtil.closeQuietly(ps);
-        }
-        if (userId == null || userId == "") {
-            final String emsg = cfg.getMessage(MSG_USER_NOT_FOUND, userName);
-            log.error(emsg);
-            throw new IllegalStateException(emsg);
-        }
-        // pstmt closed in finally below
-        log.ok(msg, userName, userId);
-        return userId;
-    }
+    static final String CONN = "conn";
+    static final String ID = "id";
+    static final String ATTRIBUTES = "attributes";
+    static final String TIMING = "timing";
+    static final String ACTION = "action";
+    static final String OP_GET_USER = "getUser";
+    static final String PASSWORD = "password";
 
     /**
      * Get default attributes to get from schema
      * @param ais attribute info set
      * @return set of the 
      */
-    public static Set<String> getDefaultAttributesToGet(Set<AttributeInfo> ais) {
+    private static Set<String> getDefaultAttributesToGet(Set<AttributeInfo> ais) {
         Set<String> ret = CollectionUtil.newCaseInsensitiveSet();
         for (AttributeInfo ai : ais) {
             if (ai.isReturnedByDefault()) {
@@ -341,7 +295,7 @@ public class OracleERPUtil {
      * @param type
      * @return The attribute info set
      */
-    public static Set<AttributeInfo> getAttributeInfos(Schema schema, String type) {
+    static Set<AttributeInfo> getAttributeInfos(Schema schema, String type) {
         ObjectClassInfo oci = schema.findObjectClassInfo(type);
         if (oci == null) {
             throw new IllegalStateException("Unknown object type");
@@ -353,8 +307,9 @@ public class OracleERPUtil {
      * Get default attributes to get from schema
      * @param ais attribute info set
      * @return set of the 
+     * TODO not used, check in creation time
      */
-    public static Set<String> getCreatableAttributes(Set<AttributeInfo> ais) {
+    static Set<String> getCreatableAttributes(Set<AttributeInfo> ais) {
         Set<String> ret = CollectionUtil.newCaseInsensitiveSet();
         for (AttributeInfo ai : ais) {
             if (ai.isCreateable()) {
@@ -368,23 +323,9 @@ public class OracleERPUtil {
      * Get default attributes to get from schema
      * @param ais attribute info set
      * @return set of the 
+     * TODO test the updatable attributes
      */
-    public static Set<String> getRequiredAttributes(Set<AttributeInfo> ais) {
-        Set<String> ret = CollectionUtil.newCaseInsensitiveSet();
-        for (AttributeInfo ai : ais) {
-            if (ai.isRequired()) {
-                ret.add(ai.getName());
-            }
-        }
-        return ret;
-    }
-
-    /**
-     * Get default attributes to get from schema
-     * @param ais attribute info set
-     * @return set of the 
-     */
-    public static Set<String> getUpdatableAttributes(Set<AttributeInfo> ais) {
+    static Set<String> getUpdatableAttributes(Set<AttributeInfo> ais) {
         Set<String> ret = CollectionUtil.newCaseInsensitiveSet();
         for (AttributeInfo ai : ais) {
             if (ai.isUpdateable()) {
@@ -399,7 +340,7 @@ public class OracleERPUtil {
      * @param ais attribute info set
      * @return set of the 
      */
-    public static Set<String> getReadableAttributes(Set<AttributeInfo> ais) {
+    static Set<String> getReadableAttributes(Set<AttributeInfo> ais) {
         Set<String> ret = CollectionUtil.newCaseInsensitiveSet();
         for (AttributeInfo ai : ais) {
             if (ai.isReadable()) {
@@ -414,7 +355,7 @@ public class OracleERPUtil {
      * @param ais attribute info set
      * @return set of the 
      */
-    public static Set<String> getAllAttributes(Set<AttributeInfo> ais) {
+    private static Set<String> getAllAttributes(Set<AttributeInfo> ais) {
         Set<String> ret = CollectionUtil.newCaseInsensitiveSet();
         for (AttributeInfo ai : ais) {
             ret.add(ai.getName());
@@ -428,7 +369,7 @@ public class OracleERPUtil {
      * @param ais Attribute info set 
      * @return set of attribute names to get or empty set, when not defined
      */
-    public static Set<String> getAttributesToGet(OperationOptions options, Set<AttributeInfo> ais) {
+    static Set<String> getAttributesToGet(OperationOptions options, Set<AttributeInfo> ais) {
         final String msg = "getAttributesToGet";
         Set<String> allAttributes = getAllAttributes(ais);
         Set<String> _attrToGet;
@@ -438,7 +379,8 @@ public class OracleERPUtil {
                 if (allAttributes.contains(toGet)) {
                     _attrToGet.add(toGet);
                 } else {
-                    throw new IllegalArgumentException("Invalid attribute to get" + toGet);
+                   /* final String msg =  
+                    throw new IllegalArgumentException("Invalid attribute to get" + toGet);*/
                 }
             }
         } else {
@@ -452,73 +394,10 @@ public class OracleERPUtil {
     }
 
     /**
-     * Get The personId from employeNumber or NPW number
-     * @param name user identity
-     * @param conn connector
-     * @param cfg configuration
-     * @param attrs attributes 
-     * @return personid the id of the person
-     */
-    public static Integer getPersonId(String name, OracleERPConnection conn, OracleERPConfiguration cfg,
-            Set<Attribute> attrs) {
-        log.ok("getPersonId for userId: ''{0}''", name);
-        Integer ret = null;
-        int num = 0;
-        String columnName = null;
-        final Attribute empAttr = AttributeUtil.find(EMP_NUM, attrs);
-        final Attribute npwAttr = AttributeUtil.find(NPW_NUM, attrs);
-        if (empAttr != null) {
-            num = AttributeUtil.getIntegerValue(empAttr);
-            columnName = EMP_NUM;
-            log.ok("{0} present with value ''{1}''", columnName, num);
-        } else if (npwAttr != null) {
-            num = AttributeUtil.getIntegerValue(npwAttr);
-            columnName = NPW_NUM;
-            log.ok("{0} present with value ''{1}''", columnName, num);
-        } else {
-            log.ok("neither {0} not {1} attributes for personId are present", EMP_NUM, NPW_NUM);
-            return null;
-        }
-
-        log.ok("clomunName ''{0}''", columnName);
-        String sql = "select " + PERSON_ID + " from " + cfg.app() + "PER_PEOPLE_F where " + columnName + " = ?";        
-        sql = whereAnd(sql, ACTIVE_PEOPLE_ONLY_WHERE_CLAUSE);
-        ResultSet rs = null; // SQL query on person_id
-        PreparedStatement ps = null; // statement that generates the query
-        try {
-            ps = conn.prepareStatement(sql);
-            ps.setInt(1, num);
-            ps.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
-            rs = ps.executeQuery();
-            if (rs.next()) {
-                ret = rs.getInt(1);
-            }
-            log.ok("Oracle ERP: PERSON_ID return from {0} = {1}", sql, ret);
-
-            if (ret == null) {
-                final String msg = cfg.getMessage(MSG_HR_LINKING_ERROR, num, name);
-                log.error(msg);
-                throw new ConnectorException(msg);
-            }
-
-            log.ok("getPersonId for userId: ''{0}'' -> ''{1}''", name, ret);
-            return ret;
-        } catch (SQLException e) {
-            log.error(e, sql);
-            throw ConnectorException.wrap(e);
-        } finally {
-            SQLUtil.closeQuietly(rs);
-            rs = null;
-            SQLUtil.closeQuietly(ps);
-            ps = null;
-        }
-    }
-
-    /**
      * @param dateString
      * @return the timestamp
      */
-    public static Timestamp stringToTimestamp(final String dateString) {
+    static Timestamp stringToTimestamp(final String dateString) {
         Timestamp tms;
         try {
             tms = Timestamp.valueOf(dateString);
@@ -536,7 +415,7 @@ public class OracleERPUtil {
      * @param dateString
      * @return the timestamp
      */
-    public static Date stringToDate(final String dateString) {
+    private static Date stringToDate(final String dateString) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Date date = null;
 
@@ -563,7 +442,7 @@ public class OracleERPUtil {
      * @param whereAnd
      * @return and string
      */
-    public static String whereAnd(String sqlSelect, String whereAnd) {
+    static String whereAnd(String sqlSelect, String whereAnd) {
         int iofw = sqlSelect.toUpperCase().indexOf("WHERE");
         return (iofw == -1) ? sqlSelect + " WHERE " + whereAnd : sqlSelect.substring(0, iofw) + "WHERE ( "
                 + sqlSelect.substring(iofw + 5) + " ) AND ( " + whereAnd + " )";
@@ -575,7 +454,7 @@ public class OracleERPUtil {
      * @return The transformed attribute set
      * @throws SQLException 
      */
-    public static Map<String, SQLParam> getColumnValues(ResultSet resultSet) throws SQLException {
+    static Map<String, SQLParam> getColumnValues(ResultSet resultSet) throws SQLException {
         Assertions.nullCheck(resultSet, "resultSet");
         Map<String, SQLParam> ret = CollectionUtil.<SQLParam> newCaseInsensitiveMap();
         final ResultSetMetaData meta = resultSet.getMetaData();
@@ -604,7 +483,7 @@ public class OracleERPUtil {
      * @return the resulted string
      * @throws java.sql.SQLException
      */
-    public static String getColumn(ResultSet result, int col) throws java.sql.SQLException {
+    static String getColumn(ResultSet result, int col) throws java.sql.SQLException {
         String s = result.getString(col);
         if (s != null)
             s = s.trim();
@@ -616,7 +495,7 @@ public class OracleERPUtil {
      * @param columnValues
      * @return long  value
      */
-    public static Long extractLong(String name, Map<String, SQLParam> columnValues) {
+    static Long extractLong(String name, Map<String, SQLParam> columnValues) {
         //enable date
         final SQLParam param = columnValues.get(name);
         if (param == null) {
@@ -648,7 +527,7 @@ public class OracleERPUtil {
      * @param columnValues
      * @return date value
      */
-    public static Date extractDate(String name, Map<String, SQLParam> columnValues) {
+    static Date extractDate(String name, Map<String, SQLParam> columnValues) {
         //enable date
         final SQLParam param = columnValues.get(name);
         if (param == null) {
@@ -673,7 +552,7 @@ public class OracleERPUtil {
      * @param strDate string date
      * @return normalized date
      */
-    public static String normalizeStrDate(String strDate) {
+    static String normalizeStrDate(String strDate) {
         final String method = "normalizeStrDate ''{0}'' -> ''{1}''";
         String retDate = strDate;
         if ((strDate == null) || strDate.equalsIgnoreCase("null")) {
@@ -691,7 +570,7 @@ public class OracleERPUtil {
      * @return sql date type
      * 
      */
-    public static java.sql.Date getCurrentDate() {
+    static java.sql.Date getCurrentDate() {
         final String method = "getCurrentDate ''{0}''";
         Calendar rightNow = Calendar.getInstance();
         java.util.Date utilDate = rightNow.getTime();
@@ -700,49 +579,11 @@ public class OracleERPUtil {
     }
 
     /**
-     * Add a quoted string to a SQL statement we're building in a buffer. If the attribute might be an integer, then
-     * call addAttributeValue() instead, which factors in the syntax of the attribute when determining whether or not to
-     * quote the value.
-     * @param b buffer
-     * @param s string to be quoted
-     */
-    public static void addQuoted(StringBuilder b, String s) {
-        final String method = "addQuoted ''{0}''";
-        log.ok(method, s);
-        b.append("'");
-        if (s != null) {
-            for (int i = 0; i < s.length(); i++) {
-                char ch = s.charAt(i);
-                if (ch == '\'')
-                    b.append("''");
-                else
-                    b.append(ch);
-            }
-        }
-        b.append("'");
-    }
-
-    /**
-     * @param userParamMap map
-     * @param paramName param Name
-     * @return the String parameter
-     */
-    public static String getStringParamValue(final Map<String, SQLParam> userParamMap, final String paramName) {
-        final String method = "getStringParamValue ''{0}''";
-        log.ok(method, paramName);
-        final SQLParam param = userParamMap.get(paramName);
-        if (param == null || !(param.getValue() instanceof String))
-            return null;
-        final String ret = (String) param.getValue();
-        return ret;
-    }
-
-    /**
      * Convert to strings
      * @param from 
      * @return list of strings
      */
-    public static List<String> convertToListString(List<Object> from) {
+    static List<String> convertToListString(List<Object> from) {
         final String method = "convertToListString";
         log.ok(method);
         //Convert to list of Strings
@@ -757,7 +598,7 @@ public class OracleERPUtil {
      * @param list
      * @return The string value
      */
-    public static String listToCommaDelimitedString(List<String> list) {
+    static String listToCommaDelimitedString(List<String> list) {
         final String method = "listToCommaDelimitedString";
         log.ok(method);
         StringBuilder ret = new StringBuilder();
@@ -775,7 +616,7 @@ public class OracleERPUtil {
      * @param where
      * @return the id from the current statement 
      */
-    public static String getFilterId(FilterWhereBuilder where) {
+    static String getFilterId(FilterWhereBuilder where) {
         String filterId = null;
         if (where != null) {
             for (SQLParam sqlp : where.getParams()) {
@@ -786,18 +627,4 @@ public class OracleERPUtil {
         }
         return filterId;
     }
-
-    // The SQL call update function SQL template
-    private static final String FND_USER_CALL = "fnd_user_pkg.";
-
-    /**
-     * @param schemaId
-     * @param fn
-     * @param body
-     * @return The SQL string
-     */
-    public static String createCallSQL(String schemaId, final String fn, StringBuilder body) {
-        return "{ call " + schemaId + FND_USER_CALL + fn + " ( " + body.toString() + " ) }";
-    }
-
 }

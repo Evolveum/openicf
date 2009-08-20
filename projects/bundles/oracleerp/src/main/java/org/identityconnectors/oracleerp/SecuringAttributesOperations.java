@@ -56,19 +56,17 @@ final class SecuringAttributesOperations extends Operation {
      * @param conn
      * @param cfg
      */
-    protected SecuringAttributesOperations(OracleERPConnection conn, OracleERPConfiguration cfg) {
+    SecuringAttributesOperations(OracleERPConnection conn, OracleERPConfiguration cfg) {
         super(conn, cfg);
     }
 
     /**
-     *
      *
      * @param secAttr
      * @param userName
      *
      *             Interesting thing here is that a user can have exact duplicate securing attributes, as crazy as that
      *             sounds, they just show up multiple times in the native gui.
-     *
      *             Since there is no available key, we will delete all and add all new ones
      *
      */
@@ -76,7 +74,7 @@ final class SecuringAttributesOperations extends Operation {
         final String method = "updateUserSecuringAttrs";
         log.info(method);
 
-        final String userId=getUserId(conn, cfg, userName);
+        final String userId=getUserId(userName);
 
         //Convert to list of Strings
         final List<String> secAttrList = convertToListString(secAttr.getValue());
@@ -151,7 +149,7 @@ final class SecuringAttributesOperations extends Operation {
                 value = value.trim();
             }
         } else {
-            final String msg1 = cfg.getMessage(MSG_INVALID_SECURING_ATTRIBUTE, secAttr);
+            final String msg1 = getCfg().getMessage(MSG_INVALID_SECURING_ATTRIBUTE, secAttr);
             log.error(msg1);
             throw new ConnectorException(msg1);
         }
@@ -172,7 +170,7 @@ final class SecuringAttributesOperations extends Operation {
                     + " AND fndapplvl.application_name = ? AND akattrvl.attribute_code = akattr.attribute_code "
                     + " AND akattr.ATTRIBUTE_APPLICATION_ID = fndapplvl.application_id";
 
-            pstmt = conn.prepareStatement(sqlSelect);
+            pstmt = getConn().prepareStatement(sqlSelect);
             pstmt.setString(1, attributeName);
             pstmt.setString(2, applicationName);
             rs = pstmt.executeQuery();
@@ -186,9 +184,9 @@ final class SecuringAttributesOperations extends Operation {
             }
             // pstmt closed in finally below
 
-            final String sqlCall = "{ call " + cfg.app()
+            final String sqlCall = "{ call " + getCfg().app()
                     + "icx_user_sec_attr_pub.create_user_sec_attr(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
-            cstmt1 = conn.prepareCall(sqlCall);
+            cstmt1 = getConn().prepareCall(sqlCall);
 
             cstmt1.setInt(1, 1);
             cstmt1.setNull(2, java.sql.Types.VARCHAR);
@@ -232,12 +230,12 @@ final class SecuringAttributesOperations extends Operation {
             } else {
                 cstmt1.setNull(14, java.sql.Types.NUMERIC);
             }
-            cstmt1.setInt(15, cfg.getAdminUserId());
+            cstmt1.setInt(15, getCfg().getAdminUserId());
             java.sql.Date sqlDate = getCurrentDate();
             cstmt1.setDate(16, sqlDate);
-            cstmt1.setInt(17, cfg.getAdminUserId());
+            cstmt1.setInt(17, getCfg().getAdminUserId());
             cstmt1.setDate(18, sqlDate);
-            cstmt1.setInt(19, cfg.getAdminUserId());
+            cstmt1.setInt(19, getCfg().getAdminUserId());
 
 
             cstmt1.execute();
@@ -245,9 +243,9 @@ final class SecuringAttributesOperations extends Operation {
             log.info(method + " done");
 
         } catch (Exception ex) {
-            final String msg1 = cfg.getMessage(MSG_COULD_NOT_EXECUTE, ex.getMessage());
+            final String msg1 = getCfg().getMessage(MSG_COULD_NOT_EXECUTE, ex.getMessage());
             log.error(ex, msg1);
-            SQLUtil.rollbackQuietly(conn);
+            SQLUtil.rollbackQuietly(getConn());
             throw new ConnectorException(msg1, ex);
         } finally {
             SQLUtil.closeQuietly(rs);
@@ -300,7 +298,7 @@ final class SecuringAttributesOperations extends Operation {
                 value = value.trim();
             }
         } else {
-            final String msg1 = cfg.getMessage(MSG_INVALID_SECURING_ATTRIBUTE, secAttr);
+            final String msg1 = getCfg().getMessage(MSG_INVALID_SECURING_ATTRIBUTE, secAttr);
             log.error(msg1);
             throw new ConnectorException(msg1);
         }
@@ -320,7 +318,7 @@ final class SecuringAttributesOperations extends Operation {
                     + " AND fndapplvl.application_name = ? AND akattrvl.attribute_code = akattr.attribute_code "
                     + " AND akattr.ATTRIBUTE_APPLICATION_ID = fndapplvl.application_id";
 
-            pstmt = conn.prepareStatement(sqlSelect);
+            pstmt = getConn().prepareStatement(sqlSelect);
             pstmt.setString(1, attributeName);
             pstmt.setString(2, applicationName);
             rs = pstmt.executeQuery();
@@ -333,8 +331,8 @@ final class SecuringAttributesOperations extends Operation {
                 // rs closed in finally below
             }
             // pstmt closed in finally below
-            final String sqlCall = "{ call " + cfg.app() + "icx_user_sec_attr_pub.delete_user_sec_attr(?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
-            cstmt1 = conn.prepareCall(sqlCall);
+            final String sqlCall = "{ call " + getCfg().app() + "icx_user_sec_attr_pub.delete_user_sec_attr(?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
+            cstmt1 = getConn().prepareCall(sqlCall);
 
             cstmt1.setInt(1, 1);
             cstmt1.setNull(2, java.sql.Types.VARCHAR);
@@ -379,9 +377,9 @@ final class SecuringAttributesOperations extends Operation {
             // cstmt1 closed in finally below
 
         } catch (Exception e) {
-            final String msg1 = cfg.getMessage(MSG_COULD_NOT_EXECUTE, e.getMessage());
+            final String msg1 = getCfg().getMessage(MSG_COULD_NOT_EXECUTE, e.getMessage());
             log.error(e, msg1);
-            SQLUtil.rollbackQuietly(conn);
+            SQLUtil.rollbackQuietly(getConn());
             throw new ConnectorException(msg1, e);
         } finally {
             SQLUtil.closeQuietly(rs);
@@ -411,14 +409,14 @@ final class SecuringAttributesOperations extends Operation {
         if (userName != null) {
             b.append(", akwebsecattr.VARCHAR2_VALUE, akwebsecattr.DATE_VALUE, akwebsecattr.NUMBER_VALUE ");
         }
-        b.append("FROM " + cfg.app() + "AK_ATTRIBUTES_VL akattrvl, " + cfg.app()
+        b.append("FROM " + getCfg().app() + "AK_ATTRIBUTES_VL akattrvl, " + getCfg().app()
                 + "FND_APPLICATION_VL fndappvl ");
         // conditionalize including AK_WEB_USER_SEC_ATTR_VALUES in the FROM
         // list, has significant performance impact when present but not
         // referenced.
         if (userName !=  null) {
-            b.append(", " + cfg.app() + "AK_WEB_USER_SEC_ATTR_VALUES akwebsecattr, ");
-            b.append(cfg.app() + "FND_USER fnduser ");
+            b.append(", " + getCfg().app() + "AK_WEB_USER_SEC_ATTR_VALUES akwebsecattr, ");
+            b.append(getCfg().app() + "FND_USER fnduser ");
         }
 
         b.append("WHERE akattrvl.ATTRIBUTE_APPLICATION_ID = fndappvl.APPLICATION_ID ");
@@ -437,7 +435,7 @@ final class SecuringAttributesOperations extends Operation {
         List<String> arrayList = new ArrayList<String>();
         final String sql = b.toString();
         try {
-            st = conn.prepareStatement(sql);
+            st = getConn().prepareStatement(sql);
             if ( userName != null) {
                 st.setString(1, userName.toUpperCase());
             }
@@ -465,9 +463,9 @@ final class SecuringAttributesOperations extends Operation {
                 arrayList.add(sb.toString());
             }
         } catch (Exception e) {
-            final String msg1 = cfg.getMessage(MSG_COULD_NOT_EXECUTE, e.getMessage());
+            final String msg1 = getCfg().getMessage(MSG_COULD_NOT_EXECUTE, e.getMessage());
             log.error(e, msg1);
-            SQLUtil.rollbackQuietly(conn);
+            SQLUtil.rollbackQuietly(getConn());
             throw new ConnectorException(msg1, e);
         } finally {
             SQLUtil.closeQuietly(res);
@@ -478,6 +476,45 @@ final class SecuringAttributesOperations extends Operation {
         log.info(method + " done");
         return arrayList;
     }
+    
+    /**
+     * Get user id from the user name
+     * @param userName
+     * @return The UserId string value
+     */
+     String getUserId(String userName) {
+        final String msg = "getUserId ''{0}'' -> ''{1}''";
+        String userId = null;
+        log.ok("get UserId for {0}", userName);
+        final String sql = "select " + USER_ID + " from " + getCfg().app() + "FND_USER where upper(user_name) = ?";
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            ps = getConn().prepareStatement(sql);
+            ps.setString(1, userName.toUpperCase());
+            rs = ps.executeQuery();
+            if (rs != null) {
+                if (rs.next()) {
+                    userId = rs.getString(1);
+                }
+                // rs closed in finally below
+            }
+        } catch (Exception e) {
+            log.error(e, sql);
+            throw ConnectorException.wrap(e);
+        } finally {
+            SQLUtil.closeQuietly(rs);
+            SQLUtil.closeQuietly(ps);
+        }
+        if (userId == null || userId == "") {
+            final String emsg = getCfg().getMessage(MSG_USER_NOT_FOUND, userName);
+            log.error(emsg);
+            throw new IllegalStateException(emsg);
+        }
+        // pstmt closed in finally below
+        log.ok(msg, userName, userId);
+        return userId;
+    }    
 
 
 }
