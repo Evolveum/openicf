@@ -214,8 +214,8 @@ namespace Org.IdentityConnectors.Exchange
             }
 
             // prepare the command            
-            Command cmdEnable = ExchangeUtility.GetCommand(cmdInfoEnable, attributes);
-            Command cmdSet = ExchangeUtility.GetCommand(cmdInfoSet, attributes);
+            Command cmdEnable = ExchangeUtility.GetCommand(cmdInfoEnable, attributes, this.configuration);
+            Command cmdSet = ExchangeUtility.GetCommand(cmdInfoSet, attributes, this.configuration);
 
             try
             {
@@ -312,11 +312,11 @@ namespace Org.IdentityConnectors.Exchange
                     if (origRcptType != rcptType)
                     {
                         Command cmdEnable = ExchangeUtility.GetCommand(
-                                PSExchangeConnector.CommandInfo.EnableMailUser, attributes);
+                                PSExchangeConnector.CommandInfo.EnableMailUser, attributes, this.configuration);
                         this.InvokePipeline(cmdEnable);
                     }
 
-                    Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetMailUser, attributes);
+                    Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetMailUser, attributes, this.configuration);
                     this.InvokePipeline(cmdSet);
                 }
                 else
@@ -337,7 +337,7 @@ namespace Org.IdentityConnectors.Exchange
                 string origDatabase = psuser.Members[AttDatabase] != null ? psuser.Members[AttDatabase].Value.ToString() : null;
                 if (origRcptType != rcptType)
                 {
-                    Command cmdEnable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.EnableMailbox, attributes);
+                    Command cmdEnable = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.EnableMailbox, attributes, this.configuration);
                     this.InvokePipeline(cmdEnable);
                 }
                 else
@@ -351,7 +351,7 @@ namespace Org.IdentityConnectors.Exchange
                     }
                 }
 
-                Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetMailbox, attributes);
+                Command cmdSet = ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.SetMailbox, attributes, this.configuration);
                 this.InvokePipeline(cmdSet);
             }
             else if (rcptType == RcptTypeUser && origRcptType != rcptType)
@@ -740,7 +740,7 @@ namespace Org.IdentityConnectors.Exchange
             ICollection<ConnectorAttribute> attributes = new Collection<ConnectorAttribute> { cobject.Name };
 
             // get the command
-            Command cmd = ExchangeUtility.GetCommand(cmdInfo, attributes);
+            Command cmd = ExchangeUtility.GetCommand(cmdInfo, attributes, this.configuration);
             ICollection<PSObject> foundObjects = this.InvokePipeline(cmd);
             PSObject user = null;
             if (foundObjects != null && foundObjects.Count == 1)
@@ -774,11 +774,11 @@ namespace Org.IdentityConnectors.Exchange
             // get detailed information            
             if (rcptType == RcptTypeMailBox)
             {
-                foundObjects = this.InvokePipeline(ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.GetMailbox, attributes));
+                foundObjects = this.InvokePipeline(ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.GetMailbox, attributes, this.configuration));
             }
             else if (rcptType == RcptTypeMailUser)
             {
-                foundObjects = this.InvokePipeline(ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.GetMailUser, attributes));
+                foundObjects = this.InvokePipeline(ExchangeUtility.GetCommand(PSExchangeConnector.CommandInfo.GetMailUser, attributes, this.configuration));
             }
 
             if (foundObjects != null && foundObjects.Count == 1)
@@ -810,6 +810,12 @@ namespace Org.IdentityConnectors.Exchange
         {
             try
             {
+                Trace.TraceInformation("PowerShell Command: " + cmd);
+                foreach (CommandParameter parameter in cmd.Parameters)
+                {
+                    Trace.TraceInformation("parameter: " + parameter.Name + " value:" + parameter.Value);
+                }
+
                 return this.runspace.InvokePipeline(cmd);
             }
             catch (Exception e)
@@ -865,7 +871,7 @@ namespace Org.IdentityConnectors.Exchange
             string name = ExchangeUtility.GetAttValue(Name.NAME, attributes) as string;
             ExchangeUtility.NullCheck(name, "User name", this.configuration);
 
-            Command cmdUser = ExchangeUtility.GetCommand(cmdInfo, attributes);
+            Command cmdUser = ExchangeUtility.GetCommand(cmdInfo, attributes, this.configuration);
             ICollection<PSObject> users = this.InvokePipeline(cmdUser);
             if (users.Count == 1)
             {

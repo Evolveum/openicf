@@ -684,8 +684,24 @@ namespace Org.IdentityConnectors.ActiveDirectory
                         configuration.DirectoryAdminPassword);
                 controller = DomainController.GetDomainController(context);
             }
-            
+
             return controller;
+        }
+
+        public static string GetDomainControllerName(ActiveDirectoryConfiguration configuration)
+        {
+            string serverName = configuration.LDAPHostName;
+            if (string.IsNullOrEmpty(serverName))
+            {
+                // serverless
+                using (DirectoryEntry rootDe = new DirectoryEntry("LDAP://RootDSE",
+                    configuration.DirectoryAdminName, configuration.DirectoryAdminPassword))
+                {
+                    serverName = rootDe.Properties["dnsHostName"].Value as string;
+                }
+            }
+
+            return serverName;
         }
 
         internal ActiveDirectorySchema GetADSchema()

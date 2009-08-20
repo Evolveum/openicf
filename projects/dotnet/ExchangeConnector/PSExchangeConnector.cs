@@ -106,13 +106,13 @@ namespace Org.IdentityConnectors.Exchange
                 if (oclass.Is(MailboxName))
                 {
                     // enable mailbox for person
-                    Command cmd = ExchangeUtility.GetCommand(CommandInfo.EnableMailbox, attributes);
+                    Command cmd = ExchangeUtility.GetCommand(CommandInfo.EnableMailbox, attributes, this.configuration);
                     this.runspace.InvokePipeline(cmd);
                 }
                 else if (oclass.Is(MailUserName))
                 {
                     // enable mailuser
-                    Command cmd = ExchangeUtility.GetCommand(CommandInfo.EnableMailUser, attributes);
+                    Command cmd = ExchangeUtility.GetCommand(CommandInfo.EnableMailUser, attributes, this.configuration);
                     this.runspace.InvokePipeline(cmd);                    
                 }
 

@@ -175,9 +175,12 @@ namespace Org.IdentityConnectors.Exchange
         /// </summary>
         /// <param name="cmdInfo">Command defition</param>
         /// <param name="attributes">Attribute values</param>
-        /// <returns>Ready to execute Command</returns>             
+        /// <param name="config">Configuration object</param>
+        /// <returns>
+        /// Ready to execute Command
+        /// </returns>
         /// <exception cref="ArgumentNullException">if some of the param is null</exception>
-        internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, ICollection<ConnectorAttribute> attributes)
+        internal static Command GetCommand(PSExchangeConnector.CommandInfo cmdInfo, ICollection<ConnectorAttribute> attributes, ExchangeConfiguration config)
         {
             Assertions.NullCheck(cmdInfo, "cmdInfo");
             Assertions.NullCheck(attributes, "attributes");
@@ -198,10 +201,16 @@ namespace Org.IdentityConnectors.Exchange
             foreach (string attName in cmdInfo.Parameters)
             {
                 object val = GetAttValue(attName, attributes);
+                if (val == null && attName.Equals("DomainController"))
+                {
+                    // add domain controller if not provided
+                    val = ActiveDirectoryUtils.GetDomainControllerName(config);
+                }
+
                 if (val != null)
                 {
                     cmd.Parameters.Add(attName, val);
-                }
+                }                  
             }
 
             return cmd;
