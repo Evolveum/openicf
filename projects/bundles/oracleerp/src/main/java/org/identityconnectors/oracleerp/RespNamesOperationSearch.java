@@ -81,7 +81,7 @@ final class RespNamesOperationSearch extends Operation implements SearchOp<Filte
         log.info(method);
 
         final Set<AttributeInfo> ais = getAttributeInfos(getCfg().getSchema(), RESP_NAMES);
-        final Set<String> atg = getAttributesToGet(options, ais);
+        final Set<String> atg = getAttributesToGet(options, ais, getCfg());
 
         PreparedStatement st = null;
         ResultSet res = null;

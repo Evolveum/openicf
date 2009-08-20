@@ -199,6 +199,9 @@ class OracleERPUtil {
     static final String MSG_FAILED_DELETE_RESP = "msg.failed.delete.responsibility";
     static final String MSG_FAILED_UPDATE_RESP = "msg.failed.update.responsibility";
     static final String MSG_INVALID_SECURING_ATTRIBUTE = "msg.invalid.securing.attribute";
+    static final String MSG_UNSUPPORTED_ATTRIBUTE = "msg.unsupported.attribute";
+
+    
 
     /**
      * object class name definitions
@@ -367,9 +370,10 @@ class OracleERPUtil {
      * Get attributes to get list
      * @param options
      * @param ais Attribute info set 
+     * @param cfg the messsage
      * @return set of attribute names to get or empty set, when not defined
      */
-    static Set<String> getAttributesToGet(OperationOptions options, Set<AttributeInfo> ais) {
+    static Set<String> getAttributesToGet(OperationOptions options, Set<AttributeInfo> ais, Messages cfg) {
         final String msg = "getAttributesToGet";
         Set<String> allAttributes = getAllAttributes(ais);
         Set<String> _attrToGet;
@@ -379,8 +383,8 @@ class OracleERPUtil {
                 if (allAttributes.contains(toGet)) {
                     _attrToGet.add(toGet);
                 } else {
-                   /* final String msg =  
-                    throw new IllegalArgumentException("Invalid attribute to get" + toGet);*/
+                    final String errmsg = cfg.getMessage(MSG_UNSUPPORTED_ATTRIBUTE, toGet);  
+                    throw new IllegalArgumentException(errmsg);
                 }
             }
         } else {

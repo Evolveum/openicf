@@ -42,7 +42,7 @@ import org.identityconnectors.framework.spi.ConfigurationProperty;
  * @version 1.0
  * @since 1.0
  */
-final public class OracleERPConfiguration extends AbstractConfiguration {
+final public class OracleERPConfiguration extends AbstractConfiguration implements Messages {
 
 
     /**
@@ -567,7 +567,7 @@ final public class OracleERPConfiguration extends AbstractConfiguration {
      *
      * @return the respId
      */
-    public String getRespId() {
+    String getRespId() {
         return respId;
     }
 
@@ -589,7 +589,7 @@ final public class OracleERPConfiguration extends AbstractConfiguration {
      *
      * @return the respApplId
      */
-    public String getRespApplId() {
+    String getRespApplId() {
         return respApplId;
     }
 
@@ -659,7 +659,7 @@ final public class OracleERPConfiguration extends AbstractConfiguration {
      * Accessor for the userId property
      * @return the userId
      */
-    public String getUserId() {
+    String getUserId() {
         return userId;
     }
 
@@ -674,7 +674,7 @@ final public class OracleERPConfiguration extends AbstractConfiguration {
      * Accessor for the adminUserId property
      * @return the adminUserId
      */
-    public int getAdminUserId() {
+    int getAdminUserId() {
         try {
             log.info("The adminUserId is : {0} ", userId);
             return new Integer(userId).intValue();
@@ -693,7 +693,7 @@ final public class OracleERPConfiguration extends AbstractConfiguration {
      * Accessor for the schema property
      * @return the schema
      */
-    public Schema getSchema() {
+    Schema getSchema() {
         return schema;
     }
 
@@ -767,10 +767,8 @@ final public class OracleERPConfiguration extends AbstractConfiguration {
     }
 
 
-    /**
-     * Format the connector message
-     * @param key key of the message
-     * @return return the formated message
+    /* (non-Javadoc)
+     * @see org.identityconnectors.oracleerp.Messages#getMessage(java.lang.String)
      */
     public String getMessage(String key) {
         String fmt = key;
@@ -782,11 +780,8 @@ final public class OracleERPConfiguration extends AbstractConfiguration {
         return fmt;
     }
 
-    /**
-     * Format message with arguments
-     * @param key key of the message
-     * @param objects arguments
-     * @return the localized message string
+    /* (non-Javadoc)
+     * @see org.identityconnectors.oracleerp.Messages#getMessage(java.lang.String, java.lang.Object)
      */
     public String getMessage(String key, Object... objects) {
         String fmt = key;
@@ -803,7 +798,7 @@ final public class OracleERPConfiguration extends AbstractConfiguration {
      * see the bug id. 19352
      * @return The "APPL." or empty, if noSchemaId is true
      */
-    public String app() {
+    String app() {
         if(isNoSchemaId()) return "";
         return getUser().trim().toUpperCase()+".";
     }

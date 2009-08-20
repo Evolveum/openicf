@@ -100,7 +100,7 @@ final class AuditorOperationSearch extends Operation implements SearchOp<FilterW
         activeRespsOnly);
         for (String respName : auditorRespList) {
             final Set<AttributeInfo> ais = getAttributeInfos(getCfg().getSchema(), AUDITOR_RESPS);
-            final AttributeMergeBuilder amb = new AttributeMergeBuilder(getAttributesToGet(options, ais));
+            final AttributeMergeBuilder amb = new AttributeMergeBuilder(getAttributesToGet(options, ais, getCfg()));
             auditOps.updateAuditorData(amb, respName);
             ConnectorObjectBuilder bld = new ConnectorObjectBuilder();
             bld.setObjectClass(AUDITOR_RESPS_OC);

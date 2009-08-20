@@ -98,7 +98,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
 
         final String tblname = getCfg().app() + "fnd_user";
         final Set<AttributeInfo> ais = getAttributeInfos(getCfg().getSchema(), ObjectClass.ACCOUNT_NAME);
-        final Set<String> attributesToGet = getAttributesToGet(options, ais);
+        final Set<String> attributesToGet = getAttributesToGet(options, ais, getCfg());
         final Set<String> readable = getReadableAttributes(getAttributeInfos(getCfg().getSchema(), ObjectClass.ACCOUNT_NAME));
         FilterWhereBuilder  whereFilter = where;
         // Where support
