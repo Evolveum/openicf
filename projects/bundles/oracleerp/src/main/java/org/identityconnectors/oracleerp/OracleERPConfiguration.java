@@ -516,6 +516,53 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
     }
 
     /**
+     * CLIENT_ENCRYPTION_ALGORITHMS
+     * old name = encryptionTypesClient, oracle.net.encryption_types_client
+     */
+    private String clientEncryptionType = "";
+    
+    /**
+     * Getter
+     * @return clientEncryptionType value
+     */
+    public String getClientEncryptionType() {
+        return clientEncryptionType;
+    }
+
+    /**
+     * Setter
+     * @param clientEncryptionType
+     */
+    @ConfigurationProperty(order=17 ,displayMessageKey="CLIENT_ENCRYPTION_ALGORITHMS_DISPLAY", helpMessageKey="CLIENT_ENCRYPTION_ALGORITHMS_HELP")
+    public void setClientEncryptionType(String clientEncryptionType) {
+        this.clientEncryptionType = clientEncryptionType;
+    }
+
+    /**
+     * CLIENT_ENCRYPTION_LEVEL
+     * old name = encryptionClient, oracle.net.encryption_client
+     */
+    private String clientEncryptionLevel = "";    
+
+    /**
+     * Getter
+     * @return clientEncryptionLevel value
+     */
+    public String getClientEncryptionLevel() {
+        return clientEncryptionLevel;
+    }
+
+    /**
+     * Setter
+     * @param clientEncryptionLevel
+     */
+    @ConfigurationProperty(order=18 ,displayMessageKey="CLIENT_ENCRYPTION_LEVEL_DISPLAY", helpMessageKey="CLIENT_ENCRYPTION_LEVEL_HELP")
+    public void setClientEncryptionLevel(String clientEncryptionLevel) {
+        this.clientEncryptionLevel = clientEncryptionLevel;
+    }
+
+
+    /**
      * This should be replaced by script attributes
      */
     private String userAfterActionScript;    
@@ -524,12 +571,12 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
     public String getUserAfterActionScript() {
         return userAfterActionScript;
     }
-    
+        
     /**
      * Set the user after action script 
      * @param userGetUserAfterActionScript
      */
-    @ConfigurationProperty(order=17 ,displayMessageKey="USER_AFTER_ACTION_SCRIPT_DISPLAY", helpMessageKey="USER_AFTER_ACTION_SCRIPT_HELP")
+    @ConfigurationProperty(order=19 ,displayMessageKey="USER_AFTER_ACTION_SCRIPT_DISPLAY", helpMessageKey="USER_AFTER_ACTION_SCRIPT_HELP")
     public void setUserAfterActionScript(String userGetUserAfterActionScript) {
         this.userAfterActionScript = userGetUserAfterActionScript;
     }
@@ -551,7 +598,7 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
      * Action script language setter
      * @param actionScriptLanguage
      */
-    @ConfigurationProperty(order=18 ,displayMessageKey="ACTION_SCRIPT_LANGUAGE_DISPLAY", helpMessageKey="ACTION_SCRIPT_LANGUAGE_HELP")
+    @ConfigurationProperty(order=20 ,displayMessageKey="ACTION_SCRIPT_LANGUAGE_DISPLAY", helpMessageKey="ACTION_SCRIPT_LANGUAGE_HELP")
     public void setActionScriptLanguage(String actionScriptLanguage) {
         this.actionScriptLanguage = actionScriptLanguage;
     }

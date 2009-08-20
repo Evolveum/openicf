@@ -63,6 +63,8 @@ public class OracleERPConfigurationTests extends OracleERPTestsBase {
         assertTrue("isReturnSobOrgAttrs", config.isReturnSobOrgAttrs());
         assertNotNull("null getUserActions", config.getUserAfterActions());        
         assertNotNull("null getConnectionUrl", config.getConnectionUrl());
+        assertNotNull("null clientEncryptionLevel", config.getClientEncryptionLevel());
+        assertNotNull("null clientEncryptionType", config.getClientEncryptionType());
         
         config.validate();
     }    

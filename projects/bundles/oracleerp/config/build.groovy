@@ -57,6 +57,8 @@ configuration{
     sysadm.noSchemaId=false
     sysadm.returnSobOrgAttrs=true
     sysadm.userActions=""
+    sysadm.clientEncryptionType="RC4_40"
+    sysadm.clientEncryptionLevel="REJECTED" 
     
     user.driver="oracle.jdbc.driver.OracleDriver"
     user.user="__configureme__"
