@@ -268,8 +268,6 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
      */
     private ObjectClassInfo getRespNamesObjectClassInfo() {
         ObjectClassInfoBuilder ocib = new ObjectClassInfoBuilder();
-
-        ocib = new ObjectClassInfoBuilder();
         ocib.setType(RESP_NAMES_OC.getObjectClassValue());
 
         ocib.addAttributeInfo(Name.INFO);
@@ -320,10 +318,8 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
      * @return the info class
      */
     private ObjectClassInfo getAuditorResponsibilitiesObjectClassInfo() {
-        ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
-
         //Auditor responsibilities
-        oc = new ObjectClassInfoBuilder();
+        ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
         oc.setType(AUDITOR_RESPS_OC.getObjectClassValue());
 
         oc.addAttributeInfo(Name.INFO);
@@ -373,9 +369,8 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
      * @return the info class
      */
     private ObjectClassInfo getResponsibilitiesObjectClassInfo() {
-        ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
         //Resp object class
-        oc = new ObjectClassInfoBuilder();
+        ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
         oc.setType(RESP_OC.getObjectClassValue());
         // The Name is supported attribute
         oc.addAttributeInfo(Name.INFO);
@@ -389,10 +384,8 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
      * @return the info class
      */
     private ObjectClassInfo getDirectResponsibilitiesObjectClassInfo() {
-        ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
-
         //Resp object class
-        oc = new ObjectClassInfoBuilder();
+        ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
         oc.setType(DIRECT_RESP_OC.getObjectClassValue());
         // The Name is supported attribute
         oc.addAttributeInfo(Name.INFO);
@@ -406,9 +399,8 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
      * @return the info class
      */
     private ObjectClassInfo getIndirectResponsibilitiesObjectClassInfo() {
-        ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
         //directResponsibilities object class
-        oc = new ObjectClassInfoBuilder();
+        ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
         oc.setType(INDIRECT_RESP_OC.getObjectClassValue());
         // The Name is supported attribute
         oc.addAttributeInfo(Name.INFO);
@@ -422,9 +414,8 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
      * @return the info class
      */
     private ObjectClassInfo getApplicationsObjectClassInfo() {
-        ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
         //Applications object class
-        oc = new ObjectClassInfoBuilder();
+        ObjectClassInfoBuilder oc = new ObjectClassInfoBuilder();
         oc.setType(APPS_OC.getObjectClassValue());
         // The Name is supported attribute
         oc.addAttributeInfo(Name.INFO);
