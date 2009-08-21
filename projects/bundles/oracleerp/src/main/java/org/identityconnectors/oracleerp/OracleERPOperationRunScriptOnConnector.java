@@ -70,7 +70,6 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
         final Map<String, Object> scriptArguments = request.getScriptArguments();
         final Map<String, Object> actionContext = new HashMap<String, Object>();
         final Map<String, Object> inputMap = new HashMap<String, Object>();
-        final Object attributes = scriptArguments.get(ATTRIBUTES);
         final List<String> errorList = new ArrayList<String>();
         
         Assertions.nullCheck(scriptArguments, "scriptArguments");
@@ -87,7 +86,7 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
         actionContext.put(CONN, getConn().getConnection()); //The real connection
         actionContext.put(ACTION, scriptArguments.get(ACTION)); // The action is the operation name createUser/updateUser/deleteUser/disableUser/enableUser
         actionContext.put(TIMING, scriptArguments.get(TIMING)); // The timing before / after
-        actionContext.put(ATTRIBUTES, attributes); // The attributes
+        actionContext.put(ATTRIBUTES, scriptArguments.get(ATTRIBUTES)); // The attributes
         actionContext.put(ID, userName); // The user name
         if (pwdArg != null) {
             final GuardedString password = ((GuardedString) pwdArg);
