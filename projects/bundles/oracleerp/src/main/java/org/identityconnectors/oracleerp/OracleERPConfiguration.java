@@ -44,12 +44,26 @@ import org.identityconnectors.framework.spi.ConfigurationProperty;
  */
 final public class OracleERPConfiguration extends AbstractConfiguration implements Messages {
 
-
     /**
      * Setup logging.
      */
     static final Log log = Log.getLog(OracleERPConfiguration.class);
 
+    /** Oracle thin url pattern, used when formating the url from components */
+    static final String ORACLE_THIN_CONN_URL = "java:oracle:thin:@{0}:{1}:{2}";
+
+    /** Oracle user friendly url default, when left unchanged, the components are considered */
+    static final String DEFAULT_CONN_URL = "java:oracle:thin:@HOSTNAME:PORT:DB";    
+
+    /** Oracle default port */
+    static final String DEFAULT_PORT = "1521";
+
+    /** Predefined encryption type */
+    static final String DEFAULT_ENCRYPTION_TYPE = "RC4_128";
+ 
+    /** Predefined encryption level*/
+    static final String DEFAULT_ENCRYPTION_LEVEL = "ACCEPTED";
+    
     /**
      * Datasource attributed
      * The attribute has precedence over other database connection related attributes.
@@ -127,12 +141,6 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
         this.driver = driver;
     }
 
-    /** */
-    private static final String ORACLE_THIN_CONN_URL = "java:oracle:thin:@{0}:{1}:{2}";
-
-    /** */
-    private static final String DEFAULT_CONN_URL = "java:oracle:thin:@HOSTNAME:PORT:DB";
-
     /**
      * Database connection url
      * Ignored if <b>dataSource</b> attribute is specified
@@ -188,8 +196,6 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
         this.host = host;
     }
 
-    /** */
-    private static final String DEFAULT_PORT = "1521";
 
     /**
      * Port attribute
@@ -317,7 +323,7 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
 
     /*
      * implemented by framework, left as comment for the reference
-     * name="encryptionClient" type="string" multi="false" value="ACCEPTED"
+     * name="encryptionClient" type="string" multi="false" value="DEFAULT_ENCRYPTION_LEVEL"
      * displayName="ENCRYPTION_CLIENT" description="HELP_ORACLE_ERP_CLIENT_ENCRYPTION_LEVEL"
      */
 
@@ -514,12 +520,12 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
     public void setNoSchemaId(boolean noSchemaId) {
         this.noSchemaId = noSchemaId;
     }
-
+    
     /**
      * CLIENT_ENCRYPTION_ALGORITHMS
      * old name = encryptionTypesClient, oracle.net.encryption_types_client
      */
-    private String clientEncryptionType = "";
+    private String clientEncryptionType = DEFAULT_ENCRYPTION_TYPE;
     
     /**
      * Getter
@@ -542,7 +548,7 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
      * CLIENT_ENCRYPTION_LEVEL
      * old name = encryptionClient, oracle.net.encryption_client
      */
-    private String clientEncryptionLevel = "";    
+    private String clientEncryptionLevel = DEFAULT_ENCRYPTION_LEVEL;    
 
     /**
      * Getter

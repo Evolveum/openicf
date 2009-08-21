@@ -112,12 +112,25 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
         Object ret;
         try {
             ret = scripEx.execute(inputMap);
+            
+            //Go through the errors and throw first one 
+            //TODO implement the warning set return, when possible
+            StringBuilder errorBld = new StringBuilder();
+            for (String s : errorList) {
+                errorBld.append(s);
+                errorBld.append("; ");
+            }
+            //Any errors, warnings?
+            if (errorBld.length() != 0) {
+                throw new IllegalStateException(errorBld.toString());
+            }
+            //Make sure, the connection is commit
+            getConn().commit();            
         } catch (Exception e) {
             log.error(e, "error in script");
             SQLUtil.rollbackQuietly(getConn());
             throw ConnectorException.wrap(e);
         }
-        getConn().commit();
         return ret;
     }
 
