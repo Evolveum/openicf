@@ -22,7 +22,7 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
 
 import org.junit.Test;
 
@@ -67,5 +67,41 @@ public class OracleERPConnectorTests extends OracleERPTestsBase {
         assertNotNull("null connector instance",conn);        
         conn.test();
     }
+    
+    /**
+     * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
+     */
+    @Test(expected=IllegalArgumentException.class)
+    public void testConnectorUserWrongAccountIncluded() {
+        OracleERPConfiguration cfg = getConfiguration(CONFIG_SYSADM);
+        cfg.setAccountsIncluded("WHERE REAL='BLAF'");
+        OracleERPConnector conn = getConnector(cfg);
+        assertNotNull("null connector instance",conn);        
+        conn.test();
+    }
+    
+    /**
+     * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
+     */
+    @Test
+    public void testConnectorUserAccountIncludedOk() {
+        OracleERPConfiguration cfg = getConfiguration(CONFIG_SYSADM);
+        OracleERPConnector conn = getConnector(cfg);
+        assertNotNull("null connector instance",conn);        
+        conn.test();
+    }    
+    
+    /**
+     * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
+     */
+    @Test
+    public void testConnectorUserAccountIncludedOk2() {
+        OracleERPConfiguration cfg = getConfiguration(CONFIG_SYSADM);
+        cfg.setAccountsIncluded("USER_NAME like 'JTU%'");
+        OracleERPConnector conn = getConnector(cfg);
+        assertNotNull("null connector instance",conn);        
+        conn.test();
+    }     
+
     //TODO add more connector related tests
 }

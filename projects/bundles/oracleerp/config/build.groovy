@@ -50,7 +50,7 @@ configuration{
     sysadm.url="__configureme__"
     sysadm.user="__configureme__"
     sysadm.password=new GuardedString("__configureme__".toCharArray());
-    sysadm.accountsIncluded=""
+    sysadm.accountsIncluded="where USER_NAME like 'JTU%'"
     sysadm.activeAccountsOnly=false
     sysadm.auditResponsibility="System Administrator"
     sysadm.manageSecuringAttrs=true
@@ -66,6 +66,7 @@ configuration{
     user.host="__configureme__"
     user.database="PROD"
     user.port="1521"
+
 }
 
 account{

@@ -200,6 +200,7 @@ class OracleERPUtil {
     static final String MSG_FAILED_UPDATE_RESP = "msg.failed.update.responsibility";
     static final String MSG_INVALID_SECURING_ATTRIBUTE = "msg.invalid.securing.attribute";
     static final String MSG_UNSUPPORTED_ATTRIBUTE = "msg.unsupported.attribute";
+    static final String MSG_INVALID_ACCOUNT_INCLUDED = "msg.invalid.account.included";
 
     
 
@@ -432,7 +433,6 @@ class OracleERPUtil {
                 try {
                     date = DateFormat.getDateInstance().parse(dateString);
                 } catch (ParseException e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
             }
@@ -447,10 +447,23 @@ class OracleERPUtil {
      * @return and string
      */
     static String whereAnd(String sqlSelect, String whereAnd) {
+        String add = trimWhere(whereAnd).trim();
+        if ( add.length() == 0 ) {
+            return sqlSelect;
+        }
         int iofw = sqlSelect.toUpperCase().indexOf("WHERE");
-        return (iofw == -1) ? sqlSelect + " WHERE " + whereAnd : sqlSelect.substring(0, iofw) + "WHERE ( "
-                + sqlSelect.substring(iofw + 5) + " ) AND ( " + whereAnd + " )";
+        return (iofw == -1) ? sqlSelect + " WHERE " + add : sqlSelect.substring(0, iofw).trim() + " WHERE ( "
+                + sqlSelect.substring(iofw + 5).trim() + " ) AND ( " + add + " )";
     }
+    
+    /**
+     * @param where
+     * @return and string
+     */
+    private static String trimWhere(String where) {
+        int iofw = where.toUpperCase().indexOf("WHERE");
+        return (iofw == -1) ? where : where.substring(0, iofw) + where.substring(iofw + 5);
+    }    
     
     /**
      * Read one row from database result set and convert a columns to attribute set.  

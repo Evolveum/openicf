@@ -323,6 +323,9 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         log.info("test");
         getCfg().validate();
         getConn().test();
+        validateAccountsIncluded();
+        
+        //TODO Validate Get User After script by compiling it
     }
 
     /* (non-Javadoc)
@@ -500,6 +503,27 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         }
         return false;
     }
+    
+    /**
+     * We double check that the AccountsIncluded clause is valid
+     */
+    private void validateAccountsIncluded() {
+        final String sql = "SELECT 1 FROM "+ getCfg().app() + "fnd_user";
+        String testSql = OracleERPUtil.whereAnd(sql, getCfg().getAccountsIncluded());
+        PreparedStatement ps = null;
+        ResultSet res = null;        
+        try {
+            ps = getConn().prepareStatement(testSql);
+            res = ps.executeQuery();
+            log.info("accountsIncluded are ok");
+        } catch (SQLException e) {
+            log.error(e, testSql);
+            throw new IllegalArgumentException(getCfg().getMessage(MSG_INVALID_ACCOUNT_INCLUDED, getCfg().getAccountsIncluded()));
+        } finally {
+            SQLUtil.closeQuietly(res);
+            SQLUtil.closeQuietly(ps);
+        }
+    }    
 
     /**
      * The New responsibility format there
