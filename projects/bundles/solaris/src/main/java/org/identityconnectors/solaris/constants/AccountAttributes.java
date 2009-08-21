@@ -43,24 +43,26 @@ public enum AccountAttributes implements SolarisAttribute {
      * NOTE:
      * "logins -oxa" 
      * -oxma gives the full set of groups 
+     * 
      */
     
     /** home directory */
     DIR("dir", UpdateSwitches.DIR, CommandConstants.Logins.CMD, PatternBuilder.buildPattern(CommandConstants.Logins.COL_COUNT, CommandConstants.Logins.UID_COL, 6/*dir col.*/)), 
     SHELL("shell", UpdateSwitches.SHELL, CommandConstants.Logins.CMD, PatternBuilder.buildPattern(CommandConstants.Logins.COL_COUNT, CommandConstants.Logins.UID_COL, 7/*shell col.*/)),
     /** primary group */
-    GROUP("group", UpdateSwitches.GROUP, null, null /* TODO */),
-    SECONDARY_GROUP("secondary_group", UpdateSwitches.SECONDARY_GROUP, CommandConstants.Logins.CMD_EXTENDED, null /* TODO */),
+    GROUP("group", UpdateSwitches.GROUP, CommandConstants.Logins.CMD, PatternBuilder.buildPattern(CommandConstants.Logins.COL_COUNT, CommandConstants.Logins.UID_COL, 3/*groupName col.*/)),
+    SECONDARY_GROUP("secondary_group", UpdateSwitches.SECONDARY_GROUP, CommandConstants.Logins.CMD_EXTENDED, null, SecondaryGroupParser.Builder.getInstance()),
     /** ! this is the solaris native 'uid', *NOT* the one defined by the framework. */
     UID("uid", UpdateSwitches.UID, CommandConstants.Logins.CMD, PatternBuilder.buildPattern(CommandConstants.Logins.COL_COUNT, CommandConstants.Logins.UID_COL, 2/*solaris uid*/)),
     NAME(Name.NAME, UpdateSwitches.UNKNOWN, CommandConstants.Logins.CMD,  PatternBuilder.buildPattern(CommandConstants.Logins.COL_COUNT, CommandConstants.Logins.UID_COL)),
+    // FIXME: introduce AccountId attribute as in the adapter, maybe?
     /** ! this is the UID defined by the framework */
     FRAMEWORK_UID(Uid.NAME, AccountAttributes.NAME),    
-    EXPIRE("expire", UpdateSwitches.EXPIRE, null, null /* TODO */),
+    EXPIRE("expire", UpdateSwitches.EXPIRE, CommandConstants.Logins.CMD, PatternBuilder.buildPattern(CommandConstants.Logins.COL_COUNT, CommandConstants.Logins.UID_COL, 14/*expired*/)),
     INACTIVE("inactive", UpdateSwitches.INACTIVE, CommandConstants.Logins.CMD, PatternBuilder.buildPattern(CommandConstants.Logins.COL_COUNT, CommandConstants.Logins.UID_COL, 13/*inactive col.*/)), 
-    COMMENT("comment", UpdateSwitches.COMMENT, null, null /* TODO */),
-    TIME_LAST_LOGIN("time_last_login", UpdateSwitches.UNKNOWN, null, null /* TODO */),
-    AUTHORIZATION("authorization", UpdateSwitches.AUTHORIZATION, null, null /* TODO */),
+    COMMENT("comment", UpdateSwitches.COMMENT, CommandConstants.Logins.CMD, PatternBuilder.buildPattern(CommandConstants.Logins.COL_COUNT, CommandConstants.Logins.UID_COL, 5/*comment col.*/)),
+    TIME_LAST_LOGIN("time_last_login", UpdateSwitches.UNKNOWN, "last  -1 __username__", "[\\d]?\\d[\\s]+\\d\\d:\\d\\d" /* parses the date of last login */),
+    AUTHORIZATION("authorization", UpdateSwitches.AUTHORIZATION, "auths __username__", null /* TODO */),
     PROFILE("profile", UpdateSwitches.PROFILE, null, null /* TODO */),
     ROLES("role", UpdateSwitches.ROLE, "roles __user__", PatternBuilder.buildAcceptAllPattern() /* TODO */);
     
@@ -194,7 +196,7 @@ public enum AccountAttributes implements SolarisAttribute {
             static final String CMD_EXTENDED = "logins -oxma";
             /** the total number of columns in output of the command (delimited by ":") */
             static final int COL_COUNT = 14;
-            /** the column which contains the UID */
+            /** the column which contains the native solaris UID */
             static final int UID_COL = 1;
             public static final String DEFAULT_OUTPUT_DELIMITER = ":";
         }

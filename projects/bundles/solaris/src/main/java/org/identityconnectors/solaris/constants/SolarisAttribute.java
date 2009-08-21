@@ -46,6 +46,10 @@ public interface SolarisAttribute {
      *            with "__AttributeName__" marker in the command.
      * @return a command that just needs a few insertions and then can be
      *         executed.
+     * 
+     *         Note: implementational detail: {@see
+     *         SearchPerformer#performSearch(SolarisAttribute, String, String)}
+     *         will try to substitute the AccountID in the placeholder.
      */
     public abstract String getCommand(String... fillInAttributes);
 

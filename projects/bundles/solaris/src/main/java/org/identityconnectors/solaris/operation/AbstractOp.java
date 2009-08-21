@@ -68,7 +68,7 @@ public abstract class AbstractOp {
     }
     
     /** @return the command formatter */
-    protected final CommandBuilder getCmdBuilder() {
+    public final CommandBuilder getCmdBuilder() {
         return _cmdBuilder;
     }
     

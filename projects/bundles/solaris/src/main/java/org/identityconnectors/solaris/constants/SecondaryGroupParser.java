@@ -11,6 +11,8 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.operation.search.SearchPerformer.SearchCallback;
 
 /**
+ * Handle the output of parsing the extended 'logins -oxma' command
+ * {@link AccountAttributes.CommandConstants.Logins#CMD_EXTENDED}.
  * 
  * @author David Adam
  */
@@ -28,9 +30,10 @@ class SecondaryGroupParser implements SearchCallback {
         }
     }
 
-/**
+    /**
      * @param loginsCommandResult the line that is parsed for secondary groups, it is the output line of logins command, {@see AccountAttributes
      * @param pattern this argument is ignored.
+     * @return the list of the groupnames separated by comma.
      */
     public Pair<Uid, String> getUidAndAttr(String loginsCommandResult,
             Pattern pattern) {
@@ -39,13 +42,10 @@ class SecondaryGroupParser implements SearchCallback {
         // SVIDResrouceAdapter#buildUser(loginsResult, targetUser) method.
         // */
         final int minTokens = AccountAttributes.CommandConstants.Logins.COL_COUNT;
-        Collection<String> loginsTokens = Arrays
-                .asList(loginsCommandResult
-                        .split(AccountAttributes.CommandConstants.Logins.DEFAULT_OUTPUT_DELIMITER));
+        Collection<String> loginsTokens = Arrays.asList(loginsCommandResult.split(AccountAttributes.CommandConstants.Logins.DEFAULT_OUTPUT_DELIMITER));
 
         if (loginsTokens.size() < minTokens) {
-            throw new ConnectorException(
-                    "ERROR: too little tokens retrieved from 'logins' command.");
+            throw new ConnectorException("ERROR: too little tokens retrieved from 'logins' command.");
         }
 
         /*
@@ -63,99 +63,24 @@ class SecondaryGroupParser implements SearchCallback {
         int totalTokens = loginsTokens.size();
         Iterator<String> tokenIt = loginsTokens.iterator();
 
-        /*
-         * XXXXXXXXXXXXXx
-         */
         String accountId = tokenIt.next();
-
-        /*
-         * XXXXXXXXXXXXXX
-         */
-        String groupName = tokenIt.next();
-        /*
-         * XXXXXXXXXXXXXX
-         */
-        tokenIt.next(); // skip group id
-        
-        /*
-         * XXXXXXXXXXXXXX
-         */
-        String userComment = tokenIt.next();
+        //skip userId, groupName, groupId, userComment
+        for (int i = 2; i <= 5; i++) {
+            tokenIt.next();
+        }
 
         final int numSecondaryGroups = (totalTokens - minTokens) / 2;
-        /*
-         * XXXXXXXXXXXXXX
-         */
         StringBuilder secondaryGroupNames = new StringBuilder();
-//        StringBuilder secondaryGroupIds = new StringBuilder();
         
         for (int i = 0; i < numSecondaryGroups; i++) {
             secondaryGroupNames.append(tokenIt.next());
             /*secondaryGroupIds.append((String) */tokenIt.next()/*)*/;
             if (i < numSecondaryGroups - 1) {
                 secondaryGroupNames.append(',');
-                /*secondaryGroupIds.append(',');*/
             }
-        }
-
-        /*
-         * XXXXXXXXXXXXXX
-         */
-        String userDir = tokenIt.next();
-        /*
-         * XXXXXXXXXXXXXX
-         */
-        String userShell = tokenIt.next();
-
-        /*
-         * XXXXXXXXXXXXXX
-         */
-        String pwstat = tokenIt.next();
-        boolean PASSWD_FORCE_CHANGE = false;
-        if ("PS".equals(pwstat))
-            PASSWD_FORCE_CHANGE = true;
-
-        boolean disabled = false; // PASSWD_LOCK
-        if ("LK".equals(pwstat)) {
-            disabled = true;
-        }
+        }//for
         
-        /*
-         * XXXXXXXXXXXXXX
-         */
-        tokenIt.next(); // skip password change
-        /*
-         * XXXXXXXXXXXXXX
-         */
-        String PASSWD_MIN = tokenIt.next();
-        /*
-         * XXXXXXXXXXXXXX
-         */
-        String PASSWD_MAX = tokenIt.next();
-        /*
-         * XXXXXXXXXXXXXX
-         */
-        String PASSWD_WARN = tokenIt.next();
-
-        /*
-         * XXXXXXXXXXXXXX
-         */
-        String userInactive = tokenIt.next(); //USER_INACTIVE
-        if (userInactive.equals("-1")) {
-            // This is set to not expire and security modules may
-            // not even be installed on the host so reset this to null.
-            userInactive = null;
-        }
-
-        String userExpire = tokenIt.next(); //USER_EXPIRE
-        if (userExpire.equals("0") || userExpire.equals("000000")) {
-            // This is set to not expire and security modules may
-            // not even be installed on the host so reset this to null.
-            userExpire = null;
-        }
-
-        // //////////////////////////
-        return null;
+        return new Pair<Uid, String>(new Uid(accountId), secondaryGroupNames.toString());
     }
 
 }
