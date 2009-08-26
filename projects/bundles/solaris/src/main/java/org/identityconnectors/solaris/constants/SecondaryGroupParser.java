@@ -36,7 +36,7 @@ class SecondaryGroupParser implements SearchCallback {
      * @return the list of the groupnames separated by comma.
      */
     public Pair<Uid, String> getUidAndAttr(String loginsCommandResult,
-            Pattern pattern) {
+            Pattern... pattern) {
         // /*
         // * the implementation is base on
         // SVIDResrouceAdapter#buildUser(loginsResult, targetUser) method.
