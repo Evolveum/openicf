@@ -93,7 +93,7 @@ public class OpSearchImpl extends AbstractOp {
             query = new AttributeFilter(AccountAttributes.NAME.getName(), ".*");
         }
         
-        final SearchPerformer sp = new SearchPerformer(getConfiguration(), getConnection());
+        final SearchPerformer sp = new SearchPerformer(getConfiguration(), getConnection(), this);
         //traverse through the tree of search query:
         Set<Uid> result = query.evaluate(sp);
         
