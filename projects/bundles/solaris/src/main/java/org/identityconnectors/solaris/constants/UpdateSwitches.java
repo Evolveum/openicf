@@ -60,8 +60,6 @@ public enum UpdateSwitches {
 
     /** get the command line switch */
     public String getCmdSwitch() {
-        if (commandLineSwitch == null)
-            throw new IllegalArgumentException(String.format("No command line switch defined for %s", this));
         return commandLineSwitch;
     }
 }
