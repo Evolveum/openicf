@@ -38,6 +38,7 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.constants.SolarisAttribute;
+import org.identityconnectors.solaris.operation.AbstractOp;
 
 /**
  * This class is used to perform search for various attributes during one run of
@@ -53,13 +54,27 @@ public class SearchPerformer {
     private Map<String, String[]> cachedCommands;
     private SolarisConnection connection;
     private SolarisConfiguration configuration;
+    private AbstractOp operation;
 
-    public SearchPerformer(SolarisConfiguration configuration, SolarisConnection connection) {
+    /** constructor for unit tests only */
+    SearchPerformer(SolarisConfiguration configuration, SolarisConnection connection) {
         cachedCommands = new HashMap<String, String[]>();
         this.connection = connection;
         this.configuration = configuration;
     }
     
+    /**
+     * construct a new search performer
+     * @param configuration
+     * @param connection
+     * @param opSearchImpl the operation that is source of information turned on sudo command
+     */
+    public SearchPerformer(SolarisConfiguration configuration,
+            SolarisConnection connection, AbstractOp opSearchImpl) {
+        this(configuration, connection);
+        operation = opSearchImpl;
+    }
+
     public Set<Uid> performSearch(SolarisAttribute attribute, String searchRegExp) {
         return performSearch(attribute, searchRegExp, null);
     }
@@ -71,7 +86,7 @@ public class SearchPerformer {
      */
     private Set<Uid> performSearch(SolarisAttribute attribute, String searchRegExp, String uid, SearchCallback callback) {
         // try to substitute username if needed in the command.
-        final String command = ((uid == null) ? attribute.getCommand() : attribute.getCommand(uid));
+        final String command = buildCommand(attribute, uid);
         final String[] output = cacheRequest(command);
         Pattern p = Pattern.compile(attribute.getRegExpForUidAndAttribute());
         Set<Uid> result = new HashSet<Uid>();
@@ -91,6 +106,14 @@ public class SearchPerformer {
         }
 
         return result;
+    }
+
+    private String buildCommand(SolarisAttribute attribute, String uid) {
+        String command = ((uid == null) ? attribute.getCommand() : attribute.getCommand(uid));
+        if (operation != null) {
+            command = operation.getCmdBuilder().build(command);
+        }
+        return command;
     }
     
     /**
@@ -112,8 +135,8 @@ public class SearchPerformer {
     public Set<Uid> performSearch(SolarisAttribute attribute, String searchRegExp, String uid) {
          return performSearch(attribute, searchRegExp, uid,
                 new SearchCallback() {
-                    public Pair<Uid, String> getUidAndAttr(String line, Pattern pattern) {
-                        return getUidAndAttr(line, pattern);
+                    public Pair<Uid, String> getUidAndAttr(String line, Pattern... pattern) {
+                        return getUidAndAttrImpl(line, pattern);
                     }
                 });
     }
@@ -158,19 +181,18 @@ public class SearchPerformer {
     public List<String> performValueSearchForUid(SolarisAttribute attribute, String searchRegExp, String uid) {
         return performValueSearchForUid(attribute, searchRegExp, uid,
                 new SearchCallback() {
-                    public Pair<Uid, String> getUidAndAttr(String line, Pattern pattern) {
-                        return getUidAndAttr(line, pattern);
+                    public Pair<Uid, String> getUidAndAttr(String line, Pattern... pattern) {
+                        return getUidAndAttrImpl(line, pattern);
                     }
                 });
     }
 
     /** @return null if no match, and a pair otherwise. */
-    @SuppressWarnings("unused") // the method is used in interfaces in this class.
-    private Pair<Uid, String> getUidAndAttr(String line, Pattern pattern) {
+    private Pair<Uid, String> getUidAndAttrImpl(String line, Pattern... pattern) {
         // PAIR: Uid + attributeValue for the searched attribute
         Pair<Uid, String> pair = null;
         
-        Matcher matcher = pattern.matcher(line);
+        Matcher matcher = pattern[0].matcher(line); // FIXME do it for rall patterns
         if (matcher.matches()) {
             final int groupCnt = matcher.groupCount();
             switch (groupCnt) {
@@ -222,6 +244,6 @@ public class SearchPerformer {
     }
     
     public interface SearchCallback {
-        public Pair<Uid, String> getUidAndAttr(String line, Pattern pattern);
+        public Pair<Uid, String> getUidAndAttr(String line, Pattern... pattern);
     }
 }
