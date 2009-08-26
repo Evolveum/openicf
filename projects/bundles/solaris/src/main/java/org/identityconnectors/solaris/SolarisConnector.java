@@ -158,14 +158,19 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     }
     
     /**
-     * TODO
+     * helper class for lazy initialization of a static field (Bloch: Effective Java)
      */
+    private static class SchemaHolder {
+        static final Schema schema = buildSchema();
+    }
+    
+    // FIXME: control schema identity with adapter.
     public Schema schema() {
-        if (_schema != null) {
-            return _schema;
-        }
-        
-        final SchemaBuilder schemaBuilder = new SchemaBuilder(getClass());
+        return SchemaHolder.schema;
+    }
+
+    private static Schema buildSchema() {
+        final SchemaBuilder schemaBuilder = new SchemaBuilder(SolarisConnector.class);
         
         /* 
          * GROUP
@@ -210,59 +215,6 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         
         _schema = schemaBuilder.build();
         return _schema;
-        
-//      + "  <AccountAttributeTypes>\n"
-//      + "    <AccountAttributeType name='accountId' type='string' mapName='accountId' mapType='string' required='true'>\n"
-//      + "      <AttributeDefinitionRef>\n"
-//      + "        <ObjectRef type='AttributeDefinition' name='accountId'/>\n"
-//      + "      </AttributeDefinitionRef>\n"
-//      + "    </AccountAttributeType>\n"
-//      + "    <AccountAttributeType name='Home directory' type='string' mapName='dir' mapType='string'>\n"
-//      + "    </AccountAttributeType>\n"
-//      + "    <AccountAttributeType name='Login shell' type='string' mapName='shell' mapType='string'>\n"
-//      + "    </AccountAttributeType>\n"
-//      + "    <AccountAttributeType name='Primary group' type='string' mapName='group' mapType='string'>\n"
-//      + "    </AccountAttributeType>\n"
-//      + "    <AccountAttributeType name='Secondary groups' type='string' mapName='secondary_group' mapType='string'>\n"
-//      + "    </AccountAttributeType>\n"
-//      + "    <AccountAttributeType name='User ID' type='string' mapName='uid' mapType='string'>\n"
-//      + "    </AccountAttributeType>\n"
-//      + "    <AccountAttributeType name='Expiration date' type='string' mapName='expire' mapType='string'>\n"
-//      + "    </AccountAttributeType>\n"
-//      + "    <AccountAttributeType name='Inactive' type='string' mapName='inactive' mapType='string'>\n"
-//      + "    </AccountAttributeType>\n"
-//      + "    <AccountAttributeType name='Description' type='string' mapName='comment' mapType='string'>\n"
-//      + "    </AccountAttributeType>\n"
-//      + "    <AccountAttributeType name='Last login time' type='string' mapName='time_last_login' mapType='string' readOnly='true'>\n"
-//      + "    </AccountAttributeType>\n"
-//      + "     <AccountAttributeType  name='Maximum Password Age' type='string' mapName='max' mapType='string'>\n"
-//      + "     </AccountAttributeType>\n"
-//      + "     <AccountAttributeType  name='Minimum Password Age' type='string' mapName='min' mapType='string'>\n"
-//      + "     </AccountAttributeType>\n"
-//      + "     <AccountAttributeType  name='Password Warn Time' type='string' mapName='warn'   mapType='string'>\n"
-//      + "     </AccountAttributeType>\n"
-//      + "     <AccountAttributeType  name='Lock Account' type='string' mapName='lock' mapType='string'>\n"
-//      + "     </AccountAttributeType>\n"
-//      + "  </AccountAttributeTypes>\n"
-//      + "  <ObjectTypes>\n"
-//      + "    <ObjectType name='Group' nameKey='UI_RESOURCE_OBJECT_TYPE_GROUP' icon='group'>\n"
-//      + "      <ObjectClasses operator='AND'>\n"
-//      + "        <ObjectClass name='group'/>\n"
-//      + "      </ObjectClasses>\n"
-//      + "      <ObjectFeatures>\n"
-//      + "        <ObjectFeature name='create'/>\n"
-//      + "        <ObjectFeature name='update'/>\n"
-//      + "        <ObjectFeature name='delete'/>\n"
-//      + "        <ObjectFeature name='rename'/>\n"
-//      + "        <ObjectFeature name='saveas'/>\n"
-//      + "      </ObjectFeatures>\n"
-//      + "      <ObjectAttributes idAttr='groupName' displayNameAttr='groupName' descriptionAttr='description'>\n"
-//      + "        <ObjectAttribute name='groupName' type='string'/>\n"
-//      + "        <ObjectAttribute name='gid' type='string'/>\n"
-//      + "        <ObjectAttribute name='users' type='string'/>\n"
-//      + "      </ObjectAttributes>\n"
-//      + "    </ObjectType>\n"
-//      + "  </ObjectTypes>\n"
     }
 
     /* ********************** AUXILIARY METHODS ********************* */

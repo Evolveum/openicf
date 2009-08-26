@@ -254,6 +254,11 @@ public class SolarisConnection {
 
     /** once connection is disposed it won't be used at all. */
     public void dispose() {
+        try {
+            send("logout");
+        } catch (IOException e) {
+            // OK
+        }
         log.info("dispose()");
         if (_expect4j != null) {
             _expect4j.close();
