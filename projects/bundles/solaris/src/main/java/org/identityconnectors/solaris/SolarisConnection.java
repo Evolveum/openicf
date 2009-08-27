@@ -92,6 +92,18 @@ public class SolarisConnection {
             // .getPort());
             //break;
         }
+        
+        try {
+            waitFor(_configuration.getRootShellPrompt());
+            /*
+             * turn off the echoing of keyboard input on the resource.
+             * Saves bandwith too.
+             */
+            send("stty -echo");
+            waitFor(_configuration.getRootShellPrompt());
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }
     }
 
     /**
