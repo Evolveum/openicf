@@ -65,8 +65,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="MockConnector.cs" />
     <Compile Include="CollectionUtilTests.cs" />
     <Compile Include="ConnectorAttributeUtilTests.cs" />
+    <Compile Include="ConnectorFacadeTests.cs" />
     <Compile Include="GuardedByteArrayTests.cs">
       <SubType>Code</SubType>
     </Compile>
