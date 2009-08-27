@@ -33,6 +33,7 @@ import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
@@ -181,13 +182,13 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
             attributes.add(AttributeInfoBuilder.build(attr.getName()));
         }
         
-        schemaBuilder.defineObjectClass(ObjectClass.GROUP_NAME, attributes);
-        
         //GROUP supports no authentication:
-        ObjectClassInfoBuilder ociB = new ObjectClassInfoBuilder();
+        final ObjectClassInfoBuilder ociB = new ObjectClassInfoBuilder();
         ociB.setType(ObjectClass.GROUP_NAME);
         ociB.addAllAttributeInfo(attributes);
-        schemaBuilder.removeSupportedObjectClass(AuthenticateOp.class, ociB.build());
+        final ObjectClassInfo ociInfo = ociB.build();
+        schemaBuilder.defineObjectClass(ociInfo);
+        schemaBuilder.removeSupportedObjectClass(AuthenticateOp.class, ociInfo);
         
         /*
          * ACCOUNT
