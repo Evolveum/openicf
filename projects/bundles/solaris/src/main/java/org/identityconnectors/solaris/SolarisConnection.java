@@ -268,9 +268,6 @@ public class SolarisConnection {
     public void dispose() {
         try {
             send("exit");
-            if (_configuration.isSudoAuth()) {
-                send("exit");
-            }
         } catch (IOException e) {
             // OK
         }
