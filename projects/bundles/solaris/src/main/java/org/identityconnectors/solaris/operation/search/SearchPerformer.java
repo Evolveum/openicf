@@ -55,6 +55,7 @@ public class SearchPerformer {
     private SolarisConnection connection;
     private SolarisConfiguration configuration;
     private AbstractOp operation;
+    private boolean isNot;
 
     /** constructor for unit tests only */
     SearchPerformer(SolarisConfiguration configuration, SolarisConnection connection) {
@@ -75,7 +76,12 @@ public class SearchPerformer {
         operation = opSearchImpl;
     }
 
-    public Set<Uid> performSearch(SolarisAttribute attribute, String searchRegExp) {
+    /**
+     * {@see SearchPerformer#performValueSearchForUid(SolarisAttribute, String, String)}
+     * @param isNot perform inverse search
+     */
+    public Set<Uid> performSearch(SolarisAttribute attribute, String searchRegExp, boolean isNot) {
+        this.isNot = isNot; // FIXME this should be passed as a proper parameter.
         return performSearch(attribute, searchRegExp, null);
     }
 
@@ -97,11 +103,13 @@ public class SearchPerformer {
             grepResult = callback.getUidAndAttr(line, p); //getUidAndAttr(line, p);
 
             // in case there's a match with the searched regular expression:
-            if (grepResult != null) {
-                if (grepResult.second != null
-                        && grepResult.second.matches(searchRegExp)) {
-                    result.add(grepResult.first);
-                } 
+            if (grepResult != null && grepResult.second != null) {
+                final boolean matches = grepResult.second.matches(searchRegExp);
+                if (!isNot && matches) {
+                     result.add(grepResult.first);
+                } else if (isNot && !matches) {
+                     result.add(grepResult.first);
+                }
             }
         }
 

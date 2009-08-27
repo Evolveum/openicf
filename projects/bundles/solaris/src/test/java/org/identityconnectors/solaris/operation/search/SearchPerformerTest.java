@@ -106,7 +106,7 @@ public class SearchPerformerTest {
         Set<Uid> result = sp.performSearch(attribute, "-1" /*
                                                             * default value of
                                                             * inactive attribute
-                                                            */);
+                                                            */, false);
         
         Assert.assertTrue(result.size() >= 1);
         boolean b = false;
@@ -126,7 +126,7 @@ public class SearchPerformerTest {
         SearchPerformer sp = new SearchPerformer((SolarisConfiguration) connector.getConfiguration(), connector.getConnection());
         SolarisAttribute attribute = AccountAttributes.SHELL;
         
-        Set<Uid> result = sp.performSearch(attribute, USER_SHELL_TYPE);
+        Set<Uid> result = sp.performSearch(attribute, USER_SHELL_TYPE, false);
         
         Assert.assertTrue(result.size() >= 1);
         boolean b = false;

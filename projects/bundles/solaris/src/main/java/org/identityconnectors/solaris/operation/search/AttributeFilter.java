@@ -38,6 +38,12 @@ public class AttributeFilter implements Node {
     private String regex;
 
     private SolarisAttribute attr;
+    
+    /** 
+     * inverse matching, 
+     * for instance match attribute whose value is not 'foo'. 
+     */
+    private boolean isNot;
 
     /**
      * @param attributeName
@@ -45,12 +51,20 @@ public class AttributeFilter implements Node {
      * @param regex
      *            the regular expression that is used to filter
      */
-    public AttributeFilter(String attributeName, String regex) {
+    public AttributeFilter(String attributeName, String regex, boolean isNot) {
         attr = SolarisUtil.getAttributeBasedOnName(attributeName);
         this.regex = regex;
+        this.isNot = isNot;
+    }
+    
+    /**
+     * {@see AttributeFilter#AttributeFilter(String, String, boolean)}
+     */
+    public AttributeFilter(String attributeName, String regex) {
+        this(attributeName, regex, false);
     }
 
     public Set<Uid> evaluate(SearchPerformer sp) {
-        return sp.performSearch(attr, regex);
+        return sp.performSearch(attr, regex, isNot);
     }
 }

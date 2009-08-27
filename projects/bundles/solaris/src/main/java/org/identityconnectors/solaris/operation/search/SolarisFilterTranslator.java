@@ -47,46 +47,29 @@ public class SolarisFilterTranslator extends
     } 
 
     @Override
-    protected Node createContainsExpression(ContainsFilter filter,
-            boolean not) {
-        if (!not) {
-            /* '.*' == zero and more repetitions of any character */
-            String regExp = String.format(".*(%s).*", filter.getValue());
-            return new AttributeFilter(filter.getName(), regExp);
-        }
-
-        return super.createContainsExpression(filter, not);
+    protected Node createContainsExpression(ContainsFilter filter, boolean not) {
+        /* '.' == zero and more repetitions of any character */
+        String regExp = String.format(".*(%s).*", filter.getValue());
+        return new AttributeFilter(filter.getName(), regExp, not);
     }
 
     @Override
     protected Node createEndsWithExpression(EndsWithFilter filter,
             boolean not) {
-        if (!not) {
-            String regExp = String.format(".*%s", filter.getValue());
-            return new AttributeFilter(filter.getName(), regExp);
-        }
-
-        return super.createEndsWithExpression(filter, not);
+        String regExp = String.format(".*%s", filter.getValue());
+        return new AttributeFilter(filter.getName(), regExp, not);
     }
 
     @Override
     protected Node createStartsWithExpression(StartsWithFilter filter,
             boolean not) {
-        if (!not) {
-            String regExp = String.format("%s.*", filter.getValue());
-            return new AttributeFilter(filter.getName(), regExp);
-        }
-
-        return super.createStartsWithExpression(filter, not);
+        String regExp = String.format("%s.*", filter.getValue());
+        return new AttributeFilter(filter.getName(), regExp, not);
     }
 
     @Override
-    protected Node createEqualsExpression(EqualsFilter filter,
-            boolean not) {
-        if (!not) { 
-            return new AttributeFilter(filter.getName(), (String) filter.getAttribute().getValue().get(0));
-        }
-
-        return super.createEqualsExpression(filter, not);
+    protected Node createEqualsExpression(EqualsFilter filter, boolean not) {
+        return new AttributeFilter(filter.getName(), (String) filter
+                .getAttribute().getValue().get(0), not);
     }
 }
