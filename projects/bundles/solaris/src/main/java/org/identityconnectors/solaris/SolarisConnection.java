@@ -267,7 +267,10 @@ public class SolarisConnection {
     /** once connection is disposed it won't be used at all. */
     public void dispose() {
         try {
-            send("logout");
+            send("exit");
+            if (_configuration.isSudoAuth()) {
+                send("exit");
+            }
         } catch (IOException e) {
             // OK
         }
