@@ -137,7 +137,7 @@ public enum AccountAttributes implements SolarisAttribute {
      * @return the name of attribute, or null if it doesn't exist.
      */
     public static AccountAttributes fromAttributeName(String s) {
-        return AttributeHelper.getFromMap(map, s, "AccountAttributes");
+        return map.get(s);
     }
     
     /** 

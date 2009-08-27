@@ -22,8 +22,6 @@
  */
 package org.identityconnectors.solaris.constants;
 
-import java.util.Map;
-
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 
@@ -64,14 +62,5 @@ class AttributeHelper {
             }
             return result;
         }
-    }
-    
-    /** gets the item from the map. 
-     * @param attrType TODO
-     * @throws NPE in case the map doesn't contain the item. */
-    public static <T> T getFromMap(Map<String, T> map, String item, String attrType) {
-        T itemValue = map.get(item);
-        if (itemValue == null) throw new NullPointerException("Attribute definition not found: '" + item + "', type: '" + attrType + "'");
-        return itemValue;
     }
 }
