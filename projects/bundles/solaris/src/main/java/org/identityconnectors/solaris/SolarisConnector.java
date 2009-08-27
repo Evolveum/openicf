@@ -22,12 +22,14 @@
  */
 package org.identityconnectors.solaris;
 
+import java.io.IOException;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
@@ -82,6 +84,8 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     private SolarisConfiguration _configuration;
 
     private static Schema _schema;
+    
+    private static String uniqueMessage = "uNiQuEmEsSaGe";
 
     /**
      * {@see
@@ -98,9 +102,10 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      */
     public void checkAlive() {
         try {
-            SolarisConnection.test(_configuration);
+            getConnection().send("echo " + uniqueMessage);
+            getConnection().waitFor(uniqueMessage);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw ConnectorException.wrap(e);
         }
     }
 
