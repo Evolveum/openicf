@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src/main/java"/>
+	<classpathentry kind="src" path="src/test/java"/>
+	<classpathentry kind="lib" path="dist/googleapps-1.0.x.jar"/>
+	<classpathentry kind="lib" path="lib/gdata-appsforyourdomain-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/gdata-client-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/gdata-core-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/google-collect-1.0-rc1.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Connector Framework"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Connector Common Test Library"/>
+	<classpathentry kind="output" path="build"/>
+</classpath>
