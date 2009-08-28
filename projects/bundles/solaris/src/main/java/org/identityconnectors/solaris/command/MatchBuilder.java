@@ -60,7 +60,7 @@ public final class MatchBuilder {
         try {
             matches.add(new RegExpMatch(regExp, closure));
         } catch (MalformedPatternException ex) {
-            ConnectorException.wrap(ex);
+            throw ConnectorException.wrap(ex);
         }
     }
     
@@ -72,7 +72,7 @@ public final class MatchBuilder {
         try {
             matches.add(new RegExpCaseInsensitiveMatch(regExp, closure));
         } catch (MalformedPatternException ex) {
-            ConnectorException.wrap(ex);
+            throw ConnectorException.wrap(ex);
         }
     }
     
