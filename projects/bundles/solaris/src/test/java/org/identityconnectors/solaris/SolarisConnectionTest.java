@@ -20,10 +20,11 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-package org.identityconnectors.solaris.test;
+package org.identityconnectors.solaris;
 
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnector;
+import org.identityconnectors.solaris.test.SolarisTestCommon;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
