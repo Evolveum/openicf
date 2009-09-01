@@ -32,6 +32,7 @@ import org.identityconnectors.framework.api.*;
 import org.identityconnectors.framework.common.exceptions.*;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.common.objects.filter.*;
+import org.identityconnectors.test.common.PropertyBag;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.*;
 
@@ -42,6 +43,7 @@ import org.junit.*;
  *
  */
 public class DB2ConnectorTest {
+    private static PropertyBag testProps;
 	private static DB2Configuration testConf;
     private static ConnectorFacade facade;
 
@@ -52,6 +54,7 @@ public class DB2ConnectorTest {
 	public static void setupClass(){
 		testConf = DB2ConfigurationTest.createTestConfiguration();
 		facade = createFacade(testConf);
+		testProps = TestHelpers.getProperties(DB2Connector.class);
 	}
 	
     private static ConnectorFacade createFacade(DB2Configuration conf) {
@@ -117,10 +120,7 @@ public class DB2ConnectorTest {
 	}
 
 	static String getTestRequiredProperty(String name){
-	    String value = TestHelpers.getProperty(name,null);
-	    if(value == null){
-	        throw new IllegalArgumentException("Property named [" + name + "] is not defined");
-	    }
+	    String value = testProps.getStringProperty(name);
 	    return value;
 	}
 	
@@ -177,7 +177,7 @@ public class DB2ConnectorTest {
 	 */
 	@Test
 	public void testDelete(){
-		String username = TestHelpers.getProperty("testUser","TEST");
+		String username = testProps.getProperty("testUser",String.class,"TEST");
 		Map<String, Object> emptyMap = Collections.emptyMap();
 		Set<Attribute> attributes = new HashSet<Attribute>();
 		attributes.add(new Name(username));
@@ -205,7 +205,7 @@ public class DB2ConnectorTest {
      */
     @Test
     public void testFindUserByUid() {
-    	String username = TestHelpers.getProperty("testUser","TEST");
+    	String username = testProps.getProperty("testUser",String.class,"TEST");
         createTestUser();
         final Uid expected = new Uid(username);
         FindUidObjectHandler handler = new FindUidObjectHandler(expected);
@@ -264,7 +264,7 @@ public class DB2ConnectorTest {
      */
     @Test
     public void testFindUserByEndWith() {
-    	String username = TestHelpers.getProperty("testUser","TEST");
+    	String username = testProps.getProperty("testUser",String.class,"TEST");
         createTestUser();
         final Attribute expected = AttributeBuilder.build(Name.NAME, username);
         FindUidObjectHandler handler = new FindUidObjectHandler(new Uid(username));
@@ -282,7 +282,7 @@ public class DB2ConnectorTest {
      */
     @Test
     public void testFindUserByStartWith() {
-    	String username = TestHelpers.getProperty("testUser","TEST");
+    	String username = testProps.getProperty("testUser",String.class,"TEST");
         createTestUser();
         final Attribute expected = AttributeBuilder.build(Name.NAME, username);
         FindUidObjectHandler handler = new FindUidObjectHandler(new Uid(username));
@@ -299,7 +299,7 @@ public class DB2ConnectorTest {
      */
     @Test
     public void testFindCheckAttributes(){
-    	String username = TestHelpers.getProperty("testUser","TEST");
+    	String username = testProps.getProperty("testUser",String.class,"TEST");
     	final Uid expected = new Uid(username);
         createTestUser();
         FindUidObjectHandler handler = new FindUidObjectHandler(new Uid(username));

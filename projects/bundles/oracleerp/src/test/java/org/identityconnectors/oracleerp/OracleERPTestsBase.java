@@ -30,6 +30,7 @@ import java.util.*;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.contract.data.DataProvider;
+import org.identityconnectors.contract.data.GroovyDataProvider;
 import org.identityconnectors.contract.test.ConnectorHelper;
 import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;
@@ -72,7 +73,7 @@ abstract public class OracleERPTestsBase {
      */
     @BeforeClass
     public static void setUpClass() { 
-        dataProvider = ConnectorHelper.createDataProvider();
+        dataProvider = new GroovyDataProvider(OracleERPConnector.class.getName());
     }
 
     /**

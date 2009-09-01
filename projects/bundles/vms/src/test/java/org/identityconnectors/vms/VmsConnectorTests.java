@@ -68,6 +68,7 @@ import org.identityconnectors.framework.common.objects.filter.Filter;
 import org.identityconnectors.framework.common.objects.filter.NotFilter;
 import org.identityconnectors.framework.common.objects.filter.OrFilter;
 import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
+import org.identityconnectors.test.common.PropertyBag;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -98,9 +99,10 @@ public class VmsConnectorTests {
 
     @BeforeClass
     public static void before() {
-        HOST_NAME         = TestHelpers.getProperty("HOST_NAME", null);
-        SYSTEM_PASSWORD   = TestHelpers.getProperty("SYSTEM_PASSWORD", null);
-        SYSTEM_USER       = TestHelpers.getProperty("SYSTEM_USER", null);
+        PropertyBag testProps = TestHelpers.getProperties(VmsConnector.class);
+        HOST_NAME         = testProps.getStringProperty("HOST_NAME");
+        SYSTEM_PASSWORD   = testProps.getStringProperty("SYSTEM_PASSWORD");
+        SYSTEM_USER       = testProps.getStringProperty("SYSTEM_USER");
         Assert.assertNotNull("HOST_NAME must be specified", HOST_NAME);
         Assert.assertNotNull("SYSTEM_PASSWORD must be specified", SYSTEM_PASSWORD);
         Assert.assertNotNull("SYSTEM_USER must be specified", SYSTEM_USER);

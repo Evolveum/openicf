@@ -30,6 +30,7 @@ import junit.framework.Assert;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.common.objects.filter.*;
+import org.identityconnectors.test.common.PropertyBag;
 import org.identityconnectors.test.common.TestHelpers;
 import org.identityconnectors.common.security.GuardedString;
 
@@ -42,11 +43,12 @@ import org.identityconnectors.common.security.GuardedString;
  */
 public class WebTimeSheetConnectorTests {
 
-    private static final String URL = TestHelpers.getProperty("WTSURL", null);
-    private static final String LOGIN = TestHelpers.getProperty("WTSLOGIN", null);
-    private static final String PASSWORD = TestHelpers.getProperty("WTSPASSWORD", null);
-    private static final String APPNAME = TestHelpers.getProperty("WTSAPPNAME", null);
-    private static final String APPPASSWORD = TestHelpers.getProperty("WTSAPPPASSWORD", null);
+    private static final PropertyBag properties = TestHelpers.getProperties(WebTimeSheetConnector.class);
+    private static final String URL = properties.getStringProperty("WTSURL");
+    private static final String LOGIN = properties.getStringProperty("WTSLOGIN");
+    private static final String PASSWORD = properties.getStringProperty("WTSPASSWORD");
+    private static final String APPNAME = properties.getStringProperty("WTSAPPNAME");
+    private static final String APPPASSWORD = properties.getStringProperty("WTSAPPPASSWORD");
     //set up logging
     private static final Log log = Log.getLog(WebTimeSheetConnectorTests.class);
     private static WebTimeSheetConnector testConnector = new WebTimeSheetConnector();

@@ -85,9 +85,9 @@ public class OpDeleteImplTest {
     private Set<Attribute> initSampleUser() {
         Set<Attribute> res = new HashSet<Attribute>();
         
-        res.add(AttributeBuilder.build(Name.NAME, getTestProperty("sampleUser", true)));
+        res.add(AttributeBuilder.build(Name.NAME, getTestProperty("sampleUser")));
         
-        String samplePasswd = getTestProperty("samplePasswd", true);
+        String samplePasswd = getTestProperty("samplePasswd");
         res.add(AttributeBuilder.buildPassword(new GuardedString(samplePasswd.toCharArray())));
         
         return res;

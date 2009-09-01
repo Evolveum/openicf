@@ -39,38 +39,34 @@
  */
 package org.identityconnectors.googleapps;
 
-import java.util.HashSet;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-
-import org.junit.Test;
-
 
 import org.identityconnectors.common.IOUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
-
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
+import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.Uid;
-
 import org.identityconnectors.framework.common.objects.filter.Filter;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
-import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
+import org.identityconnectors.test.common.PropertyBag;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * Tests for the GoogleAppsConnector.
@@ -376,11 +372,11 @@ public class GoogleAppsConnectorTests {
      */
     public GoogleAppsConfiguration newConfiguration() {
         GoogleAppsConfiguration config = new GoogleAppsConfiguration();
-
-        config.setConnectionUrl(TestHelpers.getProperty("connector.connectionUrl", null));
-        config.setLogin(TestHelpers.getProperty("connector.login", null));
-        config.setPassword(TestHelpers.getProperty("connector.password", null));
-        config.setDomain(TestHelpers.getProperty("connector.domain", null));
+        PropertyBag properties = TestHelpers.getProperties(GoogleAppsConnector.class);
+        config.setConnectionUrl(properties.getStringProperty("connector.connectionUrl"));
+        config.setLogin(properties.getStringProperty("connector.login"));
+        config.setPassword(properties.getStringProperty("connector.password"));
+        config.setDomain(properties.getStringProperty("connector.domain"));
 
         config.validate();
 

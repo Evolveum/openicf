@@ -62,6 +62,7 @@ import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
 import org.identityconnectors.framework.common.objects.filter.Filter;
 import org.identityconnectors.framework.common.objects.filter.OrFilter;
 import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
+import org.identityconnectors.test.common.PropertyBag;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -226,9 +227,10 @@ public class SpmlConnectorTests {
 
     @BeforeClass
     public static void before() {
-        HOST_NAME         = TestHelpers.getProperty("HOST_NAME", null);
-        SYSTEM_PASSWORD   = TestHelpers.getProperty("SYSTEM_PASSWORD", null);
-        SYSTEM_USER       = TestHelpers.getProperty("SYSTEM_USER", null);
+        PropertyBag testProps = TestHelpers.getProperties(SpmlConnector.class);
+        HOST_NAME         = testProps.getStringProperty("HOST_NAME");
+        SYSTEM_PASSWORD   = testProps.getStringProperty("SYSTEM_PASSWORD");
+        SYSTEM_USER       = testProps.getStringProperty("SYSTEM_USER");
         TEST_USER         = "SPML101";
         Assert.assertNotNull("HOST_NAME must be specified", HOST_NAME);
         Assert.assertNotNull("SYSTEM_PASSWORD must be specified", SYSTEM_PASSWORD);

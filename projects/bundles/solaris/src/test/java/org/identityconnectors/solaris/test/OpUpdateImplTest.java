@@ -153,7 +153,7 @@ public class OpUpdateImplTest {
         
         res.add(AttributeBuilder.build(Name.NAME, getTestProperty("sampleUser")));
         
-        String samplePasswd = getTestProperty("samplePasswd", true);
+        String samplePasswd = getTestProperty("samplePasswd");
         res.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString(samplePasswd.toCharArray())));
         
         return res;

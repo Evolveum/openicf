@@ -43,6 +43,7 @@ import javax.sql.DataSource;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.test.common.PropertyBag;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -63,6 +64,8 @@ public class DB2ConfigurationTest {
 	private final static String WRONG_ALIAS = "wrgAls";
     private final static String WRONG_DATASOURCE = "wrongDatasource";
 	
+    private static final PropertyBag testProps = TestHelpers.getProperties(DB2Connector.class);
+    
 	/**
 	 * Test validation
 	 */
@@ -74,7 +77,7 @@ public class DB2ConfigurationTest {
 	
 	static DB2Configuration createTestConfiguration(){
 		DB2Configuration conf = null;
-		String connType = TestHelpers.getProperty("connType",null);
+		String connType = testProps.getStringProperty("connType");
 		if("type4".equals(connType)){
 			conf = createTestType4Configuration();
 		}
@@ -93,11 +96,11 @@ public class DB2ConfigurationTest {
 	
 	private static DB2Configuration createTestType4Configuration(){
 		DB2Configuration conf = createDB2Configuration();
-		String databaseName = TestHelpers.getProperty("type4.databaseName",null);
-		String adminAcoount = TestHelpers.getProperty("type4.adminAccount",null);
-		String adminPassword = TestHelpers.getProperty("type4.adminPassword",null);
-		String host = TestHelpers.getProperty("type4.host",null);
-		String port = TestHelpers.getProperty("type4.port",null);
+		String databaseName = testProps.getStringProperty("type4.databaseName");
+		String adminAcoount = testProps.getStringProperty("type4.adminAccount");
+		String adminPassword = testProps.getStringProperty("type4.adminPassword");
+		String host = testProps.getStringProperty("type4.host");
+		String port = testProps.getStringProperty("type4.port");
 		conf.setDatabaseName(databaseName);
 		conf.setAdminAccount(adminAcoount);
 		conf.setAdminPassword(new GuardedString(adminPassword.toCharArray()));
@@ -109,10 +112,10 @@ public class DB2ConfigurationTest {
 	
 	private static DB2Configuration createTestTypeURLConfiguration(){
 		DB2Configuration conf = createDB2Configuration();
-		String url = TestHelpers.getProperty("typeURL.url",null);
-		String adminAcoount = TestHelpers.getProperty("typeURL.adminAccount",null);
-		String adminPassword = TestHelpers.getProperty("typeURL.adminPassword",null);
-		String jdbcDriver = TestHelpers.getProperty("typeURL.jdbcDriver",null);
+		String url = testProps.getStringProperty("typeURL.url");
+		String adminAcoount = testProps.getStringProperty("typeURL.adminAccount");
+		String adminPassword = testProps.getStringProperty("typeURL.adminPassword");
+		String jdbcDriver = testProps.getStringProperty("typeURL.jdbcDriver");
 		conf.setUrl(url);
 		conf.setAdminAccount(adminAcoount);
 		conf.setAdminPassword(new GuardedString(adminPassword.toCharArray()));
@@ -211,13 +214,13 @@ public class DB2ConfigurationTest {
 	
 	
     private static DB2Configuration createTestType2Configuration(String driver){
-        String alias = TestHelpers.getProperty("type2.alias",null);
+        String alias = testProps.getStringProperty("type2.alias");
         if(alias == null){
             return null;
         }
         DB2Configuration conf = createDB2Configuration();
-        String adminAccount = TestHelpers.getProperty("type2.adminAccount",null);
-        String adminPassword = TestHelpers.getProperty("type2.adminPassword",null);
+        String adminAccount = testProps.getStringProperty("type2.adminAccount");
+        String adminPassword = testProps.getStringProperty("type2.adminPassword");
         conf.setDatabaseName(alias);
         conf.setAdminAccount(adminAccount);
         conf.setAdminPassword(new GuardedString(adminPassword.toCharArray()));

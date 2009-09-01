@@ -24,5 +24,6 @@
     <property name="contracts.run" value="true"/>
     <property name="framework.dir" value="${basedir}/../../framework"/>
     <property name="dotnet.dir" value="../"/>
+    <property name="connectorName" value="Org.IdentityConnectors.ActiveDirectory.ActiveDirectoryConnector"/>	
     <import file="../build.xml"/>    
 </project>

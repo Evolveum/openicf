@@ -39,6 +39,7 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.api.ConnectorFacadeFactory;
+import org.identityconnectors.test.common.PropertyBag;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.*;
 
@@ -68,25 +69,27 @@ public class MySQLUserConnectorDSTests extends MySQLTestBase {
      */
     @BeforeClass
     public static void setUpClass() throws Exception {
-        idmHost = TestHelpers.getProperty(HOST, null);
+        PropertyBag testProps = TestHelpers.getProperties(MySQLUserConnector.class);
+
+        idmHost = testProps.getStringProperty(HOST);
         assertNotNull(HOST + MSG, idmHost);
 
-        idmUser = TestHelpers.getProperty(USER, null);
+        idmUser = testProps.getStringProperty(USER);
         assertNotNull(USER + MSG, idmUser);
 
-        idmPassword = new GuardedString(TestHelpers.getProperty(PASSWD, "").toCharArray());
+        idmPassword = new GuardedString(testProps.getProperty(PASSWD, String.class, "").toCharArray());
         assertNotNull(PASSWD + MSG, idmPassword);
 
-        idmPort = TestHelpers.getProperty(PORT, null);
+        idmPort = testProps.getStringProperty(PORT);
         assertNotNull(PORT + MSG, idmPort);
 
-        idmDriver = TestHelpers.getProperty(DRIVER, null);
+        idmDriver = testProps.getStringProperty(DRIVER);
         assertNotNull(DRIVER + MSG, idmDriver);
 
-        idmModelUser = TestHelpers.getProperty(USER_MODEL, null);
+        idmModelUser = testProps.getStringProperty(USER_MODEL);
         assertNotNull(USER_MODEL + MSG, idmModelUser);
 
-        final String passwd = TestHelpers.getProperty(TEST_PASSWD, null);
+        final String passwd = testProps.getStringProperty(TEST_PASSWD);
         assertNotNull(TEST_PASSWD + MSG, passwd);
         testPassword = new GuardedString(passwd.toCharArray());       
     }

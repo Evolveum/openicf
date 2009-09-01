@@ -36,6 +36,7 @@ import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnector;
+import org.identityconnectors.test.common.PropertyBag;
 import org.identityconnectors.test.common.TestHelpers;
 
 /**
@@ -44,6 +45,8 @@ import org.identityconnectors.test.common.TestHelpers;
  *
  */
 public class SolarisTestCommon {
+    
+    private static final PropertyBag testProps = TestHelpers.getProperties(SolarisConnector.class);
     
     /** used to view the ip address of the resource that we are connecting to */
     public static void printIPAddress(SolarisConfiguration config) {
@@ -61,20 +64,8 @@ public class SolarisTestCommon {
         return conn;
     }
     
-    /**
-     * acquires a test property with given name
-     */
-    public static String getTestProperty(String name, boolean nullCheck) {
-        final String propValue = TestHelpers.getProperty(name, null);
-        if (nullCheck) {
-            String msg = "%s must be provided in build.groovy. It cannot be null.";
-            Assert.assertNotNull(String.format(msg, name), propValue);
-        }
-        return propValue;
-    }
-    
     public static String getTestProperty(String name) {
-        return getTestProperty(name, true);
+        return testProps.getStringProperty(name);
     }
 
     public static SolarisConfiguration createConfiguration() {
@@ -114,7 +105,7 @@ public class SolarisTestCommon {
     
     /** fill in sample user/password for sample user used in create */
     public static Set<Attribute> initSampleUser() {
-        return initSampleUser(getTestProperty("sampleUser", true));
+        return initSampleUser(getTestProperty("sampleUser"));
     }
     
     /** {@link SolarisTestCommon#initSampleUser()}*/
@@ -123,7 +114,7 @@ public class SolarisTestCommon {
         
         res.add(AttributeBuilder.build(Name.NAME, username));
         
-        String samplePasswd = getTestProperty("samplePasswd", true);
+        String samplePasswd = getTestProperty("samplePasswd");
         res.add(AttributeBuilder.buildPassword(new GuardedString(samplePasswd.toCharArray())));
         
         return res;

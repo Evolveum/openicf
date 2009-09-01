@@ -33,6 +33,7 @@ import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.SyncDelta;
 import org.identityconnectors.framework.common.objects.SyncResultsHandler;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.test.common.PropertyBag;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -49,10 +50,12 @@ public class RacfLdapConnectorTests extends RacfConnectorTestBase {
     
     @BeforeClass
     public static void beforeClass() {
-        HOST_NAME         = TestHelpers.getProperty("LDAP_HOST_NAME", null);
-        SYSTEM_PASSWORD   = TestHelpers.getProperty("LDAP_SYSTEM_PASSWORD", null);
-        SUFFIX            = TestHelpers.getProperty("LDAP_SUFFIX", null);
-        SYSTEM_USER       = TestHelpers.getProperty("LDAP_SYSTEM_USER", null);
+        PropertyBag testProps = TestHelpers.getProperties(RacfConnector.class);
+        
+        HOST_NAME         = testProps.getStringProperty("LDAP_HOST_NAME");
+        SYSTEM_PASSWORD   = testProps.getStringProperty("LDAP_SYSTEM_PASSWORD");
+        SUFFIX            = testProps.getStringProperty("LDAP_SUFFIX");
+        SYSTEM_USER       = testProps.getStringProperty("LDAP_SYSTEM_USER");
        
         SYSTEM_USER_LDAP  = "racfid="+SYSTEM_USER+",profileType=user,"+SUFFIX;
         

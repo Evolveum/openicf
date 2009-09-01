@@ -25,6 +25,7 @@ package org.identityconnectors.db2;
 import java.sql.*;
 
 import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.test.common.PropertyBag;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.*;
 
@@ -47,7 +48,7 @@ public class DB2AuthorityReaderTest {
 	public static void setup() throws Exception{
 		conn = DB2ConnectorTest.createTestConnection();
 		testee = new DB2AuthorityReader(conn);
-		testUser = TestHelpers.getProperty("testUser",null);
+		testUser = TestHelpers.getProperties(DB2Connector.class).getStringProperty("testUser");
 	}
 	
 	/**
