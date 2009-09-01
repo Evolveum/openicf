@@ -47,5 +47,21 @@ namespace Org.IdentityConnectors.Common
                 throw new ArgumentNullException(String.Format(FORMAT, param));
             }
         }
+
+        /**
+         * Throws {@link IllegalArgumentException} if the parameter <code>o</code>
+         * is <code>null</code> or blank.
+         * 
+         * @param o
+         *            value to test for blank.
+         * @param param
+         *            name of the parameter to check.
+         */
+        public static void BlankCheck(String o, String param) {
+            String FORMAT = "Parameter '%s' must not be blank.";
+            if (StringUtil.IsBlank(o)) {
+                throw new ArgumentException(String.Format(FORMAT, param));
+            }
+        }
     }
 }
