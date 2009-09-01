@@ -58,7 +58,7 @@ namespace Org.IdentityConnectors.Common
          *            name of the parameter to check.
          */
         public static void BlankCheck(String o, String param) {
-            String FORMAT = "Parameter '%s' must not be blank.";
+            String FORMAT = "Parameter '{0}' must not be blank.";
             if (StringUtil.IsBlank(o)) {
                 throw new ArgumentException(String.Format(FORMAT, param));
             }
