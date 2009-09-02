@@ -90,6 +90,10 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
         dispose();
         connect();
     }
+    
+    public RW3270Configuration getConfiguration() {
+    	return _config;
+    }
 
     public void resetStandardOutput() {
         _buffer.setLength(0);

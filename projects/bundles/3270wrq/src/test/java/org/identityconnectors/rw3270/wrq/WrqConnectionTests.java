@@ -33,6 +33,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 
+import javax.naming.NamingException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -85,7 +86,7 @@ public class WrqConnectionTests {
     public void testTelnetConnectionViaPool() {
         OurConfiguration configuration = createConfiguration();
         try {
-            RW3270Connection connection = new WrqConnection(configuration);
+            RW3270Connection connection = createLoggedinConnection(configuration);
             try {
                 // Now, display a user
                 //
@@ -100,6 +101,20 @@ public class WrqConnectionTests {
             Assert.fail(e.toString());
         }
     }
+
+	private WrqConnection createLoggedinConnection(
+			OurConfiguration configuration) throws NamingException {
+		WrqConnection connection = new WrqConnection(configuration);
+        boolean succeeded = false;
+        try {
+        	connection.loginUser();
+        	succeeded = true;
+        } finally {
+        	if (!succeeded)
+        		connection.dispose();
+        }
+		return connection;
+	}
     
     private static MapTransform fillInPatternNodes(String parserString) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -141,7 +156,7 @@ public class WrqConnectionTests {
         
         OurConfiguration configuration = createConfiguration();
         try {
-            RW3270Connection connection = new WrqConnection(configuration);
+            RW3270Connection connection = createLoggedinConnection(configuration);
             try {
                 // Now, display a user's OMVS info
                 //
@@ -181,7 +196,7 @@ public class WrqConnectionTests {
             "</MapTransform>";
         
         try {
-            RW3270Connection connection = new WrqConnection(configuration);
+            RW3270Connection connection = createLoggedinConnection(configuration);
             try {
                 // Now, display a user's CICS info
                 //
@@ -236,7 +251,7 @@ public class WrqConnectionTests {
             "</MapTransform>";
         
         try {
-            RW3270Connection connection = new WrqConnection(configuration);
+            RW3270Connection connection = createLoggedinConnection(configuration);
             try {
                 // Now, display a user's TSO info
                 //

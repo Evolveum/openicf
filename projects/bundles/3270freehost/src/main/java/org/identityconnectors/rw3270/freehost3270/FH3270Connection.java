@@ -62,7 +62,6 @@ public class FH3270Connection extends RW3270BaseConnection {
                 _semaphore.release();
             }
         });
-        loginUser();
     }
 
     @Override

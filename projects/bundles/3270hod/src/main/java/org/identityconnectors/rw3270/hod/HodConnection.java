@@ -45,7 +45,6 @@ public class HodConnection extends RW3270BaseConnection implements ECLPSListener
 
     public HodConnection(RW3270Configuration config) throws NamingException {
         super(config);
-        loginUser();
     }
 
     @Override

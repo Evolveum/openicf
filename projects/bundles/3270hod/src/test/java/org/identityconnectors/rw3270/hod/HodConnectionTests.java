@@ -33,6 +33,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 
+import javax.naming.NamingException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -85,7 +86,7 @@ public class HodConnectionTests {
     public void testTelnetConnectionViaPool() {
         OurConfiguration configuration = createConfiguration();
         try {
-            RW3270Connection connection = new HodConnection(configuration);
+            RW3270Connection connection = createLoggedinConnection(configuration);
             try {
                 // Now, display a user
                 //
@@ -101,6 +102,21 @@ public class HodConnectionTests {
             Assert.fail(e.toString());
         }
     }
+
+	private HodConnection createLoggedinConnection(
+			OurConfiguration configuration) throws NamingException {
+		HodConnection connection = new HodConnection(configuration);
+        boolean succeeded = false;
+        try {
+        	connection.loginUser();
+        	succeeded = true;
+        } finally {
+        	if (!succeeded)
+        		connection.dispose();
+        }
+		return connection;
+		
+	}
 
     private String executeCommand(RW3270Connection connection, String command) {
         connection.resetStandardOutput();
@@ -158,7 +174,7 @@ public class HodConnectionTests {
         
         OurConfiguration configuration = createConfiguration();
         try {
-            RW3270Connection connection = new HodConnection(configuration);
+            RW3270Connection connection = createLoggedinConnection(configuration);
             try {
                 // Now, display a user's OMVS info
                 //
@@ -199,7 +215,7 @@ public class HodConnectionTests {
             "</MapTransform>";
         
         try {
-            RW3270Connection connection = new HodConnection(configuration);
+            RW3270Connection connection = createLoggedinConnection(configuration);
             try {
                 // Now, display a user's CICS info
                 //
@@ -239,7 +255,7 @@ public class HodConnectionTests {
             "</MapTransform>";
         
         try {
-            RW3270Connection connection = new HodConnection(configuration);
+            RW3270Connection connection = createLoggedinConnection(configuration);
             try {
                 // Now, display a user's TSO info
                 //

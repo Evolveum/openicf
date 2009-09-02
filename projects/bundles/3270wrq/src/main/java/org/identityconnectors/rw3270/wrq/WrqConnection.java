@@ -44,7 +44,6 @@ public class WrqConnection extends RW3270BaseConnection implements ECLPSListener
 
     public WrqConnection(RW3270Configuration config) throws NamingException {
         super(config);
-        loginUser();
     }
 
     @Override

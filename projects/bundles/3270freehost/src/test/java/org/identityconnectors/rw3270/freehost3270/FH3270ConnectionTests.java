@@ -33,6 +33,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 
+import javax.naming.NamingException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -120,7 +121,7 @@ public class FH3270ConnectionTests {
 
         OurConfiguration configuration = createConfiguration();
         try {
-            RW3270Connection connection = new FH3270Connection(configuration);
+            RW3270Connection connection = createLoggedinConnection(configuration);
             try {
                 // Now, display a user's OMVS info
                 //
@@ -144,6 +145,20 @@ public class FH3270ConnectionTests {
         }
     }
 
+	private FH3270Connection createLoggedinConnection(
+			OurConfiguration configuration) throws NamingException {
+		FH3270Connection connection = new FH3270Connection(configuration);
+        boolean succeeded = false;
+        try {
+        	connection.loginUser();
+        	succeeded = true;
+        } finally {
+        	if (!succeeded)
+        		connection.dispose();
+        }
+		return connection;
+	}
+
     @Test
     public void testCicsParser() {
         OurConfiguration configuration = createConfiguration();
@@ -160,7 +175,7 @@ public class FH3270ConnectionTests {
             "</MapTransform>";
 
         try {
-            RW3270Connection connection = new FH3270Connection(configuration);
+            RW3270Connection connection = createLoggedinConnection(configuration);
             try {
                 // Now, display a user's CICS info
                 //
@@ -218,7 +233,7 @@ public class FH3270ConnectionTests {
             "  </PatternNode>\n" +
             "</MapTransform>\n";
         try {
-            RW3270Connection connection = new FH3270Connection(configuration);
+            RW3270Connection connection = createLoggedinConnection(configuration);
             try {
                 // Now, display a user's CICS info
                 //
@@ -258,7 +273,7 @@ public class FH3270ConnectionTests {
             "</MapTransform>";
 
         try {
-            RW3270Connection connection = new FH3270Connection(configuration);
+            RW3270Connection connection = createLoggedinConnection(configuration);
             try {
                 // Now, display a user's TSO info
                 //
