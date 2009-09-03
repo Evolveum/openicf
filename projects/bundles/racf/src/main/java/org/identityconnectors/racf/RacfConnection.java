@@ -31,6 +31,7 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.rw3270.RW3270BaseConnection;
 import org.identityconnectors.rw3270.RW3270Connection;
 import org.identityconnectors.rw3270.RW3270ConnectionFactory;
 
@@ -50,6 +51,7 @@ public class RacfConnection {
             try {
                 System.out.println("initializing command line");
                 _racfConnection = new RW3270ConnectionFactory(configuration).newConnection();
+                ((RW3270BaseConnection)_racfConnection).loginUser();
             } catch (Exception e) {
                 throw ConnectorException.wrap(e);
             }
