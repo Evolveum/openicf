@@ -444,11 +444,15 @@ public abstract class RacfConnectorTestBase {
         for (Attribute attribute : attributes) {
             System.out.println(attribute.getName());
             List<Object> values = attribute.getValue();
-            for (Object value : values) {
-                if (value==null)
-                    System.out.println("    <null>");
-                else
-                    System.out.println("    "+value.getClass().getName()+":"+value);
+            if (values==null) {
+            	System.out.println("    <null value>");
+            } else {
+	            for (Object value : values) {
+	                if (value==null)
+	                    System.out.println("    <null>");
+	                else
+	                    System.out.println("    "+value.getClass().getName()+":"+value);
+	            }
             }
         }
     }
