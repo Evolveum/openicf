@@ -874,6 +874,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
                 return ret;
             } catch (TargetInvocationException e) {
                 Exception root = e.InnerException;
+                ExceptionUtil.PreserveStackTrace( root );
                 throw root;
             }
         }

@@ -81,6 +81,7 @@
     <Compile Include="ApiRemote.cs" />
     <Compile Include="ApiRemoteMessages.cs" />
     <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="ExceptionUtil.cs" />
     <Compile Include="Security.cs" />
     <Compile Include="Serializer.cs" />
     <Compile Include="SerializerBinary.cs" />

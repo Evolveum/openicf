@@ -177,6 +177,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
                 // call out to the operation..
             } catch (TargetInvocationException e) {
                 Exception root = e.InnerException;
+                ExceptionUtil.PreserveStackTrace( root );
                 throw root;
             } finally {
                 // make sure dispose of the connector properly

@@ -69,6 +69,8 @@
     <Compile Include="CollectionUtilTests.cs" />
     <Compile Include="ConnectorAttributeUtilTests.cs" />
     <Compile Include="ConnectorFacadeTests.cs" />
+    <Compile Include="ConnectorFacadeExceptionTests.cs" />
+    <Compile Include="ExceptionUtilTests.cs" />
     <Compile Include="GuardedByteArrayTests.cs">
       <SubType>Code</SubType>
     </Compile>

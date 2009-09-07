@@ -492,7 +492,9 @@ namespace Org.IdentityConnectors.Framework.Impl.Server
                     result = method.Invoke(operation, args);
                 }
                 catch (TargetInvocationException e) {
-                    throw e.InnerException;
+                    Exception root = e.InnerException;
+                    ExceptionUtil.PreserveStackTrace( root );
+                    throw root;
                 }
                 bool anyStreams =
                     argumentsAndStreamHandlers.Count > arguments.Count;
