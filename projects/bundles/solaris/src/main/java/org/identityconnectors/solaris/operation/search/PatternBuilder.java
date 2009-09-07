@@ -62,14 +62,13 @@ public class PatternBuilder {
     private String delimiter;
 
     public PatternBuilder(int nrOfColumns) {
-        this.nrOfColumns = nrOfColumns;
-//        this(nrOfColumns, DEFAULT_DELIMITER);
+        this(nrOfColumns, DEFAULT_DELIMITER);
     }
 
-//    public PatternBuilder(int nrOfColumns, String delimiter) {
-//        this.nrOfColumns = nrOfColumns;
-//        this.delimiter = delimiter;
-//    }
+    public PatternBuilder(int nrOfColumns, String delimiter) {
+        this.nrOfColumns = nrOfColumns;
+        this.delimiter = delimiter;
+    }
 
     public String build(int... columnSelector) {
         checkValidity(columnSelector);
@@ -114,12 +113,12 @@ public class PatternBuilder {
         return pb.build(columnSelector);
     }
 
-//    /* this method has no present usage yet, might be useful for future */
-//    public static String buildPattern(int nrOfColumns, String delimiter,
-//            int... columnSelector) {
-//        PatternBuilder pb = new PatternBuilder(nrOfColumns, delimiter);
-//        return pb.build(columnSelector);
-//    }
+    /* this method has no present usage yet, might be useful for future */
+    public static String buildPattern(int nrOfColumns, String delimiter,
+            int... columnSelector) {
+        PatternBuilder pb = new PatternBuilder(nrOfColumns, delimiter);
+        return pb.build(columnSelector);
+    }
     
     /** create a pattern that matches any string */
     public static String buildAcceptAllPattern() {
