@@ -33,5 +33,6 @@ public class OpSchemaTest {
     public void test() {
         SolarisConnector conn = SolarisTestCommon.createConnector(SolarisTestCommon.createConfiguration());
         Assert.assertNotNull(conn.schema());
+        conn.dispose();
     }
 }

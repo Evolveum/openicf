@@ -105,7 +105,7 @@ public class OpSearchImplTest {
         } finally {
             // cleanup users
             if (pairs != null) {
-                cleanupUsers(NR_OF_USERS, pairs);
+                cleanupUsers(pairs);
             }
         }
     }
@@ -129,8 +129,7 @@ public class OpSearchImplTest {
         return USERNAME_BASE + i;
     }
 
-    private void cleanupUsers(int nrOfUsers, List<Pair<String, GuardedString>> list) {
-        int i = 0;
+    private void cleanupUsers(List<Pair<String, GuardedString>> list) {
         for (Pair<String, GuardedString> pair : list) {
             facade.delete(ObjectClass.ACCOUNT, new Uid(pair.first), null);
             try {
@@ -139,8 +138,6 @@ public class OpSearchImplTest {
             } catch (RuntimeException ex) {
                 // OK
             }
-
-            i++;
         }//for
     }
 

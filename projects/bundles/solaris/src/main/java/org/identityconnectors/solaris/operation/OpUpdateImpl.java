@@ -35,7 +35,6 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConfiguration;
-import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.command.CommandUtil;
@@ -74,20 +73,6 @@ public class OpUpdateImpl extends AbstractOp {
         Uid name = (Uid) attrMap.get(Uid.NAME);
         final String accountId = name.getUidValue();
 
-        /*String output = null;*/
-
-        // if i run the tests separately, the login info is in the expect4j's
-        // buffer
-        // otherwise (when tests are run in batch), there is empty buffer, so
-        // this waitfor will timeout.
-        try {
-            /* output = */getConnection().waitFor(
-                    getConfiguration().getRootShellPrompt(),
-                    SolarisConnection.WAIT);
-        } catch (Exception ex) {
-            // OK
-        }
-
         doSudoStart();
 
         /*
@@ -116,11 +101,6 @@ public class OpUpdateImpl extends AbstractOp {
 
                     getConnection().send(getCmdBuilder().build("usermod", commandSwitches, accountId));
                     getConnection().expect(builder.build());
-
-                    // LEGACY imlementation: TODO erase
-                    // output = executeCommand(getCmdBuilder().build("usermod",
-                    // commandSwitches, accountId));
-                    // EOF LEGACY imlementation:
 
                     // Release the uid "mutex"
                     getConnection().send(getMutexReleaseScript());

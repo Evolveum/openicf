@@ -38,7 +38,6 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.constants.AccountAttributes;
@@ -76,16 +75,6 @@ public class OpSearchImpl extends AbstractOp {
         
         this.options = options;
         this.oclass = oclass;
-        
-        // if i run the tests separately, the login info is in the expect4j's buffer
-        // otherwise (when tests are run in batch), there is empty buffer, so this waitfor will timeout.
-        try {
-            getConnection().waitFor(
-                    getConfiguration().getRootShellPrompt(),
-                    SolarisConnection.WAIT);
-        } catch (Exception ex) {
-            // OK
-        }
         
         // TODO 
         if (query == null) {

@@ -151,14 +151,6 @@ public class OpCreateImpl extends AbstractOp {
     private boolean accountExists(String name) {
         final boolean[] exists = new boolean[1];
         exists[0] = true;
-        
-        //TODO is this waitFor needed?
-        try {
-            // eliminate the output of previous commands
-            getConnection().waitFor(getConfiguration().getRootShellPrompt());
-        } catch (Exception e) {
-            //OK
-        }
         try {
             // FIXME find a more solid command that works for both NIS and normal passwords
             getConnection().send(getCmdBuilder().build(String.format("logins -l %s", name)));
