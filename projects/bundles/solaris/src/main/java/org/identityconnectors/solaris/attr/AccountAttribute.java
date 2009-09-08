@@ -23,6 +23,9 @@
 
 package org.identityconnectors.solaris.attr;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.Uid;
 
@@ -58,6 +61,30 @@ public enum AccountAttribute implements ConnectorAttribute {
     private String n;
     private NativeAttribute nattr;
 
+    private static final Map<NativeAttribute, AccountAttribute> nativeToAccount = new HashMap<NativeAttribute, AccountAttribute>();
+    static {
+        for (AccountAttribute accAttr : values()) {
+            switch (accAttr) {
+            /*
+             * NAME, UID and FRAMEWORK_UID are mapped to the same native attribute
+             */
+            case NAME:
+            case UID:
+            case FRAMEWORK_UID:
+                nativeToAccount.put(accAttr.getNative(), NAME);
+                break;
+
+            default:
+                nativeToAccount.put(accAttr.getNative(), accAttr);
+                break;
+            }
+        }
+    }
+
+    public static AccountAttribute fromNative(NativeAttribute nativeAttr) {
+        return nativeToAccount.get(nativeAttr);
+    }
+
     private AccountAttribute(String name, NativeAttribute nativeAttr) {
         n = name;
         nattr = nativeAttr;
@@ -70,5 +97,4 @@ public enum AccountAttribute implements ConnectorAttribute {
     public NativeAttribute getNative() {
         return nattr;
     }
-
 }
