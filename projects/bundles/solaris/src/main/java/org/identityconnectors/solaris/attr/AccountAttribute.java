@@ -56,7 +56,8 @@ public enum AccountAttribute implements ConnectorAttribute {
     MAX("max", NativeAttribute.MAX_DAYS_BETWEEN_CHNG),
     MIN("min", NativeAttribute.MIN_DAYS_BETWEEN_CHNG),
     WARN("warn", NativeAttribute.DAYS_BEFORE_TO_WARN),
-    LOCK("lock", NativeAttribute.LOCK);
+    LOCK("lock", NativeAttribute.LOCK),
+    PASSWD_FORCE_CHANGE("force_change", NativeAttribute.PWSTAT);
 
     private String n;
     private NativeAttribute nattr;

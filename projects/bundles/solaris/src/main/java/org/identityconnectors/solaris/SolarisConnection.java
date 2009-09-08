@@ -46,10 +46,15 @@ import expect4j.matches.Match;
 public class SolarisConnection {
     /** set the timeout for waiting on reply. */
     public static final int WAIT = 12000;
-
     
     //TODO might be a configuration property
     private static final String HOST_END_OF_LINE_TERMINATOR = "\n";
+    /* 
+     * Root Shell Prompt used by the connector.
+     * As Expect uses regular expressions, the pattern should be quoted as a string literal. 
+     */
+    private static final String CONNECTOR_PROMPT = "~ConnectorPrompt";
+    private String _originalPrompt;
     
     /**
      * the configuration object from which this connection is created.
@@ -94,13 +99,21 @@ public class SolarisConnection {
         }
         
         try {
+            // FIXME: add rejects for "incorrect" error (see adapter)
             waitFor(_configuration.getRootShellPrompt());
             /*
              * turn off the echoing of keyboard input on the resource.
              * Saves bandwith too.
              */
-            send("stty -echo");
-            waitFor(_configuration.getRootShellPrompt());
+            executeCommand("stty -echo");
+            
+            /*
+             * Change root shell prompt, for simplier parsing of the output.
+             * Revert the changes after the connection is closed.
+             */
+            _originalPrompt = _configuration.getRootShellPrompt();
+            _configuration.setRootShellPrompt(CONNECTOR_PROMPT);
+            executeCommand("PS1=\"" + CONNECTOR_PROMPT + "\"");
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
@@ -241,7 +254,6 @@ public class SolarisConnection {
     public String executeCommand(String command) {
         String output = null;
         try {
-            
             send(command);
             output = waitFor(_configuration.getRootShellPrompt(), WAIT); 
         } catch (Exception e) {
@@ -251,16 +263,10 @@ public class SolarisConnection {
         int index = output.lastIndexOf(_configuration.getRootShellPrompt());
         if (index!=-1)
             output = output.substring(0, index);
-        
-        String terminator = "\n";
-        // trim off starting or ending \n
-        //
-        if (output.startsWith(terminator)) {
-            output = output.substring(terminator.length());
-        }
-        if (output.endsWith(terminator)) {
-            output = output.substring(0, output.length()-terminator.length());
-        }
+
+//        if (output.endsWith(HOST_END_OF_LINE_TERMINATOR)) {
+//            output = output.substring(0, output.length()-HOST_END_OF_LINE_TERMINATOR.length());
+//        }
         return output;
     }
 
@@ -276,6 +282,9 @@ public class SolarisConnection {
             _expect4j.close();
             _expect4j = null;
         }
+
+        // reset the original root prompt. (see the constructor)
+        _configuration.setRootShellPrompt(_originalPrompt);
     }
     
     /**

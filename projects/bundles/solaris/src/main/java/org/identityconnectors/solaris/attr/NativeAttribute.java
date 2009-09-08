@@ -23,6 +23,9 @@
 
 package org.identityconnectors.solaris.attr;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public enum NativeAttribute {
     /** USER attribute */
     NAME,
@@ -72,4 +75,24 @@ public enum NativeAttribute {
     GID,
     /** GROUP attribute */
     G_USERS;
+
+    private static final Map<String, NativeAttribute> stringToNative = new HashMap<String, NativeAttribute>();
+    static {
+        for (NativeAttribute accAttr : values()) {
+            stringToNative.put(accAttr.getName(), accAttr);
+        }
+    }
+    
+    /**
+     * is able to transform string value into NativeAttribute, given, that we
+     * respect the name defined by {@see NativeAttribute#getName()}.
+     */
+    public static NativeAttribute fromString(String nativeAttr) {
+        return stringToNative.get(nativeAttr);
+    }
+    
+    /** @return String representation of the native attribute name. */
+    public String getName() {
+        return this.toString();
+    }
 }
