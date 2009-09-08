@@ -10,7 +10,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/Connector Framework - Internal"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Connector Contract Tests"/>
 	<classpathentry kind="var" path="USER_HOME/.connectors/connector-oracleerp/lib/ojdbc14.jar"/>
-	<classpathentry exported="true" kind="con" path="GROOVY_SUPPORT"/>
 	<classpathentry kind="lib" path="/Connector Contract Tests/src"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Connector Common Test Library"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>

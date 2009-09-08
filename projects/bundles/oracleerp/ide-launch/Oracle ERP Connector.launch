@@ -13,5 +13,4 @@
 <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/1.5"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value=""/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="Oracle ERP Connector"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dproject.name=connector-oracleerp&#13;&#10;-Ddata-provider=org.identityconnectors.contract.data.GroovyDataProvider&#13;&#10;-DbundleJar=dist/org.identityconnectors.oracleerp-1.0.1.jar&#13;&#10;-DbundleName=org.identityconnectors.oracleerp&#13;&#10;-DbundleVersion=1.0.1"/>
 </launchConfiguration>

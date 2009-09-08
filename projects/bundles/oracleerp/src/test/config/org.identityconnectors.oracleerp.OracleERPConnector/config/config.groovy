@@ -228,11 +228,11 @@ testsuite {
      
 //  Connector WRONG configuration for ValidateApiOpTests
   Validate.invalidConfig = [
-     [ host : "" ],
-     [ login : "" ],
-     [ password : "" ],
-     [ databaseName : "" ],
-     [ driver : "" ]
+//     [ host : "" ],
+//     [ login : "" ],
+//     [ password : "" ],
+//     [ databaseName : "" ],
+//     [ driver : "" ]
   ]
   
 //  Connector WRONG configuration for TestApiOpTests
