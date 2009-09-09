@@ -23,16 +23,22 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
     <!-- DotNet Common build targets -->
     <PropertyGroup>                
-        <SVN_Revision Condition="'$(SVN_REVISION)' == ''">0</SVN_Revision>
-        <VersionFile>$(MSBuildProjectDirectory)\version.txt</VersionFile>
+        <VersionFileIn>$(MSBuildProjectDirectory)\version.template</VersionFileIn>
+	<VersionFileOut>$(MSBuildProjectDirectory)\version.txt</VersionFileOut>
         <Company>Sun Microsystems, Inc.</Company>
         <Copyright>Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.</Copyright>
         <CommonBuildDir>$(MSBuildProjectDirectory)\..\Build</CommonBuildDir>
     </PropertyGroup>
 
     <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />   
-    <Target Name="SetVersion">
-        <Version VersionFile="$(VersionFile)">
+    <Target Name="SetRevision" Condition="'$(SVN_REVISION)' == ''">
+	    <SvnVersion LocalPath=".">
+ 		<Output TaskParameter="Revision" PropertyName="SVN_Revision" />
+	    </SvnVersion>
+    </Target>	
+	
+    <Target Name="SetVersion" DependsOnTargets="SetRevision">
+        <Version VersionFile="$(VersionFileIn)">
                 <Output TaskParameter="Major" PropertyName="Major" />
                 <Output TaskParameter="Minor" PropertyName="Minor" />
                 <Output TaskParameter="Build" PropertyName="Build" />
@@ -40,8 +46,8 @@
        </Version>
        <Message Text="$(MSBuildProjectName) Version: $(Major).$(Minor).$(Build).$(SVN_Revision)"/>
        <!-- need to store the version file if SVN_revision is defined, it is used for running contract tests -->
-       <WriteLinesToFile File="$(VersionFile)" Lines="$(Major).$(Minor).$(Build).$(SVN_Revision)" 
-         Overwrite="true" Condition="'$(SVN_REVISION)' != '0'"/>
+       <WriteLinesToFile File="$(VersionFileOut)" Lines="$(Major).$(Minor).$(Build).$(SVN_Revision)" 
+         Overwrite="true"/>
        <AssemblyInfo CodeLanguage="CS"  
                 OutputFile="AssemblyInfo.cs"
                 AssemblyTitle="$(ProductName)"
