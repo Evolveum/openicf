@@ -23,6 +23,7 @@
 
 package org.identityconnectors.solaris.operation.search;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -46,6 +47,7 @@ class SolarisEntry {
         
         public Builder(String name) {
             this.name = name;
+            attrSet = new HashSet<Attribute>();
         }
         
         /** add a multivalue attr */

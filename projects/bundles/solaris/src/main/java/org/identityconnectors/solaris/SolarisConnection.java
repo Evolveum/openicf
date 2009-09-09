@@ -263,6 +263,8 @@ public class SolarisConnection {
         int index = output.lastIndexOf(_configuration.getRootShellPrompt());
         if (index!=-1)
             output = output.substring(0, index);
+        
+        output = output.trim();
 
 //        if (output.endsWith(HOST_END_OF_LINE_TERMINATOR)) {
 //            output = output.substring(0, output.length()-HOST_END_OF_LINE_TERMINATOR.length());

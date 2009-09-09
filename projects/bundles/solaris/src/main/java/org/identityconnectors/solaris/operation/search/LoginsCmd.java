@@ -34,7 +34,7 @@ import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.command.CommandBuilder;
 
-class LoginsCmd {
+class LoginsCmd implements Command {
 
     public static SolarisEntry getAttributesFor(String username, SolarisConnection conn, CommandBuilder bldr) {
         SolarisEntry entry = null;
@@ -73,7 +73,7 @@ class LoginsCmd {
         
         /* NAME */
         final String foundUser = tokenIt.next();
-        if (foundUser == null || username != foundUser) {
+        if (foundUser == null || !username.equals(foundUser)) {
             String msg = String.format("the logins command returned a different user than expected. Expecting: '%s', Returned: '%s'", username, foundUser);
             throw new RuntimeException(msg);
         }
