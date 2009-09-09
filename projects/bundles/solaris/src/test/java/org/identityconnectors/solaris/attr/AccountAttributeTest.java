@@ -23,40 +23,22 @@
 
 package org.identityconnectors.solaris.attr;
 
-import java.util.EnumMap;
-import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
-import org.identityconnectors.framework.common.objects.Name;
-
-public enum GroupAttribute implements ConnectorAttribute {
-    GROUPNAME(Name.NAME, NativeAttribute.G_NAME), 
-    GID("gid", NativeAttribute.GID), 
-    USERS("users", NativeAttribute.G_USERS);
-    
-    private String n;
-    private NativeAttribute nattr;
-    private static final Map<NativeAttribute, GroupAttribute> nativeToGroup = new EnumMap<NativeAttribute, GroupAttribute>(NativeAttribute.class);
-    static {
-        for (GroupAttribute accAttr : values()) {
-            nativeToGroup.put(accAttr.getNative(), accAttr);
-        }
+public class AccountAttributeTest {
+    @Test
+    public void test() {
+        AccountAttribute accAttr = AccountAttribute.DIR;
+        String name = accAttr.getName();
+        AccountAttribute nameTranslated = AccountAttribute.fromNative(accAttr
+                .getNative());
+        Assert.assertEquals(name, nameTranslated.getName());
     }
 
-    public static GroupAttribute fromNative(NativeAttribute nativeAttr) {
-        return nativeToGroup.get(nativeAttr);
+    @Test
+    public void testNegative() {
+        // group's native attribute can't yield Account attribute.
+        Assert.assertNull(AccountAttribute.fromNative(NativeAttribute.G_USERS));
     }
-
-    private GroupAttribute(String name, NativeAttribute nativeAttr) {
-        n = name;
-        nattr = nativeAttr;
-    }
-    
-    public String getName() {
-        return n;
-    }
-
-    public NativeAttribute getNative() {
-        return nattr;
-    }
-
 }
