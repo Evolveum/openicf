@@ -84,6 +84,18 @@ public class OracleERPConnectorTests extends OracleERPTestsBase {
      * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
      */
     @Test
+    public void testConnectorUserNullAccountIncluded() {
+        OracleERPConfiguration cfg = getConfiguration(CONFIG_SYSADM);
+        cfg.setAccountsIncluded(null);
+        OracleERPConnector conn = getConnector(cfg);
+        assertNotNull("null connector instance",conn);        
+        conn.test();
+    }    
+    
+    /**
+     * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
+     */
+    @Test
     public void testConnectorUserAccountIncludedOk() {
         OracleERPConfiguration cfg = getConfiguration(CONFIG_SYSADM);
         OracleERPConnector conn = getConnector(cfg);
