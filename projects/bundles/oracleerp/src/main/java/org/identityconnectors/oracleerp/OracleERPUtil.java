@@ -447,10 +447,13 @@ class OracleERPUtil {
      * @return and string
      */
     static String whereAnd(String sqlSelect, String whereAnd) {
+        if( sqlSelect == null ) {
+            throw new IllegalArgumentException("sqlSelect can not be null");
+        }
         String add = trimWhere(whereAnd).trim();
         if ( add.length() == 0 ) {
             return sqlSelect;
-        }
+        }       
         int iofw = sqlSelect.toUpperCase().indexOf("WHERE");
         return (iofw == -1) ? sqlSelect + " WHERE " + add : sqlSelect.substring(0, iofw).trim() + " WHERE ( "
                 + sqlSelect.substring(iofw + 5).trim() + " ) AND ( " + add + " )";
@@ -461,6 +464,7 @@ class OracleERPUtil {
      * @return and string
      */
     private static String trimWhere(String where) {
+        if( where == null ) return "";
         int iofw = where.toUpperCase().indexOf("WHERE");
         return (iofw == -1) ? where : where.substring(0, iofw) + where.substring(iofw + 5);
     }    
