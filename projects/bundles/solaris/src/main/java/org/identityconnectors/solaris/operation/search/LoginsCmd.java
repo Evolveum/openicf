@@ -57,9 +57,13 @@ class LoginsCmd implements Command {
     private static final Set<NativeAttribute> set;
     static {
         set = EnumSet.of(COMMENT, DAYS_BEFORE_TO_WARN, DIR, GROUPS_SEC,
-                GROUP_PRIM, LOCK, MAX_DAYS_BETWEEN_CHNG, MIN_DAYS_BETWEEN_CHNG,
-                /* left out on purpose: NAME, */ PWSTAT, SHELL, UID, USER_EXPIRE, 
-                USER_INACTIVE);
+                GROUP_PRIM, LOCK, MAX_DAYS_BETWEEN_CHNG, MIN_DAYS_BETWEEN_CHNG, 
+                PWSTAT, SHELL, UID, USER_EXPIRE, USER_INACTIVE);
+        /*
+         * NativeAttribute.NAME is left out from the 'set' on purpose. The
+         * reason is that the name is already known to the issuer of logins
+         * command.
+         */
     }
 
     public static SolarisEntry getAttributesFor(String username, SolarisConnection conn, CommandBuilder bldr) {

@@ -23,40 +23,25 @@
 
 package org.identityconnectors.solaris.operation.search;
 
-import java.util.Iterator;
 import java.util.Set;
 
-import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.command.CommandBuilder;
 
-/**
- * Basic retrieval of Items from Solaris Resource.
- * 
- * @author David Adam
- */
-public class SolarisEntries {
-    private SolarisConnection conn;
-    private CommandBuilder bldr;
-
-    public SolarisEntries(SolarisConnection conn, CommandBuilder bldr) {
-        this.conn = conn;
-        this.bldr = bldr;
+class SearchHelper {
+    /**
+     * evaluate if logins command is necessary to launch.
+     * 
+     * @param attrsToGet
+     *            attributes to get
+     * @return true if {@link LoginsCmd} is required to be called, as it
+     *         processes one of the attributes to get.
+     */
+    public static boolean isLoginsRequired(Set<NativeAttribute> attrsToGet) {
+        for (NativeAttribute nativeAttribute : attrsToGet) {
+            if (LoginsCmd.isProvided(nativeAttribute)) {
+                return true;
+            }
+        }
+        return false;
     }
-
-    public Iterator<SolarisEntry> getAllAccounts(Set<NativeAttribute> attrsToGet) {
-        //TODO
-        return null;
-    }
-
-    // public abstract Iterator<SolarisEntry> getAllGroups();
-
-    public SolarisEntry getAccount(String name, Set<NativeAttribute> attrsToGet) {
-        return AccountUtil.getAccount(conn, bldr, name, attrsToGet);
-    }
-
-
-
-    // public abstract SolarisEntry getGroup(String groupName,
-    // Set<NativeAttribute> attrsToGet);
 }
