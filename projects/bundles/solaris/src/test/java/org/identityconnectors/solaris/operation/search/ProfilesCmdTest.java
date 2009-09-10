@@ -25,8 +25,8 @@ package org.identityconnectors.solaris.operation.search;
 
 import junit.framework.Assert;
 
+import org.identityconnectors.common.Pair;
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.command.CommandBuilder;
@@ -36,10 +36,8 @@ import org.junit.Test;
 public class ProfilesCmdTest {
     @Test
     public void test() {
-        SolarisConfiguration config = SolarisTestCommon.createConfiguration();
-        SolarisConnection conn = new SolarisConnection(config);
-        CommandBuilder bldr = new CommandBuilder(config);
-        Attribute result = ProfilesCmd.getProfilesAttributeFor("root", conn, bldr);
+        Pair<SolarisConnection, CommandBuilder> pair = SolarisTestCommon.getSolarisConn();
+        Attribute result = ProfilesCmd.getProfilesAttributeFor("root", pair.first, pair.second);
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.getValue());
         Assert.assertEquals(NativeAttribute.PROFILES.getName(), result.getName());

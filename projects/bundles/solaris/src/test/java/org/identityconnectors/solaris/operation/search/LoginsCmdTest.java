@@ -27,8 +27,8 @@ import java.util.Set;
 
 import junit.framework.Assert;
 
+import org.identityconnectors.common.Pair;
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.command.CommandBuilder;
@@ -39,10 +39,8 @@ public class LoginsCmdTest {
 
     @Test
     public void test() {
-        SolarisConfiguration config = SolarisTestCommon.createConfiguration();
-        SolarisConnection conn = new SolarisConnection(config);
-        CommandBuilder bldr = new CommandBuilder(config);
-        SolarisEntry result = LoginsCmd.getAttributesFor("root", conn, bldr);
+        Pair<SolarisConnection, CommandBuilder> pair = SolarisTestCommon.getSolarisConn();
+        SolarisEntry result = LoginsCmd.getAttributesFor("root", pair.first, pair.second);
         Assert.assertTrue(result.getAttributeSet().size() >= 5);
         Set<Attribute> attrSet = result.getAttributeSet();
         for (Attribute attribute : attrSet) {
@@ -53,5 +51,12 @@ public class LoginsCmdTest {
                 break;
             }
         }
+    }
+    
+    @Test
+    public void testEnum() {
+        Assert.assertTrue(LoginsCmd.isProvided(NativeAttribute.NAME));
+        // GROUP NAME attribute is not provided by Logins command.
+        Assert.assertFalse(LoginsCmd.isProvided(NativeAttribute.G_NAME));
     }
 }

@@ -23,10 +23,27 @@
 
 package org.identityconnectors.solaris.operation.search;
 
+import static org.identityconnectors.solaris.attr.NativeAttribute.COMMENT;
+import static org.identityconnectors.solaris.attr.NativeAttribute.DAYS_BEFORE_TO_WARN;
+import static org.identityconnectors.solaris.attr.NativeAttribute.DIR;
+import static org.identityconnectors.solaris.attr.NativeAttribute.GROUPS_SEC;
+import static org.identityconnectors.solaris.attr.NativeAttribute.GROUP_PRIM;
+import static org.identityconnectors.solaris.attr.NativeAttribute.LOCK;
+import static org.identityconnectors.solaris.attr.NativeAttribute.MAX_DAYS_BETWEEN_CHNG;
+import static org.identityconnectors.solaris.attr.NativeAttribute.MIN_DAYS_BETWEEN_CHNG;
+import static org.identityconnectors.solaris.attr.NativeAttribute.NAME;
+import static org.identityconnectors.solaris.attr.NativeAttribute.PWSTAT;
+import static org.identityconnectors.solaris.attr.NativeAttribute.SHELL;
+import static org.identityconnectors.solaris.attr.NativeAttribute.UID;
+import static org.identityconnectors.solaris.attr.NativeAttribute.USER_EXPIRE;
+import static org.identityconnectors.solaris.attr.NativeAttribute.USER_INACTIVE;
+
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
@@ -35,6 +52,15 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.command.CommandBuilder;
 
 class LoginsCmd implements Command {
+
+    /** a hard-coded set of constants used provided by Logins command. DO NOT CHANGE */
+    private static final Set<NativeAttribute> set;
+    static {
+        set = EnumSet.of(COMMENT, DAYS_BEFORE_TO_WARN, DIR, GROUPS_SEC,
+                GROUP_PRIM, LOCK, MAX_DAYS_BETWEEN_CHNG, MIN_DAYS_BETWEEN_CHNG,
+                /* left out on purpose: NAME, */ PWSTAT, SHELL, UID, USER_EXPIRE, 
+                USER_INACTIVE);
+    }
 
     public static SolarisEntry getAttributesFor(String username, SolarisConnection conn, CommandBuilder bldr) {
         SolarisEntry entry = null;
@@ -53,6 +79,12 @@ class LoginsCmd implements Command {
         return entry;
     }
 
+    /*
+     * IMPLEMENTATION NOTE:
+     * the logins command provides a fixed set of {@link NativeAttribute}-s. If
+     * the implementation is changed, don't forget to update the list of
+     * acquired attributes: {@link LoginsCmd#set}.
+     */
     private static SolarisEntry getEntry(String out, String username) {
         final SolarisEntry.Builder bldr = new SolarisEntry.Builder(username);
         
@@ -77,16 +109,16 @@ class LoginsCmd implements Command {
             String msg = String.format("the logins command returned a different user than expected. Expecting: '%s', Returned: '%s'", username, foundUser);
             throw new RuntimeException(msg);
         }
-        bldr.addAttr(NativeAttribute.NAME, username);
+        bldr.addAttr(NAME, username);
         /* USER UID */
-        bldr.addAttr(NativeAttribute.UID, tokenIt.next());
+        bldr.addAttr(UID, tokenIt.next());
         
         /* PRIMARY GROUP NAME */
-        bldr.addAttr(NativeAttribute.GROUP_PRIM, tokenIt.next());
+        bldr.addAttr(GROUP_PRIM, tokenIt.next());
         /* PRIMARY GROUP GID - skip */
         tokenIt.next();
         
-        bldr.addAttr(NativeAttribute.COMMENT, tokenIt.next());
+        bldr.addAttr(COMMENT, tokenIt.next());
         
         
         
@@ -99,7 +131,7 @@ class LoginsCmd implements Command {
         }
         
         final int numSecondaryGroups = (totalTokens-MIN_TOKENS)/2;
-        final List<String> secondaryGroupNames = new ArrayList<String>(numSecondaryGroups);
+        final List<Object> secondaryGroupNames = new ArrayList<Object>(numSecondaryGroups);
         
         for (int i = 0; i < numSecondaryGroups; i++) {
             // store secondary group name
@@ -110,20 +142,20 @@ class LoginsCmd implements Command {
         
         
         
-        bldr.addAttr(NativeAttribute.GROUPS_SEC, secondaryGroupNames);
-        bldr.addAttr(NativeAttribute.DIR, tokenIt.next());
-        bldr.addAttr(NativeAttribute.SHELL, tokenIt.next());
+        bldr.addAttr(GROUPS_SEC, secondaryGroupNames);
+        bldr.addAttr(DIR, tokenIt.next());
+        bldr.addAttr(SHELL, tokenIt.next());
         
         
         
         /* PWSTAT + PASSWD_LOCK */
         final String pwstat = tokenIt.next();
         if ("PS".equals(pwstat)) {
-            bldr.addAttr(NativeAttribute.PWSTAT, Boolean.TRUE.toString());
+            bldr.addAttr(PWSTAT, Boolean.TRUE.toString());
         }
         // TODO shouldn't it return false otherwise (see SVIDRA#buildUser(String, WSUser))?
         if ("LK".equals(pwstat)) {
-            bldr.addAttr(NativeAttribute.LOCK, Boolean.TRUE.toString());
+            bldr.addAttr(LOCK, Boolean.TRUE.toString());
         }
         // TODO shouldn't it return false otherwise (see SVIDRA#buildUser(String, WSUser))?
         
@@ -132,9 +164,9 @@ class LoginsCmd implements Command {
         
         
         
-        bldr.addAttr(NativeAttribute.MIN_DAYS_BETWEEN_CHNG, tokenIt.next());
-        bldr.addAttr(NativeAttribute.MAX_DAYS_BETWEEN_CHNG, tokenIt.next());
-        bldr.addAttr(NativeAttribute.DAYS_BEFORE_TO_WARN, tokenIt.next());
+        bldr.addAttr(MIN_DAYS_BETWEEN_CHNG, tokenIt.next());
+        bldr.addAttr(MAX_DAYS_BETWEEN_CHNG, tokenIt.next());
+        bldr.addAttr(DAYS_BEFORE_TO_WARN, tokenIt.next());
         
         /* USER INACTIVE */
         String userInactive = tokenIt.next();
@@ -143,7 +175,7 @@ class LoginsCmd implements Command {
             // not even be installed on the host so reset this to null.
             userInactive = null;
         }
-        bldr.addAttr(NativeAttribute.USER_INACTIVE, userInactive);
+        bldr.addAttr(USER_INACTIVE, userInactive);
         
         /* USER EXPIRE */
         String userExpire = tokenIt.next();
@@ -152,8 +184,16 @@ class LoginsCmd implements Command {
             // not even be installed on the host so reset this to null.
             userExpire = null;
         }
-        bldr.addAttr(NativeAttribute.USER_EXPIRE, userExpire);
+        bldr.addAttr(USER_EXPIRE, userExpire);
         
         return bldr.build();
+    }
+    
+    /**
+     * @param attr the attribute in question.
+     * @return true if the attribute is provided by {@link LoginsCmd}.
+     */
+    public static boolean isProvided(NativeAttribute attr) {
+        return set.contains(attr);
     }
 }

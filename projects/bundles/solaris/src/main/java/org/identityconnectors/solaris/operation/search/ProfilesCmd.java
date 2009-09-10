@@ -33,7 +33,7 @@ import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.command.CommandBuilder;
 
-class ProfilesCmd {
+class ProfilesCmd implements Command {
     public static Attribute getProfilesAttributeFor(String username, SolarisConnection conn, CommandBuilder bldr) {
         final String out = conn.executeCommand(bldr.build("profiles", username));
         List<String> profiles = null;

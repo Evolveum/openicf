@@ -25,6 +25,7 @@ package org.identityconnectors.solaris.test;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.identityconnectors.common.Pair;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;
@@ -33,7 +34,9 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.solaris.SolarisConfiguration;
+import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
+import org.identityconnectors.solaris.command.CommandBuilder;
 import org.identityconnectors.test.common.PropertyBag;
 import org.identityconnectors.test.common.TestHelpers;
 
@@ -116,5 +119,12 @@ public class SolarisTestCommon {
         res.add(AttributeBuilder.buildPassword(new GuardedString(samplePasswd.toCharArray())));
         
         return res;
+    }
+    
+    public static Pair<SolarisConnection, CommandBuilder> getSolarisConn() {
+        SolarisConfiguration config = SolarisTestCommon.createConfiguration();
+        SolarisConnection conn = new SolarisConnection(config);
+        CommandBuilder bldr = new CommandBuilder(config);
+        return new Pair<SolarisConnection, CommandBuilder>(conn, bldr);
     }
 }

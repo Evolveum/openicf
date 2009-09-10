@@ -23,7 +23,8 @@
 
 package org.identityconnectors.solaris.operation.search;
 
-import junit.framework.Assert;
+import java.util.EnumSet;
+import java.util.Set;
 
 import org.identityconnectors.common.Pair;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -31,14 +32,37 @@ import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.command.CommandBuilder;
 import org.identityconnectors.solaris.test.SolarisTestCommon;
+import org.junit.Assert;
 import org.junit.Test;
 
-public class LastCmdTest {
+public class SolarisEntriesTest {
     @Test
-    public void test() {
+    public void testGetAccount() {
         Pair<SolarisConnection, CommandBuilder> pair = SolarisTestCommon.getSolarisConn();
-        Attribute result = LastCmd.getLastAttributeFor("root", pair.first, pair.second);
-        Assert.assertNotNull(result);
-        Assert.assertEquals(NativeAttribute.LAST_LOGIN.getName(), result.getName());
+        SolarisEntries se = new SolarisEntries(pair.first, pair.second);
+        final String userName = "root";
+        SolarisEntry result = se.getAccount(userName, EnumSet.of(NativeAttribute.AUTHS, NativeAttribute.PROFILES, NativeAttribute.NAME));
+        Assert.assertTrue(result.getName().equals(userName));
+        Set<Attribute> set = result.getAttributeSet();
+        Assert.assertNotNull(set);
+        
+        boolean isAuths = false;
+        boolean isProfiles = false;
+        for (Attribute attribute : set) {
+            if (!isAuths)
+                isAuths = checkIfPresent(NativeAttribute.AUTHS, attribute);
+            
+            if (!isProfiles)
+                isProfiles = checkIfPresent(NativeAttribute.PROFILES, attribute); 
+        }
+        Assert.assertTrue(isAuths);
+        Assert.assertTrue(isProfiles);
+    }
+
+    private boolean checkIfPresent(NativeAttribute auths, Attribute attribute) {
+        if (auths.getName().equals(attribute.getName())) {
+            return true;
+        }
+        return false;
     }
 }

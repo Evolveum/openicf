@@ -25,8 +25,8 @@ package org.identityconnectors.solaris.operation.search;
 
 import junit.framework.Assert;
 
+import org.identityconnectors.common.Pair;
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.command.CommandBuilder;
@@ -36,10 +36,8 @@ import org.junit.Test;
 public class RolesCmdTest {
     @Test
     public void test() {
-        SolarisConfiguration config = SolarisTestCommon.createConfiguration();
-        SolarisConnection conn = new SolarisConnection(config);
-        CommandBuilder bldr = new CommandBuilder(config);
-        Attribute result = RolesCmd.getRolesAttributeFor("root", conn, bldr);
+        Pair<SolarisConnection, CommandBuilder> pair = SolarisTestCommon.getSolarisConn();
+        Attribute result = RolesCmd.getRolesAttributeFor("root", pair.first, pair.second);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.getValue().size() == 0);
         Assert.assertEquals(NativeAttribute.ROLES.getName(), result.getName());

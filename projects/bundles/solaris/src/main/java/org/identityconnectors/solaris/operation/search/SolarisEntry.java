@@ -51,7 +51,7 @@ class SolarisEntry {
         }
         
         /** add a multivalue attr */
-        public Builder addAttr(NativeAttribute name, List<String> values) {
+        public Builder addAttr(NativeAttribute name, List<Object> values) {
             attrSet.add(AttributeBuilder.build(name.getName(), values));
             return this;
         }
@@ -59,6 +59,18 @@ class SolarisEntry {
         /** add a singlevalue attr */
         public Builder addAttr(NativeAttribute name, String value) {
             attrSet.add(AttributeBuilder.build(name.getName(), value));
+            return this;
+        }
+        
+        public Builder addAllAttributesFrom(SolarisEntry entry) {
+            if (!entry.getName().equals(name)) {
+                throw new RuntimeException("mixing attributes for various username.");
+            }
+            
+            Set<Attribute> entries = entry.getAttributeSet();
+            for (Attribute attribute : entries) {
+                attrSet.add(attribute);
+            }
             return this;
         }
         
