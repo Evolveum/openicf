@@ -45,8 +45,7 @@ public class SolarisEntries {
     }
 
     public Iterator<SolarisEntry> getAllAccounts(Set<NativeAttribute> attrsToGet) {
-        //TODO
-        return null;
+        return AccountUtil.getAllAccounts(conn, bldr, attrsToGet);
     }
 
     // public abstract Iterator<SolarisEntry> getAllGroups();

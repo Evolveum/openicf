@@ -24,6 +24,7 @@
 package org.identityconnectors.solaris.operation.search;
 
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import org.identityconnectors.common.Pair;
@@ -50,19 +51,50 @@ public class SolarisEntriesTest {
         boolean isProfiles = false;
         for (Attribute attribute : set) {
             if (!isAuths)
-                isAuths = checkIfPresent(NativeAttribute.AUTHS, attribute);
+                isAuths = SolarisTestCommon.checkIfNativeAttrPresent(NativeAttribute.AUTHS, attribute);
             
             if (!isProfiles)
-                isProfiles = checkIfPresent(NativeAttribute.PROFILES, attribute); 
+                isProfiles = SolarisTestCommon.checkIfNativeAttrPresent(NativeAttribute.PROFILES, attribute);
+            
+            if (isAuths && isProfiles)
+                break;
         }
         Assert.assertTrue(isAuths);
         Assert.assertTrue(isProfiles);
     }
-
-    private boolean checkIfPresent(NativeAttribute auths, Attribute attribute) {
-        if (auths.getName().equals(attribute.getName())) {
-            return true;
-        }
-        return false;
+    
+    @Test
+    public void testGetAllAccounts() {
+        Pair<SolarisConnection, CommandBuilder> pair = SolarisTestCommon.getSolarisConn();
+        SolarisEntries se = new SolarisEntries(pair.first, pair.second);
+        
+        final NativeAttribute profilesAttr = NativeAttribute.PROFILES;
+        final NativeAttribute rolesAttr = NativeAttribute.ROLES;
+        
+        Iterator<SolarisEntry> result = se.getAllAccounts(EnumSet.of(profilesAttr, rolesAttr));
+        while (result.hasNext()) {
+            final SolarisEntry nextIt = result.next();
+            final Set<Attribute> attributeSet = nextIt.getAttributeSet();
+            
+            boolean isProfiles = false;
+            boolean isRoles = false;
+            for (Attribute attribute : attributeSet) {
+                if (!isProfiles)
+                    isProfiles = SolarisTestCommon.checkIfNativeAttrPresent(profilesAttr, attribute);
+                
+                if (!isRoles)
+                    isRoles = SolarisTestCommon.checkIfNativeAttrPresent(rolesAttr, attribute);
+                
+                if (isProfiles && isRoles)
+                    break;
+            }
+            
+            final String basicMsg = "Entry: '%s' is missing attribute: '%s'";
+            String msg = String.format(basicMsg, nextIt.getName(), profilesAttr);
+            Assert.assertTrue(msg, isProfiles);
+            
+            msg = String.format(basicMsg, nextIt.getName(), rolesAttr);
+            Assert.assertTrue(msg, isRoles);
+        }//while
     }
 }

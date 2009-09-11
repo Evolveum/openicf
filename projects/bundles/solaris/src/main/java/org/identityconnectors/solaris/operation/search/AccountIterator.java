@@ -23,7 +23,6 @@
 
 package org.identityconnectors.solaris.operation.search;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -33,56 +32,66 @@ import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.command.CommandBuilder;
 
+public class AccountIterator implements Iterator<SolarisEntry> {
 
-public class AccountUtil {
-    public static SolarisEntry getAccount(SolarisConnection conn, CommandBuilder bldr, String name, Set<NativeAttribute> attrsToGet) {
+    private List<String> accounts;
+    
+    /** bunch of boolean flags says if the command is needed to be launched (based on attributes to get) */
+    private boolean isLogins;
+    private boolean isProfiles;
+    private boolean isAuths;
+    private boolean isLast;
+    private boolean isRoles;
+
+    private Iterator<String> it;
+    private SolarisConnection conn;
+    private CommandBuilder bldr;
+
+    public AccountIterator(List<String> usernames, Set<NativeAttribute> attrsToGet, SolarisConnection conn, CommandBuilder bldr) {
+        this.conn = conn;
+        this.bldr = bldr;
+        
+        accounts = usernames;
+        it = accounts.iterator();
+        
+        isLogins = SearchHelper.isLoginsRequired(attrsToGet);
+        isProfiles = attrsToGet.contains(NativeAttribute.PROFILES);
+        isAuths = attrsToGet.contains(NativeAttribute.AUTHS);
+        isLast = attrsToGet.contains(NativeAttribute.LAST_LOGIN);
+        isRoles = attrsToGet.contains(NativeAttribute.ROLES);
+    }
+    
+    public boolean hasNext() {
+        return it.hasNext();
+    }
+
+    public SolarisEntry next() {
+        String name = it.next();
         SolarisEntry.Builder entryBuilder = new SolarisEntry.Builder(name).addAttr(NativeAttribute.NAME, name);
-        if (SearchHelper.isLoginsRequired(attrsToGet)) {
+        if (isLogins) {
             entryBuilder.addAllAttributesFrom(LoginsCmd.getAttributesFor(name, conn, bldr));
         }
-
-        if (attrsToGet.contains(NativeAttribute.PROFILES)) {
+        if (isProfiles) {
             final Attribute profiles = ProfilesCmd.getProfilesAttributeFor(name, conn, bldr);
             entryBuilder.addAttr(NativeAttribute.PROFILES, profiles.getValue());
         }
-        
-        if (attrsToGet.contains(NativeAttribute.AUTHS)) {
+        if (isAuths) {
             final Attribute auths = AuthsCmd.getAuthsAttributeFor(name, conn, bldr);
             entryBuilder.addAttr(NativeAttribute.AUTHS, auths.getValue());
         }
-        
-        if (attrsToGet.contains(NativeAttribute.LAST_LOGIN)) {
+        if (isLast) {
             final Attribute last = LastCmd.getLastAttributeFor(name, conn, bldr);
             entryBuilder.addAttr(NativeAttribute.LAST_LOGIN, last.getValue());
         }
-        
-        if (attrsToGet.contains(NativeAttribute.ROLES)) {
+        if (isRoles) {
             final Attribute roles = RolesCmd.getRolesAttributeFor(name, conn, bldr);
             entryBuilder.addAttr(NativeAttribute.ROLES, roles.getValue());
         }
-
         return entryBuilder.build();
     }
 
-    public static Iterator<SolarisEntry> getAllAccounts(SolarisConnection conn,
-            CommandBuilder bldr, Set<NativeAttribute> attrsToGet) {
-        String command = bldr.build("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"");
-        String out = conn.executeCommand(command);
-        
-        List<String> accountNames = getAccounts(out);
-        if (accountNames.size() < 1) {
-            throw new RuntimeException("Internal error: the number of retrieved accounts names is: " + accountNames.size());
-        }
-
-        return new AccountIterator(accountNames, attrsToGet, conn, bldr);
+    public void remove() {
+        throw new UnsupportedOperationException("Internal error: AccountIterators do not allow remove().");
     }
 
-    private static List<String> getAccounts(String out) {
-        String[] tokens = out.split("\n");
-        List<String> result = new ArrayList<String>(tokens.length);
-        for (String string : tokens) {
-            result.add(string.trim());
-        }
-        return result;
-    }
 }
