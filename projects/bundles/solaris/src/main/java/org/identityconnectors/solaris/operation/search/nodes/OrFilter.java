@@ -20,12 +20,26 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-package org.identityconnectors.solaris.operation.search;
+package org.identityconnectors.solaris.operation.search.nodes;
 
 import java.util.Set;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.solaris.operation.search.SearchPerformer;
 
-public interface Node {
-    public abstract Set<Uid> evaluate(SearchPerformer sp);
+/**
+ * OR of two node values. 
+ * Note: in implementation this translated to union of satisfying {@see Uid}-s (left/right expressions).
+ * @author David Adam
+ */
+public class OrFilter extends BinaryOpNode {
+    
+    public OrFilter(Node left, Node right) {
+        super(left, right);
+    }
+
+    public Set<Uid> evaluate(SearchPerformer sp) {
+        return CollectionUtil.union(getLeft().evaluate(sp), getRight().evaluate(sp));
+    }
 }

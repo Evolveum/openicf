@@ -20,7 +20,7 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-package org.identityconnectors.solaris.operation.search;
+package org.identityconnectors.solaris.operation.search.nodes;
 
 
 

@@ -61,9 +61,9 @@ import org.identityconnectors.solaris.operation.OpAuthenticateImpl;
 import org.identityconnectors.solaris.operation.OpCreateImpl;
 import org.identityconnectors.solaris.operation.OpDeleteImpl;
 import org.identityconnectors.solaris.operation.OpUpdateImpl;
-import org.identityconnectors.solaris.operation.search.Node;
 import org.identityconnectors.solaris.operation.search.OpSearchImpl;
 import org.identityconnectors.solaris.operation.search.SolarisFilterTranslator;
+import org.identityconnectors.solaris.operation.search.nodes.Node;
 
 /**
  * @author David Adam

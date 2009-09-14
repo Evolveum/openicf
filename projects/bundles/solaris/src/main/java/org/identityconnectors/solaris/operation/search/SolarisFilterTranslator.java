@@ -28,6 +28,10 @@ import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
 import org.identityconnectors.framework.common.objects.filter.EndsWithFilter;
 import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
 import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
+import org.identityconnectors.solaris.operation.search.nodes.AndFilter;
+import org.identityconnectors.solaris.operation.search.nodes.AttributeFilter;
+import org.identityconnectors.solaris.operation.search.nodes.Node;
+import org.identityconnectors.solaris.operation.search.nodes.OrFilter;
 
 public class SolarisFilterTranslator extends
         AbstractFilterTranslator<Node> {

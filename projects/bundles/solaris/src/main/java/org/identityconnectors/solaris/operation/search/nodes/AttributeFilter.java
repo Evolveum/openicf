@@ -20,13 +20,14 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-package org.identityconnectors.solaris.operation.search;
+package org.identityconnectors.solaris.operation.search.nodes;
 
 import java.util.Set;
 
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.constants.SolarisAttribute;
+import org.identityconnectors.solaris.operation.search.SearchPerformer;
 
 /**
  * encapsulates matching of a single attribute by a regular expression.

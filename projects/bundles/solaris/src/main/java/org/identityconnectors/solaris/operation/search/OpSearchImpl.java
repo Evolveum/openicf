@@ -43,6 +43,8 @@ import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.constants.AccountAttributes;
 import org.identityconnectors.solaris.constants.SolarisAttribute;
 import org.identityconnectors.solaris.operation.AbstractOp;
+import org.identityconnectors.solaris.operation.search.nodes.AttributeFilter;
+import org.identityconnectors.solaris.operation.search.nodes.Node;
 
 
 public class OpSearchImpl extends AbstractOp {
