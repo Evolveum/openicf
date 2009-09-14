@@ -285,5 +285,14 @@ namespace Org.IdentityConnectors.Framework.Common
                 CheckOperationOptionType(val.GetType());
             }
         }
+
+        /**
+         * Returns the version of the framework.
+         * 
+         * @return the framework version; never null.
+         */
+        public static Version GetFrameworkVersion() {
+            return Assembly.GetExecutingAssembly().GetName().Version;
+        }
     }
 }
