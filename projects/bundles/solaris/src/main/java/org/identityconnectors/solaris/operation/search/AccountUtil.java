@@ -32,6 +32,7 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.command.CommandBuilder;
+import org.identityconnectors.solaris.SolarisConfiguration;
 
 
 public class AccountUtil {
@@ -65,7 +66,7 @@ public class AccountUtil {
     }
 
     public static Iterator<SolarisEntry> getAllAccounts(SolarisConnection conn,
-            CommandBuilder bldr, Set<NativeAttribute> attrsToGet) {
+            CommandBuilder bldr, SolarisConfiguration config, Set<NativeAttribute> attrsToGet) {
         String command = bldr.build("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"");
         String out = conn.executeCommand(command);
         
@@ -74,10 +75,16 @@ public class AccountUtil {
             throw new RuntimeException("Internal error: the number of retrieved accounts names is: " + accountNames.size());
         }
 
-        return new AccountIterator(accountNames, attrsToGet, conn, bldr);
+        // Impl. note: use AccountIterator in case specific attributes are required, that we won't be able to fetch from BlockAccountIteratr
+        if (attrsToGet.contains(NativeAttribute.PROFILES) || attrsToGet.contains(NativeAttribute.AUTHS) || attrsToGet.contains(NativeAttribute.ROLES)) {
+            return new AccountIterator(accountNames, attrsToGet, conn, bldr);
+        }
+        
+        // BlockAccount iterator is optimized for fetching info from 'logins' command and 'last login time' only.
+        return new BlockAccountIterator(accountNames, attrsToGet, conn, bldr, config, 30);
     }
 
-    private static List<String> getAccounts(String out) {
+    static List<String> getAccounts(String out) {
         String[] tokens = out.split("\n");
         List<String> result = new ArrayList<String>(tokens.length);
         for (String string : tokens) {

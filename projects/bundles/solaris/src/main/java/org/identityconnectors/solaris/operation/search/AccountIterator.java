@@ -67,6 +67,11 @@ public class AccountIterator implements Iterator<SolarisEntry> {
 
     public SolarisEntry next() {
         String name = it.next();
+        return buildUser(name);
+
+    }
+
+    private SolarisEntry buildUser(String name) {
         SolarisEntry.Builder entryBuilder = new SolarisEntry.Builder(name).addAttr(NativeAttribute.NAME, name);
         if (isLogins) {
             entryBuilder.addAllAttributesFrom(LoginsCmd.getAttributesFor(name, conn, bldr));

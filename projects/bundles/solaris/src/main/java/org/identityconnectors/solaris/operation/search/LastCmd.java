@@ -36,6 +36,10 @@ import org.identityconnectors.solaris.command.CommandBuilder;
 class LastCmd implements Command {
     public static Attribute getLastAttributeFor(String username, SolarisConnection conn, CommandBuilder bldr) {
         final String out = conn.executeCommand(bldr.build("last -1", username));
+        return parseOutput(username, out);
+    }
+
+    public static Attribute parseOutput(String username, final String out) {
         List<String> lastResult = null;
         if (out != null && username != null && !out.contains("wtmp begins")) {
             // we only need the first line of the output

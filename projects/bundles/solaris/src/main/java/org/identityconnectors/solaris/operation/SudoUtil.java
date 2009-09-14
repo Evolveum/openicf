@@ -33,7 +33,7 @@ import org.identityconnectors.solaris.command.closure.ClosureFactory;
 /** 
  * this class is based on resource adapter's sudo code.
  */
-class SudoUtil {
+public class SudoUtil {
     private static final String SUDO_START_COMMAND = "sudo -v";
     private static final String SUDO_RESET_COMMAND = "sudo -k";
     

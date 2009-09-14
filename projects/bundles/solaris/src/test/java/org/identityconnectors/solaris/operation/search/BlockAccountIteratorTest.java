@@ -23,42 +23,34 @@
 
 package org.identityconnectors.solaris.operation.search;
 
-import java.util.Iterator;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
 
+import org.identityconnectors.common.Pair;
+import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.command.CommandBuilder;
-import org.identityconnectors.solaris.SolarisConfiguration;
+import org.identityconnectors.solaris.test.SolarisTestCommon;
+import org.junit.Assert;
+import org.junit.Test;
 
-/**
- * Basic retrieval of Items from Solaris Resource.
- * 
- * @author David Adam
- */
-public class SolarisEntries {
-    private SolarisConnection conn;
-    private CommandBuilder bldr;
-    private SolarisConfiguration config;
-
-    public SolarisEntries(SolarisConnection conn, CommandBuilder bldr, SolarisConfiguration config) {
-        this.conn = conn;
-        this.bldr = bldr;
-        this.config = config;
+public class BlockAccountIteratorTest {
+    @Test 
+    public void test() {
+        // similar test to AccountIteratorTest
+        Pair<SolarisConnection, CommandBuilder> pair = SolarisTestCommon.getSolarisConn();
+        String command = pair.second.build("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"");
+        String out = pair.first.executeCommand(command);
+        final List<String> usernames = AccountUtil.getAccounts(out);
+        SolarisConfiguration config = SolarisTestCommon.createConfiguration();
+        
+        BlockAccountIterator bai = new BlockAccountIterator(usernames, EnumSet.of(NativeAttribute.NAME), pair.first, pair.second, config , 2);
+        List<String> retrievedUsernames = new ArrayList<String>();
+        while (bai.hasNext()) {
+            retrievedUsernames.add(bai.next().getName());
+        }
+        Assert.assertEquals(usernames, retrievedUsernames);
     }
-
-    public Iterator<SolarisEntry> getAllAccounts(Set<NativeAttribute> attrsToGet) {
-        return AccountUtil.getAllAccounts(conn, bldr, config, attrsToGet);
-    }
-
-    // public abstract Iterator<SolarisEntry> getAllGroups();
-
-    public SolarisEntry getAccount(String name, Set<NativeAttribute> attrsToGet) {
-        return AccountUtil.getAccount(conn, bldr, name, attrsToGet);
-    }
-
-
-
-    // public abstract SolarisEntry getGroup(String groupName,
-    // Set<NativeAttribute> attrsToGet);
 }

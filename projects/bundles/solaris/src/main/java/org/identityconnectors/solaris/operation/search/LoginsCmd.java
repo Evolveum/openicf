@@ -89,7 +89,7 @@ class LoginsCmd implements Command {
      * the implementation is changed, don't forget to update the list of
      * acquired attributes: {@link LoginsCmd#set}.
      */
-    private static SolarisEntry getEntry(String out, String username) {
+    public static SolarisEntry getEntry(String out, String username) {
         final SolarisEntry.Builder bldr = new SolarisEntry.Builder(username);
         
         final String[] tokens = out.split(":");

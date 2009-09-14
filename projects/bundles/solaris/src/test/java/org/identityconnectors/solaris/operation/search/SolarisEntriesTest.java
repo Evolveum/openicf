@@ -29,18 +29,35 @@ import java.util.Set;
 
 import org.identityconnectors.common.Pair;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.command.CommandBuilder;
 import org.identityconnectors.solaris.test.SolarisTestCommon;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 public class SolarisEntriesTest {
+    private SolarisConfiguration config;
+    private SolarisEntries se;
+
+    @Before
+    public void setUp() {
+        Pair<SolarisConnection, CommandBuilder> pair = SolarisTestCommon.getSolarisConn();
+        this.config = SolarisTestCommon.createConfiguration();
+        this.se = new SolarisEntries(pair.first, pair.second, config);
+    }
+    
+    @After
+    public void tearDown() {
+        this.config = null;
+        this.se = null;
+    }
+    
     @Test
     public void testGetAccount() {
-        Pair<SolarisConnection, CommandBuilder> pair = SolarisTestCommon.getSolarisConn();
-        SolarisEntries se = new SolarisEntries(pair.first, pair.second);
         final String userName = "root";
         SolarisEntry result = se.getAccount(userName, EnumSet.of(NativeAttribute.AUTHS, NativeAttribute.PROFILES, NativeAttribute.NAME));
         Assert.assertTrue(result.getName().equals(userName));
@@ -65,9 +82,6 @@ public class SolarisEntriesTest {
     
     @Test
     public void testGetAllAccounts() {
-        Pair<SolarisConnection, CommandBuilder> pair = SolarisTestCommon.getSolarisConn();
-        SolarisEntries se = new SolarisEntries(pair.first, pair.second);
-        
         final NativeAttribute profilesAttr = NativeAttribute.PROFILES;
         final NativeAttribute rolesAttr = NativeAttribute.ROLES;
         

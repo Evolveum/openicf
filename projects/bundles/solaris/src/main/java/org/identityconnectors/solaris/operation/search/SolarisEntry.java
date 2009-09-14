@@ -107,4 +107,9 @@ class SolarisEntry {
     public Set<Attribute> getAttributeSet() {
         return attrSet;
     }
+    
+    @Override
+    public String toString() {
+        return String.format("<Name: '%s', Attributes: [%s]", name, attrSet.toString());
+    }
 }
