@@ -283,65 +283,28 @@ Locating Configuration Files and Proprietary JARs
 <h3><a name="Locating_Config_Files"></a>Configuration
 Files</h3>
 
-<p>Contract test configuration files (properties files) are
-located as
-follows:</p>
+<p>Contract test configuration files (groovy files) are loaded as classpath resources with connector class full qualified name as basic prefix:</p>
 
 <table style="text-align: left; width: 90%; height: 89px;" border="1" cellpadding="5" cellspacing="0">
-
   <tbody>
-
     <tr>
-
-      <td><span style="color: rgb(0, 153, 0);">Main</span>
-configuration file</td>
-
-      <td>
-      <pre>{$project.home}/config/build.groovy</pre>
-
-      </td>
-
+      <td><span style="color: rgb(0, 153, 0);">Main </span>configuration file</td>
+      <td><pre>${connectorName}/config/config.groovy</pre></td>
     </tr>
     
     <tr>
-
-      <td width="200"><span style="color: rgb(51, 102, 102);">Optional</span>
-configuration file for
-resource specific
-configurations
-      </td>
-
-      <td>
-      <pre>{$project.home}/config/{$configuration}/build.groovy</pre>
-
-      </td>
-
+      <td width="200"><span style="color: rgb(51, 102, 102);">Optional </span>configuration file for resource specific configurations</td>
+      <td><pre>${connectorName}/config/${configuration}/config.groovy</pre></td>
     </tr>    
 
     <tr>
-
-      <td><span style="color: rgb(0, 153, 0);">Private Main</span>
-configuration file</td>
-
-      <td>
-      <pre>{$user.home}/.connectors/bundle-name/build.groovy</pre>
-
-      </td>
-
+      <td><span style="color: rgb(0, 153, 0);">Private Main </span>configuration file</td>
+      <td><pre>${connectorName}/config-private/config.groovy</pre></td>
     </tr>
 
     <tr>
-
-      <td width="200"><span style="color: rgb(51, 102, 102);">Private Optional</span>
-configuration file for
-resource specific
-configurations
-      </td>
-
-      <td>
-      <pre>{$user.home}/.connectors/bundle-name/{$configuration}/build.groovy</pre>
-
-      </td>
+      <td width="200"><span style="color: rgb(51, 102, 102);">Private Optional </span>configuration file for resource specific configurations</td>
+      <td><pre>${connectorName}/config-private/${configuration}/config.groovy</pre></td>
 
     </tr>
 
@@ -355,21 +318,16 @@ follows:</p>
 
 <ul>
 
-  <li>Set <span style="font-family: monospace;" class="literal">user-home</span>&nbsp;to
-a path such as&nbsp;<span style="font-family: monospace;" class="literal">/home/john</span>
-(on UNIX) or <span style="font-family: monospace;" class="literal">C:\Users\john</span>
-(on Windows)</li>
-
-  <li>Set <span style="font-family: monospace;" class="literal">bundle-name</span>
-equivalent to the connector's <span style="font-family: monospace;" class="literal">project
-name</span> property. This property is
-defined&nbsp;in&nbsp;&nbsp;<span style="font-family: monospace;" class="literal">build.xml</span>&nbsp;in
-the connector's folder.</li>
+  <li>Set <span style="font-family: monospace;" class="literal">connectorName</span>&nbsp;to
+a full qualified name of your connector e.g &nbsp;<span style="font-family: monospace;" class="literal">org.identityconnectors.ldap.LDAPConnector</span>
+</li>
 
   <li>Replace&nbsp;<span style="font-family: monospace;" class="literal">{</span><span style="font-family: monospace;" class="literal">$</span><span style="font-family: monospace;" class="literal">configuration}</span>
 with resource-specific configuration information. For example, a <span style="font-family: monospace;" class="literal">databasetable</span>
 connector can run against various databases, and in the case of a MySQL
 configuration, the folder name would be <span style="font-family: monospace;" class="literal">.databasetable-mysql</span>.</li>
+  <li>Connector build script copies the configuration files from your connector project folder(src/test/config) and default private configuration folder(user.home/.connectors/bundle-name/config) to be present on classpath of the unit and contract tests</li>
+          
 
 </ul>
 
@@ -413,7 +371,7 @@ in configuration-specific folders:<br>
 <div style="margin-left: 40px;">
 <span style="font-family: monospace;" class="literal">{$user-home}/.connectors/bundle-name/lib</span>
 <span style="font-family: monospace;"></span><br>
-<span style="font-family: monospace;" class="literal">{$user-home}/.connectors/bundle-name/{$configuration}/lib</span></div>
+<span style="font-family: monospace;" class="literal">{$user-home}/.connectors/bundle-name/lib/{$configuration}</span></div>
 
 <br>
 
