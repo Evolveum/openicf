@@ -53,6 +53,28 @@ namespace Org.IdentityConnectors.Framework.Api.Operations
         Uid Authenticate(ObjectClass objectClass, string username, GuardedString password, OperationOptions options);
     }
 
+    public interface ResolveUsernameApiOp : APIOperation {
+
+        /**
+         * Resolve the given {@link AuthenticationApiOp authentication} username
+         * to the corresponding {@link Uid}. The <code>Uid</code> is the one
+         * that {@link AuthenticationApiOp#authenticate} would return
+         * in case of a successful authentication. 
+         * 
+         * @param objectClass The object class to use for authenticate.
+         *            Will typically be an account. Must not be null.
+         * @param username
+         *            string that represents the account or user id.
+         * @param options
+         *            additional options that impact the way this operation is run.
+         *            May be null.
+         * @return Uid The uid of the account that would be used to authenticate.
+         * @throws RuntimeException
+         *             iff the username could not be resolved.
+         */
+        Uid ResolveUsername(ObjectClass objectClass, string username, OperationOptions options);
+    }
+
     /// <summary>
     /// Operation to create connector objects based on the attributes provided.
     /// </summary>

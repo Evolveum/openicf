@@ -1432,6 +1432,8 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
         static OperationMappings() {
             MAPPINGS.Add(new ObjectTypeMapperImpl(typeof(AuthenticationApiOp),
                     "AuthenticationApiOp"));
+            MAPPINGS.Add(new ObjectTypeMapperImpl(typeof(ResolveUsernameApiOp),
+                    "ResolveUsernameApiOp"));
             MAPPINGS.Add(new ObjectTypeMapperImpl(typeof(SearchApiOp),
                     "SearchApiOp"));
             MAPPINGS.Add(new ObjectTypeMapperImpl(typeof(ValidateApiOp),

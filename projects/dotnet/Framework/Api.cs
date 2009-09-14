@@ -147,8 +147,8 @@ namespace Org.IdentityConnectors.Framework.Api
      * Main interface for which consumers call the Connector API logic.
      */
     public interface ConnectorFacade : CreateApiOp, DeleteApiOp,
-            SearchApiOp, UpdateApiOp, SchemaApiOp, AuthenticationApiOp, GetApiOp,
-            ValidateApiOp, TestApiOp, ScriptOnConnectorApiOp, ScriptOnResourceApiOp,
+            SearchApiOp, UpdateApiOp, SchemaApiOp, AuthenticationApiOp, ResolveUsernameApiOp,
+            GetApiOp, ValidateApiOp, TestApiOp, ScriptOnConnectorApiOp, ScriptOnResourceApiOp,
             SyncApiOp {
 
         /**

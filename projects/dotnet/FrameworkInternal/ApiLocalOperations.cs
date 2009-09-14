@@ -275,7 +275,37 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local.Operations
         }
     }
     #endregion
-    
+
+    #region ResolveUsernameImpl
+    internal class ResolveUsernameImpl : ConnectorAPIOperationRunner,
+            ResolveUsernameApiOp
+    {
+        /**
+         * Pass the configuration etc to the abstract class.
+         */
+        public ResolveUsernameImpl(ConnectorOperationalContext context,
+                Connector connector)
+            : base(context, connector)
+        {
+        }
+
+        /**
+         * Resolve the username to an <code>Uid</code>.
+         */
+        public Uid ResolveUsername(ObjectClass objectClass, String username, OperationOptions options)
+        {
+            Assertions.NullCheck(objectClass, "objectClass");
+            Assertions.NullCheck(username, "username");
+            //convert null into empty
+            if (options == null)
+            {
+                options = new OperationOptionsBuilder().Build();
+            }
+            return ((ResolveUsernameOp)GetConnector()).ResolveUsername(objectClass, username, options);
+        }
+    }
+    #endregion
+
     #region CreateImpl
     internal class CreateImpl : ConnectorAPIOperationRunner,
             CreateApiOp {

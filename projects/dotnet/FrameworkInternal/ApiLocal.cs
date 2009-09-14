@@ -584,6 +584,8 @@ namespace Org.IdentityConnectors.Framework.Impl.Api.Local
                               SafeType<APIOperation>.Get<UpdateImpl>());
             AddImplementation(SafeType<APIOperation>.Get<AuthenticationApiOp>(),
                               SafeType<APIOperation>.Get<AuthenticationImpl>());
+            AddImplementation(SafeType<APIOperation>.Get<ResolveUsernameApiOp>(),
+                              SafeType<APIOperation>.Get<ResolveUsernameImpl>());
             AddImplementation(SafeType<APIOperation>.Get<TestApiOp>(),
                               SafeType<APIOperation>.Get<TestImpl>());
             AddImplementation(SafeType<APIOperation>.Get<ScriptOnConnectorApiOp>(), 

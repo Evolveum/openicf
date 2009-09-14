@@ -182,6 +182,22 @@ namespace FrameworkTests {
         }
 
         [Test]
+        public void ResolveUsernameCallPattern()
+        {
+            TestCallPattern(new TestOperationPattern()
+            {
+                MakeCall = facade =>
+                {
+                    facade.ResolveUsername(ObjectClass.ACCOUNT, "dfadf", null);
+                },
+                CheckCalls = calls =>
+                {
+                    Assert.AreEqual("ResolveUsername", GetAndRemoveMethodName(calls));
+                }
+            });
+        }
+
+        [Test]
         public void CreateCallPattern()
         {
             TestCallPattern(new TestOperationPattern()

@@ -607,6 +607,16 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
         /**
          * {@inheritDoc}
          */
+        public Uid ResolveUsername(ObjectClass objectClass, String username, OperationOptions options)
+        {
+            return ((ResolveUsernameApiOp)this
+             .GetOperationCheckSupported(SafeType<APIOperation>.Get<ResolveUsernameApiOp>())).ResolveUsername(
+                    objectClass, username, options);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public ConnectorObject GetObject(ObjectClass objClass, Uid uid, OperationOptions options) {
             return ((GetApiOp) this.GetOperationCheckSupported(SafeType<APIOperation>.Get<GetApiOp>()))
                     .GetObject(objClass, uid, options);

@@ -125,7 +125,7 @@ namespace FrameworkTests
 
     public class MockAllOpsConnector : MockConnector, CreateOp,
             DeleteOp, UpdateOp, SearchOp<string>, UpdateAttributeValuesOp, AuthenticateOp, 
-            TestOp, ScriptOnConnectorOp, ScriptOnResourceOp 
+            ResolveUsernameOp, TestOp, ScriptOnConnectorOp, ScriptOnResourceOp 
         {
 
         public object RunScriptOnConnector(ScriptContext request,
@@ -210,6 +210,13 @@ namespace FrameworkTests
             Assert.IsNotNull(username);
             Assert.IsNotNull(password);
             AddCall("Authenticate", username, password);
+            return null;
+        }
+
+        public Uid ResolveUsername(ObjectClass objectClass, string username, OperationOptions options)
+        {
+            Assert.IsNotNull(username);
+            AddCall("ResolveUsername", username);
             return null;
         }
 

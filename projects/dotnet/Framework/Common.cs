@@ -66,7 +66,9 @@ namespace Org.IdentityConnectors.Framework.Common
                 new Dictionary<SafeType<SPIOperation>,SafeType<APIOperation>>();
             temp[SafeType<SPIOperation>.Get<AuthenticateOp>()]=
                 SafeType<APIOperation>.Get<AuthenticationApiOp>();
-            temp[SafeType<SPIOperation>.Get<CreateOp>()]=
+            temp[SafeType<SPIOperation>.Get<ResolveUsernameOp>()] =
+                SafeType<APIOperation>.Get<ResolveUsernameApiOp>();
+            temp[SafeType<SPIOperation>.Get<CreateOp>()] =
                 SafeType<APIOperation>.Get<CreateApiOp>();
             temp[SafeType<SPIOperation>.Get<DeleteOp>()]=
                 SafeType<APIOperation>.Get<DeleteApiOp>();
