@@ -26,7 +26,18 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 
 
-/** node of search filter tree for Solaris */
-public interface Node {
-    public abstract boolean evaluate(SolarisEntry entry);
+/**
+ * this filter matches everything.
+ * @author David Adam
+ */
+public class UniversalNode implements Node {
+    public UniversalNode() {}
+    // kept empty on purpose. This is just a placeholder class. 
+
+    /** 
+     * {@see org.identityconnectors.solaris.operation.search.nodes.Node#evaluate(org.identityconnectors.solaris.operation.search.SearchPerformer)}
+     */
+    public boolean evaluate(SolarisEntry entry) {
+        throw new UnsupportedOperationException();
+    }
 }

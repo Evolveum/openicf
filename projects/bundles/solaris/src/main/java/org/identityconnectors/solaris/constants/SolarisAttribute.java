@@ -24,7 +24,6 @@ package org.identityconnectors.solaris.constants;
 
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.operation.search.PatternBuilder;
-import org.identityconnectors.solaris.operation.search.SearchPerformer.SearchCallback;
 
 /**
  * abstraction of all Solaris Object type attributes (including GROUP, ACCOUNT).
@@ -62,9 +61,4 @@ public interface SolarisAttribute {
      */
     public abstract String getRegExpForUidAndAttribute();
     
-    /**
-     * @return the callback method {@see SearchCallback} this method is uded to 
-     * parse the output lines of unix commands.
-     */
-    public abstract SearchCallback getCallbackMethod();
 }

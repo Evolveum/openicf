@@ -22,24 +22,21 @@
  */
 package org.identityconnectors.solaris.operation.search.nodes;
 
-import java.util.Set;
 
-import org.identityconnectors.common.CollectionUtil;
-import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.solaris.operation.search.SearchPerformer;
+import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 /**
  * OR of two node values. 
  * Note: in implementation this translated to union of satisfying {@see Uid}-s (left/right expressions).
  * @author David Adam
  */
-public class OrFilter extends BinaryOpNode {
+public class OrNode extends BinaryOpNode {
     
-    public OrFilter(Node left, Node right) {
+    public OrNode(Node left, Node right) {
         super(left, right);
     }
 
-    public Set<Uid> evaluate(SearchPerformer sp) {
-        return CollectionUtil.union(getLeft().evaluate(sp), getRight().evaluate(sp));
+    public boolean evaluate(SolarisEntry entry) {
+        return getLeft().evaluate(entry) || getRight().evaluate(entry);
     }
 }

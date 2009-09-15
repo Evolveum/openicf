@@ -22,11 +22,32 @@
  */
 package org.identityconnectors.solaris.operation.search.nodes;
 
+import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 
 
-/** node of search filter tree for Solaris */
-public interface Node {
-    public abstract boolean evaluate(SolarisEntry entry);
+/**
+ * Single value filter.
+ * @author David Adam
+ *
+ */
+public class EqualsNode extends AttributeNode {
+
+    private String value;
+
+    public String getValue() {
+        return value;
+    }
+    
+    public EqualsNode(NativeAttribute nativeAttr, boolean isNot, String value) {
+        super(nativeAttr, isNot);
+        this.value = value;
+    }
+
+    @Override
+    public boolean evaluate(SolarisEntry entry) {
+        throw new UnsupportedOperationException();
+    }
+
 }

@@ -22,58 +22,87 @@
  */
 package org.identityconnectors.solaris.operation.search;
 
-
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.filter.AbstractFilterTranslator;
+import org.identityconnectors.framework.common.objects.filter.ContainsAllValuesFilter;
 import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
 import org.identityconnectors.framework.common.objects.filter.EndsWithFilter;
 import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
 import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
-import org.identityconnectors.solaris.operation.search.nodes.AndFilter;
-import org.identityconnectors.solaris.operation.search.nodes.AttributeFilter;
+import org.identityconnectors.solaris.attr.AccountAttribute;
+import org.identityconnectors.solaris.attr.ConnectorAttribute;
+import org.identityconnectors.solaris.attr.GroupAttribute;
+import org.identityconnectors.solaris.attr.NativeAttribute;
+import org.identityconnectors.solaris.operation.search.nodes.AndNode;
+import org.identityconnectors.solaris.operation.search.nodes.ContainsAllValuesNode;
+import org.identityconnectors.solaris.operation.search.nodes.ContainsNode;
+import org.identityconnectors.solaris.operation.search.nodes.EndsWithNode;
+import org.identityconnectors.solaris.operation.search.nodes.EqualsNode;
 import org.identityconnectors.solaris.operation.search.nodes.Node;
-import org.identityconnectors.solaris.operation.search.nodes.OrFilter;
+import org.identityconnectors.solaris.operation.search.nodes.OrNode;
+import org.identityconnectors.solaris.operation.search.nodes.StartsWithNode;
+
+
+
 
 public class SolarisFilterTranslator extends
         AbstractFilterTranslator<Node> {
 
-    public SolarisFilterTranslator() {
+    private ObjectClass oclass;
+
+    public SolarisFilterTranslator(ObjectClass oclass) {
+        this.oclass = oclass;
+    }
+    
+    /** multivalue attributes filter. */
+    @Override
+    protected Node createContainsAllValuesExpression(
+            ContainsAllValuesFilter filter, boolean not) {
+        Attribute attr = filter.getAttribute();
+        return new ContainsAllValuesNode(translateFromConnectorAttribute(attr.getName()), attr.getValue(), not);
+    }
+
+    private NativeAttribute translateFromConnectorAttribute(String connectorAttribute) {
+        ConnectorAttribute connAttr = null;
+        if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
+            connAttr = AccountAttribute.fromString(connectorAttribute);
+        } else if (oclass.is(ObjectClass.GROUP_NAME)) {
+            connAttr =  GroupAttribute.fromString(connectorAttribute);
+        }
+        return connAttr.getNative();
     }
 
     @Override
     protected Node createOrExpression(Node leftExpression,
             Node rightExpression) {
-        return new OrFilter(leftExpression, rightExpression);
+        return new OrNode(leftExpression, rightExpression);
     }
     
     @Override
     protected Node createAndExpression(Node leftExpression, Node rightExpression) {
-        return new AndFilter(leftExpression, rightExpression);
+        return new AndNode(leftExpression, rightExpression);
     } 
 
     @Override
     protected Node createContainsExpression(ContainsFilter filter, boolean not) {
-        /* '.' == zero and more repetitions of any character */
-        String regExp = String.format(".*(%s).*", filter.getValue());
-        return new AttributeFilter(filter.getName(), regExp, not);
+        return new ContainsNode(translateFromConnectorAttribute(filter.getName()), not, filter.getValue());
     }
 
     @Override
     protected Node createEndsWithExpression(EndsWithFilter filter,
             boolean not) {
-        String regExp = String.format(".*%s", filter.getValue());
-        return new AttributeFilter(filter.getName(), regExp, not);
+        return new EndsWithNode(translateFromConnectorAttribute(filter.getName()), not, filter.getValue());
     }
 
     @Override
     protected Node createStartsWithExpression(StartsWithFilter filter,
             boolean not) {
-        String regExp = String.format("%s.*", filter.getValue());
-        return new AttributeFilter(filter.getName(), regExp, not);
+        return new StartsWithNode(translateFromConnectorAttribute(filter.getName()), not, filter.getValue());
     }
 
     @Override
     protected Node createEqualsExpression(EqualsFilter filter, boolean not) {
-        return new AttributeFilter(filter.getName(), (String) filter
-                .getAttribute().getValue().get(0), not);
+        return new EqualsNode(translateFromConnectorAttribute(filter.getName()), not, (String) filter.getAttribute().getValue().get(0));
     }
 }

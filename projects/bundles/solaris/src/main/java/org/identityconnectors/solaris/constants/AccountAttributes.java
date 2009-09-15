@@ -29,7 +29,6 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.operation.search.PatternBuilder;
-import org.identityconnectors.solaris.operation.search.SearchPerformer.SearchCallback;
 
 
 /**
@@ -51,7 +50,7 @@ public enum AccountAttributes implements SolarisAttribute {
     SHELL("shell", UpdateSwitches.SHELL, CommandConstants.Logins.CMD, PatternBuilder.buildPattern(CommandConstants.Logins.COL_COUNT, CommandConstants.Logins.UID_COL, 7/*shell col.*/)),
     /** primary group */
     GROUP("group", UpdateSwitches.GROUP, CommandConstants.Logins.CMD, PatternBuilder.buildPattern(CommandConstants.Logins.COL_COUNT, CommandConstants.Logins.UID_COL, 3/*groupName col.*/)),
-    SECONDARY_GROUP("secondary_group", UpdateSwitches.SECONDARY_GROUP, CommandConstants.Logins.CMD_EXTENDED, null, SecondaryGroupParser.Builder.getInstance()),
+    SECONDARY_GROUP("secondary_group", UpdateSwitches.SECONDARY_GROUP, CommandConstants.Logins.CMD_EXTENDED, null /*SecondaryGroupParser.Builder.getInstance()*/),
     /** ! this is the solaris native 'uid', *NOT* the one defined by the framework. */
     UID("uid", UpdateSwitches.UID, CommandConstants.Logins.CMD, PatternBuilder.buildPattern(CommandConstants.Logins.COL_COUNT, CommandConstants.Logins.UID_COL, 2/*solaris uid*/)),
     NAME(Name.NAME, UpdateSwitches.UNKNOWN, CommandConstants.Logins.CMD,  PatternBuilder.buildPattern(CommandConstants.Logins.COL_COUNT, CommandConstants.Logins.UID_COL)),
@@ -83,30 +82,8 @@ public enum AccountAttributes implements SolarisAttribute {
     private String command;
     /** regular expression to extract Uid and Attribute from the raw data gathered by {@link GroupAttributes#command} */
     private String regexp;
-    /** a callback method that is used for special search, that requires to parse multiple attributes.
-     * Mostly this attribute is really optional. */
-    private SearchCallback callback;
-
     
-    /**
-     * initialize the constants for objectclass __ACCOUNT__'s attributes
-     * 
-     * @param attrName
-     *            the name of attribute (most of the time identical with one
-     *            defined in adapter
-     * @param cmdSwitch
-     *            the command line switch generated for this attribute, when set
-     *            in create/update operations
-     * @param command
-     *            the command that is used in search to get value/uid pairs of
-     *            this attribute
-     * @param regexp
-     *            the regular expression used for parsing the command's output,
-     *            to get the respective columns.
-     */
-    private AccountAttributes(String attrName, UpdateSwitches cmdSwitch, String command, String regexp) {
-        this(attrName, cmdSwitch, command, regexp, null);
-    }
+
     
     /** 
      * copy an existing constant, just use a different name. 
@@ -123,12 +100,11 @@ public enum AccountAttributes implements SolarisAttribute {
      * {@see AccountAttributes#AccountAttributes(String, UpdateSwitches, String, String)}
      * @param callback an optional attribute that is used for special searches.
      */
-    private AccountAttributes(String attrName, UpdateSwitches cmdSwitch, String command, String regexp, SearchCallback callback) {
+    private AccountAttributes(String attrName, UpdateSwitches cmdSwitch, String command, String regexp) {
         this.attrName = attrName;
         this.cmdSwitch = cmdSwitch;
         this.command = command;
         this.regexp = regexp;
-        this.callback = callback;
     }
     
     /**
@@ -200,12 +176,5 @@ public enum AccountAttributes implements SolarisAttribute {
             static final int UID_COL = 1;
             public static final String DEFAULT_OUTPUT_DELIMITER = ":";
         }
-    }
-    
-    /**
-     * {@see SolarisAttribute#getCallbackMethod()}
-     */
-    public SearchCallback getCallbackMethod() {
-        return callback;
     }
 }

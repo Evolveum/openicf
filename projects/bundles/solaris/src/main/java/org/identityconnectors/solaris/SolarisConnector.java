@@ -159,7 +159,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
 
     public FilterTranslator<Node> createFilterTranslator(
             ObjectClass oclass, OperationOptions options) {
-        return new SolarisFilterTranslator();
+        return new SolarisFilterTranslator(oclass);
     }
     
     /**

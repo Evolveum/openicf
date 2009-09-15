@@ -40,11 +40,13 @@ import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
-import org.identityconnectors.solaris.constants.AccountAttributes;
+import org.identityconnectors.solaris.attr.AccountAttribute;
 import org.identityconnectors.solaris.constants.SolarisAttribute;
 import org.identityconnectors.solaris.operation.AbstractOp;
-import org.identityconnectors.solaris.operation.search.nodes.AttributeFilter;
+import org.identityconnectors.solaris.operation.search.nodes.AttributeNode;
+import org.identityconnectors.solaris.operation.search.nodes.BinaryOpNode;
 import org.identityconnectors.solaris.operation.search.nodes.Node;
+import org.identityconnectors.solaris.operation.search.nodes.UniversalNode;
 
 
 public class OpSearchImpl extends AbstractOp {
@@ -62,9 +64,7 @@ public class OpSearchImpl extends AbstractOp {
     /**
      * Search operation
      * 
-     * @param query
-     *            can contain AND, OR ("&", "|") that represents and-ing and
-     *            or-ing the result of matches. AND has priority over OR.
+     * @param query contains the filters. Is created by {@link SolarisFilterTranslator}
      */
     public void executeQuery(ObjectClass oclass, Node query,
             ResultsHandler handler, OperationOptions options) {
@@ -78,99 +78,93 @@ public class OpSearchImpl extends AbstractOp {
         this.options = options;
         this.oclass = oclass;
         
-        // TODO 
         if (query == null) {
-            // NULL filter, return all results
-            query = new AttributeFilter(AccountAttributes.NAME.getName(), ".*");
+            // NULL indicates that we should return all results.
+            query = new UniversalNode();
         }
         
-        final SearchPerformer sp = new SearchPerformer(getConfiguration(), getConnection(), this);
-        //traverse through the tree of search query:
-        Set<Uid> result = query.evaluate(sp);
-        
-        for (Uid uid : result) {
-            notifyHandler(handler, uid.getUidValue(), sp);
-        }
+//        query = traverseAndTranslate(query, oclass);
     }
 
-    /** calls handler with given string 
-     * @param sp TODO*/
-    private void notifyHandler(ResultsHandler handler, String uid, SearchPerformer sp) {
-        // TODO this could be more complicated, when other than Name attributes arrive.
-        ConnectorObjectBuilder builder = new ConnectorObjectBuilder()
-                .addAttribute(AttributeBuilder.build(Name.NAME, uid))
-                .addAttribute(new Uid(uid));
-        /*
-         * return RETURNED_BY_DEFAULT attributes + attrsToGet
-         */
-        /** attributes to get */
-        String[] attrsToGet = options.getAttributesToGet();
-        if (attrsToGet == null) {
-            // if no attributes to get, return all RETURNED_BY_DEFAULT attributes
-            attrsToGet = getReturnedByDefaultAttrs(getSchema());
-        }
-        
-        for (String attrName : attrsToGet) {
-            // acquire the attribute's value:
-            final List<String> attrValue = getValueForUid(uid, attrName, sp);
-            
-            // set it in the returned connector object:
-            if (attrValue != null) {
-                builder.addAttribute(AttributeBuilder.build(attrName, attrValue));
-            }
-        }
-        
-        ConnectorObject co = builder.build();
-        
-        handler.handle(co);
-    }
+//    /** calls handler with given string 
+//     * @param sp TODO*/
+//    private void notifyHandler(ResultsHandler handler, String uid, SearchPerformer sp) {
+//        // TODO this could be more complicated, when other than Name attributes arrive.
+//        ConnectorObjectBuilder builder = new ConnectorObjectBuilder()
+//                .addAttribute(AttributeBuilder.build(Name.NAME, uid))
+//                .addAttribute(new Uid(uid));
+//        /*
+//         * return RETURNED_BY_DEFAULT attributes + attrsToGet
+//         */
+//        /** attributes to get */
+//        String[] attrsToGet = options.getAttributesToGet();
+//        if (attrsToGet == null) {
+//            // if no attributes to get, return all RETURNED_BY_DEFAULT attributes
+//            attrsToGet = getReturnedByDefaultAttrs(getSchema());
+//        }
+//        
+//        for (String attrName : attrsToGet) {
+//            // acquire the attribute's value:
+//            final List<String> attrValue = getValueForUid(uid, attrName, sp);
+//            
+//            // set it in the returned connector object:
+//            if (attrValue != null) {
+//                builder.addAttribute(AttributeBuilder.build(attrName, attrValue));
+//            }
+//        }
+//        
+//        ConnectorObject co = builder.build();
+//        
+//        handler.handle(co);
+//    }
 
-    /**
-     * Acquire a given attribute for a uid.
-     * 
-     * @param uid
-     *            the uid which is queried for all attributes
-     * @param attrName
-     *            the selected attribute, whose value is returned
-     * @param sp 
-     * @return the attribute's value
-     */
-    private List<String> getValueForUid(String uid, String attrName, SearchPerformer sp) {
-        final SolarisAttribute attrType = SolarisUtil.getAttributeBasedOnName(attrName);
-        if (attrType == null) {
-            return null;
-        }
-        final List<String> result = sp.performValueSearchForUid(attrType, attrType.getRegExpForUidAndAttribute(), uid);
-        
-        return result;
-    }
+//    /**
+//     * Acquire a given attribute for a uid.
+//     * 
+//     * @param uid
+//     *            the uid which is queried for all attributes
+//     * @param attrName
+//     *            the selected attribute, whose value is returned
+//     * @param sp 
+//     * @return the attribute's value
+//     */
+//    private List<String> getValueForUid(String uid, String attrName, SearchPerformer sp) {
+//        final SolarisAttribute attrType = SolarisUtil.getAttributeBasedOnName(attrName);
+//        if (attrType == null) {
+//            return null;
+//        }
+//        //final List<String> result = sp.performValueSearchForUid(attrType, attrType.getRegExpForUidAndAttribute(), uid);
+//        throw new UnsupportedOperationException();
+//        
+////        return result;
+//    }
 
-    /**
-     * TODO this can be done in two ways: 
-     * either you have a register of returned by default attributes in the connector, 
-     * or you find it in the schema.
-     * 
-     * @param schema
-     * @return set of attribute names that are returned by default
-     */
-    private String[] getReturnedByDefaultAttrs(Schema schema) {
-        // return the cached names
-        if (returnedByDefaultAttributeNames != null)
-            return returnedByDefaultAttributeNames;
-        
-        List<String> result = new ArrayList<String>();
-        
-        ObjectClassInfo ocinfo = schema.findObjectClassInfo(oclass.getObjectClassValue());
-        Set<AttributeInfo> attrInfo = ocinfo.getAttributeInfo();
-        for (AttributeInfo attributeInfo : attrInfo) {
-            if (attributeInfo.isReturnedByDefault()) {
-                result.add(attributeInfo.getName());
-            }
-        }
-        
-        //cache the names
-        returnedByDefaultAttributeNames = result.toArray(new String[0]);
-        
-        return returnedByDefaultAttributeNames;
-    }
+//    /**
+//     * TODO this can be done in two ways: 
+//     * either you have a register of returned by default attributes in the connector, 
+//     * or you find it in the schema.
+//     * 
+//     * @param schema
+//     * @return set of attribute names that are returned by default
+//     */
+//    private String[] getReturnedByDefaultAttrs(Schema schema) {
+//        // return the cached names
+//        if (returnedByDefaultAttributeNames != null)
+//            return returnedByDefaultAttributeNames;
+//        
+//        List<String> result = new ArrayList<String>();
+//        
+//        ObjectClassInfo ocinfo = schema.findObjectClassInfo(oclass.getObjectClassValue());
+//        Set<AttributeInfo> attrInfo = ocinfo.getAttributeInfo();
+//        for (AttributeInfo attributeInfo : attrInfo) {
+//            if (attributeInfo.isReturnedByDefault()) {
+//                result.add(attributeInfo.getName());
+//            }
+//        }
+//        
+//        //cache the names
+//        returnedByDefaultAttributeNames = result.toArray(new String[0]);
+//        
+//        return returnedByDefaultAttributeNames;
+//    }
 }

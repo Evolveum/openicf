@@ -22,23 +22,32 @@
  */
 package org.identityconnectors.solaris.operation.search.nodes;
 
-import java.util.Set;
+import org.identityconnectors.solaris.attr.NativeAttribute;
+import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
-import org.identityconnectors.common.CollectionUtil;
-import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.solaris.operation.search.SearchPerformer;
 
-/** 
- * AND of two node values. 
- * Note: in implementation this translated to intersection of satisfying {@see Uid}-s (left/right expressions).
+
+/**
+ * Single value filter.
+ * @author David Adam
+ *
  */
-public class AndFilter extends BinaryOpNode {
+public class StartsWithNode extends AttributeNode {
+
+    private String value;
+
+    public String getValue() {
+        return value;
+    }
     
-    public AndFilter(Node left, Node right) {
-        super(left, right);
+    public StartsWithNode(NativeAttribute nativeAttr, boolean isNot, String value) {
+        super(nativeAttr, isNot);
+        this.value = value;
     }
 
-    public Set<Uid> evaluate(SearchPerformer sp) {
-        return CollectionUtil.intersection(getLeft().evaluate(sp), getRight().evaluate(sp));
+    @Override
+    public boolean evaluate(SolarisEntry entry) {
+        throw new UnsupportedOperationException();
     }
+
 }

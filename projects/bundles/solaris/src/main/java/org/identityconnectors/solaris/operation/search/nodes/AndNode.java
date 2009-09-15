@@ -22,11 +22,20 @@
  */
 package org.identityconnectors.solaris.operation.search.nodes;
 
+
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
+/** 
+ * AND of two node values. 
+ * Note: in implementation this translated to intersection of satisfying {@see Uid}-s (left/right expressions).
+ */
+public class AndNode extends BinaryOpNode {
+    
+    public AndNode(Node left, Node right) {
+        super(left, right);
+    }
 
-
-/** node of search filter tree for Solaris */
-public interface Node {
-    public abstract boolean evaluate(SolarisEntry entry);
+    public boolean evaluate(SolarisEntry entry) {
+        return getLeft().evaluate(entry) && getRight().evaluate(entry);
+    }
 }

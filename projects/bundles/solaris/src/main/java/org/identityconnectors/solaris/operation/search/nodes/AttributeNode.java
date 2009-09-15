@@ -22,23 +22,19 @@
  */
 package org.identityconnectors.solaris.operation.search.nodes;
 
-import java.util.Set;
+import org.identityconnectors.solaris.attr.NativeAttribute;
+import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
-import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.solaris.SolarisUtil;
-import org.identityconnectors.solaris.constants.SolarisAttribute;
-import org.identityconnectors.solaris.operation.search.SearchPerformer;
+
 
 /**
  * encapsulates matching of a single attribute by a regular expression.
  * 
  * @author David Adam
  */
-public class AttributeFilter implements Node {
+public abstract class AttributeNode implements Node {
 
-    private String regex;
-
-    private SolarisAttribute attr;
+    private NativeAttribute attrName;
     
     /** 
      * inverse matching, 
@@ -47,25 +43,27 @@ public class AttributeFilter implements Node {
     private boolean isNot;
 
     /**
-     * @param attributeName
+     * @param nativeAttributeName
      *            the attribute name that is filtered
-     * @param regex
-     *            the regular expression that is used to filter
+     * @param isNot
+     *            in case it is true this means inverse filter evaluation. (For
+     *            instance equals filter becomes 'not equals').
+     * @param the
+     *            filter value that is compared to the actual attribute
      */
-    public AttributeFilter(String attributeName, String regex, boolean isNot) {
-        attr = SolarisUtil.getAttributeBasedOnName(attributeName);
-        this.regex = regex;
+    public AttributeNode(NativeAttribute nativeAttr, boolean isNot) {
+        this.attrName = nativeAttr;
         this.isNot = isNot;
     }
     
-    /**
-     * {@see AttributeFilter#AttributeFilter(String, String, boolean)}
-     */
-    public AttributeFilter(String attributeName, String regex) {
-        this(attributeName, regex, false);
+    public abstract boolean evaluate(SolarisEntry entry);
+    
+    /** @return true if the evaluation should be done in negative logic. */
+    protected boolean isNot() {
+        return isNot;
     }
-
-    public Set<Uid> evaluate(SearchPerformer sp) {
-        return sp.performSearch(attr, regex, isNot);
+    
+    public final NativeAttribute getAttributeName() {
+        return attrName;
     }
 }

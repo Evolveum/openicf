@@ -26,7 +26,6 @@ import java.util.Map;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.solaris.operation.search.SearchPerformer.SearchCallback;
 
 /**
  * Also take a look at {@link AccountAttributes}}.
@@ -62,40 +61,17 @@ public enum AccountAttributesForPassword implements SolarisAttribute  {
     private String command;
     /** regular expression to extract Uid and Attribute from the raw data gathered by {@link GroupAttributes#command} */
     private String regexp;
-    /** a callback method that is used for special search, that requires to parse multiple attributes.
-     * Mostly this attribute is really optional. */
-    private SearchCallback callback;
     
-    /**
-     * initialize the constants for objectclass __ACCOUNT__'s attributes
-     * 
-     * @param attrName
-     *            the name of attribute (most of the time identical with one
-     *            defined in adapter
-     * @param cmdSwitch
-     *            the command line switch generated for this attribute, when set
-     *            in create/update operations
-     * @param command
-     *            the command that is used in search to get value/uid pairs of
-     *            this attribute
-     * @param regexp
-     *            the regular expression used for parsing the command's output,
-     *            to get the respective columns.
-     */
-    private AccountAttributesForPassword(String attrName, PasswdSwitches cmdSwitch, String command, String regexp) {
-        this(attrName, cmdSwitch, command, regexp, null);
-    }
     
     /** 
      * {@see AccountAttributesForPassword#AccountAttributesForPassword(String, PasswdSwitches, String, String)}
      * @param callback an optional attribute that is used for special searches.
      */
-    private AccountAttributesForPassword(String attrName, PasswdSwitches cmdSwitch, String command, String regexp, SearchCallback callback) {
+    private AccountAttributesForPassword(String attrName, PasswdSwitches cmdSwitch, String command, String regexp) {
         this.attrName = attrName;
         this.cmdSwitch = cmdSwitch;
         this.command = command;
         this.regexp = regexp;
-        this.callback = callback;
     }
     
     /**
@@ -143,10 +119,4 @@ public enum AccountAttributesForPassword implements SolarisAttribute  {
         return AttributeHelper.fillInCommand(command, fillInAttributes);
     }
     
-    /**
-     * {@see SolarisAttribute#getCallbackMethod()}
-     */
-    public SearchCallback getCallbackMethod() {
-        return callback;
-    }
 }

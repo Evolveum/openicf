@@ -36,7 +36,7 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
  * Type of attributes must be {@link org.identityconnectors.solaris.attr.NativeAttribute}.
  * @author David Adam
  */
-class SolarisEntry {
+public class SolarisEntry {
     private String name;
     private Set<Attribute> attrSet;
     

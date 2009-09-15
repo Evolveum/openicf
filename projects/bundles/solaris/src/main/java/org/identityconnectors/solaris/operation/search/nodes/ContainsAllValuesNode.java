@@ -22,11 +22,33 @@
  */
 package org.identityconnectors.solaris.operation.search.nodes;
 
+import java.util.List;
+
+import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 
+/**
+ * Multi value filter.
+ * @author David Adam
+ *
+ */
+public class ContainsAllValuesNode extends AttributeNode {
 
-/** node of search filter tree for Solaris */
-public interface Node {
-    public abstract boolean evaluate(SolarisEntry entry);
+    private List<Object> values;
+
+    public List<Object> getValues() {
+        return values;
+    }
+    
+    public ContainsAllValuesNode(NativeAttribute nativeAttr, List<Object> values, boolean isNot) {
+        super(nativeAttr, isNot);
+        this.values = values;
+    }
+
+    @Override
+    public boolean evaluate(SolarisEntry entry) {
+        throw new UnsupportedOperationException();
+    }
+
 }
