@@ -24,6 +24,7 @@
 package org.identityconnectors.solaris.attr;
 
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.identityconnectors.framework.common.objects.Name;
@@ -81,9 +82,20 @@ public enum AccountAttribute implements ConnectorAttribute {
             }
         }
     }
+    
+    private static final Map<String, AccountAttribute> stringToAccount = new HashMap<String, AccountAttribute>();
+    static {
+        for (AccountAttribute accAttr : values()) {
+            stringToAccount.put(accAttr.getName(), accAttr);
+        }
+    }
 
     public static AccountAttribute fromNative(NativeAttribute nativeAttr) {
         return nativeToAccount.get(nativeAttr);
+    }
+    
+    public static AccountAttribute fromString(String accountAttr) {
+        return stringToAccount.get(accountAttr);
     }
 
     private AccountAttribute(String name, NativeAttribute nativeAttr) {

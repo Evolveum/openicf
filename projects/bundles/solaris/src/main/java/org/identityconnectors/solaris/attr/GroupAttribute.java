@@ -24,6 +24,7 @@
 package org.identityconnectors.solaris.attr;
 
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.identityconnectors.framework.common.objects.Name;
@@ -41,9 +42,20 @@ public enum GroupAttribute implements ConnectorAttribute {
             nativeToGroup.put(accAttr.getNative(), accAttr);
         }
     }
+    
+    private static final Map<String, GroupAttribute> stringToGroup = new HashMap<String, GroupAttribute>();
+    static {
+        for (GroupAttribute grpAttr : values()) {
+            stringToGroup.put(grpAttr.getName(), grpAttr);
+        }
+    }
 
     public static GroupAttribute fromNative(NativeAttribute nativeAttr) {
         return nativeToGroup.get(nativeAttr);
+    }
+    
+    public static GroupAttribute fromString(String groupAttr) {
+        return stringToGroup.get(groupAttr);
     }
 
     private GroupAttribute(String name, NativeAttribute nativeAttr) {
