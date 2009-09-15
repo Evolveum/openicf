@@ -72,7 +72,7 @@ final class SecuringAttributesOperations extends Operation {
      */
     public void updateUserSecuringAttrs(final Attribute secAttr, String userName) {
         final String method = "updateUserSecuringAttrs";
-        log.info(method);
+        log.ok(method);
 
         final String userId=getUserId(userName);
 
@@ -100,7 +100,7 @@ final class SecuringAttributesOperations extends Operation {
             }
         }
 
-        log.info(method + " done");
+        log.ok(method + " done");
     }
 
     /**
@@ -129,7 +129,7 @@ final class SecuringAttributesOperations extends Operation {
     */
     private void addSecuringAttr(String userId, String secAttr) {
         final String method = "addUserSecuringAttrs";
-        log.info(method);
+        log.ok(method);
         String attributeName = null;
         String applicationName = null;
         String value = null;
@@ -240,7 +240,7 @@ final class SecuringAttributesOperations extends Operation {
 
             cstmt1.execute();
             // cstmt1 closed in finally below
-            log.info(method + " done");
+            log.ok(method + " done");
 
         } catch (Exception ex) {
             final String msg1 = getCfg().getMessage(MSG_COULD_NOT_EXECUTE, ex.getMessage());
@@ -277,7 +277,7 @@ final class SecuringAttributesOperations extends Operation {
     */
     private void deleteSecuringAttr(String userId, String secAttr) {
         final String method = "deleteSecuringAttr";
-        log.info(method);
+        log.ok(method);
         String attributeName = null;
         String applicationName = null;
         String value = null;
@@ -389,7 +389,7 @@ final class SecuringAttributesOperations extends Operation {
             SQLUtil.closeQuietly(cstmt1);
             cstmt1 = null;
         }
-        log.info(method + " done");
+        log.ok(method + " done");
     }
 
     /**
@@ -399,7 +399,7 @@ final class SecuringAttributesOperations extends Operation {
      */
     public List<String> getSecuringAttrs(String userName) {
         final String method = "getSecAttrs";
-        log.info(method);
+        log.ok(method);
         PreparedStatement st = null;
         ResultSet res = null;
         StringBuilder b = new StringBuilder();
@@ -473,7 +473,7 @@ final class SecuringAttributesOperations extends Operation {
             SQLUtil.closeQuietly(st);
             st = null;
         }
-        log.info(method + " done");
+        log.ok(method + " done");
         return arrayList;
     }
     

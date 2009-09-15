@@ -74,7 +74,7 @@ final class ResponsibilitiesOperationSearch extends Operation implements SearchO
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder query, ResultsHandler handler,
             OperationOptions options) {
         final String method = "executeQuery";
-        log.info(method);
+        log.ok(method);
 
         final boolean activeRespsOnly = respOps.isActiveRespOnly(options);
         final String id = respOps.getOptionId(options);
@@ -101,7 +101,7 @@ final class ResponsibilitiesOperationSearch extends Operation implements SearchO
             }
         }
         getConn().commit();
-        log.info(method + " done");
+        log.ok(method + " done");
     }
 
 }

@@ -94,7 +94,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder where, ResultsHandler handler,
             OperationOptions options) {
         final String method = "executeQuery";
-        log.info(method);
+        log.ok(method);
 
         final String tblname = getCfg().app() + "fnd_user";
         final Set<AttributeInfo> ais = getAttributeInfos(getCfg().getSchema(), ObjectClass.ACCOUNT_NAME);
@@ -188,7 +188,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             SQLUtil.closeQuietly(statement);
         }
         getConn().commit();
-        log.info(method + " ok");
+        log.ok(method + " ok");
     }
 
     /**
@@ -302,13 +302,13 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
 
         if (personColumns.isEmpty()) {
             // No persons column required
-            log.info("No persons AttributesToGet, skip");
+            log.ok("No persons AttributesToGet, skip");
             return;
         }
 
         final Long personId = extractLong(EMP_ID, columnValues);
         if (personId == null) {
-            log.info("buildPersonDetails: Null personId(employId)");
+            log.ok("buildPersonDetails: Null personId(employId)");
             return;
         }
         log.ok("buildPersonDetails for personId: {0}", personId);
@@ -404,7 +404,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
     private void buildResponsibilities(AttributeMergeBuilder amb, final String userName) {
 
         if (!getCfg().isNewResponsibilityViews() && amb.isInAttributesToGet(RESPS)) {
-            log.info("buildResponsibilities from "+RESPS_TABLE);
+            log.ok("buildResponsibilities from "+RESPS_TABLE);
             //add responsibilities
             final List<String> responsibilities = respOps.getResponsibilities(userName, RESPS_TABLE, false);
             amb.setAttribute(RESPS, responsibilities);
@@ -413,7 +413,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             final List<String> resps = respOps.getResps(responsibilities, RESP_FMT_KEYS);
             amb.setAttribute(RESPKEYS, resps);
         } else if (amb.isInAttributesToGet(DIRECT_RESPS)) {
-            log.info("buildResponsibilities from "+RESPS_DIRECT_VIEW);
+            log.ok("buildResponsibilities from "+RESPS_DIRECT_VIEW);
             final List<String> responsibilities = respOps.getResponsibilities(userName, RESPS_DIRECT_VIEW, false);
             amb.setAttribute(DIRECT_RESPS, responsibilities);
 
@@ -423,7 +423,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         }
 
         if (amb.isInAttributesToGet(INDIRECT_RESPS)) {
-            log.info("buildResponsibilities from "+RESPS_INDIRECT_VIEW);
+            log.ok("buildResponsibilities from "+RESPS_INDIRECT_VIEW);
             //add responsibilities
             final List<String> responsibilities = respOps.getResponsibilities(userName, RESPS_INDIRECT_VIEW, false);
             amb.setAttribute(INDIRECT_RESPS, responsibilities);
@@ -461,7 +461,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         }
         final boolean auditorDataRequired = isAuditorDataRequired(amb);
         if (auditorDataRequired) {
-            log.info("buildAuditorDataObject  for uid: {0}", auditorDataRequired);
+            log.ok("buildAuditorDataObject  for uid: {0}", auditorDataRequired);
             List<String> activeRespList = respOps.getResponsibilities(userName, respOps.getRespLocation(), false);
             for (String activeRespName : activeRespList) {
                 auditOps.updateAuditorData(amb, activeRespName);

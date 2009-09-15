@@ -111,7 +111,7 @@ final class ResponsibilitiesOperations extends Operation {
      */
     public void updateUserResponsibilities(final Attribute attr, final String userName) {
         final String method = "updateUserResponsibilities";
-        log.info(method);
+        log.ok(method);
 
         final List<String> errors = new ArrayList<String>();
         final List<String> respList = new ArrayList<String>();
@@ -240,7 +240,7 @@ final class ResponsibilitiesOperations extends Operation {
             log.error(iae, msg);
             throw new ConnectorException(msg, iae);
         }
-        log.info(method + "done");
+        log.ok(method + "done");
     }
 
     /**
@@ -257,7 +257,7 @@ final class ResponsibilitiesOperations extends Operation {
     List<String> getResponsibilities(String userName, String respLocation, boolean activeOnly) {
 
         final String method = "getResponsibilities";
-        log.info(method);
+        log.ok(method);
 
         StringBuilder b = new StringBuilder();
 
@@ -352,7 +352,7 @@ final class ResponsibilitiesOperations extends Operation {
             st = null;
         }
 
-        log.info(method + " done");
+        log.ok(method + " done");
         return arrayList;
     }
 
@@ -367,7 +367,7 @@ final class ResponsibilitiesOperations extends Operation {
      */
     List<String> getResps(List<String> resps, int respFmt) {
         final String method = "getResps";
-        log.info(method + " respFmt=" + respFmt);
+        log.ok(method + " respFmt=" + respFmt);
         List<String> respKeys = new ArrayList<String>();
         if (resps != null) {
             for (String strResp : resps) {
@@ -375,7 +375,7 @@ final class ResponsibilitiesOperations extends Operation {
                 respKeys.add(strRespReformatted);
             }
         }
-        log.info(method + " done");
+        log.ok(method + " done");
         return respKeys;
     } // getResps()
 
@@ -391,7 +391,7 @@ final class ResponsibilitiesOperations extends Operation {
      */
     private String getResp(String strResp, int respFmt) {
         final String method = "getResp(String, int)";
-        log.info(method + "respFmt=" + respFmt);
+        log.ok(method + "respFmt=" + respFmt);
         String strRespRet = null;
         StringTokenizer tok = new StringTokenizer(strResp, "||", false);
 
@@ -416,13 +416,13 @@ final class ResponsibilitiesOperations extends Operation {
             }
             strRespRet = key.toString();
         }
-        log.info(method + " done");
+        log.ok(method + " done");
         return strRespRet;
     } // getRespWithNormalizeDates()
 
     private void addUserResponsibility(String identity, String resp, List<String> errors) {
         final String method = "addUserResponsibility";
-        log.info(method);
+        log.ok(method);
         PreparedStatement st = null;
         String securityGroup = null;
         String respName = null;
@@ -544,7 +544,7 @@ final class ResponsibilitiesOperations extends Operation {
             }
         }
         getConn().commit();
-        log.info(method + " done");
+        log.ok(method + " done");
     }
 
     /**
@@ -606,7 +606,7 @@ final class ResponsibilitiesOperations extends Operation {
 
     private void deleteUserResponsibility(String identity, String resp, List<String> errors) {
         final String method = "deleteUserResponsibility";
-        log.info(method);
+        log.ok(method);
         PreparedStatement st = null;
         String securityGroup = null;
         String respName = null;
@@ -684,12 +684,12 @@ final class ResponsibilitiesOperations extends Operation {
             SQLUtil.closeQuietly(st);
             st = null;
         }
-        log.info(method + " done");
+        log.ok(method + " done");
     }
 
     private void updateUserResponsibility(String identity, String resp, List<String> errors) {
         final String method = "updateUserResponsibility";
-        log.info(method);
+        log.ok(method);
         PreparedStatement st = null;
         String securityGroup = null;
         String respName = null;
@@ -812,7 +812,7 @@ final class ResponsibilitiesOperations extends Operation {
                 st = null;
             }
         }
-        log.info(method + " done");
+        log.ok(method + " done");
     }
 
     /**

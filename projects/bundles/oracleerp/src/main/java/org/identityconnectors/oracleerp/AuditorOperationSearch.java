@@ -92,7 +92,7 @@ final class AuditorOperationSearch extends Operation implements SearchOp<FilterW
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder query, ResultsHandler handler,
     OperationOptions options) {
         final String method = "executeQuery";
-        log.info(method);
+        log.ok(method);
         final String id = respOps.getOptionId(options);
         final boolean activeRespsOnly = respOps.isActiveRespOnly(options);
         final String respLocation = respOps.getRespLocation();
@@ -112,6 +112,6 @@ final class AuditorOperationSearch extends Operation implements SearchOp<FilterW
             }
         }
         getConn().commit();
-        log.info(method + "ok");
+        log.ok(method + "ok");
     }
 }

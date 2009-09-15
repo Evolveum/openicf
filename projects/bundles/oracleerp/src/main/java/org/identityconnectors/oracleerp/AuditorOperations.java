@@ -88,7 +88,7 @@ final class AuditorOperations extends Operation {
      */
      public void updateAuditorData(AttributeMergeBuilder amb, String respName) {
          final String method = "updateAuditorData";
-         log.info(method);
+         log.ok(method);
          // Profile Options used w/SOB and Organization
          String sobOption = "GL Set of Books ID";
          String ouOption = "MO: Operating Unit";
@@ -398,7 +398,7 @@ final class AuditorOperations extends Operation {
             b.append(" and  fr.responsibility_name = ?");
             b.append(" order by 1");
 
-            log.info(method + ": Resp = " + curResp);
+            log.ok(method + ": Resp = " + curResp);
 
             try {
                 st = getConn().prepareStatement(b.toString());
@@ -433,6 +433,6 @@ final class AuditorOperations extends Operation {
             }
         }
 
-        log.info(method + " done");
+        log.ok(method + " done");
      }
 }

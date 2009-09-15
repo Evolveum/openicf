@@ -98,7 +98,7 @@ final class AccountOperationCreate extends Operation implements CreateOp {
             throw new IllegalArgumentException(getCfg().getMessage(MSG_ACCOUNT_NAME_REQUIRED));
         }
         final String name = nameAttr.getNameValue().toUpperCase();
-        log.info("create user ''{0}''", name);
+        log.ok("create user ''{0}''", name);
 
         Set<Attribute> attrsMod = CollectionUtil.newSet(attrs); //modifiable set
         //add required owner, if missing
@@ -156,7 +156,7 @@ final class AccountOperationCreate extends Operation implements CreateOp {
         }
 
         getConn().commit();
-        log.info("create user ''{0}'' done", name);
+        log.ok("create user ''{0}'' done", name);
         return new Uid(name);
     }
     

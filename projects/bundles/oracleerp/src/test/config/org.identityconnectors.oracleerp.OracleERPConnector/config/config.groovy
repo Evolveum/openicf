@@ -44,7 +44,7 @@ configuration{
     tst.manageSecuringAttrs=false
     tst.noSchemaId=false
     tst.returnSobOrgAttrs=false
-    tst.userActions=""
+    tst.userActionScript=""
     
     sysadm.driver="oracle.jdbc.driver.OracleDriver"
     sysadm.url="__configureme__"
@@ -56,7 +56,7 @@ configuration{
     sysadm.manageSecuringAttrs=true
     sysadm.noSchemaId=false
     sysadm.returnSobOrgAttrs=true
-    sysadm.userActions=""
+    sysadm.userActionScript=""
     sysadm.clientEncryptionType="RC4_40"
     sysadm.clientEncryptionLevel="REJECTED" 
     
@@ -100,6 +100,7 @@ account{
     all.fax="555-555-5555"
     //all.customer_id=11223344
     //all.supplier_id=102
+    all.person_party_id=new BigDecimal(3044)
     
     all.directResponsibilities="Cash Forecasting||Cash Management||Standard||2004-04-12||null"
     all.responsibilityKeys="Cash Forecasting||Cash Management||Standard"
@@ -147,13 +148,13 @@ connector{
     database="PROD"
     user="__configureme__"
     password=new GuardedString("__configureme__".toCharArray());
-    accountsIncluded=""
+    accountsIncluded="where USER_NAME like 'CTU-%'"    
     activeAccountsOnly=true
     auditResponsibility="System Administrator"
     manageSecuringAttrs=true
     noSchemaId=false
     returnSobOrgAttrs=false
-    userActions=""
+    userActionScript=""
     /* WRONG configuration for ValidateApiOpTests */
     i1.wrong.host=""
     i2.wrong.user=""
@@ -172,12 +173,12 @@ testsuite {
     Search.disable.caseinsensitive=true // skip insensitive test
     
     /* AuthenticationApiOpTests: */
-    Authentication.__ACCOUNT__.username=Lazy.get("i0.Authentication.__ACCOUNT__.__NAME__")
+    Authentication.__ACCOUNT__.user=Lazy.get("i0.Authentication.__ACCOUNT__.__NAME__")
     Authentication.__ACCOUNT__.wrong.password="__configureme__"
     /* SchemaApiOpTests: */
     
     /* declared object classes */
-    Schema.oclasses=[ "__ACCOUNT__", "responsibilityNames" ]
+    Schema.oclasses=[ "__ACCOUNT__", "directResponsibilityNames" ]
     
     /* list of attributes which contains object class "__ACCOUNT__" */
     Schema.attributes.__ACCOUNT__.oclasses=[ "__NAME__", "__PASSWORD__" ]
@@ -207,8 +208,7 @@ testsuite {
     Schema.__NAME__.attribute.__ACCOUNT__.oclasses=[type:"java.lang.String", readable:"true", updateable:"true", createable:"true",
                                                     required:"true", multiValue:"false", returnedByDefault:"true"]
     /* attributes of "__PASSWORD__" */
-    Schema.__PASSWORD__.attribute.__ACCOUNT__.oclasses=[type:"org.identityconnectors.common.security.GuardedString", readable:"false",   updateable:"true",
-    
+    Schema.__PASSWORD__.attribute.__ACCOUNT__.oclasses=[type:"org.identityconnectors.common.security.GuardedString", readable:"false",   updateable:"true",    
                                                         createable:"true", required:"true", multiValue:"false", returnedByDefault:"true"]
     Schema.MIDDLENAME.attribute.__ACCOUNT__.oclasses=testsuite.Schema.common.attribute
     
@@ -228,11 +228,8 @@ testsuite {
      
 //  Connector WRONG configuration for ValidateApiOpTests
   Validate.invalidConfig = [
-//     [ host : "" ],
-//     [ login : "" ],
-//     [ password : "" ],
-//     [ databaseName : "" ],
-//     [ driver : "" ]
+     [ user : "" ],
+     [ driver : "" ]
   ]
   
 //  Connector WRONG configuration for TestApiOpTests
@@ -267,7 +264,7 @@ modified.password_lifespan_days=20
          employee_id=empty()
          employee_number=5
          person_fullname="Monster, Cookie"
-         person_party_id=3044
+         person_party_id=new BigDecimal(3044)
          npw_number=empty()
          email_address="person@somewhere.com"
 modified.email_address="person1@somewhere.com"

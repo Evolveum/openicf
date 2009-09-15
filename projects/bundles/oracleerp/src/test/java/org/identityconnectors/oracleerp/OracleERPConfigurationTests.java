@@ -61,7 +61,7 @@ public class OracleERPConfigurationTests extends OracleERPTestsBase {
         assertTrue("isManageSecuringAttrs", config.isManageSecuringAttrs());
         assertFalse("isNoSchemaId", config.isNoSchemaId());
         assertTrue("isReturnSobOrgAttrs", config.isReturnSobOrgAttrs());
-        assertNotNull("null getUserActions", config.getUserAfterActions());        
+        assertNotNull("null getUserActionScript", config.getUserAfterActionScript());        
         assertNotNull("null getConnectionUrl", config.getConnectionUrl());
         assertNotNull("null clientEncryptionLevel", config.getClientEncryptionLevel());
         assertNotNull("null clientEncryptionType", config.getClientEncryptionType());
@@ -90,7 +90,7 @@ public class OracleERPConfigurationTests extends OracleERPTestsBase {
         assertFalse("isManageSecuringAttrs", config.isManageSecuringAttrs());
         assertFalse("isNoSchemaId", config.isNoSchemaId());
         assertFalse("isReturnSobOrgAttrs", config.isReturnSobOrgAttrs());
-        assertNotNull("null getUserActions", config.getUserAfterActions());        
+        assertNotNull("null getUserActionScript", config.getUserAfterActionScript());        
         assertNotNull("null getConnectionUrl", config.getConnectionUrl());
         
         config.validate();
@@ -118,7 +118,7 @@ public class OracleERPConfigurationTests extends OracleERPTestsBase {
         assertTrue("isManageSecuringAttrs", config.isManageSecuringAttrs());
         assertFalse("isNoSchemaId", config.isNoSchemaId());
         assertFalse("isReturnSobOrgAttrs", config.isReturnSobOrgAttrs());
-        assertNotNull("null getUserActions", config.getUserAfterActions());        
+        assertNotNull("null getUserActionScript", config.getUserAfterActionScript());        
         assertNotNull("null getConnectionUrl", config.getConnectionUrl());
         
         config.validate();

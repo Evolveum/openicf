@@ -68,7 +68,7 @@ final class SecuringAttributesOperationSearch extends Operation implements Searc
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder query, ResultsHandler handler,
     OperationOptions options) {
         final String method = "executeQuery";
-        log.info(method);
+        log.ok(method);
         PreparedStatement st = null;
         ResultSet res = null;
         StringBuilder b = new StringBuilder();
@@ -88,7 +88,7 @@ final class SecuringAttributesOperationSearch extends Operation implements Searc
         b.append("ORDER BY akattrvl.NAME");
         final String sql = b.toString();
         try {
-            log.info("execute sql {0}", sql);
+            log.ok("execute sql {0}", sql);
             st = getConn().prepareStatement(sql);
             res = st.executeQuery();
             while (res.next()) {
@@ -117,6 +117,6 @@ final class SecuringAttributesOperationSearch extends Operation implements Searc
             st = null;
         }
         getConn().commit();
-        log.info(method + " done");
+        log.ok(method + " done");
     }
 }

@@ -93,7 +93,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
      */
     public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
         final String name = uid.getUidValue().toUpperCase();
-        log.info("update user ''{0}''", name );
+        log.ok("update user ''{0}''", name );
 
         Set<Attribute> attrsMod = CollectionUtil.newSet(attrs); //modifiable set
 
@@ -175,7 +175,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
 
         getConn().commit();
         //Return new UID
-        log.info( "update user ''{0}'' done", name );
+        log.ok( "update user ''{0}'' done", name );
         return new Uid(name);
     }
 
@@ -186,7 +186,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
      */
     private void enable(ObjectClass objclass, String userName, OperationOptions options) {
         final String method = "enable";
-        log.info( method);
+        log.ok( method);
         //Map attrs = _actionUtil.getAccountAttributes(user, JActionUtil.OP_ENABLE_USER);
 
         // no enable user stored procedure that I could find, null out
@@ -213,7 +213,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
             SQLUtil.closeQuietly(st);
             st = null;
         }
-        log.info( method);
+        log.ok( method);
     }
 
     /**
@@ -224,7 +224,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
     private void disable(ObjectClass objclass, String userName, OperationOptions options) {
         final String sql = "{ call "+getCfg().app()+"fnd_user_pkg.disableuser(?) }";
         final String method = "disable";
-        log.info( method);
+        log.ok( method);
         CallableStatement cs = null;
         try {
             cs = getConn().prepareCall(sql);
@@ -239,6 +239,6 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
             SQLUtil.closeQuietly(cs);
             cs = null;
         }
-        log.info( method);
+        log.ok( method);
     }
 }

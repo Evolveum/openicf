@@ -472,13 +472,13 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
      * imported adapter attribute
      * name="GetUser Actions"  type="string" multi="false" required="false"
      * displayName="GETUSER_AFTER_ACTION" description="GETUSER_AFTER_ACTION_HELP"
-     */
+     *
     private String userAfterActions = "";
 
     /**
      * Getter for the userAfterActions attribute.
      * @return userAfterActions attribute
-     */
+     *
     public String getUserAfterActions() {
         return userAfterActions;
     }
@@ -486,11 +486,52 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
     /**
      * Setter for the userAfterActions attribute.
      * @param userAfterActions attribute.
-     */
+     *
     @ConfigurationProperty(order=15 ,displayMessageKey="AFTER_ACTION_DISPLAY", helpMessageKey="AFTER_ACTION_HELP")
     public void setUserAfterActions(String userAfterActions) {
         this.userAfterActions = userAfterActions;
+    }   
+    
+    /**
+     * This should be replaced by script attributes
+     */
+    private String userAfterActionScript;    
+
+    
+    public String getUserAfterActionScript() {
+        return userAfterActionScript;
     }
+        
+    /**
+     * Set the user after action script 
+     * @param userGetUserAfterActionScript
+     */
+    @ConfigurationProperty(order=15 ,displayMessageKey="USER_AFTER_ACTION_SCRIPT_DISPLAY", helpMessageKey="USER_AFTER_ACTION_SCRIPT_HELP")
+    public void setUserAfterActionScript(String userGetUserAfterActionScript) {
+        this.userAfterActionScript = userGetUserAfterActionScript;
+    }
+    
+    /**
+     * This property will be integrated by script attribute
+     */
+    private String actionScriptLanguage = GROOVY;
+    
+    /**
+     * The action script language setter
+     * @return String 
+     */
+    public String getActionScriptLanguage() {
+        return actionScriptLanguage;
+    }
+
+    /**
+     * Action script language setter
+     * @param actionScriptLanguage
+     */
+    @ConfigurationProperty(order=16 ,displayMessageKey="ACTION_SCRIPT_LANGUAGE_DISPLAY", helpMessageKey="ACTION_SCRIPT_LANGUAGE_HELP")
+    public void setActionScriptLanguage(String actionScriptLanguage) {
+        this.actionScriptLanguage = actionScriptLanguage;
+    }    
 
     /**
      * When true, the schema identifier will not be prefixed to table names.
@@ -516,7 +557,7 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
      * Setter for the noSchemaId attribute.
      * @param noSchemaId
      */
-    @ConfigurationProperty(order=16 ,displayMessageKey="NO_SCHEMA_ID_DISPLAY", helpMessageKey="NO_SCHEMA_ID_HELP")
+    @ConfigurationProperty(order=17 ,displayMessageKey="NO_SCHEMA_ID_DISPLAY", helpMessageKey="NO_SCHEMA_ID_HELP")
     public void setNoSchemaId(boolean noSchemaId) {
         this.noSchemaId = noSchemaId;
     }
@@ -539,7 +580,7 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
      * Setter
      * @param clientEncryptionType
      */
-    @ConfigurationProperty(order=17 ,displayMessageKey="CLIENT_ENCRYPTION_ALGORITHMS_DISPLAY", helpMessageKey="CLIENT_ENCRYPTION_ALGORITHMS_HELP")
+    @ConfigurationProperty(order=18 ,displayMessageKey="CLIENT_ENCRYPTION_ALGORITHMS_DISPLAY", helpMessageKey="CLIENT_ENCRYPTION_ALGORITHMS_HELP")
     public void setClientEncryptionType(String clientEncryptionType) {
         this.clientEncryptionType = clientEncryptionType;
     }
@@ -562,53 +603,10 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
      * Setter
      * @param clientEncryptionLevel
      */
-    @ConfigurationProperty(order=18 ,displayMessageKey="CLIENT_ENCRYPTION_LEVEL_DISPLAY", helpMessageKey="CLIENT_ENCRYPTION_LEVEL_HELP")
+    @ConfigurationProperty(order=19 ,displayMessageKey="CLIENT_ENCRYPTION_LEVEL_DISPLAY", helpMessageKey="CLIENT_ENCRYPTION_LEVEL_HELP")
     public void setClientEncryptionLevel(String clientEncryptionLevel) {
         this.clientEncryptionLevel = clientEncryptionLevel;
     }
-
-
-    /**
-     * This should be replaced by script attributes
-     */
-    private String userAfterActionScript;    
-
-    
-    public String getUserAfterActionScript() {
-        return userAfterActionScript;
-    }
-        
-    /**
-     * Set the user after action script 
-     * @param userGetUserAfterActionScript
-     */
-    @ConfigurationProperty(order=19 ,displayMessageKey="USER_AFTER_ACTION_SCRIPT_DISPLAY", helpMessageKey="USER_AFTER_ACTION_SCRIPT_HELP")
-    public void setUserAfterActionScript(String userGetUserAfterActionScript) {
-        this.userAfterActionScript = userGetUserAfterActionScript;
-    }
-    
-    /**
-     * This property will be integrated by script attribute
-     */
-    private String actionScriptLanguage = GROOVY;
-    
-    /**
-     * The action script language setter
-     * @return String 
-     */
-    public String getActionScriptLanguage() {
-        return actionScriptLanguage;
-    }
-
-    /**
-     * Action script language setter
-     * @param actionScriptLanguage
-     */
-    @ConfigurationProperty(order=20 ,displayMessageKey="ACTION_SCRIPT_LANGUAGE_DISPLAY", helpMessageKey="ACTION_SCRIPT_LANGUAGE_HELP")
-    public void setActionScriptLanguage(String actionScriptLanguage) {
-        this.actionScriptLanguage = actionScriptLanguage;
-    }
-
 
     /**
      * Responsibility Id
@@ -729,7 +727,7 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
      */
     int getAdminUserId() {
         try {
-            log.info("The adminUserId is : {0} ", userId);
+            log.ok("The adminUserId is : {0} ", userId);
             return new Integer(userId).intValue();
         } catch (Exception ex) {
             log.error(ex, "The User Id String {0} is not a number", userId);
@@ -796,11 +794,11 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
                     throw new IllegalArgumentException(getMessage(MSG_DATABASE_BLANK));
                 }
             }
-            log.info("driver configuration is ok");
+            log.ok("driver configuration is ok");
         } else {
             //Validate the JNDI properties
             JNDIUtil.arrayToHashtable(jndiProperties, getConnectorMessages());
-            log.info("dataSource configuration is ok");
+            log.ok("dataSource configuration is ok");
         }
     }
 

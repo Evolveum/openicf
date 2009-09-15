@@ -72,7 +72,7 @@ final class ApplicationOperationSearch extends Operation implements SearchOp<Fil
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder query, ResultsHandler handler,
     OperationOptions options) {
         final String method = "executeQuery";
-        log.info(method);
+        log.ok(method);
         PreparedStatement st = null;
         ResultSet res = null;
         StringBuilder b = new StringBuilder();
@@ -115,6 +115,6 @@ final class ApplicationOperationSearch extends Operation implements SearchOp<Fil
             st = null;
         }
         getConn().commit();
-        log.info(method + " ok");
+        log.ok(method + " ok");
     }
 }

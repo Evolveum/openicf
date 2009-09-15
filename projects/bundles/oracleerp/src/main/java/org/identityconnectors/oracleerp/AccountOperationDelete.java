@@ -66,7 +66,7 @@ final class AccountOperationDelete extends Operation implements DeleteOp {
      */
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
         final String sql = "{ call "+getCfg().app()+"fnd_user_pkg.disableuser(?) }";
-        log.info("delete user ''{0}''", uid.getUidValue());
+        log.ok("delete user ''{0}''", uid.getUidValue());
         CallableStatement cs = null;
         try {
             cs = getConn().prepareCall(sql);
@@ -90,7 +90,7 @@ final class AccountOperationDelete extends Operation implements DeleteOp {
             SQLUtil.closeQuietly(cs);
             cs = null;
         }
-        log.info("delete user ''{0}'' done", uid.getUidValue());
+        log.ok("delete user ''{0}'' done", uid.getUidValue());
         getConn().commit();
     }
 }

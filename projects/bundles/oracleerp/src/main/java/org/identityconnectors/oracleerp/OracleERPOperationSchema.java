@@ -76,7 +76,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
     }
 
     public Schema schema() {
-        log.info("schema");
+        log.ok("schema");
 
         // Use SchemaBuilder to build the schema.
         SchemaBuilder schemaBld = new SchemaBuilder(OracleERPConnector.class);
@@ -118,7 +118,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         addSearchableOnlyOC(schemaBld, secGrpsOci);
 
         final Schema schema = schemaBld.build();
-        log.info("schema done");
+        log.ok("schema done");
         return schema;
     }
 

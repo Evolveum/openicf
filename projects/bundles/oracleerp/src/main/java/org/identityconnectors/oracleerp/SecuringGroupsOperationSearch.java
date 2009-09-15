@@ -64,7 +64,7 @@ final class SecuringGroupsOperationSearch extends Operation implements SearchOp<
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder query, ResultsHandler handler,
             OperationOptions options) {
         final String method = "executeQuery";
-        log.info(method);
+        log.ok(method);
 
         PreparedStatement st = null;
         ResultSet res = null;
@@ -102,7 +102,7 @@ final class SecuringGroupsOperationSearch extends Operation implements SearchOp<
             st = null;
         }
         getConn().commit();
-        log.info(method + " done");
+        log.ok(method + " done");
     }
 
     /* (non-Javadoc)

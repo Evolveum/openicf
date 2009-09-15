@@ -101,7 +101,7 @@ final class OracleERPConnection extends DatabaseConnection {
             /* On Oracle enable the synonyms */
             try {
                 if (!oracleConn.getIncludeSynonyms()) {
-                    log.info("setIncludeSynonyms on ORACLE");
+                    log.ok("setIncludeSynonyms on ORACLE");
                     oracleConn.setIncludeSynonyms(true);
                     log.ok("setIncludeSynonyms success");
                 }
@@ -111,7 +111,7 @@ final class OracleERPConnection extends DatabaseConnection {
             //Set default row Prefetch
             try {
                 if (oracleConn.getDefaultRowPrefetch() != DEFAULT_ROW_PREFETCH) {
-                    log.info("setDefaultRowPrefetch on ORACLE");
+                    log.ok("setDefaultRowPrefetch on ORACLE");
                     oracleConn.setDefaultRowPrefetch(DEFAULT_ROW_PREFETCH);
                     log.ok("setDefaultRowPrefetch success");
                 }
@@ -179,7 +179,7 @@ final class OracleERPConnection extends DatabaseConnection {
      * @throws SQLException an exception in statement
      */
     public CallableStatement prepareCall(final String sql) throws SQLException {
-        log.info("prepareCall");
+        log.ok("prepareCall");
         final CallableStatement cs = getConnection().prepareCall(sql);
         cs.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
         return cs;
@@ -194,7 +194,7 @@ final class OracleERPConnection extends DatabaseConnection {
      */
     @Override
     public CallableStatement prepareCall(final String sql, final List<SQLParam> params) throws SQLException {
-        log.info("prepareCall");
+        log.ok("prepareCall");
         final CallableStatement cs = super.prepareCall(sql, params);
         cs.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
         return cs;
@@ -220,7 +220,7 @@ final class OracleERPConnection extends DatabaseConnection {
      * @throws SQLException 
      */
     public PreparedStatement prepareStatement(String sql) throws SQLException {
-        log.info("prepareStatement");
+        log.ok("prepareStatement");
         PreparedStatement ps = getConnection().prepareStatement(sql);
         ps.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
         return ps;
@@ -235,7 +235,7 @@ final class OracleERPConnection extends DatabaseConnection {
      */
     @Override
     public PreparedStatement prepareStatement(final String sql, final List<SQLParam> params) throws SQLException {
-        log.info("prepareStatement");
+        log.ok("prepareStatement");
         final PreparedStatement ps = super.prepareStatement(sql, params);
         ps.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
         return ps;
