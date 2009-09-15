@@ -53,6 +53,7 @@ import org.identityconnectors.framework.spi.AttributeNormalizer;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.Connector;
 import org.identityconnectors.framework.spi.ConnectorClass;
+import org.identityconnectors.framework.spi.PoolableConnector;
 import org.identityconnectors.framework.spi.operations.AuthenticateOp;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
@@ -70,7 +71,7 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
  * @since 1.0
  */
 @ConnectorClass(displayNameKey = "oracleerp.connector.display", configurationClass = OracleERPConfiguration.class)
-public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, SearchOp<FilterWhereBuilder>, UpdateOp,
+public class OracleERPConnector implements PoolableConnector, AuthenticateOp, DeleteOp, SearchOp<FilterWhereBuilder>, UpdateOp,
         CreateOp, TestOp, SchemaOp, ScriptOnConnectorOp, AttributeNormalizer {
 
     /**
@@ -403,7 +404,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
                 cs.execute();
                 // Result ?
                 // cstmt1 closed in finally below
-
+                getConn().commit();
             } catch (SQLException e) {
                 final String msg = "Oracle ERP: Failed to call {0}FND_GLOBAL.APPS_INITIALIZE()";
                 log.error(e, msg, getCfg().app());
@@ -462,7 +463,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
                         getCfg().setRespApplId(rs.getString(2));
                     }
                 }
-
+                getConn().commit();
                 log.ok(msg, getCfg().getRespId(), getCfg().getRespApplId());
             } catch (SQLException e) {
                 SQLUtil.rollbackQuietly(getConn());
@@ -489,6 +490,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         try {
             ps = getConn().prepareStatement(sql);
             res = ps.executeQuery();
+            getConn().commit();
             log.ok("description exists");
             return true;
         } catch (SQLException e) {
@@ -514,6 +516,7 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         try {
             ps = getConn().prepareStatement(testSql);
             res = ps.executeQuery();
+            getConn().commit();
             log.ok("accountsIncluded are ok");
         } catch (SQLException e) {
             log.error(e, testSql);
@@ -538,9 +541,11 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
             ps = getConn().prepareStatement(sql);
             res = ps.executeQuery();
             if (res != null && res.next()) {
+                getConn().commit();
                 log.ok("newResponsibilityViews: true");
                 return true;
             }
+            getConn().commit();
         } catch (SQLException e) {
             log.error(e, sql);
             SQLUtil.rollbackQuietly(getConn());
@@ -553,6 +558,21 @@ public class OracleERPConnector implements Connector, AuthenticateOp, DeleteOp, 
         }
         log.ok("newResponsibilityViews: false");
         return false;
+    }
+    /**
+     * Check alive method
+     */
+    public void checkAlive() {
+        log.ok("checkAlive DatabaseTable connector");
+        try {
+            getConn().test();
+            getConn().commit();
+        } catch (Exception e) {
+          log.error(e, "error in checkAlive");
+          throw ConnectorException.wrap(e);
+        } 
+        //Check alive will not close the connection, the next API call is expected
+        log.ok("checkAlive DatabaseTable connector ok");                
     }
 
 }

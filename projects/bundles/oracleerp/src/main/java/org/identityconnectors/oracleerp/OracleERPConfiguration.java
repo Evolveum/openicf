@@ -495,7 +495,7 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
     /**
      * This should be replaced by script attributes
      */
-    private String userAfterActionScript;    
+    private String userAfterActionScript;
 
     
     public String getUserAfterActionScript() {
