@@ -22,11 +22,29 @@
  */
 package org.identityconnectors.solaris.operation.search.nodes;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 
 
 /** node of search filter tree for Solaris */
 public interface Node {
+    public static class Traverser {
+        public static Set<NativeAttribute> collectAttributeNames(Node node) {
+            Set<NativeAttribute> result = new HashSet<NativeAttribute>();
+            if (node instanceof BinaryOpNode) {
+                BinaryOpNode binNode = (BinaryOpNode) node;
+                result.addAll(collectAttributeNames(binNode.getLeft()));
+                result.addAll(collectAttributeNames(binNode.getRight()));
+            } else if (node instanceof AttributeNode) {
+                result.add(((AttributeNode) node).getAttributeName());
+            }
+            return result;
+        }
+    }
+    
     public abstract boolean evaluate(SolarisEntry entry);
 }
