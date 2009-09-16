@@ -223,8 +223,10 @@ testsuite {
         DeleteApiOp:["__ACCOUNT__"],
         ScriptOnConnectorApiOp:["__ACCOUNT__"],
         UpdateApiOp:["__ACCOUNT__"],
+        ResolveUsernameApiOp: ['__ACCOUNT__'],
         AuthenticationApiOp:["__ACCOUNT__"]
      ]
+     
      
 //  Connector WRONG configuration for ValidateApiOpTests
   Validate.invalidConfig = [
