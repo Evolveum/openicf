@@ -71,22 +71,22 @@ public class AccountIterator implements Iterator<SolarisEntry> {
     private SolarisEntry buildUser(String name) {
         SolarisEntry.Builder entryBuilder = new SolarisEntry.Builder(name).addAttr(NativeAttribute.NAME, name);
         if (isLogins) {
-            entryBuilder.addAllAttributesFrom(LoginsCmd.getAttributesFor(name, conn));
+            entryBuilder.addAllAttributesFrom(LoginsCommand.getAttributesFor(name, conn));
         }
         if (isProfiles) {
-            final Attribute profiles = ProfilesCmd.getProfilesAttributeFor(name, conn);
+            final Attribute profiles = ProfilesCommand.getProfilesAttributeFor(name, conn);
             entryBuilder.addAttr(NativeAttribute.PROFILES, profiles.getValue());
         }
         if (isAuths) {
-            final Attribute auths = AuthsCmd.getAuthsAttributeFor(name, conn);
+            final Attribute auths = AuthsCommand.getAuthsAttributeFor(name, conn);
             entryBuilder.addAttr(NativeAttribute.AUTHS, auths.getValue());
         }
         if (isLast) {
-            final Attribute last = LastCmd.getLastAttributeFor(name, conn);
+            final Attribute last = LastCommand.getLastAttributeFor(name, conn);
             entryBuilder.addAttr(NativeAttribute.LAST_LOGIN, last.getValue());
         }
         if (isRoles) {
-            final Attribute roles = RolesCmd.getRolesAttributeFor(name, conn);
+            final Attribute roles = RolesCommand.getRolesAttributeFor(name, conn);
             entryBuilder.addAttr(NativeAttribute.ROLES, roles.getValue());
         }
         return entryBuilder.build();

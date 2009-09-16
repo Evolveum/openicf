@@ -31,13 +31,12 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.test.SolarisTestCommon;
 import org.junit.Test;
 
-public class RolesCmdTest {
+public class LastCommandTest {
     @Test
     public void test() {
        SolarisConnection conn = SolarisTestCommon.getSolarisConn();
-        Attribute result = RolesCmd.getRolesAttributeFor("root", conn);
+        Attribute result = LastCommand.getLastAttributeFor("root", conn);
         Assert.assertNotNull(result);
-        Assert.assertTrue(result.getValue().size() == 0);
-        Assert.assertEquals(NativeAttribute.ROLES.getName(), result.getName());
+        Assert.assertEquals(NativeAttribute.LAST_LOGIN.getName(), result.getName());
     }
 }

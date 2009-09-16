@@ -23,8 +23,6 @@
 
 package org.identityconnectors.solaris.operation.search;
 
-import java.util.Set;
-
 import junit.framework.Assert;
 
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -33,28 +31,13 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.test.SolarisTestCommon;
 import org.junit.Test;
 
-public class LoginsCmdTest {
-
+public class ProfilesCommandTest {
     @Test
     public void test() {
        SolarisConnection conn = SolarisTestCommon.getSolarisConn();
-        SolarisEntry result = LoginsCmd.getAttributesFor("root", conn);
-        Assert.assertTrue(result.getAttributeSet().size() >= 5);
-        Set<Attribute> attrSet = result.getAttributeSet();
-        for (Attribute attribute : attrSet) {
-            if (attribute.getName().equals(NativeAttribute.NAME)) {
-                Assert.assertNotNull(attribute.getValue());
-                Assert.assertTrue(attribute.getValue().size() == 1);
-                Assert.assertEquals("root", attribute.getValue().get(0));
-                break;
-            }
-        }
-    }
-    
-    @Test
-    public void testEnum() {
-        Assert.assertTrue(LoginsCmd.isProvided(NativeAttribute.ID));
-        // USERS attribute is not provided by Logins command.
-        Assert.assertFalse(LoginsCmd.isProvided(NativeAttribute.USERS));
+        Attribute result = ProfilesCommand.getProfilesAttributeFor("root", conn);
+        Assert.assertNotNull(result);
+        Assert.assertNotNull(result.getValue());
+        Assert.assertEquals(NativeAttribute.PROFILES.getName(), result.getName());
     }
 }

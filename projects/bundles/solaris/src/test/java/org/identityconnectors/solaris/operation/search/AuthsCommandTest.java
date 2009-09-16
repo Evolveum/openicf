@@ -23,5 +23,22 @@
 
 package org.identityconnectors.solaris.operation.search;
 
-/** Marker interface for all commands used in Solaris connector implementations. */
-public interface Command {}
+import junit.framework.Assert;
+
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.solaris.SolarisConnection;
+import org.identityconnectors.solaris.attr.NativeAttribute;
+import org.identityconnectors.solaris.test.SolarisTestCommon;
+import org.junit.Test;
+
+public class AuthsCommandTest {
+    @Test
+    public void test() {
+       SolarisConnection conn = SolarisTestCommon.getSolarisConn();
+        Attribute result = AuthsCommand.getAuthsAttributeFor("root", conn);
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.getValue().size() > 0);
+        Assert.assertNotNull(result.getValue().get(0));
+        Assert.assertEquals(NativeAttribute.AUTHS.getName(), result.getName());
+    }
+}

@@ -51,7 +51,7 @@ import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 
-class LoginsCmd implements Command {
+class LoginsCommand {
 
     /** a hard-coded set of constants used provided by Logins command. DO NOT CHANGE */
     private static final Set<NativeAttribute> set;
@@ -195,7 +195,7 @@ class LoginsCmd implements Command {
     
     /**
      * @param attr the attribute in question.
-     * @return true if the attribute is provided by {@link LoginsCmd}.
+     * @return true if the attribute is provided by {@link LoginsCommand}.
      */
     public static boolean isProvided(NativeAttribute attr) {
         return set.contains(attr);

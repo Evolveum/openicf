@@ -23,31 +23,38 @@
 
 package org.identityconnectors.solaris.operation.search;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.Set;
+
+import junit.framework.Assert;
 
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
+import org.identityconnectors.solaris.test.SolarisTestCommon;
+import org.junit.Test;
 
-class RolesCmd implements Command {
-    /**
-     * @param name username
-     * @param op operation that called the command
-     * @return the roles attribute for given user 
-     */
-    public static Attribute getRolesAttributeFor(String username, SolarisConnection conn) {
-        final String out = conn.executeCommand(conn.buildCommand("roles", username));
-        List<String> roles = null;
-        if (!out.endsWith("No such user") && !out.endsWith("No roles") && !out.endsWith("not found")) {
-            roles = Arrays.asList(out.split(","));
-        } else if (out.endsWith("No roles")) {
-            roles = Collections.emptyList(); 
-        } else {
-            throw new RuntimeException("'roles' command for user '" + username + "' failed. Buffer: <" + out + ">");
+public class LoginsCommandTest {
+
+    @Test
+    public void test() {
+       SolarisConnection conn = SolarisTestCommon.getSolarisConn();
+        SolarisEntry result = LoginsCommand.getAttributesFor("root", conn);
+        Assert.assertTrue(result.getAttributeSet().size() >= 5);
+        Set<Attribute> attrSet = result.getAttributeSet();
+        for (Attribute attribute : attrSet) {
+            if (attribute.getName().equals(NativeAttribute.NAME)) {
+                Assert.assertNotNull(attribute.getValue());
+                Assert.assertTrue(attribute.getValue().size() == 1);
+                Assert.assertEquals("root", attribute.getValue().get(0));
+                break;
+            }
         }
-        return AttributeBuilder.build(NativeAttribute.ROLES.getName(), roles);
+    }
+    
+    @Test
+    public void testEnum() {
+        Assert.assertTrue(LoginsCommand.isProvided(NativeAttribute.ID));
+        // USERS attribute is not provided by Logins command.
+        Assert.assertFalse(LoginsCommand.isProvided(NativeAttribute.USERS));
     }
 }

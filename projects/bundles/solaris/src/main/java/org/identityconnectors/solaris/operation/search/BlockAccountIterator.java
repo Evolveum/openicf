@@ -166,15 +166,15 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
      */
     private SolarisEntry buildUser(String username, String token, String lastLoginToken) {
         if (lastLoginToken == null) {
-            return LoginsCmd.getEntry(token, username);
+            return LoginsCommand.getEntry(token, username);
         } else {
             SolarisEntry.Builder entryBuilder = new SolarisEntry.Builder(username).addAttr(NativeAttribute.NAME, username);
             // logins
-            SolarisEntry entry = LoginsCmd.getEntry(token, username);
+            SolarisEntry entry = LoginsCommand.getEntry(token, username);
             entryBuilder.addAllAttributesFrom(entry);
             
             //last
-            Attribute attribute = LastCmd.parseOutput(username, lastLoginToken);
+            Attribute attribute = LastCommand.parseOutput(username, lastLoginToken);
             entryBuilder.addAttr(NativeAttribute.LAST_LOGIN, attribute.getValue());
             
             return entryBuilder.build();

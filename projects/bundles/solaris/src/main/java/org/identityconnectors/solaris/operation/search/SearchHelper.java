@@ -33,12 +33,12 @@ class SearchHelper {
      * 
      * @param attrsToGet
      *            attributes to get
-     * @return true if {@link LoginsCmd} is required to be called, as it
+     * @return true if {@link LoginsCommand} is required to be called, as it
      *         processes one of the attributes to get.
      */
     public static boolean isLoginsRequired(Set<NativeAttribute> attrsToGet) {
         for (NativeAttribute nativeAttribute : attrsToGet) {
-            if (LoginsCmd.isProvided(nativeAttribute)) {
+            if (LoginsCommand.isProvided(nativeAttribute)) {
                 return true;
             }
         }

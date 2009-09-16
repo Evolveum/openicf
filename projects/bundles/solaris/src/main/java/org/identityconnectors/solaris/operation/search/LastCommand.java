@@ -32,7 +32,7 @@ import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 
-class LastCmd implements Command {
+class LastCommand {
     public static Attribute getLastAttributeFor(String username, SolarisConnection conn) {
         final String out = conn.executeCommand(conn.buildCommand("last -1", username));
         return parseOutput(username, out);

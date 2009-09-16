@@ -38,26 +38,26 @@ public class AccountUtil {
     public static SolarisEntry getAccount(SolarisConnection conn, String name, Set<NativeAttribute> attrsToGet) {
         SolarisEntry.Builder entryBuilder = new SolarisEntry.Builder(name).addAttr(NativeAttribute.NAME, name);
         if (SearchHelper.isLoginsRequired(attrsToGet)) {
-            entryBuilder.addAllAttributesFrom(LoginsCmd.getAttributesFor(name, conn));
+            entryBuilder.addAllAttributesFrom(LoginsCommand.getAttributesFor(name, conn));
         }
 
         if (attrsToGet.contains(NativeAttribute.PROFILES)) {
-            final Attribute profiles = ProfilesCmd.getProfilesAttributeFor(name, conn);
+            final Attribute profiles = ProfilesCommand.getProfilesAttributeFor(name, conn);
             entryBuilder.addAttr(NativeAttribute.PROFILES, profiles.getValue());
         }
         
         if (attrsToGet.contains(NativeAttribute.AUTHS)) {
-            final Attribute auths = AuthsCmd.getAuthsAttributeFor(name, conn);
+            final Attribute auths = AuthsCommand.getAuthsAttributeFor(name, conn);
             entryBuilder.addAttr(NativeAttribute.AUTHS, auths.getValue());
         }
         
         if (attrsToGet.contains(NativeAttribute.LAST_LOGIN)) {
-            final Attribute last = LastCmd.getLastAttributeFor(name, conn);
+            final Attribute last = LastCommand.getLastAttributeFor(name, conn);
             entryBuilder.addAttr(NativeAttribute.LAST_LOGIN, last.getValue());
         }
         
         if (attrsToGet.contains(NativeAttribute.ROLES)) {
-            final Attribute roles = RolesCmd.getRolesAttributeFor(name, conn);
+            final Attribute roles = RolesCommand.getRolesAttributeFor(name, conn);
             entryBuilder.addAttr(NativeAttribute.ROLES, roles.getValue());
         }
 
