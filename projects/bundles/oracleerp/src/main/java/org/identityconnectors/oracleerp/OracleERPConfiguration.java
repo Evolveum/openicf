@@ -663,6 +663,7 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
      *
      * @return the descrExists
      */
+    //@ConfigurationProperty(order=20) publish for self configurable user form
     public boolean isDescrExists() {
         return descrExists;
     }
@@ -671,7 +672,7 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
      * Setter for the descrExists property.
      * @param descrExists the descrExists to set
      */
-    void setDescrExists(boolean descrExists) {
+    public void setDescrExists(boolean descrExists) {
         this.descrExists = descrExists;
     }
 
@@ -688,6 +689,7 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
      *
      * @return the newResponsibilityViews
      */
+    //@ConfigurationProperty(order=21) publish for self configurable user form
     public boolean isNewResponsibilityViews() {
         return newResponsibilityViews;
     }
@@ -696,7 +698,7 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
      * Setter for the newResponsibilityViews property.
      * @param newResponsibilityViews the newResponsibilityViews to set
      */
-    void setNewResponsibilityViews(boolean newResponsibilityViews) {
+    public void setNewResponsibilityViews(boolean newResponsibilityViews) {
         this.newResponsibilityViews = newResponsibilityViews;
     }
 

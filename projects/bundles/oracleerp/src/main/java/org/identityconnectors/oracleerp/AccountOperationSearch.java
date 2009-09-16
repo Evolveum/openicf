@@ -251,7 +251,8 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             amb.setAttribute(AttributeBuilder.buildLastPasswordChangeDate(pwdDate));
         }
 
-        final Long access_left = OracleERPUtil.extractLong(PWD_ACCESSES_LEFT, columnValues);
+        
+        /*final Long access_left = OracleERPUtil.extractLong(PWD_ACCESSES_LEFT, columnValues);
 
         final Long lifespan_days = OracleERPUtil.extractLong(PWD_LIFESPAN_DAYS, columnValues);
 
@@ -267,7 +268,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             amb.setAttribute(AttributeBuilder.buildPasswordExpired(true));
         } else {
             amb.setAttribute(AttributeBuilder.buildPasswordExpired(false));
-        }
+        }*/
     }
 
     /**

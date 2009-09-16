@@ -160,7 +160,11 @@ final class ResponsibilitiesOperations extends Operation {
                         if (endDateStr != null && !endDateStr.equalsIgnoreCase("null")) {
                             // format date input
                             int i = endDateStr.indexOf(" ");
-                            endDate = java.sql.Date.valueOf(endDateStr.substring(0, i));
+                            if( i > -1 ) {
+                                endDate = java.sql.Date.valueOf(endDateStr.substring(0, i));
+                            } else {
+                                endDate = java.sql.Date.valueOf(endDateStr);
+                            }
                             delResp = endDate.after(curDate);
                         } else {
                             delResp = true;
@@ -408,8 +412,8 @@ final class ResponsibilitiesOperations extends Operation {
                 // descr possibly not available in ui version 11.5.10
                 if (count > 5) {
                     key.append(tok.nextToken()); // description
+                    key.append("||");
                 }
-                key.append("||");
                 key.append(tok.nextToken()); // start_date
                 key.append("||");
                 key.append(tok.nextToken()); // end_date

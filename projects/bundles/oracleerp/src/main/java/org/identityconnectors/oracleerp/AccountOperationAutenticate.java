@@ -42,6 +42,7 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.spi.operations.AuthenticateOp;
+import org.identityconnectors.framework.spi.operations.ResolveUsernameOp;
 
 
 /**
@@ -50,7 +51,7 @@ import org.identityconnectors.framework.spi.operations.AuthenticateOp;
  * @version $Revision 1.0$
  * @since 1.0
  */
-final class AccountOperationAutenticate extends Operation implements AuthenticateOp {
+final class AccountOperationAutenticate extends Operation implements AuthenticateOp, ResolveUsernameOp {
 
     /**
      * @param conn
@@ -187,4 +188,47 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public Uid resolveUsername(ObjectClass objectClass, String username, OperationOptions options) {
+        log.ok("resolveUsername ''{0}''", username);
+
+        Assertions.nullCheck(objectClass, "objectClass");
+        Assertions.nullCheck(username, "username");
+
+
+        //call the validation function
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+
+        final String sqlAccount = "select user_name from "
+                    + getCfg().app() + "fnd_user where upper(user_name) = ?";
+
+        List<SQLParam> par1 = new ArrayList<SQLParam>();
+        par1.add(new SQLParam(USER_NAME, username.toUpperCase()));
+        final Uid uid = new Uid(username.toUpperCase());
+        try {
+            ps = getConn().prepareCall(sqlAccount, par1);
+            rs = ps.executeQuery();
+            if (rs == null || !rs.next()) {
+                //account not found
+                throw new InvalidCredentialException(getCfg().getMessage(MSG_AUTH_FAILED, username));
+            }
+        } catch (Exception ex) {
+            log.error(ex, "autenticate exception");
+            SQLUtil.rollbackQuietly(getConn());
+            throw ConnectorException.wrap(ex);
+        } finally {
+            SQLUtil.closeQuietly(rs);
+            rs = null;
+            SQLUtil.closeQuietly(ps);
+            ps = null;
+        }
+
+        getConn().commit();
+        log.ok("authenticate user ''{0}'' done", username);
+        return uid;
+    }
 }
