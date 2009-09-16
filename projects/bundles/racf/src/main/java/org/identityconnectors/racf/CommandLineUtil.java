@@ -891,7 +891,7 @@ class CommandLineUtil {
                 for (String segment : segmentsNeeded)
                     buffer.append(" "+segment);
 
-                String output = getCommandOutput(buffer.toString());
+                String output = getCommandOutput(buffer.toString())+"\n";
                 
                 // Split out the various segments
                 //
