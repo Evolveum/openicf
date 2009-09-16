@@ -563,16 +563,7 @@ public class OracleERPConnector implements PoolableConnector, AuthenticateOp, De
      * Check alive method
      */
     public void checkAlive() {
-        log.ok("checkAlive DatabaseTable connector");
-        try {
-            getConn().test();
-            getConn().commit();
-        } catch (Exception e) {
-          log.error(e, "error in checkAlive");
-          throw ConnectorException.wrap(e);
-        } 
-        //Check alive will not close the connection, the next API call is expected
-        log.ok("checkAlive DatabaseTable connector ok");                
+        getConn().test();
     }
 
 }
