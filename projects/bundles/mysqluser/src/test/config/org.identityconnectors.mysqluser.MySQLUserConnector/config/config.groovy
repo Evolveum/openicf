@@ -129,7 +129,7 @@ testsuite {
                         ScriptOnConnectorApiOp:["__ACCOUNT__"], 
                         UpdateApiOp:["__ACCOUNT__"],   
                         AuthenticationApiOp:["__ACCOUNT__"],
-                        ResolveUsernameOp: ['__ACCOUNT__']
+                        ResolveUsernameApiOp: ["__ACCOUNT__"]
                         ]
 }
  
