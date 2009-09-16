@@ -42,11 +42,13 @@ class LastCommand {
         List<String> lastResult = null;
         if (out != null && username != null && !out.contains("wtmp begins")) {
             // we only need the first line of the output
-            final String[] tokens = out.split("\n");
-            final String last = tokens[0];
-            if (last != null && last.length() > 56) {
-                String value = last.substring(40, 56);
-                lastResult = CollectionUtil.newList(value);
+            final String[] lines = out.split("\n");
+            if (lines.length >= 1) {
+                final String lastLine = lines[0];
+                if (lastLine != null && lastLine.length() > 56) {
+                    String value = lastLine.substring(40, 56);
+                    lastResult = CollectionUtil.newList(value);
+                }
             } else {
                 lastResult = Collections.emptyList();
             }

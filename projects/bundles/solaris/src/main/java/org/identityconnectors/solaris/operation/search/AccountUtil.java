@@ -62,11 +62,11 @@ class AccountUtil {
         return new BlockAccountIterator(accountNames, attrsToGet, conn, 30);
     }
 
-    static List<String> getAccounts(String out) {
-        String[] tokens = out.split("\n");
-        List<String> result = new ArrayList<String>(tokens.length);
-        for (String string : tokens) {
-            result.add(string.trim());
+    static List<String> getAccounts(String usernameLines) {
+        String[] lines = usernameLines.split("\n");
+        List<String> result = new ArrayList<String>(lines.length);
+        for (String username : lines) {
+            result.add(username.trim());
         }
         return result;
     }

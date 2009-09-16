@@ -124,14 +124,14 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
         while (it.hasNext()) {
             final int accountIndex = captureIndex + (blockCount * blockSize);
             final String currentAccount = accounts.get(accountIndex);
-            String token = it.next();
-            String lastLoginToken = null;
+            String line = it.next();
+            String lastLoginLine = null;
             
             // Weed out shell continuation chars
-            if (token.startsWith(SHELL_CONT_CHARS)) {
-                int index = token.lastIndexOf(SHELL_CONT_CHARS);
+            if (line.startsWith(SHELL_CONT_CHARS)) {
+                int index = line.lastIndexOf(SHELL_CONT_CHARS);
 
-                token = token.substring(index + SHELL_CONT_CHARS.length());
+                line = line.substring(index + SHELL_CONT_CHARS.length());
             }
             
             //TODO clarify meaning of this section.
@@ -140,14 +140,14 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
                     throw new ConnectorException(String.format("User '%s' is missing last login time.", currentAccount));
                 }
 
-                lastLoginToken = "";
+                lastLoginLine = "";
 
-                while (lastLoginToken.length() < 3) {
-                    lastLoginToken = it.next();
+                while (lastLoginLine.length() < 3) {
+                    lastLoginLine = it.next();
                 }
             }// if (isLast)
             
-            SolarisEntry entry = buildUser(currentAccount, token, lastLoginToken);
+            SolarisEntry entry = buildUser(currentAccount, line, lastLoginLine);
             if (entry != null) {
                 result.add(entry);
             }
@@ -160,21 +160,21 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
 
     /**
      * build user based on the content given.
-     * @param token
-     * @param lastLoginToken
+     * @param loginsLine
+     * @param lastLoginLine
      * @return the build user.
      */
-    private SolarisEntry buildUser(String username, String token, String lastLoginToken) {
-        if (lastLoginToken == null) {
-            return LoginsCommand.getEntry(token, username);
+    private SolarisEntry buildUser(String username, String loginsLine, String lastLoginLine) {
+        if (lastLoginLine == null) {
+            return LoginsCommand.getEntry(loginsLine, username);
         } else {
             SolarisEntry.Builder entryBuilder = new SolarisEntry.Builder(username).addAttr(NativeAttribute.NAME, username);
             // logins
-            SolarisEntry entry = LoginsCommand.getEntry(token, username);
+            SolarisEntry entry = LoginsCommand.getEntry(loginsLine, username);
             entryBuilder.addAllAttributesFrom(entry);
             
             //last
-            Attribute attribute = LastCommand.parseOutput(username, lastLoginToken);
+            Attribute attribute = LastCommand.parseOutput(username, lastLoginLine);
             entryBuilder.addAttr(NativeAttribute.LAST_LOGIN, attribute.getValue());
             
             return entryBuilder.build();

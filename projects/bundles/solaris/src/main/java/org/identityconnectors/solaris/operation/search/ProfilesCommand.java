@@ -37,10 +37,10 @@ class ProfilesCommand {
         final String out = conn.executeCommand(conn.buildCommand("profiles", username));
         List<String> profiles = null;
         if (!out.endsWith("No such user") && !out.endsWith("No profiles") && !out.endsWith("not found") && out.trim().length() > 0) {
-            final String[] tokens = out.split("\n");
-            profiles = new ArrayList<String>(tokens.length);
-            for (String t : tokens) {
-                profiles.add(t.trim());
+            final String[] lines = out.split("\n");
+            profiles = new ArrayList<String>(lines.length);
+            for (String line : lines) {
+                profiles.add(line.trim());
             }
         } else {
             profiles = Collections.emptyList();

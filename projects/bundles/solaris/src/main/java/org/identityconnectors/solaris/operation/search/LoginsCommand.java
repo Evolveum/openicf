@@ -92,6 +92,7 @@ class LoginsCommand {
     public static SolarisEntry getEntry(String accountLine, String username) {
         final SolarisEntry.Builder bldr = new SolarisEntry.Builder(username);
         
+        /* tokens delimited by ":" */
         final String[] tokens = accountLine.split(":");
         final Iterator<String> tokenIt = Arrays.asList(tokens).iterator();
         
