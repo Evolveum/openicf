@@ -61,10 +61,10 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
     private int blockCount = -1;
     private SolarisConfiguration config;
 
-    public BlockAccountIterator(List<String> usernames, Set<NativeAttribute> attrsToGet, SolarisConnection conn, SolarisConfiguration config, int blockSize) {
+    public BlockAccountIterator(List<String> usernames, Set<NativeAttribute> attrsToGet, SolarisConnection conn, int blockSize) {
         this.conn = conn;
         this.blockSize = blockSize;
-        this.config = config;
+        this.config = conn.getConfiguration();
 
         accounts = usernames;
         usernameIter = accounts.listIterator();

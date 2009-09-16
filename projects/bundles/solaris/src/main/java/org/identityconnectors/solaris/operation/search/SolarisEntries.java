@@ -26,7 +26,6 @@ package org.identityconnectors.solaris.operation.search;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 
@@ -37,15 +36,13 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
  */
 public class SolarisEntries {
     private SolarisConnection conn;
-    private SolarisConfiguration config;
 
-    public SolarisEntries(SolarisConnection conn, SolarisConfiguration config) {
+    public SolarisEntries(SolarisConnection conn) {
         this.conn = conn;
-        this.config = config;
     }
 
     public Iterator<SolarisEntry> getAllAccounts(Set<NativeAttribute> attrsToGet) {
-        return AccountUtil.getAllAccounts(conn, config, attrsToGet);
+        return AccountUtil.getAllAccounts(conn, attrsToGet);
     }
 
     // public abstract Iterator<SolarisEntry> getAllGroups();

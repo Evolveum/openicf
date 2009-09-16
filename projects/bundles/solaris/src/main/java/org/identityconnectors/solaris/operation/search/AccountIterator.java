@@ -51,7 +51,7 @@ public class AccountIterator implements Iterator<SolarisEntry> {
         accounts = usernames;
         it = accounts.iterator();
         
-        isLogins = SearchHelper.isLoginsRequired(attrsToGet);
+        isLogins = LoginsCommand.isLoginsRequired(attrsToGet);
         isProfiles = attrsToGet.contains(NativeAttribute.PROFILES);
         isAuths = attrsToGet.contains(NativeAttribute.AUTHS);
         isLast = attrsToGet.contains(NativeAttribute.LAST_LOGIN);

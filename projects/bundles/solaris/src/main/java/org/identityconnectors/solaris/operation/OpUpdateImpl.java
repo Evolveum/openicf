@@ -57,7 +57,7 @@ public class OpUpdateImpl extends AbstractOp {
     final ObjectClass[] acceptOC = { ObjectClass.ACCOUNT, ObjectClass.GROUP };
 
     public OpUpdateImpl(Log log, SolarisConnector conn) {
-        super(log, conn);
+        super(log, conn, OpUpdateImpl.class);
     }
 
     /** main update method */

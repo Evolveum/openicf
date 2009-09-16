@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
-import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.test.SolarisTestCommon;
@@ -42,9 +41,8 @@ public class BlockAccountIteratorTest {
         String command = conn.buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"");
         String out = conn.executeCommand(command);
         final List<String> usernames = AccountUtil.getAccounts(out);
-        SolarisConfiguration config = SolarisTestCommon.createConfiguration();
         
-        BlockAccountIterator bai = new BlockAccountIterator(usernames, EnumSet.of(NativeAttribute.NAME), conn, config , 2);
+        BlockAccountIterator bai = new BlockAccountIterator(usernames, EnumSet.of(NativeAttribute.NAME), conn , 2);
         List<String> retrievedUsernames = new ArrayList<String>();
         while (bai.hasNext()) {
             retrievedUsernames.add(bai.next().getName());

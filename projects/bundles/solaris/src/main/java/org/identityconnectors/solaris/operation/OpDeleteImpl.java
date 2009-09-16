@@ -35,7 +35,7 @@ public class OpDeleteImpl extends AbstractOp {
     final ObjectClass[] acceptOC = { ObjectClass.ACCOUNT, ObjectClass.GROUP };
 
     public OpDeleteImpl(Log log, SolarisConnector conn) {
-        super(log, conn);
+        super(log, conn, OpDeleteImpl.class);
     }
     
     // TODO

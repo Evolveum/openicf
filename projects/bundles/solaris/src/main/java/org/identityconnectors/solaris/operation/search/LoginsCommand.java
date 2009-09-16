@@ -197,7 +197,24 @@ class LoginsCommand {
      * @param attr the attribute in question.
      * @return true if the attribute is provided by {@link LoginsCommand}.
      */
-    public static boolean isProvided(NativeAttribute attr) {
+    private static boolean isProvided(NativeAttribute attr) {
         return set.contains(attr);
+    }
+    
+    /**
+     * evaluate if logins command is required for retrieval of given attributes
+     * 
+     * @param attrs
+     *            attributes
+     * @return true if {@link LoginsCommand} is required to be called, as it
+     *         yields at least one of attributes on the list.
+     */
+    public static boolean isLoginsRequired(Set<NativeAttribute> attrs) {
+        for (NativeAttribute nativeAttribute : attrs) {
+            if (LoginsCommand.isProvided(nativeAttribute)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

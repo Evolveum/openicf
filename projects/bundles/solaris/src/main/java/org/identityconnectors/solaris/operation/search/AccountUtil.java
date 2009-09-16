@@ -28,44 +28,23 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.solaris.SolarisConfiguration;
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 
 
-public class AccountUtil {
+class AccountUtil {
     public static SolarisEntry getAccount(SolarisConnection conn, String name, Set<NativeAttribute> attrsToGet) {
-        SolarisEntry.Builder entryBuilder = new SolarisEntry.Builder(name).addAttr(NativeAttribute.NAME, name);
-        if (SearchHelper.isLoginsRequired(attrsToGet)) {
-            entryBuilder.addAllAttributesFrom(LoginsCommand.getAttributesFor(name, conn));
+        // the result will be an Iterable collection with a single element returned.
+        AccountIterator it = new AccountIterator(CollectionUtil.newList(name), attrsToGet, conn);
+        if (it.hasNext()) {
+            return it.next();
+        } else {
+            throw new RuntimeException("Error: nothing returned when requesting attributes for user: '" + name + "'");
         }
-
-        if (attrsToGet.contains(NativeAttribute.PROFILES)) {
-            final Attribute profiles = ProfilesCommand.getProfilesAttributeFor(name, conn);
-            entryBuilder.addAttr(NativeAttribute.PROFILES, profiles.getValue());
-        }
-        
-        if (attrsToGet.contains(NativeAttribute.AUTHS)) {
-            final Attribute auths = AuthsCommand.getAuthsAttributeFor(name, conn);
-            entryBuilder.addAttr(NativeAttribute.AUTHS, auths.getValue());
-        }
-        
-        if (attrsToGet.contains(NativeAttribute.LAST_LOGIN)) {
-            final Attribute last = LastCommand.getLastAttributeFor(name, conn);
-            entryBuilder.addAttr(NativeAttribute.LAST_LOGIN, last.getValue());
-        }
-        
-        if (attrsToGet.contains(NativeAttribute.ROLES)) {
-            final Attribute roles = RolesCommand.getRolesAttributeFor(name, conn);
-            entryBuilder.addAttr(NativeAttribute.ROLES, roles.getValue());
-        }
-
-        return entryBuilder.build();
     }
 
-    public static Iterator<SolarisEntry> getAllAccounts(SolarisConnection conn,
-            SolarisConfiguration config, Set<NativeAttribute> attrsToGet) {
+    public static Iterator<SolarisEntry> getAllAccounts(SolarisConnection conn, Set<NativeAttribute> attrsToGet) {
         String command = conn.buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"");
         String out = conn.executeCommand(command);
         
@@ -80,7 +59,7 @@ public class AccountUtil {
         }
         
         // BlockAccount iterator is optimized for fetching info from 'logins' command and 'last login time' only.
-        return new BlockAccountIterator(accountNames, attrsToGet, conn, config, 30);
+        return new BlockAccountIterator(accountNames, attrsToGet, conn, 30);
     }
 
     static List<String> getAccounts(String out) {

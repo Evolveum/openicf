@@ -28,7 +28,6 @@ import java.util.Iterator;
 import java.util.Set;
 
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.test.SolarisTestCommon;
@@ -38,19 +37,16 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class SolarisEntriesTest {
-    private SolarisConfiguration config;
     private SolarisEntries se;
 
     @Before
     public void setUp() {
-       SolarisConnection conn = SolarisTestCommon.getSolarisConn();
-        this.config = SolarisTestCommon.createConfiguration();
-        this.se = new SolarisEntries(conn, config);
+        SolarisConnection conn = SolarisTestCommon.getSolarisConn();
+        this.se = new SolarisEntries(conn);
     }
     
     @After
     public void tearDown() {
-        this.config = null;
         this.se = null;
     }
     

@@ -50,11 +50,4 @@ public class LoginsCommandTest {
             }
         }
     }
-    
-    @Test
-    public void testEnum() {
-        Assert.assertTrue(LoginsCommand.isProvided(NativeAttribute.ID));
-        // USERS attribute is not provided by Logins command.
-        Assert.assertFalse(LoginsCommand.isProvided(NativeAttribute.USERS));
-    }
 }

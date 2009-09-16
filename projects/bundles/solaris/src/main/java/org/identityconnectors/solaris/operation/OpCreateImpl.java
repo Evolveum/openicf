@@ -68,7 +68,7 @@ public class OpCreateImpl extends AbstractOp {
     }
     
     public OpCreateImpl(Log log, SolarisConnector conn) {
-        super(log, conn);
+        super(log, conn, OpCreateImpl.class);
     }
 
     public Uid create(ObjectClass oclass, final Set<Attribute> attrs, final OperationOptions options) {

@@ -32,19 +32,18 @@ import org.identityconnectors.solaris.SolarisConnector;
 public abstract class AbstractOp {
     private SolarisConfiguration _configuration;
     private SolarisConnection _connection;
-    private Log _log;
+    private final Log _log;
     private SolarisConnector _connector;
     
-    public AbstractOp(Log log, SolarisConnector conn) {
+    public AbstractOp(Log log, SolarisConnector conn, Class<? extends AbstractOp> clazz) {
         _connector = conn;
-        _configuration = (SolarisConfiguration) conn.getConfiguration();
         
         final SolarisConnection connection = conn.getConnection();
         Assertions.nullCheck(connection, "connection");
+        _configuration = connection.getConfiguration();
         _connection = connection;
         
-        // TODO introduce separate logs for every operation.
-        _log = log;
+        _log = Log.getLog(clazz);
     }
 
     protected final Log getLog() {

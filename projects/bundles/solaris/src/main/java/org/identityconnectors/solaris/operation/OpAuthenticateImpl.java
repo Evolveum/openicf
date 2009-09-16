@@ -36,7 +36,7 @@ public class OpAuthenticateImpl extends AbstractOp {
     final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT};
     
     public OpAuthenticateImpl(Log log, SolarisConnector conn) {
-        super(log, conn);
+        super(log, conn, OpAuthenticateImpl.class);
     }
 
     public Uid authenticate(ObjectClass objectClass, String username,

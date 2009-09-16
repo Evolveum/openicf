@@ -58,7 +58,7 @@ public class OpSearchImpl extends AbstractOp {
     private static String[] returnedByDefaultAttributeNames; // todo possibly this could be acquired right from connector attribute structures.
     
     public OpSearchImpl(Log log, SolarisConnector conn) {
-        super(log, conn);
+        super(log, conn, OpSearchImpl.class);
     }
     
     /**

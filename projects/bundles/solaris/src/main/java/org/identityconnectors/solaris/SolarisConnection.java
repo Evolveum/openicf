@@ -61,6 +61,10 @@ public class SolarisConnection {
      * the configuration object from which this connection is created.
      */
     private SolarisConfiguration _configuration;
+    public SolarisConfiguration getConfiguration() {
+        return _configuration;
+    }
+
     private final Log log = Log.getLog(SolarisConnection.class);
     private Expect4j _expect4j;
 
