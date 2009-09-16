@@ -31,11 +31,10 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.command.CommandBuilder;
 
 class ProfilesCmd implements Command {
-    public static Attribute getProfilesAttributeFor(String username, SolarisConnection conn, CommandBuilder bldr) {
-        final String out = conn.executeCommand(bldr.build("profiles", username));
+    public static Attribute getProfilesAttributeFor(String username, SolarisConnection conn) {
+        final String out = conn.executeCommand(conn.buildCommand("profiles", username));
         List<String> profiles = null;
         if (!out.endsWith("No such user") && !out.endsWith("No profiles") && !out.endsWith("not found") && out.trim().length() > 0) {
             final String[] tokens = out.split("\n");

@@ -27,11 +27,9 @@ import java.util.Set;
 
 import junit.framework.Assert;
 
-import org.identityconnectors.common.Pair;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.command.CommandBuilder;
 import org.identityconnectors.solaris.test.SolarisTestCommon;
 import org.junit.Test;
 
@@ -39,8 +37,8 @@ public class LoginsCmdTest {
 
     @Test
     public void test() {
-        Pair<SolarisConnection, CommandBuilder> pair = SolarisTestCommon.getSolarisConn();
-        SolarisEntry result = LoginsCmd.getAttributesFor("root", pair.first, pair.second);
+       SolarisConnection conn = SolarisTestCommon.getSolarisConn();
+        SolarisEntry result = LoginsCmd.getAttributesFor("root", conn);
         Assert.assertTrue(result.getAttributeSet().size() >= 5);
         Set<Attribute> attrSet = result.getAttributeSet();
         for (Attribute attribute : attrSet) {

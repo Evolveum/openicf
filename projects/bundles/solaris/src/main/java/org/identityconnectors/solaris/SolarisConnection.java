@@ -29,6 +29,7 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.solaris.command.CommandUtil;
 import org.identityconnectors.solaris.command.MatchBuilder;
 import org.identityconnectors.solaris.constants.ConnectionType;
 
@@ -282,6 +283,30 @@ public class SolarisConnection {
         _configuration.setRootShellPrompt(_originalPrompt);
     }
     
+    /**
+     * @param command
+     *            the command can be a chain of strings separated by spaces. In
+     *            case for some reason we want to delegate the chaining to this
+     *            builder, we can use the additional arguments parameter.
+     * @param arguments
+     *            optional parameter for chaining extra arguments at the end of
+     *            command.
+     */
+    public String buildCommand(String command, CharSequence... arguments) {
+        StringBuilder buff = new StringBuilder();
+        if (_configuration.isSudoAuth()) {
+            buff.append("sudo ");
+        }
+        buff.append(command);
+        
+        for (CharSequence string : arguments) {
+            buff.append(" ");
+            buff.append(string.toString());
+        }
+        
+        return CommandUtil.limitString(buff);
+    }
+
     /**
      * Try to authenticate with the given configuration
      * If the test fails, an exception is thrown.

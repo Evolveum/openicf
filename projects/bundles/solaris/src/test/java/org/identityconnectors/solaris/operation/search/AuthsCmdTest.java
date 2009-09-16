@@ -25,19 +25,17 @@ package org.identityconnectors.solaris.operation.search;
 
 import junit.framework.Assert;
 
-import org.identityconnectors.common.Pair;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.command.CommandBuilder;
 import org.identityconnectors.solaris.test.SolarisTestCommon;
 import org.junit.Test;
 
 public class AuthsCmdTest {
     @Test
     public void test() {
-        Pair<SolarisConnection, CommandBuilder> pair = SolarisTestCommon.getSolarisConn();
-        Attribute result = AuthsCmd.getAuthsAttributeFor("root", pair.first, pair.second);
+       SolarisConnection conn = SolarisTestCommon.getSolarisConn();
+        Attribute result = AuthsCmd.getAuthsAttributeFor("root", conn);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.getValue().size() > 0);
         Assert.assertNotNull(result.getValue().get(0));

@@ -31,7 +31,6 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.command.CommandBuilder;
 
 class AuthsCmd implements Command {
     /**
@@ -39,8 +38,8 @@ class AuthsCmd implements Command {
      * @param op operation that called the command
      * @return the auths attribute for given user 
      */
-    public static Attribute getAuthsAttributeFor(String username, SolarisConnection conn, CommandBuilder bldr) {
-        final String out = conn.executeCommand(bldr.build("auths", username));
+    public static Attribute getAuthsAttributeFor(String username, SolarisConnection conn) {
+        final String out = conn.executeCommand(conn.buildCommand("auths", username));
         List<String> auths = null;
         if (!out.endsWith("No such user") && !out.contains("No auth") && !out.endsWith("not found")) {
             auths = Arrays.asList(out.split(","));

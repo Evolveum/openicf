@@ -28,13 +28,13 @@ import static org.identityconnectors.solaris.attr.NativeAttribute.DAYS_BEFORE_TO
 import static org.identityconnectors.solaris.attr.NativeAttribute.DIR;
 import static org.identityconnectors.solaris.attr.NativeAttribute.GROUPS_SEC;
 import static org.identityconnectors.solaris.attr.NativeAttribute.GROUP_PRIM;
+import static org.identityconnectors.solaris.attr.NativeAttribute.ID;
 import static org.identityconnectors.solaris.attr.NativeAttribute.LOCK;
 import static org.identityconnectors.solaris.attr.NativeAttribute.MAX_DAYS_BETWEEN_CHNG;
 import static org.identityconnectors.solaris.attr.NativeAttribute.MIN_DAYS_BETWEEN_CHNG;
 import static org.identityconnectors.solaris.attr.NativeAttribute.NAME;
 import static org.identityconnectors.solaris.attr.NativeAttribute.PWSTAT;
 import static org.identityconnectors.solaris.attr.NativeAttribute.SHELL;
-import static org.identityconnectors.solaris.attr.NativeAttribute.ID;
 import static org.identityconnectors.solaris.attr.NativeAttribute.USER_EXPIRE;
 import static org.identityconnectors.solaris.attr.NativeAttribute.USER_INACTIVE;
 
@@ -50,7 +50,6 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.command.CommandBuilder;
 
 class LoginsCmd implements Command {
 
@@ -67,10 +66,10 @@ class LoginsCmd implements Command {
          */
     }
 
-    public static SolarisEntry getAttributesFor(String username, SolarisConnection conn, CommandBuilder bldr) {
+    public static SolarisEntry getAttributesFor(String username, SolarisConnection conn) {
         SolarisEntry entry = null;
         try {
-            final String cmd = bldr.build("logins -oxma -l ", username);
+            final String cmd = conn.buildCommand("logins -oxma -l ", username);
             String out = conn.executeCommand(cmd);
             
             if (out.endsWith("was not found")) {

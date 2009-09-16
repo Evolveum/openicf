@@ -66,7 +66,7 @@ public class CommandUtil {
      * @param data
      * @return
      */
-    static String limitString(StringBuilder data) {
+    public static String limitString(StringBuilder data) {
         return limitString(data, DEFAULT_LIMIT /* == max length of line from SolarisResourceAdapter#getUpdateNativeUserScript(), line userattribparams */).toString();
     }
     

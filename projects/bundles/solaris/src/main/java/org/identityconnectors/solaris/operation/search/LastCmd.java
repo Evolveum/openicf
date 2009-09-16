@@ -31,11 +31,10 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.command.CommandBuilder;
 
 class LastCmd implements Command {
-    public static Attribute getLastAttributeFor(String username, SolarisConnection conn, CommandBuilder bldr) {
-        final String out = conn.executeCommand(bldr.build("last -1", username));
+    public static Attribute getLastAttributeFor(String username, SolarisConnection conn) {
+        final String out = conn.executeCommand(conn.buildCommand("last -1", username));
         return parseOutput(username, out);
     }
 

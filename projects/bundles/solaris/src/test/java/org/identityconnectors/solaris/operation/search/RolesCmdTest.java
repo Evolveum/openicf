@@ -25,19 +25,17 @@ package org.identityconnectors.solaris.operation.search;
 
 import junit.framework.Assert;
 
-import org.identityconnectors.common.Pair;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.command.CommandBuilder;
 import org.identityconnectors.solaris.test.SolarisTestCommon;
 import org.junit.Test;
 
 public class RolesCmdTest {
     @Test
     public void test() {
-        Pair<SolarisConnection, CommandBuilder> pair = SolarisTestCommon.getSolarisConn();
-        Attribute result = RolesCmd.getRolesAttributeFor("root", pair.first, pair.second);
+       SolarisConnection conn = SolarisTestCommon.getSolarisConn();
+        Attribute result = RolesCmd.getRolesAttributeFor("root", conn);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.getValue().size() == 0);
         Assert.assertEquals(NativeAttribute.ROLES.getName(), result.getName());

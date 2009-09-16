@@ -97,7 +97,7 @@ public class OpCreateImpl extends AbstractOp {
          */
         final String commandSwitches = CommandUtil.prepareCommand(attrs, ObjectClass.ACCOUNT);
         // USERADD accountId
-        String command = getCmdBuilder().build("useradd", commandSwitches, accountId);
+        String command = getConnection().buildCommand("useradd", commandSwitches, accountId);
         
         Match[] matches = prepareMatches(getConfiguration().getRootShellPrompt(), errorsUseradd);
         
@@ -153,7 +153,7 @@ public class OpCreateImpl extends AbstractOp {
         exists[0] = true;
         try {
             // FIXME find a more solid command that works for both NIS and normal passwords
-            getConnection().send(getCmdBuilder().build(String.format("logins -l %s", name)));
+            getConnection().send(getConnection().buildCommand(String.format("logins -l %s", name)));
             getConnection().expect(MatchBuilder.buildRegExpMatch(String.format("%s was not found", name), new Closure() {
                 public void run(ExpectState state) throws Exception {
                     exists[0] = false; 

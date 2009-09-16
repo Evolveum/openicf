@@ -36,7 +36,6 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.command.CommandBuilder;
 import org.identityconnectors.solaris.operation.SudoUtil;
 
 public class BlockAccountIterator implements Iterator<SolarisEntry> {
@@ -56,16 +55,14 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
     /** iterates through block of accounts. */
     private Iterator<SolarisEntry> accountIter;
     private SolarisConnection conn;
-    private CommandBuilder bldr;
 
     /** size of the blocks that the accounts are iterated. */
     private final int blockSize;
     private int blockCount = -1;
     private SolarisConfiguration config;
 
-    public BlockAccountIterator(List<String> usernames, Set<NativeAttribute> attrsToGet, SolarisConnection conn, CommandBuilder bldr, SolarisConfiguration config, int blockSize) {
+    public BlockAccountIterator(List<String> usernames, Set<NativeAttribute> attrsToGet, SolarisConnection conn, SolarisConfiguration config, int blockSize) {
         this.conn = conn;
-        this.bldr = bldr;
         this.blockSize = blockSize;
         this.config = config;
 
@@ -104,12 +101,12 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
      */
     private List<SolarisEntry> buildEntries(List<String> blockUserNames) {
         SudoUtil.doSudoStart(config, conn);
-        conn.executeCommand(bldr.build("rm -f", TMPFILE));
+        conn.executeCommand(conn.buildCommand("rm -f", TMPFILE));
         
         String getUsersScript = buildGetUserScript(blockUserNames);
         final String out = conn.executeCommand(getUsersScript);
         
-        conn.executeCommand(bldr.build("rm -f", TMPFILE));
+        conn.executeCommand(conn.buildCommand("rm -f", TMPFILE));
         SudoUtil.doSudoReset(config, conn);
         
         return processOutput(out);
@@ -229,15 +226,15 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
         String getScript = null;
         if (isLast) {
             getScript = 
-                bldr.build("logins") + " -oxma -l $user 2>>" + TMPFILE + "; " +
-                "LASTLOGIN=`" + bldr.build("last") + " -1 $user`; " +
+                conn.buildCommand("logins") + " -oxma -l $user 2>>" + TMPFILE + "; " +
+                "LASTLOGIN=`" + conn.buildCommand("last") + " -1 $user`; " +
                 "if [ -z \"$LASTLOGIN\" ]; then " +
                      "echo \"wtmp begins\" ; " +
                 "else " +
                      "echo $LASTLOGIN; " +
                 "fi; ";
         } else {
-            getScript = bldr.build("logins") + " -oxma -l $user 2>>" + TMPFILE + "; ";
+            getScript = conn.buildCommand("logins") + " -oxma -l $user 2>>" + TMPFILE + "; ";
         }
         getUsersScript.append(getScript);
         getUsersScript.append("done");

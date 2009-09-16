@@ -28,13 +28,11 @@ import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
-import org.identityconnectors.solaris.command.CommandBuilder;
 
 public abstract class AbstractOp {
     private SolarisConfiguration _configuration;
     private SolarisConnection _connection;
     private Log _log;
-    private CommandBuilder _cmdBuilder;
     private SolarisConnector _connector;
     
     public AbstractOp(Log log, SolarisConnector conn) {
@@ -47,8 +45,6 @@ public abstract class AbstractOp {
         
         // TODO introduce separate logs for every operation.
         _log = log;
-        _cmdBuilder = new CommandBuilder(_configuration);
-        
     }
 
     protected final Log getLog() {
@@ -65,11 +61,6 @@ public abstract class AbstractOp {
     
     protected final String executeCommand(String command) {
         return getConnection().executeCommand(command);
-    }
-    
-    /** @return the command formatter */
-    public final CommandBuilder getCmdBuilder() {
-        return _cmdBuilder;
     }
     
     protected final void doSudoStart() {

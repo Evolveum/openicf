@@ -99,7 +99,7 @@ public class OpUpdateImpl extends AbstractOp {
                     builder.addRegExpMatch("command not found", ClosureFactory.newConnectorException("usermod command is not found"));
                     builder.addRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException("not allowed to execute usermod"));
 
-                    getConnection().send(getCmdBuilder().build("usermod", commandSwitches, accountId));
+                    getConnection().send(getConnection().buildCommand("usermod", commandSwitches, accountId));
                     getConnection().expect(builder.build());
 
                     // Release the uid "mutex"
@@ -144,7 +144,7 @@ public class OpUpdateImpl extends AbstractOp {
             //for nonexisting UID (note: match not present in the adapter)
             builder.addCaseInsensitiveRegExpMatch("User unknown", ClosureFactory.newUnknownUidException(String.format("Unknown Uid: '%s'", accountId)));
 
-            getConnection().send(getCmdBuilder().build("passwd -r files", accountId));
+            getConnection().send(getConnection().buildCommand("passwd -r files", accountId));
             getConnection().expect(builder.build());
 
             SolarisUtil.sendPassword(passwd, getConnection());
@@ -160,8 +160,8 @@ public class OpUpdateImpl extends AbstractOp {
 
     private String getAcquireMutexScript() {
         Long timeout = getConfiguration().getMutexAcquireTimeout();
-        String rmCmd = getCmdBuilder().build("rm");
-        String catCmd = getCmdBuilder().build("cat");
+        String rmCmd = getConnection().buildCommand("rm");
+        String catCmd = getConnection().buildCommand("cat");
 
         if (timeout < 1) {
             timeout = SolarisConfiguration.DEFAULT_MUTEX_ACQUIRE_TIMEOUT;
@@ -214,7 +214,7 @@ public class OpUpdateImpl extends AbstractOp {
     }
 
     private String getMutexReleaseScript() {
-        String rmCmd = getCmdBuilder().build("rm");
+        String rmCmd = getConnection().buildCommand("rm");
         String pidMutexReleaseScript =
             "if [ -f " + pidMutexFile + " ]; then " +
               "LOCKPID=`cat " + pidMutexFile + "`; " +

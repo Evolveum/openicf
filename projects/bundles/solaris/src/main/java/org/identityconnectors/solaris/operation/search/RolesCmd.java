@@ -31,7 +31,6 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.command.CommandBuilder;
 
 class RolesCmd implements Command {
     /**
@@ -39,8 +38,8 @@ class RolesCmd implements Command {
      * @param op operation that called the command
      * @return the roles attribute for given user 
      */
-    public static Attribute getRolesAttributeFor(String username, SolarisConnection conn, CommandBuilder bldr) {
-        final String out = conn.executeCommand(bldr.build("roles", username));
+    public static Attribute getRolesAttributeFor(String username, SolarisConnection conn) {
+        final String out = conn.executeCommand(conn.buildCommand("roles", username));
         List<String> roles = null;
         if (!out.endsWith("No such user") && !out.endsWith("No roles") && !out.endsWith("not found")) {
             roles = Arrays.asList(out.split(","));

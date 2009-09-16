@@ -52,7 +52,7 @@ public class OpDeleteImpl extends AbstractOp {
         getLog().info("delete(''{0}'')", accountId);
         
         // USERDEL accountId
-        final String command = getCmdBuilder().build("userdel", accountId);
+        final String command = getConnection().buildCommand("userdel", accountId);
         
         try {
             String output = executeCommand(command);

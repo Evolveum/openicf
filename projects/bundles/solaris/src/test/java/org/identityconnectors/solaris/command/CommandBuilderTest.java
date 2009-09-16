@@ -25,15 +25,17 @@ package org.identityconnectors.solaris.command;
 import junit.framework.Assert;
 
 import org.identityconnectors.solaris.SolarisConfiguration;
+import org.identityconnectors.solaris.SolarisConnection;
+import org.identityconnectors.solaris.test.SolarisTestCommon;
 import org.junit.Test;
 
 public class CommandBuilderTest {
     @Test
     public void test() {
         SolarisConfiguration config = new SolarisConfiguration();
+        SolarisConnection conn = SolarisTestCommon.getSolarisConn();
         config.setSudoAuth(false);
-        CommandBuilder cmdBld = new CommandBuilder(config);
-        String actual = cmdBld.build("command", "arg1", "arg2", "arg3");
+        String actual = conn.buildCommand("command", "arg1", "arg2", "arg3");
         String expected = "command arg1 arg2 arg3";
         Assert.assertEquals(expected, actual);
     }

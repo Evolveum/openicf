@@ -27,12 +27,10 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.identityconnectors.common.Pair;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.command.CommandBuilder;
 import org.identityconnectors.solaris.test.SolarisTestCommon;
 import org.junit.After;
 import org.junit.Assert;
@@ -45,9 +43,9 @@ public class SolarisEntriesTest {
 
     @Before
     public void setUp() {
-        Pair<SolarisConnection, CommandBuilder> pair = SolarisTestCommon.getSolarisConn();
+       SolarisConnection conn = SolarisTestCommon.getSolarisConn();
         this.config = SolarisTestCommon.createConfiguration();
-        this.se = new SolarisEntries(pair.first, pair.second, config);
+        this.se = new SolarisEntries(conn, config);
     }
     
     @After

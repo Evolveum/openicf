@@ -30,7 +30,6 @@ import java.util.Set;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.command.CommandBuilder;
 
 public class AccountIterator implements Iterator<SolarisEntry> {
 
@@ -45,11 +44,9 @@ public class AccountIterator implements Iterator<SolarisEntry> {
 
     private Iterator<String> it;
     private SolarisConnection conn;
-    private CommandBuilder bldr;
 
-    public AccountIterator(List<String> usernames, Set<NativeAttribute> attrsToGet, SolarisConnection conn, CommandBuilder bldr) {
+    public AccountIterator(List<String> usernames, Set<NativeAttribute> attrsToGet, SolarisConnection conn) {
         this.conn = conn;
-        this.bldr = bldr;
         
         accounts = usernames;
         it = accounts.iterator();
@@ -74,22 +71,22 @@ public class AccountIterator implements Iterator<SolarisEntry> {
     private SolarisEntry buildUser(String name) {
         SolarisEntry.Builder entryBuilder = new SolarisEntry.Builder(name).addAttr(NativeAttribute.NAME, name);
         if (isLogins) {
-            entryBuilder.addAllAttributesFrom(LoginsCmd.getAttributesFor(name, conn, bldr));
+            entryBuilder.addAllAttributesFrom(LoginsCmd.getAttributesFor(name, conn));
         }
         if (isProfiles) {
-            final Attribute profiles = ProfilesCmd.getProfilesAttributeFor(name, conn, bldr);
+            final Attribute profiles = ProfilesCmd.getProfilesAttributeFor(name, conn);
             entryBuilder.addAttr(NativeAttribute.PROFILES, profiles.getValue());
         }
         if (isAuths) {
-            final Attribute auths = AuthsCmd.getAuthsAttributeFor(name, conn, bldr);
+            final Attribute auths = AuthsCmd.getAuthsAttributeFor(name, conn);
             entryBuilder.addAttr(NativeAttribute.AUTHS, auths.getValue());
         }
         if (isLast) {
-            final Attribute last = LastCmd.getLastAttributeFor(name, conn, bldr);
+            final Attribute last = LastCmd.getLastAttributeFor(name, conn);
             entryBuilder.addAttr(NativeAttribute.LAST_LOGIN, last.getValue());
         }
         if (isRoles) {
-            final Attribute roles = RolesCmd.getRolesAttributeFor(name, conn, bldr);
+            final Attribute roles = RolesCmd.getRolesAttributeFor(name, conn);
             entryBuilder.addAttr(NativeAttribute.ROLES, roles.getValue());
         }
         return entryBuilder.build();
