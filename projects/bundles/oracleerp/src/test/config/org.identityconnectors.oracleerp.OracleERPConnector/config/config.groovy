@@ -173,8 +173,8 @@ testsuite {
     Search.disable.caseinsensitive=true // skip insensitive test
     
     /* AuthenticationApiOpTests: */
-    Authentication.__ACCOUNT__.user=Lazy.get("i0.Authentication.__ACCOUNT__.__NAME__")
-    Authentication.__ACCOUNT__.wrong.password="__configureme__"
+    Authentication.__ACCOUNT__.username=Lazy.get("i0.Authentication.__ACCOUNT__.__NAME__")
+    Authentication.__ACCOUNT__.wrong.password=new GuardedString("WRONG".toCharArray());
     /* SchemaApiOpTests: */
     
     /* declared object classes */
