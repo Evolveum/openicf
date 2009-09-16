@@ -39,6 +39,6 @@ public class AccountAttributeTest {
     @Test
     public void testNegative() {
         // group's native attribute can't yield Account attribute.
-        Assert.assertNull(AccountAttribute.fromNative(NativeAttribute.G_USERS));
+        Assert.assertNull(AccountAttribute.fromNative(NativeAttribute.USERS));
     }
 }

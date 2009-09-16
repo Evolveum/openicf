@@ -30,12 +30,12 @@ import java.util.Map;
 import org.identityconnectors.framework.common.objects.Name;
 
 public enum GroupAttribute implements ConnectorAttribute {
-    GROUPNAME(Name.NAME, NativeAttribute.G_NAME), 
-    GID("gid", NativeAttribute.GID), 
-    USERS("users", NativeAttribute.G_USERS);
+    GROUPNAME(Name.NAME, NativeAttribute.NAME), 
+    GID("gid", NativeAttribute.ID), 
+    USERS("users", NativeAttribute.USERS);
     
-    private String n;
-    private NativeAttribute nattr;
+    private String name;
+    private NativeAttribute nativeAttr;
     private static final Map<NativeAttribute, GroupAttribute> nativeToGroup = new EnumMap<NativeAttribute, GroupAttribute>(NativeAttribute.class);
     static {
         for (GroupAttribute accAttr : values()) {
@@ -59,16 +59,16 @@ public enum GroupAttribute implements ConnectorAttribute {
     }
 
     private GroupAttribute(String name, NativeAttribute nativeAttr) {
-        n = name;
-        nattr = nativeAttr;
+        this.name = name;
+        this.nativeAttr = nativeAttr;
     }
     
     public String getName() {
-        return n;
+        return name;
     }
 
     public NativeAttribute getNative() {
-        return nattr;
+        return nativeAttr;
     }
 
 }

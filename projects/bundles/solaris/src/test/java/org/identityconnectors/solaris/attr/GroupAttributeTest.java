@@ -39,6 +39,6 @@ public class GroupAttributeTest {
     @Test
     public void testNegative() {
         // Account's native attribute can't yield Group attribute.
-        Assert.assertNull(GroupAttribute.fromNative(NativeAttribute.NAME));
+        Assert.assertNull(GroupAttribute.fromNative(NativeAttribute.DIR));
     }
 }

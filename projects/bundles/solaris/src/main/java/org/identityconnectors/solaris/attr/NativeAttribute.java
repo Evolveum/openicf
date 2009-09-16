@@ -27,10 +27,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum NativeAttribute {
-    /** USER attribute */
+    /** USER/GROUP attribute */
     NAME,
-    /** USER attribute */
-    UID,
+    /** USER/GROUP attribute */
+    ID,
     /** USER attribute: primary group */
     GROUP_PRIM,
     /** USER attribute */
@@ -68,13 +68,8 @@ public enum NativeAttribute {
     LAST_LOGIN,
     
     
-    
     /** GROUP attribute */
-    G_NAME,
-    /** GROUP attribute */
-    GID,
-    /** GROUP attribute */
-    G_USERS;
+    USERS;
 
     private static final Map<String, NativeAttribute> stringToNative = new HashMap<String, NativeAttribute>();
     static {

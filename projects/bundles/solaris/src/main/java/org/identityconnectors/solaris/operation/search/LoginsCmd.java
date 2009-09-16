@@ -34,12 +34,13 @@ import static org.identityconnectors.solaris.attr.NativeAttribute.MIN_DAYS_BETWE
 import static org.identityconnectors.solaris.attr.NativeAttribute.NAME;
 import static org.identityconnectors.solaris.attr.NativeAttribute.PWSTAT;
 import static org.identityconnectors.solaris.attr.NativeAttribute.SHELL;
-import static org.identityconnectors.solaris.attr.NativeAttribute.UID;
+import static org.identityconnectors.solaris.attr.NativeAttribute.ID;
 import static org.identityconnectors.solaris.attr.NativeAttribute.USER_EXPIRE;
 import static org.identityconnectors.solaris.attr.NativeAttribute.USER_INACTIVE;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
@@ -58,7 +59,7 @@ class LoginsCmd implements Command {
     static {
         set = EnumSet.of(COMMENT, DAYS_BEFORE_TO_WARN, DIR, GROUPS_SEC,
                 GROUP_PRIM, LOCK, MAX_DAYS_BETWEEN_CHNG, MIN_DAYS_BETWEEN_CHNG, 
-                PWSTAT, SHELL, UID, USER_EXPIRE, USER_INACTIVE);
+                PWSTAT, SHELL, ID, USER_EXPIRE, USER_INACTIVE);
         /*
          * NativeAttribute.NAME is left out from the 'set' on purpose. The
          * reason is that the name is already known to the issuer of logins
@@ -89,10 +90,10 @@ class LoginsCmd implements Command {
      * the implementation is changed, don't forget to update the list of
      * acquired attributes: {@link LoginsCmd#set}.
      */
-    public static SolarisEntry getEntry(String out, String username) {
+    public static SolarisEntry getEntry(String accountLine, String username) {
         final SolarisEntry.Builder bldr = new SolarisEntry.Builder(username);
         
-        final String[] tokens = out.split(":");
+        final String[] tokens = accountLine.split(":");
         final Iterator<String> tokenIt = Arrays.asList(tokens).iterator();
         
         /*
@@ -115,7 +116,7 @@ class LoginsCmd implements Command {
         }
         bldr.addAttr(NAME, username);
         /* USER UID */
-        bldr.addAttr(UID, tokenIt.next());
+        bldr.addAttr(ID, tokenIt.next());
         
         /* PRIMARY GROUP NAME */
         bldr.addAttr(GROUP_PRIM, tokenIt.next());
@@ -131,7 +132,7 @@ class LoginsCmd implements Command {
         final int MIN_TOKENS = 14;
         final int totalTokens = tokens.length;
         if (totalTokens < MIN_TOKENS) {
-            throw new RuntimeException("Error: Missing tokens in output for user '" + username + "'" + ", output: <" + out + ">");
+            throw new RuntimeException("Error: Missing tokens in output for user '" + username + "'" + ", accountLine: <" + accountLine + ">");
         }
         
         final int numSecondaryGroups = (totalTokens-MIN_TOKENS)/2;
@@ -156,12 +157,12 @@ class LoginsCmd implements Command {
         final String pwstat = tokenIt.next();
         if ("PS".equals(pwstat)) {
             bldr.addAttr(PWSTAT, Boolean.TRUE.toString());
-        }
-        // TODO shouldn't it return false otherwise (see SVIDRA#buildUser(String, WSUser))?
-        if ("LK".equals(pwstat)) {
+        } else if ("LK".equals(pwstat)) {
             bldr.addAttr(LOCK, Boolean.TRUE.toString());
+        } else {
+            bldr.addAttr(LOCK, Collections.emptyList());
+            bldr.addAttr(PWSTAT, Collections.emptyList());
         }
-        // TODO shouldn't it return false otherwise (see SVIDRA#buildUser(String, WSUser))?
         
         /* PASSWD CHANGE - skip */
         tokenIt.next();

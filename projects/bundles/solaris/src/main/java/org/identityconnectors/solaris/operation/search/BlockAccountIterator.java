@@ -51,25 +51,27 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
     /** of last time of user login is required */
     private boolean isLast;
 
-    private ListIterator<String> iter;
-    private Iterator<SolarisEntry> blockIter;
+    /** iterates through the full list of usernames. */
+    private ListIterator<String> usernameIter;
+    /** iterates through block of accounts. */
+    private Iterator<SolarisEntry> accountIter;
     private SolarisConnection conn;
     private CommandBuilder bldr;
 
     /** size of the blocks that the accounts are iterated. */
-    private final int BLOCK_SIZE;
+    private final int blockSize;
     private int blockCount = -1;
     private SolarisConfiguration config;
 
     public BlockAccountIterator(List<String> usernames, Set<NativeAttribute> attrsToGet, SolarisConnection conn, CommandBuilder bldr, SolarisConfiguration config, int blockSize) {
         this.conn = conn;
         this.bldr = bldr;
-        this.BLOCK_SIZE = blockSize;
+        this.blockSize = blockSize;
         this.config = config;
 
         accounts = usernames;
-        iter = accounts.listIterator();
-        blockIter = initNextBlockOfAccounts(iter);
+        usernameIter = accounts.listIterator();
+        accountIter = initNextBlockOfAccounts(usernameIter);
         
         boolean isProfiles = attrsToGet.contains(NativeAttribute.PROFILES);
         boolean isAuths = attrsToGet.contains(NativeAttribute.AUTHS);
@@ -85,11 +87,9 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
     private Iterator<SolarisEntry> initNextBlockOfAccounts(Iterator<String> globalIterator) {
         blockCount++;
         
-        int blockCntr = 0;
-        List<String> blockUserNames = new ArrayList<String>(BLOCK_SIZE);
-        while (globalIterator.hasNext() && blockCntr < BLOCK_SIZE) {
+        List<String> blockUserNames = new ArrayList<String>(blockSize);
+        for (int i = 0; globalIterator.hasNext() && i < blockSize; i++) {
             blockUserNames.add(globalIterator.next());
-            blockCntr++;
         }
         
         List<SolarisEntry> blockEntries = buildEntries(blockUserNames);
@@ -119,13 +119,13 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
     private List<SolarisEntry> processOutput(String out) {
 //        SVIDRA# getUsersFromCaptureList(CaptureList captureList, ArrayList users)()
         
-        List<String> tokens = Arrays.asList(out.split("\n"));
-        Iterator<String> it = tokens.iterator();
+        List<String> lines = Arrays.asList(out.split("\n"));
+        Iterator<String> it = lines.iterator();
         int captureIndex = 0;
-        List<SolarisEntry> result = new ArrayList<SolarisEntry>(BLOCK_SIZE);
+        List<SolarisEntry> result = new ArrayList<SolarisEntry>(blockSize);
         
         while (it.hasNext()) {
-            final int accountIndex = captureIndex + (blockCount * BLOCK_SIZE);
+            final int accountIndex = captureIndex + (blockCount * blockSize);
             final String currentAccount = accounts.get(accountIndex);
             String token = it.next();
             String lastLoginToken = null;
@@ -137,6 +137,7 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
                 token = token.substring(index + SHELL_CONT_CHARS.length());
             }
             
+            //TODO clarify meaning of this section.
             if (isLast) {
                 if (!it.hasNext()) {
                     throw new ConnectorException(String.format("User '%s' is missing last login time.", currentAccount));
@@ -167,9 +168,6 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
      * @return the build user.
      */
     private SolarisEntry buildUser(String username, String token, String lastLoginToken) {
-        if (token == null) {
-            return null;
-        }
         if (lastLoginToken == null) {
             return LoginsCmd.getEntry(token, username);
         } else {
@@ -248,16 +246,16 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
     }
 
     public boolean hasNext() {
-        return blockIter.hasNext() || iter.hasNext();
+        return accountIter.hasNext() || usernameIter.hasNext();
     }
 
     public SolarisEntry next() {
-        if (blockIter.hasNext()) {
-            return blockIter.next();
+        if (accountIter.hasNext()) {
+            return accountIter.next();
         } else {
-            if (iter.hasNext()) {
-                blockIter = initNextBlockOfAccounts(iter);
-                return blockIter.next();
+            if (usernameIter.hasNext()) {
+                accountIter = initNextBlockOfAccounts(usernameIter);
+                return accountIter.next();
             }
         }
         throw new NoSuchElementException();

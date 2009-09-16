@@ -190,16 +190,9 @@ public class SolarisConnection {
         return waitFor(string, WAIT);
     }
     
-    /** {@see SolarisConnection#waitForCaseInsensitive(String, int)}*/
+    /** do case insensitive match and wait for */
     public String waitForCaseInsensitive(final String string) throws Exception {
-        return waitForCaseInsensitive(string, WAIT);
-    }
-    
-    /** do case insensitive match and wait for
-     * {@see SolarisConnection#waitFor(String, int)} 
-     */
-    public String waitForCaseInsensitive(final String string, int millis) throws Exception {
-        return waitForImpl(string, millis, true);
+        return waitForImpl(string, WAIT, true);
     }
 
     /** Match a sequence of expected patterns, and invoke the respective actions on them. 

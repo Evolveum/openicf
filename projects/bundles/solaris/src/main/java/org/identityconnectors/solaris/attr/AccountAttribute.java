@@ -60,8 +60,8 @@ public enum AccountAttribute implements ConnectorAttribute {
     LOCK("lock", NativeAttribute.LOCK),
     PASSWD_FORCE_CHANGE("force_change", NativeAttribute.PWSTAT);
 
-    private String n;
-    private NativeAttribute nattr;
+    private String name;
+    private NativeAttribute nativeAttr;
 
     private static final Map<NativeAttribute, AccountAttribute> nativeToAccount = new EnumMap<NativeAttribute, AccountAttribute>(NativeAttribute.class);
     static {
@@ -99,15 +99,15 @@ public enum AccountAttribute implements ConnectorAttribute {
     }
 
     private AccountAttribute(String name, NativeAttribute nativeAttr) {
-        n = name;
-        nattr = nativeAttr;
+        this.name = name;
+        this.nativeAttr = nativeAttr;
     }
     
     public String getName() {
-        return n;
+        return name;
     }
 
     public NativeAttribute getNative() {
-        return nattr;
+        return nativeAttr;
     }
 }

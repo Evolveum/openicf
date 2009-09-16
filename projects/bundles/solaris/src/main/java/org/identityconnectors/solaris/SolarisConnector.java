@@ -84,7 +84,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
 
     private static Schema _schema;
     
-    private static String checkAlive = "checkAlive";
+    private static String CHECK_ALIVE = "checkAlive";
 
     /**
      * {@see
@@ -101,8 +101,10 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      */
     public void checkAlive() {
         try {
-            getConnection().send("echo '" + checkAlive + "'");
-            getConnection().waitFor(checkAlive);
+            String out = getConnection().executeCommand("echo '" + CHECK_ALIVE + "'");
+            if (!out.contains(CHECK_ALIVE)) {
+                throw new RuntimeException("Solaris Connector no longer alive.");
+            }
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }

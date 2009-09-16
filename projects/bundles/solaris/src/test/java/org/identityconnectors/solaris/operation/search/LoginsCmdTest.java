@@ -55,8 +55,8 @@ public class LoginsCmdTest {
     
     @Test
     public void testEnum() {
-        Assert.assertTrue(LoginsCmd.isProvided(NativeAttribute.NAME));
-        // GROUP NAME attribute is not provided by Logins command.
-        Assert.assertFalse(LoginsCmd.isProvided(NativeAttribute.G_NAME));
+        Assert.assertTrue(LoginsCmd.isProvided(NativeAttribute.ID));
+        // USERS attribute is not provided by Logins command.
+        Assert.assertFalse(LoginsCmd.isProvided(NativeAttribute.USERS));
     }
 }

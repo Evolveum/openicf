@@ -75,7 +75,7 @@ public class SolarisEntry {
         }
         
 //        /** add an attribute with null value */
-//        public Builder addNullAttr(NativeAttribute name) {
+//        public Builder addEmptyAttr(NativeAttribute name) {
 //            attrSet.add(AttributeBuilder.build(name.getName()));
 //            return this;
 //        }
