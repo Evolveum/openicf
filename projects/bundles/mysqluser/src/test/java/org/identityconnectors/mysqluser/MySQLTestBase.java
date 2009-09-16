@@ -199,7 +199,6 @@ public abstract class MySQLTestBase {
     }
 
     /**
-     * Test method for {@link MySQLUserConnector#update(ObjectClass, Set, OperationOptions)}.
      * Test creating of the connector object, searching using UID and update
      */
     @Test
@@ -238,7 +237,6 @@ public abstract class MySQLTestBase {
     }
 
     /**
-     * Test method for {@link MySQLUserConnector#update(ObjectClass, Set, OperationOptions)}.
      * Test creating of the connector object, searching using UID and update
      */
     @Test(expected = IllegalArgumentException.class)
@@ -420,7 +418,6 @@ public abstract class MySQLTestBase {
     }
 
     /**
-     * Test method for {@link MySQLUserConnector#authenticate(username, password, options)}.
      * Test creating of the connector object, searching using UID and update
      */
     @Test
@@ -437,9 +434,27 @@ public abstract class MySQLTestBase {
         assertEquals(userName, uid.getUidValue());
         quitellyDeleteUser(userName); 
     }
+    
 
     /**
-     * Test method for {@link MySQLUserConnector#authenticate(String, GuardedString, OperationOptions)}.
+     * Test creating of the connector object, searching using UID and update
+     */
+    @Test
+    public void testResolveUsernameOriginal() {
+        String userName = TST_USER1;
+        assertNotNull(facade);
+        //To be sure it is created
+        quitellyCreateUser(userName, testPassword);    
+        
+        // test user created
+        testUserFound(userName, true);
+        
+        final Uid uid = facade.resolveUsername(ObjectClass.ACCOUNT, userName, null);
+        assertEquals(userName, uid.getUidValue());
+        quitellyDeleteUser(userName); 
+    }    
+
+    /**
      * Test creating of the connector object, searching using UID and update
      */
     @Test(expected = InvalidCredentialException.class)
@@ -457,9 +472,17 @@ public abstract class MySQLTestBase {
             quitellyDeleteUser(userName);
         }
     }
+    
+    /**
+     * Test creating of the connector object, searching using UID and update
+     */
+    @Test(expected = InvalidCredentialException.class)
+    public void testResolveUsernameWrongOriginal() {
+        assertNotNull(facade);
+        facade.resolveUsername(ObjectClass.ACCOUNT, "blaf", null);
+    }    
 
     /**
-     * Test method for {@link MySQLUserConnector#update(ObjectClass, Set, OperationOptions)}.
      * Test creating of the connector object, searching using UID and update
      */
     @Test

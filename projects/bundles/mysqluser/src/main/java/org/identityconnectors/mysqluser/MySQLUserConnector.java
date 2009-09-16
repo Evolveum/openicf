@@ -66,6 +66,7 @@ import org.identityconnectors.framework.spi.PoolableConnector;
 import org.identityconnectors.framework.spi.operations.AuthenticateOp;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
+import org.identityconnectors.framework.spi.operations.ResolveUsernameOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
@@ -89,7 +90,7 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
         displayNameKey = "MYSQL_CONNECTOR_DISPLAY",
         configurationClass = MySQLUserConfiguration.class) 
 public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp<FilterWhereBuilder>, DeleteOp, UpdateOp,
-        SchemaOp, TestOp, AuthenticateOp {
+        SchemaOp, TestOp, AuthenticateOp, ResolveUsernameOp {
     
     /**
      * Setup logging for the {@link MySQLUserConnector}.
@@ -109,8 +110,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
 
     /**
      * Gets the Configuration context for this connector.
-     * 
-     * @see org.identityconnectors.framework.spi.PoolableConnector#getConfiguration()
+     * {@inheritdoc }
      */
     public Configuration getConfiguration() {
         return this.config;
@@ -119,8 +119,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
    
     /**
      * Callback method to receive the {@link Configuration}.
-     * 
-     * @see org.identityconnectors.framework.spi.PoolableConnector#init(Configuration)
+     * {@inheritdoc }
      */
     public void init(Configuration cfg) {
         this.config = (MySQLUserConfiguration) cfg;
@@ -130,8 +129,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
     
     /**
      * Method to receive check the connector is valid.
-     * 
-     * @see org.identityconnectors.framework.spi.PoolableConnector#checkAlive()
+     * {@inheritdoc }
      */
     public void checkAlive() {
         if ( StringUtil.isNotBlank(config.getDatasource())) {
@@ -160,8 +158,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
   
     /**
      * Disposes of the {@link MySQLUserConnector}'s resources.
-     * 
-     * @see org.identityconnectors.framework.spi.PoolableConnector#dispose()
+     * {@inheritdoc }
      */
     public void dispose() {
         if ( this.conn != null ) {
@@ -174,16 +171,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
     
     /**
      * Create a new mysql user using model-user rights.
-     * 
-     * @param oclass the {@link ObjectClass} type (must be ACCOUNT )
-     * @param attrs attributes. Required attributes are name and password
-     * @param options additional options. Additional options are not supported in this operation.  
-     * 
-     * @return the value that represents the account  {@link Uid} for the new user. 
-     * @throws AlreadyExistsException if the user or group already exists on the target resource
-     * @throws ConnectorException if an invalid attribute is specified
-     * 
-     * @see org.identityconnectors.framework.spi.operations.CreateOp#create(ObjectClass, Set, OperationOptions)
+     * {@inheritdoc }
      */
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {
 
@@ -232,14 +220,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
     
     /**
      * Deletes a mysql user using drop statement
-     * @param oclass the type of object to delete. Only ACCOUNT is supported.
-     * @param uid the {@link Uid} of the user to delete
-     * @param options additional options. Additional options are not supported in this operation. 
-     * 
-     * @throws UnknownUidException if the specified Uid does not exist on the target resource
-     * @throws ConnectorException if a problem occurs with the connection
-     * 
-     * @see DeleteOp#delete(ObjectClass, Uid, OperationOptions)
+     * {@inheritdoc }
      */
     public void delete(final ObjectClass oclass, final Uid uid, final OperationOptions options) {
         if (oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
@@ -266,12 +247,8 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
     }
     
     /**
-     * Update the database row w/ the data provided.
-     * @param oclass the {@link ObjectClass} type (must be ACCOUNT )
-     * @param attrs attributes. Required attributes are name and password
-     * @param options additional options. Additional options are not supported in this operation.  
-     * 
-     * @see UpdateOp#update(ConnectorObject, Set, OperationOptions )
+     * Update mysql user.
+     * {@inheritDoc}
      */
     public Uid update(final ObjectClass oclass, Uid oldUid, final Set<Attribute> attrs, final OperationOptions options) {
         final String SQL_UPDATE = "UPDATE mysql.user SET {0} WHERE user=?";
@@ -328,8 +305,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
 
     /**
      * Creates a MySQL filter translator.
-     * 
-     * @see FilterTranslator#createFilterTranslator(ObjectClass, OperationOptions )
+     * {@inheritdoc }
      */
     public FilterTranslator<FilterWhereBuilder> createFilterTranslator(ObjectClass oclass, OperationOptions options) {
         return new MySQLUserFilterTranslator(oclass, options);
@@ -339,12 +315,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      * Runs a query generated by the MySQLUserFilterTranslator.
      * This will be called once for each native query produced
      * by the FilterTranslator. 
-     * @param oclass The object class for the search. Will never be null.
-     * @param where The native query to run. A value of null means 'return everything for the given object class'.
-     * @param handler Results should be returned to this handler
-     * @param options this can be null.
-     * 
-     * @see SearchOp#executeQuery(ObjectClass, Object, ResultsHandler, OperationOptions)
+     * {@inheritdoc }
      */
     public void executeQuery(ObjectClass oclass, FilterWhereBuilder where, ResultsHandler handler, OperationOptions options) {
         /**
@@ -413,9 +384,8 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
 
 
     /**
+     * Create the mysqluser schema
      * {@inheritDoc}
-     * 
-     * @see SchemaOp#schema()
      */
     public Schema schema() {
         //The Name is supported attribute
@@ -435,7 +405,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
 
     /**
      * Test the configuration and connection
-     * @see org.identityconnectors.framework.spi.operations.TestOp#test()
+     * {@inheritDoc}
      */
     public void test() {
         try {
@@ -459,12 +429,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
 
     /** 
      * Attempts to authenticate the given user/password combination.
-     * 
-     * @param user the username of the user
-     * @param password the user's password
-     * @throws InvalidCredentialException if the user is not authenticated
-     *  
-     * @see org.identityconnectors.framework.spi.operations.AuthenticateOp#authenticate(java.lang.String, java.lang.String, org.identityconnectors.framework.common.objects.OperationOptions)
+     * {@inheritdoc }
      */
     public Uid authenticate(ObjectClass oclass, String user, GuardedString password, OperationOptions options) {
         final String AUTH_SELECT="SELECT DISTINCT user FROM mysql.user WHERE user = ? AND password = password(?)";
@@ -517,6 +482,56 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
         }
     }
 
+
+    /**
+     * {@inheritDoc}
+     */
+    public Uid resolveUsername(ObjectClass oclass, String user, OperationOptions options) {
+        final String AUTH_SELECT="SELECT DISTINCT user FROM mysql.user WHERE user = ?";
+        
+        log.info("authenticate user: {0}", user);
+
+        // Get the needed attributes
+        if(oclass == null || (!oclass.equals(ObjectClass.ACCOUNT))) {
+            throw new IllegalArgumentException(config.getMessage(MSG_ACCOUNT_OBJECT_CLASS_REQUIRED)); 
+        }         
+
+        if (user == null || StringUtil.isBlank(user)) {
+            throw new IllegalArgumentException(config.getMessage(MSG_NAME_BLANK));
+        }
+
+        List<SQLParam> values = new ArrayList<SQLParam>();
+        values.add(new SQLParam("user", user, Types.VARCHAR));
+        
+        PreparedStatement stmt = null;
+        ResultSet result = null;
+        try {
+            conn.openConnection();
+            
+            stmt = conn.prepareStatement(AUTH_SELECT, values);
+            result = stmt.executeQuery();
+            //No PasswordExpired capability
+            if (!result.next()) {
+                throw new InvalidCredentialException(config.getMessage(MSG_AUTH_FAILED, user));
+            }            
+            final Uid uid = new Uid( result.getString(1));
+            
+            conn.commit();
+
+            log.info("user: {0} authenticated ", user);
+            return uid;
+        } catch (SQLException e) {
+            log.error(e, "user: {0} authentication failed ", user);
+            SQLUtil.rollbackQuietly(conn);
+            throw ConnectorException.wrap(e);
+        } finally {
+            SQLUtil.closeQuietly(result);
+            SQLUtil.closeQuietly(stmt);
+            
+            conn.closeConnection();
+        }
+    }
+    
     /**
      * Only supported attributes
      * @param oclass the only one supported class
@@ -883,5 +898,6 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      */
     private Uid newUid(String userName) {
         return new Uid(userName);
-    }    
+    }
+
 }

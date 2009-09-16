@@ -73,8 +73,6 @@ public class MySQLUserConnection extends DatabaseConnection {
 
     /**
      * Determines if the underlying JDBC {@link java.sql.Connection} is valid.
-     * 
-     * @see org.identityconnectors.framework.spi.Connection#test()
      * @throws RuntimeException
      *             if the underlying JDBC {@link java.sql.Connection} is not valid otherwise do nothing.
      */

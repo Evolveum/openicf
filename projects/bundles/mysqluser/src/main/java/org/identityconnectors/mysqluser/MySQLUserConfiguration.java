@@ -224,8 +224,6 @@ public class MySQLUserConfiguration extends AbstractConfiguration {
 
     /**
      * Attempt to validate the arguments added to the Configuration.
-     * 
-     * @see org.identityconnectors.framework.Configuration#validate()
      */
     @Override
     public void validate() {
