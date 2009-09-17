@@ -35,23 +35,16 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
  * @author David Adam
  */
 public class SolarisEntries {
-    private SolarisConnection conn;
 
-    public SolarisEntries(SolarisConnection conn) {
-        this.conn = conn;
-    }
-
-    public Iterator<SolarisEntry> getAllAccounts(Set<NativeAttribute> attrsToGet) {
+    public static Iterator<SolarisEntry> getAllAccounts(Set<NativeAttribute> attrsToGet, SolarisConnection conn) {
         return AccountUtil.getAllAccounts(conn, attrsToGet);
     }
 
     // public abstract Iterator<SolarisEntry> getAllGroups();
 
-    public SolarisEntry getAccount(String name, Set<NativeAttribute> attrsToGet) {
+    public static SolarisEntry getAccount(String name, Set<NativeAttribute> attrsToGet, SolarisConnection conn) {
         return AccountUtil.getAccount(conn, name, attrsToGet);
     }
-
-
 
     // public abstract SolarisEntry getGroup(String groupName,
     // Set<NativeAttribute> attrsToGet);

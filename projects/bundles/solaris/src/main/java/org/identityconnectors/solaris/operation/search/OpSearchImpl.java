@@ -23,51 +23,96 @@
 package org.identityconnectors.solaris.operation.search;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.identityconnectors.common.logging.Log;
-import org.identityconnectors.framework.common.objects.AttributeBuilder;
+import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
-import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Schema;
-import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.attr.AccountAttribute;
-import org.identityconnectors.solaris.constants.SolarisAttribute;
+import org.identityconnectors.solaris.attr.ConnectorAttribute;
+import org.identityconnectors.solaris.attr.GroupAttribute;
+import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.AbstractOp;
-import org.identityconnectors.solaris.operation.search.nodes.AttributeNode;
-import org.identityconnectors.solaris.operation.search.nodes.BinaryOpNode;
+import org.identityconnectors.solaris.operation.search.nodes.EqualsNode;
 import org.identityconnectors.solaris.operation.search.nodes.Node;
 import org.identityconnectors.solaris.operation.search.nodes.UniversalNode;
 
 
 public class OpSearchImpl extends AbstractOp {
     
-    private OperationOptions options;
-    private ObjectClass oclass;
+    private final ObjectClass oclass;
     final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT, ObjectClass.GROUP};
+    private final Node filter;
+    private final ResultsHandler handler;
+    
+    /** original set of attributes to get, contains {@see ConnectorAttribute}-s. */
+    private final String[] attrsToGet;
+    /** names of attributes to get translated to {@see NativeAttribute}-s. */
+    private final Set<NativeAttribute> attrsToGetNative;
+    
     /** names of returned by default attributes (given by schema, it is static during lifetime of the connector */
     private static String[] returnedByDefaultAttributeNames; // todo possibly this could be acquired right from connector attribute structures.
     
-    public OpSearchImpl(Log log, SolarisConnector conn) {
+    public OpSearchImpl(Log log, SolarisConnector conn, ObjectClass oclass, Node filter,
+            ResultsHandler handler, OperationOptions options) {
         super(log, conn, OpSearchImpl.class);
+        this.oclass = oclass;
+        
+        if (filter == null) {
+            // NULL indicates that we should return all results.
+            this.filter = new UniversalNode();
+        } else {
+            this.filter = filter;
+        }
+        
+        this.handler = handler;
+        
+        
+        
+        /** attributes to get init */
+        String[] attrsToGet = options.getAttributesToGet();
+        if (attrsToGet == null) {
+            // if no attributes to get, return all RETURNED_BY_DEFAULT attributes
+            attrsToGet = getReturnedByDefaultAttrs(getSchema());
+        }
+        this.attrsToGet = attrsToGet;
+        
+        
+        // translate attrsToGet from Connector to Native attributes:
+        Set<NativeAttribute> translatedAttrs = new HashSet<NativeAttribute>(attrsToGet.length);
+        if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
+            for (String accountAttrName : attrsToGet) {
+                translatedAttrs.add(AccountAttribute.fromString(accountAttrName).getNative());
+            }
+        } else if (oclass.is(ObjectClass.GROUP_NAME)) {
+            for (String groupAttrName : attrsToGet) {
+                translatedAttrs.add(GroupAttribute.fromString(groupAttrName).getNative());
+            }
+        }
+        attrsToGetNative = translatedAttrs;
     }
     
     /**
      * Search operation
      * 
-     * @param query contains the filters. Is created by {@link SolarisFilterTranslator}
+     * @param filter contains the filters. Is created by {@link SolarisFilterTranslator}
      */
-    public void executeQuery(ObjectClass oclass, Node query,
-            ResultsHandler handler, OperationOptions options) {
+    public void executeQuery() {
         SolarisUtil.controlObjectClassValidity(oclass, acceptOC, getClass());
         
         if (oclass.is(ObjectClass.GROUP_NAME)) {
@@ -75,96 +120,105 @@ public class OpSearchImpl extends AbstractOp {
             throw new UnsupportedOperationException();
         }
         
-        this.options = options;
-        this.oclass = oclass;
+        /*
+         * 
+         *  ACCOUNT search
+         *   
+         */
         
-        if (query == null) {
-            // NULL indicates that we should return all results.
-            query = new UniversalNode();
+        /* required attributes inside the search (!= attrsToGet) */
+        Set<NativeAttribute> requiredAttrs = new HashSet<NativeAttribute>(NativeAttribute.values().length);
+        // 1) retrieve native attributes from the Node
+        filter.collectAttributeNames(requiredAttrs);
+        // 2) make union of attributes inside filter AND attributesToGet given from client.
+        requiredAttrs.addAll(attrsToGetNative);
+        
+        
+        if (filter instanceof EqualsNode && ((EqualsNode) filter).getAttributeName().equals(NativeAttribute.NAME)) {
+            simpleFilter(requiredAttrs);
+        } else {
+            complexFind(requiredAttrs);
         }
-        
-//        query = traverseAndTranslate(query, oclass);
     }
 
-//    /** calls handler with given string 
-//     * @param sp TODO*/
-//    private void notifyHandler(ResultsHandler handler, String uid, SearchPerformer sp) {
-//        // TODO this could be more complicated, when other than Name attributes arrive.
-//        ConnectorObjectBuilder builder = new ConnectorObjectBuilder()
-//                .addAttribute(AttributeBuilder.build(Name.NAME, uid))
-//                .addAttribute(new Uid(uid));
-//        /*
-//         * return RETURNED_BY_DEFAULT attributes + attrsToGet
-//         */
-//        /** attributes to get */
-//        String[] attrsToGet = options.getAttributesToGet();
-//        if (attrsToGet == null) {
-//            // if no attributes to get, return all RETURNED_BY_DEFAULT attributes
-//            attrsToGet = getReturnedByDefaultAttrs(getSchema());
-//        }
-//        
-//        for (String attrName : attrsToGet) {
-//            // acquire the attribute's value:
-//            final List<String> attrValue = getValueForUid(uid, attrName, sp);
-//            
-//            // set it in the returned connector object:
-//            if (attrValue != null) {
-//                builder.addAttribute(AttributeBuilder.build(attrName, attrValue));
-//            }
-//        }
-//        
-//        ConnectorObject co = builder.build();
-//        
-//        handler.handle(co);
-//    }
+    /**
+     * COMPLEX filtering, requires evaluation of the filter tree ({@see Node}).
+     */
+    private void complexFind(Set<NativeAttribute> requiredAttrs) {
+        Iterator<SolarisEntry> entryIt = SolarisEntries.getAllAccounts(requiredAttrs, getConnection());
+        while (entryIt.hasNext()) {
+            final SolarisEntry entry = entryIt.next();
+            if (filter.evaluate(entry)) {
+                ConnectorObject connObj = convertToConnectorObject(entry, oclass);
+                handler.handle(connObj);
+            }
+        }
+    }
 
-//    /**
-//     * Acquire a given attribute for a uid.
-//     * 
-//     * @param uid
-//     *            the uid which is queried for all attributes
-//     * @param attrName
-//     *            the selected attribute, whose value is returned
-//     * @param sp 
-//     * @return the attribute's value
-//     */
-//    private List<String> getValueForUid(String uid, String attrName, SearchPerformer sp) {
-//        final SolarisAttribute attrType = SolarisUtil.getAttributeBasedOnName(attrName);
-//        if (attrType == null) {
-//            return null;
-//        }
-//        //final List<String> result = sp.performValueSearchForUid(attrType, attrType.getRegExpForUidAndAttribute(), uid);
-//        throw new UnsupportedOperationException();
-//        
-////        return result;
-//    }
+    /**
+     * SIMPLE filtering defined as an {@see EqualsNode} with a single {@see Name} attribute.
+     * For instance: userName = 'johnSmith'.
+     */
+    private void simpleFilter(Set<NativeAttribute> requiredAttrs) {
+        SolarisEntry singleAccount = SolarisEntries.getAccount(((EqualsNode) filter).getValue(), requiredAttrs, getConnection());
+        ConnectorObject connObj = convertToConnectorObject(singleAccount, oclass);
+        handler.handle(connObj);
+    }
 
-//    /**
-//     * TODO this can be done in two ways: 
-//     * either you have a register of returned by default attributes in the connector, 
-//     * or you find it in the schema.
-//     * 
-//     * @param schema
-//     * @return set of attribute names that are returned by default
-//     */
-//    private String[] getReturnedByDefaultAttrs(Schema schema) {
-//        // return the cached names
-//        if (returnedByDefaultAttributeNames != null)
-//            return returnedByDefaultAttributeNames;
-//        
-//        List<String> result = new ArrayList<String>();
-//        
-//        ObjectClassInfo ocinfo = schema.findObjectClassInfo(oclass.getObjectClassValue());
-//        Set<AttributeInfo> attrInfo = ocinfo.getAttributeInfo();
-//        for (AttributeInfo attributeInfo : attrInfo) {
-//            if (attributeInfo.isReturnedByDefault()) {
-//                result.add(attributeInfo.getName());
-//            }
-//        }
-//        
-//        //cache the names
-//        returnedByDefaultAttributeNames = result.toArray(new String[0]);
-//        
-//        return returnedByDefaultAttributeNames;
-//    }
+    /**
+     * @param account
+     * @return A connector object based on attributes of given 'account', that contains the ATTRS_TO_GET.
+     */
+    private ConnectorObject convertToConnectorObject(SolarisEntry account, ObjectClass oclass) {
+        ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
+        Map<NativeAttribute, List<Object>> indexedEntry = indexEntry(account.getAttributeSet());
+        
+        for (String attribute : attrsToGet) {
+            ConnectorAttribute connAttr = (oclass.is(ObjectClass.ACCOUNT_NAME)) ? AccountAttribute.fromString(attribute) : GroupAttribute.fromString(attribute);
+            
+            List<Object> value = indexedEntry.get(connAttr.getNative());
+            if (value == null) 
+                value = Collections.emptyList();
+            builder.addAttribute(connAttr.getName(), value);
+        }
+        
+        return builder.build();
+    }
+
+    private Map<NativeAttribute, List<Object>> indexEntry(Set<Attribute> entryAttrs) {
+        Map<NativeAttribute, List<Object>> map = new HashMap<NativeAttribute, List<Object>>(entryAttrs.size());
+        for (Attribute attribute : entryAttrs) {
+            map.put(NativeAttribute.fromString(attribute.getName()), attribute.getValue());
+        }
+        return map;
+    }
+
+    /**
+     * TODO enhancement::: this can be done in two ways: 
+     * either you have a register of returned by default attributes in the connector, 
+     * or you find it in the schema.
+     * 
+     * @param schema
+     * @return set of attribute names that are returned by default
+     */
+    private String[] getReturnedByDefaultAttrs(Schema schema) {
+        // return the cached names
+        if (returnedByDefaultAttributeNames != null)
+            return returnedByDefaultAttributeNames;
+        
+        List<String> result = new ArrayList<String>();
+        
+        ObjectClassInfo ocinfo = schema.findObjectClassInfo(oclass.getObjectClassValue());
+        Set<AttributeInfo> attrInfo = ocinfo.getAttributeInfo();
+        for (AttributeInfo attributeInfo : attrInfo) {
+            if (attributeInfo.isReturnedByDefault()) {
+                result.add(attributeInfo.getName());
+            }
+        }
+        
+        //cache the names
+        returnedByDefaultAttributeNames = result.toArray(new String[0]);
+        
+        return returnedByDefaultAttributeNames;
+    }
 }

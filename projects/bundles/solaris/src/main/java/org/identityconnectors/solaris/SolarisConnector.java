@@ -156,7 +156,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     
     public void executeQuery(ObjectClass oclass, Node query,
             ResultsHandler handler, OperationOptions options) {
-        new OpSearchImpl(_log, this).executeQuery(oclass, query, handler, options);
+        new OpSearchImpl(_log, this, oclass, query, handler, options).executeQuery();
     }
 
     public FilterTranslator<Node> createFilterTranslator(

@@ -34,6 +34,8 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
 /**
  * Encapsulates an entry and its attributes.
  * Type of attributes must be {@link org.identityconnectors.solaris.attr.NativeAttribute}.
+ * 
+ * Contract: internally this class should contain NativeAttributes!
  * @author David Adam
  */
 public class SolarisEntry {

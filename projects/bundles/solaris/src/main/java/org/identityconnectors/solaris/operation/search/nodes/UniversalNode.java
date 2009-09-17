@@ -41,7 +41,7 @@ public class UniversalNode implements Node {
      * {@see org.identityconnectors.solaris.operation.search.nodes.Node#evaluate(org.identityconnectors.solaris.operation.search.SearchPerformer)}
      */
     public boolean evaluate(SolarisEntry entry) {
-        throw new UnsupportedOperationException();
+        return true;
     }
     
     /**

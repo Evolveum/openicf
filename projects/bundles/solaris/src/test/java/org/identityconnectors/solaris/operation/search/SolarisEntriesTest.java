@@ -31,29 +31,22 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.test.SolarisTestCommon;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 public class SolarisEntriesTest {
-    private SolarisEntries se;
+    private SolarisConnection conn;
 
     @Before
     public void setUp() {
-        SolarisConnection conn = SolarisTestCommon.getSolarisConn();
-        this.se = new SolarisEntries(conn);
-    }
-    
-    @After
-    public void tearDown() {
-        this.se = null;
+        conn = SolarisTestCommon.getSolarisConn();
     }
     
     @Test
     public void testGetAccount() {
         final String userName = "root";
-        SolarisEntry result = se.getAccount(userName, EnumSet.of(NativeAttribute.AUTHS, NativeAttribute.PROFILES, NativeAttribute.NAME));
+        SolarisEntry result = SolarisEntries.getAccount(userName, EnumSet.of(NativeAttribute.AUTHS, NativeAttribute.PROFILES, NativeAttribute.NAME), conn);
         Assert.assertTrue(result.getName().equals(userName));
         Set<Attribute> set = result.getAttributeSet();
         Assert.assertNotNull(set);
@@ -79,7 +72,7 @@ public class SolarisEntriesTest {
         final NativeAttribute profilesAttr = NativeAttribute.PROFILES;
         final NativeAttribute rolesAttr = NativeAttribute.ROLES;
         
-        Iterator<SolarisEntry> result = se.getAllAccounts(EnumSet.of(profilesAttr, rolesAttr));
+        Iterator<SolarisEntry> result = SolarisEntries.getAllAccounts(EnumSet.of(profilesAttr, rolesAttr), conn);
         while (result.hasNext()) {
             final SolarisEntry nextIt = result.next();
             final Set<Attribute> attributeSet = nextIt.getAttributeSet();

@@ -45,7 +45,6 @@ import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.test.common.ToListResultsHandler;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class OpSearchImplTest {
@@ -75,7 +74,7 @@ public class OpSearchImplTest {
      * no exception should be thrown.
      * Searching for all account on the resource -- by null filter.
      */
-    @Test @Ignore // TODO temporarily disabling tests
+    @Test 
     public void testSearchNullFilter() {
         final int NR_OF_USERS = 3;
         List<Pair<String, GuardedString>> pairs = null;
@@ -147,7 +146,7 @@ public class OpSearchImplTest {
     /**
      * Searching using filter
      */
-    @Test @Ignore
+    @Test 
     public void testSearchWithFilter() {
         
         final Set<Attribute> attrs = SolarisTestCommon.initSampleUser();
