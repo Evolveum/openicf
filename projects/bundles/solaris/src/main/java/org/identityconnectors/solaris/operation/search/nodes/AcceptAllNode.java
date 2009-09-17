@@ -33,8 +33,8 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
  * this filter matches everything.
  * @author David Adam
  */
-public class UniversalNode implements Node {
-    public UniversalNode() {}
+public class AcceptAllNode implements Node {
+    public AcceptAllNode() {}
     // kept empty on purpose. This is just a placeholder class. 
 
     /** 

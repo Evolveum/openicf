@@ -50,7 +50,7 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.AbstractOp;
 import org.identityconnectors.solaris.operation.search.nodes.EqualsNode;
 import org.identityconnectors.solaris.operation.search.nodes.Node;
-import org.identityconnectors.solaris.operation.search.nodes.UniversalNode;
+import org.identityconnectors.solaris.operation.search.nodes.AcceptAllNode;
 
 
 public class OpSearchImpl extends AbstractOp {
@@ -75,7 +75,7 @@ public class OpSearchImpl extends AbstractOp {
         
         if (filter == null) {
             // NULL indicates that we should return all results.
-            this.filter = new UniversalNode();
+            this.filter = new AcceptAllNode();
         } else {
             this.filter = filter;
         }

@@ -80,8 +80,7 @@ public class OpCreateImpl extends AbstractOp {
         }
         
         // Read only list of attributes
-        final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(
-                AttributeUtil.toMap(attrs));
+        final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
 
         final Name name = (Name) attrMap.get(Name.NAME);
         final String accountId = name.getNameValue();
