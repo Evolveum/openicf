@@ -107,7 +107,7 @@ public class AccountOperationSearchTests extends OracleERPTestsBase {
         
         testAttrSet(attrs, returned, OperationalAttributes.PASSWORD_NAME);
         final Set<Attribute> enabledAttr = getAttributeSet(ACCOUNT_ENABLED);
-        testAttrSet(enabledAttr, returned, OperationalAttributes.ENABLE_DATE_NAME);
+        testAttrSet(enabledAttr, returned, OperationalAttributes.ENABLE_DATE_NAME, OperationalAttributes.PASSWORD_EXPIRED_NAME);
     }     
     
     /**

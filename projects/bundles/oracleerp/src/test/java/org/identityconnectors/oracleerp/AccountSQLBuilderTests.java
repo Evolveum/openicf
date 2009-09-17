@@ -205,7 +205,7 @@ public class AccountSQLBuilderTests {
     static public AccountSQLCall buildSQLCalll(boolean create, final Set<Attribute> attrs) {
         final AccountSQLCallBuilder asb =  new AccountSQLCallBuilder(SCHEMA_PREFIX, create);        
         for (Attribute attribute : attrs) {
-            asb.addAttribute(ObjectClass.ACCOUNT, attribute, null);
+            asb.setAttribute(ObjectClass.ACCOUNT, attribute, null);
         }
         return asb.build();
     }      

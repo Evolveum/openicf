@@ -111,9 +111,8 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         fndUserColumnNames.add(USER_NAME); //User id
         fndUserColumnNames.add(START_DATE); //Enable Date
         fndUserColumnNames.add(END_DATE); // Disable date
-        fndUserColumnNames.add(PWD_ACCESSES_LEFT); // Disable date
-        fndUserColumnNames.add(PWD_DATE); // Last logon date
-        fndUserColumnNames.add(PWD_LIFESPAN_DAYS); // Alloved days from last logon
+        fndUserColumnNames.add(PWD_DATE); // Password date
+        fndUserColumnNames.add(LAST_LOGON_DATE); // Last logon date
         
         final Set<String> perPeopleColumnNames = CollectionUtil.newSet(fndUserColumnNames);
         final String filterId = getFilterId(whereFilter);
@@ -240,35 +239,24 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             //bld.addAttribute(AttributeBuilder.buildEnabled(false));
         }
 
+        //Last logon date
         final Date lastLogonDate = OracleERPUtil.extractDate(LAST_LOGON_DATE, columnValues);
         if ( lastLogonDate != null ) {
             amb.setAttribute(AttributeBuilder.buildLastLoginDate(lastLogonDate));
         }
 
-        // password expired
+        // password change date
         final Date pwdDate = OracleERPUtil.extractDate(PWD_DATE, columnValues);
         if( pwdDate != null ) {
             amb.setAttribute(AttributeBuilder.buildLastPasswordChangeDate(pwdDate));
         }
-
         
-        /*final Long access_left = OracleERPUtil.extractLong(PWD_ACCESSES_LEFT, columnValues);
-
-        final Long lifespan_days = OracleERPUtil.extractLong(PWD_LIFESPAN_DAYS, columnValues);
-
-        if (access_left != null && access_left.intValue() <= 0) {
-            amb.setAttribute(AttributeBuilder.buildPasswordExpired(true));
-        } else if (lifespan_days != null && pwdDate != null) {
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(pwdDate);
-            cal.add(Calendar.DAY_OF_MONTH, lifespan_days.intValue());
-            boolean expired = cal.after(dateNow);
-            amb.setAttribute(AttributeBuilder.buildPasswordExpired(expired));
-        } else if ( pwdDate == null){
+        // password expired when both are null
+        if (lastLogonDate == null && pwdDate == null) {
             amb.setAttribute(AttributeBuilder.buildPasswordExpired(true));
         } else {
             amb.setAttribute(AttributeBuilder.buildPasswordExpired(false));
-        }*/
+        }
     }
 
     /**

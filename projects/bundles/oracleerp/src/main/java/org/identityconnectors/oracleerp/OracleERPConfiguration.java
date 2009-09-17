@@ -477,7 +477,7 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
 
     /**
      * Getter for the userAfterActions attribute.
-     * @return userAfterActions attribute
+     * return userAfterActions attribute
      *
     public String getUserAfterActions() {
         return userAfterActions;
@@ -485,7 +485,7 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
 
     /**
      * Setter for the userAfterActions attribute.
-     * @param userAfterActions attribute.
+     * param userAfterActions attribute.
      *
     @ConfigurationProperty(order=15 ,displayMessageKey="AFTER_ACTION_DISPLAY", helpMessageKey="AFTER_ACTION_HELP")
     public void setUserAfterActions(String userAfterActions) {

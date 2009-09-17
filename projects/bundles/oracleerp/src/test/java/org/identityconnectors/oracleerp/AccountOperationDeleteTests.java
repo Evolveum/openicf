@@ -22,13 +22,19 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.*;
+import static org.identityconnectors.oracleerp.OracleERPUtil.getAttributeInfos;
 import static org.junit.Assert.*;
 
 import java.util.List;
 import java.util.Set;
 
-import org.identityconnectors.framework.common.objects.*;
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.ConnectorObject;
+import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
+import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.Test;
@@ -96,5 +102,5 @@ public class AccountOperationDeleteTests extends OracleERPTestsBase {
         Set<Attribute> returned = r2.get(0).getAttributes();
         assertFalse("Should not be enabled", AttributeUtil.getBooleanValue(AttributeUtil.find(OperationalAttributes.ENABLE_NAME, returned)));
     }
-
+    
  }

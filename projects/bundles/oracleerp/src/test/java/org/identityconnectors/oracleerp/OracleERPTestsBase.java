@@ -278,10 +278,10 @@ abstract public class OracleERPTestsBase {
                 testAttribute(attrName, expAttr, currAttr);
             } else {
                 if (expAttr == null && currAttr != null) {
-                    mis.add(currAttr.getName());
+                    ext.add(currAttr.getName());
                 }
                 if (currAttr == null && expAttr != null) {
-                    ext.add(expAttr.getName());
+                    mis.add(expAttr.getName());
                 }
             }
         }
@@ -303,9 +303,9 @@ abstract public class OracleERPTestsBase {
         for (int i = 0; i < expVals.size(); i++) {
             if( expVals.get(i) == currVals.get(i)) {
                 continue;
-            }
-            String exp = expVals.get(i).toString();
-            String curr = currVals.get(i).toString();
+            }            
+            String exp = expVals.get(i) == null ? "null" : expVals.get(i).toString();
+            String curr = currVals.get(i) == null ? "null" : currVals.get(i).toString();
             if(attrName.contains("date")) {                
                 assertEquals(attrName+":["+i+"]", OracleERPUtil.normalizeStrDate(exp) , OracleERPUtil.normalizeStrDate(curr));
             } else {

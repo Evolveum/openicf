@@ -57,7 +57,7 @@ public class AccountOperationAutenticateTests extends OracleERPTestsBase {
         final Uid uid = c.create(ObjectClass.ACCOUNT, attrs, null);
         assertNotNull(uid);
         
-        assertEquals(uid, c.authenticate(ObjectClass.ACCOUNT, uid.getUidValue(), password, null));               
+        assertEquals(uid, c.authenticate(ObjectClass.ACCOUNT, uid.getUidValue(), password, null));
     }
     
     /**

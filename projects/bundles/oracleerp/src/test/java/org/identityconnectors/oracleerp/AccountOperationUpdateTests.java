@@ -78,7 +78,43 @@ public class AccountOperationUpdateTests extends OracleERPTestsBase {
         
         // Date text representations are not the same, skiped due to extra test
         testAttrSet(update, returned, OperationalAttributes.PASSWORD_NAME, OWNER);
-
+    }
+    
+    /**
+     * Test method .
+     */
+    @Test
+    public void testUpdateDeleteCreatedRespNameIssue() {
+        final OracleERPConnector c = getConnector(CONFIG_SYSADM);
+        
+        final Set<Attribute> create = getAttributeSet(ACCOUNT_MODIFY_ATTRS);
+        replaceNameByRandom(create);
+        Uid uid = c.create(ObjectClass.ACCOUNT, create, null);
+        assertNotNull(uid);
+        
+        List<ConnectorObject> results = TestHelpers
+        .searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid));
+        assertTrue("expect 1 connector object", results.size() == 1);
+        
+        ConnectorObject co = results.get(0);
+        Set<Attribute> returned = co.getAttributes();
+        
+        // Date text representations are not the same, skiped due to extra test
+        testAttrSet(create, returned, OperationalAttributes.PASSWORD_NAME, OWNER);
+                
+        final Set<Attribute> update = getAttributeSet(ACCOUNT_ALL_ATTRS);
+        replaceNameByValue(update, uid.getUidValue());
+        uid = c.update(ObjectClass.ACCOUNT, uid, update, null);
+        assertNotNull(uid);
+        
+        results = TestHelpers.searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid));
+        assertTrue("expect 1 connector object", results.size() == 1);
+        
+        co = results.get(0);
+        returned = co.getAttributes();
+        
+        // Date text representations are not the same, skiped due to extra test
+        testAttrSet(update, returned, OperationalAttributes.PASSWORD_NAME, OWNER);
     }
     
     /**
@@ -97,22 +133,6 @@ public class AccountOperationUpdateTests extends OracleERPTestsBase {
         // Name is generated to the new name
         replaceNameByRandom(update);
         uid = c.update(ObjectClass.ACCOUNT, uid, update, null);
-        /*
-         * This should work, after right renaming the account
-         * TODO implement renaming test, when rename account will be supported
-        assertNotNull(uid);
-        
-        List<ConnectorObject> results = TestHelpers
-        .searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid));
-        assertTrue("expect 1 connector object", results.size() == 1);
-        
-        final ConnectorObject co = results.get(0);
-        final Set<Attribute> returned = co.getAttributes();
-        System.out.println(returned);
-        
-        // Date text representations are not the same, skiped due to extra test
-        testAttrSet(update, returned, OperationalAttributes.PASSWORD_NAME, OWNER);
-        */
     }    
     
     
