@@ -251,12 +251,12 @@ modified.description="Connector test user mod"
 
          password_date=stringDate(0)
 
-         password_accesses_left=56
-modified.password_accesses_left=30
-         password_lifespan_accesses=5
-modified.password_lifespan_accesses=10
-         password_lifespan_days=30
-modified.password_lifespan_days=20
+         password_accesses_left=new BigDecimal(56)
+modified.password_accesses_left=new BigDecimal(30)
+         password_lifespan_accesses=new BigDecimal(5)
+modified.password_lifespan_accesses=new BigDecimal(10)
+         password_lifespan_days=new BigDecimal(30)
+modified.password_lifespan_days=new BigDecimal(20)
 
          employee_id=empty()
          employee_number=5
