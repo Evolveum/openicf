@@ -285,7 +285,7 @@ def currentTimeMillis(){
 }
 
 def stringDate( dife ){
-    return new java.sql.Timestamp(System.currentTimeMillis() + dife*24*3600000 ).toString().substring(0, 10)
+    return new java.sql.Timestamp(System.currentTimeMillis() + dife*24*3600000 ).toString().substring(0, 10)+" 00:00:00.0"
 }
 
 def getDt( dife ){

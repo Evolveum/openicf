@@ -160,8 +160,7 @@ final class AccountSQLCall {
                     body.append(MessageFormat.format(parameterExpress, Q));
                     sqlParams.add(val);
                 } else if (nullParam != null) {
-                    body.append(MessageFormat.format(parameterExpress,
-                            nullParam));
+                    body.append(MessageFormat.format(parameterExpress, nullParam));
                 } else {
                     throw new IllegalStateException();
                 }
@@ -256,9 +255,9 @@ final class AccountSQLCall {
                     passwordExpired = AttributeUtil.getBooleanValue(attr);
                 }
                 if (passwordExpired) {
-                    addNullValue(LAST_LOGON_DATE, NULL_DATE);
+                    setNullValue(LAST_LOGON_DATE, NULL_DATE);
                     log.ok("passwordExpired: {0} => NULL_DATE", LAST_LOGON_DATE);
-                    addNullValue(PWD_DATE, NULL_DATE);
+                    setNullValue(PWD_DATE, NULL_DATE);
                     log.ok("append also {0} => NULL_DATE", PWD_DATE);
                 } else if (create) {
                     setSqlValue(LAST_LOGON_DATE, currentDate);
@@ -303,13 +302,13 @@ final class AccountSQLCall {
                  * }
                  */
                 if (AttributeUtil.getSingleValue(attr) == null) {
-                    addNullValue(END_DATE, NULL_DATE);
+                    setNullValue(END_DATE, NULL_DATE);
                     log.ok("NULL {0} => NULL_DATE : continue", END_DATE);
                 } else {
                     final String dateString = AttributeUtil
                             .getAsStringValue(attr);
                     if (SYSDATE.equalsIgnoreCase(dateString)) {
-                        addNullValue(END_DATE, SYSDATE);
+                        setNullValue(END_DATE, SYSDATE);
                         log.ok("sysdate value in {0} => {1} : continue",
                                 END_DATE, SYSDATE);
                     } else {
@@ -329,7 +328,7 @@ final class AccountSQLCall {
                  * }
                  */
                 if (AttributeUtil.getSingleValue(attr) == null) {
-                    addNullValue(DESCR, NULL_CHAR);
+                    setNullValue(DESCR, NULL_CHAR);
                     log.ok("NULL {0} => NULL_CHAR", DESCR);
                 } else {
                     final String descr = AttributeUtil.getAsStringValue(attr);
@@ -349,7 +348,7 @@ final class AccountSQLCall {
                  * }
                  */
                 if (AttributeUtil.getSingleValue(attr) == null) {
-                    addNullValue(PWD_ACCESSES_LEFT, NULL_NUMBER);
+                    setNullValue(PWD_ACCESSES_LEFT, NULL_NUMBER);
                     log.ok("NULL {0} => NULL_NUMBER", PWD_ACCESSES_LEFT);
                 } else {
                     final String accessLeft = AttributeUtil
@@ -370,7 +369,7 @@ final class AccountSQLCall {
                  * }
                  */
                 if (AttributeUtil.getSingleValue(attr) == null) {
-                    addNullValue(PWD_LIFESPAN_ACCESSES, NULL_NUMBER);
+                    setNullValue(PWD_LIFESPAN_ACCESSES, NULL_NUMBER);
                     log.ok("NULL {0} => NULL_NUMBER", PWD_LIFESPAN_ACCESSES);
                 } else {
                     final String lifeAccess = AttributeUtil
@@ -392,7 +391,7 @@ final class AccountSQLCall {
                  * }
                  */
                 if (AttributeUtil.getSingleValue(attr) == null) {
-                    addNullValue(PWD_LIFESPAN_DAYS, NULL_NUMBER);
+                    setNullValue(PWD_LIFESPAN_DAYS, NULL_NUMBER);
                     log.ok("NULL {0} => NULL_NUMBER", PWD_LIFESPAN_DAYS);
                 } else {
                     final String lifeDays = AttributeUtil
@@ -414,7 +413,7 @@ final class AccountSQLCall {
                  *  }
                  */
                 if (AttributeUtil.getSingleValue(attr) == null) {
-                    addNullValue(EMP_ID, NULL_NUMBER);
+                    setNullValue(EMP_ID, NULL_NUMBER);
                     log.ok("NULL {0} => NULL_NUMBER", EMP_ID);
                 } else {
                     final String empId = AttributeUtil.getAsStringValue(attr);
@@ -433,7 +432,7 @@ final class AccountSQLCall {
                  * }
                  */
                 if (AttributeUtil.getSingleValue(attr) == null) {
-                    addNullValue(EMAIL, NULL_CHAR);
+                    setNullValue(EMAIL, NULL_CHAR);
                     log.ok("NULL {0} => NULL_CHAR", EMAIL);
                 } else {
                     final String email = AttributeUtil.getAsStringValue(attr);
@@ -452,7 +451,7 @@ final class AccountSQLCall {
                  *  }
                  */
                 if (AttributeUtil.getSingleValue(attr) == null) {
-                    addNullValue(FAX, NULL_CHAR);
+                    setNullValue(FAX, NULL_CHAR);
                     log.ok("NULL {0} => NULL_CHAR", FAX);
                 } else {
                     final String fax = AttributeUtil.getAsStringValue(attr);
@@ -472,7 +471,7 @@ final class AccountSQLCall {
                  * }
                  */
                 if (AttributeUtil.getSingleValue(attr) == null) {
-                    addNullValue(CUST_ID, NULL_NUMBER);
+                    setNullValue(CUST_ID, NULL_NUMBER);
                     log.ok("NULL {0} => NULL_NUMBER", CUST_ID);
                 } else {
                     final String custId = AttributeUtil.getAsStringValue(attr);
@@ -492,7 +491,7 @@ final class AccountSQLCall {
                  * }
                  */
                 if (AttributeUtil.getSingleValue(attr) == null) {
-                    addNullValue(SUPP_ID, NULL_NUMBER);
+                    setNullValue(SUPP_ID, NULL_NUMBER);
                     log.ok("NULL {0} => NULL_NUMBER", SUPP_ID);
                 } else {
                     final String suppId = AttributeUtil.getAsStringValue(attr);
@@ -540,7 +539,7 @@ final class AccountSQLCall {
          * @param columnName
          * @param value
          */
-        private void addNullValue(String columnName, String value) {
+        private void setNullValue(String columnName, String value) {
             // We deal about null values later
             if (value == null)
                 return;
@@ -551,19 +550,8 @@ final class AccountSQLCall {
                         "could not add unknown column " + columnName);
             }
 
-            // Check the old value exist
-            final Object oldValue = sqlNullMap.get(columnName);
-
-            // no conflict, old value is not exist
-            if (oldValue == null) {
-                sqlNullMap.put(columnName, value);
-                return;
-            }
-            // just check the value is the same
-            if (!oldValue.equals(value)) {
-                throw new IllegalArgumentException("Can not replace "
-                        + columnName + " value " + oldValue + " to " + value);
-            }
+            sqlNullMap.put(columnName, value);
+            return;
         }
 
         /**

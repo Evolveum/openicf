@@ -251,10 +251,12 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         
         // password expired when both are null
         if (lastLogonDate == null && pwdDate == null) {
+            amb.setAttribute(AttributeBuilder.build(EXP_PWD, true));
             amb.setAttribute(AttributeBuilder.buildPasswordExpired(true));
-        } else {
+        } /*else {
+            amb.setAttribute(AttributeBuilder.build(EXP_PWD, false));
             amb.setAttribute(AttributeBuilder.buildPasswordExpired(false));
-        }
+        }*/
     }
 
     /**
@@ -385,9 +387,9 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
                 value = SQLUtil.jdbc2AttributeValue(origValue);
             } 
             
-            if (value != null && columnName.toLowerCase().endsWith("date")) {
+            /*if (value != null && columnName.toLowerCase().endsWith("date")) {
                 value = value.toString().substring(0,10);
-            }
+            }*/
             amb.setAttribute(attributeName, value);
         }
     }

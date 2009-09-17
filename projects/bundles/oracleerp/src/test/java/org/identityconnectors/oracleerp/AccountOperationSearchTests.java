@@ -72,7 +72,7 @@ public class AccountOperationSearchTests extends OracleERPTestsBase {
         final Set<Attribute> returned = co.getAttributes();
         System.out.println(returned);
         
-        testAttrSet(attrs, returned, OperationalAttributes.PASSWORD_NAME, OWNER);
+        testAttrSet(attrs, returned, OperationalAttributes.PASSWORD_NAME, OWNER, OperationalAttributes.PASSWORD_EXPIRED_NAME);
         
         final Set<Attribute> auditorAttr = getAttributeSet(ACCOUNT_AUDITOR);
         testAttrSet(auditorAttr, returned);

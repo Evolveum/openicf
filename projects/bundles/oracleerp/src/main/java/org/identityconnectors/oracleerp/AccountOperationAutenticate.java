@@ -83,8 +83,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
         ResultSet rs = null;
 
 
-        final String sqlAccount = "select user_name, start_date, end_date, password_accesses_left,"
-                    + " password_date, password_lifespan_days from "
+        final String sqlAccount = "select user_name, start_date, end_date, password_date, last_logon_date from "
                     + getCfg().app() + "fnd_user where upper(user_name) = ?";
 
         List<SQLParam> par1 = new ArrayList<SQLParam>();

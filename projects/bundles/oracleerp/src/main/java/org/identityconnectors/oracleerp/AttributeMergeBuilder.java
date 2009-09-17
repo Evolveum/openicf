@@ -226,7 +226,7 @@ final class AttributeMergeBuilder {
         Assertions.nullCheck(_attrs, "_attrs");
         final List<Object> list = _attrs.get(name);
         if (list == null || list.get(index) == null) {
-            throw new IllegalStateException("null list or value");
+            return false;
         }
         return list.get(index).equals(value);
     }

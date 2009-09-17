@@ -155,7 +155,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         ocib.addAttributeInfo(AttributeInfoBuilder.build(SESS_NUM, String.class, OracleERPOperationSchema.NCU));
         // reset is implemented as change password
         // name='Password',  Password is mapped to operationalAttribute
-        ocib.addAttributeInfo(OperationalAttributeInfos.PASSWORD);        
+        ocib.addAttributeInfo(OperationalAttributeInfos.PASSWORD);
         // name='start_date' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(START_DATE, String.class));
         // name='end_date' type='string' required='false'
@@ -163,7 +163,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         // name='description' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(DESCR, String.class));
         // name='expirePassword' type='string' required='false' is mapped to PASSWORD_EXPIRED
-        ocib.addAttributeInfo(AttributeInfoBuilder.build(EXP_PWD, Boolean.class, NCUD));
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(EXP_PWD, Boolean.class));
         // name='password_accesses_left' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(PWD_DATE, String.class));
         // name='password_accesses_left' type='string' required='false'
