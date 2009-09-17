@@ -306,7 +306,7 @@ abstract public class OracleERPTestsBase {
             }            
             String exp = expVals.get(i) == null ? "null" : expVals.get(i).toString();
             String curr = currVals.get(i) == null ? "null" : currVals.get(i).toString();
-            if(attrName.contains("date")) {                
+            if(attrName.contains("date")) {
                 assertEquals(attrName+":["+i+"]", OracleERPUtil.normalizeStrDate(exp) , OracleERPUtil.normalizeStrDate(curr));
             } else {
                 assertEquals(attrName+":["+i+"]", exp, curr);

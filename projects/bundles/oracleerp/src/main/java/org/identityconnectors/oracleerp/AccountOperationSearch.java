@@ -24,6 +24,7 @@ package org.identityconnectors.oracleerp;
 
 import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -229,17 +230,14 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         if (end_date != null && start_date != null) {
             boolean enable = dateNow.compareTo(end_date) <= 0 && dateNow.compareTo(start_date) > 0;
             amb.setAttribute(AttributeBuilder.buildEnabled(enable));
-        } else if (end_date != null) {
-            boolean enable = dateNow.compareTo(end_date) <= 0;
-            amb.setAttribute(AttributeBuilder.buildEnabled(enable));
-        } else if (start_date != null) {
+        } else if (start_date != null && end_date == null) {
             boolean enable = dateNow.compareTo(start_date) > 0;
             amb.setAttribute(AttributeBuilder.buildEnabled(enable));
-        } else {
-            //bld.addAttribute(AttributeBuilder.buildEnabled(false));
+        } else if (start_date == null) {
+            amb.addAttribute(AttributeBuilder.buildEnabled(false));
         }
 
-        //Last logon date
+        //Last login date
         final Date lastLogonDate = OracleERPUtil.extractDate(LAST_LOGON_DATE, columnValues);
         if ( lastLogonDate != null ) {
             amb.setAttribute(AttributeBuilder.buildLastLoginDate(lastLogonDate));
@@ -377,10 +375,18 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
             Object value = null;
             if (origValue instanceof BigInteger) {
                 value =  origValue.toString();
+            } else if (origValue instanceof BigDecimal) {
+                value =  origValue.toString();
+            } else if (origValue instanceof Integer) {
+                value =  origValue.toString();
             } else if (origValue instanceof Long) {
                 value =  origValue.toString();
             } else {
                 value = SQLUtil.jdbc2AttributeValue(origValue);
+            } 
+            
+            if (value != null && columnName.toLowerCase().endsWith("date")) {
+                value = value.toString().substring(0,10);
             }
             amb.setAttribute(attributeName, value);
         }

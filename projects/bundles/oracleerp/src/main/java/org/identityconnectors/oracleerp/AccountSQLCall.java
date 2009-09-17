@@ -137,7 +137,7 @@ final class AccountSQLCall {
             Assertions.nullCheck(sqlParamsMap.get(OWNER), OWNER);
             if (create) {
                 Assertions.nullCheck(sqlParamsMap.get(UNENCRYPT_PWD),
-                        OperationalAttributes.PASSWORD_NAME);
+                OperationalAttributes.PASSWORD_NAME);
             }
 
             final String fn = (create) ? CREATE_FNC : UPDATE_FNC;
