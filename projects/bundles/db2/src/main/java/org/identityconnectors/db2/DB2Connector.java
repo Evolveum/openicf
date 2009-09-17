@@ -23,17 +23,17 @@
 package org.identityconnectors.db2;
 
 import java.sql.*;
-import java.text.MessageFormat;
+import java.text.*;
 import java.util.*;
 
-import org.identityconnectors.common.StringUtil;
-import org.identityconnectors.common.logging.Log;
-import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.common.*;
+import org.identityconnectors.common.logging.*;
+import org.identityconnectors.common.security.*;
 import org.identityconnectors.dbcommon.*;
 import org.identityconnectors.framework.common.exceptions.*;
 import org.identityconnectors.framework.common.objects.*;
-import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
-import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
+import org.identityconnectors.framework.common.objects.AttributeInfo.*;
+import org.identityconnectors.framework.common.objects.filter.*;
 import org.identityconnectors.framework.spi.*;
 import org.identityconnectors.framework.spi.operations.*;
 
@@ -259,7 +259,8 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
                 }
             }
         } catch (SQLException e) {
-            throw new ConnectorException(cfg.getConnectorMessages().format(DB2Messages.SEARCH_FAILED, null),e);
+            String detailMsg = new SQLMsgRetriever().retrieveMsg(e);
+            throw new ConnectorException(cfg.getConnectorMessages().format(DB2Messages.SEARCH_FAILED, null, detailMsg),e);
         } finally {
             SQLUtil.closeQuietly(result);
             SQLUtil.closeQuietly(statement);
@@ -295,7 +296,8 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
         }
         catch(Exception e){
             SQLUtil.rollbackQuietly(adminConn);
-        	throw new ConnectorException(cfg.getConnectorMessages().format(DB2Messages.CREATE_OF_USER_FAILED, null, userName),e);
+            String detailMsg = new SQLMsgRetriever().retrieveMsg(e);
+        	throw new ConnectorException(cfg.getConnectorMessages().format(DB2Messages.CREATE_OF_USER_FAILED, null, userName, detailMsg),e);
         }
 		return new Uid(userName);
 	}
@@ -424,16 +426,13 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
      */
     void checkDB2Validity(String accountID)  {
         if (accountID.length() > DB2Specifics.MAX_NAME_SIZE) {
-        	throw new IllegalArgumentException(cfg.getConnectorMessages().format(DB2Messages.USERNAME_LONG, null, DB2Specifics.MAX_NAME_SIZE));
+        	throw new IllegalArgumentException(cfg.getConnectorMessages().format(DB2Messages.USERNAME_LONG, null, DB2Specifics.MAX_NAME_SIZE, accountID));
         }
         if (DB2Specifics.containsIllegalDB2Chars(accountID.toCharArray())) {
-            throw new IllegalArgumentException(cfg.getConnectorMessages().format(DB2Messages.USERNAME_CONTAINS_ILLEGAL_CHARACTERS, null));
+            throw new IllegalArgumentException(cfg.getConnectorMessages().format(DB2Messages.USERNAME_CONTAINS_ILLEGAL_CHARACTERS, null, accountID));
         }
         if (DB2Specifics.isReservedName(accountID.toUpperCase())) {
-            throw new IllegalArgumentException(cfg.getConnectorMessages().format(DB2Messages.USERNAME_IS_RESERVED_WORD, null));
-        }
-        if(DB2Specifics.hasInvalidPrefix(accountID.toUpperCase())){
-        	throw new IllegalArgumentException(cfg.getConnectorMessages().format(DB2Messages.USERNAME_HAS_INVALID_PREFIX, null));
+            throw new IllegalArgumentException(cfg.getConnectorMessages().format(DB2Messages.USERNAME_IS_RESERVED_WORD, null, accountID));
         }
     }
     
@@ -517,7 +516,8 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
 			log.info("User deleted : {0}", uidValue);
 		} catch (Exception e) {
 		    SQLUtil.rollbackQuietly(adminConn);
-			throw new ConnectorException(cfg.getConnectorMessages().format(DB2Messages.DELETE_OF_USER_FAILED, null, uidValue),e);
+		    String detailMsg = new SQLMsgRetriever().retrieveMsg(e);
+			throw new ConnectorException(cfg.getConnectorMessages().format(DB2Messages.DELETE_OF_USER_FAILED, null, uidValue, detailMsg),e);
 		}
 	}
 	
@@ -583,7 +583,8 @@ public class DB2Connector implements AuthenticateOp,SchemaOp,CreateOp,SearchOp<F
         }
         catch(Exception e){
             SQLUtil.rollbackQuietly(adminConn);
-        	throw new ConnectorException(cfg.getConnectorMessages().format(DB2Messages.UPDATE_OF_USER_FAILED,null,uidValue),e);
+            String detailMsg = new SQLMsgRetriever().retrieveMsg(e);
+        	throw new ConnectorException(cfg.getConnectorMessages().format(DB2Messages.UPDATE_OF_USER_FAILED,null,uidValue, detailMsg),e);
         }
 		return uid;
 	}

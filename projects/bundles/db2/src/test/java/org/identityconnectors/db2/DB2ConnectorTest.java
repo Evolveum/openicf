@@ -22,18 +22,22 @@
  */
 package org.identityconnectors.db2;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import java.sql.Connection;
+import java.sql.*;
 import java.util.*;
 
-import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.common.security.*;
 import org.identityconnectors.framework.api.*;
 import org.identityconnectors.framework.common.exceptions.*;
 import org.identityconnectors.framework.common.objects.*;
 import org.identityconnectors.framework.common.objects.filter.*;
-import org.identityconnectors.test.common.PropertyBag;
-import org.identityconnectors.test.common.TestHelpers;
+import org.identityconnectors.test.common.*;
 import org.junit.*;
 
 
@@ -577,9 +581,6 @@ public class DB2ConnectorTest {
     	connector.checkDB2Validity("#TEST1");
     	testFailForValidity(connector,"ABCDEFGHIJKLMNOPRSTABCDEFGHIJKLMNO","Must fail for too long name");
     	testFailForValidity(connector,"US%US","Must fail for invalid char");
-    	testFailForValidity(connector,"1USER","Must fail for invalid prefix");
-    	testFailForValidity(connector,".USER","Must fail for invalid prefix");
-    	testFailForValidity(connector,",USER","Must fail for invalid prefix");
     }
     
     private void testFailForValidity(DB2Connector connector,String name,String msg){

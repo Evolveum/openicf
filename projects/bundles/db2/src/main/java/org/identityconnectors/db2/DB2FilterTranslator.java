@@ -22,17 +22,8 @@
  */
 package org.identityconnectors.db2;
 
-import java.sql.Types;
-
-import org.identityconnectors.dbcommon.DatabaseFilterTranslator;
-import org.identityconnectors.dbcommon.FilterWhereBuilder;
-import org.identityconnectors.dbcommon.SQLParam;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.dbcommon.*;
+import org.identityconnectors.framework.common.objects.*;
 
 /**
  * DB2 filter translator
