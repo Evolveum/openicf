@@ -12,9 +12,9 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/Connector Common Test Library"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/3270 Freehost Library"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/3270 WRQ Library"/>
-	<classpathentry kind="lib" path="lib/expect4j-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/jakarta-oro-2.0.8.jar"/>
 	<classpathentry kind="var" path="USER_HOME/.connectors/connector-racf/lib/bcmail-jdk14-137.jar"/>
 	<classpathentry kind="var" path="USER_HOME/.connectors/connector-racf/lib/bcprov-jdk14-137.jar"/>
+	<classpathentry kind="var" path="USER_HOME/.connectors/connector-racf/lib/expect4j-r17.jar"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>
