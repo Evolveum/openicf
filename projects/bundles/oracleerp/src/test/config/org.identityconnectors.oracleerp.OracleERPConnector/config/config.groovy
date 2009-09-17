@@ -169,7 +169,7 @@ testsuite {
     
     /* AuthenticationApiOpTests: */
     Authentication.__ACCOUNT__.username=Lazy.get("i0.Authentication.__ACCOUNT__.__NAME__")
-    Authentication.__ACCOUNT__.wrong.password=new GuardedString("WRONG".toCharArray());
+    Authentication.__ACCOUNT__.wrong.password="WRONG"
     /* SchemaApiOpTests: */
     
     /* declared object classes */
