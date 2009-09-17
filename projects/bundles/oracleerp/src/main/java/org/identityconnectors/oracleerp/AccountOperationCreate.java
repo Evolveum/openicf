@@ -180,11 +180,11 @@ final class AccountOperationCreate extends Operation implements CreateOp {
         final Attribute empAttr = AttributeUtil.find(EMP_NUM, attrs);
         final Attribute npwAttr = AttributeUtil.find(NPW_NUM, attrs);
         if (empAttr != null) {
-            num = AttributeUtil.getIntegerValue(empAttr);
+            num = Integer.valueOf(AttributeUtil.getAsStringValue(empAttr));
             columnName = EMP_NUM;
             log.ok("{0} present with value ''{1}''", columnName, num);
         } else if (npwAttr != null) {
-            num = AttributeUtil.getIntegerValue(npwAttr);
+            num = Integer.valueOf(AttributeUtil.getAsStringValue(npwAttr));
             columnName = NPW_NUM;
             log.ok("{0} present with value ''{1}''", columnName, num);
         } else {

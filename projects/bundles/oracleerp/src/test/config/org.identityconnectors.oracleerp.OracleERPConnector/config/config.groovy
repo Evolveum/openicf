@@ -238,6 +238,7 @@ testsuite {
          __NAME__="CTU-" + Lazy.random("AAAAAA######")
          __PASSWORD__= new GuardedString("password".toCharArray())
 modified.__PASSWORD__= new GuardedString("modpasswd".toCharArray())
+         __ENABLE__= true
          owner="CUST"
          session_number=0
 
@@ -259,7 +260,7 @@ modified.password_lifespan_accesses="10"
 modified.password_lifespan_days="20"
 
          employee_id=empty()
-         employee_number=5
+         employee_number="5"
          person_fullname="Monster, Cookie"
          person_party_id="3044"
          npw_number=empty()
