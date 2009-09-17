@@ -30,7 +30,7 @@
             <fileset dir="${lib}" includes="**/*.jar">
                 <exclude name="habeans2.jar"/>
                 <exclude name="expect4j*.jar"/>
-                <exclude name="test/jakarta-oro-2.0.8.jar"/>
+                <exclude name="test/jakarta-oro-*.jar"/>
             </fileset>
         </delete> 
     </target>
