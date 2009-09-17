@@ -4,11 +4,11 @@
 	<classpathentry excluding="**/.svn/*" kind="src" path="src/test/java"/>
 	<classpathentry excluding="**/.svn/*" kind="src" path="config-private"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry exported="true" kind="lib" path="lib/expect4j-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/jakarta-oro-2.0.8.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Connector Framework"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Groovy"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Connector Framework - Internal"/>
+    <classpathentry kind="var" path="USER_HOME/.connectors/3270common/lib/expect4j-r17.jar"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>
