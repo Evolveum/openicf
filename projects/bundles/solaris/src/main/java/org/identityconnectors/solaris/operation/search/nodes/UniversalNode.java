@@ -22,6 +22,9 @@
  */
 package org.identityconnectors.solaris.operation.search.nodes;
 
+import java.util.Set;
+
+import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 
@@ -39,5 +42,12 @@ public class UniversalNode implements Node {
      */
     public boolean evaluate(SolarisEntry entry) {
         throw new UnsupportedOperationException();
+    }
+    
+    /**
+     * {@see org.identityconnectors.solaris.operation.search.nodes.Node#collectAttributeNames(java.util.Set)}
+     */
+    public void collectAttributeNames(Set<NativeAttribute> attrs) {
+        // blank on purpose
     }
 }

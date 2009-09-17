@@ -22,6 +22,8 @@
  */
 package org.identityconnectors.solaris.operation.search.nodes;
 
+import java.util.Set;
+
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
@@ -65,5 +67,12 @@ public abstract class AttributeNode implements Node {
     
     public final NativeAttribute getAttributeName() {
         return attrName;
+    }
+    
+    /** 
+     * {@see org.identityconnectors.solaris.operation.search.nodes.Node#collectAttributeNames(java.util.Set)}
+     */
+    public void collectAttributeNames(Set<NativeAttribute> attrs) {
+        attrs.add(getAttributeName());
     }
 }

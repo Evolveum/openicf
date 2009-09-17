@@ -22,7 +22,6 @@
  */
 package org.identityconnectors.solaris.operation.search.nodes;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import org.identityconnectors.solaris.attr.NativeAttribute;
@@ -30,21 +29,21 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 
 
-/** node of search filter tree for Solaris */
+/** 
+ * Node of search filter tree for Solaris.
+ * 
+ * Internal representation of the tree is a Binary tree with two type of nodes:
+ * <ul>
+ * <li>Leaves (extending {@see AttributeNode}) of the tree contain {@link NativeAttribute}-s.</li>
+ * <li>Nodes which are not leaves extend {@see BinaryOpNode}.</li>
+ * </ul>
+ * 
+ * @author David Adam
+ */
 public interface Node {
-    public static class Traverser {
-        public static Set<NativeAttribute> collectAttributeNames(Node node) {
-            Set<NativeAttribute> result = new HashSet<NativeAttribute>();
-            if (node instanceof BinaryOpNode) {
-                BinaryOpNode binNode = (BinaryOpNode) node;
-                result.addAll(collectAttributeNames(binNode.getLeft()));
-                result.addAll(collectAttributeNames(binNode.getRight()));
-            } else if (node instanceof AttributeNode) {
-                result.add(((AttributeNode) node).getAttributeName());
-            }
-            return result;
-        }
-    }
+    /** @return true if the attributes of 'entry' satisfy the filter's conditions. */
+    public boolean evaluate(SolarisEntry entry);
     
-    public abstract boolean evaluate(SolarisEntry entry);
+    /** add the attributes of the node to the given set */
+    public void collectAttributeNames(Set<NativeAttribute> attrs);
 }

@@ -22,6 +22,10 @@
  */
 package org.identityconnectors.solaris.operation.search.nodes;
 
+import java.util.Set;
+
+import org.identityconnectors.solaris.attr.NativeAttribute;
+
 
 
 public abstract class BinaryOpNode implements Node {
@@ -40,5 +44,13 @@ public abstract class BinaryOpNode implements Node {
     
     public Node getRight() {
         return right;
+    }
+    
+    /**
+     * {@see org.identityconnectors.solaris.operation.search.nodes.Node#collectAttributeNames(java.util.Set)}
+     */
+    public void collectAttributeNames(Set<NativeAttribute> attrs) {
+        left.collectAttributeNames(attrs);
+        right.collectAttributeNames(attrs);
     }
 }
