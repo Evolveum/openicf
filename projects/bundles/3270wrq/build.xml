@@ -33,7 +33,7 @@
                 <exclude name="wrqtls12.jar"/>
                 <exclude name="RWebSDK.jar"/>
                 <exclude name="expect4j*.jar"/>
-                <exclude name="test/jakarta-oro-2.0.8.jar"/>
+                <exclude name="test/jakarta-oro-*.jar"/>
             </fileset>
         </delete>
     </target>
