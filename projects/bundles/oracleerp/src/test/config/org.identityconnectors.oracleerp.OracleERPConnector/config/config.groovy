@@ -153,7 +153,7 @@ connector{
     /* WRONG configuration for ValidateApiOpTests */
     i1.wrong.host=""
     i2.wrong.user=""
-    i3.wrong.password=""
+    i3.wrong.password=new GuardedString("".toCharArray())
     i4.wrong.database=""
     i53.wrong.driver=""
 }
@@ -169,7 +169,7 @@ testsuite {
     
     /* AuthenticationApiOpTests: */
     Authentication.__ACCOUNT__.username=Lazy.get("i0.Authentication.__ACCOUNT__.__NAME__")
-    Authentication.__ACCOUNT__.wrong.password="WRONG"
+    Authentication.__ACCOUNT__.wrong.password=new GuardedString("WRONG".toCharArray())
     /* SchemaApiOpTests: */
     
     /* declared object classes */
