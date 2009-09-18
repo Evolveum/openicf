@@ -256,7 +256,6 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
      *
      * imported adapter attribute
      * name="user" displayName="USER" type="string" multi="false"
-     * description="HELP_286"  value="APPL"
      */
     private String user = DEFAULT_USER_NAME;
 
@@ -768,12 +767,12 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
      */
     @Override
     public void validate() {
-        if(StringUtil.isBlank(user)){
-            throw new IllegalArgumentException(getMessage(MSG_USER_BLANK));
-        }
         if (StringUtil.isBlank(dataSource)) {
             if(getPassword()==null){
                 throw new IllegalArgumentException(getMessage(MSG_PASSWORD_BLANK));
+            }
+            if(StringUtil.isBlank(user)){
+                throw new IllegalArgumentException(getMessage(MSG_USER_BLANK));
             }
             if(StringUtil.isBlank(driver)){
                 throw new IllegalArgumentException(getMessage(MSG_DRIVER_BLANK));
@@ -844,6 +843,9 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
         return fmt;
     }
 
+    /** application prefix cache */
+    private String app;
+    
     /**
      * The application id from the user
      * see the bug id. 19352
@@ -851,6 +853,22 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
      */
     String app() {
         if(isNoSchemaId()) return "";
-        return getUser().trim().toUpperCase()+".";
+        if(StringUtil.isNotBlank(app)) {
+            return app;
+        }
+        app = getOraUserName()+".";
+        return app;
+    }
+
+    /**
+     * OraUser name is a user if not empty, or DEFAULT_USER_NAME
+     * @return the ora user name
+     */
+    String getOraUserName() {
+        String userName = getUser();
+        if (StringUtil.isBlank(userName)) {
+            userName = DEFAULT_USER_NAME;
+        } 
+        return userName.trim().toUpperCase();
     }
 }

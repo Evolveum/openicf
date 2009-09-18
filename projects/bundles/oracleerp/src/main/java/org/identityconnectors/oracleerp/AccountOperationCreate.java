@@ -39,6 +39,7 @@ import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.oracleerp.AccountSQLCall.AccountSQLCallBuilder;
@@ -47,7 +48,7 @@ import org.identityconnectors.oracleerp.AccountSQLCall.AccountSQLCallBuilder;
 /**
  * The Account CreateOp implementation of the SPI
  *
- * { call {0}fnd_user_pkg.{1} ( {2} ) } // {0} .. "APPL.", {1} .. "CreateUser"
+ * { call {0}fnd_user_pkg.{1} ( {2} ) } // {0} .. "APPS.", {1} .. "CreateUser"
  * {2} ...  is an array of
  * x_user_name => ?,
  * x_owner => ?,
@@ -109,7 +110,9 @@ final class AccountOperationCreate extends Operation implements CreateOp {
         // Get the User values
         final AccountSQLCallBuilder asb = new AccountSQLCallBuilder(getCfg().app(), true);
         //add required owner, if missing
-        asb.setAttribute(oclass, AttributeBuilder.build(OWNER, getCfg().getUser()), options);
+        if (AttributeUtil.find(OWNER, attrs) == null) {
+            asb.setAttribute(oclass, AttributeBuilder.build(OWNER, getCfg().getUser()), options);
+        }
         
         //Get the person_id and set is it as a employee id
         final Integer person_id = getPersonId(name, attrs);
@@ -118,8 +121,10 @@ final class AccountOperationCreate extends Operation implements CreateOp {
             asb.setAttribute(oclass, AttributeBuilder.build(EMP_ID, person_id), options);
         }
         
-        //Add password not expired in create, will be replaced by actual attrs value, if exist there
-        asb.setAttribute(oclass, AttributeBuilder.buildPasswordExpired(false), options);
+        //Add password not expired in create
+        if (AttributeUtil.find(EXP_PWD, attrs) == null && AttributeUtil.find(OperationalAttributes.PASSWORD_EXPIRED_NAME, attrs) == null) {
+            asb.setAttribute(oclass, AttributeBuilder.buildPasswordExpired(false), options);
+        }
         
         for (Attribute attr : attrs) {
             asb.setAttribute(oclass, attr, options);

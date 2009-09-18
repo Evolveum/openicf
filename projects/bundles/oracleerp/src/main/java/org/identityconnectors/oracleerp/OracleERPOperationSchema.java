@@ -163,7 +163,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         // name='description' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(DESCR, String.class));
         // name='expirePassword' type='string' required='false' is mapped to PASSWORD_EXPIRED
-        ocib.addAttributeInfo(AttributeInfoBuilder.build(EXP_PWD, Boolean.class));
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(EXP_PWD, Boolean.class, NCUD));
         // name='password_accesses_left' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(PWD_DATE, String.class));
         // name='password_accesses_left' type='string' required='false'

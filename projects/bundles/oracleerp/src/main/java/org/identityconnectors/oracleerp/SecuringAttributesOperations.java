@@ -484,14 +484,14 @@ final class SecuringAttributesOperations extends Operation {
      */
      String getUserId(String userName) {
         final String msg = "getUserId ''{0}'' -> ''{1}''";
-        String userId = null;
+        String userId = "0";
         log.ok("get UserId for {0}", userName);
         final String sql = "select " + USER_ID + " from " + getCfg().app() + "FND_USER where upper(user_name) = ?";
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
             ps = getConn().prepareStatement(sql);
-            ps.setString(1, userName.toUpperCase());
+            ps.setString(1, getCfg().getOraUserName());
             rs = ps.executeQuery();
             if (rs != null) {
                 if (rs.next()) {
@@ -509,7 +509,6 @@ final class SecuringAttributesOperations extends Operation {
         if (userId == null || userId == "") {
             final String emsg = getCfg().getMessage(MSG_USER_NOT_FOUND, userName);
             log.error(emsg);
-            throw new IllegalStateException(emsg);
         }
         // pstmt closed in finally below
         log.ok(msg, userName, userId);

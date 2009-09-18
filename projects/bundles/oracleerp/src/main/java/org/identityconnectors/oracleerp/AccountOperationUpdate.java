@@ -47,7 +47,7 @@ import org.identityconnectors.oracleerp.AccountSQLCall.AccountSQLCallBuilder;
 /**
  * The Account CreateOp implementation of the SPI
  *
- * { call {0}fnd_user_pkg.{1} ( {2} ) } // {0} .. "APPL.", {1} .. "UpdateUser"
+ * { call {0}fnd_user_pkg.{1} ( {2} ) } // {0} .. "APPS.", {1} .. "UpdateUser"
  * {2} ...  is an array of
  * x_user_name => ?,
  * x_owner => ?,
