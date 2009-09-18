@@ -1,0 +1,86 @@
+<HTML>
+<HEAD>
+    <META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=iso-8859-1">
+    <TITLE>WebTimeSheet Connector</TITLE>
+</HEAD>
+<DIV id="projecthome" class="app">
+    <H1>WebTimeSheet Connector Overview</H1>
+    <P>
+    </P>
+<p>
+The WebTimesheet Connector is can be used for provisioning of Replicon <a href="http://www.replicon.com/">Web TimeSheet</a>
+</p>
+
+    <h3>Bundle Information</h3>
+    <ul>  
+       <li><b>Latest stable release:</b> <a href="/downloads.html#Bundles">1.0.5260</a>
+	   <li><b>Platform:</b> Java
+       <li><b>3rd-party libraries required:</b> <a href="http://hc.apache.org/downloads.cgi">HttpClient 4.0</a>, <a href="http://hc.apache.org/downloads.cgi">HttpCore 4.0.1</a>,
+       <a href="http://www.jcip.net/">jcip annotations</a>
+       <li><b>Other dependencies:</b>
+       <li><b>Release notes:</b>
+    </ul>
+</p>
+<h3>Version Information</h3>
+     <table border="1">
+     	<tr><th>Connector Version</th><th>Framework Version</th><th>Supported Resource Version(s)</th></tr>
+     	<tr>
+     	    <td><a href="https://identityconnectors.dev.java.net/downloads.html#Bundles">1.0.5260</a></td>
+     	    <td><a href="https://identityconnectors.dev.java.net/downloads.html#Framework">1.0</a></td>
+     	    <td><ul><li>current</ul></td>
+     	</tr>
+     	<!-- add later versions here -->
+     </table>
+    <p><b>Note:</b> The "Framework Version" listed is the <b><i>minimum</i></b> required framework version for that version of
+    the connector. Newer framework versions are backwards compatible and will support previous connectors.</p>
+<h3>Configuration Properties</h3>
+<p>
+These are the properties that can be specified on the Configuration object when setting up the Connector.
+	<ul>
+		<li>Optional:
+			<ul>
+				<li><b>URLProperty</b> (String): URL of Web TimeSheet instance (ie: http://hosted.webtimesheet.com/mycompany/replicon or http://myserver/cgi/rt.dll)
+<description>
+			</ul>
+			<ul>
+				<li><b>AdminUidProperty</b>(String): Administrator user ID</li>
+			</ul>
+			<ul>
+				<li><b>AdminPasswordProperty</b>(String): WTS Administrator user password</li>
+			</ul>
+			<ul>
+				<li><b>AppPasswordProperty</b>(String): WTS Integration Application password - the connector will register with this password on first connection</li>
+			</ul>
+	</ul>
+</p>
+<h3>Schema and Supported Features</h3>
+<p>
+This Connector supports the ACCOUNT object class and "Department" object class. The ACCOUNT object class
+supports the following special attributes:
+<ul>
+	<li>FirstName</li>
+	<li>LastName</li>
+	<li>LoginName</li>
+	<li>Id</li>
+	<li>EmployeeId</li>
+	<li>InternalEmail</li>
+	<li>ParentDepartmentId</li>
+	<li>DepartmentId</li>
+	<li>Domain</li>
+	<li>AuthenticationType</li>
+</ul>
+The WebTimeSheet Connector supports the following operations:
+	<ul>
+				<li><b>Create</b>
+				<li><b>Delete</b>
+				<li><b>Update</b>
+				<li><b>Search</b>
+				<li><b>Schema</b>
+				<li><b>Test</b>
+	</ul>
+</p>
+<h3>Documentation and Source Code</h3>
+<p>The javadoc for this bundle is included in the zip file when you download the connector. The source code can be found under the <a href="https://identityconnectors.dev.java.net/source/browse/identityconnectors/">Subversion</a>
+section of the IdentityConnectors website.</p>
+</DIV>
+</HTML>
