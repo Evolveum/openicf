@@ -397,8 +397,8 @@ public class GoogleAppsConnectorTests {
         config.setPassword(properties.getStringProperty("connector.password"));
         config.setDomain(properties.getStringProperty("connector.domain"));
 
-        testGroup = properties.getStringProperty("connector.testGroup", null);
-        testDomain =  properties.getStringProperty("connector.domain", null);
+        testGroup = properties.getStringProperty("connector.testGroup");
+        testDomain =  properties.getStringProperty("connector.domain");
 
         config.validate();
 
