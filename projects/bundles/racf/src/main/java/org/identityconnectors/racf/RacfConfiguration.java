@@ -44,6 +44,7 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     private Integer        _hostLdapPortNumber;
     private Integer        _hostTelnetPortNumber;
     private Integer        _commandTimeout;
+    private String[]       _userQueries;
 
     private String[]       _userObjectClasses;
     private String[]       _groupObjectClasses;
@@ -300,6 +301,23 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
      */
     public void setGroupObjectClasses(String[] groupObjectClasses) {
         _groupObjectClasses = arrayCopy(groupObjectClasses);
+    }
+
+    /**
+     * Get the user queries
+     * @return an array of query strings that can fetch all users
+     */
+    @ConfigurationProperty(order=5, displayMessageKey="UserQueries", helpMessageKey="UserQueriesHelp")
+    public String[] getUserQueries() {
+        return arrayCopy(_userQueries);
+    }
+
+    /**
+     * Set the query strings that can fetch all users
+     * @param userObjectClasses -- an array of query strings that can fetch all users
+     */
+    public void setUserQueries(String[] userQueries) {
+        _userQueries = arrayCopy(userQueries);
     }
 
     /**

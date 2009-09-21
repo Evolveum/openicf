@@ -238,10 +238,26 @@ class LdapUtil {
         }
     }
 
-    //TODO: implement partitioned query for all
-    //
-
     public List<String> getUsersViaLdap(String query) {
+        RacfConfiguration configuration = (RacfConfiguration)_connector.getConfiguration();
+        String[] queries = configuration.getUserQueries();
+        
+        // If we are querying ALL users, and we have a partitioned Query, 
+        // we will use it instead
+        //
+        if (("*".equals(query) || query==null) && queries!=null && queries.length>0) {
+            Set<String> users = new HashSet<String>();
+            for (String subquery : queries)
+                users.addAll(getUsersViaLdap(subquery));
+            List<String> userList = new ArrayList<String>(users.size());
+            userList.addAll(users);
+            return userList;
+        } else {
+            return getUsersViaLdap0(query);
+        }
+    }
+
+    private List<String> getUsersViaLdap0(String query) {
         SearchControls subTreeControls = new SearchControls(SearchControls.ONELEVEL_SCOPE, 4095, 0, null, true, true);
         List<String> userNames = new LinkedList<String>(); 
         try {
