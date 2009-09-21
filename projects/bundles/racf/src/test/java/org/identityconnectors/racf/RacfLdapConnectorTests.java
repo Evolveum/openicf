@@ -33,6 +33,7 @@ import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.SyncDelta;
 import org.identityconnectors.framework.common.objects.SyncResultsHandler;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.racf.RacfConnectorTestBase.TestHandler;
 import org.identityconnectors.test.common.PropertyBag;
 import org.identityconnectors.test.common.TestHelpers;
 import org.junit.BeforeClass;
@@ -152,6 +153,57 @@ public class RacfLdapConnectorTests extends RacfConnectorTestBase {
             su.sync(ObjectClass.ACCOUNT, null, handler, options);
         } finally {
             connector.dispose();
+        }
+    }
+
+    @Test//@Ignore
+    public void testListAllUsersWithUserQueries() throws Exception {
+        {
+            RacfConfiguration config = createConfiguration();
+            config.setUserQueries(new String[] { "(racfid=X*)" });
+            RacfConnector connector = createConnector(config);
+            try {
+                TestHandler handler = new TestHandler();
+                TestHelpers.search(connector,ObjectClass.ACCOUNT, null, handler, null);
+                for (ConnectorObject user : handler) {
+                    Assert.assertFalse(user.getUid().getUidValue().startsWith("RACFID=I"));
+                }
+            } finally {
+                connector.dispose();
+            }
+        }
+        {
+            RacfConfiguration config = createConfiguration();
+            config.setUserQueries(new String[] { "(racfid=I*)" });
+            RacfConnector connector = createConnector(config);
+            try {
+                TestHandler handler = new TestHandler();
+                TestHelpers.search(connector,ObjectClass.ACCOUNT, null, handler, null);
+                Assert.assertTrue(handler.iterator().hasNext());
+                for (ConnectorObject user : handler) {
+                    Assert.assertTrue(user.getUid().getUidValue().startsWith("RACFID=I"));
+                }
+            } finally {
+                connector.dispose();
+            }
+        }
+        {
+            RacfConfiguration config = createConfiguration();
+            config.setUserQueries(new String[] { "(racfid=Z*)", "(racfid=I*)" });
+            RacfConnector connector = createConnector(config);
+            try {
+                TestHandler handler = new TestHandler();
+                TestHelpers.search(connector,ObjectClass.ACCOUNT, null, handler, null);
+                Assert.assertTrue(handler.iterator().hasNext());
+                for (ConnectorObject user : handler) {
+                    Assert.assertTrue(
+                            user.getUid().getUidValue().startsWith("RACFID=Z") ||
+                            user.getUid().getUidValue().startsWith("RACFID=I")
+                            );
+                }
+            } finally {
+                connector.dispose();
+            }
         }
     }
 
