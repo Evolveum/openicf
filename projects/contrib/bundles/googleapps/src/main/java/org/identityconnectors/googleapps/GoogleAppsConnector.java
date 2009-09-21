@@ -104,7 +104,7 @@ public class GoogleAppsConnector implements
     public static final String ATTR_GIVEN_NAME = "givenName";
     public static final String ATTR_QUOTA = "quota";
     public static final String ATTR_NICKNAME_LIST = "nicknames";
-     public static final String ATTR_GROUP_LIST = "groups";
+    public static final String ATTR_GROUP_LIST = "groups";
 
     // Group Objects
     public static final String ATTR_MEMBER_LIST = "members";
@@ -193,7 +193,7 @@ public class GoogleAppsConnector implements
         attributes.add(q.build());
         // Multi-valued attributes - group/nicknames - not required / not returned by default
         attributes.add(buildMultivaluedAttribute(ATTR_NICKNAME_LIST, String.class, false, false));
-        attributes.add(buildMultivaluedAttribute(ATTR_MEMBER_LIST, String.class, false, false));
+        attributes.add(buildMultivaluedAttribute(ATTR_GROUP_LIST, String.class, false, false));
 
 
         // Operational Attributes - password and enable/disable status
@@ -323,7 +323,8 @@ public class GoogleAppsConnector implements
      * @param ops - search options. By default, the nicknames for a user are not returned
      */
     public void executeQuery(ObjectClass oclass, String query, ResultsHandler handler, OperationOptions ops) {
-        log.info("query string = {0}", query);
+        log.info("query string = {0} options = {1}", query, ops.getAttributesToGet());
+        
         if (ObjectClass.ACCOUNT.equals(oclass))
             userOps.query(query,handler,ops);
         else if ( ObjectClass.GROUP.equals(oclass))

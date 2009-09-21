@@ -74,7 +74,7 @@ public abstract class ChangeSetExecutor {
      */
     public abstract void doRemove(String item);
 
-    public void execute() {
+    private void execute() {
         // toAdd now contains all the net new names we need to add
         // add the new names
         for (String n : changes.itemsToBeAdded()) {

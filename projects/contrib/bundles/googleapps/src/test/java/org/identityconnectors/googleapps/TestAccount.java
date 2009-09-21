@@ -19,27 +19,30 @@ import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.googleapps.GoogleAppsConnector;
 
 /**
  *
+ * Todo: This is ugly. Find a better way to create a test account based
+ * on the schema.
+ *
+ * Assumes the group connectorstest@identric.org exists
+ * 
  * @author warrenstrange
  */
 public class TestAccount {
 
-    private static final String ACCOUNTID = "accountid";
-    private static final String PASSWORD = "password";
-    private static final String FIRSTNAME = "givenName";
-    private static final String LASTNAME = "familyName";        // Fields..
-    private static final String QUOTA = "quota";
-    private static final String NICKNAMES = "nicknames";
+ 
     private String accountId;
     private String password;
     private String givenName;
     private String familyName;
     private Integer quota;
-    private List<String> nicknames;
+    private List<String> nicknames = new ArrayList<String>();
+    private List<String> groups = new ArrayList<String>();;
 
     /**
      * Create a unique test account fully populated..
@@ -59,10 +62,9 @@ public class TestAccount {
         setAccountId(x);
         setAccountId(x);
         setQuota(new Integer(25600));
-        List<String> nicks = new ArrayList<String>();
-        //nicks.add("alias" + x);
-        nicks.add("testalias");
-        setNicknames(nicks);
+       
+        getNicknames().add("testalias-" + x);
+        
     }
 
     public String getAccountId() {
@@ -115,21 +117,30 @@ public class TestAccount {
     public static TestAccount fromConnectorObject(ConnectorObject obj) {
         TestAccount t = new TestAccount();
         t.getNicknames().clear();
+        t.getGroups().clear();
+
         for (Attribute attr : obj.getAttributes()) {
             String name = attr.getName();
             if (Name.NAME.equalsIgnoreCase(name)) {
                 t.setAccountId(AttributeUtil.getStringValue(attr));
-            } else if (FIRSTNAME.equalsIgnoreCase(name)) {
+            } else if (GoogleAppsConnector.ATTR_GIVEN_NAME.equalsIgnoreCase(name)) {
                 t.setGivenName(AttributeUtil.getStringValue(attr));
-            } else if (LASTNAME.equalsIgnoreCase(name)) {
+            } else if (GoogleAppsConnector.ATTR_FAMILY_NAME.equalsIgnoreCase(name)) {
                 t.setFamilyName(AttributeUtil.getStringValue(attr));
-            } else if (QUOTA.equalsIgnoreCase(name)) {
+            } else if (GoogleAppsConnector.ATTR_QUOTA.equalsIgnoreCase(name)) {
                 t.setQuota(AttributeUtil.getIntegerValue(attr));
-            } else if (NICKNAMES.equalsIgnoreCase(name)) {
+            } else if (GoogleAppsConnector.ATTR_NICKNAME_LIST.equalsIgnoreCase(name)) {
                 // must cast list to array of strings
                 List<String> nicks = t.getNicknames();
                 for (Object o : attr.getValue()) {
                     nicks.add((String) o);
+                }
+            }
+            else if (GoogleAppsConnector.ATTR_GROUP_LIST.equalsIgnoreCase(name)) {
+                // must cast list to array of strings
+                List<String> groups = t.getGroups();
+                for (Object o : attr.getValue()) {
+                    groups.add((String) o);
                 }
             }
         }
@@ -154,13 +165,14 @@ public class TestAccount {
                 map.put(OperationalAttributes.PASSWORD_NAME, new GuardedString(getPassword().toCharArray()));
             }
         } else {
-            map.put(PASSWORD, getPassword());
+            map.put(OperationalAttributes.PASSWORD_NAME, getPassword());
         }
 
-        map.put(FIRSTNAME, getGivenName());
-        map.put(LASTNAME, getFamilyName());
-        map.put(QUOTA, getQuota());
-        map.put(NICKNAMES, getNicknames());
+        map.put(GoogleAppsConnector.ATTR_GIVEN_NAME, getGivenName());
+        map.put(GoogleAppsConnector.ATTR_FAMILY_NAME, getFamilyName());
+        map.put(GoogleAppsConnector.ATTR_QUOTA, getQuota());
+        map.put(GoogleAppsConnector.ATTR_NICKNAME_LIST, getNicknames());
+        map.put(GoogleAppsConnector.ATTR_GROUP_LIST, getGroups());
         return map;
     }
 
@@ -223,6 +235,20 @@ public class TestAccount {
 
     public void setNicknames(List<String> nicknames) {
         this.nicknames = nicknames;
+    }
+
+    /**
+     * @return the groups
+     */
+    public List<String> getGroups() {
+        return groups;
+    }
+
+    /**
+     * @param groups the groups to set
+     */
+    public void setGroups(List<String> groups) {
+        this.groups = groups;
     }
 }
 

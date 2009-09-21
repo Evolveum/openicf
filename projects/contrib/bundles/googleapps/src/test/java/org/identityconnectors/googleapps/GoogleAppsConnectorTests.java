@@ -38,7 +38,8 @@
  * -----------
  */
 package org.identityconnectors.googleapps;
-
+import java.util.Arrays;
+import java.util.HashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -91,6 +92,11 @@ public class GoogleAppsConnectorTests {
      */
     private GoogleAppsConnection conn;
     private GoogleAppsConnector gapps;
+
+    public static String testGroup; // primary group to add a user to - init from config
+
+    public static String testDomain; // Domain - s init from config
+    
     // Setup/Teardown
 
     /**
@@ -105,8 +111,7 @@ public class GoogleAppsConnectorTests {
         gapps.init(config);
         gapps.test();
 
-        //System.out.println("Set up google apps connector");
-
+        //System.out.println("Set up google apps connector")
     }
 
     @After
@@ -121,7 +126,7 @@ public class GoogleAppsConnectorTests {
      * but that seems self fulfilling :-), and it means schema
      * updates occur in two places (the schema, and here).
      */
-    @Ignore("Ignore for now so hudson build works")
+    //@Ignore("Ignore for now so hudson build works")
     @Test
     public void testSchema() {
         Schema schema = gapps.schema();
@@ -131,6 +136,7 @@ public class GoogleAppsConnectorTests {
         Set<ObjectClassInfo> objectInfos = schema.getObjectClassInfo();
         assertNotNull(objectInfos);
         assertEquals(2, objectInfos.size()); // supports ACCOUNT and GROUP
+        // todo: What else to test?
     }
 
     /**
@@ -142,10 +148,11 @@ public class GoogleAppsConnectorTests {
      * designing tests we need to make sure we do not trigger this
      * condition. 
      */
-    @Ignore("Ignore for now so hudson build works")
+    //@Ignore("Ignore for now so hudson build works")
     @Test
     public void testCreateReadUpdateDeleteUser() {
         TestAccount tst = new TestAccount();
+        tst.getGroups().add(testGroup);
         System.out.println("Creating test account " + tst.toString());
         Set<Attribute> attrSet = tst.toAttributeSet(true);
         assertNotNull(attrSet);
@@ -192,6 +199,11 @@ public class GoogleAppsConnectorTests {
 
         assertEquals(tst, test2);
 
+        // test the group membership
+        ConnectorObject obj = fetchGroup(testGroup);
+        Attribute a = obj.getAttributeByName(GoogleAppsConnector.ATTR_MEMBER_LIST);
+        assertTrue( a.getValue().contains( tst.getAccountId() + "@" + testDomain));
+        
 
         // delete the test account
         gapps.delete(ObjectClass.ACCOUNT, uid, null);
@@ -199,11 +211,11 @@ public class GoogleAppsConnectorTests {
 
     }
 
-    private ConnectorObject fetchConnectorObject(String id , ObjectClass clazz) {
+    private ConnectorObject fetchConnectorObject(String id , ObjectClass clazz, String[] optionalAttrs) {
          Filter filter = FilterBuilder.equalTo(new Name(id));
 
         OperationOptionsBuilder builder = new OperationOptionsBuilder();
-        builder.setAttributesToGet(GoogleAppsConnector.ATTR_NICKNAME_LIST);
+        builder.setAttributesToGet(Arrays.asList(optionalAttrs));
 
         List<ConnectorObject> r = TestHelpers.searchToList(gapps, clazz, filter, builder.build());
 
@@ -219,8 +231,15 @@ public class GoogleAppsConnectorTests {
         return obj;
     }
 
+    private static final String accountOptionalAttrs[] = { GoogleAppsConnector.ATTR_NICKNAME_LIST,GoogleAppsConnector.ATTR_GROUP_LIST, };
+    private static final String groupOptionalAttrs[] = { GoogleAppsConnector.ATTR_MEMBER_LIST,GoogleAppsConnector.ATTR_OWNER_LIST, };
+
     private TestAccount fetchAccount(String id) {
-        return TestAccount.fromConnectorObject(fetchConnectorObject(id, ObjectClass.ACCOUNT));
+        return TestAccount.fromConnectorObject(fetchConnectorObject(id, ObjectClass.ACCOUNT, accountOptionalAttrs));
+    }
+
+    private ConnectorObject fetchGroup(String id) {
+        return fetchConnectorObject(id, ObjectClass.GROUP, groupOptionalAttrs);
     }
 
     /**
@@ -254,6 +273,7 @@ public class GoogleAppsConnectorTests {
         int NUMBER_NICKS = 3;
 
         TestAccount test1 = new TestAccount();
+        test1.getGroups().add(testGroup);
 
         String suffix = "n" + test1.getAccountId();
 
@@ -303,7 +323,6 @@ public class GoogleAppsConnectorTests {
 
             // update the account
             gapps.update(ObjectClass.ACCOUNT, uid, test1.toAttributeSet(false), null);
-
             test2 = fetchAccount(test1.getAccountId());
             assertEquals(test2.getNicknames(), test1.getNicknames());
             assertEquals(test2.getNicknames().size(), 0);
@@ -336,8 +355,8 @@ public class GoogleAppsConnectorTests {
         gapps.update(ObjectClass.GROUP, uid, attr, null);
 
         // read it back
-        ConnectorObject o = fetchConnectorObject(id, ObjectClass.GROUP);
-        
+        ConnectorObject o = fetchGroup(id);
+       
         
         // delete it
         gapps.delete(ObjectClass.GROUP, uid, null);
@@ -378,6 +397,9 @@ public class GoogleAppsConnectorTests {
         config.setPassword(properties.getStringProperty("connector.password"));
         config.setDomain(properties.getStringProperty("connector.domain"));
 
+        testGroup = properties.getStringProperty("connector.testGroup", null);
+        testDomain =  properties.getStringProperty("connector.domain", null);
+
         config.validate();
 
         System.out.println("Apps config=" + config);
@@ -386,5 +408,5 @@ public class GoogleAppsConnectorTests {
 
     static String getResourceAsString(String res) {
         return IOUtil.getResourceAsString(GoogleAppsConnectorTests.class, res);
-    }
+    }  
 }

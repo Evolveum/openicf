@@ -141,7 +141,7 @@ public class GoogleAppsUserOps {
 
             if (attrs != null) {
                 List<String> alist = Arrays.asList(attrs);
-                log.info("Query options {0} ", alist);
+               
                 if (alist.contains(GoogleAppsConnector.ATTR_NICKNAME_LIST)) 
                     fetchNicknames = true;
                 else if(alist.contains(GoogleAppsConnector.ATTR_GROUP_LIST))
