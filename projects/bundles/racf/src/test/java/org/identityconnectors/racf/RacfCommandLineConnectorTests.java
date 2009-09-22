@@ -37,6 +37,8 @@ import java.util.Map;
 
 import junit.framework.Assert;
 
+import org.identityconnectors.common.script.Script;
+import org.identityconnectors.common.script.ScriptBuilder;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -288,29 +290,38 @@ public class RacfCommandLineConnectorTests extends RacfConnectorTestBase {
         }
     }
 
-    private String getLoginScript() {
+    private Script getLoginScript() {
         String script =
             "connection.connect();\n" +
-            "connection.waitFor(\"====> \", 20000);\n" +
+            "connection.waitFor(\"PRESS THE ENTER KEY\", SHORT_WAIT);\n" +
             "connection.send(\"TSO[enter]\");\n" +
-            "connection.waitFor(\"ENTER USERID -\", 20000);\n" +
+            "connection.waitFor(\"ENTER USERID -\", SHORT_WAIT);\n" +
             "connection.send(USERNAME+\"[enter]\");\n" +
-            "connection.waitFor(\"Password  ===>\", 20000);\n" +
+            "connection.waitFor(\"Password  ===>\", SHORT_WAIT);\n" +
             "connection.send(PASSWORD);\n" +
             "connection.send(\"[enter]\");\n" +
-            "connection.waitFor(\" \\\\*\\\\*\\\\* \", 20000);\n" +
+            "connection.waitFor(\"\\\\*\\\\*\\\\*\", SHORT_WAIT);\n" +
             "connection.send(\"[enter]\");\n" +
-            "connection.waitFor(\"Option ===>\", 20000);\n" +
+            "connection.waitFor(\"Option ===>\", SHORT_WAIT);\n" +
             "connection.send(\"[pf3]\");\n" +
-            "connection.waitFor(\"READY\\\\s{74}\", 20000);";
-        return script;
+            "connection.waitFor(\" READY\\\\s{74}\", SHORT_WAIT);";
+        ScriptBuilder builder = new ScriptBuilder();
+        builder.setScriptLanguage("GROOVY");
+        builder.setScriptText(script);
+        return builder.build();
     }
 
-    private String getLogoffScript() {
+    private Script getLogoffScript() {
         String script = "connection.send(\"LOGOFF[enter]\");\n";
-        return script;
+//            "connection.send(\"LOGOFF[enter]\");\n" +
+//            "connection.waitFor(\"=====>\", SHORT_WAIT);\n" +
+//            "connection.dispose();\n";
+        ScriptBuilder builder = new ScriptBuilder();
+        builder.setScriptLanguage("GROOVY");
+        builder.setScriptText(script);
+        return builder.build();
     }
-
+    
     
     // Override these to do Ldap tests
     //
@@ -323,7 +334,6 @@ public class RacfCommandLineConnectorTests extends RacfConnectorTestBase {
         config.setDisconnectScript(getLogoffScript());
         config.setUserName(SYSTEM_USER );
         config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
-        config.setScriptingLanguage("GROOVY");
         config.setSegmentNames(new String[] { 
                 "ACCOUNT.RACF",                     "ACCOUNT.TSO",                  "ACCOUNT.NETVIEW",
                 "ACCOUNT.CICS",                     "ACCOUNT.OMVS",                 "ACCOUNT.CATALOG", 
