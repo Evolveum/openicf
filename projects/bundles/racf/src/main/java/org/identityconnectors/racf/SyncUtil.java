@@ -40,16 +40,9 @@ import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeBuilder;
-import org.identityconnectors.framework.common.objects.AttributeInfo;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
-import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.OperationalAttributes;
-import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.SyncDeltaBuilder;
 import org.identityconnectors.framework.common.objects.SyncDeltaType;
 import org.identityconnectors.framework.common.objects.SyncResultsHandler;
@@ -57,8 +50,6 @@ import org.identityconnectors.framework.common.objects.SyncToken;
 import org.identityconnectors.framework.common.objects.Uid;
 
 public class SyncUtil {
-    private final static String             RACF_PASSWORD = "racfpassword";
-
     private RacfConnector                   _connector;
 
 
@@ -189,7 +180,7 @@ public class SyncUtil {
                         builder.setToken(new SyncToken(maxChangeNumber));
                         handler.handle(builder.build());
                     } else if ("ADD".equalsIgnoreCase(change) || "MODIFY".equalsIgnoreCase(change)) {
-                        String query = "(racfid="+_connector.extractRacfIdFromLdapId(targetDn.get().toString())+")";
+                        String query = "(racfid="+RacfConnector.extractRacfIdFromLdapId(targetDn.get().toString())+")";
                         
                         _connector.executeQuery(ObjectClass.ACCOUNT, query, localHandler, options);
                         if (localHandler.size()>0) {
@@ -354,7 +345,7 @@ public class SyncUtil {
             Object changes = getAttributeValueFromLdap(attributes, "changes");
             if (changes != null) {
                 map.put("changes", changes);
-                Map<String, Object> changeMap = new TreeMap(new StringComparator());
+                Map<String, Object> changeMap = new TreeMap<String, Object>(new StringComparator());
                 StringTokenizer st = new StringTokenizer((String) changes, "\n");
                 while (st.hasMoreTokens()) {
                     String line = st.nextToken();
@@ -450,10 +441,8 @@ public class SyncUtil {
         return i;
     }
 
-    static public class StringComparator implements java.util.Comparator, Serializable {
-        public int compare(Object o1, Object o2) {
-            String key1 = (String)o1;
-            String key2 = (String)o2;
+    static public class StringComparator implements java.util.Comparator<String>, Serializable {
+        public int compare(String key1, String key2) {
 
             // the arrays must be non-null but the cells may be null
 
