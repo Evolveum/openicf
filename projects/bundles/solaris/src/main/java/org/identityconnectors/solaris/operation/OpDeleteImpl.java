@@ -32,10 +32,12 @@ import org.identityconnectors.solaris.SolarisUtil;
 
 public class OpDeleteImpl extends AbstractOp {
 
+    private static final Log _log = Log.getLog(OpDeleteImpl.class);
+    
     final ObjectClass[] acceptOC = { ObjectClass.ACCOUNT, ObjectClass.GROUP };
 
-    public OpDeleteImpl(Log log, SolarisConnector conn) {
-        super(log, conn, OpDeleteImpl.class);
+    public OpDeleteImpl(SolarisConnector conn) {
+        super(conn);
     }
     
     // TODO
@@ -70,4 +72,7 @@ public class OpDeleteImpl extends AbstractOp {
 
     }
 
+    private static Log getLog() {
+        return _log;
+    }
 }

@@ -48,12 +48,14 @@ import org.identityconnectors.solaris.attr.ConnectorAttribute;
 import org.identityconnectors.solaris.attr.GroupAttribute;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.AbstractOp;
+import org.identityconnectors.solaris.operation.search.nodes.AcceptAllNode;
 import org.identityconnectors.solaris.operation.search.nodes.EqualsNode;
 import org.identityconnectors.solaris.operation.search.nodes.Node;
-import org.identityconnectors.solaris.operation.search.nodes.AcceptAllNode;
 
 
 public class OpSearchImpl extends AbstractOp {
+    
+    private static final Log _log = Log.getLog(OpSearchImpl.class);
     
     private final ObjectClass oclass;
     final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT, ObjectClass.GROUP};
@@ -68,9 +70,9 @@ public class OpSearchImpl extends AbstractOp {
     /** names of returned by default attributes (given by schema, it is static during lifetime of the connector */
     private static String[] returnedByDefaultAttributeNames; // todo possibly this could be acquired right from connector attribute structures.
     
-    public OpSearchImpl(Log log, SolarisConnector conn, ObjectClass oclass, Node filter,
+    public OpSearchImpl(SolarisConnector conn, ObjectClass oclass, Node filter,
             ResultsHandler handler, OperationOptions options) {
-        super(log, conn, OpSearchImpl.class);
+        super(conn);
         this.oclass = oclass;
         
         if (filter == null) {
@@ -113,6 +115,7 @@ public class OpSearchImpl extends AbstractOp {
      * @param filter contains the filters. Is created by {@link SolarisFilterTranslator}
      */
     public void executeQuery() {
+        getLog().info("search ({0})", filter.toString());
         SolarisUtil.controlObjectClassValidity(oclass, acceptOC, getClass());
         
         if (oclass.is(ObjectClass.GROUP_NAME)) {
@@ -139,6 +142,7 @@ public class OpSearchImpl extends AbstractOp {
         } else {
             complexFind(requiredAttrs);
         }
+        getLog().info("search successfully finished.");
     }
 
     /**
@@ -220,5 +224,9 @@ public class OpSearchImpl extends AbstractOp {
         returnedByDefaultAttributeNames = result.toArray(new String[0]);
         
         return returnedByDefaultAttributeNames;
+    }
+    
+    private static Log getLog() {
+        return _log;
     }
 }

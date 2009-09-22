@@ -73,9 +73,9 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         SchemaOp, CreateOp, DeleteOp, UpdateOp, SearchOp<Node>, TestOp {
 
     /**
-     * Setup logging for the {@link DatabaseTableConnector}.
+     * Setup logging for the {@link SolarisConnector}.
      */
-    private final Log _log = Log.getLog(SolarisConnector.class);
+    private static final Log _log = Log.getLog(SolarisConnector.class);
 
     private SolarisConnection _connection;
 
@@ -99,6 +99,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      * {@see org.identityconnectors.framework.spi.PoolableConnector#checkAlive()}
      */
     public void checkAlive() {
+        getLog().info("checkAlive()");
         try {
             String out = getConnection().executeCommand("echo '" + CHECK_ALIVE + "'");
             if (!out.contains(CHECK_ALIVE)) {
@@ -115,6 +116,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      * {@see org.identityconnectors.framework.spi.Connector#dispose()}
      */
     public void dispose() {
+        getLog().info("dispose()");
         _configuration = null;
         if (_connection != null) {
             _connection.dispose();
@@ -131,7 +133,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      */
     public Uid authenticate(ObjectClass objectClass, String username,
             GuardedString password, OperationOptions options) {
-        return new OpAuthenticateImpl(_log, this).authenticate(objectClass, username, password, options);
+        return new OpAuthenticateImpl(this).authenticate(objectClass, username, password, options);
         
     }
 
@@ -139,27 +141,28 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     public Uid create(ObjectClass oclass, Set<Attribute> attrs,
             OperationOptions options) {
         
-        return new OpCreateImpl(_log, this).create(oclass, attrs, options);
+        return new OpCreateImpl(this).create(oclass, attrs, options);
     }
     
     /** {@inheritDoc} */
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
         
-        new OpDeleteImpl(_log, this).delete(objClass, uid, options);
+        new OpDeleteImpl(this).delete(objClass, uid, options);
     }
     
     public Uid update(ObjectClass objclass, Uid uid,
             Set<Attribute> replaceAttributes, OperationOptions options) {
-        return new OpUpdateImpl(_log, this).update(objclass, uid, AttributeUtil.addUid(replaceAttributes, uid), options);
+        return new OpUpdateImpl(this).update(objclass, uid, AttributeUtil.addUid(replaceAttributes, uid), options);
     }
     
     public void executeQuery(ObjectClass oclass, Node query,
             ResultsHandler handler, OperationOptions options) {
-        new OpSearchImpl(_log, this, oclass, query, handler, options).executeQuery();
+        new OpSearchImpl(this, oclass, query, handler, options).executeQuery();
     }
 
     public FilterTranslator<Node> createFilterTranslator(
             ObjectClass oclass, OperationOptions options) {
+        getLog().info("creating Filter translator.");
         return new SolarisFilterTranslator(oclass);
     }
     
@@ -172,6 +175,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     
     // FIXME: control schema identity with adapter.
     public Schema schema() {
+        getLog().info("schema()");
         return SchemaHolder.schema;
     }
 
@@ -225,6 +229,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      * @throws Exception if the test of connection was failed.
      */
     public void test() {
+        getLog().info("test()");
         _configuration.validate();        
         checkAlive();
     }
@@ -241,7 +246,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         return _configuration;
     }
 
-
-
-
+    private static Log getLog() {
+        return _log;
+    }
 }

@@ -47,6 +47,8 @@ import org.identityconnectors.solaris.command.MatchBuilder;
  */
 public class OpUpdateImpl extends AbstractOp {
 
+    private static final Log _log = Log.getLog(OpUpdateImpl.class);
+    
     /** mutex acquire constants */
     private static final String tmpPidMutexFile = "/tmp/WSlockuid.$$";
     private static final String pidMutexFile = "/tmp/WSlockuid";
@@ -55,13 +57,15 @@ public class OpUpdateImpl extends AbstractOp {
     /** These objectclasses are valid for update operation. */
     final ObjectClass[] acceptOC = { ObjectClass.ACCOUNT, ObjectClass.GROUP };
 
-    public OpUpdateImpl(Log log, SolarisConnector conn) {
-        super(log, conn, OpUpdateImpl.class);
+    public OpUpdateImpl(SolarisConnector conn) {
+        super(conn);
     }
 
     /** main update method */
     public Uid update(ObjectClass objclass, Uid uid,
             Set<Attribute> replaceAttributes, OperationOptions options) {
+        
+        getLog().info("update ('{0}', name: '{1}'", objclass.toString(), uid.getUidValue());
 
         SolarisUtil.controlObjectClassValidity(objclass, acceptOC, getClass());
 
@@ -129,6 +133,8 @@ public class OpUpdateImpl extends AbstractOp {
         Uid newUid = null; // TODO
 
         doSudoReset();
+        
+        getLog().info("update successful ('{0}', name: '{1}')", objclass.toString(), uid.getUidValue());
         return newUid;
     }
 
@@ -221,5 +227,9 @@ public class OpUpdateImpl extends AbstractOp {
               "fi; " +
             "fi";
         return pidMutexReleaseScript;
+    }
+    
+    private static Log getLog() {
+        return _log;
     }
 }

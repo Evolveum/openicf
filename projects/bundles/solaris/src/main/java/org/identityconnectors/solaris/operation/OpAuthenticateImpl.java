@@ -37,6 +37,8 @@ import expect4j.matches.Match;
 
 public class OpAuthenticateImpl extends AbstractOp {
 
+    private static final Log _log = Log.getLog(OpAuthenticateImpl.class);
+    
     private static final String MSG = "authenticateMessage";
     final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT};
     private static final Match[] matches;
@@ -48,19 +50,20 @@ public class OpAuthenticateImpl extends AbstractOp {
         matches = builder.build();
     }
     
-    public OpAuthenticateImpl(Log log, SolarisConnector conn) {
-        super(log, conn, OpAuthenticateImpl.class);
+    public OpAuthenticateImpl(SolarisConnector conn) {
+        super(conn);
     }
 
     public Uid authenticate(ObjectClass objectClass, String username,
             GuardedString password, OperationOptions options) {
         SolarisUtil.controlObjectClassValidity(objectClass, acceptOC, getClass());
-        
+        getLog().info("authenticate (user: '{0}')", username);
         try {
             getConnection().send("exec login " + username + " TERM=vt00");
             getConnection().waitForCaseInsensitive("assword:");
             SolarisUtil.sendPassword(password, getConnection());
             getConnection().expect(matches);
+            getLog().info("authenticate successful for user: '{0}'", username);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
@@ -98,6 +101,10 @@ public class OpAuthenticateImpl extends AbstractOp {
     return script;
     }
          */
+    }
+    
+    private static Log getLog() {
+        return _log;
     }
 
 }

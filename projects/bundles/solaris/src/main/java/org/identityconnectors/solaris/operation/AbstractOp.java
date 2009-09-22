@@ -23,7 +23,6 @@
 package org.identityconnectors.solaris.operation;
 
 import org.identityconnectors.common.Assertions;
-import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
@@ -32,22 +31,15 @@ import org.identityconnectors.solaris.SolarisConnector;
 public abstract class AbstractOp {
     private SolarisConfiguration _configuration;
     private SolarisConnection _connection;
-    private final Log _log;
     private SolarisConnector _connector;
     
-    public AbstractOp(Log log, SolarisConnector conn, Class<? extends AbstractOp> clazz) {
+    public AbstractOp(SolarisConnector conn) {
         _connector = conn;
         
         final SolarisConnection connection = conn.getConnection();
         Assertions.nullCheck(connection, "connection");
         _configuration = connection.getConfiguration();
         _connection = connection;
-        
-        _log = Log.getLog(clazz);
-    }
-
-    protected final Log getLog() {
-        return _log;
     }
 
     protected final SolarisConfiguration getConfiguration() {

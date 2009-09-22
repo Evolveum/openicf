@@ -53,4 +53,9 @@ public abstract class BinaryOpNode implements Node {
         left.collectAttributeNames(attrs);
         right.collectAttributeNames(attrs);
     }
+    
+    @Override
+    public String toString() {
+        return String.format("Filter %s: [left=\"%s\", right=\"%s\"]", getClass().getName(), left.toString(), right.toString());
+    }
 }

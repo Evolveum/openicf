@@ -50,6 +50,7 @@ import expect4j.ExpectState;
 import expect4j.matches.Match;
 
 public class OpCreateImpl extends AbstractOp {
+    private static final Log _log = Log.getLog(OpCreateImpl.class);
     
     final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT, ObjectClass.GROUP};
     private final static Match[] errorsUseradd;
@@ -70,8 +71,8 @@ public class OpCreateImpl extends AbstractOp {
         errorsPasswd = builder.build();
     }
     
-    public OpCreateImpl(Log log, SolarisConnector conn) {
-        super(log, conn, OpCreateImpl.class);
+    public OpCreateImpl(SolarisConnector conn) {
+        super(conn);
     }
 
     public Uid create(ObjectClass oclass, final Set<Attribute> attrs, final OperationOptions options) {
@@ -190,5 +191,9 @@ public class OpCreateImpl extends AbstractOp {
         builder.addMatches(commonErrMatches);
         
         return builder.build();
+    }
+    
+    private static Log getLog() {
+        return _log;
     }
 }

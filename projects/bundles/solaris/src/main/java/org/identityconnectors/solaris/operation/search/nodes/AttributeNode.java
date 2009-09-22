@@ -75,4 +75,9 @@ public abstract class AttributeNode implements Node {
     public void collectAttributeNames(Set<NativeAttribute> attrs) {
         attrs.add(getAttributeName());
     }
+    
+    @Override
+    public String toString() {
+        return String.format("Filter %s : name='%s', value='%s'", getClass().getName(), attrName.getName());
+    }
 }
