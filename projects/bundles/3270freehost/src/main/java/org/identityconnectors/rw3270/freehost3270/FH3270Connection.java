@@ -131,9 +131,10 @@ public class FH3270Connection extends RW3270BaseConnection {
             logoutUser();
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
+        } finally {
+            _rw3270.disconnect();
+            _rw3270 = null;
         }
-        _rw3270.disconnect();
-        _rw3270 = null;
     }
 
     public String getStandardOutput() {

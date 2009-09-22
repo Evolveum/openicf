@@ -152,9 +152,10 @@ public class WrqConnection extends RW3270BaseConnection implements ECLPSListener
             logoutUser();
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
+        } finally {
+            _session.dispose();
+            _session = null;
         }
-        _session.dispose();
-        _session = null;
     }
 
     public String getStandardOutput() {
