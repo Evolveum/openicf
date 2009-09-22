@@ -170,7 +170,7 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
                 bld.setUid(userName);
 
                 //get after user action
-                if (StringUtil.isNotBlank(getCfg().getUserAfterActionScript())) {
+                if (getCfg().getUserAfterActionScript() != null) {
                     bld = new AccountOperationGetUserAfterAction(getConn(), getCfg()).runScriptOnConnector(userName, bld);
                 }
 
@@ -251,12 +251,12 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
         
         // password expired when both are null
         if (lastLogonDate == null && pwdDate == null) {
-            amb.setAttribute(AttributeBuilder.build(EXP_PWD, true));
+            amb.setAttribute(AttributeBuilder.build(EXP_PWD, Boolean.TRUE));
             amb.setAttribute(AttributeBuilder.buildPasswordExpired(true));
-        } /*else {
-            amb.setAttribute(AttributeBuilder.build(EXP_PWD, false));
+        } else {
+            amb.setAttribute(AttributeBuilder.build(EXP_PWD, Boolean.FALSE));
             amb.setAttribute(AttributeBuilder.buildPasswordExpired(false));
-        }*/
+        }
     }
 
     /**

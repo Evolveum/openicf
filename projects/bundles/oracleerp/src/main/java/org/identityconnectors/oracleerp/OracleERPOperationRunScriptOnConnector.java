@@ -62,8 +62,6 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
      * @see org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp#runScriptOnConnector(org.identityconnectors.framework.common.objects.ScriptContext, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public Object runScriptOnConnector(ScriptContext request, OperationOptions options) {
-        final ClassLoader loader = getClass().getClassLoader();
-
         /*
          * Build the actionContext to pass it to the script according the documentation
          */
@@ -105,11 +103,12 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
         /*
          * Build the script executor and run the script
          */
-        final String scriptLanguage = request.getScriptLanguage();
-        final ScriptExecutorFactory scriptExFact = ScriptExecutorFactory.newInstance(scriptLanguage);
-        final ScriptExecutor scripEx = scriptExFact.newScriptExecutor(loader, request.getScriptText(), true);
         Object ret;
         try {
+            final ClassLoader loader = getClass().getClassLoader();
+            final String scriptLanguage = request.getScriptLanguage();
+            final ScriptExecutorFactory scriptExFact = ScriptExecutorFactory.newInstance(scriptLanguage);
+            final ScriptExecutor scripEx = scriptExFact.newScriptExecutor(loader, request.getScriptText(), true);
             ret = scripEx.execute(inputMap);
             
             //Go through the errors and throw first one 
@@ -121,7 +120,7 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
             }
             //Any errors, warnings?
             if (errorBld.length() != 0) {
-                throw new IllegalStateException(errorBld.toString());
+                throw new ConnectorException(errorBld.toString());
             }
             //Make sure, the connection is commit
             getConn().commit();            

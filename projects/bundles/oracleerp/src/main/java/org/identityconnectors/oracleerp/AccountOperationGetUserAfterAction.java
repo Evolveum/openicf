@@ -56,7 +56,6 @@ final class AccountOperationGetUserAfterAction extends Operation {
 
 
     public ConnectorObjectBuilder runScriptOnConnector(Object userName, ConnectorObjectBuilder cob) {
-        final ClassLoader loader = getClass().getClassLoader();
 
         /*
          * Build the actionContext to pass it to the script according the documentation
@@ -81,10 +80,11 @@ final class AccountOperationGetUserAfterAction extends Operation {
         /*
          * Build the script executor and run the script
          */
-        final String scriptLanguage = getCfg().getActionScriptLanguage();
-        final ScriptExecutorFactory scriptExFact = ScriptExecutorFactory.newInstance(scriptLanguage);
-        final ScriptExecutor scripEx = scriptExFact.newScriptExecutor(loader, getCfg().getUserAfterActionScript(), true);
         try {
+            final ClassLoader loader = getClass().getClassLoader();
+            final String scriptLanguage = getCfg().getUserAfterActionScript().getScriptLanguage();
+            final ScriptExecutorFactory scriptExFact = ScriptExecutorFactory.newInstance(scriptLanguage);
+            final ScriptExecutor scripEx = scriptExFact.newScriptExecutor(loader, getCfg().getUserAfterActionScript().getScriptText(), true);
             scripEx.execute(inputMap);
             
             //Go through the errors and throw first one 
@@ -96,7 +96,7 @@ final class AccountOperationGetUserAfterAction extends Operation {
             }
             //Any errors, warnings?
             if (errorBld.length() != 0) {
-                throw new IllegalStateException(errorBld.toString());
+                throw new ConnectorException(errorBld.toString());
             }
             //Make sure, the connection is commit
             getConn().commit();

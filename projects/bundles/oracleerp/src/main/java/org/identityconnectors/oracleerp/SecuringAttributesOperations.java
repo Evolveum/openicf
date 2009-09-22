@@ -491,7 +491,7 @@ final class SecuringAttributesOperations extends Operation {
         ResultSet rs = null;
         try {
             ps = getConn().prepareStatement(sql);
-            ps.setString(1, getCfg().getOraUserName());
+            ps.setString(1, userName.toUpperCase());
             rs = ps.executeQuery();
             if (rs != null) {
                 if (rs.next()) {

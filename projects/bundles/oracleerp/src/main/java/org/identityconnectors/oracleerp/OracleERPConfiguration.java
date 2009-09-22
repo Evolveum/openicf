@@ -28,6 +28,7 @@ import java.text.MessageFormat;
 
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.common.script.Script;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.JNDIUtil;
 import org.identityconnectors.framework.common.objects.Schema;
@@ -302,30 +303,6 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
         this.password = password;
     }
 
-    /*
-     * implemented by framework, left as comment for the reference
-     * name="useConnectionPool" type="string" multi="false" value="FALSE"
-     * displayName="CONN_POOLING" description="HELP_395"
-     */
-
-    /*
-     * implemented by framework, left as comment for the reference
-     * name="idleTimeout" type="string" multi="false" value="" + IDLE_TIMEOUT
-     * displayName="DBPOOL_IDLETIMEOUT" description="DBPOOL_IDLETIMEOUT_HELP"
-     */
-
-    /*
-     * implemented by framework, left as comment for the reference
-     * name="encryptionTypesClient"  type="string" multi="false"  value="RC4_128"
-     * displayName="ENCRYPTION_TYPES_CLIENT" description="HELP_ORACLE_ERP_CLIENT_ENCRYPTION_ALGORITHMS"
-     */
-
-    /*
-     * implemented by framework, left as comment for the reference
-     * name="encryptionClient" type="string" multi="false" value="DEFAULT_ENCRYPTION_LEVEL"
-     * displayName="ENCRYPTION_CLIENT" description="HELP_ORACLE_ERP_CLIENT_ENCRYPTION_LEVEL"
-     */
-
     /**
      * Audit Responsibility attribute,  desired Oracle ERP responsibility
      *
@@ -471,67 +448,26 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
      * imported adapter attribute
      * name="GetUser Actions"  type="string" multi="false" required="false"
      * displayName="GETUSER_AFTER_ACTION" description="GETUSER_AFTER_ACTION_HELP"
-     *
-    private String userAfterActions = "";
+     */
+    private Script userAfterActionScript = null;
 
     /**
      * Getter for the userAfterActions attribute.
-     * return userAfterActions attribute
-     *
-    public String getUserAfterActions() {
-        return userAfterActions;
+     * @return userAfterActions attribute
+     */
+    public Script getUserAfterActionScript() {
+        return userAfterActionScript;
     }
 
     /**
      * Setter for the userAfterActions attribute.
-     * param userAfterActions attribute.
-     *
-    @ConfigurationProperty(order=15 ,displayMessageKey="AFTER_ACTION_DISPLAY", helpMessageKey="AFTER_ACTION_HELP")
-    public void setUserAfterActions(String userAfterActions) {
-        this.userAfterActions = userAfterActions;
-    }   
-    
-    /**
-     * This should be replaced by script attributes
-     */
-    private String userAfterActionScript;
-
-    
-    public String getUserAfterActionScript() {
-        return userAfterActionScript;
-    }
-        
-    /**
-     * Set the user after action script 
-     * @param userGetUserAfterActionScript
+     * @param userAfterActionScript attribute.
      */
     @ConfigurationProperty(order=15 ,displayMessageKey="USER_AFTER_ACTION_SCRIPT_DISPLAY", helpMessageKey="USER_AFTER_ACTION_SCRIPT_HELP")
-    public void setUserAfterActionScript(String userGetUserAfterActionScript) {
-        this.userAfterActionScript = userGetUserAfterActionScript;
-    }
+    public void setUserAfterActionScript(Script userAfterActionScript) {
+        this.userAfterActionScript = userAfterActionScript;
+    }   
     
-    /**
-     * This property will be integrated by script attribute
-     */
-    private String actionScriptLanguage = GROOVY;
-    
-    /**
-     * The action script language setter
-     * @return String 
-     */
-    public String getActionScriptLanguage() {
-        return actionScriptLanguage;
-    }
-
-    /**
-     * Action script language setter
-     * @param actionScriptLanguage
-     */
-    @ConfigurationProperty(order=16 ,displayMessageKey="ACTION_SCRIPT_LANGUAGE_DISPLAY", helpMessageKey="ACTION_SCRIPT_LANGUAGE_HELP")
-    public void setActionScriptLanguage(String actionScriptLanguage) {
-        this.actionScriptLanguage = actionScriptLanguage;
-    }    
-
     /**
      * When true, the schema identifier will not be prefixed to table names.
      * When false, a schema identifier is prefixed to tables names.
@@ -561,7 +497,12 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
         this.noSchemaId = noSchemaId;
     }
     
-    /**
+
+    /*
+     * implemented by framework, left as comment for the reference
+     * name="encryptionTypesClient"  type="string" multi="false"  value="RC4_128"
+     * displayName="ENCRYPTION_TYPES_CLIENT" description="HELP_ORACLE_ERP_CLIENT_ENCRYPTION_ALGORITHMS"
+     * 
      * CLIENT_ENCRYPTION_ALGORITHMS
      * old name = encryptionTypesClient, oracle.net.encryption_types_client
      */
@@ -585,6 +526,11 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
     }
 
     /**
+    /*
+     * implemented by framework, left as comment for the reference
+     * name="encryptionClient" type="string" multi="false" value="DEFAULT_ENCRYPTION_LEVEL"
+     * displayName="ENCRYPTION_CLIENT" description="HELP_ORACLE_ERP_CLIENT_ENCRYPTION_LEVEL"
+     * 
      * CLIENT_ENCRYPTION_LEVEL
      * old name = encryptionClient, oracle.net.encryption_client
      */

@@ -36,6 +36,8 @@ import java.util.Set;
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.common.script.Script;
+import org.identityconnectors.common.script.ScriptExecutorFactory;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLParam;
@@ -337,7 +339,7 @@ public class OracleERPConnector implements PoolableConnector, AuthenticateOp, De
         getCfg().validate();
         getConn().test();
         validateAccountsIncluded();
-        
+        validateGetUserAfterActionScript(getCfg().getUserAfterActionScript());
         //TODO Validate Get User After script by compiling it
     }
 
@@ -382,8 +384,9 @@ public class OracleERPConnector implements PoolableConnector, AuthenticateOp, De
         this.conn = OracleERPConnection.createConnection(getCfg());
         log.ok("createOracleERPConnection");
 
-        getCfg().setUserId(new SecuringAttributesOperations(getConn(), getCfg()).getUserId(getCfg().getUser()));
-        log.ok("Init: for user {0} the configUserId is {1}", getCfg().getUser(), getCfg().getUserId());
+        getCfg().setUserId(new SecuringAttributesOperations(getConn(), 
+        								getCfg()).getUserId(getCfg().getOraUserName()));
+        log.info("Init: for user {0} the configUserId is {1}", getCfg().getUser(), getCfg().getUserId());
 
         initResponsibilities();
         initFndGlobal();
@@ -405,7 +408,7 @@ public class OracleERPConnector implements PoolableConnector, AuthenticateOp, De
             try {
                 final String sql = "call " + getCfg().app() + "FND_GLOBAL.APPS_INITIALIZE(?,?,?)";
                 final String msg = "Oracle ERP: {0}FND_GLOBAL.APPS_INITIALIZE({1}, {2}, {3}) called.";
-                log.ok(msg, getCfg().app(), getCfg().getUserId(), respId, respApplId);
+                log.info(msg, getCfg().app(), getCfg().getUserId(), respId, respApplId);
                 List<SQLParam> pars = new ArrayList<SQLParam>();
                 pars.add(new SQLParam("userId", getCfg().getUserId(), Types.VARCHAR));
                 pars.add(new SQLParam("respId", respId, Types.VARCHAR));
@@ -425,7 +428,7 @@ public class OracleERPConnector implements PoolableConnector, AuthenticateOp, De
                 cs = null;
             }
         } else {
-            log.ok("Oracle ERP: {0}FND_GLOBAL.APPS_INITIALIZE() NOT called.", getCfg().app());
+            log.info("Oracle ERP: {0}FND_GLOBAL.APPS_INITIALIZE() NOT called.", getCfg().app());
         }
     }
 
@@ -574,5 +577,26 @@ public class OracleERPConnector implements PoolableConnector, AuthenticateOp, De
     public void checkAlive() {
         getConn().test();
     }
+    
 
+    /**
+     * Validate the get user after script
+     * @param userAfterAction the script
+     */
+    private void validateGetUserAfterActionScript(Script userAfterAction) {
+        if (userAfterAction == null || StringUtil.isBlank(userAfterAction.getScriptLanguage())
+                || StringUtil.isBlank(userAfterAction.getScriptText())) {
+            return;
+        }
+        try {
+            final ClassLoader loader = getClass().getClassLoader();
+            final String scriptLanguage = userAfterAction.getScriptLanguage();
+            final ScriptExecutorFactory scriptExFact = ScriptExecutorFactory.newInstance(scriptLanguage);
+            //Compile the script
+            scriptExFact.newScriptExecutor(loader, userAfterAction.getScriptText(), true);
+        } catch (Exception e) {
+            log.error(e, "error in script");
+            throw ConnectorException.wrap(e);
+        }
+    }
 }
