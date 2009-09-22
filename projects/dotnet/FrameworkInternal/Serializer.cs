@@ -1492,6 +1492,7 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
             HANDLERS.Add( new ObjectClassInfoHandler() );
             HANDLERS.Add( new SchemaHandler() );
             HANDLERS.Add( new UidHandler() );
+            HANDLERS.Add( new ScriptHandler());
             HANDLERS.Add( new ScriptContextHandler() );
             HANDLERS.Add( new OperationOptionsHandler() );
             HANDLERS.Add( new OperationOptionInfoHandler() );
@@ -1952,7 +1953,28 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer
                 encoder.WriteStringContents(val.GetUidValue());
             }
         }
-        private class ScriptContextHandler : AbstractObjectSerializationHandler {
+        private class ScriptHandler : AbstractObjectSerializationHandler
+        {
+            public ScriptHandler()
+                : base(typeof(Script), "Script") {
+
+            }
+            public override Object Deserialize(ObjectDecoder decoder) {
+                ScriptBuilder builder = new ScriptBuilder();
+                builder.ScriptLanguage = decoder.ReadStringField("scriptLanguage", null);
+                builder.ScriptText = (String)decoder.ReadObjectField("scriptText", typeof(string), null);
+                return builder.Build();
+            }
+
+            public override void Serialize(Object obj, ObjectEncoder encoder)
+            {
+                Script val = (Script)obj;
+                encoder.WriteStringField("scriptLanguage", val.ScriptLanguage);
+                encoder.WriteObjectField("scriptText", val.ScriptText, true);
+            }
+        }
+        private class ScriptContextHandler : AbstractObjectSerializationHandler
+        {
             public ScriptContextHandler() 
                 : base(typeof(ScriptContext),"ScriptContext") {
                 

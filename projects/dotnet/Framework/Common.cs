@@ -108,7 +108,8 @@ namespace Org.IdentityConnectors.Framework.Common
                 typeof(Uri),
                 typeof(FileName),
                 typeof(GuardedByteArray),
-                typeof(GuardedString)
+                typeof(GuardedString),
+                typeof(Script)
             );
             ATTR_SUPPORTED_TYPES = CollectionUtil.NewReadOnlySet<Type>
             ( 

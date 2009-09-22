@@ -966,7 +966,18 @@ namespace FrameworkTests
             Assert.AreEqual("bar",v2.Options["foo"]);
             Assert.AreEqual("bar2",v2.Options["foo2"]);
         }
-        
+
+        [Test]
+        public void TestScript() {
+            ScriptBuilder builder = new ScriptBuilder();
+            builder.ScriptLanguage = "language";
+            builder.ScriptText = "text";
+            Script v1 = builder.Build();
+            Script v2 = (Script)CloneObject(v1);
+            Assert.AreEqual("language", v2.ScriptLanguage);
+            Assert.AreEqual("text", v2.ScriptText);
+        }
+
         [Test]
         public void TestScriptContext() {
             ScriptContextBuilder builder = new ScriptContextBuilder();

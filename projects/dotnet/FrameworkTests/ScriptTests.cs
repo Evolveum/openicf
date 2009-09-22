@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using Org.IdentityConnectors.Common;
 using Org.IdentityConnectors.Common.Script;
+using Org.IdentityConnectors.Framework.Common.Objects;
 using NUnit.Framework;
 using NUnit.Framework.SyntaxHelpers;
 
@@ -57,6 +58,74 @@ namespace FrameworkTests
         [ExpectedException(typeof(ArgumentException))]
         public void testUnsupported() {
             ScriptExecutorFactory.NewInstance("fadsflkj");
+        }
+
+        [Test]
+        public void testBasic() {
+            ScriptBuilder builder = new ScriptBuilder();
+            builder.ScriptLanguage = "Groovy";
+            builder.ScriptText = "print 'foo'";
+            Script s1 = builder.Build();
+            Assert.AreEqual("Groovy", s1.ScriptLanguage);
+            Assert.AreEqual("print 'foo'", s1.ScriptText);
+            builder = new ScriptBuilder();
+            builder.ScriptLanguage = "Groovy";
+            builder.ScriptText = "print 'foo'";
+            Script s2 = builder.Build();
+            Assert.AreEqual(s1, s2);
+            Assert.AreEqual(s1.GetHashCode(), s2.GetHashCode());
+        }
+    
+        [Test]
+        public void testLanguageNotBlank() {
+            try {
+                ScriptBuilder builder = new ScriptBuilder();
+                builder.ScriptText = "print 'foo'";
+                builder.Build();
+                Assert.Fail();
+            } catch (ArgumentException) {
+                // OK.
+            }
+    
+            try {
+                ScriptBuilder builder = new ScriptBuilder();
+                builder.ScriptText = "print 'foo'";
+                builder.ScriptLanguage = "";
+                builder.Build();
+                Assert.Fail();
+            } catch (ArgumentException) {
+                // OK.
+            }
+    
+            try {
+                ScriptBuilder builder = new ScriptBuilder();
+                builder.ScriptText = "print 'foo'";
+                builder.ScriptLanguage = " ";
+                builder.Build();
+                Assert.Fail();
+            }
+            catch (ArgumentException)
+            {
+                // OK.
+            }
+        }
+    
+        [Test]
+        public void testTextNotNull() {
+            ScriptBuilder builder = new ScriptBuilder();
+            try {
+                builder.ScriptLanguage = "Groovy";
+                builder.Build();
+                Assert.Fail();
+            } catch (ArgumentNullException) {
+                // OK.
+            }
+    
+            // The text can be empty.
+            builder = new ScriptBuilder();
+            builder.ScriptLanguage = "Groovy";
+            builder.ScriptText = "";
+            builder.Build();
         }
     }
 }

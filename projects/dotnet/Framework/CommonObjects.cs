@@ -3194,6 +3194,109 @@ namespace Org.IdentityConnectors.Framework.Common.Objects
     }
     #endregion
     
+    #region Script
+    /**
+     * Represents a script in a scripting language.
+     * 
+     * @since 1.1
+     */
+    public sealed class Script {
+    
+        private readonly string scriptLanguage;
+        private readonly string scriptText;
+    
+        internal Script(string scriptLanguage, string scriptText) {
+            Assertions.BlankCheck(scriptLanguage, "scriptLanguage");
+            Assertions.NullCheck(scriptText, "scriptText"); // Allow empty text.
+            this.scriptLanguage = scriptLanguage;
+            this.scriptText = scriptText;
+        }
+    
+        /**
+         * Returns the language of this script.
+         * 
+         * @return the script language; never null.
+         */
+        public string ScriptLanguage {
+            get {
+                return scriptLanguage;
+            }
+        }
+    
+        /**
+         * Returns the text of this script.
+         * 
+         * @return the script text; never null.
+         */
+        public string ScriptText {
+            get {
+                return scriptText;
+            }
+        }
+    
+        public override int GetHashCode() {
+            return scriptLanguage.GetHashCode() ^ scriptText.GetHashCode();
+        }
+    
+        public override bool Equals(object obj) {
+            if (obj is Script) {
+                Script other = (Script) obj;
+                if (!scriptLanguage.Equals(other.scriptLanguage)) {
+                    return false;
+                }
+                if (!scriptText.Equals(other.scriptText)) {
+                    return false;
+                }
+                return true;
+            }
+            return false;
+        }
+    
+        public override string ToString() {
+            // Text can be large, probably should not be included.
+            return "Script: " + scriptLanguage;
+        }
+    }
+    #endregion
+
+    #region ScriptBuilder
+    /**
+     * Builder for {@link Script}.
+     */
+    public class ScriptBuilder {
+
+        /**
+         * Creates a new <code>ScriptBuilder</code>.
+         */
+        public ScriptBuilder() {
+        }
+
+        /**
+         * Gets/sets the language of the script.
+         */
+        public string ScriptLanguage {
+            get; set;
+        }
+
+        /**
+         * Gets/sets the text of the script.
+         */
+        public string ScriptText {
+            get; set;
+        }
+
+        /**
+         * Creates a <code>Script</code>. Prior to calling this method the language
+         * and the text should have been set.
+         * 
+         * @return a new script; never null.
+         */
+        public Script Build() {
+            return new Script(ScriptLanguage, ScriptText);
+        }
+    }
+    #endregion
+
     #region ScriptContext
     /**
      * Encapsulates a script and all of its parameters.
