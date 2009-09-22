@@ -409,11 +409,11 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
 
     @ConfigurationProperty(order=19, confidential=true)
     public String[] getConnectionProperties() {
-        return _connectionProperties;
+        return arrayCopy(_connectionProperties);
     }
 
     public void setConnectionProperties(String[] properties) {
-        _connectionProperties = properties;
+        _connectionProperties = arrayCopy(properties);
     }
 
     @ConfigurationProperty(order=11)

@@ -861,64 +861,59 @@ class CommandLineUtil {
         
         Map<String, Object> attributesFromCommandLine = new HashMap<String, Object>();
         if (segmentsNeeded.size()>0 || ((RacfConfiguration)_connector.getConfiguration()).getUserName()==null) {
-            try {
-                boolean racfNeeded = segmentsNeeded.remove(RACF);
-                boolean catalogNeeded = segmentsNeeded.remove(CATALOG);
-                StringBuffer buffer = new StringBuffer();
-                buffer.append(listCommand+" "+racfName);
-                if (!racfNeeded)
-                    buffer.append(" NORACF");
-                for (String segment : segmentsNeeded)
-                    buffer.append(" "+segment);
+            boolean racfNeeded = segmentsNeeded.remove(RACF);
+            boolean catalogNeeded = segmentsNeeded.remove(CATALOG);
+            StringBuffer buffer = new StringBuffer();
+            buffer.append(listCommand+" "+racfName);
+            if (!racfNeeded)
+                buffer.append(" NORACF");
+            for (String segment : segmentsNeeded)
+                buffer.append(" "+segment);
 
-                String output = getCommandOutput(buffer.toString())+"\n";
-                
-                // Split out the various segments
+            String output = getCommandOutput(buffer.toString())+"\n";
+            
+            // Split out the various segments
+            //
+            StringBuffer segmentPatternString = new StringBuffer();
+            if (racfNeeded)
+                segmentPatternString.append("(.+?)");
+            for (String segment : segmentsNeeded) {
+                segmentPatternString.append("(NO )?"+segment.toUpperCase()+" INFORMATION (.+?)");
+            }
+            Pattern segmentsPattern = Pattern.compile(segmentPatternString.toString()+"$", Pattern.DOTALL);
+            Matcher segmentsMatcher = segmentsPattern.matcher(output);
+            if (segmentsMatcher.find()) {
+                // Deal with RACF first
                 //
-                StringBuffer segmentPatternString = new StringBuffer();
-                if (racfNeeded)
-                    segmentPatternString.append("(.+?)");
+                int offset = 0;
+                if (racfNeeded) {
+                    OutputParser transform = _segmentParsers.get(objectClassPrefix+"RACF");
+                    try {
+                        attributesFromCommandLine.putAll(transform.parse(segmentsMatcher.group(1)));
+                    } catch (Exception e) {
+                        if (_debug) System.out.println(_buffer2.toString().replaceAll("(.{80})", "$1\n"));
+                        throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNPARSEABLE_RESPONSE, "LISTUSER", output));
+                    }
+                    offset = 1;
+                }
+                // Parse the other segments, and add the attributes to the set of
+                // attributes received
+                //
+                int i=0;
                 for (String segment : segmentsNeeded) {
-                    segmentPatternString.append("(NO )?"+segment.toUpperCase()+" INFORMATION (.+?)");
-                }
-                Pattern segmentsPattern = Pattern.compile(segmentPatternString.toString()+"$", Pattern.DOTALL);
-                Matcher segmentsMatcher = segmentsPattern.matcher(output);
-                if (segmentsMatcher.find()) {
-                    // Deal with RACF first
-                    //
-                    int offset = 0;
-                    if (racfNeeded) {
-                        OutputParser transform = _segmentParsers.get(objectClassPrefix+"RACF");
-                        try {
-                            attributesFromCommandLine.putAll(transform.parse(segmentsMatcher.group(1)));
-                        } catch (Exception e) {
-                            if (_debug) System.out.println(_buffer2.toString().replaceAll("(.{80})", "$1\n"));
-                            throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNPARSEABLE_RESPONSE, "LISTUSER", output));
-                        }
-                        offset = 1;
+                    String noValue = segmentsMatcher.group(2*i+offset+1);
+                    String segmentValue = segmentsMatcher.group(2*i+offset+2);
+                    if (StringUtil.isBlank(noValue)) {
+                        OutputParser transform = _segmentParsers.get(objectClassPrefix+segment);
+                        attributesFromCommandLine.putAll(transform.parse(segmentValue));
                     }
-                    // Parse the other segments, and add the attributes to the set of
-                    // attributes received
-                    //
-                    int i=0;
-                    for (String segment : segmentsNeeded) {
-                        String noValue = segmentsMatcher.group(2*i+offset+1);
-                        String segmentValue = segmentsMatcher.group(2*i+offset+2);
-                        if (StringUtil.isBlank(noValue)) {
-                            OutputParser transform = _segmentParsers.get(objectClassPrefix+segment);
-                            attributesFromCommandLine.putAll(transform.parse(segmentValue));
-                        }
-                        i++;
-                    }
-                } else if (output.toUpperCase().contains(UNABLE_TO_LOCATE_USER)) {
-                    throw new UnknownUidException();
-                } else {
-                    if (_debug) System.out.println(_buffer2.toString().replaceAll("(.{80})", "$1\n"));
-                    throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNPARSEABLE_RESPONSE, "LISTUSER", output));
+                    i++;
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw ConnectorException.wrap(e);
+            } else if (output.toUpperCase().contains(UNABLE_TO_LOCATE_USER)) {
+                throw new UnknownUidException();
+            } else {
+                if (_debug) System.out.println(_buffer2.toString().replaceAll("(.{80})", "$1\n"));
+                throw new ConnectorException(((RacfConfiguration)_connector.getConfiguration()).getMessage(RacfMessages.UNPARSEABLE_RESPONSE, "LISTUSER", output));
             }
         }
         
@@ -1165,6 +1160,7 @@ class CommandLineUtil {
             buffer.setLength(buffer.length()-1);
         return buffer.toString();
     }
+    
     private static class CharArrayBuffer {
         private char[]  _array;
         private int     _position;
@@ -1203,7 +1199,4 @@ class CommandLineUtil {
             return result;
         }
     }
-
-
-
 }
