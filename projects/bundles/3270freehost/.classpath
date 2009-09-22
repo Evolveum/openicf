@@ -11,5 +11,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/Connector Framework - Internal"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Connector Common Test Library"/>
     <classpathentry kind="var" path="USER_HOME/.connectors/3270freehost/lib/freehost3270.jar"/>
+    <classpathentry kind="var" path="USER_HOME/.connectors/3270freehost/lib/expect4j-r17.jar"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>

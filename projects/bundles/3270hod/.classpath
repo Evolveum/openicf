@@ -11,5 +11,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/Pattern Parser"/>
 	<classpathentry kind="var" path="USER_HOME/.connectors/3270hod/lib/habeans2.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Connector Common Test Library"/>
+    <classpathentry kind="var" path="USER_HOME/.connectors/3270hod/lib/expect4j-r17.jar"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>
