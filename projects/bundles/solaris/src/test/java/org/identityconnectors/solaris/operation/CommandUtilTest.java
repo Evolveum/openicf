@@ -20,17 +20,15 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-package org.identityconnectors.solaris.command;
+package org.identityconnectors.solaris.operation;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import junit.framework.Assert;
 
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeBuilder;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.solaris.constants.AccountAttributes;
+import org.identityconnectors.solaris.attr.NativeAttribute;
+import org.identityconnectors.solaris.operation.CommandUtil;
 import org.junit.Test;
 
 public class CommandUtilTest {
@@ -55,24 +53,25 @@ public class CommandUtilTest {
     
     @Test
     public void testPrepareCommand() {
-        Set<Attribute> replaceAttributes = new HashSet<Attribute>();
         final String attrValue = "dummy";
-        replaceAttributes.add(AttributeBuilder.build(AccountAttributes.UID.getName(), attrValue));
-        String cmd = CommandUtil.prepareCommand(replaceAttributes, ObjectClass.ACCOUNT);
-        String expected = String.format("%s \"%s\"", AccountAttributes.UID.getCmdSwitch(), attrValue);
+        final NativeAttribute attrName = NativeAttribute.DIR;
+        Set<NativePair> replaceAttributes = buildPair(attrName, attrValue);
+        String cmd = CommandUtil.prepareCommand(replaceAttributes);
+        String expected = String.format("%s \"%s\"", attrName.getCmdSwitch(), attrValue);
         Assert.assertEquals(expected, cmd.trim());
         
         // try multiple commands
         final String attrValue2 = "foobar";
-        replaceAttributes.add(AttributeBuilder.build(AccountAttributes.COMMENT.getName(), attrValue2));
-        expected = String.format("%s \"%s\" %s \"%s\"", AccountAttributes.UID.getCmdSwitch(), attrValue, AccountAttributes.COMMENT.getCmdSwitch(), attrValue2);
-        cmd = CommandUtil.prepareCommand(replaceAttributes, ObjectClass.ACCOUNT);
+        final NativeAttribute attrName2 = NativeAttribute.GROUP_PRIM;
+        replaceAttributes = buildPair(attrName, attrValue, attrName2, attrValue2);
+        expected = String.format("%s \"%s\" %s \"%s\"", attrName.getCmdSwitch(), attrValue, attrName2.getCmdSwitch(), attrValue2);
+        cmd = CommandUtil.prepareCommand(replaceAttributes);
         Assert.assertTrue(cmd.split(" ").length == 4);
         
         
         String[] tokens = cmd.split(" ");
-        controlCmdParam(attrValue, tokens, AccountAttributes.UID.getCmdSwitch());
-        controlCmdParam(attrValue2, tokens, AccountAttributes.COMMENT.getCmdSwitch());
+        controlCmdParam(attrValue, tokens, attrName.getCmdSwitch());
+        controlCmdParam(attrValue2, tokens, attrName2.getCmdSwitch());
     }
 
     private void controlCmdParam(final String attrValue, String[] tokens,
@@ -91,5 +90,18 @@ public class CommandUtilTest {
 
     private Object quote(String string) {
         return String.format("\"%s\"", string);
+    }
+    
+    private static Set<NativePair> buildPair(NativeAttribute attr, String value) {
+        Set<NativePair> set = new HashSet<NativePair>();
+        set.add(new NativePair(attr, value));
+        return set;
+    }
+    
+    private static Set<NativePair> buildPair(NativeAttribute attr, String value, NativeAttribute attr2, String value2) {
+        Set<NativePair> set = buildPair(attr, value);
+        Set<NativePair> set2 = buildPair(attr2, value2);
+        set.addAll(set2);
+        return set;
     }
 }

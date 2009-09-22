@@ -23,6 +23,8 @@
 package org.identityconnectors.solaris.operation;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,10 +39,11 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
-import org.identityconnectors.solaris.command.CommandUtil;
+import org.identityconnectors.solaris.attr.AccountAttribute;
+import org.identityconnectors.solaris.attr.ConnectorAttribute;
+import org.identityconnectors.solaris.attr.GroupAttribute;
 import org.identityconnectors.solaris.command.MatchBuilder;
 import org.identityconnectors.solaris.command.closure.ClosureFactory;
-import org.identityconnectors.solaris.constants.AccountAttributes;
 
 import expect4j.Closure;
 import expect4j.ExpectState;
@@ -94,11 +97,11 @@ public class OpCreateImpl extends AbstractOp {
         /*
          * CREATE A NEW ACCOUNT
          */
-        final String commandSwitches = CommandUtil.prepareCommand(attrs, ObjectClass.ACCOUNT);
+        final String commandSwitches = CommandUtil.prepareCommand(convertAttrsToPair(attrs, oclass));
         // USERADD accountId
         String command = getConnection().buildCommand("useradd", commandSwitches, accountId);
         
-        Match[] matches = prepareMatches(getConfiguration().getRootShellPrompt(), errorsUseradd);
+        Match[] matches = prepareMatches(getRootShellPrompt(), errorsUseradd);
         
         try {//CONNECTION
             getLog().info("useradd(''{0}'')", accountId);
@@ -137,13 +140,29 @@ public class OpCreateImpl extends AbstractOp {
         /*
          * INACTIVE attribute
          */
-        Attribute inactive = attrMap.get(AccountAttributes.INACTIVE);
+        Attribute inactive = attrMap.get(AccountAttribute.INACTIVE);
         if (inactive != null) {
-            
+            //TODO
         }
         
         
         return new Uid(accountId);
+    }
+
+    static Set<NativePair> convertAttrsToPair(Set<Attribute> attrs, ObjectClass oclass) {
+        Set<NativePair> set = new HashSet<NativePair>(attrs.size());
+        for (Attribute attr : attrs) {
+            final String attrName = attr.getName();
+            ConnectorAttribute connAttr = (oclass.is(ObjectClass.ACCOUNT_NAME)) ? AccountAttribute.fromString(attrName) : GroupAttribute.fromString(attrName);
+
+            if (connAttr == null)
+                continue;
+
+            List<Object> values = attr.getValue();
+            String value = (values.size() > 0) ? (String) values.get(0) : null ;
+            set.add(new NativePair(connAttr.getNative(), value));
+        }
+        return set;
     }
 
     /** checks if the account already exists on the resource. */

@@ -38,15 +38,16 @@ public class SudoUtil {
     private static final String SUDO_RESET_COMMAND = "sudo -k";
     
     // purely based on RA, TODO test 
-    public static void doSudoStart(SolarisConfiguration config, final SolarisConnection conn) {
+    public static void doSudoStart(final SolarisConnection conn) {
+        final SolarisConfiguration config = conn.getConfiguration();
         if (config.isSudoAuth()) {
             try {
                 // 1) send sudo reset command
-                conn.send(SUDO_RESET_COMMAND); // TODO CommandBuilder might be user for this
+                conn.send(SUDO_RESET_COMMAND); 
                 conn.expect(MatchBuilder.buildRegExpMatch("not found", ClosureFactory.newConnectorException("Sudo command is not found")));
 
                 // 2) send sudo start command
-                conn.send(SUDO_START_COMMAND); // TODO CommandBuilder might be user for this
+                conn.send(SUDO_START_COMMAND); 
                 conn.waitForCaseInsensitive("assword:");
                 // TODO evaluate which password should be used:
                 GuardedString passwd = config.getPassword();
@@ -54,7 +55,7 @@ public class SudoUtil {
                 
                 // 3) wait for the end of sudo operation
                 MatchBuilder builder = new MatchBuilder();
-                builder.addRegExpMatch(config.getRootShellPrompt(), ClosureFactory.newNullClosure());// TODO possibly replace NullClosure with null.
+                builder.addRegExpMatch(conn.getRootShellPrompt(), ClosureFactory.newNullClosure());// TODO possibly replace NullClosure with null.
                 // signs of password reject:
                 builder.addRegExpMatch("may not run", ClosureFactory.newConnectorException("Not sufficient permissions")); // TODO improve error msg
                 builder.addRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException("Not sufficient permissions"));// TODO improve error msg
@@ -66,12 +67,13 @@ public class SudoUtil {
     }
     
     // purely based on RA, TODO test 
-    public static void doSudoReset(SolarisConfiguration config, SolarisConnection conn) {
+    public static void doSudoReset(SolarisConnection conn) {
+        final SolarisConfiguration config = conn.getConfiguration();
         if (config.isSudoAuth()) {
             // 1) send sudo reset command
             try {
                 conn.send(SUDO_RESET_COMMAND);
-                conn.waitFor(config.getRootShellPrompt());
+                conn.waitFor(conn.getRootShellPrompt());
             } catch (Exception e) {
                 throw ConnectorException.wrap(e);
             }

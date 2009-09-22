@@ -54,9 +54,8 @@ import org.identityconnectors.framework.spi.operations.SchemaOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
-import org.identityconnectors.solaris.constants.AccountAttributes;
-import org.identityconnectors.solaris.constants.AccountAttributesForPassword;
-import org.identityconnectors.solaris.constants.GroupAttributes;
+import org.identityconnectors.solaris.attr.AccountAttribute;
+import org.identityconnectors.solaris.attr.GroupAttribute;
 import org.identityconnectors.solaris.operation.OpAuthenticateImpl;
 import org.identityconnectors.solaris.operation.OpCreateImpl;
 import org.identityconnectors.solaris.operation.OpDeleteImpl;
@@ -184,7 +183,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
          */
         Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
         //attributes.add(Name.INFO);
-        for (GroupAttributes attr : GroupAttributes.values()) {
+        for (GroupAttribute attr : GroupAttribute.values()) {
             attributes.add(AttributeInfoBuilder.build(attr.getName()));
         }
         
@@ -201,10 +200,10 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
          */
         attributes = new HashSet<AttributeInfo>();
         attributes.add(OperationalAttributeInfos.PASSWORD);
-        for (AccountAttributes attr : AccountAttributes.values()) {
+        for (AccountAttribute attr : AccountAttribute.values()) {
             AttributeInfo newAttr = null;
             
-            if (!attr.equals(AccountAttributes.UID)) {
+            if (!attr.equals(AccountAttribute.UID)) {
                 newAttr = AttributeInfoBuilder.build(attr.getName());
             } else {
                 // 'uid' is not returned by default, as __NAME__ already contains this information. 
@@ -213,9 +212,6 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
             }
             
             attributes.add(newAttr);
-        }
-        for (AccountAttributesForPassword attr : AccountAttributesForPassword.values()) {
-            attributes.add(AttributeInfoBuilder.build(attr.getName()));
         }
         
         schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);

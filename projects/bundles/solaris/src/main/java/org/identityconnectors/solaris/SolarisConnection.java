@@ -29,9 +29,9 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.solaris.command.CommandUtil;
 import org.identityconnectors.solaris.command.MatchBuilder;
 import org.identityconnectors.solaris.constants.ConnectionType;
+import org.identityconnectors.solaris.operation.CommandUtil;
 
 import expect4j.Closure;
 import expect4j.Expect4j;
@@ -55,6 +55,7 @@ public class SolarisConnection {
      * As Expect uses regular expressions, the pattern should be quoted as a string literal. 
      */
     private static final String CONNECTOR_PROMPT = "~ConnectorPrompt";
+    private String _rootShellPrompt;
     private String _originalPrompt;
     
     /**
@@ -84,6 +85,8 @@ public class SolarisConnection {
                     "Cannot create a SolarisConnection on a null configuration.");
         }
         _configuration = configuration;
+        
+        _rootShellPrompt = _configuration.getRootShellPrompt();
 
         final ConnectionType connType = ConnectionType
                 .toConnectionType(_configuration.getConnectionType());
@@ -96,16 +99,22 @@ public class SolarisConnection {
             _expect4j = createSSHPubKeyConn(username, password);
             break;
         case TELNET:
-            throw new UnsupportedOperationException("Telnet access not yet implemented: TODO");
-            // _expect4j = ExpectUtils.telnet(_configuration
-            // .getHostNameOrIpAddr(), _configuration
-            // .getPort());
-            //break;
+            // throw new
+            // UnsupportedOperationException("Telnet access not yet implemented: TODO");
+            _expect4j = createTelnetConn(username, password);
+            break;
         }
         
         try {
+            if (connType.equals(ConnectionType.TELNET)) {
+                waitFor("login");
+                send(username.trim());
+                waitForCaseInsensitive("assword");
+                SolarisUtil.sendPassword(password, this);
+            }
+            
             // FIXME: add rejects for "incorrect" error (see adapter)
-            waitFor(_configuration.getRootShellPrompt());
+            waitFor(getRootShellPrompt());
             /*
              * turn off the echoing of keyboard input on the resource.
              * Saves bandwith too.
@@ -116,12 +125,23 @@ public class SolarisConnection {
              * Change root shell prompt, for simplier parsing of the output.
              * Revert the changes after the connection is closed.
              */
-            _originalPrompt = _configuration.getRootShellPrompt();
-            _configuration.setRootShellPrompt(CONNECTOR_PROMPT);
+            _rootShellPrompt = CONNECTOR_PROMPT;
             executeCommand("PS1=\"" + CONNECTOR_PROMPT + "\"");
         } catch (Exception e) {
-            throw ConnectorException.wrap(e);
+            throw new ConnectorException(String.format("Connection failed to host '%s:%s' for user '%s'", _configuration.getHostNameOrIpAddr(), _configuration.getPort(), username), e);
+            //throw ConnectorException.wrap(e);
         }
+    }
+
+    private Expect4j createTelnetConn(String username, GuardedString password) {
+        Expect4j expect4j = null;
+        try {
+            expect4j = ExpectUtils.telnet(_configuration
+                    .getHostNameOrIpAddr(), _configuration.getPort());
+        } catch (Exception e1) {
+            throw ConnectorException.wrap(e1);
+        }
+        return expect4j;
     }
 
     /**
@@ -253,12 +273,12 @@ public class SolarisConnection {
         String output = null;
         try {
             send(command);
-            output = waitFor(_configuration.getRootShellPrompt(), WAIT); 
+            output = waitFor(getRootShellPrompt(), WAIT); 
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
         
-        int index = output.lastIndexOf(_configuration.getRootShellPrompt());
+        int index = output.lastIndexOf(getRootShellPrompt());
         if (index!=-1)
             output = output.substring(0, index);
         
@@ -320,5 +340,9 @@ public class SolarisConnection {
     static void test(SolarisConfiguration configuration) throws Exception {
         SolarisConnection connection = new SolarisConnection(configuration);
         connection.dispose();
+    }
+
+    public String getRootShellPrompt() {
+        return _rootShellPrompt;
     }
 }

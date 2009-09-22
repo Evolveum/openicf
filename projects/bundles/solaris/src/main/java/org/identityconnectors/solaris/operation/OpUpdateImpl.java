@@ -37,7 +37,6 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
-import org.identityconnectors.solaris.command.CommandUtil;
 import org.identityconnectors.solaris.command.MatchBuilder;
 import org.identityconnectors.solaris.command.closure.ClosureFactory;
 
@@ -79,22 +78,21 @@ public class OpUpdateImpl extends AbstractOp {
          * ACCOUNT
          */
         if (objclass.is(ObjectClass.ACCOUNT_NAME)) {
-            final String commandSwitches = CommandUtil.prepareCommand(replaceAttributes, ObjectClass.ACCOUNT);
+            final String commandSwitches = CommandUtil.prepareCommand(OpCreateImpl.convertAttrsToPair(replaceAttributes, objclass));
 
             if (commandSwitches.length() > 0) {
                 try {
                     // First acquire the "mutex" for uid creation
                     getConnection().send(getAcquireMutexScript());
                     MatchBuilder builder = new MatchBuilder();
-                    builder.addRegExpMatch(getConfiguration()
-                            .getRootShellPrompt(), ClosureFactory.newNullClosure());
+                    builder.addRegExpMatch(getRootShellPrompt(), ClosureFactory.newNullClosure());
                     builder.addRegExpMatch("ERROR", ClosureFactory.newConnectorException("acquiring mutex failed"));
 
                     getConnection().expect(builder.build());
 
                     // perform the UPDATE
                     builder = new MatchBuilder();
-                    builder.addRegExpMatch(getConfiguration().getRootShellPrompt(), ClosureFactory.newNullClosure());
+                    builder.addRegExpMatch(getRootShellPrompt(), ClosureFactory.newNullClosure());
                     builder.addRegExpMatch("ERROR", ClosureFactory.newConnectorException("ERROR occured during update [usermod]"));
                     builder.addRegExpMatch("command not found", ClosureFactory.newConnectorException("usermod command is not found"));
                     builder.addRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException("not allowed to execute usermod"));
@@ -104,7 +102,7 @@ public class OpUpdateImpl extends AbstractOp {
 
                     // Release the uid "mutex"
                     getConnection().send(getMutexReleaseScript());
-                    getConnection().waitFor(getConfiguration().getRootShellPrompt());
+                    getConnection().waitFor(getRootShellPrompt());
                 } catch (Exception ex) {
                     throw ConnectorException.wrap(ex);
                 }
@@ -152,7 +150,7 @@ public class OpUpdateImpl extends AbstractOp {
             getConnection().waitForCaseInsensitive("ew password:");
             SolarisUtil.sendPassword(passwd, getConnection());
 
-            getConnection().waitFor(getConfiguration().getRootShellPrompt());
+            getConnection().waitFor(getRootShellPrompt());
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }

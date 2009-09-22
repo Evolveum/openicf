@@ -79,14 +79,20 @@ public class OpCreateImplTest {
         final GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
         
         try {
-            Uid uid = facade.create(ObjectClass.ACCOUNT, attrs, null);
+            Uid uid = null;
+            try {
+                uid = facade.create(ObjectClass.ACCOUNT, attrs, null);
+            } catch (RuntimeException ex) {
+                Assert.fail(String.format(
+                        "Create failed for: '%s'\n ExceptionMessage: %s",
+                        username, ex.getMessage()));
+            }
             Assert.assertNotNull(uid);
         
             // try to authenticate 
             try {
                 facade.authenticate(ObjectClass.ACCOUNT, username, password, null);
             } catch (RuntimeException ex) {
-                ex.printStackTrace();
                 Assert.fail(String.format("Authenticate failed for: '%s'\n ExceptionMessage: %s", username, ex.getMessage()));
             }
         } finally {
@@ -101,7 +107,7 @@ public class OpCreateImplTest {
         }
     }
     
-    @Test (expected=IllegalArgumentException.class)
+    @Test (expected=RuntimeException.class)
     public void unknownObjectClass() {
         final Set<Attribute> attrs = SolarisTestCommon.initSampleUser();
         facade.create(new ObjectClass("NONEXISTING_OBJECTCLASS"), attrs, null);

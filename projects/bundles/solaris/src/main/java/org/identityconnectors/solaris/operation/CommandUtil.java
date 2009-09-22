@@ -20,16 +20,10 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-package org.identityconnectors.solaris.command;
+package org.identityconnectors.solaris.operation;
 
 import java.util.Set;
 
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.solaris.constants.AccountAttributes;
-import org.identityconnectors.solaris.constants.AccountAttributesForPassword;
-import org.identityconnectors.solaris.constants.GroupAttributes;
 
 /**
  * contains utility methods for forming commands for Unix.
@@ -38,7 +32,7 @@ import org.identityconnectors.solaris.constants.GroupAttributes;
 public class CommandUtil {
 
     /** Maximum number of characters per line in Solaris shells */
-    final static int DEFAULT_LIMIT = 120;
+    public static final int DEFAULT_LIMIT = 120;
     
     private static StringBuilder limitString(StringBuilder data, int limit) {
         StringBuilder result = new StringBuilder(limit);
@@ -74,33 +68,26 @@ public class CommandUtil {
      * use the attributes to generate the argument of a Solaris command.
      * 
      * @param attributes Attributes, whose *value* and *name* is used.
-     * @param oclass the objectclass, whose attributes are scanned for matching.
      */
-    public static String prepareCommand(Set<Attribute> attributes, ObjectClass oclass) {
+    public static String prepareCommand(Set<NativePair> attributes) {
         StringBuilder command = new StringBuilder();
 
-        for (Attribute attr : attributes) {
-            // skip special attributes such as __PASSWORD__ or __NAME__
-            if (AttributeUtil.isSpecial(attr))
-                continue;
+        for (NativePair attr : attributes) {
+            // add the command line switch
+            String toAppend = attr.getNativeAttr().getCmdSwitch();
+            if (toAppend != null) {
+                command.append(toAppend);
+                command.append(" ");
+
+                // add the attribute value
+                toAppend = attr.getValue();
+                if (toAppend != null) {
+                    // quote value
+                    command.append("\"" + toAppend + "\"");
+                    command.append(" ");
+                }
+            }
             
-            try {
-                if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
-                    String toAppend = null;
-                    toAppend = AccountAttributes.formatCommandSwitch(attr);
-                    if (toAppend == null) {
-                        toAppend = AccountAttributesForPassword.formatCommandSwitch(attr);
-                    }
-                    
-                    command.append(toAppend);
-                    
-                } else if (oclass.is(ObjectClass.GROUP_NAME)) {
-                    command.append(GroupAttributes.formatCommandSwitch(attr));
-                } else throw new IllegalArgumentException("unknown objectClass: '" + oclass.getDisplayNameKey() + "'");
-            } catch (Exception ex) {
-                // OK ignoring attribute
-            } // try
-            command.append(" ");
         }// for
 
         return command.toString();

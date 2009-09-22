@@ -63,14 +63,18 @@ public abstract class AbstractOp {
     }
     
     protected final void doSudoStart() {
-        SudoUtil.doSudoStart(getConfiguration(), getConnection());
+        SudoUtil.doSudoStart(getConnection());
     }
 
     protected final void doSudoReset() {
-        SudoUtil.doSudoReset(getConfiguration(), getConnection());
+        SudoUtil.doSudoReset(getConnection());
     }
     
     protected final Schema getSchema() {
         return _connector.schema();
+    }
+    
+    protected final String getRootShellPrompt() {
+        return _connection.getRootShellPrompt();
     }
 }
