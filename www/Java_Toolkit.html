@@ -19,6 +19,9 @@
     
         <LI><A HREF="http://junit.org/">JUnit
         4.x</A></LI>
+        
+        <LI><A HREF="http://subversion.tigris.org/">Subversion command line client
+        </A></LI>
                 
     </UL>
     <P>Optional: 
@@ -134,21 +137,20 @@ at the command line.</P>
     <P>Likewise, if you wanted to run only your own unit tests, you'd run:</P>
     <PRE>~/workspace/FooBundle$ ant run-unit-tests</PRE><A NAME="PropsFile"/>
    
-	<P>When writing tests, there is a utility class you may use called TestHelpers. It loads properties from the connector's <I>build.properties</I> file AND the public groovy configuration 
-	from a "${project-home}/config/build.groovy" file AND from a hidden, private, environment-specific groovy configuration file in your "${user-home}/.connectors" directory. This allows you to extract privileged data (such as a path names or user credentials) from
-    your testing code and place them in this local file. The naming convention for this private file is <B>${user-home}/.connectors/${project-name}/build.groovy</B>, where ${project-name} is the ant
-    project name as defined in the connector's <I>build.xml</I> file. The toolkit auto-generates this file for you, and you are free to add anything you need to it. In code
-    all you need to do is call TestHelpers.getProperty() to retrieve any properties you have set.</P>
+	<P>When writing tests, there is a utility class you may use called TestHelpers. It loads properties from groovy files as classpath resources. The following classpaths are used to load groovy files resources :
+              <ul>
+               <li><code>loader.getResource(prefix + "/public/build.groovy")</code></li>
+               <li><code>loader.getResource(prefix + "/public/" + cfg + "/build.groovy") </code> optionally where cfg is passed configuration</li>
+               <li> <code> loader.getResource(prefix + "/private/build.groovy") </<code> </li>
+               <li> <code >loader.getResource(prefix + "/private/" + cfg + "/build.groovy") </code> optionally where cfg is passed configuration</li>
+              </ul>
+              where prefix is FQN of your connector class and cfg is optional configuration of the test. Build script helps you to add the files on classpath from following locations :
+              <ul>
+                <li>Public path : ${bundle.dir}/src/test/config</li>
+                <li>Private path : ${user.home}/.connectors/${project.name}/config</li>
+              </ul>
+       </P>
     <P>
-    TestHelpers actually aggregates properties from potentially four different files, if they are present. It loads properties in the following order:</P>
-    <OL>
-    <LI><p><B>${user.home}/.connectors/connectors.properties</B> //(optional) global private properties file</p></LI>
-    <LI><p><B>${bundle.dir}/build.properties</B> //(required) public build properties file</p></LI>
-    <LI><p><B>${bundle.dir}/config/.build.groovy</B> //(optional) public build groovy configuration file, also includes contract test properties</p></LI>
-    <LI><p><B>${bundle.dir}/config/${configuration}/build.groovy</B> //(optional) configuration-specific public groovy configuration file</p></LI>
-    <LI><p><B>${user.home}/.connectors/${project-name}/build.groovy</B> //(optional) private build groovy configuration file. Includes sensitive configuration properties</p></LI>
-	<LI><p><B>${user.home}/.connectors/${project-name}/${configuration}/build.groovy</B> //(optional) configuration-specific groovy configuration file. Includes configuration-specific sensitive configuration properties</p></LI>
-    </OL>
     <P>
     Properties defined in subsequent files override those defined in earlier files (the underlying structure for TestHelpers is just a standard Java Properties object). Also, you should notice
     that the latter two files are Groovy config files. These are very similar but have a <a href="http://groovy.codehaus.org/ConfigSlurper" target="blank">different syntax</a> than standard Java properties files. The reason for this is to
