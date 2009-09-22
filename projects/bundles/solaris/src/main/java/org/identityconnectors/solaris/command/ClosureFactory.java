@@ -20,11 +20,10 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-package org.identityconnectors.solaris.command.closure;
+package org.identityconnectors.solaris.command;
 
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
-import org.identityconnectors.solaris.command.MatchBuilder;
 
 import expect4j.Closure;
 import expect4j.ExpectState;

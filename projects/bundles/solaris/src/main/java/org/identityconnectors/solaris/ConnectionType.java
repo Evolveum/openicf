@@ -20,7 +20,7 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-package org.identityconnectors.solaris.constants;
+package org.identityconnectors.solaris;
 
 /** 
  * selector of connection type

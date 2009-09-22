@@ -30,8 +30,8 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
+import org.identityconnectors.solaris.command.ClosureFactory;
 import org.identityconnectors.solaris.command.MatchBuilder;
-import org.identityconnectors.solaris.command.closure.ClosureFactory;
 
 import expect4j.matches.Match;
 

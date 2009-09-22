@@ -42,8 +42,8 @@ import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.attr.AccountAttribute;
 import org.identityconnectors.solaris.attr.ConnectorAttribute;
 import org.identityconnectors.solaris.attr.GroupAttribute;
+import org.identityconnectors.solaris.command.ClosureFactory;
 import org.identityconnectors.solaris.command.MatchBuilder;
-import org.identityconnectors.solaris.command.closure.ClosureFactory;
 
 import expect4j.Closure;
 import expect4j.ExpectState;

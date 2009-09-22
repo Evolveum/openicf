@@ -27,8 +27,8 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisUtil;
+import org.identityconnectors.solaris.command.ClosureFactory;
 import org.identityconnectors.solaris.command.MatchBuilder;
-import org.identityconnectors.solaris.command.closure.ClosureFactory;
 
 /** 
  * this class is based on resource adapter's sudo code.

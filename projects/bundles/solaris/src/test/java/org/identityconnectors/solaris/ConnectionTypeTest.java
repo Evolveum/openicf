@@ -20,8 +20,9 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-package org.identityconnectors.solaris.constants;
+package org.identityconnectors.solaris;
 
+import org.identityconnectors.solaris.ConnectionType;
 import org.junit.Assert;
 import org.junit.Test;
 

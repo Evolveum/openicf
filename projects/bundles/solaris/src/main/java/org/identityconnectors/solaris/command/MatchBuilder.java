@@ -28,8 +28,6 @@ import java.util.List;
 
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.solaris.command.closure.ClosureFactory;
-import org.identityconnectors.solaris.command.pattern.RegExpCaseInsensitiveMatch;
 
 import expect4j.Closure;
 import expect4j.matches.Match;

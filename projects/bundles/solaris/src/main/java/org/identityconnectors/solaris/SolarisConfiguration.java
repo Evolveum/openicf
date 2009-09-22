@@ -27,7 +27,6 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.Configuration;
-import org.identityconnectors.solaris.constants.ConnectionType;
 
 public class SolarisConfiguration extends AbstractConfiguration {
 

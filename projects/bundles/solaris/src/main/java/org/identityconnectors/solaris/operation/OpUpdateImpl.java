@@ -37,8 +37,8 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
+import org.identityconnectors.solaris.command.ClosureFactory;
 import org.identityconnectors.solaris.command.MatchBuilder;
-import org.identityconnectors.solaris.command.closure.ClosureFactory;
 
 /**
  * Implementation of update SPI operation

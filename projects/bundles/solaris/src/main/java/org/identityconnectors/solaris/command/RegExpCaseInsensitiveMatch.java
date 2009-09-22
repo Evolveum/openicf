@@ -20,15 +20,32 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * ====================
  */
-package org.identityconnectors.solaris.constants;
+package org.identityconnectors.solaris.command;
 
-import junit.framework.Assert;
+import org.apache.oro.text.regex.MalformedPatternException;
+import org.apache.oro.text.regex.Pattern;
+import org.apache.oro.text.regex.Perl5Compiler;
 
-import org.junit.Test;
+import expect4j.Closure;
+import expect4j.matches.RegExpMatch;
 
-public class UpdateSwitchesTest {
-    @Test
-    public void test() {
-        Assert.assertTrue(UpdateSwitches.AUTHORIZATION.getCmdSwitch().equals("-A"));
+/**
+ * extends the Expect4J's matcher with case insensitive match.
+ * @author David Adam
+ */
+public class RegExpCaseInsensitiveMatch extends RegExpMatch {
+
+    public RegExpCaseInsensitiveMatch(String patternStr, Closure closure)
+            throws MalformedPatternException {
+        super(patternStr, closure);
     }
+    
+    @Override
+    public Pattern compilePattern(String patternStr)
+            throws MalformedPatternException {
+        Perl5Compiler compiler = getCompiler();
+        // adding case insensitivity mask
+        return compiler.compile(patternStr, Perl5Compiler.DEFAULT_MASK|Perl5Compiler.SINGLELINE_MASK|Perl5Compiler.CASE_INSENSITIVE_MASK);
+    }
+
 }
