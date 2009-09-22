@@ -190,7 +190,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         // name='supplier_id' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(SUPP_ID, String.class));
         // name='person_party_id' type='string' required='false'
-        ocib.addAttributeInfo(AttributeInfoBuilder.build(PERSON_PARTY_ID, String.class));
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(PERSON_PARTY_ID, String.class, NCU));
 
         if (getCfg().isNewResponsibilityViews()) {
             // name='DIRECT_RESPS' type='string' required='false'
