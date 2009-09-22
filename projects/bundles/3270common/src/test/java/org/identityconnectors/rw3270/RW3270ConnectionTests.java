@@ -37,6 +37,8 @@ import javax.naming.NamingException;
 import junit.framework.Assert;
 
 import org.identityconnectors.common.l10n.CurrentLocale;
+import org.identityconnectors.common.script.Script;
+import org.identityconnectors.common.script.ScriptBuilder;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
@@ -210,7 +212,6 @@ public class RW3270ConnectionTests {
         config.setDisconnectScript(getLogoffScript());
         config.setUserName(SYSTEM_USER);
         config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
-        config.setScriptingLanguage("GROOVY");
         config.setEvictionInterval(60000);
         config.setConnectionClassName(DummyConnection.class.getName());
 
@@ -229,16 +230,18 @@ public class RW3270ConnectionTests {
         return config;
     }
     
-    private String getLoginScript() {
-        String script =
-            "";
-        return script;
+    private Script getLoginScript() {
+        ScriptBuilder builder = new ScriptBuilder();
+        builder.setScriptLanguage("GROOVY");
+        builder.setScriptText("");
+        return builder.build();
     }
 
-    private String getLogoffScript() {
-        String script =
-            "";
-        return script;
+    private Script getLogoffScript() {
+        ScriptBuilder builder = new ScriptBuilder();
+        builder.setScriptLanguage("GROOVY");
+        builder.setScriptText("");
+        return builder.build();
     }
 
     public static class DummyConnection extends RW3270BaseConnection {
@@ -326,18 +329,17 @@ public class RW3270ConnectionTests {
     }
     
     public static class OurConfiguration extends AbstractConfiguration implements RW3270Configuration {
-        private String _connectScript;
-        private String _disconnectScript;
+        private Script _connectScript;
+        private Script _disconnectScript;
         private String _host;
         private Integer _port;
         private GuardedString _password;
-        private String _language;
         private String _userName;
         private Integer _evictionInterval;
         private String _connectClass;
         private String[] _connectionProperties;
 
-        public String getConnectScript() {
+        public Script getConnectScript() {
             return _connectScript;
         }
 
@@ -345,7 +347,7 @@ public class RW3270ConnectionTests {
             return _connectClass;
         }
 
-        public String getDisconnectScript() {
+        public Script getDisconnectScript() {
             return _disconnectScript;
         }
 
@@ -361,10 +363,6 @@ public class RW3270ConnectionTests {
             return _password;
         }
 
-        public String getScriptingLanguage() {
-            return _language;
-        }
-
         public String[] getConnectionProperties() {
             return _connectionProperties;
         }
@@ -373,7 +371,7 @@ public class RW3270ConnectionTests {
             return _userName;
         }
 
-        public void setConnectScript(String script) {
+        public void setConnectScript(Script script) {
             _connectScript = script;
         }
 
@@ -381,7 +379,7 @@ public class RW3270ConnectionTests {
             _connectClass = clazz;
         }
 
-        public void setDisconnectScript(String script) {
+        public void setDisconnectScript(Script script) {
             _disconnectScript = script;
         }
 
@@ -395,10 +393,6 @@ public class RW3270ConnectionTests {
 
         public void setPassword(GuardedString password) {
             _password = password;
-        }
-
-        public void setScriptingLanguage(String language) {
-            _language = language;
         }
 
         public void setConnectionProperties(String[] connectionProperties) {

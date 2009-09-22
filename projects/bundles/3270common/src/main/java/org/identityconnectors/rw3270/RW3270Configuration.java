@@ -23,6 +23,7 @@
 package org.identityconnectors.rw3270;
 
 
+import org.identityconnectors.common.script.Script;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.spi.Configuration;
 
@@ -100,35 +101,25 @@ public interface RW3270Configuration extends Configuration {
      */
     public void setPassword(GuardedString password);
     /**
-     * Get the he language to be used for Scripts
-     * @return language
-     */
-    public String getScriptingLanguage();
-    /**
-     * Set the language to be used for Scripts
-     * @param language -- scripting language
-     */
-    public void setScriptingLanguage(String language);
-    /**
      * Get the script to be executed to establish a command line session
      * @return script
      */
-    public String getConnectScript();
+    public Script getConnectScript();
     /**
      * Set the script to be executed to establish a command line session
      * @param script -- script
      */
-    public void setConnectScript(String script);
+    public void setConnectScript(Script script);
     /**
      * Get the script to be executed to terminate a command line session
      * @return script
      */
-    public String getDisconnectScript();
+    public Script getDisconnectScript();
     /**
      * Set the script to be executed to establish a command line session
      * @param script -- script
      */
-    public void setDisconnectScript(String script);
+    public void setDisconnectScript(Script script);
     /**
      * Get the name of the implementation of RW3270Connection in use.
      * @return RW3270Connection implementation class name

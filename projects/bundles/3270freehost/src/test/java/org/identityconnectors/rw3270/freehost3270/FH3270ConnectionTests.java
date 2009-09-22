@@ -40,6 +40,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import junit.framework.Assert;
 
 import org.identityconnectors.common.l10n.CurrentLocale;
+import org.identityconnectors.common.script.Script;
+import org.identityconnectors.common.script.ScriptBuilder;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
@@ -316,7 +318,6 @@ public class FH3270ConnectionTests {
         config.setConnectionProperties(null);
         config.setConnectScript(getLoginScript());
         config.setDisconnectScript(getLogoffScript());
-        config.setScriptingLanguage("GROOVY");
         config.setUserName(SYSTEM_USER);
         config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
         config.setEvictionInterval(60000);
@@ -339,7 +340,7 @@ public class FH3270ConnectionTests {
         return config;
     }
 
-    private String getLoginScript() {
+    private Script getLoginScript() {
         String script =
             "connection.connect();\n" +
             "connection.waitFor(\"PRESS THE ENTER KEY\", SHORT_WAIT);\n" +
@@ -354,15 +355,21 @@ public class FH3270ConnectionTests {
             "connection.waitFor(\"Option ===>\", SHORT_WAIT);\n" +
             "connection.send(\"[pf3]\");\n" +
             "connection.waitFor(\" READY\\\\s{74}\", SHORT_WAIT);";
-        return script;
+        ScriptBuilder builder = new ScriptBuilder();
+        builder.setScriptLanguage("GROOVY");
+        builder.setScriptText(script);
+        return builder.build();
     }
 
-    private String getLogoffScript() {
+    private Script getLogoffScript() {
         String script = "connection.send(\"LOGOFF[enter]\");\n";
 //            "connection.send(\"LOGOFF[enter]\");\n" +
 //            "connection.waitFor(\"=====>\", SHORT_WAIT);\n" +
 //            "connection.dispose();\n";
-        return script;
+        ScriptBuilder builder = new ScriptBuilder();
+        builder.setScriptLanguage("GROOVY");
+        builder.setScriptText(script);
+        return builder.build();
     }
 
     public static class TestHandler implements ResultsHandler, Iterable<ConnectorObject> {
@@ -382,20 +389,18 @@ public class FH3270ConnectionTests {
         }
     }
 
-
     public static class OurConfiguration extends AbstractConfiguration implements RW3270Configuration {
-        private String _connectScript;
-        private String _disconnectScript;
+        private Script _connectScript;
+        private Script _disconnectScript;
         private String _host;
         private Integer _port;
         private GuardedString _password;
-        private String _language;
         private String _userName;
         private Integer _evictionInterval;
         private String _connectClass;
         private String[] _connectionProperties;
 
-        public String getConnectScript() {
+        public Script getConnectScript() {
             return _connectScript;
         }
 
@@ -403,7 +408,7 @@ public class FH3270ConnectionTests {
             return _connectClass;
         }
 
-        public String getDisconnectScript() {
+        public Script getDisconnectScript() {
             return _disconnectScript;
         }
 
@@ -419,10 +424,6 @@ public class FH3270ConnectionTests {
             return _password;
         }
 
-        public String getScriptingLanguage() {
-            return _language;
-        }
-
         public String[] getConnectionProperties() {
             return _connectionProperties;
         }
@@ -431,7 +432,7 @@ public class FH3270ConnectionTests {
             return _userName;
         }
 
-        public void setConnectScript(String script) {
+        public void setConnectScript(Script script) {
             _connectScript = script;
         }
 
@@ -439,7 +440,7 @@ public class FH3270ConnectionTests {
             _connectClass = clazz;
         }
 
-        public void setDisconnectScript(String script) {
+        public void setDisconnectScript(Script script) {
             _disconnectScript = script;
         }
 
@@ -453,10 +454,6 @@ public class FH3270ConnectionTests {
 
         public void setPassword(GuardedString password) {
             _password = password;
-        }
-
-        public void setScriptingLanguage(String language) {
-            _language = language;
         }
 
         public void setConnectionProperties(String[] connectionProperties) {
@@ -479,6 +476,7 @@ public class FH3270ConnectionTests {
             
         }
     }
+
     
     public class OurConnectorMessages implements ConnectorMessages {
         private Map<Locale, Map<String, String>> _catalogs = new HashMap<Locale, Map<String, String>>();

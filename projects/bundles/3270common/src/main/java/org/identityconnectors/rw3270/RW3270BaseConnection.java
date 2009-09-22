@@ -62,7 +62,6 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
     protected Pattern                   _cursorPattern  = Pattern.compile("cursor\\s*\\(\\s*(\\d+)\\s*\\)", Pattern.CASE_INSENSITIVE);
     protected static final String       CLEAR            = "CLEAR";
     protected static final String       ENTER            = "ENTER";
-    protected ScriptExecutorFactory     _factory;
     protected ScriptExecutor            _connectScriptExecutor;
     protected ScriptExecutor            _disconnectScriptExecutor;
 
@@ -72,9 +71,10 @@ public abstract class RW3270BaseConnection implements RW3270Connection {
         _model = 2;
         _semaphore = new Semaphore(0);
         _expect4j = new Expect4j(_ioPair = new RW3270IOPair(this));
-        _factory = ScriptExecutorFactory.newInstance(config.getScriptingLanguage());
-        _connectScriptExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), config.getConnectScript(), true);
-        _disconnectScriptExecutor = _factory.newScriptExecutor(getClass().getClassLoader(), config.getDisconnectScript(), true);
+        ScriptExecutorFactory factory = ScriptExecutorFactory.newInstance(config.getConnectScript().getScriptLanguage());
+        _connectScriptExecutor = factory.newScriptExecutor(getClass().getClassLoader(), config.getConnectScript().getScriptText(), true);
+         factory = ScriptExecutorFactory.newInstance(config.getDisconnectScript().getScriptLanguage());
+        _disconnectScriptExecutor = factory.newScriptExecutor(getClass().getClassLoader(), config.getDisconnectScript().getScriptText(), true);
     }
 
     public abstract void sendKeys(String keys);
