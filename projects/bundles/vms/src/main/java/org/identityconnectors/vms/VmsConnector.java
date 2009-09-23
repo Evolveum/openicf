@@ -2044,6 +2044,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
 
     public Uid resolveUsername(ObjectClass objectClass, String username,
             OperationOptions options) {
+        if (!objectClass.is(ObjectClass.ACCOUNT_NAME))
+            throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
+
         return new Uid(username);
     }
     
