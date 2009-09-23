@@ -64,6 +64,7 @@ import org.identityconnectors.framework.spi.ConnectorClass;
 import org.identityconnectors.framework.spi.PoolableConnector;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
+import org.identityconnectors.framework.spi.operations.ResolveUsernameOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
@@ -128,7 +129,7 @@ import org.openspml.v2.util.xml.ObjectFactory;
 @ConnectorClass(
         displayNameKey="SPMLConnector",
         configurationClass= SpmlConfiguration.class)
-public class SpmlConnector implements PoolableConnector, CreateOp,
+public class SpmlConnector implements PoolableConnector, CreateOp, ResolveUsernameOp,
         DeleteOp, SearchOp<FilterItem>, UpdateOp, SchemaOp, TestOp {
     private Log log = Log.getLog(SpmlConnector.class);
     private ScriptExecutorFactory _factory;
@@ -216,7 +217,12 @@ public class SpmlConnector implements PoolableConnector, CreateOp,
             }
         }
     }
-
+    
+    public Uid resolveUsername(ObjectClass objectClass, String username,
+            OperationOptions options) {
+        return new Uid(username);
+    }
+    
     /**
      * {@inheritDoc}
      */
