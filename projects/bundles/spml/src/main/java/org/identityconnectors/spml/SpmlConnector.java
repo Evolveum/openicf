@@ -222,6 +222,11 @@ public class SpmlConnector implements PoolableConnector, CreateOp, ResolveUserna
     
     public Uid resolveUsername(ObjectClass objectClass, String username,
             OperationOptions options) {
+        // Force checking of objectClass
+        //
+        if (!objectClass.is(ObjectClass.ACCOUNT_NAME))
+            throw new ConnectorException(_configuration.getMessage(SpmlMessages.UNSUPPORTED_OBJECTCLASS, objectClass));
+        
         LocalHandler handler = new LocalHandler();
         FilterItem item = new SpmlFilterTranslator(_configuration, _connection).createEqualsExpression(new EqualsFilter(AttributeBuilder.build(Name.NAME, username)), false);
         executeQuery(ObjectClass.ACCOUNT, item, handler, options);
