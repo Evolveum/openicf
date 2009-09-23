@@ -4,35 +4,17 @@
 package org.identityconnectors.oracle;
 
 
-import java.sql.Connection;
-import java.util.Set;
+import java.sql.*;
+import java.util.*;
 
-import org.identityconnectors.common.logging.Log;
-import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.dbcommon.FilterWhereBuilder;
-import org.identityconnectors.dbcommon.SQLUtil;
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.OperationOptions;
-import org.identityconnectors.framework.common.objects.ResultsHandler;
-import org.identityconnectors.framework.common.objects.Schema;
-import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
-import org.identityconnectors.framework.spi.AttributeNormalizer;
-import org.identityconnectors.framework.spi.Configuration;
-import org.identityconnectors.framework.spi.ConnectorClass;
-import org.identityconnectors.framework.spi.PoolableConnector;
-import org.identityconnectors.framework.spi.operations.AuthenticateOp;
-import org.identityconnectors.framework.spi.operations.CreateOp;
-import org.identityconnectors.framework.spi.operations.DeleteOp;
-import org.identityconnectors.framework.spi.operations.SPIOperation;
-import org.identityconnectors.framework.spi.operations.SchemaOp;
-import org.identityconnectors.framework.spi.operations.SearchOp;
-import org.identityconnectors.framework.spi.operations.TestOp;
-import org.identityconnectors.framework.spi.operations.UpdateAttributeValuesOp;
-import org.identityconnectors.framework.spi.operations.UpdateOp;
-import org.identityconnectors.oracle.OracleConfiguration.ConnectionType;
+import org.identityconnectors.common.security.*;
+import org.identityconnectors.dbcommon.*;
+import org.identityconnectors.framework.common.exceptions.*;
+import org.identityconnectors.framework.common.objects.*;
+import org.identityconnectors.framework.common.objects.filter.*;
+import org.identityconnectors.framework.spi.*;
+import org.identityconnectors.framework.spi.operations.*;
+import org.identityconnectors.oracle.OracleConfiguration.*;
 
 /**
  * Implementation of Oracle connector. It just holds common oracle constants and delegates SPI calls to AbstractOracleOperation subclasses.
@@ -46,8 +28,6 @@ import org.identityconnectors.oracle.OracleConfiguration.ConnectionType;
 public final class OracleConnector implements PoolableConnector, AuthenticateOp,
 		CreateOp, DeleteOp, UpdateOp, UpdateAttributeValuesOp,
 		SearchOp<Pair<String, FilterWhereBuilder>>, SchemaOp,TestOp,AttributeNormalizer {
-    
-	private final static Log log = Log.getLog(OracleConnector.class);
     
     private Connection adminConn;
     private OracleConfiguration cfg;
@@ -114,7 +94,7 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
     		Pair<String, GuardedString> pair = createOracleAttributeNormalizer().normalizeAuthenticateEntry(username, password);
     		username = pair.getFirst();
     		password = pair.getSecond();
-    		return new OracleOperationAuthenticate(cfg, adminConn, log).authenticate(objectClass, username, password, options);
+    		return new OracleOperationAuthenticate(cfg, adminConn).authenticate(objectClass, username, password, options);
     	}
     	finally{
     		finsishSPI(AuthenticateOp.class);
@@ -125,7 +105,7 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
     	startSPI(DeleteOp.class);
     	try{
-    		new OracleOperationDelete(cfg, adminConn, log).delete(objClass, uid, options);
+    		new OracleOperationDelete(cfg, adminConn).delete(objClass, uid, options);
     	}
     	finally{
     		finsishSPI(DeleteOp.class);
@@ -137,7 +117,7 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
     	startSPI(CreateOp.class);
     	try{
     		attrs = createOracleAttributeNormalizer().normalizeAttributes(oclass, CreateOp.class, attrs);
-    		return new OracleOperationCreate(cfg, adminConn, log).create(oclass, attrs, options);
+    		return new OracleOperationCreate(cfg, adminConn).create(oclass, attrs, options);
     	}
     	finally{
     		finsishSPI(CreateOp.class);
@@ -148,7 +128,7 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
     	startSPI(UpdateOp.class);
     	try{
     		attrs = createOracleAttributeNormalizer().normalizeAttributes(objclass, UpdateOp.class, attrs);
-    		return new OracleOperationUpdate(cfg, adminConn, log).update(objclass, uid, attrs, options);
+    		return new OracleOperationUpdate(cfg, adminConn).update(objclass, uid, attrs, options);
     	}
     	finally{
     		finsishSPI(UpdateOp.class);
@@ -159,7 +139,7 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
     	startSPI(UpdateAttributeValuesOp.class);
     	try{
     		valuesToAdd = createOracleAttributeNormalizer().normalizeAttributes(objclass, UpdateOp.class, valuesToAdd);
-    		return new OracleOperationUpdate(cfg, adminConn, log).addAttributeValues(objclass, uid, valuesToAdd, options);
+    		return new OracleOperationUpdate(cfg, adminConn).addAttributeValues(objclass, uid, valuesToAdd, options);
     	}
     	finally{
     		finsishSPI(UpdateAttributeValuesOp.class);
@@ -170,7 +150,7 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
     	startSPI(UpdateAttributeValuesOp.class);
     	try{
     		valuesToRemove = createOracleAttributeNormalizer().normalizeAttributes(objclass, UpdateOp.class, valuesToRemove);
-        	return new OracleOperationUpdate(cfg, adminConn, log).removeAttributeValues(objclass, uid, valuesToRemove, options);
+        	return new OracleOperationUpdate(cfg, adminConn).removeAttributeValues(objclass, uid, valuesToRemove, options);
     	}
     	finally{
     		finsishSPI(UpdateAttributeValuesOp.class);
@@ -180,7 +160,7 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
 	public FilterTranslator<Pair<String, FilterWhereBuilder>> createFilterTranslator(ObjectClass oclass, OperationOptions options) {
 		startSPI(SearchOp.class);
 		try{
-			return new OracleOperationSearch(cfg, adminConn, log).createFilterTranslator(oclass, options);
+			return new OracleOperationSearch(cfg, adminConn).createFilterTranslator(oclass, options);
 		}
 		finally{
 			finsishSPI(SearchOp.class);
@@ -191,7 +171,7 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
 	public void executeQuery(ObjectClass oclass, Pair<String, FilterWhereBuilder> pair, ResultsHandler handler, OperationOptions options) {
 		startSPI(SearchOp.class);
 		try{
-			new OracleOperationSearch(cfg, adminConn, log).executeQuery(oclass, pair, handler, options);
+			new OracleOperationSearch(cfg, adminConn).executeQuery(oclass, pair, handler, options);
 		}
 		finally{
 			finsishSPI(SearchOp.class);
@@ -204,7 +184,7 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
 		}
 		startSPI(SearchOp.class);
 		try{
-			schema = new OracleOperationSchema(cfg, adminConn, log).schema();
+			schema = new OracleOperationSchema(cfg, adminConn).schema();
 		}
 		finally{
 			finsishSPI(SearchOp.class);
@@ -235,11 +215,6 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
     Connection getAdminConnection(){
     	return adminConn;
     }
-    
-    static Log getLog(){
-        return log;
-    }
-    
 
     
 	private void startSPI(Class<? extends SPIOperation> op){

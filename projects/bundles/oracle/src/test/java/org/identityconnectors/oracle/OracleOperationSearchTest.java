@@ -88,7 +88,7 @@ public class OracleOperationSearchTest extends OracleConnectorAbstractTest{
 	 */
 	@Test
 	public void testCreateFilterTranslator() {
-		FilterTranslator<Pair<String, FilterWhereBuilder>> translator = new OracleOperationSearch(testConf,connector.getOrCreateAdminConnection(),OracleConnector.getLog()).createFilterTranslator(ObjectClass.ACCOUNT, null);
+		FilterTranslator<Pair<String, FilterWhereBuilder>> translator = new OracleOperationSearch(testConf,connector.getOrCreateAdminConnection()).createFilterTranslator(ObjectClass.ACCOUNT, null);
 		assertNotNull(translator);
 		List<Pair<String, FilterWhereBuilder>> translate = translator.translate(new EqualsFilter(new Name("test")));
 		assertNotNull(translate);

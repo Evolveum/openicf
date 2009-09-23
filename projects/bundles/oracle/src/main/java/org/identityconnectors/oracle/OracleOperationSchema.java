@@ -3,25 +3,13 @@
  */
 package org.identityconnectors.oracle;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.SQLException;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Set;
+import java.sql.*;
+import java.util.*;
 
-import org.identityconnectors.common.logging.Log;
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.objects.AttributeInfo;
-import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
-import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
-import org.identityconnectors.framework.common.objects.OperationalAttributes;
-import org.identityconnectors.framework.common.objects.Schema;
-import org.identityconnectors.framework.common.objects.SchemaBuilder;
-import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
-import org.identityconnectors.framework.spi.operations.SchemaOp;
+import org.identityconnectors.framework.common.exceptions.*;
+import org.identityconnectors.framework.common.objects.*;
+import org.identityconnectors.framework.common.objects.AttributeInfo.*;
+import org.identityconnectors.framework.spi.operations.*;
 
 /**
  * Constructs schema for Oracle connector
@@ -31,9 +19,9 @@ import org.identityconnectors.framework.spi.operations.SchemaOp;
 final class OracleOperationSchema extends AbstractOracleOperation implements SchemaOp {
 	//Last veersion for oracle where oracle supports quotas for temporary table spaces
 	private static final Pair<Integer, Integer> LAST_TMP_TS_QUOTA_VERSION = new Pair<Integer, Integer>(10,1);
-	OracleOperationSchema(OracleConfiguration cfg, Connection adminConn,
-			Log log) {
-		super(cfg, adminConn, log);
+	
+	OracleOperationSchema(OracleConfiguration cfg, Connection adminConn) {
+		super(cfg, adminConn);
 	}
 
 	public Schema schema() {

@@ -24,10 +24,10 @@ import org.identityconnectors.oracle.OracleConfiguration.ConnectionType;
  *
  */
 final class OracleOperationAuthenticate extends AbstractOracleOperation implements AuthenticateOp{
+    private final static Log log = Log.getLog(OracleOperationAuthenticate.class);
     
-    
-    OracleOperationAuthenticate(OracleConfiguration cfg,Connection adminConn, Log log) {
-        super(cfg, adminConn, log);
+    OracleOperationAuthenticate(OracleConfiguration cfg,Connection adminConn) {
+        super(cfg, adminConn);
     }
 
     public Uid authenticate(ObjectClass objectClass, String username, GuardedString password, OperationOptions options) {

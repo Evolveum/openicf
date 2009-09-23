@@ -31,7 +31,7 @@ import static org.identityconnectors.oracle.OracleMessages.*;
  *
  */
 final class OracleOperationCreate extends AbstractOracleOperation implements CreateOp{
-    
+    private final static Log log = Log.getLog(OracleOperationCreate.class);
 	private static final Collection<String> VALID_CREATE_ATTRIBUTES;
 	
 	static {
@@ -42,8 +42,8 @@ final class OracleOperationCreate extends AbstractOracleOperation implements Cre
 	}
     
 	
-    OracleOperationCreate(OracleConfiguration cfg,Connection adminConn, Log log) {
-        super(cfg, adminConn, log);
+    OracleOperationCreate(OracleConfiguration cfg,Connection adminConn) {
+        super(cfg, adminConn);
     }
 
     public Uid create(ObjectClass oclass, Set<Attribute> attrs, OperationOptions options) {

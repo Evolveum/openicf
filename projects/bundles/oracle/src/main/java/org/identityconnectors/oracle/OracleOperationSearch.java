@@ -60,7 +60,9 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 	
 	static final Collection<String> VALID_ATTRIBUTES_TO_GET;
 	
-	static final Collection<String> VALID_SEARCH_BY_ATTRIBUTES;
+	private static final Collection<String> VALID_SEARCH_BY_ATTRIBUTES;
+	
+	private static final Log log = Log.getLog(OracleOperationSearch.class);
 	
 	static {
 		Collection<String> tmp = new TreeSet<String>(OracleConnectorHelper.getAttributeNamesComparator());
@@ -73,8 +75,8 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 	
 	
 	
-	OracleOperationSearch(OracleConfiguration cfg, Connection adminConn, Log log) {
-		super(cfg, adminConn, log);
+	OracleOperationSearch(OracleConfiguration cfg, Connection adminConn) {
+		super(cfg, adminConn);
 	}
 
 	public FilterTranslator<Pair<String, FilterWhereBuilder>> createFilterTranslator(ObjectClass oclass, OperationOptions options) {

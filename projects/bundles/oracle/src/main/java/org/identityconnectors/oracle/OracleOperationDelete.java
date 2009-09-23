@@ -19,10 +19,10 @@ import static org.identityconnectors.oracle.OracleMessages.*;
  *
  */
 final class OracleOperationDelete extends AbstractOracleOperation implements DeleteOp{
+    private final static Log log = Log.getLog(OracleOperationDelete.class);
     
-    
-    OracleOperationDelete(OracleConfiguration cfg, Connection adminConn,Log log) {
-        super(cfg, adminConn, log);
+    OracleOperationDelete(OracleConfiguration cfg, Connection adminConn) {
+        super(cfg, adminConn);
     }
 
 

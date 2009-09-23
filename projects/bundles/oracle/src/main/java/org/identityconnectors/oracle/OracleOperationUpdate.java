@@ -42,6 +42,8 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
 
 	private static final Collection<String> VALID_UPDATE_ATTRIBUTES;
 	
+	private static final Log log = Log.getLog(OracleOperationUpdate.class);
+	
 	static {
 		SortedSet<String> tmp = new TreeSet<String>(OracleConnectorHelper.getAttributeNamesComparator());
 		tmp.addAll(OracleConstants.ALL_ATTRIBUTE_NAMES);
@@ -50,8 +52,8 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
 	}
 	
 	
-    OracleOperationUpdate(OracleConfiguration cfg, Connection adminConn, Log log) {
-        super(cfg, adminConn, log);
+    OracleOperationUpdate(OracleConfiguration cfg, Connection adminConn) {
+        super(cfg, adminConn);
     }
 
     public Uid update(ObjectClass objclass, Uid uid,  Set<Attribute> attrs, OperationOptions options) {

@@ -1,8 +1,6 @@
 package org.identityconnectors.oracle;
 
-import java.sql.Connection;
-
-import org.identityconnectors.common.logging.Log;
+import java.sql.*;
 
 /** Abstract operation for OracleConnector like Create,Update.
  *  We will keep operations in separate classes.
@@ -11,14 +9,12 @@ import org.identityconnectors.common.logging.Log;
  */
 abstract class AbstractOracleOperation {
     protected final Connection adminConn;
-    protected final Log log;
     protected final OracleConfiguration cfg;
     
-    AbstractOracleOperation(OracleConfiguration cfg,Connection adminConn, Log log) {
+    AbstractOracleOperation(OracleConfiguration cfg,Connection adminConn) {
         super();
         this.cfg = OracleConnectorHelper.assertNotNull(cfg, "cfg");
         this.adminConn = OracleConnectorHelper.assertNotNull(adminConn, "adminConn");
-        this.log = OracleConnectorHelper.assertNotNull(log, "log");
     }
     
     
