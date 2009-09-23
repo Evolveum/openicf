@@ -42,34 +42,13 @@ import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.attr.AccountAttribute;
 import org.identityconnectors.solaris.attr.ConnectorAttribute;
 import org.identityconnectors.solaris.attr.GroupAttribute;
-import org.identityconnectors.solaris.command.ClosureFactory;
-import org.identityconnectors.solaris.command.MatchBuilder;
-
-import expect4j.Closure;
-import expect4j.ExpectState;
-import expect4j.matches.Match;
+import org.identityconnectors.solaris.attr.NativeAttribute;
+import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 public class OpCreateImpl extends AbstractOp {
     private static final Log _log = Log.getLog(OpCreateImpl.class);
     
     final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT, ObjectClass.GROUP};
-    private final static Match[] errorsUseradd;
-    static {
-        MatchBuilder builder = new MatchBuilder();
-        builder.addCaseInsensitiveRegExpMatch("invalid", ClosureFactory.newConnectorException("ERROR during execution of 'useradd' -- invalid command"));
-        builder.addCaseInsensitiveRegExpMatch("ERROR", ClosureFactory.newConnectorException("ERROR during execution of 'useradd'"));
-        builder.addCaseInsensitiveRegExpMatch("command not found", ClosureFactory.newConnectorException("'useradd' command is missing"));
-        builder.addCaseInsensitiveRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException("Not allowed to execute the 'useradd' command."));
-        errorsUseradd = builder.build();
-    }
-    private final static Match[] errorsPasswd;
-    static {
-        MatchBuilder builder = new MatchBuilder();
-        builder.addCaseInsensitiveRegExpMatch("Permission denied", ClosureFactory.newConnectorException("Permission denied when executing 'passwd'"));
-        builder.addCaseInsensitiveRegExpMatch("command not found", ClosureFactory.newConnectorException("'passwd' command not found"));
-        builder.addCaseInsensitiveRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException("current user is not allowed to execute 'passwd' command"));
-        errorsPasswd = builder.build();
-    }
     
     public OpCreateImpl(SolarisConnector conn) {
         super(conn);
@@ -89,64 +68,63 @@ public class OpCreateImpl extends AbstractOp {
         final Name name = (Name) attrMap.get(Name.NAME);
         final String accountId = name.getNameValue();
 
-        getLog().info("~~~~~~~ create(''{0}'') ~~~~~~~", accountId);
+        _log.info("~~~~~~~ create(''{0}'') ~~~~~~~", accountId);
         
         if (accountExists(accountId)) {
             throw new ConnectorException("Account '" + accountId + "' already exists on the resource. The same user cannot be created multiple times.");
         }
         
+        // translate connector attributes to native counterparts
+        final SolarisEntry.Builder builder = new SolarisEntry.Builder(name.getNameValue());
+        for (Attribute attribute : attrs) {
+            NativeAttribute nativeAttrName = AccountAttribute.fromString(attribute.getName()).getNative();
+            builder.addAttr(nativeAttrName, attribute.getValue());
+        }
+        /*
+         * START SUDO
+         */
+        doSudoStart();
+        /*
+         * First acquire the "mutex" for uid creation
+         */
+        {
+            String mutexOut = getConnection().executeCommand(OpUpdateImpl.getAcquireMutexScript(getConnection()));
+            if (mutexOut.contains("ERROR")) {
+                throw new ConnectorException("error when acquiring mutex (update operation). Buffer content: <" + mutexOut + ">");
+            }
+        }
+        
         /*
          * CREATE A NEW ACCOUNT
          */
-        final String commandSwitches = CommandUtil.prepareCommand(convertAttrsToPair(attrs, oclass));
-        // USERADD accountId
-        String command = getConnection().buildCommand("useradd", commandSwitches, accountId);
+        _log.info("launching 'useradd' command (''{0}'')", accountId);
+        final SolarisEntry entry = builder.build();
+        new CreateCommand(getConnection()).createUser(entry);
         
-        Match[] matches = prepareMatches(getRootShellPrompt(), errorsUseradd);
-        
-        try {//CONNECTION
-            getLog().info("useradd(''{0}'')", accountId);
-            
-            getConnection().send(command);
-            getConnection().expect(matches);
-        } catch (Exception ex) {
-            getLog().error(ex, null);
-        } //EOF CONNECTION
+        /*
+         * Release the uid "mutex"
+         */
+        getConnection().executeCommand(OpUpdateImpl.getMutexReleaseScript(getConnection()));
         
         /*
          * PASSWORD SET
          */
-        
-        final GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
-        try {
-            getLog().info("passwd()");
-            // TODO configurable source of password (NIS and other resources?)
-            command = String.format("passwd -r files %s", accountId);
-            getConnection().send(command);
-            
-            matches = prepareMatches("New Password", errorsPasswd);
-            getConnection().expect(matches);
-            SolarisUtil.sendPassword(password, getConnection());
-            
-            matches = prepareMatches("Re-enter new Password:", errorsPasswd);
-            getConnection().expect(matches);
-            SolarisUtil.sendPassword(password, getConnection());
-            
-            //TODO what if something else happens?
-            getConnection().waitFor(String.format("passwd: password successfully changed for %s", accountId));
-        } catch (Exception ex) {
-            getLog().error(ex, null);
-        }
+        _log.info("launching 'passwd' command (''{0}'')", accountId);
+        GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
+        new PasswdCommand().configureUserPassword(entry, password, getConnection());
         
         /*
          * INACTIVE attribute
          */
         Attribute inactive = attrMap.get(AccountAttribute.INACTIVE);
         if (inactive != null) {
-            //TODO
+            throw new UnsupportedOperationException();
         }
         
-        
+        /*
+         * END SUDO
+         */
+        doSudoReset();
         return new Uid(accountId);
     }
 
@@ -168,32 +146,16 @@ public class OpCreateImpl extends AbstractOp {
 
     /** checks if the account already exists on the resource. */
     private boolean accountExists(String name) {
-        final boolean[] exists = new boolean[1];
-        exists[0] = true;
         try {
             // FIXME find a more solid command that works for both NIS and normal passwords
-            getConnection().send(getConnection().buildCommand(String.format("logins -l %s", name)));
-            getConnection().expect(MatchBuilder.buildRegExpMatch(String.format("%s was not found", name), new Closure() {
-                public void run(ExpectState state) throws Exception {
-                    exists[0] = false; 
-                }
-            }));
+            final String out = getConnection().executeCommand(getConnection().buildCommand(String.format("logins -l %s", name)));
+            if (!out.contains(String.format("%s was not found", name))) {
+                return true;
+            } 
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
         
-        return exists[0];
-    }
-
-    private Match[] prepareMatches(String string, Match[] commonErrMatches) {
-        MatchBuilder builder = new MatchBuilder();
-        builder.addNoActionMatch(string);
-        builder.addMatches(commonErrMatches);
-        
-        return builder.build();
-    }
-    
-    private static Log getLog() {
-        return _log;
+        return false;
     }
 }

@@ -41,10 +41,13 @@ public enum NativeAttribute {
     DIR,
     /** USER attribute */
     SHELL,
-    /** USER attribute */
+    /**
+     * USER attribute. Other nick for {@link NativeAttribute.PWSTAT} in the
+     * adapter for this attribute was PASSWORD_FORCE_CHANGE.
+     */
     PWSTAT,
-    /** USER attribute */
-    PW_LAST_CHANGE,
+//    /** USER attribute */ // not used see SVIDRA#
+//    PW_LAST_CHANGE,
     /** USER attribute */
     MIN_DAYS_BETWEEN_CHNG,
     /** USER attribute */

@@ -35,6 +35,7 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConfiguration;
+import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.command.ClosureFactory;
@@ -65,7 +66,7 @@ public class OpUpdateImpl extends AbstractOp {
     public Uid update(ObjectClass objclass, Uid uid,
             Set<Attribute> replaceAttributes, OperationOptions options) {
         
-        getLog().info("update ('{0}', name: '{1}'", objclass.toString(), uid.getUidValue());
+        _log.info("update ('{0}', name: '{1}'", objclass.toString(), uid.getUidValue());
 
         SolarisUtil.controlObjectClassValidity(objclass, acceptOC, getClass());
 
@@ -82,12 +83,28 @@ public class OpUpdateImpl extends AbstractOp {
          * ACCOUNT
          */
         if (objclass.is(ObjectClass.ACCOUNT_NAME)) {
-            final String commandSwitches = CommandUtil.prepareCommand(OpCreateImpl.convertAttrsToPair(replaceAttributes, objclass));
+            //TODO
+          //TODO 
+          //TODO 
+            //FIXME
+          //FIXME
+          //FIXME
+          //FIXME
+          //TODO 
+          //TODO 
+            final String commandSwitches = ""; //CommandUtil.prepareCommand(OpCreateImpl.convertAttrsToPair(replaceAttributes, objclass));
 
             if (commandSwitches.length() > 0) {
                 try {
-                    // First acquire the "mutex" for uid creation
-                    getConnection().send(getAcquireMutexScript());
+                    /*
+                     * First acquire the "mutex" for uid creation
+                     */
+                    {
+                        String mutexOut = getConnection().executeCommand(getAcquireMutexScript(getConnection()));
+                        if (mutexOut.contains("ERROR")) {
+                            throw new ConnectorException("error when acquiring mutex (update operation). Buffer content: <" + mutexOut + ">");
+                        }
+                    }
                     MatchBuilder builder = new MatchBuilder();
                     builder.addRegExpMatch(getRootShellPrompt(), ClosureFactory.newNullClosure());
                     builder.addRegExpMatch("ERROR", ClosureFactory.newConnectorException("acquiring mutex failed"));
@@ -104,9 +121,10 @@ public class OpUpdateImpl extends AbstractOp {
                     getConnection().send(getConnection().buildCommand("usermod", commandSwitches, accountId));
                     getConnection().expect(builder.build());
 
-                    // Release the uid "mutex"
-                    getConnection().send(getMutexReleaseScript());
-                    getConnection().waitFor(getRootShellPrompt());
+                    /*
+                     * Release the uid "mutex"
+                     */
+                    getConnection().executeCommand(getMutexReleaseScript(getConnection()));
                 } catch (Exception ex) {
                     throw ConnectorException.wrap(ex);
                 }
@@ -134,7 +152,7 @@ public class OpUpdateImpl extends AbstractOp {
 
         doSudoReset();
         
-        getLog().info("update successful ('{0}', name: '{1}')", objclass.toString(), uid.getUidValue());
+        _log.info("update successful ('{0}', name: '{1}')", objclass.toString(), uid.getUidValue());
         return newUid;
     }
 
@@ -162,10 +180,15 @@ public class OpUpdateImpl extends AbstractOp {
         }
     }
 
-    private String getAcquireMutexScript() {
-        Long timeout = getConfiguration().getMutexAcquireTimeout();
-        String rmCmd = getConnection().buildCommand("rm");
-        String catCmd = getConnection().buildCommand("cat");
+    /**
+     * Mutexing script is used to prevernt race conditions when creating
+     * multiple users. These conditions are present at {@link OpCreateImpl} and
+     * {@link OpUpdateImpl}. The code is taken from the resource adapter.
+     */
+    static String getAcquireMutexScript(SolarisConnection conn) {
+        Long timeout = conn.getConfiguration().getMutexAcquireTimeout();
+        String rmCmd = conn.buildCommand("rm");
+        String catCmd = conn.buildCommand("cat");
 
         if (timeout < 1) {
             timeout = SolarisConfiguration.DEFAULT_MUTEX_ACQUIRE_TIMEOUT;
@@ -217,8 +240,9 @@ public class OpUpdateImpl extends AbstractOp {
         return pidMutexAcquireScript;
     }
 
-    private String getMutexReleaseScript() {
-        String rmCmd = getConnection().buildCommand("rm");
+    /** Counterpart of {@link OpUpdateImpl#getAcquireMutexScript(SolarisConnection)} */
+    static String getMutexReleaseScript(SolarisConnection conn) {
+        String rmCmd = conn.buildCommand("rm");
         String pidMutexReleaseScript =
             "if [ -f " + pidMutexFile + " ]; then " +
               "LOCKPID=`cat " + pidMutexFile + "`; " +
@@ -227,9 +251,5 @@ public class OpUpdateImpl extends AbstractOp {
               "fi; " +
             "fi";
         return pidMutexReleaseScript;
-    }
-    
-    private static Log getLog() {
-        return _log;
     }
 }

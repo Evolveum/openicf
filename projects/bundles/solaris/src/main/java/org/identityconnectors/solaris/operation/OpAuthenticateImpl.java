@@ -57,13 +57,13 @@ public class OpAuthenticateImpl extends AbstractOp {
     public Uid authenticate(ObjectClass objectClass, String username,
             GuardedString password, OperationOptions options) {
         SolarisUtil.controlObjectClassValidity(objectClass, acceptOC, getClass());
-        getLog().info("authenticate (user: '{0}')", username);
+        _log.info("authenticate (user: '{0}')", username);
         try {
             getConnection().send("exec login " + username + " TERM=vt00");
             getConnection().waitForCaseInsensitive("assword:");
             SolarisUtil.sendPassword(password, getConnection());
             getConnection().expect(matches);
-            getLog().info("authenticate successful for user: '{0}'", username);
+            _log.info("authenticate successful for user: '{0}'", username);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
@@ -101,10 +101,6 @@ public class OpAuthenticateImpl extends AbstractOp {
     return script;
     }
          */
-    }
-    
-    private static Log getLog() {
-        return _log;
     }
 
 }

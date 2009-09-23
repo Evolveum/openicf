@@ -27,6 +27,7 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.Configuration;
+import org.identityconnectors.framework.spi.ConfigurationProperty;
 
 public class SolarisConfiguration extends AbstractConfiguration {
 
@@ -189,16 +190,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
      */
     private long mutexAcquireTimeout = DEFAULT_MUTEX_ACQUIRE_TIMEOUT;
     
-    /*
-     * RA_MAKE_DIR
-     * 
-     * <b>Make Directory</b><br>Indicate whether the user''s home directory
-     * should be created. Enter a value of TRUE to create the user''s home
-     * directory or FALSE to do nothing. <br>The user''s home directory will be
-     * created in /home unless set by using a <b>dir</b> attribute setting in
-     * the schema map to set the home directory path.
-     */
-    // TODO boolean MAKE_DIR (if to make home directory)
+
     
     /*
      * RA_HOME_BASE_DIR
@@ -207,7 +199,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
      * when creating user home directories. The accountID will be appended to
      * this value to form the user home directory.
      */
-    //TODO HOME_BASE_DIR
+    private String homeBaseDir;
     
     /*
      * RA_KEY_PASSPHRASE
@@ -222,19 +214,15 @@ public class SolarisConfiguration extends AbstractConfiguration {
      * <b>Default Primary Group</b><br>Default group a new user will be placed
      * in.
      */
-    //TODO DEFAULT_PRIMARY_GROUP
+    private String defaultPrimaryGroup;
     
     /*
      * RA_LOGIN_SHELL
      * 
      * <b>Login Shell</b><br>Default shell a new user will be given.
      */
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //TODO LOGIN_SHELL
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    
+    private String loginShell;
+
     /*
      * RA_SKEL_DIR
      * 
@@ -242,7 +230,18 @@ public class SolarisConfiguration extends AbstractConfiguration {
      * files to the user''s home directory. Typically this is /etc/skel. This
      * directory must already exist.
      */
-    // TODO SKEL_DIR
+    private String skelDir;
+
+    /*
+     * RA_MAKE_DIR
+     * 
+     * <b>Make Directory</b><br>Indicate whether the user''s home directory
+     * should be created. Enter a value of TRUE to create the user''s home
+     * directory or FALSE to do nothing. <br>The user''s home directory will be
+     * created in /home unless set by using a <b>dir</b> attribute setting in
+     * the schema map to set the home directory path.
+     */
+    private boolean makeDir;// (if to make home directory)
     
     /*
      * RA_DEL_HOME_DIR
@@ -321,6 +320,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
     }
     
     /* ********** GET / SET ************ */
+    @ConfigurationProperty(required=true)
     public String getUserName() {
         return userName;
     }
@@ -329,6 +329,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
         userName = name;
     }
 
+    @ConfigurationProperty(required=true)
     public GuardedString getPassword() {
         return password;
     }
@@ -337,6 +338,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
         this.password = _password;
     }
 
+    @ConfigurationProperty(required=true)
     public String getHostNameOrIpAddr() {
         return hostNameOrIpAddr;
     }
@@ -353,6 +355,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
         this.port = port;
     }
 
+    @ConfigurationProperty(required=true)
     public String getConnectionType() {
         return connectionType;
     }
@@ -361,6 +364,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
         this.connectionType = ConnectionType.toConnectionType(connectionType).toString();
     }
     
+    @ConfigurationProperty(required=true)
     public String getRootShellPrompt() {
         return rootShellPrompt;
     }
@@ -381,6 +385,41 @@ public class SolarisConfiguration extends AbstractConfiguration {
     }
     public void setMutexAcquireTimeout(long mutexAcquireTimeout) {
         this.mutexAcquireTimeout = mutexAcquireTimeout;
+    }
+    
+    public String getSkelDir() {
+        return skelDir;
+    }
+    public void setSkelDir(String skelDir) {
+        this.skelDir = skelDir;
+    }
+    
+    public Boolean isMakeDir() {
+        return makeDir;
+    }
+    public void setMakeDir(boolean makeDir) {
+        this.makeDir = makeDir;
+    }
+    
+    public String getHomeBaseDir() {
+        return homeBaseDir;
+    }
+    public void setHomeBaseDir(String homeBaseDir) {
+        this.homeBaseDir = homeBaseDir;
+    }
+    
+    public String getDefaultPrimaryGroup() {
+        return defaultPrimaryGroup;
+    }
+    public void setDefaultPrimaryGroup(String defaultPrimaryGroup) {
+        this.defaultPrimaryGroup = defaultPrimaryGroup;
+    }
+    
+    public String getLoginShell() {
+        return loginShell;
+    }
+    public void setLoginShell(String loginShell) {
+        this.loginShell = loginShell;
     }
 
     

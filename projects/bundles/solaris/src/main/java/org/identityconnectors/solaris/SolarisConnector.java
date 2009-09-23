@@ -99,7 +99,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      * {@see org.identityconnectors.framework.spi.PoolableConnector#checkAlive()}
      */
     public void checkAlive() {
-        getLog().info("checkAlive()");
+        _log.info("checkAlive()");
         try {
             String out = getConnection().executeCommand("echo '" + CHECK_ALIVE + "'");
             if (!out.contains(CHECK_ALIVE)) {
@@ -116,7 +116,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      * {@see org.identityconnectors.framework.spi.Connector#dispose()}
      */
     public void dispose() {
-        getLog().info("dispose()");
+        _log.info("dispose()");
         _configuration = null;
         if (_connection != null) {
             _connection.dispose();
@@ -162,7 +162,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
 
     public FilterTranslator<Node> createFilterTranslator(
             ObjectClass oclass, OperationOptions options) {
-        getLog().info("creating Filter translator.");
+        _log.info("creating Filter translator.");
         return new SolarisFilterTranslator(oclass);
     }
     
@@ -175,7 +175,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     
     // FIXME: control schema identity with adapter.
     public Schema schema() {
-        getLog().info("schema()");
+        _log.info("schema()");
         return SchemaHolder.schema;
     }
 
@@ -229,7 +229,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      * @throws Exception if the test of connection was failed.
      */
     public void test() {
-        getLog().info("test()");
+        _log.info("test()");
         _configuration.validate();        
         checkAlive();
     }
@@ -244,9 +244,5 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      */
     public Configuration getConfiguration() {
         return _configuration;
-    }
-
-    private static Log getLog() {
-        return _log;
     }
 }

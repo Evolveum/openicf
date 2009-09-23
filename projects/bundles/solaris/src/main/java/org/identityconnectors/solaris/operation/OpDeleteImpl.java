@@ -51,7 +51,7 @@ public class OpDeleteImpl extends AbstractOp {
         final String accountId = uid.getUidValue();
         // checkIfUserExists(accountId);
         
-        getLog().info("delete(''{0}'')", accountId);
+        _log.info("delete(''{0}'')", accountId);
         
         // USERDEL accountId
         final String command = getConnection().buildCommand("userdel", accountId);
@@ -64,15 +64,11 @@ public class OpDeleteImpl extends AbstractOp {
         } catch (RuntimeException ex) {
             throw ex;
         } catch (Exception ex) {
-            getLog().error(ex, null);
+            _log.error(ex, null);
         }
 
         // TODO add handling of exceptions: existing user, etc.
-        getLog().ok("userdel(''{0}'')", accountId);
+        _log.ok("userdel(''{0}'')", accountId);
 
-    }
-
-    private static Log getLog() {
-        return _log;
     }
 }

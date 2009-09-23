@@ -64,32 +64,32 @@ public class CommandUtil {
         return limitString(data, DEFAULT_LIMIT /* == max length of line from SolarisResourceAdapter#getUpdateNativeUserScript(), line userattribparams */).toString();
     }
     
-    /** 
-     * use the attributes to generate the argument of a Solaris command.
-     * 
-     * @param attributes Attributes, whose *value* and *name* is used.
-     */
-    public static String prepareCommand(Set<NativePair> attributes) {
-        StringBuilder command = new StringBuilder();
-
-        for (NativePair attr : attributes) {
-            // add the command line switch
-            String toAppend = attr.getNativeAttr().getCmdSwitch();
-            if (toAppend != null) {
-                command.append(toAppend);
-                command.append(" ");
-
-                // add the attribute value
-                toAppend = attr.getValue();
-                if (toAppend != null) {
-                    // quote value
-                    command.append("\"" + toAppend + "\"");
-                    command.append(" ");
-                }
-            }
-            
-        }// for
-
-        return command.toString();
-    }
+//    /** 
+//     * use the attributes to generate the argument of a Solaris command.
+//     * 
+//     * @param attributes Attributes, whose *value* and *name* is used.
+//     */
+//    public static String prepareCommand(Set<NativePair> attributes) {
+//        StringBuilder command = new StringBuilder();
+//
+//        for (NativePair attr : attributes) {
+//            // add the command line switch
+//            String toAppend = attr.getNativeAttr().getCmdSwitch();
+//            if (toAppend != null) {
+//                command.append(toAppend);
+//                command.append(" ");
+//
+//                // add the attribute value
+//                toAppend = attr.getValue();
+//                if (toAppend != null) {
+//                    // quote value
+//                    command.append("\"" + toAppend + "\"");
+//                    command.append(" ");
+//                }
+//            }
+//            
+//        }// for
+//
+//        return command.toString();
+//    }
 }

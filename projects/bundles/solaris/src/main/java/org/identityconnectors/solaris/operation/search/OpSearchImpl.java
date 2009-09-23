@@ -115,7 +115,7 @@ public class OpSearchImpl extends AbstractOp {
      * @param filter contains the filters. Is created by {@link SolarisFilterTranslator}
      */
     public void executeQuery() {
-        getLog().info("search ({0})", filter.toString());
+        _log.info("search ({0})", filter.toString());
         SolarisUtil.controlObjectClassValidity(oclass, acceptOC, getClass());
         
         if (oclass.is(ObjectClass.GROUP_NAME)) {
@@ -142,7 +142,7 @@ public class OpSearchImpl extends AbstractOp {
         } else {
             complexFind(requiredAttrs);
         }
-        getLog().info("search successfully finished.");
+        _log.info("search successfully finished.");
     }
 
     /**
@@ -224,9 +224,5 @@ public class OpSearchImpl extends AbstractOp {
         returnedByDefaultAttributeNames = result.toArray(new String[0]);
         
         return returnedByDefaultAttributeNames;
-    }
-    
-    private static Log getLog() {
-        return _log;
     }
 }

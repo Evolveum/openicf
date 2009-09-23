@@ -22,27 +22,10 @@
  */
 package org.identityconnectors.solaris.operation;
 
-import junit.framework.Assert;
-
-import org.junit.Test;
-
-public class CommandUtilTest {
-    @Test
-    public void test() {
-        StringBuilder input = new StringBuilder();
-        for (int i = 0; i < 350; i++) {
-            input.append("a");
-        }
-        String resultStr = CommandUtil.limitString(input);
-        Assert.assertTrue(resultStr.contains("\\"));
-        String[] strs = resultStr.split("\n");
-        for (String string : strs) {
-            
-            final int limit = CommandUtil.DEFAULT_LIMIT + 1;
-            final int trimmedStringLength = string.trim().length();
-            
-            String msg = String.format("String exceeds the maximal limit '%s', as it is: '%s'", limit , trimmedStringLength);
-            Assert.assertTrue(msg, trimmedStringLength <= limit);
-        }
-    }
+/**
+ * @author David Adam
+ *
+ */
+class UpdateCommand extends CommandSwitches {
+ 
 }
