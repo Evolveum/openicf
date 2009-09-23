@@ -77,6 +77,7 @@ import org.identityconnectors.framework.spi.ConnectorClass;
 import org.identityconnectors.framework.spi.PoolableConnector;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
+import org.identityconnectors.framework.spi.operations.ResolveUsernameOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 import org.identityconnectors.framework.spi.operations.SyncOp;
@@ -91,7 +92,7 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
                              "org.identityconnectors.rw3270.wrq.Messages",  
                              "org.identityconnectors.rw3270.freehost3270.Messages"})
 public class RacfConnector implements Connector, CreateOp, PoolableConnector,
-DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormalizer {
+DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormalizer, ResolveUsernameOp {
     
     static final List<String>   POSSIBLE_ATTRIBUTES         = Arrays.asList(
             "ADSP", "AUDITOR", "SPECIAL", "GRPACC", "OIDCARD", "OPERATIONS");
@@ -1332,6 +1333,13 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
         } else {
             throw new UnsupportedOperationException();
         }
+    }
+
+    public Uid resolveUsername(ObjectClass objectClass, String username,
+            OperationOptions options) {
+        if (!objectClass.is(ObjectClass.ACCOUNT_NAME))
+            throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
+        return new Uid(username);
     }
     
 }
