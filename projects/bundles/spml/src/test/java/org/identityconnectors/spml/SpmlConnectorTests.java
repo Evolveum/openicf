@@ -722,6 +722,33 @@ public class SpmlConnectorTests {
             info.dispose();
         }
     }
+    @Test//@Ignore
+    public void testResolve() throws Exception {
+        SpmlConfiguration config = createConfiguration();
+        SpmlConnector info = createConnector(config);
+        try {
+            Set<Attribute> attrs = fillInSampleUser(TEST_USER);
+    
+            // Delete the account if it already exists
+            //
+            deleteUser(TEST_USER, info);
+            try {
+                info.resolveUsername(ObjectClass.ACCOUNT, TEST_USER, new OperationOptions(new HashMap()));
+                Assert.fail("exception expected");
+            } catch (UnknownUidException ue) {
+                // expected
+            }
+    
+            // Create the account
+            //
+            Uid newUid = info.create(ObjectClass.ACCOUNT, attrs, null);
+            System.out.println(newUid.getValue()+" created");
+            Uid retrievedUid = info.resolveUsername(ObjectClass.ACCOUNT, TEST_USER, new OperationOptions(new HashMap()));
+            Assert.assertEquals(newUid, retrievedUid);
+        } finally {
+            info.dispose();
+        }
+    }
 
     private Set<Attribute> fillInSampleUser(final String testUser) {
         Set<Attribute> attrs = new HashSet<Attribute>();
