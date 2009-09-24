@@ -69,6 +69,7 @@ import org.identityconnectors.framework.common.objects.SchemaBuilder;
 import org.identityconnectors.framework.common.objects.SyncResultsHandler;
 import org.identityconnectors.framework.common.objects.SyncToken;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.AttributeNormalizer;
 import org.identityconnectors.framework.spi.Configuration;
@@ -1313,10 +1314,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
     }
 
     public SyncToken getLatestSyncToken(ObjectClass objClass) {
-        if (_syncUtil==null)
-            _syncUtil = new SyncUtil(this);
-        
         if (isLdapConnectionAvailable()) {
+            if (_syncUtil==null)
+                _syncUtil = new SyncUtil(this);
             return _syncUtil.getLatestSyncToken(objClass);
         } else {
             throw new UnsupportedOperationException();
@@ -1325,10 +1325,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
 
     public void sync(ObjectClass objClass, SyncToken token,
             SyncResultsHandler handler, OperationOptions options) {
-        if (_syncUtil==null)
-            _syncUtil = new SyncUtil(this);
-        
         if (isLdapConnectionAvailable()) {
+            if (_syncUtil==null)
+                _syncUtil = new SyncUtil(this);
             _syncUtil.sync(objClass, token, handler, options);
         } else {
             throw new UnsupportedOperationException();
@@ -1339,7 +1338,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
             OperationOptions options) {
         if (!objectClass.is(ObjectClass.ACCOUNT_NAME))
             throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
-        return new Uid(username);
+        LocalHandler handler = new LocalHandler();
+        List<String> query = createFilterTranslator(objectClass, options).translate(new EqualsFilter(AttributeBuilder.build(Name.NAME, username)));
+        executeQuery(ObjectClass.ACCOUNT, query.get(0), handler, options);
+        if (!handler.iterator().hasNext())
+            throw new UnknownUidException();
+        return handler.iterator().next().getUid();
     }
     
 }

@@ -540,6 +540,34 @@ public abstract class RacfConnectorTestBase {
         }
     }
 
+    @Test//@Ignore
+    public void testResolve() throws Exception {
+        RacfConfiguration config = createConfiguration();
+        RacfConnector connector = createConnector(config);
+        try {
+            Set<Attribute> attrs = fillInSampleUser(TEST_USER);
+    
+            // Delete the account if it already exists
+            //
+            deleteUser(TEST_USER_UID, connector);
+            try {
+                connector.resolveUsername(ObjectClass.ACCOUNT, TEST_USER, new OperationOptions(new HashMap()));
+                Assert.fail("exception expected");
+            } catch (UnknownUidException ue) {
+                // expected
+            }
+    
+            // Create the account
+            //
+            Uid newUid = connector.create(ObjectClass.ACCOUNT, attrs, null);
+            System.out.println(newUid.getValue()+" created");
+            Uid retrievedUid = connector.resolveUsername(ObjectClass.ACCOUNT, TEST_USER, new OperationOptions(new HashMap()));
+            Assert.assertEquals(newUid, retrievedUid);
+        } finally {
+            connector.dispose();
+        }
+    }
+
     @Test
     @Ignore
     public void testChangePassword() throws Exception {
