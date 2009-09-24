@@ -78,6 +78,6 @@ public abstract class AttributeNode implements Node {
     
     @Override
     public String toString() {
-        return String.format("Filter %s : name='%s', value='%s'", getClass().getName(), attrName.getName());
+        return String.format("Filter %s : name='%s'", getClass().getName(), attrName.getName());
     }
 }

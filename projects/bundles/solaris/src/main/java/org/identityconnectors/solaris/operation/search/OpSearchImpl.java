@@ -24,7 +24,6 @@ package org.identityconnectors.solaris.operation.search;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -34,6 +33,7 @@ import java.util.Set;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -175,26 +175,19 @@ public class OpSearchImpl extends AbstractOp {
      */
     private ConnectorObject convertToConnectorObject(SolarisEntry account, ObjectClass oclass) {
         ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
-        Map<NativeAttribute, List<Object>> indexedEntry = indexEntry(account.getAttributeSet());
+        Map<String, Attribute> indexedEntry = AttributeUtil.toMap(account.getAttributeSet());
         
         for (String attribute : attrsToGet) {
             ConnectorAttribute connAttr = (oclass.is(ObjectClass.ACCOUNT_NAME)) ? AccountAttribute.forAttributeName(attribute) : GroupAttribute.forAttributeName(attribute);
             
-            List<Object> value = indexedEntry.get(connAttr.getNative());
+            final Attribute attrToConvert = indexedEntry.get(connAttr.getNative().getName());
+            List<Object> value = (attrToConvert != null) ? attrToConvert.getValue() : null;
             if (value == null) 
                 value = Collections.emptyList();
             builder.addAttribute(connAttr.getName(), value);
         }
         
         return builder.build();
-    }
-
-    private Map<NativeAttribute, List<Object>> indexEntry(Set<Attribute> entryAttrs) {
-        Map<NativeAttribute, List<Object>> map = new HashMap<NativeAttribute, List<Object>>(entryAttrs.size());
-        for (Attribute attribute : entryAttrs) {
-            map.put(NativeAttribute.forAttributeName(attribute.getName()), attribute.getValue());
-        }
-        return map;
     }
 
     /**

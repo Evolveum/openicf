@@ -22,10 +22,13 @@
  */
 package org.identityconnectors.solaris.operation;
 
+import java.util.Map;
+
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
+import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.command.ClosureFactory;
 import org.identityconnectors.solaris.command.MatchBuilder;
@@ -37,7 +40,9 @@ import expect4j.matches.Match;
  * @author David Adam
  *
  */
-class CreateCommand extends CommandSwitches {
+class CreateCommand  {
+    private final static Map<NativeAttribute, String> createSwitches = CommandSwitches.commonSwitches;
+    
     private final static Match[] errorsUseradd;
     static {
         MatchBuilder builder = new MatchBuilder();
@@ -47,19 +52,15 @@ class CreateCommand extends CommandSwitches {
         builder.addCaseInsensitiveRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException("Not allowed to execute the 'useradd' command."));
         errorsUseradd = builder.build();
     }
-    private SolarisConnection conn;
     
-    public CreateCommand(SolarisConnection conn) {
-        this.conn = conn;
-    }
-    public void createUser(SolarisEntry entry/* , OperationOptions options */) {
+    public static void createUser(SolarisEntry entry/* , OperationOptions options */, SolarisConnection conn) {
 
         // create command line switches construction
-        String commandSwitches = formatCreateCommandSwitches(entry);
+        String commandSwitches = formatCreateCommandSwitches(entry, conn, createSwitches);
 
         // useradd command execution
         String command = conn.buildCommand("useradd", commandSwitches, entry.getName());
-        Match[] matches = prepareMatches(conn.getRootShellPrompt(), errorsUseradd);
+        Match[] matches = SolarisUtil.prepareMatches(conn.getRootShellPrompt(), errorsUseradd);
         try {
             conn.send(command);
             conn.expect(matches);
@@ -71,9 +72,10 @@ class CreateCommand extends CommandSwitches {
     /**
      * creates command line switches construction
      * @param conn 
+     * @param createSwitches2 
      */
-    private String formatCreateCommandSwitches(SolarisEntry entry) {
-        StringBuilder buffer = makeOptionalSkelDir();
+    private static String formatCreateCommandSwitches(SolarisEntry entry, SolarisConnection conn, Map<NativeAttribute, String> switches) {
+        StringBuilder buffer = makeOptionalSkelDir(conn);
         
         for (Attribute attr : entry.getAttributeSet()) {
             NativeAttribute nAttrName = NativeAttribute.forAttributeName(attr.getName());
@@ -83,7 +85,7 @@ class CreateCommand extends CommandSwitches {
             /* 
              * append command line switch
              */
-            String cmdSwitchForAttr = super.getCreateOrUpdate(nAttrName);
+            String cmdSwitchForAttr = switches.get(nAttrName);
             if (cmdSwitchForAttr != null) {
                 buffer.append(cmdSwitchForAttr);
                 buffer.append(" ");
@@ -91,13 +93,13 @@ class CreateCommand extends CommandSwitches {
                 // preprocess the values and use resource configuration values to control them.
                 switch (nAttrName) {
                 case DIR:
-                    value = setHomeDirValue(value, entry);
+                    value = setHomeDirValue(value, entry, conn);
                     break;
                 case GROUP_PRIM:
-                    value = setGroupPrimValue(value);
+                    value = setGroupPrimValue(value, conn);
                     break;
                 case SHELL:
-                    value = setShellValue(value);
+                    value = setShellValue(value, conn);
                     break;
                 }
 
@@ -118,7 +120,7 @@ class CreateCommand extends CommandSwitches {
      * @param explicitShellValue
      * @return
      */
-    private String setShellValue(final String explicitShellValue) {
+    private static String setShellValue(final String explicitShellValue, SolarisConnection conn) {
         if (explicitShellValue != null)
             return explicitShellValue;
         
@@ -135,7 +137,7 @@ class CreateCommand extends CommandSwitches {
      * @param explicitPrimGroupValue
      * @return
      */
-    private String setGroupPrimValue(final String explicitPrimGroupValue) {
+    private static String setGroupPrimValue(final String explicitPrimGroupValue, SolarisConnection conn) {
         if (explicitPrimGroupValue != null)
             return explicitPrimGroupValue;
         
@@ -159,7 +161,7 @@ class CreateCommand extends CommandSwitches {
      *         defined, otherwise the create the default skeleton directory for
      *         home.
      */
-    private StringBuilder makeOptionalSkelDir() {
+    private static StringBuilder makeOptionalSkelDir(SolarisConnection conn) {
         StringBuilder makeDirectory = new StringBuilder();
         Boolean configuredIsMakeDir = conn.getConfiguration().getMakeDir();
         if ((configuredIsMakeDir != null) && configuredIsMakeDir) {
@@ -185,7 +187,7 @@ class CreateCommand extends CommandSwitches {
      * @param conn
      * @return the value with correct settings
      */
-    private String setHomeDirValue(final String explicitHomeDirAttrValue, SolarisEntry entry) {
+    private static String setHomeDirValue(final String explicitHomeDirAttrValue, SolarisEntry entry, SolarisConnection conn) {
         if (explicitHomeDirAttrValue != null)
             return explicitHomeDirAttrValue;
         

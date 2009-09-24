@@ -38,7 +38,6 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.attr.AccountAttribute;
-import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 public class OpCreateImpl extends AbstractOp {
@@ -70,12 +69,6 @@ public class OpCreateImpl extends AbstractOp {
             throw new ConnectorException("Account '" + accountId + "' already exists on the resource. The same user cannot be created multiple times.");
         }
         
-        // translate connector attributes to native counterparts
-        final SolarisEntry.Builder builder = new SolarisEntry.Builder(name.getNameValue());
-        for (Attribute attribute : attrs) {
-            NativeAttribute nativeAttrName = AccountAttribute.forAttributeName(attribute.getName()).getNative();
-            builder.addAttr(nativeAttrName, attribute.getValue());
-        }
         /*
          * START SUDO
          */
@@ -83,31 +76,28 @@ public class OpCreateImpl extends AbstractOp {
         /*
          * First acquire the "mutex" for uid creation
          */
-        {
-            String mutexOut = getConnection().executeCommand(OpUpdateImpl.getAcquireMutexScript(getConnection()));
-            if (mutexOut.contains("ERROR")) {
-                throw new ConnectorException("error when acquiring mutex (update operation). Buffer content: <" + mutexOut + ">");
-            }
+        String mutexOut = getConnection().executeCommand(SolarisUtil.getAcquireMutexScript(getConnection()));
+        if (mutexOut.contains("ERROR")) {
+            throw new ConnectorException("error when acquiring mutex (update operation). Buffer content: <" + mutexOut + ">");
         }
         
         /*
          * CREATE A NEW ACCOUNT
          */
         _log.info("launching 'useradd' command (''{0}'')", accountId);
-        final SolarisEntry entry = builder.build();
-        new CreateCommand(getConnection()).createUser(entry);
-        
+        final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(name.getNameValue(), attrs);
+        CreateCommand.createUser(entry, getConnection());
         /*
          * Release the uid "mutex"
          */
-        getConnection().executeCommand(OpUpdateImpl.getMutexReleaseScript(getConnection()));
+        getConnection().executeCommand(SolarisUtil.getMutexReleaseScript(getConnection()));
         
         /*
          * PASSWORD SET
          */
         _log.info("launching 'passwd' command (''{0}'')", accountId);
         GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
-        new PasswdCommand().configureUserPassword(entry, password, getConnection());
+        PasswdCommand.configureUserPassword(entry, password, getConnection());
         
         /*
          * INACTIVE attribute

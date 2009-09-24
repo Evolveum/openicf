@@ -55,6 +55,8 @@ public enum NativeAttribute {
     /** USER attribute */
     DAYS_BEFORE_TO_WARN,
     /** USER attribute */
+    PASSWD,
+    /** USER attribute */
     USER_EXPIRE, 
     /** USER attribute */
     USER_INACTIVE,

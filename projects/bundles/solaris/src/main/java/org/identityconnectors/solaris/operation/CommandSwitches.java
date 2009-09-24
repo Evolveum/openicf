@@ -25,84 +25,38 @@ package org.identityconnectors.solaris.operation;
 import java.util.EnumMap;
 import java.util.Map;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.command.MatchBuilder;
-
-import expect4j.matches.Match;
 
 /**
  * Switches for {@link CreateCommand} and {@link UpdateCommand}.
  * @author David Adam
  *
  */
-abstract class CommandSwitches {
+class CommandSwitches {
     //create and update operation switches (identical for both operations)
-    private static final Map<NativeAttribute, String> _CU_switches;
+    static final Map<NativeAttribute, String> commonSwitches;
+
     static {
-        _CU_switches = new EnumMap<NativeAttribute, String>(NativeAttribute.class);
+        Map<NativeAttribute, String> switchMap = new EnumMap<NativeAttribute, String>(NativeAttribute.class);
         // values based on SVIDResourceAdapter's paramToFlagMap
-        _CU_switches.put(NativeAttribute.ID, "-u");
-        _CU_switches.put(NativeAttribute.GROUP_PRIM, "-g");
-        _CU_switches.put(NativeAttribute.GROUPS_SEC, "-G");
-        _CU_switches.put(NativeAttribute.DIR, "-d");
-        _CU_switches.put(NativeAttribute.SHELL, "-s");
-        _CU_switches.put(NativeAttribute.COMMENT, "-c");
-        _CU_switches.put(NativeAttribute.USER_INACTIVE, "-f");
-        _CU_switches.put(NativeAttribute.USER_EXPIRE, "-e");
-        _CU_switches.put(NativeAttribute.AUTHS, "-A");
-        _CU_switches.put(NativeAttribute.PROFILES, "-P");
-        _CU_switches.put(NativeAttribute.ROLES, "-R");
+        switchMap.put(NativeAttribute.ID, "-u");
+        switchMap.put(NativeAttribute.GROUP_PRIM, "-g");
+        switchMap.put(NativeAttribute.GROUPS_SEC, "-G");
+        switchMap.put(NativeAttribute.DIR, "-d");
+        switchMap.put(NativeAttribute.SHELL, "-s");
+        switchMap.put(NativeAttribute.COMMENT, "-c");
+        switchMap.put(NativeAttribute.USER_INACTIVE, "-f");
+        switchMap.put(NativeAttribute.USER_EXPIRE, "-e");
+        switchMap.put(NativeAttribute.AUTHS, "-A");
+        switchMap.put(NativeAttribute.PROFILES, "-P");
+        switchMap.put(NativeAttribute.ROLES, "-R");
+        //switchMap.put(NativeAttribute.PASSWD, null); // password doesn't have ANY switch.
+        commonSwitches = CollectionUtil.asReadOnlyMap(switchMap);
         
 // TODO what is the value for these attributes?
-//        _CU_switches.put(NativeAttribute.NAME, null);
+//        _CU_switches.put(NativeAttribute.NAME, null); // Create only
 //        _CU_switches.put(NativeAttribute.LAST_LOGIN, null);
 //        _CU_switches.put(NativeAttribute.USERS, null);
-    }
-    
-    // passwd operation switches
-    private static final Map<NativeAttribute, String> _passwdSwitches;
-    static {
-        _passwdSwitches = new EnumMap<NativeAttribute, String>(NativeAttribute.class);
-        _passwdSwitches.put(NativeAttribute.PWSTAT, "-f");
-        //passwdSwitches.put(NativeAttribute.PW_LAST_CHANGE, null); // this is not used attribute (see LoginsCommand and its SVIDRA counterpart). TODO erase this comment.
-        _passwdSwitches.put(NativeAttribute.MIN_DAYS_BETWEEN_CHNG, "-x");
-        _passwdSwitches.put(NativeAttribute.MAX_DAYS_BETWEEN_CHNG, "-n");
-        _passwdSwitches.put(NativeAttribute.DAYS_BEFORE_TO_WARN, "-w");
-        _passwdSwitches.put(NativeAttribute.LOCK, "-l");
-    }
-    
-    /**
-     * get the command line switch used in {@link CreateCommand} and
-     * {@link UpdateCommand}
-     * 
-     * @param attr
-     *            the native attribute
-     * @return the command line switch (for instance '-s' for shell of the user)
-     *         for the given native attribute. Return null if switch doesn't
-     *         exist.
-     */
-    protected String getCreateOrUpdate(NativeAttribute attr) {
-        return _CU_switches.get(attr);
-    }
-
-    /**
-     * get the command line switch used in {@link PasswdCommand}
-     * 
-     * @param attr
-     *            the native attribute
-     * @return the command line switch (for instance '-w' for
-     *         {@link NativeAttribute#DAYS_BEFORE_TO_WARN}) for the given native
-     *         attribute. Return null if switch doesn't exist.
-     */
-    protected String getPasswd(NativeAttribute attr) {
-        return _passwdSwitches.get(attr);
-    }
-    
-    protected static Match[] prepareMatches(String string, Match[] commonErrMatches) {
-        MatchBuilder builder = new MatchBuilder();
-        builder.addNoActionMatch(string);
-        builder.addMatches(commonErrMatches);
-        
-        return builder.build();
     }
 }

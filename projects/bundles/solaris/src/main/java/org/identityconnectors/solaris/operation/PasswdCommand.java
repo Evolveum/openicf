@@ -22,10 +22,14 @@
  */
 package org.identityconnectors.solaris.operation;
 
+import java.util.EnumMap;
+import java.util.Map;
+
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisUtil;
+import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.command.ClosureFactory;
 import org.identityconnectors.solaris.command.MatchBuilder;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
@@ -38,33 +42,44 @@ import expect4j.matches.Match;
  *
  */
 class PasswdCommand extends CommandSwitches {
-    private final static Match[] errorsPasswd;
+
+    private static final String NEW_PASSWORD_MATCH = "ew Password:";
+    
+    // passwd operation switches
+    private static final Map<NativeAttribute, String> _passwdSwitches;
+    static {
+        _passwdSwitches = new EnumMap<NativeAttribute, String>(NativeAttribute.class);
+        _passwdSwitches.put(NativeAttribute.PWSTAT, "-f");
+        //passwdSwitches.put(NativeAttribute.PW_LAST_CHANGE, null); // this is not used attribute (see LoginsCommand and its SVIDRA counterpart). TODO erase this comment.
+        _passwdSwitches.put(NativeAttribute.MIN_DAYS_BETWEEN_CHNG, "-x");
+        _passwdSwitches.put(NativeAttribute.MAX_DAYS_BETWEEN_CHNG, "-n");
+        _passwdSwitches.put(NativeAttribute.DAYS_BEFORE_TO_WARN, "-w");
+        _passwdSwitches.put(NativeAttribute.LOCK, "-l");
+    }
+    
+    private final static Match[] passwdMatches;
     static {
         MatchBuilder builder = new MatchBuilder();
+        builder.addNoActionMatch(NEW_PASSWORD_MATCH);//success
+        //errors:
         builder.addCaseInsensitiveRegExpMatch("Permission denied", ClosureFactory.newConnectorException("Permission denied when executing 'passwd'"));
         builder.addCaseInsensitiveRegExpMatch("command not found", ClosureFactory.newConnectorException("'passwd' command not found"));
         builder.addCaseInsensitiveRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException("current user is not allowed to execute 'passwd' command"));
-        errorsPasswd = builder.build();
+        passwdMatches = builder.build();
     }
     
-    public PasswdCommand() {
-        // empty intentionally
-    }
-    
-    public void configureUserPassword(SolarisEntry entry, GuardedString password, SolarisConnection conn) {
+    public static void configureUserPassword(SolarisEntry entry, GuardedString password, SolarisConnection conn) {
         try {
-            String command = String.format("passwd -r files %s", entry.getName());
+            String command = conn.buildCommand("passwd -r files", entry.getName());
             conn.send(command);
 
-            Match[] matches = prepareMatches("New Password", errorsPasswd);
-            conn.expect(matches);
+            conn.expect(passwdMatches);
             SolarisUtil.sendPassword(password, conn);
 
-            matches = prepareMatches("Re-enter new Password:", errorsPasswd);
-            conn.expect(matches);
+            conn.waitFor(NEW_PASSWORD_MATCH);
             SolarisUtil.sendPassword(password, conn);
 
-            conn.waitFor(String.format("passwd: password successfully changed for %s", entry.getName()));
+            conn.waitFor(conn.getRootShellPrompt() /*String.format("passwd: password successfully changed for %s", entry.getName())*/);
         } catch (Exception ex) {
             throw ConnectorException.wrap(ex);
         }

@@ -27,8 +27,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
-
+/**
+ * Every {@link AccountAttribute} has been assigned a {@link NativeAttribute}.
+ * @author David Adam
+ *
+ */
 public enum AccountAttribute implements ConnectorAttribute {
     DIR("dir", NativeAttribute.DIR), 
     SHELL("shell", NativeAttribute.SHELL),
@@ -53,6 +58,7 @@ public enum AccountAttribute implements ConnectorAttribute {
     /*
      * password related attributes
      */
+    PASSWORD(OperationalAttributes.PASSWORD_NAME, NativeAttribute.PASSWD),
     MAX("max", NativeAttribute.MAX_DAYS_BETWEEN_CHNG),
     MIN("min", NativeAttribute.MIN_DAYS_BETWEEN_CHNG),
     WARN("warn", NativeAttribute.DAYS_BEFORE_TO_WARN),
