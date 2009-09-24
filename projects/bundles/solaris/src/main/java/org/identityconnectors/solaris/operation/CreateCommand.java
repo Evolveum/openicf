@@ -76,7 +76,7 @@ class CreateCommand extends CommandSwitches {
         StringBuilder buffer = makeOptionalSkelDir();
         
         for (Attribute attr : entry.getAttributeSet()) {
-            NativeAttribute nAttrName = NativeAttribute.fromString(attr.getName());
+            NativeAttribute nAttrName = NativeAttribute.forAttributeName(attr.getName());
             // assuming Single values only
             String value = (attr.getValue().size() > 0) ? (String) attr.getValue().get(0) : null;
 

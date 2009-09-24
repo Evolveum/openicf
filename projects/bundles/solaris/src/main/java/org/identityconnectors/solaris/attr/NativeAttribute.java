@@ -85,7 +85,7 @@ public enum NativeAttribute {
      * is able to transform string value into NativeAttribute, given, that we
      * respect the name defined by {@see NativeAttribute#getName()}.
      */
-    public static NativeAttribute fromString(String nativeAttr) {
+    public static NativeAttribute forAttributeName(String nativeAttr) {
         return stringToNative.get(nativeAttr);
     }
     

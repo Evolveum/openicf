@@ -99,11 +99,11 @@ public class OpSearchImpl extends AbstractOp {
         Set<NativeAttribute> translatedAttrs = new HashSet<NativeAttribute>(attrsToGet.length);
         if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
             for (String accountAttrName : attrsToGet) {
-                translatedAttrs.add(AccountAttribute.fromString(accountAttrName).getNative());
+                translatedAttrs.add(AccountAttribute.forAttributeName(accountAttrName).getNative());
             }
         } else if (oclass.is(ObjectClass.GROUP_NAME)) {
             for (String groupAttrName : attrsToGet) {
-                translatedAttrs.add(GroupAttribute.fromString(groupAttrName).getNative());
+                translatedAttrs.add(GroupAttribute.forAttributeName(groupAttrName).getNative());
             }
         }
         attrsToGetNative = translatedAttrs;
@@ -178,7 +178,7 @@ public class OpSearchImpl extends AbstractOp {
         Map<NativeAttribute, List<Object>> indexedEntry = indexEntry(account.getAttributeSet());
         
         for (String attribute : attrsToGet) {
-            ConnectorAttribute connAttr = (oclass.is(ObjectClass.ACCOUNT_NAME)) ? AccountAttribute.fromString(attribute) : GroupAttribute.fromString(attribute);
+            ConnectorAttribute connAttr = (oclass.is(ObjectClass.ACCOUNT_NAME)) ? AccountAttribute.forAttributeName(attribute) : GroupAttribute.forAttributeName(attribute);
             
             List<Object> value = indexedEntry.get(connAttr.getNative());
             if (value == null) 
@@ -192,7 +192,7 @@ public class OpSearchImpl extends AbstractOp {
     private Map<NativeAttribute, List<Object>> indexEntry(Set<Attribute> entryAttrs) {
         Map<NativeAttribute, List<Object>> map = new HashMap<NativeAttribute, List<Object>>(entryAttrs.size());
         for (Attribute attribute : entryAttrs) {
-            map.put(NativeAttribute.fromString(attribute.getName()), attribute.getValue());
+            map.put(NativeAttribute.forAttributeName(attribute.getName()), attribute.getValue());
         }
         return map;
     }

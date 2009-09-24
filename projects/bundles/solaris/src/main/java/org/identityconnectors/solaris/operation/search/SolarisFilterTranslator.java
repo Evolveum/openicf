@@ -66,9 +66,9 @@ public class SolarisFilterTranslator extends
     private NativeAttribute translateFromConnectorAttribute(String connectorAttribute) {
         ConnectorAttribute connAttr = null;
         if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
-            connAttr = AccountAttribute.fromString(connectorAttribute);
+            connAttr = AccountAttribute.forAttributeName(connectorAttribute);
         } else if (oclass.is(ObjectClass.GROUP_NAME)) {
-            connAttr =  GroupAttribute.fromString(connectorAttribute);
+            connAttr =  GroupAttribute.forAttributeName(connectorAttribute);
         }
         return connAttr.getNative();
     }

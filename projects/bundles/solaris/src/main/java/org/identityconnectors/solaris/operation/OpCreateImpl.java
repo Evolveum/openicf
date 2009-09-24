@@ -77,7 +77,7 @@ public class OpCreateImpl extends AbstractOp {
         // translate connector attributes to native counterparts
         final SolarisEntry.Builder builder = new SolarisEntry.Builder(name.getNameValue());
         for (Attribute attribute : attrs) {
-            NativeAttribute nativeAttrName = AccountAttribute.fromString(attribute.getName()).getNative();
+            NativeAttribute nativeAttrName = AccountAttribute.forAttributeName(attribute.getName()).getNative();
             builder.addAttr(nativeAttrName, attribute.getValue());
         }
         /*
@@ -132,7 +132,7 @@ public class OpCreateImpl extends AbstractOp {
         Set<NativePair> set = new HashSet<NativePair>(attrs.size());
         for (Attribute attr : attrs) {
             final String attrName = attr.getName();
-            ConnectorAttribute connAttr = (oclass.is(ObjectClass.ACCOUNT_NAME)) ? AccountAttribute.fromString(attrName) : GroupAttribute.fromString(attrName);
+            ConnectorAttribute connAttr = (oclass.is(ObjectClass.ACCOUNT_NAME)) ? AccountAttribute.forAttributeName(attrName) : GroupAttribute.forAttributeName(attrName);
 
             if (connAttr == null)
                 continue;

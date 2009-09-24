@@ -43,7 +43,7 @@ public enum GroupAttribute implements ConnectorAttribute {
         }
     }
     
-    public static GroupAttribute fromString(String groupAttr) {
+    public static GroupAttribute forAttributeName(String groupAttr) {
         return stringToGroup.get(groupAttr);
     }
 

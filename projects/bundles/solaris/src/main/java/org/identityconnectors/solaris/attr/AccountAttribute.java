@@ -69,7 +69,7 @@ public enum AccountAttribute implements ConnectorAttribute {
         }
     }
     
-    public static AccountAttribute fromString(String accountAttr) {
+    public static AccountAttribute forAttributeName(String accountAttr) {
         return stringToAccount.get(accountAttr);
     }
 

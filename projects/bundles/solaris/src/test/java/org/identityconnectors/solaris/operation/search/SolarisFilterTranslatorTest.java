@@ -53,7 +53,7 @@ public class SolarisFilterTranslatorTest {
         Assert.assertNotNull(result);
         Assert.assertTrue(result instanceof EqualsNode);
         EqualsNode eq = (EqualsNode) result;
-        Assert.assertEquals(AccountAttribute.fromString(connectorAttrName).getNative(), eq.getAttributeName());
+        Assert.assertEquals(AccountAttribute.forAttributeName(connectorAttrName).getNative(), eq.getAttributeName());
         Assert.assertEquals(username, eq.getValue());
     }
     
@@ -70,6 +70,6 @@ public class SolarisFilterTranslatorTest {
         Set<NativeAttribute> result = new HashSet<NativeAttribute>();
         //Node.Traverser.collectAttributeNames(andNode);
         andNode.collectAttributeNames(result);
-        Assert.assertEquals(EnumSet.of(AccountAttribute.fromString(typeOne).getNative(), typeTwo.getNative()), result);
+        Assert.assertEquals(EnumSet.of(AccountAttribute.forAttributeName(typeOne).getNative(), typeTwo.getNative()), result);
     }
 }
