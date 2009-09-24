@@ -50,6 +50,8 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.PredefinedAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.parser.factory.OutputParser;
+import org.identityconnectors.parser.factory.OutputParserFactory;
 import org.identityconnectors.rw3270.RW3270Connection;
 
 import expect4j.Closure;
@@ -405,8 +407,8 @@ class CommandLineUtil {
             setCatalogAttributes(attributes);
             buffer.clear();
             if (groups!=null) {
-                List groupsValue = groups.getValue();
-                List ownersValue = owners==null?null:owners.getValue();
+                List<Object> groupsValue = groups.getValue();
+                List<Object> ownersValue = owners==null?null:owners.getValue();
                 for (int i=0; i<groupsValue.size(); i++) {
                     createConnection(name, (String)groupsValue.get(i), (String)(ownersValue==null?null:ownersValue.get(i)));
                 }
@@ -435,15 +437,15 @@ class CommandLineUtil {
             Uid uid = createOrUpdateViaCommandLine(objectClass, name, buffer);
             buffer.clear();
             if (accounts!=null) {
-                List accountsValue = accounts.getValue();
-                List ownersValue = owners==null?null:owners.getValue();
+                List<Object> accountsValue = accounts.getValue();
+                List<Object> ownersValue = owners==null?null:owners.getValue();
                 for (int i=0; i<accountsValue.size(); i++) {
                     createConnection((String)accountsValue.get(i), name, (String)(ownersValue==null?null:ownersValue.get(i)));
                 }
             }
             return uid;
         } else if (objectClass.is(RacfConnector.RACF_CONNECTION_NAME)) {
-            String[] info = _connector.extractRacfIdAndGroupIdFromLdapId(name);
+            String[] info = RacfConnector.extractRacfIdAndGroupIdFromLdapId(name);
             String user = info[0];
             String group = info[1];
             Attribute owner = AttributeUtil.find(ATTR_LDAP_OWNER, attrs);
@@ -495,7 +497,7 @@ class CommandLineUtil {
                 throw e;
             }
         } else if (objectClass.is(RacfConnector.RACF_CONNECTION_NAME)) {
-            String[] info = _connector.extractRacfIdAndGroupIdFromLdapId(uidString);
+            String[] info = RacfConnector.extractRacfIdAndGroupIdFromLdapId(uidString);
             String user = info[0];
             String group = info[1];
             String command = "REMOVE "+user+" GROUP("+group+")";
