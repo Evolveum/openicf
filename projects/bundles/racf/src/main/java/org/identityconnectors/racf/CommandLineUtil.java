@@ -61,7 +61,7 @@ import expect4j.matches.RegExpMatch;
 import expect4j.matches.TimeoutMatch;
 
 class CommandLineUtil {
-    private static final String         DEFAULT_PARSER_FACTORY      = "org.identityconnectors.racf.MapTransformParserFactory";
+    private static final String         DEFAULT_PARSER_FACTORY      = "org.identityconnectors.parser.factory.patternparser.MapTransformParserFactory";
     private static final String         OUTPUT_COMPLETE_PATTERN     = "\\sREADY\\s{74}";
     private static final String         OUTPUT_COMPLETE             = " READY";
     private static final String         OUTPUT_CONTINUING_PATTERN   = "\\s[*]{3}\\s{76}";
