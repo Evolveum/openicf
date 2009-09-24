@@ -34,7 +34,6 @@ import org.identityconnectors.common.script.ScriptExecutor;
 import org.identityconnectors.common.script.ScriptExecutorFactory;
 import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
 
 
@@ -45,6 +44,10 @@ import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
  * @since 1.0
  */
 final class AccountOperationGetUserAfterAction extends Operation {
+
+    private static final String CHANGED_ATTRIBUTES = "changedAttributes";
+    private static final String CURRENT_ATTRIBUTES = "currentAttributes";
+
 
     /**
      * @param conn
@@ -68,14 +71,13 @@ final class AccountOperationGetUserAfterAction extends Operation {
         //Connection
         actionContext.put(CONN, getConn().getConnection()); //The real connection
         actionContext.put(ACTION, OP_GET_USER); // The action is the operation name createUser/updateUser/deleteUser/disableUser/enableUser
-        actionContext.put("currentAttributes", AttributeUtil.toMap(cob.build().getAttributes())); // The attributes
-        actionContext.put("changedAttributes", changedAttributes); // The attributes
+        actionContext.put(CURRENT_ATTRIBUTES, OracleERPUtil.getScriptAttributes( cob.build().getAttributes())); // The attributes
+        actionContext.put(CHANGED_ATTRIBUTES, changedAttributes); // The attributes
         actionContext.put(ID, userName); // The user name
-        actionContext.put("trace", log); //The loging
-        actionContext.put("errors", errorList); // The error list
+        actionContext.put(TRACE, log); //The loging
+        actionContext.put(ERRORS, errorList); // The error list
 
-        inputMap.put("actionContext", actionContext);
-
+        inputMap.put(ACTION_CONTEXT, actionContext);
 
         /*
          * Build the script executor and run the script
@@ -84,7 +86,8 @@ final class AccountOperationGetUserAfterAction extends Operation {
             final ClassLoader loader = getClass().getClassLoader();
             final String scriptLanguage = getCfg().getUserAfterActionScript().getScriptLanguage();
             final ScriptExecutorFactory scriptExFact = ScriptExecutorFactory.newInstance(scriptLanguage);
-            final ScriptExecutor scripEx = scriptExFact.newScriptExecutor(loader, getCfg().getUserAfterActionScript().getScriptText(), true);
+            final String scriptText = getCfg().getUserAfterActionScript().getScriptText();
+            final ScriptExecutor scripEx = scriptExFact.newScriptExecutor(loader, scriptText, true);
             scripEx.execute(inputMap);
             
             //Go through the errors and throw first one 

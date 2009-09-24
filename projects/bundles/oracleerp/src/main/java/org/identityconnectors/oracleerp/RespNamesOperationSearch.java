@@ -122,6 +122,11 @@ final class RespNamesOperationSearch extends Operation implements SearchOp<Filte
                     break;
                 }
             }
+        } catch (ConnectorException e) {
+            final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
+            log.error(e, msg);
+            SQLUtil.rollbackQuietly(getConn());
+            throw e;
         } catch (Exception e) {
             final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
             log.error(e, msg);

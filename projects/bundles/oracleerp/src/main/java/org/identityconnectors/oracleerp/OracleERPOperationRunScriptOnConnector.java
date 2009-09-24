@@ -84,9 +84,9 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
         actionContext.put(CONN, getConn().getConnection()); //The real connection
         actionContext.put(ACTION, scriptArguments.get(ACTION)); // The action is the operation name createUser/updateUser/deleteUser/disableUser/enableUser
         actionContext.put(TIMING, scriptArguments.get(TIMING)); // The timing before / after
-        actionContext.put(ATTRIBUTES, scriptArguments.get(ATTRIBUTES)); // The attributes
+        actionContext.put(ATTRIBUTES, OracleERPUtil.getScriptAttributes( scriptArguments.get(ATTRIBUTES))); // The attributes
         actionContext.put(ID, userName); // The user name
-        if (pwdArg != null) {
+        if (pwdArg != null && pwdArg instanceof GuardedString) {
             final GuardedString password = ((GuardedString) pwdArg);
             password.access(new GuardedString.Accessor() {
                 public void access(char[] clearChars) {
@@ -94,21 +94,22 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
                 }
             });
         }
-        actionContext.put("trace", log); //The loging
-        actionContext.put("errors", errorList); // The error list
+        actionContext.put(TRACE, log); //The loging
+        actionContext.put(ERRORS, errorList); // The error list
 
-        inputMap.put("actionContext", actionContext);
+        inputMap.put(ACTION_CONTEXT, actionContext);
 
 
         /*
          * Build the script executor and run the script
          */
         Object ret;
+        final String scriptText = request.getScriptText();
         try {
             final ClassLoader loader = getClass().getClassLoader();
             final String scriptLanguage = request.getScriptLanguage();
             final ScriptExecutorFactory scriptExFact = ScriptExecutorFactory.newInstance(scriptLanguage);
-            final ScriptExecutor scripEx = scriptExFact.newScriptExecutor(loader, request.getScriptText(), true);
+            final ScriptExecutor scripEx = scriptExFact.newScriptExecutor(loader, scriptText, true);
             ret = scripEx.execute(inputMap);
             
             //Go through the errors and throw first one 
@@ -125,13 +126,12 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
             //Make sure, the connection is commit
             getConn().commit();            
         } catch (Exception e) {
-            log.error(e, "error in script");
+            final String msg = getCfg().getMessage(MSG_COULD_NOT_EXECUTE, scriptText);
+            log.error(e, msg);
             SQLUtil.rollbackQuietly(getConn());
-            throw ConnectorException.wrap(e);
+            throw new ConnectorException(msg, e);
         }
         return ret;
     }
-
-
 
 }

@@ -129,6 +129,9 @@ public class OracleERPConnector implements PoolableConnector, AuthenticateOp, De
     }
     
 
+    /**
+     * {@inheritDoc}
+     */
     public Uid resolveUsername(ObjectClass objectClass, String username, OperationOptions options) {
         log.ok("authenticate");
 
@@ -315,7 +318,6 @@ public class OracleERPConnector implements PoolableConnector, AuthenticateOp, De
         log.ok("runScriptOnConnector");
 
         Assertions.nullCheck(request, "request");
-        Assertions.nullCheck(options, "options");
         return new OracleERPOperationRunScriptOnConnector(getConn(), getCfg()).runScriptOnConnector(request, options);
 
     }

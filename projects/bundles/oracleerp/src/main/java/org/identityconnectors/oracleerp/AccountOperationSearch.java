@@ -178,6 +178,11 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
                     break;
                 }
             }
+        } catch (ConnectorException e) {
+            final String msg = getCfg().getMessage(MSG_ACCOUNT_NOT_READ, filterId == null ? "" : filterId );
+            log.error(e, msg);
+            SQLUtil.rollbackQuietly(getConn());
+            throw e;
         } catch (Exception e) {
             final String msg = getCfg().getMessage(MSG_ACCOUNT_NOT_READ, filterId == null ? "" : filterId );
             log.error(e, msg);
@@ -328,6 +333,11 @@ final class AccountOperationSearch extends Operation implements SearchOp<FilterW
                 }
             }
 
+        } catch (ConnectorException e) {
+            final String msg = getCfg().getMessage(MSG_ACCOUNT_NOT_READ, personId);
+            log.error(e, msg);
+            SQLUtil.rollbackQuietly(getConn());
+            throw e;
         } catch (Exception e) {
             final String msg = getCfg().getMessage(MSG_ACCOUNT_NOT_READ, personId);
             log.error(e, msg);

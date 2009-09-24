@@ -34,9 +34,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.CollectionUtil;
@@ -44,6 +46,7 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.dbcommon.FilterWhereBuilder;
 import org.identityconnectors.dbcommon.SQLParam;
 import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -278,6 +281,10 @@ class OracleERPUtil {
     static final String ACTION = "action";
     static final String OP_GET_USER = "getUser";
     static final String PASSWORD = "password";
+    
+    static final String ACTION_CONTEXT = "actionContext";
+    static final String ERRORS = "errors";
+    static final String TRACE = "trace";
 
     /**
      * Get default attributes to get from schema
@@ -647,5 +654,38 @@ class OracleERPUtil {
             }
         }
         return filterId;
+    }
+
+    /**
+     * The conversion map of the attribute to the map of the attribute values
+     * @param object
+     * @return the map of the values
+     */
+    @SuppressWarnings("unchecked")
+    static Map<String, Object> getScriptAttributes(Object object) {
+        Map<String, Object> ret = new HashMap<String, Object>();
+        if ( object == null) {
+            return ret;
+        }
+        // expected type is a map of the Attribute names and the attributes
+        if ( object instanceof Map<?, ?>) {
+            /* for every attribute store in the map the value */
+            Map<String, Object> attributes = (Map<String, Object>) object;
+            for (Entry<String, Object> attr : attributes.entrySet()) {
+                Object attribute = attr.getValue();
+                if ( attribute instanceof Attribute) {
+                    List<Object> values = ((Attribute) attribute).getValue();                    
+                    if ( values != null && values.size() == 1 ) {
+                        /* Replace Attribute by a single value */
+                        attribute = values.get(0);
+                    } else if (values != null && values.size() > 1 ) {
+                        /* Replace attribute by List of values */
+                        attribute =  values;
+                    }
+                }
+                ret.put(attr.getKey(), attribute);
+            }
+        }
+        return ret;
     }
 }

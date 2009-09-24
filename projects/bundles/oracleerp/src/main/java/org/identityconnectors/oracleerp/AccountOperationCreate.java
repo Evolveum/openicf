@@ -141,12 +141,11 @@ final class AccountOperationCreate extends Operation implements CreateOp {
                 // Create the user
                 cs = getConn().prepareCall(aSql.getCallSql(), aSql.getSqlParams());
                 cs.execute();
-
             } catch (Exception e) {
                 SQLUtil.rollbackQuietly(getConn());
                 final String message = getCfg().getMessage(MSG_ACCOUNT_NOT_CREATE, name);
                 log.error(e, message);
-                throw new IllegalStateException(message, e);
+                throw new ConnectorException(message, e);
             } finally {
                 SQLUtil.closeQuietly(cs);
             }

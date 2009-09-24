@@ -240,9 +240,8 @@ final class ResponsibilitiesOperations extends Operation {
                 iaexceptions.append(txt);
                 iaexceptions.append(";");
             }
-            IllegalArgumentException iae = new IllegalArgumentException(iaexceptions.toString());
-            log.error(iae, msg);
-            throw new ConnectorException(msg, iae);
+            log.error(msg);
+            throw new ConnectorException(iaexceptions.toString());
         }
         log.ok(method + "done");
     }
@@ -344,6 +343,11 @@ final class ResponsibilitiesOperations extends Operation {
                 }
                 arrayList.add(sb.toString());
             }
+        } catch (ConnectorException e) {
+            final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
+            log.error(e, msg);
+            SQLUtil.rollbackQuietly(getConn());
+            throw e;
         } catch (Exception e) {
             final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
             log.error(e, msg);

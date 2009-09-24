@@ -263,6 +263,11 @@ final class AuditorOperations extends Operation {
                 }// end-if (qo)
             }// end-while
             // no catch, just use finally to ensure closes happen
+        } catch (ConnectorException e) {
+            final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
+            log.error(e, msg);
+            SQLUtil.rollbackQuietly(getConn());
+            throw e;
         } catch (Exception e) {
             final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
             log.error(e, msg);
@@ -329,6 +334,11 @@ final class AuditorOperations extends Operation {
                 }// end while
 
                 // no catch, just use finally to ensure closes happen
+            } catch (ConnectorException e) {
+                final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
+                log.error(e, msg);
+                SQLUtil.rollbackQuietly(getConn());
+                throw e;
             } catch (Exception e) {
                 final String msg = getCfg().getMessage(MSG_COULD_NOT_READ);
                 log.error(e, msg);

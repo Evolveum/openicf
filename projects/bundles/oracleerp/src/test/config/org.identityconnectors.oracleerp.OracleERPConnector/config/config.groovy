@@ -31,6 +31,7 @@ import java.math.BigInteger
 import org.identityconnectors.contract.data.groovy.Lazy;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.contract.exceptions.ObjectNotFoundException;
+import org.identityconnectors.common.script.Script
 
 /* JUNIT tests configurations */
 configuration{
@@ -56,7 +57,6 @@ configuration{
     sysadm.manageSecuringAttrs=true
     sysadm.noSchemaId=false
     sysadm.returnSobOrgAttrs=true
-    sysadm.userActionScript=""
     sysadm.clientEncryptionType="RC4_40"
     sysadm.clientEncryptionLevel="REJECTED" 
     

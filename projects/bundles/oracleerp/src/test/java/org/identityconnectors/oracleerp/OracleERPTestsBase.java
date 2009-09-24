@@ -74,6 +74,10 @@ abstract public class OracleERPTestsBase {
     protected static final String CONFIG_SYSADM = "configuration.sysadm";
     protected static final String CONFIG_TST = "configuration.tst";
     protected static final String CONFIG_USER = "configuration.user";
+    
+    protected static final String GROOVY = "GROOVY";
+    protected static final String RUN_ERROR_ACTION = "org.identityconnectors.oracleerp.OracleERPConnector/config/RunErrorAction.groovy";
+
     /**
      * Load configurations and attibuteSets Data provides 
      */

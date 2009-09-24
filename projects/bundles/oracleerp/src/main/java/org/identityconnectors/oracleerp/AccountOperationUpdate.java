@@ -231,7 +231,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
         } catch (Exception e) {
             final String msg = getCfg().getMessage(MSG_COULD_NOT_DISABLE_USER, userName);
             SQLUtil.rollbackQuietly(getConn());
-            throw new IllegalArgumentException(MessageFormat.format(msg, userName),e);
+            throw new ConnectorException(MessageFormat.format(msg, userName),e);
         } finally {
             SQLUtil.closeQuietly(cs);
             cs = null;
