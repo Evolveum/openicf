@@ -1236,6 +1236,34 @@ public class VmsConnectorTests {
             info.dispose();
         }
     }
+    @Test//@Ignore
+    public void testResolve() throws Exception {
+        VmsConfiguration config = createConfiguration();
+        VmsConnector connector = createConnector(config);
+        String userName = "TEST106";
+        try {
+            Set<Attribute> attrs = fillInSampleUser(userName);
+    
+            // Delete the account if it already exists
+            //
+            deleteUser(userName, connector);
+            try {
+                connector.resolveUsername(ObjectClass.ACCOUNT, userName, new OperationOptions(new HashMap()));
+                Assert.fail("exception expected");
+            } catch (UnknownUidException ue) {
+                // expected
+            }
+    
+            // Create the account
+            //
+            Uid newUid = connector.create(ObjectClass.ACCOUNT, attrs, null);
+            System.out.println(newUid.getValue()+" created");
+            Uid retrievedUid = connector.resolveUsername(ObjectClass.ACCOUNT, userName, new OperationOptions(new HashMap()));
+            Assert.assertEquals(newUid, retrievedUid);
+        } finally {
+            connector.dispose();
+        }
+    }
 
     private Set<Attribute> fillInSampleUser(final String testUser) {
         return fillInSampleUser(testUser, false);

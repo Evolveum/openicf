@@ -79,6 +79,7 @@ import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
 import org.identityconnectors.framework.common.objects.ScriptContext;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
 import org.identityconnectors.framework.spi.AttributeNormalizer;
 import org.identityconnectors.framework.spi.Configuration;
@@ -2046,8 +2047,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, AttributeNormalizer, ScriptOnRes
             OperationOptions options) {
         if (!objectClass.is(ObjectClass.ACCOUNT_NAME))
             throw new IllegalArgumentException(_configuration.getMessage(VmsMessages.UNSUPPORTED_OBJECT_CLASS, objectClass.getObjectClassValue()));
-
-        return new Uid(username);
+        LocalHandler handler = new LocalHandler();
+        List<String> query = createFilterTranslator(objectClass, options).translate(new EqualsFilter(AttributeBuilder.build(Name.NAME, username)));
+        executeQuery(ObjectClass.ACCOUNT, query.get(0), handler, options);
+        if (!handler.iterator().hasNext())
+            throw new UnknownUidException();
+        return handler.iterator().next().getUid();
     }
     
     private String getCreateDirCommand(Map<String, Attribute> attrMap, Attribute createDirectory) {
