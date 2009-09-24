@@ -30,7 +30,6 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.solaris.command.MatchBuilder;
-import org.identityconnectors.solaris.operation.CommandUtil;
 
 import expect4j.Closure;
 import expect4j.Expect4j;
@@ -327,7 +326,7 @@ public class SolarisConnection {
             buff.append(string.toString());
         }
         
-        return CommandUtil.limitString(buff);
+        return SolarisUtil.limitString(buff);
     }
 
     /**

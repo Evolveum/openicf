@@ -161,7 +161,7 @@ class CreateCommand extends CommandSwitches {
      */
     private StringBuilder makeOptionalSkelDir() {
         StringBuilder makeDirectory = new StringBuilder();
-        Boolean configuredIsMakeDir = conn.getConfiguration().isMakeDir();
+        Boolean configuredIsMakeDir = conn.getConfiguration().getMakeDir();
         if ((configuredIsMakeDir != null) && configuredIsMakeDir) {
             makeDirectory.append(" -m");
             String skeldir = conn.getConfiguration().getSkelDir();

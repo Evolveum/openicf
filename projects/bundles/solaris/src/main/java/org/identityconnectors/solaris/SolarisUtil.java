@@ -39,6 +39,39 @@ import org.identityconnectors.solaris.operation.AbstractOp;
 /** helper class for Solaris specific operations */
 public class SolarisUtil {
     
+    /** Maximum number of characters per line in Solaris shells */
+    public static final int DEFAULT_LIMIT = 120;
+    
+    private static StringBuilder limitString(StringBuilder data, int limit) {
+        StringBuilder result = new StringBuilder(limit);
+        if (data.length() > limit) {
+            result.append(data.substring(0, limit));
+            result.append("\\\n"); // /<newline> separator of Unix command line cmds.
+            
+            final String remainder = data.substring(limit, data.length()); 
+            if (remainder.length() > limit) {
+                // TODO performance: might be a more effective way to handle this copying. Maybe skip copying and pass the respective part of stringbuffer directly to the recursive call.
+                StringBuilder sbtmp = new StringBuilder();
+                sbtmp.append(remainder);
+                result.append(limitString(sbtmp, limit));
+            } else {
+                result.append(remainder);
+            }
+        } else {
+            return data;
+        }
+        return result;
+    }
+
+    /**
+     * Cut the command into pieces, so it doesn't have a longer line than the given DEFAULT_LIMIT
+     * @param data
+     * @return
+     */
+    public static String limitString(StringBuilder data) {
+        return limitString(data, DEFAULT_LIMIT /* == max length of line from SolarisResourceAdapter#getUpdateNativeUserScript(), line userattribparams */).toString();
+    }
+    
     /** helper method for getting the password from an attribute map */
     public static GuardedString getPasswordFromMap(Map<String, Attribute> attrMap) {
         Attribute attrPasswd = attrMap.get(OperationalAttributes.PASSWORD_NAME);

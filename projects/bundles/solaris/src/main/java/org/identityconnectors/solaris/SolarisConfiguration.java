@@ -241,7 +241,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
      * created in /home unless set by using a <b>dir</b> attribute setting in
      * the schema map to set the home directory path.
      */
-    private boolean makeDir;// (if to make home directory)
+    private Boolean makeDir;// (if to make home directory)
     
     /*
      * RA_DEL_HOME_DIR
@@ -394,10 +394,10 @@ public class SolarisConfiguration extends AbstractConfiguration {
         this.skelDir = skelDir;
     }
     
-    public Boolean isMakeDir() {
+    public Boolean getMakeDir() {
         return makeDir;
     }
-    public void setMakeDir(boolean makeDir) {
+    public void setMakeDir(Boolean makeDir) {
         this.makeDir = makeDir;
     }
     
