@@ -217,6 +217,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
             
             attributes.add(newAttr);
         }
+        attributes.add(OperationalAttributeInfos.PASSWORD);
         
         schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
         

@@ -33,7 +33,6 @@ import junit.framework.Assert;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.ConnectorFacade;
-import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
@@ -121,7 +120,7 @@ public class OpUpdateImplTest {
         }
     }
     
-    @Test (expected=IllegalArgumentException.class) 
+    @Test (expected=RuntimeException.class) 
     public void unknownObjectClass() {
         String username = config.getUserName();
         Set<Attribute> replaceAttributes = new HashSet<Attribute>();
@@ -134,7 +133,7 @@ public class OpUpdateImplTest {
                 username), replaceAttributes, null);
     }
     
-    @Test(expected = UnknownUidException.class)
+    @Test(expected = RuntimeException.class)
     public void testUpdateUnknownUid() {
         Set<Attribute> replaceAttributes = new HashSet<Attribute>();
         final String newPassword = getTestProperty("modified.samplePasswd");
