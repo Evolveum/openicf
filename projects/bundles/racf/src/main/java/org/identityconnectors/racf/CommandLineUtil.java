@@ -328,12 +328,19 @@ class CommandLineUtil {
             char[] currentArray = accessor.getArray();
             return currentArray;
         } else {
-            StringBuffer buffer = new StringBuffer();
-            for (Object value : values) {
-                value = computeValue(value.toString(), segmentName, attributeName);
-                buffer.append(" "+value);
+            if (values.size()==1 && values.get(0) instanceof Boolean) {
+                if ((Boolean)values.get(0))
+                    return "YES".toCharArray();
+                else
+                    return "NO".toCharArray();
+            } else {
+                StringBuffer buffer = new StringBuffer();
+                for (Object value : values) {
+                    value = computeValue(value.toString(), segmentName, attributeName);
+                    buffer.append(" "+value);
+                }
+                return buffer.substring(1).toCharArray();
             }
-            return buffer.substring(1).toCharArray();
         }
     }
 
