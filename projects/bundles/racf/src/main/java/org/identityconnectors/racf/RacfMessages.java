@@ -36,6 +36,8 @@ public class RacfMessages {
     public static final String USERNAME_NULL                  = "USERNAME_NULL";
     public static final String PASSWORD_NULL                  = "PASSWORD_NULL";
     public static final String CONNECTION_CLASS_NULL          = "CONNECTION_CLASS_NULL";
+    public static final String DISCONNECT_SCRIPT_NULL         = "DISCONNECT_SCRIPT_NULL";
+    public static final String CONNECT_SCRIPT_NULL            = "CONNECT_SCRIPT_NULL";
     public static final String USERNAMES_NULL                 = "USERNAMES_NULL";
     public static final String PASSWORDS_NULL                 = "PASSWORDS_NULL";
     public static final String INTERVAL_NULL                  = "INTERVAL_NULL";

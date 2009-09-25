@@ -204,9 +204,19 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
             throw new IllegalArgumentException(getMessage(RacfMessages.PASSWORDS_NULL));
         if (!noCommandLine && StringUtil.isBlank(_connectionClassName))
             throw new IllegalArgumentException(getMessage(RacfMessages.CONNECTION_CLASS_NULL));
-        
+        if (!noCommandLine && isBlank(_disconnectScript))
+            throw new IllegalArgumentException(getMessage(RacfMessages.DISCONNECT_SCRIPT_NULL));
+        if (!noCommandLine && isBlank(_connectScript))
+            throw new IllegalArgumentException(getMessage(RacfMessages.CONNECT_SCRIPT_NULL));
+
         if (_isUseSsl==null)
             throw new IllegalArgumentException(getMessage(RacfMessages.SSL_NULL));
+    }
+
+    boolean isBlank(Script script) {
+        if (script==null)
+            return true;
+        return script.getScriptText()==null;
     }
     
     boolean isBlank(GuardedString string) {
