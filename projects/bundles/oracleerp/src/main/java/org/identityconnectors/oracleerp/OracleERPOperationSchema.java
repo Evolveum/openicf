@@ -60,7 +60,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
     //Optional aggregated user attributes
     static final EnumSet<Flags> NRD = EnumSet.of(Flags.NOT_READABLE, Flags.NOT_RETURNED_BY_DEFAULT);
 
-    static final EnumSet<Flags> NUR = EnumSet.of(Flags.REQUIRED, Flags.NOT_UPDATEABLE);
+    static final EnumSet<Flags> RNU = EnumSet.of(Flags.REQUIRED, Flags.NOT_UPDATEABLE);
 
     static final EnumSet<Flags> NCU = EnumSet.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE);
 
@@ -151,7 +151,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         ocib.setType(ObjectClass.ACCOUNT_NAME);
 
         // The Name is supported attribute
-        ocib.addAttributeInfo(AttributeInfoBuilder.build(NAME, StringBuilder.class, NUR));
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(Name.NAME, String.class, RNU));
         // name='owner' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(OWNER, String.class, NRD));
         // name='session_number' type='string' required='false'
