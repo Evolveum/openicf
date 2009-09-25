@@ -144,7 +144,7 @@ connector{
     user="__configureme__"
     password=new GuardedString("__configureme__".toCharArray());
     accountsIncluded="where USER_NAME like 'CTU-%' AND (START_DATE - SYSDATE <= 0) AND ((END_DATE IS NULL) OR (END_DATE - SYSDATE > 0))"
-    activeAccountsOnly=false  //where clause invalidate activeAccountsOnly
+    activeAccountsOnly=false  // accountsIncluded clause invalidate activeAccountsOnly
     auditResponsibility="System Administrator"
     manageSecuringAttrs=true
     noSchemaId=false

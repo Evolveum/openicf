@@ -60,6 +60,8 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
     //Optional aggregated user attributes
     static final EnumSet<Flags> NRD = EnumSet.of(Flags.NOT_READABLE, Flags.NOT_RETURNED_BY_DEFAULT);
 
+    static final EnumSet<Flags> NUR = EnumSet.of(Flags.REQUIRED, Flags.NOT_UPDATEABLE);
+
     static final EnumSet<Flags> NCU = EnumSet.of(Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE);
 
     static final EnumSet<Flags> MNCUD = EnumSet.of(Flags.MULTIVALUED, Flags.NOT_CREATABLE, Flags.NOT_UPDATEABLE,
@@ -149,11 +151,11 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         ocib.setType(ObjectClass.ACCOUNT_NAME);
 
         // The Name is supported attribute
-        ocib.addAttributeInfo(Name.INFO);
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(NAME, StringBuilder.class, NUR));
         // name='owner' type='string' required='false'
-        ocib.addAttributeInfo(AttributeInfoBuilder.build(OWNER, String.class, OracleERPOperationSchema.NRD));
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(OWNER, String.class, NRD));
         // name='session_number' type='string' required='false'
-        ocib.addAttributeInfo(AttributeInfoBuilder.build(SESS_NUM, String.class, OracleERPOperationSchema.NCU));
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(SESS_NUM, String.class, NCU));
         // reset is implemented as change password
         // name='Password',  Password is mapped to operationalAttribute
         ocib.addAttributeInfo(OperationalAttributeInfos.PASSWORD);
