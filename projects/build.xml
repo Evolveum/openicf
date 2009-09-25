@@ -71,8 +71,8 @@
         <oc:ant dir="bundles/dbcommon" target="clean" />
         <oc:ant dir="bundles/dbcommon" target="dist" />
 
-        <oc:ant dir="bundles/database" target="clean" />
-        <oc:ant dir="bundles/database" target="dist" />
+        <oc:ant dir="bundles/databasetable" target="clean" />
+        <oc:ant dir="bundles/databasetable" target="dist" />
 
         <!-- not everyone's got a local install of mysql ready -->
         <oc:ant dir="bundles/mysqluser" target="clean" />
