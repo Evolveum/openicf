@@ -216,7 +216,7 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     boolean isBlank(Script script) {
         if (script==null)
             return true;
-        return script.getScriptText()==null;
+        return StringUtil.isBlank(script.getScriptText());
     }
     
     boolean isBlank(GuardedString string) {
