@@ -249,7 +249,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
      * RESATTR_HELP_1=<b>Delete Home Directory</b><br>Specifies whether an
      * accounts home directory should be deleted when the account is deleted.
      */
-    //TODO DEL_HOME_DIR
+    private boolean delHomeDir = false;
     
     /*
      * RA_SYS_DB_TYPE
@@ -294,6 +294,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
     //===================================================================================
     //===================================================================================
     
+
 
     /* ********** CONSTRUCTOR ************ */
     public SolarisConfiguration() {
@@ -420,6 +421,13 @@ public class SolarisConfiguration extends AbstractConfiguration {
     }
     public void setLoginShell(String loginShell) {
         this.loginShell = loginShell;
+    }
+    
+    public boolean isDelHomeDir() {
+        return delHomeDir;
+    }
+    public void setDelHomeDir(boolean delHomeDir) {
+        this.delHomeDir = delHomeDir;
     }
 
     
