@@ -66,12 +66,12 @@ public class OpDeleteImplTest {
         facade = null;
     }
     
-    @Test (expected=UnknownUidException.class)
+    @Test (expected=RuntimeException.class)
     public void testDeleteUnknownUid() {
         facade.delete(ObjectClass.ACCOUNT, new Uid("NONEXISTING_UID____"), null);
     }
     
-    @Test (expected=IllegalArgumentException.class)
+    @Test (expected=RuntimeException.class)
     public void unknownObjectClass() {
         final Set<Attribute> attrs = initSampleUser();
         facade.delete(new ObjectClass("NONEXISTING_OBJECTCLASS"), getUid(attrs), null);
