@@ -23,6 +23,7 @@
 package org.identityconnectors.solaris.operation;
 
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
@@ -54,17 +55,22 @@ public class OpDeleteImpl extends AbstractOp {
         _log.info("delete(''{0}'')", accountId);
         
         // USERDEL accountId
-        final String command = getConnection().buildCommand("userdel", accountId);
+        final String command = getConnection().buildCommand("userdel", ((getConfiguration().isDelHomeDir()) ? "-r" : ""), accountId);
         
         try {
             String output = executeCommand(command);
             if (output.contains("does not exist") || output.contains("nknown user")) {
                 throw new UnknownUidException("Unknown Uid: " + accountId);
+            } else if (output.contains("ERROR")) {
+                throw new ConnectorException("ERROR during delete operation for user '" + accountId + "', buffer content: <" + output + ">");
             }
-        } catch (RuntimeException ex) {
-            throw ex;
+            
+            output = executeCommand("echo $?");
+            if (!output.equals("0")) {
+                throw new ConnectorException("ERROR during delete operation for user '" + accountId + "', buffer content: <" + output + ">" + " the error code returned from userdel was not '0'");
+            }
         } catch (Exception ex) {
-            _log.error(ex, null);
+            throw ConnectorException.wrap(ex);
         }
 
         // TODO add handling of exceptions: existing user, etc.
