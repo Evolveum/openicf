@@ -34,7 +34,7 @@ import org.junit.Test;
 public class ProfilesCommandTest {
     @Test
     public void test() {
-       SolarisConnection conn = SolarisTestCommon.getSolarisConn();
+        SolarisConnection conn = SolarisTestCommon.getSolarisConn();
         Attribute result = ProfilesCommand.getProfilesAttributeFor("root", conn);
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.getValue());

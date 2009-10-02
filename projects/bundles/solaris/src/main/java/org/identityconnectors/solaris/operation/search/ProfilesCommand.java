@@ -40,29 +40,15 @@ class ProfilesCommand {
             final String[] lines = out.split("\n");
             profiles = new ArrayList<String>(lines.length);
             for (String line : lines) {
-                profiles.add(line.trim());
+                if (!line.trim().endsWith(":")) { /* this is handling output for OpenSolaris 2008.11, which contains an line:
+                                              {$username} :
+                                              that is not needed. This line is missing in Solaris 10 or older versions of the OS.*/
+                    profiles.add(line.trim());
+                }
             }
         } else {
             profiles = Collections.emptyList();
         }
         return AttributeBuilder.build(NativeAttribute.PROFILES.getName(), profiles);
-        
-        // FIXME: 'profiles' output is: 
-        /* root@pc:~# profiles root
-
-        root :
-                  All
-                  Console User
-                  Suspend To RAM
-                  Suspend To Disk
-                  Brightness
-                  CPU Power Management
-                  Network Autoconf
-                  Network Wifi Info
-                  Basic Solaris User
-                  
-        <end of output>
-        the problem is that root : is not part of the profile (maybe?) The adapter let it be in the profiles?...
-*/
     }
 }
