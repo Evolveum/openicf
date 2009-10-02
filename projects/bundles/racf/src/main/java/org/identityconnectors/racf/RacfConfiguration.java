@@ -168,12 +168,20 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
         return builder.build();
     }
 
+    boolean isNoLdap() {
+        return (StringUtil.isBlank(_suffix) || _hostLdapPortNumber==null || isBlank(_ldapPassword) || StringUtil.isBlank(_ldapUserName));
+    }
+
+    boolean isNoCommandLine() {
+        return StringUtil.isBlank(_userName) || isBlank(_password);
+    }
+    
     public void validate() {
         // It's OK for all LDAP or all CommandLine connection info to be missing
         // but not both
         //
-        boolean noLdap = (StringUtil.isBlank(_suffix) || _hostLdapPortNumber==null || isBlank(_ldapPassword) || StringUtil.isBlank(_ldapUserName));
-        boolean noCommandLine = StringUtil.isBlank(_userName) || isBlank(_password);
+        boolean noLdap = isNoLdap();
+        boolean noCommandLine = isNoCommandLine();
         
         if (noLdap && noCommandLine)
             throw new IllegalArgumentException(getMessage(RacfMessages.BAD_CONNECTION_INFO));
@@ -191,6 +199,8 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
             throw new IllegalArgumentException(getMessage(RacfMessages.USERNAME_NULL));
         if (!noLdap && isBlank(_ldapPassword))
             throw new IllegalArgumentException(getMessage(RacfMessages.PASSWORD_NULL));
+        if (!noLdap && _isUseSsl==null)
+            throw new IllegalArgumentException(getMessage(RacfMessages.SSL_NULL));
 
         if (!noCommandLine && _hostTelnetPortNumber==null)
             throw new IllegalArgumentException(getMessage(RacfMessages.TELNET_PORT_NULL));
@@ -209,8 +219,6 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
         if (!noCommandLine && isBlank(_connectScript))
             throw new IllegalArgumentException(getMessage(RacfMessages.CONNECT_SCRIPT_NULL));
 
-        if (_isUseSsl==null)
-            throw new IllegalArgumentException(getMessage(RacfMessages.SSL_NULL));
     }
 
     boolean isBlank(Script script) {

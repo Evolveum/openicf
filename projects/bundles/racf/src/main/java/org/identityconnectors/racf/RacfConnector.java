@@ -171,7 +171,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
         if (isLdapConnectionAvailable()) {
             Uid uid = _ldapUtil.createViaLdap(objectClass, ldapAttrs, options);
             if (hasNonSpecialAttributes(commandLineAttrs)) {
-                if (_configuration.getUserName()==null)
+                if (!isCommandLineAvailable())
                     throw new ConnectorException(_configuration.getMessage(RacfMessages.NEED_COMMAND_LINE));
                 _clUtil.updateViaCommandLine(objectClass, commandLineAttrs, options);
             }
@@ -392,7 +392,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
             int commandLineSize = commandLineAttrs.size();
             if (commandLineAttrs.contains(Name.NAME))
                 commandLineSize--;
-            if (StringUtil.isBlank(_configuration.getUserName()) && commandLineSize>0)
+            if (!isCommandLineAvailable() && commandLineSize>0)
                 throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.ATTRS_NO_CL));
             
             for (String name : names) {
@@ -427,6 +427,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
         }
     }
     
+    private boolean isCommandLineAvailable() {
+        return !_configuration.isNoCommandLine();
+    }
+    
     private TreeSet<String> getDefaultAttributes(Map<String, AttributeInfo> infos) {
         TreeSet<String> results = new TreeSet<String>();
         for (Map.Entry<String, AttributeInfo> entry : infos.entrySet()) {
@@ -436,7 +440,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
         return results;
     }
     
-    private boolean isEmpty(Map map) {
+    private boolean isEmpty(Map<?,?> map) {
         return (map==null || map.isEmpty());
     }
 
@@ -474,8 +478,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
             String name = entry.getKey();
             Object value = entry.getValue();
             if (includeInAttributes(objectClass, name, attributesToGet)) {
-                if (value instanceof Collection)
-                    builder.addAttribute(name, (Collection<? extends Object>)value);
+                if (value instanceof Collection<?>)
+                    builder.addAttribute(name, (Collection<?>)value);
                 else if (value==null)
                     builder.addAttribute(name);
                 else
@@ -681,7 +685,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
         if (isLdapConnectionAvailable()) {
             Uid uid = _ldapUtil.updateViaLdap(objectClass, ldapAttrs, options);
             if (hasNonSpecialAttributes(commandLineAttrs)) {
-                if (_configuration.getUserName()==null)
+                if (!isCommandLineAvailable())
                     throw new ConnectorException(_configuration.getMessage(RacfMessages.NEED_COMMAND_LINE));
                 _clUtil.updateViaCommandLine(objectClass, commandLineAttrs, options);
             }
@@ -971,7 +975,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
             // Operational Attributes
             //
             attributes.add(buildReadonlyAttribute(PredefinedAttributes.PASSWORD_CHANGE_INTERVAL_NAME, long.class));
-            if (_configuration.getUserName()!=null) {
+            if (isCommandLineAvailable()) {
                 attributes.add(OperationalAttributeInfos.ENABLE);
                 attributes.add(OperationalAttributeInfos.ENABLE_DATE);
                 attributes.add(OperationalAttributeInfos.DISABLE_DATE);
