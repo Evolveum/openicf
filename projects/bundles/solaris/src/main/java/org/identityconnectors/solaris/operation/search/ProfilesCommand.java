@@ -40,10 +40,11 @@ class ProfilesCommand {
             final String[] lines = out.split("\n");
             profiles = new ArrayList<String>(lines.length);
             for (String line : lines) {
-                if (!line.trim().endsWith(":")) { /* this is handling output for OpenSolaris 2008.11, which contains an line:
+                final String trimmedLine = line.trim();
+                if (!trimmedLine.endsWith(":")) { /* this is handling output for OpenSolaris 2008.11, which contains an line:
                                               {$username} :
                                               that is not needed. This line is missing in Solaris 10 or older versions of the OS.*/
-                    profiles.add(line.trim());
+                    profiles.add(trimmedLine);
                 }
             }
         } else {
