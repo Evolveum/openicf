@@ -56,7 +56,11 @@ class CreateCommand  {
     public static void createUser(SolarisEntry entry/* , OperationOptions options */, SolarisConnection conn) {
 
         // create command line switches construction
-        String commandSwitches = formatCreateCommandSwitches(entry, conn, createSwitches);
+        String commandSwitches = formatCreateCommandSwitches(entry, conn);
+        
+        if (commandSwitches.length() == 0) {
+            return; // no create switches found, nothing to process
+        }
 
         // useradd command execution
         String command = conn.buildCommand("useradd", commandSwitches, entry.getName());
@@ -71,10 +75,17 @@ class CreateCommand  {
 
     /**
      * creates command line switches construction
-     * @param conn 
-     * @param createSwitches2 
+     * 
+     * @param entry
+     *            the entry whose attribute should be transferred to command
+     *            line switches.
+     * @param conn
+     * @return the create command line switches based on entry's attribute/value
+     *         pairs. Return a zero-length string in case no switch (
+     *         {@link CreateCommand#createSwitches}) matched the attributes in
+     *         given entry.
      */
-    private static String formatCreateCommandSwitches(SolarisEntry entry, SolarisConnection conn, Map<NativeAttribute, String> switches) {
+    private static String formatCreateCommandSwitches(SolarisEntry entry, SolarisConnection conn) {
         StringBuilder buffer = makeOptionalSkelDir(conn);
         
         for (Attribute attr : entry.getAttributeSet()) {
@@ -85,7 +96,7 @@ class CreateCommand  {
             /* 
              * append command line switch
              */
-            String cmdSwitchForAttr = switches.get(nAttrName);
+            String cmdSwitchForAttr = createSwitches.get(nAttrName);
             if (cmdSwitchForAttr != null) {
                 buffer.append(cmdSwitchForAttr);
                 buffer.append(" ");
@@ -113,7 +124,7 @@ class CreateCommand  {
                 }
             }
         }// for
-        return buffer.toString();
+        return buffer.toString().trim();
     }
 
     /**

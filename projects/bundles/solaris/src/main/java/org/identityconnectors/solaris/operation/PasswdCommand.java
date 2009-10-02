@@ -84,4 +84,22 @@ class PasswdCommand extends CommandSwitches {
             throw ConnectorException.wrap(ex);
         }
     }
+    
+    public static void configurePasswordProperties(SolarisEntry entry, SolarisConnection conn) {
+        final String cmdSwitches = CommandSwitches.formatCommandSwitches(entry, conn, _passwdSwitches);
+        if (cmdSwitches.length() == 0) {
+            return; // no password related attribute present in the entry.
+        }
+        
+        try {
+            final String command = conn.buildCommand("passwd", cmdSwitches, entry.getName());
+            final String out = conn.executeCommand(command);
+            final String loweredOut = out.toLowerCase();
+            if (loweredOut.contains("usage:") || loweredOut.contains("password aging is disabled") || loweredOut.contains("command not found")) {
+                throw new ConnectorException("Error during configuration of password related attributes. Buffer content: <" + out + ">");
+            }
+        } catch (Exception ex) {
+            throw ConnectorException.wrap(ex);
+        }
+    }
 }

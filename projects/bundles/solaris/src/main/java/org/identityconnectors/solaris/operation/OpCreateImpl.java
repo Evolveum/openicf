@@ -37,7 +37,6 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
-import org.identityconnectors.solaris.attr.AccountAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 public class OpCreateImpl extends AbstractOp {
@@ -99,13 +98,7 @@ public class OpCreateImpl extends AbstractOp {
         GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
         PasswdCommand.configureUserPassword(entry, password, getConnection());
         
-        /*
-         * INACTIVE attribute
-         */
-        Attribute inactive = attrMap.get(AccountAttribute.INACTIVE);
-        if (inactive != null) {
-            throw new UnsupportedOperationException();
-        }
+        PasswdCommand.configurePasswordProperties(entry, getConnection());
         
         /*
          * END SUDO

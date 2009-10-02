@@ -26,7 +26,10 @@ import java.util.EnumMap;
 import java.util.Map;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
+import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 /**
  * Switches for {@link CreateCommand} and {@link UpdateCommand}.
@@ -58,5 +61,46 @@ class CommandSwitches {
 //        _CU_switches.put(NativeAttribute.NAME, null); // Create only
 //        _CU_switches.put(NativeAttribute.LAST_LOGIN, null);
 //        _CU_switches.put(NativeAttribute.USERS, null);
+    }
+    
+    /**
+     * creates command line switches construction
+     * 
+     * @param entry
+     *            the account that is source of values for the switches
+     * @param conn
+     * @param command
+     *            line switches
+     * @return the formatted -switch "value" pairs, separated by space. Returns
+     *         a zero-length string, in case no switch matched the attributes in
+     *         the given entry.
+     */
+    static String formatCommandSwitches(SolarisEntry entry, SolarisConnection conn, Map<NativeAttribute, String> switches) {
+        StringBuilder buffer = new StringBuilder();
+        
+        for (Attribute attr : entry.getAttributeSet()) {
+            NativeAttribute nAttrName = NativeAttribute.forAttributeName(attr.getName());
+            // assuming Single values only
+            String value = (attr.getValue().size() > 0) ? (String) attr.getValue().get(0) : null;
+
+            /* 
+             * append command line switch
+             */
+            String cmdSwitchForAttr = switches.get(nAttrName);
+            if (cmdSwitchForAttr != null) {
+                buffer.append(cmdSwitchForAttr);
+                buffer.append(" ");
+
+                /*
+                 * append the single-value for the given switch
+                 */
+                if (value != null) {
+                    // quote value
+                    buffer.append("\"" + value + "\"");
+                    buffer.append(" ");
+                }
+            }
+        }// for
+        return buffer.toString().trim();
     }
 }

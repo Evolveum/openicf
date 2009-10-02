@@ -59,58 +59,132 @@ class UpdateCommand extends CommandSwitches {
     }
     
     public static void updateUser(SolarisEntry entry, SolarisConnection conn) {
+        String newName = findNewName(entry);
         /*
          * UPDATE OF USER ATTRIBUTES (except password) {@see PasswdCommand}
          */
-        final String commandSwitches = formatUpdateCommandSwitches(entry, conn, updateSwitches);
+        String commandSwitches = CommandSwitches.formatCommandSwitches(entry, conn, updateSwitches);
+        
+        if (newName != null) {
+            String newUserNameParams = " -l \"" + newName + "\" -G \"\"";
+            commandSwitches += newUserNameParams;
+        }
 
-        if (commandSwitches.length() <= 0) {
-            return;
+        if (commandSwitches.length() == 0) {
+            return; // no update switch found, nothing to process
         }
         
-        try {
-            MatchBuilder builder = new MatchBuilder();
-            builder.addRegExpMatch(conn.getRootShellPrompt(), ClosureFactory.newNullClosure());
-            builder.addMatches(usermodErrors);
+        if (newName != null) {
+            // The secondary groups the target user belongs to must
+            // be extracted, the rename operation will temporarily
+            // remove them to keep /etc/group clean.
+            String groupsScript = getSecondaryGroupsScript(entry, conn);
+            conn.executeCommand(groupsScript);
+        }
 
+        MatchBuilder builder = new MatchBuilder();
+        builder.addRegExpMatch(conn.getRootShellPrompt(), ClosureFactory.newNullClosure());
+        builder.addMatches(usermodErrors);
+        try {
             conn.send(conn.buildCommand("usermod", commandSwitches, entry.getName()));
             conn.expect(builder.build());
         } catch (Exception ex) {
             throw ConnectorException.wrap(ex);
         }
-    }
-    
-    /**
-     * creates command line switches construction
-     * @param conn 
-     * @param createSwitches2 
-     */
-    private static String formatUpdateCommandSwitches(SolarisEntry entry, SolarisConnection conn, Map<NativeAttribute, String> switches) {
-        StringBuilder buffer = new StringBuilder();
         
-        for (Attribute attr : entry.getAttributeSet()) {
-            NativeAttribute nAttrName = NativeAttribute.forAttributeName(attr.getName());
-            // assuming Single values only
-            String value = (attr.getValue().size() > 0) ? (String) attr.getValue().get(0) : null;
-
-            /* 
-             * append command line switch
-             */
-            String cmdSwitchForAttr = switches.get(nAttrName);
-            if (cmdSwitchForAttr != null) {
-                buffer.append(cmdSwitchForAttr);
-                buffer.append(" ");
-
-                /*
-                 * append the single-value for the given switch
-                 */
-                if (value != null) {
-                    // quote value
-                    buffer.append("\"" + value + "\"");
-                    buffer.append(" ");
-                }
+        // If this is a rename operation, check to see if the user's
+        // home directory needs to be renamed as well.
+        if (newName != null) {
+            // This script will restore the secondary groups to the
+            // renamed user.
+            final String updateGroupsCmd = conn.buildCommand("usermod", "-G \"$WSGROUPS\"", newName);
+            executeCommandWithUserModErrors(updateGroupsCmd, conn);
+            
+            // Test to see if the user's home directory is to be renamed.
+            // If a new home directory was specified as part of the rename
+            // then skip this.
+            if (!commandSwitches.contains("-d ")) {
+             // Rename the home directory of the user to match the new
+                // user name.  This will only be done if the basename of
+                // the home directory matches the old username.  Also, if
+                // the renamed home directory already exists, then the
+                // rename of the home directory will not occur.
+                final String renameDirScript = getRenameDirScript(entry, conn, newName);
+                executeCommandWithUserModErrors(renameDirScript, conn);
             }
-        }// for
-        return buffer.toString();
+        }
+    }
+
+    private static String getRenameDirScript(SolarisEntry entry,
+            SolarisConnection conn, String newName) {
+        String renameDir =
+            "NEWNAME=" + newName + "; " +
+            "OLDNAME=" + entry.getName() + "; " +
+            "OLDDIR=`" + conn.buildCommand("logins") + " -ox -l $NEWNAME | cut -d: -f6`; " +
+            "OLDBASE=`basename $OLDDIR`; " +
+            "if [ \"$OLDNAME\" = \"$OLDBASE\" ]; then\n" +
+              "PARENTDIR=`dirname $OLDDIR`; " +
+              "NEWDIR=`echo $PARENTDIR/$NEWNAME`; " +
+              "if [ ! -s $NEWDIR ]; then " +
+                conn.buildCommand("chown") + " $NEWNAME $OLDDIR; " +
+                conn.buildCommand("mv") + " -f $OLDDIR $NEWDIR; " +
+                "if [ $? -eq 0 ]; then\n" +
+                  conn.buildCommand("usermod") + " -d $NEWDIR $NEWNAME; " +
+                "fi; " +
+              "fi; " +
+            "fi";
+        return renameDir;
+    }
+
+    /**
+     * @param newName
+     * @param conn
+     */
+    private static void executeCommandWithUserModErrors(String command,
+            SolarisConnection conn) {
+        
+        MatchBuilder builder = new MatchBuilder();
+        builder.addRegExpMatch(conn.getRootShellPrompt(), ClosureFactory.newNullClosure());
+        builder.addMatches(usermodErrors);
+
+        try {
+            conn.send(command);
+            conn.expect(builder.build());
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }
+    }
+
+    private static String getSecondaryGroupsScript(SolarisEntry entry,
+            SolarisConnection conn) {
+        String getGroups =
+            "n=1; " +
+            "WSGROUPS=; " +
+            "GROUPSWORK=`" + conn.buildCommand("logins") + " -m -l " + entry.getName() + " | awk '{ print $1 }'`; " +
+            "for i in $GROUPSWORK; " +
+            "do "  +
+              "if [ $n -eq 1 ]; then\n" +
+                "n=2; " +
+              "else " +
+                "if [ $n -eq 2 ]; then " +
+                  "WSGROUPS=$i; " +
+                  "n=3; " +
+                "else\n" +
+                  "WSGROUPS=`echo \"$WSGROUPS,$i\"`; " +
+                "fi; " +
+              "fi; " +
+            "done";
+        
+        return getGroups;
+    }
+
+    private static String findNewName(SolarisEntry entry) {
+        for (Attribute attr : entry.getAttributeSet()) {
+            NativeAttribute nativeAttr = NativeAttribute.forAttributeName(attr.getName());
+            if (nativeAttr.equals(NativeAttribute.NAME)) {
+                return (String) attr.getValue().get(0);
+            }
+        }
+        return null;
     }
 }
