@@ -58,9 +58,9 @@ class CreateCommand  {
         // create command line switches construction
         String commandSwitches = formatCreateCommandSwitches(entry, conn);
         
-        if (commandSwitches.length() == 0) {
-            return; // no create switches found, nothing to process
-        }
+//        if (commandSwitches.length() == 0) {
+//            return; // no create switches found, nothing to process
+//        }
 
         // useradd command execution
         String command = conn.buildCommand("useradd", commandSwitches, entry.getName());
