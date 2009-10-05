@@ -880,11 +880,11 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_DEFAULT_UNIT,        String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_SECURITY_LABEL,      String.class));
             }
-            if (userObjectClasses.contains("SAFDfpSegment")) {
+            if (userObjectClasses.contains("racfLanguageSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_LANG_PRIMARY,            String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_LANG_SECONDARY,          String.class));
             }
-            if (userObjectClasses.contains("racfLanguageSegment")) {
+            if (userObjectClasses.contains("racfCicsSegment")) {
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_CICS_OPER_ID,            String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_CICS_OPER_CLASS,         String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_CICS_OPER_PRIORITY,      String.class));
@@ -1047,6 +1047,10 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
             // Sync is not supported for Group
             //
             schemaBuilder.removeSupportedObjectClass(SyncOp.class, objectClassInfo);
+            
+            // ResolveUsername is not supported for Group
+            //
+            schemaBuilder.removeSupportedObjectClass(ResolveUsernameOp.class, objectClassInfo);
         }
         return schemaBuilder.build();
     }
