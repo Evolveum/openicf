@@ -53,14 +53,10 @@ class CreateCommand  {
         errorsUseradd = builder.build();
     }
     
-    public static void createUser(SolarisEntry entry/* , OperationOptions options */, SolarisConnection conn) {
+    public static void createUser(SolarisEntry entry, SolarisConnection conn) {
 
         // create command line switches construction
         String commandSwitches = formatCreateCommandSwitches(entry, conn);
-        
-//        if (commandSwitches.length() == 0) {
-//            return; // no create switches found, nothing to process
-//        }
 
         // useradd command execution
         String command = conn.buildCommand("useradd", commandSwitches, entry.getName());
