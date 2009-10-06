@@ -173,7 +173,7 @@ testsuite {
     /* SchemaApiOpTests: */
     
     /* declared object classes */
-    Schema.oclasses=[ "__ACCOUNT__", "directResponsibilityNames" ]
+    Schema.oclasses=[ "__ACCOUNT__", "applications", "auditorResps", "directResponsibilities", "indirectResponsibilities", "responsibilityNames", "responsibilities", "securingAttrs", "securityGroups" ]
     
     /* list of attributes which contains object class "__ACCOUNT__" */
     Schema.attributes.__ACCOUNT__.oclasses=[ "__NAME__", "__PASSWORD__" ]
