@@ -72,6 +72,20 @@ public class OpCreateImpl extends AbstractOp {
          * START SUDO
          */
         doSudoStart();
+        try {
+            createImpl(attrs, attrMap, name, accountId);
+        } finally {
+            /*
+             * END SUDO
+             */
+            doSudoReset();
+        }
+        return new Uid(accountId);
+    }
+
+    private void createImpl(final Set<Attribute> attrs,
+            final Map<String, Attribute> attrMap, final Name name,
+            final String accountId) {
         /*
          * First acquire the "mutex" for uid creation
          */
@@ -85,11 +99,14 @@ public class OpCreateImpl extends AbstractOp {
          */
         _log.info("launching 'useradd' command (''{0}'')", accountId);
         final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(name.getNameValue(), attrs);
-        CreateCommand.createUser(entry, getConnection());
-        /*
-         * Release the uid "mutex"
-         */
-        getConnection().executeCommand(SolarisUtil.getMutexReleaseScript(getConnection()));
+        try {
+            CreateCommand.createUser(entry, getConnection());
+        } finally {
+            /*
+             * Release the uid "mutex"
+             */
+            getConnection().executeCommand(SolarisUtil.getMutexReleaseScript(getConnection()));
+        }
         
         /*
          * PASSWORD SET
@@ -99,12 +116,6 @@ public class OpCreateImpl extends AbstractOp {
         PasswdCommand.configureUserPassword(entry, password, getConnection());
         
         PasswdCommand.configurePasswordProperties(entry, getConnection());
-        
-        /*
-         * END SUDO
-         */
-        doSudoReset();
-        return new Uid(accountId);
     }
 
     /** checks if the account already exists on the resource. */

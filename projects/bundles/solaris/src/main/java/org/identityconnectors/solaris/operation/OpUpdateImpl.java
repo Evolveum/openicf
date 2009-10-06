@@ -72,6 +72,25 @@ public class OpUpdateImpl extends AbstractOp {
          * START SUDO
          */
         doSudoStart();
+        try {
+            updateImpl(uid, replaceAttributes, attrMap);
+        } finally {
+            /*
+             * SUDO STOP
+             */
+            doSudoReset();
+        }
+
+        _log.info("update successful ('{0}', name: '{1}')",
+                objclass.toString(), uid.getUidValue());
+        
+        Uid replaceUid = (Uid) attrMap.get(Uid.NAME);
+        Uid newUid = (replaceUid == null) ? uid : replaceUid;
+        return newUid;
+    }
+
+    private void updateImpl(Uid uid, Set<Attribute> replaceAttributes,
+            final Map<String, Attribute> attrMap) {
         /*
          * First acquire the "mutex" for uid creation
          */
@@ -82,31 +101,20 @@ public class OpUpdateImpl extends AbstractOp {
         
         // UPDATE OF ALL ATTRIBUTES EXCEPT PASSWORD
         final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(uid.getUidValue(), replaceAttributes);
-        UpdateCommand.updateUser(entry, getConnection());
-        
-        /*
-         * Release the uid "mutex"
-         */
-        getConnection().executeCommand(SolarisUtil.getMutexReleaseScript(getConnection()));
+        try {
+            UpdateCommand.updateUser(entry, getConnection());
+        } finally {
+            /*
+             * Release the uid "mutex"
+             */
+            getConnection().executeCommand(SolarisUtil.getMutexReleaseScript(getConnection()));
+        }
        
         // PASSWORD UPDATE
         GuardedString passwd = SolarisUtil.getPasswordFromMap(attrMap);
         if (passwd != null) {
             PasswdCommand.configureUserPassword(entry, passwd, getConnection());
         }
-
-        
-        /*
-         * SUDO STOP
-         */
-        doSudoReset();
-
-        _log.info("update successful ('{0}', name: '{1}')",
-                objclass.toString(), uid.getUidValue());
-        
-        Uid replaceUid = (Uid) attrMap.get(Uid.NAME);
-        Uid newUid = (replaceUid == null) ? uid : replaceUid;
-        return newUid;
     }
 
 
