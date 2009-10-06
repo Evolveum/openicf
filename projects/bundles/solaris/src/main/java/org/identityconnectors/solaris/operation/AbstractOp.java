@@ -54,14 +54,6 @@ public abstract class AbstractOp {
         return getConnection().executeCommand(command);
     }
     
-    protected final void doSudoStart() {
-        SudoUtil.doSudoStart(getConnection());
-    }
-
-    protected final void doSudoReset() {
-        SudoUtil.doSudoReset(getConnection());
-    }
-    
     protected final Schema getSchema() {
         return _connector.schema();
     }

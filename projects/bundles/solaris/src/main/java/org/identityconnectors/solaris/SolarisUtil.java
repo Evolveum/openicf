@@ -37,8 +37,6 @@ import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.solaris.attr.AccountAttribute;
 import org.identityconnectors.solaris.command.MatchBuilder;
 import org.identityconnectors.solaris.operation.AbstractOp;
-import org.identityconnectors.solaris.operation.OpCreateImpl;
-import org.identityconnectors.solaris.operation.OpUpdateImpl;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 import expect4j.matches.Match;
@@ -130,85 +128,5 @@ public class SolarisUtil {
             }
         }
         return builder.build();
-    }
-    
-    /*
-     * MUTEXING
-     */
-    /** mutex acquire constants */
-    private static final String tmpPidMutexFile = "/tmp/WSlockuid.$$";
-    private static final String pidMutexFile = "/tmp/WSlockuid";
-    private static final String pidFoundFile = "/tmp/WSpidfound.$$";
-    /**
-     * Mutexing script is used to prevernt race conditions when creating
-     * multiple users. These conditions are present at {@link OpCreateImpl} and
-     * {@link OpUpdateImpl}. The code is taken from the resource adapter.
-     */
-    public static String getAcquireMutexScript(SolarisConnection conn) {
-        Long timeout = conn.getConfiguration().getMutexAcquireTimeout();
-        String rmCmd = conn.buildCommand("rm");
-        String catCmd = conn.buildCommand("cat");
-
-        if (timeout < 1) {
-            timeout = SolarisConfiguration.DEFAULT_MUTEX_ACQUIRE_TIMEOUT;
-        }
-
-        String pidMutexAcquireScript =
-            "TIMEOUT=" + timeout + "; " +
-            "echo $$ > " + tmpPidMutexFile + "; " +
-            "while test 1; " +
-            "do " +
-              "ln -n " + tmpPidMutexFile + " " + pidMutexFile + " 2>/dev/null; " +
-              "rc=$?; " +
-              "if [ $rc -eq 0 ]; then\n" +
-                "LOCKPID=`" + catCmd + " " +  pidMutexFile + "`; " +
-                "if [ \"$LOCKPID\" = \"$$\" ]; then " +
-                  rmCmd + " -f " + tmpPidMutexFile + "; " +
-                  "break; " +
-                "fi; " +
-              "fi\n" +
-              "if [ -f " + pidMutexFile + " ]; then " +
-                "LOCKPID=`" + catCmd + " " + pidMutexFile + "`; " +
-                "if [ \"$LOCKPID\" = \"$$\" ]; then " +
-                  rmCmd + " -f " + pidMutexFile + "\n" +
-                "else " +
-                  "ps -ef | while read REPLY\n" +
-                  "do " +
-                    "TESTPID=`echo $REPLY | awk '{ print $2 }'`; " +
-                    "if [ \"$LOCKPID\" = \"$TESTPID\" ]; then " +
-                      "touch " + pidFoundFile + "; " +
-                      "break; " +
-                    "fi\n" +
-                  "done\n" +
-                  "if [ ! -f " + pidFoundFile + " ]; then " +
-                    rmCmd + " -f " + pidMutexFile + "; " +
-                  "else " +
-                    rmCmd + " -f " + pidFoundFile + "; " +
-                  "fi\n" +
-                "fi\n" +
-              "fi\n" +
-              "TIMEOUT=`echo | awk 'BEGIN { n = '$TIMEOUT' } { n -= 1 } END { print n }'`\n" +
-              "if [ $TIMEOUT = 0 ]; then " +
-                "echo \"ERROR: failed to obtain uid mutex\"; " +
-                rmCmd + " -f " + tmpPidMutexFile + "; " +
-                "break; " +
-              "fi\n" +
-              "sleep 1; " +
-            "done";
-
-        return pidMutexAcquireScript;
-    }
-
-    /** Counterpart of {@link OpUpdateImpl#getAcquireMutexScript(SolarisConnection)} */
-    public static String getMutexReleaseScript(SolarisConnection conn) {
-        String rmCmd = conn.buildCommand("rm");
-        String pidMutexReleaseScript =
-            "if [ -f " + pidMutexFile + " ]; then " +
-              "LOCKPID=`cat " + pidMutexFile + "`; " +
-              "if [ \"$LOCKPID\" = \"$$\" ]; then " +
-                rmCmd + " -f " + pidMutexFile + "; " +
-              "fi; " +
-            "fi";
-        return pidMutexReleaseScript;
     }
 }

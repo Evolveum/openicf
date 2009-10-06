@@ -28,7 +28,6 @@ import java.util.Set;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -71,14 +70,14 @@ public class OpUpdateImpl extends AbstractOp {
         /*
          * START SUDO
          */
-        doSudoStart();
+        getConnection().doSudoStart();
         try {
             updateImpl(uid, replaceAttributes, attrMap);
         } finally {
             /*
              * SUDO STOP
              */
-            doSudoReset();
+            getConnection().doSudoReset();
         }
 
         _log.info("update successful ('{0}', name: '{1}')",
@@ -94,10 +93,7 @@ public class OpUpdateImpl extends AbstractOp {
         /*
          * First acquire the "mutex" for uid creation
          */
-        String mutexOut = getConnection().executeCommand(SolarisUtil.getAcquireMutexScript(getConnection()));
-        if (mutexOut.contains("ERROR")) {
-            throw new ConnectorException("error when acquiring mutex (update operation). Buffer content: <" + mutexOut + ">");
-        }
+        getConnection().executeMutexAcquireScript();
         
         // UPDATE OF ALL ATTRIBUTES EXCEPT PASSWORD
         final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(uid.getUidValue(), replaceAttributes);
@@ -107,7 +103,7 @@ public class OpUpdateImpl extends AbstractOp {
             /*
              * Release the uid "mutex"
              */
-            getConnection().executeCommand(SolarisUtil.getMutexReleaseScript(getConnection()));
+            getConnection().executeMutexReleaseScript();
         }
        
         // PASSWORD UPDATE

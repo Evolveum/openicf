@@ -71,14 +71,14 @@ public class OpCreateImpl extends AbstractOp {
         /*
          * START SUDO
          */
-        doSudoStart();
+        getConnection().doSudoStart();
         try {
             createImpl(attrs, attrMap, name, accountId);
         } finally {
             /*
              * END SUDO
              */
-            doSudoReset();
+            getConnection().doSudoReset();
         }
         return new Uid(accountId);
     }
@@ -89,10 +89,8 @@ public class OpCreateImpl extends AbstractOp {
         /*
          * First acquire the "mutex" for uid creation
          */
-        String mutexOut = getConnection().executeCommand(SolarisUtil.getAcquireMutexScript(getConnection()));
-        if (mutexOut.contains("ERROR")) {
-            throw new ConnectorException("error when acquiring mutex (update operation). Buffer content: <" + mutexOut + ">");
-        }
+        getConnection().executeMutexAcquireScript();
+        
         
         /*
          * CREATE A NEW ACCOUNT
@@ -105,7 +103,7 @@ public class OpCreateImpl extends AbstractOp {
             /*
              * Release the uid "mutex"
              */
-            getConnection().executeCommand(SolarisUtil.getMutexReleaseScript(getConnection()));
+            getConnection().executeMutexReleaseScript();
         }
         
         /*

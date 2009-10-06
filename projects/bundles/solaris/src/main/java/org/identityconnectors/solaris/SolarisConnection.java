@@ -29,7 +29,10 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.solaris.command.ClosureFactory;
 import org.identityconnectors.solaris.command.MatchBuilder;
+import org.identityconnectors.solaris.operation.OpCreateImpl;
+import org.identityconnectors.solaris.operation.OpUpdateImpl;
 
 import expect4j.Closure;
 import expect4j.Expect4j;
@@ -343,4 +346,140 @@ public class SolarisConnection {
     public String getRootShellPrompt() {
         return _rootShellPrompt;
     }
+    
+    /*
+     * MUTEXING
+     */
+    /** mutex acquire constants */
+    private static final String tmpPidMutexFile = "/tmp/WSlockuid.$$";
+    private static final String pidMutexFile = "/tmp/WSlockuid";
+    private static final String pidFoundFile = "/tmp/WSpidfound.$$";
+    /**
+     * Mutexing script is used to prevent race conditions when creating
+     * multiple users. These conditions are present at {@link OpCreateImpl} and
+     * {@link OpUpdateImpl}. The code is taken from the resource adapter.
+     */
+    private String getAcquireMutexScript() {
+        Long timeout = getConfiguration().getMutexAcquireTimeout();
+        String rmCmd = buildCommand("rm");
+        String catCmd = buildCommand("cat");
+
+        if (timeout < 1) {
+            timeout = SolarisConfiguration.DEFAULT_MUTEX_ACQUIRE_TIMEOUT;
+        }
+
+        String pidMutexAcquireScript =
+            "TIMEOUT=" + timeout + "; " +
+            "echo $$ > " + tmpPidMutexFile + "; " +
+            "while test 1; " +
+            "do " +
+              "ln -n " + tmpPidMutexFile + " " + pidMutexFile + " 2>/dev/null; " +
+              "rc=$?; " +
+              "if [ $rc -eq 0 ]; then\n" +
+                "LOCKPID=`" + catCmd + " " +  pidMutexFile + "`; " +
+                "if [ \"$LOCKPID\" = \"$$\" ]; then " +
+                  rmCmd + " -f " + tmpPidMutexFile + "; " +
+                  "break; " +
+                "fi; " +
+              "fi\n" +
+              "if [ -f " + pidMutexFile + " ]; then " +
+                "LOCKPID=`" + catCmd + " " + pidMutexFile + "`; " +
+                "if [ \"$LOCKPID\" = \"$$\" ]; then " +
+                  rmCmd + " -f " + pidMutexFile + "\n" +
+                "else " +
+                  "ps -ef | while read REPLY\n" +
+                  "do " +
+                    "TESTPID=`echo $REPLY | awk '{ print $2 }'`; " +
+                    "if [ \"$LOCKPID\" = \"$TESTPID\" ]; then " +
+                      "touch " + pidFoundFile + "; " +
+                      "break; " +
+                    "fi\n" +
+                  "done\n" +
+                  "if [ ! -f " + pidFoundFile + " ]; then " +
+                    rmCmd + " -f " + pidMutexFile + "; " +
+                  "else " +
+                    rmCmd + " -f " + pidFoundFile + "; " +
+                  "fi\n" +
+                "fi\n" +
+              "fi\n" +
+              "TIMEOUT=`echo | awk 'BEGIN { n = '$TIMEOUT' } { n -= 1 } END { print n }'`\n" +
+              "if [ $TIMEOUT = 0 ]; then " +
+                "echo \"ERROR: failed to obtain uid mutex\"; " +
+                rmCmd + " -f " + tmpPidMutexFile + "; " +
+                "break; " +
+              "fi\n" +
+              "sleep 1; " +
+            "done";
+
+        return pidMutexAcquireScript;
+    }
+
+    /** Counterpart of {@link SolarisConnection#getAcquireMutexScript()} */
+    private String getMutexReleaseScript() {
+        String rmCmd = buildCommand("rm");
+        String pidMutexReleaseScript =
+            "if [ -f " + pidMutexFile + " ]; then " +
+              "LOCKPID=`cat " + pidMutexFile + "`; " +
+              "if [ \"$LOCKPID\" = \"$$\" ]; then " +
+                rmCmd + " -f " + pidMutexFile + "; " +
+              "fi; " +
+            "fi";
+        return pidMutexReleaseScript;
+    }
+    
+    public void executeMutexAcquireScript() {
+        String mutexOut = executeCommand(getAcquireMutexScript());
+        if (mutexOut.contains("ERROR")) {
+            throw new ConnectorException("error when acquiring mutex. Buffer content: <" + mutexOut + ">");
+        }
+    }
+    
+    public void executeMutexReleaseScript() {
+        executeCommand(getMutexReleaseScript());
+    }
+    
+    /*
+     * SUDO
+     */
+    private static final String SUDO_START_COMMAND = "sudo -v";
+    private static final String SUDO_RESET_COMMAND = "sudo -k";
+    
+    // purely based on RA, TODO test 
+    public void doSudoStart() {
+        final SolarisConfiguration config = getConfiguration();
+        if (config.isSudoAuth()) {
+            try {
+                // 1) send sudo reset command
+                send(SUDO_RESET_COMMAND); 
+                expect(MatchBuilder.buildRegExpMatch("not found", ClosureFactory.newConnectorException("Sudo command is not found")));
+
+                // 2) send sudo start command
+                send(SUDO_START_COMMAND); 
+                waitForCaseInsensitive("assword:");
+                // TODO evaluate which password should be used:
+                GuardedString passwd = config.getPassword();
+                SolarisUtil.sendPassword(passwd, this);
+                
+                // 3) wait for the end of sudo operation
+                MatchBuilder builder = new MatchBuilder();
+                builder.addRegExpMatch(getRootShellPrompt(), ClosureFactory.newNullClosure());// TODO possibly replace NullClosure with null.
+                // signs of password reject:
+                builder.addRegExpMatch("may not run", ClosureFactory.newConnectorException("Not sufficient permissions")); // TODO improve error msg
+                builder.addRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException("Not sufficient permissions"));// TODO improve error msg
+                expect(builder.build());
+            } catch (Exception e) {
+                throw ConnectorException.wrap(e);
+            }
+        }
+    }
+    
+    // purely based on RA, TODO test 
+    public void doSudoReset() {
+        final SolarisConfiguration config = getConfiguration();
+        if (config.isSudoAuth()) {
+            // send sudo reset command
+            executeCommand(SUDO_RESET_COMMAND);
+        }
+    }
+
 }

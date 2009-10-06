@@ -35,7 +35,6 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.operation.SudoUtil;
 
 public class BlockAccountIterator implements Iterator<SolarisEntry> {
 
@@ -97,14 +96,14 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
      * @return the SolarisEntry list initialized with the required attributes.
      */
     private List<SolarisEntry> buildEntries(List<String> blockUserNames) {
-        SudoUtil.doSudoStart(conn);
+        conn.doSudoStart();
         conn.executeCommand(conn.buildCommand("rm -f", TMPFILE));
         
         String getUsersScript = buildGetUserScript(blockUserNames);
         final String out = conn.executeCommand(getUsersScript);
         
         conn.executeCommand(conn.buildCommand("rm -f", TMPFILE));
-        SudoUtil.doSudoReset(conn);
+        conn.doSudoReset();
         
         return processOutput(out);
     }
