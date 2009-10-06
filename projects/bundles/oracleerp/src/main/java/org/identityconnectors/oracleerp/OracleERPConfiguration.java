@@ -715,32 +715,40 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
     public void validate() {
         if (StringUtil.isBlank(dataSource)) {
             if(getPassword()==null){
+                log.info("validate Password");
                 throw new IllegalArgumentException(getMessage(MSG_PASSWORD_BLANK));
             }
             if(StringUtil.isBlank(user)){
+                log.info("validate user");
                 throw new IllegalArgumentException(getMessage(MSG_USER_BLANK));
             }
             if(StringUtil.isBlank(driver)){
+                log.info("validate driver");
                 throw new IllegalArgumentException(getMessage(MSG_DRIVER_BLANK));
             }
             try {
+                log.info("validate driver forName");
                 Class.forName(driver);
             } catch (ClassNotFoundException e) {
                 throw new IllegalArgumentException(getMessage(MSG_DRIVER_NOT_FOUND));
             }
             if(StringUtil.isBlank(url)) {
                 if(StringUtil.isBlank(host)){
+                    log.info("validate driver host");
                     throw new IllegalArgumentException(getMessage(MSG_HOST_BLANK));
                 }
                 if(StringUtil.isBlank(port)){
+                    log.info("validate driver port");
                     throw new IllegalArgumentException(getMessage(MSG_PORT_BLANK));
                 }
                 if(StringUtil.isBlank(database)){
+                    log.info("validate driver database");
                     throw new IllegalArgumentException(getMessage(MSG_DATABASE_BLANK));
                 }
             }
             log.ok("driver configuration is ok");
         } else {
+            log.info("validate dataSource");
             //Validate the JNDI properties
             JNDIUtil.arrayToHashtable(jndiProperties, getConnectorMessages());
             log.ok("dataSource configuration is ok");
