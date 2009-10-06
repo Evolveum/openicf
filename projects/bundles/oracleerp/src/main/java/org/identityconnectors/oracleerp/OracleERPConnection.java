@@ -179,7 +179,7 @@ final class OracleERPConnection extends DatabaseConnection {
      * @throws SQLException an exception in statement
      */
     public CallableStatement prepareCall(final String sql) throws SQLException {
-        log.ok("prepareCall");
+        log.ok("prepareCall sql: {0}", sql);
         final CallableStatement cs = getConnection().prepareCall(sql);
         cs.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
         return cs;
@@ -194,7 +194,7 @@ final class OracleERPConnection extends DatabaseConnection {
      */
     @Override
     public CallableStatement prepareCall(final String sql, final List<SQLParam> params) throws SQLException {
-        log.ok("prepareCall");
+        log.ok("prepareCall sql: {0}", sql);
         final CallableStatement cs = super.prepareCall(sql, params);
         cs.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
         return cs;
@@ -220,7 +220,7 @@ final class OracleERPConnection extends DatabaseConnection {
      * @throws SQLException 
      */
     public PreparedStatement prepareStatement(String sql) throws SQLException {
-        log.ok("prepareStatement");
+        log.ok("prepareStatement sql: {0}", sql);
         PreparedStatement ps = getConnection().prepareStatement(sql);
         ps.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
         return ps;
@@ -235,7 +235,7 @@ final class OracleERPConnection extends DatabaseConnection {
      */
     @Override
     public PreparedStatement prepareStatement(final String sql, final List<SQLParam> params) throws SQLException {
-        log.ok("prepareStatement");
+        log.ok("prepareStatement sql: {0}", sql);
         final PreparedStatement ps = super.prepareStatement(sql, params);
         ps.setQueryTimeout(OracleERPUtil.ORACLE_TIMEOUT);
         return ps;
@@ -271,9 +271,11 @@ final class OracleERPConnection extends DatabaseConnection {
                         info.put("user", config.getUser());
                         info.put("password", new String(clearChars));
                         if( StringUtil.isNotBlank(config.getClientEncryptionType())){
+                            log.ok("getDriverMangerConnection set oracle.net.encryption_types_client {0}", config.getClientEncryptionType());
                             info.put("oracle.net.encryption_types_client", config.getClientEncryptionType());
                         }
                         if( StringUtil.isNotBlank(config.getClientEncryptionLevel())){
+                            log.ok("getDriverMangerConnection set oracle.net.encryption_client {0}", config.getClientEncryptionLevel());
                             info.put("oracle.net.encryption_client", config.getClientEncryptionLevel());
                         }
 

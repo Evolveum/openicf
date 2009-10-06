@@ -591,11 +591,13 @@ public class OracleERPConnector implements PoolableConnector, AuthenticateOp, De
             return;
         }
         try {
+	        final String scriptText = userAfterAction.getScriptText();
             final ClassLoader loader = getClass().getClassLoader();
             final String scriptLanguage = userAfterAction.getScriptLanguage();
+            log.ok("validateGetUserAfterActionScript: {0}", scriptText);
             final ScriptExecutorFactory scriptExFact = ScriptExecutorFactory.newInstance(scriptLanguage);
             //Compile the script
-            scriptExFact.newScriptExecutor(loader, userAfterAction.getScriptText(), true);
+            scriptExFact.newScriptExecutor(loader, scriptText, true);
         } catch (Exception e) {
             log.error(e, "error in script");
             throw ConnectorException.wrap(e);

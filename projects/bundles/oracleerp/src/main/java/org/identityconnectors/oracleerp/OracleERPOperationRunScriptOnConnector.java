@@ -39,6 +39,7 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.ScriptContext;
+import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp;
 
 
@@ -73,9 +74,12 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
         Assertions.nullCheck(scriptArguments, "scriptArguments");
 
         //Name
-        final Object userNameArg = scriptArguments.get(Name.NAME);
-        Assertions.nullCheck(userNameArg, Name.NAME);
-        final String userName = ((Name) userNameArg).getNameValue();
+        Object idArg = scriptArguments.get(Uid.NAME);
+        if (idArg == null) {
+            idArg = scriptArguments.get(Name.NAME);
+        }
+        Assertions.nullCheck(idArg, Uid.NAME);
+        final String id = ((Name) idArg).getNameValue();
 
         //Password
         final Object pwdArg = scriptArguments.get(OperationalAttributes.PASSWORD_NAME);
@@ -85,7 +89,7 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
         actionContext.put(ACTION, scriptArguments.get(ACTION)); // The action is the operation name createUser/updateUser/deleteUser/disableUser/enableUser
         actionContext.put(TIMING, scriptArguments.get(TIMING)); // The timing before / after
         actionContext.put(ATTRIBUTES, OracleERPUtil.getScriptAttributes( scriptArguments.get(ATTRIBUTES))); // The attributes
-        actionContext.put(ID, userName); // The user name
+        actionContext.put(ID, id); // The user id
         if (pwdArg != null && pwdArg instanceof GuardedString) {
             final GuardedString password = ((GuardedString) pwdArg);
             password.access(new GuardedString.Accessor() {
@@ -105,6 +109,7 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
          */
         Object ret;
         final String scriptText = request.getScriptText();
+        log.ok("runScriptOnConnector execute script: {0}", scriptText);
         try {
             final ClassLoader loader = getClass().getClassLoader();
             final String scriptLanguage = request.getScriptLanguage();
@@ -121,7 +126,9 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
             }
             //Any errors, warnings?
             if (errorBld.length() != 0) {
-                throw new ConnectorException(errorBld.toString());
+                final String msg = errorBld.toString();
+                log.error("script errors: {0}", msg);
+                throw new ConnectorException(msg);
             }
             //Make sure, the connection is commit
             getConn().commit();            

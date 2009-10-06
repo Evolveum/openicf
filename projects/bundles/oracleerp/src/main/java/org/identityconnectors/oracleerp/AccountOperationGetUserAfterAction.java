@@ -87,6 +87,8 @@ final class AccountOperationGetUserAfterAction extends Operation {
             final String scriptLanguage = getCfg().getUserAfterActionScript().getScriptLanguage();
             final ScriptExecutorFactory scriptExFact = ScriptExecutorFactory.newInstance(scriptLanguage);
             final String scriptText = getCfg().getUserAfterActionScript().getScriptText();
+            
+            log.ok("execute GetUserAfterAction script: {0}", scriptText);
             final ScriptExecutor scripEx = scriptExFact.newScriptExecutor(loader, scriptText, true);
             scripEx.execute(inputMap);
             
@@ -99,7 +101,9 @@ final class AccountOperationGetUserAfterAction extends Operation {
             }
             //Any errors, warnings?
             if (errorBld.length() != 0) {
-                throw new ConnectorException(errorBld.toString());
+                final String msg = errorBld.toString();
+                log.error("errors in script: {0}", msg);
+                throw new ConnectorException(msg);
             }
             //Make sure, the connection is commit
             getConn().commit();
