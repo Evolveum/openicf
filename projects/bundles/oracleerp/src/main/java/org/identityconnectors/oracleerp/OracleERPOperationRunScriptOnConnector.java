@@ -72,23 +72,24 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
         final List<String> errorList = new ArrayList<String>();
         
         Assertions.nullCheck(scriptArguments, "scriptArguments");
+        final Map<String, Object> scriptAttributes = OracleERPUtil.getScriptAttributes( scriptArguments.get(ATTRIBUTES) );
 
         //Name
-        Object idArg = scriptArguments.get(Uid.NAME);
-        if (idArg == null) {
-            idArg = scriptArguments.get(Name.NAME);
+        Object value = scriptAttributes.get(Uid.NAME);
+        if (value == null) {
+            value = scriptAttributes.get(Name.NAME);
         }
-        Assertions.nullCheck(idArg, Uid.NAME);
-        final String id = ((Name) idArg).getNameValue();
+        Assertions.nullCheck(value, ID);
+        final String id = (String) value;
 
         //Password
-        final Object pwdArg = scriptArguments.get(OperationalAttributes.PASSWORD_NAME);
+        final Object pwdArg = scriptAttributes.get(OperationalAttributes.PASSWORD_NAME);
 
         //Connection
         actionContext.put(CONN, getConn().getConnection()); //The real connection
         actionContext.put(ACTION, scriptArguments.get(ACTION)); // The action is the operation name createUser/updateUser/deleteUser/disableUser/enableUser
         actionContext.put(TIMING, scriptArguments.get(TIMING)); // The timing before / after
-        actionContext.put(ATTRIBUTES, OracleERPUtil.getScriptAttributes( scriptArguments.get(ATTRIBUTES))); // The attributes
+        actionContext.put(ATTRIBUTES, scriptAttributes); // The attributes
         actionContext.put(ID, id); // The user id
         if (pwdArg != null && pwdArg instanceof GuardedString) {
             final GuardedString password = ((GuardedString) pwdArg);
