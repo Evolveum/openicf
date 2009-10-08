@@ -166,7 +166,7 @@ public class RacfLdapConnectorTests extends RacfConnectorTestBase {
                 TestHandler handler = new TestHandler();
                 TestHelpers.search(connector,ObjectClass.ACCOUNT, null, handler, null);
                 for (ConnectorObject user : handler) {
-                    Assert.assertFalse(user.getUid().getUidValue().startsWith("RACFID=I"));
+                    Assert.assertFalse(user.getUid().getUidValue().startsWith("racfid=I"));
                 }
             } finally {
                 connector.dispose();
@@ -181,7 +181,7 @@ public class RacfLdapConnectorTests extends RacfConnectorTestBase {
                 TestHelpers.search(connector,ObjectClass.ACCOUNT, null, handler, null);
                 Assert.assertTrue(handler.iterator().hasNext());
                 for (ConnectorObject user : handler) {
-                    Assert.assertTrue(user.getUid().getUidValue().startsWith("RACFID=I"));
+                    Assert.assertTrue(user.getUid().getUidValue().startsWith("racfid=I"));
                 }
             } finally {
                 connector.dispose();
@@ -197,8 +197,8 @@ public class RacfLdapConnectorTests extends RacfConnectorTestBase {
                 Assert.assertTrue(handler.iterator().hasNext());
                 for (ConnectorObject user : handler) {
                     Assert.assertTrue(
-                            user.getUid().getUidValue().startsWith("RACFID=Z") ||
-                            user.getUid().getUidValue().startsWith("RACFID=I")
+                            user.getUid().getUidValue().startsWith("racfid=Z") ||
+                            user.getUid().getUidValue().startsWith("racfid=I")
                             );
                 }
             } finally {
