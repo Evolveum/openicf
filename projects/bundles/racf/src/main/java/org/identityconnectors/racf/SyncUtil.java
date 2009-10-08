@@ -176,7 +176,7 @@ public class SyncUtil {
                     if ("DELETE".equalsIgnoreCase(change)) {
                         SyncDeltaBuilder builder = new SyncDeltaBuilder();
                         builder.setDeltaType(SyncDeltaType.DELETE);
-                        builder.setUid(new Uid(targetDn.get().toString().toUpperCase()));
+                        builder.setUid(new Uid(LdapUtil.createUniformUid(targetDn.get().toString(), ((RacfConfiguration)_connector.getConfiguration()).getSuffix())));
                         builder.setToken(new SyncToken(maxChangeNumber));
                         handler.handle(builder.build());
                     } else if ("ADD".equalsIgnoreCase(change) || "MODIFY".equalsIgnoreCase(change)) {

@@ -80,6 +80,27 @@ class LdapUtil {
         if (pemcert.length()>0 && pemkey.length()>0)
             _passwdEnvDecrypter = RACFPasswordEnvelopeUtilities.newRACFPasswordEnvelopeDecryptor(decryptorClass, pemcert.toString(), pemkey.toString());
     }
+    
+    static private Pattern _uidPattern = Pattern.compile("racfid=(\\w+),([^,]+).+", Pattern.CASE_INSENSITIVE);
+    
+    public String createUniformUid(Uid oldUid) {
+        return createUniformUid(oldUid.getUidValue());
+    }
+    
+    public String createUniformUid(String oldUidString) {
+        return createUniformUid(oldUidString, ((RacfConfiguration)_connector.getConfiguration()).getSuffix());
+    }
+    
+    static public String createUniformUid(String oldUidString, String suffix) {
+        Matcher matcher = _uidPattern.matcher(oldUidString);
+        if (matcher.matches()) {
+            return "racfid="+matcher.group(1).toUpperCase()+","+matcher.group(2).toLowerCase()+","+suffix;
+        } else {
+            return oldUidString;
+        }
+    }
+    
+    
 
     private StringBuffer loadBuffer(String[] vals) {
         StringBuffer buffer = new StringBuffer();
@@ -100,7 +121,7 @@ class LdapUtil {
                 Name name = AttributeUtil.getNameFromAttributes(attrs);
                 Map<String, Attribute> newAttributes = AttributeUtil.toMap(attrs);
                 ((RacfConnection)_connector.getConnection()).getDirContext().createSubcontext(name.getNameValue(), createLdapAttributesFromConnectorAttributes(newAttributes));
-                return new Uid(name.getNameValue().toUpperCase());
+                return new Uid(createUniformUid(name.getNameValue()));
             } catch (NamingException e) {
                 throw new ConnectorException(e);
             }
@@ -140,7 +161,7 @@ class LdapUtil {
                     changes.add(disableDate);
 
                 String id = name.getNameValue();
-                Uid uid = new Uid(id.toUpperCase());
+                Uid uid = new Uid(createUniformUid(id));
                 Map<String, Attribute> newAttributes = CollectionUtil.newCaseInsensitiveMap();
                 newAttributes.putAll(attributes);
                 addObjectClass(objectClass, newAttributes);
@@ -167,7 +188,7 @@ class LdapUtil {
                 Attribute groupOwners = attributes.remove(ATTR_LDAP_CONNECT_OWNER);
 
                 String id = name.getNameValue();
-                Uid uid = new Uid(id.toUpperCase());
+                Uid uid = new Uid(createUniformUid(id));
                 Map<String, Attribute> newAttributes = new HashMap<String, Attribute>(attributes);
                 addObjectClass(objectClass, newAttributes);
                 ((RacfConnection)_connector.getConnection()).getDirContext().createSubcontext(id, createLdapAttributesFromConnectorAttributes(objectClass, newAttributes));
@@ -340,9 +361,9 @@ class LdapUtil {
             attributesToGet.add(ATTR_LDAP_ATTRIBUTES);
 
         SearchResult ldapObject = getAttributesFromLdap(ldapName, attributesRead, attributesToGet);
-        Uid uid = new Uid(ldapObject.getNameInNamespace().toUpperCase());
+        Uid uid = new Uid(createUniformUid(ldapObject.getNameInNamespace()));
         attributesRead.put(Uid.NAME, uid);
-        attributesRead.put(Name.NAME, ldapObject.getNameInNamespace());
+        attributesRead.put(Name.NAME, createUniformUid(ldapObject.getNameInNamespace()));
 
         // For Users, we need to do a separate query against the connections to pick up
         // Connection info
@@ -361,7 +382,7 @@ class LdapUtil {
                     String connection = result.getNameInNamespace();
                     String[] ids = RacfConnector.extractRacfIdAndGroupIdFromLdapId(connection);
                     String group = ids[1];
-                    groupsForUser.add(_connector.createUidFromName(RacfConnector.RACF_GROUP, group).getUidValue());
+                    groupsForUser.add(createUniformUid(_connector.createUidFromName(RacfConnector.RACF_GROUP, group).getUidValue()));
                 }
                 if (groups)
                     attributesRead.put(ATTR_LDAP_GROUPS, groupsForUser);
@@ -493,9 +514,7 @@ class LdapUtil {
                 else
                     attributesRead.put(OperationalAttributes.ENABLE_DATE_NAME, converted);
             }
-            // Groups must be upcased
-            //
-            upcaseAttribute(attributesRead, ATTR_LDAP_GROUPS);
+            
 
             // Groups must be filled in if null
             //
@@ -503,23 +522,19 @@ class LdapUtil {
                 attributesRead.put(ATTR_LDAP_GROUPS, new LinkedList<Object>());
             }
 
-            // Default Group must be upcased
-            //
-            upcaseAttribute(attributesRead, ATTR_LDAP_DEFAULT_GROUP);
-
-            // Owner Group must be upcased
-            //
-            upcaseAttribute(attributesRead, ATTR_LDAP_OWNER);
-
-            // Group Owners must be upcased
-            //
-            upcaseAttribute(attributesRead, ATTR_LDAP_CONNECT_OWNER);
-
             // Group Owners must be filled in if null
             //
             if (!attributesRead.containsKey(ATTR_LDAP_CONNECT_OWNER)) {
                 attributesRead.put(ATTR_LDAP_CONNECT_OWNER, new LinkedList<Object>());
             }
+            
+            // Names/Uids must be made uniform
+            //
+            makeUniformUid(attributesRead, ATTR_LDAP_GROUPS);
+            makeUniformUid(attributesRead, ATTR_LDAP_DEFAULT_GROUP);
+            makeUniformUid(attributesRead, ATTR_LDAP_OWNER);
+            makeUniformUid(attributesRead, ATTR_LDAP_CONNECT_OWNER);
+
         }
 
         // Remap GROUP attributes as needed
@@ -530,22 +545,12 @@ class LdapUtil {
                 if ("NONE".equals(value))
                     attributesRead.put(ATTR_LDAP_SUP_GROUP, null);
             }
-            // Superior Group must be upcased
-            //
-            upcaseAttribute(attributesRead, ATTR_LDAP_SUP_GROUP);
-
-            // Owner Group must be upcased
-            //
-            upcaseAttribute(attributesRead, ATTR_LDAP_OWNER);
-
+            
             // Groups must be filled in if null
             //
             if (!attributesRead.containsKey(ATTR_LDAP_SUB_GROUPS)) {
                 attributesRead.put(ATTR_LDAP_SUB_GROUPS, new LinkedList<Object>());
             }
-            // Members must be upcased
-            //
-            upcaseAttribute(attributesRead, ATTR_LDAP_GROUP_USERIDS);
 
             // Members must be filled in if null
             //
@@ -558,19 +563,40 @@ class LdapUtil {
             if (!attributesRead.containsKey(ATTR_LDAP_CONNECT_OWNER)) {
                 attributesRead.put(ATTR_LDAP_CONNECT_OWNER, new LinkedList<Object>());
             }
+
+            // Names/Uids must be made uniform
+            //
+            makeUniformUid(attributesRead, ATTR_LDAP_OWNER);
+            makeUniformUid(attributesRead, ATTR_LDAP_SUP_GROUP);
+            makeUniformUid(attributesRead, ATTR_LDAP_SUB_GROUPS);
+            makeUniformUid(attributesRead, ATTR_LDAP_CONNECT_OWNER);
+            makeUniformUid(attributesRead, ATTR_LDAP_GROUP_USERIDS);
         }
         return attributesRead;
     }
+    
 
-    private void upcaseAttribute(Map<String, Object> attributesRead, String attributename) {
+    static boolean isUidValued(String name) {
+        return ATTR_LDAP_GROUPS.equalsIgnoreCase(name) ||
+        ATTR_LDAP_DEFAULT_GROUP.equalsIgnoreCase(name) ||
+        ATTR_LDAP_OWNER.equalsIgnoreCase(name) ||
+        ATTR_LDAP_CONNECT_OWNER.equalsIgnoreCase(name) ||
+        ATTR_LDAP_SUP_GROUP.equalsIgnoreCase(name) ||
+        ATTR_LDAP_SUB_GROUPS.equalsIgnoreCase(name) ||
+        ATTR_LDAP_CONNECT_OWNER.equalsIgnoreCase(name) ||
+        ATTR_LDAP_GROUP_USERIDS.equalsIgnoreCase(name);
+    }
+
+
+    private void makeUniformUid(Map<String, Object> attributesRead, String attributename) {
         if (attributesRead.containsKey(attributename)) {
             Object value = attributesRead.get(attributename);
             if (value instanceof List) {
                 List list = (List)value;
                 for (int i=0; i<list.size(); i++)
-                    list.set(i, list.get(i).toString().toUpperCase());
+                    list.set(i, createUniformUid(list.get(i).toString()));
             } else if (value!=null)
-                value = value.toString().toUpperCase();
+                value = createUniformUid(value.toString());
             attributesRead.put(attributename, value);
         }
     }
@@ -580,7 +606,7 @@ class LdapUtil {
         Set<String> attributesToGet = new HashSet<String>();
         attributesToGet.add(ATTR_LDAP_CONNECT_OWNER);
         getAttributesFromLdap(query, attributesRead, attributesToGet);
-        return (String)attributesRead.get(ATTR_LDAP_CONNECT_OWNER);
+        return createUniformUid((String)attributesRead.get(ATTR_LDAP_CONNECT_OWNER));
     }
 
     private SearchResult getAttributesFromLdap(String ldapName, Map<String, Object> attributesRead,

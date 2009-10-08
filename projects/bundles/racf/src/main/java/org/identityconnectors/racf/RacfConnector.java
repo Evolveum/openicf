@@ -399,11 +399,12 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
                 try {
                     // We can special case getting at most just name
                     //
+                    name = LdapUtil.createUniformUid(name, _configuration.getSuffix());
                     ConnectorObject object = null;
                     if (getNameOnly || getNothing) {
                         ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
                         builder.setObjectClass(objectClass);
-                        builder.setUid(name.toUpperCase());
+                        builder.setUid(name);
                         if (getNameOnly)
                             builder.setName(name);
                         object = builder.build();
@@ -452,13 +453,15 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
         if (!isEmpty(attributesFromLdap)) {
             uid = (Uid)attributesFromLdap.remove(Uid.NAME);
             builder.setUid(uid);
-            String name = ((String)attributesFromLdap.remove(Name.NAME)).toUpperCase();
+            String name = (String)attributesFromLdap.remove(Name.NAME);
+            name = LdapUtil.createUniformUid(name, _configuration.getSuffix());
             builder.setName(name);
             addAttributes(objectClass, attributesFromLdap, attributesToGet, builder);
         }
         if (!isEmpty(attributesFromCommandLine)) {
             if (isEmpty(attributesFromLdap)) {
                 String name = ((String)attributesFromCommandLine.get(ATTR_CL_USERID)).toUpperCase();
+                name = LdapUtil.createUniformUid(name, _configuration.getSuffix());
                 uid = new Uid(name);
                 builder.setUid(uid);
                 builder.setName(name);
@@ -614,9 +617,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
      */
     Uid createUidFromName(ObjectClass objectClass, String name) {
         if (objectClass.is(ObjectClass.ACCOUNT_NAME))
-            return new Uid("racfid="+name.toUpperCase()+",profileType=user,"+_configuration.getSuffix());
+            return new Uid("racfid="+name.toUpperCase()+",profiletype=user,"+_configuration.getSuffix());
         else if (objectClass.is(RACF_GROUP_NAME))
-            return new Uid("racfid="+name.toUpperCase()+",profileType=group,"+_configuration.getSuffix());
+            return new Uid("racfid="+name.toUpperCase()+",profiletype=group,"+_configuration.getSuffix());
         else 
             return null;
     }
@@ -1214,18 +1217,22 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
         if (values==null)
             return AttributeBuilder.build(name);
         for (Object value : values)
-            if (value instanceof String)
-                newValues.add(((String)value).toUpperCase());
-            else
+            if (value instanceof String) {
+                if (!LdapUtil.isUidValued(name))
+                    newValues.add(((String)value).toUpperCase());
+                else
+                    newValues.add(LdapUtil.createUniformUid(((String)value), _configuration.getSuffix()));
+            } else {
                 newValues.add(value);
+            }
         if (attribute instanceof Name)
-            return new Name(((String)newValues.get(0)));
+            return new Name(LdapUtil.createUniformUid((String)newValues.get(0), _configuration.getSuffix()));
         else if (attribute instanceof Uid)
-            return new Uid(((String)newValues.get(0)));
+            return new Uid(LdapUtil.createUniformUid((String)newValues.get(0), _configuration.getSuffix()));
         else
             return AttributeBuilder.build(name, newValues);
     }
-
+    
     Long convertFromResumeRevokeFormat(Object value) {
         try {
             return _resumeRevokeFormat.parse(value.toString()).getTime();
