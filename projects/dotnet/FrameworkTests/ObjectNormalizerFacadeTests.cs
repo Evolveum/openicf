@@ -33,119 +33,124 @@ namespace FrameworkTests
     [TestFixture]
     public class ObjectNormalizerFacadeTests
     {
-        public class MyAttributeNormalizer : AttributeNormalizer {
-            public ConnectorAttribute NormalizeAttribute(ObjectClass oclass, ConnectorAttribute attribute) {
-                if ( attribute.Is("foo")) {
+        public class MyAttributeNormalizer : AttributeNormalizer
+        {
+            public ConnectorAttribute NormalizeAttribute(ObjectClass oclass, ConnectorAttribute attribute)
+            {
+                if (attribute.Is("foo"))
+                {
                     String val = ConnectorAttributeUtil.GetStringValue(attribute);
-                    return ConnectorAttributeBuilder.Build("foo",val.Trim());
+                    return ConnectorAttributeBuilder.Build("foo", val.Trim());
                 }
-                else {
+                else
+                {
                     return attribute;
                 }
             }
         }
-        
+
         private ConnectorAttribute CreateTestAttribute()
         {
-            return ConnectorAttributeBuilder.Build("foo"," bar ");
+            return ConnectorAttributeBuilder.Build("foo", " bar ");
         }
-        
+
         private ConnectorAttribute CreateNormalizedTestAttribute()
         {
-            return ConnectorAttributeBuilder.Build("foo","bar");        
+            return ConnectorAttributeBuilder.Build("foo", "bar");
         }
-        
-        private ObjectNormalizerFacade CreateTestNormalizer() 
+
+        private ObjectNormalizerFacade CreateTestNormalizer()
         {
             ObjectNormalizerFacade facade = new
             ObjectNormalizerFacade(ObjectClass.ACCOUNT,
                     new MyAttributeNormalizer());
             return facade;
         }
-        
+
         private void AssertNormalizedFilter(Filter expectedNormalizedFilter,
-                Filter filter) {
-            ObjectNormalizerFacade facade = 
+                Filter filter)
+        {
+            ObjectNormalizerFacade facade =
                 CreateTestNormalizer();
             filter = facade.NormalizeFilter(filter);
             String expectedXml = SerializerUtil.SerializeXmlObject(expectedNormalizedFilter, false);
             String actualXml = SerializerUtil.SerializeXmlObject(filter, false);
             Assert.AreEqual(expectedXml, actualXml);
         }
-        
-        
-        
+
+
+
         [Test]
         public void TestEndsWith()
         {
             Filter expected =
                 FilterBuilder.EndsWith(CreateNormalizedTestAttribute());
-            Filter filter = 
-                FilterBuilder.EndsWith(CreateTestAttribute());  
-            AssertNormalizedFilter(expected,filter);
-        }    
+            Filter filter =
+                FilterBuilder.EndsWith(CreateTestAttribute());
+            AssertNormalizedFilter(expected, filter);
+        }
         [Test]
         public void TestStartsWith()
         {
             Filter expected =
                 FilterBuilder.StartsWith(CreateNormalizedTestAttribute());
-            Filter filter = 
-                FilterBuilder.StartsWith(CreateTestAttribute());  
-            AssertNormalizedFilter(expected,filter);
+            Filter filter =
+                FilterBuilder.StartsWith(CreateTestAttribute());
+            AssertNormalizedFilter(expected, filter);
         }
         [Test]
         public void TestContains()
         {
             Filter expected =
                 FilterBuilder.Contains(CreateNormalizedTestAttribute());
-            Filter filter = 
-                FilterBuilder.Contains(CreateTestAttribute());  
-            AssertNormalizedFilter(expected,filter);
+            Filter filter =
+                FilterBuilder.Contains(CreateTestAttribute());
+            AssertNormalizedFilter(expected, filter);
         }
         [Test]
         public void TestEqualTo()
         {
             Filter expected =
                 FilterBuilder.EqualTo(CreateNormalizedTestAttribute());
-            Filter filter = 
-                FilterBuilder.EqualTo(CreateTestAttribute());  
-            AssertNormalizedFilter(expected,filter);
+            Filter filter =
+                FilterBuilder.EqualTo(CreateTestAttribute());
+            AssertNormalizedFilter(expected, filter);
         }
         [Test]
         public void TestGreaterThanOrEqualTo()
         {
             Filter expected =
                 FilterBuilder.GreaterThanOrEqualTo(CreateNormalizedTestAttribute());
-            Filter filter = 
-                FilterBuilder.GreaterThanOrEqualTo(CreateTestAttribute());  
-            AssertNormalizedFilter(expected,filter);
+            Filter filter =
+                FilterBuilder.GreaterThanOrEqualTo(CreateTestAttribute());
+            AssertNormalizedFilter(expected, filter);
         }
         [Test]
         public void TestLessThanOrEqualTo()
         {
             Filter expected =
                 FilterBuilder.LessThanOrEqualTo(CreateNormalizedTestAttribute());
-            Filter filter = 
-                FilterBuilder.LessThanOrEqualTo(CreateTestAttribute());  
-            AssertNormalizedFilter(expected,filter);
+            Filter filter =
+                FilterBuilder.LessThanOrEqualTo(CreateTestAttribute());
+            AssertNormalizedFilter(expected, filter);
         }
         [Test]
         public void TestLessThan()
         {
             Filter expected =
                 FilterBuilder.LessThan(CreateNormalizedTestAttribute());
-            Filter filter = 
-                FilterBuilder.LessThan(CreateTestAttribute());  
-            AssertNormalizedFilter(expected,filter);
+            Filter filter =
+                FilterBuilder.LessThan(CreateTestAttribute());
+            AssertNormalizedFilter(expected, filter);
         }
         [Test]
         public void TestGreaterThan()
         {
             Filter expected =
                 FilterBuilder.GreaterThan(CreateNormalizedTestAttribute());
-            Filter filter = 
-                FilterBuilder.GreaterThan(CreateTestAttribute());  
-            AssertNormalizedFilter(expected,filter);
+            Filter filter =
+                FilterBuilder.GreaterThan(CreateTestAttribute());
+            AssertNormalizedFilter(expected, filter);
         }
         [Test]
         public void TestAnd()
@@ -153,10 +158,10 @@ namespace FrameworkTests
             Filter expected =
                 FilterBuilder.And(FilterBuilder.Contains(CreateNormalizedTestAttribute()),
                         FilterBuilder.Contains(CreateNormalizedTestAttribute()));
-            Filter filter = 
+            Filter filter =
                 FilterBuilder.And(FilterBuilder.Contains(CreateTestAttribute()),
                         FilterBuilder.Contains(CreateTestAttribute()));
-            AssertNormalizedFilter(expected,filter);
+            AssertNormalizedFilter(expected, filter);
         }
         [Test]
         public void TestOr()
@@ -164,30 +169,30 @@ namespace FrameworkTests
             Filter expected =
                 FilterBuilder.Or(FilterBuilder.Contains(CreateNormalizedTestAttribute()),
                         FilterBuilder.Contains(CreateNormalizedTestAttribute()));
-            Filter filter = 
+            Filter filter =
                 FilterBuilder.Or(FilterBuilder.Contains(CreateTestAttribute()),
                         FilterBuilder.Contains(CreateTestAttribute()));
-            AssertNormalizedFilter(expected,filter);
+            AssertNormalizedFilter(expected, filter);
         }
         [Test]
         public void TestNot()
         {
             Filter expected =
                 FilterBuilder.Not(FilterBuilder.Contains(CreateNormalizedTestAttribute()));
-            Filter filter = 
+            Filter filter =
                 FilterBuilder.Not(FilterBuilder.Contains(CreateTestAttribute()));
-            AssertNormalizedFilter(expected,filter);
+            AssertNormalizedFilter(expected, filter);
         }
         [Test]
         public void TestContainsAllValues()
         {
             Filter expected =
                 FilterBuilder.ContainsAllValues(CreateNormalizedTestAttribute());
-            Filter filter = 
-                FilterBuilder.ContainsAllValues(CreateTestAttribute());  
-            AssertNormalizedFilter(expected,filter);
+            Filter filter =
+                FilterBuilder.ContainsAllValues(CreateTestAttribute());
+            AssertNormalizedFilter(expected, filter);
         }
-        [Test] 
+        [Test]
         public void TestConnectorObject()
         {
             ConnectorObjectBuilder builder =
@@ -206,7 +211,7 @@ namespace FrameworkTests
             Assert.AreEqual(expected, v2);
             Assert.IsFalse(expected.Equals(v1));
         }
-        
+
         [Test]
         public void TestSyncDelta()
         {
@@ -216,31 +221,31 @@ namespace FrameworkTests
             objbuilder.SetUid("myuid");
             objbuilder.AddAttribute(CreateTestAttribute());
             ConnectorObject obj = objbuilder.Build();
-            
+
             SyncDeltaBuilder builder =
                 new SyncDeltaBuilder();
-             builder.DeltaType=(SyncDeltaType.DELETE);
-             builder.Token=(new SyncToken("mytoken"));
-             builder.Uid=(new Uid("myuid"));
-             builder.Object=(obj);
-             SyncDelta v1 = builder.Build();
-             SyncDelta v2 = CreateTestNormalizer().NormalizeSyncDelta(v1);
-             builder =
-                 new SyncDeltaBuilder();
-             builder.DeltaType=(SyncDeltaType.DELETE);
-             builder.Token=(new SyncToken("mytoken"));
-             builder.Uid=(new Uid("myuid"));
-             objbuilder =
-                 new ConnectorObjectBuilder();
-             objbuilder.SetName("myname");
-             objbuilder.SetUid("myuid");
-             objbuilder.AddAttribute(CreateNormalizedTestAttribute());
-             builder.Object = objbuilder.Build();
-             SyncDelta expected = builder.Build();
-             Assert.AreEqual(expected, v2);
-             Assert.IsFalse(expected.Equals(v1));
-            
+            builder.DeltaType = (SyncDeltaType.DELETE);
+            builder.Token = (new SyncToken("mytoken"));
+            builder.Uid = (new Uid("myuid"));
+            builder.Object = (obj);
+            SyncDelta v1 = builder.Build();
+            SyncDelta v2 = CreateTestNormalizer().NormalizeSyncDelta(v1);
+            builder =
+                new SyncDeltaBuilder();
+            builder.DeltaType = (SyncDeltaType.DELETE);
+            builder.Token = (new SyncToken("mytoken"));
+            builder.Uid = (new Uid("myuid"));
+            objbuilder =
+                new ConnectorObjectBuilder();
+            objbuilder.SetName("myname");
+            objbuilder.SetUid("myuid");
+            objbuilder.AddAttribute(CreateNormalizedTestAttribute());
+            builder.Object = objbuilder.Build();
+            SyncDelta expected = builder.Build();
+            Assert.AreEqual(expected, v2);
+            Assert.IsFalse(expected.Equals(v1));
+
         }
-    
+
     }
 }

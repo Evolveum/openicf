@@ -37,8 +37,9 @@ namespace Org.IdentityConnectors.Common
         /// <returns></returns>
         public static IPAddress GetIPAddress(String hostOrIp)
         {
-            if ( hostOrIp.Equals("0.0.0.0") ||
-                hostOrIp.Equals("::0") ) {
+            if (hostOrIp.Equals("0.0.0.0") ||
+                hostOrIp.Equals("::0"))
+            {
                 return IPAddress.Parse(hostOrIp);
             }
             return Dns.GetHostAddresses(hostOrIp)[0];

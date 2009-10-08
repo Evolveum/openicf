@@ -32,15 +32,15 @@ namespace FrameworkTests
     {
         [Test]
         public void TestSafeType()
-        {            
-           //compile-time type safe
-           SafeType<APIOperation> op =
-               SafeType<APIOperation>.Get<ScriptOnResourceApiOp>();
-           Assert.AreEqual(typeof(ScriptOnResourceApiOp),op.RawType);
-           //runtime type safe. needed for marshalling code, etc
-           op =
-               SafeType<APIOperation>.ForRawType(typeof(SchemaApiOp));
-           Assert.AreEqual(typeof(SchemaApiOp),op.RawType);
+        {
+            //compile-time type safe
+            SafeType<APIOperation> op =
+                SafeType<APIOperation>.Get<ScriptOnResourceApiOp>();
+            Assert.AreEqual(typeof(ScriptOnResourceApiOp), op.RawType);
+            //runtime type safe. needed for marshalling code, etc
+            op =
+                SafeType<APIOperation>.ForRawType(typeof(SchemaApiOp));
+            Assert.AreEqual(typeof(SchemaApiOp), op.RawType);
         }
     }
 }

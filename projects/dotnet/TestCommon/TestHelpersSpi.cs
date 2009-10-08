@@ -35,20 +35,20 @@ namespace Org.IdentityConnectors.Test.Common.Spi
     /// Private use only, do not implement! Use the methods in 
     /// <see cref="Org.IdentityConnectors.Test.Common.TestHelpers"/> instead.
     /// </summary>
-    public interface TestHelpersSpi {
-    
+    public interface TestHelpersSpi
+    {
         APIConfiguration CreateTestConfiguration(SafeType<Connector> clazz,
                 Configuration config);
-        
+
         void FillConfiguration(Configuration config,
                 IDictionary<string, object> configData);
 
         void Search<T>(SearchOp<T> search,
-                ObjectClass oclass, 
-                Filter filter, 
+                ObjectClass oclass,
+                Filter filter,
                 ResultsHandler handler,
                 OperationOptions options) where T : class;
-                
+
         ConnectorMessages CreateDummyMessages();
     }
 }

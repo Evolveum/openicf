@@ -35,43 +35,51 @@ namespace Org.IdentityConnectors.Common.Script.Boo
         /// <summary>
         /// Attempt to trigger an exception if the runtime is not present.
         /// </summary>
-        public BooScriptExecutorFactory() {
+        public BooScriptExecutorFactory()
+        {
             new BooScriptExecutor(new Assembly[0], "1").Execute(null);
         }
-        
+
         /// <summary>
         /// Creates a script executor give the Boo script.
         /// </summary>
         override
-        public ScriptExecutor NewScriptExecutor(Assembly [] referencedAssemblies, string script, bool compile) {
-            return new BooScriptExecutor(referencedAssemblies,script);
+        public ScriptExecutor NewScriptExecutor(Assembly[] referencedAssemblies, string script, bool compile)
+        {
+            return new BooScriptExecutor(referencedAssemblies, script);
         }
- 
+
         /// <summary>
         /// Processes the script.
         /// </summary>
-        class BooScriptExecutor : ScriptExecutor {
-            private readonly Assembly [] _referencedAssemblies;
+        class BooScriptExecutor : ScriptExecutor
+        {
+            private readonly Assembly[] _referencedAssemblies;
             private readonly string _script;
             private readonly InteractiveInterpreter _engine;
-            
-            public BooScriptExecutor(Assembly [] referencedAssemblies, string script) {
+
+            public BooScriptExecutor(Assembly[] referencedAssemblies, string script)
+            {
                 _referencedAssemblies = referencedAssemblies;
                 _script = script;
                 _engine = new InteractiveInterpreter();
                 _engine.RememberLastValue = true;
-                foreach (Assembly assembly in referencedAssemblies) {
-                    _engine.References.Add(assembly);       
+                foreach (Assembly assembly in referencedAssemblies)
+                {
+                    _engine.References.Add(assembly);
                 }
             }
-            public object Execute(IDictionary<string,object> arguments) {
+            public object Execute(IDictionary<string, object> arguments)
+            {
                 // add all the globals
                 IDictionary<string, object> args = CollectionUtil.NullAsEmpty(arguments);
-                foreach (KeyValuePair<string, object> entry in args) {
+                foreach (KeyValuePair<string, object> entry in args)
+                {
                     _engine.SetValue(entry.Key, entry.Value);
                 }
                 CompilerContext context = _engine.Eval(_script);
-                if ( context.Errors.Count > 0 ) {
+                if (context.Errors.Count > 0)
+                {
                     throw context.Errors[0];
                 }
                 return _engine.LastValue;

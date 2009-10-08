@@ -35,157 +35,190 @@ namespace Org.IdentityConnectors.Common
         // DOM Navigation utilities
         //
         ////////////////////////////////////////////////////////////
-    
-        /**
-         * Return the value of an attribute on an element. <p/> The DOM getAttribute
-         * method returns an empty string if the attribute doesn't exist. Here, we
-         * detect this and return null.
-         */
-        public static String GetAttribute(XmlElement e, String name) {
+
+        /// <summary>
+        /// Return the value of an attribute on an element.
+        /// </summary>
+        /// <remarks>
+        /// <p /> The DOM getAttribute
+        /// method returns an empty string if the attribute doesn't exist. Here, we
+        /// detect this and return null.
+        /// </remarks>
+        public static String GetAttribute(XmlElement e, String name)
+        {
             String value = e.GetAttribute(name);
             if (value != null && value.Length == 0)
                 value = null;
             return value;
         }
-    
-        /**
-         * Find an immediate child of the given name
-         */
-        public static XmlElement FindImmediateChildElement(XmlNode node, String name) {
-    
+
+        /// <summary>
+        /// Find an immediate child of the given name
+        /// </summary>
+        public static XmlElement FindImmediateChildElement(XmlNode node, String name)
+        {
+
             XmlElement found = null;
-            
-            if (node != null) {
-    
+
+            if (node != null)
+            {
+
                 for (XmlNode child = node.FirstChild; child != null
-                        && found == null; child = child.NextSibling) {
-    
-                    if (child.NodeType == XmlNodeType.Element) {
-                        XmlElement tmp = (XmlElement) child;
-                        if ( tmp.LocalName.Equals(name) ) {
+                        && found == null; child = child.NextSibling)
+                {
+
+                    if (child.NodeType == XmlNodeType.Element)
+                    {
+                        XmlElement tmp = (XmlElement)child;
+                        if (tmp.LocalName.Equals(name))
+                        {
                             return tmp;
                         }
                     }
                 }
             }
-    
+
             return found;
         }
-    
-        /**
-         * Returns the First child element or null if none found
-         * @param node The node. May be null.
-         * @return the First child element or null if none found
-         */
-        public static XmlElement GetFirstChildElement(XmlNode node) {
-            if ( node == null ) {
+
+        /// <summary>
+        /// Returns the First child element or null if none found
+        /// </summary>
+        /// <param name="node">The node. May be null.</param>
+        /// <returns>the First child element or null if none found</returns>
+        public static XmlElement GetFirstChildElement(XmlNode node)
+        {
+            if (node == null)
+            {
                 return null;
             }
             XmlNode child = node.FirstChild;
-            if ( child != null && child.NodeType == XmlNodeType.Element ) {
+            if (child != null && child.NodeType == XmlNodeType.Element)
+            {
                 return (XmlElement)child;
             }
-            else {
+            else
+            {
                 return GetNextElement(child);
             }
         }
-        
-        /**
-         * Get the next right sibling that is an element.
-         */
-        public static XmlElement GetNextElement(XmlNode node) {
-    
+
+        /// <summary>
+        /// Get the next right sibling that is an element.
+        /// </summary>
+        public static XmlElement GetNextElement(XmlNode node)
+        {
+
             XmlElement found = null;
-    
-            if (node != null) {
-    
+
+            if (node != null)
+            {
+
                 for (XmlNode next = node.NextSibling; next != null
-                        && found == null; next = next.NextSibling) {
-    
+                        && found == null; next = next.NextSibling)
+                {
+
                     if (next.NodeType == XmlNodeType.Element)
-                        found = (XmlElement) next;
+                        found = (XmlElement)next;
                 }
             }
-    
+
             return found;
         }
-    
-        /**
-         * Locate the first text node at any level below the given node. If the
-         * ignoreEmpty flag is true, we will ignore text nodes that contain only
-         * whitespace characteres. <p/> Note that if you're trying to extract
-         * element content, you probably don't want this since parser's can break up
-         * pcdata into multiple adjacent text nodes. See getContent() for a more
-         * useful method.
-         */
-        private static XmlText FindText(XmlNode node, bool ignoreEmpty) {
-    
+
+        /// <summary>
+        /// Locate the first text node at any level below the given node.
+        /// </summary>
+        /// <remarks>
+        /// If the
+        /// ignoreEmpty flag is true, we will ignore text nodes that contain only
+        /// whitespace characteres. <p /> Note that if you're trying to extract
+        /// element content, you probably don't want this since parser's can break up
+        /// pcdata into multiple adjacent text nodes. See getContent() for a more
+        /// useful method.
+        /// </remarks>
+        private static XmlText FindText(XmlNode node, bool ignoreEmpty)
+        {
+
             XmlText found = null;
-    
-            if (node != null) {
-    
+
+            if (node != null)
+            {
+
                 if (node.NodeType == XmlNodeType.Text
-                        || node.NodeType == XmlNodeType.CDATA) {
-    
-                    XmlText t = (XmlText) node;
+                        || node.NodeType == XmlNodeType.CDATA)
+                {
+
+                    XmlText t = (XmlText)node;
                     if (!ignoreEmpty)
                         found = t;
-                    else {
+                    else
+                    {
                         String s = t.Data.Trim();
                         if (s.Length > 0)
                             found = t;
                     }
                 }
-    
-                if (found == null) {
-    
+
+                if (found == null)
+                {
+
                     for (XmlNode child = node.FirstChild; child != null
-                            && found == null; child = child.NextSibling) {
-    
+                            && found == null; child = child.NextSibling)
+                    {
+
                         found = FindText(child, ignoreEmpty);
                     }
                 }
             }
-    
+
             return found;
         }
-    
-    
-        /**
-         * Return the content of the given element. <p/> We will descend to an
-         * arbitrary depth looking for the first text node. <p/> Note that
-         * the parser may break what was originally a single string of pcdata into
-         * multiple adjacent text nodes. Xerces appears to do this when it
-         * encounters a '$' in the text, not sure if there is specified behavior, or
-         * if its parser specific. <p/> Here, we will congeal adjacent text nodes.
-         * <p/> We will NOT ignore text nodes that have only whitespace.
-         */
-        public static String GetContent(XmlElement e) {
-    
+
+
+        /// <summary>
+        /// Return the content of the given element.
+        /// </summary>
+        /// <remarks>
+        /// <p /> We will descend to an
+        /// arbitrary depth looking for the first text node. <p /> Note that
+        /// the parser may break what was originally a single string of pcdata into
+        /// multiple adjacent text nodes. Xerces appears to do this when it
+        /// encounters a '$' in the text, not sure if there is specified behavior, or
+        /// if its parser specific. <p /> Here, we will congeal adjacent text nodes.
+        /// <p /> We will NOT ignore text nodes that have only whitespace.
+        /// </remarks>
+        public static String GetContent(XmlElement e)
+        {
+
             String content = null;
-    
-            if (e != null) {
-    
+
+            if (e != null)
+            {
+
                 // find the first inner text node,
                 XmlText t = FindText(e, false);
-                if (t != null) {
+                if (t != null)
+                {
                     // we have at least some text
                     StringBuilder b = new StringBuilder();
-                    while (t != null) {
+                    while (t != null)
+                    {
                         b.Append(t.Data);
                         XmlNode n = t.NextSibling;
-    
+
                         t = null;
                         if (n != null
-                                && ((n.NodeType == XmlNodeType.Text) || 
-                                        (n.NodeType == XmlNodeType.CDATA))) {
-                            t = (XmlText) n;
+                                && ((n.NodeType == XmlNodeType.Text) ||
+                                        (n.NodeType == XmlNodeType.CDATA)))
+                        {
+                            t = (XmlText)n;
                         }
                     }
                     content = b.ToString();
                 }
             }
-    
+
             return content;
         }
     }

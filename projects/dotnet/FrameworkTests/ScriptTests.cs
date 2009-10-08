@@ -38,9 +38,10 @@ namespace FrameworkTests
     public class ScriptTests
     {
         [Test]
-        public void testBooScripting() {
+        public void testBooScripting()
+        {
             ScriptExecutorFactory factory = ScriptExecutorFactory.NewInstance("BOO");
-            ScriptExecutor exe = factory.NewScriptExecutor(new Assembly[0],"x", false);
+            ScriptExecutor exe = factory.NewScriptExecutor(new Assembly[0], "x", false);
             IDictionary<string, object> vals = new Dictionary<string, object>();
             vals["x"] = 1;
             Assert.AreEqual(1, exe.Execute(vals));
@@ -48,20 +49,23 @@ namespace FrameworkTests
             Assert.AreEqual(2, exe.Execute(vals));
         }
         [Test]
-        public void testShellScripting() {
+        public void testShellScripting()
+        {
             ScriptExecutorFactory factory = ScriptExecutorFactory.NewInstance("Shell");
-            ScriptExecutor exe = factory.NewScriptExecutor(new Assembly[0],"echo bob", false);
+            ScriptExecutor exe = factory.NewScriptExecutor(new Assembly[0], "echo bob", false);
             IDictionary<string, object> vals = new Dictionary<string, object>();
             Assert.AreEqual(0, exe.Execute(vals));
         }
         [Test]
         [ExpectedException(typeof(ArgumentException))]
-        public void testUnsupported() {
+        public void testUnsupported()
+        {
             ScriptExecutorFactory.NewInstance("fadsflkj");
         }
 
         [Test]
-        public void testBasic() {
+        public void testBasic()
+        {
             ScriptBuilder builder = new ScriptBuilder();
             builder.ScriptLanguage = "Groovy";
             builder.ScriptText = "print 'foo'";
@@ -75,29 +79,37 @@ namespace FrameworkTests
             Assert.AreEqual(s1, s2);
             Assert.AreEqual(s1.GetHashCode(), s2.GetHashCode());
         }
-    
+
         [Test]
-        public void testLanguageNotBlank() {
-            try {
+        public void testLanguageNotBlank()
+        {
+            try
+            {
                 ScriptBuilder builder = new ScriptBuilder();
                 builder.ScriptText = "print 'foo'";
                 builder.Build();
                 Assert.Fail();
-            } catch (ArgumentException) {
+            }
+            catch (ArgumentException)
+            {
                 // OK.
             }
-    
-            try {
+
+            try
+            {
                 ScriptBuilder builder = new ScriptBuilder();
                 builder.ScriptText = "print 'foo'";
                 builder.ScriptLanguage = "";
                 builder.Build();
                 Assert.Fail();
-            } catch (ArgumentException) {
+            }
+            catch (ArgumentException)
+            {
                 // OK.
             }
-    
-            try {
+
+            try
+            {
                 ScriptBuilder builder = new ScriptBuilder();
                 builder.ScriptText = "print 'foo'";
                 builder.ScriptLanguage = " ";
@@ -109,18 +121,22 @@ namespace FrameworkTests
                 // OK.
             }
         }
-    
+
         [Test]
-        public void testTextNotNull() {
+        public void testTextNotNull()
+        {
             ScriptBuilder builder = new ScriptBuilder();
-            try {
+            try
+            {
                 builder.ScriptLanguage = "Groovy";
                 builder.Build();
                 Assert.Fail();
-            } catch (ArgumentNullException) {
+            }
+            catch (ArgumentNullException)
+            {
                 // OK.
             }
-    
+
             // The text can be empty.
             builder = new ScriptBuilder();
             builder.ScriptLanguage = "Groovy";

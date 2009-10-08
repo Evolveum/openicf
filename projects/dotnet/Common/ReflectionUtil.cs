@@ -36,32 +36,39 @@ namespace Org.IdentityConnectors.Common
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        public static Type [] GetAllInterfaces(Type type) {
+        public static Type[] GetAllInterfaces(Type type)
+        {
             HashSet<Type> temp = new HashSet<Type>();
-            GetAllInterfaces2(type,temp);
+            GetAllInterfaces2(type, temp);
             return temp.ToArray();
         }
-        
-        private static void GetAllInterfaces2(Type type, HashSet<Type> rv) {
-            if ( type != null ) {
-                if ( type.IsInterface ) {
+
+        private static void GetAllInterfaces2(Type type, HashSet<Type> rv)
+        {
+            if (type != null)
+            {
+                if (type.IsInterface)
+                {
                     rv.Add(type);
                 }
-                GetAllInterfaces2(type.BaseType,rv);
-                foreach (Type inter in type.GetInterfaces()) {
-                    GetAllInterfaces2(inter,rv);
+                GetAllInterfaces2(type.BaseType, rv);
+                foreach (Type inter in type.GetInterfaces())
+                {
+                    GetAllInterfaces2(inter, rv);
                 }
             }
         }
-        
+
         /// <summary>
         /// Returns the generic type definition of the given type
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        public static Type [] GetTypeErasure(Type [] types) {
-            Type [] rv = new Type[types.Length];
-            for ( int i = 0; i < types.Length; i++ ) {
+        public static Type[] GetTypeErasure(Type[] types)
+        {
+            Type[] rv = new Type[types.Length];
+            for (int i = 0; i < types.Length; i++)
+            {
                 rv[i] = GetTypeErasure(types[i]);
             }
             return rv;
@@ -71,13 +78,15 @@ namespace Org.IdentityConnectors.Common
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        public static Type GetTypeErasure(Type type) {
-            if ( type.IsGenericType ) {
+        public static Type GetTypeErasure(Type type)
+        {
+            if (type.IsGenericType)
+            {
                 type = type.GetGenericTypeDefinition();
             }
             return type;
         }
-        
+
         /// <summary>
         /// Returns true iff t1 is a parent type of t2. Unlike
         /// Type.isAssignableFrom, this handles generic types as
@@ -87,14 +96,16 @@ namespace Org.IdentityConnectors.Common
         /// <param name="t2"></param>
         /// <returns></returns>
         public static bool IsParentTypeOf(Type t1,
-                                          Type t2) {
-            if (t2 == null) {
+                                          Type t2)
+        {
+            if (t2 == null)
+            {
                 return t1 == null;
             }
-            Type found = FindInHierarchyOf(t1,t2);
+            Type found = FindInHierarchyOf(t1, t2);
             return found != null;
-        }        
-        
+        }
+
         /// <summary>
         /// Finds t1 in the hierarchy of t2 or null if not found. The
         /// returned value will have generic parameters applied to it.
@@ -102,45 +113,56 @@ namespace Org.IdentityConnectors.Common
         /// <param name="t1"></param>
         /// <param name="t2"></param>
         /// <returns></returns>
-        public static Type FindInHierarchyOf(Type t1, Type t2) {
-            if (t2 == null) {
+        public static Type FindInHierarchyOf(Type t1, Type t2)
+        {
+            if (t2 == null)
+            {
                 return null;
             }
-            if ( EqualsIgnoreGeneric(t1,t2) ) {
+            if (EqualsIgnoreGeneric(t1, t2))
+            {
                 return t2;
             }
-            Type found1 = FindInHierarchyOf(t1,t2.BaseType);
-            if (found1 != null) {
+            Type found1 = FindInHierarchyOf(t1, t2.BaseType);
+            if (found1 != null)
+            {
                 return found1;
             }
-            foreach (Type inter in t2.GetInterfaces()) {
-                Type found2 = FindInHierarchyOf(t1,inter);
-                if (found2 != null) {
+            foreach (Type inter in t2.GetInterfaces())
+            {
+                Type found2 = FindInHierarchyOf(t1, inter);
+                if (found2 != null)
+                {
                     return found2;
                 }
             }
             return null;
         }
-        
+
         private static bool EqualsIgnoreGeneric(Type t1,
-                                            Type t2) {
-            if ( t1 == null || t2 == null ) {
+                                            Type t2)
+        {
+            if (t1 == null || t2 == null)
+            {
                 return t1 == null && t2 == null;
             }
-            if ( t1.IsGenericType ) {
+            if (t1.IsGenericType)
+            {
                 t1 = t1.GetGenericTypeDefinition();
             }
-            if ( t2.IsGenericType ) {
+            if (t2.IsGenericType)
+            {
                 t2 = t2.GetGenericTypeDefinition();
             }
             return t1.Equals(t2);
         }
-        
-        public static Type [] GetParameterTypes(MethodInfo method)
+
+        public static Type[] GetParameterTypes(MethodInfo method)
         {
-            ParameterInfo [] parameters = method.GetParameters();
-            Type [] rv = new Type[parameters.Length];
-            for (int i = 0; i < parameters.Length; i++) {
+            ParameterInfo[] parameters = method.GetParameters();
+            Type[] rv = new Type[parameters.Length];
+            for (int i = 0; i < parameters.Length; i++)
+            {
                 rv[i] = parameters[i].ParameterType;
             }
             return rv;

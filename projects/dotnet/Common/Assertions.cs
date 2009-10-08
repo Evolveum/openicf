@@ -29,37 +29,34 @@ namespace Org.IdentityConnectors.Common
     /// </summary>
     public static class Assertions
     {
-        /**
-         * Throws {@link NullPointerException} if the parameter <code>o</code>
-         * is <code>null</code>.
-         * 
-         * @param o
-         *            check if the object is <code>null</code>.
-         * @param param
-         *            name of the parameter to check for <code>null</code>.
-         * @throws NullPointerException
-         *             if <code>o</code> is <code>null</code> and constructs a
-         *             message with the name of the parameter.
-         */
-        public static void NullCheck(Object o, String param) {
+        /// <summary>
+        /// Throws <see cref="NullReferenceException" /> if the parameter <code>o</code>
+        /// is <code>null</code>.
+        /// </summary>
+        /// <param name="o">check if the object is <code>null</code>.</param>
+        /// <param name="param">name of the parameter to check for <code>null</code>.</param>
+        /// <exception cref="NullReferenceException">if <code>o</code> is <code>null</code> and constructs a
+        /// message with the name of the parameter.</exception>
+        public static void NullCheck(Object o, String param)
+        {
             String FORMAT = "Parameter '{0}' must not be null.";
-            if (o == null) {
+            if (o == null)
+            {
                 throw new ArgumentNullException(String.Format(FORMAT, param));
             }
         }
 
-        /**
-         * Throws {@link IllegalArgumentException} if the parameter <code>o</code>
-         * is <code>null</code> or blank.
-         * 
-         * @param o
-         *            value to test for blank.
-         * @param param
-         *            name of the parameter to check.
-         */
-        public static void BlankCheck(String o, String param) {
+        /// <summary>
+        /// Throws <see cref="ArgumentException" /> if the parameter <code>o</code>
+        /// is <code>null</code> or blank.
+        /// </summary>
+        /// <param name="o">value to test for blank.</param>
+        /// <param name="param">name of the parameter to check.</param>
+        public static void BlankCheck(String o, String param)
+        {
             String FORMAT = "Parameter '{0}' must not be blank.";
-            if (StringUtil.IsBlank(o)) {
+            if (StringUtil.IsBlank(o))
+            {
                 throw new ArgumentException(String.Format(FORMAT, param));
             }
         }

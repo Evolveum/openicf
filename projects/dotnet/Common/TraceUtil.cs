@@ -35,13 +35,14 @@ namespace Org.IdentityConnectors.Common
         /// </summary>
         /// <param name="msg">An optional error message to display in addition to the exception</param>
         /// <param name="e">The exception</param>
-        public static void TraceException(String msg, Exception e) {
+        public static void TraceException(String msg, Exception e)
+        {
             StringBuilder builder = new StringBuilder();
-            if ( msg != null )
+            if (msg != null)
             {
                 builder.AppendLine(msg);
             }
-            if ( e != null )
+            if (e != null)
             {
                 builder.AppendLine(e.ToString());
             }

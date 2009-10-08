@@ -37,50 +37,57 @@ namespace FrameworkTests
     /// </summary>
     [TestFixture]
     public class UpdateImplTests
-    {    
+    {
         [Test]
-        [ExpectedException(typeof(ArgumentNullException ))]
-        public void ValidateUidArg() {
-            UpdateImpl.ValidateInput(ObjectClass.ACCOUNT, null, new HashSet<ConnectorAttribute>(),true);
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void ValidateUidArg()
+        {
+            UpdateImpl.ValidateInput(ObjectClass.ACCOUNT, null, new HashSet<ConnectorAttribute>(), true);
         }
         [Test]
-        [ExpectedException(typeof(ArgumentNullException ))]
-        public void ValidateObjectClassArg() {
-            UpdateImpl.ValidateInput(null, new Uid("foo"), new HashSet<ConnectorAttribute>(),true);
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void ValidateObjectClassArg()
+        {
+            UpdateImpl.ValidateInput(null, new Uid("foo"), new HashSet<ConnectorAttribute>(), true);
         }
-        
+
         [Test]
-        [ExpectedException(typeof(ArgumentNullException ))]
-        public void ValidateAttrsArg() {
-            UpdateImpl.ValidateInput(ObjectClass.ACCOUNT, new Uid("foo"),null,true);
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void ValidateAttrsArg()
+        {
+            UpdateImpl.ValidateInput(ObjectClass.ACCOUNT, new Uid("foo"), null, true);
         }
-        
-        [Test]
-        [ExpectedException(typeof(ArgumentException ))]
-        public void ValidateUidAttribute() {
-            HashSet<ConnectorAttribute> attrs=new HashSet<ConnectorAttribute>();
-            attrs.Add(new Uid("foo"));
-            UpdateImpl.ValidateInput(ObjectClass.ACCOUNT, new Uid("foo"),attrs,true);
-        }
-        
-        [Test]
-        [ExpectedException(typeof(ArgumentException ))]
-        public void ValidateAddWithNullAttribute() {
-            ICollection<ConnectorAttribute> attrs = new HashSet<ConnectorAttribute>();
-            attrs.Add(ConnectorAttributeBuilder.Build("something"));
-            UpdateImpl.ValidateInput(ObjectClass.ACCOUNT, new Uid("foo"), attrs, true);        
-        }
-        
+
         [Test]
         [ExpectedException(typeof(ArgumentException))]
-        public void ValidateAttemptToAddName() {
+        public void ValidateUidAttribute()
+        {
+            HashSet<ConnectorAttribute> attrs = new HashSet<ConnectorAttribute>();
+            attrs.Add(new Uid("foo"));
+            UpdateImpl.ValidateInput(ObjectClass.ACCOUNT, new Uid("foo"), attrs, true);
+        }
+
+        [Test]
+        [ExpectedException(typeof(ArgumentException))]
+        public void ValidateAddWithNullAttribute()
+        {
+            ICollection<ConnectorAttribute> attrs = new HashSet<ConnectorAttribute>();
+            attrs.Add(ConnectorAttributeBuilder.Build("something"));
+            UpdateImpl.ValidateInput(ObjectClass.ACCOUNT, new Uid("foo"), attrs, true);
+        }
+
+        [Test]
+        [ExpectedException(typeof(ArgumentException))]
+        public void ValidateAttemptToAddName()
+        {
             ICollection<ConnectorAttribute> attrs = new HashSet<ConnectorAttribute>();
             attrs.Add(new Name("fadf"));
             UpdateImpl.ValidateInput(ObjectClass.ACCOUNT, new Uid("foo"), attrs, true);
         }
-    
+
         [Test]
-        public void ValidateAttemptToAddDeleteOperationalAttribute() {
+        public void ValidateAttemptToAddDeleteOperationalAttribute()
+        {
             // list of all the operational attributes..
             ICollection<ConnectorAttribute> list = new List<ConnectorAttribute>();
             list.Add(ConnectorAttributeBuilder.BuildEnabled(false));
@@ -88,43 +95,54 @@ namespace FrameworkTests
             list.Add(ConnectorAttributeBuilder.BuildCurrentPassword(newSecureString("fadsf")));
             list.Add(ConnectorAttributeBuilder.BuildPasswordExpirationDate(DateTime.Now));
             list.Add(ConnectorAttributeBuilder.BuildPassword(newSecureString("fadsf")));
-            foreach (ConnectorAttribute attr in list) {
+            foreach (ConnectorAttribute attr in list)
+            {
                 ICollection<ConnectorAttribute> attrs = new HashSet<ConnectorAttribute>();
                 attrs.Add(attr);
-                try {
+                try
+                {
                     UpdateImpl.ValidateInput(ObjectClass.ACCOUNT, new Uid("1"), attrs, true);
                     Assert.Fail("Failed: " + attr.Name);
-                } catch (ArgumentException) {
+                }
+                catch (ArgumentException)
+                {
                     // this is a good thing..
                 }
             }
         }
-        
-        private static SecureString newSecureString(string password) {
+
+        private static SecureString newSecureString(string password)
+        {
             SecureString rv = new SecureString();
-            foreach (char c in password.ToCharArray()) {
+            foreach (char c in password.ToCharArray())
+            {
                 rv.AppendChar(c);
             }
             return rv;
         }
-    
+
         /// <summary>
         /// Validate two collections are equal.  (Not fast but effective)
         /// </summary>
-        public static bool AreEqual(ICollection<ConnectorAttribute> arg1, 
-                                    ICollection<ConnectorAttribute> arg2) {
-            if (arg1.Count != arg2.Count) {
+        public static bool AreEqual(ICollection<ConnectorAttribute> arg1,
+                                    ICollection<ConnectorAttribute> arg2)
+        {
+            if (arg1.Count != arg2.Count)
+            {
                 return false;
             }
-            foreach (ConnectorAttribute attr in arg1) {
-                if (!arg2.Contains(attr)) {
+            foreach (ConnectorAttribute attr in arg1)
+            {
+                if (!arg2.Contains(attr))
+                {
                     return false;
                 }
             }
             return true;
         }
         [Test]
-        public void MergeAddAttribute() {
+        public void MergeAddAttribute()
+        {
             UpdateImpl up = new UpdateImpl(null, null);
             ICollection<ConnectorAttribute> actual;
             ICollection<ConnectorAttribute> baseAttrs = CollectionUtil.NewSet<ConnectorAttribute>();
@@ -133,13 +151,14 @@ namespace FrameworkTests
             // attempt to add a value to an attribute..
             ConnectorAttribute cattr = ConnectorAttributeBuilder.Build("abc", 2);
             changeset.Add(cattr);
-            expected.Add(ConnectorAttributeBuilder.Build("abc", 2));        
-            actual = up.Merge(changeset, baseAttrs,true);
+            expected.Add(ConnectorAttributeBuilder.Build("abc", 2));
+            actual = up.Merge(changeset, baseAttrs, true);
             Assert.IsTrue(AreEqual(expected, actual));
         }
-    
+
         [Test]
-        public void MergeAddToExistingAttribute() {
+        public void MergeAddToExistingAttribute()
+        {
             UpdateImpl up = new UpdateImpl(null, null);
             ICollection<ConnectorAttribute> actual;
             ICollection<ConnectorAttribute> baseAttrs = CollectionUtil.NewSet<ConnectorAttribute>();
@@ -150,13 +169,14 @@ namespace FrameworkTests
             ConnectorAttribute cattr = ConnectorAttributeBuilder.Build("abc", 2);
             baseAttrs.Add(battr);
             changeset.Add(cattr);
-            expected.Add(ConnectorAttributeBuilder.Build("abc", 1, 2));        
+            expected.Add(ConnectorAttributeBuilder.Build("abc", 1, 2));
             actual = up.Merge(changeset, baseAttrs, true);
             Assert.IsTrue(AreEqual(expected, actual));
         }
-        
+
         [Test]
-        public void MergeDeleteNonExistentAttribute() {
+        public void MergeDeleteNonExistentAttribute()
+        {
             UpdateImpl up = new UpdateImpl(null, null);
             ICollection<ConnectorAttribute> actual;
             ICollection<ConnectorAttribute> baseAttrs = CollectionUtil.NewSet<ConnectorAttribute>();
@@ -168,9 +188,10 @@ namespace FrameworkTests
             actual = up.Merge(changeset, baseAttrs, false);
             Assert.IsTrue(AreEqual(expected, actual));
         }
-    
+
         [Test]
-        public void MergeDeleteToExistingAttribute() {
+        public void MergeDeleteToExistingAttribute()
+        {
             UpdateImpl up = new UpdateImpl(null, null);
             ICollection<ConnectorAttribute> actual;
             ICollection<ConnectorAttribute> baseAttrs = CollectionUtil.NewSet<ConnectorAttribute>();
@@ -185,9 +206,10 @@ namespace FrameworkTests
             actual = up.Merge(changeset, baseAttrs, false);
             Assert.IsTrue(AreEqual(expected, actual));
         }
-    
+
         [Test]
-        public void MergeDeleteToExistingAttributeCompletely() {
+        public void MergeDeleteToExistingAttributeCompletely()
+        {
             UpdateImpl up = new UpdateImpl(null, null);
             ICollection<ConnectorAttribute> actual;
             ICollection<ConnectorAttribute> baseAttrs = CollectionUtil.NewSet<ConnectorAttribute>();
@@ -202,8 +224,5 @@ namespace FrameworkTests
             actual = up.Merge(changeset, baseAttrs, false);
             Assert.IsTrue(AreEqual(expected, actual));
         }
-            
-        
-        
     }
 }

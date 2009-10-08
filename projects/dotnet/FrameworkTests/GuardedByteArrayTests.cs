@@ -42,55 +42,63 @@ namespace FrameworkTests
             ss.AppendByte(0x01);
             ss.AppendByte(0x02);
             byte[] decrypted = DecryptToByteArray(ss);
-            Assert.AreEqual(new byte[] { 0x00, 0x01, 0x02} ,decrypted);
+            Assert.AreEqual(new byte[] { 0x00, 0x01, 0x02 }, decrypted);
             String hash = ss.GetBase64SHA1Hash();
             Assert.IsTrue(ss.VerifyBase64SHA1Hash(hash));
             ss.AppendByte(0x03);
             Assert.IsFalse(ss.VerifyBase64SHA1Hash(hash));
         }
         [Test]
-        public void TestRange() {
-    
-            for ( byte i = 0; i < 0xFF; i++) {
+        public void TestRange()
+        {
+
+            for (byte i = 0; i < 0xFF; i++)
+            {
                 byte expected = i;
                 GuardedByteArray gba = new GuardedByteArray();
                 gba = (GuardedByteArray)SerializerUtil.CloneObject(gba);
                 gba.AppendByte(i);
-                gba.Access(clearChars => {
-                        int v = (byte)clearChars[0];
-                        Assert.AreEqual(expected, v);
-                          });
-    
+                gba.Access(clearChars =>
+                {
+                    int v = (byte)clearChars[0];
+                    Assert.AreEqual(expected, v);
+                });
+
             }
         }
-        
+
         [Test]
-        public void TestEquals() {
+        public void TestEquals()
+        {
             GuardedByteArray arr1 = new GuardedByteArray();
             GuardedByteArray arr2 = new GuardedByteArray();
             Assert.AreEqual(arr1, arr2);
             arr2.AppendByte(0x02);
-            Assert.AreNotEqual(arr1,arr2);
+            Assert.AreNotEqual(arr1, arr2);
             arr1.AppendByte(0x02);
             Assert.AreEqual(arr1, arr2);
         }
-        
 
-        /**
-         * Highly insecure method! Do not do this in production
-         * code. This is only for test purposes
-         */
-        private byte[] DecryptToByteArray(GuardedByteArray str) {
+
+        /// <summary>
+        /// Highly insecure method! Do not do this in production
+        /// code.
+        /// </summary>
+        /// <remarks>
+        /// This is only for test purposes
+        /// </remarks>
+        private byte[] DecryptToByteArray(GuardedByteArray str)
+        {
             byte[] result = null;
             str.Access(
-                                            array=>
-                {
-                    result = new byte[array.Length];
-                    for ( int i = 0 ; i < array.Length; i++)
-                    {
-                        result[i] = array[i];
-                    }
-                });
+                                            array =>
+                                            {
+                                                result = new byte[array.Length];
+                                                for (int i = 0; i < array.Length; i++)
+                                                {
+                                                    result[i] = array[i];
+                                                }
+                                            });
             return result;
         }
     }

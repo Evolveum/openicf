@@ -50,121 +50,143 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
     /// <summary>
     /// Internal class, public only for unit tests
     /// </summary>
-    public class ConfigurationPropertyImpl : ConfigurationProperty {
-        
+    public class ConfigurationPropertyImpl : ConfigurationProperty
+    {
         private ICollection<SafeType<APIOperation>> _operations;
 
-        public ICollection<SafeType<APIOperation>> Operations {
-            get {
+        public ICollection<SafeType<APIOperation>> Operations
+        {
+            get
+            {
                 return _operations;
             }
-            set {
+            set
+            {
                 _operations = CollectionUtil.NewReadOnlySet(value);
             }
         }
-        
+
         public ConfigurationPropertiesImpl Parent { get; set; }
-        
+
         public int Order { get; set; }
-        
+
         public string Name { get; set; }
-        
+
         public string HelpMessageKey { get; set; }
-        
+
         public string DisplayMessageKey { get; set; }
-    
-        public string GetHelpMessage(string def) {
-            return FormatMessage(HelpMessageKey,def);
+
+        public string GetHelpMessage(string def)
+        {
+            return FormatMessage(HelpMessageKey, def);
         }
-    
-        public string GetDisplayName(string def) {
-            return FormatMessage(DisplayMessageKey,def);
+
+        public string GetDisplayName(string def)
+        {
+            return FormatMessage(DisplayMessageKey, def);
         }
-    
+
         public object Value { get; set; }
-    
+
         public Type ValueType { get; set; }
-        
+
         public bool IsConfidential { get; set; }
-        
+
         public bool IsRequired { get; set; }
 
         public override int GetHashCode()
         {
             return Name.GetHashCode();
         }
-        
-        public override bool Equals(Object o) {
+
+        public override bool Equals(Object o)
+        {
             ConfigurationPropertyImpl other = o as ConfigurationPropertyImpl;
-            if ( other != null ) {
-                if (!Name.Equals(other.Name)) {
+            if (other != null)
+            {
+                if (!Name.Equals(other.Name))
+                {
                     return false;
                 }
-                if (!CollectionUtil.Equals(Value,other.Value)) {
+                if (!CollectionUtil.Equals(Value, other.Value))
+                {
                     return false;
                 }
-                if (Order != other.Order) {
+                if (Order != other.Order)
+                {
                     return false;
                 }
-                if (!CollectionUtil.Equals(HelpMessageKey,other.HelpMessageKey)) {
+                if (!CollectionUtil.Equals(HelpMessageKey, other.HelpMessageKey))
+                {
                     return false;
                 }
-                if (!CollectionUtil.Equals(DisplayMessageKey,other.DisplayMessageKey)) {
+                if (!CollectionUtil.Equals(DisplayMessageKey, other.DisplayMessageKey))
+                {
                     return false;
                 }
-                if (IsConfidential != other.IsConfidential) {
+                if (IsConfidential != other.IsConfidential)
+                {
                     return false;
                 }
-                if (IsRequired != other.IsRequired) {
+                if (IsRequired != other.IsRequired)
+                {
                     return false;
                 }
-                if (!CollectionUtil.Equals(ValueType,other.ValueType)) {
+                if (!CollectionUtil.Equals(ValueType, other.ValueType))
+                {
                     return false;
                 }
-                if (!CollectionUtil.Equals(_operations,other._operations)) {
+                if (!CollectionUtil.Equals(_operations, other._operations))
+                {
                     return false;
                 }
-                
+
                 return true;
             }
             return false;
         }
-        private String FormatMessage(String key, String dflt, params object [] args) {
+        private String FormatMessage(String key, String dflt, params object[] args)
+        {
             APIConfigurationImpl apiConfig = Parent.Parent;
-            ConnectorMessages messages = 
+            ConnectorMessages messages =
                 apiConfig.ConnectorInfo.Messages;
             return messages.Format(key, dflt, args);
         }
     }
     #endregion
-    
+
     #region ConfigurationPropertiesImpl
     /// <summary>
     /// Internal class, public only for unit tests
     /// </summary>
-    public class ConfigurationPropertiesImpl : ConfigurationProperties {
+    public class ConfigurationPropertiesImpl : ConfigurationProperties
+    {
         //properties, sorted by "order"
         private IList<ConfigurationPropertyImpl> _properties;
         //property names, sorted by "order
         private IList<string> _propertyNames;
         private IDictionary<string, ConfigurationPropertyImpl> _propertiesByName;
-        
-        public IList<ConfigurationPropertyImpl> Properties {
-            get {
+
+        public IList<ConfigurationPropertyImpl> Properties
+        {
+            get
+            {
                 return _properties;
             }
-            set {
-                ConfigurationPropertyImpl [] arr =
+            set
+            {
+                ConfigurationPropertyImpl[] arr =
                     value == null ? new ConfigurationPropertyImpl[0] : value.ToArray();
-                
+
                 Array.Sort(arr,
-                           (p1,p2)=> {return p1.Order.CompareTo(p2.Order);});
-                _properties = 
+                           (p1, p2) => { return p1.Order.CompareTo(p2.Order); });
+                _properties =
                     CollectionUtil.NewReadOnlyList<ConfigurationPropertyImpl>(arr);
                 IList<string> propertyNames = new List<string>();
                 IDictionary<string, ConfigurationPropertyImpl> propertiesByName =
                     new Dictionary<string, ConfigurationPropertyImpl>();
-                foreach (ConfigurationPropertyImpl property in _properties) {
+                foreach (ConfigurationPropertyImpl property in _properties)
+                {
                     propertyNames.Add(property.Name);
                     propertiesByName[property.Name] = property;
                     property.Parent = this;
@@ -173,32 +195,39 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
                 _propertiesByName = CollectionUtil.AsReadOnlyDictionary(propertiesByName);
             }
         }
-        public ConfigurationProperty GetProperty(String name) {
-            return CollectionUtil.GetValue(_propertiesByName,name,null);
+        public ConfigurationProperty GetProperty(String name)
+        {
+            return CollectionUtil.GetValue(_propertiesByName, name, null);
         }
-        public IList<string> PropertyNames {
-            get {
+        public IList<string> PropertyNames
+        {
+            get
+            {
                 return _propertyNames;
             }
         }
         public APIConfigurationImpl Parent { get; set; }
-        public void SetPropertyValue(String name, object val) {
+        public void SetPropertyValue(String name, object val)
+        {
             ConfigurationProperty property = GetProperty(name);
-            if ( property == null ) {
-                String MSG = "Property '"+name+"' does not exist.";
+            if (property == null)
+            {
+                String MSG = "Property '" + name + "' does not exist.";
                 throw new ArgumentException(MSG);
             }
             property.Value = val;
         }
-        
+
         public override int GetHashCode()
         {
             return CollectionUtil.GetHashCode(_properties);
         }
-        
-        public override bool Equals(object o) {
+
+        public override bool Equals(object o)
+        {
             ConfigurationPropertiesImpl other = o as ConfigurationPropertiesImpl;
-            if ( other != null ) {
+            if (other != null)
+            {
                 return CollectionUtil.SetsEqual(_properties,
                                                 other._properties);
             }
@@ -206,117 +235,140 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
         }
     }
     #endregion
-    
+
     #region APIConfigurationImpl
     /// <summary>
     /// Internal class, public only for unit tests
     /// </summary>
-    public class APIConfigurationImpl : APIConfiguration {
-        
+    public class APIConfigurationImpl : APIConfiguration
+    {
         private ObjectPoolConfiguration _connectorPooling;
-        
+
         private ConfigurationPropertiesImpl _configurationProperties;
         private ICollection<SafeType<APIOperation>> _supportedOperations =
             CollectionUtil.NewReadOnlySet<SafeType<APIOperation>>(new SafeType<APIOperation>[0]);
-        
+
         private IDictionary<SafeType<APIOperation>, int> _timeoutMap =
             new Dictionary<SafeType<APIOperation>, int>();
-        
-        public ConfigurationProperties ConfigurationProperties { 
-            get {
+
+        public ConfigurationProperties ConfigurationProperties
+        {
+            get
+            {
                 return _configurationProperties;
             }
-            set {
-                if (_configurationProperties != null) {
+            set
+            {
+                if (_configurationProperties != null)
+                {
                     _configurationProperties.Parent = null;
                 }
                 _configurationProperties = (ConfigurationPropertiesImpl)value;
-                if (_configurationProperties != null) {
+                if (_configurationProperties != null)
+                {
                     _configurationProperties.Parent = this;
-                }  
+                }
             }
         }
-        public IDictionary<SafeType<APIOperation>, int> TimeoutMap {
-            get {
+        public IDictionary<SafeType<APIOperation>, int> TimeoutMap
+        {
+            get
+            {
                 return _timeoutMap;
             }
-            set {
+            set
+            {
                 _timeoutMap = value;
             }
         }
-        public bool IsConnectorPoolingSupported { get; set;}
-        public ObjectPoolConfiguration ConnectorPoolConfiguration 
-        { 
-            get {
-                if (_connectorPooling == null) {
+        public bool IsConnectorPoolingSupported { get; set; }
+        public ObjectPoolConfiguration ConnectorPoolConfiguration
+        {
+            get
+            {
+                if (_connectorPooling == null)
+                {
                     _connectorPooling = new ObjectPoolConfiguration();
                 }
                 return _connectorPooling;
             }
-            set {
+            set
+            {
                 _connectorPooling = value;
             }
         }
-        public ICollection<SafeType<APIOperation>> SupportedOperations {
-            get {
+        public ICollection<SafeType<APIOperation>> SupportedOperations
+        {
+            get
+            {
                 return _supportedOperations;
             }
-            set {
+            set
+            {
                 _supportedOperations = CollectionUtil.NewReadOnlySet<SafeType<APIOperation>>(value);
             }
         }
-        
-        public int GetTimeout(SafeType<APIOperation> operation) {
-            return CollectionUtil.GetValue(_timeoutMap,operation,
+
+        public int GetTimeout(SafeType<APIOperation> operation)
+        {
+            return CollectionUtil.GetValue(_timeoutMap, operation,
                                            APIConstants.NO_TIMEOUT);
         }
-        public void SetTimeout(SafeType<APIOperation> operation, int timeout) {
+        public void SetTimeout(SafeType<APIOperation> operation, int timeout)
+        {
             _timeoutMap[operation] = timeout;
         }
-        
+
         public AbstractConnectorInfo ConnectorInfo { get; set; }
-        
+
         public int ProducerBufferSize { get; set; }
-        public APIConfigurationImpl() {
+        public APIConfigurationImpl()
+        {
             ProducerBufferSize = 100;
         }
     }
     #endregion
-    
+
     #region AbstractConnectorInfo
     /// <summary>
     /// internal class, public only for unit tests
     /// </summary>
-    public class AbstractConnectorInfo : ConnectorInfo {
-        
+    public class AbstractConnectorInfo : ConnectorInfo
+    {
         private APIConfigurationImpl _defaultAPIConfiguration;
-        
-        
-        public string GetConnectorDisplayName() {
+
+
+        public string GetConnectorDisplayName()
+        {
             return Messages.Format(ConnectorDisplayNameKey,
-                                   ConnectorKey.ConnectorName);            
+                                   ConnectorKey.ConnectorName);
         }
-        
+
         public ConnectorKey ConnectorKey { get; set; }
-        
+
         public string ConnectorDisplayNameKey { get; set; }
-        
+
         public ConnectorMessages Messages { get; set; }
-        
-        public APIConfigurationImpl DefaultAPIConfiguration {
-            get {
+
+        public APIConfigurationImpl DefaultAPIConfiguration
+        {
+            get
+            {
                 return _defaultAPIConfiguration;
             }
-            set {
-                if ( value != null ) {
+            set
+            {
+                if (value != null)
+                {
                     value.ConnectorInfo = this;
                 }
                 _defaultAPIConfiguration = value;
             }
         }
 
-        public APIConfiguration CreateDefaultAPIConfiguration() {
-            APIConfigurationImpl rv = 
+        public APIConfiguration CreateDefaultAPIConfiguration()
+        {
+            APIConfigurationImpl rv =
             (APIConfigurationImpl)
             SerializerUtil.CloneObject(_defaultAPIConfiguration);
             rv.ConnectorInfo = this;
@@ -329,108 +381,131 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
     /// <summary>
     /// internal class, public only for unit tests
     /// </summary>
-    public class ConnectorMessagesImpl : ConnectorMessages {
-    
-        private IDictionary<CultureInfo,IDictionary<string,string>> 
-            _catalogs = new Dictionary<CultureInfo,IDictionary<String,String>>();
- 
-        public String Format(String key, String dflt, params object [] args) {
-            if ( key == null ) {
+    public class ConnectorMessagesImpl : ConnectorMessages
+    {
+        private IDictionary<CultureInfo, IDictionary<string, string>>
+            _catalogs = new Dictionary<CultureInfo, IDictionary<String, String>>();
+
+        public String Format(String key, String dflt, params object[] args)
+        {
+            if (key == null)
+            {
                 return dflt;
             }
             CultureInfo locale = CultureInfo.CurrentUICulture;
-            if ( locale == null ) {
+            if (locale == null)
+            {
                 locale = CultureInfo.CurrentCulture;
             }
-            if ( dflt == null ) {
+            if (dflt == null)
+            {
                 dflt = key;
             }
             CultureInfo foundCulture = locale;
             IDictionary<string, string>
-                catalog = CollectionUtil.GetValue(_catalogs,foundCulture,null);
+                catalog = CollectionUtil.GetValue(_catalogs, foundCulture, null);
             //check neutral culture
-            if ( catalog == null ) {
+            if (catalog == null)
+            {
                 foundCulture = foundCulture.Parent;
-                catalog = CollectionUtil.GetValue(_catalogs,foundCulture,null);
+                catalog = CollectionUtil.GetValue(_catalogs, foundCulture, null);
             }
             //check invariant culture
-            if ( catalog == null ) {
+            if (catalog == null)
+            {
                 foundCulture = foundCulture.Parent;
-                catalog = CollectionUtil.GetValue(_catalogs,foundCulture,null);
+                catalog = CollectionUtil.GetValue(_catalogs, foundCulture, null);
             }
             String message = null;
-            if ( catalog != null ) {
-                message = CollectionUtil.GetValue(catalog,key,null);
+            if (catalog != null)
+            {
+                message = CollectionUtil.GetValue(catalog, key, null);
             }
-            if ( message == null ) {
-                message = GetFrameworkMessage(locale,key);
+            if (message == null)
+            {
+                message = GetFrameworkMessage(locale, key);
             }
-            if ( message == null ) {
+            if (message == null)
+            {
                 return dflt;
             }
-            else {
+            else
+            {
                 //TODO: think more about this since the formatting
                 //is slightly different than Java
-                return String.Format(foundCulture,message,args);
+                return String.Format(foundCulture, message, args);
             }
         }
-        
+
         private String GetFrameworkMessage(CultureInfo culture, String key)
         {
             ResourceManager manager =
                 new ResourceManager("Org.IdentityConnectors.Resources",
                                     typeof(ConnectorMessagesImpl).Assembly);
-            String contents = (String)manager.GetObject(key,culture);
+            String contents = (String)manager.GetObject(key, culture);
             return contents;
         }
-        
-        public IDictionary<CultureInfo,IDictionary<string,string>> Catalogs {
-            get {
+
+        public IDictionary<CultureInfo, IDictionary<string, string>> Catalogs
+        {
+            get
+            {
                 return _catalogs;
             }
-            set {
-                if ( value == null ) {
-                    _catalogs = 
-                        new Dictionary<CultureInfo,IDictionary<string,string>>();
+            set
+            {
+                if (value == null)
+                {
+                    _catalogs =
+                        new Dictionary<CultureInfo, IDictionary<string, string>>();
                 }
-                else {
+                else
+                {
                     _catalogs = value;
                 }
             }
         }
     }
     #endregion
-    
+
     #region ConnectorInfoManagerFactoryImpl
     public sealed class ConnectorInfoManagerFactoryImpl :
-        ConnectorInfoManagerFactory {
-        private class RemoteManagerKey {
+        ConnectorInfoManagerFactory
+    {
+        private class RemoteManagerKey
+        {
             private readonly String _host;
             private readonly int _port;
-            
-            public RemoteManagerKey(RemoteFrameworkConnectionInfo info) {
+
+            public RemoteManagerKey(RemoteFrameworkConnectionInfo info)
+            {
                 _host = info.Host;
                 _port = info.Port;
             }
-            
-            public override bool Equals(Object o) {
-                if ( o is RemoteManagerKey ) {
+
+            public override bool Equals(Object o)
+            {
+                if (o is RemoteManagerKey)
+                {
                     RemoteManagerKey other = (RemoteManagerKey)o;
-                    if (!_host.Equals(other._host)) {
+                    if (!_host.Equals(other._host))
+                    {
                         return false;
                     }
-                    if (_port != other._port) {
+                    if (_port != other._port)
+                    {
                         return false;
                     }
                     return true;
                 }
                 return false;
             }
-            
-            public override int GetHashCode() {
-                return _host.GetHashCode()^_port;
+
+            public override int GetHashCode()
+            {
+                return _host.GetHashCode() ^ _port;
             }
-            
+
         }
 
         private Object LOCAL_LOCK = new Object();
@@ -438,62 +513,66 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
 
         private ConnectorInfoManager
             _localManagerCache;
-    
-        private IDictionary<RemoteManagerKey,RemoteConnectorInfoManagerImpl>
-        _remoteManagerCache = new Dictionary<RemoteManagerKey,RemoteConnectorInfoManagerImpl>();
-    
-        public ConnectorInfoManagerFactoryImpl() {
-            
+
+        private IDictionary<RemoteManagerKey, RemoteConnectorInfoManagerImpl>
+        _remoteManagerCache = new Dictionary<RemoteManagerKey, RemoteConnectorInfoManagerImpl>();
+
+        public ConnectorInfoManagerFactoryImpl()
+        {
+
         }
-        
-        
-        
-        public override void ClearRemoteCache() {
-            lock (REMOTE_LOCK) {
+
+        public override void ClearRemoteCache()
+        {
+            lock (REMOTE_LOCK)
+            {
                 _remoteManagerCache.Clear();
             }
         }
-        
-    
+
         public override ConnectorInfoManager GetLocalManager()
         {
-            lock (LOCAL_LOCK) {
+            lock (LOCAL_LOCK)
+            {
                 ConnectorInfoManager rv = _localManagerCache;
-                if ( rv == null ) {
+                if (rv == null)
+                {
                     rv = new LocalConnectorInfoManagerImpl();
                 }
                 _localManagerCache = rv;
-                return rv;    
+                return rv;
             }
         }
-        
+
         public override ConnectorInfoManager GetRemoteManager(RemoteFrameworkConnectionInfo info)
         {
             RemoteManagerKey key = new RemoteManagerKey(info);
-            lock (REMOTE_LOCK) {
-                RemoteConnectorInfoManagerImpl rv = CollectionUtil.GetValue(_remoteManagerCache,key,null);
-                if ( rv == null ) {
+            lock (REMOTE_LOCK)
+            {
+                RemoteConnectorInfoManagerImpl rv = CollectionUtil.GetValue(_remoteManagerCache, key, null);
+                if (rv == null)
+                {
                     rv = new RemoteConnectorInfoManagerImpl(info);
                 }
                 _remoteManagerCache[key] = rv;
                 return rv.Derive(info);
             }
         }
-    
+
     }
     #endregion
 
     #region AbstractConnectorFacade
-    internal abstract class AbstractConnectorFacade : ConnectorFacade {
-
+    internal abstract class AbstractConnectorFacade : ConnectorFacade
+    {
         private readonly APIConfigurationImpl _configuration;
-        
-    
-        /**
-         * Builds up the maps of supported operations and calls.
-         */
-        public AbstractConnectorFacade(APIConfigurationImpl configuration)  {
-            Assertions.NullCheck(configuration,"configuration");
+
+        /// <summary>
+        /// Builds up the maps of supported operations and calls.
+        /// </summary>
+        public AbstractConnectorFacade(APIConfigurationImpl configuration)
+        {
+            Assertions.NullCheck(configuration, "configuration");
             //clone in case application tries to modify
             //after the fact. this is necessary to
             //ensure thread-safety of a ConnectorFacade
@@ -501,112 +580,94 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
             //pool, so it is important that it not be modified.
             _configuration = (APIConfigurationImpl)SerializerUtil.CloneObject(configuration);
             //parent ref not included in the clone
-            _configuration.ConnectorInfo=(configuration.ConnectorInfo);
+            _configuration.ConnectorInfo = (configuration.ConnectorInfo);
         }
-    
-        /**
-         * Return an instance of an API operation.
-         * 
-         * @return <code>null</code> if the operation is not support otherwise
-         *         return an instance of the operation.
-         * @see com.sun.openconnectors.framework.api.ConnectorFacade#getOperation(java.lang.Class)
-         */
-        public APIOperation GetOperation(SafeType<APIOperation> api) {
-            if (!SupportedOperations.Contains(api)) {
+
+        /// <summary>
+        /// Return an instance of an API operation.
+        /// </summary>
+        /// <returns>
+        /// <code>null</code> if the operation is not support otherwise
+        /// return an instance of the operation.</returns>
+        /// <seealso cref="Org.IdentityConnectors.Framework.Api.ConnectorFacade.GetOperation(SafeType{APIOperation})" />
+        public APIOperation GetOperation(SafeType<APIOperation> api)
+        {
+            if (!SupportedOperations.Contains(api))
+            {
                 return null;
             }
             return GetOperationImplementation(api);
         }
-    
-        /**
-         * {@inheritDoc}
-         */
-        public ICollection<SafeType<APIOperation>> SupportedOperations {
-            get {
+
+        public ICollection<SafeType<APIOperation>> SupportedOperations
+        {
+            get
+            {
                 return _configuration.SupportedOperations;
             }
         }
-    
+
         // =======================================================================
         // Operation API Methods
         // =======================================================================
-        /**
-         * {@inheritDoc}
-         */
-        public Schema Schema() {
-            return ((SchemaApiOp) this.GetOperationCheckSupported(SafeType<APIOperation>.Get<SchemaApiOp>()))
+        public Schema Schema()
+        {
+            return ((SchemaApiOp)this.GetOperationCheckSupported(SafeType<APIOperation>.Get<SchemaApiOp>()))
                     .Schema();
         }
-    
-        /**
-         * {@inheritDoc}
-         */
-        public Uid Create(ObjectClass oclass, ICollection<ConnectorAttribute> attrs, OperationOptions options) {
-            CreateApiOp op = ((CreateApiOp) GetOperationCheckSupported(SafeType<APIOperation>.Get<CreateApiOp>()));
-            return op.Create(oclass,attrs,options);
+
+        public Uid Create(ObjectClass oclass, ICollection<ConnectorAttribute> attrs, OperationOptions options)
+        {
+            CreateApiOp op = ((CreateApiOp)GetOperationCheckSupported(SafeType<APIOperation>.Get<CreateApiOp>()));
+            return op.Create(oclass, attrs, options);
         }
-    
-        /**
-         * {@inheritDoc}
-         */
-        public void Delete(ObjectClass objClass, Uid uid, OperationOptions options) {
-            ((DeleteApiOp) 
+
+        public void Delete(ObjectClass objClass, Uid uid, OperationOptions options)
+        {
+            ((DeleteApiOp)
              this.GetOperationCheckSupported(SafeType<APIOperation>.Get<DeleteApiOp>()))
                 .Delete(objClass, uid, options);
         }
-    
-        /**
-         * {@inheritDoc}
-         */
-        public void Search(ObjectClass oclass,Filter filter, ResultsHandler handler, OperationOptions options) {
-            ((SearchApiOp) this.GetOperationCheckSupported(SafeType<APIOperation>.Get<SearchApiOp>())).Search(
-                    oclass,filter, handler, options);
+
+        public void Search(ObjectClass oclass, Filter filter, ResultsHandler handler, OperationOptions options)
+        {
+            ((SearchApiOp)this.GetOperationCheckSupported(SafeType<APIOperation>.Get<SearchApiOp>())).Search(
+                    oclass, filter, handler, options);
         }
-    
-        /**
-         * {@inheritDoc}
-         */
-        public Uid Update(ObjectClass objclass, Uid uid, ICollection<ConnectorAttribute> attrs, OperationOptions options) {
-            return ((UpdateApiOp) this.GetOperationCheckSupported(SafeType<APIOperation>.Get<UpdateApiOp>()))
+
+        public Uid Update(ObjectClass objclass, Uid uid, ICollection<ConnectorAttribute> attrs, OperationOptions options)
+        {
+            return ((UpdateApiOp)this.GetOperationCheckSupported(SafeType<APIOperation>.Get<UpdateApiOp>()))
                     .Update(objclass, uid, attrs, options);
         }
-        
-        /**
-         * {@inheritDoc}
-         */
+
         public Uid AddAttributeValues(
                 ObjectClass objclass,
                 Uid uid,
                 ICollection<ConnectorAttribute> attrs,
-                OperationOptions options) {
-            return ((UpdateApiOp) this.GetOperationCheckSupported(SafeType<APIOperation>.Get<UpdateApiOp>()))
+                OperationOptions options)
+        {
+            return ((UpdateApiOp)this.GetOperationCheckSupported(SafeType<APIOperation>.Get<UpdateApiOp>()))
                 .AddAttributeValues(objclass, uid, attrs, options);
         }
-        
-        /**
-         * {@inheritDoc}
-         */
+
         public Uid RemoveAttributeValues(
                 ObjectClass objclass,
                 Uid uid,
                 ICollection<ConnectorAttribute> attrs,
-                OperationOptions options) {
-            return ((UpdateApiOp) this.GetOperationCheckSupported(SafeType<APIOperation>.Get<UpdateApiOp>()))
+                OperationOptions options)
+        {
+            return ((UpdateApiOp)this.GetOperationCheckSupported(SafeType<APIOperation>.Get<UpdateApiOp>()))
                 .RemoveAttributeValues(objclass, uid, attrs, options);
         }
-        
-        /**
-         * {@inheritDoc}
-         */
-        public Uid Authenticate(ObjectClass objectClass,String username, GuardedString password, OperationOptions options) {
-            return ((AuthenticationApiOp) this
+
+        public Uid Authenticate(ObjectClass objectClass, String username, GuardedString password, OperationOptions options)
+        {
+            return ((AuthenticationApiOp)this
              .GetOperationCheckSupported(SafeType<APIOperation>.Get<AuthenticationApiOp>())).Authenticate(
-                    objectClass,username, password, options);
+                    objectClass, username, password, options);
         }
 
-        /**
-         * {@inheritDoc}
-         */
         public Uid ResolveUsername(ObjectClass objectClass, String username, OperationOptions options)
         {
             return ((ResolveUsernameApiOp)this
@@ -614,257 +675,280 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
                     objectClass, username, options);
         }
 
-        /**
-         * {@inheritDoc}
-         */
-        public ConnectorObject GetObject(ObjectClass objClass, Uid uid, OperationOptions options) {
-            return ((GetApiOp) this.GetOperationCheckSupported(SafeType<APIOperation>.Get<GetApiOp>()))
+        public ConnectorObject GetObject(ObjectClass objClass, Uid uid, OperationOptions options)
+        {
+            return ((GetApiOp)this.GetOperationCheckSupported(SafeType<APIOperation>.Get<GetApiOp>()))
                     .GetObject(objClass, uid, options);
         }
-        /**
-         * {@inheritDoc}
-         */
+
         public Object RunScriptOnConnector(ScriptContext request,
-                OperationOptions options) {
-            return ((ScriptOnConnectorApiOp) this
+                OperationOptions options)
+        {
+            return ((ScriptOnConnectorApiOp)this
                     .GetOperationCheckSupported(SafeType<APIOperation>.Get<ScriptOnConnectorApiOp>()))
-                    .RunScriptOnConnector(request, options);        
+                    .RunScriptOnConnector(request, options);
         }
-        
-        /**
-         * {@inheritDoc}
-         */
+
         public Object RunScriptOnResource(ScriptContext request,
-                OperationOptions options) {
-            return ((ScriptOnResourceApiOp) this
+                OperationOptions options)
+        {
+            return ((ScriptOnResourceApiOp)this
                     .GetOperationCheckSupported(SafeType<APIOperation>.Get<ScriptOnResourceApiOp>()))
-                    .RunScriptOnResource(request, options);        
+                    .RunScriptOnResource(request, options);
         }
-    
-        /**
-         * {@inheritDoc}
-         */
-        public void Test() {
-            ((TestApiOp) this.GetOperationCheckSupported(SafeType<APIOperation>.Get<TestApiOp>())).Test();
+
+        public void Test()
+        {
+            ((TestApiOp)this.GetOperationCheckSupported(SafeType<APIOperation>.Get<TestApiOp>())).Test();
         }
-    
-        /**
-         * {@inheritDoc}
-         */
-        public void Validate() {
-            ((ValidateApiOp) this.GetOperationCheckSupported(SafeType<APIOperation>.Get<ValidateApiOp>())).Validate();
+
+        public void Validate()
+        {
+            ((ValidateApiOp)this.GetOperationCheckSupported(SafeType<APIOperation>.Get<ValidateApiOp>())).Validate();
         }
-        
+
         public void Sync(ObjectClass objClass, SyncToken token,
                 SyncResultsHandler handler,
-                OperationOptions options) {
+                OperationOptions options)
+        {
             ((SyncApiOp)this.GetOperationCheckSupported(SafeType<APIOperation>.Get<SyncApiOp>()))
             .Sync(objClass, token, handler, options);
         }
-        
-        public SyncToken GetLatestSyncToken(ObjectClass objectClass) {
+
+        public SyncToken GetLatestSyncToken(ObjectClass objectClass)
+        {
             return ((SyncApiOp)this.GetOperationCheckSupported(SafeType<APIOperation>.Get<SyncApiOp>()))
             .GetLatestSyncToken(objectClass);
         }
-        
-        private APIOperation GetOperationCheckSupported(SafeType<APIOperation> api) {
+
+        private APIOperation GetOperationCheckSupported(SafeType<APIOperation> api)
+        {
             // check if this operation is supported.
-            if (!SupportedOperations.Contains(api)) {
+            if (!SupportedOperations.Contains(api))
+            {
                 String MSG = "Operation ''{0}'' not supported.";
                 String str = String.Format(MSG, api);
                 throw new InvalidOperationException(str);
             }
             return GetOperationImplementation(api);
         }
-        
-        /**
-         * Gets the implementation of the given operation
-         * @param api The operation to implement.
-         * @return The implementation
-         */
+
+        /// <summary>
+        /// Gets the implementation of the given operation
+        /// </summary>
+        /// <param name="api">The operation to implement.</param>
+        /// <returns>The implementation</returns>
         protected abstract APIOperation GetOperationImplementation(SafeType<APIOperation> api);
-    
-        protected APIConfigurationImpl GetAPIConfiguration() {
+
+        protected APIConfigurationImpl GetAPIConfiguration()
+        {
             return _configuration;
         }
-        
-        /**
-         * Creates a new {@link APIOperation} proxy given a handler.
-         */
-        protected APIOperation NewAPIOperationProxy(SafeType<APIOperation> api, InvocationHandler handler) {
-            return (APIOperation) Proxy.NewProxyInstance(api.RawType, handler);
+
+        /// <summary>
+        /// Creates a new <see cref="APIOperation" /> proxy given a handler.
+        /// </summary>
+        protected APIOperation NewAPIOperationProxy(SafeType<APIOperation> api, InvocationHandler handler)
+        {
+            return (APIOperation)Proxy.NewProxyInstance(api.RawType, handler);
         }
 
         private static bool LOGGINGPROXY_ENABLED;
-        static AbstractConnectorFacade() {
+        static AbstractConnectorFacade()
+        {
             string enabled = System.Configuration.
                 ConfigurationManager.AppSettings.Get("logging.proxy");
-            LOGGINGPROXY_ENABLED = StringUtil.IsTrue(enabled);            
+            LOGGINGPROXY_ENABLED = StringUtil.IsTrue(enabled);
         }
-        
-        protected APIOperation CreateLoggingProxy(SafeType<APIOperation> api, APIOperation target) {
+
+        protected APIOperation CreateLoggingProxy(SafeType<APIOperation> api, APIOperation target)
+        {
             APIOperation ret = target;
-            if (LOGGINGPROXY_ENABLED) {
-                LoggingProxy logging = new LoggingProxy(api, target); 
+            if (LOGGINGPROXY_ENABLED)
+            {
+                LoggingProxy logging = new LoggingProxy(api, target);
                 ret = NewAPIOperationProxy(api, logging);
             }
             return ret;
         }
     }
     #endregion
-    
+
     #region ConnectorFacadeFactoryImpl
-    public class ConnectorFacadeFactoryImpl : ConnectorFacadeFactory {
-    
-    
-    
-    
-        /**
-         * {@inheritDoc}
-         */
-        public override ConnectorFacade NewInstance(APIConfiguration config) {
+    public class ConnectorFacadeFactoryImpl : ConnectorFacadeFactory
+    {
+        public override ConnectorFacade NewInstance(APIConfiguration config)
+        {
             ConnectorFacade ret = null;
-            APIConfigurationImpl impl = (APIConfigurationImpl) config;
+            APIConfigurationImpl impl = (APIConfigurationImpl)config;
             AbstractConnectorInfo connectorInfo = impl.ConnectorInfo;
-            if ( connectorInfo is LocalConnectorInfoImpl ) {
+            if (connectorInfo is LocalConnectorInfoImpl)
+            {
                 LocalConnectorInfoImpl localInfo =
                     (LocalConnectorInfoImpl)connectorInfo;
                 // create a new Provisioner..
-                ret = new LocalConnectorFacadeImpl(localInfo,impl);
+                ret = new LocalConnectorFacadeImpl(localInfo, impl);
             }
-            else {
+            else
+            {
                 ret = new RemoteConnectorFacadeImpl(impl);
             }
             return ret;
         }
-    
-        
-        /**
-         * Dispose of all object pools and other resources associated with this
-         * class.
-         */
-        public override void Dispose() {
+
+
+        /// <summary>
+        /// Dispose of all object pools and other resources associated with this
+        /// class.
+        /// </summary>
+        public override void Dispose()
+        {
             ConnectorPoolManager.Dispose();
         }
-    
+
     }
     #endregion
 
     #region ObjectStreamHandler
-    internal interface ObjectStreamHandler {
+    internal interface ObjectStreamHandler
+    {
         bool Handle(Object obj);
     }
     #endregion
-    
+
     #region StreamHandlerUtil
-    internal static class StreamHandlerUtil {
-        
-       /**
-        * Adapts from a ObjectStreamHandler to a ResultsHandler
-        */
-       private class ResultsHandlerAdapter {
-           private readonly ObjectStreamHandler _target;
-           public ResultsHandlerAdapter(ObjectStreamHandler target) {
-               _target = target;
-           }
-           public bool Handle(ConnectorObject obj) {
-               return _target.Handle(obj);
-           }
-       }
-       
-       /**
-        * Adapts from a ObjectStreamHandler to a SyncResultsHandler
-        */
-       private class SyncResultsHandlerAdapter {
-           private readonly ObjectStreamHandler _target;
-           public SyncResultsHandlerAdapter(ObjectStreamHandler target) {
-               _target = target;
-           }
-           public bool Handle(SyncDelta obj) {
-               return _target.Handle(obj);
-           }
-       }
-       
-       /**
-        * Adapts from a ObjectStreamHandler to a SyncResultsHandler
-        */
-       private class ObjectStreamHandlerAdapter : ObjectStreamHandler {
-           private readonly Type _targetInterface;
-           private readonly Object _target;
-           public ObjectStreamHandlerAdapter(Type targetInterface, Object target) {
-               Assertions.NullCheck(targetInterface, "targetInterface");
-               Assertions.NullCheck(target, "target");
-               if (!targetInterface.IsAssignableFrom(target.GetType())) {
-                   throw new ArgumentException("Target" +targetInterface+" "+target);
-               }
-               if (!IsAdaptableToObjectStreamHandler(targetInterface)) {
-                   throw new ArgumentException("Target interface not supported: "+targetInterface);
-               }
-               _targetInterface = targetInterface;
-               _target = target;
-           }
-           public bool Handle(Object obj) {
-               if (_targetInterface.Equals( typeof(ResultsHandler) )) {
-                   return ((ResultsHandler)_target)((ConnectorObject)obj);
-               }
-               else if (_targetInterface.Equals(typeof(SyncResultsHandler))) {
-                   return ((SyncResultsHandler)_target)((SyncDelta)obj);
-               }
-               else {
-                   throw new InvalidOperationException("Unhandled case: "+_targetInterface);
-               }
-           }
-       }
-        
-       public static bool IsAdaptableToObjectStreamHandler(Type clazz) {
-           return ( typeof(ResultsHandler).IsAssignableFrom(clazz) ||
-                   typeof(SyncResultsHandler).IsAssignableFrom(clazz));
-       }
-       
-       public static ObjectStreamHandler AdaptToObjectStreamHandler(Type interfaceType,
-               Object target) {
-           return new ObjectStreamHandlerAdapter(interfaceType,target);
-       }
-       public static Object AdaptFromObjectStreamHandler(Type interfaceType,
-               ObjectStreamHandler target) {
-           if (interfaceType.Equals( typeof(ResultsHandler) ) ){
-               return new ResultsHandler(new ResultsHandlerAdapter(target).Handle);
-           }
-           else if (interfaceType.Equals( typeof(SyncResultsHandler) ) ) {
-               return new SyncResultsHandler(new SyncResultsHandlerAdapter(target).Handle);
-           }
-           else {
-               throw new InvalidOperationException("Unhandled case: "+interfaceType);
-           }       
-       }
-       
+    internal static class StreamHandlerUtil
+    {
+        /// <summary>
+        /// Adapts from a ObjectStreamHandler to a ResultsHandler
+        /// </summary>
+        private class ResultsHandlerAdapter
+        {
+            private readonly ObjectStreamHandler _target;
+            public ResultsHandlerAdapter(ObjectStreamHandler target)
+            {
+                _target = target;
+            }
+            public bool Handle(ConnectorObject obj)
+            {
+                return _target.Handle(obj);
+            }
+        }
+
+        /// <summary>
+        /// Adapts from a ObjectStreamHandler to a SyncResultsHandler
+        /// </summary>
+        private class SyncResultsHandlerAdapter
+        {
+            private readonly ObjectStreamHandler _target;
+            public SyncResultsHandlerAdapter(ObjectStreamHandler target)
+            {
+                _target = target;
+            }
+            public bool Handle(SyncDelta obj)
+            {
+                return _target.Handle(obj);
+            }
+        }
+
+        /// <summary>
+        /// Adapts from a ObjectStreamHandler to a SyncResultsHandler
+        /// </summary>
+        private class ObjectStreamHandlerAdapter : ObjectStreamHandler
+        {
+            private readonly Type _targetInterface;
+            private readonly Object _target;
+            public ObjectStreamHandlerAdapter(Type targetInterface, Object target)
+            {
+                Assertions.NullCheck(targetInterface, "targetInterface");
+                Assertions.NullCheck(target, "target");
+                if (!targetInterface.IsAssignableFrom(target.GetType()))
+                {
+                    throw new ArgumentException("Target" + targetInterface + " " + target);
+                }
+                if (!IsAdaptableToObjectStreamHandler(targetInterface))
+                {
+                    throw new ArgumentException("Target interface not supported: " + targetInterface);
+                }
+                _targetInterface = targetInterface;
+                _target = target;
+            }
+            public bool Handle(Object obj)
+            {
+                if (_targetInterface.Equals(typeof(ResultsHandler)))
+                {
+                    return ((ResultsHandler)_target)((ConnectorObject)obj);
+                }
+                else if (_targetInterface.Equals(typeof(SyncResultsHandler)))
+                {
+                    return ((SyncResultsHandler)_target)((SyncDelta)obj);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Unhandled case: " + _targetInterface);
+                }
+            }
+        }
+
+        public static bool IsAdaptableToObjectStreamHandler(Type clazz)
+        {
+            return (typeof(ResultsHandler).IsAssignableFrom(clazz) ||
+                    typeof(SyncResultsHandler).IsAssignableFrom(clazz));
+        }
+
+        public static ObjectStreamHandler AdaptToObjectStreamHandler(Type interfaceType,
+                Object target)
+        {
+            return new ObjectStreamHandlerAdapter(interfaceType, target);
+        }
+        public static Object AdaptFromObjectStreamHandler(Type interfaceType,
+                ObjectStreamHandler target)
+        {
+            if (interfaceType.Equals(typeof(ResultsHandler)))
+            {
+                return new ResultsHandler(new ResultsHandlerAdapter(target).Handle);
+            }
+            else if (interfaceType.Equals(typeof(SyncResultsHandler)))
+            {
+                return new SyncResultsHandler(new SyncResultsHandlerAdapter(target).Handle);
+            }
+            else
+            {
+                throw new InvalidOperationException("Unhandled case: " + interfaceType);
+            }
+        }
     }
     #endregion
-    
+
     #region LoggingProxy
-    public class LoggingProxy : InvocationHandler {
-        
+    public class LoggingProxy : InvocationHandler
+    {
         private readonly SafeType<APIOperation> _op;
         private readonly object _target;
-        
-        public LoggingProxy(SafeType<APIOperation> api, object target) {
+
+        public LoggingProxy(SafeType<APIOperation> api, object target)
+        {
             _op = api;
             _target = target;
         }
         /// <summary>
         /// Log all operations.
         /// </summary>
-        public Object Invoke(Object proxy, MethodInfo method, Object [] args) {
+        public Object Invoke(Object proxy, MethodInfo method, Object[] args)
+        {
             //do not proxy equals, hashCode, toString
-            if (method.DeclaringType.Equals(typeof(object))) {
+            if (method.DeclaringType.Equals(typeof(object)))
+            {
                 return method.Invoke(this, args);
             }
             StringBuilder bld = new StringBuilder();
             bld.Append("Enter: ");
             AddMethodName(bld, method);
             bld.Append('(');
-            for (int i=0; args != null && i < args.Length; i++) {
-                if (i != 0) {
+            for (int i = 0; args != null && i < args.Length; i++)
+            {
+                if (i != 0)
+                {
                     bld.Append(", ");
                 }
                 bld.Append('{').Append(i).Append('}');
@@ -873,7 +957,8 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
             // write out trace header
             Trace.TraceInformation(bld.ToString(), args);
             // invoke the method
-            try {
+            try
+            {
                 object ret = method.Invoke(_target, args);
                 // clear out buffer.
                 bld.Length = 0;
@@ -882,19 +967,21 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
                 bld.Append("({0})");
                 Trace.TraceInformation(bld.ToString(), ret);
                 return ret;
-            } catch (TargetInvocationException e) {
+            }
+            catch (TargetInvocationException e)
+            {
                 Exception root = e.InnerException;
-                ExceptionUtil.PreserveStackTrace( root );
+                ExceptionUtil.PreserveStackTrace(root);
                 throw root;
             }
         }
-        
-        private void AddMethodName(StringBuilder bld, MethodInfo method) {
+
+        private void AddMethodName(StringBuilder bld, MethodInfo method)
+        {
             bld.Append(_op.RawType.Name);
             bld.Append('.');
             bld.Append(method.Name);
         }
     }
     #endregion
-
 }

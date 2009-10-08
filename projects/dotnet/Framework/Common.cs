@@ -31,7 +31,8 @@ using Org.IdentityConnectors.Framework.Spi.Operations;
 using Org.IdentityConnectors.Framework.Common.Objects;
 namespace Org.IdentityConnectors.Framework.Common
 {
-    internal static class FrameworkInternalBridge {
+    internal static class FrameworkInternalBridge
+    {
         private static readonly Object LOCK = new Object();
         private static Assembly _assembly = null;
         /// <summary>
@@ -39,59 +40,64 @@ namespace Org.IdentityConnectors.Framework.Common
         /// </summary>
         /// <param name="typeName"></param>
         /// <returns></returns>
-        public static SafeType<T> LoadType<T>(String typeName) where T : class {
-            
+        public static SafeType<T> LoadType<T>(String typeName) where T : class
+        {
+
             Assembly assembly;
-            lock(LOCK) {                
-                if (_assembly == null) {
+            lock (LOCK)
+            {
+                if (_assembly == null)
+                {
                     AssemblyName assemName = new AssemblyName();
                     assemName.Name = "FrameworkInternal";
                     _assembly = Assembly.Load(assemName);
                 }
                 assembly = _assembly;
             }
-            
-            return SafeType<T>.ForRawType(assembly.GetType(typeName,true));
-            
+
+            return SafeType<T>.ForRawType(assembly.GetType(typeName, true));
+
         }
     }
-    
-    public static class FrameworkUtil {
-        private static readonly IDictionary<SafeType<SPIOperation>,SafeType<APIOperation>> SPI_TO_API;
+
+    public static class FrameworkUtil
+    {
+        private static readonly IDictionary<SafeType<SPIOperation>, SafeType<APIOperation>> SPI_TO_API;
         private static readonly ICollection<Type> CONFIG_SUPPORTED_TYPES;
         private static readonly ICollection<Type> ATTR_SUPPORTED_TYPES;
 
-        static FrameworkUtil() {
-            IDictionary<SafeType<SPIOperation>,SafeType<APIOperation>> temp =
-                new Dictionary<SafeType<SPIOperation>,SafeType<APIOperation>>();
-            temp[SafeType<SPIOperation>.Get<AuthenticateOp>()]=
+        static FrameworkUtil()
+        {
+            IDictionary<SafeType<SPIOperation>, SafeType<APIOperation>> temp =
+                new Dictionary<SafeType<SPIOperation>, SafeType<APIOperation>>();
+            temp[SafeType<SPIOperation>.Get<AuthenticateOp>()] =
                 SafeType<APIOperation>.Get<AuthenticationApiOp>();
             temp[SafeType<SPIOperation>.Get<ResolveUsernameOp>()] =
                 SafeType<APIOperation>.Get<ResolveUsernameApiOp>();
             temp[SafeType<SPIOperation>.Get<CreateOp>()] =
                 SafeType<APIOperation>.Get<CreateApiOp>();
-            temp[SafeType<SPIOperation>.Get<DeleteOp>()]=
+            temp[SafeType<SPIOperation>.Get<DeleteOp>()] =
                 SafeType<APIOperation>.Get<DeleteApiOp>();
-            temp[SafeType<SPIOperation>.ForRawType(typeof(SearchOp<>))]=
+            temp[SafeType<SPIOperation>.ForRawType(typeof(SearchOp<>))] =
                 SafeType<APIOperation>.Get<SearchApiOp>();
-            temp[SafeType<SPIOperation>.Get<UpdateOp>()]=
+            temp[SafeType<SPIOperation>.Get<UpdateOp>()] =
                 SafeType<APIOperation>.Get<UpdateApiOp>();
-            temp[SafeType<SPIOperation>.Get<UpdateAttributeValuesOp>()]=
+            temp[SafeType<SPIOperation>.Get<UpdateAttributeValuesOp>()] =
                 SafeType<APIOperation>.Get<UpdateApiOp>();
-            temp[SafeType<SPIOperation>.Get<SchemaOp>()]=
+            temp[SafeType<SPIOperation>.Get<SchemaOp>()] =
                 SafeType<APIOperation>.Get<SchemaApiOp>();
-            temp[SafeType<SPIOperation>.Get<TestOp>()]=
+            temp[SafeType<SPIOperation>.Get<TestOp>()] =
                 SafeType<APIOperation>.Get<TestApiOp>();
-            temp[SafeType<SPIOperation>.Get<ScriptOnConnectorOp>()]=
+            temp[SafeType<SPIOperation>.Get<ScriptOnConnectorOp>()] =
                 SafeType<APIOperation>.Get<ScriptOnConnectorApiOp>();
-            temp[SafeType<SPIOperation>.Get<ScriptOnResourceOp>()]=
+            temp[SafeType<SPIOperation>.Get<ScriptOnResourceOp>()] =
                 SafeType<APIOperation>.Get<ScriptOnResourceApiOp>();
-            temp[SafeType<SPIOperation>.Get<SyncOp>()]=
+            temp[SafeType<SPIOperation>.Get<SyncOp>()] =
                 SafeType<APIOperation>.Get<SyncApiOp>();
             SPI_TO_API = CollectionUtil.NewReadOnlyDictionary(temp);
-            
+
             CONFIG_SUPPORTED_TYPES = CollectionUtil.NewReadOnlySet<Type>
-            ( 
+            (
                 typeof(string),
                 typeof(long),
                 typeof(long?),
@@ -112,7 +118,7 @@ namespace Org.IdentityConnectors.Framework.Common
                 typeof(Script)
             );
             ATTR_SUPPORTED_TYPES = CollectionUtil.NewReadOnlySet<Type>
-            ( 
+            (
                 typeof(string),
                 typeof(long),
                 typeof(long?),
@@ -132,65 +138,120 @@ namespace Org.IdentityConnectors.Framework.Common
                 typeof(GuardedByteArray),
                 typeof(GuardedString)
             );
-    
+
         }
-        
-        
-        /**
-         * Determines if the class is a supported attribute type. If not it throws
-         * an {@link IllegalArgumentException}.
-         * 
-         * <ul>
-         * <li>string</li>
-         * <li>long</li>
-         * <li>long?</li>
-         * <li>char</li>
-         * <li>char?</li>
-         * <li>double</li>
-         * <li>double?</li>
-         * <li>float</li>
-         * <li>float?</li>
-         * <li>int</li>
-         * <li>int?</li>
-         * <li>bool</li>
-         * <li>bool?</li>
-         * <li>byte[]</li>
-         * <li>BigDecimal</li>
-         * <li>BigInteger</li>
-         * </ul>
-         * 
-         * @param clazz
-         *            type to check against the support list of types.
-         * @throws IllegalArgumentException
-         *             iff the type is not on the supported list.
-         */
-        public static void CheckAttributeType(Type type) {
-            if (!FrameworkUtil.IsSupportedAttributeType(type)) {
-                String MSG = "Attribute type ''"+type+"'' is not supported.";
+
+
+        /// <summary>
+        /// Determines if the class is a supported attribute type.
+        /// </summary>
+        /// <remarks>
+        /// If not it throws
+        /// an <see cref="ArgumentException" />.
+        /// <list type="bullet">
+        /// <item>
+        /// <description>string
+        /// </description>
+        /// </item>
+        /// <item>
+        /// <description>long
+        /// </description>
+        /// </item>
+        /// <item>
+        /// <description>long?
+        /// </description>
+        /// </item>
+        /// <item>
+        /// <description>char
+        /// </description>
+        /// </item>
+        /// <item>
+        /// <description>char?
+        /// </description>
+        /// </item>
+        /// <item>
+        /// <description>double
+        /// </description>
+        /// </item>
+        /// <item>
+        /// <description>double?
+        /// </description>
+        /// </item>
+        /// <item>
+        /// <description>float
+        /// </description>
+        /// </item>
+        /// <item>
+        /// <description>float?
+        /// </description>
+        /// </item>
+        /// <item>
+        /// <description>int
+        /// </description>
+        /// </item>
+        /// <item>
+        /// <description>int?
+        /// </description>
+        /// </item>
+        /// <item>
+        /// <description>bool
+        /// </description>
+        /// </item>
+        /// <item>
+        /// <description>bool?
+        /// </description>
+        /// </item>
+        /// <item>
+        /// <description>byte[]
+        /// </description>
+        /// </item>
+        /// <item>
+        /// <description>BigDecimal
+        /// </description>
+        /// </item>
+        /// <item>
+        /// <description>BigInteger
+        /// </description>
+        /// </item>
+        /// </list>
+        /// </remarks>
+        /// <param name="clazz">type to check against the support list of types.</param>
+        /// <exception cref="ArgumentException">iff the type is not on the supported list.</exception>
+        public static void CheckAttributeType(Type type)
+        {
+            if (!FrameworkUtil.IsSupportedAttributeType(type))
+            {
+                String MSG = "Attribute type ''" + type + "'' is not supported.";
                 throw new ArgumentException(MSG);
             }
         }
-        public static void CheckAttributeValue(Object value) {
-            if ( value != null ) {
+        public static void CheckAttributeValue(Object value)
+        {
+            if (value != null)
+            {
                 CheckAttributeType(value.GetType());
             }
         }
-        public static ICollection<SafeType<APIOperation>> Spi2Apis(SafeType<SPIOperation> type) {
+        public static ICollection<SafeType<APIOperation>> Spi2Apis(SafeType<SPIOperation> type)
+        {
             type = type.GetTypeErasure();
             HashSet<SafeType<APIOperation>> set = new HashSet<SafeType<APIOperation>>();
             set.Add(SPI_TO_API[type]);
             // add GetApiOp if search is available..
-            
-            if (type.RawType.Equals(typeof(SearchOp<>))) {
+
+            if (type.RawType.Equals(typeof(SearchOp<>)))
+            {
                 set.Add(SafeType<APIOperation>.Get<GetApiOp>());
             }
             return set;
         }
-        public static ICollection<SafeType<SPIOperation>> AllSPIOperations() {
+        public static ICollection<SafeType<SPIOperation>> AllSPIOperations()
+        {
             return SPI_TO_API.Keys;
         }
-        public static ICollection<SafeType<APIOperation>> AllAPIOperations() {
-            ICollection<SafeType<APIOperation>> set = 
+        public static ICollection<SafeType<APIOperation>> AllAPIOperations()
+        {
+            ICollection<SafeType<APIOperation>> set =
                 new HashSet<SafeType<APIOperation>>();
             CollectionUtil.AddAll(set,
                                   SPI_TO_API.Values);
@@ -199,102 +260,122 @@ namespace Org.IdentityConnectors.Framework.Common
             set.Add(SafeType<APIOperation>.Get<ValidateApiOp>());
             return CollectionUtil.AsReadOnlySet(set);
         }
-        public static ICollection<SafeType<APIOperation>> GetDefaultSupportedOperations(SafeType<Connector> connector) {
-            ICollection<SafeType<APIOperation>> rv = 
+        public static ICollection<SafeType<APIOperation>> GetDefaultSupportedOperations(SafeType<Connector> connector)
+        {
+            ICollection<SafeType<APIOperation>> rv =
                 new HashSet<SafeType<APIOperation>>();
-            ICollection<Type> interfaces = 
+            ICollection<Type> interfaces =
                 ReflectionUtil.GetTypeErasure(ReflectionUtil.GetAllInterfaces(connector.RawType));
-            foreach (SafeType<SPIOperation> spi in AllSPIOperations()) {
-                if (interfaces.Contains(spi.RawType)) {                    
-                    CollectionUtil.AddAll(rv,Spi2Apis(spi));
+            foreach (SafeType<SPIOperation> spi in AllSPIOperations())
+            {
+                if (interfaces.Contains(spi.RawType))
+                {
+                    CollectionUtil.AddAll(rv, Spi2Apis(spi));
                 }
             }
             //finally add unconditionally supported ops
-            CollectionUtil.AddAll(rv,GetUnconditionallySupportedOperations());
+            CollectionUtil.AddAll(rv, GetUnconditionallySupportedOperations());
             return CollectionUtil.AsReadOnlySet(rv);
         }
-        public static ICollection<SafeType<APIOperation>> GetUnconditionallySupportedOperations() {
+        public static ICollection<SafeType<APIOperation>> GetUnconditionallySupportedOperations()
+        {
             HashSet<SafeType<APIOperation>> ret;
             ret = new HashSet<SafeType<APIOperation>>();
             //add validate api op always
             ret.Add(SafeType<APIOperation>.Get<ValidateApiOp>());
             //add ScriptOnConnectorApiOp always
             ret.Add(SafeType<APIOperation>.Get<ScriptOnConnectorApiOp>());
-            return ret;        
+            return ret;
         }
-        public static ICollection<Type> GetAllSupportedConfigTypes() {
+        public static ICollection<Type> GetAllSupportedConfigTypes()
+        {
             return CONFIG_SUPPORTED_TYPES;
         }
-        public static bool IsSupportedConfigurationType (Type type) {
-            if ( type.IsArray) {
+        public static bool IsSupportedConfigurationType(Type type)
+        {
+            if (type.IsArray)
+            {
                 return IsSupportedConfigurationType(type.GetElementType());
             }
-            else {
+            else
+            {
                 return CONFIG_SUPPORTED_TYPES.Contains(type);
             }
         }
-        public static ICollection<Type> GetAllSupportedAttributeTypes() {
+        public static ICollection<Type> GetAllSupportedAttributeTypes()
+        {
             return ATTR_SUPPORTED_TYPES;
         }
-        public static bool IsSupportedAttributeType(Type clazz) {
+        public static bool IsSupportedAttributeType(Type clazz)
+        {
             return ATTR_SUPPORTED_TYPES.Contains(clazz);
         }
-        
-        /**
-         * Determines if the class is a supported type for an OperationOption. If not it throws
-         * an {@link IllegalArgumentException}.
-         * 
-         * @param clazz
-         *            type to check against the support list of types.
-         * @throws IllegalArgumentException
-         *             iff the type is not on the supported list.
-         */
-        public static void CheckOperationOptionType(Type clazz) {
+
+        /// <summary>
+        /// Determines if the class is a supported type for an OperationOption.
+        /// </summary>
+        /// <remarks>
+        /// If not it throws
+        /// an <see cref="ArgumentException" />.
+        /// </remarks>
+        /// <param name="clazz">type to check against the support list of types.</param>
+        /// <exception cref="ArgumentException">iff the type is not on the supported list.</exception>
+        public static void CheckOperationOptionType(Type clazz)
+        {
             //the set of supported operation option types
             //is the same as that for configuration beans plus Name,
             //ObjectClass, Uid, and QualifiedUid
-        
-            if ( clazz.IsArray ) {
+
+            if (clazz.IsArray)
+            {
                 CheckOperationOptionType(clazz.GetElementType());
                 return;
             }
-                    
-            if (FrameworkUtil.IsSupportedConfigurationType(clazz)) {
-                return; //ok
-            }
-    
-            if (typeof(ObjectClass).IsAssignableFrom(clazz)) {
-                return; //ok
-            }
-            
-            if (typeof(Uid).IsAssignableFrom(clazz)) {
-                return; //ok
-            }
-            
-            if (typeof(QualifiedUid).IsAssignableFrom(clazz)) {
+
+            if (FrameworkUtil.IsSupportedConfigurationType(clazz))
+            {
                 return; //ok
             }
 
-            String MSG = "ConfigurationOption type '+"+clazz.Name+"+' is not supported.";
+            if (typeof(ObjectClass).IsAssignableFrom(clazz))
+            {
+                return; //ok
+            }
+
+            if (typeof(Uid).IsAssignableFrom(clazz))
+            {
+                return; //ok
+            }
+
+            if (typeof(QualifiedUid).IsAssignableFrom(clazz))
+            {
+                return; //ok
+            }
+
+            String MSG = "ConfigurationOption type '+" + clazz.Name + "+' is not supported.";
             throw new ArgumentException(MSG);
         }
-        /**
-         * Determines if the class of the object is a supported attribute type.
-         * If not it throws an {@link IllegalArgumentException}.
-         * @param value The value to check or null.
-         */
-        public static void CheckOperationOptionValue(Object val) {
-            if ( val != null ) {
+        /// <summary>
+        /// Determines if the class of the object is a supported attribute type.
+        /// </summary>
+        /// <remarks>
+        /// If not it throws an <see cref="ArgumentException" />.
+        /// </remarks>
+        /// <param name="value">The value to check or null.</param>
+        public static void CheckOperationOptionValue(Object val)
+        {
+            if (val != null)
+            {
                 CheckOperationOptionType(val.GetType());
             }
         }
 
-        /**
-         * Returns the version of the framework.
-         * 
-         * @return the framework version; never null.
-         */
-        public static Version GetFrameworkVersion() {
+        /// <summary>
+        /// Returns the version of the framework.
+        /// </summary>
+        /// <returns>the framework version; never null.</returns>
+        public static Version GetFrameworkVersion()
+        {
             return Assembly.GetExecutingAssembly().GetName().Version;
         }
     }

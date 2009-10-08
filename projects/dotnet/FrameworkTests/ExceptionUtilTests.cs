@@ -44,20 +44,20 @@ namespace FrameworkTests
         /// <param name="stackTrace">The captured stack trace to test against.</param>
         public static void AssertStackTrace(Exception exception, StackTrace stackTrace)
         {
-            Trace.TraceInformation( "Stack trace from the failing method: {0}", stackTrace.ToString() );
-            Trace.TraceInformation( "Exception stack trace: {0}", exception.StackTrace );
+            Trace.TraceInformation("Stack trace from the failing method: {0}", stackTrace.ToString());
+            Trace.TraceInformation("Exception stack trace: {0}", exception.StackTrace);
 
             string fullST = stackTrace.ToString();
-            int newLinePos = fullST.IndexOf( Environment.NewLine );
-            string failingMethodExpected = fullST.Substring( 0, (newLinePos == -1) ? fullST.Length : newLinePos );
+            int newLinePos = fullST.IndexOf(Environment.NewLine);
+            string failingMethodExpected = fullST.Substring(0, (newLinePos == -1) ? fullST.Length : newLinePos);
 
-            newLinePos = exception.StackTrace.IndexOf( Environment.NewLine );
-            string failingMethodActual = exception.StackTrace.Substring( 0, (newLinePos == -1) ? fullST.Length : newLinePos );
+            newLinePos = exception.StackTrace.IndexOf(Environment.NewLine);
+            string failingMethodActual = exception.StackTrace.Substring(0, (newLinePos == -1) ? fullST.Length : newLinePos);
 
             //check if the first line of the stack trace fetched from the failing method is contained in the
             //first line of the exception's stack trace, i.e. the method which threw the exception is in the
             //stack trace of the exception
-            Assert.That( failingMethodActual.Contains( failingMethodExpected ) );
+            Assert.That(failingMethodActual.Contains(failingMethodExpected));
         }
     }
 
@@ -79,38 +79,38 @@ namespace FrameworkTests
                             //delegate to the failing method
                             Action foo = () =>
                             {
-                                stackTrace = new StackTrace( false );
+                                stackTrace = new StackTrace(false);
                                 throw new InvalidOperationException();
                             };
 
                             foo();
 
-                            Assert.Fail( "Exception was not thrown - 1" );
+                            Assert.Fail("Exception was not thrown - 1");
                         }
-                        catch( InvalidOperationException iopex )
+                        catch (InvalidOperationException iopex)
                         {
                             //wrap the exception to make sure that there is an
                             //inner exception that can be re-thrown later on
-                            throw new ArgumentException( string.Empty, iopex );
+                            throw new ArgumentException(string.Empty, iopex);
                         };
                     };
 
                     bar();
 
-                    Assert.Fail( "Exception was not thrown - 2" );
+                    Assert.Fail("Exception was not thrown - 2");
                 }
-                catch( ArgumentException aex )
+                catch (ArgumentException aex)
                 {
                     //preserve the stack trace of the nested exception and re-throw it
-                    ExceptionUtil.PreserveStackTrace( aex.InnerException );
+                    ExceptionUtil.PreserveStackTrace(aex.InnerException);
                     throw aex.InnerException;
                 }
 
-                Assert.Fail( "Exception was not thrown - 3" );
+                Assert.Fail("Exception was not thrown - 3");
             }
-            catch( InvalidOperationException iopex )
+            catch (InvalidOperationException iopex)
             {
-                ExceptionUtilTestHelpers.AssertStackTrace( iopex, stackTrace );
+                ExceptionUtilTestHelpers.AssertStackTrace(iopex, stackTrace);
             }
         }
     }

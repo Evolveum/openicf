@@ -31,14 +31,14 @@ namespace FrameworkTests
     [TestFixture]
     public class LocaleTests
     {
-        
-        
+
+
         [Test]
         public void TestJava2CSharp()
         {
             HashSet<CultureInfo>
                 cultures = new HashSet<CultureInfo>(CultureInfo.GetCultures(CultureTypes.AllCultures));
- 
+
             TestJavaLocale(cultures, new Locale("ar", "", ""), "Arabic");
             TestJavaLocale(cultures, new Locale("be", "", ""), "Belarusian");
             TestJavaLocale(cultures, new Locale("bg", "", ""), "Bulgarian");
@@ -91,8 +91,8 @@ namespace FrameworkTests
             TestJavaLocale(cultures, new Locale("ar", "OM", ""), "Arabic (Oman)");
             TestJavaLocale(cultures, new Locale("ar", "QA", ""), "Arabic (Qatar)");
             TestJavaLocale(cultures, new Locale("ar", "SA", ""), "Arabic (Saudi Arabia)");
-            TestJavaLocale(cultures, 
-                           new Locale("ar", "SD", ""), 
+            TestJavaLocale(cultures,
+                           new Locale("ar", "SD", ""),
                            "Arabic (Sudan)",
                            new Locale("ar"));
             TestJavaLocale(cultures, new Locale("ar", "SY", ""), "Arabic (Syria)");
@@ -112,7 +112,7 @@ namespace FrameworkTests
             TestJavaLocale(cultures, new Locale("en", "CA", ""), "English (Canada)");
             TestJavaLocale(cultures, new Locale("en", "GB", ""), "English (United Kingdom)");
             TestJavaLocale(cultures, new Locale("en", "IE", ""), "English (Ireland)");
-            TestJavaLocale(cultures, new Locale("en", "IN", ""), 
+            TestJavaLocale(cultures, new Locale("en", "IN", ""),
                            "English (India)",
                            new Locale("en"));
             TestJavaLocale(cultures, new Locale("en", "NZ", ""), "English (New Zealand)");
@@ -168,17 +168,17 @@ namespace FrameworkTests
             TestJavaLocale(cultures, new Locale("sk", "SK", ""), "Slovak (Slovakia)");
             TestJavaLocale(cultures, new Locale("sl", "SI", ""), "Slovenian (Slovenia)");
             TestJavaLocale(cultures, new Locale("sq", "AL", ""), "Albanian (Albania)");
-            TestJavaLocale(cultures, new Locale("sr", "BA", ""), 
+            TestJavaLocale(cultures, new Locale("sr", "BA", ""),
                            "Serbian (Bosnia and Herzegovina)",
                            new Locale("sr"));
-            TestJavaLocale(cultures, new Locale("sr", "CS", ""), 
+            TestJavaLocale(cultures, new Locale("sr", "CS", ""),
                            "Serbian (Serbia and Montenegro)",
                            new Locale("sr"));
             TestJavaLocale(cultures, new Locale("sv", "SE", ""), "Swedish (Sweden)");
             TestJavaLocale(cultures, new Locale("th", "TH", ""), "Thai (Thailand)");
-            TestJavaLocale(cultures, new Locale("th", "TH", "TH"), 
+            TestJavaLocale(cultures, new Locale("th", "TH", "TH"),
                            "Thai (Thailand,TH)",
-                           new Locale("th","TH"));
+                           new Locale("th", "TH"));
             TestJavaLocale(cultures, new Locale("tr", "TR", ""), "Turkish (Turkey)");
             TestJavaLocale(cultures, new Locale("uk", "UA", ""), "Ukrainian (Ukraine)");
             TestJavaLocale(cultures, new Locale("vi", "VN", ""), "Vietnamese (Vietnam)");
@@ -190,21 +190,24 @@ namespace FrameworkTests
             //    Console.WriteLine("remaining: "+info+" "+info.DisplayName+" "+info.TwoLetterISOLanguageName);
             //}
         }
-        private void TestJavaLocale(HashSet<CultureInfo> cultures, 
-                                    Locale original, 
-                                    String display) {
-            TestJavaLocale(cultures,original,display,null);
+        private void TestJavaLocale(HashSet<CultureInfo> cultures,
+                                    Locale original,
+                                    String display)
+        {
+            TestJavaLocale(cultures, original, display, null);
         }
-        private void TestJavaLocale(HashSet<CultureInfo> cultures, 
-                                    Locale original, 
+        private void TestJavaLocale(HashSet<CultureInfo> cultures,
+                                    Locale original,
                                     String display,
-                                    Locale expected) {
-            if ( expected == null ) {
+                                    Locale expected)
+        {
+            if (expected == null)
+            {
                 expected = original;
             }
             CultureInfo cinfo = original.ToCultureInfo();
             Locale actual = Locale.FindLocale(cinfo);
-            Assert.AreEqual(expected,actual,display+" ("+original+") "+" didn't map");
+            Assert.AreEqual(expected, actual, display + " (" + original + ") " + " didn't map");
         }
     }
 }

@@ -36,51 +36,59 @@ namespace Org.IdentityConnectors.Common.Security
     /// </summary>
     public interface UnmanagedArray<T> : IDisposable
     {
-        int Length {get;}
-        T this[int index] {get;set;}
+        int Length { get; }
+        T this[int index] { get; set; }
     }
     #endregion
-    
-    /**
-     * Secure byte array implementation that solves the problems associated with
-     * keeping confidential data as <code>byte[]</code>. That is, anything 
-     * represented as a <code>byte[]</code> is kept in memory in clear
-     * text and stays in memory <b>at least</b> until it is garbage collected.
-     * <p>
-     * The GuardedByteArray class alleviates this problem by storing the bytes in
-     * memory in an encrypted form. The encryption key will be a randomly-generated
-     * key.
-     * <p>
-     * In their serialized form, GuardedByteArray will be encrypted using a known
-     * default key. This is to provide a minimum level of protection regardless
-     * of the transport. For communications with the Remote Connector Framework
-     * it is recommended that deployments enable SSL for true encryption.
-     * <p>
-     * Applications may also wish to persist GuardedByteArrays. In the case of 
-     * Identity Manager, it should convert GuardedByteArrays to EncryptedData so
-     * that they can be stored and managed using the Manage Encryption features
-     * of Identity Manager. Other applications may wish to serialize APIConfiguration
-     * as a whole. These applications are responsible for encrypting the APIConfiguration
-     * blob for an additional layer of security (beyond the basic default key encryption
-     * provided by GuardedByteArray).
-     */
+
+    /// <summary>
+    /// Secure byte array implementation that solves the problems associated with
+    /// keeping confidential data as <code>byte[]</code>.
+    /// </summary>
+    /// <remarks>
+    /// That is, anything
+    /// represented as a <code>byte[]</code> is kept in memory in clear
+    /// text and stays in memory <b>at least</b> until it is garbage collected.
+    /// <para>
+    /// The GuardedByteArray class alleviates this problem by storing the bytes in
+    /// memory in an encrypted form. The encryption key will be a randomly-generated
+    /// key.
+    /// </para>
+    /// <para>
+    /// In their serialized form, GuardedByteArray will be encrypted using a known
+    /// default key. This is to provide a minimum level of protection regardless
+    /// of the transport. For communications with the Remote Connector Framework
+    /// it is recommended that deployments enable SSL for true encryption.
+    /// </para>
+    /// <para>
+    /// Applications may also wish to persist GuardedByteArrays. In the case of
+    /// Identity Manager, it should convert GuardedByteArrays to EncryptedData so
+    /// that they can be stored and managed using the Manage Encryption features
+    /// of Identity Manager. Other applications may wish to serialize APIConfiguration
+    /// as a whole. These applications are responsible for encrypting the APIConfiguration
+    /// blob for an additional layer of security (beyond the basic default key encryption
+    /// provided by GuardedByteArray).
+    /// </para>
+    /// </remarks>
     public sealed class GuardedByteArray : IDisposable
     {
-        /**
-         * This method will be called with the clear text of the byte array.
-         * After the call the clearBytes array will be automatically zeroed
-         * out, thus keeping the window of potential exposure to a bare-minimum.
-         * @param clearChars
-         */
+        /// <summary>
+        /// This method will be called with the clear text of the byte array.
+        /// </summary>
+        /// <remarks>
+        /// After the call the clearBytes array will be automatically zeroed
+        /// out, thus keeping the window of potential exposure to a bare-minimum.
+        /// </remarks>
+        /// <param name="clearChars"></param>
         public delegate void Accessor(UnmanagedArray<byte> clearBytes);
 
 
         private SecureString _target;
         private String _base64SHA1Hash;
 
-        /**
-         * Creates an empty secure byte array.
-         */
+        /// <summary>
+        /// Creates an empty secure byte array.
+        /// </summary>
         public GuardedByteArray()
         {
             _target = new SecureString();
@@ -100,18 +108,20 @@ namespace Org.IdentityConnectors.Common.Security
         }
 
 
-        /**
-         * Provides access to the clear-text value of the bytes in a controlled fashion.
-         * The clear-text bytes will only be available for the duration of the call
-         * and automatically zeroed out following the call. 
-         * 
-         * <p>
-         * <b>NOTE:</b> Callers are encouraged to use {@link #verifyBase64SHA1Hash(String)}
-         * where possible if the intended use is merely to verify the contents of
-         * the string match an expected hash value.
-         * @param accessor Accessor callback.
-         * @throws IllegalStateException If the byte array has been disposed
-         */
+        /// <summary>
+        /// Provides access to the clear-text value of the bytes in a controlled fashion.
+        /// </summary>
+        /// <remarks>
+        /// The clear-text bytes will only be available for the duration of the call
+        /// and automatically zeroed out following the call.
+        /// <para>
+        /// <b>NOTE:</b> Callers are encouraged to use <see cref="VerifyBase64SHA1Hash(String)" />
+        /// where possible if the intended use is merely to verify the contents of
+        /// the string match an expected hash value.
+        /// </para>
+        /// </remarks>
+        /// <param name="accessor">Accessor callback.</param>
+        /// <exception cref="IllegalStateException">If the byte array has been disposed</exception>
         public void Access(Accessor accessor)
         {
             using (SecureStringToByteArrayAdapter adapter = new SecureStringToByteArrayAdapter(_target))
@@ -120,14 +130,16 @@ namespace Org.IdentityConnectors.Common.Security
             }
         }
 
-        /**
-         * Appends a single clear-text byte to the secure byte array.
-         * The in-memory data will be decrypted, the character will be
-         * appended, and then it will be re-encrypted.
-         * @param b The byte to append.
-         * @throws IllegalStateException If the byte array is read-only
-         * @throws IllegalStateException If the byte array has been disposed
-         */
+        /// <summary>
+        /// Appends a single clear-text byte to the secure byte array.
+        /// </summary>
+        /// <remarks>
+        /// The in-memory data will be decrypted, the character will be
+        /// appended, and then it will be re-encrypted.
+        /// </remarks>
+        /// <param name="b">The byte to append.</param>
+        /// <exception cref="IllegalStateException">If the byte array is read-only</exception>
+        /// <exception cref="IllegalStateException">If the byte array has been disposed</exception>
         public void AppendByte(byte b)
         {
             _target.AppendChar((char)b);
@@ -143,39 +155,42 @@ namespace Org.IdentityConnectors.Common.Security
             ComputeHash();
         }
 
-        /**
-         * Clears the in-memory representation of the byte array.
-         */
+        /// <summary>
+        /// Clears the in-memory representation of the byte array.
+        /// </summary>
         public void Dispose()
         {
             _target.Dispose();
         }
 
-        /**
-         * Returns true iff this byte array has been marked read-only
-         * @return true iff this byte array has been marked read-only
-         * @throws IllegalStateException If the byte array has been disposed
-         */
+        /// <summary>
+        /// Returns true iff this byte array has been marked read-only
+        /// </summary>
+        /// <returns>true iff this byte array has been marked read-only</returns>
+        /// <exception cref="IllegalStateException">If the byte array has been disposed</exception>
         public bool IsReadOnly()
         {
             return _target.IsReadOnly();
         }
 
-        /**
-         * Mark this byte array as read-only.
-         * @throws IllegalStateException If the byte array has been disposed
-         */
+        /// <summary>
+        /// Mark this byte array as read-only.
+        /// </summary>
+        /// <exception cref="IllegalStateException">If the byte array has been disposed</exception>
         public void MakeReadOnly()
         {
             _target.MakeReadOnly();
         }
 
-        /**
-         * Create a copy of the byte array. If this instance is read-only,
-         * the copy will not be read-only.
-         * @return A copy of the byte array.
-         * @throws IllegalStateException If the byte array has been disposed
-         */
+        /// <summary>
+        /// Create a copy of the byte array.
+        /// </summary>
+        /// <remarks>
+        /// If this instance is read-only,
+        /// the copy will not be read-only.
+        /// </remarks>
+        /// <returns>A copy of the byte array.</returns>
+        /// <exception cref="IllegalStateException">If the byte array has been disposed</exception>
         public GuardedByteArray Copy()
         {
             SecureString t2 = _target.Copy();
@@ -183,13 +198,13 @@ namespace Org.IdentityConnectors.Common.Security
             return rv;
         }
 
-        /**
-         * Verifies that this base-64 encoded SHA1 hash of this byte array
-         * matches the given value.
-         * @param hash The hash to verify against.
-         * @return True if the hash matches the given parameter.
-         * @throws IllegalStateException If the byte array has been disposed
-         */
+        /// <summary>
+        /// Verifies that this base-64 encoded SHA1 hash of this byte array
+        /// matches the given value.
+        /// </summary>
+        /// <param name="hash">The hash to verify against.</param>
+        /// <returns>True if the hash matches the given parameter.</returns>
+        /// <exception cref="IllegalStateException">If the byte array has been disposed</exception>
         public bool VerifyBase64SHA1Hash(String hash)
         {
             CheckNotDisposed();
@@ -242,151 +257,180 @@ namespace Org.IdentityConnectors.Common.Security
 
     }
 
-    /**
-     * Secure string implementation that solves the problems associated with
-     * keeping passwords as <code>java.lang.String</code>. That is, anything 
-     * represented as a <code>String</code> is kept in memory as a clear
-     * text password and stays in memory <b>at least</b> until it is garbage collected.
-     * <p>
-     * The GuardedString class alleviates this problem by storing the characters in
-     * memory in an encrypted form. The encryption key will be a randomly-generated
-     * key.
-     * <p>
-     * In their serialized form, GuardedString will be encrypted using a known
-     * default key. This is to provide a minimum level of protection regardless
-     * of the transport. For communications with the Remote Connector Framework
-     * it is recommended that deployments enable SSL for true encryption.
-     * <p>
-     * Applications may also wish to persist GuardedStrings. In the case of 
-     * Identity Manager, it should convert GuardedStrings to EncryptedData so
-     * that they can be stored and managed using the Manage Encryption features
-     * of Identity Manager. Other applications may wish to serialize APIConfiguration
-     * as a whole. These applications are responsible for encrypting the APIConfiguration
-     * blob for an additional layer of security (beyond the basic default key encryption
-     * provided by GuardedString).
-     */
-    public sealed class GuardedString : IDisposable {
-        /**
-         * This method will be called with the clear text of the string.
-         * After the call the clearChars array will be automatically zeroed
-         * out, thus keeping the window of potential exposure to a bare-minimum.
-         * @param clearChars
-         */
-        public delegate void Accessor(UnmanagedArray<char> clearChars); 
-        
-        
+    /// <summary>
+    /// Secure string implementation that solves the problems associated with
+    /// keeping passwords as <code>java.lang.String</code>.
+    /// </summary>
+    /// <remarks>
+    /// That is, anything
+    /// represented as a <code>String</code> is kept in memory as a clear
+    /// text password and stays in memory <b>at least</b> until it is garbage collected.
+    /// <para>
+    /// The GuardedString class alleviates this problem by storing the characters in
+    /// memory in an encrypted form. The encryption key will be a randomly-generated
+    /// key.
+    /// </para>
+    /// <para>
+    /// In their serialized form, GuardedString will be encrypted using a known
+    /// default key. This is to provide a minimum level of protection regardless
+    /// of the transport. For communications with the Remote Connector Framework
+    /// it is recommended that deployments enable SSL for true encryption.
+    /// </para>
+    /// <para>
+    /// Applications may also wish to persist GuardedStrings. In the case of
+    /// Identity Manager, it should convert GuardedStrings to EncryptedData so
+    /// that they can be stored and managed using the Manage Encryption features
+    /// of Identity Manager. Other applications may wish to serialize APIConfiguration
+    /// as a whole. These applications are responsible for encrypting the APIConfiguration
+    /// blob for an additional layer of security (beyond the basic default key encryption
+    /// provided by GuardedString).
+    /// </para>
+    /// </remarks>
+    public sealed class GuardedString : IDisposable
+    {
+        /// <summary>
+        /// This method will be called with the clear text of the string.
+        /// </summary>
+        /// <remarks>
+        /// After the call the clearChars array will be automatically zeroed
+        /// out, thus keeping the window of potential exposure to a bare-minimum.
+        /// </remarks>
+        /// <param name="clearChars"></param>
+        public delegate void Accessor(UnmanagedArray<char> clearChars);
+
+
         private SecureString _target;
         private String _base64SHA1Hash;
-        
-        /**
-         * Creates an empty secure string
-         */
-        public GuardedString() {
+
+        /// <summary>
+        /// Creates an empty secure string
+        /// </summary>
+        public GuardedString()
+        {
             _target = new SecureString();
             ComputeHash();
         }
-        
-        public GuardedString(SecureString str) {
+
+        public GuardedString(SecureString str)
+        {
             _target = str.Copy();
             ComputeHash();
         }
-        
-        
-        /**
-         * Provides access to the clear-text value of the string in a controlled fashion.
-         * The clear-text characters will only be available for the duration of the call
-         * and automatically zeroed out following the call. 
-         * 
-         * <p>
-         * <b>NOTE:</b> Callers are encouraged to use {@link #verifyBase64SHA1Hash(String)}
-         * where possible if the intended use is merely to verify the contents of
-         * the string match an expected hash value.
-         * @param accessor Accessor callback.
-         * @throws IllegalStateException If the string has been disposed
-         */
-        public void Access(Accessor accessor) {
-            using (SecureStringAdapter adapter = new SecureStringAdapter(_target)) {
+
+
+        /// <summary>
+        /// Provides access to the clear-text value of the string in a controlled fashion.
+        /// </summary>
+        /// <remarks>
+        /// The clear-text characters will only be available for the duration of the call
+        /// and automatically zeroed out following the call.
+        /// <para>
+        /// <b>NOTE:</b> Callers are encouraged to use <see cref="VerifyBase64SHA1Hash(String)" />
+        /// where possible if the intended use is merely to verify the contents of
+        /// the string match an expected hash value.
+        /// </para>
+        /// </remarks>
+        /// <param name="accessor">Accessor callback.</param>
+        /// <exception cref="IllegalStateException">If the string has been disposed</exception>
+        public void Access(Accessor accessor)
+        {
+            using (SecureStringAdapter adapter = new SecureStringAdapter(_target))
+            {
                 accessor(adapter);
             }
-        }        
-        
-        /**
-         * Appends a single clear-text character to the secure string.
-         * The in-memory data will be decrypted, the character will be
-         * appended, and then it will be re-encrypted.
-         * @param c The character to append.
-         * @throws IllegalStateException If the string is read-only
-         * @throws IllegalStateException If the string has been disposed
-         */
-        public void AppendChar(char c) {
+        }
+
+        /// <summary>
+        /// Appends a single clear-text character to the secure string.
+        /// </summary>
+        /// <remarks>
+        /// The in-memory data will be decrypted, the character will be
+        /// appended, and then it will be re-encrypted.
+        /// </remarks>
+        /// <param name="c">The character to append.</param>
+        /// <exception cref="IllegalStateException">If the string is read-only</exception>
+        /// <exception cref="IllegalStateException">If the string has been disposed</exception>
+        public void AppendChar(char c)
+        {
             _target.AppendChar(c);
             ComputeHash();
         }
-        
-        /**
-         * Clears the in-memory representation of the string.
-         */
-        public void Dispose() {
+
+        /// <summary>
+        /// Clears the in-memory representation of the string.
+        /// </summary>
+        public void Dispose()
+        {
             _target.Dispose();
         }
-        
-        /**
-         * Returns true iff this string has been marked read-only
-         * @return true iff this string has been marked read-only
-         * @throws IllegalStateException If the string has been disposed
-         */
-        public bool IsReadOnly() {
+
+        /// <summary>
+        /// Returns true iff this string has been marked read-only
+        /// </summary>
+        /// <returns>true iff this string has been marked read-only</returns>
+        /// <exception cref="IllegalStateException">If the string has been disposed</exception>
+        public bool IsReadOnly()
+        {
             return _target.IsReadOnly();
         }
-        
-        /**
-         * Mark this string as read-only.
-         * @throws IllegalStateException If the string has been disposed
-         */
-        public void MakeReadOnly() {
+
+        /// <summary>
+        /// Mark this string as read-only.
+        /// </summary>
+        /// <exception cref="IllegalStateException">If the string has been disposed</exception>
+        public void MakeReadOnly()
+        {
             _target.MakeReadOnly();
         }
-        
-        /**
-         * Create a copy of the string. If this instance is read-only,
-         * the copy will not be read-only.
-         * @return A copy of the string.
-         * @throws IllegalStateException If the string has been disposed
-         */
-        public GuardedString Copy() {
+
+        /// <summary>
+        /// Create a copy of the string.
+        /// </summary>
+        /// <remarks>
+        /// If this instance is read-only,
+        /// the copy will not be read-only.
+        /// </remarks>
+        /// <returns>A copy of the string.</returns>
+        /// <exception cref="IllegalStateException">If the string has been disposed</exception>
+        public GuardedString Copy()
+        {
             SecureString t2 = _target.Copy();
             GuardedString rv = new GuardedString(t2);
             return rv;
         }
-        
-        /**
-         * Verifies that this base-64 encoded SHA1 hash of this string
-         * matches the given value.
-         * @param hash The hash to verify against.
-         * @return True if the hash matches the given parameter.
-         * @throws IllegalStateException If the string has been disposed
-         */
-        public bool VerifyBase64SHA1Hash(String hash) {
+
+        /// <summary>
+        /// Verifies that this base-64 encoded SHA1 hash of this string
+        /// matches the given value.
+        /// </summary>
+        /// <param name="hash">The hash to verify against.</param>
+        /// <returns>True if the hash matches the given parameter.</returns>
+        /// <exception cref="IllegalStateException">If the string has been disposed</exception>
+        public bool VerifyBase64SHA1Hash(String hash)
+        {
             CheckNotDisposed();
             return _base64SHA1Hash.Equals(hash);
         }
-        
-        public string GetBase64SHA1Hash() {
+
+        public string GetBase64SHA1Hash()
+        {
             CheckNotDisposed();
-            return _base64SHA1Hash;            
+            return _base64SHA1Hash;
         }
-        
-        
-            
+
+
+
         private void CheckNotDisposed()
         {
             //this throws if disposed
             _target.IsReadOnly();
         }
-        
-    
-        public override bool Equals(Object o) {
-            if ( o is GuardedString ) {
+
+
+        public override bool Equals(Object o)
+        {
+            if (o is GuardedString)
+            {
                 GuardedString other = (GuardedString)o;
                 //not the true contract of equals. however,
                 //due to the high mathematical improbability of
@@ -398,109 +442,131 @@ namespace Org.IdentityConnectors.Common.Security
             }
             return false;
         }
-        
-        public override int GetHashCode() {
+
+        public override int GetHashCode()
+        {
             return _base64SHA1Hash.GetHashCode();
         }
-        
-        public SecureString ToSecureString() {
+
+        public SecureString ToSecureString()
+        {
             return _target.Copy();
         }
-        
+
         private void ComputeHash()
         {
-            Access(array=> {
-                        _base64SHA1Hash = SecurityUtil.ComputeBase64SHA1Hash(array);
-                  });            
+            Access(array =>
+            {
+                _base64SHA1Hash = SecurityUtil.ComputeBase64SHA1Hash(array);
+            });
         }
-        
+
     }
-    
+
 
     #region AbstractUnmanagedArray
     public abstract class AbstractUnmanagedArray<T> : UnmanagedArray<T>
     {
         private readonly int _length;
         private bool _disposed;
-        public AbstractUnmanagedArray(int length) {
-            if (length < 0) {
-                throw new ArgumentException("Invalid length: "+length);
+        public AbstractUnmanagedArray(int length)
+        {
+            if (length < 0)
+            {
+                throw new ArgumentException("Invalid length: " + length);
             }
             _length = length;
         }
-        public int Length {
-            get {
-                if (_disposed) {
+        public int Length
+        {
+            get
+            {
+                if (_disposed)
+                {
                     throw new ObjectDisposedException("UnmanagedArray");
                 }
-                return _length;               
+                return _length;
             }
         }
-        public T this[int index] {
-            get {
-                if (_disposed) {
+        public T this[int index]
+        {
+            get
+            {
+                if (_disposed)
+                {
                     throw new ObjectDisposedException("UnmanagedArray");
                 }
-                if ( index < 0 || index >= Length ) {
+                if (index < 0 || index >= Length)
+                {
                     throw new IndexOutOfRangeException();
                 }
                 return GetValue(index);
             }
-            set {
-                if (_disposed) {
+            set
+            {
+                if (_disposed)
+                {
                     throw new ObjectDisposedException("SecureStringAdapter");
                 }
-                if ( index < 0 || index >= Length ) {
+                if (index < 0 || index >= Length)
+                {
                     throw new IndexOutOfRangeException();
                 }
-                SetValue(index,value);
+                SetValue(index, value);
             }
         }
-        public void Dispose() {
-            if (!_disposed) {
-                for ( int i = 0; i < Length; i++ ) {
+        public void Dispose()
+        {
+            if (!_disposed)
+            {
+                for (int i = 0; i < Length; i++)
+                {
                     this[i] = default(T);
                 }
                 _disposed = true;
                 FreeMemory();
             }
-        } 
-        
+        }
+
         abstract protected T GetValue(int index);
         abstract protected void SetValue(int index, T val);
         abstract protected void FreeMemory();
     }
     #endregion
-    
+
     #region SecureStringAdapter
     internal class SecureStringAdapter : AbstractUnmanagedArray<char>
     {
         private IntPtr _bstrPtr;
-        public SecureStringAdapter(SecureString secureString) : base(secureString.Length) {
-            Assertions.NullCheck(secureString,"secureString");
+        public SecureStringAdapter(SecureString secureString)
+            : base(secureString.Length)
+        {
+            Assertions.NullCheck(secureString, "secureString");
             _bstrPtr = Marshal.SecureStringToBSTR(secureString);
         }
         protected override char GetValue(int index)
-        {            
-            unsafe {
-                char * charPtr = (char*)_bstrPtr;
-                return *(charPtr+index);
+        {
+            unsafe
+            {
+                char* charPtr = (char*)_bstrPtr;
+                return *(charPtr + index);
             }
         }
         protected override void SetValue(int index, char c)
         {
-            unsafe {
-                char * charPtr = (char*)_bstrPtr;
-                *(charPtr+index) = c;
-            }                
+            unsafe
+            {
+                char* charPtr = (char*)_bstrPtr;
+                *(charPtr + index) = c;
+            }
         }
         protected override void FreeMemory()
         {
-            Marshal.ZeroFreeBSTR( _bstrPtr );
+            Marshal.ZeroFreeBSTR(_bstrPtr);
         }
     }
     #endregion
-    
+
     #region SecureStringToByteArrayAdapter
     internal class SecureStringToByteArrayAdapter : AbstractUnmanagedArray<byte>
     {
@@ -538,102 +604,120 @@ namespace Org.IdentityConnectors.Common.Security
     public class UnmanagedCharArray : AbstractUnmanagedArray<char>
     {
         private IntPtr _ptr;
-        public UnmanagedCharArray(int length) : base(length) {
-            unsafe {
-                _ptr = Marshal.AllocHGlobal(length*sizeof(char));
+        public UnmanagedCharArray(int length)
+            : base(length)
+        {
+            unsafe
+            {
+                _ptr = Marshal.AllocHGlobal(length * sizeof(char));
             }
         }
         protected override char GetValue(int index)
-        {            
-            unsafe {
-                char * charPtr = (char*)_ptr;
-                return *(charPtr+index);
+        {
+            unsafe
+            {
+                char* charPtr = (char*)_ptr;
+                return *(charPtr + index);
             }
         }
         protected override void SetValue(int index, char c)
         {
-            unsafe {
-                char * charPtr = (char*)_ptr;
-                *(charPtr+index) = c;
-            }                
+            unsafe
+            {
+                char* charPtr = (char*)_ptr;
+                *(charPtr + index) = c;
+            }
         }
         protected override void FreeMemory()
         {
-            Marshal.FreeHGlobal( _ptr );
-        }        
+            Marshal.FreeHGlobal(_ptr);
+        }
     }
     #endregion
-    
+
     #region UnmanagedByteArray
     public class UnmanagedByteArray : AbstractUnmanagedArray<byte>
     {
         private IntPtr _ptr;
-        public UnmanagedByteArray(int length) : base(length) {
-            unsafe {
-                _ptr = Marshal.AllocHGlobal(length*sizeof(byte));
+        public UnmanagedByteArray(int length)
+            : base(length)
+        {
+            unsafe
+            {
+                _ptr = Marshal.AllocHGlobal(length * sizeof(byte));
             }
         }
         protected override byte GetValue(int index)
-        {            
-            unsafe {
-                byte * charPtr = (byte*)_ptr;
-                return *(charPtr+index);
+        {
+            unsafe
+            {
+                byte* charPtr = (byte*)_ptr;
+                return *(charPtr + index);
             }
         }
         protected override void SetValue(int index, byte c)
         {
-            unsafe {
-                byte * charPtr = (byte*)_ptr;
-                *(charPtr+index) = c;
-            }                
+            unsafe
+            {
+                byte* charPtr = (byte*)_ptr;
+                *(charPtr + index) = c;
+            }
         }
         protected override void FreeMemory()
         {
-            Marshal.FreeHGlobal( _ptr );
-        }        
+            Marshal.FreeHGlobal(_ptr);
+        }
     }
     #endregion
-    
+
     #region SecurityUtil
     /// <summary>
     /// Description of SecurityUtil.
     /// </summary>
     public static class SecurityUtil
     {
-        
-        /**
-         * Converts chars to bytes without using any external functions
-         * that might allocate additional buffers for the potentially
-         * sensitive data. This guarantees the caller that they only
-         * need to cleanup the input and result.
-         * @param chars The chars
-         * @return The bytes
-         */
+
+        /// <summary>
+        /// Converts chars to bytes without using any external functions
+        /// that might allocate additional buffers for the potentially
+        /// sensitive data.
+        /// </summary>
+        /// <remarks>
+        /// This guarantees the caller that they only
+        /// need to cleanup the input and result.
+        /// </remarks>
+        /// <param name="chars">The chars</param>
+        /// <returns>The bytes</returns>
         public static UnmanagedArray<byte> CharsToBytes(UnmanagedArray<char> chars)
         {
-            UnmanagedByteArray bytes = new UnmanagedByteArray(chars.Length*2);
-            
-            for ( int i = 0; i < chars.Length; i++ ) {
+            UnmanagedByteArray bytes = new UnmanagedByteArray(chars.Length * 2);
+
+            for (int i = 0; i < chars.Length; i++)
+            {
                 char v = chars[i];
-                bytes[i*2] = (byte)(0xff & (v >>  8));
-                bytes[i*2+1] = (byte)(0xff & (v));
+                bytes[i * 2] = (byte)(0xff & (v >> 8));
+                bytes[i * 2 + 1] = (byte)(0xff & (v));
             }
             return bytes;
         }
-        
-        /**
-         * Converts bytes to chars without using any external functions
-         * that might allocate additional buffers for the potentially
-         * sensitive data. This guarantees the caller that they only
-         * need to cleanup the input and result.
-         * @param chars The chars
-         * @return The bytes
-         */
+
+        /// <summary>
+        /// Converts bytes to chars without using any external functions
+        /// that might allocate additional buffers for the potentially
+        /// sensitive data.
+        /// </summary>
+        /// <remarks>
+        /// This guarantees the caller that they only
+        /// need to cleanup the input and result.
+        /// </remarks>
+        /// <param name="chars">The chars</param>
+        /// <returns>The bytes</returns>
         public static UnmanagedArray<char> BytesToChars(UnmanagedArray<byte> bytes)
         {
-            UnmanagedCharArray chars = new UnmanagedCharArray(bytes.Length/2);
-            for ( int i = 0; i < chars.Length; i++ ) {
-                char v = (char)((bytes[i*2]<<8) | bytes[i*2+1]);
+            UnmanagedCharArray chars = new UnmanagedCharArray(bytes.Length / 2);
+            for (int i = 0; i < chars.Length; i++)
+            {
+                char v = (char)((bytes[i * 2] << 8) | bytes[i * 2 + 1]);
                 chars[i] = v;
             }
             return chars;
@@ -647,7 +731,7 @@ namespace Org.IdentityConnectors.Common.Security
                 return ComputeBase64SHA1Hash(bytes);
             }
         }
-        
+
         public unsafe static string ComputeBase64SHA1Hash(UnmanagedArray<byte> input)
         {
             byte[] managedBytes = new byte[input.Length];
@@ -668,59 +752,61 @@ namespace Org.IdentityConnectors.Common.Security
                 }
             }
         }
-        
-        /**
-         * Copies an unmanaged byte array into a managed byte array.
-         * NOTE: it is imperative for security reasons that this only
-         * be done in a context where the byte array in question is pinned.
-         * moreover, the byte array must be cleared prior to leaving the
-         * pinned block
-         */
+
+        /// <summary>
+        /// Copies an unmanaged byte array into a managed byte array.
+        /// </summary>
+        /// <remarks>
+        /// NOTE: it is imperative for security reasons that this only
+        /// be done in a context where the byte array in question is pinned.
+        /// moreover, the byte array must be cleared prior to leaving the
+        /// pinned block
+        /// </remarks>
         public static void UnmanagedBytesToManagedBytes(UnmanagedArray<byte> array,
-                                                        byte [] bytes)
+                                                        byte[] bytes)
         {
-            for ( int i = 0 ; i < array.Length; i++ )
+            for (int i = 0; i < array.Length; i++)
             {
                 bytes[i] = array[i];
             }
         }
-        
-        /**
-         * Clears an array of potentially sensitive bytes
-         * @param bytes The bytes. May be null.
-         * NOTE: because this is C#, this alone is not enough. The
-         * array must be pinned during the interval it is in-use or
-         * it could be copied out from under you.
-         */
-        public static void Clear(byte [] bytes)
+
+        /// <summary>
+        /// Clears an array of potentially sensitive bytes
+        /// </summary>
+        /// <param name="bytes">The bytes. May be null.
+        /// NOTE: because this is C#, this alone is not enough. The
+        /// array must be pinned during the interval it is in-use or
+        /// it could be copied out from under you.</param>
+        public static void Clear(byte[] bytes)
         {
-            if ( bytes != null )
+            if (bytes != null)
             {
-                for ( int i = 0; i < bytes.Length; i++ )
+                for (int i = 0; i < bytes.Length; i++)
                 {
                     bytes[i] = 0;
                 }
             }
         }
-        
-        /**
-         * Clears an array of potentially sensitive chars
-         * @param chars The characters. May be null.
-         * NOTE: because this is C#, this alone is not enough. The
-         * array must be pinned during the interval it is in-use or
-         * it could be copied out from under you.
-         */
-        public static void Clear(char [] chars)
+
+        /// <summary>
+        /// Clears an array of potentially sensitive chars
+        /// </summary>
+        /// <param name="chars">The characters. May be null.
+        /// NOTE: because this is C#, this alone is not enough. The
+        /// array must be pinned during the interval it is in-use or
+        /// it could be copied out from under you.</param>
+        public static void Clear(char[] chars)
         {
-            if ( chars != null ) 
+            if (chars != null)
             {
-                for ( int i = 0; i < chars.Length; i++)
+                for (int i = 0; i < chars.Length; i++)
                 {
                     chars[i] = (char)0;
                 }
             }
         }
-    
+
         public static bool VerifyBase64SHA1Hash(UnmanagedArray<char> input, string hash)
         {
             string inputHash = ComputeBase64SHA1Hash(input);
@@ -728,58 +814,63 @@ namespace Org.IdentityConnectors.Common.Security
         }
     }
     #endregion
-    
+
     #region Encryptor
-    /**
-     * Responsible for encrypting/decrypting bytes. Implementations
-     * are intended to be thread-safe.
-     */
-    public interface Encryptor {
-        /**
-         * Decrypts the given byte array
-         * @param bytes The encrypted bytes
-         * @return The decrypted bytes
-         */
-        UnmanagedArray<byte> Decrypt(byte [] bytes);
-        
-        /**
-         * Encrypts the given byte array
-         * @param bytes The clear bytes
-         * @return The ecnrypted bytes
-         */
-        byte [] Encrypt(UnmanagedArray<byte> bytes);
+    /// <summary>
+    /// Responsible for encrypting/decrypting bytes.
+    /// </summary>
+    /// <remarks>
+    /// Implementations
+    /// are intended to be thread-safe.
+    /// </remarks>
+    public interface Encryptor
+    {
+        /// <summary>
+        /// Decrypts the given byte array
+        /// </summary>
+        /// <param name="bytes">The encrypted bytes</param>
+        /// <returns>The decrypted bytes</returns>
+        UnmanagedArray<byte> Decrypt(byte[] bytes);
+
+        /// <summary>
+        /// Encrypts the given byte array
+        /// </summary>
+        /// <param name="bytes">The clear bytes</param>
+        /// <returns>The ecnrypted bytes</returns>
+        byte[] Encrypt(UnmanagedArray<byte> bytes);
     }
     #endregion
 
     #region EncryptorFactory
-    public abstract class EncryptorFactory {
+    public abstract class EncryptorFactory
+    {
         private static readonly object LOCK = new object();
-        
+
         // At some point we might make this pluggable, but for now, hard-code
         private const String IMPL_NAME = "Org.IdentityConnectors.Common.Security.Impl.EncryptorFactoryImpl";
-    
+
         private static EncryptorFactory _instance;
-    
-        /**
-         * Get the singleton instance of the {@link EncryptorFactory}.
-         */
-        public static EncryptorFactory GetInstance() {
-            lock(LOCK) {
-                if (_instance == null) {
+
+        /// <summary>
+        /// Get the singleton instance of the <see cref="EncryptorFactory" />.
+        /// </summary>
+        public static EncryptorFactory GetInstance()
+        {
+            lock (LOCK)
+            {
+                if (_instance == null)
+                {
                     Type type = FrameworkInternalBridge.LoadType(IMPL_NAME);
                     _instance = (EncryptorFactory)Activator.CreateInstance(type);
                 }
                 return _instance;
             }
         }
-    
-        /**
-         * Default encryptor that encrypts/descrypts using a default key
-         */
+
+        /// <summary>
+        /// Default encryptor that encrypts/descrypts using a default key
+        /// </summary>
         public abstract Encryptor GetDefaultEncryptor();
-        
-    
     }
     #endregion
-
 }

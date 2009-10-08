@@ -32,18 +32,18 @@ namespace FrameworkTests
     {
         private static readonly object LOCK = new Object();
         private static bool _initialized;
-        
-        
+
+
         public static void InitializeLogging()
         {
-            lock(LOCK)
+            lock (LOCK)
             {
                 if (!_initialized)
                 {
-                    ConsoleTraceListener listener = 
+                    ConsoleTraceListener listener =
                         new ConsoleTraceListener();
-                    listener.TraceOutputOptions = 
-                        TraceOptions.ThreadId|TraceOptions.Timestamp;
+                    listener.TraceOutputOptions =
+                        TraceOptions.ThreadId | TraceOptions.Timestamp;
                     Trace.Listeners.Add(listener);
                     _initialized = true;
                 }

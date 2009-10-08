@@ -30,32 +30,35 @@ using Org.IdentityConnectors.Framework.Spi.Operations;
 namespace org.identityconnectors.testconnector
 {
     public class TstConnectorConfig : AbstractConfiguration
-    {    
-        public override void Validate() {
+    {
+        public override void Validate()
+        {
         }
     }
-    
+
     [ConnectorClass("TestConnector",
                       typeof(TstConnectorConfig),
-                      MessageCatalogPaths=new String[]{"TestBundleV2.Messages"}
+                      MessageCatalogPaths = new String[] { "TestBundleV2.Messages" }
                         )]
     public class TstConnector : CreateOp, Connector, SchemaOp
     {
-        public Uid Create(ObjectClass oclass, ICollection<ConnectorAttribute> attrs, OperationOptions options) {
+        public Uid Create(ObjectClass oclass, ICollection<ConnectorAttribute> attrs, OperationOptions options)
+        {
             String version = "2.0";
             return new Uid(version);
         }
-        public void Init(Configuration cfg) {
+        public void Init(Configuration cfg)
+        {
         }
 
-        public void Dispose() {
-            
+        public void Dispose()
+        {
+
         }
-            
-        public Schema Schema() {
+
+        public Schema Schema()
+        {
             return null;
         }
-
-        
     }
 }

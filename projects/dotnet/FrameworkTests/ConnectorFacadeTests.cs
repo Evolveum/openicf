@@ -35,7 +35,8 @@ using Org.IdentityConnectors.Framework.Spi;
 using Org.IdentityConnectors.Framework.Spi.Operations;
 using Org.IdentityConnectors.Test.Common;
 
-namespace FrameworkTests {
+namespace FrameworkTests
+{
 
     [TestFixture]
     public class ConnectorFacadeTests

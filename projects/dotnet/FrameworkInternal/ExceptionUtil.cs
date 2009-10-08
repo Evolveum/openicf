@@ -65,21 +65,21 @@ namespace Org.IdentityConnectors.Framework.Impl
         /// </remarks>
         public static void PreserveStackTrace(Exception exception)
         {
-            Assertions.NullCheck( exception, "exception" );
+            Assertions.NullCheck(exception, "exception");
 
             try
             {
-                MethodInfo preserveStackTrace = typeof( Exception ).GetMethod( 
-                    PreserveStackTraceMethodName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.InvokeMethod );
+                MethodInfo preserveStackTrace = typeof(Exception).GetMethod(
+                    PreserveStackTraceMethodName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.InvokeMethod);
 
-                preserveStackTrace.Invoke( exception, null );
+                preserveStackTrace.Invoke(exception, null);
             }
-            catch( Exception ex )
+            catch (Exception ex)
             {
                 //it should not ever happen, but we have to make sure that if a next release of .Net Framework does not
                 //include the invoked method it will not break the execution
-                TraceUtil.TraceException( string.Format(
-                    @"Could not set an exception to preserve its stack trace. Exception: ""{0}""", exception ), ex );
+                TraceUtil.TraceException(string.Format(
+                    @"Could not set an exception to preserve its stack trace. Exception: ""{0}""", exception), ex);
                 return;
             }
         }

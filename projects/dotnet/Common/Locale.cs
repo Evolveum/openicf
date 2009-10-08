@@ -31,45 +31,46 @@ namespace Org.IdentityConnectors.Common
     /// </summary>
     public sealed class Locale
     {
-        private static readonly IDictionary<Locale,String> 
+        private static readonly IDictionary<Locale, String>
             Locale2CultureInfoName = new Dictionary<Locale, String>();
-        private static readonly IDictionary<String,Locale>
+        private static readonly IDictionary<String, Locale>
             CultureInfoName2Locale = new Dictionary<String, Locale>();
-        
-        private static void AddMapping(Locale locale, String name) {
+
+        private static void AddMapping(Locale locale, String name)
+        {
             Locale2CultureInfoName[locale] = name;
             CultureInfoName2Locale[name] = locale;
         }
-        
+
         /// <summary>
         /// Special cases
         /// </summary>
         static Locale()
         {
-            AddMapping(new Locale(),"");
-            AddMapping(new Locale("iw"),"he");
-            AddMapping(new Locale("zh"),"zh-CHS");
-            AddMapping(new Locale("iw","IL"),"he-IL");
-            AddMapping(new Locale("no","NO"),"nb-NO");
-            AddMapping(new Locale("no","NO","NY"),"nn-NO");
+            AddMapping(new Locale(), "");
+            AddMapping(new Locale("iw"), "he");
+            AddMapping(new Locale("zh"), "zh-CHS");
+            AddMapping(new Locale("iw", "IL"), "he-IL");
+            AddMapping(new Locale("no", "NO"), "nb-NO");
+            AddMapping(new Locale("no", "NO", "NY"), "nn-NO");
         }
-        
+
         private String _language;
         private String _country;
         private String _variant;
-        
+
         public Locale()
             : this("")
         {
-            
+
         }
-        
+
         public Locale(String language)
-            : this(language,"")
+            : this(language, "")
         {
         }
         public Locale(String language, String country)
-            : this(language,country,"")
+            : this(language, country, "")
         {
         }
         public Locale(String language, String country, String variant)
@@ -78,52 +79,66 @@ namespace Org.IdentityConnectors.Common
             _country = country ?? "";
             _variant = variant ?? "";
         }
-        
-        public string Language {
-            get {
+
+        public string Language
+        {
+            get
+            {
                 return _language;
             }
         }
-        
-        public string Country {
-            get {
+
+        public string Country
+        {
+            get
+            {
                 return _country;
             }
         }
-        
-        public string Variant {
-            get {
+
+        public string Variant
+        {
+            get
+            {
                 return _variant;
             }
         }
-        
-        public override bool Equals(Object o) {
+
+        public override bool Equals(Object o)
+        {
             Locale other = o as Locale;
-            if ( other != null ) {
-                if (!Object.Equals(Language,other.Language)) {
+            if (other != null)
+            {
+                if (!Object.Equals(Language, other.Language))
+                {
                     return false;
                 }
-                if (!Object.Equals(Country,other.Country)) {
+                if (!Object.Equals(Country, other.Country))
+                {
                     return false;
                 }
-                if (!Object.Equals(Variant,other.Variant)) {
+                if (!Object.Equals(Variant, other.Variant))
+                {
                     return false;
                 }
                 return true;
             }
             return false;
         }
-        
-        public override int GetHashCode() {
-            unchecked {
-                return _language.GetHashCode()+_country.GetHashCode();
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return _language.GetHashCode() + _country.GetHashCode();
             }
         }
-        
-        public override string ToString() {
-            return Language+"_"+Country+"_"+Variant;
+
+        public override string ToString()
+        {
+            return Language + "_" + Country + "_" + Variant;
         }
-        
+
         /// <summary>
         /// Creates the closest CultureInfo that maps to this locale
         /// </summary>
@@ -131,57 +146,68 @@ namespace Org.IdentityConnectors.Common
         public CultureInfo ToCultureInfo()
         {
             CultureInfo rv = null;
-            String code = CollectionUtil.GetValue(Locale2CultureInfoName,this,null);
-            if (code != null ) {
+            String code = CollectionUtil.GetValue(Locale2CultureInfoName, this, null);
+            if (code != null)
+            {
                 rv = TryCultureCode(code);
             }
-            if ( rv == null ) {
-                if (Country.Length > 0) {
-                    rv = TryCultureCode(Language+"-"+Country);
+            if (rv == null)
+            {
+                if (Country.Length > 0)
+                {
+                    rv = TryCultureCode(Language + "-" + Country);
                 }
             }
-            if ( rv == null ) {
+            if (rv == null)
+            {
                 rv = TryCultureCode(Language);
             }
-            if ( rv == null ) {
+            if (rv == null)
+            {
                 rv = CultureInfo.InvariantCulture;
             }
             return rv;
         }
-        
-        public static Locale FindLocale(CultureInfo info) 
+
+        public static Locale FindLocale(CultureInfo info)
         {
             String code = info.Name;
-            Locale rv = CollectionUtil.GetValue(CultureInfoName2Locale,code,null);
-            if (rv == null) {
-                String [] parts = code.Split(new string[]{"-"},
+            Locale rv = CollectionUtil.GetValue(CultureInfoName2Locale, code, null);
+            if (rv == null)
+            {
+                String[] parts = code.Split(new string[] { "-" },
                                              StringSplitOptions.RemoveEmptyEntries);
                 String language = "";
                 String country = "";
-                if ( parts.Length > 0 ) {
+                if (parts.Length > 0)
+                {
                     String l = parts[0];
-                    if (LooksLikeValidLanguageCode(l)) {
+                    if (LooksLikeValidLanguageCode(l))
+                    {
                         language = l;
-                        if ( parts.Length > 1 ) {
+                        if (parts.Length > 1)
+                        {
                             String c = parts[1];
-                            if (LooksLikeValidCountryCode(c)) {
+                            if (LooksLikeValidCountryCode(c))
+                            {
                                 country = c;
                             }
                         }
                     }
                 }
-                rv = new Locale(language,country);
+                rv = new Locale(language, country);
             }
             return rv;
         }
-        
+
         /// <summary>
         /// Weeds out some junk
         /// </summary>
         /// <param name="l"></param>
         /// <returns></returns>
-        private static bool LooksLikeValidLanguageCode(String l) {
-            char [] chars = l.ToCharArray();
+        private static bool LooksLikeValidLanguageCode(String l)
+        {
+            char[] chars = l.ToCharArray();
             return (chars.Length == 2 &&
                     Char.IsLower(chars[0]) &&
                     Char.IsLower(chars[1]));
@@ -191,18 +217,22 @@ namespace Org.IdentityConnectors.Common
         /// </summary>
         /// <param name="l"></param>
         /// <returns></returns>
-        private static bool LooksLikeValidCountryCode(String l) {
-            char [] chars = l.ToCharArray();
+        private static bool LooksLikeValidCountryCode(String l)
+        {
+            char[] chars = l.ToCharArray();
             return (chars.Length == 2 &&
                     Char.IsUpper(chars[0]) &&
                     Char.IsUpper(chars[1]));
         }
-        
-        private static CultureInfo TryCultureCode(String code) {
-            try {
+
+        private static CultureInfo TryCultureCode(String code)
+        {
+            try
+            {
                 return new CultureInfo(code);
             }
-            catch (Exception) {
+            catch (Exception)
+            {
                 return null;
             }
         }

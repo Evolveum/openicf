@@ -29,15 +29,18 @@ namespace Org.IdentityConnectors.Common
     /// </summary>
     public static class DateTimeUtil
     {
-        public static DateTime GetDateTimeFromUtcMillis(long dateTime) {
-            return DateTime.FromFileTimeUtc(dateTime*10000);
+        public static DateTime GetDateTimeFromUtcMillis(long dateTime)
+        {
+            return DateTime.FromFileTimeUtc(dateTime * 10000);
         }
-        
-        public static long GetUtcTimeMillis(DateTime dateTime) {
-            return dateTime.ToFileTimeUtc()/10000;
+
+        public static long GetUtcTimeMillis(DateTime dateTime)
+        {
+            return dateTime.ToFileTimeUtc() / 10000;
         }
-        
-        public static long GetCurrentUtcTimeMillis() {
+
+        public static long GetCurrentUtcTimeMillis()
+        {
             return GetUtcTimeMillis(DateTime.Now);
         }
     }

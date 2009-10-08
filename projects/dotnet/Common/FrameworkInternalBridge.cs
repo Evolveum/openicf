@@ -27,7 +27,8 @@ namespace Org.IdentityConnectors.Common
     /// <summary>
     /// Description of FrameworkInternalBridge.
     /// </summary>
-    internal static class FrameworkInternalBridge {
+    internal static class FrameworkInternalBridge
+    {
         private static readonly Object LOCK = new Object();
         private static Assembly _assembly = null;
         /// <summary>
@@ -35,20 +36,23 @@ namespace Org.IdentityConnectors.Common
         /// </summary>
         /// <param name="typeName"></param>
         /// <returns></returns>
-        public static Type LoadType(String typeName) {
-            
+        public static Type LoadType(String typeName)
+        {
+
             Assembly assembly;
-            lock(LOCK) {                
-                if (_assembly == null) {
+            lock (LOCK)
+            {
+                if (_assembly == null)
+                {
                     AssemblyName assemName = new AssemblyName();
                     assemName.Name = "FrameworkInternal";
                     _assembly = Assembly.Load(assemName);
                 }
                 assembly = _assembly;
             }
-            
-            return assembly.GetType(typeName,true);
-            
+
+            return assembly.GetType(typeName, true);
+
         }
     }
 }

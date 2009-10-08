@@ -36,188 +36,214 @@ namespace FrameworkTests
     [TestFixture]
     public class ObjectPoolTests
     {
-        private class MyTestConnection {
+        private class MyTestConnection
+        {
             private bool _isGood = true;
-            
-            public void Test() {
-                if (!_isGood) {
+
+            public void Test()
+            {
+                if (!_isGood)
+                {
                     throw new ConnectorException("Connection is bad");
                 }
             }
-            
-            public void Dispose() {
+
+            public void Dispose()
+            {
                 _isGood = false;
             }
-            
-            public bool IsGood {
-                get {
+
+            public bool IsGood
+            {
+                get
+                {
                     return _isGood;
                 }
             }
         }
-        
-        private class MyTestConnectionFactory : ObjectPoolHandler<MyTestConnection> {
-            
+
+        private class MyTestConnectionFactory : ObjectPoolHandler<MyTestConnection>
+        {
+
             private bool _createBadConnection = false;
             private int _totalCreatedConnections = 0;
-            
-            public MyTestConnection NewObject() {
+
+            public MyTestConnection NewObject()
+            {
                 _totalCreatedConnections++;
                 MyTestConnection rv = new MyTestConnection();
-                if (_createBadConnection) {
+                if (_createBadConnection)
+                {
                     rv.Dispose();
                 }
                 return rv;
             }
-            public void TestObject(MyTestConnection obj) {
+            public void TestObject(MyTestConnection obj)
+            {
                 obj.Test();
             }
-            public void DisposeObject(MyTestConnection obj) {
+            public void DisposeObject(MyTestConnection obj)
+            {
                 obj.Dispose();
             }
-            
-            public int TotalCreatedConnections {
-                get {
+
+            public int TotalCreatedConnections
+            {
+                get
+                {
                     return _totalCreatedConnections;
                 }
             }
-                                    
-            public bool CreateBadConnection {
-                set {
+
+            public bool CreateBadConnection
+            {
+                set
+                {
                     _createBadConnection = value;
                 }
-            }    
+            }
         }
-        
-        private class MyTestThread {
+
+        private class MyTestThread
+        {
             private readonly ObjectPool<MyTestConnection> _pool;
             private readonly int _numIterations;
             private Exception _exception;
             private Thread _thisThread;
             public MyTestThread(ObjectPool<MyTestConnection> pool,
-                    int numIterations) {
+                    int numIterations)
+            {
                 _pool = pool;
                 _numIterations = numIterations;
                 _thisThread = new Thread(Run);
             }
 
-            public void Start() {
+            public void Start()
+            {
                 _thisThread.Start();
             }
-            
-            public void Run() {                
-                try {
-                    for ( int i = 0; i < _numIterations; i++ ) {
+
+            public void Run()
+            {
+                try
+                {
+                    for (int i = 0; i < _numIterations; i++)
+                    {
                         MyTestConnection con =
                             _pool.BorrowObject();
-                         Thread.Sleep(300);
+                        Thread.Sleep(300);
                         _pool.ReturnObject(con);
                     }
                 }
-                catch (Exception e) {
+                catch (Exception e)
+                {
                     _exception = e;
                 }
             }
-            public void Shutdown() {
+            public void Shutdown()
+            {
                 _thisThread.Join();
-                if (_exception != null) {
+                if (_exception != null)
+                {
                     throw _exception;
                 }
             }
-            
+
         }
-        
+
         [Test]
         public void TestWithManyThreads()
         {
             int NUM_ITERATIONS = 10;
             int NUM_THREADS = 10;
-            int MAX_CONNECTIONS = NUM_THREADS-3; //make sure we get some waiting
+            int MAX_CONNECTIONS = NUM_THREADS - 3; //make sure we get some waiting
             ObjectPoolConfiguration config = new ObjectPoolConfiguration();
-            config.MaxObjects=(MAX_CONNECTIONS); 
-            config.MaxIdle=(MAX_CONNECTIONS);
-            config.MinIdle=(MAX_CONNECTIONS);
-            config.MinEvictableIdleTimeMillis=(60*1000);
-            config.MaxWait=(60*1000);
+            config.MaxObjects = (MAX_CONNECTIONS);
+            config.MaxIdle = (MAX_CONNECTIONS);
+            config.MinIdle = (MAX_CONNECTIONS);
+            config.MinEvictableIdleTimeMillis = (60 * 1000);
+            config.MaxWait = (60 * 1000);
             MyTestConnectionFactory fact = new MyTestConnectionFactory();
-            
-            ObjectPool<MyTestConnection> pool = new ObjectPool<MyTestConnection>(fact,config);
-            
-            MyTestThread [] threads = new MyTestThread[NUM_THREADS];
-            for (int i = 0; i < threads.Length; i++) {
-                threads[i] = new MyTestThread(pool,NUM_ITERATIONS);
+
+            ObjectPool<MyTestConnection> pool = new ObjectPool<MyTestConnection>(fact, config);
+
+            MyTestThread[] threads = new MyTestThread[NUM_THREADS];
+            for (int i = 0; i < threads.Length; i++)
+            {
+                threads[i] = new MyTestThread(pool, NUM_ITERATIONS);
                 threads[i].Start();
             }
-                    
-            foreach (MyTestThread thread in threads) {
+
+            foreach (MyTestThread thread in threads)
+            {
                 thread.Shutdown();
             }
-            
+
             //these should be the same since we never 
             //should have disposed anything
             Assert.AreEqual(MAX_CONNECTIONS, fact.TotalCreatedConnections);
             ObjectPool<MyTestConnection>.Statistics stats = pool.GetStatistics();
             Assert.AreEqual(0, stats.NumActive);
             Assert.AreEqual(MAX_CONNECTIONS, stats.NumIdle);
-            
+
             pool.Shutdown();
             stats = pool.GetStatistics();
             Assert.AreEqual(0, stats.NumActive);
-            Assert.AreEqual(0, stats.NumIdle);        
-            
+            Assert.AreEqual(0, stats.NumIdle);
+
         }
-        
+
         [Test]
         public void TestBadConnection()
         {
             int MAX_CONNECTIONS = 3;
             ObjectPoolConfiguration config = new ObjectPoolConfiguration();
-            config.MaxObjects=(MAX_CONNECTIONS); 
-            config.MaxIdle=(MAX_CONNECTIONS);
-            config.MinIdle=(MAX_CONNECTIONS);
-            config.MinEvictableIdleTimeMillis=(60*1000);
-            config.MaxWait=(60*1000);
+            config.MaxObjects = (MAX_CONNECTIONS);
+            config.MaxIdle = (MAX_CONNECTIONS);
+            config.MinIdle = (MAX_CONNECTIONS);
+            config.MinEvictableIdleTimeMillis = (60 * 1000);
+            config.MaxWait = (60 * 1000);
             MyTestConnectionFactory fact = new MyTestConnectionFactory();
-            
-            ObjectPool<MyTestConnection> pool = new ObjectPool<MyTestConnection>(fact,config);
-            
+
+            ObjectPool<MyTestConnection> pool = new ObjectPool<MyTestConnection>(fact, config);
+
             //borrow first connection and return
             MyTestConnection conn = pool.BorrowObject();
             Assert.AreEqual(1, fact.TotalCreatedConnections);
             pool.ReturnObject(conn);
             Assert.AreEqual(1, fact.TotalCreatedConnections);
-            
+
             //re-borrow same connection and return
             conn = pool.BorrowObject();
             Assert.AreEqual(1, fact.TotalCreatedConnections);
             pool.ReturnObject(conn);
             Assert.AreEqual(1, fact.TotalCreatedConnections);
-            
+
             //dispose and make sure we get a new connection
-            conn.Dispose(); 
+            conn.Dispose();
             conn = pool.BorrowObject();
             Assert.AreEqual(2, fact.TotalCreatedConnections);
             pool.ReturnObject(conn);
             Assert.AreEqual(2, fact.TotalCreatedConnections);
         }
-        
+
         [Test]
         public void TestIdleCleanup()
         {
             ObjectPoolConfiguration config = new ObjectPoolConfiguration();
-            config.MaxObjects=(3); 
-            config.MaxIdle=(2);
-            config.MinIdle=(1);
-            config.MinEvictableIdleTimeMillis=(3000);
-            config.MaxWait=(60*1000);
+            config.MaxObjects = (3);
+            config.MaxIdle = (2);
+            config.MinIdle = (1);
+            config.MinEvictableIdleTimeMillis = (3000);
+            config.MaxWait = (60 * 1000);
             MyTestConnectionFactory fact = new MyTestConnectionFactory();
-            
-            ObjectPool<MyTestConnection> pool = new ObjectPool<MyTestConnection>(fact,config);
-    
+
+            ObjectPool<MyTestConnection> pool = new ObjectPool<MyTestConnection>(fact, config);
+
             MyTestConnection conn1 = (MyTestConnection)pool.BorrowObject();
             MyTestConnection conn2 = (MyTestConnection)pool.BorrowObject();
             MyTestConnection conn3 = (MyTestConnection)pool.BorrowObject();
-            
+
             Assert.AreEqual(3, fact.TotalCreatedConnections);
             pool.ReturnObject(conn1);
             Assert.AreEqual(1, pool.GetStatistics().NumIdle);
@@ -228,7 +254,7 @@ namespace FrameworkTests
             Assert.AreEqual(false, conn1.IsGood);
             Assert.AreEqual(true, conn2.IsGood);
             Assert.AreEqual(true, conn3.IsGood);
-            Thread.Sleep(((int)(config.MinEvictableIdleTimeMillis+1000)));
+            Thread.Sleep(((int)(config.MinEvictableIdleTimeMillis + 1000)));
             MyTestConnection conn4 = (MyTestConnection)pool.BorrowObject();
             Assert.AreSame(conn3, conn4);
             Assert.AreEqual(false, conn1.IsGood);
@@ -236,19 +262,21 @@ namespace FrameworkTests
             Assert.AreEqual(true, conn3.IsGood);
             Assert.AreEqual(true, conn4.IsGood);
         }
-        
+
         [Test]
         public void TestCreateBadConnection()
         {
             MyTestConnectionFactory fact = new MyTestConnectionFactory();
-            fact.CreateBadConnection=(true);
-            
-            ObjectPool<MyTestConnection> pool = new ObjectPool<MyTestConnection>(fact,new ObjectPoolConfiguration());
-            try {
+            fact.CreateBadConnection = (true);
+
+            ObjectPool<MyTestConnection> pool = new ObjectPool<MyTestConnection>(fact, new ObjectPoolConfiguration());
+            try
+            {
                 pool.BorrowObject();
                 Assert.Fail("expected exception");
             }
-            catch (ConnectorException e) {
+            catch (ConnectorException e)
+            {
                 Assert.AreEqual("Connection is bad", e.Message);
             }
         }

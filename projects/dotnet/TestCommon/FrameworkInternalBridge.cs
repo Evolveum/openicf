@@ -31,7 +31,8 @@ using Org.IdentityConnectors.Framework.Spi.Operations;
 using Org.IdentityConnectors.Framework.Common.Objects;
 namespace Org.IdentityConnectors.Test.Common
 {
-    internal static class FrameworkInternalBridge {
+    internal static class FrameworkInternalBridge
+    {
         private static readonly Object LOCK = new Object();
         private static Assembly _assembly = null;
         /// <summary>
@@ -39,20 +40,23 @@ namespace Org.IdentityConnectors.Test.Common
         /// </summary>
         /// <param name="typeName"></param>
         /// <returns></returns>
-        public static SafeType<T> LoadType<T>(String typeName) where T : class {
-            
+        public static SafeType<T> LoadType<T>(String typeName) where T : class
+        {
+
             Assembly assembly;
-            lock(LOCK) {                
-                if (_assembly == null) {
+            lock (LOCK)
+            {
+                if (_assembly == null)
+                {
                     AssemblyName assemName = new AssemblyName();
                     assemName.Name = "FrameworkInternal";
                     _assembly = Assembly.Load(assemName);
                 }
                 assembly = _assembly;
             }
-            
-            return SafeType<T>.ForRawType(assembly.GetType(typeName,true));
-            
+
+            return SafeType<T>.ForRawType(assembly.GetType(typeName, true));
+
         }
-    }    
+    }
 }

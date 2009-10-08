@@ -26,117 +26,119 @@ using System.Reflection;
 
 namespace Org.IdentityConnectors.Common
 {
-   /// <summary>
-   /// The equivalent of java's Class&lt;? extends...%gt; syntax.
-   /// Allows you to restrict a Type to a certain class hierarchy.
-   /// </summary>
-   public sealed class SafeType<T>
-       where T : class
-   {
-       private readonly Type _rawType;
-       
-       /// <summary>
-       /// Make private so no one can create directly
-       /// </summary>
-       private SafeType(Type rawType)
-       {           
-           if (!ReflectionUtil.IsParentTypeOf(typeof(T),rawType)) {
-               throw new ArgumentException("Type: "+rawType+" is not a subclass of"+typeof(T));
-           }
-           _rawType = rawType;
-       }
-       
-       /// <summary>
-       /// Returns the SafeType for a given raw type. 
-       /// NOTE: If possible use Get<U>() instead since it is statically
-       /// checked at compile time.
-       /// </summary>
-       /// <param name="type"></param>
-       /// <returns></returns>
-       public static SafeType<T> ForRawType(Type type)
-       {
-           return new SafeType<T>(type);
-       }
-       
-       /// <summary>
-       /// Gets an instance of the safe type in a type-safe fashion.
-       /// </summary>
-       /// <returns>The instance of the safe type</returns>
-       public static SafeType<T> Get<U>()
-           where U : T
-       {
-           return new SafeType<T>(typeof(U));
-       }
-       
-       /// <summary>
-       /// Gets an instance of the safe type in a type-safe fashion from an object.
-       /// </summary>
-       /// <returns>The instance of the safe type</returns>
-       public static SafeType<T> Get(T obj)
-       {
-           return new SafeType<T>(obj.GetType());
-       }
-       
-       /// <summary>
-       /// Returns the generic type definition corresponding to this type.
-       /// Will return the same type if this is already a generic type.
-       /// </summary>
-       /// <returns></returns>
-       public SafeType<T> GetTypeErasure()
-       {
-           return SafeType<T>.ForRawType(ReflectionUtil.GetTypeErasure(RawType));
-       }
-       
-       /// <summary>
-       /// Returns the underlying C# type
-       /// </summary>
-       public Type RawType {
-           get {
-               return _rawType;
-           }
-       }
-       
-       /// <summary>
-       /// Creates a new instance of the given type
-       /// </summary>
-       /// <returns>The new instance</returns>
-       public T CreateInstance()
-       {
-           return (T)Activator.CreateInstance(RawType);
-       }
-       
-       /// <summary>
-       /// Returns true iff these represent the same underlying type
-       /// and the SafeType has the same parent type.
-       /// </summary>
-       /// <param name="o">The other</param>
-       /// <returns>true iff these represent the same underylying type
-       /// and the TypeGroup has the same parent type</returns>
-       public override bool Equals(object o)
-       {
-           if ( o is SafeType<T> ) {
-               SafeType<T> other = (SafeType<T>)o;
-               return RawType.Equals(other.RawType);
-           }
-           return false;
-       }
-       /// <summary>
-       /// Returns a hash of the type
-       /// </summary>
-       /// <returns>a hash of the type</returns>
-       public override int GetHashCode()
-       {
-           return RawType.GetHashCode();
-       }
-       /// <summary>
-       /// Returns a string representation of the member type
-       /// </summary>
-       /// <returns>a string representation of the member type</returns>
-       public override string ToString()
-       {
-           return RawType.ToString();
-       }
-   }
+    /// <summary>
+    /// The equivalent of java's Class&lt;? extends...%gt; syntax.
+    /// Allows you to restrict a Type to a certain class hierarchy.
+    /// </summary>
+    public sealed class SafeType<T>
+        where T : class
+    {
+        private readonly Type _rawType;
 
-    
+        /// <summary>
+        /// Make private so no one can create directly
+        /// </summary>
+        private SafeType(Type rawType)
+        {
+            if (!ReflectionUtil.IsParentTypeOf(typeof(T), rawType))
+            {
+                throw new ArgumentException("Type: " + rawType + " is not a subclass of" + typeof(T));
+            }
+            _rawType = rawType;
+        }
+
+        /// <summary>
+        /// Returns the SafeType for a given raw type. 
+        /// NOTE: If possible use Get<U>() instead since it is statically
+        /// checked at compile time.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static SafeType<T> ForRawType(Type type)
+        {
+            return new SafeType<T>(type);
+        }
+
+        /// <summary>
+        /// Gets an instance of the safe type in a type-safe fashion.
+        /// </summary>
+        /// <returns>The instance of the safe type</returns>
+        public static SafeType<T> Get<U>()
+            where U : T
+        {
+            return new SafeType<T>(typeof(U));
+        }
+
+        /// <summary>
+        /// Gets an instance of the safe type in a type-safe fashion from an object.
+        /// </summary>
+        /// <returns>The instance of the safe type</returns>
+        public static SafeType<T> Get(T obj)
+        {
+            return new SafeType<T>(obj.GetType());
+        }
+
+        /// <summary>
+        /// Returns the generic type definition corresponding to this type.
+        /// Will return the same type if this is already a generic type.
+        /// </summary>
+        /// <returns></returns>
+        public SafeType<T> GetTypeErasure()
+        {
+            return SafeType<T>.ForRawType(ReflectionUtil.GetTypeErasure(RawType));
+        }
+
+        /// <summary>
+        /// Returns the underlying C# type
+        /// </summary>
+        public Type RawType
+        {
+            get
+            {
+                return _rawType;
+            }
+        }
+
+        /// <summary>
+        /// Creates a new instance of the given type
+        /// </summary>
+        /// <returns>The new instance</returns>
+        public T CreateInstance()
+        {
+            return (T)Activator.CreateInstance(RawType);
+        }
+
+        /// <summary>
+        /// Returns true iff these represent the same underlying type
+        /// and the SafeType has the same parent type.
+        /// </summary>
+        /// <param name="o">The other</param>
+        /// <returns>true iff these represent the same underylying type
+        /// and the TypeGroup has the same parent type</returns>
+        public override bool Equals(object o)
+        {
+            if (o is SafeType<T>)
+            {
+                SafeType<T> other = (SafeType<T>)o;
+                return RawType.Equals(other.RawType);
+            }
+            return false;
+        }
+        /// <summary>
+        /// Returns a hash of the type
+        /// </summary>
+        /// <returns>a hash of the type</returns>
+        public override int GetHashCode()
+        {
+            return RawType.GetHashCode();
+        }
+        /// <summary>
+        /// Returns a string representation of the member type
+        /// </summary>
+        /// <returns>a string representation of the member type</returns>
+        public override string ToString()
+        {
+            return RawType.ToString();
+        }
+    }
 }

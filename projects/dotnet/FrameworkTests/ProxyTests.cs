@@ -32,38 +32,38 @@ namespace FrameworkTests
 {
     public interface MyTestInterface
     {
-        string TestProperty {get;set;}
-        
+        string TestProperty { get; set; }
+
         String TestTwoArgs(string val1, string val2);
         void TestVoid(IList<object> list);
         int TestPrimitive(int arg);
         DateTime TestStruct(DateTime arg);
     }
-    
+
     [TestFixture]
     public class ProxyTests
     {
         public class MyHandler : InvocationHandler
         {
             private string _testProperty;
-            
-            public Object Invoke(Object proxy, MethodInfo method, Object [] args)
+
+            public Object Invoke(Object proxy, MethodInfo method, Object[] args)
             {
                 if (method.Name.Equals("TestTwoArgs"))
                 {
-                    return ""+method.Name+" "+args[0]+" "+args[1];
+                    return "" + method.Name + " " + args[0] + " " + args[1];
                 }
-                else if ( method.Name.Equals("TestVoid") )
+                else if (method.Name.Equals("TestVoid"))
                 {
                     IList<object> arg = (IList<object>)args[0];
                     arg.Add("my void result");
                     return null;
                 }
-                else if ( method.Name.Equals("get_TestProperty") )
+                else if (method.Name.Equals("get_TestProperty"))
                 {
                     return _testProperty;
                 }
-                else if ( method.Name.Equals("set_TestProperty") ) 
+                else if (method.Name.Equals("set_TestProperty"))
                 {
                     _testProperty = (string)args[0];
                     return null;
@@ -74,27 +74,24 @@ namespace FrameworkTests
                 }
             }
         }
-        
+
         [Test]
         public void TestProxy()
         {
             InvocationHandler handler = new MyHandler();
-            
-            MyTestInterface inter = 
+
+            MyTestInterface inter =
                 (MyTestInterface)Proxy.NewProxyInstance(typeof(MyTestInterface),
                                                         handler);
             Assert.AreEqual("TestTwoArgs foo bar",
-                            inter.TestTwoArgs("foo","bar"));
+                            inter.TestTwoArgs("foo", "bar"));
             IList<object> temp = new List<object>();
             inter.TestVoid(temp);
-            Assert.AreEqual("my void result",temp[0]);
-            Assert.AreEqual(10,inter.TestPrimitive(10));
-            Assert.AreEqual(1000L,inter.TestStruct(new DateTime(1000)).Ticks);
+            Assert.AreEqual("my void result", temp[0]);
+            Assert.AreEqual(10, inter.TestPrimitive(10));
+            Assert.AreEqual(1000L, inter.TestStruct(new DateTime(1000)).Ticks);
             inter.TestProperty = "my property";
-            Assert.AreEqual("my property",inter.TestProperty);
+            Assert.AreEqual("my property", inter.TestProperty);
         }
-        
     }
-    
-    
 }

@@ -26,39 +26,41 @@ namespace Org.IdentityConnectors.Common
 {
     public static class StringUtil
     {
-        /**
-         * Determines if a string is empty. Empty is defined as null or empty
-         * string.
-         * 
-         * <pre>
-         *  StringUtil.isEmpty(null)               = true
-         *  StringUtil.isEmpty(&quot;&quot;)       = true
-         *  StringUtil.isEmpty(&quot; &quot;)      = false
-         *  StringUtil.isEmpty(&quot;bob&quot;)    = false
-         *  StringUtil.isEmpty(&quot; bob &quot;)  = false
-         * </pre>
-         * 
-         * @param val
-         *            string to evaluate as empty.
-         * @return true if the string is empty else false.
-         */
-        public static bool IsEmpty(String val) {
+        /// <summary>
+        /// Determines if a string is empty.
+        /// </summary>
+        /// <remarks>
+        /// Empty is defined as null or empty
+        /// string.
+        /// <pre>
+        /// StringUtil.isEmpty(null)               = true
+        /// StringUtil.isEmpty("")       = true
+        /// StringUtil.isEmpty(" ")      = false
+        /// StringUtil.isEmpty("bob")    = false
+        /// StringUtil.isEmpty(" bob ")  = false
+        /// </pre>
+        /// </remarks>
+        /// <param name="val">string to evaluate as empty.</param>
+        /// <returns>true if the string is empty else false.</returns>
+        public static bool IsEmpty(String val)
+        {
             return (val == null) ? true : val.Length == 0;
         }
-        
-        /**
-         * <pre>
-         *      StringUtil.isBlank(null)                = true
-         *      StringUtil.isBlank(&quot;&quot;)        = true
-         *      StringUtil.isBlank(&quot; &quot;)       = true
-         *      StringUtil.isBlank(&quot;bob&quot;)     = false
-         *      StringUtil.isBlank(&quot;  bob  &quot;) = false
-         * </pre>
-         */
-        public static bool IsBlank(String val) {
+
+        /// <summary>
+        /// <pre>
+        /// StringUtil.isBlank(null)                = true
+        /// StringUtil.isBlank("")        = true
+        /// StringUtil.isBlank(" ")       = true
+        /// StringUtil.isBlank("bob")     = false
+        /// StringUtil.isBlank("  bob  ") = false
+        /// </pre>
+        /// </summary>
+        public static bool IsBlank(String val)
+        {
             return (val == null) ? true : IsEmpty(val.Trim());
         }
-        
+
         /// <summary>
         /// Constructs a secure string from a char []. The char[] will
         /// be cleared out when finished.
@@ -66,23 +68,26 @@ namespace Org.IdentityConnectors.Common
         /// <param name="val">The characters to use. Will be cleared
         /// out.</param>
         /// <returns>A secure string representation</returns>
-        public static GuardedString NewGuardedString(char [] val)
+        public static GuardedString NewGuardedString(char[] val)
         {
             GuardedString rv = new GuardedString();
-            for( int i = 0; i < val.Length; i++ )
+            for (int i = 0; i < val.Length; i++)
             {
                 rv.AppendChar(val[i]);
                 val[i] = (char)0;
             }
             return rv;
         }
-        
-        
-        public static bool IsTrue(string val) {
-            if (!IsBlank(val)) {
+
+
+        public static bool IsTrue(string val)
+        {
+            if (!IsBlank(val))
+            {
                 // clean up the value..
                 val = val.Trim().ToLower();
-                if (val.Equals("1") || val.Equals("on") || val.Equals("true")) {
+                if (val.Equals("1") || val.Equals("on") || val.Equals("true"))
+                {
                     return true;
                 }
             }

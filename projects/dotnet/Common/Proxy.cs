@@ -31,11 +31,11 @@ namespace Org.IdentityConnectors.Common.Proxy
     /// </summary>
     public interface InvocationHandler
     {
-        Object 
-        Invoke(Object proxy, MethodInfo method, Object [] args);
+        Object
+        Invoke(Object proxy, MethodInfo method, Object[] args);
     }
-    
-    
+
+
     /// <summary>
     /// Similar to java.lang.reflect.Proxy
     /// </summary>
@@ -48,81 +48,82 @@ namespace Org.IdentityConnectors.Common.Proxy
                                    typeof(object[])});
         private static readonly MethodInfo GET_METHOD_FROM_HANDLE_METHOD =
             typeof(MethodBase).GetMethod("GetMethodFromHandle",
-                                         new Type[]{typeof(RuntimeMethodHandle)});
-   
+                                         new Type[] { typeof(RuntimeMethodHandle) });
+
         private static readonly object LOCK = new Object();
-        
-        private static IDictionary<Type,ConstructorInfo>
-            _implementationMap = new Dictionary<Type,ConstructorInfo>();
-        
+
+        private static IDictionary<Type, ConstructorInfo>
+            _implementationMap = new Dictionary<Type, ConstructorInfo>();
+
         private static int _count = 0;
-        
+
         public static Object NewProxyInstance(Type interfaze,
                                               InvocationHandler handler)
         {
             ConstructorInfo constructor = GetOrCreateConstructorInfo(interfaze);
-            return constructor.Invoke(new object[]{handler});
+            return constructor.Invoke(new object[] { handler });
         }
-        
+
         private static ConstructorInfo GetOrCreateConstructorInfo(Type type)
         {
-            lock(LOCK)
+            lock (LOCK)
             {
                 ConstructorInfo rv =
-                    CollectionUtil.GetValue(_implementationMap,type,null);
-                if ( rv == null )
+                    CollectionUtil.GetValue(_implementationMap, type, null);
+                if (rv == null)
                 {
                     Type impl = GenerateImplementation(type);
-                    rv = 
-                        impl.GetConstructor(new Type[]{typeof(InvocationHandler)});
+                    rv =
+                        impl.GetConstructor(new Type[] { typeof(InvocationHandler) });
 
                     _implementationMap[type] = rv;
                 }
                 return rv;
             }
         }
-        
+
         private static String NextName()
         {
             int count;
-            lock(LOCK) {
+            lock (LOCK)
+            {
                 count = _count;
                 count++;
             }
-            return "___proxy"+count;
+            return "___proxy" + count;
         }
-        
-        
-        
-        private static Type GenerateImplementation(Type interfaze) 
+
+
+
+        private static Type GenerateImplementation(Type interfaze)
         {
             if (!interfaze.IsInterface)
             {
-                throw new ArgumentException("Type is not an interface: "+interfaze);
+                throw new ArgumentException("Type is not an interface: " + interfaze);
             }
-            if ( interfaze.IsGenericType )
+            if (interfaze.IsGenericType)
             {
-                throw new ArgumentException("Type is a generic type: "+interfaze);                
+                throw new ArgumentException("Type is a generic type: " + interfaze);
             }
-            
+
             String uniqueName = NextName();
-            
+
             AssemblyName assemblyName = new AssemblyName(uniqueName);
-            AssemblyBuilder assemblyBuilder = 
+            AssemblyBuilder assemblyBuilder =
                 AppDomain.CurrentDomain.DefineDynamicAssembly(
-                    assemblyName, 
+                    assemblyName,
                     AssemblyBuilderAccess.RunAndSave);
             // For a single-module assembly, the module name is usually
             // the assembly name plus an extension.
-            ModuleBuilder moduleBuilder = 
+            ModuleBuilder moduleBuilder =
                 assemblyBuilder.DefineDynamicModule(assemblyName.Name, assemblyName.Name + ".dll");
-    
+
             TypeBuilder typeBuilder = moduleBuilder.DefineType(
-                uniqueName, 
+                uniqueName,
                  TypeAttributes.Public);
             typeBuilder.AddInterfaceImplementation(interfaze);
-            
-            MethodInfo [] methods = interfaze.GetMethods();
+
+            MethodInfo[] methods = interfaze.GetMethods();
             ConstructorBuilder classInitializer =
                 typeBuilder.DefineTypeInitializer();
             ILGenerator classInitializerCode =
@@ -131,21 +132,21 @@ namespace Org.IdentityConnectors.Common.Proxy
             FieldBuilder handlerField =
                 typeBuilder.DefineField("_handler",
                             typeof(InvocationHandler),
-                            FieldAttributes.Private|FieldAttributes.InitOnly);
+                            FieldAttributes.Private | FieldAttributes.InitOnly);
             int count = 0;
             foreach (MethodInfo method in methods)
             {
-                GenerateMethod(typeBuilder,method,classInitializerCode,count,
+                GenerateMethod(typeBuilder, method, classInitializerCode, count,
                               handlerField);
                 count++;
             }
             classInitializerCode.Emit(OpCodes.Ret);
-            
-            
+
+
             ConstructorBuilder constructorBuilder = typeBuilder.DefineConstructor(
-            MethodAttributes.Public, 
-            CallingConventions.Standard, 
-            new Type[]{typeof(InvocationHandler)});
+            MethodAttributes.Public,
+            CallingConventions.Standard,
+            new Type[] { typeof(InvocationHandler) });
             ILGenerator constructorCode = constructorBuilder.GetILGenerator();
             // For a constructor, argument zero is a reference to the new
             // instance. Push it on the stack before calling the base
@@ -153,115 +154,119 @@ namespace Org.IdentityConnectors.Common.Proxy
             // base class (System.Object) by passing an empty array of 
             // types (Type.EmptyTypes) to GetConstructor.
             constructorCode.Emit(OpCodes.Ldarg_0);
-            constructorCode.Emit(OpCodes.Call, 
+            constructorCode.Emit(OpCodes.Call,
                 typeof(object).GetConstructor(Type.EmptyTypes));
             constructorCode.Emit(OpCodes.Ldarg_0);
             constructorCode.Emit(OpCodes.Ldarg_1);
             constructorCode.Emit(OpCodes.Stfld, handlerField);
             constructorCode.Emit(OpCodes.Ret);
-            
-            
+
+
             Type t = typeBuilder.CreateType();
-            
+
             //assemblyBuilder.Save(assemblyName.Name+".dll");
-            
+
             return t;
         }
-        
+
         private static void ValidateMethod(MethodInfo info)
         {
-            if ( info.GetGenericArguments().Length != 0 ) {
+            if (info.GetGenericArguments().Length != 0)
+            {
                 throw new ArgumentException(
-                    "Method not supported since it has generic arguments: "+info);
-                                            
+                    "Method not supported since it has generic arguments: " + info);
+
             }
-            foreach (ParameterInfo parameter in info.GetParameters()) {
-                if ( parameter.IsOut ) {
+            foreach (ParameterInfo parameter in info.GetParameters())
+            {
+                if (parameter.IsOut)
+                {
                     throw new ArgumentException(
-                        "Method not supported since it has output paramaters: "+info);                    
+                        "Method not supported since it has output paramaters: " + info);
                 }
-                if ( parameter.IsRetval ) {
+                if (parameter.IsRetval)
+                {
                     throw new ArgumentException(
-                        "Method not supported since it has retval paramaters: "+info);                    
+                        "Method not supported since it has retval paramaters: " + info);
                 }
             }
         }
-        
+
         private static void GenerateMethod(TypeBuilder typeBuilder,
-                                           MethodInfo method,                                    
+                                           MethodInfo method,
                                            ILGenerator classInitializerCode,
                                            int methodCount,
                                            FieldBuilder handlerField)
         {
             ValidateMethod(method);
-        
+
             FieldBuilder methodField =
-                typeBuilder.DefineField("METHOD"+methodCount,
+                typeBuilder.DefineField("METHOD" + methodCount,
                                         typeof(MethodInfo),
-                                        FieldAttributes.Private|FieldAttributes.InitOnly|FieldAttributes.Static);
-            
-            
-            
+                                        FieldAttributes.Private | FieldAttributes.InitOnly | FieldAttributes.Static);
+
+
+
             classInitializerCode.Emit(OpCodes.Ldtoken,
                                       method);
             classInitializerCode.Emit(OpCodes.Call,
                                       GET_METHOD_FROM_HANDLE_METHOD);
-            classInitializerCode.Emit(OpCodes.Castclass,typeof(MethodInfo));
-            classInitializerCode.Emit(OpCodes.Stsfld,methodField);
-            
-            
-            Type [] parameterTypes = ReflectionUtil.GetParameterTypes(method);
+            classInitializerCode.Emit(OpCodes.Castclass, typeof(MethodInfo));
+            classInitializerCode.Emit(OpCodes.Stsfld, methodField);
+
+
+            Type[] parameterTypes = ReflectionUtil.GetParameterTypes(method);
             MethodBuilder methodBuilder = typeBuilder.DefineMethod(
-                method.Name, 
-                MethodAttributes.Public|
-                MethodAttributes.HideBySig|
-                MethodAttributes.NewSlot|
-                MethodAttributes.Virtual|
+                method.Name,
+                MethodAttributes.Public |
+                MethodAttributes.HideBySig |
+                MethodAttributes.NewSlot |
+                MethodAttributes.Virtual |
                 MethodAttributes.Final,
                 method.CallingConvention,
-                method.ReturnType, 
+                method.ReturnType,
                 parameterTypes);
-            
+
             ILGenerator methodCode = methodBuilder.GetILGenerator();
             methodCode.Emit(OpCodes.Ldarg_0);
-            methodCode.Emit(OpCodes.Ldfld,handlerField);
+            methodCode.Emit(OpCodes.Ldfld, handlerField);
             methodCode.Emit(OpCodes.Ldarg_0);
-            methodCode.Emit(OpCodes.Ldsfld,methodField);
-            methodCode.Emit(OpCodes.Ldc_I4,parameterTypes.Length);
-            methodCode.Emit(OpCodes.Newarr,typeof(object));
-            
-            for (int index = 0; index < parameterTypes.Length; index++) 
+            methodCode.Emit(OpCodes.Ldsfld, methodField);
+            methodCode.Emit(OpCodes.Ldc_I4, parameterTypes.Length);
+            methodCode.Emit(OpCodes.Newarr, typeof(object));
+
+            for (int index = 0; index < parameterTypes.Length; index++)
             {
                 Type parameterType = parameterTypes[index];
                 methodCode.Emit(OpCodes.Dup);
-                methodCode.Emit(OpCodes.Ldc_I4,index);
-                methodCode.Emit(OpCodes.Ldarg,index+1);
+                methodCode.Emit(OpCodes.Ldc_I4, index);
+                methodCode.Emit(OpCodes.Ldarg, index + 1);
                 if (parameterType.IsValueType)
                 {
-                    methodCode.Emit(OpCodes.Box,parameterType);
+                    methodCode.Emit(OpCodes.Box, parameterType);
                 }
                 methodCode.Emit(OpCodes.Stelem_Ref);
             }
-            
-            methodCode.Emit(OpCodes.Callvirt,INVOCATION_HANDLER_METHOD);
+
+            methodCode.Emit(OpCodes.Callvirt, INVOCATION_HANDLER_METHOD);
             Type returnType = method.ReturnType;
-            
+
             if (typeof(void).Equals(returnType))
             {
                 methodCode.Emit(OpCodes.Pop);
             }
             else if (returnType.IsValueType)
             {
-                methodCode.Emit(OpCodes.Unbox_Any,returnType);
+                methodCode.Emit(OpCodes.Unbox_Any, returnType);
             }
-            else 
+            else
             {
-                methodCode.Emit(OpCodes.Castclass,returnType);
+                methodCode.Emit(OpCodes.Castclass, returnType);
             }
-            
+
             methodCode.Emit(OpCodes.Ret);
-            
-            typeBuilder.DefineMethodOverride(methodBuilder,method);
+
+            typeBuilder.DefineMethodOverride(methodBuilder, method);
         }
     }
 }

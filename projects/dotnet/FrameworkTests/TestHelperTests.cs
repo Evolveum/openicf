@@ -33,7 +33,7 @@ using Org.IdentityConnectors.Framework.Spi;
 using Org.IdentityConnectors.Test.Common;
 
 namespace FrameworkTests
-{    
+{
     /// <summary>
     /// Description of TestHelperTests.
     /// </summary>
@@ -44,7 +44,8 @@ namespace FrameworkTests
         public void testLoadProperties()
         {
             string tmpFn = Path.GetTempFileName();
-            try {
+            try
+            {
                 // create some xml text
                 TextWriter stringWriter = new StringWriter();
                 XmlTextWriter w = new XmlTextWriter(stringWriter);
@@ -60,19 +61,23 @@ namespace FrameworkTests
                 w.Close();
                 File.WriteAllText(tmpFn, stringWriter.ToString());
                 // load the properties files
-                IDictionary<string, string> dict =TestHelpers.LoadPropertiesFile(tmpFn);
+                IDictionary<string, string> dict = TestHelpers.LoadPropertiesFile(tmpFn);
                 Assert.AreEqual(dict["bob"], "bobsValue");
-            } finally {
+            }
+            finally
+            {
                 File.Delete(tmpFn);
             }
         }
         [Test]
-        public void testGetProperties() {
+        public void testGetProperties()
+        {
             Assert.IsTrue(TestHelpers.GetProperty("Help", null).Equals("Me"));
         }
 
         [Test]
-        public void testFillConfiguration() {
+        public void testFillConfiguration()
+        {
             TestConfiguration testConfig = new TestConfiguration();
             // There is no "Foo" property in the config bean. We want to ensure
             // that TestHelpers.FillConfiguration() does not fail for unknown properties.
@@ -86,18 +91,23 @@ namespace FrameworkTests
             Assert.AreEqual(1234, testConfig.Port);
         }
 
-        public class TestConfiguration : Configuration {
+        public class TestConfiguration : Configuration
+        {
 
-            public ConnectorMessages ConnectorMessages {
-                get {
+            public ConnectorMessages ConnectorMessages
+            {
+                get
+                {
                     return null;
                 }
-                set {
+                set
+                {
                     Assert.Fail("Should not set ConnectorMessages");
                 }
             }
 
-            public void Validate() {
+            public void Validate()
+            {
                 Assert.Fail("Should not call Validate()");
             }
 

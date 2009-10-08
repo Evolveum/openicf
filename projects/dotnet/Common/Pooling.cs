@@ -26,156 +26,200 @@ using System.Collections.Generic;
 
 namespace Org.IdentityConnectors.Common.Pooling
 {
-    /**
-     * Configuration for pooling objects
-     */
-    public sealed class ObjectPoolConfiguration {
-    
-        /**
-         * Max objects (idle+active). 
-         */
+    /// <summary>
+    /// Configuration for pooling objects
+    /// </summary>
+    public sealed class ObjectPoolConfiguration
+    {
+
+        /// <summary>
+        /// Max objects (idle+active).
+        /// </summary>
         private int _maxObjects = 10;
-    
-        /**
-         * Max idle objects.
-         */
+
+        /// <summary>
+        /// Max idle objects.
+        /// </summary>
         private int _maxIdle = 10;
-    
-        /**
-         * Max time to wait if the pool is waiting for a free object to become
-         * available before failing. Zero means don't wait
-         */
+
+        /// <summary>
+        /// Max time to wait if the pool is waiting for a free object to become
+        /// available before failing.
+        /// </summary>
+        /// <remarks>
+        /// Zero means don't wait
+        /// </remarks>
         private long _maxWait = 150 * 1000;
-    
-        /**
-         * Minimum time to wait before evicting an idle object.
-         * Zero means don't wait
-         */
+
+        /// <summary>
+        /// Minimum time to wait before evicting an idle object.
+        /// </summary>
+        /// <remarks>
+        /// Zero means don't wait
+        /// </remarks>
         private long _minEvictableIdleTimeMillis = 120 * 1000;
-    
-        /**
-         * Minimum number of idle objects.
-         */
+
+        /// <summary>
+        /// Minimum number of idle objects.
+        /// </summary>
         private int _minIdle = 1;
-    
-    
-        /**
-         * Get the set number of maximum objects (idle+active)
-         */
-        public int MaxObjects {
-            get {
+
+
+        /// <summary>
+        /// Get the set number of maximum objects (idle+active)
+        /// </summary>
+        public int MaxObjects
+        {
+            get
+            {
                 return _maxObjects;
             }
-            set {
+            set
+            {
                 _maxObjects = value;
             }
         }
-        
-        /**
-         * Get the maximum number of idle objects.
-         */
-        public int MaxIdle {
-            get {
+
+        /// <summary>
+        /// Get the maximum number of idle objects.
+        /// </summary>
+        public int MaxIdle
+        {
+            get
+            {
                 return _maxIdle;
             }
-            set {
+            set
+            {
                 _maxIdle = value;
             }
         }
-        
-        /**
-         * Max time to wait if the pool is waiting for a free object to become
-         * available before failing. Zero means don't wait
-         */
-        public long MaxWait {
-            get {
+
+        /// <summary>
+        /// Max time to wait if the pool is waiting for a free object to become
+        /// available before failing.
+        /// </summary>
+        /// <remarks>
+        /// Zero means don't wait
+        /// </remarks>
+        public long MaxWait
+        {
+            get
+            {
                 return _maxWait;
             }
-            set {
+            set
+            {
                 _maxWait = value;
             }
         }
-        
-        /**
-         * Minimum time to wait before evicting an idle object.
-         * Zero means don't wait
-         */
-        public long MinEvictableIdleTimeMillis {
-            get {
+
+        /// <summary>
+        /// Minimum time to wait before evicting an idle object.
+        /// </summary>
+        /// <remarks>
+        /// Zero means don't wait
+        /// </remarks>
+        public long MinEvictableIdleTimeMillis
+        {
+            get
+            {
                 return _minEvictableIdleTimeMillis;
             }
-            set {
+            set
+            {
                 _minEvictableIdleTimeMillis = value;
             }
         }
-        
-        /**
-         * Minimum number of idle objects.
-         */
-        public int MinIdle {
-            get {
+
+        /// <summary>
+        /// Minimum number of idle objects.
+        /// </summary>
+        public int MinIdle
+        {
+            get
+            {
                 return _minIdle;
             }
-            set {
+            set
+            {
                 _minIdle = value;
             }
         }
-            
-        public void Validate() {
-            if (_minIdle < 0) {
+
+        public void Validate()
+        {
+            if (_minIdle < 0)
+            {
                 throw new InvalidOperationException("Min idle is less than zero.");
             }
-            if (_maxObjects < 0) {
+            if (_maxObjects < 0)
+            {
                 throw new InvalidOperationException("Max active is less than zero.");
             }
-            if (_maxIdle < 0) {
+            if (_maxIdle < 0)
+            {
                 throw new InvalidOperationException("Max idle is less than zero.");
             }
-            if (_maxWait < 0) {
+            if (_maxWait < 0)
+            {
                 throw new InvalidOperationException("Max wait is less than zero.");
             }
-            if (_minEvictableIdleTimeMillis < 0) {
+            if (_minEvictableIdleTimeMillis < 0)
+            {
                 throw new InvalidOperationException("Min evictable idle time millis less than zero.");
             }
-            if ( _minIdle > _maxIdle ) {
-                throw new InvalidOperationException("Min idle is greater than max idle.");            
+            if (_minIdle > _maxIdle)
+            {
+                throw new InvalidOperationException("Min idle is greater than max idle.");
             }
-            if ( _maxIdle > _maxObjects ) {
-                throw new InvalidOperationException("Max idle is greater than max objects.");                        
-            }
-        }
-    
-        public override int GetHashCode() {
-            unchecked {
-                return (int)(MaxObjects+MaxIdle+MaxWait+MinEvictableIdleTimeMillis+MinIdle);        
+            if (_maxIdle > _maxObjects)
+            {
+                throw new InvalidOperationException("Max idle is greater than max objects.");
             }
         }
-    
-        public override bool Equals(Object obj) {
-            if ( obj is ObjectPoolConfiguration) {
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (int)(MaxObjects + MaxIdle + MaxWait + MinEvictableIdleTimeMillis + MinIdle);
+            }
+        }
+
+        public override bool Equals(Object obj)
+        {
+            if (obj is ObjectPoolConfiguration)
+            {
                 ObjectPoolConfiguration other = (ObjectPoolConfiguration)obj;
-                
-                if (MaxObjects != other.MaxObjects) {
+
+                if (MaxObjects != other.MaxObjects)
+                {
                     return false;
                 }
-                if (MaxIdle != other.MaxIdle) {
+                if (MaxIdle != other.MaxIdle)
+                {
                     return false;
                 }
-                if (MaxWait != other.MaxWait) {
+                if (MaxWait != other.MaxWait)
+                {
                     return false;
                 }
-                if (MinEvictableIdleTimeMillis != other.MinEvictableIdleTimeMillis) {
+                if (MinEvictableIdleTimeMillis != other.MinEvictableIdleTimeMillis)
+                {
                     return false;
                 }
-                if (MinIdle != other.MinIdle) {
+                if (MinIdle != other.MinIdle)
+                {
                     return false;
                 }
                 return true;
             }
             return false;
         }
-        
-        public override String ToString() {
+
+        public override String ToString()
+        {
             // poor man's toString()
             IDictionary<String, Object> bld = new Dictionary<String, Object>();
             bld["MaxObjects"] = MaxObjects;

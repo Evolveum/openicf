@@ -27,47 +27,49 @@ namespace Org.IdentityConnectors.Common
     /// <summary>
     /// Represents a Pair of objects
     /// </summary>
-    public class Pair<T1,T2>
+    public class Pair<T1, T2>
     {
         public Pair()
         {
         }
-        
+
         public Pair(T1 first, T2 second)
         {
             First = first;
             Second = second;
         }
-        
+
         public T1 First { get; set; }
         public T2 Second { get; set; }
-        
+
         public override bool Equals(object obj)
         {
-            Pair<T1,T2> other = obj as Pair<T1, T2>;
-            if ( other != null ) 
+            Pair<T1, T2> other = obj as Pair<T1, T2>;
+            if (other != null)
             {
-                return Object.Equals(First,other.First) && 
-                    Object.Equals(Second,other.Second);
+                return Object.Equals(First, other.First) &&
+                    Object.Equals(Second, other.Second);
             }
             return false;
         }
-        
+
         public override int GetHashCode()
         {
             int rv = 0;
-            if ( First != null ) {
+            if (First != null)
+            {
                 rv ^= First.GetHashCode();
             }
-            if ( Second != null ) {
+            if (Second != null)
+            {
                 rv ^= Second.GetHashCode();
             }
             return rv;
         }
-        
+
         public override string ToString()
         {
-            return "( "+First+", "+Second+" )";
+            return "( " + First + ", " + Second + " )";
         }
     }
 }

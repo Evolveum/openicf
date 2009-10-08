@@ -124,12 +124,12 @@ namespace FrameworkTests
     }
 
     public class MockAllOpsConnector : MockConnector, CreateOp,
-            DeleteOp, UpdateOp, SearchOp<string>, UpdateAttributeValuesOp, AuthenticateOp, 
-            ResolveUsernameOp, TestOp, ScriptOnConnectorOp, ScriptOnResourceOp 
-        {
+            DeleteOp, UpdateOp, SearchOp<string>, UpdateAttributeValuesOp, AuthenticateOp,
+            ResolveUsernameOp, TestOp, ScriptOnConnectorOp, ScriptOnResourceOp
+    {
 
         public object RunScriptOnConnector(ScriptContext request,
-                OperationOptions options) 
+                OperationOptions options)
         {
             Assert.IsNotNull(request);
             Assert.IsNotNull(options);
@@ -138,7 +138,7 @@ namespace FrameworkTests
         }
 
         public object RunScriptOnResource(ScriptContext request,
-                OperationOptions options) 
+                OperationOptions options)
         {
             Assert.IsNotNull(request);
             Assert.IsNotNull(options);
@@ -147,7 +147,7 @@ namespace FrameworkTests
         }
 
         public Uid Create(ObjectClass oclass, ICollection<ConnectorAttribute> attrs,
-                OperationOptions options) 
+                OperationOptions options)
         {
             Assert.IsNotNull(attrs);
             AddCall("Create", attrs);
@@ -155,7 +155,7 @@ namespace FrameworkTests
         }
 
         public void Delete(ObjectClass objClass, Uid uid,
-                OperationOptions options) 
+                OperationOptions options)
         {
             Assert.IsNotNull(uid);
             Assert.IsNotNull(objClass);
@@ -163,30 +163,30 @@ namespace FrameworkTests
         }
 
         public Uid Update(ObjectClass objclass, Uid uid, ICollection<ConnectorAttribute> attrs,
-                OperationOptions options) 
+                OperationOptions options)
         {
             Assert.IsNotNull(objclass);
             Assert.IsNotNull(attrs);
             AddCall("Update", objclass, attrs);
             return null;
         }
-        
+
         public Uid AddAttributeValues(ObjectClass objclass, Uid uid,
-                ICollection<ConnectorAttribute> valuesToAdd, OperationOptions options) 
+                ICollection<ConnectorAttribute> valuesToAdd, OperationOptions options)
         {
             AddCall("AddAttributeValues", objclass, valuesToAdd);
             return null;
         }
-        
+
         public Uid RemoveAttributeValues(ObjectClass objclass, Uid uid,
-                ICollection<ConnectorAttribute> valuesToRemove, OperationOptions options) 
+                ICollection<ConnectorAttribute> valuesToRemove, OperationOptions options)
         {
             AddCall("RemoveAttributeValues", objclass, valuesToRemove);
             return null;
         }
-        
+
         public FilterTranslator<string> CreateFilterTranslator(ObjectClass oclass,
-                OperationOptions options) 
+                OperationOptions options)
         {
             Assert.IsNotNull(oclass);
             Assert.IsNotNull(options);
@@ -196,7 +196,7 @@ namespace FrameworkTests
         }
 
         public void ExecuteQuery(ObjectClass oclass, string query,
-                ResultsHandler handler, OperationOptions options) 
+                ResultsHandler handler, OperationOptions options)
         {
             Assert.IsNotNull(oclass);
             Assert.IsNotNull(handler);
@@ -205,7 +205,7 @@ namespace FrameworkTests
         }
 
         public Uid Authenticate(ObjectClass objectClass, string username, GuardedString password,
-                OperationOptions options) 
+                OperationOptions options)
         {
             Assert.IsNotNull(username);
             Assert.IsNotNull(password);
@@ -220,7 +220,7 @@ namespace FrameworkTests
             return null;
         }
 
-        public void Test() 
+        public void Test()
         {
             AddCall("Test");
         }
@@ -230,7 +230,7 @@ namespace FrameworkTests
     {
 
         private Configuration _cfg;
-        
+
         public void Dispose()
         {
             // nothing to do this is a mock connector..
@@ -278,7 +278,7 @@ namespace FrameworkTests
             objects[idx] = obj;
             return obj.Uid;
         }
-        
+
         public FilterTranslator<string> CreateFilterTranslator(ObjectClass oclass, OperationOptions options)
         {
             //no translation - ok since this is just for tests
@@ -325,9 +325,10 @@ namespace FrameworkTests
 
         public bool Fail
         {
-            get; set; 
+            get;
+            set;
         }
-        
+
         public override void Validate()
         {
             if (fail)

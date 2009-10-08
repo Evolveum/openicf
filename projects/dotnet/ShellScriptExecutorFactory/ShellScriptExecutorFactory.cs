@@ -51,20 +51,24 @@ namespace Org.IdentityConnectors.Common.Script.Shell
         /// Creates a script executor give the Shell script.
         /// </summary>
         override
-        public ScriptExecutor NewScriptExecutor(Assembly [] refs, string script, bool compile) {
+        public ScriptExecutor NewScriptExecutor(Assembly[] refs, string script, bool compile)
+        {
             return new ShellScriptExecutor(script);
         }
- 
+
         /// <summary>
         /// Processes the script.
         /// </summary>
-        class ShellScriptExecutor : ScriptExecutor {
+        class ShellScriptExecutor : ScriptExecutor
+        {
             private readonly string _script;
-            
-            public ShellScriptExecutor(string script) {
-                _script = script;             
+
+            public ShellScriptExecutor(string script)
+            {
+                _script = script;
             }
-            public object Execute(IDictionary<string,object> arguments) {
+            public object Execute(IDictionary<string, object> arguments)
+            {
                 // create the process info..
                 Process process = new Process();
                 // set the defaults..
@@ -75,36 +79,54 @@ namespace Org.IdentityConnectors.Common.Script.Shell
                 // if there are any environment varibles set to false..
                 process.StartInfo.UseShellExecute = arguments.Count == 0;
                 // take out username and password if they're in the options.
-                foreach (KeyValuePair<string, object> kv in arguments) {
-                    if (kv.Key.ToUpper().Equals("USERNAME")) {
+                foreach (KeyValuePair<string, object> kv in arguments)
+                {
+                    if (kv.Key.ToUpper().Equals("USERNAME"))
+                    {
                         string domainUser = kv.Value.ToString();
-                        string[] split = domainUser.Split(new char[] {'\\'});
-                        if (split.Length == 1) {
+                        string[] split = domainUser.Split(new char[] { '\\' });
+                        if (split.Length == 1)
+                        {
                             process.StartInfo.UserName = split[0];
-                        } else {
+                        }
+                        else
+                        {
                             process.StartInfo.Domain = split[0];
                             process.StartInfo.UserName = split[1];
                         }
-                    } else if (kv.Key.ToUpper().Equals("PASSWORD")) {
-                        if (kv.Value is SecureString) {
+                    }
+                    else if (kv.Key.ToUpper().Equals("PASSWORD"))
+                    {
+                        if (kv.Value is SecureString)
+                        {
                             process.StartInfo.Password = (SecureString)kv.Value;
                         }
-                        else if (kv.Value is GuardedString) {
+                        else if (kv.Value is GuardedString)
+                        {
                             process.StartInfo.Password = ((GuardedString)kv.Value).ToSecureString();
-                        } else {
+                        }
+                        else
+                        {
                             throw new ArgumentException("Invalid type for password.");
                         }
-                    } else if (kv.Key.ToUpper().Equals("WORKINGDIR")) {
+                    }
+                    else if (kv.Key.ToUpper().Equals("WORKINGDIR"))
+                    {
                         process.StartInfo.WorkingDirectory = kv.Value.ToString();
-                    } else if (kv.Key.ToUpper().Equals("TIMEOUT")) {
+                    }
+                    else if (kv.Key.ToUpper().Equals("TIMEOUT"))
+                    {
                         timeout = Int32.Parse(kv.Value.ToString());
-                    } else {
+                    }
+                    else
+                    {
                         process.StartInfo.EnvironmentVariables[kv.Key] = kv.Value.ToString();
                     }
                 }
                 // write out the script..
                 string fn = Path.GetTempFileName() + ".cmd";
-                using (StreamWriter sw = new StreamWriter(fn)) {
+                using (StreamWriter sw = new StreamWriter(fn))
+                {
                     sw.Write(_script);
                 }
                 // set temp file..
@@ -112,7 +134,8 @@ namespace Org.IdentityConnectors.Common.Script.Shell
                 // execute script..
                 process.Start();
                 // wait for the process to exit..
-                if (!process.WaitForExit(timeout)) {
+                if (!process.WaitForExit(timeout))
+                {
                     process.Close();
                     throw new TimeoutException("Script failed to exit in time!");
                 }

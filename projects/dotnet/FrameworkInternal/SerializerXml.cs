@@ -32,524 +32,633 @@ using Org.IdentityConnectors.Framework.Common.Exceptions;
 using Org.IdentityConnectors.Framework.Common.Serializer;
 namespace Org.IdentityConnectors.Framework.Impl.Serializer.Xml
 {
-    public class XmlObjectEncoder : ObjectEncoder {
-                    
+    public class XmlObjectEncoder : ObjectEncoder
+    {
         private StringBuilder _rootBuilder;
         private XmlWriter _writer;
-        
-        public XmlObjectEncoder(StringBuilder builder) {
+
+        public XmlObjectEncoder(StringBuilder builder)
+        {
             Assertions.NullCheck(builder, "builder");
             _rootBuilder = builder;
         }
-        
-        public String WriteObject(Object o) {
+
+        public String WriteObject(Object o)
+        {
             XmlWriterSettings settings = new XmlWriterSettings();
             settings.Indent = true;
             settings.OmitXmlDeclaration = true;
             _writer = XmlWriter.Create(_rootBuilder, settings);
-            String rv = WriteObjectInternal(o,false);
+            String rv = WriteObjectInternal(o, false);
             _writer.Close();
             return rv;
         }
-        
-        public void WriteBooleanContents(bool v) {
+
+        public void WriteBooleanContents(bool v)
+        {
             WriteStringContentsInternal(EncodeBoolean(v));
         }
-    
-        public void WriteBooleanField(String fieldName, bool v) {
-            WriteAttributeInternal(fieldName,EncodeBoolean(v));
+
+        public void WriteBooleanField(String fieldName, bool v)
+        {
+            WriteAttributeInternal(fieldName, EncodeBoolean(v));
         }
-    
-        public void WriteByteArrayContents(byte[] v) {
+
+        public void WriteByteArrayContents(byte[] v)
+        {
             WriteStringContentsInternal(EncodeByteArray(v));
         }
-    
-        public void WriteClassContents(Type v) {
+
+        public void WriteClassContents(Type v)
+        {
             WriteStringContentsInternal(EncodeClass(v));
         }
-        
-        public void WriteClassField(String name, Type v) {
-            if ( v != null ) {
+
+        public void WriteClassField(String name, Type v)
+        {
+            if (v != null)
+            {
                 WriteAttributeInternal(name, EncodeClass(v));
             }
         }
-    
-        public void WriteDoubleContents(double v) {
+
+        public void WriteDoubleContents(double v)
+        {
             WriteStringContentsInternal(EncodeDouble(v));
         }
-    
-        public void WriteDoubleField(String fieldName, double v) {
-            WriteAttributeInternal(fieldName,EncodeDouble(v));
+
+        public void WriteDoubleField(String fieldName, double v)
+        {
+            WriteAttributeInternal(fieldName, EncodeDouble(v));
         }
-    
-        public void WriteFloatContents(float v) {
+
+        public void WriteFloatContents(float v)
+        {
             WriteStringContentsInternal(EncodeFloat(v));
         }
-    
-        public void WriteFloatField(String fieldName, float v) {
-            WriteAttributeInternal(fieldName,EncodeFloat(v));
+
+        public void WriteFloatField(String fieldName, float v)
+        {
+            WriteAttributeInternal(fieldName, EncodeFloat(v));
         }
-    
-        public void WriteIntContents(int v) {
+
+        public void WriteIntContents(int v)
+        {
             WriteStringContentsInternal(EncodeInt(v));
         }
-    
-        public void WriteIntField(String fieldName, int v) {
-            WriteAttributeInternal(fieldName,EncodeInt(v));
+
+        public void WriteIntField(String fieldName, int v)
+        {
+            WriteAttributeInternal(fieldName, EncodeInt(v));
         }
-    
-        public void WriteLongContents(long v) {
+
+        public void WriteLongContents(long v)
+        {
             WriteStringContentsInternal(EncodeLong(v));
         }
-    
-        public void WriteLongField(String fieldName, long v) {
-            WriteAttributeInternal(fieldName,EncodeLong(v));
+
+        public void WriteLongField(String fieldName, long v)
+        {
+            WriteAttributeInternal(fieldName, EncodeLong(v));
         }
-    
-        public void WriteObjectContents(Object o) {
-            WriteObjectInternal(o,false);
+
+        public void WriteObjectContents(Object o)
+        {
+            WriteObjectInternal(o, false);
         }
-    
-        public void WriteObjectField(String fieldName, Object obj, bool inline) {
+
+        public void WriteObjectField(String fieldName, Object obj, bool inline)
+        {
             if (inline && obj == null)
             {
                 return; //don't write anything
             }
             BeginElement(fieldName);
-            WriteObjectInternal(obj,inline);
+            WriteObjectInternal(obj, inline);
             EndElement();
         }
-    
-        public void WriteStringContents(String str) {
+
+        public void WriteStringContents(String str)
+        {
             WriteStringContentsInternal(str);
         }
-        
-        public void WriteStringField(String fieldName, String str) {
-            if ( str != null ) {
+
+        public void WriteStringField(String fieldName, String str)
+        {
+            if (str != null)
+            {
                 WriteAttributeInternal(fieldName, str);
             }
         }
-        
-        internal static String EncodeBoolean(bool b) {
+
+        internal static String EncodeBoolean(bool b)
+        {
             return b.ToString();
         }
-        
-        private static String EncodeByteArray(byte [] bytes) {
+
+        private static String EncodeByteArray(byte[] bytes)
+        {
             return Convert.ToBase64String(bytes);
         }
-            
-        private static String EncodeClass(Type clazz) {
+
+        private static String EncodeClass(Type clazz)
+        {
             ObjectSerializationHandler handler =
                 ObjectSerializerRegistry.GetHandlerByObjectType(clazz);
             ObjectTypeMapper mapper =
                 ObjectSerializerRegistry.GetMapperByObjectType(clazz);
-            if ( handler == null && clazz.IsArray ) {
+            if (handler == null && clazz.IsArray)
+            {
                 //we may have special handlers for certain types of arrays
                 //if handler is null, treat like any other array
-                return EncodeClass(clazz.GetElementType())+"[]";
+                return EncodeClass(clazz.GetElementType()) + "[]";
             }
-            else if ( mapper == null ) {
-                throw new ConnectorException("No serializer for class: "+clazz);
+            else if (mapper == null)
+            {
+                throw new ConnectorException("No serializer for class: " + clazz);
             }
-            else {
+            else
+            {
                 String typeName = mapper.HandledSerialType;
                 return typeName;
             }
         }
-        
-        internal static String EncodeDouble(double d) {
+
+        internal static String EncodeDouble(double d)
+        {
             return d.ToString("R");
         }
-        
-        internal static String EncodeFloat(float d) {
+
+        internal static String EncodeFloat(float d)
+        {
             return d.ToString("R");
         }
-        
-        internal static String EncodeInt(int d) {
+
+        internal static String EncodeInt(int d)
+        {
             return d.ToString();
         }
-        
-        internal static String EncodeLong(long d) {
+
+        internal static String EncodeLong(long d)
+        {
             return d.ToString();
         }
-        
-        /**
-         * Writes the object
-         * @param object
-         * @param inline
-         * @return The type name (regardless of whether it was inlined)
-         */
-        String WriteObjectInternal(Object obj, bool inline) {
-            if ( obj == null ) {
-                if ( inline ) {
+
+        /// <summary>
+        /// Writes the object
+        /// </summary>
+        /// <param name="object"></param>
+        /// <param name="inline"></param>
+        /// <returns>The type name (regardless of whether it was inlined)</returns>
+        String WriteObjectInternal(Object obj, bool inline)
+        {
+            if (obj == null)
+            {
+                if (inline)
+                {
                     throw new ArgumentException("null cannot be inlined");
                 }
                 BeginElement("null");
                 EndElement();
                 return "null";
             }
-            else {
+            else
+            {
                 Type clazz = obj.GetType();
                 ObjectSerializationHandler handler =
                     ObjectSerializerRegistry.GetHandlerByObjectType(clazz);
-                if ( handler == null ) {
+                if (handler == null)
+                {
                     //we may have special handlers for certain types of arrays
                     //if handler is null, treat like any other array
-                    if ( clazz.IsArray ) {
-                        if (!inline) {
+                    if (clazz.IsArray)
+                    {
+                        if (!inline)
+                        {
                             String componentTypeName = EncodeClass(clazz.GetElementType());
                             BeginElement("Array");
                             WriteAttributeInternal("componentType", componentTypeName);
                         }
                         Array array = (Array)obj;
                         int length = array.Length;
-                        for ( int i = 0; i < length; i++ ) {
+                        for (int i = 0; i < length; i++)
+                        {
                             Object val = array.GetValue(i);
-                            WriteObjectInternal(val,false);
+                            WriteObjectInternal(val, false);
                         }
-                        if (!inline) {
+                        if (!inline)
+                        {
                             EndElement();
                         }
                         return "Array";
                     }
-                    else {
-                        throw new ConnectorException("No serializer for class: "+clazz); 
+                    else
+                    {
+                        throw new ConnectorException("No serializer for class: " + clazz);
                     }
                 }
-                else {
+                else
+                {
                     String typeName = EncodeClass(clazz);
-                    if (!inline) {
+                    if (!inline)
+                    {
                         BeginElement(typeName);
                     }
                     handler.Serialize(obj, this);
-                    if (!inline) {
+                    if (!inline)
+                    {
                         EndElement();
                     }
                     return typeName;
                 }
             }
-    
+
         }
-        
+
         //////////////////////////////////////////////////////////////////
         //
         // xml encoding
         //
         /////////////////////////////////////////////////////////////////
-    
-        
-        
-        private void BeginElement(String name) {
+
+        private void BeginElement(String name)
+        {
             _writer.WriteStartElement(name);
         }
-            
-        private void EndElement() {
+
+        private void EndElement()
+        {
             _writer.WriteEndElement();
         }
-        private void WriteAttributeInternal(String fieldName, String str) {
-            _writer.WriteAttributeString(fieldName,str);
+        private void WriteAttributeInternal(String fieldName, String str)
+        {
+            _writer.WriteAttributeString(fieldName, str);
         }
-        private void WriteStringContentsInternal(String str) {
+        private void WriteStringContentsInternal(String str)
+        {
             _writer.WriteString(str);
         }
     }
-    
-    public class XmlObjectDecoder : ObjectDecoder {
-    
+
+    public class XmlObjectDecoder : ObjectDecoder
+    {
+
         private readonly XmlElement _node;
         private readonly Type _expectedClass;
-        
-        public XmlObjectDecoder(XmlElement node, Type expectedClass) {
+
+        public XmlObjectDecoder(XmlElement node, Type expectedClass)
+        {
             _node = node;
             _expectedClass = expectedClass;
         }
-        
-        public Object ReadObject() {
+
+        public Object ReadObject()
+        {
             return ReadObjectInternal();
         }
-        
-        public bool ReadBooleanContents() {
+
+        public bool ReadBooleanContents()
+        {
             return DecodeBoolean(ReadStringContentsInternal());
         }
-    
-        public bool ReadBooleanField(String fieldName, bool dflt) {
-            return DecodeBoolean(ReadStringAttributeInternal(fieldName,XmlObjectEncoder.EncodeBoolean(dflt)));
+
+        public bool ReadBooleanField(String fieldName, bool dflt)
+        {
+            return DecodeBoolean(ReadStringAttributeInternal(fieldName, XmlObjectEncoder.EncodeBoolean(dflt)));
         }
-    
-        public byte[] ReadByteArrayContents() {
+
+        public byte[] ReadByteArrayContents()
+        {
             return DecodeByteArray(ReadStringContentsInternal());
         }
-    
-        public Type ReadClassContents() {
+
+        public Type ReadClassContents()
+        {
             return DecodeClass(ReadStringContentsInternal());
         }
-        
-        public Type ReadClassField(String name, Type dflt) {
+
+        public Type ReadClassField(String name, Type dflt)
+        {
             String val = ReadStringAttributeInternal(name, null);
-            if ( val == null ) {
+            if (val == null)
+            {
                 return dflt;
             }
-            else {
+            else
+            {
                 return DecodeClass(val);
             }
         }
-    
-        public double ReadDoubleContents() {
+
+        public double ReadDoubleContents()
+        {
             return DecodeDouble(ReadStringContentsInternal());
         }
-    
-        public double ReadDoubleField(String fieldName, double dflt) {
-            return DecodeDouble(ReadStringAttributeInternal(fieldName,XmlObjectEncoder.EncodeDouble(dflt)));
+
+        public double ReadDoubleField(String fieldName, double dflt)
+        {
+            return DecodeDouble(ReadStringAttributeInternal(fieldName, XmlObjectEncoder.EncodeDouble(dflt)));
         }
-    
-        public float ReadFloatContents() {
+
+        public float ReadFloatContents()
+        {
             return DecodeFloat(ReadStringContentsInternal());
         }
-    
-        public float ReadFloatField(String fieldName, float dflt) {
-            return DecodeFloat(ReadStringAttributeInternal(fieldName,XmlObjectEncoder.EncodeFloat(dflt)));
+
+        public float ReadFloatField(String fieldName, float dflt)
+        {
+            return DecodeFloat(ReadStringAttributeInternal(fieldName, XmlObjectEncoder.EncodeFloat(dflt)));
         }
-    
-        public int ReadIntContents() {
+
+        public int ReadIntContents()
+        {
             return DecodeInt(ReadStringContentsInternal());
         }
-    
-        public int ReadIntField(String fieldName, int dflt) {
-            return DecodeInt(ReadStringAttributeInternal(fieldName,XmlObjectEncoder.EncodeInt(dflt)));
+
+        public int ReadIntField(String fieldName, int dflt)
+        {
+            return DecodeInt(ReadStringAttributeInternal(fieldName, XmlObjectEncoder.EncodeInt(dflt)));
         }
-    
-        public long ReadLongContents() {
+
+        public long ReadLongContents()
+        {
             return DecodeLong(ReadStringContentsInternal());
         }
-    
-        public long ReadLongField(String fieldName, long dflt) {
-            return DecodeLong(ReadStringAttributeInternal(fieldName,XmlObjectEncoder.EncodeLong(dflt)));
+
+        public long ReadLongField(String fieldName, long dflt)
+        {
+            return DecodeLong(ReadStringAttributeInternal(fieldName, XmlObjectEncoder.EncodeLong(dflt)));
         }
-        
-        public int GetNumSubObjects() {
+
+        public int GetNumSubObjects()
+        {
             int count = 0;
             for (XmlElement subElement = XmlUtil.GetFirstChildElement(_node);
                  subElement != null;
-                 subElement = XmlUtil.GetNextElement(subElement)) {
+                 subElement = XmlUtil.GetNextElement(subElement))
+            {
                 count++;
             }
             return count;
         }
-    
-        public Object ReadObjectContents(int index) {
+
+        public Object ReadObjectContents(int index)
+        {
             XmlElement subElement = XmlUtil.GetFirstChildElement(_node);
-            for ( int i = 0; i < index; i++) {
+            for (int i = 0; i < index; i++)
+            {
                 subElement = XmlUtil.GetNextElement(subElement);
             }
-            
-            if ( subElement == null ) {
-                throw new ConnectorException("Missing subelement number: "+index);
+
+            if (subElement == null)
+            {
+                throw new ConnectorException("Missing subelement number: " + index);
             }
-            
-            return new XmlObjectDecoder(subElement,null).ReadObject();
+
+            return new XmlObjectDecoder(subElement, null).ReadObject();
         }
-    
-        public Object ReadObjectField(String fieldName, Type expected, Object dflt) {
+
+        public Object ReadObjectField(String fieldName, Type expected, Object dflt)
+        {
             XmlElement child = XmlUtil.FindImmediateChildElement(_node, fieldName);
-            if ( child == null ) {
+            if (child == null)
+            {
                 return dflt;
             }
-            if ( expected != null ) {
-                return new XmlObjectDecoder(child,expected).ReadObject();
+            if (expected != null)
+            {
+                return new XmlObjectDecoder(child, expected).ReadObject();
             }
             XmlElement subElement = XmlUtil.GetFirstChildElement(child);
-            if ( subElement == null ) {
+            if (subElement == null)
+            {
                 return dflt;
             }
             //if they specify null, don't apply defaults
-            return new XmlObjectDecoder(subElement,null).ReadObject();    
+            return new XmlObjectDecoder(subElement, null).ReadObject();
         }
-    
-        public String ReadStringContents() {
+
+        public String ReadStringContents()
+        {
             String rv = ReadStringContentsInternal();
             return rv == null ? "" : rv;
         }
-        
-        public String ReadStringField(String fieldName, String dflt) {
+
+        public String ReadStringField(String fieldName, String dflt)
+        {
             return ReadStringAttributeInternal(fieldName, dflt);
         }
-        
-        private String ReadStringContentsInternal() {
+
+        private String ReadStringContentsInternal()
+        {
             String xml = XmlUtil.GetContent(_node);
-            return xml; 
+            return xml;
         }
-        
-        private String ReadStringAttributeInternal(String name, String dflt) {
+
+        private String ReadStringAttributeInternal(String name, String dflt)
+        {
             XmlAttribute attr = _node.GetAttributeNode(name);
-            if ( attr == null ) {
+            if (attr == null)
+            {
                 return dflt;
             }
             return attr.Value;
         }
-        
-        private bool DecodeBoolean(String v) {
+
+        private bool DecodeBoolean(String v)
+        {
             return Boolean.Parse(v);
         }
-        
-        private byte [] DecodeByteArray(String base64) {
+
+        private byte[] DecodeByteArray(String base64)
+        {
             return Convert.FromBase64String(base64);
         }
-            
-        private Type DecodeClass(String type) {
-            if ( type.EndsWith("[]") ) {
-                String componentName = type.Substring(0,type.Length-"[]".Length);
+
+        private Type DecodeClass(String type)
+        {
+            if (type.EndsWith("[]"))
+            {
+                String componentName = type.Substring(0, type.Length - "[]".Length);
                 Type componentClass =
                     DecodeClass(componentName);
                 Type arrayClass =
                     componentClass.MakeArrayType();
-                return arrayClass;            
+                return arrayClass;
             }
-            else {                
+            else
+            {
                 ObjectTypeMapper mapper =
                     ObjectSerializerRegistry.GetMapperBySerialType(type);
-                if ( mapper == null ) {
-                    throw new ConnectorException("No deserializer for type: "+type);
+                if (mapper == null)
+                {
+                    throw new ConnectorException("No deserializer for type: " + type);
                 }
                 Type clazz = mapper.HandledObjectType;
                 return clazz;
             }
         }
-        
-        private double DecodeDouble(String val) {
+
+        private double DecodeDouble(String val)
+        {
             return Double.Parse(val);
         }
-        
-        private float DecodeFloat(String val) {
+
+        private float DecodeFloat(String val)
+        {
             return Single.Parse(val);
         }
-        
-        private int DecodeInt(String val) {
+
+        private int DecodeInt(String val)
+        {
             return Int32.Parse(val);
         }
-        
-        private long DecodeLong(String val) {
+
+        private long DecodeLong(String val)
+        {
             return Int64.Parse(val);
         }
-        
-        private Object ReadObjectInternal() {
-            if (_expectedClass != null) {
+
+        private Object ReadObjectInternal()
+        {
+            if (_expectedClass != null)
+            {
                 ObjectSerializationHandler handler =
                     ObjectSerializerRegistry.GetHandlerByObjectType(_expectedClass);
-                if ( handler == null ) {
-                    if (_expectedClass.IsArray) {
+                if (handler == null)
+                {
+                    if (_expectedClass.IsArray)
+                    {
                         IList<Object> temp = new List<Object>();
                         for (XmlElement child = XmlUtil.GetFirstChildElement(_node); child != null;
-                             child = XmlUtil.GetNextElement(child)) {
-                            XmlObjectDecoder sub = new XmlObjectDecoder(child,null);
+                             child = XmlUtil.GetNextElement(child))
+                        {
+                            XmlObjectDecoder sub = new XmlObjectDecoder(child, null);
                             Object obj = sub.ReadObject();
                             temp.Add(obj);
                         }
                         int length = temp.Count;
-                        Array array = Array.CreateInstance(_expectedClass.GetElementType(),length);
-                        for ( int i = 0; i < length; i++) {
+                        Array array = Array.CreateInstance(_expectedClass.GetElementType(), length);
+                        for (int i = 0; i < length; i++)
+                        {
                             Object element = temp[i];
-                            array.SetValue(element,i);
+                            array.SetValue(element, i);
                         }
-                        return array;                    
+                        return array;
                     }
-                    else {
-                        throw new ConnectorException("No deserializer for type: "+_expectedClass);
+                    else
+                    {
+                        throw new ConnectorException("No deserializer for type: " + _expectedClass);
                     }
                 }
-                else {
+                else
+                {
                     return handler.Deserialize(this);
-                }            
+                }
             }
-            else if ( _node.LocalName.Equals("null") ) {
+            else if (_node.LocalName.Equals("null"))
+            {
                 return null;
             }
-            else if (_node.LocalName.Equals("Array")) {
+            else if (_node.LocalName.Equals("Array"))
+            {
                 String componentType = XmlUtil.GetAttribute(_node, "componentType");
-                if ( componentType == null ) {
+                if (componentType == null)
+                {
                     componentType = "Object";
                 }
                 Type componentClass = DecodeClass(componentType);
                 IList<Object> temp = new List<Object>();
                 for (XmlElement child = XmlUtil.GetFirstChildElement(_node); child != null;
-                     child = XmlUtil.GetNextElement(child)) {
-                    XmlObjectDecoder sub = new XmlObjectDecoder(child,null);
+                     child = XmlUtil.GetNextElement(child))
+                {
+                    XmlObjectDecoder sub = new XmlObjectDecoder(child, null);
                     Object obj = sub.ReadObject();
                     temp.Add(obj);
                 }
                 int length = temp.Count;
-                Array array = Array.CreateInstance(componentClass, 
+                Array array = Array.CreateInstance(componentClass,
                         length);
-                for ( int i = 0; i < length; i++) {
+                for (int i = 0; i < length; i++)
+                {
                     Object element = temp[i];
-                    array.SetValue(element,i);
+                    array.SetValue(element, i);
                 }
                 return array;
             }
-            else {
+            else
+            {
                 Type clazz =
                     DecodeClass(_node.LocalName);
                 ObjectSerializationHandler handler =
                     ObjectSerializerRegistry.GetHandlerByObjectType(clazz);
-                if ( handler == null ) {
-                    throw new ConnectorException("No deserializer for type: "+clazz);
+                if (handler == null)
+                {
+                    throw new ConnectorException("No deserializer for type: " + clazz);
                 }
-                else {
+                else
+                {
                     return handler.Deserialize(this);
                 }
             }
         }
-    
     }
-    
-    public class XmlObjectParser {
 
+    public class XmlObjectParser
+    {
         public static void parse(TextReader inputSource,
-                XmlObjectResultsHandler handler, 
+                XmlObjectResultsHandler handler,
                 bool validate)
         {
-            XmlReaderSettings mySettings = 
+            XmlReaderSettings mySettings =
                 new XmlReaderSettings();
-            if ( validate ) {
+            if (validate)
+            {
                 mySettings.ValidationType = ValidationType.DTD;
             }
             mySettings.ProhibitDtd = false;
             mySettings.XmlResolver = new MyEntityResolver(validate);
-            XmlReader reader = XmlReader.Create(inputSource,mySettings);
+            XmlReader reader = XmlReader.Create(inputSource, mySettings);
             MyParser parser = new MyParser(handler);
             parser.Parse(reader);
         }
-    
-        
+
         private class MyEntityResolver : XmlResolver
         {
-            private readonly bool _validate;   
-            
+            private readonly bool _validate;
+
             public MyEntityResolver(bool validate)
             {
                 _validate = validate;
             }
-            
+
             public override Object GetEntity(Uri absoluteUri, string role, Type ofObject)
             {
                 String text = null;
-                if (absoluteUri.AbsolutePath.EndsWith(XmlObjectSerializerImpl.CONNECTORS_DTD)) {
-                    if (!_validate) {
+                if (absoluteUri.AbsolutePath.EndsWith(XmlObjectSerializerImpl.CONNECTORS_DTD))
+                {
+                    if (!_validate)
+                    {
                         text = "<?xml version='1.0' encoding='UTF-8'?>";
                     }
-                    else {
+                    else
+                    {
                         text = GetDTD();
                     }
                 }
-                if ( text != null ) {
-                    byte [] bytes = Encoding.UTF8.GetBytes(text);
+                if (text != null)
+                {
+                    byte[] bytes = Encoding.UTF8.GetBytes(text);
                     return new MemoryStream(bytes);
                 }
                 return null;
             }
-            
-            public override ICredentials Credentials {
-                set {
-                    
+
+            public override ICredentials Credentials
+            {
+                set
+                {
+
                 }
             }
             private static String GetDTD()
@@ -561,52 +670,60 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer.Xml
                 return contents;
             }
         }
-    
-        private class MyParser 
+
+        private class MyParser
         {
-            /**
-             * The document for the current top-level element. with each top-level element,
-             * we discard the previous to avoid accumulating memory
-             */
+            /// <summary>
+            /// The document for the current top-level element.
+            /// </summary>
+            /// <remarks>
+            /// with each top-level element,
+            /// we discard the previous to avoid accumulating memory
+            /// </remarks>
             private XmlDocument _currentTopLevelElementDocument;
-            
-    
-            /**
-             * Stack of elements we are creating
-             */
+
+
+            /// <summary>
+            /// Stack of elements we are creating
+            /// </summary>
             private IList<XmlElement> _elementStack = new List<XmlElement>(10);
-        
-            /**
-             * Results handler that we write our objects to
-             */
+
+            /// <summary>
+            /// Results handler that we write our objects to
+            /// </summary>
             private readonly XmlObjectResultsHandler _handler;
-            
-            /**
-             * Is the handler still handing
-             */
+
+            /// <summary>
+            /// Is the handler still handing
+            /// </summary>
             private bool _stillHandling = true;
-            
-            
+
+
             public MyParser(XmlObjectResultsHandler handler)
             {
-                _handler  = handler;
+                _handler = handler;
             }
-    
+
             public void Parse(XmlReader reader)
             {
-                while ( _stillHandling && reader.Read() ) {
+                while (_stillHandling && reader.Read())
+                {
                     XmlNodeType nodeType = reader.NodeType;
-                    switch (nodeType) {
+                    switch (nodeType)
+                    {
                         case XmlNodeType.Element:
                             StartElement(reader.LocalName);
                             bool empty = reader.IsEmptyElement;
-                            if (reader.MoveToFirstAttribute()) {
-                                AddAttribute(reader.LocalName,reader.Value);
-                                while (reader.MoveToNextAttribute()) {
-                                    AddAttribute(reader.LocalName,reader.Value);                                    
+                            if (reader.MoveToFirstAttribute())
+                            {
+                                AddAttribute(reader.LocalName, reader.Value);
+                                while (reader.MoveToNextAttribute())
+                                {
+                                    AddAttribute(reader.LocalName, reader.Value);
                                 }
                             }
-                            if ( empty ) {
+                            if (empty)
+                            {
                                 EndElement();
                             }
                             break;
@@ -622,47 +739,49 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer.Xml
                     }
                 }
             }
-    
+
             private XmlElement GetCurrentElement()
             {
-                if (_elementStack.Count > 0 )
+                if (_elementStack.Count > 0)
                 {
-                    return _elementStack[_elementStack.Count-1];
+                    return _elementStack[_elementStack.Count - 1];
                 }
                 else
                 {
                     return null;
                 }
             }
-    
-            private void AddText(String text) 
+
+            private void AddText(String text)
             {
                 XmlElement currentElement = GetCurrentElement();
-                if ( currentElement != null )
+                if (currentElement != null)
                 {
                     currentElement.AppendChild(_currentTopLevelElementDocument.CreateTextNode(text));
                 }
             }
-        
+
             private void EndElement()
             {
                 if (_elementStack.Count > 0) //we don't push the top-level MULTI_OBJECT_ELEMENT on the stack
                 {
-                    XmlElement element = _elementStack[_elementStack.Count-1];
-                    _elementStack.RemoveAt(_elementStack.Count-1);
-                    if (_elementStack.Count == 0) {
+                    XmlElement element = _elementStack[_elementStack.Count - 1];
+                    _elementStack.RemoveAt(_elementStack.Count - 1);
+                    if (_elementStack.Count == 0)
+                    {
                         _currentTopLevelElementDocument = null;
-                        if (_stillHandling) {
-                            XmlObjectDecoder decoder = new XmlObjectDecoder(element,null);
+                        if (_stillHandling)
+                        {
+                            XmlObjectDecoder decoder = new XmlObjectDecoder(element, null);
                             Object obj = decoder.ReadObject();
                             _stillHandling = _handler(obj);
                         }
                     }
-                }            
+                }
             }
-            
-    
-            private void StartElement(String localName) 
+
+
+            private void StartElement(String localName)
             {
                 XmlElement element = null;
                 if (_elementStack.Count == 0)
@@ -675,83 +794,95 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer.Xml
                 }
                 else
                 {
-                    element = 
+                    element =
                         _currentTopLevelElementDocument.CreateElement(localName);
                     GetCurrentElement().AppendChild(element);
                 }
-                if (element != null) 
+                if (element != null)
                 {
                     _elementStack.Add(element);
                 }
             }
-                
+
             private void AddAttribute(String name, String val)
             {
                 XmlElement element = GetCurrentElement();
-                if ( element != null )
+                if (element != null)
                 {
                     element.SetAttribute(name, val);
                 }
-            }    
-        }    
+            }
+        }
     }
 
-    public class XmlObjectSerializerImpl : XmlObjectSerializer {
-    
+    public class XmlObjectSerializerImpl : XmlObjectSerializer
+    {
+
         public const String MULTI_OBJECT_ELEMENT = "MultiObject";
-        public const String CONNECTORS_DTD       = "connectors.dtd";
-        
+        public const String CONNECTORS_DTD = "connectors.dtd";
+
         private readonly TextWriter _output;
-        
+
         private readonly bool _multiObject;
-        
+
         private readonly bool _includeHeader;
-        
+
         private bool _firstObjectWritten;
-        
+
         private bool _documentEnded;
-        
-        public XmlObjectSerializerImpl(TextWriter output, bool includeHeader, bool multiObject) {
+
+        public XmlObjectSerializerImpl(TextWriter output, bool includeHeader, bool multiObject)
+        {
             _output = output;
             _includeHeader = includeHeader;
             _multiObject = multiObject;
         }
-        
-        
-        /**
-         * Writes the next object to the stream. 
-         * @param object The object to write.
-         * @see ObjectSerializerFactory for a list of supported types.
-         * @throws ConnectorException if there is more than one object
-         * and this is not configured for multi-object document. 
-         */
-        public void WriteObject(Object obj) {
-            if (_documentEnded) {
-                throw new InvalidOperationException("Attempt to writeObject after the document is already closed");            
+
+
+        /// <summary>
+        /// Writes the next object to the stream.
+        /// </summary>
+        /// <param name="object">The object to write.</param>
+        /// <seealso cref="Org.IdentityConnectors.Framework.Common.Serializer.ObjectSerializerFactory" />
+        /// <exception cref="Org.IdentityConnectors.Framework.Common.Exceptions.ConnectorException">if there is more than one object
+        /// and this is not configured for multi-object document.</exception>
+        public void WriteObject(Object obj)
+        {
+            if (_documentEnded)
+            {
+                throw new InvalidOperationException("Attempt to writeObject after the document is already closed");
             }
             StringBuilder buf = new StringBuilder();
             XmlObjectEncoder encoder = new XmlObjectEncoder(buf);
             String elementName = encoder.WriteObject(obj);
-            if (!_firstObjectWritten) {
+            if (!_firstObjectWritten)
+            {
                 StartDocument(elementName);
             }
-            else {
-                if (!_multiObject) {
+            else
+            {
+                if (!_multiObject)
+                {
                     throw new InvalidOperationException("Attempt to write multiple objects on a single-object document");
                 }
             }
             Write(buf.ToString());
             _firstObjectWritten = true;
         }
-        
-        public void Flush() {
+
+        public void Flush()
+        {
             _output.Flush();
         }
-        
-        public void Close( bool closeStream ) {
-            if (!_documentEnded) {
-                if (!_firstObjectWritten) {
-                    if (!_multiObject) {
+
+        public void Close(bool closeStream)
+        {
+            if (!_documentEnded)
+            {
+                if (!_firstObjectWritten)
+                {
+                    if (!_multiObject)
+                    {
                         throw new InvalidOperationException("Attempt to write zero objects on a single-object document");
                     }
                     StartDocument(null);
@@ -759,36 +890,41 @@ namespace Org.IdentityConnectors.Framework.Impl.Serializer.Xml
                 WriteEndDocument();
                 _documentEnded = true;
             }
-            if (closeStream) {
+            if (closeStream)
+            {
                 _output.Close();
             }
         }
-        
-        private void StartDocument(String firstElement) {
-            if (_includeHeader) {
+
+        private void StartDocument(String firstElement)
+        {
+            if (_includeHeader)
+            {
                 String docType = _multiObject ? MULTI_OBJECT_ELEMENT : firstElement;
                 String line1 = "<?xml version='1.0' encoding='UTF-8'?>\n";
-                String line2 = "<!DOCTYPE "+docType+" PUBLIC '"+CONNECTORS_DTD+"' '"+CONNECTORS_DTD+"'>\n";
+                String line2 = "<!DOCTYPE " + docType + " PUBLIC '" + CONNECTORS_DTD + "' '" + CONNECTORS_DTD + "'>\n";
                 Write(line1);
                 Write(line2);
             }
-            if (_multiObject) {
-                String line3 = "<"+MULTI_OBJECT_ELEMENT+">\n";
+            if (_multiObject)
+            {
+                String line3 = "<" + MULTI_OBJECT_ELEMENT + ">\n";
                 Write(line3);
             }
         }
-        
-        private void WriteEndDocument() {
-            if (_multiObject) {
-                String line1 = "</"+MULTI_OBJECT_ELEMENT+">\n";
-                Write(line1);            
+
+        private void WriteEndDocument()
+        {
+            if (_multiObject)
+            {
+                String line1 = "</" + MULTI_OBJECT_ELEMENT + ">\n";
+                Write(line1);
             }
         }
-        
-        private void Write(String str) {
+
+        private void Write(String str)
+        {
             _output.Write(str);
         }
-        
     }
-    
 }

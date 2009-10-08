@@ -82,7 +82,7 @@ namespace FrameworkTests
             {
                 //do not insert file info, as the stack trace of the exception and the dumped stack trace
                 //will always differ in the line numbers
-                _stackTrace = new StackTrace( false );
+                _stackTrace = new StackTrace(false);
                 throw new EUTestException();
             }
             #endregion
@@ -107,17 +107,17 @@ namespace FrameworkTests
             ConnectorFacadeFactory factory = ConnectorFacadeFactory.GetInstance();
             Configuration config = new MockConfiguration();
             ConnectorFacade facade = factory.NewInstance(
-                TestHelpers.CreateTestConfiguration( SafeType<Connector>.Get<SpyConnector>(), config ) );
+                TestHelpers.CreateTestConfiguration(SafeType<Connector>.Get<SpyConnector>(), config));
 
             try
             {
                 facade.Test();
 
-                Assert.Fail( "Exception was not thrown" );
+                Assert.Fail("Exception was not thrown");
             }
-            catch( EUTestException eutex )
+            catch (EUTestException eutex)
             {
-                ExceptionUtilTestHelpers.AssertStackTrace( eutex, SpyConnector.StackTrace );
+                ExceptionUtilTestHelpers.AssertStackTrace(eutex, SpyConnector.StackTrace);
             }
         }
     }
