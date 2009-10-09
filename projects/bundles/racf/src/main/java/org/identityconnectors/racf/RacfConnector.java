@@ -415,7 +415,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
                         
                         Map<String, Object> clValues = new HashMap<String, Object>();
                         if (commandLineSize>0)
-                            clValues = _clUtil.getAttributesFromCommandLine(objectClass, name, commandLineAttrs);
+                            clValues = _clUtil.getAttributesFromCommandLine(objectClass, extractRacfIdFromLdapId(name), commandLineAttrs);
                         object = buildObject(objectClass, ldapValues, clValues, attributesToGet, wantUid);
                     }
                     handler.handle(object);
@@ -927,6 +927,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_HOME,               String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_INIT_PROGRAM,       String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_MAX_CPUTIME,        String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_MAX_PROCESSES,      String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_MAX_ADDR_SPACE,     String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_MAX_FILES,          String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_OMVS_MAX_THREADS,        String.class));

@@ -631,10 +631,22 @@ class LdapUtil {
                 }
                 attributesRead.put(attribute.getID(), value);
             } else {
-                attributesRead.put(attribute.getID(), getValueFromAttribute(attribute));
+                Object value = getValueFromAttribute(attribute);
+                if ("NONE".equals(value) && isIntegerAttribute(attribute.getID()))
+                    value = null;
+                attributesRead.put(attribute.getID(), value);
             }
         }
         return ldapObject;
+    }
+
+    private boolean isIntegerAttribute(String name) {
+        return ATTR_LDAP_OMVS_MAX_CPUTIME.equalsIgnoreCase(name) ||
+        ATTR_LDAP_OMVS_MAX_ADDR_SPACE.equalsIgnoreCase(name) ||
+        ATTR_LDAP_OMVS_MAX_FILES.equalsIgnoreCase(name) ||
+        ATTR_LDAP_OMVS_MAX_MEMORY_MAP.equalsIgnoreCase(name) ||
+        ATTR_LDAP_OMVS_MAX_THREADS.equalsIgnoreCase(name) ||
+        ATTR_LDAP_OMVS_MAX_PROCESSES.equalsIgnoreCase(name);
     }
 
     static Object getValueFromAttribute(javax.naming.directory.Attribute attribute) throws NamingException {

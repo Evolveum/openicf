@@ -97,6 +97,7 @@ public interface RacfConstants {
     public static final String ATTR_LDAP_OMVS_MAX_FILES        = "racfOmvsMaximumFilesPerProcess";
     public static final String ATTR_LDAP_OMVS_MAX_THREADS      = "racfOmvsMaximumThreadsPerProcess";
     public static final String ATTR_LDAP_OMVS_MAX_MEMORY_MAP   = "racfOmvsMaximumMemoryMapArea";
+    public static final String ATTR_LDAP_OMVS_MAX_PROCESSES    = "racfOmvsMaximumProcessesPerUID";
     public static final String ATTR_LDAP_NV_INITIALCMD         = "racfNetviewInitialCommand";
     public static final String ATTR_LDAP_NV_DEFAULT_CONSOLE    = "racfDefaultConsoleName";
     public static final String ATTR_LDAP_NV_CTL                = "racfCTLKeyword";
