@@ -361,9 +361,11 @@ class LdapUtil {
             attributesToGet.add(ATTR_LDAP_ATTRIBUTES);
 
         SearchResult ldapObject = getAttributesFromLdap(ldapName, attributesRead, attributesToGet);
-        Uid uid = new Uid(createUniformUid(ldapObject.getNameInNamespace()));
+        String name = createUniformUid(ldapObject.getNameInNamespace());
+        Uid uid = new Uid(name);
         attributesRead.put(Uid.NAME, uid);
-        attributesRead.put(Name.NAME, createUniformUid(ldapObject.getNameInNamespace()));
+        attributesRead.put(Name.NAME, name);
+        attributesRead.put(ATTR_LDAP_ACCOUNTID, RacfConnector.extractRacfIdFromLdapId(name));
 
         // For Users, we need to do a separate query against the connections to pick up
         // Connection info

@@ -28,6 +28,7 @@ public interface RacfConstants {
     public static final String ATTR_LDAP_ENABLED               = "fakeEnabled";
     public static final String ATTR_LDAP_EXPIRED               = "fakeExpired";
     
+    public static final String ATTR_LDAP_ACCOUNTID             = "accountId";
     public static final String ATTR_LDAP_DATA                  = "racfInstallationData";
     public static final String ATTR_LDAP_MODEL                 = "racfDatasetModel";
     public static final String ATTR_LDAP_OWNER                 = "racfOwner";

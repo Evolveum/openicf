@@ -848,6 +848,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
     
             // Required Attributes
             //
+            attributes.add(buildReadonlyAttribute(ATTR_LDAP_ACCOUNTID,                   String.class));
             attributes.add(buildNonupdateAttribute(Name.NAME,                            String.class, true));
             attributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DEFAULT_GROUP,           String.class));
     
