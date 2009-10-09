@@ -347,6 +347,22 @@ class LdapUtil {
         Map<String, Object> attributesRead = CollectionUtil.newCaseInsensitiveMap();
         Set<String> attributesToGet = new HashSet<String>(originalAttributesToGet);
 
+        // This is artificial, so remove it
+        //
+        attributesToGet.remove(ATTR_LDAP_ACCOUNTID);
+        attributesToGet.remove(Name.NAME);
+        
+        // Now special case 'name-only', since that includes accountId
+        //
+        if (attributesToGet.size()==0) {
+            String name = ldapName;
+            Uid uid = new Uid(name);
+            attributesRead.put(Uid.NAME, uid);
+            attributesRead.put(Name.NAME, name);
+            attributesRead.put(ATTR_LDAP_ACCOUNTID, RacfConnector.extractRacfIdFromLdapId(name));
+            return attributesRead;
+        }
+        
         // A few attributes need to be done via a separate LDAP query, so we save them
         //
         boolean owners = attributesToGet.remove(ATTR_LDAP_CONNECT_OWNER);
