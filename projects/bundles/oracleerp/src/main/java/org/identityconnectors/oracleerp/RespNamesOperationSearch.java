@@ -50,7 +50,7 @@ final class RespNamesOperationSearch extends Operation implements SearchOp<Filte
     /**
      * Setup logging.
      */
-    static final Log log = Log.getLog(RespNamesOperationSearch.class);
+    private static final Log log = Log.getLog(RespNamesOperationSearch.class);
 
     /** Audit Operations */
     private AuditorOperations auditOps;

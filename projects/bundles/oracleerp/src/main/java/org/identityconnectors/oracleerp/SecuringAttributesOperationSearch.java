@@ -45,7 +45,7 @@ final class SecuringAttributesOperationSearch extends Operation implements Searc
     /**
      * Setup logging.
      */
-    static final Log log = Log.getLog(SecuringAttributesOperationSearch.class);
+    private static final Log log = Log.getLog(SecuringAttributesOperationSearch.class);
     /**
      * @param conn
      * @param cfg

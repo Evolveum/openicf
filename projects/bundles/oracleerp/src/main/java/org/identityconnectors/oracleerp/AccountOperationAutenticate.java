@@ -64,7 +64,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
     /**
      * Setup logging.
      */
-    static final Log log = Log.getLog(AccountOperationAutenticate.class);
+    private static final Log log = Log.getLog(AccountOperationAutenticate.class);
 
     /* (non-Javadoc)
      * @see org.identityconnectors.framework.spi.operations.AuthenticateOp#authenticate(org.identityconnectors.framework.common.objects.ObjectClass, java.lang.String, org.identityconnectors.common.security.GuardedString, org.identityconnectors.framework.common.objects.OperationOptions)

@@ -82,7 +82,7 @@ final class ResponsibilitiesOperations extends Operation {
     /**
      * Setup logging.
      */
-    static final Log log = Log.getLog(ResponsibilitiesOperations.class);
+    private static final Log log = Log.getLog(ResponsibilitiesOperations.class);
 
     /**
      * @param conn

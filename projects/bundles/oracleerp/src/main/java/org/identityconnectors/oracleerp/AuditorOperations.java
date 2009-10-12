@@ -52,7 +52,7 @@ final class AuditorOperations extends Operation {
     /**
      * Setup logging.
      */
-    static final Log log = Log.getLog(AuditorOperations.class);
+    private static final Log log = Log.getLog(AuditorOperations.class);
 
     /**
      * @param conn

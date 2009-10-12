@@ -77,7 +77,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
     /**
      * Setup logging.
      */
-    static final Log log = Log.getLog(AccountOperationUpdate.class);
+    private static final Log log = Log.getLog(AccountOperationUpdate.class);
 
     /**
      * Resp Operations
@@ -98,8 +98,8 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
      * @see org.identityconnectors.framework.spi.operations.UpdateOp#update(org.identityconnectors.framework.common.objects.ObjectClass, org.identityconnectors.framework.common.objects.Uid, java.util.Set, org.identityconnectors.framework.common.objects.OperationOptions)
      */
     public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> attrs, OperationOptions options) {
-        final String name = uid.getUidValue().toUpperCase();
-        log.ok("update user ''{0}''", name );
+        final String id = uid.getUidValue().toUpperCase();
+        log.ok("update user ''{0}''", id );
 
 
         // Enable/dissable user
@@ -108,9 +108,9 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
             boolean enable =AttributeUtil.getBooleanValue(enableAttr);
             if ( enable ) {
                 //delete user is the same as dissable
-                enable(objclass, name, options);
+                enable(objclass, id, options);
             } else {
-                disable(objclass, name, options);
+                disable(objclass, id, options);
             }
         }
 
@@ -119,8 +119,8 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
             //Cannot rename user
             if (nameAttr.getNameValue() != null) {
                 final String newName = nameAttr.getNameValue();
-                if (!name.equalsIgnoreCase(newName)) {
-                    final String emsg = getCfg().getMessage(MSG_COULD_NOT_RENAME_USER, name, newName);
+                if (!id.equalsIgnoreCase(newName)) {
+                    final String emsg = getCfg().getMessage(MSG_COULD_NOT_RENAME_USER, id, newName);
                     throw new IllegalStateException(emsg);
                 }
             }
@@ -128,7 +128,8 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
 
         // Get the User values
         final AccountSQLCallBuilder asb = new AccountSQLCallBuilder(getCfg().app(), false);
-        asb.setAttribute(objclass, AttributeBuilder.build(Name.NAME, name), options);
+        // add the id
+        asb.setAttribute(objclass, AttributeBuilder.build(Uid.NAME, id), options);
         //Add default owner
         asb.setAttribute(objclass, AttributeBuilder.build(OWNER, CUST), options);
         
@@ -141,13 +142,13 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
             CallableStatement cs = null;
             final AccountSQLCall aSql = asb.build();
             final String msg = "Update user account {0}";
-            log.ok(msg, name);
+            log.ok(msg, id);
             try {
                 // Create the user
                 cs = getConn().prepareCall(aSql.getCallSql(), aSql.getSqlParams());
                 cs.execute();
             } catch (Exception e) {
-                String message = getCfg().getMessage(MSG_ACCOUNT_NOT_UPDATE, name);
+                String message = getCfg().getMessage(MSG_ACCOUNT_NOT_UPDATE, id);
                 log.error(e, message);
                 SQLUtil.rollbackQuietly(getConn());
                 throw new ConnectorException(message, e);
@@ -160,20 +161,20 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
         final Attribute resp = AttributeUtil.find(RESPS, attrs);
         final Attribute directResp = AttributeUtil.find(DIRECT_RESPS, attrs);
         if ( resp != null ) {
-            respOps.updateUserResponsibilities( resp, name);
+            respOps.updateUserResponsibilities( resp, id);
         } else if ( directResp != null ) {
-            respOps.updateUserResponsibilities( directResp, name);
+            respOps.updateUserResponsibilities( directResp, id);
         }
 
         final Attribute secAttr = AttributeUtil.find(SEC_ATTRS, attrs);
         if ( secAttr != null ) {
-            new SecuringAttributesOperations(getConn(), getCfg()).updateUserSecuringAttrs(secAttr, name);
+            new SecuringAttributesOperations(getConn(), getCfg()).updateUserSecuringAttrs(secAttr, id);
         }
 
         getConn().commit();
         //Return new UID
-        log.ok( "update user ''{0}'' done", name );
-        return new Uid(name);
+        log.ok( "update user ''{0}'' done", id );
+        return new Uid(id);
     }
 
     /**

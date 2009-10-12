@@ -77,7 +77,7 @@ final class AccountOperationCreate extends Operation implements CreateOp {
     /**
      * Setup logging.
      */
-    static final Log log = Log.getLog(AccountOperationCreate.class);
+    private static final Log log = Log.getLog(AccountOperationCreate.class);
 
     /** ResOps */
     private ResponsibilitiesOperations respOps;

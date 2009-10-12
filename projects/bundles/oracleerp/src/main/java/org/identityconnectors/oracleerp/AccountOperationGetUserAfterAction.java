@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.script.ScriptExecutor;
 import org.identityconnectors.common.script.ScriptExecutorFactory;
 import org.identityconnectors.dbcommon.SQLUtil;
@@ -44,7 +45,11 @@ import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
  * @since 1.0
  */
 final class AccountOperationGetUserAfterAction extends Operation {
-
+    /**
+     * Setup logging.
+     */
+    private static final Log log = Log.getLog(AccountOperationGetUserAfterAction.class);
+    
     private static final String CHANGED_ATTRIBUTES = "changedAttributes";
     private static final String CURRENT_ATTRIBUTES = "currentAttributes";
 
@@ -59,7 +64,6 @@ final class AccountOperationGetUserAfterAction extends Operation {
 
 
     public ConnectorObjectBuilder runScriptOnConnector(Object userName, ConnectorObjectBuilder cob) {
-
         /*
          * Build the actionContext to pass it to the script according the documentation
          */
@@ -71,11 +75,13 @@ final class AccountOperationGetUserAfterAction extends Operation {
         //Connection
         actionContext.put(CONN, getConn().getConnection()); //The real connection
         actionContext.put(ACTION, OP_GET_USER); // The action is the operation name createUser/updateUser/deleteUser/disableUser/enableUser
-        actionContext.put(CURRENT_ATTRIBUTES, OracleERPUtil.getScriptAttributes( cob.build().getAttributes())); // The attributes
+        final Map<String, Object> scriptAttributes = OracleERPUtil.getScriptAttributes( cob.build().getAttributes());
+        actionContext.put(CURRENT_ATTRIBUTES, scriptAttributes); // The attributes
         actionContext.put(CHANGED_ATTRIBUTES, changedAttributes); // The attributes
         actionContext.put(ID, userName); // The user name
         actionContext.put(TRACE, log); //The loging
         actionContext.put(ERRORS, errorList); // The error list
+        log.ok("runScriptOnConnector action: {0}, ID: {1}, scriptAttributes: {2}", OP_GET_USER, userName, scriptAttributes);
 
         inputMap.put(ACTION_CONTEXT, actionContext);
 

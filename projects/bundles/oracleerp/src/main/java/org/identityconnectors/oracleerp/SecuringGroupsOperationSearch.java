@@ -49,7 +49,7 @@ final class SecuringGroupsOperationSearch extends Operation implements SearchOp<
     /**
      * Setup logging.
      */
-    static final Log log = Log.getLog(SecuringGroupsOperationSearch.class);
+    private static final Log log = Log.getLog(SecuringGroupsOperationSearch.class);
     /**
      * @param conn
      * @param cfg

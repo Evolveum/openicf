@@ -56,7 +56,7 @@ import org.identityconnectors.framework.spi.operations.SearchOp;
 final class AccountOperationSearch extends Operation implements SearchOp<FilterWhereBuilder> {
 
     /** Setup logging. */
-    static final Log log = Log.getLog(AccountOperationSearch.class);
+    private static final Log log = Log.getLog(AccountOperationSearch.class);
 
     /** Name translation */
     private AccountNameResolver nr = new AccountNameResolver();

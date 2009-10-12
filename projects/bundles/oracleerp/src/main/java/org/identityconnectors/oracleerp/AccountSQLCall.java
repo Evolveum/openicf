@@ -47,12 +47,6 @@ import org.identityconnectors.oracleerp.AccountOperations.CallParam;
  * @since 1.0
  */
 final class AccountSQLCall {
-
-    /**
-     * Setup logging. For builder too, so it is not private
-     */
-    static final Log log = Log.getLog(AccountSQLCall.class);
-
     /**
      * The return sql of the builder class
      */
@@ -82,6 +76,8 @@ final class AccountSQLCall {
      *
      */
     public static class AccountSQLCallBuilder {
+        
+        private static final Log log = Log.getLog(AccountSQLCallBuilder.class);
 
         /**
          * The create/update SQL string

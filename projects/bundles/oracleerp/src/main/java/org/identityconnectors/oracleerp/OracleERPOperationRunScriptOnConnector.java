@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.identityconnectors.common.Assertions;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.script.ScriptExecutor;
 import org.identityconnectors.common.script.ScriptExecutorFactory;
 import org.identityconnectors.common.security.GuardedString;
@@ -50,6 +51,10 @@ import org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp;
  * @since 1.0
  */
 final class OracleERPOperationRunScriptOnConnector extends Operation implements ScriptOnConnectorOp {
+    /**
+     * Setup logging.
+     */
+    private static final Log log = Log.getLog(OracleERPOperationRunScriptOnConnector.class);
 
     /**
      * @param conn
@@ -87,8 +92,10 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
 
         //Connection
         actionContext.put(CONN, getConn().getConnection()); //The real connection
-        actionContext.put(ACTION, scriptArguments.get(ACTION)); // The action is the operation name createUser/updateUser/deleteUser/disableUser/enableUser
-        actionContext.put(TIMING, scriptArguments.get(TIMING)); // The timing before / after
+        final Object action = scriptArguments.get(ACTION);
+        actionContext.put(ACTION, action); // The action is the operation name createUser/updateUser/deleteUser/disableUser/enableUser
+        final Object timing = scriptArguments.get(TIMING);
+        actionContext.put(TIMING, timing); // The timing before / after
         actionContext.put(ATTRIBUTES, scriptAttributes); // The attributes
         actionContext.put(ID, id); // The user id
         if (pwdArg != null && pwdArg instanceof GuardedString) {
@@ -101,6 +108,7 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
         }
         actionContext.put(TRACE, log); //The loging
         actionContext.put(ERRORS, errorList); // The error list
+        log.ok("runScriptOnConnector action: {0}, timing: {1}, ID: {2}, scriptAttributes: {3}", action, timing, id, scriptAttributes);
 
         inputMap.put(ACTION_CONTEXT, actionContext);
 

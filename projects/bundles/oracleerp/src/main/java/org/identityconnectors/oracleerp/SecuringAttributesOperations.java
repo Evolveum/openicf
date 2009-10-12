@@ -50,7 +50,7 @@ final class SecuringAttributesOperations extends Operation {
     /**
      * Setup logging.
      */
-    static final Log log = Log.getLog(SecuringAttributesOperations.class);
+    private static final Log log = Log.getLog(SecuringAttributesOperations.class);
 
     /**
      * @param conn

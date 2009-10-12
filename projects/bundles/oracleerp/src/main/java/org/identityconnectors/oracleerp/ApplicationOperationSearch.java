@@ -49,7 +49,7 @@ final class ApplicationOperationSearch extends Operation implements SearchOp<Fil
     /**
      * Setup logging.
      */
-    static final Log log = Log.getLog(ApplicationOperationSearch.class);
+    private static final Log log = Log.getLog(ApplicationOperationSearch.class);
     /**
      * @param conn
      * @param cfg

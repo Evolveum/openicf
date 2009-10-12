@@ -51,7 +51,7 @@ final class AccountOperationDelete extends Operation implements DeleteOp {
     /**
      * Setup logging.
      */
-    static final Log log = Log.getLog(AccountOperationDelete.class);
+    private static final Log log = Log.getLog(AccountOperationDelete.class);
 
     /**
      * @param conn

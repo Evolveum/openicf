@@ -61,7 +61,7 @@ final class AuditorOperationSearch extends Operation implements SearchOp<FilterW
     /**
      * Setup logging.
      */
-    static final Log log = Log.getLog(AuditorOperationSearch.class);
+    private static final Log log = Log.getLog(AuditorOperationSearch.class);
     /**
      * REsp Operations
      */

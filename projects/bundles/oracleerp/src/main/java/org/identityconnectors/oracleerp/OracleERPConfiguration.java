@@ -48,7 +48,7 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
     /**
      * Setup logging.
      */
-    static final Log log = Log.getLog(OracleERPConfiguration.class);
+    private static final Log log = Log.getLog(OracleERPConfiguration.class);
 
     /** Oracle thin url pattern, used when formating the url from components */
     static final String ORACLE_THIN_CONN_URL = "java:oracle:thin:@{0}:{1}:{2}";

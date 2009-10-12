@@ -46,7 +46,7 @@ final class ResponsibilitiesOperationSearch extends Operation implements SearchO
     /**
      * Setup logging.
      */
-    static final Log log = Log.getLog(ResponsibilitiesOperationSearch.class);
+    private static final Log log = Log.getLog(ResponsibilitiesOperationSearch.class);
 
     /** Resp operations*/
     private ResponsibilitiesOperations respOps;

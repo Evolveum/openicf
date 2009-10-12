@@ -55,7 +55,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
     /**
      * Setup logging.
      */
-    static final Log log = Log.getLog(OracleERPOperationSchema.class);
+    private static final Log log = Log.getLog(OracleERPOperationSchema.class);
 
     //Optional aggregated user attributes
     static final EnumSet<Flags> NRD = EnumSet.of(Flags.NOT_READABLE, Flags.NOT_RETURNED_BY_DEFAULT);
