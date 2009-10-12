@@ -25,6 +25,7 @@ package org.identityconnectors.solaris.test;
 
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,6 +34,7 @@ import junit.framework.Assert;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -111,5 +113,12 @@ public class OpCreateImplTest {
     public void unknownObjectClass() {
         final Set<Attribute> attrs = SolarisTestCommon.initSampleUser();
         facade.create(new ObjectClass("NONEXISTING_OBJECTCLASS"), attrs, null);
+    }
+    
+    @Test (expected=RuntimeException.class)
+    public void createExistingAccount() {
+        final Set<Attribute> attrs = new HashSet<Attribute>();
+        attrs.add(AttributeBuilder.build(ObjectClass.ACCOUNT_NAME, "root"));
+        facade.create(ObjectClass.ACCOUNT, attrs, null);
     }
 }
