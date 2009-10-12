@@ -62,9 +62,6 @@ import org.identityconnectors.framework.common.objects.Uid;
  */
 class OracleERPUtil {
 
-    /**
-     * Setup logging.
-     */
     private static final Log log = Log.getLog(OracleERPUtil.class);
 
     static final String MSG = "Oracle ERP: ";

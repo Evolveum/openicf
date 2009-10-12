@@ -55,12 +55,10 @@ import org.identityconnectors.framework.spi.Configuration;
  */
 final class OracleERPConnection extends DatabaseConnection {
     /**
-     * The default row prefetch
+     * The default row prefetch used in Oracle statements
      */
     private static final int DEFAULT_ROW_PREFETCH = 10;
-    /**
-     * Setup logging for the {@link OracleERPConnector}.
-     */
+
     static final Log log = Log.getLog(OracleERPConnector.class);
 
     /**

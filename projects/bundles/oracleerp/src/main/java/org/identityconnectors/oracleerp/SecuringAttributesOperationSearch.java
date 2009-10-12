@@ -42,9 +42,7 @@ import org.identityconnectors.framework.spi.operations.SearchOp;
  * @since 1.0
  */
 final class SecuringAttributesOperationSearch extends Operation implements SearchOp<FilterWhereBuilder> {
-    /**
-     * Setup logging.
-     */
+
     private static final Log log = Log.getLog(SecuringAttributesOperationSearch.class);
     /**
      * @param conn

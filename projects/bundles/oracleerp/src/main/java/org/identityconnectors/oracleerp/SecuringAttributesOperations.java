@@ -47,9 +47,6 @@ import org.identityconnectors.framework.common.objects.Attribute;
  */
 final class SecuringAttributesOperations extends Operation {
 
-    /**
-     * Setup logging.
-     */
     private static final Log log = Log.getLog(SecuringAttributesOperations.class);
 
     /**

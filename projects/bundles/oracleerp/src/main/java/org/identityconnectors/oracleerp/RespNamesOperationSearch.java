@@ -47,9 +47,7 @@ import org.identityconnectors.framework.spi.operations.SearchOp;
  * @since 1.0
  */
 final class RespNamesOperationSearch extends Operation implements SearchOp<FilterWhereBuilder> {
-    /**
-     * Setup logging.
-     */
+
     private static final Log log = Log.getLog(RespNamesOperationSearch.class);
 
     /** Audit Operations */

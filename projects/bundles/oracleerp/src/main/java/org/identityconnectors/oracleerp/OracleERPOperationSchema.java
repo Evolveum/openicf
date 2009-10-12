@@ -52,9 +52,6 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
  */
 final class OracleERPOperationSchema extends Operation implements SchemaOp {
 
-    /**
-     * Setup logging.
-     */
     private static final Log log = Log.getLog(OracleERPOperationSchema.class);
 
     //Optional aggregated user attributes

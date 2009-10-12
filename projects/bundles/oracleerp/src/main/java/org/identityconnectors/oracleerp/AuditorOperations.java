@@ -49,9 +49,6 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
  */
 final class AuditorOperations extends Operation {
 
-    /**
-     * Setup logging.
-     */
     private static final Log log = Log.getLog(AuditorOperations.class);
 
     /**

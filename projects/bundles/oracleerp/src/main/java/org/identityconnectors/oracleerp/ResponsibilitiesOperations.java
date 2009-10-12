@@ -79,9 +79,6 @@ final class ResponsibilitiesOperations extends Operation {
         AUDITOR_ATTRIBUTE_NAMES.add(AUDITOR_RESPS);
     }
 
-    /**
-     * Setup logging.
-     */
     private static final Log log = Log.getLog(ResponsibilitiesOperations.class);
 
     /**

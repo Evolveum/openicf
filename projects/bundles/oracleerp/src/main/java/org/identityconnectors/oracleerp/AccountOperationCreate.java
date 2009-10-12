@@ -74,9 +74,6 @@ import org.identityconnectors.oracleerp.AccountSQLCall.AccountSQLCallBuilder;
  */
 final class AccountOperationCreate extends Operation implements CreateOp {
 
-    /**
-     * Setup logging.
-     */
     private static final Log log = Log.getLog(AccountOperationCreate.class);
 
     /** ResOps */

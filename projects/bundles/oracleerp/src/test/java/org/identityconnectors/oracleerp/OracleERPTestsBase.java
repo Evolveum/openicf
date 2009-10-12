@@ -61,7 +61,6 @@ abstract public class OracleERPTestsBase {
 
     private static final Log log = Log.getLog(OracleERPTestsBase.class);
     
-    
     protected static final String ACCOUNT_ALL_ATTRS = "account.all";
     protected static final String ACCOUNT_AUDITOR = "account.auditor";
     protected static final String ACCOUNT_MODIFY_ATTRS = "account.modify";

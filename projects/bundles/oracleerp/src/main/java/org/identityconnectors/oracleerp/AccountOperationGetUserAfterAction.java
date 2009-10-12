@@ -45,9 +45,7 @@ import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
  * @since 1.0
  */
 final class AccountOperationGetUserAfterAction extends Operation {
-    /**
-     * Setup logging.
-     */
+
     private static final Log log = Log.getLog(AccountOperationGetUserAfterAction.class);
     
     private static final String CHANGED_ATTRIBUTES = "changedAttributes";

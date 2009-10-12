@@ -74,9 +74,6 @@ import org.identityconnectors.oracleerp.AccountSQLCall.AccountSQLCallBuilder;
  */
 final class AccountOperationUpdate extends Operation implements UpdateOp {
 
-    /**
-     * Setup logging.
-     */
     private static final Log log = Log.getLog(AccountOperationUpdate.class);
 
     /**

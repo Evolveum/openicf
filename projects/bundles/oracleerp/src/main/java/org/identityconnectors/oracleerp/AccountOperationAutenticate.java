@@ -61,9 +61,6 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
         super(conn, cfg);
     }
 
-    /**
-     * Setup logging.
-     */
     private static final Log log = Log.getLog(AccountOperationAutenticate.class);
 
     /* (non-Javadoc)

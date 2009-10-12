@@ -76,9 +76,6 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
 public class OracleERPConnector implements PoolableConnector, AuthenticateOp, DeleteOp, SearchOp<FilterWhereBuilder>, UpdateOp,
         CreateOp, TestOp, SchemaOp, ScriptOnConnectorOp, AttributeNormalizer, ResolveUsernameOp {
 
-    /**
-     * Setup logging for the {@link OracleERPConnector}.
-     */
     private static final Log log = Log.getLog(OracleERPConnector.class);
 
     /**

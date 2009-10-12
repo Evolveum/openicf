@@ -45,9 +45,6 @@ import org.identityconnectors.framework.spi.ConfigurationProperty;
  */
 final public class OracleERPConfiguration extends AbstractConfiguration implements Messages {
 
-    /**
-     * Setup logging.
-     */
     private static final Log log = Log.getLog(OracleERPConfiguration.class);
 
     /** Oracle thin url pattern, used when formating the url from components */

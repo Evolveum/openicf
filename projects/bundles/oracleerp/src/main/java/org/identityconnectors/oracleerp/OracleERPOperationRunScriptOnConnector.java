@@ -51,9 +51,7 @@ import org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp;
  * @since 1.0
  */
 final class OracleERPOperationRunScriptOnConnector extends Operation implements ScriptOnConnectorOp {
-    /**
-     * Setup logging.
-     */
+    
     private static final Log log = Log.getLog(OracleERPOperationRunScriptOnConnector.class);
 
     /**

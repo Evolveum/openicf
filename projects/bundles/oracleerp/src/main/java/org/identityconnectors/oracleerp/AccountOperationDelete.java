@@ -48,9 +48,6 @@ import org.identityconnectors.framework.spi.operations.DeleteOp;
  */
 final class AccountOperationDelete extends Operation implements DeleteOp {
 
-    /**
-     * Setup logging.
-     */
     private static final Log log = Log.getLog(AccountOperationDelete.class);
 
     /**
