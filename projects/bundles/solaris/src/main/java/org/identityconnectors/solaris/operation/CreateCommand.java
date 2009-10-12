@@ -43,6 +43,7 @@ import expect4j.matches.Match;
 class CreateCommand  {
     private final static Map<NativeAttribute, String> createSwitches = CommandSwitches.commonSwitches;
     
+    
     private final static Match[] errorsUseradd;
     static {
         MatchBuilder builder = new MatchBuilder();

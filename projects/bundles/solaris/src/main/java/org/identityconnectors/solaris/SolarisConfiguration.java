@@ -258,22 +258,22 @@ public class SolarisConfiguration extends AbstractConfiguration {
      * <b>System Database Type</b><br>Specify the system database type in use.
      * The default type is FILES. Supported types are NIS.
      */
-//    private String sysDbType = "FILES";
+    private String sysDbType = "FILES";
     
     /*
      * RA_NISDIR
      * 
      * <b>NIS Build Directory</b><br>Enter the directory name where the NIS build files are located.
      */
-    //TODO NISDIR = "/var/yp";
-    
+    private String nisDir = "/var/yp";
+
     /*
      * RA_NISPWDDIR
      * 
      * <b>NIS Password Source Directory</b><br>Enter the directory name where
      * the NIS password source files are located.
      */
-    // TODO NISPWDDIR
+    private String nisPwdDir;
     
     /*
      * RA_NISSHADOW
@@ -281,7 +281,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
      * <b>NIS Shadow Password Support</b><br>Specify TRUE if the NIS database
      * used shadow passwords, FALSE otherwise.
      */
-    //TODO NISSHADOW = false;
+    private boolean nisShadow = false;
     
     /*
      * RA_NISSRCDIR
@@ -295,6 +295,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
     //===================================================================================
     //===================================================================================
     
+
 
 
     /* ********** CONSTRUCTOR ************ */
@@ -431,12 +432,33 @@ public class SolarisConfiguration extends AbstractConfiguration {
         this.delHomeDir = delHomeDir;
     }
     
-//    public String getSysDbType() {
-//        return sysDbType;
-//    }
-//    public void setSysDbType(String sysDbType) {
-//        this.sysDbType = sysDbType;
-//    }
+    public String getSysDbType() {
+        return sysDbType;
+    }
+    public void setSysDbType(String sysDbType) {
+        this.sysDbType = sysDbType;
+    }
+    
+    public String getNisPwdDir() {
+        return nisPwdDir;
+    }
+    public void setNisPwdDir(String nisPwdDir) {
+        this.nisPwdDir = nisPwdDir;
+    }
+    
+    public String getNisDir() {
+        return nisDir;
+    }
+    public void setNisDir(String nisDir) {
+        this.nisDir = nisDir;
+    }
+    
+    public boolean isNisShadow() {
+        return nisShadow;
+    }
+    public void setNisShadow(boolean nisShadow) {
+        this.nisShadow = nisShadow;
+    }
 
     
     /* *********** AUXILIARY METHODS ***************** */

@@ -28,7 +28,6 @@ import java.util.Set;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
@@ -37,9 +36,12 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
+import org.identityconnectors.solaris.operation.nis.OpCreateNISImpl;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 public class OpCreateImpl extends AbstractOp {
+    private static final String DEFAULT_NISPWDDIR = "/etc";
+
     private static final Log _log = Log.getLog(OpCreateImpl.class);
     
     final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT, ObjectClass.GROUP};
@@ -48,6 +50,10 @@ public class OpCreateImpl extends AbstractOp {
         super(conn);
     }
 
+    /**
+     * central method of Create operation. Internally it delegates the work to 
+     * to NIS / Non-NIS (native) subordinates.
+     */
     public Uid create(ObjectClass oclass, final Set<Attribute> attrs, final OperationOptions options) {
         SolarisUtil.controlObjectClassValidity(oclass, acceptOC, getClass());
         
@@ -64,28 +70,67 @@ public class OpCreateImpl extends AbstractOp {
 
         _log.info("~~~~~~~ create(''{0}'') ~~~~~~~", accountId);
         
-        if (accountExists(accountId)) {
-            throw new ConnectorException("Account '" + accountId + "' already exists on the resource. The same user cannot be created multiple times.");
+        final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(name.getNameValue(), attrs);
+        final GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
+        
+        if (isNis()) {
+            invokeNISCreate(entry, password);
+        } else {
+            invokeNativeCreate(entry, password);
+          
         }
         
+        return new Uid(accountId);
+    }
+
+    /**
+     * NIS Create implementation.
+     * 
+     * Compare with Native create operation {@link OpCreateImpl#invokeNativeCreate(Set, Map, Name, String)}
+     */
+    private void invokeNISCreate(SolarisEntry entry, GuardedString password) {
+        
+        String pwdDir = getNisPwdDir();
+        if (pwdDir.equals(DEFAULT_NISPWDDIR)) {
+            invokeNativeCreate(entry, password);
+            
+            // The user has to be added to the NIS database
+            getConnection().doSudoStart();
+            OpCreateNISImpl.addNISMake("passwd", getConnection());
+            getConnection().doSudoReset();
+        } else {
+            OpCreateNISImpl.performNIS(pwdDir, entry, getConnection());
+        }
+    }
+    
+
+    /**
+     * implementation of the Native Create operation.
+     * 
+     * Compare with other NIS implementation: {@see OpCreateImpl#invokeNISCreate(Set, Map, Name, String)}
+     */
+    private void invokeNativeCreate(SolarisEntry entry, GuardedString password) {
         /*
          * START SUDO
          */
         getConnection().doSudoStart();
         try {
-            createImpl(attrs, attrMap, name, accountId);
+            createImpl(entry, password);
         } finally {
             /*
              * END SUDO
              */
             getConnection().doSudoReset();
         }
-        return new Uid(accountId);
     }
 
-    private void createImpl(final Set<Attribute> attrs,
-            final Map<String, Attribute> attrMap, final Name name,
-            final String accountId) {
+    /*
+     * Note: do not invoke this from other then
+     * OpCreateImpl.invokeNativeCreate(Set<Attribute>, Map<String, Attribute>,
+     * Name, String) 
+     * method
+     */
+    private void createImpl(SolarisEntry entry, GuardedString password) {
         /*
          * First acquire the "mutex" for uid creation
          */
@@ -95,8 +140,7 @@ public class OpCreateImpl extends AbstractOp {
         /*
          * CREATE A NEW ACCOUNT
          */
-        _log.info("launching 'useradd' command (''{0}'')", accountId);
-        final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(name.getNameValue(), attrs);
+        _log.info("launching 'useradd' command (''{0}'')", entry.getName());
         try {
             CreateCommand.createUser(entry, getConnection());
         } finally {
@@ -109,25 +153,29 @@ public class OpCreateImpl extends AbstractOp {
         /*
          * PASSWORD SET
          */
-        _log.info("launching 'passwd' command (''{0}'')", accountId);
-        GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
+        _log.info("launching 'passwd' command (''{0}'')", entry.getName());
         PasswdCommand.configureUserPassword(entry, password, getConnection());
         
         PasswdCommand.configurePasswordProperties(entry, getConnection());
     }
-
-    /** checks if the account already exists on the resource. */
-    private boolean accountExists(String name) {
-        try {
-            // FIXME find a more solid command that works for both NIS and normal passwords
-            final String out = getConnection().executeCommand(getConnection().buildCommand(String.format("logins -l %s", name)));
-            if (!out.contains(String.format("%s was not found", name))) {
-                return true;
-            } 
-        } catch (Exception e) {
-            throw ConnectorException.wrap(e);
+    
+    /*
+     * ******************* AUXILIARY METHODS ***********************
+     */
+    private String getNisPwdDir() {
+        String pwdDir = getConnection().getConfiguration().getNisPwdDir();
+        if ((pwdDir == null) || (pwdDir.length() == 0)) {
+            pwdDir = DEFAULT_NISPWDDIR;
         }
-        
-        return false;
+        return pwdDir;
+    }
+
+    private boolean isNis() {
+        final String sysDB = getConnection().getConfiguration().getSysDbType();
+        boolean sysDbType = false;
+        if ((sysDB != null) && sysDB.equalsIgnoreCase("nis")) {
+            sysDbType = true;
+        }
+        return sysDbType;
     }
 }
