@@ -45,7 +45,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
      * resource. This value may depend on the value of Connection Type. The
      * standard value for telnet is 23; the standard value for SSH is 22.
      */
-    private Integer port;
+    private Integer port = 23;
     
     /* 
      * all this info is from resource adapter's prototype xml
@@ -128,7 +128,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
      * protocol type. The default protocol is Telnet. Supported protocols are
      * Telnet, SSH, and SSHPubKey.
      */
-    private String connectionType;
+    private String connectionType = ConnectionType.TELNET.toString();
     //private ConnectorMessages _connectorMessages;
     
     /*
@@ -150,7 +150,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
      * 
      * IMHO @deprecated
      */
-    // CONN_MAX
+    // CONN_MAX = 10;
     
     /*
      * RA_CONN_TIMEOUT
@@ -173,6 +173,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
      * RA_CONN_TIMEOUT -> message in RAMessages.properties, at key:
      * RESATTR_HELP_73
      */
+    // DEFAULT = 900
     
     /*
      * RA_BLOCK_FETCH_TIMEOUT
@@ -183,7 +184,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
      * 
      * IMHO @deprecated
      */
-    
+    // default = 600
     /*
      * RA_MUTEX_ACQUIRE_TIMEOUT
      * Mutex Acquire Timeout
@@ -257,14 +258,14 @@ public class SolarisConfiguration extends AbstractConfiguration {
      * <b>System Database Type</b><br>Specify the system database type in use.
      * The default type is FILES. Supported types are NIS.
      */
-    // TODO SYS_DB_TYPE
+//    private String sysDbType = "FILES";
     
     /*
      * RA_NISDIR
      * 
      * <b>NIS Build Directory</b><br>Enter the directory name where the NIS build files are located.
      */
-    //TODO NISDIR
+    //TODO NISDIR = "/var/yp";
     
     /*
      * RA_NISPWDDIR
@@ -280,7 +281,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
      * <b>NIS Shadow Password Support</b><br>Specify TRUE if the NIS database
      * used shadow passwords, FALSE otherwise.
      */
-    //TODO NISSHADOW
+    //TODO NISSHADOW = false;
     
     /*
      * RA_NISSRCDIR
@@ -429,6 +430,13 @@ public class SolarisConfiguration extends AbstractConfiguration {
     public void setDelHomeDir(boolean delHomeDir) {
         this.delHomeDir = delHomeDir;
     }
+    
+//    public String getSysDbType() {
+//        return sysDbType;
+//    }
+//    public void setSysDbType(String sysDbType) {
+//        this.sysDbType = sysDbType;
+//    }
 
     
     /* *********** AUXILIARY METHODS ***************** */
@@ -465,11 +473,11 @@ public class SolarisConfiguration extends AbstractConfiguration {
             throw new ConfigurationException(String.format(msg, "Port"));
         }
         
-        if (connectionType == null) {
+        if (StringUtil.isBlank(connectionType)) {
             throw new ConfigurationException(String.format(msg, "Connection type"));
         }
         
-        if (rootShellPrompt == null) {
+        if (StringUtil.isBlank(rootShellPrompt)) {
             throw new ConfigurationException(String.format(msg, "Root shell prompt"));
         }
 
