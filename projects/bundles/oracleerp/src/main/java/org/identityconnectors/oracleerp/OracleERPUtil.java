@@ -65,7 +65,7 @@ class OracleERPUtil {
     /**
      * Setup logging.
      */
-    static final Log log = Log.getLog(OracleERPUtil.class);
+    private static final Log log = Log.getLog(OracleERPUtil.class);
 
     static final String MSG = "Oracle ERP: ";
 
@@ -182,6 +182,7 @@ class OracleERPUtil {
     static final String MSG_DRIVER_BLANK = "msg.driver.blank";
     static final String MSG_DRIVER_NOT_FOUND = "msg.jdbc.driver.not.found";
     static final String MSG_UNKNOWN_OPERATION_TYPE = "msg.unknown.operation.type";
+    static final String MSG_UNSUPPORTED_OPERATION = "msg.unsupported.operation";
     static final String MSG_HR_LINKING_ERROR = "msg.hr.linking.error";
     static final String MSG_USER_NOT_FOUND = "msg.user.not.found";
     static final String MSG_COULD_NOT_ENABLE_USER = "msg.could.not.enable.user";

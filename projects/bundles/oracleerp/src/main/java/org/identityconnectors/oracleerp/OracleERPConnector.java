@@ -79,7 +79,7 @@ public class OracleERPConnector implements PoolableConnector, AuthenticateOp, De
     /**
      * Setup logging for the {@link OracleERPConnector}.
      */
-    static final Log log = Log.getLog(OracleERPConnector.class);
+    private static final Log log = Log.getLog(OracleERPConnector.class);
 
     /**
      * Place holder for the {@link Configuration} passed into the init() method {@link OracleERPConnector#init}.
@@ -124,6 +124,8 @@ public class OracleERPConnector implements PoolableConnector, AuthenticateOp, De
 
         if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
             return new AccountOperationAutenticate(getConn(), getCfg()).authenticate(objectClass, username, password, options);
+        } else if (objectClass.is(RESP_NAMES)) {
+            throw new IllegalArgumentException(getCfg().getMessage(MSG_UNSUPPORTED_OPERATION, "authenticate", objectClass.toString()));
         }
         throw new IllegalArgumentException(getCfg().getMessage(MSG_UNKNOWN_OPERATION_TYPE, objectClass.toString()));
     }
@@ -140,6 +142,8 @@ public class OracleERPConnector implements PoolableConnector, AuthenticateOp, De
 
         if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
             return new AccountOperationAutenticate(getConn(), getCfg()).resolveUsername(objectClass, username, options);
+        } else if (objectClass.is(RESP_NAMES)) {
+            throw new IllegalArgumentException(getCfg().getMessage(MSG_UNSUPPORTED_OPERATION, "resolveUsername", objectClass.toString()));
         }
         throw new IllegalArgumentException(getCfg().getMessage(MSG_UNKNOWN_OPERATION_TYPE, objectClass.toString()));
     }
@@ -158,16 +162,11 @@ public class OracleERPConnector implements PoolableConnector, AuthenticateOp, De
         log.ok("create");
         Assertions.nullCheck(oclass, "oclass");
         Assertions.nullCheck(attrs, "attrs");
-        if (attrs.isEmpty()) {
-            throw new IllegalArgumentException("Invalid attributes provided to a create operation.");
-        }
-
-        //doBeforeCreateActionScripts(oclass, attrs, options);
-
+        
         if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
             return new AccountOperationCreate(getConn(), getCfg()).create(oclass, attrs, options);
         } else if (oclass.is(RESP_NAMES)) {
-            // TODO add create "respNames" function
+            throw new IllegalArgumentException(getCfg().getMessage(MSG_UNSUPPORTED_OPERATION, "create", oclass.toString()));
         }
 
         throw new IllegalArgumentException(getCfg().getMessage(MSG_UNKNOWN_OPERATION_TYPE, oclass.toString()));
@@ -221,7 +220,7 @@ public class OracleERPConnector implements PoolableConnector, AuthenticateOp, De
             new AccountOperationDelete(getConn(), getCfg()).delete(objClass, uid, options);
             return;
         } else if (objClass.is(RESP_NAMES)) {
-            // TODO ad delete RespNames Function
+            throw new IllegalArgumentException(getCfg().getMessage(MSG_UNSUPPORTED_OPERATION, "delete", objClass.toString()));
         }
 
         throw new IllegalArgumentException(getCfg().getMessage(MSG_UNKNOWN_OPERATION_TYPE, objClass.toString()));
@@ -353,18 +352,20 @@ public class OracleERPConnector implements PoolableConnector, AuthenticateOp, De
         Assertions.nullCheck(objClass, "oclass");
         Assertions.nullCheck(uid, "uid");
         Assertions.nullCheck(attrs, "replaceAttributes");
-        if (attrs.isEmpty()) {
-            throw new IllegalArgumentException("Invalid attributes provided to a create operation.");
-        }
 
         if (uid == null || uid.getUidValue() == null) {
             throw new IllegalArgumentException(getCfg().getMessage(MSG_ACCOUNT_UID_REQUIRED));
         }
+        
+        if (attrs.isEmpty()) {
+            // Nothing to update
+            return uid;
+        }
 
         if (objClass.is(ObjectClass.ACCOUNT_NAME)) {
             return new AccountOperationUpdate(getConn(), getCfg()).update(objClass, uid, attrs, options);
-        } else if (objClass.is(RESP_NAMES)) {
-            // TODO update resp names
+        }  else if (objClass.is(RESP_NAMES)) {
+            throw new IllegalArgumentException(getCfg().getMessage(MSG_UNSUPPORTED_OPERATION, "update", objClass.toString()));
         }
 
         throw new IllegalArgumentException(getCfg().getMessage(MSG_UNKNOWN_OPERATION_TYPE, objClass.toString()));
