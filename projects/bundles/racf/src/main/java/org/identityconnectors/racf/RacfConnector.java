@@ -130,8 +130,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
      * {@inheritDoc}
      */
     public void dispose() {
-        System.out.println("disposing connector");
-        _connection.dispose();
+        if (_connection!=null)
+           _connection.dispose();
     }
 
     /**
