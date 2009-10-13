@@ -63,6 +63,21 @@ public class AccountOperationAutenticateTests extends OracleERPTestsBase {
     /**
      * Test method .
      */
+    @Test
+    public void testResolveUsername() {
+        final OracleERPConnector c = getConnector(CONFIG_TST); 
+       
+        final Set<Attribute> attrs = getAttributeSet(ACCOUNT_REQUIRED_ATTRS);
+        replaceNameByRandom(attrs);
+        final Uid uid = c.create(ObjectClass.ACCOUNT, attrs, null);
+        assertNotNull(uid);
+        
+        assertEquals(uid, c.resolveUsername(ObjectClass.ACCOUNT, uid.getUidValue(), null));
+    }
+    
+    /**
+     * Test method .
+     */
     @Test(expected=InvalidCredentialException.class)
     public void testAuthenticateDissabled() {
         final OracleERPConnector c = getConnector(CONFIG_TST); 

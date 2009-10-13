@@ -132,7 +132,7 @@ public class OracleERPConnector implements PoolableConnector, AuthenticateOp, De
      * {@inheritDoc}
      */
     public Uid resolveUsername(ObjectClass objectClass, String username, OperationOptions options) {
-        log.ok("authenticate");
+        log.ok("resolveUsername");
 
         Assertions.nullCheck(objectClass, "objectClass");
         Assertions.nullCheck(username, "username");
@@ -575,6 +575,7 @@ public class OracleERPConnector implements PoolableConnector, AuthenticateOp, De
      * Check alive method
      */
     public void checkAlive() {
+        log.ok("checkAlive");
         getConn().test();
     }
     
