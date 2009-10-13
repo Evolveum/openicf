@@ -292,9 +292,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
                 if (isLdapConnectionAvailable())
                     ldapAttrs.add("racfPasswordEnvelope");
                 else
-                    throw new ConnectorException("TODO");
-            } else if (attribute.equals(OperationalAttributes.PASSWORD_NAME)) {
-                throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.ATTRIBUTE_NOT_READABLE, OperationalAttributes.PASSWORD_NAME));
+                    throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.ATTRIBUTE_NOT_READABLE, OperationalAttributes.PASSWORD_NAME));
             } else if (attribute.equals(OperationalAttributes.PASSWORD_EXPIRED_NAME)) {
                 if (isLdapConnectionAvailable())
                     ldapAttrs.add(OperationalAttributes.PASSWORD_EXPIRED_NAME);
