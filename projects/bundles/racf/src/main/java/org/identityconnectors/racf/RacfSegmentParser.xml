@@ -17,10 +17,10 @@
   <PatternNode key='RACF*REVOKE DATE'   pattern='REVOKE DATE=(NONE|\w+\s\d+,\s\d+)'   optional='false' reset='false'/>
   <PatternNode key='RACF*RESUME DATE'   pattern='RESUME DATE=(NONE|\w+\s\d+,\s\d+)'     optional='false' reset='false'/>
   <PatternNode key='RACF*LAST ACCESS'   pattern='LAST-ACCESS=(\S+)'         optional='false' reset='false'/>
-        //"  <PatternNode key='RACF*CLAUTH' pattern='CLASS AUTHORIZATIONS=([^\n]*(\s{23}.+\n)*)' optional='true' reset='false'>
-        //"    <SubstituteTransform pattern='(.*)\s' substitute='$1'/>
-        //"    <SplitTransform splitPattern='\s+'/>
-        //"  </PatternNode>
+  <PatternNode key='RACF*CLAUTH' pattern='CLASS AUTHORIZATIONS=([^\n]*(\s{23}.+\n)*)' optional='true' reset='false'>
+    <SubstituteTransform pattern='(.*)\s' substitute='$1'/>
+    <SplitTransform splitPattern='\s+'/>
+  </PatternNode>
   <PatternNode key='RACF*DATA'          pattern='INSTALLATION-DATA=([^\n]*(\s{20}.+\n)*)' optional='true' reset='false'>
     <SubstituteTransform pattern='^(.{50})[^\n]+' substitute='$1'/>
     <SubstituteTransform pattern='\n\s{20}(.{50})[^\n]+' substitute='$1'/>
@@ -28,6 +28,7 @@
     <SubstituteTransform pattern='\s+$' substitute=''/>
     <SubstituteTransform pattern='^$' substitute='NO-INSTALLATION-DATA'/>
   </PatternNode>
+  <PatternNode key='RACF*MODEL'         pattern='MODEL-NAME=(\S+)'         optional='true' reset='false'/>
   <PatternNode key='RACF*GROUPS'        pattern='((?:\s+GROUP=\S+\s+AUTH=\S*\s+CONNECT-OWNER=(?:[^\n]+\n){4})+)' optional='true' reset='true'>
     <SubstituteTransform pattern='.*?GROUP=(\S+)\s+AUTH=.+?CONNECT-OWNER=\S+([^\n]+\n){4}' substitute='$1 '/>
     <SubstituteTransform pattern='^\s+(.*)' substitute='$1'/>
