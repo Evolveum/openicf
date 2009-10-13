@@ -49,8 +49,9 @@ public class SolarisUtil {
     public static final int DEFAULT_LIMIT = 120;
     
     private static StringBuilder limitString(StringBuilder data, int limit) {
-        StringBuilder result = new StringBuilder(limit);
+        StringBuilder result = null;
         if (data.length() > limit) {
+            result = new StringBuilder(limit);
             result.append(data.substring(0, limit));
             result.append("\\\n"); // /<newline> separator of Unix command line cmds.
             
