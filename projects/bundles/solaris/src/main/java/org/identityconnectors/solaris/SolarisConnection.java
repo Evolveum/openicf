@@ -323,6 +323,7 @@ public class SolarisConnection {
             buff.append("sudo ");
         }
         buff.append(command);
+        buff.append(" ");// for safety reasons, in case there are no arguments, and the command is used within legacy scrips from adapter.
         
         for (CharSequence string : arguments) {
             buff.append(" ");
@@ -360,6 +361,7 @@ public class SolarisConnection {
      * {@link OpUpdateImpl}. The code is taken from the resource adapter.
      */
     private String getAcquireMutexScript() {
+        // This code is from SolarisResouceAdapter
         Long timeout = getConfiguration().getMutexAcquireTimeout();
         String rmCmd = buildCommand("rm");
         String catCmd = buildCommand("cat");
@@ -413,18 +415,74 @@ public class SolarisConnection {
 
         return pidMutexAcquireScript;
     }
+    
+    private String getAcquireMutexScript(String uidMutexFile, String tmpUidMutexFile, String pidFoundFile) {
+        Long timeout = getConfiguration().getMutexAcquireTimeout();
+        String rmCmd = buildCommand("rm");
+        String catCmd = buildCommand("cat");
+
+        if (timeout < 1) {
+            timeout = SolarisConfiguration.DEFAULT_MUTEX_ACQUIRE_TIMEOUT;
+        }
+        
+        String uidMutexAcquireScript =
+            "TIMEOUT=" + timeout + "; " +
+            "echo $$ > " + tmpUidMutexFile + "; " +
+            "while test 1; " +
+            "do " +
+            "ln -n " + tmpUidMutexFile + " " + uidMutexFile + " 2>/dev/null; " +
+            "rc=$?; " +
+            "if [ $rc -eq 0 ]; then\n" +
+              rmCmd + " -f " + tmpUidMutexFile + "; " +
+              "break; " +
+            "fi\n" +
+            "LOCKPID=`" + catCmd + " " + uidMutexFile + "`; " +
+            "if [ \"$LOCKPID\" = \"$$\" ]; then " +
+              rmCmd + " -f " + uidMutexFile + "\n" +
+            "else " +
+              "ps -ef | while read REPLY\n" +
+              "do " +
+                "TESTPID=`echo $REPLY | awk '{ print $2 }'`; " +
+                "if [ \"$LOCKPID\" = \"$TESTPID\" ]; then " +
+                  "touch " + pidFoundFile + "; " +
+                  "break; " +
+                "fi\n" +
+              "done\n" +
+              "if [ ! -f " + pidFoundFile + " ]; then " +
+                rmCmd + " -f " + uidMutexFile + "; " +
+              "else " +
+                rmCmd + " -f " + pidFoundFile + "; " +
+              "fi\n" +
+            "fi\n" +
+            "if [ -f " + uidMutexFile + " ]; then " +
+              "TIMEOUT=`echo | awk 'BEGIN { n = '$TIMEOUT' } { n -= 1 } END { print n }'`\n" +
+              "if [ $TIMEOUT = 0 ]; then " +
+                "echo \"ERROR: failed to obtain uid mutex\"; " +
+                rmCmd + " -f " + tmpUidMutexFile + "; " +
+                "break; " +
+              "fi\n" +
+              "sleep 1; " +
+            "fi\n" +
+          "done";
+
+        return uidMutexAcquireScript;
+    }
 
     /** Counterpart of {@link SolarisConnection#getAcquireMutexScript()} */
-    private String getMutexReleaseScript() {
+    private String getMutexReleaseScript(String uidMutexFile) {
         String rmCmd = buildCommand("rm");
         String pidMutexReleaseScript =
-            "if [ -f " + pidMutexFile + " ]; then " +
-              "LOCKPID=`cat " + pidMutexFile + "`; " +
+            "if [ -f " + uidMutexFile + " ]; then " +
+              "LOCKPID=`cat " + uidMutexFile + "`; " +
               "if [ \"$LOCKPID\" = \"$$\" ]; then " +
-                rmCmd + " -f " + pidMutexFile + "; " +
+                rmCmd + " -f " + uidMutexFile + "; " +
               "fi; " +
             "fi";
         return pidMutexReleaseScript;
+    }
+    
+    private String getMutexReleaseScript() {
+        return getMutexReleaseScript(pidMutexFile);
     }
     
     public void executeMutexAcquireScript() {
@@ -434,8 +492,19 @@ public class SolarisConnection {
         }
     }
     
+    public void executeMutexAcquireScript(String uidMutexFile, String tmpUidMutexFile, String pidFoundFile) {
+        String mutexOut = executeCommand(getAcquireMutexScript(uidMutexFile, tmpUidMutexFile, pidFoundFile));
+        if (mutexOut.contains("ERROR")) {
+            throw new ConnectorException("error when acquiring mutex. Buffer content: <" + mutexOut + ">");
+        }
+    }
+    
     public void executeMutexReleaseScript() {
         executeCommand(getMutexReleaseScript());
+    }
+    
+    public void executeMutexReleaseScript(String uidMutexFile) {
+        executeCommand(getMutexReleaseScript(uidMutexFile));
     }
     
     /*

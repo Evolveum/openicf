@@ -40,7 +40,6 @@ import org.identityconnectors.solaris.operation.nis.OpCreateNISImpl;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 public class OpCreateImpl extends AbstractOp {
-    private static final String DEFAULT_NISPWDDIR = "/etc";
 
     private static final Log _log = Log.getLog(OpCreateImpl.class);
     
@@ -90,8 +89,8 @@ public class OpCreateImpl extends AbstractOp {
      */
     private void invokeNISCreate(SolarisEntry entry, GuardedString password) {
         
-        String pwdDir = getNisPwdDir();
-        if (pwdDir.equals(DEFAULT_NISPWDDIR)) {
+        String pwdDir = OpCreateNISImpl.getNisPwdDir(getConnection());
+        if (pwdDir.equals(OpCreateNISImpl.DEFAULT_NISPWDDIR)) {
             invokeNativeCreate(entry, password);
             
             // The user has to be added to the NIS database
@@ -162,13 +161,6 @@ public class OpCreateImpl extends AbstractOp {
     /*
      * ******************* AUXILIARY METHODS ***********************
      */
-    private String getNisPwdDir() {
-        String pwdDir = getConnection().getConfiguration().getNisPwdDir();
-        if ((pwdDir == null) || (pwdDir.length() == 0)) {
-            pwdDir = DEFAULT_NISPWDDIR;
-        }
-        return pwdDir;
-    }
 
     private boolean isNis() {
         final String sysDB = getConnection().getConfiguration().getSysDbType();
