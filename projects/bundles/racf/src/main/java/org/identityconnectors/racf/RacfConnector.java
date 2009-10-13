@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -167,7 +168,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
     public Uid create(ObjectClass objectClass, Set<Attribute> attrs, OperationOptions options) {
         Set<Attribute> ldapAttrs = new HashSet<Attribute>();
         Set<Attribute> commandLineAttrs = new HashSet<Attribute>();
-        splitUpOutgoingAttributes(objectClass, attrs, ldapAttrs, commandLineAttrs);
+        Map<String, Attribute> attributes = AttributeUtil.toMap(attrs);
+        splitUpOutgoingAttributes(objectClass, attributes, ldapAttrs, commandLineAttrs);
         if (isLdapConnectionAvailable()) {
             Uid uid = _ldapUtil.createViaLdap(objectClass, ldapAttrs, options);
             if (hasNonSpecialAttributes(commandLineAttrs)) {
@@ -192,10 +194,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
         return false;
     }
     
-    private void splitUpOutgoingAttributes(ObjectClass objectClass, Set<Attribute> attrs, Set<Attribute> ldapAttrs, Set<Attribute> commandLineAttrs) {
+    private void splitUpOutgoingAttributes(ObjectClass objectClass, Map<String, Attribute> attributes, Set<Attribute> ldapAttrs, Set<Attribute> commandLineAttrs) {
         // Attribute consistency checking
         //
-        Map<String, Attribute> attributes = AttributeUtil.toMap(attrs);
         Attribute enableDate  = attributes.get(OperationalAttributes.ENABLE_DATE_NAME);
         Attribute disableDate = attributes.get(OperationalAttributes.DISABLE_DATE_NAME);
         Long now              = new Date().getTime();
@@ -211,7 +212,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
                 throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.PAST_ENABLE_DATE));
         }
         
-        for (Attribute attribute : attrs) {
+        for (Attribute attribute : attributes.values()) {
             // Remap special attributes as needed
             //
             if (attribute.is(OperationalAttributes.PASSWORD_NAME))  {
@@ -681,10 +682,28 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
         if (AttributeUtil.getNameFromAttributes(attrs)!=null) {
             throw new IllegalArgumentException(_configuration.getMessage(RacfMessages.ATTRIBUTE_NOT_UPDATEABLE, Name.NAME));
         }
-        // TODO: if PASSWORD is specified, but EXPIRED is not,
-        //  we must reconstruct its value by reading the user.
+        Map<String, Attribute> attributes = CollectionUtil.<Attribute>newCaseInsensitiveMap();
+        for (Attribute attr : attrs) {
+            attributes.put(attr.getName(), attr);
+        }
+
+        // If PASSWORD is specified, but EXPIRED is not,
+        // we must reconstruct the value for EXPIRED by reading the user.
         //
-        splitUpOutgoingAttributes(objectClass, attrs, ldapAttrs, commandLineAttrs);
+        if (!attributes.containsKey(OperationalAttributes.PASSWORD_EXPIRED_NAME) &&
+                attributes.containsKey(OperationalAttributes.PASSWORD_NAME)) {
+            Uid uid = AttributeUtil.getUidAttribute(attrs);
+            List<String> query = createFilterTranslator(objectClass, options).translate(new EqualsFilter(uid));
+            LocalHandler handler = new LocalHandler();
+            executeQuery(objectClass, query.get(0), handler, options);
+            Iterator<ConnectorObject> iterator = handler.iterator();
+            if (iterator.hasNext()) {
+                ConnectorObject object = iterator.next();
+                Attribute expired = object.getAttributeByName(OperationalAttributes.PASSWORD_EXPIRED_NAME);
+                attributes.put(OperationalAttributes.PASSWORD_EXPIRED_NAME, expired);
+            }
+        }
+        splitUpOutgoingAttributes(objectClass, attributes, ldapAttrs, commandLineAttrs);
         if (isLdapConnectionAvailable()) {
             Uid uid = _ldapUtil.updateViaLdap(objectClass, ldapAttrs, options);
             if (hasNonSpecialAttributes(commandLineAttrs)) {
