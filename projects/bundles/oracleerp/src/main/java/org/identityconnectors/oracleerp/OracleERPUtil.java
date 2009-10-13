@@ -194,6 +194,8 @@ class OracleERPUtil {
     static final String MSG_ACCOUNT_NOT_READ = "msg.account.not.read";
     static final String MSG_ACCOUNT_OBJECT_CLASS_REQUIRED = "msg.acount.object.class.required";
     static final String MSG_AUTH_FAILED = "msg.auth.op.failed";
+    static final String MSG_PASSWORD_EXPIRED = "msg.password.expired";
+    static final String MSG_ACCOUNT_DISABLED = "msg.account.disabled";
     static final String MSG_INVALID_RESPONSIBILITY = "msg.invalid.responsibility";
     static final String MSG_COULD_NOT_EXECUTE = "msg.could.not.execute";
     static final String MSG_FAILED_ADD_RESP = "msg.failed.add.responsibility";

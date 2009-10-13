@@ -101,13 +101,12 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
 
             //The password is expired
             if (amb.hasExpectedValue(OperationalAttributes.PASSWORD_EXPIRED_NAME, 0, Boolean.TRUE)) {
-                throw new PasswordExpiredException(getCfg().getMessage(MSG_AUTH_FAILED, username)).initUid(uid);
+                throw new PasswordExpiredException(getCfg().getMessage(MSG_PASSWORD_EXPIRED, username)).initUid(uid);
             }
 
             //The account is disabled
-            // TODO validate that there is not better InvalidCredentialException or ExpiredPassword
             if (amb.hasExpectedValue(OperationalAttributes.ENABLE_NAME, 0, Boolean.FALSE)) {
-                throw new PasswordExpiredException(getCfg().getMessage(MSG_AUTH_FAILED, username)).initUid(uid);
+                throw new InvalidPasswordException(getCfg().getMessage(MSG_ACCOUNT_DISABLED, username));
             }
 
         } catch (Exception ex) {
@@ -138,7 +137,7 @@ final class AccountOperationAutenticate extends Operation implements Authenticat
             final boolean valid = (rs.getInt(1) == 1);
             if (!valid) {
                 // password is wrong
-                throw new PasswordExpiredException(getCfg().getMessage(MSG_AUTH_FAILED, username));
+                throw new InvalidPasswordException(getCfg().getMessage(MSG_AUTH_FAILED, username));
             }
         } catch (Exception ex) {
             log.error(ex, "autenticate exception");
