@@ -402,25 +402,20 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
                 dflt = key;
             }
             CultureInfo foundCulture = locale;
-            IDictionary<string, string>
-                catalog = CollectionUtil.GetValue(_catalogs, foundCulture, null);
+            String message = GetCatalogMessage(foundCulture, key);
             //check neutral culture
-            if (catalog == null)
+            if (message == null)
             {
                 foundCulture = foundCulture.Parent;
-                catalog = CollectionUtil.GetValue(_catalogs, foundCulture, null);
+                message = GetCatalogMessage(foundCulture, key);
             }
             //check invariant culture
-            if (catalog == null)
+            if (message == null)
             {
                 foundCulture = foundCulture.Parent;
-                catalog = CollectionUtil.GetValue(_catalogs, foundCulture, null);
+                message = GetCatalogMessage(foundCulture, key);
             }
-            String message = null;
-            if (catalog != null)
-            {
-                message = CollectionUtil.GetValue(catalog, key, null);
-            }
+            //and default to framework
             if (message == null)
             {
                 message = GetFrameworkMessage(locale, key);
@@ -435,6 +430,12 @@ namespace Org.IdentityConnectors.Framework.Impl.Api
                 //is slightly different than Java
                 return String.Format(foundCulture, message, args);
             }
+        }
+
+        private String GetCatalogMessage(CultureInfo culture, String key)
+        {
+            IDictionary<string, string> catalog = CollectionUtil.GetValue(_catalogs, culture, null);
+            return catalog != null ? CollectionUtil.GetValue(catalog, key, null) : null;
         }
 
         private String GetFrameworkMessage(CultureInfo culture, String key)
