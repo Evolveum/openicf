@@ -269,7 +269,7 @@ class LdapUtil {
         if (("*".equals(query) || query==null) && queries!=null && queries.length>0) {
             Set<String> users = new HashSet<String>();
             for (String subquery : queries)
-                users.addAll(getUsersViaLdap(subquery));
+                users.addAll(getUsersViaLdap0(subquery));
             List<String> userList = new ArrayList<String>(users.size());
             userList.addAll(users);
             return userList;
