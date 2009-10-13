@@ -57,8 +57,8 @@
     <SubstituteTransform pattern='\s+$' substitute=''/>
     <SubstituteTransform pattern='^$' substitute='NO INSTALLATION DATA'/>
   </PatternNode>
-  <PatternNode key='RACF*GROUPS'        pattern='(NO GROUPS)' optional='true' reset='true'>
-    <SubstituteTransform pattern='(NO GROUPS)' substitute=''/>
+  <PatternNode key='RACF*GROUPS'        pattern='(NO SUBGROUPS)' optional='true' reset='true'>
+    <SubstituteTransform pattern='(NO SUBGROUPS)' substitute=''/>
     <SplitTransform splitPattern='\s+'/>
   </PatternNode>
   <PatternNode key='RACF*GROUPS'        pattern='SUBGROUP\(S\)=([^\n]*\n(\s{18}[^\n]+\n)*)' optional='true' reset='false'>
