@@ -89,8 +89,10 @@ public class RacfConnection {
 
     public void dispose() {
         try {
-            _context.close();
-            _dirContext.close();
+            if (_context!=null)
+                _context.close();
+            if (_dirContext!=null)
+                _dirContext.close();
         } catch (NamingException ne) {
             throw ConnectorException.wrap(ne);
         }
