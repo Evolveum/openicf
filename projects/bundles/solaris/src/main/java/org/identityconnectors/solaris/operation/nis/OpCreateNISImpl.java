@@ -29,8 +29,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisUtil;
@@ -396,9 +398,12 @@ public class OpCreateNISImpl {
                     addNISShellUpdateWithCleanup(accountId, shell, connection);
                 }
                 
-//                if (password != null) {
-//                    addNISPasswordUpdate(accountId, password, connection);
-//                }
+                GuardedString password = getPassword(entry);
+                if (password != null) {
+                    addNISPasswordUpdate(accountId, password, connection);
+                }
+                
+                addNISMake("passwd", connection);
             } finally {
                 // Release the "mutex"
                 connection.executeMutexReleaseScript(pwdMutexFile);
@@ -408,8 +413,40 @@ public class OpCreateNISImpl {
             connection.doSudoReset();
         }
         
-        
+        // TODO:  Need to add to groups (++++++++++++++++++++++++++++++++++++++++++++++++)
+    }
 
+    private static void addNISPasswordUpdate(String accountId,
+            GuardedString password, SolarisConnection connection) {
+        
+        String passwdCmd = connection.buildCommand("yppasswd", accountId);
+
+        try {
+            connection.send(passwdCmd);
+            connection.waitForCaseInsensitive("password:");
+            SolarisUtil.sendPassword(password, connection);
+            connection.waitForCaseInsensitive("new password:");
+            SolarisUtil.sendPassword(password, connection);
+
+            MatchBuilder bldr = new MatchBuilder();
+            bldr.addRegExpMatch(connection.getRootShellPrompt(), ClosureFactory.newNullClosure());
+            final String passwdError = " denied";
+            bldr.addCaseInsensitiveRegExpMatch(passwdError, ClosureFactory.newConnectorException("Error occured during change of password."));
+            connection.expect(bldr.build());
+        } catch (Exception ex) {
+            throw ConnectorException.wrap(ex);
+        }
+    }
+
+    private static GuardedString getPassword(SolarisEntry entry) {
+        GuardedString password = null;
+        for (Attribute passAttr : entry.getAttributeSet()) {
+            if (passAttr.getName().equals(OperationalAttributes.PASSWORD_NAME)) {
+                password = (GuardedString) passAttr.getValue().get(0);
+                break;
+            }
+        }
+        return password;
     }
     
     /**
@@ -437,10 +474,6 @@ public class OpCreateNISImpl {
         final String pwddir = getNisPwdDir(connection);
         final String pwdFile = pwddir + "/passwd";
         final String shadowFile = pwddir + "/shadow";
-        final String cpCmd = connection.buildCommand("cp");
-        final String mvCmd = connection.buildCommand("mv");
-        final String chownCmd = connection.buildCommand("chown");
-        final String grepCmd = connection.buildCommand("grep");
         final String removeTmpFilesScript = getRemovePwdTmpFiles(connection);
 
         // Add script to remove entry in passwd file if shell update fails
