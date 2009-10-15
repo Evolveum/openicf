@@ -22,6 +22,9 @@
  */
 package org.identityconnectors.solaris.command;
 
+import java.util.Arrays;
+import java.util.List;
+
 import junit.framework.Assert;
 
 import org.identityconnectors.solaris.SolarisConfiguration;
@@ -37,6 +40,12 @@ public class CommandBuilderTest {
         config.setSudoAuth(false);
         String actual = conn.buildCommand("command", "arg1", "arg2", "arg3");
         String expected = "command arg1 arg2 arg3";
-        Assert.assertEquals(expected, actual);
+        List<String> parsedActual = parseList(actual);
+        List<String> parsedExpected = parseList(expected);
+        Assert.assertEquals(parsedExpected, parsedActual);
+    }
+
+    private List<String> parseList(String actual) {
+        return Arrays.asList(actual.split("[\\s]+"));
     }
 }
