@@ -37,11 +37,9 @@ import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
 import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
-import org.identityconnectors.framework.spi.operations.AuthenticateOp;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
-import org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
 
 /**
@@ -129,12 +127,10 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
      */
     private void addSearchableOnlyOC(SchemaBuilder schemaBld, final ObjectClassInfo oci) {
         schemaBld.defineObjectClass(oci);
-        schemaBld.removeSupportedObjectClass(AuthenticateOp.class, oci);
         schemaBld.removeSupportedObjectClass(DeleteOp.class, oci);
         schemaBld.removeSupportedObjectClass(CreateOp.class, oci);
         schemaBld.removeSupportedObjectClass(UpdateOp.class, oci);
-        schemaBld.removeSupportedObjectClass(SchemaOp.class, oci);
-        schemaBld.removeSupportedObjectClass(ScriptOnConnectorOp.class, oci);
+        
     }
 
     /**

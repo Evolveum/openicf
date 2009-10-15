@@ -170,56 +170,34 @@ testsuite {
     /* AuthenticationApiOpTests: */
     Authentication.__ACCOUNT__.username=Lazy.get("i0.Authentication.__ACCOUNT__.__NAME__")
     Authentication.__ACCOUNT__.wrong.password=new GuardedString("WRONG".toCharArray())
+    
+    
     /* SchemaApiOpTests: */
-    
-    /* declared object classes */
+    Schema.strictCheck=false
     Schema.oclasses=[ "__ACCOUNT__", "applications", "auditorResps", "directResponsibilities", "indirectResponsibilities", "responsibilityNames", "responsibilities", "securingAttrs", "securityGroups" ]
-    
-    /* list of attributes which contains object class "__ACCOUNT__" */
-    Schema.attributes.__ACCOUNT__.oclasses=[ "__NAME__", "__PASSWORD__" ]
-    // many attributes have similar values
-    
-    Schema.common.attribute=[
-        type: java.lang.String.class,
-        readable: true,
-        createable: true,
-        updateable: true,
-        required: false,
-        multiValue: false,
-        returnedByDefault: true
-    ]
-    
-    Schema.nrbd.attribute=[
-                             type: java.lang.String.class,
-                             readable: true,
-                             createable: true,
-                             updateable: true,
-                             required: false,
-                             multiValue: false,
-                             returnedByDefault: false
-                         ]
-                         
-    /* attributes of "__NAME__" */
-    Schema.__NAME__.attribute.__ACCOUNT__.oclasses=[type:"java.lang.String", readable:"true", updateable:"true", createable:"true",
-                                                    required:"true", multiValue:"false", returnedByDefault:"true"]
-    /* attributes of "__PASSWORD__" */
-    Schema.__PASSWORD__.attribute.__ACCOUNT__.oclasses=[type:"org.identityconnectors.common.security.GuardedString", readable:"false",   updateable:"true",    
-                                                        createable:"true", required:"true", multiValue:"false", returnedByDefault:"true"]
-    Schema.MIDDLENAME.attribute.__ACCOUNT__.oclasses=testsuite.Schema.common.attribute
-    
+    Schema.attributes.__ACCOUNT__.oclasses=['owner','start_date','end_date','description','password_date','password_accesses_left','password_lifespan_accesses','password_lifespan_days','employee_id','employee_number','person_fullname','npw_number','email_address','fax','customer_id','supplier_id','person_party_id','directResponsibilities','indirectResponsibilities','responsibilityKeys','securingAttrs','expirePassword','last_logon_date','session_number','userMenuNames','menuIds','userFunctionNames','functionIds','formIds','formNames','functionNames','userFormNames','readOnlyFormIds','readWriteOnlyFormIds','readOnlyFormNames','readOnlyFunctionNames','readOnlyUserFormNames','readOnlyFunctionIds','readWriteOnlyFormNames','readWriteOnlyUserFormNames','readWriteOnlyFunctionNames','readWriteOnlyFunctionIds']
+    Schema.attributes.auditorResps.oclasses=['name','userMenuNames','menuIds','userFunctionNames','functionIds','formIds','formNames','functionNames','userFormNames','readOnlyFormIds','readWriteOnlyFormIds','readOnlyFormNames','readOnlyFunctionNames','readOnlyUserFormNames','readOnlyFunctionIds','readWriteOnlyFormNames','readWriteOnlyUserFormNames','readWriteOnlyFunctionNames','readWriteOnlyFunctionIds']
+    Schema.attributes.responsibilityNames.oclasses=['name','userMenuNames','menuIds','userFunctionNames','functionIds','formIds','formNames','functionNames','userFormNames','readOnlyFormIds','readWriteOnlyFormIds','readOnlyFormNames','readOnlyFunctionNames','readOnlyUserFormNames','readOnlyFunctionIds','readWriteOnlyFormNames','readWriteOnlyUserFormNames','readWriteOnlyFunctionNames','readWriteOnlyFunctionIds']
+    Schema.attributes.directResponsibilities.oclasses=['name']
+    Schema.attributes.indirectResponsibilities.oclasses=['name']
+    Schema.attributes.responsibilities.oclasses=['name']
+    Schema.attributes.applications.oclasses=['name']
+    Schema.attributes.securingAttrs.oclasses=['name']
+    Schema.attributes.securityGroups.oclasses=['name']
+
     /* object classes supported by operation */
     Schema.operations=[
-        GetApiOp:["__ACCOUNT__"],
-        SchemaApiOp:["__ACCOUNT__"],
-        ValidateApiOp:["__ACCOUNT__"],
-        TestApiOp:["__ACCOUNT__"],
+        GetApiOp:["__ACCOUNT__", "applications", "auditorResps", "directResponsibilities", "indirectResponsibilities", "responsibilityNames", "responsibilities", "securingAttrs", "securityGroups" ],
+        SearchApiOp:["__ACCOUNT__", "applications", "auditorResps", "directResponsibilities", "indirectResponsibilities", "responsibilityNames", "responsibilities", "securingAttrs", "securityGroups" ],
+        SchemaApiOp:["__ACCOUNT__", "applications", "auditorResps", "directResponsibilities", "indirectResponsibilities", "responsibilityNames", "responsibilities", "securingAttrs", "securityGroups" ],
+        ValidateApiOp:["__ACCOUNT__", "applications", "auditorResps", "directResponsibilities", "indirectResponsibilities", "responsibilityNames", "responsibilities", "securingAttrs", "securityGroups" ],
+        TestApiOp:["__ACCOUNT__", "applications", "auditorResps", "directResponsibilities", "indirectResponsibilities", "responsibilityNames", "responsibilities", "securingAttrs", "securityGroups" ],
+        ScriptOnConnectorApiOp: ["__ACCOUNT__", "applications", "auditorResps", "directResponsibilities", "indirectResponsibilities", "responsibilityNames", "responsibilities", "securingAttrs", "securityGroups" ],
+        ResolveUsernameApiOp: ["__ACCOUNT__", "applications", "auditorResps", "directResponsibilities", "indirectResponsibilities", "responsibilityNames", "responsibilities", "securingAttrs", "securityGroups" ],
+        AuthenticationApiOp: ["__ACCOUNT__", "applications", "auditorResps", "directResponsibilities", "indirectResponsibilities", "responsibilityNames", "responsibilities", "securingAttrs", "securityGroups" ],
         CreateApiOp:["__ACCOUNT__"],
-        SearchApiOp:["__ACCOUNT__"],
         DeleteApiOp:["__ACCOUNT__"],
-        ScriptOnConnectorApiOp:["__ACCOUNT__"],
         UpdateApiOp:["__ACCOUNT__"],
-        ResolveUsernameApiOp: ['__ACCOUNT__'],
-        AuthenticationApiOp:["__ACCOUNT__"]
      ]
      
      
@@ -235,48 +213,45 @@ testsuite {
   ]
 }
 
-         __NAME__="CTU-" + Lazy.random("AAAAAA######")
-         __PASSWORD__= new GuardedString("password".toCharArray())
-modified.__PASSWORD__= new GuardedString("modpasswd".toCharArray())
-         __ENABLE__= true
-         owner="CUST"
-         session_number=0
-
-         start_date=stringDate(-10)
-modified.start_date=stringDate(-99)
-         end_date=stringDate(+10)
-modified.end_date=stringDate(+99)
-         last_logon_date=stringDate(0)
-         description="Connector test user"
-modified.description="Connector test user mod"
-
-         password_date=stringDate(0)
-
-         password_accesses_left="56"
-modified.password_accesses_left="30"
-         password_lifespan_accesses="5"
-modified.password_lifespan_accesses="10"
-         password_lifespan_days="30"
-modified.password_lifespan_days="20"
-
-         employee_id=empty()
-         employee_number="5"
-         person_fullname="Monster, Cookie"
-         person_party_id="3044"
-         npw_number=empty()
-         email_address="person@somewhere.com"
-modified.email_address="person1@somewhere.com"
-         fax="555-555-5555"
-modified.fax="666-666-6666"
-         customer_id=empty()
-         supplier_id=empty()
-
-         directResponsibilities=["Cash Forecasting||Cash Management||Standard||2004-04-12||null"]
-modified.directResponsibilities=["Cash Forecasting||Cash Management||Standard||2004-04-12||2010-01-01","Purchasing Receiver||Purchasing||Standard||2004-04-12||null"]             
-         responsibilityKeys=["Cash Forecasting||Cash Management"]
-modified.responsibilityKeys=["Cash Forecasting||Cash Management","Purchasing Receiver||Purchasing"]
-         securingAttrs=["TO_PERSON_ID||Self-Service Web Applications||114"]
-modified.securingAttrs=["ICX_HR_PERSON_ID||Self-Service Web Applications||114", "TO_PERSON_ID||Self-Service Web Applications||112"]
+__ACCOUNT__ {
+    __NAME__="CTU-" + Lazy.random("AAAAAA######")
+    __PASSWORD__= new GuardedString("password".toCharArray())
+    modified.__PASSWORD__= new GuardedString("modpasswd".toCharArray())
+    __ENABLE__= true
+    owner="CUST"
+    session_number=0
+    start_date=stringDate(-10)
+    modified.start_date=stringDate(-99)
+    end_date=stringDate(+10)
+    modified.end_date=stringDate(+99)
+    last_logon_date=stringDate(0)
+    description="Connector test user"
+    modified.description="Connector test user mod"
+    password_date=stringDate(0)
+    password_accesses_left="56"
+    modified.password_accesses_left="30"
+    password_lifespan_accesses="5"
+    modified.password_lifespan_accesses="10"
+    password_lifespan_days="30"
+    modified.password_lifespan_days="20"
+    employee_id=empty()
+    employee_number="5"
+    person_fullname="Monster, Cookie"
+    person_party_id="3044"
+    npw_number=empty()
+    email_address="person@somewhere.com"
+    modified.email_address="person1@somewhere.com"
+    fax="555-555-5555"
+    modified.fax="666-666-6666"
+    customer_id=empty()
+    supplier_id=empty()
+    directResponsibilities=["Cash Forecasting||Cash Management||Standard||2004-04-12||null"]
+    modified.directResponsibilities=["Cash Forecasting||Cash Management||Standard||2004-04-12||2010-01-01","Purchasing Receiver||Purchasing||Standard||2004-04-12||null"]             
+    responsibilityKeys=["Cash Forecasting||Cash Management"]
+    modified.responsibilityKeys=["Cash Forecasting||Cash Management","Purchasing Receiver||Purchasing"]
+    securingAttrs=["TO_PERSON_ID||Self-Service Web Applications||114"]
+    modified.securingAttrs=["ICX_HR_PERSON_ID||Self-Service Web Applications||114", "TO_PERSON_ID||Self-Service Web Applications||112"]
+}
 
 
 /* Define tests functions */
@@ -298,3 +273,4 @@ def getDt( dife ){
 def empty() {
     return new ObjectNotFoundException()
 }
+
