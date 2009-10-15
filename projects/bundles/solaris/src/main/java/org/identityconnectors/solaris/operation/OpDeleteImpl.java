@@ -58,14 +58,14 @@ public class OpDeleteImpl extends AbstractOp {
         final String command = getConnection().buildCommand("userdel", ((getConfiguration().isDelHomeDir()) ? "-r" : ""), accountId);
         
         try {
-            String output = executeCommand(command);
+            String output = getConnection().executeCommand(command);
             if (output.contains("does not exist") || output.contains("nknown user")) {
                 throw new UnknownUidException("Unknown Uid: " + accountId);
             } else if (output.contains("ERROR")) {
                 throw new ConnectorException("ERROR during delete operation for user '" + accountId + "', buffer content: <" + output + ">");
             }
             
-            output = executeCommand("echo $?");
+            output = getConnection().executeCommand("echo $?");
             if (!output.equals("0")) {
                 throw new ConnectorException("ERROR during delete operation for user '" + accountId + "', buffer content: <" + output + ">" + " the error code returned from userdel was not '0'");
             }

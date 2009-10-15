@@ -50,10 +50,6 @@ public abstract class AbstractOp {
         return _connection;
     }
     
-    protected final String executeCommand(String command) {
-        return getConnection().executeCommand(command);
-    }
-    
     protected final Schema getSchema() {
         return _connector.schema();
     }
