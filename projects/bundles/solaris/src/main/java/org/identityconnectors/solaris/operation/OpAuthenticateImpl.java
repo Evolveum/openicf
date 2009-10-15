@@ -62,7 +62,8 @@ public class OpAuthenticateImpl extends AbstractOp {
             getConnection().send("exec login " + username + " TERM=vt00");
             getConnection().waitForCaseInsensitive("assword:");
             SolarisUtil.sendPassword(password, getConnection());
-            getConnection().expect(matches);
+            getConnection().send("echo '" + MSG + "'");
+            getConnection().expect(matches);// one of the accept messages is MSG, which means success.
             _log.info("authenticate successful for user: '{0}'", username);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
