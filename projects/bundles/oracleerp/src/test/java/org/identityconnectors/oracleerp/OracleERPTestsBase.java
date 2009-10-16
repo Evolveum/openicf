@@ -299,11 +299,13 @@ abstract public class OracleERPTestsBase {
      * @param currAttr
      */
     private void testAttribute(String attrName, final Attribute expAttr, final Attribute currAttr) {
-        final List<Object> expVals = expAttr.getValue();
-        final List<Object> currVals = currAttr.getValue();
-        assertEquals("Size of attribute:"+attrName, expVals.size(), currVals.size());
+        final List<Object> expVals = expAttr.getValue() == null ? new ArrayList<Object>() : expAttr.getValue();
+        final List<Object> currVals = currAttr.getValue() == null ? new ArrayList<Object>() : currAttr.getValue();
+        final int expValSize = expVals.size();
+        final int currValSize = currVals.size();
+        assertEquals("Size of attribute:"+attrName, expValSize, currValSize);
     
-        for (int i = 0; i < expVals.size(); i++) {
+        for (int i = 0; i < expValSize; i++) {
             if( expVals.get(i) == currVals.get(i)) {
                 continue;
             }            

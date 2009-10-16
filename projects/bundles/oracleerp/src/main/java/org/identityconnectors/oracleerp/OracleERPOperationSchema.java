@@ -87,7 +87,6 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         addSearchableOnlyOC(schemaBld, respNamesOci);
 
         // The Responsibilities for listing
-        // TODO we can join ResponsibilityNames and Responsibilities
         final ObjectClassInfo respOci = getResponsibilitiesObjectClassInfo();
         addSearchableOnlyOC(schemaBld, respOci);
 

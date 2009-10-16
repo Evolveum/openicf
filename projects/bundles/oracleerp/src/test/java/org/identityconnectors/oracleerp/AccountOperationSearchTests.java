@@ -78,9 +78,6 @@ public class AccountOperationSearchTests extends OracleERPTestsBase {
         testAttrSet(auditorAttr, returned);
     }      
     
-    //TODO add test search invalid account
-    //TODO add test search dissabled/enabled account
-    //TODO add password expired tests    
     
     /**
      * Test method .

@@ -125,7 +125,6 @@ final class OracleERPOperationRunScriptOnConnector extends Operation implements 
             ret = scripEx.execute(inputMap);
             
             //Go through the errors and throw first one 
-            //TODO implement the warning set return, when possible
             StringBuilder errorBld = new StringBuilder();
             for (String s : errorList) {
                 errorBld.append(s);

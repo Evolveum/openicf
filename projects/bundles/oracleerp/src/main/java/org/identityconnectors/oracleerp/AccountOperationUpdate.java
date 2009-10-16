@@ -128,7 +128,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
         // add the id
         asb.setAttribute(objclass, AttributeBuilder.build(Uid.NAME, id), options);
         //Add default owner
-        asb.setAttribute(objclass, AttributeBuilder.build(OWNER, CUST), options);
+        asb.setAttribute(objclass, AttributeBuilder.build(OWNER, getCfg().getDefaultOwner()), options);
         
         for (Attribute attr : attrs) {
             asb.setAttribute(objclass, attr, options);
@@ -157,10 +157,10 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
         // Update responsibilities
         final Attribute resp = AttributeUtil.find(RESPS, attrs);
         final Attribute directResp = AttributeUtil.find(DIRECT_RESPS, attrs);
-        if ( resp != null ) {
-            respOps.updateUserResponsibilities( resp, id);
-        } else if ( directResp != null ) {
+        if ( directResp != null ) {
             respOps.updateUserResponsibilities( directResp, id);
+        } else if ( resp != null ) {
+            respOps.updateUserResponsibilities( resp, id);
         }
 
         final Attribute secAttr = AttributeUtil.find(SEC_ATTRS, attrs);
@@ -197,7 +197,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
             final String sql = b.toString();
             st = getConn().prepareStatement(sql);
             st.setString(1, userName.toUpperCase());
-            st.setString(2, getCfg().getUser());
+            st.setString(2, getCfg().getDefaultOwner());
             st.execute();
         } catch (Exception e) {
             final String msg = getCfg().getMessage(MSG_COULD_NOT_ENABLE_USER, userName);

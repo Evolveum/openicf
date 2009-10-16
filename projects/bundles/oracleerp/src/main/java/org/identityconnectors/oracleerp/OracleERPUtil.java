@@ -145,6 +145,9 @@ class OracleERPUtil {
     /** Default OracleRP admin user */
     static final String DEFAULT_USER_NAME = "APPS"; // Default user name           
 
+    /** Default OracleRP apps name */
+    static final String DEFAULT_APPS_NAME = "APPS."; // Default user name           
+
     /**
      * Name attribute, old name attribute
      */
@@ -318,7 +321,6 @@ class OracleERPUtil {
      * Get default attributes to get from schema
      * @param ais attribute info set
      * @return set of the 
-     * TODO not used, check in creation time
      */
     static Set<String> getCreatableAttributes(Set<AttributeInfo> ais) {
         Set<String> ret = CollectionUtil.newCaseInsensitiveSet();
@@ -334,7 +336,6 @@ class OracleERPUtil {
      * Get default attributes to get from schema
      * @param ais attribute info set
      * @return set of the 
-     * TODO test the updatable attributes
      */
     static Set<String> getUpdatableAttributes(Set<AttributeInfo> ais) {
         Set<String> ret = CollectionUtil.newCaseInsensitiveSet();

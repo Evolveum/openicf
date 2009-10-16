@@ -106,10 +106,8 @@ final class AccountOperationCreate extends Operation implements CreateOp {
 
         // Get the User values
         final AccountSQLCallBuilder asb = new AccountSQLCallBuilder(getCfg().app(), true);
-        //add required owner, if missing
-        if (AttributeUtil.find(OWNER, attrs) == null) {
-            asb.setAttribute(oclass, AttributeBuilder.build(OWNER, getCfg().getUser()), options);
-        }
+        //Add default owner
+        asb.setAttribute(oclass, AttributeBuilder.build(OWNER, getCfg().getDefaultOwner()), options);
         
         //Get the person_id and set is it as a employee id
         final Integer person_id = getPersonId(name, attrs);
@@ -151,10 +149,10 @@ final class AccountOperationCreate extends Operation implements CreateOp {
         // Update responsibilities
         final Attribute resp = AttributeUtil.find(RESPS, attrs);
         final Attribute directResp = AttributeUtil.find(DIRECT_RESPS, attrs);
-        if ( resp != null ) {
-            respOps.updateUserResponsibilities( resp, name);
-        } else if ( directResp != null ) {
+        if ( directResp != null ) {
             respOps.updateUserResponsibilities( directResp, name);
+        } else if ( resp != null ) {
+            respOps.updateUserResponsibilities( resp, name);
         }
         // update securing attributes
         final Attribute secAttr = AttributeUtil.find(SEC_ATTRS, attrs);

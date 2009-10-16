@@ -24,6 +24,7 @@ package org.identityconnectors.oracleerp;
 
 import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
+import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -112,8 +113,12 @@ final class ResponsibilitiesOperations extends Operation {
 
         final List<String> errors = new ArrayList<String>();
         final List<String> respList = new ArrayList<String>();
-        for (Object obj : attr.getValue()) {
-            respList.add(obj.toString());
+        if (attr != null && attr.getValue() != null) {
+            for (Object obj : attr.getValue()) {
+                if (obj != null && obj instanceof String) {
+                    respList.add((String) obj);
+                }
+            }
         }
 
         // get Users Current Responsibilties
@@ -612,7 +617,7 @@ final class ResponsibilitiesOperations extends Operation {
     private void deleteUserResponsibility(String identity, String resp, List<String> errors) {
         final String method = "deleteUserResponsibility";
         log.ok(method);
-        PreparedStatement st = null;
+        CallableStatement st = null;
         String securityGroup = null;
         String respName = null;
         String respAppName = null;
@@ -652,8 +657,7 @@ final class ResponsibilitiesOperations extends Operation {
         b.append("AND fndsecgvl.security_group_name = security_group; ");
         b.append("SELECT fndapp.application_short_name, fndresp.responsibility_key, ");
         b.append("fndrespvl.description INTO resp_app, resp_key, description ");
-        b
-                .append("FROM " + getCfg().app() + "fnd_responsibility_vl fndrespvl, " + getCfg().app()
+        b.append("FROM " + getCfg().app() + "fnd_responsibility_vl fndrespvl, " + getCfg().app()
                         + "fnd_responsibility fndresp, ");
         b.append(getCfg().app() + "fnd_application_vl fndappvl, " + getCfg().app() + "fnd_application fndapp ");
         b.append("WHERE fndappvl.application_id = fndrespvl.application_id ");
@@ -663,11 +667,11 @@ final class ResponsibilitiesOperations extends Operation {
         b.append("AND fndrespvl.RESPONSIBILITY_ID = fndresp.RESPONSIBILITY_ID ");
         b.append("AND fndrespvl.APPLICATION_ID = fndresp.APPLICATION_ID; ");
         b.append(getCfg().app() + "fnd_user_pkg.DelResp (user_id, resp_app, resp_key, resp_sec_g_key); ");
-        b.append("COMMIT; END;");
+        b.append(" END;");
 
         final String sql = b.toString();
         try {
-            st = getConn().prepareStatement(sql);
+            st = getConn().prepareCall(sql);
             st.execute();
         } catch (SQLException e) {
             if (e.getErrorCode() == ORA_01403) {

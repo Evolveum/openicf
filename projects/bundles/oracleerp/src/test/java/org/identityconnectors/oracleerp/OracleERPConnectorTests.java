@@ -113,7 +113,5 @@ public class OracleERPConnectorTests extends OracleERPTestsBase {
         OracleERPConnector conn = getConnector(cfg);
         assertNotNull("null connector instance",conn);        
         conn.test();
-    }     
-
-    //TODO add more connector related tests
+    }
 }

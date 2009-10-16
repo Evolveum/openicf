@@ -245,6 +245,8 @@ __ACCOUNT__ {
     modified.fax="666-666-6666"
     customer_id=empty()
     supplier_id=empty()
+    modified.customer_id=empty()
+    modified.supplier_id=empty()
     directResponsibilities=["Cash Forecasting||Cash Management||Standard||2004-04-12||null"]
     modified.directResponsibilities=["Cash Forecasting||Cash Management||Standard||2004-04-12||2010-01-01","Purchasing Receiver||Purchasing||Standard||2004-04-12||null"]             
     responsibilityKeys=["Cash Forecasting||Cash Management"]

@@ -334,11 +334,10 @@ public class OracleERPConnector implements PoolableConnector, AuthenticateOp, De
      */
     public void test() {
         log.ok("test");
-        getCfg().validate();
         getConn().test();
         validateAccountsIncluded();
+        //Validate Get User After script by compiling it
         validateGetUserAfterActionScript(getCfg().getUserAfterActionScript());
-        //TODO Validate Get User After script by compiling it
     }
 
     /**
@@ -372,20 +371,12 @@ public class OracleERPConnector implements PoolableConnector, AuthenticateOp, De
      * {@inheritDoc}
      */
     public void init(Configuration configuration) {
-        /*
-         * RA: startConnection():
-         * TODO Compile the "get user after" script in init
-         *  convert _dbu = new OracleDBUtil(); _dbu.setUpArgs(_resource)
-         *  initUserName(), is implemented in OracleERPConfiguration: getSchemaId
-         *  _ctx = makeConnection(result);
-         */
         log.ok("init");
         this.cfg = (OracleERPConfiguration) configuration;
         this.conn = OracleERPConnection.createConnection(getCfg());
         log.ok("createOracleERPConnection");
 
-        getCfg().setUserId(new SecuringAttributesOperations(getConn(), 
-        								getCfg()).getUserId(getCfg().getOraUserName()));
+        getCfg().setUserId(new SecuringAttributesOperations(getConn(), getCfg()).getUserId(getCfg().getOraUserName()));
         log.info("Init: for user {0} the configUserId is {1}", getCfg().getUser(), getCfg().getUserId());
 
         initResponsibilities();

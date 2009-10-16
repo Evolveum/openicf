@@ -77,7 +77,7 @@ final class AccountOperationDelete extends Operation implements DeleteOp {
             if (e.getErrorCode() == 20001 || e.getErrorCode() == 1403) {
                 SQLUtil.rollbackQuietly(getConn());
                 log.error(e, msg);
-                // TODO There should be just a could not delete - informational message instead of throwing an exception
+                // There should be just a could not delete - informational message instead of throwing an exception
                 throw new UnknownUidException(uid, objClass);
             } 
             SQLUtil.rollbackQuietly(getConn());

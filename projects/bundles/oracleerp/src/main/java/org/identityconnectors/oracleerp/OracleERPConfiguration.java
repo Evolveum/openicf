@@ -794,20 +794,23 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
         return fmt;
     }
 
-    /** application prefix cache */
-    private String app;
-    
+    /** cache app */
+    private String app = null;
     /**
      * The application id from the user
      * see the bug id. 19352
-     * @return The "APPL." or empty, if noSchemaId is true
+     * @return The "APPS." or empty, if noSchemaId is true
      */
     String app() {
-        if(isNoSchemaId()) return "";
-        if(StringUtil.isNotBlank(app)) {
-            return app;
+        if ( app != null) return app;
+        
+        if(isNoSchemaId()) {
+            app = "";
+        } else if (StringUtil.isBlank(getUser())) {
+            app = DEFAULT_APPS_NAME;
+        } else {
+            app = getUserUpperCase()+".";
         }
-        app = getOraUserName()+".";
         return app;
     }
 
@@ -816,10 +819,28 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
      * @return the ora user name
      */
     String getOraUserName() {
-        String userName = getUser();
-        if (StringUtil.isBlank(userName)) {
-            userName = DEFAULT_USER_NAME;
+        if (StringUtil.isBlank(getUser())) {
+            return DEFAULT_USER_NAME;
         } 
-        return userName.trim().toUpperCase();
+        return getUserUpperCase();
     }
+    
+    private String getUserUpperCase() {
+        if (StringUtil.isBlank(getUser())) {
+            return "";
+        } 
+        return getUser().trim().toUpperCase();
+    }
+
+    /**
+     * DefaultOwner name is a user if not empty, or CUST
+     * @return the ora user name
+     */
+    String getDefaultOwner() {
+        final String userName = getUserUpperCase();
+        if (StringUtil.isBlank(userName)) {
+            return CUST;
+        } 
+        return userName;
+    }    
 }
