@@ -520,7 +520,7 @@ public class SolarisConnection {
             try {
                 // 1) send sudo reset command
                 send(SUDO_RESET_COMMAND); 
-                expect(MatchBuilder.buildRegExpMatch("not found", ClosureFactory.newConnectorException("Sudo command is not found")));
+                expect(MatchBuilder.buildRegExpMatch("not found", ClosureFactory.newConnectorException()));
 
                 // 2) send sudo start command
                 send(SUDO_START_COMMAND); 
@@ -533,8 +533,8 @@ public class SolarisConnection {
                 MatchBuilder builder = new MatchBuilder();
                 builder.addRegExpMatch(getRootShellPrompt(), ClosureFactory.newNullClosure());// TODO possibly replace NullClosure with null.
                 // signs of password reject:
-                builder.addRegExpMatch("may not run", ClosureFactory.newConnectorException("Not sufficient permissions")); // TODO improve error msg
-                builder.addRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException("Not sufficient permissions"));// TODO improve error msg
+                builder.addRegExpMatch("may not run", ClosureFactory.newConnectorException()); 
+                builder.addRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException());
                 expect(builder.build());
             } catch (Exception e) {
                 throw ConnectorException.wrap(e);

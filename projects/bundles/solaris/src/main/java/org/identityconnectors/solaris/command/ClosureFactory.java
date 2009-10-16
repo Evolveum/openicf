@@ -23,7 +23,6 @@
 package org.identityconnectors.solaris.command;
 
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 
 import expect4j.Closure;
 import expect4j.ExpectState;
@@ -42,54 +41,78 @@ import expect4j.ExpectState;
  * @author David Adam
  */
 public abstract class ClosureFactory implements Closure {
-    protected String msg;
-    
-    private ClosureFactory(String message) {
-        msg = message;
+    private ClosureFactory() {
     }
     
     public abstract void run(ExpectState state) throws Exception;
     
     /** throws a {@link ConnectorException} when the callback run() is executed. */
-    static class ConnectorExceptionClosure extends ClosureFactory {
-        public ConnectorExceptionClosure(String message) {
-            super(message);
+    public static class ConnectorExceptionClosure extends ClosureFactory {
+        
+        private String errMsg;
+        private boolean isReject = false;
+        
+        private ConnectorExceptionClosure() {
+            // empty on purpose
         }
 
         @Override
         public void run(ExpectState state) throws Exception {
-            throw new ConnectorException(String.format("%s\nBUFFER CONTENT:\n%s", super.msg, state.getBuffer()));
+            errMsg = state.getBuffer();
+            isReject = true;
+            throw new ConnectorException(errMsg); // FIXME this is temporary, before I change the SolarisConnection.
         }
-    }
-    
-    /** throws a {@link UnknownUidException} when the callback run() is executed. */
-    static class UnknownUidExceptionClosure extends ClosureFactory {
-        public UnknownUidExceptionClosure(String message) {
-            super(message);
+        
+        public String getErrMsg() {
+            return errMsg;
         }
-
-        @Override
-        public void run(ExpectState state) throws Exception {
-            throw new UnknownUidException(String.format("%s\nBUFFER CONTENT:\n%s", super.msg, state.getBuffer()));
+        public boolean isMatched() {
+            return isReject;
         }
     }
     
     /** idle call that is doing nothing in callback method. */
-    static class NullClosure implements Closure {
+    public static class NullClosure implements Closure {
+        private String msg;
+        private boolean matched = false;
+        
+        private NullClosure() {
+            // empty on purpose
+        }
+        
         public void run(ExpectState state) throws Exception {
-            //Nothing here, on purpose.
+            this.msg = state.getBuffer();
+            matched = true;
+        }
+        
+        public String getMsg() {
+            return msg;
+        }
+        
+        public boolean isMatched() {
+            return matched;
         }
     }
     
-    public static Closure newUnknownUidException(String msg) {
-        return new UnknownUidExceptionClosure(msg);
+    public static class TimeoutClosure implements Closure {
+        String msg;
+        private TimeoutClosure(String msg) {
+            this.msg = msg;
+        }
+        public void run(ExpectState state) throws Exception {
+            throw new ConnectorException(msg);
+        }
     }
     
-    public static Closure newConnectorException(String msg) {
-        return new ConnectorExceptionClosure(msg);
+    public static ConnectorExceptionClosure newConnectorException() {
+        return new ConnectorExceptionClosure();
     }
     
-    public static Closure newNullClosure() {
+    public static NullClosure newNullClosure() {
         return new NullClosure();
+    }
+
+    public static Closure newTimeoutException(String msg) {
+        return new TimeoutClosure(msg);
     }
 }

@@ -46,9 +46,9 @@ class UpdateCommand extends CommandSwitches {
     private static final Match[] usermodErrors;
     static {
         MatchBuilder builder = new MatchBuilder();
-        builder.addRegExpMatch("ERROR", ClosureFactory.newConnectorException("ERROR occured during update [usermod]"));
-        builder.addRegExpMatch("command not found", ClosureFactory.newConnectorException("usermod command is not found"));
-        builder.addRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException("not allowed to execute usermod"));
+        builder.addRegExpMatch("ERROR", ClosureFactory.newConnectorException());
+        builder.addRegExpMatch("command not found", ClosureFactory.newConnectorException());
+        builder.addRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException());
         usermodErrors = builder.build();
     }
     

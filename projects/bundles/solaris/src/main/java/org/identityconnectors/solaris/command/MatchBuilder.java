@@ -75,8 +75,8 @@ public final class MatchBuilder {
     }
     
     /** add a timeout match with given 'millis' period. */
-    public void addTimeoutMatch(long millis, String message) {
-        matches.add(new TimeoutMatch(millis, ClosureFactory.newConnectorException(message)));
+    public void addTimeoutMatch(long millis, String msg) {
+        matches.add(new TimeoutMatch(millis, ClosureFactory.newTimeoutException(msg)));
     }
     
     /** concatenate all the given matches with existing ones. */

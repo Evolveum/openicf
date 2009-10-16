@@ -51,8 +51,8 @@ public class OpCreateNISImpl {
     static {
         MatchBuilder bldr = new MatchBuilder();
         bldr.addCaseInsensitiveRegExpMatch("new shell:", ClosureFactory.newNullClosure());
-        bldr.addCaseInsensitiveRegExpMatch("password:", ClosureFactory.newConnectorException(""));
-        bldr.addCaseInsensitiveRegExpMatch("passwd:", ClosureFactory.newConnectorException(""));
+        bldr.addCaseInsensitiveRegExpMatch("password:", ClosureFactory.newConnectorException());
+        bldr.addCaseInsensitiveRegExpMatch("passwd:", ClosureFactory.newConnectorException());
         chshMatchers = bldr.build();
     }
     
@@ -86,10 +86,10 @@ public class OpCreateNISImpl {
     private final static Match[] passwdCleanupReject;
     static {
         MatchBuilder bldr = new MatchBuilder();
-        bldr.addCaseInsensitiveRegExpMatch(NO_DEFAULT_PRIMARY_GROUP, ClosureFactory.newConnectorException(NO_DEFAULT_PRIMARY_GROUP));
-        bldr.addCaseInsensitiveRegExpMatch(NO_DEFAULT_HOME_DIR, ClosureFactory.newConnectorException(NO_DEFAULT_HOME_DIR));
-        bldr.addCaseInsensitiveRegExpMatch(NO_DEFAULT_LOGIN_SHELL, ClosureFactory.newConnectorException(NO_DEFAULT_LOGIN_SHELL));
-        bldr.addCaseInsensitiveRegExpMatch(UID_NOT_UNIQUE, ClosureFactory.newConnectorException(UID_NOT_UNIQUE));
+        bldr.addCaseInsensitiveRegExpMatch(NO_DEFAULT_PRIMARY_GROUP, ClosureFactory.newConnectorException());
+        bldr.addCaseInsensitiveRegExpMatch(NO_DEFAULT_HOME_DIR, ClosureFactory.newConnectorException());
+        bldr.addCaseInsensitiveRegExpMatch(NO_DEFAULT_LOGIN_SHELL, ClosureFactory.newConnectorException());
+        bldr.addCaseInsensitiveRegExpMatch(UID_NOT_UNIQUE, ClosureFactory.newConnectorException());
         passwdCleanupReject = bldr.build();
     }
     
@@ -101,7 +101,7 @@ public class OpCreateNISImpl {
     private final static Match[] shellMatchers;
     static {
         MatchBuilder bldr = new MatchBuilder();
-        bldr.addCaseInsensitiveRegExpMatch(INVALID_SHELL, ClosureFactory.newConnectorException(INVALID_SHELL));
+        bldr.addCaseInsensitiveRegExpMatch(INVALID_SHELL, ClosureFactory.newConnectorException());
         shellMatchers = bldr.build();
     }
     
@@ -431,7 +431,7 @@ public class OpCreateNISImpl {
             MatchBuilder bldr = new MatchBuilder();
             bldr.addRegExpMatch(connection.getRootShellPrompt(), ClosureFactory.newNullClosure());
             final String passwdError = " denied";
-            bldr.addCaseInsensitiveRegExpMatch(passwdError, ClosureFactory.newConnectorException("Error occured during change of password."));
+            bldr.addCaseInsensitiveRegExpMatch(passwdError, ClosureFactory.newConnectorException());
             connection.expect(bldr.build());
         } catch (Exception ex) {
             throw ConnectorException.wrap(ex);

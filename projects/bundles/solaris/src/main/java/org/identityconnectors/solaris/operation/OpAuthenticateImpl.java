@@ -45,8 +45,8 @@ public class OpAuthenticateImpl extends AbstractOp {
     static {
         MatchBuilder builder = new MatchBuilder();
         builder.addCaseInsensitiveRegExpMatch(MSG, ClosureFactory.newNullClosure());
-        builder.addCaseInsensitiveRegExpMatch("incorrect", ClosureFactory.newConnectorException("Can't login with the given credentials"));
-        builder.addCaseInsensitiveRegExpMatch("lowest level \"shell\"", ClosureFactory.newConnectorException("Can't login for given credentials."));
+        builder.addCaseInsensitiveRegExpMatch("incorrect", ClosureFactory.newConnectorException());
+        builder.addCaseInsensitiveRegExpMatch("lowest level \"shell\"", ClosureFactory.newConnectorException());
         matches = builder.build();
     }
     

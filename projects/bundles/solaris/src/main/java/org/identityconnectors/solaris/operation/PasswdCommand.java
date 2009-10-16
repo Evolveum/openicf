@@ -62,9 +62,9 @@ class PasswdCommand extends CommandSwitches {
         MatchBuilder builder = new MatchBuilder();
         builder.addNoActionMatch(NEW_PASSWORD_MATCH);//success
         //errors:
-        builder.addCaseInsensitiveRegExpMatch("Permission denied", ClosureFactory.newConnectorException("Permission denied when executing 'passwd'"));
-        builder.addCaseInsensitiveRegExpMatch("command not found", ClosureFactory.newConnectorException("'passwd' command not found"));
-        builder.addCaseInsensitiveRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException("current user is not allowed to execute 'passwd' command"));
+        builder.addCaseInsensitiveRegExpMatch("Permission denied", ClosureFactory.newConnectorException());
+        builder.addCaseInsensitiveRegExpMatch("command not found", ClosureFactory.newConnectorException());
+        builder.addCaseInsensitiveRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException());
         passwdMatches = builder.build();
     }
     

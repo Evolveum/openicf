@@ -47,10 +47,10 @@ class CreateCommand  {
     private final static Match[] errorsUseradd;
     static {
         MatchBuilder builder = new MatchBuilder();
-        builder.addCaseInsensitiveRegExpMatch("invalid", ClosureFactory.newConnectorException("ERROR during execution of 'useradd' -- invalid command"));
-        builder.addCaseInsensitiveRegExpMatch("ERROR", ClosureFactory.newConnectorException("ERROR during execution of 'useradd'"));
-        builder.addCaseInsensitiveRegExpMatch("command not found", ClosureFactory.newConnectorException("'useradd' command is missing"));
-        builder.addCaseInsensitiveRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException("Not allowed to execute the 'useradd' command."));
+        builder.addCaseInsensitiveRegExpMatch("invalid", ClosureFactory.newConnectorException());
+        builder.addCaseInsensitiveRegExpMatch("ERROR", ClosureFactory.newConnectorException());
+        builder.addCaseInsensitiveRegExpMatch("command not found", ClosureFactory.newConnectorException());
+        builder.addCaseInsensitiveRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException());
         errorsUseradd = builder.build();
     }
     
