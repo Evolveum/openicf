@@ -25,30 +25,37 @@
     <property name="bundles.dir" value="../"/>
     <import file="${framework.dir}/connector_build.xml"/>      
 
+<!-- **** CONTRACT TESTS **** -->
 <target name="run-contract-tests" depends="contract-init">
 
-<!-- opensolaris configuration -->
-<antcall target="contract-dist" inheritAll="false">
-<param name="testConfig" value="opensolaris"/>
-</antcall>
-<antcall target="contract-tests" inheritAll="false">
-<param name="testConfig" value="opensolaris"/>
-</antcall>
+    <!-- opensolaris configuration -->
+    <antcall target="contract-dist" inheritAll="false">
+        <param name="testConfig" value="opensolaris"/>
+    </antcall>
+    <antcall target="contract-tests" inheritAll="false">
+        <param name="testConfig" value="opensolaris"/>
+    </antcall>
 
-<!-- solaris 9 configuration -->
-<antcall target="contract-dist" inheritAll="false">
-<param name="testConfig" value="solaris9"/>
-</antcall>
-<antcall target="contract-tests" inheritAll="false">
-<param name="testConfig" value="solaris9"/>
-</antcall>
+    <!-- solaris 9 configuration -->
+    <antcall target="contract-dist" inheritAll="false">
+        <param name="testConfig" value="solaris9"/>
+    </antcall>
+    <antcall target="contract-tests" inheritAll="false">
+        <param name="testConfig" value="solaris9"/>
+    </antcall>
 
-<!-- solaris 10 configuration -->
-<antcall target="contract-dist" inheritAll="false">
-<param name="testConfig" value="solaris10"/>
-</antcall>
-<antcall target="contract-tests" inheritAll="false">
-<param name="testConfig" value="solaris10"/>
-</antcall>
+    <!-- solaris 10 configuration -->
+    <antcall target="contract-dist" inheritAll="false">
+        <param name="testConfig" value="solaris10"/>
+    </antcall>
+    <antcall target="contract-tests" inheritAll="false">
+        <param name="testConfig" value="solaris10"/>
+    </antcall>
 </target>
+
+
+
+<!-- **** UNIT TESTS **** --> 
+
+
 </project>
