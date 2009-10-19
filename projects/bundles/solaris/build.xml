@@ -26,7 +26,7 @@
     <import file="${framework.dir}/connector_build.xml"/>      
 
 <!-- **** CONTRACT TESTS **** -->
-<target name="run-contract-tests" depends="contract-init">
+    <target name="run-contract-tests" depends="contract-init">
 
     <!-- opensolaris configuration -->
     <antcall target="contract-dist" inheritAll="false">
@@ -56,6 +56,20 @@
 
 
 <!-- **** UNIT TESTS **** --> 
+<target name="run-unit-tests" depends="test-init, instrument, build-testclasspath">
+        
+    <antcall target="connector-build.run-unit-tests">
+        <param name="testConfig" value="opensolaris"/>
+    </antcall>
+
+    <antcall target="connector-build.run-unit-tests">
+        <param name="testConfig" value="solaris9"/>
+    </antcall>
+
+    <antcall target="connector-build.run-unit-tests">
+        <param name="testConfig" value="solaris10"/>
+    </antcall>
+</target>
 
 
 </project>
