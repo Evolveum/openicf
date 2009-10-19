@@ -47,7 +47,7 @@ import expect4j.matches.Match;
  */
 public class SolarisConnection {
     /** set the timeout for waiting on reply. */
-    public static final int WAIT = 12000;
+    public static final int WAIT = 60000;
     
     //TODO might be a configuration property
     private static final String HOST_END_OF_LINE_TERMINATOR = "\n";
@@ -56,8 +56,10 @@ public class SolarisConnection {
      * As Expect uses regular expressions, the pattern should be quoted as a string literal. 
      */
     private static final String CONNECTOR_PROMPT = "~ConnectorPrompt";
+    //private static final double ERROR_WAIT = 100 * Math.pow(10, 6); // 100 mseconds, but implementation uses nanoseconds, hard-coded constant in the adapter.
+    
     private String _rootShellPrompt;
-    private String _originalPrompt;
+    private Expect4j _expect4j;
     
     /**
      * the configuration object from which this connection is created.
@@ -68,7 +70,7 @@ public class SolarisConnection {
     }
 
     private final Log log = Log.getLog(SolarisConnection.class);
-    private Expect4j _expect4j;
+    
 
     /** default constructor */
     public SolarisConnection(SolarisConfiguration configuration) {
@@ -303,9 +305,6 @@ public class SolarisConnection {
             _expect4j.close();
             _expect4j = null;
         }
-
-        // reset the original root prompt. (see the constructor)
-        _configuration.setRootShellPrompt(_originalPrompt);
     }
     
     /**
