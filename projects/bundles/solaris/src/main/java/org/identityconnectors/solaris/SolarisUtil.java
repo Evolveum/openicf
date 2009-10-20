@@ -98,8 +98,20 @@ public class SolarisUtil {
         throw new IllegalArgumentException(String.format(
                 MSG_NOT_SUPPORTED_OBJECTCLASS, oclass, operation.getName()));
     }
-    
-    public static void sendPassword(GuardedString passwd, final SolarisConnection conn) {
+
+    /**
+     * send a password to the resource, and return the response from the
+     * resource, if any.
+     * 
+     * @param passwd
+     *            the password to send
+     * @param rejects
+     *            the error messages. If found in response
+     *            {@link ConnectorException is thrown}
+     * @param conn
+     * @return feedback on the sent password from the resource.
+     */
+    public static String sendPassword(GuardedString passwd, Set<String> rejects, final SolarisConnection conn) {
         passwd.access(new GuardedString.Accessor() {
             public void access(char[] clearChars) {
                 try {
@@ -109,14 +121,8 @@ public class SolarisUtil {
                 }
             }
         });
-    }
-    
-    public static Match[] prepareMatches(String string, Match[] commonErrMatches) {
-        MatchBuilder builder = new MatchBuilder();
-        builder.addNoActionMatch(string);
-        builder.addMatches(commonErrMatches);
         
-        return builder.build();
+        return (rejects.size() > 0) ? conn.executeCommand(null, rejects) : "";
     }
     
     public static SolarisEntry forConnectorAttributeSet(String userName, Set<Attribute> attrs) {

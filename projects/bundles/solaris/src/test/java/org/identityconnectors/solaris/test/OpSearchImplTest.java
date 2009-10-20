@@ -24,6 +24,7 @@ package org.identityconnectors.solaris.test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,6 +60,8 @@ public class OpSearchImplTest {
     @Before
     public void setUp() throws Exception {
         config = SolarisTestCommon.createConfiguration();
+        config.setPort(23);
+        config.setConnectionType("TELNET");
         facade = SolarisTestCommon.createConnectorFacade(config);
         
         SolarisTestCommon.printIPAddress(config);
@@ -130,15 +133,31 @@ public class OpSearchImplTest {
     }
 
     private void cleanupUsers(List<Pair<String, GuardedString>> list) {
+        List<String> notCleanedUp = new ArrayList<String>();
+        
         for (Pair<String, GuardedString> pair : list) {
             facade.delete(ObjectClass.ACCOUNT, new Uid(pair.first), null);
             try {
                 facade.authenticate(ObjectClass.ACCOUNT, pair.first, pair.second, null);
-                Assert.fail(String.format("Account was not cleaned up: '%s'", pair.first));
+                notCleanedUp.add(pair.first);
             } catch (RuntimeException ex) {
                 // OK
             }
         }//for
+        
+        if (notCleanedUp.size() == 0) {
+            return;
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append("Account(s) was not cleaned up: ");
+        for (Iterator<String> iterator = notCleanedUp.iterator(); iterator.hasNext();) {
+            String acc = iterator.next();
+            sb.append(String.format("'%s'", acc));
+            String toAppend = (iterator.hasNext()) ? ", " : "." ;
+            sb.append(toAppend);
+        }
+        Assert.fail(sb.toString());
     }
 
     

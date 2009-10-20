@@ -22,6 +22,12 @@
  */
 package org.identityconnectors.solaris.operation;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
@@ -32,8 +38,7 @@ import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.command.ClosureFactory;
 import org.identityconnectors.solaris.command.MatchBuilder;
-
-import expect4j.matches.Match;
+import org.identityconnectors.solaris.command.ClosureFactory.ConnectorExceptionClosure;
 
 public class OpAuthenticateImpl extends AbstractOp {
 
@@ -41,14 +46,7 @@ public class OpAuthenticateImpl extends AbstractOp {
     
     private static final String MSG = "authenticateMessage";
     final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT};
-    private static final Match[] matches;
-    static {
-        MatchBuilder builder = new MatchBuilder();
-        builder.addCaseInsensitiveRegExpMatch(MSG, ClosureFactory.newNullClosure());
-        builder.addCaseInsensitiveRegExpMatch("incorrect", ClosureFactory.newConnectorException());
-        builder.addCaseInsensitiveRegExpMatch("lowest level \"shell\"", ClosureFactory.newConnectorException());
-        matches = builder.build();
-    }
+    private static final Set<String> rejects = CollectionUtil.newSet("incorrect", "lowest level \"shell\"");
     
     public OpAuthenticateImpl(SolarisConnector conn) {
         super(conn);
@@ -58,12 +56,24 @@ public class OpAuthenticateImpl extends AbstractOp {
             GuardedString password, OperationOptions options) {
         SolarisUtil.controlObjectClassValidity(objectClass, acceptOC, getClass());
         _log.info("authenticate (user: '{0}')", username);
+        
+        /* init */
+        // add error matchers
+        MatchBuilder builder = new MatchBuilder();
+        List<ConnectorExceptionClosure> cecList = new ArrayList<ConnectorExceptionClosure>();
+        for (String rej : rejects) {
+            ConnectorExceptionClosure cec = ClosureFactory.newConnectorException();
+            cecList.add(cec);
+            builder.addRegExpMatch(rej, cec);
+        }
+        // add normal feedback matcher
+        builder.addRegExpMatch(MSG, ClosureFactory.newCaptureClosure());
+        
         try {
             getConnection().send("exec login " + username + " TERM=vt00");
             getConnection().waitForCaseInsensitive("assword:");
-            SolarisUtil.sendPassword(password, getConnection());
-            getConnection().send("echo '" + MSG + "'");
-            getConnection().expect(matches);// one of the accept messages is MSG, which means success.
+            SolarisUtil.sendPassword(password, Collections.<String>emptySet(), getConnection());
+            getConnection().executeCommand("echo '" + MSG + "'", rejects, CollectionUtil.newSet(MSG));
             _log.info("authenticate successful for user: '{0}'", username);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
@@ -103,5 +113,4 @@ public class OpAuthenticateImpl extends AbstractOp {
     }
          */
     }
-
 }

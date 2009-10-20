@@ -22,19 +22,18 @@
  */
 package org.identityconnectors.solaris.operation;
 
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Set;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.command.ClosureFactory;
-import org.identityconnectors.solaris.command.MatchBuilder;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
-
-import expect4j.matches.Match;
 
 
 /**
@@ -57,27 +56,17 @@ class PasswdCommand extends CommandSwitches {
         _passwdSwitches.put(NativeAttribute.LOCK, "-l");
     }
     
-    private final static Match[] passwdMatches;
-    static {
-        MatchBuilder builder = new MatchBuilder();
-        builder.addNoActionMatch(NEW_PASSWORD_MATCH);//success
-        //errors:
-        builder.addCaseInsensitiveRegExpMatch("Permission denied", ClosureFactory.newConnectorException());
-        builder.addCaseInsensitiveRegExpMatch("command not found", ClosureFactory.newConnectorException());
-        builder.addCaseInsensitiveRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException());
-        passwdMatches = builder.build();
-    }
+    private final static Set<String> passwdRejects = CollectionUtil.newSet("Permission denied", "command not found", "not allowed to execute");
     
     public static void configureUserPassword(SolarisEntry entry, GuardedString password, SolarisConnection conn) {
         try {
             String command = conn.buildCommand("passwd -r files", entry.getName());
-            conn.send(command);
+            String out = conn.executeCommand(command, passwdRejects, CollectionUtil.newSet(NEW_PASSWORD_MATCH));
 
-            conn.expect(passwdMatches);
-            SolarisUtil.sendPassword(password, conn);
+            SolarisUtil.sendPassword(password, Collections.<String>emptySet(), conn);
 
             conn.waitFor(NEW_PASSWORD_MATCH);
-            SolarisUtil.sendPassword(password, conn);
+            SolarisUtil.sendPassword(password, Collections.<String>emptySet(), conn);
 
             conn.waitFor(conn.getRootShellPrompt() /*String.format("passwd: password successfully changed for %s", entry.getName())*/);
         } catch (Exception ex) {

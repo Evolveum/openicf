@@ -23,14 +23,21 @@
 package org.identityconnectors.solaris;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import org.apache.oro.text.regex.MalformedPatternException;
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.solaris.command.ClosureFactory;
 import org.identityconnectors.solaris.command.MatchBuilder;
+import org.identityconnectors.solaris.command.ClosureFactory.CaptureClosure;
+import org.identityconnectors.solaris.command.ClosureFactory.ConnectorExceptionClosure;
 import org.identityconnectors.solaris.operation.OpCreateImpl;
 import org.identityconnectors.solaris.operation.OpUpdateImpl;
 
@@ -46,8 +53,17 @@ import expect4j.matches.Match;
  *
  */
 public class SolarisConnection {
+    /*
+     * Implementation constant: the maximum timeout that the connection 
+     * waits before retrying to read an emergency output (after occurrence of ERROR in 
+     * output stream from the resource.
+     * 
+     * Constant's unit: millisecond.
+     */
+    private static final int WAITFOR_TIMEOUT_FOR_ERROR = 600;
+
     /** set the timeout for waiting on reply. */
-    public static final int WAIT = 60000;
+    public static final int WAIT = 24000;
     
     //TODO might be a configuration property
     private static final String HOST_END_OF_LINE_TERMINATOR = "\n";
@@ -56,7 +72,14 @@ public class SolarisConnection {
      * As Expect uses regular expressions, the pattern should be quoted as a string literal. 
      */
     private static final String CONNECTOR_PROMPT = "~ConnectorPrompt";
-    //private static final double ERROR_WAIT = 100 * Math.pow(10, 6); // 100 mseconds, but implementation uses nanoseconds, hard-coded constant in the adapter.
+    /*
+     * Implementation constant: the maximum length of overall timeout that we 
+     * wait after discovering ERROR in output stream of the unix resource.
+     * 
+     * - we are using System.nanotime() for time measuring, so the unit of 
+     * this constant is nanosecond.
+     */
+    private static final double ERROR_WAIT = 100 * Math.pow(10, 6); // 100 mseconds, hard-coded constant in the adapter.
     
     private String _rootShellPrompt;
     private Expect4j _expect4j;
@@ -109,15 +132,17 @@ public class SolarisConnection {
         }
         
         try {
-            if (connType.equals(ConnectionType.TELNET)) {
+            if (!connType.selfAuthenticates()) {
+                /*
+                 * telnet doesn't authenticate automatically, so an extra step is needed:
+                 */
                 waitFor("login");
                 send(username.trim());
                 waitForCaseInsensitive("assword");
-                SolarisUtil.sendPassword(password, this);
+                SolarisUtil.sendPassword(password, Collections.<String>emptySet(), this);
             }
             
-            // FIXME: add rejects for "incorrect" error (see adapter)
-            waitFor(getRootShellPrompt());
+            executeCommand(null/* no command sent here */, CollectionUtil.newSet("incorrect"));
             /*
              * turn off the echoing of keyboard input on the resource.
              * Saves bandwith too.
@@ -132,7 +157,6 @@ public class SolarisConnection {
             executeCommand("PS1=\"" + CONNECTOR_PROMPT + "\"");
         } catch (Exception e) {
             throw new ConnectorException(String.format("Connection failed to host '%s:%s' for user '%s'", _configuration.getHostNameOrIpAddr(), _configuration.getPort(), username), e);
-            //throw ConnectorException.wrap(e);
         }
     }
 
@@ -222,13 +246,6 @@ public class SolarisConnection {
     public String waitForCaseInsensitive(final String string) throws Exception {
         return waitForImpl(string, WAIT, true);
     }
-
-    /** Match a sequence of expected patterns, and invoke the respective actions on them. 
-     * Implementation note: internally uses Expect4j#expect() method. 
-     */
-    public void expect(Match[] matches) throws MalformedPatternException, Exception {
-        _expect4j.expect(matches);
-    }
     
     /**
      * Waits for feedback from the resource, respecting given timeout.
@@ -243,7 +260,7 @@ public class SolarisConnection {
         return waitForImpl(string, millis, false);
     }
     
-    private String waitForImpl(final String string, int millis, boolean caseInsensitive) throws MalformedPatternException, Exception {
+    private String waitForImpl(final String string, final int millis, boolean caseInsensitive) throws MalformedPatternException, Exception {
         log.info("waitFor(''{0}'', {1}, {2})", string, millis, Boolean.toString(caseInsensitive));
         /** internal buffer for the Solaris resource's output */
         final StringBuilder buffer = new StringBuilder();
@@ -262,7 +279,13 @@ public class SolarisConnection {
         } else {
             builder.addRegExpMatch(string, successClosure);
         }
-        builder.addTimeoutMatch(millis, String.format("Timeout in waitFor('%s', %s)", string, Integer.toString(millis)));
+        builder.addTimeoutMatch(millis, new Closure() {
+            public void run(ExpectState state) throws Exception {
+                String msg = String.format("Timeout in waitFor('%s', %s) buffer: <%s>",
+                        string, Integer.toString(millis), state.getBuffer());
+                throw new ConnectorException(msg);
+            }
+        });
         
         _expect4j.expect(builder.build());
         
@@ -270,27 +293,162 @@ public class SolarisConnection {
     }
     
     /** 
-     * Execute a issue a command on the resource specified by the configuration 
+     * {@see SolarisConnection#executeCommand(String, Set, Set)} 
      */
     public String executeCommand(String command) {
-        String output = null;
+        return executeCommand(command, Collections.<String>emptySet());
+    }
+    
+    /**
+     * {@see SolarisConnection#executeCommand(String, Set, Set)}
+     */
+    public String executeCommand(String command, Set<String> rejects) {
+        return executeCommand(command, rejects, Collections.<String>emptySet());
+    }
+
+    /**
+     * Execute a issue a command on the resource. Return the match of feedback
+     * up to the root shell prompt
+     * {@link SolarisConnection#getRootShellPrompt()}.
+     * 
+     * @param command
+     *            the executed command
+     * @param rejects
+     *            the error messages that can occur. If they are found, a
+     *            {@link ConnectorException} is thrown.
+     * @param accepts
+     *            these are accepting strings, if they are found the result is
+     *            returned. If empty set is given, the default accept is
+     *            {@link SolarisConnection#getRootShellPrompt()}.
+     */
+    public String executeCommand(String command, Set<String> rejects, Set<String> accepts) {
         try {
-            send(command);
-            output = waitFor(getRootShellPrompt(), WAIT); 
+            if (command != null) {
+                send(command);
+            }
+        } catch (Exception e) {
+            // TODO finish ex...
+        }
+        
+        /*
+         * IMPLEMENTATION NOTE on 'Ordering of matchers w.r.t. Expect4j'
+         * 
+         * Expect4j matches the first pattern, that occurs at the minimum index in the input stream.
+         * That said, for instance input stream is 
+         * '$ foobar $'
+         * with List of patterns = { "foobar", "$" }.
+         * The matching pattern according to expect is "$".
+         * *WHY*?
+         * Expect matches the "$" pattern, despite of "foobar" being the first in the list of patterns.
+         * In fact, the implementation iterates over the list of matchers, and searches for the index 
+         * of matching substring. The first minimal index wins. In other words, if two matchers both 
+         * match the input from the start, the matcher, which is the first in the list of patterns, wins.
+         * 
+         * This explains why "$" was matched (it has index 0), rather then foobar (with larger match index 2).
+         */
+        
+        // according to the previous implementation note, the error matchers should go first!:
+        MatchBuilder builder = new MatchBuilder();
+        // #1 Adding Error matchers
+        final List<ConnectorExceptionClosure> cecList = new ArrayList<ConnectorExceptionClosure>();
+        for (String rej : rejects) {
+            ConnectorExceptionClosure cec = ClosureFactory.newConnectorException();
+            cecList.add(cec);
+            builder.addRegExpMatch(rej, cec);
+        }
+        
+        // #2 Adding RootShellPrompt matcher or other acceptance matchers if given
+        List<CaptureClosure> captureClosures = null;
+        if (accepts.size() > 0) {
+            captureClosures = CollectionUtil.newList();
+            for (String acc : accepts) {
+                CaptureClosure closure = ClosureFactory.newCaptureClosure();
+                captureClosures.add(closure);
+                builder.addRegExpMatch(acc, closure);
+            }
+        } else {
+            CaptureClosure closure = ClosureFactory.newCaptureClosure();
+            captureClosures = CollectionUtil.newList(closure);
+            builder.addRegExpMatch(getRootShellPrompt(), closure);
+        }
+        
+        // #3 set the timeout for matching too
+        final boolean[] isTimeoutMatched = new boolean[1];
+        builder.addTimeoutMatch(WAIT, new Closure() {
+            public void run(ExpectState state) throws Exception {
+                isTimeoutMatched[0] = true;
+            }
+        });
+        
+        try {
+            _expect4j.expect(builder.build());
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
         
-        int index = output.lastIndexOf(getRootShellPrompt());
-        if (index!=-1)
-            output = output.substring(0, index);
+        String output = null;
+        for (CaptureClosure cl : captureClosures) {
+            if (cl.isMatched()) {
+                // get regular output matched by root shell prompt.
+                output = cl.getMsg();
+                break;
+            }
+        }
         
-        output = output.trim();
+        if (output == null) {
+            // handle error message processing, throw an exception if error found
+            handleRejects(cecList);
+            
+            // no reject thrown and exception, so timeout occurred.
+            if (isTimeoutMatched[0]) {
+                throw new ConnectorException("executeCommand: timeout occured, and no ERROR or useful message matched.");
+            }
+        }
+        
+        output = trimOutput(output);
 
-//        if (output.endsWith(HOST_END_OF_LINE_TERMINATOR)) {
-//            output = output.substring(0, output.length()-HOST_END_OF_LINE_TERMINATOR.length());
-//        }
         return output;
+    }
+
+    private String trimOutput(String output) {
+        int index = output.lastIndexOf(getRootShellPrompt());
+        if (index != -1) {
+            output = output.substring(0, index);
+        }
+        output = output.trim();
+        return output;
+    }
+
+    private void handleRejects(List<ConnectorExceptionClosure> cecList) {
+        for (ConnectorExceptionClosure connectorExceptionClosure : cecList) {
+            if (connectorExceptionClosure.isMatched()) {
+                String out = connectorExceptionClosure.getErrMsg();
+
+                out = waitForInput(out);
+
+                throw new ConnectorException("ERROR OUTPUT: " + out);
+            }
+        }
+    }
+    
+    private String waitForInput(final String out) {
+        StringBuilder buffer = new StringBuilder(out);
+        long start = System.nanoTime();
+        while (System.nanoTime() - start <= ERROR_WAIT) {
+            System.out.println("trying ...");
+            String tmp = null;
+            try {
+                tmp = waitFor(".+", WAITFOR_TIMEOUT_FOR_ERROR);
+            } catch (Exception ex) {
+                // OK
+            }
+            int lastLength = buffer.length();
+            buffer.append((tmp != null) ? tmp : "");
+            if (buffer.indexOf(getRootShellPrompt(), lastLength) > -1) {
+                break;
+            }
+        }
+        return trimOutput(buffer.toString());
     }
 
     /** once connection is disposed it won't be used at all. */
@@ -518,23 +676,15 @@ public class SolarisConnection {
         if (config.isSudoAuth()) {
             try {
                 // 1) send sudo reset command
+                executeCommand(SUDO_RESET_COMMAND, CollectionUtil.newSet("not found"));
                 send(SUDO_RESET_COMMAND); 
-                expect(MatchBuilder.buildRegExpMatch("not found", ClosureFactory.newConnectorException()));
 
                 // 2) send sudo start command
                 send(SUDO_START_COMMAND); 
                 waitForCaseInsensitive("assword:");
                 // TODO evaluate which password should be used:
                 GuardedString passwd = config.getPassword();
-                SolarisUtil.sendPassword(passwd, this);
-                
-                // 3) wait for the end of sudo operation
-                MatchBuilder builder = new MatchBuilder();
-                builder.addRegExpMatch(getRootShellPrompt(), ClosureFactory.newNullClosure());// TODO possibly replace NullClosure with null.
-                // signs of password reject:
-                builder.addRegExpMatch("may not run", ClosureFactory.newConnectorException()); 
-                builder.addRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException());
-                expect(builder.build());
+                SolarisUtil.sendPassword(passwd, CollectionUtil.newSet("may not run", "not allowed to execute"), this);
             } catch (Exception e) {
                 throw ConnectorException.wrap(e);
             }
@@ -547,6 +697,20 @@ public class SolarisConnection {
         if (config.isSudoAuth()) {
             // send sudo reset command
             executeCommand(SUDO_RESET_COMMAND);
+        }
+    }
+    
+    /*
+     * there is only one usage of this in {@link OpAuthenticateImpl}
+     * It should be avoided FIXME.
+     * @param matches
+     */
+    @Deprecated
+    public void expect(Match[] matches) {
+        try {
+            _expect4j.expect(matches);
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
         }
     }
 

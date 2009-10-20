@@ -22,16 +22,22 @@
  */
 package org.identityconnectors.solaris;
 
-import org.identityconnectors.solaris.SolarisConfiguration;
-import org.identityconnectors.solaris.SolarisConnector;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.solaris.test.SolarisTestCommon;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class SolarisConnectionTest {
     
     private static SolarisConfiguration config;
+    private static final String TIMEOUT_BETWEEN_MSGS = "0.5";
+    private static final String LAST_ECHOED_INFO = "sausage.";
     
     /**
      * set valid credentials based on build.groovy property file
@@ -58,6 +64,48 @@ public class SolarisConnectionTest {
             connector.checkAlive();
         } finally {
             connector.dispose();
+        }
+    }
+    
+    /**
+     * test that if an error occurs in the output, an exception is thrown.
+     */
+    @Test
+    public void testErrorReplyScenario() {
+        SolarisConnection conn = new SolarisConnection(SolarisTestCommon.createConfiguration());
+        Set<String> rejects = new HashSet<String>();
+        final String ERROR = "ERROR";
+        rejects.add(ERROR);
+        try {
+            conn.executeCommand(
+                    String.format("echo \"%s: ahoj ship\"", ERROR), 
+                    rejects);
+            Assert.fail("no exception thrown, when error found.");
+        } catch (ConnectorException e) {
+            // OK
+        }
+    }
+    
+    @Test @Ignore
+    public void testErrorReplyScenarioWithTimeout() {
+        config = SolarisTestCommon.createConfiguration();
+        config.setPort(23);
+        config.setConnectionType("telnet");
+        SolarisConnection conn = new SolarisConnection(config);
+        Set<String> rejects = new HashSet<String>();
+        final String ERROR_MARKER = "ERROR";
+        rejects.add(ERROR_MARKER);
+        try {
+            // Tougher test (it demands setting a long timeout on the connection.)
+            //conn.executeCommand(String.format("export timeout=\"%s\" && echo  \"%s: ahoj\" && sleep \"$timeout\" && echo  \"ship\" && sleep \"$timeout\" && echo  \"egg\" && sleep \"$timeout\" && echo  \"spam\" && sleep \"$timeout\" && echo  \"%s\"", TIMEOUT_BETWEEN_MSGS, ERROR_MARKER, LAST_ECHOED_INFO), rejects);
+            // Weaker test
+            conn.executeCommand(String.format("export timeout=\"%s\" && echo  \"%s: ahoj\" && sleep \"$timeout\" && echo \"%s\"", TIMEOUT_BETWEEN_MSGS, ERROR_MARKER, LAST_ECHOED_INFO), rejects);
+            Assert.fail("no exception thrown, when error found.");
+        } catch (ConnectorException e) {
+            final String exMsg = e.getMessage();
+            String msg = String.format("Buffer <%s> doesn't containt the last echoed info: '%s'.", exMsg, LAST_ECHOED_INFO);
+            //System.out.println("TEST: found: <"  exMsg  ">");
+            Assert.assertTrue(msg, exMsg.contains(LAST_ECHOED_INFO));
         }
     }
     

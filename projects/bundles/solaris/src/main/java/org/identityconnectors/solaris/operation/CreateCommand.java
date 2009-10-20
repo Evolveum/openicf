@@ -23,18 +23,14 @@
 package org.identityconnectors.solaris.operation;
 
 import java.util.Map;
+import java.util.Set;
 
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
-import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.command.ClosureFactory;
-import org.identityconnectors.solaris.command.MatchBuilder;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
-
-import expect4j.matches.Match;
 
 /**
  * @author David Adam
@@ -43,16 +39,7 @@ import expect4j.matches.Match;
 class CreateCommand  {
     private final static Map<NativeAttribute, String> createSwitches = CommandSwitches.commonSwitches;
     
-    
-    private final static Match[] errorsUseradd;
-    static {
-        MatchBuilder builder = new MatchBuilder();
-        builder.addCaseInsensitiveRegExpMatch("invalid", ClosureFactory.newConnectorException());
-        builder.addCaseInsensitiveRegExpMatch("ERROR", ClosureFactory.newConnectorException());
-        builder.addCaseInsensitiveRegExpMatch("command not found", ClosureFactory.newConnectorException());
-        builder.addCaseInsensitiveRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException());
-        errorsUseradd = builder.build();
-    }
+    private final static Set<String> errorsUseradd = CollectionUtil.newSet("invalid", "ERROR", "command not found", "not allowed to execute");
     
     public static void createUser(SolarisEntry entry, SolarisConnection conn) {
 
@@ -61,13 +48,7 @@ class CreateCommand  {
 
         // useradd command execution
         String command = conn.buildCommand("useradd", commandSwitches, entry.getName());
-        Match[] matches = SolarisUtil.prepareMatches(conn.getRootShellPrompt(), errorsUseradd);
-        try {
-            conn.send(command);
-            conn.expect(matches);
-        } catch (Exception ex) {
-            throw ConnectorException.wrap(ex);
-        }
+        conn.executeCommand(command, errorsUseradd);
     }
 
     /**

@@ -75,8 +75,8 @@ public final class MatchBuilder {
     }
     
     /** add a timeout match with given 'millis' period. */
-    public void addTimeoutMatch(long millis, String msg) {
-        matches.add(new TimeoutMatch(millis, ClosureFactory.newTimeoutException(msg)));
+    public void addTimeoutMatch(long millis, Closure closure) {
+        matches.add(new TimeoutMatch(millis, closure));
     }
     
     /** concatenate all the given matches with existing ones. */
@@ -89,7 +89,7 @@ public final class MatchBuilder {
     /** add a match with no action upon match. */
     public void addNoActionMatch(String matchingRegExp) {
         try {
-            matches.add(new RegExpCaseInsensitiveMatch(matchingRegExp, ClosureFactory.newNullClosure()));
+            matches.add(new RegExpCaseInsensitiveMatch(matchingRegExp, ClosureFactory.newCaptureClosure()));
         } catch (MalformedPatternException e) {
             throw ConnectorException.wrap(e);
         }

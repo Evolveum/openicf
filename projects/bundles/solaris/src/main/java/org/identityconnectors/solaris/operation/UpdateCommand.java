@@ -24,17 +24,14 @@ package org.identityconnectors.solaris.operation;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.command.ClosureFactory;
-import org.identityconnectors.solaris.command.MatchBuilder;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
-
-import expect4j.matches.Match;
 
 /**
  * Updates any {@link NativeAttribute}, except {@link OperationalAttributes#PASSWORD_NAME}.
@@ -43,14 +40,7 @@ import expect4j.matches.Match;
  * 
  */
 class UpdateCommand extends CommandSwitches {
-    private static final Match[] usermodErrors;
-    static {
-        MatchBuilder builder = new MatchBuilder();
-        builder.addRegExpMatch("ERROR", ClosureFactory.newConnectorException());
-        builder.addRegExpMatch("command not found", ClosureFactory.newConnectorException());
-        builder.addRegExpMatch("not allowed to execute", ClosureFactory.newConnectorException());
-        usermodErrors = builder.build();
-    }
+    private static final Set<String> usermodErrors = CollectionUtil.newSet("ERROR", "command not found", "not allowed to execute");
     
     private final static Map<NativeAttribute, String> updateSwitches;
     static {
@@ -82,15 +72,8 @@ class UpdateCommand extends CommandSwitches {
             conn.executeCommand(groupsScript);
         }
 
-        MatchBuilder builder = new MatchBuilder();
-        builder.addRegExpMatch(conn.getRootShellPrompt(), ClosureFactory.newNullClosure());
-        builder.addMatches(usermodErrors);
-        try {
-            conn.send(conn.buildCommand("usermod", commandSwitches, entry.getName()));
-            conn.expect(builder.build());
-        } catch (Exception ex) {
-            throw ConnectorException.wrap(ex);
-        }
+        String cmd = conn.buildCommand("usermod", commandSwitches, entry.getName());
+        conn.executeCommand(cmd, usermodErrors);
         
         // If this is a rename operation, check to see if the user's
         // home directory needs to be renamed as well.
@@ -98,7 +81,7 @@ class UpdateCommand extends CommandSwitches {
             // This script will restore the secondary groups to the
             // renamed user.
             final String updateGroupsCmd = conn.buildCommand("usermod", "-G \"$WSGROUPS\"", newName);
-            executeCommandWithUserModErrors(updateGroupsCmd, conn);
+            conn.executeCommand(updateGroupsCmd, usermodErrors);
             
             // Test to see if the user's home directory is to be renamed.
             // If a new home directory was specified as part of the rename
@@ -110,7 +93,7 @@ class UpdateCommand extends CommandSwitches {
                 // the renamed home directory already exists, then the
                 // rename of the home directory will not occur.
                 final String renameDirScript = getRenameDirScript(entry, conn, newName);
-                executeCommandWithUserModErrors(renameDirScript, conn);
+                conn.executeCommand(renameDirScript, usermodErrors);
             }
         }
     }
@@ -134,25 +117,6 @@ class UpdateCommand extends CommandSwitches {
               "fi; " +
             "fi";
         return renameDir;
-    }
-
-    /**
-     * @param newName
-     * @param conn
-     */
-    private static void executeCommandWithUserModErrors(String command,
-            SolarisConnection conn) {
-        
-        MatchBuilder builder = new MatchBuilder();
-        builder.addRegExpMatch(conn.getRootShellPrompt(), ClosureFactory.newNullClosure());
-        builder.addMatches(usermodErrors);
-
-        try {
-            conn.send(command);
-            conn.expect(builder.build());
-        } catch (Exception e) {
-            throw ConnectorException.wrap(e);
-        }
     }
 
     private static String getSecondaryGroupsScript(SolarisEntry entry,

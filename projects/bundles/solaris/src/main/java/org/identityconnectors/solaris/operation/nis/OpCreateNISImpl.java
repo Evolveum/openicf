@@ -22,12 +22,14 @@
  */
 package org.identityconnectors.solaris.operation.nis;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
@@ -37,24 +39,13 @@ import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.command.ClosureFactory;
-import org.identityconnectors.solaris.command.MatchBuilder;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
-
-import expect4j.matches.Match;
 
 public class OpCreateNISImpl {
     private static final Log _log = Log.getLog(OpCreateNISImpl.class);
     public static final String DEFAULT_NISPWDDIR = "/etc";
     
-    private final static Match[] chshMatchers;
-    static {
-        MatchBuilder bldr = new MatchBuilder();
-        bldr.addCaseInsensitiveRegExpMatch("new shell:", ClosureFactory.newNullClosure());
-        bldr.addCaseInsensitiveRegExpMatch("password:", ClosureFactory.newConnectorException());
-        bldr.addCaseInsensitiveRegExpMatch("passwd:", ClosureFactory.newConnectorException());
-        chshMatchers = bldr.build();
-    }
+    private final static Set<String> chshRejects = CollectionUtil.newSet("password:", "passwd:");
     
     private final static Set<NativeAttribute> allowedNISattributes;
     static {
@@ -83,27 +74,16 @@ public class OpCreateNISImpl {
     private static final String whoIAm = "WHOIAM=`who am i | cut -d ' ' -f1`";
     
     /** initialize reject messages for the password cleanup command. */
-    private final static Match[] passwdCleanupReject;
-    static {
-        MatchBuilder bldr = new MatchBuilder();
-        bldr.addCaseInsensitiveRegExpMatch(NO_DEFAULT_PRIMARY_GROUP, ClosureFactory.newConnectorException());
-        bldr.addCaseInsensitiveRegExpMatch(NO_DEFAULT_HOME_DIR, ClosureFactory.newConnectorException());
-        bldr.addCaseInsensitiveRegExpMatch(NO_DEFAULT_LOGIN_SHELL, ClosureFactory.newConnectorException());
-        bldr.addCaseInsensitiveRegExpMatch(UID_NOT_UNIQUE, ClosureFactory.newConnectorException());
-        passwdCleanupReject = bldr.build();
-    }
+    private final static Set<String> passwdCleanupReject = CollectionUtil.newSet(
+            NO_DEFAULT_PRIMARY_GROUP, NO_DEFAULT_HOME_DIR, NO_DEFAULT_LOGIN_SHELL, UID_NOT_UNIQUE
+            );
     
     private final static String pwdMutexFile = "/tmp/WSpwdlock";
     private final static String tmpPwdMutexFile = "/tmp/WSpwdlock.$$";
     private final static String pwdPidFile = "/tmp/WSpwdpid.$$";
     private static final String INVALID_SHELL = "unacceptable as a new shell";
     
-    private final static Match[] shellMatchers;
-    static {
-        MatchBuilder bldr = new MatchBuilder();
-        bldr.addCaseInsensitiveRegExpMatch(INVALID_SHELL, ClosureFactory.newConnectorException());
-        shellMatchers = bldr.build();
-    }
+    private final static Set<String> shellRejects = CollectionUtil.newSet(INVALID_SHELL);
     
     public static void addNISMake(String target, SolarisConnection conn) {
         final String makeCmd = conn.buildCommand("/usr/ccs/bin/make");
@@ -344,9 +324,7 @@ public class OpCreateNISImpl {
         }
         
         try {
-            connection.send(passwordCleanup);
-            final Match[] matches = SolarisUtil.prepareMatches(connection.getRootShellPrompt(), passwdCleanupReject);
-            connection.expect(matches);
+            connection.executeCommand(passwordCleanup, passwdCleanupReject);
         } catch (Exception ex) {
             throw ConnectorException.wrap(ex);
         }
@@ -424,15 +402,9 @@ public class OpCreateNISImpl {
         try {
             connection.send(passwdCmd);
             connection.waitForCaseInsensitive("password:");
-            SolarisUtil.sendPassword(password, connection);
+            SolarisUtil.sendPassword(password, Collections.<String>emptySet(), connection);
             connection.waitForCaseInsensitive("new password:");
-            SolarisUtil.sendPassword(password, connection);
-
-            MatchBuilder bldr = new MatchBuilder();
-            bldr.addRegExpMatch(connection.getRootShellPrompt(), ClosureFactory.newNullClosure());
-            final String passwdError = " denied";
-            bldr.addCaseInsensitiveRegExpMatch(passwdError, ClosureFactory.newConnectorException());
-            connection.expect(bldr.build());
+            SolarisUtil.sendPassword(password, CollectionUtil.newSet(" denied"), connection);
         } catch (Exception ex) {
             throw ConnectorException.wrap(ex);
         }
@@ -460,8 +432,7 @@ public class OpCreateNISImpl {
         
         final String passwordRecord = passwdCmd + "-r nis -e " + accountId + " 2>&1 | tee " + tmpPwdfile3 + " ; ";
         try {
-            connection.send(passwordRecord);
-            connection.expect(chshMatchers);
+            connection.executeCommand(passwordRecord, chshRejects, CollectionUtil.newSet("new shell:"));
             connection.executeCommand(shell);
         } catch (Exception ex) {
             throw ConnectorException.wrap(ex);
@@ -490,13 +461,8 @@ public class OpCreateNISImpl {
         addNISMake("passwd", connection);
         
         final String invalidShellCheck= "echo $INVALID_SHELL_ERRMSG; unset INVALID_SHELL_ERRMSG;";
-        final Match[] matches = SolarisUtil.prepareMatches(connection.getRootShellPrompt(), shellMatchers);
-        try {
-            connection.send(invalidShellCheck);
-            connection.expect(matches);
-        } catch (Exception ex) {
-            throw ConnectorException.wrap(ex);
-        }
+
+        connection.executeCommand(invalidShellCheck, shellRejects);
     }
 
     private static String initPasswdShadowCleanUpScript(String accountId,

@@ -60,7 +60,6 @@ public abstract class ClosureFactory implements Closure {
         public void run(ExpectState state) throws Exception {
             errMsg = state.getBuffer();
             isReject = true;
-            throw new ConnectorException(errMsg); // FIXME this is temporary, before I change the SolarisConnection.
         }
         
         public String getErrMsg() {
@@ -72,11 +71,11 @@ public abstract class ClosureFactory implements Closure {
     }
     
     /** idle call that is doing nothing in callback method. */
-    public static class NullClosure implements Closure {
+    public static class CaptureClosure implements Closure {
         private String msg;
         private boolean matched = false;
         
-        private NullClosure() {
+        private CaptureClosure() {
             // empty on purpose
         }
         
@@ -95,12 +94,24 @@ public abstract class ClosureFactory implements Closure {
     }
     
     public static class TimeoutClosure implements Closure {
-        String msg;
+        private String msg;
+        private String buffer;
+        private boolean matched = false;
+        
         private TimeoutClosure(String msg) {
             this.msg = msg;
         }
         public void run(ExpectState state) throws Exception {
-            throw new ConnectorException(msg);
+            buffer = state.getBuffer();
+            matched = true;
+        }
+        
+        public boolean isMatched() {
+            return matched;
+        }
+        
+        public String getErrMsg() {
+            return String.format("%s buffer: <%s>", msg, buffer);
         }
     }
     
@@ -108,11 +119,14 @@ public abstract class ClosureFactory implements Closure {
         return new ConnectorExceptionClosure();
     }
     
-    public static NullClosure newNullClosure() {
-        return new NullClosure();
+    public static CaptureClosure newCaptureClosure() {
+        return new CaptureClosure();
     }
 
-    public static Closure newTimeoutException(String msg) {
+    /**
+     * @param msg the given message is appended when timeout occurs
+     */
+    public static TimeoutClosure newTimeoutClosure(String msg) {
         return new TimeoutClosure(msg);
     }
 }
