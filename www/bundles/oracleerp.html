@@ -1,0 +1,2177 @@
+<html>
+<head>
+<meta http-equiv="CONTENT-TYPE" content="text/html; charset=iso-8859-1">
+<title>OracleERP Connector</title>
+</head>
+<div id="projecthome" class="app">
+<h1>OracleERP Connector Overview</h1>
+<h3>The OracleERP connector specification</h3>
+		<p>The Oracle ERP connector is defined in the {@link org.identityconnectors.oracleerp}package.
+        <br /> The main class is {@link org.identityconnectors.oracleerp.OracleERPConnector}.
+        <br /> The configuration is hold by {@link org.identityconnectors.oracleerp.OracleERPConfiguration}.
+        </p>
+
+        <p>The Oracle ERP connector supports Oracle E-Business Suite (EBS) version 11.5.10 and 12</p>
+        
+        <p>Note – we also provides an Oracle connector that supports Oracle databases.
+                For detailed information about this connector look at {@link org.identityconnectors.oracle.Oracle}.</p>
+
+<h4>Oracle ApplicationsUser Management Security</h4>
+<p>
+User security is controlled at three levels within Oracle Applications:
+responsibilities and permissions can be assigned.</p>
+<ul>
+    <li>Functional security, which controls user access to the individual menus and menu options within the system.</li>
+    <li>data security, which controls what specific data objects a user can operate on.</li>
+    <li>Role Based Access Control (RBAC), which allows for the creation of roles, to which.</li>
+</ul>
+
+<p>The Oracle ERP adapter supports functional security only. Therefore,
+the adapter cannot list create, update, or delete Oracle data objects, object
+instances, or instance sets. Nor does the adapter create or manage role objects,
+role hierarchies or role categories.</p>
+
+<h3>Oracle Client Encryption Types</h3>
+
+<p>This parameter can contain a list of valid Oracle support encryption
+algorithm names, such as RC4_56 or RC4_128. If this list is empty, all algorithms
+supported by Oracle for that Oracle release will be available. The client/server
+will negotiate on which of these algorithms to use based on Oracle Client
+Encryption Level setting.</p>
+
+<hr>
+
+<p>The Oracle Server must also be configured to support this type
+of encryption.</p>
+
+<p>For a more information about the supported algorithms,
+refer to the <b>Oracle Advanced Security Administrator&rsquo;s Guide</b>.
+See the SQLNET.ENCRYPTION_TYPES_CLIENT section for a list of valid values
+for the thin JDBC client.</p>
+
+<hr>
+
+<h3>Oracle Client Encryption Level</h3>
+
+<p>This value determines the level of security that the server/client negotiates
+and enforces. The default value, if left blank, is ACCEPTED. The valid values
+are REJECTED, ACCEPTED, REQUESTED and REQUIRED. For more details about the
+use of this parameter, refer to the <b>Oracle Advanced Security Administrator&rsquo;s
+Guide</b> and the SQLNET.ENCRYPTION_CLIENT values.</p>
+
+<p>You must also configure the Oracle Server to support this type of encryption.</p>
+
+<h3>Oracle E-Business Suite (EBS) Admin User Responsibility</h3>
+
+<p>This value determines the EBS Responsibility used by the Identity Manager Oracle
+EBS Admin user to call the EBS application initialization routine. A list
+of valid responsibilities can be found in the <tt>fnd_responsibility_vl</tt> table.
+Also refer to the Oracle EBS documentation for more information.</p>
+
+<p>If the Identity Manager Oracle EBS Admin user has a valid EBS system
+account and has a responsibility that matches the value of this parameter,
+the Oracle session created during connection enables the users&rsquo; actions
+to be audited using the Oracle EBS auditing mechanism.
+For example, the <tt>created_by</tt> and the <tt>last_updated_by</tt> fields of
+the <tt>fnd_user</tt> table objects will be updated correctly with
+the user ID of the Identity Manager Oracle EBS Admin user.</p>
+
+<p>Enabling an Oracle EBS user requires the value of the <tt>owner</tt> attribute
+to be specified. The value <tt>CUST</tt> is used by default unless
+the owner attribute is provided</p>
+
+<h3>Search for Object classess</h3>
+
+<p>The OracleERP connector search supports a user&rsquo;s responsibilities
+and other Oracle EBS objects. The following table provides information about
+the supported object classess.</p>
+
+
+<table border="1" cellspacing="0" cellpadding="10" width="100%">
+<thead>
+<tr>
+<th scope="col" align="left" valign="top">
+<p>Object class                        &nbsp;</p>
+
+</th><th scope="col" align="left" valign="top">
+
+<p>Options Supported                            &nbsp;</p>
+
+</th><th scope="col" align="left" valign="top">
+<p>Comments                            &nbsp;</p>
+
+</th>
+</tr>
+
+</thead>
+<tbody>
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>auditorResps</tt>
+
+</p>
+
+</td><td align="left" valign="top">
+<p>
+<tt>id</tt>, <tt>activeRespsOnly</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>Returns a list of auditor responsibilities for the user.&nbsp;</p>
+<p>id is a string indicating a resource identity whose responsibilities
+are returned.&nbsp;</p>
+<p>If activeRespsOnly is set to true, then only active responsibilities
+are returned. The default is false.&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>responsibilities</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>
+<tt>id</tt>, <tt>activeRespsOnly</tt>
+
+</p>
+
+</td><td align="left" valign="top">
+<p>Returns the user&rsquo;s responsibilities. Valid for 11.5.9 only.&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>directResponsibilities</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>
+<tt>id</tt>, <tt>activeRespsOnly</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>Returns the user&rsquo;s direct responsibilities. Valid for 11.5.10
+only.&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+
+<td align="left" valign="top">
+<p>
+<tt>indirectResponsibilities</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>
+<tt>id</tt>, <tt>activeRespsOnly</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>Returns the user&rsquo;s indirect responsibilities. Valid for 11.5.10
+only.&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>responsibilityNames</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>None&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Returns a list of responsibility names assigned to the user.&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>applications</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>
+<tt>responsibilityName</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>If no responsibility names are specified, then all applications assigned
+to the user are returned.&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>securityGroups</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>
+<tt>application</tt>
+
+</p>
+
+</td><td align="left" valign="top">
+<p>If no applications are specified, then all security groups assigned
+to the user are returned.&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>account</tt>
+</p>
+
+</td><td align="left" valign="top">
+
+<p>
+<tt>activeAccountsOnly</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>Returns a list of accounts for the user. If set to true, then only active
+accounts are returned. The default is false.&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>securingAttrs</tt>
+
+</p>
+
+</td><td align="left" valign="top">
+<p>
+<tt>searchPattern</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>Returns a list of securing attributes that match the specified search
+pattern. If a pattern is not specified, all securing attributes are returned.&nbsp;</p>
+
+</td>
+</tr>
+
+</tbody>
+</table>
+
+<h3 class="sol">Auditing Responsibilities object class</h3>
+
+<p>To audit the sub-items (such as forms and functions) of responsibilities
+assigned to users, search the <tt>auditor object class</tt></p>
+<p> see <tt>auditorData</tt> object class in the schema which contains
+a set of <tt>responsibility</tt> objects. The following attributes
+are always returned in a responsibility object:</p>
+
+<ul>
+<li>
+<p>
+<tt>responsibility</tt>
+</p>
+
+
+</li>
+<li>
+<p>
+<tt>userMenuNames</tt>
+</p>
+
+</li>
+<li>
+<p>
+<tt>menuIds</tt>
+</p>
+
+
+</li>
+<li>
+<p>
+<tt>userFunctionNames</tt>
+</p>
+
+
+</li>
+<li>
+<p>
+<tt>functionIds</tt>
+</p>
+
+
+</li>
+<li>
+<p>
+<tt>formIds</tt>
+</p>
+
+
+</li>
+
+<li>
+<p>
+<tt>formNames</tt>
+</p>
+
+
+</li>
+<li>
+<p>
+<tt>userFormNames</tt>
+</p>
+
+
+</li>
+<li>
+
+<p>
+<tt>readOnlyFormIds</tt>
+</p>
+
+
+</li>
+<li>
+<p>
+<tt>readWriteOnlyFormIds</tt>
+</p>
+
+
+</li>
+<li>
+<p>
+
+<tt>readOnlyFormNames</tt>
+</p>
+
+
+</li>
+<li>
+<p>
+<tt>readOnlyUserFormNames</tt>
+</p>
+
+
+</li>
+<li>
+<p>
+<tt>readWriteOnlyFormNames</tt>
+
+</p>
+
+
+</li>
+<li>
+<p>
+<tt>readWriteOnlyUserFormNames</tt>
+</p>
+
+
+</li>
+<li>
+<p>
+<tt>functionNames</tt>
+</p>
+
+
+</li>
+<li>
+<p>
+<tt>readOnlyFunctionNames</tt>
+</p>
+
+
+</li>
+<li>
+<p>
+<tt>readWriteOnlyFunctionNames</tt>
+</p>
+
+</li>
+</ul>
+
+<hr>
+<b>Note &ndash; </b>
+<p>
+<tt>readOnly</tt> and <tt>ReadWrite</tt> attributes
+are identified by querying the PARAMETERS column in the fnd_form_functions
+table for one of the following:</p>
+
+<p>QUERY_ONLY=True</p>
+
+<p>If the <strong>Return Set of Books and/or Organization</strong> resource
+parameter is set to TRUE, the following attributes are also returned:</p>
+
+<ul>
+<li>
+<p>
+<tt>setOfBooksName</tt>
+</p>
+
+
+</li>
+<li>
+
+<p>
+<tt>setOfBooksId</tt>
+</p>
+
+
+</li>
+<li>
+<p>
+<tt>organizationalUnitName</tt>
+</p>
+
+
+</li>
+<li>
+<p>
+
+<tt>organizationalUnitId</tt>
+</p>
+
+
+</li>
+</ul>
+
+<p>With the exception of the <tt>responsibility</tt>, <tt>setOfBooksName</tt>, <tt>setOfBooksId</tt>, <tt>organizationalUnitId</tt>,
+and <tt>organizationalUnitName</tt> attributes, the attribute names
+match account attribute names that may be added to attribute to return list.
+The acount auditor data object class contains a an aggregate set of values that are assigned to the user.
+</p>
+<h2 class="sol">Using Resource Actions</h2>
+
+<p>The Oracle ERP adapter supports resource actions. To enable these actions,
+you must supply scripts written in Javascript or BeanShell. The adapter calls
+these scripts before or after performing the following provisioning actions:</p>
+
+<a name=""></a>
+<ul>
+<li>
+<p>
+
+<a href="http://docs.sun.com/app/docs/doc/820-6551/bzatv?a=view">create Before/After Action</a>
+</p>
+
+
+</li>
+<li>
+<p>
+<a href="http://docs.sun.com/app/docs/doc/820-6551/bzaty?a=view">update Before/After Action</a>
+</p>
+
+
+</li>
+<li>
+<p>
+<a href="http://docs.sun.com/app/docs/doc/820-6551/bzaub?a=view">delete Before/After Action</a>
+
+</p>
+
+
+</li>
+<li>
+<p>
+<a href="http://docs.sun.com/app/docs/doc/820-6551/bzaue?a=view">enable Before/After Action</a>
+</p>
+
+
+</li>
+<li>
+<p>
+<a href="http://docs.sun.com/app/docs/doc/820-6551/bzauh?a=view">disable Before/After Action</a>
+</p>
+
+
+</li>
+<li>
+<p>
+<a href="http://docs.sun.com/app/docs/doc/820-6551/bzauk?a=view">getUser After Action</a>
+</p>
+
+
+</li>
+</ul>
+
+<p>Every action script receives an <tt>actionContext</tt> map,
+as defined by the <tt>java.util.Map</tt> class. The possible map
+content varies for each action.</p>
+
+<p>Scripts should never close the JDBC Connection that is passed to them.
+The adapter automatically closes the connection at the appropriate time.</p>
+
+<p>See <a href="http://docs.sun.com/app/docs/doc/820-6551/bzbuc?a=view">Chapter&nbsp;50, Adding Actions to Resources</a> for
+more information about implementing resource actions. Example scripts are
+provided in <tt>$WSHOME/sample/OracleERPActions.xml</tt>.</p>
+
+<a name=""></a>
+<h3 class="sol">create Before/After Action</h3>
+
+<p>The <tt>actionContext</tt> map passed to the action contains
+the following entries:</p>
+
+<a name="bzatw"></a><a name=""></a>
+<table border="1" cellspacing="0" cellpadding="10" width="100%">
+<thead>
+<tr>
+<th scope="col" align="left" valign="top">
+<p>Key             &nbsp;</p>
+
+</th><th scope="col" align="left" valign="top">
+<p>Value Type                            &nbsp;</p>
+
+</th><th scope="col" align="left" valign="top">
+<p>Value Description                             &nbsp;</p>
+
+</th>
+</tr>
+
+</thead>
+<tbody>
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>conn</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.sql.Connection&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>JDBC connection to the customer&rsquo;s database&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>adapter</tt>
+
+</p>
+
+</td><td align="left" valign="top">
+<p>com.waveset.adapter.OracleERPResourceAdapter&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Adapter instance&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>action</tt>
+
+</p>
+
+</td><td align="left" valign="top">
+<p>java.lang.String&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>The <tt>createUser</tt> string</p>
+
+</td>
+</tr>
+
+<tr>
+
+<td align="left" valign="top">
+<p>
+<tt>timing</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.lang.String&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Must be <tt>before</tt> or <tt>after</tt>
+
+</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>id</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.lang.String&nbsp;</p>
+
+</td><td align="left" valign="top">
+
+<p>Account ID of the user to create&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>password</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.lang.String&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>If present, this value is the new user&rsquo;s decrypted password&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>attributes</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.util.Map&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Map of attributes to set for the new user.&nbsp;</p>
+<a name=""></a>
+<ul>
+<li>
+<p>The key identifies which attribute to set</p>
+
+
+</li>
+<li>
+<p>The value specifies the decrypted value to which the attribute
+should be set.</p>
+
+
+</li>
+</ul>
+
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>errors</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.util.List&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Initially, this value is an empty list.&nbsp;</p>
+<p>The script may add <tt>java.lang.String</tt> objects to this
+list if any errors are found during processing.</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>trace</tt>
+
+</p>
+
+</td><td align="left" valign="top">
+<p>com.sun.idm.logging.trace.Trace&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Object used to trace execution&nbsp;</p>
+<p>Scripts can use methods from this class to be &ldquo;debuggable&rdquo;
+in a customer environment.&nbsp;</p>
+
+</td>
+</tr>
+
+</tbody>
+</table>
+
+<p>
+</p>
+<p>
+</p>
+<a name="bzatx"></a>
+<h4 class="sol">Error Handling</h4>
+<p>Any throw from within the script is considered a failure.</p>
+
+<p>If the script encounters any errors, the script may also add appropriate
+strings to the <tt>errors</tt> key. The presence of any items in
+the <tt>errors</tt> List is considered a creation failure.</p>
+
+
+<a name=""></a>
+<h3 class="sol">update Before/After Action</h3>
+
+<p>The <tt>actionContext</tt> map passed to the action contains
+the following entries:</p>
+
+<a name="bzatz"></a><a name=""></a>
+<table border="1" cellspacing="0" cellpadding="10" width="100%">
+<thead>
+<tr>
+<th scope="col" align="left" valign="top">
+
+<p>Key               &nbsp;</p>
+
+</th><th scope="col" align="left" valign="top">
+<p>Value Type                            &nbsp;</p>
+
+</th><th scope="col" align="left" valign="top">
+<p>Value Description                             &nbsp;</p>
+
+</th>
+</tr>
+
+</thead>
+<tbody>
+<tr>
+
+<td align="left" valign="top">
+<p>
+<tt>conn</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.sql.Connection&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>JDBC connection to the database&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>adapter</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>com.wavset.adapter.OracleERPResourceAdapter&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Adapter instance&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>action</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.lang.String&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>The <tt>updateUser</tt> string</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>timing</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.lang.String&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Must be <tt>before</tt> or <tt>after</tt>
+
+</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>id&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>java.lang.String&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Account ID of the user to update.&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>password</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.lang.String&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>If present, this value is the decrypted value of the user&rsquo;s new
+password.&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>attributes</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.util.Map&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Map of attributes to set for the existing user.&nbsp;</p>
+
+<a name=""></a>
+<ul>
+<li>
+<p>The key identifies which attribute to set</p>
+
+
+</li>
+<li>
+<p>The value is a decrypted value to which the attribute should
+be set.</p>
+
+<p>A missing key means that the attribute is not being updated.</p>
+
+
+</li>
+
+</ul>
+
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>errors</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.util.List&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Initially, this value is an empty list.&nbsp;</p>
+<p>The script may add <tt>java.lang.String</tt> objects to this
+list if any errors are found during processing.</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>trace</tt>
+
+</p>
+
+</td><td align="left" valign="top">
+<p>com.sun.idm.logging.trace.Trace&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Object used to trace execution.&nbsp;</p>
+<p>Scripts can use the methods of this class to make themselves &ldquo;debuggable&rdquo;
+in a customer environment.&nbsp;</p>
+
+</td>
+</tr>
+
+</tbody>
+</table>
+
+<p>
+</p>
+<p>
+</p>
+<a name="bzaua"></a>
+<h4 class="sol">Error Handling</h4>
+<p>Any throw from within the script is considered a failure.</p>
+
+<p>If the script encounters any errors, the script may add the appropriate
+strings to the <tt>errors</tt> key. The presence of any items in
+the <tt>errors</tt> List is considered an update failure.</p>
+
+
+<a name=""></a>
+<h3 class="sol">delete Before/After Action</h3>
+
+<p>The <tt>actionContext</tt> map passed to the action contains
+the following entries:</p>
+
+<a name="bzauc"></a><a name=""></a>
+<table border="1" cellspacing="0" cellpadding="10" width="100%">
+<thead>
+<tr>
+<th scope="col" align="left" valign="top">
+
+<p>Key         &nbsp;</p>
+
+</th><th scope="col" align="left" valign="top">
+<p>Value Type                            &nbsp;</p>
+
+</th><th scope="col" align="left" valign="top">
+<p>Value Description                             &nbsp;</p>
+
+</th>
+</tr>
+
+</thead>
+<tbody>
+<tr>
+
+<td align="left" valign="top">
+<p>
+<tt>conn</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.sql.Connection&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>JDBC connection to the database&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>adapter</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>com.wavset.adapter.OracleERPResourceAdapter&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Adapter instance&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>action</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.lang.String&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>The <tt>deleteUser</tt> string</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>timing</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.lang.String&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Must be <tt>before</tt> or <tt>after</tt>
+
+</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>id</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.lang.String&nbsp;</p>
+
+</td><td align="left" valign="top">
+
+<p>Account ID of the user to delete&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>errors</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.util.List&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Initially, this value is an empty list.&nbsp;</p>
+<p>The script may add <tt>java.lang.String</tt> objects to this
+list if any errors are found during processing.</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>trace</tt>
+
+</p>
+
+</td><td align="left" valign="top">
+<p>com.sun.idm.logging.trace.Trace&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Object used to trace execution.&nbsp;</p>
+<p>Scripts can use the methods of this class to make themselves &ldquo;debuggable&rdquo;
+in a customer environment.&nbsp;</p>
+
+</td>
+</tr>
+
+</tbody>
+</table>
+
+<p>
+</p>
+<p>
+</p>
+<a name="bzaud"></a>
+<h4 class="sol">Error Handling</h4>
+<p>Any throw from within the script is considered a failure.</p>
+
+<p>If the script encounters any errors, the script may add appropriate
+strings to the <tt>errors</tt> key. The presence of any items in
+the <tt>errors</tt> List is considered a deletion failure.</p>
+
+
+<a name=""></a>
+<h3 class="sol">enable Before/After Action</h3>
+
+<p>The <tt>actionContext</tt> map passed to the action contains
+the following entries:</p>
+
+<a name="bzauf"></a><a name=""></a>
+<table border="1" cellspacing="0" cellpadding="10" width="100%">
+<thead>
+<tr>
+<th scope="col" align="left" valign="top">
+
+<p>Key              &nbsp;</p>
+
+</th><th scope="col" align="left" valign="top">
+<p>Value Type                            &nbsp;</p>
+
+</th><th scope="col" align="left" valign="top">
+<p>Value Description                             &nbsp;</p>
+
+</th>
+</tr>
+
+</thead>
+<tbody>
+<tr>
+
+<td align="left" valign="top">
+<p>conn&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>java.sql.Connection&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>JDBC connection to the database&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+
+<p>adapter&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>com.wavset.adapter.OracleERPResourceAdapter&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Adapter instance&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>action&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>java.lang.String&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>The <tt>enableUser</tt> string</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+
+<p>timing&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>java.lang.String&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Must be <tt>before</tt> or <tt>after</tt>
+</p>
+
+</td>
+
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>id&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>java.lang.String&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>User account ID to enable&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>errors&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>java.util.List&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Initially, this value is an empty list.&nbsp;</p>
+<p>The script may add <tt>java.lang.String</tt> objects to this
+list if any errors are found during processing.</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>trace&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>com.sun.idm.logging.trace.Trace&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Object used to trace execution.&nbsp;</p>
+<p>Scripts can use the methods of this class to make themselves &ldquo;debuggable&rdquo;
+
+in a customer environment.&nbsp;</p>
+
+</td>
+</tr>
+
+</tbody>
+</table>
+
+<p>
+</p>
+<p>
+</p>
+<a name="bzaug"></a>
+<h4 class="sol">Error Handling</h4>
+<p>Any throw from within the script is considered a failure.</p>
+
+<p>If the script encounters any errors, the script may add the appropriate
+strings to the <tt>errors</tt> key. The presence of any items in
+the <tt>errors</tt> List is considered a failure.</p>
+
+
+<a name=""></a>
+<h3 class="sol">disable Before/After Action</h3>
+
+<p>The <tt>actionContext</tt> map passed to the action contains
+the following entries:</p>
+
+<a name="bzaui"></a><a name=""></a>
+<table border="1" cellspacing="0" cellpadding="10" width="100%">
+<thead>
+<tr>
+<th scope="col" align="left" valign="top">
+<p>Key            &nbsp;</p>
+
+</th><th scope="col" align="left" valign="top">
+<p>Value Type                            &nbsp;</p>
+
+</th><th scope="col" align="left" valign="top">
+<p>Value Description                             &nbsp;</p>
+
+</th>
+</tr>
+
+</thead>
+<tbody>
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>conn</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.sql.Connection&nbsp;</p>
+
+</td><td align="left" valign="top">
+
+<p>JDBC connection to the database&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>adapter</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>com.wavset.adapter.OracleERPResourceAdapter&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Adapter instance&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>action</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.lang.String&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>The <tt>disableUser</tt> string</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>timing</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.lang.String&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Must be <tt>before</tt> or <tt>after</tt>
+</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>id</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.lang.String&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>User account ID to disable&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>errors</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.util.List&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Initially, this value is an empty list.&nbsp;</p>
+<p>The script may add <tt>java.lang.String</tt> objects to this
+list if any errors are found during processing.</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>trace</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>com.sun.idm.logging.trace.Trace&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Object used to trace execution.&nbsp;</p>
+
+<p>Scripts can use the methods of this class to make themselves &ldquo;debuggable&rdquo;
+in a customer environment.&nbsp;</p>
+
+</td>
+</tr>
+
+</tbody>
+</table>
+
+<p>
+</p>
+<p>
+</p>
+<a name="bzauj"></a>
+
+<h4 class="sol">Error Handling</h4>
+<p>Any throw from within the script is considered a failure.</p>
+
+<p>If the script encounters any errors, the script may add the appropriate
+strings to the <tt>errors</tt> key. The presence of any items in
+the <tt>errors</tt> List is considered a failure.</p>
+
+
+<a name=""></a>
+<h3 class="sol">getUser After Action</h3>
+
+<p>The getUser action is useful in situations where you need to retrieve
+additional custom account attributes from the database beyond those retrieved
+by the standard adapter. To enable this action, specify the name of this resource
+action by setting the resource parameter labeled GetUser After Action.</p>
+
+<p>The <tt>actionContext</tt> map passed to the action contains
+the following entries:</p>
+
+<a name="bzaul"></a><a name=""></a>
+<table border="1" cellspacing="0" cellpadding="10" width="100%">
+<thead>
+<tr>
+<th scope="col" align="left" valign="top">
+<p>Key                &nbsp;</p>
+
+</th><th scope="col" align="left" valign="top">
+<p>Value Type                            &nbsp;</p>
+
+</th><th scope="col" align="left" valign="top">
+<p>Value Description                             &nbsp;</p>
+
+</th>
+</tr>
+
+</thead>
+<tbody>
+<tr>
+<td align="left" valign="top">
+<p>
+
+<tt>conn</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.sql.Connection&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>JDBC connection to the database&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+
+<p>
+<tt>adapter</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>com.wavset.adapter.OracleERPResourceAdapter&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Adapter instance&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+
+<td align="left" valign="top">
+<p>
+<tt>action</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.lang.String&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>The <tt>getUser</tt> string</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>id</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.lang.String&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>The user account ID to fetch.&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>currentAttributes</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.util.Map&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Map of attributes to set for the existing user.&nbsp;</p>
+
+<a name=""></a>
+<ul>
+<li>
+<p>The key identifies which attribute to set</p>
+
+
+</li>
+<li>
+<p>The value is a decrypted value to which the attriute should
+be set.</p>
+
+
+</li>
+</ul>
+
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>changedAttributes</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>java.util.Map&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>This is passed in as empty map.&nbsp;</p>
+
+<p>The script can optionally populate this map in order to either:&nbsp;</p>
+<a name=""></a>
+<ul>
+<li>
+<p>Add new account attributes to Identity Manager&rsquo;s view of
+the user, or</p>
+
+
+</li>
+<li>
+<p>Change the value of account attributes in Identity Manager&rsquo;s
+user view</p>
+
+<p>The key is the name of the account attribute (as registered
+in the right-hand side of the schema map). The value is the desired value
+for the account attribute.</p>
+
+
+</li>
+</ul>
+
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>
+<tt>errors</tt>
+</p>
+
+</td><td align="left" valign="top">
+
+<p>java.util.List&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Initially this value is an empty list.&nbsp;</p>
+<p>The script may add <tt>java.lang.String</tt> objects to this
+list if any errors are found during processing.</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+
+<p>
+<tt>trace</tt>
+</p>
+
+</td><td align="left" valign="top">
+<p>com.sun.idm.logging.trace.Trace&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Object used to trace execution.&nbsp;</p>
+<p>Scripts can use the methods of this class to make themselves &ldquo;debuggable&rdquo;
+in a customer environment.&nbsp;</p>
+
+</td>
+</tr>
+
+</tbody>
+</table>
+
+<p>
+</p>
+<p>
+</p>
+<a name="bzaum"></a>
+<h4 class="sol">Error Handling</h4>
+<p>Any throw from within the script is considered a failure.</p>
+
+<p>If the script encounters any errors, it may add appropriate strings
+to the <tt>errors</tt> key. The presence of any items in the <tt>errors</tt> List is considered a fetch failure.</p>
+
+
+<a name=""></a>
+<h2 class="sol">Security Notes</h2>
+
+<p>This section provides information about <a name="indexterm-672"></a><a name="indexterm-673"></a>supported connections and privilege requirements.</p>
+
+<a name="bzauo"></a>
+<h3 class="sol">Supported Connections</h3>
+
+<p>Identity Manager can use one of the following drivers to communicate
+with the Oracle adapter:</p>
+
+<a name=""></a>
+<ul>
+<li>
+<p>JDBC thin driver</p>
+
+
+</li>
+<li>
+
+<p>JDBC OCI driver</p>
+
+
+</li>
+<li>
+<p>Third-party drivers</p>
+
+
+</li>
+</ul>
+
+<p>Since the Oracle Application stored procedures require unencrypted passwords
+to be passed to some of the stored procedures used for provisioning, you should
+implement encrypted communications between Identity Manager and the Oracle
+application resource.</p>
+
+<p>Please read the Oracle publication <b>Oracle Advanced Security
+Administrators Guide</b> and your JDBC driver&rsquo;s documentation
+to validate the level of support for encryption that your specific version
+of Oracle RDBMS and driver provides.</p>
+
+<a name="bzaup"></a>
+<h3 class="sol">Oracle EBS Permissions</h3>
+
+<a name="indexterm-674"></a>
+<p>Oracle E-Business Suite requires access to the following tables and
+stored procedures.</p>
+
+<hr>
+<b>Note &ndash; </b>
+<p>The administrator must be able to run the <tt>select</tt> command
+for all tables. In addition, the administrator must be able to update the <tt>apps.fnd_user</tt> table.</p>
+
+<hr>
+
+<a name="bzauq"></a><a name=""></a>
+<table border="1" cellspacing="0" cellpadding="10" width="100%">
+<thead>
+<tr>
+<th scope="col" align="left" valign="top">
+<p>Tables                            &nbsp;</p>
+
+</th><th scope="col" align="left" valign="top">
+<p>Stored Procedures                             &nbsp;</p>
+
+</th>
+</tr>
+
+</thead>
+<tbody>
+<tr>
+<td align="left" valign="top">
+<p>apps.ak_attributes&nbsp;</p>
+<p>apps.ak_attributes_tl&nbsp;</p>
+<p>apps.ak_web_user_sec_attr_values&nbsp;</p>
+<p>apps.fnd_application&nbsp;</p>
+<p>apps.fnd_application_tl&nbsp;</p>
+<p>apps.fnd_application_vl&nbsp;</p>
+
+<p>apps.fnd_profile&nbsp;</p>
+<p>apps.fnd_responsibility&nbsp;</p>
+<p>apps.fnd_responsibility_vl&nbsp;</p>
+<p>apps.fnd_security_groups&nbsp;</p>
+<p>apps.fnd_security_groups_tl&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>apps.app_exception.raise_exception&nbsp;</p>
+<p>apps.fnd_global.apps_initialize&nbsp;</p>
+<p>apps.fnd_global.user_id&nbsp;</p>
+
+<p>apps.fnd_message.get&nbsp;</p>
+<p>apps.fnd_message.get_token&nbsp;</p>
+<p>apps.fnd_message.set_name&nbsp;</p>
+<p>apps.fnd_message.set_token&nbsp;</p>
+<p>apps.fnd_profile.get&nbsp;</p>
+<p>apps.fnd_user_pkg.AddResp&nbsp;</p>
+<p>apps.fnd_user_pkg.CreateUser&nbsp;</p>
+<p>apps.fnd_user_pkg.DisableUser&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>apps.fnd_security_groups_vl&nbsp;</p>
+<p>apps.fnd_user&nbsp;</p>
+<p>apps.fnd_user_resp_groups&nbsp;</p>
+<p>apps.icx_parameters&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>apps.fnd_user_pkg.DelResp&nbsp;</p>
+
+<p>apps.fnd_user_pkg.UpdateUser&nbsp;</p>
+<p>apps.fnd_user_pkg.user_synch&nbsp;</p>
+<p>apps.fnd_user_pkg.validatelogin&nbsp;</p>
+<p>apps.fnd_user_resp_groups_api.assignment_exists&nbsp;</p>
+<p>apps.fnd_user_resp_groups_api.insert_assignment&nbsp;</p>
+<p>apps.fnd_user_resp_groups_api.update_assignment&nbsp;</p>
+<p>apps.fnd_web_sec.change_password&nbsp;</p>
+<p>apps.fnd_web_soc.create_user&nbsp;</p>
+<p>apps.fnd_web_sec.validation_login&nbsp;</p>
+
+<p>apps.icx_user_sec_attr_pub.create_user_sec_attr&nbsp;</p>
+<p>apps.icx_user_sec_attr_pub.delete_user_sec_attr&nbsp;</p>
+
+</td>
+</tr>
+
+</tbody>
+</table>
+
+<p>
+</p>
+<p>
+</p>
+<hr>
+<b>Note &ndash; </b>
+
+<p>The adapter might access additional tables and stored procedures.
+Refer to the Oracle E-business Suite documentation for additional information.</p>
+
+<hr>
+
+<p>Oracle states that the Oracle EBS system, including the <tt>fnd_user_pkg</tt> stored procedures, were designed to be used to administer the ORACLE
+EBS system as the APPS user. Oracle does NOT recommend creating an alternate
+administrative user. However, if you need to manage Oracle EBS with a user
+other than <tt>APPS</tt>, contact Oracle for guidance.</p>
+
+<p>The alternate administrative user must be granted the same access as
+the <tt>APPS</tt> user has to all Oracle data, including tables,
+views, and stored procedures.</p>
+
+<p>The user will also need synonyms set up so the user will have access
+to the tables that the <tt>APPS</tt> user has access to. If a different
+user is used and the appropriate grants and synonyms have not been created
+for the user, the following error might be encountered:</p>
+
+<a name=""></a>
+<pre>Error: ORA-00942: table or view does not exist</pre>
+
+<p>Add the appropriate grants and synonyms to correct the error. A sample <tt>SQL*Plus</tt> script is located in the following directory:</p>
+
+<a name=""></a>
+<pre>$WSHOME/sample/other/CreateLHERPAdminUser.oracle.</pre>
+
+<p>You can modify this script as necessary and use it to create an alternative
+Oracle EBS Admin user. Usage instructions are documented in the comments at
+the beginning of the script.</p>
+
+<p>For <a name="indexterm-675"></a>pass-through authentication only, authority
+is needed to run the following SQL command:</p>
+
+<a name=""></a>
+<pre>create or replace function wavesetValidateFunc1 (username IN varchar2,
+  password IN varchar2)
+RETURN varchar2 IS ret_val boolean;
+BEGIN ret_val := apps.FND_USER_PKG.ValidateLogin(username, password);
+IF ret_val = TRUE THEN RETURN &rsquo;valid&rsquo;;
+ELSE RETURN NULL;
+END IF;
+END wavesetValidateFunc1;</pre>
+
+<a name="bzaur"></a>
+<h2 class="sol">Provisioning Notes</h2>
+
+<p>The following table summarizes the provisioning capabilities of this
+adapter. The adapter does not issue any direct table updates during any supported
+provisioning operation.</p>
+
+<a name="bzaus"></a><a name=""></a>
+<table border="1" cellspacing="0" cellpadding="10" width="100%">
+<thead>
+<tr>
+<th scope="col" align="left" valign="top">
+<p>Feature                         &nbsp;</p>
+
+</th><th scope="col" align="left" valign="top">
+<p>Supported?                         &nbsp;</p>
+
+</th>
+</tr>
+
+</thead>
+<tbody>
+<tr>
+<td align="left" valign="top">
+<p>Create a user.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Yes&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>Set start and end dates.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Yes&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>Set password access limits.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Yes&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>Set password lifespan time limit.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Yes&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>Change or reset password.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Yes.&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+
+<p>Set Employee ID (HRMS link) for a user record.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Yes&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>Set the Email and Fax attributes of a user account.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Yes&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>Set the Customer ID or Supplier ID for a user record.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Yes&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+
+<td align="left" valign="top">
+<p>Assign one or more direct responsibilities to a user.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Yes&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>Assign Securing Attributes to a User account.&nbsp;</p>
+
+</td><td align="left" valign="top">
+
+<p>Yes&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>Remove or edit Assigned Responsibilities for a User.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Yes.&nbsp;</p>
+<p>Note: Responsibilities are end-dated (disabled), rather than deleted.&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>Disable an account.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Yes&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+
+<p>Re-enable an account.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Yes&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>Delete an account.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Yes. The account is end-dated (disabled).&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>Pass-through authentication.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Yes&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+
+<td align="left" valign="top">
+<p>Data Loading Methods: Reconcile ,Extract to File, Load from Resource,
+Load from file.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Reconciliation&nbsp;</p>
+<p>Load from resource&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>Provision to FND_USER table.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Yes&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>Provision to Oracle HRMS.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>No&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>Link FND_USER record to Oracle HRMS on create.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Yes&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+
+<p>Manage menu definitions or individual responsibilities.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>No&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>Assign indirect responsibilities.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>No. Indirect responsibilities can be read, but not assigned.&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>Set User Session Limits (ICX:Session Timeout , ICX:Limit Time, ICX:
+Limit Connects).&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>No&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+
+<td align="left" valign="top">
+<p>RBAC objects and assignments.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>No&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>Use grants of permission sets on specific data objects, data objects
+instances, or instance sets.&nbsp;</p>
+
+</td><td align="left" valign="top">
+
+<p>No&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>Before/After actions.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>Yes&nbsp;</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="left" valign="top">
+<p>Rename accounts.&nbsp;</p>
+
+</td><td align="left" valign="top">
+<p>No&nbsp;</p>
+
+</td>
+</tr>
+
+</tbody>
+</table>
+
+
+
+<h3>Bundle Information</h3>
+<ul>
+	<li><b>Latest stable release:</b> <a
+		href="/downloads.html#Bundles">1.0.5408</a></li>
+	<li><b>Platform:</b> Java</li>
+	<li><b>3rd-party libraries required: ojdbc14.jar</b></li>
+	<li><b>Other dependencies:</b></li>
+	<li><b>Release notes:</b>
+	<ul>
+        <li><b>The Oracle ERP connector can be configured using datasource.</b></li><p>
+        When a datasource is configured, then the url, host, port, database, user and a password is not required.</p>
+
+        <li><b>The Oracle ERP connector can be configured using full url with thing jdbc driver syntax.</b></li><p>
+        When a url is configured, then the host, port and a database is not required.</p>
+
+        <li><b>The default configuration</b></li><p>
+        require mandatory host, port, database, user and a password to be specified<p>
+
+        <li><b>Oracle Real Application Clusters</b></li><p> If you are connecting to Oracle Real Application Clusters (RAC) using a thin driver, specify a
+             value in the following format in the Connection URL on the Resource parameters page:
+             <code>
+                   jdbc:oracle:thin:@(DESCRIPTION=(LOAD_BALANCE=on)
+                   (ADDRESS=(PROTOCOL=TCP)(HOST=host01)(PORT=1521))
+                   (ADDRESS=(PROTOCOL=TCP)(HOST=host02)(PORT=1521))
+                   (ADDRESS=(PROTOCOL=TCP)(HOST=host03)(PORT=1521))
+                   (CONNECT_DATA=(SERVICE_NAME=PROD)))
+             </code>
+        </p>
+	</li>
+</ul>
+<h3>Version Information</h3>
+<table border="1">
+	<tr>
+		<th>Connector Version</th>
+		<th>Framework Version</th>
+		<th>Supported Resource Version(s)</th>
+	</tr>
+	<tr>
+		<td><a href="/downloads.html#Bundles">1.0</a></td>
+		<td><a href="/downloads.html#Framework">1.0</a></td>
+		<td>
+		<ul>
+			<li>MySQL 6.0 - Alpha</li>
+			<li>MySQL 5.1 - GA release</li>
+			<li>MySQL 5.0 - GA release</li>
+			<li>MySQL 4.1 - GA release</li>
+		</ul>
+		</td>
+	</tr>
+	<!-- add later versions here -->
+</table>
+<p><b>Note:</b> The "Framework Version" listed is the <b><i>minimum</i></b>
+required framework version for that version of the connector. Newer
+framework versions are backwards compatible and will support previous
+connectors.</p>
+<h3>Configuration Properties</h3>
+
+<ul>
+	<li>Required:
+	<ul>
+		<li><b>user</b> The user capable to do admin operations on the
+		resource.</li>
+		<li><b>password</b> The admin user password.</li>
+		<li><b>usermoel</b> The template user to create new users from.</li>
+	</ul>
+	</li>
+	<li>Option "jdbc driver":
+	<ul>
+		<li><b>driver</b> The driver class name</li>
+		<li><b>host</b> The databse host name</li>
+		<li><b>port</b> The datasource port</li>
+	</ul>
+	</li>
+	<li>Option "datasource":
+	<ul>
+		<li><b>datasource</b>Datasource for use in server environment</li>
+		<li><b>jndiProperties</b>The properties in server environment</li>
+	</ul>
+	</li>
+</ul>
+
+<h3>Schema and Supported Features</h3>
+<ul>
+	<li>Object Classes supported:
+	<ul>
+		<li><b>Account</b></li>
+	</ul>
+	</li>
+	<li>Operations supported:
+	<ul>
+		<li><b>Authenticate</b></li>
+		<li><b>Create</b></li>
+		<li><b>Delete</b></li>
+		<li><b>Update</b></li>
+		<li><b>Search</b></li>
+		<li><b>Schema</b></li>
+		<li><b>Test</b></li>
+	</ul>
+	</li>
+</ul>
+<h3>Documentation and Source Code</h3>
+<p>The javadoc for this bundle is included in the zip file when you
+download the connector. The source code can be found under the <a
+	href="https://identityconnectors.dev.java.net/source/browse/identityconnectors/">Subversion</a>
+section of this website.</p>
+</div>
+</html>
