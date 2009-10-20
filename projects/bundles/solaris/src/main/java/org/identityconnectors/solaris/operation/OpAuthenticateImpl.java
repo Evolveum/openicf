@@ -57,18 +57,6 @@ public class OpAuthenticateImpl extends AbstractOp {
         SolarisUtil.controlObjectClassValidity(objectClass, acceptOC, getClass());
         _log.info("authenticate (user: '{0}')", username);
         
-        /* init */
-        // add error matchers
-        MatchBuilder builder = new MatchBuilder();
-        List<ConnectorExceptionClosure> cecList = new ArrayList<ConnectorExceptionClosure>();
-        for (String rej : rejects) {
-            ConnectorExceptionClosure cec = ClosureFactory.newConnectorException();
-            cecList.add(cec);
-            builder.addRegExpMatch(rej, cec);
-        }
-        // add normal feedback matcher
-        builder.addRegExpMatch(MSG, ClosureFactory.newCaptureClosure());
-        
         try {
             getConnection().send("exec login " + username + " TERM=vt00");
             getConnection().waitForCaseInsensitive("assword:");

@@ -89,8 +89,8 @@ public class SolarisConnectionTest {
     @Test @Ignore
     public void testErrorReplyScenarioWithTimeout() {
         config = SolarisTestCommon.createConfiguration();
-        config.setPort(23);
-        config.setConnectionType("telnet");
+//        config.setPort(23);
+//        config.setConnectionType("telnet");
         SolarisConnection conn = new SolarisConnection(config);
         Set<String> rejects = new HashSet<String>();
         final String ERROR_MARKER = "ERROR";
