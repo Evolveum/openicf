@@ -72,11 +72,10 @@ public class OpCreateImpl extends AbstractOp {
         final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(name.getNameValue(), attrs);
         final GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
         
-        if (isNis()) {
+        if (SolarisUtil.isNis(getConnection())) {
             invokeNISCreate(entry, password);
         } else {
             invokeNativeCreate(entry, password);
-          
         }
         
         return new Uid(accountId);
@@ -94,9 +93,18 @@ public class OpCreateImpl extends AbstractOp {
             invokeNativeCreate(entry, password);
             
             // The user has to be added to the NIS database
+            /*
+             * START SUDO
+             */
             getConnection().doSudoStart();
-            OpCreateNISImpl.addNISMake("passwd", getConnection());
-            getConnection().doSudoReset();
+            try {
+                OpCreateNISImpl.addNISMake("passwd", getConnection());
+            } finally {
+                /*
+                 * END SUDO
+                 */
+                getConnection().doSudoReset();
+            }
         } else {
             OpCreateNISImpl.performNIS(pwdDir, entry, getConnection());
         }
@@ -156,18 +164,5 @@ public class OpCreateImpl extends AbstractOp {
         PasswdCommand.configureUserPassword(entry, password, getConnection());
         
         PasswdCommand.configurePasswordProperties(entry, getConnection());
-    }
-    
-    /*
-     * ******************* AUXILIARY METHODS ***********************
-     */
-
-    private boolean isNis() {
-        final String sysDB = getConnection().getConfiguration().getSysDbType();
-        boolean sysDbType = false;
-        if ((sysDB != null) && sysDB.equalsIgnoreCase("nis")) {
-            sysDbType = true;
-        }
-        return sysDbType;
     }
 }
