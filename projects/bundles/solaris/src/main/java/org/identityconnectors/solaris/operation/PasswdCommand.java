@@ -61,7 +61,7 @@ class PasswdCommand extends CommandSwitches {
     public static void configureUserPassword(SolarisEntry entry, GuardedString password, SolarisConnection conn) {
         try {
             String command = conn.buildCommand("passwd -r files", entry.getName());
-            String out = conn.executeCommand(command, passwdRejects, CollectionUtil.newSet(NEW_PASSWORD_MATCH));
+            conn.executeCommand(command, passwdRejects, CollectionUtil.newSet(NEW_PASSWORD_MATCH));
 
             SolarisUtil.sendPassword(password, Collections.<String>emptySet(), conn);
 

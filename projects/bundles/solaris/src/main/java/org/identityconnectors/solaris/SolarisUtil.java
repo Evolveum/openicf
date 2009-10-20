@@ -35,11 +35,8 @@ import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.solaris.attr.AccountAttribute;
-import org.identityconnectors.solaris.command.MatchBuilder;
 import org.identityconnectors.solaris.operation.AbstractOp;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
-
-import expect4j.matches.Match;
 
 
 /** helper class for Solaris specific operations */
