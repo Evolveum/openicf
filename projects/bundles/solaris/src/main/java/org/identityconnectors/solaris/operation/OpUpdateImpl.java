@@ -66,18 +66,13 @@ public class OpUpdateImpl extends AbstractOp {
 
         // Read only list of attributes
         final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(replaceAttributes));
-
-        /*
-         * START SUDO
-         */
-        getConnection().doSudoStart();
-        try {
-            updateImpl(uid, replaceAttributes, attrMap);
-        } finally {
-            /*
-             * SUDO STOP
-             */
-            getConnection().doSudoReset();
+        final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(uid.getUidValue(), replaceAttributes);
+        final GuardedString passwd = SolarisUtil.getPasswordFromMap(attrMap);
+        
+        if (SolarisUtil.isNis(getConnection())) {
+            invokeNISUpdate(entry, passwd);
+        } else {
+            invokeNativeUpdate(entry, passwd);
         }
 
         _log.info("update successful ('{0}', name: '{1}')",
@@ -88,15 +83,45 @@ public class OpUpdateImpl extends AbstractOp {
         return newUid;
     }
 
-    private void updateImpl(Uid uid, Set<Attribute> replaceAttributes,
-            final Map<String, Attribute> attrMap) {
+    /**
+     * NIS Update implementation.
+     * 
+     * Compare with Native update operation: {@see OpUpdateImpl#invokeNativeUpdate(SolarisEntry, GuardedString)}
+     */
+    private void invokeNISUpdate(final SolarisEntry entry,
+            final GuardedString passwd) {
+        
+    }
+    
+    /**
+     * implementation of the Native Update operation.
+     * 
+     * Compare with other NIS implementation: {@see OpUpdateImpl#invokeNISUpdate(SolarisEntry, GuardedString)} 
+     */
+    private void invokeNativeUpdate(final SolarisEntry entry,
+            final GuardedString passwd) {
+        /*
+         * START SUDO
+         */
+        getConnection().doSudoStart();
+        try {
+            updateImpl(entry, passwd );
+        } finally {
+            /*
+             * SUDO STOP
+             */
+            getConnection().doSudoReset();
+        }
+    }
+
+    private void updateImpl(SolarisEntry entry, GuardedString passwd) {
         /*
          * First acquire the "mutex" for uid creation
          */
         getConnection().executeMutexAcquireScript();
         
         // UPDATE OF ALL ATTRIBUTES EXCEPT PASSWORD
-        final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(uid.getUidValue(), replaceAttributes);
+        
         try {
             UpdateCommand.updateUser(entry, getConnection());
         } finally {
@@ -107,7 +132,6 @@ public class OpUpdateImpl extends AbstractOp {
         }
        
         // PASSWORD UPDATE
-        GuardedString passwd = SolarisUtil.getPasswordFromMap(attrMap);
         if (passwd != null) {
             PasswdCommand.configureUserPassword(entry, passwd, getConnection());
         }

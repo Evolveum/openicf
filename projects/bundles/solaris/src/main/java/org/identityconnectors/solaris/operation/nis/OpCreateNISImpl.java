@@ -43,7 +43,6 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 public class OpCreateNISImpl {
     private static final Log _log = Log.getLog(OpCreateNISImpl.class);
-    public static final String DEFAULT_NISPWDDIR = "/etc";
     
     private final static Set<String> chshRejects = CollectionUtil.newSet("password:", "passwd:");
     
@@ -111,7 +110,7 @@ public class OpCreateNISImpl {
         return nisDir;
     }
 
-    public static void performNIS(String pwdDir, SolarisEntry entry, SolarisConnection connection) {
+    public static void performNIS(SolarisEntry entry, SolarisConnection connection) {
 
         final SolarisConfiguration config = connection.getConfiguration();
         
@@ -123,6 +122,7 @@ public class OpCreateNISImpl {
         String gecos = null;
         String homedir = null;
 
+        final String pwdDir = CommonNIS.getNisPwdDir(connection);
         String pwdfile = pwdDir + "/passwd";
         String shadowfile = pwdDir + "/shadow";
         String salt = "";
@@ -442,7 +442,7 @@ public class OpCreateNISImpl {
         final String passwordCleanup = "unset INVALID_SHELL_ERRMSG; INVALID_SHELL_ERRMSG=`grep \"" + INVALID_SHELL + "\" " + tmpPwdfile3 + "`;";
         connection.executeCommand(passwordCleanup);
 
-        final String pwddir = getNisPwdDir(connection);
+        final String pwddir = CommonNIS.getNisPwdDir(connection);
         final String pwdFile = pwddir + "/passwd";
         final String shadowFile = pwddir + "/shadow";
         final String removeTmpFilesScript = getRemovePwdTmpFiles(connection);
@@ -561,13 +561,5 @@ public class OpCreateNISImpl {
             "fi";
 
         return removePwdTmpFiles;
-    }
-    
-    public static String getNisPwdDir(SolarisConnection connection) {
-        String pwdDir = connection.getConfiguration().getNisPwdDir();
-        if ((pwdDir == null) || (pwdDir.length() == 0)) {
-            pwdDir = DEFAULT_NISPWDDIR;
-        }
-        return pwdDir;
     }
 }
