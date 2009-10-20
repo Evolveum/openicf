@@ -423,23 +423,48 @@ namespace Org.IdentityConnectors.Framework.Api.Operations
 
     }
 
+    /// <summary>
+    /// Validates the <see cref="Org.IdentityConnectors.Framework.Api.APIConfiguration"/>.
+    /// <para>
+    /// A valid configuration is one that is ready to be used by the connector:
+    /// it is complete (all the required properties have been given values) 
+    /// and the property values are well-formed (are in the expected range, 
+    /// have the expected format, etc.)
+    /// </para>
     public interface ValidateApiOp : APIOperation
     {
         /// <summary>
-        /// Tests connectivity and validity of the <see cref="Org.IdentityConnectors.Framework.Spi.Configuration" />.
+        /// Validates the <see cref="Org.IdentityConnectors.Framework.Api.APIConfiguration"/>.
         /// </summary>
-        /// <exception cref="Exception">iff the <see cref="Org.IdentityConnectors.Framework.Spi.Configuration" /> is not valid or a
-        /// <see cref="Connection" /> to the resource could not be established.</exception>
+        /// <exception cref="System.Exception">iff the configuration is not valid.</exception>
         void Validate();
     }
 
+    /// <summary>
+    /// Tests the <see cref="Org.IdentityConnectors.Framework.Api.APIConfiguration"/> with the connector.
+    /// <para>
+    /// Unlike validation performed by <see cref="M:Org.IdentityConnectors.Framework.Api.Operations.ValidateApiOp.Validate"/>, testing a configuration should
+    /// check that any pieces of environment referred by the configuration are available.
+    /// For example the connector could make a physical connection to a host specified
+    /// in the configuration to check that it exists and that the credentials
+    /// specified in the configuration are usable.
+    /// </para>
+    /// <para>
+    /// Since this operation may connect to the resource, it may be slow. Clients are
+    /// advised not to invoke this operation often, such as before every provisioning operation.
+    /// This operation is <strong>not</strong> intended to check that the connector is alive
+    /// (its physical connection to the resource has not timed out).
+    /// </para>
+    /// <para>
+    /// This operation may be invoked before the configuration has been validated.
+    /// </para>
+    /// </summary>
     public interface TestApiOp : APIOperation
     {
         /// <summary>
-        /// Tests connectivity and validity of the <see cref="Org.IdentityConnectors.Framework.Spi.Configuration" />.
+        /// Tests the current <see cref="Org.IdentityConnectors.Framework.Api.APIConfiguration"/> with the connector.
         /// </summary>
-        /// <exception cref="Exception">iff the <see cref="Org.IdentityConnectors.Framework.Spi.Configuration" /> is not valid or a
-        /// <see cref="Connection" /> to the resource could not be established.</exception>
+        /// <exception cref="System.Exception">iff the configuration is not valid or the test failed.</exception>
         void Test();
     }
 }

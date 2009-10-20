@@ -458,13 +458,28 @@ namespace Org.IdentityConnectors.Framework.Spi.Operations
                 OperationOptions options);
     }
 
+    /// <summary>
+    /// Tests the connector <see cref="Configuration"/>.
+    /// <para>
+    /// Unlike validation performed by <see cref="M:Configuration:Validate"/>, testing a configuration
+    /// checks that any pieces of environment referred by the configuration are available.
+    /// For example, the connector could make a physical connection to a host specified
+    /// in the configuration to check that it exists and that the credentials
+    /// specified in the configuration are usable.
+    /// </para>
+    /// <para>
+    /// This operation may be invoked before the configuration has been validated.
+    /// An implementation is free to validate the configuration before testing it.
+    /// </para>
     public interface TestOp : SPIOperation
     {
         /// <summary>
-        /// Tests connectivity and validity of the <see cref="Org.IdentityConnectors.Framework.Spi.Configuration" />.
-        /// </summary>
-        /// <exception cref="Exception">iff the <see cref="Org.IdentityConnectors.Framework.Spi.Configuration" /> is not valid or a
-        /// <see cref="Connection" /> to the resource could not be established.</exception>
+        /// Tests the <see cref="Configuration"/> with the connector.
+        /// </summay>
+        /// <exception cref="System.Exception">iff the configuration is not valid or the test failed. Implementations
+        /// are encouraged to throw the most specific exception available.
+        /// When no specific exception is available, implementations can throw
+        /// <see cref="Org.IdentityConnectors.Framework.Common.Exceptions.ConnectorException"/>.</exception>
         void Test();
     }
 

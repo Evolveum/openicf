@@ -92,17 +92,56 @@ namespace Org.IdentityConnectors.Framework.Spi
     #endregion
 
     #region Configuration
-    ///<summary>
-    /// Configuration information for the Connector.
-    ///</summary>
+    /// <summary>
+    /// Encapsulates the configuration of a connector.
+    /// <para>
+    /// Implementations of the <code>Configuration</code> interface must have a default
+    /// constructor. All properties are considered configuration for the connector.
+    /// The initial value of the property is
+    /// considered the default value of the property. The types of the properties
+    /// can be only those returned by <see cref="M:Org.IdentityConnectors.Framework.Common.FrameworkUtil.GetAllSupportedConfigTypes"/> and
+    /// multi-dimensional arrays thereof. The properties are not required by default,
+    /// but a property can be marked as required through use of the <see cref="ConfigurationPropertyAttribute"/>.
+    /// </para>
+    /// <para>  
+    /// Each property corresponds to two entries in a resource named <code>Messages</code>:
+    /// <code>[Property].display</code> and <code>[Property].help</code>. For example,
+    /// <code>hostname.help</code> and <code>hostname.display</code> would be the keys
+    /// corresponding to a <code>hostname</code> property. The <code>display</code> message is the display
+    /// name of the property and can be used to display the property in a view. The <code>help</code>
+    /// message holds the description of the property. The names of the two keys can be overridden
+    /// through the <code>ConfigurationProperty</code> annotation.
+    /// <para>
+    /// </summary>
     public interface Configuration
     {
-
+        /// <summary>
+        /// Gets or sets the {@link ConnectorMessages message catalog} instance that allows the Connector
+        /// to localize messages. The setter is called before any bean property setter,
+        /// the <see cref="M:Validate"/> method or this property getter.
+        /// </summary>
         ConnectorMessages ConnectorMessages { get; set; }
 
         /// <summary>
-        /// Determine if the configuration is valid based on the values set.
+        /// Determines if the configuration is valid.
+        /// <para>
+        /// A valid configuration is one that is ready to be used by the connector:
+        /// it is complete (all the required properties have been given values) 
+        /// and the property values are well-formed (are in the expected range, 
+        /// have the expected format, etc.)
+        /// </para>
+        /// <para>
+        /// Implementations of this method <strong>should not</strong> connect to the resource
+        /// in an attempt to validate the configuration. For example, implementations
+        /// should not attempt to check that a host of the specified name exists
+        /// by making a connection to it. Such checks can be performed in the implementation
+        /// of the <see cref="M:Org.IdentityConnectors.Framework.Spi.Operations.TestOp.Test"/> method.
+        /// </para>
         /// </summary>
+        /// <exception cref="System.Exception">iff the configuration is not valid. Implementations
+        /// are encouraged to throw the most specific exception available.
+        /// When no specific exception is available, implementations can throw
+        /// <see cref="Org.IdentityConnectors.Framework.Common.Exceptions.ConfigurationException"/>.</exception>
         void Validate();
     }
     #endregion
@@ -275,9 +314,26 @@ namespace Org.IdentityConnectors.Framework.Spi
     public interface PoolableConnector : Connector
     {
         /// <summary>
-        /// Checks to see if the connector is still alive.
-        /// </summary>
-        /// <exception cref="Exception">If no longer alive.</exception>
+        /// Checks if the connector is still alive.
+        /// <para>
+        /// A connector can spend a large amount of time in the pool before
+        /// being used. This method is intended to check if the connector is
+        /// alive and operations can be invoked on it (for instance, an implementation
+        /// would check that the connector's physical connection to the resource
+        /// has not timed out).
+        /// </para>
+        /// <para>
+        /// The major difference between this method and <see cref="M:TestOp.Test"/> is that
+        /// this method must do only the minimum that is necessary to check that the
+        /// connector is still alive. <code>TestOp.Test()</code> does a more thorough
+        /// check of the environment specified in the Configuration, and can therefore
+        /// be much slower.
+        /// </para>
+        /// <para>
+        /// This method can be called often. Implementations should do their
+        /// best to keep this method fast.
+        /// </para>
+        /// <exception cref="System.Exception">if the connector is no longer alive.</exception>
         void CheckAlive();
     }
     #endregion
