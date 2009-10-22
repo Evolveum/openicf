@@ -22,7 +22,7 @@
  */
 package org.identityconnectors.oracleerp;
 
-import static org.identityconnectors.oracleerp.OracleERPUtil.OWNER;
+import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 import static org.junit.Assert.*;
 
 import java.util.HashSet;
@@ -88,7 +88,7 @@ public class AccountOperationUpdateTests extends OracleERPTestsBase {
     public void testUpdateDeleteCreatedRespNameIssue() {
         final OracleERPConnector c = getConnector(CONFIG_SYSADM);
         
-        final Set<Attribute> create = getAttributeSet(ACCOUNT_MODIFY_ATTRS);
+        final Set<Attribute> create = getAttributeSet(ACCOUNT_ALL_ATTRS);
         replaceNameByRandom(create);
         Uid uid = c.create(ObjectClass.ACCOUNT, create, null);
         assertNotNull(uid);
@@ -99,12 +99,16 @@ public class AccountOperationUpdateTests extends OracleERPTestsBase {
         
         ConnectorObject co = results.get(0);
         Set<Attribute> returned = co.getAttributes();
-        
-        // Date text representations are not the same, skiped due to extra test
-        testAttrSet(create, returned, OperationalAttributes.PASSWORD_NAME, OWNER);
                 
         final Set<Attribute> update = getAttributeSet(ACCOUNT_ALL_ATTRS);
         replaceNameByValue(update, uid.getUidValue());
+        
+        //remove old directResponsibility
+        final Attribute directResp = AttributeUtil.find(DIRECT_RESPS, update);
+        update.remove(directResp);
+        //add empty responsibility
+        final Attribute emptyResp = AttributeBuilder.build(DIRECT_RESPS);
+        update.add(emptyResp);
         uid = c.update(ObjectClass.ACCOUNT, uid, update, null);
         assertNotNull(uid);
         
@@ -114,52 +118,21 @@ public class AccountOperationUpdateTests extends OracleERPTestsBase {
         co = results.get(0);
         returned = co.getAttributes();
         
-        // Date text representations are not the same, skiped due to extra test
-        testAttrSet(update, returned, OperationalAttributes.PASSWORD_NAME, OWNER);
+        //remove empty responsibility
+        update.remove(emptyResp);
+        final Attribute newResp = AttributeBuilder.build(DIRECT_RESPS, "Cash Forecasting||Cash Management||Standard||"+getCDS()+"||"+getCDS());
+        //add end-dated responsibility, product of calling remove responsibility 
+        update.add(newResp);
+        testAttrSet(update, returned, OperationalAttributes.PASSWORD_NAME, OWNER, OperationalAttributes.PASSWORD_EXPIRED_NAME);
     }
-    
-    
     /**
-     * Test method .
+     * Create string repre of the current date string
+     * @return the date String
      */
-    @Test
-    public void testUpdateDeleteAllCreatedRespNameIssue() {
-        final OracleERPConnector c = getConnector(CONFIG_SYSADM);
-        
-        final Set<Attribute> create = getAttributeSet(ACCOUNT_MODIFY_ATTRS);
-        replaceNameByRandom(create);
-        Uid uid = c.create(ObjectClass.ACCOUNT, create, null);
-        assertNotNull(uid);
-        
-        List<ConnectorObject> results = TestHelpers
-        .searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid));
-        assertTrue("expect 1 connector object", results.size() == 1);
-        
-        ConnectorObject co = results.get(0);
-        Set<Attribute> returned = co.getAttributes();
-        
-        // Date text representations are not the same, skiped due to extra test
-        testAttrSet(create, returned, OperationalAttributes.PASSWORD_NAME, OWNER);
-                
-        final Set<Attribute> update = getAttributeSet(ACCOUNT_MODIFY_ATTRS);
-        final Attribute respNames = AttributeUtil.find(OracleERPUtil.DIRECT_RESPS, update);
-        update.remove(respNames);
-        update.add(AttributeBuilder.build(OracleERPUtil.DIRECT_RESPS)); //empty resp
-        
-        replaceNameByValue(update, uid.getUidValue());
-        uid = c.update(ObjectClass.ACCOUNT, uid, update, null);
-        assertNotNull(uid);
-        
-        results = TestHelpers.searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid));
-        assertTrue("expect 1 connector object", results.size() == 1);
-        
-        co = results.get(0);
-        returned = co.getAttributes();
-        
-        // Date text representations are not the same, skiped due to extra test
-        testAttrSet(update, returned, OperationalAttributes.PASSWORD_NAME, OWNER);
+    private String getCDS() {
+        return new java.sql.Timestamp(System.currentTimeMillis()).toString().substring(0, 10);
     }
-    
+     
     /**
      * Test method .
      */
