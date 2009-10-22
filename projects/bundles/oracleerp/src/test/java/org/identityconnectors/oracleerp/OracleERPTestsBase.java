@@ -288,7 +288,7 @@ abstract public class OracleERPTestsBase {
                 }
             }
         }
-        assertEquals("missing attriburtes " + mis, 0, mis.size());
+        assertEquals("missing attriburtes " + mis, mis.size(), 0);
         assertEquals("extra attriburtes " + ext, 0, ext.size());
         log.info("expected attributes are equal to current");
     }

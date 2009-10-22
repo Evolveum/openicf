@@ -88,19 +88,19 @@ account{
     all.__PASSWORD_EXPIRED__=false
     all.password_date=stringDate(0)
     
-    all.password_accesses_left=56
-    all.password_lifespan_accesses=5
-    all.password_lifespan_days=30
+    all.password_accesses_left="56"
+    all.password_lifespan_accesses="5"
+    all.password_lifespan_days="30"
     
-    //all.employee_id=5
-    all.employee_number=5
+    all.employee_number="5"
     all.person_fullname="Monster, Cookie"
-    //all.npw_number=4
     all.email_address="person@somewhere.com"
     all.fax="555-555-5555"
+    //all.employee_id=5
+    //all.npw_number=4
     //all.customer_id=11223344
     //all.supplier_id=102
-    all.person_party_id=new BigDecimal(3044)
+    //all.person_party_id="3044"
     
     all.directResponsibilities="Cash Forecasting||Cash Management||Standard||2004-04-12||null"
     all.responsibilityKeys="Cash Forecasting||Cash Management||Standard"
@@ -110,7 +110,7 @@ account{
     modify.__PASSWORD__= new GuardedString("modpasswd".toCharArray())
     modify.email_address="person1@somewhere.com"
     modify.fax="666-666-6666"
-    modify.directResponsibilities=["Cash Forecasting||Cash Management||Standard||2004-04-12||2010-01-01","Purchasing Receiver||Purchasing||Standard||2004-04-12||null"]
+    modify.directResponsibilities=["Cash Forecasting||Cash Management||Standard||2004-04-12||null","Purchasing Receiver||Purchasing||Standard||2004-04-12||null"]
     modify.password_accesses_left=58
     modify.password_lifespan_accesses=6
     modify.password_lifespan_days=31

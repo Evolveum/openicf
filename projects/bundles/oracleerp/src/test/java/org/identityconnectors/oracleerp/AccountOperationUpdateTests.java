@@ -85,7 +85,52 @@ public class AccountOperationUpdateTests extends OracleERPTestsBase {
      * Test method .
      */
     @Test
-    public void testUpdateDeleteCreatedRespNameIssue() {
+    public void testUpdateALL() {
+        final OracleERPConnector c = getConnector(CONFIG_SYSADM);
+        
+        final Set<Attribute> create = getAttributeSet(ACCOUNT_MODIFY_ATTRS);
+        replaceNameByRandom(create);
+        Uid uid = c.create(ObjectClass.ACCOUNT, create, null);
+        assertNotNull(uid);
+        
+        List<ConnectorObject> results = TestHelpers
+        .searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid));
+        assertTrue("expect 1 connector object", results.size() == 1);
+        
+        ConnectorObject co = results.get(0);
+        Set<Attribute> returned = co.getAttributes();
+        
+        // Date text representations are not the same, skiped due to extra test
+        testAttrSet(create, returned, OperationalAttributes.PASSWORD_NAME, OWNER);
+                
+        final Set<Attribute> update = getAttributeSet(ACCOUNT_ALL_ATTRS);
+        replaceNameByValue(update, uid.getUidValue());
+        uid = c.update(ObjectClass.ACCOUNT, uid, update, null);
+        assertNotNull(uid);
+        
+        results = TestHelpers.searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid));
+        assertTrue("expect 1 connector object", results.size() == 1);
+        
+        co = results.get(0);
+        returned = co.getAttributes();
+        
+        //remove old directResponsibility
+        final Attribute directResp = AttributeUtil.find(DIRECT_RESPS, update);
+        update.remove(directResp);
+
+        final Attribute newResp = AttributeBuilder.build(DIRECT_RESPS, 
+                "Cash Forecasting||Cash Management||Standard||2004-04-12||null" ,
+                "Purchasing Receiver||Purchasing||Standard||"+getCDS()+"||"+getCDS());
+        //add end-dated responsibility, product of calling remove responsibility 
+        update.add(newResp);
+        testAttrSet(update, returned, OperationalAttributes.PASSWORD_NAME, OWNER, RESPKEYS, OperationalAttributes.PASSWORD_EXPIRED_NAME, EMP_NUM, PERSON_FULLNAME);
+    }    
+    
+    /**
+     * Test method .
+     */
+    @Test
+    public void testUpdateRespName() {
         final OracleERPConnector c = getConnector(CONFIG_SYSADM);
         
         final Set<Attribute> create = getAttributeSet(ACCOUNT_ALL_ATTRS);
