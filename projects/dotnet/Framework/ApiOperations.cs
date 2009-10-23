@@ -453,7 +453,7 @@ namespace Org.IdentityConnectors.Framework.Api.Operations
     /// Since this operation may connect to the resource, it may be slow. Clients are
     /// advised not to invoke this operation often, such as before every provisioning operation.
     /// This operation is <strong>not</strong> intended to check that the connector is alive
-    /// (its physical connection to the resource has not timed out).
+    /// (i.e., its physical connection to the resource has not timed out).
     /// </para>
     /// <para>
     /// This operation may be invoked before the configuration has been validated.
