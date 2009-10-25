@@ -22,8 +22,6 @@
  */
 package org.identityconnectors.racf;
 
-import java.util.ListResourceBundle;
-
 public class RacfMessages {
     public static final String SUFFIX_NULL                    = "SUFFIX_NULL";
     public static final String HOST_NULL                      = "HOST_NULL";
@@ -31,6 +29,8 @@ public class RacfMessages {
     public static final String ILLEGAL_LDAP_PORT              = "ILLEGAL_LDAP_PORT";
     public static final String TELNET_PORT_NULL               = "TELNET_PORT_NULL";
     public static final String COMMAND_TIMEOUT_NULL           = "COMMAND_TIMEOUT_NULL";
+    public static final String REAPER_MAX_IDLE_NULL           = "REAPER_MAX_IDLE_NULL";
+    public static final String REAPER_TIME_PERIOD_NULL        = "REAPER_TIME_PERIOD_NULL";
     public static final String ILLEGAL_TELNET_PORT            = "ILLEGAL_TELNET_PORT";
     public static final String SSL_NULL                       = "SSL_NULL";
     public static final String USERNAME_NULL                  = "USERNAME_NULL";
@@ -72,4 +72,8 @@ public class RacfMessages {
     public static final String BAD_CONNECTION_INFO            = "BAD_CONNECTION_INFO";
     public static final String BAD_NAME_FILTER                = "BAD_NAME_FILTER";
     public static final String BAD_ATTRIBUTE_VALUE            = "BAD_ATTRIBUTE_VALUE";
+    public static final String EMPTY_POOL                     = "EMPTY_POOL";
+    public static final String POOL_FROZEN                    = "POOL_FROZEN";
+    public static final String BAD_CONN_ENTRY                 = "BAD_CONN_ENTRY";
+    public static final String ERROR_CONNECTING               = "ERROR_CONNECTING";
 }

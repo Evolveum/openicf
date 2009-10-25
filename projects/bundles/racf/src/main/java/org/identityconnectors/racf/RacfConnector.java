@@ -44,7 +44,6 @@ import java.util.regex.Pattern;
 import javax.naming.NamingException;
 
 import org.identityconnectors.common.CollectionUtil;
-import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -76,7 +75,6 @@ import org.identityconnectors.framework.spi.AttributeNormalizer;
 import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.framework.spi.Connector;
 import org.identityconnectors.framework.spi.ConnectorClass;
-import org.identityconnectors.framework.spi.PoolableConnector;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
 import org.identityconnectors.framework.spi.operations.ResolveUsernameOp;
@@ -93,7 +91,7 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
                              "org.identityconnectors.rw3270.hod.Messages",  
                              "org.identityconnectors.rw3270.wrq.Messages",  
                              "org.identityconnectors.rw3270.freehost3270.Messages"})
-public class RacfConnector implements Connector, CreateOp, PoolableConnector,
+public class RacfConnector implements Connector, CreateOp,
 DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormalizer, ResolveUsernameOp {
     
     static final List<String>   POSSIBLE_ATTRIBUTES         = Arrays.asList(
@@ -103,7 +101,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
     public static final String         SEPARATOR_REGEX     ="\\*";
     public static final String         RACF_GROUP_NAME     ="RacfGroup";
     public static final ObjectClass    RACF_GROUP          = new ObjectClass(RACF_GROUP_NAME);
-    public static final String         RACF_CONNECTION_NAME ="RacfConnection";
+    public static final String         RACF_CONNECTION_NAME="RacfConnection";
     public static final ObjectClass    RACF_CONNECTION     = new ObjectClass(RACF_CONNECTION_NAME);
 
     private Map<String, AttributeInfo>  _accountAttributes = null;
@@ -426,9 +424,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
             throw new ConnectorException(e);
         }
     }
-    
+
     private boolean isCommandLineAvailable() {
-        return !_configuration.isNoCommandLine();
+        return !_configuration.isNoCommandLine() && !ConnectionPool.getConnectionPool(_configuration).isEmpty();
     }
     
     private TreeSet<String> getDefaultAttributes(Map<String, AttributeInfo> infos) {
@@ -646,6 +644,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
      * @return a List<String> of user names
      */
     private List<String> getUsers(String query) {
+        // TODO: Do we want to allow having LDAP do the query via command line
+        //       if the query is "*" or null
         if (isLdapConnectionAvailable()) {
             return _ldapUtil.getUsersViaLdap(query);
         } else {
@@ -720,9 +720,9 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
     private Schema clSchema() {
         final SchemaBuilder schemaBuilder = new SchemaBuilder(getClass());
 
+        // RACF Users
+        //
         {
-            // RACF Users
-            //
             Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
     
             // Required Attributes
@@ -851,13 +851,16 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
         Set<String>                 groupObjectClasses;
         
         userObjectClasses = CollectionUtil.newCaseInsensitiveSet();
-        for (String userObjectClass : _configuration.getUserObjectClasses())
-            userObjectClasses.add(userObjectClass);
-        
-        groupObjectClasses = CollectionUtil.newCaseInsensitiveSet();
-        for (String groupObjectClass : _configuration.getGroupObjectClasses())
-            groupObjectClasses.add(groupObjectClass);
+        if (_configuration.getUserObjectClasses()!=null) {
+            for (String userObjectClass : _configuration.getUserObjectClasses())
+                userObjectClasses.add(userObjectClass);
+        }
 
+        groupObjectClasses = CollectionUtil.newCaseInsensitiveSet();
+        if (_configuration.getGroupObjectClasses()!=null) {
+            for (String groupObjectClass : _configuration.getGroupObjectClasses())
+                groupObjectClasses.add(groupObjectClass);
+        }
         // RACF Users
         //
         {
@@ -894,8 +897,8 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_DESTINATION,         String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_MESSAGE_CLASS,       String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_DEFAULT_LOGIN,       String.class));
-                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_LOGON_SIZE,          String.class));
-                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_MAX_REGION_SIZE,     String.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_LOGON_SIZE,          Integer.class));
+                attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_MAX_REGION_SIZE,     Integer.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_DEFAULT_SYSOUT,      String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_USERDATA,            String.class));
                 attributes.add(buildNonDefaultAttribute(ATTR_LDAP_TSO_DEFAULT_UNIT,        String.class));
@@ -1033,6 +1036,7 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
         //
         {
             Set<AttributeInfo> groupAttributes = new HashSet<AttributeInfo>();
+            groupAttributes.add(buildReadonlyAttribute(ATTR_LDAP_ACCOUNTID,              String.class));
             groupAttributes.add(buildNonupdateAttribute(Name.NAME,                       String.class, true));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_DATA,               String.class));
             groupAttributes.add(AttributeInfoBuilder.build(ATTR_LDAP_MODEL,              String.class));
@@ -1205,30 +1209,6 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
         return _configuration.getLdapUserName()!=null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public void checkAlive() {
-        // Check command line connection
-        //
-        if (!StringUtil.isBlank(_configuration.getUserName())) {
-            try {
-                _clUtil.getUsersViaCommandLine("DUMMY");
-            } catch (UnknownUidException uue) {
-                // ignore this error
-            }
-        }
-        // Check LDAP connection
-        //
-        if (!StringUtil.isBlank(_configuration.getLdapUserName())) {
-            try {
-                _ldapUtil.getUsersViaLdap("racfid=DUMMY,profileType=User,"+_configuration.getSuffix());
-            } catch (UnknownUidException uue) {
-                // ignore this error
-            }
-        }
-    }
-
     public Attribute normalizeAttribute(ObjectClass oclass, Attribute attribute) {
         List<Object> values = attribute.getValue();
         List<Object> newValues = new LinkedList<Object>();
@@ -1340,11 +1320,16 @@ DeleteOp, SearchOp<String>, UpdateOp, SchemaOp, SyncOp, TestOp, AttributeNormali
     
     public void test() {
         _configuration.validate();
-        // This actually needs to do nothing, because, as a poolable connector,
-        // we only get here via
-        //  - creating a new connector, and running init
-        //  - pulling a connector from the pool, and running isAlive()
-        // Either of these guarantees a working connection
+        // Ensure that the pool doesn't get reaped during the operation
+        //
+        if (!_configuration.isNoCommandLine()) {
+            ConnectionPool pool = ConnectionPool.getConnectionPool(_configuration, false);
+            try {
+                pool.testAllConnections();
+            } finally {
+                pool.setReapable(true);
+            }
+        }
     }
 
     public SyncToken getLatestSyncToken(ObjectClass objClass) {

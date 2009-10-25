@@ -104,7 +104,7 @@ public abstract class RacfConnectorTestBase {
     protected static final String CATALOG_PARSER      = "org/identityconnectors/racf/CatalogParser.xml";
 
     @Before
-    public void before() {
+    public void before() throws IOException {
         TEST_USER_UID     = makeUid(TEST_USER, ObjectClass.ACCOUNT);
         TEST_USER_UID2    = makeUid(TEST_USER2, ObjectClass.ACCOUNT);
         TEST_GROUP1_UID   = makeUid(TEST_GROUP1, RacfConnector.RACF_GROUP);
@@ -134,6 +134,10 @@ public abstract class RacfConnectorTestBase {
     @Test//@Ignore
     public void testListAllGroups() throws Exception {
         RacfConfiguration config = createConfiguration();
+        testListAllGroups(config);
+    }
+    
+    public void testListAllGroups(RacfConfiguration config) throws Exception {
         RacfConnector connector = createConnector(config);
         try {
             TestHandler handler = new TestHandler();
@@ -148,6 +152,7 @@ public abstract class RacfConnectorTestBase {
             connector.dispose();
         }
     }
+    
 /*
     @Test//@Ignore
     public void testXXX() throws Exception {
@@ -317,6 +322,7 @@ public abstract class RacfConnectorTestBase {
     boolean equals(Uid one, Uid two) {
         return one.getUidValue().equalsIgnoreCase(two.getUidValue());
     }
+    
     @Test//@Ignore
     public void testModifyUser() throws Exception {
         RacfConfiguration config = createConfiguration();
@@ -789,10 +795,11 @@ public abstract class RacfConnectorTestBase {
         OurConnectorMessages messages = new OurConnectorMessages();
         Map<Locale, Map<String, String>> catalogs = new HashMap<Locale, Map<String,String>>();
         Map<String, String> foo = new HashMap<String, String>();
-        addBundle(foo, "org.identityconnectors.racf.Messages");
         addBundle(foo, "org.identityconnectors.racf.Messages"); 
         addBundle(foo, "org.identityconnectors.rw3270.Messages"); 
         addBundle(foo, "org.identityconnectors.rw3270.hod.Messages");
+        addBundle(foo, "org.identityconnectors.rw3270.wrq.Messages");
+        addBundle(foo, "org.identityconnectors.rw3270.freehost3270.Messages");
         catalogs.put(Locale.getDefault(), foo);
         messages.setCatalogs(catalogs);
         config.setConnectorMessages(messages);
@@ -811,8 +818,8 @@ public abstract class RacfConnectorTestBase {
 
     private RacfConfiguration createUserConfiguration() throws IOException {
         RacfConfiguration config = createConfiguration();
-        config.setPassword(new GuardedString("password".toCharArray()));
-        config.setUserName(TEST_USER);
+        config.setUserNames(new String[] {TEST_USER} );
+        config.setPasswords(new GuardedString[] {new GuardedString("password".toCharArray())});
         return config;
     }
     

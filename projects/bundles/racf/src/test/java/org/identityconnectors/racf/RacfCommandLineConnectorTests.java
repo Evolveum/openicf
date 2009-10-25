@@ -33,13 +33,21 @@ import static org.identityconnectors.racf.RacfConstants.ATTR_CL_SUPGROUP;
 import static org.identityconnectors.racf.RacfConstants.ATTR_CL_TSO_SIZE;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 import junit.framework.Assert;
 
 import org.identityconnectors.common.script.Script;
 import org.identityconnectors.common.script.ScriptBuilder;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
@@ -54,6 +62,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class RacfCommandLineConnectorTests extends RacfConnectorTestBase {
+    protected static String       SYSTEM_USER2;
+    protected static String       SYSTEM_PASSWORD2;
 
     public static void main(String[] args) {
         RacfCommandLineConnectorTests tests = new RacfCommandLineConnectorTests();
@@ -64,20 +74,37 @@ public class RacfCommandLineConnectorTests extends RacfConnectorTestBase {
         }
     }
 
+    @Before
+    public void before() throws IOException {
+        super.before();
+
+        // Need to shutdown and restart pool, so that we can properly check for messages
+        //
+        final RacfConfiguration config = createConfiguration();
+        config.setUserNames(new String[] {SYSTEM_USER2} );
+        config.setPasswords(new GuardedString[] {new GuardedString(SYSTEM_PASSWORD2.toCharArray())});
+
+        ConnectionPool.getConnectionPool(config);
+    }
+    
     @BeforeClass
     public static void beforeClass() {
         PropertyBag testProps = TestHelpers.getProperties(RacfConnector.class);
 
         HOST_NAME         = testProps.getStringProperty("HOST_NAME");
         SYSTEM_PASSWORD   = testProps.getStringProperty("SYSTEM_PASSWORD");
+        SYSTEM_PASSWORD2  = testProps.getStringProperty("SYSTEM_PASSWORD2");
         SUFFIX            = testProps.getStringProperty("SUFFIX");
         SYSTEM_USER       = testProps.getStringProperty("SYSTEM_USER");
+        SYSTEM_USER2      = testProps.getStringProperty("SYSTEM_USER2");
        
         SYSTEM_USER_LDAP  = "racfid="+SYSTEM_USER+",profileType=user,"+SUFFIX;
         
         Assert.assertNotNull("HOST_NAME must be specified", HOST_NAME);
         Assert.assertNotNull("SYSTEM_PASSWORD must be specified", SYSTEM_PASSWORD);
         Assert.assertNotNull("SYSTEM_USER must be specified", SYSTEM_USER);
+        Assert.assertNotNull("SYSTEM_PASSWORD2 must be specified", SYSTEM_PASSWORD2);
+        Assert.assertNotNull("SYSTEM_USER2 must be specified", SYSTEM_USER2);
         Assert.assertNotNull("SUFFIX must be specified", SUFFIX);
     }
 
@@ -290,6 +317,255 @@ public class RacfCommandLineConnectorTests extends RacfConnectorTestBase {
         }
     }
 
+    class MyLogHandler extends Handler {
+        private List<String> messages;
+
+        public MyLogHandler() {
+            messages = new LinkedList<String>();
+        }
+
+        @Override
+        public void close() throws SecurityException {
+        }
+
+        @Override
+        public void flush() {
+            messages.clear();
+        }
+
+        @Override
+        public void publish(LogRecord record) {
+            messages.add(record.getMessage());
+        }
+
+        public List<String> getMessages() {
+            return messages;
+        }
+
+    }
+
+    @Test//@Ignore
+    public void testListAllGroupsTwice() throws Exception {
+        Logger log = Logger.getLogger(ConnectionPool.class.getName());
+        MyLogHandler logHandler = new MyLogHandler();
+        log.addHandler(logHandler);
+        final RacfConfiguration config = createConfiguration();
+        Runnable runnable = new Runnable() {
+            public void run() {
+                try {
+                    testListAllGroups(config);
+                } catch (Exception ex) {
+                    Assert.fail(ex.toString());
+                }
+            }
+        };
+        Thread threadOne = new Thread(runnable);
+        Thread threadTwo = new Thread(runnable);
+        threadOne.start();
+        threadTwo.start();
+        threadOne.join();
+        threadTwo.join();
+    }
+
+    @Test//@Ignore
+    public void testListAllGroupsTwiceWith2Ids() throws Exception {
+        Logger log = Logger.getLogger(ConnectionPool.class.getName());
+        MyLogHandler logHandler = new MyLogHandler();
+        log.addHandler(logHandler);
+        final RacfConfiguration config = createConfiguration();
+        config.setUserNames(new String[] {SYSTEM_USER2, SYSTEM_USER} );
+        config.setPasswords(new GuardedString[] {new GuardedString(SYSTEM_PASSWORD2.toCharArray()), new GuardedString(SYSTEM_PASSWORD.toCharArray())});
+        Runnable runnable = new Runnable() {
+            public void run() {
+                try {
+                    testListAllGroups(config);
+                } catch (Exception ex) {
+                    Assert.fail(ex.toString());
+                }
+            }
+        };
+        Thread threadOne = new Thread(runnable);
+        Thread threadTwo = new Thread(runnable);
+        threadOne.start();
+        threadTwo.start();
+        threadOne.join();
+        threadTwo.join();
+
+        // NOTE
+        // In the JUnit log, this test takes 66 seconds, with testListAllGroupsTwice taking
+        // 116 seconds, so we can clearly see the simultaneous sessions working in parallel
+        //
+
+        // In addition to simply managing to avoid failing,
+        // both userIds should have been used by the pool
+        //
+        List<String> messages = logHandler.getMessages();
+        String[] expectedMessages = {
+                "creating inactive connection for "+SYSTEM_USER+" on oedipus.stc.com",
+                "creating inactive connection for "+SYSTEM_USER2+" on oedipus.stc.com",
+                "activated connection for "+SYSTEM_USER+" on oedipus.stc.com",
+                "activated connection for "+SYSTEM_USER2+" on oedipus.stc.com",
+                "returned connection for "+SYSTEM_USER+" on oedipus.stc.com",
+                "returned connection for "+SYSTEM_USER2+" on oedipus.stc.com",
+        };
+        for (String expected : expectedMessages) {
+            Assert.assertTrue("Didn't see:"+expected, messages.contains(expected));
+        }
+    }
+
+    @Test//@Ignore
+    public void testListAllGroupsTwiceWithBadId() throws Exception {
+        Logger log = Logger.getLogger(ConnectionPool.class.getName());
+        MyLogHandler logHandler = new MyLogHandler();
+        log.addHandler(logHandler);
+        final RacfConfiguration config = createConfiguration();
+        config.setUserNames(new String[] {SYSTEM_USER2, SYSTEM_USER} );
+        config.setPasswords(new GuardedString[] {new GuardedString(SYSTEM_PASSWORD2.toCharArray()), new GuardedString("bogus".toCharArray())});
+        Runnable runnable = new Runnable() {
+            public void run() {
+                try {
+                    testListAllGroups(config);
+                } catch (Exception ex) {
+                    Assert.fail(ex.toString());
+                }
+            }
+        };
+        Thread threadOne = new Thread(runnable);
+        Thread threadTwo = new Thread(runnable);
+        threadOne.start();
+        threadTwo.start();
+        threadOne.join();
+        threadTwo.join();
+
+        // In addition to simply managing to avoid failing,
+        // both userIds should have been used by the pool,
+        // and SYSTEM_USER should have caused a login failure.
+        //
+        List<String> messages = logHandler.getMessages();
+        String[] expectedMessages = {
+                "creating inactive connection for "+SYSTEM_USER+" on oedipus.stc.com",
+                "creating inactive connection for "+SYSTEM_USER2+" on oedipus.stc.com",
+                "activated connection for "+SYSTEM_USER2+" on oedipus.stc.com",
+                "returned bad connection for "+SYSTEM_USER+" on oedipus.stc.com",
+                "returned connection for "+SYSTEM_USER2+" on oedipus.stc.com",
+        };
+        for (String expected : expectedMessages) {
+            Assert.assertTrue("Didn't see:"+expected, messages.contains(expected));
+        }
+        boolean found = false;
+        for (String message: messages) {
+            if (message.startsWith("failed to create connection: userName '"+SYSTEM_USER))
+                found = true;
+        }
+        Assert.assertTrue("Didn't see:failed to create connection: userName '"+SYSTEM_USER+"'", found);
+    }
+
+    @Test//@Ignore
+    public void testPoolReaping() throws Exception {
+        Logger log = Logger.getLogger(ConnectionPool.class.getName());
+        MyLogHandler logHandler = new MyLogHandler();
+        log.addHandler(logHandler);
+        final RacfConfiguration config = createConfiguration();
+        // Ensure we have the pool activated
+        //
+        ConnectionPool.getConnectionPool(config);
+        // Wait until we are sure the reaper has run
+        //
+        Thread.sleep(2*60*1000);
+        //
+        String[] expectedMessages = {
+                "creating inactive connection for "+SYSTEM_USER+" on oedipus.stc.com",
+                "reaping pool for oedipus.stc.com",
+        };
+        List<String> messages = logHandler.getMessages();
+        for (String expected : expectedMessages) {
+            Assert.assertTrue("Didn't see:"+expected, messages.contains(expected));
+        }
+    }
+
+    @Test//@Ignore
+    public void testTest() throws Exception {
+        // Test with a single Username
+        {
+            Logger log = Logger.getLogger(ConnectionPool.class.getName());
+            MyLogHandler logHandler = new MyLogHandler();
+            log.addHandler(logHandler);
+            final RacfConfiguration config = createConfiguration();
+            RacfConnector connector = createConnector(config);
+            try {
+                connector.test();
+            } finally {
+                connector.dispose();
+            }
+            List<String> messages = logHandler.getMessages();
+            String[] expectedMessages = {
+                    "creating inactive connection for "+SYSTEM_USER+" on oedipus.stc.com",
+                    "activated test connection for "+SYSTEM_USER+" on oedipus.stc.com",
+                    "shut down test connection for "+SYSTEM_USER+" on oedipus.stc.com",
+            };
+            for (String expected : expectedMessages) {
+                Assert.assertTrue("Didn't see:"+expected, messages.contains(expected));
+            }
+        }
+
+        // Test with 2 usernames, both valid
+        {
+            Logger log = Logger.getLogger(ConnectionPool.class.getName());
+            MyLogHandler logHandler = new MyLogHandler();
+            log.addHandler(logHandler);
+            final RacfConfiguration config = createConfiguration();
+            config.setUserNames(new String[] {SYSTEM_USER2, SYSTEM_USER} );
+            config.setPasswords(new GuardedString[] {new GuardedString(SYSTEM_PASSWORD2.toCharArray()), new GuardedString(SYSTEM_PASSWORD.toCharArray())});
+            RacfConnector connector = createConnector(config);
+            try {
+                connector.test();
+            } finally {
+                connector.dispose();
+            }
+            List<String> messages = logHandler.getMessages();
+            String[] expectedMessages = {
+                    "creating inactive connection for "+SYSTEM_USER+" on oedipus.stc.com",
+                    "activated test connection for "+SYSTEM_USER+" on oedipus.stc.com",
+                    "shut down test connection for "+SYSTEM_USER+" on oedipus.stc.com",
+                    "creating inactive connection for "+SYSTEM_USER2+" on oedipus.stc.com",
+                    "activated test connection for "+SYSTEM_USER2+" on oedipus.stc.com",
+                    "shut down test connection for "+SYSTEM_USER2+" on oedipus.stc.com",
+            };
+            for (String expected : expectedMessages) {
+                Assert.assertTrue("Didn't see:"+expected, messages.contains(expected));
+            }
+        }
+
+        // Test with 2 usernames, one invalid
+        {
+            Logger log = Logger.getLogger(ConnectionPool.class.getName());
+            MyLogHandler logHandler = new MyLogHandler();
+            log.addHandler(logHandler);
+            final RacfConfiguration config = createConfiguration();
+            config.setUserNames(new String[] {SYSTEM_USER2, SYSTEM_USER} );
+            config.setPasswords(new GuardedString[] {new GuardedString("bogus".toCharArray()), new GuardedString(SYSTEM_PASSWORD.toCharArray())});
+            RacfConnector connector = createConnector(config);
+            try {
+                connector.test();
+                Assert.fail("no exception thrown by test");
+            } catch (ConnectorException ce) {
+                // we expect this
+            } finally {
+                connector.dispose();
+            }
+            List<String> messages = logHandler.getMessages();
+            String[] expectedMessages = {
+                    "creating inactive connection for "+SYSTEM_USER+" on oedipus.stc.com",
+                    "activated test connection for "+SYSTEM_USER+" on oedipus.stc.com",
+                    "shut down test connection for "+SYSTEM_USER+" on oedipus.stc.com",
+                    "creating inactive connection for "+SYSTEM_USER2+" on oedipus.stc.com",
+            };
+            for (String expected : expectedMessages) {
+                Assert.assertTrue("Didn't see:"+expected, messages.contains(expected));
+            }
+        }
+    }
+
     private Script getLoginScript() {
         String script =
             "connection.connect();\n" +
@@ -329,11 +605,12 @@ public class RacfCommandLineConnectorTests extends RacfConnectorTestBase {
         config.setHostNameOrIpAddr(HOST_NAME);
         config.setUseSsl(USE_SSL);
         config.setHostTelnetPortNumber(HOST_TELNET_PORT);
-        config.setCommandTimeout(60000);
+        config.setCommandTimeout(60*1000);
+        config.setReaperMaximumIdleTime(15*60*1000);
         config.setConnectScript(getLoginScript());
         config.setDisconnectScript(getLogoffScript());
-        config.setUserName(SYSTEM_USER );
-        config.setPassword(new GuardedString(SYSTEM_PASSWORD.toCharArray()));
+        config.setUserNames(new String[] {SYSTEM_USER} );
+        config.setPasswords(new GuardedString[] {new GuardedString(SYSTEM_PASSWORD.toCharArray())});
         config.setSegmentNames(new String[] { 
                 "ACCOUNT.RACF",                     "ACCOUNT.TSO",                  "ACCOUNT.NETVIEW",
                 "ACCOUNT.CICS",                     "ACCOUNT.OMVS",                 "ACCOUNT.CATALOG", 
@@ -348,7 +625,6 @@ public class RacfCommandLineConnectorTests extends RacfConnectorTestBase {
     }
     
     protected void initializeLdapConfiguration(RacfConfiguration config) {
-
     }
 
     protected String getInstallationDataAttributeName() {

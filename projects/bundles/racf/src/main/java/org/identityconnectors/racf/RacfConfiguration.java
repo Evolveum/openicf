@@ -32,11 +32,12 @@ import org.identityconnectors.common.script.Script;
 import org.identityconnectors.common.script.ScriptBuilder;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
 import org.identityconnectors.rw3270.RW3270Configuration;
 
-public class RacfConfiguration extends AbstractConfiguration implements RW3270Configuration {
+public class RacfConfiguration extends AbstractConfiguration {
     private String         _ldapUserName;
     private GuardedString  _ldapPassword;
     private String         _suffix;
@@ -46,6 +47,7 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     private Integer        _hostLdapPortNumber;
     private Integer        _hostTelnetPortNumber;
     private Integer        _commandTimeout;
+    private Integer        _reaperMaximumIdle;
     private String[]       _userQueries;
 
     private String[]       _userObjectClasses;
@@ -54,8 +56,9 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     private String[]       _segmentNames;
     private String[]       _segmentParsers;
     private String         _parserFactory;
-    private String         _userName;
-    private GuardedString  _password;
+
+    private String[]       _userNames;
+    private GuardedString[]_passwords;
 
     private Script         _connectScript;
     private Script         _disconnectScript;
@@ -70,7 +73,101 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     private String[]       _asCertificate;
     private String[]       _asPrivateKey;
     private String[]       _asFilterChangesBy;
-    
+
+    private static class OurRW3270Configuration implements RW3270Configuration {
+        private RacfConfiguration     _config;
+        private int                 _index;
+
+        public OurRW3270Configuration(RacfConfiguration config, int index) {
+            _config = config;
+            _index = index;
+        }
+
+        public Script getConnectScript() {
+            return _config.getConnectScript();
+        }
+
+        public String getConnectionClassName() {
+            return _config.getConnectionClassName();
+        }
+
+        public String[] getConnectionProperties() {
+            return _config.getConnectionProperties();
+        }
+
+        public Script getDisconnectScript() {
+            return _config.getDisconnectScript();
+        }
+
+        public String getHostNameOrIpAddr() {
+            return _config.getHostNameOrIpAddr();
+        }
+
+        public Integer getHostTelnetPortNumber() {
+            return _config.getHostTelnetPortNumber();
+        }
+
+        public GuardedString getPassword() {
+            return _config.getPasswords()[_index];
+        }
+
+        public String getUserName() {
+            return _config.getUserNames()[_index];
+        }
+
+        public void setConnectScript(Script script) {
+            _config.setConnectScript(script);
+        }
+
+        public void setConnectionClassName(String className) {
+            _config.setConnectionClassName(className);
+        }
+
+        public void setConnectionProperties(String[] properties) {
+            _config.setConnectionProperties(properties);
+        }
+
+        public void setDisconnectScript(Script script) {
+            _config.setDisconnectScript(script);
+        }
+
+        public void setHostNameOrIpAddr(String nameOrIpAddr) {
+            _config.setHostNameOrIpAddr(nameOrIpAddr);
+        }
+
+        public void setHostTelnetPortNumber(Integer port) {
+            _config.setHostTelnetPortNumber(port);
+        }
+
+        public void setPassword(GuardedString password) {
+            GuardedString[] passwords = _config.getPasswords();
+            passwords[_index] = password;
+            _config.setPasswords(passwords);
+        }
+
+        public void setUserName(String name) {
+            String[] userNames = _config.getUserNames();
+            userNames[_index] = name;
+            _config.setUserNames(userNames);
+        }
+
+        public ConnectorMessages getConnectorMessages() {
+            return _config.getConnectorMessages();
+        }
+
+        public void setConnectorMessages(ConnectorMessages messages) {
+            _config.setConnectorMessages(messages);
+        }
+
+        public void validate() {
+            _config.validate();
+        }
+    }
+
+    public RW3270Configuration getRW3270Configuration(int index) {
+        return new OurRW3270Configuration(this, index);
+    }
+
     public String getMessage(String key) {
         return getConnectorMessages().format(key, key);
     }
@@ -109,22 +206,22 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
                 "racfGroupOvmSegment",
                 "racfGroupOmvsSegment",
                 "SAFDfpSegment"});
-        setConnectScript(getLoginScript());
-        setDisconnectScript(getLogoffScript());
+        //setConnectScript(getLoginScript());
+        //setDisconnectScript(getLogoffScript());
         setSegmentNames(new String[] { 
                 "ACCOUNT.RACF",                     "ACCOUNT.TSO",                  "ACCOUNT.NETVIEW",
                 "ACCOUNT.CICS",                     "ACCOUNT.OMVS",                 "ACCOUNT.CATALOG", 
                 "ACCOUNT.OMVS",                     "GROUP.RACF" });
         try {
-        setSegmentParsers(new String[] { 
-                loadParserFromFile(RACF_PARSER),    loadParserFromFile(TSO_PARSER), loadParserFromFile(NETVIEW_PARSER), 
-                loadParserFromFile(CICS_PARSER),    loadParserFromFile(OMVS_PARSER), loadParserFromFile(CATALOG_PARSER), 
-                loadParserFromFile(OMVS_PARSER),    loadParserFromFile(GROUP_RACF_PARSER) });
+            setSegmentParsers(new String[] { 
+                    loadParserFromFile(RACF_PARSER),    loadParserFromFile(TSO_PARSER), loadParserFromFile(NETVIEW_PARSER), 
+                    loadParserFromFile(CICS_PARSER),    loadParserFromFile(OMVS_PARSER), loadParserFromFile(CATALOG_PARSER), 
+                    loadParserFromFile(OMVS_PARSER),    loadParserFromFile(GROUP_RACF_PARSER) });
         } catch (IOException ioe) {
             throw ConnectorException.wrap(ioe);
         }
     }
-    
+
     private String loadParserFromFile(String fileName) throws IOException {
         BufferedReader is = new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream(fileName)));
         try {
@@ -162,18 +259,21 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
 
     private Script getLogoffScript() {
         String script = "connection.send(\"LOGOFF[enter]\");\n";
+        //            "connection.send(\"LOGOFF[enter]\");\n" +
+        //            "connection.waitFor(\"=====>\", SHORT_WAIT);\n" +
+        //            "connection.dispose();\n";
         ScriptBuilder builder = new ScriptBuilder();
         builder.setScriptLanguage("GROOVY");
         builder.setScriptText(script);
         return builder.build();
     }
-
+    
     boolean isNoLdap() {
         return (StringUtil.isBlank(_suffix) || _hostLdapPortNumber==null || isBlank(_ldapPassword) || StringUtil.isBlank(_ldapUserName));
     }
 
     boolean isNoCommandLine() {
-        return StringUtil.isBlank(_userName) || isBlank(_password);
+        return isBlank(_userNames) || isBlank(_passwords);
     }
     
     public void validate() {
@@ -182,10 +282,10 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
         //
         boolean noLdap = isNoLdap();
         boolean noCommandLine = isNoCommandLine();
-        
+
         if (noLdap && noCommandLine)
             throw new IllegalArgumentException(getMessage(RacfMessages.BAD_CONNECTION_INFO));
-        
+
         if (StringUtil.isBlank(_hostNameOrIpAddr))
             throw new IllegalArgumentException(getMessage(RacfMessages.HOST_NULL));
 
@@ -201,16 +301,18 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
             throw new IllegalArgumentException(getMessage(RacfMessages.PASSWORD_NULL));
         if (!noLdap && _isUseSsl==null)
             throw new IllegalArgumentException(getMessage(RacfMessages.SSL_NULL));
-
+        
         if (!noCommandLine && _hostTelnetPortNumber==null)
             throw new IllegalArgumentException(getMessage(RacfMessages.TELNET_PORT_NULL));
         if (!noCommandLine && _commandTimeout==null)
             throw new IllegalArgumentException(getMessage(RacfMessages.COMMAND_TIMEOUT_NULL));
+        if (!noCommandLine && _reaperMaximumIdle==null)
+            throw new IllegalArgumentException(getMessage(RacfMessages.REAPER_MAX_IDLE_NULL));
         if (_hostTelnetPortNumber!=null && (_hostTelnetPortNumber<1 || _hostTelnetPortNumber>65536))
             throw new IllegalArgumentException(getMessage(RacfMessages.ILLEGAL_TELNET_PORT, _hostTelnetPortNumber));
-        if (!noCommandLine && StringUtil.isBlank(_userName))
+        if (!noCommandLine && isBlank(_userNames))
             throw new IllegalArgumentException(getMessage(RacfMessages.USERNAMES_NULL));
-        if (!noCommandLine && isBlank(_password))
+        if (!noCommandLine && isBlank(_passwords))
             throw new IllegalArgumentException(getMessage(RacfMessages.PASSWORDS_NULL));
         if (!noCommandLine && StringUtil.isBlank(_connectionClassName))
             throw new IllegalArgumentException(getMessage(RacfMessages.CONNECTION_CLASS_NULL));
@@ -226,7 +328,7 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
             return true;
         return StringUtil.isBlank(script.getScriptText());
     }
-    
+
     boolean isBlank(GuardedString string) {
         if (string==null)
             return true;
@@ -234,6 +336,28 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
         string.access(accessor);
         boolean isBlank = accessor.getArray().length==0;
         accessor.clear();
+        return isBlank;
+    }
+
+    boolean isBlank(GuardedString[] strings) {
+        if (strings.length==0)
+            return true;
+        boolean isBlank = false;
+        for (GuardedString string : strings) {
+            isBlank |= isBlank(string);
+        }
+        return isBlank;
+    }
+
+    boolean isBlank(String[] strings) {
+        if (strings==null || strings.length==0)
+            return true;
+        boolean isBlank = false;
+        for (String string : strings) {
+            if (string==null)
+                return true;
+            isBlank |= string.length()==0;
+        }
         return isBlank;
     }
 
@@ -412,21 +536,21 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     }
 
     @ConfigurationProperty(order=8)
-    public String getUserName() {
-        return _userName;
+    public String[] getUserNames() {
+        return arrayCopy(_userNames);
     }
 
-    public void setUserName(String name) {
-        _userName = name;
+    public void setUserNames(String[] names) {
+        _userNames = arrayCopy(names);
     }
 
     @ConfigurationProperty(order=9, confidential=true)
-    public GuardedString getPassword() {
-        return _password;
+    public GuardedString[] getPasswords() {
+        return arrayCopy(_passwords);
     }
 
-    public void setPassword(GuardedString password) {
-        _password = password;
+    public void setPasswords(GuardedString[] passwords) {
+        _passwords = arrayCopy(passwords);
     }
 
     @ConfigurationProperty(order=19, confidential=true)
@@ -498,7 +622,7 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     /**
      * {@inheritDoc}
      */
-    
+
     @ConfigurationProperty(order=14)
     public Integer getCommandTimeout() {
         return _commandTimeout;
@@ -508,6 +632,21 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
      */
     public void setCommandTimeout(Integer commandTimeout) {
         _commandTimeout = commandTimeout;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+
+    @ConfigurationProperty(order=14)
+    public Integer getReaperMaximumIdleTime() {
+        return _reaperMaximumIdle;
+    }
+    /**
+     * {@inheritDoc}
+     */
+    public void setReaperMaximumIdleTime(Integer reaperMaximumIdle) {
+        _reaperMaximumIdle = reaperMaximumIdle;
     }
 
     /**
@@ -529,11 +668,11 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     public String[] getActiveSyncCertificate() {
         return arrayCopy(_asCertificate);
     }
-    
+
     public void setActiveSyncCertificate(String[] certificate) {
         _asCertificate = arrayCopy(certificate);
     }
-    
+
     @ConfigurationProperty
     public String[] getActiveSyncPrivateKey() {
         return arrayCopy(_asPrivateKey);
@@ -542,7 +681,7 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     public void setActiveSyncPrivateKey(String[] privateKey) {
         _asPrivateKey = arrayCopy(privateKey);
     }
-    
+
     @ConfigurationProperty
     public String[] getActiveSyncFilterChangesBy() {
         return arrayCopy(_asFilterChangesBy);
@@ -551,7 +690,7 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     public void setActiveSyncFilterChangesBy(String[] filterChangesBy) {
         _asFilterChangesBy = arrayCopy(filterChangesBy);
     }
-    
+
     @ConfigurationProperty
     public String getActiveSyncBlocksize() {
         return _asBlockSize;
@@ -560,16 +699,16 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     public void getActiveSyncBlocksize(String blockSize) {
         _asBlockSize = blockSize;
     }
-    
+
     @ConfigurationProperty
     public Boolean getActiveSyncResetToToday() {
         return _asResetToday;
     }
-        
+
     public void setActiveSyncResetToToday(Boolean asResetToday) {
         _asResetToday = asResetToday;
     }
-    
+
     @ConfigurationProperty
     public Boolean getActiveSyncFilterUseOrSearch() {
         return _asFilterUseOrSearch;
@@ -578,7 +717,7 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     public void setActiveSyncFilterUseOrSearch(Boolean useOrSearch) {
         _asFilterUseOrSearch = useOrSearch;
     }
-    
+
     @ConfigurationProperty
     public Boolean getActiveSyncRemoveOCFromFilter() {
         return _asRemoveOCFromFilter;
@@ -587,7 +726,7 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     public void setActiveSyncRemoveOCFromFilter(Boolean removeOCFromFilter) {
         _asRemoveOCFromFilter = removeOCFromFilter;
     }
-    
+
     @ConfigurationProperty
     public String getActiveSyncPasswordDecryptorClass() {
         return _asDecryptorClass;
@@ -596,7 +735,7 @@ public class RacfConfiguration extends AbstractConfiguration implements RW3270Co
     public void setActiveSyncPasswordDecryptorClass(String decryptorClass) {
         _asDecryptorClass = decryptorClass;
     }
-    
+
     private <T> T[] arrayCopy(T[] array) {
         if (array==null)
             return null;

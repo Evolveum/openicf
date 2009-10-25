@@ -31,30 +31,21 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.rw3270.RW3270BaseConnection;
-import org.identityconnectors.rw3270.RW3270Connection;
-import org.identityconnectors.rw3270.RW3270ConnectionFactory;
 
 public class RacfConnection {
     private InitialContext            _context;
     private DirContext                _dirContext;
     private RacfConfiguration         _configuration;
-    private RW3270Connection          _racfConnection;
 
-    public RacfConnection(RacfConfiguration configuration) throws NamingException {
+    public RacfConnection(RacfConfiguration configuration) {
         _configuration = configuration;
-        if (_configuration.getLdapUserName()!=null) {
-            _context = new InitialContext(createCommonContextProperties());
-            _dirContext = new InitialDirContext(createCommonContextProperties());
-        }
-        if (_configuration.getUserName()!=null) {
-            try {
-                System.out.println("initializing command line");
-                _racfConnection = new RW3270ConnectionFactory(configuration).newConnection();
-                ((RW3270BaseConnection)_racfConnection).loginUser();
-            } catch (Exception e) {
-                throw ConnectorException.wrap(e);
+        try {
+            if (!_configuration.isNoLdap()) {
+                _context = new InitialContext(createCommonContextProperties());
+                _dirContext = new InitialDirContext(createCommonContextProperties());
             }
+        } catch (NamingException e) {
+            throw ConnectorException.wrap(e);
         }
     }
 
@@ -86,7 +77,7 @@ public class RacfConnection {
     public DirContext getDirContext() {
         return _dirContext;
     }
-
+    
     public void dispose() {
         try {
             if (_context!=null)
@@ -96,12 +87,5 @@ public class RacfConnection {
         } catch (NamingException ne) {
             throw ConnectorException.wrap(ne);
         }
-        if (_racfConnection!=null)
-            _racfConnection.dispose();
     }
-
-    public RW3270Connection getRacfConnection() {
-        return _racfConnection;
-    }
-
 }
