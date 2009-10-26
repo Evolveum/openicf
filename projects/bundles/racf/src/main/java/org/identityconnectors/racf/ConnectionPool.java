@@ -292,9 +292,12 @@ public class ConnectionPool {
     private RW3270Connection getConnection(boolean wait) {
         try {
             QueueEntry entry = findUnusedConnection(wait);
-            if (entry!=null)
+            if (entry!=null) {
                 _inUseConnections.put(entry._connection, entry);
-            return entry._connection;
+                return entry._connection;
+            } else {
+                return null;
+            }
         } catch (Exception ie) {
             throw ConnectorException.wrap(ie);
         }
