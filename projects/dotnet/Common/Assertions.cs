@@ -30,12 +30,12 @@ namespace Org.IdentityConnectors.Common
     public static class Assertions
     {
         /// <summary>
-        /// Throws <see cref="NullReferenceException" /> if the parameter <code>o</code>
+        /// Throws <see cref="NullReferenceException" /> if the parameter <paramref name="o"/>
         /// is <code>null</code>.
         /// </summary>
         /// <param name="o">check if the object is <code>null</code>.</param>
         /// <param name="param">name of the parameter to check for <code>null</code>.</param>
-        /// <exception cref="NullReferenceException">if <code>o</code> is <code>null</code> and constructs a
+        /// <exception cref="NullReferenceException">if <paramref name="o"/> is <code>null</code> and constructs a
         /// message with the name of the parameter.</exception>
         public static void NullCheck(Object o, String param)
         {
@@ -47,11 +47,13 @@ namespace Org.IdentityConnectors.Common
         }
 
         /// <summary>
-        /// Throws <see cref="ArgumentException" /> if the parameter <code>o</code>
+        /// Throws <see cref="ArgumentException" /> if the parameter <paramref name="o"/>
         /// is <code>null</code> or blank.
         /// </summary>
         /// <param name="o">value to test for blank.</param>
         /// <param name="param">name of the parameter to check.</param>
+        /// <exception cref="ArgumentException">if <paramref name="o"/> is <code>null</code> or  blank and constructs a
+        /// message with the name of the parameter.</exception>
         public static void BlankCheck(String o, String param)
         {
             String FORMAT = "Parameter '{0}' must not be blank.";
