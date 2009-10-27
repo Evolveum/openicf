@@ -92,7 +92,11 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      */
     public void init(Configuration cfg) {
         _configuration = (SolarisConfiguration) cfg;
-        _connection = new SolarisConnection(_configuration);
+        _connection = initConnection(_configuration);
+    }
+
+    private SolarisConnection initConnection(final SolarisConfiguration configuration) {
+        return new SolarisConnection(configuration);
     }
 
     /**
@@ -133,8 +137,15 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      */
     public Uid authenticate(ObjectClass objectClass, String username,
             GuardedString password, OperationOptions options) {
-        return new OpAuthenticateImpl(this).authenticate(objectClass, username, password, options);
-        
+        Uid uid = null;
+        try {
+            uid = new OpAuthenticateImpl(this).authenticate(objectClass, username, password, options);
+        } finally {
+            // after unsuccessful authenticate the connection might be in an unusable state. We have to create a new connection then.
+            _connection.dispose();
+            _connection = null;
+        }
+        return uid; 
     }
 
     /** {@inheritDoc} */
@@ -237,6 +248,10 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
 
     /* ********************** GET / SET methods ********************* */
     public SolarisConnection getConnection() {
+        if (_connection != null)
+            return _connection;
+        
+        _connection = initConnection(_configuration);
         return _connection;
     }
     

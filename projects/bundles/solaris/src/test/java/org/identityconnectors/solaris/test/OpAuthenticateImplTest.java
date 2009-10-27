@@ -43,6 +43,8 @@ public class OpAuthenticateImplTest {
     @Before
     public void setUp() throws Exception {
         config = SolarisTestCommon.createConfiguration();
+        config.setConnectionType("TELNET");
+        config.setPort(23);
         facade = SolarisTestCommon.createConnectorFacade(config);
         
         SolarisTestCommon.printIPAddress(config);
@@ -83,5 +85,18 @@ public class OpAuthenticateImplTest {
     public void unknownUid() {
         GuardedString password = config.getPassword();
         facade.authenticate(ObjectClass.ACCOUNT, "NONEXISTING_UID___", password, null);
+    }
+    
+    /**
+     * after unsuccessful authenticate the connection must recover and be in a usable state.
+     */
+    @Test
+    public void testTwiceAuthWithFailure() {
+        try {
+            facade.authenticate(ObjectClass.ACCOUNT, "NONEXISTING_UID__", config.getPassword(), null);
+        } catch (ConnectorException ex) {
+            //OK
+        }
+        facade.authenticate(ObjectClass.ACCOUNT, config.getUserName(), config.getPassword(), null);
     }
 }
