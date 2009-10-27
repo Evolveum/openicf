@@ -48,7 +48,11 @@ import expect4j.ExpectUtils;
 import expect4j.matches.Match;
 
 /**
- * maps functionality of SSHConnection.java
+ * Connection class provides connection to the Solaris resource. It also creates an 
+ * abstraction layer for interpretation of errors.
+ * 
+ * The connection offers the following authentication types: SSH, Telnet and SSH Pubkey.
+ * 
  * @author David Adam
  *
  */
@@ -643,17 +647,11 @@ public class SolarisConnection {
     }
     
     public void executeMutexAcquireScript() {
-        String mutexOut = executeCommand(getAcquireMutexScript());
-        if (mutexOut.contains("ERROR")) {
-            throw new ConnectorException("error when acquiring mutex. Buffer content: <" + mutexOut + ">");
-        }
+        executeCommand(getAcquireMutexScript(), CollectionUtil.newSet("ERROR"));
     }
     
     public void executeMutexAcquireScript(String uidMutexFile, String tmpUidMutexFile, String pidFoundFile) {
-        String mutexOut = executeCommand(getAcquireMutexScript(uidMutexFile, tmpUidMutexFile, pidFoundFile));
-        if (mutexOut.contains("ERROR")) {
-            throw new ConnectorException("error when acquiring mutex. Buffer content: <" + mutexOut + ">");
-        }
+        executeCommand(getAcquireMutexScript(uidMutexFile, tmpUidMutexFile, pidFoundFile), CollectionUtil.newSet("ERROR"));
     }
     
     public void executeMutexReleaseScript() {
