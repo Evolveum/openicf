@@ -22,9 +22,11 @@
  */
 package org.identityconnectors.solaris;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.solaris.test.SolarisTestCommon;
 import org.junit.After;
@@ -106,6 +108,23 @@ public class SolarisConnectionTest {
             String msg = String.format("Buffer <%s> doesn't containt the last echoed info: '%s'.", exMsg, LAST_ECHOED_INFO);
             //System.out.println("TEST: found: <"  exMsg  ">");
             Assert.assertTrue(msg, exMsg.contains(LAST_ECHOED_INFO));
+        }
+    }
+    
+    @Test
+    public void testSpecialAccepts() {
+        final String MSG = "AHOJ";
+        final String errMarker = "ERROR";
+        config = SolarisTestCommon.createConfiguration();
+        SolarisConnection conn = new SolarisConnection(config);
+        
+        conn.executeCommand(String.format("echo \"%s\"", MSG), Collections.<String>emptySet(), CollectionUtil.newSet(MSG));
+
+        try {
+            conn.executeCommand(String.format("echo \"%s %s\"", errMarker, MSG), CollectionUtil.newSet(errMarker), CollectionUtil.newSet(MSG));
+            Assert.fail("no exception thrown when error should be found in the output.");
+        } catch (ConnectorException ex) {
+            //OK
         }
     }
     
