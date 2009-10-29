@@ -22,7 +22,6 @@
  */
 package org.identityconnectors.solaris.operation;
 
-import java.util.Collections;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
