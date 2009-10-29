@@ -30,7 +30,7 @@ namespace Org.IdentityConnectors.Common
     public static class Assertions
     {
         /// <summary>
-        /// Throws <see cref="NullReferenceException" /> if the parameter <paramref name="o"/>
+        /// Throws <see cref="ArgumentNullException" /> if the parameter <paramref name="o"/>
         /// is <code>null</code>.
         /// </summary>
         /// <param name="o">check if the object is <code>null</code>.</param>
