@@ -351,9 +351,9 @@ public class OpCreateNISImpl extends AbstractNISOp {
         try {
             connection.send(passwdCmd);
             connection.waitForCaseInsensitive("password:");
-            // TODO uncomment
-            //SolarisUtil.sendPassword(password, Collections.<String>emptySet(), CollectionUtil.newSet("new password:"), connection);
-            //SolarisUtil.sendPassword(password, CollectionUtil.newSet(" denied"), Collections.<String>emptySet(), connection);
+
+            SolarisUtil.sendPassword(password, Collections.<String>emptySet(), CollectionUtil.newSet("new password:"), connection);
+            SolarisUtil.sendPassword(password, CollectionUtil.newSet(" denied"), Collections.<String>emptySet(), connection);
         } catch (Exception ex) {
             throw ConnectorException.wrap(ex);
         }
