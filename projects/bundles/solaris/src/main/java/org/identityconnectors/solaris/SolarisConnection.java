@@ -143,7 +143,7 @@ public class SolarisConnection {
                 waitFor("login");
                 send(username.trim());
                 waitForCaseInsensitive("assword");
-                SolarisUtil.sendPassword(password, Collections.<String>emptySet(), this);
+                SolarisUtil.sendPassword(password, this);
             }
             
             executeCommand(null/* no command sent here */, CollectionUtil.newSet("incorrect"));
@@ -300,7 +300,7 @@ public class SolarisConnection {
      * {@see SolarisConnection#executeCommand(String, Set, Set)} 
      */
     public String executeCommand(String command) {
-        return executeCommand(command, Collections.<String>emptySet());
+        return executeCommand(command, Collections.<String>emptySet(), Collections.<String>emptySet());
     }
     
     /**
@@ -323,7 +323,17 @@ public class SolarisConnection {
      * @param accepts
      *            these are accepting strings, if they are found the result is
      *            returned. If empty set is given, the default accept is
-     *            {@link SolarisConnection#getRootShellPrompt()}.
+     *            {@link SolarisConnection#getRootShellPrompt()}. Note: in case
+     *            <code>accepts</code> parameter is specified, it'll be the last
+     *            element in the response from the resource.
+     * 
+     * @return the response from the resource when the command is successful,
+     *         free of error messages. Otherwise throw a
+     *         {@link ConnectorException}.
+     * 
+     * @throws ConnectorException
+     *             in case a <code>rejects</code> string is found in the
+     *             response of the resource.
      */
     public String executeCommand(String command, Set<String> rejects, Set<String> accepts) {
         try {
@@ -682,7 +692,7 @@ public class SolarisConnection {
                 waitForCaseInsensitive("assword:");
                 // TODO evaluate which password should be used:
                 GuardedString passwd = config.getPassword();
-                SolarisUtil.sendPassword(passwd, CollectionUtil.newSet("may not run", "not allowed to execute"), this);
+                SolarisUtil.sendPassword(passwd, CollectionUtil.newSet("may not run", "not allowed to execute"), Collections.<String>emptySet(), this);
             } catch (Exception e) {
                 throw ConnectorException.wrap(e);
             }

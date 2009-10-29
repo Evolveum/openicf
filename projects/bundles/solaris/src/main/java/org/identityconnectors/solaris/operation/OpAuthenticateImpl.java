@@ -55,7 +55,7 @@ public class OpAuthenticateImpl extends AbstractOp {
         try {
             getConnection().send("exec login " + username + " TERM=vt00");
             getConnection().waitForCaseInsensitive("assword:");
-            SolarisUtil.sendPassword(password, Collections.<String>emptySet(), getConnection());
+            SolarisUtil.sendPassword(password, getConnection());
             getConnection().executeCommand("echo '" + MSG + "'", rejects, CollectionUtil.newSet(MSG));
             _log.info("authenticate successful for user: '{0}'", username);
         } catch (Exception e) {
