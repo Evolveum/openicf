@@ -23,8 +23,6 @@
 package org.identityconnectors.solaris.operation.nis;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,36 +31,16 @@ import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
-public class OpCreateNISImpl {
+public class OpCreateNISImpl extends AbstractNISOp {
     private static final Log _log = Log.getLog(OpCreateNISImpl.class);
     
     private final static Set<String> chshRejects = CollectionUtil.newSet("password:", "passwd:");
-    
-    private final static Set<NativeAttribute> allowedNISattributes;
-    static {
-        allowedNISattributes = new HashSet<NativeAttribute>();
-        allowedNISattributes.add(NativeAttribute.ID);
-        allowedNISattributes.add(NativeAttribute.GROUP_PRIM);
-        allowedNISattributes.add(NativeAttribute.DIR);
-        allowedNISattributes.add(NativeAttribute.COMMENT);
-        allowedNISattributes.add(NativeAttribute.SHELL);
-    }
-    
-    // Temporary file names
-    private static final String tmpPwdfile1 = "/tmp/wspasswd.$$";
-    private static final String tmpPwdfile2 = "/tmp/wspasswd_work.$$";
-    private static final String tmpPwdfile3 = "/tmp/wspasswd_out.$$";
-
-    // This is a major string to look for if you want to do rejects on shadow file errors
-    private static final String ERROR_MODIFYING = "Error modifying ";
 
     private static final String DEFAULTS_FILE = "/usr/sadm/defadduser";
     private static final String NO_DEFAULT_PRIMARY_GROUP = "No default primary group";
@@ -77,39 +55,10 @@ public class OpCreateNISImpl {
             NO_DEFAULT_PRIMARY_GROUP, NO_DEFAULT_HOME_DIR, NO_DEFAULT_LOGIN_SHELL, UID_NOT_UNIQUE
             );
     
-    private final static String pwdMutexFile = "/tmp/WSpwdlock";
-    private final static String tmpPwdMutexFile = "/tmp/WSpwdlock.$$";
-    private final static String pwdPidFile = "/tmp/WSpwdpid.$$";
     private static final String INVALID_SHELL = "unacceptable as a new shell";
     
     private final static Set<String> shellRejects = CollectionUtil.newSet(INVALID_SHELL);
     
-    public static void addNISMake(String target, SolarisConnection conn) {
-        final String makeCmd = conn.buildCommand("/usr/ccs/bin/make");
-        
-        final String nisDir = getNISDir(conn);
-        
-        StringBuilder buildscript = new StringBuilder("nisdomain=`domainname`; ");
-        buildscript.append("cd " + nisDir + "/$nisdomain\n");
-
-        // TODO question: where do we get the Makefile???
-        buildscript.append(makeCmd + "-f ../Makefile " + target + "; cd");
-        try {
-            conn.executeCommand(buildscript.toString());
-            conn.waitFor(conn.getRootShellPrompt());// one of the waitFor(RootShellPrompt) is hidden in executeCommand impl.
-        } catch (Exception ex) {
-            throw ConnectorException.wrap(ex);
-        }
-    }
-
-    private static String getNISDir(SolarisConnection conn) {
-        final String nisDir = conn.getConfiguration().getNisDir();
-        if ((nisDir == null) || (nisDir.length() == 0)) {
-            throw new ConnectorException("NIS directory not specified.");
-        }
-        return nisDir;
-    }
-
     public static void performNIS(SolarisEntry entry, SolarisConnection connection) {
 
         final SolarisConfiguration config = connection.getConfiguration();
@@ -134,7 +83,7 @@ public class OpCreateNISImpl {
         String cpCmd;
         String chownCmd;
         String diffCmd;
-        String removeTmpFilesScript = getRemovePwdTmpFiles(connection);
+        String removeTmpFilesScript = CommonNIS.getRemovePwdTmpFiles(connection);
         
         String basedir = config.getHomeBaseDir();
         if ((basedir != null) && (basedir.length() > 0)) {
@@ -162,7 +111,7 @@ public class OpCreateNISImpl {
         }
         
         // Get specified user attributes, which can override above resource attributes
-        Map<NativeAttribute, List<Object>> attributes = constructNISUserAttributeParameters(entry, allowedNISattributes);
+        Map<NativeAttribute, List<Object>> attributes = CommonNIS.constructNISUserAttributeParameters(entry, allowedNISattributes);
         
         for (Map.Entry<NativeAttribute, List<Object>> it : attributes.entrySet()) {
             NativeAttribute key = it.getKey();
@@ -370,7 +319,7 @@ public class OpCreateNISImpl {
                 // NIS database has to be updated before updates to shell or password
                 // If the option is to bypass the make, only issue a make if there is a shell or
                 // password to be set.
-                addNISMake("passwd", connection);
+                CommonNIS.addNISMake("passwd", connection);
                 
                 if (shell != null) {
                     addNISShellUpdateWithCleanup(accountId, shell, connection);
@@ -381,7 +330,7 @@ public class OpCreateNISImpl {
                     addNISPasswordUpdate(accountId, password, connection);
                 }
                 
-                addNISMake("passwd", connection);
+                CommonNIS.addNISMake("passwd", connection);
             } finally {
                 // Release the "mutex"
                 connection.executeMutexReleaseScript(pwdMutexFile);
@@ -402,23 +351,12 @@ public class OpCreateNISImpl {
         try {
             connection.send(passwdCmd);
             connection.waitForCaseInsensitive("password:");
-            SolarisUtil.sendPassword(password, Collections.<String>emptySet(), connection);
-            connection.waitForCaseInsensitive("new password:");
-            SolarisUtil.sendPassword(password, CollectionUtil.newSet(" denied"), connection);
+            // TODO uncomment
+            //SolarisUtil.sendPassword(password, Collections.<String>emptySet(), CollectionUtil.newSet("new password:"), connection);
+            //SolarisUtil.sendPassword(password, CollectionUtil.newSet(" denied"), Collections.<String>emptySet(), connection);
         } catch (Exception ex) {
             throw ConnectorException.wrap(ex);
         }
-    }
-
-    private static GuardedString getPassword(SolarisEntry entry) {
-        GuardedString password = null;
-        for (Attribute passAttr : entry.getAttributeSet()) {
-            if (passAttr.getName().equals(OperationalAttributes.PASSWORD_NAME)) {
-                password = (GuardedString) passAttr.getValue().get(0);
-                break;
-            }
-        }
-        return password;
     }
     
     /**
@@ -445,7 +383,7 @@ public class OpCreateNISImpl {
         final String pwddir = CommonNIS.getNisPwdDir(connection);
         final String pwdFile = pwddir + "/passwd";
         final String shadowFile = pwddir + "/shadow";
-        final String removeTmpFilesScript = getRemovePwdTmpFiles(connection);
+        final String removeTmpFilesScript = CommonNIS.getRemovePwdTmpFiles(connection);
 
         // Add script to remove entry in passwd file if shell update fails
         String getOwner =
@@ -458,7 +396,7 @@ public class OpCreateNISImpl {
         connection.executeCommand(removeTmpFilesScript);
         
         // The user has to be removed from the NIS database, incase of invalid shell failures
-        addNISMake("passwd", connection);
+        CommonNIS.addNISMake("passwd", connection);
         
         final String invalidShellCheck= "echo $INVALID_SHELL_ERRMSG; unset INVALID_SHELL_ERRMSG;";
 
@@ -523,43 +461,4 @@ public class OpCreateNISImpl {
         return script;
     }
     
-    /**
-     * filters the given entry's attributes, so they are just the ones that are allowed NIS attributes.
-     */
-    private static Map<NativeAttribute, List<Object>> constructNISUserAttributeParameters(
-            SolarisEntry entry, Set<NativeAttribute> allowedNISattributes) {
-        
-        Map<NativeAttribute, List<Object>> result = new HashMap<NativeAttribute, List<Object>>();
-        
-        for (Attribute attr : entry.getAttributeSet()) {
-            String type = attr.getName();
-            List<Object> value = attr.getValue();
-            
-            for (NativeAttribute nattr : allowedNISattributes) {
-                if (type.equals(nattr.toString())) {
-                    result.put(NativeAttribute.forAttributeName(type), value);
-                    break;
-                }
-            }
-        }
-        return result;
-    }
-
-    private static String getRemovePwdTmpFiles(SolarisConnection conn)
-    {
-        final String rmCmd = conn.buildCommand("rm");
-
-        String removePwdTmpFiles =
-            "if [ -f " + tmpPwdfile1 + " ]; then " +
-              rmCmd + " -f " + tmpPwdfile1 + "; " +
-            "fi; " +
-            "if [ -f " + tmpPwdfile2 + " ]; then " +
-              rmCmd + " -f " + tmpPwdfile2 + "; " +
-            "fi; " +
-            "if [ -f " + tmpPwdfile3 + " ]; then " +
-              rmCmd + " -f " + tmpPwdfile3 + "; " +
-            "fi";
-
-        return removePwdTmpFiles;
-    }
 }

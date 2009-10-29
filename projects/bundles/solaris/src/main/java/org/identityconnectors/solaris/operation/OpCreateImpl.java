@@ -98,7 +98,7 @@ public class OpCreateImpl extends AbstractOp {
              */
             getConnection().doSudoStart();
             try {
-                OpCreateNISImpl.addNISMake("passwd", getConnection());
+                CommonNIS.addNISMake("passwd", getConnection());
             } finally {
                 /*
                  * END SUDO

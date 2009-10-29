@@ -22,14 +22,26 @@
  */
 package org.identityconnectors.solaris.operation.nis;
 
-import org.identityconnectors.solaris.SolarisConnection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class CommonNIS {
+import org.identityconnectors.common.StringUtil;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.solaris.SolarisConnection;
+import org.identityconnectors.solaris.attr.NativeAttribute;
+import org.identityconnectors.solaris.operation.search.SolarisEntry;
+
+public class CommonNIS extends AbstractNISOp {
     private static final String DEFAULT_NISPWDDIR = "/etc";
+    
+   
     
     static String getNisPwdDir(SolarisConnection connection) {
         String pwdDir = connection.getConfiguration().getNisPwdDir();
-        if ((pwdDir == null) || (pwdDir.length() == 0)) {
+        if (StringUtil.isBlank(pwdDir)) {
             pwdDir = DEFAULT_NISPWDDIR;
         }
         return pwdDir;
@@ -46,4 +58,70 @@ public class CommonNIS {
     public static boolean isDefaultNisPwdDir(SolarisConnection conn) {
         return isDefaultNisPwdDirImpl(getNisPwdDir(conn));
     }
+    
+    public static void addNISMake(String target, SolarisConnection conn) {
+        final String makeCmd = conn.buildCommand("/usr/ccs/bin/make");
+        
+        final String nisDir = getNISDir(conn);
+        
+        StringBuilder buildscript = new StringBuilder("nisdomain=`domainname`; ");
+        buildscript.append("cd " + nisDir + "/$nisdomain\n");
+
+        // TODO question: where do we get the Makefile???
+        buildscript.append(makeCmd + "-f ../Makefile " + target + "; cd");
+        try {
+            conn.executeCommand(buildscript.toString());
+            conn.waitFor(conn.getRootShellPrompt());// one of the waitFor(RootShellPrompt) is hidden in executeCommand impl.
+        } catch (Exception ex) {
+            throw ConnectorException.wrap(ex);
+        }
+    }
+
+    private static String getNISDir(SolarisConnection conn) {
+        final String nisDir = conn.getConfiguration().getNisDir();
+        if (StringUtil.isBlank(nisDir)) {
+            throw new ConnectorException("NIS directory not specified.");
+        }
+        return nisDir;
+    }
+    
+    public static String getRemovePwdTmpFiles(SolarisConnection conn) {
+        final String rmCmd = conn.buildCommand("rm");
+
+        String removePwdTmpFiles =
+            "if [ -f " + tmpPwdfile1 + " ]; then " +
+              rmCmd + " -f " + tmpPwdfile1 + "; " +
+            "fi; " +
+            "if [ -f " + tmpPwdfile2 + " ]; then " +
+              rmCmd + " -f " + tmpPwdfile2 + "; " +
+            "fi; " +
+            "if [ -f " + tmpPwdfile3 + " ]; then " +
+              rmCmd + " -f " + tmpPwdfile3 + "; " +
+            "fi";
+
+        return removePwdTmpFiles;
+    }
+    
+    /**
+     * filters the given entry's attributes, so they are just the ones that are allowed NIS attributes.
+     */
+    public static Map<NativeAttribute, List<Object>> constructNISUserAttributeParameters(
+            SolarisEntry entry, Set<NativeAttribute> allowedNISattributes) {
+        
+        Map<NativeAttribute, List<Object>> result = new HashMap<NativeAttribute, List<Object>>();
+        
+        for (Attribute attr : entry.getAttributeSet()) {
+            String type = attr.getName();
+            List<Object> value = attr.getValue();
+            
+            for (NativeAttribute nattr : allowedNISattributes) {
+                if (type.equals(nattr.toString())) {
+                    result.put(NativeAttribute.forAttributeName(type), value);
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
 }
