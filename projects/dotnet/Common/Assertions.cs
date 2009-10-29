@@ -35,7 +35,7 @@ namespace Org.IdentityConnectors.Common
         /// </summary>
         /// <param name="o">check if the object is <code>null</code>.</param>
         /// <param name="param">name of the parameter to check for <code>null</code>.</param>
-        /// <exception cref="NullReferenceException">if <paramref name="o"/> is <code>null</code> and constructs a
+        /// <exception cref="ArgumentNullException">if <paramref name="o"/> is <code>null</code> and constructs a
         /// message with the name of the parameter.</exception>
         public static void NullCheck(Object o, String param)
         {
