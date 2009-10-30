@@ -23,9 +23,12 @@
 package org.identityconnectors.solaris;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.oro.text.regex.MalformedPatternException;
@@ -297,15 +300,40 @@ public class SolarisConnection {
     }
 
     /**
+     * This method's contract is similar to
+     * {@link SolarisConnection#executeCommand(String, Map, Set)}. The only
+     * difference is the 'rejects' parameter.
+     * 
+     * @param rejects
+     *            the error messages that can occur. If they are found, a
+     *            {@link ConnectorException} is thrown.
+     */
+    public String executeCommand(String command, Set<String> rejects, Set<String> accepts) {
+        Map<String, Class<? extends ConnectorException>> rejectsMap = new HashMap<String, Class<? extends ConnectorException>>();
+        for (String rej : rejects) {
+            rejectsMap.put(rej, ConnectorException.class);
+        }
+        return executeCommand(command, CollectionUtil.asReadOnlyMap(rejectsMap), accepts);
+    }
+
+    /**
      * Execute a issue a command on the resource. Return the match of feedback
      * up to the root shell prompt
      * {@link SolarisConnection#getRootShellPrompt()}.
      * 
      * @param command
      *            the executed command
+     * 
      * @param rejects
-     *            the error messages that can occur. If they are found, a
-     *            {@link ConnectorException} is thrown.
+     *            Map that contains error message, <i>exception type</i> pairs.
+     *            If the error message is found in response from the resource,
+     *            the given exception type will be thrown.
+     *            <p>
+     *            Note: map value containing <i>exception type</i> cannot be
+     *            null, if you don't know what exception to throw use
+     *            {@link ConnectorException}.
+     *            </p>
+     * 
      * @param accepts
      *            these are accepting strings, if they are found the result is
      *            returned. If empty set is given, the default accept is
@@ -321,7 +349,7 @@ public class SolarisConnection {
      *             in case a <code>rejects</code> string is found in the
      *             response of the resource.
      */
-    public String executeCommand(String command, Set<String> rejects, Set<String> accepts) {
+    public String executeCommand(String command, Map<String, Class<? extends ConnectorException>> rejects, Set<String> accepts) {
         try {
             if (command != null) {
                 sendInternal(command);
@@ -350,11 +378,11 @@ public class SolarisConnection {
         // according to the previous implementation note, the error matchers should go first!:
         MatchBuilder builder = new MatchBuilder();
         // #1 Adding Error matchers
-        final List<Closure> cecList = new ArrayList<Closure>();
-        for (String rej : rejects) {
-            Closure cec = new Closure();
+        final List<ErrorClosure> cecList = new ArrayList<ErrorClosure>();
+        for (Map.Entry<String, Class<? extends ConnectorException>> rejEntry : rejects.entrySet()) {
+            ErrorClosure cec = new ErrorClosure(rejEntry.getValue());
             cecList.add(cec);
-            builder.addCaseInsensitiveRegExpMatch(rej, cec);
+            builder.addCaseInsensitiveRegExpMatch(rejEntry.getKey(), cec);
         }
         
         // #2 Adding RootShellPrompt matcher or other acceptance matchers if given
@@ -419,16 +447,25 @@ public class SolarisConnection {
         return output;
     }
 
-    private void handleRejects(List<Closure> cecList) {
-        for (Closure connectorExceptionClosure : cecList) {
+    private void handleRejects(List<ErrorClosure> cecList) {
+        for (ErrorClosure connectorExceptionClosure : cecList) {
             if (connectorExceptionClosure.isMatched()) {
                 String out = connectorExceptionClosure.getMessage();
 
                 out = waitForInput(out);
 
-                throw new ConnectorException("ERROR OUTPUT: " + out);
-            }
-        }
+                Class<? extends ConnectorException> exceptionType = connectorExceptionClosure.getExceptionType();
+                Constructor<? extends ConnectorException> constructor = null;
+                try {
+                    constructor = exceptionType.getConstructor(String.class);
+                    throw constructor.newInstance("ERROR OUTPUT: " + out);
+                } catch (RuntimeException e) {
+                    throw e;
+                } catch (Exception e) {
+                    throw new RuntimeException("Internal Error: String constructor not found for exception: " + exceptionType.getCanonicalName());
+                }//try
+            }//fi
+        }//for
     }
     
     private String waitForInput(final String out) {
@@ -818,6 +855,18 @@ public class SolarisConnection {
         public void run(ExpectState state) throws Exception {
             msg = state.getBuffer();
             isReject = true;
+        }
+    }
+    
+    private class ErrorClosure extends Closure {
+        private Class<? extends ConnectorException> exceptionType;
+        
+        public ErrorClosure(Class<? extends ConnectorException> exceptionType) {
+            this.exceptionType = exceptionType;
+        }
+
+        public Class<? extends ConnectorException> getExceptionType() {
+            return exceptionType;
         }
     }
 }

@@ -137,4 +137,8 @@ public class SolarisConnectionTest {
     private SolarisConfiguration getConfig() {
         return config;
     }
+
+    public void testExecuteCommand() {
+    
+    }
 }

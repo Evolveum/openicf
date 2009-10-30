@@ -23,12 +23,13 @@
 package org.identityconnectors.solaris.operation;
 
 import java.util.Collections;
-import java.util.Set;
+import java.util.Map;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.exceptions.InvalidCredentialException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
@@ -42,7 +43,10 @@ public class OpAuthenticateImpl extends AbstractOp {
     
     private static final String MSG = "authenticateMessage";
     final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT};
-    private static final Set<String> rejects = CollectionUtil.newSet("incorrect", "lowest level \"shell\"");
+    private static final Map<String, Class<? extends ConnectorException>> rejectsMap;
+    static {
+        rejectsMap = CollectionUtil.newMap("incorrect", InvalidCredentialException.class, "lowest level \"shell\"", ConnectorException.class);
+    }
     
     public OpAuthenticateImpl(SolarisConnector conn) {
         super(conn);
@@ -57,7 +61,7 @@ public class OpAuthenticateImpl extends AbstractOp {
             final String command = "exec login " + username + " TERM=vt00";
             getConnection().executeCommand(command, Collections.<String>emptySet(), CollectionUtil.newSet("assword:"));
             SolarisConnection.sendPassword(password, getConnection());
-            getConnection().executeCommand("echo '" + MSG + "'", rejects, CollectionUtil.newSet(MSG));
+            getConnection().executeCommand("echo '" + MSG + "'", rejectsMap, CollectionUtil.newSet(MSG));
             _log.info("authenticate successful for user: '{0}'", username);
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
