@@ -38,6 +38,8 @@
     <Optimize>False</Optimize>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DocumentationFile>
+    </DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -81,6 +83,7 @@
     <Compile Include="LocaleTests.cs" />
     <Compile Include="ObjectNormalizerFacadeTests.cs" />
     <Compile Include="ObjectSerializationTests.cs" />
+    <Compile Include="PropertyBagTests.cs" />
     <Compile Include="ProxyTests.cs" />
     <Compile Include="SafeTypeTest.cs" />
     <Compile Include="ScriptTests.cs" />
@@ -89,9 +92,6 @@
     <Compile Include="TestUtil.cs" />
     <Compile Include="UpdateImplTests.cs" />
     <None Include="app.config">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="project.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
@@ -163,4 +163,10 @@
     <MSBuild Projects="..\ShellScriptExecutorFactory\ShellScriptExecutorFactory.csproj" Targets="Clean">
     </MSBuild>
   </Target>
+  <ItemGroup>
+    <EmbeddedResource Include="Org.IdentityConnectors.TestConnector.FakeConnector\config\config.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Org.IdentityConnectors.TestConnector.FakeConnector\config\myconfig\config.xml" />
+  </ItemGroup>
 </Project>

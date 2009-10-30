@@ -1310,8 +1310,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void TestSyncGC()
         {
             // test with searchChildDomain (uses GC)
-            TestSync(true, GetProperty(config_PROPERTY_SYNC_CONTAINER_ROOT));
-            TestSync(true, GetProperty(config_PROPERTY_SYNC_CONTAINER_CHILD));
+            TestSync(true, GetProperty(config_PROPERTY_SYNC_CONTAINER_ROOT, null));
+            TestSync(true, GetProperty(config_PROPERTY_SYNC_CONTAINER_CHILD, null));
         }
 
         // test sync
@@ -1319,8 +1319,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void TestSyncDC()
         {
             // test withouth searchChildDomains (uses DC)
-            TestSync(false, GetProperty(config_PROPERTY_SYNC_CONTAINER_ROOT));
-            TestSync(false, GetProperty(config_PROPERTY_SYNC_CONTAINER_CHILD));
+            TestSync(false, GetProperty(config_PROPERTY_SYNC_CONTAINER_ROOT, null));
+            TestSync(false, GetProperty(config_PROPERTY_SYNC_CONTAINER_CHILD, null));
         }
 
         [Test]
@@ -2738,7 +2738,16 @@ namespace Org.IdentityConnectors.ActiveDirectory
         // this needs to be replaced by the real one.
         public string GetProperty(string propertyName)
         {
-            string propertyValue = TestHelpers.GetProperty(propertyName, null);
+            var propertyValue =
+                TestHelpers.GetProperties(typeof(ActiveDirectoryConnector)).GetProperty<string>(propertyName);
+            //Trace.WriteLine(String.Format("GetProperty: {0} = {1}", propertyName, propertyValue));
+            return propertyValue;
+        }
+
+        public string GetProperty(string propertyName, string def)
+        {
+            var propertyValue =
+                TestHelpers.GetProperties(typeof(ActiveDirectoryConnector)).GetProperty<string>(propertyName, def);
             //Trace.WriteLine(String.Format("GetProperty: {0} = {1}", propertyName, propertyValue));
             return propertyValue;
         }

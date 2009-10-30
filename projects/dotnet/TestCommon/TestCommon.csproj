@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -12,6 +12,7 @@
     <AssemblyName>TestCommon</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <InternalsVisibleTo>FrameworkTests</InternalsVisibleTo>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -47,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="PropertyBag.cs" />
     <Compile Include="Test.cs" />
     <Compile Include="FrameworkInternalBridge.cs" />
     <Compile Include="TestHelpersSpi.cs" />
@@ -60,5 +62,8 @@
       <Project>{8B24461B-456A-4032-89A1-CD418F7B5B62}</Project>
       <Name>Framework</Name>
     </ProjectReference>
-  </ItemGroup>  
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="config.xsd" />
+  </ItemGroup>
 </Project>

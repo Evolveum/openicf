@@ -105,9 +105,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="project.xml">
+    <EmbeddedResource Include="Org.IdentityConnectors.ActiveDirectory.ActiveDirectoryConnector\config\config.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildProjectDirectory)\..\DotNetCommonBuild.Targets" />
   <PropertyGroup>

@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-<project>
-    <!-- test for TestHelpers.GetProperty -->
-    <property name="Help" value="Me"/>
-</project>

@@ -24,13 +24,16 @@ using System;
 using System.IO;
 using System.Xml;
 using System.Collections.Generic;
+using System.Linq;
 
 using NUnit.Framework;
-using NUnit.Framework.SyntaxHelpers;
 
 using Org.IdentityConnectors.Framework.Common.Objects;
 using Org.IdentityConnectors.Framework.Spi;
 using Org.IdentityConnectors.Test.Common;
+using System.Text;
+using System.Diagnostics;
+using Org.IdentityConnectors.Common;
 
 namespace FrameworkTests
 {
@@ -41,38 +44,142 @@ namespace FrameworkTests
     public class TestHelperTests
     {
         [Test]
-        public void testLoadProperties()
+        public void TestReadConfiguration()
         {
-            string tmpFn = Path.GetTempFileName();
+            using (var memoryStream = new MemoryStream())
+            {
+                var properties = new Dictionary<string, string>()
+                                     {
+                                         {"bob", "bobsValue"},
+                                         {"bob2", "bob2sValue"}
+                                     };
+
+                CreateXmlConfiguration(memoryStream, properties);
+
+                memoryStream.Seek(0, SeekOrigin.Begin);
+                // load the properties files
+                var dict = TestHelpers.ReadConfiguration(memoryStream);
+                foreach (var property in properties)
+                {
+                    Assert.AreEqual(dict[property.Key], property.Value);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Creates an XML configuration in the specified stream based on the <paramref name="properties"/>.
+        /// </summary>
+        /// <param name="stream">The output stream.</param>
+        /// <param name="properties">The properties to be stored.</param>
+        /// <remarks>The caller is responsible for closing the stream.</remarks>
+        private static void CreateXmlConfiguration(Stream stream, IDictionary<string, string> properties)
+        {
+            var settings = new XmlWriterSettings
+                               {
+                                   Encoding = Encoding.UTF8,
+                                   CloseOutput = false
+                               };
+            using (var writer = XmlWriter.Create(stream, settings))
+            {
+                writer.WriteStartDocument();
+                writer.WriteStartElement("config");
+                foreach (var property in properties)
+                {
+                    writer.WriteStartElement("property");
+                    writer.WriteAttributeString("name", property.Key);
+                    writer.WriteAttributeString("value", property.Value);
+                    writer.WriteEndElement();
+                }
+                writer.WriteEndDocument();
+                writer.Flush();
+            }
+        }
+
+        [Test]
+        public void TestGetProperties()
+        {
+            const string testConfigName = "myconfig";
+            Type connectorType = typeof(Org.IdentityConnectors.TestConnector.FakeConnector);
+
+            //store environment variables, they must be restored at the end
+            var oldTestConfig = Environment.GetEnvironmentVariable(TestHelpers.TestConfigEVName);
+            var oldPrivateConfigRoot = Environment.GetEnvironmentVariable(TestHelpers.PrivateConfigRootEVName);
+            Environment.SetEnvironmentVariable(TestHelpers.TestConfigEVName, testConfigName);
+
+            var privateConfigRoot = Path.GetTempPath();
+
             try
             {
-                // create some xml text
-                TextWriter stringWriter = new StringWriter();
-                XmlTextWriter w = new XmlTextWriter(stringWriter);
-                w.WriteStartElement("configuration");
-                w.WriteStartElement("property");
-                w.WriteAttributeString("name", "bob");
-                w.WriteAttributeString("value", "bobsValue");
-                w.WriteEndElement();
-                w.WriteStartElement("property");
-                w.WriteAttributeString("name", "bob2");
-                w.WriteAttributeString("value", "bob2sValue");
-                w.WriteEndElement();
-                w.Close();
-                File.WriteAllText(tmpFn, stringWriter.ToString());
-                // load the properties files
-                IDictionary<string, string> dict = TestHelpers.LoadPropertiesFile(tmpFn);
-                Assert.AreEqual(dict["bob"], "bobsValue");
+                //set the TestHelpers.PrivateConfigRootEVName environment variable used by this test
+                Environment.SetEnvironmentVariable(TestHelpers.PrivateConfigRootEVName, privateConfigRoot);
+
+                //at the end the created dir structure must be deleted, hence we need to store this
+                privateConfigRoot = Path.Combine(privateConfigRoot, "config");
+
+                var privateConfigPath = Path.Combine(Path.Combine(privateConfigRoot, connectorType.FullName),
+                                                     "config-private");
+                //create the directory structure for the general and the specific "testConfigName" private config
+                Directory.CreateDirectory(Path.Combine(privateConfigPath, testConfigName));
+
+                //create general private config file
+                using (var configFile = File.Create(Path.Combine(privateConfigPath, "config.xml")))
+                {
+                    CreateXmlConfiguration(configFile, new Dictionary<string, string>() {{"privatekey", "value"}});
+                }
+
+                //create specific private config file
+                using (var configFile = File.Create(Path.Combine(Path.Combine(privateConfigPath, testConfigName), "config.xml")))
+                {
+                    CreateXmlConfiguration(configFile, new Dictionary<string, string>() {{"myconfig.privatekey", "value"}});
+                }
+
+                PropertyBag bag1 = TestHelpers.GetProperties(connectorType);
+                CheckProperties(bag1);
+                PropertyBag bag2 = TestHelpers.GetProperties(connectorType);
+                Assert.AreSame(bag1, bag2, "TestHepers must create the same PropertyBag for the same connector");
             }
             finally
             {
-                File.Delete(tmpFn);
+                if (oldTestConfig != null)
+                {
+                    Environment.SetEnvironmentVariable(TestHelpers.TestConfigEVName, oldTestConfig);
+                }
+                if (oldPrivateConfigRoot != null)
+                {
+                    Environment.SetEnvironmentVariable(TestHelpers.PrivateConfigRootEVName, oldPrivateConfigRoot);
+                }
+
+                try
+                {
+                    if (Directory.Exists(privateConfigRoot))
+                    {
+                        Directory.Delete(privateConfigRoot, true);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    //although, something bad happened there is no need to fail the test since the next time it will overwrite
+                    //the temporary files if any exists
+                    Trace.TraceWarning(ex.ToString());
+                }
             }
         }
-        [Test]
-        public void testGetProperties()
+
+        private static void CheckProperties(PropertyBag bag)
         {
-            Assert.IsTrue(TestHelpers.GetProperty("Help", null).Equals("Me"));
+            var properties = new Dictionary<string, object>
+                                 {
+                                     {"Help", "Me"},
+                                     {"publickey", "value"},
+                                     {"myconfig.publickey", "value"},
+                                     {"privatekey", "value"},
+                                     {"myconfig.privatekey", "value"}
+                                 };
+            
+            var bagElements = bag.ToDictionary();
+            Assert.That(
+                CollectionUtil.DictionariesEqual(properties, bagElements) && CollectionUtil.DictionariesEqual(bagElements, properties),
+                "Expected test properties not equal");
         }
 
         [Test]
@@ -117,5 +224,25 @@ namespace FrameworkTests
 
             public String Unused { get; set; }
         }
+    }
+}
+
+namespace Org.IdentityConnectors.TestConnector
+{
+    public class FakeConnector : Connector
+    {
+        #region Connector Members
+        public void Init(Configuration configuration)
+        {
+            throw new NotImplementedException();
+        }
+        #endregion
+
+        #region IDisposable Members
+        public void Dispose()
+        {
+            throw new NotImplementedException();
+        }
+        #endregion
     }
 }

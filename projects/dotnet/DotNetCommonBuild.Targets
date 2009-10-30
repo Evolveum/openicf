@@ -55,7 +55,8 @@
                 AssemblyCopyright="$(Copyright)"
                 AssemblyCompany="$(Company)"             
                 AssemblyVersion="$(Major).$(Minor).$(Build).$(SVN_Revision)" 
-                AssemblyFileVersion="$(Major).$(Minor).$(Build).$(SVN_Revision)" />
+                AssemblyFileVersion="$(Major).$(Minor).$(Build).$(SVN_Revision)"
+                InternalsVisibleTo="$(InternalsVisibleTo)" />
     </Target>
     <Target Name="BuildZip">
         <Copy
