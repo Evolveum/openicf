@@ -34,18 +34,16 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.solaris.command.ClosureFactory;
-import org.identityconnectors.solaris.command.MatchBuilder;
-import org.identityconnectors.solaris.command.ClosureFactory.CaptureClosure;
-import org.identityconnectors.solaris.command.ClosureFactory.ConnectorExceptionClosure;
+import org.identityconnectors.solaris.command.RegExpCaseInsensitiveMatch;
 import org.identityconnectors.solaris.operation.OpCreateImpl;
 import org.identityconnectors.solaris.operation.OpUpdateImpl;
 
-import expect4j.Closure;
 import expect4j.Expect4j;
 import expect4j.ExpectState;
 import expect4j.ExpectUtils;
 import expect4j.matches.Match;
+import expect4j.matches.RegExpMatch;
+import expect4j.matches.TimeoutMatch;
 
 /**
  * Connection class provides connection to the Solaris resource. It also creates an 
@@ -140,10 +138,9 @@ public class SolarisConnection {
                 /*
                  * telnet doesn't authenticate automatically, so an extra step is needed:
                  */
-                waitFor("login");
-                send(username.trim());
-                waitForCaseInsensitive("assword");
-                SolarisUtil.sendPassword(password, this);
+                executeCommand(null, Collections.<String>emptySet(), CollectionUtil.newSet("login"));
+                executeCommand(username.trim(), Collections.<String>emptySet(), CollectionUtil.newSet("assword"));
+                sendPassword(password, this);
             }
             
             executeCommand(null/* no command sent here */, CollectionUtil.newSet("incorrect"));
@@ -235,65 +232,54 @@ public class SolarisConnection {
      * send a command to the resource, no end of line needed.
      * @param string
      */
-    public void send(String string) throws IOException {
+    private void sendInternal(String string) throws IOException {
         _expect4j.send(string + HOST_END_OF_LINE_TERMINATOR);
     }
     
     /**
-     * {@see SolarisConnection#waitFor(String, int)}
-     */
-    public String waitFor(final String string) throws Exception {
-        return waitFor(string, WAIT);
-    }
-    
-    /** do case insensitive match and wait for */
-    public String waitForCaseInsensitive(final String string) throws Exception {
-        return waitForImpl(string, WAIT, true);
-    }
-    
-    /**
-     * Waits for feedback from the resource, respecting given timeout.
+     * send a password to the resource, and return the response from the
+     * resource, if any.
      * 
-     * @param string is a standard regular expression
-     * @param millis time in millis until expect waits for reply
-     * @return 
-     * @throws MalformedPatternException
-     * @throws Exception
+     * @param passwd
+     *            the password to send
+     * @param rejects
+     *            Optional parameter. {@see
+     *            SolarisConnection#executeCommand(String, Set, Set)} contract
+     * @param accepts
+     *            Optional parameter. {@see
+     *            SolarisConnection#executeCommand(String, Set, Set)} contract
+     * @param conn
+     * @return feedback on the sent password from the resource.
+     * 
+     * Note on usage of params 'rejects', 'accepts': If none of the parameters are given, we wait for RootShellPrompt
+     * Note: compare with {@link SolarisUtil#sendPassword(GuardedString, SolarisConnection)}
      */
-    public String waitFor(final String string, int millis) throws MalformedPatternException, Exception {
-        return waitForImpl(string, millis, false);
+    public static String sendPassword(GuardedString passwd, Set<String> rejects, Set<String> accepts, final SolarisConnection conn) {
+        sendPasswdImpl(passwd, conn);
+        
+        return conn.executeCommand(null/* no command is executed here */, rejects, accepts);
     }
     
-    private String waitForImpl(final String string, final int millis, boolean caseInsensitive) throws MalformedPatternException, Exception {
-        log.info("waitFor(''{0}'', {1}, {2})", string, millis, Boolean.toString(caseInsensitive));
-        /** internal buffer for the Solaris resource's output */
-        final StringBuilder buffer = new StringBuilder();
-        
-        // build the matchers
-        /** in case of successful match this closure is called */
-        Closure successClosure = new Closure() {
-            public void run(ExpectState state) {
-                // save the content of buffer (the response from Solaris resource)
-                buffer.append(state.getBuffer());
-            }
-        };
-        MatchBuilder builder = new MatchBuilder();
-        if (caseInsensitive) {
-            builder.addCaseInsensitiveRegExpMatch(string, successClosure);
-        } else {
-            builder.addRegExpMatch(string, successClosure);
-        }
-        builder.addTimeoutMatch(millis, new Closure() {
-            public void run(ExpectState state) throws Exception {
-                String msg = String.format("Timeout in waitFor('%s', %s) buffer: <%s>",
-                        string, Integer.toString(millis), state.getBuffer());
-                throw new ConnectorException(msg);
+    /** 
+     * just send a password but don't anticipate any response from the resource.
+     * Compare with {@link SolarisUtil#sendPassword(GuardedString, Set, Set, SolarisConnection)}
+     */
+    public static void sendPassword(GuardedString passwd, SolarisConnection conn) {
+        sendPasswdImpl(passwd, conn);
+    }
+
+    private static void sendPasswdImpl(GuardedString passwd,
+            final SolarisConnection conn) {
+        passwd.access(new GuardedString.Accessor() {
+            public void access(char[] clearChars) {
+                try {
+                    // send the password
+                    conn.sendInternal(new String(clearChars));
+                } catch (IOException e) {
+                    throw ConnectorException.wrap(e);
+                }
             }
         });
-        
-        _expect4j.expect(builder.build());
-        
-        return buffer.toString();
     }
     
     /** 
@@ -338,7 +324,7 @@ public class SolarisConnection {
     public String executeCommand(String command, Set<String> rejects, Set<String> accepts) {
         try {
             if (command != null) {
-                send(command);
+                sendInternal(command);
             }
         } catch (Exception e) {
             // TODO finish ex...
@@ -364,24 +350,24 @@ public class SolarisConnection {
         // according to the previous implementation note, the error matchers should go first!:
         MatchBuilder builder = new MatchBuilder();
         // #1 Adding Error matchers
-        final List<ConnectorExceptionClosure> cecList = new ArrayList<ConnectorExceptionClosure>();
+        final List<Closure> cecList = new ArrayList<Closure>();
         for (String rej : rejects) {
-            ConnectorExceptionClosure cec = ClosureFactory.newConnectorException();
+            Closure cec = new Closure();
             cecList.add(cec);
-            builder.addRegExpMatch(rej, cec);
+            builder.addCaseInsensitiveRegExpMatch(rej, cec);
         }
         
         // #2 Adding RootShellPrompt matcher or other acceptance matchers if given
-        List<CaptureClosure> captureClosures = null;
+        List<Closure> captureClosures = null;
         if (accepts.size() > 0) {
             captureClosures = CollectionUtil.newList();
             for (String acc : accepts) {
-                CaptureClosure closure = ClosureFactory.newCaptureClosure();
+                Closure closure = new Closure();
                 captureClosures.add(closure);
                 builder.addRegExpMatch(acc, closure);
             }
         } else {
-            CaptureClosure closure = ClosureFactory.newCaptureClosure();
+            Closure closure = new Closure();
             captureClosures = CollectionUtil.newList(closure);
             builder.addRegExpMatch(getRootShellPrompt(), closure);
         }
@@ -401,10 +387,10 @@ public class SolarisConnection {
         }
         
         String output = null;
-        for (CaptureClosure cl : captureClosures) {
+        for (Closure cl : captureClosures) {
             if (cl.isMatched()) {
                 // get regular output matched by root shell prompt.
-                output = cl.getMsg();
+                output = cl.getMessage();
                 break;
             }
         }
@@ -433,10 +419,10 @@ public class SolarisConnection {
         return output;
     }
 
-    private void handleRejects(List<ConnectorExceptionClosure> cecList) {
-        for (ConnectorExceptionClosure connectorExceptionClosure : cecList) {
+    private void handleRejects(List<Closure> cecList) {
+        for (Closure connectorExceptionClosure : cecList) {
             if (connectorExceptionClosure.isMatched()) {
-                String out = connectorExceptionClosure.getErrMsg();
+                String out = connectorExceptionClosure.getMessage();
 
                 out = waitForInput(out);
 
@@ -452,7 +438,7 @@ public class SolarisConnection {
             System.out.println("trying ...");
             String tmp = null;
             try {
-                tmp = waitFor(".+", WAITFOR_TIMEOUT_FOR_ERROR);
+                tmp = waitForImpl(".+", WAITFOR_TIMEOUT_FOR_ERROR, true);
             } catch (Exception ex) {
                 // OK
             }
@@ -464,11 +450,54 @@ public class SolarisConnection {
         }
         return trimOutput(buffer.toString());
     }
+    
+    /**
+     * @throws {@link ConnectorException} in case of timeout in waiting for rootShellPrompt character.
+     */
+    public void waitForRootShellPrompt() {
+        try {
+            waitForImpl(getRootShellPrompt(), WAIT, false);
+        } catch (Exception ex) {
+            throw ConnectorException.wrap(ex);
+        }
+    }
+    
+    private String waitForImpl(final String string, final int millis, boolean caseInsensitive) throws MalformedPatternException, Exception {
+        log.info("waitFor(''{0}'', {1}, {2})", string, millis, Boolean.toString(caseInsensitive));
+        /** internal buffer for the Solaris resource's output */
+        final StringBuilder buffer = new StringBuilder();
+        
+        // build the matchers
+        /** in case of successful match this closure is called */
+        Closure successClosure = new Closure() {
+            public void run(ExpectState state) {
+                // save the content of buffer (the response from Solaris resource)
+                buffer.append(state.getBuffer());
+            }
+        };
+        MatchBuilder builder = new MatchBuilder();
+        if (caseInsensitive) {
+            builder.addCaseInsensitiveRegExpMatch(string, successClosure);
+        } else {
+            builder.addRegExpMatch(string, successClosure);
+        }
+        builder.addTimeoutMatch(millis, new Closure() {
+            public void run(ExpectState state) throws Exception {
+                String msg = String.format("Timeout in waitFor('%s', %s) buffer: <%s>",
+                        string, Integer.toString(millis), state.getBuffer());
+                throw new ConnectorException(msg);
+            }
+        });
+        
+        _expect4j.expect(builder.build());
+        
+        return buffer.toString();
+    }
 
     /** once connection is disposed it won't be used at all. */
     public void dispose() {
         try {
-            send("exit");
+            sendInternal("exit");
         } catch (IOException e) {
             // OK
         }
@@ -685,14 +714,13 @@ public class SolarisConnection {
             try {
                 // 1) send sudo reset command
                 executeCommand(SUDO_RESET_COMMAND, CollectionUtil.newSet("not found"));
-                send(SUDO_RESET_COMMAND); 
 
                 // 2) send sudo start command
-                send(SUDO_START_COMMAND); 
-                waitForCaseInsensitive("assword:");
+                executeCommand(SUDO_START_COMMAND, Collections.<String>emptySet(), CollectionUtil.newSet("assword:")); 
+
                 // TODO evaluate which password should be used:
                 GuardedString passwd = config.getPassword();
-                SolarisUtil.sendPassword(passwd, CollectionUtil.newSet("may not run", "not allowed to execute"), Collections.<String>emptySet(), this);
+                sendPassword(passwd, CollectionUtil.newSet("may not run", "not allowed to execute"), Collections.<String>emptySet(), this);
             } catch (Exception e) {
                 throw ConnectorException.wrap(e);
             }
@@ -722,4 +750,74 @@ public class SolarisConnection {
         }
     }
 
+    /**
+     * Use this class to construct a sequence of matchers.
+     * Matchers consists of two parts:
+     * <ul>
+     *  <li>1) regular expression -- used to detect the match,</li>
+     *  <li>2) closure -- call-back interface that is executed upon the match.</li>
+     * </ul>
+     * @author David Adam
+     */
+    private final class MatchBuilder {
+        private List<Match> matches;
+
+        public MatchBuilder() {
+            matches = new ArrayList<Match>();
+        }
+
+        /**
+         * adds a case sensitive matcher. Compare with
+         * {@link MatchBuilder#addCaseInsensitiveRegExpMatch(String, Closure)}.
+         */
+        public void addRegExpMatch(String regExp, Closure closure) {
+            try {
+                matches.add(new RegExpMatch(regExp, closure));
+            } catch (MalformedPatternException ex) {
+                throw ConnectorException.wrap(ex);
+            }
+        }
+        
+        /**
+         * adds a case *insensitive matcher. Compare with
+         * {@link MatchBuilder#addRegExpMatch(String, Closure)}
+         */
+        public void addCaseInsensitiveRegExpMatch(String regExp, Closure closure) {
+            try {
+                matches.add(new RegExpCaseInsensitiveMatch(regExp, closure));
+            } catch (MalformedPatternException ex) {
+                throw ConnectorException.wrap(ex);
+            }
+        }
+        
+        /** add a timeout match with given 'millis' period. */
+        public void addTimeoutMatch(long millis, Closure closure) {
+            matches.add(new TimeoutMatch(millis, closure));
+        }
+
+        public Match[] build() {
+            return matches.toArray(new Match[matches.size()]);
+        }
+    }// MatchBuilder
+    
+    /**
+     * internal Closure to hold the buffer state of the resource, plus indicator of match.
+     */
+    private class Closure implements expect4j.Closure {
+        private String msg;
+        private boolean isReject;
+        
+        public String getMessage() {
+            return msg;
+        }
+        
+        public boolean isMatched() {
+            return isReject;
+        }
+        
+        public void run(ExpectState state) throws Exception {
+            msg = state.getBuffer();
+            isReject = true;
+        }
+    }
 }

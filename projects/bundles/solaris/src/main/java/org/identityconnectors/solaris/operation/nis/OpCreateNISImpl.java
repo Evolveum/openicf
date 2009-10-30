@@ -33,7 +33,6 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
-import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
@@ -297,7 +296,7 @@ public class OpCreateNISImpl extends AbstractNISOp {
                 connection.executeCommand(getOwner);
                 connection.executeCommand(createRecord1);
                 try {
-                    connection.waitFor(connection.getRootShellPrompt()); // second prompt due to chown nl (the first is hidden in executeCommand impl.)
+                    connection.waitForRootShellPrompt(); // second prompt due to chown nl (the first is hidden in executeCommand impl.)
                 } catch (Exception ex) {
                     throw ConnectorException.wrap(ex);
                 }
@@ -308,11 +307,7 @@ public class OpCreateNISImpl extends AbstractNISOp {
                 if (shadow) {
                     connection.executeCommand(shadowOwner);
                     connection.executeCommand(shadowRecord);
-                    try {
-                        connection.waitFor(connection.getRootShellPrompt());// second prompt due to chown nl (the first is hidden in executeCommand impl.)
-                    } catch (Exception ex) {
-                        throw ConnectorException.wrap(ex);
-                    }
+                    connection.waitForRootShellPrompt();// second prompt due to chown nl (the first is hidden in executeCommand impl.)
                     connection.executeCommand(removeTmpFilesScript);
                 }
                 
@@ -349,11 +344,10 @@ public class OpCreateNISImpl extends AbstractNISOp {
         String passwdCmd = connection.buildCommand("yppasswd", accountId);
 
         try {
-            connection.send(passwdCmd);
-            connection.waitForCaseInsensitive("password:");
+            connection.executeCommand(passwdCmd, Collections.<String>emptySet(), CollectionUtil.newSet("password:"));
 
-            SolarisUtil.sendPassword(password, Collections.<String>emptySet(), CollectionUtil.newSet("new password:"), connection);
-            SolarisUtil.sendPassword(password, CollectionUtil.newSet(" denied"), Collections.<String>emptySet(), connection);
+            SolarisConnection.sendPassword(password, Collections.<String>emptySet(), CollectionUtil.newSet("new password:"), connection);
+            SolarisConnection.sendPassword(password, CollectionUtil.newSet(" denied"), Collections.<String>emptySet(), connection);
         } catch (Exception ex) {
             throw ConnectorException.wrap(ex);
         }

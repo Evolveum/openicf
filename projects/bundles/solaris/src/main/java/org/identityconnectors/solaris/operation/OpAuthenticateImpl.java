@@ -22,6 +22,7 @@
  */
 package org.identityconnectors.solaris.operation;
 
+import java.util.Collections;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
@@ -31,6 +32,7 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 
@@ -52,9 +54,9 @@ public class OpAuthenticateImpl extends AbstractOp {
         _log.info("authenticate (user: '{0}')", username);
         
         try {
-            getConnection().send("exec login " + username + " TERM=vt00");
-            getConnection().waitForCaseInsensitive("assword:");
-            SolarisUtil.sendPassword(password, getConnection());
+            final String command = "exec login " + username + " TERM=vt00";
+            getConnection().executeCommand(command, Collections.<String>emptySet(), CollectionUtil.newSet("assword:"));
+            SolarisConnection.sendPassword(password, getConnection());
             getConnection().executeCommand("echo '" + MSG + "'", rejects, CollectionUtil.newSet(MSG));
             _log.info("authenticate successful for user: '{0}'", username);
         } catch (Exception e) {

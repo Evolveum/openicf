@@ -71,7 +71,7 @@ public class CommonNIS extends AbstractNISOp {
         buildscript.append(makeCmd + "-f ../Makefile " + target + "; cd");
         try {
             conn.executeCommand(buildscript.toString());
-            conn.waitFor(conn.getRootShellPrompt());// one of the waitFor(RootShellPrompt) is hidden in executeCommand impl.
+            conn.waitForRootShellPrompt();// one of the waitFor(RootShellPrompt) is hidden in executeCommand impl.
         } catch (Exception ex) {
             throw ConnectorException.wrap(ex);
         }

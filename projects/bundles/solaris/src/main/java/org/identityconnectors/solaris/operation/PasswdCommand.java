@@ -31,7 +31,6 @@ import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.solaris.SolarisConnection;
-import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
@@ -63,9 +62,9 @@ class PasswdCommand extends CommandSwitches {
             String command = conn.buildCommand("passwd -r files", entry.getName());
             conn.executeCommand(command, passwdRejects, CollectionUtil.newSet(NEW_PASSWORD_MATCH));
 
-            SolarisUtil.sendPassword(password, Collections.<String>emptySet(), CollectionUtil.newSet(NEW_PASSWORD_MATCH), conn);
+            SolarisConnection.sendPassword(password, Collections.<String>emptySet(), CollectionUtil.newSet(NEW_PASSWORD_MATCH), conn);
 
-            SolarisUtil.sendPassword(password, Collections.<String>emptySet(), Collections.<String>emptySet(), conn);
+            SolarisConnection.sendPassword(password, Collections.<String>emptySet(), Collections.<String>emptySet(), conn);
         } catch (Exception ex) {
             throw ConnectorException.wrap(ex);
         }

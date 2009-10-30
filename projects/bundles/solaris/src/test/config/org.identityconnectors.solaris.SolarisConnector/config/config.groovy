@@ -3,6 +3,8 @@
  *  +---------------------------------------------------+ 
  */
 import org.identityconnectors.contract.data.groovy.Lazy
+import org.identityconnectors.contract.exceptions.ObjectNotFoundException
+import org.identityconnectors.common.security.GuardedString
 
 connector {
   port = 22
@@ -17,6 +19,9 @@ testsuite {
   bundleName=System.getProperty("bundleName")
   bundleVersion=System.getProperty("bundleVersion")
   connectorName="org.identityconnectors.solaris.SolarisConnector"
+  
+  Authentication.__ACCOUNT__.username = Lazy.get("i0.Authentication.__ACCOUNT__.__NAME__")
+  Authentication.__ACCOUNT__.wrong.password = new GuardedString("_nonExistingPassword_".toCharArray())
 
   Validate.invalidConfig = [
     [port: null],
@@ -124,3 +129,19 @@ testsuite {
 }// testsuite
 
 __ACCOUNT__.inactive = "0"
+shell = new ObjectNotFoundException()
+role = new ObjectNotFoundException()
+force_change = new ObjectNotFoundException()
+authorization = new ObjectNotFoundException()
+profile = new ObjectNotFoundException()
+time_last_login = new ObjectNotFoundException()
+lock = new ObjectNotFoundException()
+comment = new ObjectNotFoundException()
+min = new ObjectNotFoundException()
+max = new ObjectNotFoundException()
+group = new ObjectNotFoundException()
+dir = new ObjectNotFoundException()
+uid = new ObjectNotFoundException()
+warn = new ObjectNotFoundException()
+expire = new ObjectNotFoundException()
+secondary_group = new ObjectNotFoundException()

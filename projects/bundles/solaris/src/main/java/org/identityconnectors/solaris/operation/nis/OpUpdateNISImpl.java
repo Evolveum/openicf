@@ -34,7 +34,6 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
-import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
@@ -221,8 +220,8 @@ public class OpUpdateNISImpl extends AbstractNISOp {
             GuardedString password, SolarisConnection connection) {
         final String passwdCmd = connection.buildCommand("yppasswd", account);
         connection.executeCommand(passwdCmd, Collections.<String>emptySet(), CollectionUtil.newSet(" password:"));
-        SolarisUtil.sendPassword(password, Collections.<String>emptySet(), CollectionUtil.newSet("new password:"), connection);
-        SolarisUtil.sendPassword(password, CollectionUtil.newSet(" denied"), Collections.<String>emptySet(), connection);
+        SolarisConnection.sendPassword(password, Collections.<String>emptySet(), CollectionUtil.newSet("new password:"), connection);
+        SolarisConnection.sendPassword(password, CollectionUtil.newSet(" denied"), Collections.<String>emptySet(), connection);
     }
 
     private static void addNISShellUpdate(String account, String shell,

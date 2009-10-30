@@ -24,12 +24,10 @@ package org.identityconnectors.solaris;
 
 import static org.identityconnectors.solaris.SolarisMessages.MSG_NOT_SUPPORTED_OBJECTCLASS;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -94,52 +92,6 @@ public class SolarisUtil {
         
         throw new IllegalArgumentException(String.format(
                 MSG_NOT_SUPPORTED_OBJECTCLASS, oclass, operation.getName()));
-    }
-
-    /**
-     * send a password to the resource, and return the response from the
-     * resource, if any.
-     * 
-     * @param passwd
-     *            the password to send
-     * @param rejects
-     *            Optional parameter. {@see
-     *            SolarisConnection#executeCommand(String, Set, Set)} contract
-     * @param accepts
-     *            Optional parameter. {@see
-     *            SolarisConnection#executeCommand(String, Set, Set)} contract
-     * @param conn
-     * @return feedback on the sent password from the resource.
-     * 
-     * Note on usage of params 'rejects', 'accepts': If none of the parameters are given, we wait for RootShellPrompt
-     * Note: compare with {@link SolarisUtil#sendPassword(GuardedString, SolarisConnection)}
-     */
-    public static String sendPassword(GuardedString passwd, Set<String> rejects, Set<String> accepts, final SolarisConnection conn) {
-        sendPasswdImpl(passwd, conn);
-        
-        return conn.executeCommand(null/* no command is executed here */, rejects, accepts);
-    }
-    
-    /** 
-     * just send a password but don't anticipate any response from the resource.
-     * Compare with {@link SolarisUtil#sendPassword(GuardedString, Set, Set, SolarisConnection)}
-     */
-    public static void sendPassword(GuardedString passwd, SolarisConnection conn) {
-        sendPasswdImpl(passwd, conn);
-    }
-
-    private static void sendPasswdImpl(GuardedString passwd,
-            final SolarisConnection conn) {
-        passwd.access(new GuardedString.Accessor() {
-            public void access(char[] clearChars) {
-                try {
-                    // send the password
-                    conn.send(new String(clearChars));
-                } catch (IOException e) {
-                    throw ConnectorException.wrap(e);
-                }
-            }
-        });
     }
     
     public static SolarisEntry forConnectorAttributeSet(String userName, Set<Attribute> attrs) {
