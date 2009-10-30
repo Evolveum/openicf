@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Waveset" type="WavesetType"/>
+  <xs:complexType name="ListType">
+    <xs:sequence>
+      <xs:element type="ObjectType" name="Object" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ExtensionType">
+    <xs:sequence>
+      <xs:element type="ObjectType" name="Object"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ObjectType" mixed="false">
+    <xs:sequence>
+      <xs:element type="AttributeType" name="Attribute" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="name" use="optional"/>
+  </xs:complexType>
+  <xs:complexType name="AttributeType" mixed="false">
+    <xs:sequence>
+      <xs:element type="ObjectType" name="Object" minOccurs="0"/>
+      <xs:element type="ListType" name="List" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="name" use="optional"/>
+    <xs:attribute type="xs:string" name="value" use="optional"/>
+  </xs:complexType>
+  <xs:complexType name="ConfigurationType">
+    <xs:sequence>
+      <xs:element type="ExtensionType" name="Extension"/>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="id" />
+    <xs:attribute type="xs:string" name="name" />
+  </xs:complexType>
+  <xs:complexType name="WavesetType">
+    <xs:sequence>
+      <xs:element type="ConfigurationType" name="Configuration"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>
