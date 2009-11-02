@@ -3,7 +3,7 @@
 	<Product Id="*"
 		Name="Connector Server"
 		Language="1033"
-		Version="1.0.0.0"
+		Version="1.2.0.0"
 		UpgradeCode="2C19FE30-F6A7-482D-A50F-C1E64D34C024"
 		Manufacturer="Sun Microsystems">
 		<Package Description="#Description"
