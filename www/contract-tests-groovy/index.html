@@ -385,7 +385,7 @@ a local&nbsp;Connector</h2>
 property file:
 </p>
 
-<p style="margin-left: 40px;"><span style="font-family: monospace;" class="literal">{$user.home}\.bundle-name\build.groovy</span></p>
+<p style="margin-left: 40px;"><span style="font-family: monospace;" class="literal">{$user.home}\.connectors\bundle-name\config\${connectorName}\config-private\config.groovy</span></p>
 
 <p><span style="font-weight: bold;">Note:</span>
 The following script fragments are from the <a href="appendix.html#attachdbtableconfig">DatabaseTable
@@ -873,12 +873,13 @@ Or, if the connector has more test configurations:<br>
 <pre style="margin-left: 40px;">ant -DtestConfig=<span style="color: rgb(0, 102, 0);">conf1</span> run-contract-tests<br></pre>
 
 where <code>conf1</code> is the configuration name. In this case, tests will use the 
-<code>{$bundle.dir}/config/<span style="color: rgb(0, 102, 0);">conf1</span>/build.groovy</code> for non confident configuration settings and
-<code>{$user.home}/.connectors/bundle-name/<span style="color: rgb(0, 102, 0);">conf1</span>/build.groovy</code> for confident (private) configuration settings 
+<code>{$bundle.dir}/config/${connectorName}/<span style="color: rgb(0, 102, 0);">conf1</span>/config.groovy</code> for non confident configuration settings and
+<code>{$user.home}/.connectors/bundle-name/config/${connectorName}/config-private/<span style="color: rgb(0, 102, 0);">conf1</span>/config.groovy</code> for confident (private) configuration settings 
 files.
 <p></p>
 
 <p><br>
+
 
 </p>
 
@@ -979,7 +980,7 @@ on
       <ul>
 
         <li>Add <code>testsuite.serverHost,
-testsuite.serverPort, testsuite.serverKey</code> to the private configuration &nbsp;(<code>${user.home}/.connectors/bundle-name/build.groovy</code>).
+testsuite.serverPort, testsuite.serverKey</code> to the private configuration &nbsp;(<code>${user.home}/.connectors/bundle-name/config/${connectorName}/config-private/config.groovy</code>).
 The rest of configuration is the same as&nbsp; <a href="#A_Configuring_a_local_Connector">steps 2 through
 5 for local connectors</a>.</li>
 
@@ -1028,8 +1029,8 @@ for every project
 which has <code>build.xml</code> and imports <code>connector_build.xml</code>.)&nbsp;</p>
 
 <p>Set the following properties in
-<code>${bundle.dir}/config/build.groovy</code>: and the private part to <br />
-<code>${user.home}/.connectors/bundle-name/build.groovy</code>:</p>
+<code>${bundle.dir}/config/${connectorName}/config.groovy</code>: and the private part to <br />
+<code>${user.home}/.connectors/bundle-name/config/${connectorName}/config-private/config.groovy</code>:</p>
 
 <ul>
 
