@@ -25,6 +25,7 @@ package org.identityconnectors.solaris.operation.search;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -33,8 +34,6 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
 
 public class AccountIterator implements Iterator<SolarisEntry> {
 
-    private List<String> accounts;
-    
     /** bunch of boolean flags says if the command is needed to be launched (based on attributes to get) */
     private boolean isLogins;
     private boolean isProfiles;
@@ -44,12 +43,13 @@ public class AccountIterator implements Iterator<SolarisEntry> {
 
     private Iterator<String> it;
     private SolarisConnection conn;
+    
+    private SolarisEntry nextEntry;
 
     public AccountIterator(List<String> usernames, Set<NativeAttribute> attrsToGet, SolarisConnection conn) {
         this.conn = conn;
         
-        accounts = usernames;
-        it = accounts.iterator();
+        it = usernames.iterator();
         
         isLogins = LoginsCommand.isLoginsRequired(attrsToGet);
         isProfiles = attrsToGet.contains(NativeAttribute.PROFILES);
@@ -59,19 +59,40 @@ public class AccountIterator implements Iterator<SolarisEntry> {
     }
     
     public boolean hasNext() {
-        return it.hasNext();
+        while ((nextEntry == null) && it.hasNext()) {
+            nextEntry = buildUser(it.next());
+        }
+        return nextEntry != null;
     }
 
+    /**
+     * @return the next user as {@link SolarisEntry} or null instead if the user
+     *         does not exist on the resource.
+     */
     public SolarisEntry next() {
-        String name = it.next();
-        return buildUser(name);
-
+        if (!hasNext())
+            throw new NoSuchElementException();
+        
+        SolarisEntry result = nextEntry;
+        nextEntry = null;
+        return result;
     }
 
+    /**
+     * get the user entry for given username
+     * @param name
+     * @return the initialized entry, or Null in case the user was not found on the resource.
+     */
     private SolarisEntry buildUser(String name) {
         SolarisEntry.Builder entryBuilder = new SolarisEntry.Builder(name).addAttr(NativeAttribute.NAME, name);
         if (isLogins) {
-            entryBuilder.addAllAttributesFrom(LoginsCommand.getAttributesFor(name, conn));
+            SolarisEntry loginsEntry = LoginsCommand.getAttributesFor(name, conn);
+            
+            // Null indicates that the user was not found.
+            if (loginsEntry == null)
+                return null;
+            
+            entryBuilder.addAllAttributesFrom(loginsEntry);
         }
         if (isProfiles) {
             final Attribute profiles = ProfilesCommand.getProfilesAttributeFor(name, conn);

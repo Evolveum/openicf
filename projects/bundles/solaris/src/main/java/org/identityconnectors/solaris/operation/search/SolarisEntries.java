@@ -42,6 +42,9 @@ public class SolarisEntries {
 
     // public abstract Iterator<SolarisEntry> getAllGroups();
 
+    /**
+     * @return the {@link SolarisEntry} if the user with given name was found. If the user was not found return null.
+     */
     public static SolarisEntry getAccount(String name, Set<NativeAttribute> attrsToGet, SolarisConnection conn) {
         return AccountUtil.getAccount(conn, name, attrsToGet);
     }

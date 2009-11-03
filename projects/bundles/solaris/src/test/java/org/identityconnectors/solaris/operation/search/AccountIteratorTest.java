@@ -25,6 +25,7 @@ package org.identityconnectors.solaris.operation.search;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
@@ -51,5 +52,12 @@ public void test() {
         retrievedUsernames.add(bai.next().getName());
     }
     Assert.assertEquals(usernames, retrievedUsernames);
+    
+    try {
+        bai.next();
+        Assert.fail("no Exception was thrown after invalid call of next.");
+    } catch (NoSuchElementException nex) {
+        // OK
+    }
 }
 }

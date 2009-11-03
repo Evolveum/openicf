@@ -66,6 +66,12 @@ class LoginsCommand {
          */
     }
 
+    /**
+     * get the attributes from Logins command for the given username
+     * @param username
+     * @param conn
+     * @return the SolarisEntry initialized with fetched attributes or null if the user was not found.
+     */
     public static SolarisEntry getAttributesFor(String username, SolarisConnection conn) {
         SolarisEntry entry = null;
         try {

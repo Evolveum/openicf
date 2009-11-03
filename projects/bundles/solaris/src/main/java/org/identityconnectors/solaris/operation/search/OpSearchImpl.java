@@ -165,8 +165,10 @@ public class OpSearchImpl extends AbstractOp {
      */
     private void simpleFilter(Set<NativeAttribute> requiredAttrs) {
         SolarisEntry singleAccount = SolarisEntries.getAccount(((EqualsNode) filter).getValue(), requiredAttrs, getConnection());
-        ConnectorObject connObj = convertToConnectorObject(singleAccount, oclass);
-        handler.handle(connObj);
+        if (singleAccount != null) {
+            ConnectorObject connObj = convertToConnectorObject(singleAccount, oclass);
+            handler.handle(connObj);
+        }
     }
 
     /**

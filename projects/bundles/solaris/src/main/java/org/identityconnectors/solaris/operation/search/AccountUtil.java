@@ -34,6 +34,11 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
 
 
 class AccountUtil {
+    /**
+     * @return the {@link SolarisEntry} that including the attributes that belong
+     *         to the given username. Return Null if the user is not available
+     *         on the resource.
+     */
     public static SolarisEntry getAccount(SolarisConnection conn, String name, Set<NativeAttribute> attrsToGet) {
         // the result will be an Iterable collection with a single element returned.
         AccountIterator it = new AccountIterator(CollectionUtil.newList(name), attrsToGet, conn);
