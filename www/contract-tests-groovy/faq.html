@@ -123,8 +123,8 @@ Property names containing special characters (invalid Java identifiers), such as
 
 <h2><a name="confusion"></a>Common confusions</h2>
 <p><strong>#1 the connector schema can be modified by <code>Schema.*</code> properties</strong> -- These lines of 
-<code>build.groovy</code> are used in <code>SchemaApiOpTests</code> to compare the schema returned by connector 
-with the correct schema defined in <code>build.groovy</code>. However this has nothing to do with the configuration 
+<code>config.groovy</code> are used in <code>SchemaApiOpTests</code> to compare the schema returned by connector 
+with the correct schema defined in <code>config.groovy</code>. However this has nothing to do with the configuration 
 of schema, that is just the competence of connector.</p>
 
 <h2><a name="configs"></a>Howto run tests with different configurations (Hudson continous build)</h2>

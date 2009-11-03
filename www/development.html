@@ -55,21 +55,7 @@
 	files simply reference a common build file in the framework.
 	Currently this reference defaults to the location of the framework
 	in the source tree. If you change the location of the framework you
-	must set the ant property '<B>framework.dir</B>'
-	in one of the following ways: 
-	</P>
-	<UL>
-		<LI><P>Add the location of the framework to the ant call as an
-		argument (-Dframework.dir=/your/framework/location)</P>
-		<LI><P>Add the location of the framework to the connector's
-		config file ($bundle.dir/config/build.groovy). 
-		This file is auto-generated if you used the <A HREF="Java_Toolkit.html">Java Toolkit</A> 
-		to create your Connector. 
-				</P>
-		<LI><P>Add the location of the framework to the global connector private
-		properties file ($user-home/.connectors/connectors.properties).
-				</P>
-	</UL>
+	must set the ant property '<B>framework.dir</B>' in your build.xml.
 	<P>Look at '<I>$framework/connector_build.xml</I>' for more info.
 	Obviously, this property only applies to the connectors, not the
 	framework itself. There are three additional (optional) build flags

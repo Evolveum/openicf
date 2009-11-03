@@ -138,12 +138,12 @@ at the command line.</P>
     <PRE>~/workspace/FooBundle$ ant run-unit-tests</PRE><A NAME="PropsFile"/>
    
 	<P>When writing tests, there is a utility class you may use called TestHelpers. It loads properties from groovy files as classpath resources. The following classpaths are used to load groovy files resources :
-              <ul>
-               <li><code>loader.getResource(prefix + "/public/build.groovy")</code></li>
-               <li><code>loader.getResource(prefix + "/public/" + cfg + "/build.groovy") </code> optionally where cfg is passed configuration</li>
-               <li> <code> loader.getResource(prefix + "/private/build.groovy") </<code> </li>
-               <li> <code >loader.getResource(prefix + "/private/" + cfg + "/build.groovy") </code> optionally where cfg is passed configuration</li>
-              </ul>
+	      <ul>
+		  <li><code>loader.getResource(prefix + "/config/config.groovy")</code></li>
+		  <li><code>loader.getResource(prefix + "/config/" + cfg + "/config.groovy") </code> optionally where cfg is passed configuration</li>
+		  <li> <code> loader.getResource(prefix + "/config-private/config.groovy") </<code> </li>
+		  <li> <code >loader.getResource(prefix + "/config-private/" + cfg + "/config.groovy") </code> optionally where cfg is passed configuration</li>
+	      </ul>
               where prefix is FQN of your connector class and cfg is optional configuration of the test. Build script helps you to add the files on classpath from following locations :
               <ul>
                 <li>Public path : ${bundle.dir}/src/test/config</li>

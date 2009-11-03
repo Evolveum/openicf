@@ -683,13 +683,13 @@ testsuite.Search.compareExistingObjectsByUidOnly = false	// default
 
 
 <h4><a name="MultiOpTests"></a>MultiOpTests#testLockOutOpAttribute()</h4>
-To turn off <code>testLockOutOpAttribute</code> test add this line into <code>build.groovy</code>:
+To turn off <code>testLockOutOpAttribute</code> test add this line into <code>config.groovy</code>:
 <pre>
 testsuite.Multi.skip.lockout=true 
 </pre>
 
 <h4><a name="MultiOpTests2"></a>MultiOpTests#testDisableDateOpAttribute()</h4>
-Test method <code>testDisableDateOpAttribute</code> uses two long date stamps for setting the <code>__DISABLE_DATE__</code> specifal attribute (javadoc <code>OperationalAttributes.DISABLE_DATE_NAME</code>) in <code>build.groovy</code>:
+Test method <code>testDisableDateOpAttribute</code> uses two long date stamps for setting the <code>__DISABLE_DATE__</code> specifal attribute (javadoc <code>OperationalAttributes.DISABLE_DATE_NAME</code>) in <code>config.groovy</code>:
 <pre>
 // Long values
 testsuite.Multi.__DISABLE_DATE__ = 123L
