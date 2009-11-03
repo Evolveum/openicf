@@ -772,20 +772,6 @@ public class SolarisConnection {
             executeCommand(SUDO_RESET_COMMAND);
         }
     }
-    
-    /*
-     * there is only one usage of this in {@link OpAuthenticateImpl}
-     * It should be avoided FIXME.
-     * @param matches
-     */
-    @Deprecated
-    public void expect(Match[] matches) {
-        try {
-            _expect4j.expect(matches);
-        } catch (Exception e) {
-            throw ConnectorException.wrap(e);
-        }
-    }
 
     /**
      * Use this class to construct a sequence of matchers.
