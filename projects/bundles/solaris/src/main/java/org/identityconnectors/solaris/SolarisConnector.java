@@ -193,22 +193,22 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     private static Schema buildSchema() {
         final SchemaBuilder schemaBuilder = new SchemaBuilder(SolarisConnector.class);
         
-        /* 
-         * GROUP
-         */
+//        /* 
+//         * GROUP
+//         */
         Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
-        //attributes.add(Name.INFO);
-        for (GroupAttribute attr : GroupAttribute.values()) {
-            attributes.add(AttributeInfoBuilder.build(attr.getName()));
-        }
-        
-        //GROUP supports no authentication:
-        final ObjectClassInfoBuilder ociB = new ObjectClassInfoBuilder();
-        ociB.setType(ObjectClass.GROUP_NAME);
-        ociB.addAllAttributeInfo(attributes);
-        final ObjectClassInfo ociInfo = ociB.build();
-        schemaBuilder.defineObjectClass(ociInfo);
-        schemaBuilder.removeSupportedObjectClass(AuthenticateOp.class, ociInfo);
+//        //attributes.add(Name.INFO);
+//        for (GroupAttribute attr : GroupAttribute.values()) {
+//            attributes.add(AttributeInfoBuilder.build(attr.getName()));
+//        }
+//        
+//        //GROUP supports no authentication:
+//        final ObjectClassInfoBuilder ociB = new ObjectClassInfoBuilder();
+//        ociB.setType(ObjectClass.GROUP_NAME);
+//        ociB.addAllAttributeInfo(attributes);
+//        final ObjectClassInfo ociInfo = ociB.build();
+//        schemaBuilder.defineObjectClass(ociInfo);
+//        schemaBuilder.removeSupportedObjectClass(AuthenticateOp.class, ociInfo);
         
         /*
          * ACCOUNT
