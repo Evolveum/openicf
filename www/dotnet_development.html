@@ -1,99 +1,294 @@
-<html>
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
 <head>
+<meta content="en-us" http-equiv="Content-Language" />
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
 <title>Developing .NET Connector Bundles</title>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 </head>
+<body>
 <div id="projecthome" class="app">
-<h1>Developing .NET Connector Bundles</h1>
-<p>The document describes the basic build environment for developing
-.NET connectors.</p>
-<p>Requirements:</p>
-<ul>
-    <li><a
-        href="http://www.microsoft.com/downloads/details.aspx?FamilyID=333325FD-AE52-4E35-B531-508D977D32A6&amp;displaylang=en">.NET
-    Framework 3.5</a></li>
-    <li><a href="http://msbuildtasks.tigris.org/">MSBuild
-    Community Tasks</a></li>
-    <li><a href="http://www.nunit.org/index.php?p=download">NUnit
-    2.4.x for .NET 2.0</a></li>
-    <li><a href="http://wix.sourceforge.net/">Wix 3.0</a></li>
-    <li><a href="http://subversion.tigris.org/">Subversion 1.4.x</a></li>
-    <li><a href="http://www.microsoft.com/downloads/details.aspx?FamilyId=F26B1AA4-741A-433A-9BE5-FA919850BDBF&displaylang=en">Windows SDK for Windows Server 2008 and .NET Framework 3.5</a></li>
-</ul>
-<p>Recommended:</p>
-<ul>
-    <li><a href="">SharpDevelop 3.0</a> free IDE to develop .NET
-    applications with plus it includes most of the dependencies.</li>
-</ul>
-<p>Its easy enough to simply checkout the entire source code base
-from <strong>https://identityconnectors.dev.java.net/svn/identityconnectors/trunk/projects/dotnet</strong>.
-All .NET based connectors (such as the Active Directory Connector) as well as the .NET version of the Connector Framework
-live under this directory.
-<h3>Checkout the code.</h3>
-<pre>
-C:\build&gt; svn checkout https://identityconnectors.dev.java.net/svn/identityconnectors/trunk/projects/dotnet dotnet 
-</pre>
-<h3>Directory Components</h3>
-The layout to the .NET development directory is split into several smaller projects.
-<ul>
-	<li>Common - Assembly for all Framework and Connector common code.</li>
-	<li>Console - Boo console to help hand test Connectors with automatic setup.</li>
-	<li>Framework - Framework Assembly for Connector SPI/API plus remoting and server.</li>
-	<li>FrameworkTests - NUnit Test Assembly to test all aspects of the framework.</li>
-	<li>Serivce - Runs the Framework remoting server as a Windows Service.</li>
-	<li>ServiceInstall - This is the install for the Windows Service.</li>
-	<li>TestBundleV1 - Test Connector Bundle for use in FrameworkTests.</li>
-	<li>TestBundleV2 - Test Connector Bundle for use in FrameworkTests with different version only same namespace.</li>
-	<li>ToolkitInstall - Install for the Framework and Console for custom Connector development.</li>
-</ul>
-<h3>Build</h3>
-<p>All .NET content is under the directory 'dotnet'.  There is a top level 
-solution which can be used by SharpDevelop and Visual Studio 2008 (VS will 
-complain because some of the projects are Wix based and not part of the 
-standard set of MS projects).
-<p>The .NET side of the project uses MSBuild exclusively because its compatible with the two most popular .NET development IDEs.
-<p>To build simply install all the required software above.  If SharpDevelop is installed one should be able to just open the solution.  If Visual Studio is install it should work with the solution as well only it will complain about a few projects.  VS2008 will modify the solution and projects please *DO NOT* check them in unless you know exactly what your doing VS2008 tends to change it to whatever it wants with little regard to customization. The same can be said about SharpDevelop to some extent.
-<p>For a command line build one environment variable must be set.  This is the location for Wix.  The environment variable WIX_HOME must be set in order to build.  You may need to add %WIX_HOME% to your PATH as well.
-<div class="hint"><p><strong>Hint: </strong>msbuild.exe is located in your .NET Framework directory.  Most likely here: C:\WINDOWS\Microsoft.NET\Framework\v3.5</div>
-<pre>
-C:\build\identityconnectors\projects\dotnet&gt;msbuild "DotNetConnectors.sln"
+	<h1>Developing .NET Connector Bundles</h1>
+	<p>The document describes the basic build environment for developing .NET 
+	connectors.</p>
+	<p>Requirements:</p>
+	<ul>
+		<li>
+		<a href="http://www.microsoft.com/downloads/details.aspx?FamilyID=333325FD-AE52-4E35-B531-508D977D32A6&amp;displaylang=en">
+		.NET Framework 3.5</a></li>
+		<li><a href="http://msbuildtasks.tigris.org/">MSBuild Community Tasks</a></li>
+		<li><a href="http://www.nunit.org/index.php?p=download">NUnit 2.4.x for 
+		.NET 2.0</a></li>
+		<li><a href="http://wix.sourceforge.net/">Wix 3.0</a></li>
+		<li><a href="http://subversion.tigris.org/">Subversion 1.4.x</a></li>
+		<li>
+		<a href="http://www.microsoft.com/downloads/details.aspx?FamilyId=F26B1AA4-741A-433A-9BE5-FA919850BDBF&amp;displaylang=en">
+		Windows SDK for Windows Server 2008 and .NET Framework 3.5</a></li>
+	</ul>
+	<p>Recommended:</p>
+	<ul>
+		<li><a href="">SharpDevelop 3.0</a> free IDE to develop .NET 
+		applications with plus it includes most of the dependencies.</li>
+	</ul>
+	<p>Its easy enough to simply checkout the entire source code base from
+	<strong>
+	https://identityconnectors.dev.java.net/svn/identityconnectors/trunk/projects/dotnet</strong>. 
+	All .NET based connectors (such as the Active Directory Connector) as well 
+	as the .NET version of the Connector Framework live under this directory.
+	</p>
+	<h3>Checkout the code.</h3>
+	<pre>C:\build&gt; svn checkout https://identityconnectors.dev.java.net/svn/identityconnectors/trunk/projects/dotnet dotnet</pre>
+	<h3>Directory Components</h3>
+	The layout to the .NET development directory is split into several smaller 
+	projects.
+	<ul>
+		<li>Common - Assembly for all Framework and Connector common code.</li>
+		<li>Console - Boo console to help hand test Connectors with automatic 
+		setup.</li>
+		<li>Framework - Framework Assembly for Connector SPI/API plus remoting 
+		and server.</li>
+		<li>FrameworkTests - NUnit Test Assembly to test all aspects of the 
+		framework.</li>
+		<li>Service - Runs the Framework remoting server as a Windows Service.</li>
+		<li>ServiceInstall - This is the install for the Windows Service.</li>
+		<li>TestBundleV1 - Test Connector Bundle for use in FrameworkTests.</li>
+		<li>TestBundleV2 - Test Connector Bundle for use in FrameworkTests with 
+		different version only same namespace.</li>
+		<li>ToolkitInstall - Install for the Framework and Console for custom 
+		Connector development.</li>
+	</ul>
+	<h3>Build</h3>
+	<p>All .NET content is under the directory &#39;dotnet&#39;. There is a top level 
+	solution which can be used by SharpDevelop and Visual Studio 2008 (VS will 
+	complain because some of the projects are Wix based and not part of the 
+	standard set of MS projects). </p>
+	<p>The .NET side of the project uses MSBuild exclusively because its 
+	compatible with the two most popular .NET development IDEs. </p>
+	<p>To build simply install all the required software above. If SharpDevelop 
+	is installed one should be able to just open the solution. If Visual Studio 
+	is install it should work with the solution as well only it will complain 
+	about a few projects. VS2008 will modify the solution and projects please 
+	*DO NOT* check them in unless you know exactly what your doing VS2008 tends 
+	to change it to whatever it wants with little regard to customization. The 
+	same can be said about SharpDevelop to some extent. </p>
+	<p>For a command line build one environment variable must be set. This is 
+	the location for Wix. The environment variable WIX_HOME must be set in order 
+	to build. You may need to add %WIX_HOME% to your PATH as well. </p>
+	<div class="hint">
+		<p><strong>Hint: </strong>msbuild.exe is located in your .NET Framework 
+		directory. Most likely here: C:\WINDOWS\Microsoft.NET\Framework\v3.5</p>
+	</div>
+	<pre>C:\build\identityconnectors\projects\dotnet&gt;msbuild &quot;DotNetConnectors.sln&quot;
 Microsoft (R) Build Engine Version 3.5.21022.8
 [Microsoft .NET Framework, Version 2.0.50727.1433]
 Copyright (C) Microsoft Corporation 2007. All rights reserved.
 
 Build started 5/14/2008 10:05:17 PM.
-Project "C:\build\identityconnectors\projects\dotnet\DotNetConnectors.sln" on nod
+Project &quot;C:\build\identityconnectors\projects\dotnet\DotNetConnectors.sln&quot; on nod
 e 0 (default targets).
-  Building solution configuration "Debug|Any CPU".
-Project "C:\build\identityconnectors\projects\dotnet\Connector Gateway.sln" (1) is
- building "C:\build\identityconnectors\projects\dotnet\Common\Common.csproj" (2) o
+  Building solution configuration &quot;Debug|Any CPU&quot;.
+Project &quot;C:\build\identityconnectors\projects\dotnet\Connector Gateway.sln&quot; (1) is
+ building &quot;C:\build\identityconnectors\projects\dotnet\Common\Common.csproj&quot; (2) o
 n node 0 (default targets).
-Skipping target "CoreCompile" because all output files are up-to-date with resp
+Skipping target &quot;CoreCompile&quot; because all output files are up-to-date with resp
 ect to the input files.
 CopyFilesToOutputDirectory:
   Common -&gt; C:\build\identityconnectors\projects\dotnet\Common\bin\Debug\Common.dl
   l
-Done Building Project "C:\build\identityconnectors\projects\dotnet\Common\Common.c
-sproj" (default targets).
+Done Building Project &quot;C:\build\identityconnectors\projects\dotnet\Common\Common.c
+sproj&quot; (default targets).
 
-Project "C:\build\identityconnectors\projects\dotnet\Connector Gateway.sln" (1) is
- building "C:\build\identityconnectors\projects\dotnet\ServiceInstall\ServiceInsta
-ll.wixproj" (3) on node 0 (default targets).
+Project &quot;C:\build\identityconnectors\projects\dotnet\Connector Gateway.sln&quot; (1) is
+ building &quot;C:\build\identityconnectors\projects\dotnet\ServiceInstall\ServiceInsta
+ll.wixproj&quot; (3) on node 0 (default targets).
 
 </pre>
-<p>This will build everything and run all the Framework tests. The result is a full Remote Connector Framework Windows Service install.  The default configuration is 'Debug'.
-<h3>Connector Development</h3>
-<p>Connector bundles are simply .NET class libraries that follow some distinct patterns. Good examples are contained with in TestBundleV1 and TestBundleV2; these are skeletons to get you started. The only required references are the 'Common' and 'Framework' assemblies. These contain all the functionality necessary to create a .NET Connector.
-<h3>Property Files in .NET</h3>
-<p>On the Java side you will see the TestHelpers mechanism, which loads in configuration properties at runtime from several different sources. The .NET side has this functionality as well.
-TestHelpers actually aggregates properties from potentially four different files, if they are present. It loads properties in the following order:</p>
-<ol>
-	<li><p><b>${user-home}/.connectors/connectors.xml</b>  //(optional) global properties file</p></li>
-	<li><p><b>${bundle-dir}/project.xml</b> //(optional) public build properties file</p></li>
-	<li><p><b>${user-home}/.connectors/${assembly-name}/project.xml</b>  //(optional) private build properties file</p></li>
-    <li><p><b>${user-home}/.connectors/${assembly-name}/${configuration}/project.xml</b>  //(optional) configuration-specific properties file</p></li>
-</ol>
-<p><i>${assembly-name}</i> is the name of the calling assembly as defined in the connector's project (.csproj) file. Note that in this case all properties files are optional, whereas on the Java side, the second one is required. 
-For an example project.xml file, take a look at the <a href="https://identityconnectors.dev.java.net/source/browse/identityconnectors/trunk/projects/dotnet/ActiveDirectoryConnectorTests/">ActiveDirectoryConnectorTests</a> project.</p>
+	<p>This will build everything and run all the Framework tests. The result is 
+	a full Remote Connector Framework Windows Service install. The default 
+	configuration is &#39;Debug&#39;. </p>
+	<h3>Connector Development</h3>
+	<p>Connector bundles are simply .NET class libraries that follow some 
+	distinct patterns. Good examples are contained with in TestBundleV1 and 
+	TestBundleV2; these are skeletons to get you started. The only required 
+	references are the &#39;Common&#39; and &#39;Framework&#39; assemblies. These contain all 
+	the functionality necessary to create a .NET Connector. </p>
+	<h3>Property Files in .NET</h3>
+	<p>Property files are configuration files containg name-value pairs of properties that can be used while running unit tests. The Connector 
+	Framework builds on its own configuration property loading mechanism when unit testing comes in question. Although, you can use any 
+	arbitrary logic to manage configuration properties of unit test, the framework has built-in support to read them via the TestHelpers 
+	class located in the
+	<a href="https://identityconnectors.dev.java.net/source/browse/identityconnectors/trunk/projects/dotnet/TestCommon">TestCommon</a> 
+	project.</p>
+	<p>Two main types of configuration property files are distinguished by the 
+	framework: <span style="font-style:italic;">public</span> and 
+	<span style="font-style:italic;">private</span>. The public configuration property file can 
+	be used to set properties which are generic for the whole connector, such as 
+	the default container in case of an LDAP based resource or the database name 
+	in case of a database resource. The private configuration property file is 
+	recommended to be used for storing sensitive data (such as user name, password, host 
+	name, etc.). Both, public and private general configuration files can 
+	be extended with any number of test 
+	setup specific property files. Let&#39;s take the Database Table Connector 
+	for example, it is a general purpose connector that can be used to manage 
+	data 
+	in any kind of database that has a JDBC driver, hence there must be a way to 
+	test it with all the supported databases. This is where a test setup 
+	specific configuration property file can come in handy. A public property 
+	file might be created to store the name of the database to use as it can be 
+	the same for all the database resources, however, specific private property files can 
+	be used to store the user name and password to a specific resource (MySQL, 
+	MS SQL, Oracle DB, etc.).
+	</p>
+	<table style="text-align: left; width: 90%;" border="1" cellpadding="4" cellspacing="0">
+		<tbody>
+			<tr>
+				<td style="vertical-align: top; background-color: rgb(239, 239, 239);"><span style="font-weight: bold;">&nbsp;Note:</span></td>
+				<td>The test setup specific property files are read if and only if the <b>TEST_CONFIG</b> environment variable is set, 
+				it must contain the name of the test setup to be used while running the unit tests.
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	<p>
+	Public property files are loaded as <strong>embedded manifest resources</strong>, while private 
+	property files are loaded as <strong>file system resources</strong>. The property files are 
+	loaded in the 
+	following order: public general file, public test setup specific file 
+	if defined, private general 
+	file and at last, private test specific file if defined. Properties that are 
+	defined in a property file can be overridden in any of the following files in 
+	the order, the last evaluated value will come into force, i.e. if, in the public general property file the property called 
+	&quot;Foo&quot; is defined with the value &#39;bar&#39; and the private 
+	general property file defines it as well with the value &quot;baz&quot; and also a 
+	test setup specific private property file defines it with the value &#39;qux&#39;, the 
+	property bag created for the connector will contain the value &#39;qux&#39; for 
+	property &#39;Foo&#39;.<br/>Although, the directory layout of the path to the configuration property 
+	files is similar to the one that you can observe on the Java side, note that the 
+	configuration file loading mechanism is slightly different. The following 
+	table shows how the path to a property file is built up according to its 
+	type:</p>
+	<table cellspacing="0" cellpadding="5" border="1" style="text-align: left; width: 90%; height: 89px;">
+		<tbody>
+			<tr>
+				<td><span style="color: rgb(0, 153, 0);">General public</span> property file</td>
+				<td><strong>{fully qualified name of the connector}\config\config.xml</strong></td>
+			</tr>
+			<tr>
+				<td width="200"><span style="color: rgb(51, 102, 102);">Test setup specific public</span> property file</td>
+				<td><strong>{fully qualified name of the connector}\config\%TEST_CONFIG%\config.xml</strong></td>
+			</tr>
+			<tr>
+				<td><span style="color: rgb(0, 153, 0);">General private</span> property file</td>
+				<td><strong>%PRIVATE_CONFIG_ROOT%\config\{fully qualified name of the connector}\config-private\config.xml</strong></td>
+			</tr>
+			<tr>
+				<td width="200"><span style="color: rgb(51, 102, 102);">Test setup specific private</span>  property file</td>
+				<td><strong>%PRIVATE_CONFIG_ROOT%\config\{fully qualified name of the connector}\config-private\%TEST_CONFIG%\config.xml</strong></td>
+			</tr>
+		</tbody>
+	</table>
+	<br/>
+	<table style="text-align: left; width: 90%;" border="1" cellpadding="4" cellspacing="0">
+		<tbody>
+			<tr>
+				<td style="vertical-align: top; background-color: rgb(239, 239, 239);"><span style="font-weight: bold;">&nbsp;Note:</span></td>
+				<td>
+					If the "PRIVATE_CONFIG_ROOT" environment variable is not defined, it will be replaced in the path with the 
+					default root which points to a directory in the current user's profile container, the path of which is constructed as follows:<br/>
+					<strong>%USERPROFILE%\.connectors\{assembly-name}</strong><br />
+					The {assembly-name} is the name of the assembly that contains the connector type.<br/>
+					<span style="font-style:italic;">For example: c:\Users\Administrator\.connectors\ActiveDirectory.Connector</span>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	<p>As the public configuration property files are embedded resources, they 
+	are intended to change rarely as any change to such property file requires the assembly to be recompiled. Use a private property file to 
+	override a property set in a public file instead.</p>
+	<b>To create a public general configuration property file</b>
+	<ol>
+		<li>
+			<p>Add a folder named as the FQN of the connector class to the project that will contain the configuration.<br/>
+			Although, it is recommended to add it to the test project, it can be any arbitrary project, but then the assembly created 
+			from that project must be used while loading the properties. See TestHelpers.GetProperties(Type, Assembly) 
+			for details.</p>
+		</li>
+		<li>
+			<p>Add a folder underneath the previously created one called <span style="font-style:italic">config</span>.</p>
+		</li>
+		<li>
+			<p>Add an XML file to this folder called <span style="font-style:italic;">config.xml</span>.</p>
+		</li>
+		<li>
+			<p>Set the Build Action property of the <span style="font-style:italic;">config.xml</span> to 
+			<span style="font-style:italic;">Embedded Resource</span>.</p>
+		</li>
+	</ol>
+	<b>To create a public test setup specific configuration property file</b>
+	<ol>
+		<li>
+			<p>Follow the steps 1. and 2. described in the previous section to create the root directory of the property files.</p>
+		</li>
+		<li>
+			<p>Add a folder underneath the previously created <span style="font-style:italic">config</span> folder called 
+			<span style="font-style:italic">myconfig</span>.</p>
+			<table style="text-align: left; width: 90%;" border="1" cellpadding="4" cellspacing="0">
+				<tbody>
+					<tr>
+						<td style="vertical-align: top; background-color: rgb(239, 239, 239);"><span style="font-weight: bold;">&nbsp;Note:</span></td>
+						<td>
+							<span style="font-style:italic">myconfig</span> is the name of the test setup that must be set for the 
+							<strong>TEST_CONFIG</strong> environment variable to make use of it.
+						</td>
+					</tr>
+				</tbody>
+			</table><br/>
+		</li>
+		<li>
+			<p>Add an XML file to this folder called <span style="font-style:italic;">config.xml</span>.</p>
+		</li>
+		<li>
+			<p>Set the Build Action property of the <span style="font-style:italic;">config.xml</span> to 
+			<span style="font-style:italic;">Embedded Resource</span>.</p>
+		</li>
+	</ol>
+	<table>
+		<tbody>
+			<tr>
+				<td><img src="images/public_config_layout.png" alt="Public configuration directory layout" title="Public configuration directory layout" height="195" width="409" /></td>
+				<td valign="top"><img src="images/build_action_property.png" alt="Build Action set to Embedded Resource" title="Build Action set to Embedded Resource" /></td>
+			</tr>
+		</tbody>
+	</table>
+	<br/>
+	<table style="text-align: left; width: 90%;" border="1" cellpadding="4" cellspacing="0">
+		<tbody>
+			<tr>
+				<td style="vertical-align: top; background-color: rgb(239, 239, 239);"><span style="font-weight: bold;">&nbsp;Note:</span></td>
+				<td>All the configuration property files must adhere to the following XML schema:
+					<pre>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema"&gt;
+  &lt;xs:element name="config"&gt;
+    &lt;xs:complexType&gt;
+      &lt;xs:sequence&gt;
+        &lt;xs:element maxOccurs="unbounded" name="property"&gt;
+          &lt;xs:complexType&gt;
+            &lt;xs:attribute name="name" type="xs:string" use="required" /&gt;
+            &lt;xs:attribute name="value" type="xs:string" use="required" /&gt;
+          &lt;/xs:complexType&gt;
+        &lt;/xs:element&gt;
+      &lt;/xs:sequence&gt;
+    &lt;/xs:complexType&gt;
+  &lt;/xs:element&gt;
+&lt;/xs:schema&gt;
+					</pre>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	<p>For an example config.xml file, take a look at the
+	<a href="https://identityconnectors.dev.java.net/source/browse/identityconnectors/trunk/projects/dotnet/ActiveDirectoryConnectorTests/">
+	ActiveDirectoryConnectorTests</a> project.</p>
 </div>
+</body>
 </html>
