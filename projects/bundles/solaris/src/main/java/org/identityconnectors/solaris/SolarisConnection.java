@@ -23,7 +23,6 @@
 package org.identityconnectors.solaris;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,6 +40,7 @@ import org.identityconnectors.solaris.command.RegExpCaseInsensitiveMatch;
 import org.identityconnectors.solaris.operation.OpCreateImpl;
 import org.identityconnectors.solaris.operation.OpUpdateImpl;
 
+import expect4j.Closure;
 import expect4j.Expect4j;
 import expect4j.ExpectState;
 import expect4j.ExpectUtils;
@@ -85,6 +85,15 @@ public class SolarisConnection {
      * this constant is nanosecond.
      */
     private static final double ERROR_WAIT = 100 * Math.pow(10, 6); // 100 mseconds, hard-coded constant in the adapter.
+    
+    /**
+     * default way of handling error messages.
+     */
+    private static final ErrorHandler defaultErrorHandler =  new ErrorHandler() {
+        public void handle(String buffer) {
+            throw new ConnectorException("ERROR, buffer content: <" + buffer + ">");
+        }
+    };
     
     private String _rootShellPrompt;
     private Expect4j _expect4j;
@@ -309,9 +318,10 @@ public class SolarisConnection {
      *            {@link ConnectorException} is thrown.
      */
     public String executeCommand(String command, Set<String> rejects, Set<String> accepts) {
-        Map<String, Class<? extends ConnectorException>> rejectsMap = new HashMap<String, Class<? extends ConnectorException>>();
+        Map<String, ErrorHandler> rejectsMap = new HashMap<String, ErrorHandler>();
         for (String rej : rejects) {
-            rejectsMap.put(rej, ConnectorException.class);
+            // by default rejects throw ConnectorException.
+            rejectsMap.put(rej, defaultErrorHandler);
         }
         return executeCommand(command, CollectionUtil.asReadOnlyMap(rejectsMap), accepts);
     }
@@ -325,14 +335,10 @@ public class SolarisConnection {
      *            the executed command
      * 
      * @param rejects
-     *            Map that contains error message, <i>exception type</i> pairs.
+     *            Map that contains error message, {@link SolarisConnection.ErrorHandler} pairs.
      *            If the error message is found in response from the resource,
-     *            the given exception type will be thrown.
+     *            the error handler is called. .
      *            <p>
-     *            Note: map value containing <i>exception type</i> cannot be
-     *            null, if you don't know what exception to throw use
-     *            {@link ConnectorException}.
-     *            </p>
      * 
      * @param accepts
      *            these are accepting strings, if they are found the result is
@@ -349,7 +355,7 @@ public class SolarisConnection {
      *             in case a <code>rejects</code> string is found in the
      *             response of the resource.
      */
-    public String executeCommand(String command, Map<String, Class<? extends ConnectorException>> rejects, Set<String> accepts) {
+    public String executeCommand(String command, Map<String, ErrorHandler> rejects, Set<String> accepts) {
         try {
             if (command != null) {
                 sendInternal(command);
@@ -379,30 +385,31 @@ public class SolarisConnection {
         MatchBuilder builder = new MatchBuilder();
         // #1 Adding Error matchers
         final List<ErrorClosure> cecList = new ArrayList<ErrorClosure>();
-        for (Map.Entry<String, Class<? extends ConnectorException>> rejEntry : rejects.entrySet()) {
+        for (Map.Entry<String, ErrorHandler> rejEntry : rejects.entrySet()) {
             ErrorClosure cec = new ErrorClosure(rejEntry.getValue());
             cecList.add(cec);
             builder.addCaseInsensitiveRegExpMatch(rejEntry.getKey(), cec);
         }
         
         // #2 Adding RootShellPrompt matcher or other acceptance matchers if given
-        List<Closure> captureClosures = null;
+        List<SolarisClosure> captureClosures = null;
         if (accepts.size() > 0) {
             captureClosures = CollectionUtil.newList();
             for (String acc : accepts) {
-                Closure closure = new Closure();
+                SolarisClosure closure = new SolarisClosure();
                 captureClosures.add(closure);
                 builder.addRegExpMatch(acc, closure);
             }
         } else {
-            Closure closure = new Closure();
+            // by default rootShellPrompt is added.
+            SolarisClosure closure = new SolarisClosure();
             captureClosures = CollectionUtil.newList(closure);
             builder.addRegExpMatch(getRootShellPrompt(), closure);
         }
         
         // #3 set the timeout for matching too
         final boolean[] isTimeoutMatched = new boolean[1];
-        builder.addTimeoutMatch(WAIT, new Closure() {
+        builder.addTimeoutMatch(WAIT, new SolarisClosure() {
             public void run(ExpectState state) throws Exception {
                 isTimeoutMatched[0] = true;
             }
@@ -415,10 +422,10 @@ public class SolarisConnection {
         }
         
         String output = null;
-        for (Closure cl : captureClosures) {
+        for (SolarisClosure cl : captureClosures) {
             if (cl.isMatched()) {
                 // get regular output matched by root shell prompt.
-                output = cl.getMessage();
+                output = cl.getMatchedBuffer();
                 break;
             }
         }
@@ -450,20 +457,11 @@ public class SolarisConnection {
     private void handleRejects(List<ErrorClosure> cecList) {
         for (ErrorClosure connectorExceptionClosure : cecList) {
             if (connectorExceptionClosure.isMatched()) {
-                String out = connectorExceptionClosure.getMessage();
+                String out = connectorExceptionClosure.getMatchedBuffer();
 
                 out = waitForInput(out);
 
-                Class<? extends ConnectorException> exceptionType = connectorExceptionClosure.getExceptionType();
-                Constructor<? extends ConnectorException> constructor = null;
-                try {
-                    constructor = exceptionType.getConstructor(String.class);
-                    throw constructor.newInstance("ERROR OUTPUT: " + out);
-                } catch (RuntimeException e) {
-                    throw e;
-                } catch (Exception e) {
-                    throw new RuntimeException("Internal Error: String constructor not found for exception: " + exceptionType.getCanonicalName());
-                }//try
+                connectorExceptionClosure.getErrorHandler().handle(out);
             }//fi
         }//for
     }
@@ -506,7 +504,7 @@ public class SolarisConnection {
         
         // build the matchers
         /** in case of successful match this closure is called */
-        Closure successClosure = new Closure() {
+        SolarisClosure successClosure = new SolarisClosure() {
             public void run(ExpectState state) {
                 // save the content of buffer (the response from Solaris resource)
                 buffer.append(state.getBuffer());
@@ -518,7 +516,7 @@ public class SolarisConnection {
         } else {
             builder.addRegExpMatch(string, successClosure);
         }
-        builder.addTimeoutMatch(millis, new Closure() {
+        builder.addTimeoutMatch(millis, new SolarisClosure() {
             public void run(ExpectState state) throws Exception {
                 String msg = String.format("Timeout in waitFor('%s', %s) buffer: <%s>",
                         string, Integer.toString(millis), state.getBuffer());
@@ -791,9 +789,9 @@ public class SolarisConnection {
 
         /**
          * adds a case sensitive matcher. Compare with
-         * {@link MatchBuilder#addCaseInsensitiveRegExpMatch(String, Closure)}.
+         * {@link MatchBuilder#addCaseInsensitiveRegExpMatch(String, SolarisClosure)}.
          */
-        public void addRegExpMatch(String regExp, Closure closure) {
+        public void addRegExpMatch(String regExp, SolarisClosure closure) {
             try {
                 matches.add(new RegExpMatch(regExp, closure));
             } catch (MalformedPatternException ex) {
@@ -803,9 +801,9 @@ public class SolarisConnection {
         
         /**
          * adds a case *insensitive matcher. Compare with
-         * {@link MatchBuilder#addRegExpMatch(String, Closure)}
+         * {@link MatchBuilder#addRegExpMatch(String, SolarisClosure)}
          */
-        public void addCaseInsensitiveRegExpMatch(String regExp, Closure closure) {
+        public void addCaseInsensitiveRegExpMatch(String regExp, SolarisClosure closure) {
             try {
                 matches.add(new RegExpCaseInsensitiveMatch(regExp, closure));
             } catch (MalformedPatternException ex) {
@@ -814,7 +812,7 @@ public class SolarisConnection {
         }
         
         /** add a timeout match with given 'millis' period. */
-        public void addTimeoutMatch(long millis, Closure closure) {
+        public void addTimeoutMatch(long millis, SolarisClosure closure) {
             matches.add(new TimeoutMatch(millis, closure));
         }
 
@@ -826,12 +824,13 @@ public class SolarisConnection {
     /**
      * internal Closure to hold the buffer state of the resource, plus indicator of match.
      */
-    private class Closure implements expect4j.Closure {
-        private String msg;
+    private class SolarisClosure implements Closure {
+        private String buffer;
         private boolean isReject;
         
-        public String getMessage() {
-            return msg;
+        /** @return the buffer content up to the matched string */
+        public String getMatchedBuffer() {
+            return buffer;
         }
         
         public boolean isMatched() {
@@ -839,20 +838,36 @@ public class SolarisConnection {
         }
         
         public void run(ExpectState state) throws Exception {
-            msg = state.getBuffer();
+            buffer = state.getBuffer();
             isReject = true;
         }
     }
     
-    private class ErrorClosure extends Closure {
-        private Class<? extends ConnectorException> exceptionType;
+    private class ErrorClosure extends SolarisClosure {
+        private final ErrorHandler errHandler;
         
-        public ErrorClosure(Class<? extends ConnectorException> exceptionType) {
-            this.exceptionType = exceptionType;
+        public ErrorClosure(ErrorHandler errHandler) {
+            this.errHandler = errHandler;
         }
 
-        public Class<? extends ConnectorException> getExceptionType() {
-            return exceptionType;
+        public ErrorHandler getErrorHandler() {
+            return errHandler;
         }
+    }
+    
+    /**
+     * Call-back interface for {@link SolarisConnection}. Used for customizable
+     * exception messages.
+     * 
+     * <p>
+     * If an error is detected, {@link ErrorHandler#handle(String)} method will
+     * be called with the error message received from the resource.
+     */
+    public interface ErrorHandler {
+        /**
+         * typically throws a customized ConnectorException, with a message,
+         * possibly including buffer's state.
+         */
+        public void handle(String buffer);
     }
 }

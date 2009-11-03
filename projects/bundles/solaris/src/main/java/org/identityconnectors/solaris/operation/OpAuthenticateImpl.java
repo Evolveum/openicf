@@ -36,6 +36,7 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
+import org.identityconnectors.solaris.SolarisConnection.ErrorHandler;
 
 public class OpAuthenticateImpl extends AbstractOp {
 
@@ -43,10 +44,6 @@ public class OpAuthenticateImpl extends AbstractOp {
     
     private static final String MSG = "authenticateMessage";
     final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT};
-    private static final Map<String, Class<? extends ConnectorException>> rejectsMap;
-    static {
-        rejectsMap = CollectionUtil.newMap("incorrect", InvalidCredentialException.class, "lowest level \"shell\"", ConnectorException.class);
-    }
     
     public OpAuthenticateImpl(SolarisConnector conn) {
         super(conn);
@@ -57,15 +54,13 @@ public class OpAuthenticateImpl extends AbstractOp {
         SolarisUtil.controlObjectClassValidity(objectClass, acceptOC, getClass());
         _log.info("authenticate (user: '{0}')", username);
         
-        try {
-            final String command = "exec login " + username + " TERM=vt00";
-            getConnection().executeCommand(command, Collections.<String>emptySet(), CollectionUtil.newSet("assword:"));
-            SolarisConnection.sendPassword(password, getConnection());
-            getConnection().executeCommand("echo '" + MSG + "'", rejectsMap, CollectionUtil.newSet(MSG));
-            _log.info("authenticate successful for user: '{0}'", username);
-        } catch (Exception e) {
-            throw ConnectorException.wrap(e);
-        }
+        final Map<String, SolarisConnection.ErrorHandler> rejectsMap = initRejectsMap(username);
+        final String command = "exec login " + username + " TERM=vt00";
+        
+        getConnection().executeCommand(command, Collections.<String>emptySet(), CollectionUtil.newSet("assword:"));
+        SolarisConnection.sendPassword(password, getConnection());
+        getConnection().executeCommand("echo '" + MSG + "'", rejectsMap, CollectionUtil.newSet(MSG));
+        _log.info("authenticate successful for user: '{0}'", username);
         
         return new Uid(username);
         /*
@@ -100,5 +95,23 @@ public class OpAuthenticateImpl extends AbstractOp {
     return script;
     }
          */
+    }
+
+    private Map<String, ErrorHandler> initRejectsMap(final String username) {
+        Map<String, ErrorHandler> rejectsMap = CollectionUtil.newMap(
+
+                "incorrect", new SolarisConnection.ErrorHandler() {
+                    public void handle(String buffer) {
+                        throw new InvalidCredentialException("Incorrect authentication for user: " + username + "");
+                    }
+                },
+
+                "lowest level \"shell\"", new SolarisConnection.ErrorHandler() {
+                    public void handle(String buffer) {
+                        throw new ConnectorException("ERROR: buffer contents: <" + buffer + ">");
+                    }
+                }
+                );
+        return rejectsMap;
     }
 }
