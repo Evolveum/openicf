@@ -26,7 +26,9 @@ package org.identityconnectors.solaris.operation.search;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.NoSuchElementException;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.test.SolarisTestCommon;
@@ -47,6 +49,13 @@ public class BlockAccountIteratorTest {
         while (bai.hasNext()) {
             retrievedUsernames.add(bai.next().getName());
         }
-        Assert.assertEquals(usernames, retrievedUsernames);
+        Assert.assertEquals(CollectionUtil.newSet(usernames), CollectionUtil.newSet(retrievedUsernames));
+        
+        try {
+            bai.next();
+            Assert.fail("no exception thrown when next was called more time than there are elements in the list.");
+        } catch (NoSuchElementException nex) {
+            // OK
+        }
     }
 }

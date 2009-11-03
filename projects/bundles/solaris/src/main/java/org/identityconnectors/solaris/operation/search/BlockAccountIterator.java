@@ -51,7 +51,7 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
     /** iterates through the full list of usernames. */
     private ListIterator<String> usernameIter;
     /** iterates through block of accounts. */
-    private Iterator<SolarisEntry> accountIter;
+    private Iterator<SolarisEntry> entryIter;
     private SolarisConnection conn;
 
     /** size of the blocks that the accounts are iterated. */
@@ -64,7 +64,7 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
 
         accounts = usernames;
         usernameIter = accounts.listIterator();
-        accountIter = initNextBlockOfAccounts(usernameIter);
+        entryIter = initNextBlockOfAccounts();
         
         boolean isProfiles = attrsToGet.contains(NativeAttribute.PROFILES);
         boolean isAuths = attrsToGet.contains(NativeAttribute.AUTHS);
@@ -77,12 +77,12 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
         }
     }
     
-    private Iterator<SolarisEntry> initNextBlockOfAccounts(Iterator<String> globalIterator) {
+    private Iterator<SolarisEntry> initNextBlockOfAccounts() {
         blockCount++;
         
         List<String> blockUserNames = new ArrayList<String>(blockSize);
-        for (int i = 0; globalIterator.hasNext() && i < blockSize; i++) {
-            blockUserNames.add(globalIterator.next());
+        for (int i = 0; usernameIter.hasNext() && i < blockSize; i++) {
+            blockUserNames.add(usernameIter.next());
         }
         
         List<SolarisEntry> blockEntries = buildEntries(blockUserNames);
@@ -239,19 +239,17 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
     }
 
     public boolean hasNext() {
-        return accountIter.hasNext() || usernameIter.hasNext();
+        while ((entryIter == null || !entryIter.hasNext()) && usernameIter.hasNext()) {
+            entryIter = initNextBlockOfAccounts();
+        }
+        return entryIter != null && entryIter.hasNext();
     }
 
     public SolarisEntry next() {
-        if (accountIter.hasNext()) {
-            return accountIter.next();
-        } else {
-            if (usernameIter.hasNext()) {
-                accountIter = initNextBlockOfAccounts(usernameIter);
-                return accountIter.next();
-            }
+        if (!hasNext()) {
+            throw new NoSuchElementException();
         }
-        throw new NoSuchElementException();
+        return entryIter.next();
     }
 
     public void remove() {
