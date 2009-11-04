@@ -36,7 +36,6 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
-import org.identityconnectors.solaris.SolarisConnection.ErrorHandler;
 
 public class OpAuthenticateImpl extends AbstractOp {
 
@@ -97,8 +96,8 @@ public class OpAuthenticateImpl extends AbstractOp {
          */
     }
 
-    private Map<String, ErrorHandler> initRejectsMap(final String username) {
-        Map<String, ErrorHandler> rejectsMap = CollectionUtil.newMap(
+    private Map<String, SolarisConnection.ErrorHandler> initRejectsMap(final String username) {
+        Map<String, SolarisConnection.ErrorHandler> rejectsMap = CollectionUtil.newMap(
 
                 "incorrect", new SolarisConnection.ErrorHandler() {
                     public void handle(String buffer) {
