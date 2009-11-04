@@ -24,6 +24,7 @@ package org.identityconnectors.solaris.operation.search;
 
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.AbstractFilterTranslator;
 import org.identityconnectors.framework.common.objects.filter.ContainsAllValuesFilter;
 import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
@@ -67,6 +68,9 @@ public class SolarisFilterTranslator extends
         ConnectorAttribute connAttr = null;
         if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
             connAttr = AccountAttribute.forAttributeName(connectorAttribute);
+            if (connectorAttribute.equals(Uid.NAME)) {
+                connAttr = AccountAttribute.NAME;
+            }
         } else if (oclass.is(ObjectClass.GROUP_NAME)) {
             connAttr =  GroupAttribute.forAttributeName(connectorAttribute);
         }

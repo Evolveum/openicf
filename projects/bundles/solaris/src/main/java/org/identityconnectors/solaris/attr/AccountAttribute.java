@@ -42,7 +42,6 @@ public enum AccountAttribute implements ConnectorAttribute {
     
     /* Native attribute for NAME and FRAMEWORK_UID should be identical. */
     NAME(Name.NAME, NativeAttribute.NAME),
-    FRAMEWORK_UID(Uid.NAME, NativeAttribute.NAME),
     /* This is the solaris native 'uid', *NOT* the one defined by the framework. */
     UID("uid", NativeAttribute.NAME),
     

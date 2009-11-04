@@ -41,6 +41,7 @@ import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Schema;
+import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.attr.AccountAttribute;
@@ -179,6 +180,10 @@ public class OpSearchImpl extends AbstractOp {
         ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
         Map<String, Attribute> indexedEntry = AttributeUtil.toMap(account.getAttributeSet());
         
+        // add UID
+        builder.addAttribute(new Uid(account.getName()));
+        
+        // and rest of the attributes
         for (String attribute : attrsToGet) {
             ConnectorAttribute connAttr = (oclass.is(ObjectClass.ACCOUNT_NAME)) ? AccountAttribute.forAttributeName(attribute) : GroupAttribute.forAttributeName(attribute);
             
