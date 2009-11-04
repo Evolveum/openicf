@@ -30,6 +30,7 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
@@ -80,8 +81,12 @@ public class OpUpdateImpl extends AbstractOp {
         _log.info("update successful ('{0}', name: '{1}')",
                 objclass.toString(), uid.getUidValue());
         
-        Uid replaceUid = (Uid) attrMap.get(Uid.NAME);
-        Uid newUid = (replaceUid == null) ? uid : replaceUid;
+        Uid newUid = uid; // uid is the uid before update.
+        // if new uid is in replaceAttributes, return the updated uid
+        if (attrMap.get(Name.NAME) != null) {
+            String name = ((Name) attrMap.get(Name.NAME)).getNameValue();
+            newUid = new Uid(name);
+        }
         return newUid;
     }
 
@@ -141,9 +146,9 @@ public class OpUpdateImpl extends AbstractOp {
         getConnection().executeMutexAcquireScript();
         
         // UPDATE OF ALL ATTRIBUTES EXCEPT PASSWORD
-        
+        String newName = null;
         try {
-            UpdateCommand.updateUser(entry, getConnection());
+            newName = UpdateCommand.updateUser(entry, getConnection());
         } finally {
             /*
              * Release the uid "mutex"
@@ -153,7 +158,11 @@ public class OpUpdateImpl extends AbstractOp {
        
         // PASSWORD UPDATE
         if (passwd != null) {
-            PasswdCommand.configureUserPassword(entry, passwd, getConnection());
+            // the username could have changed in update, so we need to change the password for the new username:
+            final SolarisEntry entryWithNewName = (!newName.equals(entry.getName())) ? 
+                    new SolarisEntry.Builder(newName).addAllAttributesFrom(entry).build() : entry;
+
+            PasswdCommand.configureUserPassword(entryWithNewName, passwd, getConnection());
         }
     }
 

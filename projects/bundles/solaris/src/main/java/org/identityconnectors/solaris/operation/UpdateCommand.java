@@ -48,20 +48,25 @@ class UpdateCommand extends CommandSwitches {
         updateSwitches.put(NativeAttribute.NAME, "-l"); // for new username attribute
     }
     
-    public static void updateUser(SolarisEntry entry, SolarisConnection conn) {
+    /** new username */
+    public static String updateUser(SolarisEntry entry, SolarisConnection conn) {
         String newName = findNewName(entry);
+        if (newName == null)
+            newName = entry.getName();
+        
         /*
          * UPDATE OF USER ATTRIBUTES (except password) {@see PasswdCommand}
          */
         String commandSwitches = CommandSwitches.formatCommandSwitches(entry, conn, updateSwitches);
         
-        if (newName != null) {
-            String newUserNameParams = " -l \"" + newName + "\" -G \"\"";
-            commandSwitches += newUserNameParams;
-        }
+        //TODO evaluate: this is based on SRA#getUpdateNativeUserScript, line 452. But it doesn't make sense to add attributes that are not already present in the replaceattrs. 
+//        if (newName != null) {
+//            String newUserNameParams = " -l \"" + newName + "\" -G \"\"";
+//            commandSwitches += newUserNameParams;
+//        }
 
         if (commandSwitches.length() == 0) {
-            return; // no update switch found, nothing to process
+            return newName; // no update switch found, nothing to process
         }
         
         if (newName != null) {
@@ -96,6 +101,8 @@ class UpdateCommand extends CommandSwitches {
                 conn.executeCommand(renameDirScript, usermodErrors);
             }
         }
+        
+        return newName;
     }
 
     private static String getRenameDirScript(SolarisEntry entry,

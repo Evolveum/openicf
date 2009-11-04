@@ -28,10 +28,12 @@ import java.util.Map;
 import java.util.Set;
 
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
+import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.attr.AccountAttribute;
 import org.identityconnectors.solaris.operation.AbstractOp;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
@@ -101,6 +103,9 @@ public class SolarisUtil {
             final AccountAttribute accAttrName = AccountAttribute.forAttributeName(attribute.getName());
             if (accAttrName != null) {
                 builder.addAttr(accAttrName.getNative(), attribute.getValue());
+            } else if (!attribute.getName().equals(OperationalAttributes.PASSWORD_NAME) && !attribute.getName().equals(Uid.NAME)) {
+                //TODO it might be a more beautiful sort out this error (filter the attributes in layers above this class).
+                throw new ConnectorException("Unsupported attribute in update(user='" + userName + "'): " + attribute.getName());
             }
         }
         return builder.build();

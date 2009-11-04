@@ -64,23 +64,17 @@ public class SolarisEntry {
             return this;
         }
         
+        /**
+         * add all attributes to the present SolarisEntry from the given entry.
+         * However the {@link SolarisEntry#getName()} is not preserved.
+         */
         public Builder addAllAttributesFrom(SolarisEntry entry) {
-            if (!entry.getName().equals(name)) {
-                throw new RuntimeException("mixing attributes for various username.");
-            }
-            
             Set<Attribute> entries = entry.getAttributeSet();
             for (Attribute attribute : entries) {
                 attrSet.add(attribute);
             }
             return this;
         }
-        
-//        /** add an attribute with null value */
-//        public Builder addEmptyAttr(NativeAttribute name) {
-//            attrSet.add(AttributeBuilder.build(name.getName()));
-//            return this;
-//        }
         
         public SolarisEntry build() {
             return new SolarisEntry(this);

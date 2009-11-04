@@ -128,7 +128,7 @@ testsuite {
 
 }// testsuite
 
-__ACCOUNT__.inactive = new ObjectNotFoundException()//"0"
+inactive = new ObjectNotFoundException()
 shell = new ObjectNotFoundException()
 role = new ObjectNotFoundException()
 force_change = new ObjectNotFoundException()
