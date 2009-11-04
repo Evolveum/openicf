@@ -42,11 +42,7 @@ class AccountUtil {
     public static SolarisEntry getAccount(SolarisConnection conn, String name, Set<NativeAttribute> attrsToGet) {
         // the result will be an Iterable collection with a single element returned.
         AccountIterator it = new AccountIterator(CollectionUtil.newList(name), attrsToGet, conn);
-        if (it.hasNext()) {
-            return it.next();
-        } else {
-            throw new RuntimeException("Error: nothing returned when requesting attributes for user: '" + name + "'");
-        }
+        return (it != null && it.hasNext()) ? it.next() : null;
     }
 
     public static Iterator<SolarisEntry> getAllAccounts(SolarisConnection conn, Set<NativeAttribute> attrsToGet) {
