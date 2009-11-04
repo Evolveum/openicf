@@ -22,6 +22,9 @@
  */
 package org.identityconnectors.solaris.operation;
 
+import java.util.Collections;
+import java.util.Map;
+
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
@@ -29,6 +32,7 @@ import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.operation.nis.CommonNIS;
@@ -106,19 +110,35 @@ public class OpDeleteImpl extends AbstractOp {
         final String command = getConnection().buildCommand("userdel", ((getConfiguration().isDelHomeDir()) ? "-r" : ""), accountId);
         
         try {
-            String output = getConnection().executeCommand(command, CollectionUtil.newSet("ERROR"));
-            if (output.contains("does not exist") || output.contains("nknown user")) {
-                throw new UnknownUidException("Unknown Uid: " + accountId);
-            } else if (output.contains("ERROR")) {
-                throw new ConnectorException("Error deleting user '" + accountId + "'.");
-            }
+            Map<String, SolarisConnection.ErrorHandler> rejectMap = initErrorMap(accountId);
+            getConnection().executeCommand(command, rejectMap, Collections.<String>emptySet());
             
-            output = getConnection().executeCommand("echo $?");
+            final String output = getConnection().executeCommand("echo $?");
             if (!output.equals("0")) {
                 throw new ConnectorException("Error deleting user '" + accountId + "'.");
             }
         } catch (Exception ex) {
             throw ConnectorException.wrap(ex);
         }
+    }
+
+    private Map<String, SolarisConnection.ErrorHandler> initErrorMap(final String accountId) {
+        final SolarisConnection.ErrorHandler unknownUidHandler = new SolarisConnection.ErrorHandler() {
+            public void handle(String buffer) {
+                throw new UnknownUidException("Unknown Uid: " + accountId);
+            }
+        };
+        
+        final Map<String, SolarisConnection.ErrorHandler> result = CollectionUtil.newMap(
+                "does not exist", unknownUidHandler,
+                "nknown user", unknownUidHandler,
+                "ERROR", new SolarisConnection.ErrorHandler() {
+                    public void handle(String buffer) {
+                        throw new ConnectorException("Error deleting user: " + accountId);
+                    }
+                }
+        );
+        
+        return result;
     }
 }
