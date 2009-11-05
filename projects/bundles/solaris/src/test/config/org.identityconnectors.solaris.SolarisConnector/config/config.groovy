@@ -22,6 +22,8 @@ testsuite {
   
   Authentication.__ACCOUNT__.username = Lazy.get("i0.Authentication.__ACCOUNT__.__NAME__")
   Authentication.__ACCOUNT__.wrong.password = new GuardedString("_nonExistingPassword_".toCharArray())
+  
+  Search.disable.caseinsensitive = true
 
   Validate.invalidConfig = [
     [port: null],
