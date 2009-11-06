@@ -82,16 +82,12 @@ public class OpDeleteImpl extends AbstractOp {
         if (CommonNIS.isDefaultNisPwdDir(getConnection())) {
             invokeNativeDelete(accountId);
             /*
-             * START SUDO
              * TODO in adapter, SRA#getDeleteNISUserScript sudo is missing (file another bug?)
              */
             getConnection().doSudoStart();
             try {
                 CommonNIS.addNISMake("passwd", getConnection());
             } finally {
-                /*
-                 * END SUDO
-                 */
                 getConnection().doSudoReset();
             }
         } else {

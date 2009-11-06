@@ -138,9 +138,6 @@ public class OpCreateImpl extends AbstractOp {
      * method
      */
     private void createImpl(SolarisEntry entry, GuardedString password) {
-        /*
-         * First acquire the "mutex" for uid creation
-         */
         getConnection().executeMutexAcquireScript();
         
         
@@ -151,9 +148,6 @@ public class OpCreateImpl extends AbstractOp {
         try {
             CreateCommand.createUser(entry, getConnection());
         } finally {
-            /*
-             * Release the uid "mutex"
-             */
             getConnection().executeMutexReleaseScript();
         }
         

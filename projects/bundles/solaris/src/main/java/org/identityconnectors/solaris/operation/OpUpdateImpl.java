@@ -100,17 +100,11 @@ public class OpUpdateImpl extends AbstractOp {
         if (CommonNIS.isDefaultNisPwdDir(getConnection())) {
             invokeNativeUpdate(entry, passwd);
             
-            /*
-             * START SUDO
-             */
             getConnection().doSudoStart();
             try {
                 // The user has to be added to the NIS database
                 CommonNIS.addNISMake("passwd", getConnection());
             } finally {
-                /*
-                 * END SUDO
-                 */
                 getConnection().doSudoReset();
             }
         } else {
@@ -125,24 +119,15 @@ public class OpUpdateImpl extends AbstractOp {
      */
     private void invokeNativeUpdate(final SolarisEntry entry,
             final GuardedString passwd) {
-        /*
-         * START SUDO
-         */
         getConnection().doSudoStart();
         try {
             updateImpl(entry, passwd );
         } finally {
-            /*
-             * SUDO STOP
-             */
             getConnection().doSudoReset();
         }
     }
 
     private void updateImpl(SolarisEntry entry, GuardedString passwd) {
-        /*
-         * First acquire the "mutex" for uid creation
-         */
         getConnection().executeMutexAcquireScript();
         
         // UPDATE OF ALL ATTRIBUTES EXCEPT PASSWORD
@@ -150,9 +135,6 @@ public class OpUpdateImpl extends AbstractOp {
         try {
             newName = UpdateCommand.updateUser(entry, getConnection());
         } finally {
-            /*
-             * Release the uid "mutex"
-             */
             getConnection().executeMutexReleaseScript();
         }
        
