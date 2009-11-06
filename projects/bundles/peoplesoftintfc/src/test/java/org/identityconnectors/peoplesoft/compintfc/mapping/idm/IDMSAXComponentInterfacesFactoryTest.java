@@ -34,7 +34,7 @@ import org.junit.*;
  * @author kitko
  *
  */
-public class IDMComponentInterfacesFactoryTest {
+public class IDMSAXComponentInterfacesFactoryTest {
 
     /**
      * Test method for {@link org.identityconnectors.peoplesoft.compintfc.mapping.idm.IDMComponentInterfacesFactory#createMapping(org.identityconnectors.peoplesoft.compintfc.PeopleSoftCompIntfcConfiguration)}.
@@ -47,7 +47,7 @@ public class IDMComponentInterfacesFactoryTest {
             throw new IllegalArgumentException("Cannot load PeopleSoftComponentInterfaces.xml");
         }
         cfg.setXMLMapping(xml);
-        ComponentInterfaces mapping = new IDMComponentInterfacesFactory().createMapping(cfg);
+        ComponentInterfaces mapping = new IDMSAXComponentInterfacesFactory().createMapping(cfg);
         Assert.assertNotNull("ComponentInterfaces is null after parse", mapping);
         Assert.assertEquals("Interface names do not match",CollectionUtil.newSet("USER_PROFILE_8_1X","USER_PROFILE_8_4X","DELETE_USER_PROFILE","ROLE_MAINT"), mapping.getInterfaceNames());
         assert81x(mapping);
