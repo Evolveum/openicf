@@ -93,16 +93,10 @@ public class OpCreateImpl extends AbstractOp {
             invokeNativeCreate(entry, password);
             
             // The user has to be added to the NIS database
-            /*
-             * START SUDO
-             */
             getConnection().doSudoStart();
             try {
                 CommonNIS.addNISMake("passwd", getConnection());
             } finally {
-                /*
-                 * END SUDO
-                 */
                 getConnection().doSudoReset();
             }
         } else {
@@ -117,16 +111,10 @@ public class OpCreateImpl extends AbstractOp {
      * Compare with other NIS implementation: {@see OpCreateImpl#invokeNISCreate(Set, Map, Name, String)}
      */
     private void invokeNativeCreate(SolarisEntry entry, GuardedString password) {
-        /*
-         * START SUDO
-         */
         getConnection().doSudoStart();
         try {
             createImpl(entry, password);
         } finally {
-            /*
-             * END SUDO
-             */
             getConnection().doSudoReset();
         }
     }
