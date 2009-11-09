@@ -28,12 +28,17 @@ import java.util.Set;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.api.operations.CreateApiOp;
+import org.identityconnectors.framework.api.operations.UpdateApiOp;
+import org.identityconnectors.framework.api.operations.ValidateApiOp;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.ObjectClassInfo;
+import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
@@ -49,6 +54,7 @@ import org.identityconnectors.framework.spi.operations.AuthenticateOp;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
+import org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
@@ -226,8 +232,22 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
             attributes.add(newAttr);
         }
         attributes.add(OperationalAttributeInfos.PASSWORD);
-        
         schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
+        
+        /*
+         * SHELL
+         */
+        attributes = new HashSet<AttributeInfo>();
+        attributes.add(
+                AttributeInfoBuilder.build(OpSearchImpl.SHELL.getObjectClassValue(), String.class, EnumSet.of(Flags.MULTIVALUED, Flags.NOT_RETURNED_BY_DEFAULT, Flags.NOT_UPDATEABLE))
+                );
+        final ObjectClassInfo ociInfoShell = new ObjectClassInfoBuilder().addAllAttributeInfo(attributes).setType(OpSearchImpl.SHELL.getObjectClassValue()).build();
+        schemaBuilder.defineObjectClass(ociInfoShell);
+        schemaBuilder.removeSupportedObjectClass(AuthenticateOp.class, ociInfoShell);
+        schemaBuilder.removeSupportedObjectClass(CreateOp.class, ociInfoShell);
+        schemaBuilder.removeSupportedObjectClass(UpdateOp.class, ociInfoShell);
+        schemaBuilder.removeSupportedObjectClass(DeleteOp.class, ociInfoShell);
+        schemaBuilder.removeSupportedObjectClass(SchemaOp.class, ociInfoShell);
         
         _schema = schemaBuilder.build();
         return _schema;

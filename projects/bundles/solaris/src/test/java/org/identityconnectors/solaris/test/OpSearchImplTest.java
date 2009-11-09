@@ -43,6 +43,7 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisUtil;
+import org.identityconnectors.solaris.operation.search.OpSearchImpl;
 import org.identityconnectors.test.common.ToListResultsHandler;
 import org.junit.After;
 import org.junit.Before;
@@ -207,6 +208,22 @@ public class OpSearchImplTest {
                     // OK
                 }
             }
+        }
+    }
+    
+    @Test
+    public void testGetShells() {
+        ToListResultsHandler handler = new ToListResultsHandler();
+        facade.search(OpSearchImpl.SHELL, null, handler, null);
+        List<ConnectorObject> result = handler.getObjects();
+        Assert.assertNotNull(result);
+        
+        if (result.size() > 0) {
+            Assert.assertTrue(result.size() >= 1);
+            ConnectorObject singleResult = result.get(0);
+            Set<Attribute> attrs = singleResult.getAttributes();
+            Assert.assertNotNull(attrs);
+            // System.out.println(attrs);
         }
     }
 }

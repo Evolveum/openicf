@@ -58,8 +58,10 @@ public class OpSearchImpl extends AbstractOp {
     
     private static final Log _log = Log.getLog(OpSearchImpl.class);
     
+    public static ObjectClass SHELL = new ObjectClass("shell");
+    
     private final ObjectClass oclass;
-    final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT, ObjectClass.GROUP};
+    final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT, ObjectClass.GROUP, SHELL};
     private final Node filter;
     private final ResultsHandler handler;
     
@@ -75,6 +77,7 @@ public class OpSearchImpl extends AbstractOp {
             ResultsHandler handler, OperationOptions options) {
         super(conn);
         this.oclass = oclass;
+        this.handler = handler;
         
         if (filter == null) {
             // NULL indicates that we should return all results.
@@ -83,9 +86,11 @@ public class OpSearchImpl extends AbstractOp {
             this.filter = filter;
         }
         
-        this.handler = handler;
-        
-        
+        if (oclass.is(SHELL.getObjectClassValue())) {
+            attrsToGet = null;
+            attrsToGetNative = null;
+            return;
+        }
         
         /** attributes to get init */
         String[] attrsToGet = options.getAttributesToGet();
@@ -122,6 +127,13 @@ public class OpSearchImpl extends AbstractOp {
         if (oclass.is(ObjectClass.GROUP_NAME)) {
             // TODO
             throw new UnsupportedOperationException();
+        } else if (oclass.is(SHELL.getObjectClassValue())) {
+            final List<String> shells = searchForShells();
+            if (shells.size() > 0) {
+                ConnectorObject co = new ConnectorObjectBuilder().setObjectClass(SHELL).addAttribute("shell", shells).build();
+                handler.handle(co);
+            }
+            return;
         }
         
         /*
@@ -144,6 +156,24 @@ public class OpSearchImpl extends AbstractOp {
             complexFind(requiredAttrs);
         }
         _log.info("search successfully finished.");
+    }
+
+    /** List the shells available on the resource. */
+    private List<String> searchForShells() {
+        String result = getConnection().executeCommand("[ -f \"/etc/shells\" ] && cat /etc/shells");
+        String[] lines = result.split("\n");
+        
+        List<String> shells = new ArrayList<String>(lines.length);
+        for (String line : lines) {
+            if (line.startsWith("#"))
+                continue;
+            
+            String trimmedLine = line.trim();
+            if (trimmedLine.length() > 0) {
+                shells.add(trimmedLine);
+            }
+        }
+        return shells;
     }
 
     /**
