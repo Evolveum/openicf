@@ -43,8 +43,6 @@ public class OpAuthenticateImplTest {
     @Before
     public void setUp() throws Exception {
         config = SolarisTestCommon.createConfiguration();
-        config.setConnectionType("TELNET");
-        config.setPort(23);
         facade = SolarisTestCommon.createConnectorFacade(config);
         
         SolarisTestCommon.printIPAddress(config);
