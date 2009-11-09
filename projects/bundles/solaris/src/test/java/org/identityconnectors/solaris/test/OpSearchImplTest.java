@@ -219,11 +219,10 @@ public class OpSearchImplTest {
         Assert.assertNotNull(result);
         
         if (result.size() > 0) {
-            Assert.assertTrue(result.size() >= 1);
-            ConnectorObject singleResult = result.get(0);
-            Set<Attribute> attrs = singleResult.getAttributes();
-            Assert.assertNotNull(attrs);
-            // System.out.println(attrs);
+            for (ConnectorObject connectorObject : result) {
+                String value = connectorObject.getName().getNameValue();
+                Assert.assertTrue(value.trim().length() > 0);
+            }
         }
     }
 }

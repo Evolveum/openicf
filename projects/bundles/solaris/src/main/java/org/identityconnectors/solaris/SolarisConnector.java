@@ -28,9 +28,6 @@ import java.util.Set;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.framework.api.operations.CreateApiOp;
-import org.identityconnectors.framework.api.operations.UpdateApiOp;
-import org.identityconnectors.framework.api.operations.ValidateApiOp;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
@@ -54,7 +51,6 @@ import org.identityconnectors.framework.spi.operations.AuthenticateOp;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
-import org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;

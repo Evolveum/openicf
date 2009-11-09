@@ -36,6 +36,7 @@ import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
+import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.OperationOptions;
@@ -130,8 +131,11 @@ public class OpSearchImpl extends AbstractOp {
         } else if (oclass.is(SHELL.getObjectClassValue())) {
             final List<String> shells = searchForShells();
             if (shells.size() > 0) {
-                ConnectorObject co = new ConnectorObjectBuilder().setObjectClass(SHELL).addAttribute("shell", shells).build();
-                handler.handle(co);
+                for (String shell : shells) {
+                    // This is how ConnectorAdapter awaits the results, the value should be in a __NAME__ attribute.
+                    ConnectorObject co = new ConnectorObjectBuilder().setObjectClass(SHELL).addAttribute(Name.NAME, shell).build();
+                    handler.handle(co);
+                }
             }
             return;
         }
