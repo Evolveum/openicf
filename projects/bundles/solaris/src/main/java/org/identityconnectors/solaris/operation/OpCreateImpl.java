@@ -37,7 +37,7 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.operation.nis.CommonNIS;
-import org.identityconnectors.solaris.operation.nis.OpCreateNISImpl;
+import org.identityconnectors.solaris.operation.nis.CreateNISUserCommand;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 public class OpCreateImpl extends AbstractOp {
@@ -100,7 +100,7 @@ public class OpCreateImpl extends AbstractOp {
                 getConnection().doSudoReset();
             }
         } else {
-            OpCreateNISImpl.performNIS(entry, getConnection());
+            CreateNISUserCommand.performNIS(entry, getConnection());
         }
     }
     
@@ -134,7 +134,7 @@ public class OpCreateImpl extends AbstractOp {
          */
         _log.info("launching 'useradd' command (''{0}'')", entry.getName());
         try {
-            CreateCommand.createUser(entry, getConnection());
+            CreateNativeUserCommand.createUser(entry, getConnection());
         } finally {
             getConnection().executeMutexReleaseScript();
         }

@@ -32,7 +32,7 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 /**
- * Switches for {@link CreateCommand} and {@link UpdateCommand}.
+ * Switches for {@link CreateNativeUserCommand} and {@link UpdateCommand}.
  * @author David Adam
  *
  */
