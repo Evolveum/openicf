@@ -140,7 +140,16 @@ public class SolarisConfiguration extends AbstractConfiguration {
      * <b>Connection Type</b> field. Do not use this field if you implement
      * password-based authentication.
      */
-    //TODO PRIVATE_KEY
+    /** this attribute makes sense for {@link ConnectionType#SSH_PUB_KEY} */
+    private GuardedString privateKey;
+
+    /*
+     * RA_KEY_PASSPHRASE
+     * 
+     * <b>Passphrase</b><br>Specify the passphrase, used during key generation.
+     */
+    /** this attribute makes sense for {@link ConnectionType#SSH_PUB_KEY} */
+    private GuardedString keyPassphrase;
     
     /*
      * RA_CONN_MAX
@@ -175,6 +184,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
      */
     // DEFAULT = 900
     
+
     /*
      * RA_BLOCK_FETCH_TIMEOUT
      * 
@@ -201,13 +211,6 @@ public class SolarisConfiguration extends AbstractConfiguration {
      * this value to form the user home directory.
      */
     private String homeBaseDir;
-    
-    /*
-     * RA_KEY_PASSPHRASE
-     * 
-     * <b>Passphrase</b><br>Specify the passphrase, used during key generation.
-     */
-    //TODO KEY_PASSPHRASE // ??????????????????
 
     /*
      * RA_DEFAULT_PRIMARY_GROUP
@@ -458,6 +461,20 @@ public class SolarisConfiguration extends AbstractConfiguration {
     }
     public void setNisShadow(boolean nisShadow) {
         this.nisShadow = nisShadow;
+    }
+    
+    public GuardedString getKeyPassphrase() {
+        return keyPassphrase;
+    }
+    public void setKeyPassphrase(GuardedString keyPassphrase) {
+        this.keyPassphrase = keyPassphrase;
+    }
+    
+    public GuardedString getPrivateKey() {
+        return privateKey;
+    }
+    public void setPrivateKey(GuardedString privateKey) {
+        this.privateKey = privateKey;
     }
 
     

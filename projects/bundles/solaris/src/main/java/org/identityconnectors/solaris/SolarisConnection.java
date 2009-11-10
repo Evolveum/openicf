@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +41,11 @@ import org.identityconnectors.solaris.command.RegExpCaseInsensitiveMatch;
 import org.identityconnectors.solaris.operation.OpCreateImpl;
 import org.identityconnectors.solaris.operation.OpUpdateImpl;
 
+import com.jcraft.jsch.ChannelShell;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+
 import expect4j.Closure;
 import expect4j.Expect4j;
 import expect4j.ExpectState;
@@ -52,9 +58,14 @@ import expect4j.matches.TimeoutMatch;
  * Connection class provides connection to the Solaris resource. It also creates an 
  * abstraction layer for interpretation of errors.
  * 
- * The connection offers the following authentication types: SSH, Telnet and SSH Pubkey.
+ * <p>The connection offers the following authentication types: SSH, Telnet and SSH Pubkey.
  * 
  * @author David Adam
+ * 
+ * <p><i>Implementation notes:</i> Expect4J is an expect based matching system for analyzing the 
+ * responses from a unix resource, and for defining actions to these responses.
+ * <p> Expect4j uses internally JSch to provide the SSH connection channel to the resource. (This is 
+ * transparent to the user of Expect4J, so it is for {@link SolarisConnection}.
  *
  */
 public class SolarisConnection {
@@ -136,11 +147,9 @@ public class SolarisConnection {
             _expect4j = createSSHConn(username, password);
             break;
         case SSH_PUB_KEY:
-            _expect4j = createSSHPubKeyConn(username, password);
+            _expect4j = createSSHPubKeyConn(username);
             break;
         case TELNET:
-            // throw new
-            // UnsupportedOperationException("Telnet access not yet implemented: TODO");
             _expect4j = createTelnetConn(username, password);
             break;
         }
@@ -185,41 +194,77 @@ public class SolarisConnection {
     }
 
     /**
-     * this piece of code is a combination of the adapter's
-     * SSHPubKeyConnection#OpenSession() method and ExpectUtils#SSH()
+     * Connect to the resource using privateKey + passphrase pair.
      * 
      * @param username
-     * @param password
-     * @return
+     * @return initialized instance of Expect4J library used for the connection.
+     * 
+     * Implementational note: this piece of code is a combination of the adapter's
+     * SSHPubKeyConnection#OpenSession() method and ExpectUtils#SSH()
      */
-    private Expect4j createSSHPubKeyConn(final String username, GuardedString password) {
-//        JSch jsch=new JSch();
-//        
-//        ///////////////
-//        byte[] pubKey = "".getBytes(); // TODO fill in password
-//        jsch.addIdentity(name, prvkey, pubkey, passphrase);
-//        ///////////////
-//        
-//        Session session=jsch.getSession(username, hostname, port);
-//        
-//        Hashtable<String, String> config = new Hashtable<String, String>();
-//        config.put("StrictHostKeyChecking", "no");
-//        session.setConfig(config);
-//        session.setDaemonThread(true);
-//        session.connect(3 * 1000); //making a connection with timeout.
-//        
-//        ChannelShell channel = (ChannelShell) session.openChannel("shell");
-//        
-//        channel.setPtyType("vt102");
-//        
-//        Hashtable env=new Hashtable();
-//        channel.setEnv(env);
-//        
-//        Expect4j expect = new Expect4j(channel.getInputStream(), channel.getOutputStream());
-//        channel.connect(5*1000);
-//
-//        return expect;
-        return null;
+    private Expect4j createSSHPubKeyConn(final String username) {
+        // FIXME add unit tests for this.
+        final JSch jsch=new JSch();
+        
+        final GuardedString privateKey = getConfiguration().getPrivateKey();
+        final GuardedString keyPassphrase = getConfiguration().getKeyPassphrase();
+        privateKey.access(new GuardedString.Accessor() {
+            public void access(final char[] privateKeyClearText) {
+                keyPassphrase.access(new GuardedString.Accessor() {
+                    public void access(final char[] keyPassphraseClearText) {
+                        try {
+                            jsch.addIdentity("IdentityConnector", convertToBytes(privateKeyClearText), null, convertToBytes(keyPassphraseClearText));
+                        } catch (JSchException e) {
+                            throw ConnectorException.wrap(e);
+                        }
+                    }
+
+                    private byte[] convertToBytes(char[] text) {
+                        byte[] bytes = new byte[text.length];
+                        for (int i = 0; i < text.length; i++) {
+                            bytes[i] = (byte) text[i];
+                        }
+                        return bytes;
+                    }
+                });
+            }
+        });
+        
+        Session session = null;
+        try {
+            session = jsch.getSession(username, getConfiguration().getHostNameOrIpAddr(), getConfiguration().getPort());
+        } catch (JSchException e) {
+            throw ConnectorException.wrap(e);
+        }
+        
+        Hashtable<String, String> config = new Hashtable<String, String>();
+        config.put("StrictHostKeyChecking", "no");
+        session.setConfig(config);
+        session.setDaemonThread(true);
+        try {
+            session.connect(3 * 1000);//making a connection with timeout.
+        } catch (JSchException e) {
+            throw ConnectorException.wrap(e);
+        } 
+        
+        ChannelShell channel = null;
+        try {
+            channel = (ChannelShell) session.openChannel("shell");
+        } catch (JSchException e) {
+            throw ConnectorException.wrap(e);
+        }
+        
+        channel.setPtyType("vt102");
+        
+        Expect4j expect = null;
+        try {
+            expect = new Expect4j(channel.getInputStream(), channel.getOutputStream());
+            channel.connect(5*1000);
+        } catch (Exception e) {
+            throw ConnectorException.wrap(e);
+        }
+
+        return expect;
     }
 
     private Expect4j createSSHConn(final String username, GuardedString password) {
