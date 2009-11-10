@@ -195,7 +195,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
 //        /* 
 //         * GROUP
 //         */
-        Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
+//        Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
 //        //attributes.add(Name.INFO);
 //        for (GroupAttribute attr : GroupAttribute.values()) {
 //            attributes.add(AttributeInfoBuilder.build(attr.getName()));
@@ -212,7 +212,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         /*
          * ACCOUNT
          */
-        attributes = new HashSet<AttributeInfo>();
+        Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
         attributes.add(OperationalAttributeInfos.PASSWORD);
         for (AccountAttribute attr : AccountAttribute.values()) {
             AttributeInfo newAttr = null;

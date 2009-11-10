@@ -59,7 +59,7 @@ public class OpSearchImpl extends AbstractOp {
     
     private static final Log _log = Log.getLog(OpSearchImpl.class);
     
-    public static ObjectClass SHELL = new ObjectClass("shell");
+    public static final ObjectClass SHELL = new ObjectClass("shell");
     
     private final ObjectClass oclass;
     final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT, ObjectClass.GROUP, SHELL};

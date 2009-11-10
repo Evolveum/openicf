@@ -27,7 +27,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.Uid;
 /**
  * Every {@link AccountAttribute} has been assigned a {@link NativeAttribute}.
  * @author David Adam
