@@ -55,6 +55,7 @@ import org.identityconnectors.framework.spi.operations.SearchOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
 import org.identityconnectors.solaris.attr.AccountAttribute;
+import org.identityconnectors.solaris.attr.GroupAttribute;
 import org.identityconnectors.solaris.operation.OpAuthenticateImpl;
 import org.identityconnectors.solaris.operation.OpCreateImpl;
 import org.identityconnectors.solaris.operation.OpDeleteImpl;
@@ -192,27 +193,35 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     private static Schema buildSchema() {
         final SchemaBuilder schemaBuilder = new SchemaBuilder(SolarisConnector.class);
         
-//        /* 
-//         * GROUP
-//         */
-//        Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
-//        //attributes.add(Name.INFO);
-//        for (GroupAttribute attr : GroupAttribute.values()) {
-//            attributes.add(AttributeInfoBuilder.build(attr.getName()));
-//        }
-//        
-//        //GROUP supports no authentication:
-//        final ObjectClassInfoBuilder ociB = new ObjectClassInfoBuilder();
-//        ociB.setType(ObjectClass.GROUP_NAME);
-//        ociB.addAllAttributeInfo(attributes);
-//        final ObjectClassInfo ociInfo = ociB.build();
-//        schemaBuilder.defineObjectClass(ociInfo);
-//        schemaBuilder.removeSupportedObjectClass(AuthenticateOp.class, ociInfo);
+        /* 
+         * GROUP
+         */
+        Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
+        //attributes.add(Name.INFO);
+        for (GroupAttribute attr : GroupAttribute.values()) {
+            switch (attr) {
+            case USERS:
+                attributes.add(AttributeInfoBuilder.build(attr.getName(), String.class, EnumSet.of(Flags.MULTIVALUED)));
+                break;
+
+            default:
+                attributes.add(AttributeInfoBuilder.build(attr.getName()));
+                break;
+            }//switch
+        }//for
+        
+        //GROUP supports no authentication:
+        final ObjectClassInfoBuilder ociB = new ObjectClassInfoBuilder();
+        ociB.setType(ObjectClass.GROUP_NAME);
+        ociB.addAllAttributeInfo(attributes);
+        final ObjectClassInfo ociInfo = ociB.build();
+        schemaBuilder.defineObjectClass(ociInfo);
+        schemaBuilder.removeSupportedObjectClass(AuthenticateOp.class, ociInfo);
         
         /*
          * ACCOUNT
          */
-        Set<AttributeInfo> attributes = new HashSet<AttributeInfo>();
+        attributes = new HashSet<AttributeInfo>();
         attributes.add(OperationalAttributeInfos.PASSWORD);
         for (AccountAttribute attr : AccountAttribute.values()) {
             AttributeInfo newAttr = null;

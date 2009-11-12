@@ -39,7 +39,6 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 public class OpUpdateNISImpl extends AbstractNISOp {
     private static final Log _log = Log.getLog(OpUpdateNISImpl.class);
-    private static final String whoIAm = "WHOIAM=`who am i | cut -d ' ' -f1`";
     
     private static final String NO_PRIMARY_GROUP = "No primary group";
     private static final String UID_NOT_UNIQUE = "uid is not unique.";
@@ -130,7 +129,7 @@ public class OpUpdateNISImpl extends AbstractNISOp {
         
         try {
             connection.doSudoStart();
-            connection.executeCommand(whoIAm);
+            connection.executeCommand(CommonNIS.whoIAm);
             try {
                 connection.executeMutexAcquireScript(pwdMutexFile, tmpPwdMutexFile, pwdPidFile);
 

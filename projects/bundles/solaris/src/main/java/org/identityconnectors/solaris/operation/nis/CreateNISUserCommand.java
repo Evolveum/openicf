@@ -47,8 +47,6 @@ public class CreateNISUserCommand extends AbstractNISOp {
     private static final String NO_DEFAULT_LOGIN_SHELL = "No default login shell";
     private static final String UID_NOT_UNIQUE = "uid is not unique.";
     
-    private static final String whoIAm = "WHOIAM=`who am i | cut -d ' ' -f1`";
-    
     /** initialize reject messages for the password cleanup command. */
     private final static Set<String> passwdCleanupReject = CollectionUtil.newSet(
             NO_DEFAULT_PRIMARY_GROUP, NO_DEFAULT_HOME_DIR, NO_DEFAULT_LOGIN_SHELL, UID_NOT_UNIQUE
@@ -264,7 +262,7 @@ public class CreateNISUserCommand extends AbstractNISOp {
             connection.doSudoStart();
             
             // get required password settings
-            connection.executeCommand(whoIAm);
+            connection.executeCommand(CommonNIS.whoIAm);
             connection.executeCommand(passwordRecord.toString());
         } finally {
             // The reject below can throw an exception when the script is executed, so reset sudo before that test

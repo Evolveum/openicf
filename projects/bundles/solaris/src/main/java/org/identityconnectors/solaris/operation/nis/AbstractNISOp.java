@@ -32,6 +32,8 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 public class AbstractNISOp {
+    public final static String whoIAm = "WHOIAM=`who am i | cut -d ' ' -f1`";
+    
     // Temporary file names
     final static  String tmpPwdfile1 = "/tmp/wspasswd.$$";
     final static String tmpPwdfile2 = "/tmp/wspasswd_work.$$";
@@ -40,6 +42,15 @@ public class AbstractNISOp {
     final static String pwdMutexFile = "/tmp/WSpwdlock";
     final static String tmpPwdMutexFile = "/tmp/WSpwdlock.$$";
     final static String pwdPidFile = "/tmp/WSpwdpid.$$";
+    
+    // GROUP constants
+    final static String duplicateGroupNameMsg = "Duplicate group name";
+    final static String duplicateGroupIdMsg = "Duplicate group id";
+    
+    // GROUP "Mutex" files
+    final static String grpMutexFile = "/tmp/WSgrplock";
+    final static String tmpGrpMutexFile = "/tmp/WSgrplock.$$";
+    final static String grpPidFile = "/tmp/WSgrppid.$$";
     
     // This is a major string to look for if you want to do rejects on shadow file errors
     final static String ERROR_MODIFYING = "Error modifying ";
