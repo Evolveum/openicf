@@ -108,4 +108,18 @@ public class SolarisEntry {
     public String toString() {
         return String.format("<Name: '%s', Attributes: [%s]", name, attrSet.toString());
     }
+    
+    /**
+     * search for attribute in this entry
+     * @param attrToFind the attribute that we search for.
+     * @return null if attribute was not found in given entry.
+     */
+    public Attribute searchForAttribute(NativeAttribute attrToFind) {
+        for (Attribute attribute : getAttributeSet()) {
+            if (attrToFind.getName().equals(attribute.getName())) {
+                return attribute;
+            }
+        }
+        return null;
+    }
 }

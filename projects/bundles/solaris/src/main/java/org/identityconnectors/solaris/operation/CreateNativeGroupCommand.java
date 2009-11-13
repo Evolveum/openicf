@@ -30,7 +30,6 @@ import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.solaris.SolarisConnection;
-import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.nis.CommonNIS;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
@@ -56,7 +55,7 @@ public class CreateNativeGroupCommand {
         // group Id is set only if we're not in saveAs mode
         String groupId = null;
         
-        Attribute groupIdAttr = SolarisUtil.searchForAttribute(group, NativeAttribute.ID);
+        Attribute groupIdAttr = group.searchForAttribute(NativeAttribute.ID);
         if (groupIdAttr != null) {
                 groupId = AttributeUtil.getStringValue(groupIdAttr);
         }
@@ -70,7 +69,7 @@ public class CreateNativeGroupCommand {
                 );
         
         
-        Attribute usersAttribute = SolarisUtil.searchForAttribute(group, NativeAttribute.USERS);
+        Attribute usersAttribute = group.searchForAttribute(NativeAttribute.USERS);
         if (usersAttribute != null) {
             final List<Object> usersValue = usersAttribute.getValue();
             Assertions.nullCheck(usersValue, "users list");

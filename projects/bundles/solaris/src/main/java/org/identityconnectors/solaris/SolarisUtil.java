@@ -35,7 +35,6 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.attr.AccountAttribute;
-import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.AbstractOp;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
@@ -119,20 +118,5 @@ public class SolarisUtil {
             sysDbType = true;
         }
         return sysDbType;
-    }
-    
-    /**
-     * search for attribute in the given entry
-     * @param entry
-     * @param attrToFind
-     * @return null if attribute was not found in given entry
-     */
-    public static Attribute searchForAttribute(SolarisEntry entry, NativeAttribute attrToFind) {
-        for (Attribute attribute : entry.getAttributeSet()) {
-            if (attrToFind.getName().equals(attribute.getName())) {
-                return attribute;
-            }
-        }
-        return null;
     }
 }

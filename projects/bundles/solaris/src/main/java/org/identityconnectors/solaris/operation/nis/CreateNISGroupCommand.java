@@ -30,7 +30,6 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.solaris.SolarisConnection;
-import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.CreateNativeGroupCommand;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
@@ -71,7 +70,7 @@ public class CreateNISGroupCommand extends AbstractNISOp {
         
         conn.executeCommand(CommonNIS.whoIAm);
         
-        Attribute groupIdAttr = SolarisUtil.searchForAttribute(group, NativeAttribute.ID);
+        Attribute groupIdAttr = group.searchForAttribute(NativeAttribute.ID);
         if (groupIdAttr != null) {
             gid = AttributeUtil.getStringValue(groupIdAttr);
         }
@@ -124,7 +123,7 @@ public class CreateNISGroupCommand extends AbstractNISOp {
             executeGroupRecord(conn, groupRecord.toString());
             conn.executeCommand(removeTmpFilesScript);
             
-            Attribute usersAttr = SolarisUtil.searchForAttribute(group, NativeAttribute.USERS);
+            Attribute usersAttr = group.searchForAttribute(NativeAttribute.USERS);
             if (usersAttr != null) {
                 final List<Object> usersValue = usersAttr.getValue();
                 Assertions.nullCheck(usersValue, "users list");
