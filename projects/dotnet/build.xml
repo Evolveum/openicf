@@ -23,8 +23,6 @@
 <project name="connectors-dotnet">
     <loadfile property="ConnectorBundle-Version" srcfile="version.txt"/>    
     <property name="server.exe" value="ConnectorServer.exe"/>    
-    <property name="framework.dir" value="../framework"/>
-    <property name="dotnet.dir" value="./"/>
     <condition property="contract.suite.classname" value="org.identityconnectors.contract.test.${testname}">
         <isset property="testname"/>
     </condition>
@@ -33,20 +31,28 @@
     <target name="dist-debug">
         <mkdir dir="${dist.dotnet}" />
         <copy todir="${dist.dotnet}" flatten="true">
-            <fileset dir="${dotnet.dir}">
+            <fileset dir="${framework.dotnet.dir}">
                 <include name="**/Debug/*.dll"/>
                 <include name="**/Debug/*.pdb"/>
                 <include name="**/Debug/ConnectorServer*"/>
+            </fileset>
+            <fileset dir="${basedir}"> <!-- The connector directory. -->
+                <include name="**/Debug/*.dll"/>
+                <include name="**/Debug/*.pdb"/>
             </fileset>
         </copy>
     </target>	
     <target name="dist-release">
         <mkdir dir="${dist.dotnet}" />
         <copy todir="${dist.dotnet}" flatten="true">
-            <fileset dir="${dotnet.dir}">
+            <fileset dir="${framework.dotnet.dir}">
                 <include name="**/Release/*.dll"/>
                 <include name="**/Release/*.pdb"/>
                 <include name="**/Release/ConnectorServer*"/>
+            </fileset>
+            <fileset dir="${basedir}"> <!-- The connector directory. -->
+                <include name="**/Release/*.dll"/>
+                <include name="**/Release/*.pdb"/>
             </fileset>
         </copy>
     </target>
@@ -78,4 +84,3 @@
         <delete dir="${dist.dotnet}" />
     </target>
 </project>
-
