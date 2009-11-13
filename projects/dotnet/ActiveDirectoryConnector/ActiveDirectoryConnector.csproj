@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ====================
   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
   
@@ -31,6 +31,7 @@
     <ProductName>ActiveDirectoryConnector</ProductName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <ZipRelease>true</ZipRelease>
+    <ConnectorFrameworkDir>..\..\framework\dotnet</ConnectorFrameworkDir>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <ErrorReport>prompt</ErrorReport>
@@ -56,6 +57,16 @@
   </PropertyGroup>
   <Import Project="$(MSBuildProjectDirectory)\..\DotNetCommonBuild.Targets" />
   <ItemGroup>
+    <Reference Include="Common">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(ConnectorFrameworkDir)\Dist\Common.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Framework">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(ConnectorFrameworkDir)\Dist\Framework.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -90,20 +101,6 @@
     <Compile Include="UserAccountControl.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Common\Common.csproj">
-      <Project>{F140E8DA-52B4-4159-992A-9DA10EA8EEFB}</Project>
-      <Name>Common</Name>
-      <Private>False</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\Framework\Framework.csproj">
-      <Project>{8B24461B-456A-4032-89A1-CD418F7B5B62}</Project>
-      <Name>Framework</Name>
-      <Private>False</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\ShellScriptExecutorFactory\ShellScriptExecutorFactory.csproj">
-      <Project>{4700690A-2D29-40A0-86AC-E5A9F71A479A}</Project>
-      <Name>ShellScriptExecutorFactory</Name>
-    </ProjectReference>
     <COMReference Include="ActiveDs">
       <Guid>{97d25db0-0363-11cf-abc4-02608c9e7553}</Guid>
       <VersionMajor>1</VersionMajor>
@@ -156,4 +153,13 @@
     </EmbeddedResource>
     <EmbeddedResource Include="ObjectClasses.xml" />
   </ItemGroup>
+  <Target Name="AfterBuild">
+    <Copy
+      SourceFiles="$(ConnectorFrameworkDir)\Dist\Shell.ScriptExecutorFactory.dll"
+      DestinationFolder="$(OutputPath)"
+    />
+  </Target>
+  <Target Name="BeforeClean">
+    <Delete Files="$(OutputPath)\Shell.ScriptExecutorFactory.dll" />
+  </Target>
 </Project>

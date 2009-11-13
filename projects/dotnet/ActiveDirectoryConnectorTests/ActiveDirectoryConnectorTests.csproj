@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ====================
   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
   
@@ -35,6 +35,7 @@
     <FileAlignment>512</FileAlignment>
     <StartupObject>
     </StartupObject>
+    <ConnectorFrameworkDir>..\..\framework\dotnet</ConnectorFrameworkDir>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -57,6 +58,26 @@
     <StartAction>Project</StartAction>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Common">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(ConnectorFrameworkDir)\Dist\Common.dll</HintPath>
+    </Reference>
+    <Reference Include="Framework">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(ConnectorFrameworkDir)\Dist\Framework.dll</HintPath>
+    </Reference>
+    <Reference Include="FrameworkInternal">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(ConnectorFrameworkDir)\Dist\FrameworkInternal.dll</HintPath>
+    </Reference>
+    <Reference Include="ShellScriptExecutorFactory">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(ConnectorFrameworkDir)\Dist\Shell.ScriptExecutorFactory.dll</HintPath>
+    </Reference>
+    <Reference Include="TestCommon">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(ConnectorFrameworkDir)\Dist\TestCommon.dll</HintPath>
+    </Reference>
     <Reference Include="nunit.framework">
     </Reference>
     <Reference Include="System" />
@@ -81,27 +102,6 @@
     <ProjectReference Include="..\ActiveDirectoryConnector\ActiveDirectoryConnector.csproj">
       <Project>{BDF495CA-0FCD-4E51-A871-D467CDE3B43E}</Project>
       <Name>ActiveDirectoryConnector</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Common\Common.csproj">
-      <Project>{F140E8DA-52B4-4159-992A-9DA10EA8EEFB}</Project>
-      <Name>Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Framework\Framework.csproj">
-      <Project>{8B24461B-456A-4032-89A1-CD418F7B5B62}</Project>
-      <Name>Framework</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\FrameworkInternal\FrameworkInternal.csproj">
-      <Project>{5B011775-B121-4EEE-A410-BA2D2F5BFB8B}</Project>
-      <Name>FrameworkInternal</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\ShellScriptExecutorFactory\ShellScriptExecutorFactory.csproj">
-      <Project>{4700690A-2D29-40A0-86AC-E5A9F71A479A}</Project>
-      <Name>ShellScriptExecutorFactory</Name>
-      <Private>False</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\TestCommon\TestCommon.csproj">
-      <Project>{E6A207D2-E083-41BF-B522-D9D3EC09323E}</Project>
-      <Name>TestCommon</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
