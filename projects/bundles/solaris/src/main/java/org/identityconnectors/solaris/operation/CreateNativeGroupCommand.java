@@ -55,6 +55,28 @@ public class CreateNativeGroupCommand {
         // group Id is set only if we're not in saveAs mode
         String groupId = null;
         
+        /*
+         * FIXME:
+         * The connector behaves differently from adapter. 
+         * Adapter behavior: in case 'saveAs' operation is performed, 
+         * disregard the given GroupId, as it belongs to the cloned group.
+         * (If used it, we'd have a duplicate groupId)
+         * 
+         * Connector behavior: we're not able to detect 'saveAs' operation yet.
+         * So we apply ostrich strategy, until the framework is not able to provide
+         * this information. 
+         * --
+         * Proposal:
+         * introduce a 'saveAs' operation option to signal the saveAs operation, 
+         * so groupId can be ignored then. 
+         * 
+         * Occurences (2):
+         * org.identityconnectors.solaris.operation.nis.CreateNISGroupCommand
+         * org.identityconnectors.solaris.operation.CreateNativeGroupCommand
+         * 
+         * ======
+         * Note: the last revision that incorporated saveAs concept was before rev. 5479
+         */
         Attribute groupIdAttr = group.searchForAttribute(NativeAttribute.ID);
         if (groupIdAttr != null) {
                 groupId = AttributeUtil.getStringValue(groupIdAttr);
