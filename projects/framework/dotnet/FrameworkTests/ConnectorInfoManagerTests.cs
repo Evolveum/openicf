@@ -500,9 +500,9 @@ namespace FrameworkTests
             str.AppendChar('t');
 
 #if DEBUG
-            const int PORT = 8758;
+            const int PORT = 58758;
 #else
-            const int PORT = 8759;
+            const int PORT = 58759;
 #endif
             _server = ConnectorServer.NewInstance();
             _server.Port = PORT;
@@ -570,9 +570,9 @@ namespace FrameworkTests
             str.AppendChar('t');
 
 #if DEBUG
-            const int PORT = 8762;
+            const int PORT = 58762;
 #else
-            const int PORT = 8761;
+            const int PORT = 58761;
 #endif
 
             /*X509Store store = new X509Store("TestCertificateStore",
