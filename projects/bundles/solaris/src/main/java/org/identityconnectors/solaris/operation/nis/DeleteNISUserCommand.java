@@ -27,9 +27,9 @@ import java.util.Collections;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.solaris.SolarisConnection;
 
-public class OpDeleteNISImpl extends AbstractNISOp {
+public class DeleteNISUserCommand extends AbstractNISOp {
 
-    public static void performNIS(String accountId, SolarisConnection connection) {
+    public static void delete(String accountId, SolarisConnection connection) {
 
         try {
             connection.doSudoStart();

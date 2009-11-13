@@ -22,20 +22,14 @@
  */
 package org.identityconnectors.solaris.operation;
 
-import java.util.Collections;
-import java.util.Map;
-
-import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
-import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.operation.nis.CommonNIS;
-import org.identityconnectors.solaris.operation.nis.OpDeleteNISImpl;
+import org.identityconnectors.solaris.operation.nis.DeleteNISUserCommand;
 
 public class OpDeleteImpl extends AbstractOp {
 
@@ -63,7 +57,7 @@ public class OpDeleteImpl extends AbstractOp {
         if (SolarisUtil.isNis(getConnection())) {
             invokeNISDelete(accountId);
         } else {
-            invokeNativeDelete(accountId);
+            DeleteNativeUserCommand.delete(accountId, getConnection());
         }
 
         // TODO add handling of exceptions: existing user, etc.
@@ -80,7 +74,7 @@ public class OpDeleteImpl extends AbstractOp {
         // If the password source file is in /etc then use the native
         // utilities
         if (CommonNIS.isDefaultNisPwdDir(getConnection())) {
-            invokeNativeDelete(accountId);
+            DeleteNativeUserCommand.delete(accountId, getConnection());
             /*
              * TODO in adapter, SRA#getDeleteNISUserScript sudo is missing (file another bug?)
              */
@@ -91,41 +85,7 @@ public class OpDeleteImpl extends AbstractOp {
                 getConnection().doSudoReset();
             }
         } else {
-            OpDeleteNISImpl.performNIS(accountId, getConnection());
+            DeleteNISUserCommand.delete(accountId, getConnection());
         }
-    }
-
-    /**
-     * implementation of the Native Delete operation.
-     * 
-     * Compare with NIS implementation: {@see OpDeleteImpl#invokeNISDelete(String)} 
-     */
-    private void invokeNativeDelete(final String accountId) {
-        // USERDEL accountId
-        final String command = getConnection().buildCommand("userdel", ((getConfiguration().isDelHomeDir()) ? "-r" : ""), accountId);
-
-        Map<String, SolarisConnection.ErrorHandler> rejectMap = initErrorMap(accountId);
-        getConnection().executeCommand(command, rejectMap, Collections.<String> emptySet());
-
-        final String output = getConnection().executeCommand("echo $?");
-        if (!output.equals("0")) {
-            throw new UnknownUidException("Error deleting user: " + accountId);
-        }
-    }
-
-    private Map<String, SolarisConnection.ErrorHandler> initErrorMap(final String accountId) {
-        final SolarisConnection.ErrorHandler unknownUidHandler = new SolarisConnection.ErrorHandler() {
-            public void handle(String buffer) {
-                throw new UnknownUidException("Error deleting user: " + accountId);
-            }
-        };
-        
-        final Map<String, SolarisConnection.ErrorHandler> result = CollectionUtil.newMap(
-                "does not exist", unknownUidHandler,
-                "nknown user", unknownUidHandler,
-                "ERROR", unknownUidHandler
-        );
-        
-        return result;
     }
 }
