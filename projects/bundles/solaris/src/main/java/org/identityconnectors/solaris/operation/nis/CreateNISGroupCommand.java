@@ -39,10 +39,10 @@ public class CreateNISGroupCommand extends AbstractNISOp {
     private static final String tmpGroupfile1 = "/tmp/wsgroup.$$";
     private static final String tmpGroupfile2 = "/tmp/wsgroup_work.$$";
     
-    public static void create(SolarisEntry group, String saveAsAccountName, SolarisConnection conn) {
+    public static void create(SolarisEntry group, SolarisConnection conn) {
         if (CommonNIS.isDefaultNisPwdDir(conn)) {
             //invoke native create operation when usig password source file in /etc
-            CreateNativeGroupCommand.create(group, saveAsAccountName, conn);
+            CreateNativeGroupCommand.create(group, conn);
             
             CommonNIS.addNISMake("group", conn);
             return;
@@ -50,14 +50,13 @@ public class CreateNISGroupCommand extends AbstractNISOp {
         
         conn.doSudoStart();
         try {
-            impl(group, saveAsAccountName, conn);
+            impl(group, conn);
         } finally {
             conn.doSudoReset();
         }
     }
 
-    private static void impl(SolarisEntry group, String saveAsAccountName,
-            SolarisConnection conn) {
+    private static void impl(SolarisEntry group, SolarisConnection conn) {
         final String groupName = group.getName();
         final String pwddir = CommonNIS.getNisPwdDir(conn);
         StringBuffer groupRecord;
@@ -72,11 +71,9 @@ public class CreateNISGroupCommand extends AbstractNISOp {
         
         conn.executeCommand(CommonNIS.whoIAm);
         
-        if (saveAsAccountName == null) {
-            Attribute groupIdAttr = SolarisUtil.searchForAttribute(group, NativeAttribute.ID);
-            if (groupIdAttr != null) {
-                gid = AttributeUtil.getStringValue(groupIdAttr);
-            }
+        Attribute groupIdAttr = SolarisUtil.searchForAttribute(group, NativeAttribute.ID);
+        if (groupIdAttr != null) {
+            gid = AttributeUtil.getStringValue(groupIdAttr);
         }
         
         // Create and perform script for adding group file entry

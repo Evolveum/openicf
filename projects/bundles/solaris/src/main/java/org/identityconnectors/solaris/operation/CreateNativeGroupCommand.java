@@ -26,6 +26,7 @@ import java.util.List;
 
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.solaris.SolarisConnection;
@@ -38,38 +39,29 @@ public class CreateNativeGroupCommand {
     /**
      * Create a native group.
      * @param group The entry that should be created. The new group's name is defined by {@link SolarisEntry#getName()}.
-     * @param saveAsAccountName name can be null, if it is non-null the method will perform a 'saveAs' operation.
-     * 
-     * <p>
-     * Note: 'saveAs' operation on Groups means that the source group (parameter 'saveAsAccountName')
-     * will be searched for its users. These users will be members of newly created group.
-     * </p>
      * @param conn Alive connection.
      */
-    public static void create(SolarisEntry group, String saveAsAccountName, SolarisConnection conn) {
+    public static void create(SolarisEntry group, SolarisConnection conn) {
         conn.doSudoStart();
         try {
-            impl(group, saveAsAccountName, conn);
+            impl(group, conn);
         } finally {
             conn.doSudoReset();
         }
     }
 
-    private static void impl(SolarisEntry group, String saveAsAccountName,
-            SolarisConnection conn) {
+    private static void impl(SolarisEntry group, SolarisConnection conn) {
         final String groupName = group.getName();
         
         // group Id is set only if we're not in saveAs mode
         String groupId = null;
         
-        if (saveAsAccountName == null) {
-            Attribute groupIdAttr = SolarisUtil.searchForAttribute(group, NativeAttribute.ID);
-            if (groupIdAttr != null) {
+        Attribute groupIdAttr = SolarisUtil.searchForAttribute(group, NativeAttribute.ID);
+        if (groupIdAttr != null) {
                 groupId = AttributeUtil.getStringValue(groupIdAttr);
-            }
         }
         
-        final String setGroupId = (saveAsAccountName == null) ? "" : ("-g " + groupId);
+        final String setGroupId = (StringUtil.isBlank(groupId)) ? "" : ("-g " + groupId);
         final String cmd = conn.buildCommand("groupadd", setGroupId, String.format("'%s'", groupName));
         conn.executeCommand(cmd, CollectionUtil.newSet(
                 "ERROR", "Invalid name", // HP errors 
