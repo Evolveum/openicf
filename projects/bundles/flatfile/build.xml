@@ -21,6 +21,6 @@
   ====================
 -->
 <project name="connector-flatfile" default="all"> 
-    <property name="framework.dir" value="../../framework"/>
+    <property name="framework.dir" value="../../framework/java"/>
     <import file="${framework.dir}/connector_build.xml"/>
 </project>

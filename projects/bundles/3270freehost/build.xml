@@ -21,7 +21,7 @@
   ====================
 -->
 <project name="3270freehost" default="all"> 
-    <property name="framework.dir" value="../../framework"/>
+    <property name="framework.dir" value="../../framework/java"/>
     <import file="${framework.dir}/connector_build.xml"/>
     <property name="patternparser.dir" value="../patternparser"/>
     <property name="3270common.dir" value="../3270common"/>

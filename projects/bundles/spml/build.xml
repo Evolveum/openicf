@@ -21,7 +21,7 @@
   ====================
 -->
 <project name="connector-spml" default="all"> 
-    <property name="framework.dir" value="../../framework"/>
+    <property name="framework.dir" value="../../framework/java"/>
     <import file="${framework.dir}/connector_build.xml"/>
     <property name="contracts.run" value="true"/>
 </project>

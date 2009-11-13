@@ -21,7 +21,7 @@
   ====================
 -->
 <project name="connector-vms" default="all">
-    <property name="framework.dir" value="../../framework"/>
+    <property name="framework.dir" value="../../framework/java"/>
     <property name="contracts.run" value="true"/>
     <import file="${framework.dir}/connector_build.xml"/>
     <property name="patternparser.dir" value="../patternparser"/>

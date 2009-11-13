@@ -22,7 +22,7 @@
 -->
 <project name="connector-exchange" default="run-contract-tests">
     <property name="contracts.run" value="true"/>
-    <property name="framework.dir" value="${basedir}/../../framework"/>
+    <property name="framework.dir" value="${basedir}/../../framework/java"/>
     <property name="dotnet.dir" value="../"/>
     <property name="connectorName" value="Org.IdentityConnectors.Exchange.ExchangeConnector"/>
     <import file="../build.xml"/>    
