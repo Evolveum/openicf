@@ -125,26 +125,14 @@ public class OpSearchImpl extends AbstractOp {
         _log.info("search ({0})", filter.toString());
         SolarisUtil.controlObjectClassValidity(oclass, acceptOC, getClass());
         
-        if (oclass.is(ObjectClass.GROUP_NAME)) {
-            // TODO
-            throw new UnsupportedOperationException();
-        } else if (oclass.is(SHELL.getObjectClassValue())) {
-            final List<String> shells = searchForShells();
-            if (shells.size() > 0) {
-                for (String shell : shells) {
-                    // This is how ConnectorAdapter awaits the results, the value should be in a __NAME__ attribute.
-                    ConnectorObject co = new ConnectorObjectBuilder().setObjectClass(SHELL).addAttribute(Name.NAME, shell).build();
-                    handler.handle(co);
-                }
-            }
+        if (oclass.is(SHELL.getObjectClassValue())) {
+            final String cmd = "[ -f \"/etc/shells\" ] && cat /etc/shells";
+            final String out = getConnection().executeCommand(cmd);
+            final List<String> items = parseResult(out);
+            notifyHandler(oclass, handler, items);
+            
             return;
         }
-        
-        /*
-         * 
-         *  ACCOUNT search
-         *   
-         */
         
         /* required attributes inside the search (!= attrsToGet) */
         Set<NativeAttribute> requiredAttrs = new HashSet<NativeAttribute>(NativeAttribute.values().length);
@@ -155,36 +143,63 @@ public class OpSearchImpl extends AbstractOp {
         
         
         if (filter instanceof EqualsNode && ((EqualsNode) filter).getAttributeName().equals(NativeAttribute.NAME)) {
-            simpleFilter(requiredAttrs);
+            simpleSearch(oclass, requiredAttrs);
         } else {
-            complexFind(requiredAttrs);
+            complexSearch(oclass, requiredAttrs);
         }
         _log.info("search successfully finished.");
     }
 
-    /** List the shells available on the resource. */
-    private List<String> searchForShells() {
-        String result = getConnection().executeCommand("[ -f \"/etc/shells\" ] && cat /etc/shells");
-        String[] lines = result.split("\n");
+    /** 
+     * Notify the given handler with results of type {@code oclass}.
+     * @param oclass the objectclass type that the results belong to.
+     * @param h the handler.
+     * @param items the result items that we will propagate to handler
+     */
+    private void notifyHandler(ObjectClass oclass, ResultsHandler h, List<String> items) {
+        for (String it : items) {
+            // This is how ConnectorAdapter awaits the results, the value should be in a __NAME__ attribute.
+            ConnectorObject co = new ConnectorObjectBuilder().setObjectClass(oclass).addAttribute(Name.NAME, it).addAttribute(Uid.NAME, it).build();
+            handler.handle(co);
+        }
+    }
+
+    /**
+     * Parse useful strings separated by newline from the given {@code commandOutput}.
+     * 
+     * @param commandOutput
+     *            the output of some command, where items are separated by new
+     *            line. If the line starts with {@code #} character, it will be
+     *            skipped (as a comment).
+     */
+    private List<String> parseResult(String commandOutput) {
+        String[] lines = commandOutput.split("\n");
         
-        List<String> shells = new ArrayList<String>(lines.length);
+        List<String> items = new ArrayList<String>(lines.length);
         for (String line : lines) {
             if (line.startsWith("#"))
                 continue;
             
             String trimmedLine = line.trim();
             if (trimmedLine.length() > 0) {
-                shells.add(trimmedLine);
+                items.add(trimmedLine);
             }
         }
-        return shells;
+        return items;
     }
 
     /**
      * COMPLEX filtering, requires evaluation of the filter tree ({@see Node}).
+     * 
+     * <p>Only {@link ObjectClass#GROUP} and {@link ObjectClass#ACCOUNT} are allowed types in this method.
+     * @param oclass2 object class type
+     * @param requiredAttrs the attributes that we want to fetch.
      */
-    private void complexFind(Set<NativeAttribute> requiredAttrs) {
-        Iterator<SolarisEntry> entryIt = SolarisEntries.getAllAccounts(requiredAttrs, getConnection());
+    private void complexSearch(ObjectClass oclass2, Set<NativeAttribute> requiredAttrs) {
+        Iterator<SolarisEntry> entryIt = (oclass2.is(ObjectClass.ACCOUNT_NAME)) ? 
+                SolarisEntries.getAllAccounts(requiredAttrs, getConnection()) : 
+                    SolarisEntries.getAllGroups(requiredAttrs, getConnection());
+
         while (entryIt.hasNext()) {
             final SolarisEntry entry = entryIt.next();
             if (filter.evaluate(entry)) {
@@ -197,11 +212,21 @@ public class OpSearchImpl extends AbstractOp {
     /**
      * SIMPLE filtering defined as an {@see EqualsNode} with a single {@see Name} attribute.
      * For instance: userName = 'johnSmith'.
+     * 
+     * <p>Only {@link ObjectClass#GROUP} and {@link ObjectClass#ACCOUNT} are allowed types in this method.
+     * @param oclass2 objectClass type
+     * @param requiredAttrs the attributes the we want to fetch.
      */
-    private void simpleFilter(Set<NativeAttribute> requiredAttrs) {
-        SolarisEntry singleAccount = SolarisEntries.getAccount(((EqualsNode) filter).getValue(), requiredAttrs, getConnection());
-        if (singleAccount != null) {
-            ConnectorObject connObj = convertToConnectorObject(singleAccount, oclass);
+    private void simpleSearch(ObjectClass oclass2, Set<NativeAttribute> requiredAttrs) {
+        final SolarisEntry singleEntry; 
+        if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
+            singleEntry = SolarisEntries.getAccount(((EqualsNode) filter).getValue(), requiredAttrs, getConnection());
+        } else { // GROUP
+            singleEntry = SolarisEntries.getGroup(((EqualsNode) filter).getValue(), requiredAttrs, getConnection());
+        }
+        
+        if (singleEntry != null) {
+            ConnectorObject connObj = convertToConnectorObject(singleEntry, oclass);
             handler.handle(connObj);
         }
     }

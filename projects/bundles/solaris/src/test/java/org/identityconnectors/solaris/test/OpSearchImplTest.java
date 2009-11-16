@@ -225,4 +225,19 @@ public class OpSearchImplTest {
             }
         }
     }
+    
+    @Test
+    public void testGetGroups() {
+        ToListResultsHandler handler = new ToListResultsHandler();
+        facade.search(ObjectClass.GROUP, null, handler, null);
+        List<ConnectorObject> result = handler.getObjects();
+        Assert.assertNotNull(result);
+        
+        if (result.size() > 0) {
+            for (ConnectorObject connectorObject : result) {
+                String value = connectorObject.getName().getNameValue();
+                Assert.assertTrue(value.trim().length() > 0);
+            }
+        }
+    }
 }

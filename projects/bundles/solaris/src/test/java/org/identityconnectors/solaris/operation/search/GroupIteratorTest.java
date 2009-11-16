@@ -28,37 +28,41 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.test.SolarisTestCommon;
 import org.junit.Assert;
 import org.junit.Test;
 
-/**
- * @author David Adam
- *
- */
-public class AccountIteratorTest {
-@Test
-public void test() {
-    // similar test to BlockAccountIteratorTest
-    SolarisConnection conn = SolarisTestCommon.getSolarisConn();
-    String command = conn.buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"");
-    String out = conn.executeCommand(command);
-    final List<String> usernames = SolarisEntries.getNewlineSeparatedItems(out);
-    
-    AccountIterator bai = new AccountIterator(usernames, EnumSet.of(NativeAttribute.NAME), conn);
-    List<String> retrievedUsernames = new ArrayList<String>();
-    while (bai.hasNext()) {
-        retrievedUsernames.add(bai.next().getName());
+
+public class GroupIteratorTest {
+    @Test
+    public void test() {
+        // similar test to BlockAccountIteratorTest
+        SolarisConnection conn = SolarisTestCommon.getSolarisConn();
+        String command = conn.buildCommand("cut -d: -f1 /etc/group");
+        String out = conn.executeCommand(command);
+        final List<String> groups = SolarisEntries.getNewlineSeparatedItems(out);
+        
+        GroupIterator gi = new GroupIterator(groups, EnumSet.of(NativeAttribute.NAME, NativeAttribute.USERS, NativeAttribute.ID), conn);
+        List<String> retrievedGroups = new ArrayList<String>();
+        while (gi.hasNext()) {
+            SolarisEntry currentGroup = gi.next();
+            retrievedGroups.add(currentGroup.getName());
+            Assert.assertNotNull(currentGroup.searchForAttribute(NativeAttribute.ID));
+            Attribute users = currentGroup.searchForAttribute(NativeAttribute.USERS);
+            for (Object it : users.getValue()) {
+                Assert.assertNotNull(it);
+            }
+        }
+        Assert.assertEquals(CollectionUtil.newSet(groups), CollectionUtil.newSet(retrievedGroups));
+        
+        try {
+            gi.next();
+            Assert.fail("no Exception was thrown after invalid call of next.");
+        } catch (NoSuchElementException nex) {
+            // OK
+        }
     }
-    Assert.assertEquals(CollectionUtil.newSet(usernames), CollectionUtil.newSet(retrievedUsernames));
-    
-    try {
-        bai.next();
-        Assert.fail("no Exception was thrown after invalid call of next.");
-    } catch (NoSuchElementException nex) {
-        // OK
-    }
-}
 }

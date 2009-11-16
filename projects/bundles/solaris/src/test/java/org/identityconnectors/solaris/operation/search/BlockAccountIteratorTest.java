@@ -42,7 +42,7 @@ public class BlockAccountIteratorTest {
        SolarisConnection conn = SolarisTestCommon.getSolarisConn();
         String command = conn.buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"");
         String out = conn.executeCommand(command);
-        final List<String> usernames = AccountUtil.getAccounts(out);
+        final List<String> usernames = SolarisEntries.getNewlineSeparatedItems(out);
         
         BlockAccountIterator bai = new BlockAccountIterator(usernames, EnumSet.of(NativeAttribute.NAME), conn , 2);
         List<String> retrievedUsernames = new ArrayList<String>();

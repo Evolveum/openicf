@@ -53,7 +53,7 @@ public class SolarisEntry {
         }
         
         /** add a multivalue attr */
-        public Builder addAttr(NativeAttribute name, List<Object> values) {
+        public Builder addAttr(NativeAttribute name, List<? extends Object> values) {
             attrSet.add(AttributeBuilder.build(name.getName(), values));
             return this;
         }
