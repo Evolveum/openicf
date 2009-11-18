@@ -41,7 +41,7 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
 public class SolarisEntries {
 
     public static Iterator<SolarisEntry> getAllAccounts(Set<NativeAttribute> attrsToGet, SolarisConnection conn) {
-        String command = (SolarisUtil.isNis(conn)) ? conn.buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"") : "ypcat passwd | cut -d: -f1";
+        String command = (!SolarisUtil.isNis(conn)) ? conn.buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"") : "ypcat passwd | cut -d: -f1";
         String out = conn.executeCommand(command);
         
         List<String> accountNames = getNewlineSeparatedItems(out);
