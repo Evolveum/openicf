@@ -27,6 +27,9 @@ import org.identityconnectors.common.security.*;
 import org.identityconnectors.framework.common.exceptions.*;
 import org.identityconnectors.framework.spi.*;
 import org.identityconnectors.peoplesoft.compintfc.mapping.*;
+import org.identityconnectors.peoplesoft.wrappers.*;
+
+import psft.pt8.joa.*;
 
 
 /**
@@ -157,6 +160,18 @@ public final class PeopleSoftCompIntfcConfiguration extends AbstractConfiguratio
             }
         }
         return mapping;
+    }
+    
+    ISession craeteAdminConnection(){
+        final ISession session = new SessionWrapper(API.createSession(false, 0));
+        final String strPath = host + ":" + port;
+        password.access(new GuardedString.Accessor() {
+            public void access(char[] clearChars) {
+                if (!session.connect(1, strPath, user, new String(clearChars), null)) {
+                }
+            }
+        });
+        return session;
     }
 
 }
