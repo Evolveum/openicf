@@ -85,39 +85,40 @@ public class OpDeleteImplTest {
         facade.delete(new ObjectClass("NONEXISTING_OBJECTCLASS"), getUid(attrs), null);
     }
     
-    @Test (expected=ConnectorException.class)
+    @Test(expected = ConnectorException.class)
     public void testDeleteUnknownGroup() {
-    	facade.delete(ObjectClass.GROUP, new Uid("nonExistingGroup"), null);
+        facade.delete(ObjectClass.GROUP, new Uid("nonExistingGroup"), null);
     }
-    
+
     @Test
     public void testDeleteGroup() {
-    	
-    	Set<Attribute> attrs = SolarisTestCommon.initSampleGroup("sampleGroup", "root");
-    	Map<String, Attribute> grpAttrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
-    	String groupName = ((Name) grpAttrMap.get(Name.NAME)).getNameValue();
-    	// create the group
-    	facade.create(ObjectClass.GROUP, attrs, null);
-    	try {
-    		// verify if it exists
-    		String out = checkIfGroupExists(groupName);
-    		Assert.assertTrue(out.contains(groupName));
-    		//perform delete
-    		facade.delete(ObjectClass.GROUP, new Uid(groupName), null);
-    		try {
-    			checkIfGroupExists(groupName);
-    			Assert.fail("delete failed, the group is still on the resource: '" + groupName + "'");
-    		} catch (ConnectorException ex) {
-    			// ok
-    		}
-    	} finally {
-    		try {
-    			testConnector.getConnection().executeCommand("cat /etc/group | grep '" + groupName + "'", Collections.<String>emptySet(), CollectionUtil.newSet(groupName));
-    			Assert.fail("group '" + groupName + "' was not deleted.");
-    		} catch (ConnectorException ex) {
-    			// OK
-    		}
-    	}
+
+        Set<Attribute> attrs = SolarisTestCommon.initSampleGroup("sampleGroup", "root");
+        Map<String, Attribute> grpAttrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
+        String groupName = ((Name) grpAttrMap.get(Name.NAME)).getNameValue();
+        // create the group
+        facade.create(ObjectClass.GROUP, attrs, null);
+        try {
+            // verify if it exists
+            String out = checkIfGroupExists(groupName);
+            Assert.assertTrue(out.contains(groupName));
+            // perform delete
+            facade.delete(ObjectClass.GROUP, new Uid(groupName), null);
+            try {
+                checkIfGroupExists(groupName);
+                Assert.fail("delete failed, the group is still on the resource: '" + groupName + "'");
+            } catch (ConnectorException ex) {
+                // ok
+            }
+        } finally {
+            try {
+                testConnector.getConnection().executeCommand("cat /etc/group | grep '" + groupName + "'", Collections.<String> emptySet(),
+                        CollectionUtil.newSet(groupName));
+                Assert.fail("group '" + groupName + "' was not deleted.");
+            } catch (ConnectorException ex) {
+                // OK
+            }
+        }
     }
 
     /** 
@@ -125,9 +126,10 @@ public class OpDeleteImplTest {
      * @return the output fetched from the group search command. If successful, it should contain the 'groupname' parameter.
      * @throws {@link ConnectorException} if the group was not found.
      */
-	private String checkIfGroupExists(String groupName) {
-		return testConnector.getConnection().executeCommand("cat /etc/group | grep '" + groupName + "'", Collections.<String>emptySet(), CollectionUtil.newSet(groupName));
-	}
+    private String checkIfGroupExists(String groupName) {
+        return testConnector.getConnection().executeCommand("cat /etc/group | grep '" + groupName + "'", Collections.<String> emptySet(),
+                CollectionUtil.newSet(groupName));
+    }
     
 
     /* ************* AUXILIARY METHODS *********** */

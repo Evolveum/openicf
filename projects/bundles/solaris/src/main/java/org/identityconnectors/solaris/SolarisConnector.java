@@ -152,7 +152,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     public Uid create(ObjectClass oclass, Set<Attribute> attrs,
             OperationOptions options) {
 
-    	// FIXME later:
+        // FIXME later:
 //    	// check if the objectclass exists, and throw an exception if yes.
 //    	Map<String, Attribute> entryAttrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
 //    	String entryName = ((Name) entryAttrMap.get(Name.NAME)).getNameValue();

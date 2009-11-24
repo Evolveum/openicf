@@ -89,15 +89,15 @@ public class OpCreateImpl extends AbstractOp {
      * Compare with Native create operation:
      * {@link OpCreateImpl#invokeNativeGroupCreate(SolarisEntry)}
      */
-	private void invokeNISGroupCreate(final SolarisEntry group) {
-		if (AbstractNISOp.isDefaultNisPwdDir(getConnection())) {
+    private void invokeNISGroupCreate(final SolarisEntry group) {
+        if (AbstractNISOp.isDefaultNisPwdDir(getConnection())) {
             invokeNativeGroupCreate(group);
-            
+
             AbstractNISOp.addNISMake("group", getConnection());
         } else {
-        	CreateNISGroupCommand.create(group, getConnection());
+            CreateNISGroupCommand.create(group, getConnection());
         }
-	}
+    }
 
     /**
      * Compare with other NIS implementation counterpart:

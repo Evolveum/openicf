@@ -43,11 +43,11 @@ class CreateNativeUserCommand  {
     private final static Set<String> errorsUseradd = CollectionUtil.newSet("invalid", "ERROR", "command not found", "not allowed to execute");
     
     public static void createUser(SolarisEntry entry, GuardedString password, SolarisConnection conn) {
-    	conn.doSudoStart();
+        conn.doSudoStart();
         try {
-        	
-        	conn.executeMutexAcquireScript();
-        	try {
+
+            conn.executeMutexAcquireScript();
+            try {
                 createUserImpl(entry, conn);
             } finally {
                 conn.executeMutexReleaseScript();

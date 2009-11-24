@@ -141,34 +141,35 @@ public class OpCreateImplTest {
     
     @Test
     public void createGroupTest() {
-    	Set<Attribute> userAttrs = SolarisTestCommon.initSampleUser();
-    	
-    	Map<String, Attribute> userAttrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(userAttrs));
-    	String username = ((Name) userAttrMap.get(Name.NAME)).getNameValue();
-    	Set<Attribute> grpAttrs = SolarisTestCommon.initSampleGroup("gsample", username);
-    	Map<String, Attribute> grpAttrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(grpAttrs));
-    	String groupName = ((Name) grpAttrMap.get(Name.NAME)).getNameValue();
-        
-    	// create a user    	
-    	facade.create(ObjectClass.ACCOUNT, userAttrs, null);
-        
-    	try {
-    		// create a group
-    		facade.create(ObjectClass.GROUP, grpAttrs, null);
-    		
-    		testConnector.getConnection().executeCommand("cat /etc/group | grep '" + groupName + "'", Collections.<String>emptySet(), CollectionUtil.newSet(groupName));
-    	} finally {
-    		// cleanup the new user
+        Set<Attribute> userAttrs = SolarisTestCommon.initSampleUser();
+
+        Map<String, Attribute> userAttrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(userAttrs));
+        String username = ((Name) userAttrMap.get(Name.NAME)).getNameValue();
+        Set<Attribute> grpAttrs = SolarisTestCommon.initSampleGroup("gsample", username);
+        Map<String, Attribute> grpAttrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(grpAttrs));
+        String groupName = ((Name) grpAttrMap.get(Name.NAME)).getNameValue();
+
+        // create a user
+        facade.create(ObjectClass.ACCOUNT, userAttrs, null);
+
+        try {
+            // create a group
+            facade.create(ObjectClass.GROUP, grpAttrs, null);
+
+            testConnector.getConnection().executeCommand("cat /etc/group | grep '" + groupName + "'", Collections.<String> emptySet(),
+                    CollectionUtil.newSet(groupName));
+        } finally {
+            // cleanup the new user
             facade.delete(ObjectClass.ACCOUNT, new Uid(username), null);
             try {
-            	final GuardedString password = SolarisUtil.getPasswordFromMap(userAttrMap);
+                final GuardedString password = SolarisUtil.getPasswordFromMap(userAttrMap);
                 facade.authenticate(ObjectClass.ACCOUNT, username, password, null);
                 Assert.fail(String.format("Account was not cleaned up: '%s'", username));
             } catch (RuntimeException ex) {
-                //OK
+                // OK
             }
             // cleanup the created group
             testConnector.getConnection().executeCommand("groupdel '" + groupName + "'");
-    	}
+        }
     }
 }
