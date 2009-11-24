@@ -22,6 +22,7 @@
  */
 package org.identityconnectors.solaris.test;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -35,6 +36,7 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
+import org.identityconnectors.solaris.attr.GroupAttribute;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.test.common.PropertyBag;
 import org.identityconnectors.test.common.TestHelpers;
@@ -132,5 +134,13 @@ public class SolarisTestCommon {
             return true;
         }
         return false;
+    }
+
+    public static Set<Attribute> initSampleGroup(String groupName, String... usernames) {
+        Set<Attribute> res = new HashSet<Attribute>();
+        res.add(AttributeBuilder.build(Name.NAME, groupName));
+        
+        res.add(AttributeBuilder.build(GroupAttribute.USERS.getName(), Arrays.asList(usernames)));
+        return res;
     }
 }

@@ -37,6 +37,7 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.operation.nis.CommonNIS;
+import org.identityconnectors.solaris.operation.nis.CreateNISGroupCommand;
 import org.identityconnectors.solaris.operation.nis.CreateNISUserCommand;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
@@ -57,29 +58,31 @@ public class OpCreateImpl extends AbstractOp {
     public Uid create(ObjectClass oclass, final Set<Attribute> attrs, final OperationOptions options) {
         SolarisUtil.controlObjectClassValidity(oclass, acceptOC, getClass());
         
-        if (oclass.is(ObjectClass.GROUP_NAME)) {
-            // TODO
-            throw new UnsupportedOperationException();
-        }
-        
         // Read only list of attributes
         final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
 
         final Name name = (Name) attrMap.get(Name.NAME);
-        final String accountId = name.getNameValue();
+        final String entryId = name.getNameValue();
 
-        _log.info("~~~~~~~ create(''{0}'') ~~~~~~~", accountId);
+        _log.info("~~~~~~~ create {0}(''{1}'') ~~~~~~~", oclass.getObjectClassValue(), entryId);
         
-        final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(name.getNameValue(), attrs);
-        final GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
-        
-        if (SolarisUtil.isNis(getConnection())) {
-            invokeNISCreate(entry, password);
-        } else {
-            invokeNativeCreate(entry, password);
+        final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(name.getNameValue(), oclass, attrs);
+        if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
+            final GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
+            if (SolarisUtil.isNis(getConnection())) {
+                invokeNISCreate(entry, password);
+            } else {
+                invokeNativeCreate(entry, password);
+            }
+        } else if (oclass.is(ObjectClass.GROUP_NAME)) {
+            if (SolarisUtil.isNis(getConnection())) {
+                CreateNISGroupCommand.create(entry, getConnection());
+            } else {
+                CreateNativeGroupCommand.create(entry, getConnection());
+            }
         }
         
-        return new Uid(accountId);
+        return new Uid(entryId);
     }
 
     /**

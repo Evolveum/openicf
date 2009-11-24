@@ -35,6 +35,8 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.attr.AccountAttribute;
+import org.identityconnectors.solaris.attr.ConnectorAttribute;
+import org.identityconnectors.solaris.attr.GroupAttribute;
 import org.identityconnectors.solaris.operation.AbstractOp;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
@@ -96,16 +98,17 @@ public class SolarisUtil {
                 MSG_NOT_SUPPORTED_OBJECTCLASS, oclass, operation.getName()));
     }
     
-    public static SolarisEntry forConnectorAttributeSet(String userName, Set<Attribute> attrs) {
+    public static SolarisEntry forConnectorAttributeSet(String userName, ObjectClass oclass, Set<Attribute> attrs) {
         // translate connector attributes to native counterparts
         final SolarisEntry.Builder builder = new SolarisEntry.Builder(userName);
         for (Attribute attribute : attrs) {
-            final AccountAttribute accAttrName = AccountAttribute.forAttributeName(attribute.getName());
+            final ConnectorAttribute accAttrName = (oclass.is(ObjectClass.ACCOUNT_NAME)) ? AccountAttribute.forAttributeName(attribute.getName()) : GroupAttribute.forAttributeName(attribute.getName());
             if (accAttrName != null) {
                 builder.addAttr(accAttrName.getNative(), attribute.getValue());
             } else if (!attribute.getName().equals(OperationalAttributes.PASSWORD_NAME) && !attribute.getName().equals(Uid.NAME)) {
+                // FIXME: do we really need this exception here? It'd be way more beautiful without if-s.
                 //TODO it might be a more beautiful sort out this error (filter the attributes in layers above this class).
-                throw new ConnectorException("Unsupported attribute in update(user='" + userName + "'): " + attribute.getName());
+                throw new ConnectorException("ERROR: Unsupported attribute: " + attribute.getName());
             }
         }
         return builder.build();

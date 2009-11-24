@@ -69,7 +69,7 @@ public class OpUpdateImpl extends AbstractOp {
 
         // Read only list of attributes
         final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(replaceAttributes));
-        final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(uid.getUidValue(), replaceAttributes);
+        final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(uid.getUidValue(), objclass, replaceAttributes);
         final GuardedString passwd = SolarisUtil.getPasswordFromMap(attrMap);
         
         if (SolarisUtil.isNis(getConnection())) {
