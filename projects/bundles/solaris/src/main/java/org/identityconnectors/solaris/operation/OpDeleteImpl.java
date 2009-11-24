@@ -28,7 +28,7 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
-import org.identityconnectors.solaris.operation.nis.CommonNIS;
+import org.identityconnectors.solaris.operation.nis.AbstractNISOp;
 import org.identityconnectors.solaris.operation.nis.DeleteNISUserCommand;
 
 public class OpDeleteImpl extends AbstractOp {
@@ -78,14 +78,14 @@ public class OpDeleteImpl extends AbstractOp {
     private void invokeNISDelete(String accountId) {
         // If the password source file is in /etc then use the native
         // utilities
-        if (CommonNIS.isDefaultNisPwdDir(getConnection())) {
+        if (AbstractNISOp.isDefaultNisPwdDir(getConnection())) {
             DeleteNativeUserCommand.delete(accountId, getConnection());
             /*
              * TODO in adapter, SRA#getDeleteNISUserScript sudo is missing (file another bug?)
              */
             getConnection().doSudoStart();
             try {
-                CommonNIS.addNISMake("passwd", getConnection());
+                AbstractNISOp.addNISMake("passwd", getConnection());
             } finally {
                 getConnection().doSudoReset();
             }

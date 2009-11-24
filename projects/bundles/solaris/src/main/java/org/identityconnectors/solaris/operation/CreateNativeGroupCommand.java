@@ -31,7 +31,7 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.operation.nis.CommonNIS;
+import org.identityconnectors.solaris.operation.nis.AbstractNISOp;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 public class CreateNativeGroupCommand {
@@ -95,7 +95,7 @@ public class CreateNativeGroupCommand {
         if (usersAttribute != null) {
             final List<Object> usersValue = usersAttribute.getValue();
             Assertions.nullCheck(usersValue, "users list");
-            CommonNIS.changeGroupMembers(groupName, usersValue, false, conn);
+            AbstractNISOp.changeGroupMembers(groupName, usersValue, false, conn);
         }
     }
 

@@ -68,7 +68,7 @@ public class CreateNISUserCommand extends AbstractNISOp {
         String gecos = null;
         String homedir = null;
 
-        final String pwdDir = CommonNIS.getNisPwdDir(connection);
+        final String pwdDir = AbstractNISOp.getNisPwdDir(connection);
         String pwdfile = pwdDir + "/passwd";
         String shadowfile = pwdDir + "/shadow";
         String salt = "";
@@ -80,7 +80,7 @@ public class CreateNISUserCommand extends AbstractNISOp {
         String cpCmd;
         String chownCmd;
         String diffCmd;
-        String removeTmpFilesScript = CommonNIS.getRemovePwdTmpFiles(connection);
+        String removeTmpFilesScript = AbstractNISOp.getRemovePwdTmpFiles(connection);
         
         String basedir = config.getHomeBaseDir();
         if ((basedir != null) && (basedir.length() > 0)) {
@@ -108,7 +108,7 @@ public class CreateNISUserCommand extends AbstractNISOp {
         }
         
         // Get specified user attributes, which can override above resource attributes
-        Map<NativeAttribute, List<Object>> attributes = CommonNIS.constructNISUserAttributeParameters(entry, allowedNISattributes);
+        Map<NativeAttribute, List<Object>> attributes = AbstractNISOp.constructNISUserAttributeParameters(entry, allowedNISattributes);
         
         for (Map.Entry<NativeAttribute, List<Object>> it : attributes.entrySet()) {
             NativeAttribute key = it.getKey();
@@ -262,7 +262,7 @@ public class CreateNISUserCommand extends AbstractNISOp {
             connection.doSudoStart();
             
             // get required password settings
-            connection.executeCommand(CommonNIS.whoIAm);
+            connection.executeCommand(AbstractNISOp.whoIAm);
             connection.executeCommand(passwordRecord.toString());
         } finally {
             // The reject below can throw an exception when the script is executed, so reset sudo before that test
@@ -312,7 +312,7 @@ public class CreateNISUserCommand extends AbstractNISOp {
                 // NIS database has to be updated before updates to shell or password
                 // If the option is to bypass the make, only issue a make if there is a shell or
                 // password to be set.
-                CommonNIS.addNISMake("passwd", connection);
+                AbstractNISOp.addNISMake("passwd", connection);
                 
                 if (shell != null) {
                     addNISShellUpdateWithCleanup(accountId, shell, connection);
@@ -323,7 +323,7 @@ public class CreateNISUserCommand extends AbstractNISOp {
                     addNISPasswordUpdate(accountId, password, connection);
                 }
                 
-                CommonNIS.addNISMake("passwd", connection);
+                AbstractNISOp.addNISMake("passwd", connection);
             } finally {
                 // Release the "mutex"
                 connection.executeMutexReleaseScript(pwdMutexFile);
@@ -372,10 +372,10 @@ public class CreateNISUserCommand extends AbstractNISOp {
         final String passwordCleanup = "unset INVALID_SHELL_ERRMSG; INVALID_SHELL_ERRMSG=`grep \"" + INVALID_SHELL + "\" " + tmpPwdfile3 + "`;";
         connection.executeCommand(passwordCleanup);
 
-        final String pwddir = CommonNIS.getNisPwdDir(connection);
+        final String pwddir = AbstractNISOp.getNisPwdDir(connection);
         final String pwdFile = pwddir + "/passwd";
         final String shadowFile = pwddir + "/shadow";
-        final String removeTmpFilesScript = CommonNIS.getRemovePwdTmpFiles(connection);
+        final String removeTmpFilesScript = AbstractNISOp.getRemovePwdTmpFiles(connection);
 
         // Add script to remove entry in passwd file if shell update fails
         String getOwner =
@@ -388,7 +388,7 @@ public class CreateNISUserCommand extends AbstractNISOp {
         connection.executeCommand(removeTmpFilesScript);
         
         // The user has to be removed from the NIS database, incase of invalid shell failures
-        CommonNIS.addNISMake("passwd", connection);
+        AbstractNISOp.addNISMake("passwd", connection);
         
         final String invalidShellCheck= "echo $INVALID_SHELL_ERRMSG; unset INVALID_SHELL_ERRMSG;";
 

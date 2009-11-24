@@ -47,7 +47,7 @@ public class OpUpdateNISImpl extends AbstractNISOp {
         // TODO eliminate duplicate accountId(Name)
         final String accountId = entry.getName();
         final String accountName = accountId;
-        String pwddir = CommonNIS.getNisPwdDir(connection);
+        String pwddir = AbstractNISOp.getNisPwdDir(connection);
         String pwdfile = pwddir + "/passwd";
         
         boolean recordUpdate = false;
@@ -71,7 +71,7 @@ public class OpUpdateNISImpl extends AbstractNISOp {
             isRename = true;
         }
         
-        String removeTmpFilesScript = CommonNIS.getRemovePwdTmpFiles(connection);
+        String removeTmpFilesScript = AbstractNISOp.getRemovePwdTmpFiles(connection);
         String getOwner =
             "OWNER=`ls -l " + pwdfile + " | awk '{ print $3 }'`; " +
             "GOWNER=`ls -l " + pwdfile + " | awk '{ print $4 }'`; " +
@@ -96,7 +96,7 @@ public class OpUpdateNISImpl extends AbstractNISOp {
             "fi";
         
         // Get specified user attributes
-        Map<NativeAttribute, List<Object>> attributes = CommonNIS.constructNISUserAttributeParameters(entry, allowedNISattributes);
+        Map<NativeAttribute, List<Object>> attributes = AbstractNISOp.constructNISUserAttributeParameters(entry, allowedNISattributes);
         
         for (Map.Entry<NativeAttribute, List<Object>> it : attributes.entrySet()) {
             NativeAttribute key = it.getKey();
@@ -129,7 +129,7 @@ public class OpUpdateNISImpl extends AbstractNISOp {
         
         try {
             connection.doSudoStart();
-            connection.executeCommand(CommonNIS.whoIAm);
+            connection.executeCommand(AbstractNISOp.whoIAm);
             try {
                 connection.executeMutexAcquireScript(pwdMutexFile, tmpPwdMutexFile, pwdPidFile);
 
@@ -192,7 +192,7 @@ public class OpUpdateNISImpl extends AbstractNISOp {
                     // Migrate the changes to the NIS database.
                     // The changes to the NIS database have to be made before the
                     // changes for shell and password.
-                    CommonNIS.addNISMake("passwd", connection);
+                    AbstractNISOp.addNISMake("passwd", connection);
                 }//if (recordUpdate)
                 
                 if (shell != null) {
@@ -204,7 +204,7 @@ public class OpUpdateNISImpl extends AbstractNISOp {
                     addNISPasswordUpdate(accountId, password, connection);
                 }
 
-                CommonNIS.addNISMake("passwd", connection);
+                AbstractNISOp.addNISMake("passwd", connection);
 
 
             } finally {

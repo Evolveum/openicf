@@ -39,11 +39,11 @@ public class CreateNISGroupCommand extends AbstractNISOp {
     private static final String tmpGroupfile2 = "/tmp/wsgroup_work.$$";
     
     public static void create(SolarisEntry group, SolarisConnection conn) {
-        if (CommonNIS.isDefaultNisPwdDir(conn)) {
+        if (AbstractNISOp.isDefaultNisPwdDir(conn)) {
             //invoke native create operation when usig password source file in /etc
             CreateNativeGroupCommand.create(group, conn);
             
-            CommonNIS.addNISMake("group", conn);
+            AbstractNISOp.addNISMake("group", conn);
             return;
         }
         
@@ -57,7 +57,7 @@ public class CreateNISGroupCommand extends AbstractNISOp {
 
     private static void impl(SolarisEntry group, SolarisConnection conn) {
         final String groupName = group.getName();
-        final String pwddir = CommonNIS.getNisPwdDir(conn);
+        final String pwddir = AbstractNISOp.getNisPwdDir(conn);
         StringBuffer groupRecord;
         String gid = null;
         String groupFile = pwddir + "/group";
@@ -68,7 +68,7 @@ public class CreateNISGroupCommand extends AbstractNISOp {
         final String grepCmd = conn.buildCommand("grep");
         final String catCmd = conn.buildCommand("cat");
         
-        conn.executeCommand(CommonNIS.whoIAm);
+        conn.executeCommand(AbstractNISOp.whoIAm);
         
         /*
          * FIXME:
@@ -120,10 +120,10 @@ public class CreateNISGroupCommand extends AbstractNISOp {
                   chownCmd + "$OWNER:$GOWNER " + groupFile + "; " +
                 "fi\n" +
               "else " +
-                "echo \"" + CommonNIS.duplicateGroupIdMsg + "\"; " +
+                "echo \"" + AbstractNISOp.duplicateGroupIdMsg + "\"; " +
               "fi; " +
             "else " +
-              "echo \"" + CommonNIS.duplicateGroupNameMsg + "\"; " +
+              "echo \"" + AbstractNISOp.duplicateGroupNameMsg + "\"; " +
             "fi";
 
         groupRecord.append(createRecord);
@@ -146,11 +146,11 @@ public class CreateNISGroupCommand extends AbstractNISOp {
             if (usersAttr != null) {
                 final List<Object> usersValue = usersAttr.getValue();
                 Assertions.nullCheck(usersValue, "users list");
-                CommonNIS.changeGroupMembers(groupName, usersValue, true, conn);
+                AbstractNISOp.changeGroupMembers(groupName, usersValue, true, conn);
             }
             
             // NIS database has to be updated before updates to shell or password
-            CommonNIS.addNISMake("group", conn);
+            AbstractNISOp.addNISMake("group", conn);
         } finally {
             conn.executeMutexReleaseScript(grpMutexFile);
         }

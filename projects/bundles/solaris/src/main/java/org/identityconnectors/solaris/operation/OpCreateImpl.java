@@ -36,7 +36,7 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
-import org.identityconnectors.solaris.operation.nis.CommonNIS;
+import org.identityconnectors.solaris.operation.nis.AbstractNISOp;
 import org.identityconnectors.solaris.operation.nis.CreateNISGroupCommand;
 import org.identityconnectors.solaris.operation.nis.CreateNISUserCommand;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
@@ -92,13 +92,13 @@ public class OpCreateImpl extends AbstractOp {
      */
     private void invokeNISCreate(SolarisEntry entry, GuardedString password) {
         
-        if (CommonNIS.isDefaultNisPwdDir(getConnection())) {
+        if (AbstractNISOp.isDefaultNisPwdDir(getConnection())) {
             invokeNativeCreate(entry, password);
             
             // The user has to be added to the NIS database
             getConnection().doSudoStart();
             try {
-                CommonNIS.addNISMake("passwd", getConnection());
+                AbstractNISOp.addNISMake("passwd", getConnection());
             } finally {
                 getConnection().doSudoReset();
             }

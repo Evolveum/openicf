@@ -49,10 +49,10 @@ public class DeleteNISUserCommand extends AbstractNISOp {
     private static void deleteImpl(String accountId,
             SolarisConnection connection) {
 
-        final String pwddir = CommonNIS.getNisPwdDir(connection);
+        final String pwddir = AbstractNISOp.getNisPwdDir(connection);
         final String pwdFile = pwddir + "/passwd";
         final String shadowFile = pwddir + "/shadow";
-        final String removeTmpFilesScript = CommonNIS.getRemovePwdTmpFiles(connection);
+        final String removeTmpFilesScript = AbstractNISOp.getRemovePwdTmpFiles(connection);
         
         
         
@@ -83,7 +83,7 @@ public class DeleteNISUserCommand extends AbstractNISOp {
         
         // The user has to be removed from the NIS database
         // TODO this comment doesn't make much sense (from adapter)
-        CommonNIS.addNISMake("passwd", connection);
+        AbstractNISOp.addNISMake("passwd", connection);
     }
 
     private static String initWorkScript(final String accountId, final String pwdFile, final SolarisConnection connection) {

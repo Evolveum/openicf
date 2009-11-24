@@ -36,7 +36,7 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
-import org.identityconnectors.solaris.operation.nis.CommonNIS;
+import org.identityconnectors.solaris.operation.nis.AbstractNISOp;
 import org.identityconnectors.solaris.operation.nis.OpUpdateNISImpl;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
@@ -97,13 +97,13 @@ public class OpUpdateImpl extends AbstractOp {
      */
     private void invokeNISUpdate(final SolarisEntry entry,
             final GuardedString passwd) {
-        if (CommonNIS.isDefaultNisPwdDir(getConnection())) {
+        if (AbstractNISOp.isDefaultNisPwdDir(getConnection())) {
             invokeNativeUpdate(entry, passwd);
             
             getConnection().doSudoStart();
             try {
                 // The user has to be added to the NIS database
-                CommonNIS.addNISMake("passwd", getConnection());
+                AbstractNISOp.addNISMake("passwd", getConnection());
             } finally {
                 getConnection().doSudoReset();
             }
