@@ -56,6 +56,7 @@ public class PeopleSoftCompIntfcConfigurationTest {
             conn = cfg.craeteAdminConnection();
             fail("Must fail on invalid host");
         }
-        catch(RuntimeException e){}
+        catch(RuntimeException e){
+        }
     }
 }

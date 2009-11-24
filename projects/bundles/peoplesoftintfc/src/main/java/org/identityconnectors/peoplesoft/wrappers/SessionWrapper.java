@@ -25,6 +25,7 @@ package org.identityconnectors.peoplesoft.wrappers;
 
 import java.io.*;
 
+import org.identityconnectors.common.*;
 import org.identityconnectors.framework.common.exceptions.*;
 
 import psft.pt8.joa.*;
@@ -35,6 +36,7 @@ import psft.pt8.joa.*;
  */
 public final class SessionWrapper implements ISession{
     private final ISession delegate;
+    private final static String LINE_SEPARATOR = System.getProperty("line.separator");
     
     public SessionWrapper(ISession delegate){
         this.delegate = delegate;
@@ -46,10 +48,19 @@ public final class SessionWrapper implements ISession{
             psft.pt8.joa.IPSMessageCollection msgs = getPSMessages();
             if (msgs != null) {
                 StringBuilder sb = new StringBuilder();
-                sb.append("Cannot connec to peoplesoft");
+                sb.append("Cannot connect to peoplesoft : ");
                 for ( int i=0; i<msgs.getCount(); i++) {
                     if (i>0) sb.append(", ");
-                    sb.append(msgs.next().getText());
+                    IPSMessage msg = msgs.next();
+                    sb.append(msg.getText());
+                    if(StringUtil.isNotEmpty(msg.getSource())){
+                        sb.append(LINE_SEPARATOR);
+                        sb.append("Source :").append(msg.getSource());
+                    }
+                    if(StringUtil.isNotEmpty(msg.getExplainText())){
+                        sb.append(LINE_SEPARATOR);
+                        sb.append("ExplainText :").append(msg.getExplainText());
+                    }
                 }
                 throw new ConnectorException(sb.toString());
             }
