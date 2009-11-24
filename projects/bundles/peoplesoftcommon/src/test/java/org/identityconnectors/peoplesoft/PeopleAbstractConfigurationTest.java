@@ -38,7 +38,7 @@ import psft.pt8.joa.*;
 public class PeopleAbstractConfigurationTest {
     @Test
     public void testCreateAdminConn(){
-        PropertyBag bag = TestHelpers.getProperties(PeoplesoftTestConfiguration.class);
+        PropertyBag bag = TestHelpers.getProperties(PeopleSoftAbstractConfiguration.class);
         String host = bag.getStringProperty("host");
         String port = bag.getStringProperty("port");
         String user = bag.getStringProperty("user");

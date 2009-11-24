@@ -20,20 +20,8 @@
   "Portions Copyrighted [year] [name of copyright owner]"
   ====================
 -->
-<project name="connector-peoplesoftintfc" default="all"> 
+<project name="connector-peoplesoftcommon" default="all"> 
     <property name="framework.dir" value="../../framework/java"/>
     <property name="bundles.dir" value="../"/>
     <import file="${framework.dir}/connector_build.xml"/>
-    <property name="peoplesoftcommon.dir" value="../peoplesoftcommon"/>
-    <target name="-pre-clean-extra">
-        <delete>
-            <fileset dir="${lib}" includes="*common*jar"/>
-        </delete>
-    </target>
-    <target name="-pre-compile-extra">
-        <copy todir="${lib}">
-            <fileset dir="${peoplesoftcommon.dir}/dist" includes="*.jar"/>
-        </copy>
-    </target> 
-
 </project>
