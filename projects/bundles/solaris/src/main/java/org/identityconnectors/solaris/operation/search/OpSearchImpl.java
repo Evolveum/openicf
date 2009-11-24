@@ -71,9 +71,6 @@ public class OpSearchImpl extends AbstractOp {
     /** names of attributes to get translated to {@see NativeAttribute}-s. */
     private final Set<NativeAttribute> attrsToGetNative;
     
-    /** names of returned by default attributes (given by schema, it is static during lifetime of the connector */
-    private static String[] returnedByDefaultAttributeNames; // todo possibly this could be acquired right from connector attribute structures.
-    
     public OpSearchImpl(SolarisConnector conn, ObjectClass oclass, Node filter,
             ResultsHandler handler, OperationOptions options) {
         super(conn);
@@ -265,9 +262,6 @@ public class OpSearchImpl extends AbstractOp {
      * @return set of attribute names that are returned by default
      */
     private String[] getReturnedByDefaultAttrs(Schema schema) {
-        // return the cached names
-        if (returnedByDefaultAttributeNames != null)
-            return returnedByDefaultAttributeNames;
         
         List<String> result = new ArrayList<String>();
         
@@ -279,9 +273,6 @@ public class OpSearchImpl extends AbstractOp {
             }
         }
         
-        //cache the names
-        returnedByDefaultAttributeNames = result.toArray(new String[0]);
-        
-        return returnedByDefaultAttributeNames;
+        return result.toArray(new String[0]);
     }
 }
