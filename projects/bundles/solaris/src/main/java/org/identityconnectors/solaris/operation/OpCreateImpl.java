@@ -70,15 +70,15 @@ public class OpCreateImpl extends AbstractOp {
         if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
             final GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
             if (SolarisUtil.isNis(getConnection())) {
-                invokeNISCreate(entry, password);
+                invokeNISUserCreate(entry, password);
             } else {
-                invokeNativeCreate(entry, password);
+                invokeNativeUserCreate(entry, password);
             }
         } else if (oclass.is(ObjectClass.GROUP_NAME)) {
             if (SolarisUtil.isNis(getConnection())) {
-                CreateNISGroupCommand.create(entry, getConnection());
+                invokeNISGroupCreate(entry);
             } else {
-                CreateNativeGroupCommand.create(entry, getConnection());
+                invokeNativeGroupCreate(entry);
             }
         }
         
@@ -86,14 +86,35 @@ public class OpCreateImpl extends AbstractOp {
     }
 
     /**
-     * NIS Create implementation.
-     * 
-     * Compare with Native create operation {@link OpCreateImpl#invokeNativeCreate(Set, Map, Name, String)}
+     * Compare with Native create operation:
+     * {@link OpCreateImpl#invokeNativeGroupCreate(SolarisEntry)}
      */
-    private void invokeNISCreate(SolarisEntry entry, GuardedString password) {
+	private void invokeNISGroupCreate(final SolarisEntry group) {
+		if (AbstractNISOp.isDefaultNisPwdDir(getConnection())) {
+            invokeNativeGroupCreate(group);
+            
+            AbstractNISOp.addNISMake("group", getConnection());
+        } else {
+        	CreateNISGroupCommand.create(group, getConnection());
+        }
+	}
+
+    /**
+     * Compare with other NIS implementation counterpart:
+     * {@link OpCreateImpl#invokeNISGroupCreate(SolarisEntry)}
+     */
+    private void invokeNativeGroupCreate(final SolarisEntry group) {
+        CreateNativeGroupCommand.create(group, getConnection());
+    }
+
+    /**
+     * Compare with Native create operation 
+     * {@link OpCreateImpl#invokeNativeUserCreate(SolarisEntry, GuardedString)}
+     */
+    private void invokeNISUserCreate(SolarisEntry entry, GuardedString password) {
         
         if (AbstractNISOp.isDefaultNisPwdDir(getConnection())) {
-            invokeNativeCreate(entry, password);
+            invokeNativeUserCreate(entry, password);
             
             // The user has to be added to the NIS database
             getConnection().doSudoStart();
@@ -109,45 +130,10 @@ public class OpCreateImpl extends AbstractOp {
     
 
     /**
-     * implementation of the Native Create operation.
-     * 
-     * Compare with other NIS implementation: {@see OpCreateImpl#invokeNISCreate(Set, Map, Name, String)}
+     * Compare with other NIS implementation counterpart: 
+     * {@see OpCreateImpl#invokeNISUserCreate(SolarisEntry, GuardedString)}
      */
-    private void invokeNativeCreate(SolarisEntry entry, GuardedString password) {
-        getConnection().doSudoStart();
-        try {
-            createImpl(entry, password);
-        } finally {
-            getConnection().doSudoReset();
-        }
-    }
-
-    /*
-     * Note: do not invoke this from other then
-     * OpCreateImpl.invokeNativeCreate(Set<Attribute>, Map<String, Attribute>,
-     * Name, String) 
-     * method
-     */
-    private void createImpl(SolarisEntry entry, GuardedString password) {
-        getConnection().executeMutexAcquireScript();
-        
-        
-        /*
-         * CREATE A NEW ACCOUNT
-         */
-        _log.info("launching 'useradd' command (''{0}'')", entry.getName());
-        try {
-            CreateNativeUserCommand.createUser(entry, getConnection());
-        } finally {
-            getConnection().executeMutexReleaseScript();
-        }
-        
-        /*
-         * PASSWORD SET
-         */
-        _log.info("launching 'passwd' command (''{0}'')", entry.getName());
-        PasswdCommand.configureUserPassword(entry, password, getConnection());
-        
-        PasswdCommand.configurePasswordProperties(entry, getConnection());
+    private void invokeNativeUserCreate(SolarisEntry entry, GuardedString password) {
+        CreateNativeUserCommand.createUser(entry, password, getConnection());
     }
 }

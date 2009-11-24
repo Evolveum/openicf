@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
@@ -41,7 +42,25 @@ class CreateNativeUserCommand  {
     
     private final static Set<String> errorsUseradd = CollectionUtil.newSet("invalid", "ERROR", "command not found", "not allowed to execute");
     
-    public static void createUser(SolarisEntry entry, SolarisConnection conn) {
+    public static void createUser(SolarisEntry entry, GuardedString password, SolarisConnection conn) {
+    	conn.doSudoStart();
+        try {
+        	
+        	conn.executeMutexAcquireScript();
+        	try {
+                createUserImpl(entry, conn);
+            } finally {
+                conn.executeMutexReleaseScript();
+            }
+            
+            PasswdCommand.configureUserPassword(entry, password, conn);
+            PasswdCommand.configurePasswordProperties(entry, conn);
+        } finally {
+            conn.doSudoReset();
+        }
+    }
+    
+    private static void createUserImpl(SolarisEntry entry, SolarisConnection conn) {
 
         // create command line switches construction
         String commandSwitches = formatCreateCommandSwitches(entry, conn);
@@ -196,10 +215,5 @@ class CreateNativeUserCommand  {
             homeDirectory = homedirBuffer.toString();
         }
         return homeDirectory;
-    }
-    
-    public static void createGroup(SolarisEntry entry/*, OperationOptions options*/) {
-        // TODO
-        throw new UnsupportedOperationException();
     }
 }

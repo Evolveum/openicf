@@ -31,22 +31,13 @@ import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.operation.CreateNativeGroupCommand;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 public class CreateNISGroupCommand extends AbstractNISOp {
     private static final String tmpGroupfile1 = "/tmp/wsgroup.$$";
     private static final String tmpGroupfile2 = "/tmp/wsgroup_work.$$";
     
-    public static void create(SolarisEntry group, SolarisConnection conn) {
-        if (AbstractNISOp.isDefaultNisPwdDir(conn)) {
-            //invoke native create operation when usig password source file in /etc
-            CreateNativeGroupCommand.create(group, conn);
-            
-            AbstractNISOp.addNISMake("group", conn);
-            return;
-        }
-        
+    public static void create(SolarisEntry group, SolarisConnection conn) {        
         conn.doSudoStart();
         try {
             impl(group, conn);
