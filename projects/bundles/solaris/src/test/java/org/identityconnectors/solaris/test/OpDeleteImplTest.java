@@ -24,13 +24,16 @@ package org.identityconnectors.solaris.test;
 
 import static org.identityconnectors.solaris.test.SolarisTestCommon.getTestProperty;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.ConnectorFacade;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
@@ -38,7 +41,9 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConfiguration;
+import org.identityconnectors.solaris.SolarisConnector;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -46,6 +51,8 @@ public class OpDeleteImplTest {
     
     private SolarisConfiguration config;
     private ConnectorFacade facade;
+    /** only for verification of results, the rest of test methods should be called on the facade. */
+    private SolarisConnector testConnector;
 
     /**
      * set valid credentials based on build.groovy property file
@@ -55,6 +62,7 @@ public class OpDeleteImplTest {
     public void setUp() throws Exception {
         config = SolarisTestCommon.createConfiguration();
         facade = SolarisTestCommon.createConnectorFacade(config);
+        testConnector = SolarisTestCommon.createConnector(config);
         
         SolarisTestCommon.printIPAddress(config);
     }
@@ -63,19 +71,63 @@ public class OpDeleteImplTest {
     public void tearDown() throws Exception {
         config = null;
         facade = null;
+        testConnector = null;
     }
     
-    @Test (expected=RuntimeException.class)
+    @Test (expected=ConnectorException.class)
     public void testDeleteUnknownUid() {
         facade.delete(ObjectClass.ACCOUNT, new Uid("NONEXISTING_UID____"), null);
     }
     
-    @Test (expected=RuntimeException.class)
+    @Test (expected=IllegalArgumentException.class)
     public void unknownObjectClass() {
         final Set<Attribute> attrs = initSampleUser();
         facade.delete(new ObjectClass("NONEXISTING_OBJECTCLASS"), getUid(attrs), null);
     }
     
+    @Test (expected=ConnectorException.class)
+    public void testDeleteUnknownGroup() {
+    	facade.delete(ObjectClass.GROUP, new Uid("nonExistingGroup"), null);
+    }
+    
+    @Test
+    public void testDeleteGroup() {
+    	
+    	Set<Attribute> attrs = SolarisTestCommon.initSampleGroup("sampleGroup", "root");
+    	Map<String, Attribute> grpAttrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
+    	String groupName = ((Name) grpAttrMap.get(Name.NAME)).getNameValue();
+    	// create the group
+    	facade.create(ObjectClass.GROUP, attrs, null);
+    	try {
+    		// verify if it exists
+    		String out = checkIfGroupExists(groupName);
+    		Assert.assertTrue(out.contains(groupName));
+    		//perform delete
+    		facade.delete(ObjectClass.GROUP, new Uid(groupName), null);
+    		try {
+    			checkIfGroupExists(groupName);
+    			Assert.fail("delete failed, the group is still on the resource: '" + groupName + "'");
+    		} catch (ConnectorException ex) {
+    			// ok
+    		}
+    	} finally {
+    		try {
+    			testConnector.getConnection().executeCommand("cat /etc/group | grep '" + groupName + "'", Collections.<String>emptySet(), CollectionUtil.newSet(groupName));
+    			Assert.fail("group '" + groupName + "' was not deleted.");
+    		} catch (ConnectorException ex) {
+    			// OK
+    		}
+    	}
+    }
+
+    /** 
+     * @param groupName the group name to search
+     * @return the output fetched from the group search command. If successful, it should contain the 'groupname' parameter.
+     * @throws {@link ConnectorException} if the group was not found.
+     */
+	private String checkIfGroupExists(String groupName) {
+		return testConnector.getConnection().executeCommand("cat /etc/group | grep '" + groupName + "'", Collections.<String>emptySet(), CollectionUtil.newSet(groupName));
+	}
     
 
     /* ************* AUXILIARY METHODS *********** */

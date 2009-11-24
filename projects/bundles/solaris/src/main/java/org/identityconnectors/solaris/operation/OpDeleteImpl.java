@@ -45,19 +45,24 @@ public class OpDeleteImpl extends AbstractOp {
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
         SolarisUtil.controlObjectClassValidity(objClass, acceptOC, getClass());
         
-        if (objClass.is(ObjectClass.GROUP_NAME)) {
-            throw new UnsupportedOperationException();
-        }
-        
         final String accountId = uid.getUidValue();
         // checkIfUserExists(accountId);
         
         _log.info("delete(''{0}'')", accountId);
         
-        if (SolarisUtil.isNis(getConnection())) {
-            invokeNISDelete(accountId);
-        } else {
-            DeleteNativeUserCommand.delete(accountId, getConnection());
+        if (objClass.is(ObjectClass.ACCOUNT_NAME)) {
+            if (SolarisUtil.isNis(getConnection())) {
+                invokeNISDelete(accountId);
+            } else {
+                DeleteNativeUserCommand.delete(accountId, getConnection());
+            }
+        } else if (objClass.is(ObjectClass.GROUP_NAME)) {
+            if (SolarisUtil.isNis(getConnection())) {
+                //FIXME
+                throw new UnsupportedOperationException("not yet implemented");
+            } else {
+                DeleteNativeGroupCommand.delete(uid.getUidValue(), getConnection());
+            }
         }
 
         // TODO add handling of exceptions: existing user, etc.
