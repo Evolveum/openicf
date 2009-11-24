@@ -41,6 +41,7 @@ import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnector;
@@ -124,16 +125,15 @@ public class OpCreateImplTest {
         facade.create(new ObjectClass("NONEXISTING_OBJECTCLASS"), attrs, null);
     }
     
-    @Test (expected=ConnectorException.class) @Ignore
-    //FIXME in case twice the same account is created an exception should be thrown.
+    @Test (expected=ConnectorException.class)
     public void createExistingAccount() {
         final Set<Attribute> attrs = new HashSet<Attribute>();
         attrs.add(AttributeBuilder.build(Name.NAME, "root"));
+        attrs.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString("".toCharArray())));
         facade.create(ObjectClass.ACCOUNT, attrs, null);
     }
     
-    @Test (expected=ConnectorException.class) @Ignore
-    //FIXME in case twice the same group is created an exception should be thrown.
+    @Test (expected=ConnectorException.class)
     public void createExistingGroup() {
         final Set<Attribute> attrs = new HashSet<Attribute>();
         attrs.add(AttributeBuilder.build(Name.NAME, "root"));
