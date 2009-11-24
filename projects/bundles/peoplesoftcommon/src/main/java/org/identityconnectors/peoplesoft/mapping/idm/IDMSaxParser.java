@@ -21,15 +21,15 @@
  * ====================
  */
 
-package org.identityconnectors.peoplesoft.compintfc.mapping.idm;
+package org.identityconnectors.peoplesoft.mapping.idm;
 
 import java.io.*;
 import java.util.*;
 
 import javax.xml.parsers.*;
 
-import org.identityconnectors.peoplesoft.compintfc.mapping.*;
-import org.identityconnectors.peoplesoft.compintfc.mapping.idm.IDMHandler.*;
+import org.identityconnectors.peoplesoft.mapping.*;
+import org.identityconnectors.peoplesoft.mapping.idm.IDMHandler.*;
 import org.xml.sax.*;
 
 /**

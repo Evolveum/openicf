@@ -21,7 +21,7 @@
  * ====================
  */
 
-package org.identityconnectors.peoplesoft.compintfc.mapping;
+package org.identityconnectors.peoplesoft.mapping;
 
 /**
  * @author kitko

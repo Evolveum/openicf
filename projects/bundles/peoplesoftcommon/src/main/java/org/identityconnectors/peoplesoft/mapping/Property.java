@@ -21,20 +21,21 @@
  * ====================
  */
 
-package org.identityconnectors.peoplesoft.compintfc;
-
+package org.identityconnectors.peoplesoft.mapping;
 
 /**
  * @author kitko
  *
  */
-abstract class AbstractPeoplesoftOperation {
-    protected  final PeopleSoftCompIntfcConfiguration cfg;
-    
-    protected AbstractPeoplesoftOperation(PeopleSoftCompIntfcConfiguration cfg){
-        this.cfg = cfg;
+public abstract class Property {
+    protected final String name;
+    public String getName(){
+        return name;
+    }
+    protected Property(String name){
+        this.name = name;
     }
     
     
-
+    
 }

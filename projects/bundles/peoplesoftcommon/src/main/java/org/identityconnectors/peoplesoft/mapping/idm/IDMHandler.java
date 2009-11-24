@@ -21,7 +21,7 @@
  * ====================
  */
 
-package org.identityconnectors.peoplesoft.compintfc.mapping.idm;
+package org.identityconnectors.peoplesoft.mapping.idm;
 
 import java.io.*;
 import java.util.*;

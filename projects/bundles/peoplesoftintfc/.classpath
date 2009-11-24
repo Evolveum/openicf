@@ -12,5 +12,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/Connector Common Test Library"/>
 	<classpathentry kind="lib" path="/Connector Framework - Internal/lib/groovy-all.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Connector Framework - Internal"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Peoplesoft Common Library"/>
 	<classpathentry kind="output" path="ide-build"/>
 </classpath>

@@ -21,14 +21,14 @@
  * ====================
  */
 
-package org.identityconnectors.peoplesoft.compintfc;
+package org.identityconnectors.peoplesoft;
 
-import org.identityconnectors.peoplesoft.compintfc.mapping.*;
+import org.identityconnectors.peoplesoft.mapping.*;
 
 /**
  * @author kitko
  *
  */
 public interface ComponentInterfacesFactory {
-    public ComponentInterfaces createMapping(PeopleSoftCompIntfcConfiguration cfg);
+    public ComponentInterfaces createMapping(PeopleSoftAbstractConfiguration cfg);
 }

@@ -21,9 +21,9 @@
  * ====================
  */
 
-package org.identityconnectors.peoplesoft.compintfc;
+package org.identityconnectors.peoplesoft;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import org.identityconnectors.common.security.*;
 import org.identityconnectors.test.common.*;
@@ -35,15 +35,15 @@ import psft.pt8.joa.*;
  * @author kitko
  *
  */
-public class PeopleSoftCompIntfcConfigurationTest {
+public class PeopleAbstractConfigurationTest {
     @Test
     public void testCreateAdminConn(){
-        PropertyBag bag = TestHelpers.getProperties(PeopleSoftCompIntfcConnector.class);
+        PropertyBag bag = TestHelpers.getProperties(PeoplesoftTestConfiguration.class);
         String host = bag.getStringProperty("host");
         String port = bag.getStringProperty("port");
         String user = bag.getStringProperty("user");
         GuardedString password = bag.getProperty("password", GuardedString.class);
-        PeopleSoftCompIntfcConfiguration cfg = new PeopleSoftCompIntfcConfiguration();
+        PeopleSoftAbstractConfiguration cfg = new PeoplesoftTestConfiguration();
         cfg.setHost(host);
         cfg.setPort(port);
         cfg.setUser(user);

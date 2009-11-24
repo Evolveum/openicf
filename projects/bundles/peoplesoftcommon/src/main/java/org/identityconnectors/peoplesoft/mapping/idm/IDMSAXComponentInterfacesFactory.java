@@ -21,7 +21,7 @@
  * ====================
  */
 
-package org.identityconnectors.peoplesoft.compintfc.mapping.idm;
+package org.identityconnectors.peoplesoft.mapping.idm;
 
 import java.io.*;
 import java.net.*;
@@ -31,8 +31,8 @@ import javax.xml.parsers.*;
 import javax.xml.validation.*;
 
 import org.identityconnectors.framework.common.exceptions.*;
-import org.identityconnectors.peoplesoft.compintfc.*;
-import org.identityconnectors.peoplesoft.compintfc.mapping.*;
+import org.identityconnectors.peoplesoft.*;
+import org.identityconnectors.peoplesoft.mapping.*;
 import org.xml.sax.*;
 
 /**
@@ -41,7 +41,7 @@ import org.xml.sax.*;
  */
 final class IDMSAXComponentInterfacesFactory implements ComponentInterfacesFactory {
 
-    public ComponentInterfaces createMapping(PeopleSoftCompIntfcConfiguration cfg) {
+    public ComponentInterfaces createMapping(PeopleSoftAbstractConfiguration cfg) {
         final URL dtdURL = getClass().getResource("/waveset.dtd");
         if(dtdURL == null){
             throw new IllegalStateException("Cannot load waveset.dtd");

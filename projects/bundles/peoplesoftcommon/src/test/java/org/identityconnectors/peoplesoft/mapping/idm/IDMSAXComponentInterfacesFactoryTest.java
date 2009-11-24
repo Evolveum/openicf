@@ -21,13 +21,13 @@
  * ====================
  */
 
-package org.identityconnectors.peoplesoft.compintfc.mapping.idm;
+package org.identityconnectors.peoplesoft.mapping.idm;
 
 import java.util.*;
 
 import org.identityconnectors.common.*;
-import org.identityconnectors.peoplesoft.compintfc.*;
-import org.identityconnectors.peoplesoft.compintfc.mapping.*;
+import org.identityconnectors.peoplesoft.*;
+import org.identityconnectors.peoplesoft.mapping.*;
 import org.junit.*;
 
 /**
@@ -37,11 +37,11 @@ import org.junit.*;
 public class IDMSAXComponentInterfacesFactoryTest {
 
     /**
-     * Test method for {@link org.identityconnectors.peoplesoft.compintfc.mapping.idm.IDMComponentInterfacesFactory#createMapping(org.identityconnectors.peoplesoft.compintfc.PeopleSoftCompIntfcConfiguration)}.
+     * Test method for {@link org.identityconnectors.peoplesoft.compintfc.mapping.idm.IDMComponentInterfacesFactory#createMapping(org.identityconnectors.peoplesoft.PeopleSoftAbstractConfiguration)}.
      */
     @Test
     public void testCreateMapping() {
-        PeopleSoftCompIntfcConfiguration cfg = new PeopleSoftCompIntfcConfiguration();
+        PeopleSoftAbstractConfiguration cfg = new PeoplesoftTestConfiguration();
         String xml = IOUtil.getResourceAsString(getClass(), "PeopleSoftComponentInterfaces.xml");
         if(xml == null){
             throw new IllegalArgumentException("Cannot load PeopleSoftComponentInterfaces.xml");
