@@ -22,7 +22,8 @@
  */
 package org.identityconnectors.solaris.test;
 
-import static org.identityconnectors.solaris.test.SolarisTestCommon.getTestProperty;
+import static org.identityconnectors.solaris.test.SolarisTestCommon.getStringProperty;
+import static org.identityconnectors.solaris.test.SolarisTestCommon.getProperty;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -94,15 +95,15 @@ public class OpUpdateImplTest {
             }
             
             Set<Attribute> replaceAttributes = new HashSet<Attribute>();
-            final String newPassword = getTestProperty("modified.samplePasswd");
-            Attribute chngPasswdAttribute = AttributeBuilder.buildPassword(new GuardedString(newPassword.toCharArray()));
+            final GuardedString newPassword = getProperty("modified.samplePasswd", GuardedString.class);
+            Attribute chngPasswdAttribute = AttributeBuilder.buildPassword(newPassword);
             replaceAttributes.add(chngPasswdAttribute);
             // 1) PERFORM THE UPDATE OF PASSWORD
             facade.update(ObjectClass.ACCOUNT, new Uid(username), replaceAttributes , null);
             
             // 2) try to authenticate with new password
             try {
-                facade.authenticate(ObjectClass.ACCOUNT, username, new GuardedString(newPassword.toCharArray()), null);
+                facade.authenticate(ObjectClass.ACCOUNT, username, newPassword, null);
             } catch (RuntimeException ex) {
                 ex.printStackTrace();
                 Assert.fail(String.format("Authenticate failed for user with changed password: '%s'\n ExceptionMessage: %s", username, ex.getMessage()));
@@ -124,9 +125,8 @@ public class OpUpdateImplTest {
     public void unknownObjectClass() {
         String username = config.getUserName();
         Set<Attribute> replaceAttributes = new HashSet<Attribute>();
-        final String newPassword = getTestProperty("modified.samplePasswd");
-        Attribute chngPasswdAttribute = AttributeBuilder
-                .buildPassword(new GuardedString(newPassword.toCharArray()));
+        final GuardedString newPassword = getProperty("modified.samplePasswd", GuardedString.class);
+        Attribute chngPasswdAttribute = AttributeBuilder.buildPassword(newPassword);
         replaceAttributes.add(chngPasswdAttribute);
 
         facade.update(new ObjectClass("NONEXISTING_OBJECTCLASS"), new Uid(
@@ -136,8 +136,8 @@ public class OpUpdateImplTest {
     @Test(expected = RuntimeException.class)
     public void testUpdateUnknownUid() {
         Set<Attribute> replaceAttributes = new HashSet<Attribute>();
-        final String newPassword = getTestProperty("modified.samplePasswd");
-        Attribute chngPasswdAttribute = AttributeBuilder.buildPassword(new GuardedString(newPassword.toCharArray()));
+        final GuardedString newPassword = getProperty("modified.samplePasswd", GuardedString.class);
+        Attribute chngPasswdAttribute = AttributeBuilder.buildPassword(newPassword);
         replaceAttributes.add(chngPasswdAttribute);
 
         facade.update(ObjectClass.ACCOUNT, new Uid("NONEXISTING_UID___"), replaceAttributes, null);
@@ -150,10 +150,10 @@ public class OpUpdateImplTest {
     private Set<Attribute> initSampleUser() {
         Set<Attribute> res = new HashSet<Attribute>();
         
-        res.add(AttributeBuilder.build(Name.NAME, getTestProperty("sampleUser")));
+        res.add(AttributeBuilder.build(Name.NAME, getStringProperty("sampleUser")));
         
-        String samplePasswd = getTestProperty("samplePasswd");
-        res.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString(samplePasswd.toCharArray())));
+        GuardedString samplePasswd = getProperty("samplePasswd", GuardedString.class);
+        res.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, samplePasswd));
         
         return res;
     }

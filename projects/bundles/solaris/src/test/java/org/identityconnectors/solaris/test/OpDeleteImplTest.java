@@ -22,7 +22,8 @@
  */
 package org.identityconnectors.solaris.test;
 
-import static org.identityconnectors.solaris.test.SolarisTestCommon.getTestProperty;
+import static org.identityconnectors.solaris.test.SolarisTestCommon.getStringProperty;
+import static org.identityconnectors.solaris.test.SolarisTestCommon.getProperty;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -138,10 +139,10 @@ public class OpDeleteImplTest {
     private Set<Attribute> initSampleUser() {
         Set<Attribute> res = new HashSet<Attribute>();
         
-        res.add(AttributeBuilder.build(Name.NAME, getTestProperty("sampleUser")));
+        res.add(AttributeBuilder.build(Name.NAME, getStringProperty("sampleUser")));
         
-        String samplePasswd = getTestProperty("samplePasswd");
-        res.add(AttributeBuilder.buildPassword(new GuardedString(samplePasswd.toCharArray())));
+        GuardedString samplePasswd = getProperty("samplePasswd", GuardedString.class);
+        res.add(AttributeBuilder.buildPassword(samplePasswd));
         
         return res;
     }

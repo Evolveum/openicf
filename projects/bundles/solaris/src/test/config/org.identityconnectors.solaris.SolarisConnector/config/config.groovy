@@ -7,10 +7,10 @@ import org.identityconnectors.contract.exceptions.ObjectNotFoundException
 import org.identityconnectors.common.security.GuardedString
 
 connector {
-  port = 22
+  port = port
   rootShellPrompt = "#"
   sudoAuth = false
-  connectionType = "ssh"
+  connectionType = connectionType
 }
 
 testsuite {
@@ -37,9 +37,9 @@ testsuite {
   ]//Test
 
   Schema {
-    oclasses = ['__ACCOUNT__', 'shell' /*, '__GROUP__'*/]
+    oclasses = ['__ACCOUNT__', 'shell' , '__GROUP__']
     attributes {
-      //__GROUP__.oclasses = ['__NAME__' /* TODO, not yet decided wether to use the adapter's 'groupName' or rather the Framework's constant. */, 'gid', 'users']
+      __GROUP__.oclasses = ['__NAME__' , 'gid', 'users']
       shell.oclasses = ['shell', '__NAME__']
       __ACCOUNT__.oclasses = ['__NAME__', 'dir', 'shell', 'group', 'secondary_group',
         'uid', 'expire', 'inactive', 'comment', 'time_last_login',
@@ -91,9 +91,9 @@ testsuite {
 
   
 
-    //gid.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
-    //__NAME__.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
-    //users.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
+    gid.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
+    __NAME__.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
+    users.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     
     shell.attribute.shell.oclasses = [
       type: String.class,
@@ -128,15 +128,15 @@ testsuite {
 
     operations = [
       AuthenticationApiOp: ['__ACCOUNT__'],
-      GetApiOp: ['__ACCOUNT__', 'shell'/*, '__GROUP__'*/],
-      SchemaApiOp: ['__ACCOUNT__'/*, '__GROUP__'*/],
-      ValidateApiOp: ['__ACCOUNT__', 'shell'/*, '__GROUP__'*/],
-      CreateApiOp: ['__ACCOUNT__'/*, '__GROUP__'*/],
-      SearchApiOp: ['__ACCOUNT__', 'shell'/*, '__GROUP__'*/],
-      DeleteApiOp: ['__ACCOUNT__'/*, '__GROUP__'*/],
-      ScriptOnConnectorApiOp: ['__ACCOUNT__', 'shell'/*, '__GROUP__'*/],
-      TestApiOp: ['__ACCOUNT__', 'shell'/*, '__GROUP__'*/],
-      UpdateApiOp: ['__ACCOUNT__'/*, '__GROUP__'*/]
+      GetApiOp: ['__ACCOUNT__', 'shell', '__GROUP__'],
+      SchemaApiOp: ['__ACCOUNT__', '__GROUP__'],
+      ValidateApiOp: ['__ACCOUNT__', 'shell', '__GROUP__'],
+      CreateApiOp: ['__ACCOUNT__', '__GROUP__'],
+      SearchApiOp: ['__ACCOUNT__', 'shell', '__GROUP__'],
+      DeleteApiOp: ['__ACCOUNT__', '__GROUP__'],
+      ScriptOnConnectorApiOp: ['__ACCOUNT__', 'shell', '__GROUP__'],
+      TestApiOp: ['__ACCOUNT__', 'shell', '__GROUP__'],
+      UpdateApiOp: ['__ACCOUNT__', '__GROUP__']
     ]//operations
   } //Schema
 
@@ -159,3 +159,5 @@ uid = new ObjectNotFoundException()
 warn = new ObjectNotFoundException()
 expire = new ObjectNotFoundException()
 secondary_group = new ObjectNotFoundException()
+
+Tstring = Lazy.random("aaaaa")

@@ -66,9 +66,14 @@ public class SolarisTestCommon {
         return conn;
     }
     
-    public static String getTestProperty(String name) {
+    public static String getStringProperty(String name) {
         return testProps.getStringProperty(name);
     }
+    
+    public static <T> T getProperty(String name, Class<T> type) {
+        return testProps.getProperty(name, type);
+    }
+    
 
     public static SolarisConfiguration createConfiguration() {
         // names of properties in the property file (build.groovy)
@@ -82,18 +87,18 @@ public class SolarisTestCommon {
         // save configuration
         SolarisConfiguration config = new SolarisConfiguration();
 
-        config.setHostNameOrIpAddr(getTestProperty(PROP_HOST));
+        config.setHostNameOrIpAddr(getStringProperty(PROP_HOST));
 
-        final String password = getTestProperty(PROP_SYSTEM_PASSWORD);
+        final String password = getStringProperty(PROP_SYSTEM_PASSWORD);
         config.setPassword(new GuardedString(password.toCharArray()));
 
-        config.setUserName(getTestProperty(PROP_SYSTEM_USER));
+        config.setUserName(getStringProperty(PROP_SYSTEM_USER));
 
-        config.setPort(Integer.valueOf(getTestProperty(PROP_PORT)));
+        config.setPort(Integer.valueOf(getProperty(PROP_PORT, Integer.class)));
 
-        config.setConnectionType(getTestProperty(PROP_CONN_TYPE));
+        config.setConnectionType(getStringProperty(PROP_CONN_TYPE));
 
-        config.setRootShellPrompt(getTestProperty(ROOT_SHELL_PROMPT));
+        config.setRootShellPrompt(getStringProperty(ROOT_SHELL_PROMPT));
 
         return config;
     }
@@ -107,7 +112,7 @@ public class SolarisTestCommon {
     
     /** fill in sample user/password for sample user used in create */
     public static Set<Attribute> initSampleUser() {
-        return initSampleUser(getTestProperty("sampleUser"));
+        return initSampleUser(getStringProperty("sampleUser"));
     }
     
     /** {@link SolarisTestCommon#initSampleUser()}*/
@@ -116,8 +121,8 @@ public class SolarisTestCommon {
         
         res.add(AttributeBuilder.build(Name.NAME, username));
         
-        String samplePasswd = getTestProperty("samplePasswd");
-        res.add(AttributeBuilder.buildPassword(new GuardedString(samplePasswd.toCharArray())));
+        GuardedString samplePasswd = getProperty("samplePasswd", GuardedString.class);
+        res.add(AttributeBuilder.buildPassword(samplePasswd));
         
         return res;
     }
