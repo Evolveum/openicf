@@ -307,4 +307,26 @@ private static final String DEFAULT_NISPWDDIR = "/etc";
         return buff.toString();
     }
 
+    protected static final String tmpGroupfile1 = "/tmp/wsgroup.$$";
+    protected static final String tmpGroupfile2 = "/tmp/wsgroup_work.$$";
+    protected static String getRemoveGroupTmpFiles(SolarisConnection conn) {
+        final String rmCmd = conn.buildCommand("rm");
+        String removeGroupTmpFiles =
+            "if [ -f " + tmpGroupfile1 + " ]; then " +
+              rmCmd + " -f " + tmpGroupfile1 + "; " +
+            "fi; " +
+            "if [ -f " + tmpGroupfile2 + " ]; then " +
+              rmCmd + " -f " + tmpGroupfile2 + "; " +
+            "fi";
+
+        return removeGroupTmpFiles;
+    }
+    
+    protected static String initGetOwner(final String file) {
+        // Add script to remove entry in passwd file
+        StringBuilder getOwner = new StringBuilder();
+        getOwner.append("OWNER=`ls -l "); getOwner.append(file); getOwner.append(" | awk '{ print $3 }'`; ");
+        getOwner.append("GOWNER=`ls -l "); getOwner.append(file); getOwner.append(" | awk '{ print $4 }'`");
+        return getOwner.toString();
+    }
 }

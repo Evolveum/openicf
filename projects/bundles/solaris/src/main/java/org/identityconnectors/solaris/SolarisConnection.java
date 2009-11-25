@@ -377,12 +377,18 @@ public class SolarisConnection {
      * {@link SolarisConnection#getRootShellPrompt()}.
      * 
      * @param command
-     *            the executed command
+     *            the executed command. In special cases (such as waiting for
+     *            the first prompt after login, the command can have {@code
+     *            null} value. If {@code command} is {@code null}, then we wait
+     *            for root shell prompt without executing any other commands
+     *            (given that {@code root shell prompt} was not overriden by
+     *            {@code accepts} parameter.
      * 
      * @param rejects
-     *            Map that contains error message, {@link SolarisConnection.ErrorHandler} pairs.
-     *            If the error message is found in response from the resource,
-     *            the error handler is called. .
+     *            Map that contains error message,
+     *            {@link SolarisConnection.ErrorHandler} pairs. If the error
+     *            message is found in response from the resource, the error
+     *            handler is called. .
      *            <p>
      * 
      * @param accepts

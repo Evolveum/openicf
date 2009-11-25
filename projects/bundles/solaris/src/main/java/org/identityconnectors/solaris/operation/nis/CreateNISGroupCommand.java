@@ -34,8 +34,7 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 public class CreateNISGroupCommand extends AbstractNISOp {
-    private static final String tmpGroupfile1 = "/tmp/wsgroup.$$";
-    private static final String tmpGroupfile2 = "/tmp/wsgroup_work.$$";
+    
     
     public static void create(SolarisEntry group, SolarisConnection conn) {        
         conn.doSudoStart();
@@ -52,7 +51,7 @@ public class CreateNISGroupCommand extends AbstractNISOp {
         StringBuffer groupRecord;
         String gid = null;
         String groupFile = pwddir + "/group";
-        final String removeTmpFilesScript = getRemoveGroupTmpFiles(conn);
+        final String removeTmpFilesScript = AbstractNISOp.getRemoveGroupTmpFiles(conn);
         final String cpCmd = conn.buildCommand("cp");
         final String chownCmd = conn.buildCommand("chown");
         final String diffCmd = conn.buildCommand("diff");
@@ -177,18 +176,5 @@ public class CreateNISGroupCommand extends AbstractNISOp {
               "newgid=$mingid; " +
             "fi";
         return script;
-    }
-
-    private static String getRemoveGroupTmpFiles(SolarisConnection conn) {
-        final String rmCmd = conn.buildCommand("rm");
-        String removeGroupTmpFiles =
-            "if [ -f " + tmpGroupfile1 + " ]; then " +
-              rmCmd + " -f " + tmpGroupfile1 + "; " +
-            "fi; " +
-            "if [ -f " + tmpGroupfile2 + " ]; then " +
-              rmCmd + " -f " + tmpGroupfile2 + "; " +
-            "fi";
-
-        return removeGroupTmpFiles;
     }
 }

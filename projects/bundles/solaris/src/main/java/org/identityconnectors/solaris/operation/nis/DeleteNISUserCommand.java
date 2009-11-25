@@ -46,8 +46,7 @@ public class DeleteNISUserCommand extends AbstractNISOp {
         }
     }
 
-    private static void deleteImpl(String accountId,
-            SolarisConnection connection) {
+    private static void deleteImpl(String accountName, SolarisConnection connection) {
 
         final String pwddir = AbstractNISOp.getNisPwdDir(connection);
         final String pwdFile = pwddir + "/passwd";
@@ -57,19 +56,19 @@ public class DeleteNISUserCommand extends AbstractNISOp {
         
         
         final String getOwner = initGetOwner(pwdFile);
-        final String workScript = initWorkScript(accountId, pwdFile, connection);
+        final String workScript = initWorkScript(accountName, pwdFile, connection);
         connection.executeCommand(getOwner);
         connection.executeCommand(workScript);
         // two extra 'waitFor(rootShellPrompt)'-s are needed, because they are produced by the script
         // waitFor #1
-        connection.executeCommand(null, Collections.<String>emptySet());
+        connection.executeCommand(null);
         // waitFor #2 -- it should not result in ERROR.
         connection.executeCommand(null/*no command sent on purpose*/, CollectionUtil.newSet("ERROR"));
         connection.executeCommand(removeTmpFilesScript);
         
         if (connection.getConfiguration().isNisShadow()) {
             final String getOwnerShadow = initGetOwner(shadowFile);
-            final String workScriptShadow = initWorkScript(accountId, shadowFile, connection);
+            final String workScriptShadow = initWorkScript(accountName, shadowFile, connection);
             connection.executeCommand(getOwnerShadow);
             connection.executeCommand(workScriptShadow);
             // two extra 'waitFor(rootShellPrompt)'-s are needed, because they are produced by the script
@@ -104,18 +103,6 @@ public class DeleteNISUserCommand extends AbstractNISOp {
         workScript.append(
             chownCmd + "$OWNER:$GOWNER " + pwdFile);
         return workScript.toString();
-    }
-
-    private static String initGetOwner(final String pwdFile) {
-        // Add script to remove entry in passwd file
-        StringBuilder getOwner = new StringBuilder();
-        getOwner.append("OWNER=`ls -l ");
-        getOwner.append(pwdFile);
-        getOwner.append(" | awk '{ print $3 }'`; ");
-        getOwner.append("GOWNER=`ls -l ");
-        getOwner.append(pwdFile);
-        getOwner.append(" | awk '{ print $4 }'`");
-        return getOwner.toString();
     }
 
 }

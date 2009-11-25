@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.solaris.SolarisConnection;
 
@@ -58,7 +59,12 @@ class DeleteNativeUserCommand {
         final Map<String, SolarisConnection.ErrorHandler> result = CollectionUtil.newMap(
                 "does not exist", unknownUidHandler,
                 "nknown user", unknownUidHandler,
-                "ERROR", unknownUidHandler
+                "ERROR", new SolarisConnection.ErrorHandler() {
+                    @Override
+                    public void handle(String buffer) {
+                        throw new ConnectorException("Error when deleting user: " + accountId);
+                    }
+                }
         );
         
         return result;
