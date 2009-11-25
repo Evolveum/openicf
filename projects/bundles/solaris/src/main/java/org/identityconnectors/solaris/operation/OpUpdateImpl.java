@@ -37,7 +37,7 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.operation.nis.AbstractNISOp;
-import org.identityconnectors.solaris.operation.nis.OpUpdateNISImpl;
+import org.identityconnectors.solaris.operation.nis.UpdateNISUserCommand;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 /**
@@ -59,10 +59,6 @@ public class OpUpdateImpl extends AbstractOp {
     /** main update method */
     public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> replaceAttributes, OperationOptions options) {
 
-        if (!objclass.is(ObjectClass.ACCOUNT_NAME)) {
-            throw new UnsupportedOperationException("GROUP and other objectclasses are not yet supported.");
-        }
-
         _log.info("update ('{0}', name: '{1}'", objclass.toString(), uid.getUidValue());
 
         SolarisUtil.controlObjectClassValidity(objclass, acceptOC, getClass());
@@ -71,11 +67,21 @@ public class OpUpdateImpl extends AbstractOp {
         final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(replaceAttributes));
         final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(uid.getUidValue(), objclass, replaceAttributes);
         final GuardedString passwd = SolarisUtil.getPasswordFromMap(attrMap);
-        
-        if (SolarisUtil.isNis(getConnection())) {
-            invokeNISUpdate(entry, passwd);
+
+        if (objclass.is(ObjectClass.ACCOUNT_NAME)) {
+            if (SolarisUtil.isNis(getConnection())) {
+                invokeNISUserUpdate(entry, passwd);
+            } else {
+                invokeNativeUserUpdate(entry, passwd);
+            }
+        } else if (objclass.is(ObjectClass.GROUP_NAME)) {
+            if (SolarisUtil.isNis(getConnection())) {
+                throw new UnsupportedOperationException(); //TODO
+            } else {
+                throw new UnsupportedOperationException(); //TODO
+            }
         } else {
-            invokeNativeUpdate(entry, passwd);
+            throw new UnsupportedOperationException();
         }
 
         _log.info("update successful ('{0}', name: '{1}')",
@@ -95,10 +101,10 @@ public class OpUpdateImpl extends AbstractOp {
      * 
      * Compare with Native update operation: {@see OpUpdateImpl#invokeNativeUpdate(SolarisEntry, GuardedString)}
      */
-    private void invokeNISUpdate(final SolarisEntry entry,
+    private void invokeNISUserUpdate(final SolarisEntry entry,
             final GuardedString passwd) {
         if (AbstractNISOp.isDefaultNisPwdDir(getConnection())) {
-            invokeNativeUpdate(entry, passwd);
+            invokeNativeUserUpdate(entry, passwd);
             
             getConnection().doSudoStart();
             try {
@@ -108,7 +114,7 @@ public class OpUpdateImpl extends AbstractOp {
                 getConnection().doSudoReset();
             }
         } else {
-            OpUpdateNISImpl.performNIS(entry, getConnection());
+            UpdateNISUserCommand.performNIS(entry, getConnection());
         }
     }
     
@@ -117,36 +123,7 @@ public class OpUpdateImpl extends AbstractOp {
      * 
      * Compare with other NIS implementation: {@see OpUpdateImpl#invokeNISUpdate(SolarisEntry, GuardedString)} 
      */
-    private void invokeNativeUpdate(final SolarisEntry entry,
-            final GuardedString passwd) {
-        getConnection().doSudoStart();
-        try {
-            updateImpl(entry, passwd );
-        } finally {
-            getConnection().doSudoReset();
-        }
+    private void invokeNativeUserUpdate(final SolarisEntry entry, final GuardedString passwd) {
+        UpdateNativeUserCommand.updateUser(entry, passwd, getConnection());
     }
-
-    private void updateImpl(SolarisEntry entry, GuardedString passwd) {
-        getConnection().executeMutexAcquireScript();
-        
-        // UPDATE OF ALL ATTRIBUTES EXCEPT PASSWORD
-        String newName = null;
-        try {
-            newName = UpdateCommand.updateUser(entry, getConnection());
-        } finally {
-            getConnection().executeMutexReleaseScript();
-        }
-       
-        // PASSWORD UPDATE
-        if (passwd != null) {
-            // the username could have changed in update, so we need to change the password for the new username:
-            final SolarisEntry entryWithNewName = (!newName.equals(entry.getName())) ? 
-                    new SolarisEntry.Builder(newName).addAllAttributesFrom(entry).build() : entry;
-
-            PasswdCommand.configureUserPassword(entryWithNewName, passwd, getConnection());
-        }
-    }
-
-
 }

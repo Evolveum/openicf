@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.solaris.SolarisConnection;
@@ -39,7 +40,7 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
  * @author David Adam
  * 
  */
-class UpdateCommand extends CommandSwitches {
+class UpdateNativeUserCommand extends CommandSwitches {
     private static final Set<String> usermodErrors = CollectionUtil.newSet("ERROR", "command not found", "not allowed to execute");
     
     private final static Map<NativeAttribute, String> updateSwitches;
@@ -48,8 +49,33 @@ class UpdateCommand extends CommandSwitches {
         updateSwitches.put(NativeAttribute.NAME, "-l"); // for new username attribute
     }
     
-    /** new username */
-    public static String updateUser(SolarisEntry entry, SolarisConnection conn) {
+    public static void updateUser(SolarisEntry entry, GuardedString password, SolarisConnection conn) {
+        conn.doSudoStart();
+        try {
+            conn.executeMutexAcquireScript();
+            
+            // UPDATE OF ALL ATTRIBUTES EXCEPT PASSWORD
+            String newName = null;
+            try {
+                newName = updateUserImpl(entry, conn);
+            } finally {
+                conn.executeMutexReleaseScript();
+            }
+           
+            // PASSWORD UPDATE
+            if (password != null) {
+                // the username could have changed in update, so we need to change the password for the new username:
+                final SolarisEntry entryWithNewName = (!newName.equals(entry.getName())) ? 
+                        new SolarisEntry.Builder(newName).addAllAttributesFrom(entry).build() : entry;
+
+                PasswdCommand.configureUserPassword(entryWithNewName, password, conn);
+            }
+        } finally {
+            conn.doSudoReset();
+        }
+    }
+
+    private static String updateUserImpl(SolarisEntry entry, SolarisConnection conn) {
         String newName = findNewName(entry);
         if (newName == null)
             newName = entry.getName();

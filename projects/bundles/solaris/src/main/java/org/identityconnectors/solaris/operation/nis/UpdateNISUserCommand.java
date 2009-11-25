@@ -37,8 +37,8 @@ import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
-public class OpUpdateNISImpl extends AbstractNISOp {
-    private static final Log _log = Log.getLog(OpUpdateNISImpl.class);
+public class UpdateNISUserCommand extends AbstractNISOp {
+    private static final Log _log = Log.getLog(UpdateNISUserCommand.class);
     
     private static final String NO_PRIMARY_GROUP = "No primary group";
     private static final String UID_NOT_UNIQUE = "uid is not unique.";
