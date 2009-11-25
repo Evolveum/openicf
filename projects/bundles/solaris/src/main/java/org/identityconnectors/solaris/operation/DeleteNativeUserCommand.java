@@ -60,7 +60,6 @@ class DeleteNativeUserCommand {
                 "does not exist", unknownUidHandler,
                 "nknown user", unknownUidHandler,
                 "ERROR", new SolarisConnection.ErrorHandler() {
-                    @Override
                     public void handle(String buffer) {
                         throw new ConnectorException("Error when deleting user: " + accountId);
                     }
