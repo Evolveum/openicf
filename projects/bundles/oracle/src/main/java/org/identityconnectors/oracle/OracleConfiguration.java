@@ -49,32 +49,110 @@ import org.identityconnectors.framework.spi.ConfigurationProperty;
 import org.identityconnectors.oracle.OracleDriverConnectionInfo.Builder;
 
 /**
- * Set of configuration properties for connecting to Oracle database
+ * Set of configuration properties for connecting to Oracle database.
+ * We support 4 types how user can connect to oracle resource :
+ * <ul>
+ *  <li>Using dataSource</li>
+ *  <li>Using custom driver with full jdbc url</li>
+ *  <li>Using thin driver</li>
+ *  <li>Using oci driver</li>
+ * </ul>
+ * 
+ *  <h4><a name="dataSource"/>Getting connection from DataSource. Used when <code>dataSource</code> property is set</h4>
+ *   We will support these properties when connecting to oracle using dataSource
+ *   <ul>
+ *      <li>dataSource : Name of jndi name of dataSource : required. It must be logical or absolute name of dataSource.
+ *          No prefix will be added when trying to do lookup
+ *      </li>
+ *      <li>
+ *          dsJNDIEnv : JNDI environment entries needed to lookup datasource. In most cases should be empty, needed only when lookuping datasource
+ *          from different server as server where connectors are running.
+ *      </li>
+ *      <li>user : Administrative account : optional, default we will get connection from DS without user/password parameters</li>
+ *      <li>password : Administrative password : optional, default we will get connection from DS without user/password parameters</li>
+ *   </ul>  
+ *
+ * <h4><a name="url"/>Getting connection from DriverManager using full jdbc url. Used when <code>url</code> property is set</h4>
+ * We will support/require these properties when connecting to oracle with url:
+ * <ul>
+ *      <li> url : Full jdbc url for connecting to oracle</li>
+ *      <li> driver  : Classname of jdbc driver</li>
+ *      <li> user : Administrative account when connecting to oracle</li>
+ *      <li> password : Password for admin account. </li>
+ * </ul>
+ *
+ *   
+ * <h4><a name="databaseName"/>Getting connection from DriverManager using Thin driver. Used when driver has value 'thin'</h4>
+ * We will support/require these properties when connecting to oracle :
+ * <ul>
+ *      <li> host : Name or IP of oracle instance host. This is required property</li>
+ *      <li> port : Port oracle listener is listening to. Default to 1521 </li>
+ *      <li> database : Name of local/remote database</li>
+ *      <li> user : Administrative account when connecting to oracle</li>
+ *      <li> adminPassword : Password for admin account. </li>
+ * </ul>
+ * 
+ * <h4><a name="aliasName"/>Getting connection from DriverManager using Type 2 oci driver.  Used when driver has value 'oci'</h4>
+ * We will require these properties when connecting to oracle using oci driver
+ * <ul>
+ *      <li> database : Name of local alias </li>
+ *      <li> user : Administrative account when connecting to oracle</li>
+ *      <li> password : Password for admin account. </li>
+ * </ul>
+ * 
+ * Additionally to these 'connect properties', oracle connector supports following configuration properties :
+ * <ul>
+ *  <li>CaseSensitivityString : String format that influences built ddl statements</li>
+ *  <li>sourceType : We can explicitly force connector to use the connect method. Can have values :
+ *      DataSource, Thin Driver, OCI Driver, Custom Driver 
+ *  </li>
+ *  <li>extraAttributesPolicyString : String format that influences which policy is applied when extra not applicable attribute is passed into operation</li>
+ *  <li>dropCascade : Flag used at delete user operation. When set to true, user is dropped with cascade flag</li>
+ *  <li>normalizerString : String with the value of normalizer name. Can have values : FULL, INPUT, INPUT_AUTH</li>
+ * </ul>
  * @author kitko
  *
  */
 public final class OracleConfiguration extends AbstractConfiguration implements Cloneable{
-    private String host;
-    private String port;
-    private String driver;
-    private String driverClassName;
-    private String database;
-    private String user;
-    private GuardedString password;
-    private String dataSource;
-    private String url;
-    private String[] dsJNDIEnv;
-    private ConnectionType connType;
-    private OracleCaseSensitivitySetup cs;
-    private String caseSensitivityString;
-    //Source type is user defined ConnectionType
-    private String sourceType;
-    private String extraAttributesPolicyString;
-    private ExtraAttributesPolicySetup extraAttributesPolicySetup;
-    private boolean dropCascade;
-    private String normalizerString;
-    private OracleNormalizerName normalizerName;
     private static final Log log = Log.getLog(OracleConfiguration.class);
+    /** Host name or ip of oracle resource */
+    private String host;
+    /** Port of oracle listener */
+    private String port;
+    /** Driver (thin,oci) or full classname */
+    private String driver;
+    /** Full classname of driver */
+    private String driverClassName;
+    /** Name of oracle database when using thin or oci driver */
+    private String database;
+    /** Name of admin user */
+    private String user;
+    /** Admin password */
+    private GuardedString password;
+    /** JNDI name of datasource */
+    private String dataSource;
+    /** Full url when using custom driver */
+    private String url;
+    /** Optional jndi entries to create initial context */
+    private String[] dsJNDIEnv;
+    /** Type/manner how we connect to oracle resource. The field is set by validator */
+    private ConnectionType connType;
+    /** CaseSensitivitySetup of builder. Field is set by validator using the caseSensitivityString */
+    private OracleCaseSensitivitySetup cs;
+    /** String format in special map format using which we build OracleCaseSensitivitySetup */
+    private String caseSensitivityString;
+    /** Source type is user defined ConnectionType */
+    private String sourceType;
+    /** String is special map format using which we build  ExtraAttributesPolicySetup */
+    private String extraAttributesPolicyString;
+    /** Extra attributes policy. Field is set by validator from extraAttributesPolicyString */
+    private ExtraAttributesPolicySetup extraAttributesPolicySetup;
+    /** Flag used at delete user operation. When set to true, user is dropped with cascade flag */
+    private boolean dropCascade;
+    /** String with the value of name of OracleNormalizerName enum */
+    private String normalizerString;
+    /** NormalizerName we create in validator using normalizerString. Normalizer created by {@link OracleNormalizerName#createNormalizer(OracleCaseSensitivitySetup)} is sent then to SPI operations */
+    private OracleNormalizerName normalizerName;
     /**
      * Creates configuration
      */

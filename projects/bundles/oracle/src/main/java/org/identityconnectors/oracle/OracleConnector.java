@@ -17,7 +17,7 @@ import org.identityconnectors.framework.spi.operations.*;
 import org.identityconnectors.oracle.OracleConfiguration.*;
 
 /**
- * Implementation of Oracle connector. It just holds common oracle constants and delegates SPI calls to AbstractOracleOperation subclasses.
+ * Implementation of Oracle connector. It just delegates SPI calls to {@link AbstractOracleOperation} subclasses.
  * This connector implementation does not normalize attributes.
  * @author kitko
  *

@@ -3,7 +3,10 @@ package org.identityconnectors.oracle;
 import org.identityconnectors.common.security.GuardedString;
 
 /**
- * Helper structure for creating/altering user
+ * Helper structure for creating/altering user.
+ * It reflects the record from DBA_USERS and holds attribute values from SPI operations.
+ * The structure is filled by {@link OracleAttributesReader}
+ * 
  * @author kitko
  *
  */

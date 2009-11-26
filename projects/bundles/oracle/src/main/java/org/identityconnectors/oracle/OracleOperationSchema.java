@@ -12,7 +12,8 @@ import org.identityconnectors.framework.common.objects.AttributeInfo.*;
 import org.identityconnectors.framework.spi.operations.*;
 
 /**
- * Constructs schema for Oracle connector
+ * Constructs schema for Oracle connector.
+ * Connector uses hardcoded schema , it just checks the version of oracle and support/does not support global authentication.
  * @author kitko
  *
  */

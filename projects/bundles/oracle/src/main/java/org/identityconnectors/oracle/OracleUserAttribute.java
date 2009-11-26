@@ -2,7 +2,9 @@ package org.identityconnectors.oracle;
 
 import org.identityconnectors.framework.spi.operations.SPIOperation;
 
-/** Policy settings of user attributes */
+/** Policy settings of user attributes.
+ *  Each oracle user attribute can have different policy for formating and for policy that is applied when attribute is not applicable in operation.
+ *  */
 
 final class DefFormatting {
     static final boolean DEF_TO_UPPER = true; //by default set token to upper
@@ -11,24 +13,31 @@ final class DefFormatting {
 }
 
 enum OracleUserAttribute {
+    /** Formating user name */
     USER,
+    /** Formatting password */
     PASSWORD(){
 		@Override
 		Formatting getFormatting() {
 			return new Formatting(false, DefFormatting.DEF_QUATES);
 		}
     },
-    SCHEMA,
+    /** Formatting one user role */
     ROLE,
+    /** Formatting the privilege */
     PRIVILEGE(){
 		@Override
 		Formatting getFormatting() {
 			return new Formatting(DefFormatting.DEF_TO_UPPER, "");
 		}
     },
+    /** Formatting name of profile user is associated with */
     PROFILE,
+    /** Formatting name of default tablespace where user's objects are created in */
     DEF_TABLESPACE,
+    /** Formatting name of temporary tablespace where user's temp objeccts are created in */
     TEMP_TABLESPACE,
+    /** Global name when using global authentication */
     GLOBAL_NAME(){
 		@Override
 		Formatting getFormatting() {

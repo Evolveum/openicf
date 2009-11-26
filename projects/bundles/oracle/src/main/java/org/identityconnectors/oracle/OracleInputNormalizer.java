@@ -18,6 +18,8 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.spi.operations.SPIOperation;
 
 /**
+ * Input normalizer normalizes input attributes from  create/update/remove.
+ * Does not normalizes output attributes
  * @author kitko
  *
  */

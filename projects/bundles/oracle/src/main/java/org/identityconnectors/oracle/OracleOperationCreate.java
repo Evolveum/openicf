@@ -26,7 +26,7 @@ import static org.identityconnectors.oracle.OracleMessages.*;
 
 /**
  * Oracle create operation. 
- * It builds create sql using OracleCreateOrAlterStBuilder and builds grants using OracleRolesAndPrivsBuilder 
+ * It builds create sql using {@link OracleCreateOrAlterStBuilder} and builds grants using {@link OracleRolesAndPrivsBuilder} 
  * @author kitko
  *
  */

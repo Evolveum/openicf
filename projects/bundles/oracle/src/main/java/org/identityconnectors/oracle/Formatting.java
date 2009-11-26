@@ -1,6 +1,6 @@
 package org.identityconnectors.oracle;
 
-class Formatting {
+final class Formatting {
     private final boolean toUpper;
     private final String quatesChar;
     

@@ -14,7 +14,7 @@ import static org.identityconnectors.oracle.OracleMessages.*;
  *  More info on syntax of url can be find at :
  *  <a href="http://www.oracle.com/technology/tech/java/sqlj_jdbc/htdocs/jdbc_faq.html#05_03">URL syntax</a>
  * */
-abstract class OracleSpecifics {
+final class OracleSpecifics {
     static final String THIN_AND_OCI_DRIVER_CLASSNAME = "oracle.jdbc.driver.OracleDriver";
     static final String OCI_DRIVER = "oci";
     static final String THIN_DRIVER = "thin";

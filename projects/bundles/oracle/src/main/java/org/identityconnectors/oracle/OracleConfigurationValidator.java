@@ -7,7 +7,7 @@ import org.identityconnectors.dbcommon.LocalizedAssert;
 import org.identityconnectors.oracle.OracleConfiguration.ConnectionType;
 
 /** Helper class that validated {@link OracleConfiguration} */
-class OracleConfigurationValidator {
+final class OracleConfigurationValidator {
 	private final OracleConfiguration cfg;
 	OracleConfigurationValidator(OracleConfiguration cfg){
 		this.cfg = cfg;

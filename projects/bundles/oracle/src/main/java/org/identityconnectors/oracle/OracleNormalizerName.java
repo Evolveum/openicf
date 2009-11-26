@@ -1,5 +1,10 @@
 package org.identityconnectors.oracle;
 
+/**
+ * Enum of available {@link OracleAttributeNormalizer} normalizers
+ * @author kitko
+ *
+ */
 enum OracleNormalizerName {
 	FULL{
 		@Override

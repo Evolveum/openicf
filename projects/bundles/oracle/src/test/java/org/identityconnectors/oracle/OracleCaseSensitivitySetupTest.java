@@ -20,8 +20,8 @@ public class OracleCaseSensitivitySetupTest {
     @Test
     public void testCreateExplicitFormatters(){
     	ConnectorMessages cm = TestHelpers.createDummyMessages();
-        OracleCaseSensitivitySetup cs = createBuilder().defineFormattersAndNormalizers(new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(OracleUserAttribute.SCHEMA).setQuatesChar("AAA").build()).build();
-        Assert.assertEquals("AAA",cs.getAttributeFormatterAndNormalizer(OracleUserAttribute.SCHEMA).getQuatesChar());
+        OracleCaseSensitivitySetup cs = createBuilder().defineFormattersAndNormalizers(new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(OracleUserAttribute.ROLE).setQuatesChar("AAA").build()).build();
+        Assert.assertEquals("AAA",cs.getAttributeFormatterAndNormalizer(OracleUserAttribute.ROLE).getQuatesChar());
         CSAttributeFormatterAndNormalizer formatter = new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(OracleUserAttribute.PROFILE).setQuatesChar("BBB").build();
         assertEquals(OracleUserAttribute.PROFILE, formatter.getAttribute());
         assertEquals("BBB", formatter.getQuatesChar());
@@ -31,8 +31,8 @@ public class OracleCaseSensitivitySetupTest {
     @Test
     public void testCreateExplicitNormalizers(){
     	ConnectorMessages cm = TestHelpers.createDummyMessages();
-        OracleCaseSensitivitySetup cs = createBuilder().defineFormattersAndNormalizers(new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(OracleUserAttribute.SCHEMA).setToUpper(true).build()).build();
-        Assert.assertTrue(cs.getAttributeFormatterAndNormalizer(OracleUserAttribute.SCHEMA).isToUpper());
+        OracleCaseSensitivitySetup cs = createBuilder().defineFormattersAndNormalizers(new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(OracleUserAttribute.ROLE).setToUpper(true).build()).build();
+        Assert.assertTrue(cs.getAttributeFormatterAndNormalizer(OracleUserAttribute.ROLE).isToUpper());
         CSAttributeFormatterAndNormalizer normalizer = new CSAttributeFormatterAndNormalizer.Builder(cm).setAttribute(OracleUserAttribute.DEF_TABLESPACE).setToUpper(false).build();
         assertEquals(OracleUserAttribute.DEF_TABLESPACE, normalizer.getAttribute());
         assertEquals(false, normalizer.isToUpper());

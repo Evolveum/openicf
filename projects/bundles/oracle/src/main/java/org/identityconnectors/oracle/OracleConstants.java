@@ -9,7 +9,7 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 
 /** Constants for Oracle connector */
-abstract class OracleConstants {
+final class OracleConstants {
 	static final String ORACLE_AUTHENTICATION_ATTR_NAME = "oracleAuthentication";
 	static final String ORACLE_GLOBAL_ATTR_NAME = "oracleGlobalName";
 	static final String ORACLE_ROLES_ATTR_NAME = "oracleRoles";

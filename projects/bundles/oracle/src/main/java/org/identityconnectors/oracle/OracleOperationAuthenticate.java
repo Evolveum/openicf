@@ -19,7 +19,8 @@ import org.identityconnectors.framework.spi.operations.AuthenticateOp;
 import org.identityconnectors.oracle.OracleConfiguration.ConnectionType;
 
 /** Authenticate operation.
- *  It just tries to create new jdbc connection with passed user/password
+ *  It just tries to create new jdbc connection with passed user/password.
+ *  It delegates creation of connection to {@link OracleConfiguration}
  * @author kitko
  *
  */

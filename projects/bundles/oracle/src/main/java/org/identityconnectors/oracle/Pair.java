@@ -1,5 +1,14 @@
 package org.identityconnectors.oracle;
 
+/**
+ * Pair is just simple immutable structure of two values.
+ * Any of two values can be null and have any value. Pair tries to implement equals and hashCode correctly delegating to first and second value methods.
+ * I find {@link org.identityconnectors.common.Pair} so bad designed, that I rather use new one
+ * @author kitko
+ *
+ * @param <F>
+ * @param <S>
+ */
 final class Pair<F,S> {
 	private final F first;
 	private final S second;

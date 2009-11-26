@@ -12,7 +12,7 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.spi.AttributeNormalizer;
 
-/** OracleCaseSensitivity is responsible for normalizing and formatting oracle objects tokens (users,schema...).
+/** OracleCaseSensitivity is responsible for normalizing and formatting oracle user tokens (users,schema...).
  *  Maybe we do not need such granularity , and have just one settings for all objects, but using this scenario
  *  we should cover all corner cases.
  *  For user we will provide some simplification how to define this caseSensitivy setup.

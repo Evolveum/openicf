@@ -15,7 +15,9 @@ import org.identityconnectors.dbcommon.SQLUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.ConnectorMessages;
 
-/** Reads records from DBA_USERS table */
+/** Reads records from DBA_USERS table.
+ *  It gets the connection and messages and tries to read {@link UserRecord} from DBA_USERS view
+ *  */
 final class OracleUserReader {
     private final Connection adminConn;
     private final ConnectorMessages cm;

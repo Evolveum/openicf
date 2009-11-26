@@ -1,7 +1,8 @@
 package org.identityconnectors.oracle;
 
 /** All constants for oracle messages that will be translated */
-class OracleMessages {
+final class OracleMessages {
+    private OracleMessages(){}
 	static final String MSG_CONNECTOR_DISPLAY = "oracle.connector.display";
 	static final String MSG_ATTRIBUTE_IS_MISSING = "oracle.attribute.is.missing";
 	static final String MSG_HOST_DISPLAY = "oracle.host.display";

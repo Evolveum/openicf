@@ -16,7 +16,7 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import static org.identityconnectors.oracle.OracleMessages.*;
 
 /** Helper static methods related to Oracle connector */
-abstract class OracleConnectorHelper {
+final class OracleConnectorHelper {
 	private OracleConnectorHelper(){}
 	
     static String getRequiredStringValue(Map<String, Attribute> attrs, String name, ConnectorMessages cm){

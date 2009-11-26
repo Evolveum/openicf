@@ -18,6 +18,7 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.spi.operations.SPIOperation;
 
 /**
+ * Full normalizer normalizes both input and ouput attributes
  * @author kitko
  *
  */
