@@ -43,10 +43,9 @@ public class UpdateNISUserCommand extends AbstractNISOp {
     private static final String NO_PRIMARY_GROUP = "No primary group";
     private static final String UID_NOT_UNIQUE = "uid is not unique.";
     
-    public static void performNIS(SolarisEntry entry, SolarisConnection connection) {
+    public static void updateUser(SolarisEntry userEntry, SolarisConnection connection) {
         // TODO eliminate duplicate accountId(Name)
-        final String accountId = entry.getName();
-        final String accountName = accountId;
+        final String accountName = userEntry.getName();
         String pwddir = AbstractNISOp.getNisPwdDir(connection);
         String pwdfile = pwddir + "/passwd";
         
@@ -64,8 +63,8 @@ public class UpdateNISUserCommand extends AbstractNISOp {
         final String grepCmd = connection.buildCommand("grep");
         
         // Test for a rename operation
-        String newName = getNameValue(entry);
-        if (!newName.equals(entry.getName())) {
+        String newName = getNameValue(userEntry);
+        if (!newName.equals(userEntry.getName())) {
             // Make sure we update the entry
             recordUpdate = true;
             isRename = true;
@@ -80,7 +79,7 @@ public class UpdateNISUserCommand extends AbstractNISOp {
         String updateUser =
             "if [ -n \"$ENTRYTEXT\" ]; then " +
               cpCmd + "-p " + pwdfile + " " + tmpPwdfile1 + "; " +
-              grepCmd + "-v \"^" + accountId + ":\" " + tmpPwdfile1 + " > " + tmpPwdfile2 + "; " +
+              grepCmd + "-v \"^" + accountName + ":\" " + tmpPwdfile1 + " > " + tmpPwdfile2 + "; " +
               chownCmd + "$WHOIAM " + tmpPwdfile2 + "\n " +
               "echo " + newName + ":$PASSWD:$NEWUID:$GROUP:$GECOS:$HOMEDIR:$SHELL >> " + tmpPwdfile2 + "; " +
               diffCmd + pwdfile + " " + tmpPwdfile1 + " 2>&1 >/dev/null; " +
@@ -92,11 +91,11 @@ public class UpdateNISUserCommand extends AbstractNISOp {
                 "GRPERRMSG=\"" + ERROR_MODIFYING + pwdfile + ", for entry " + newName + ".\"; " +
               "fi; " +
             "else\n" +
-            "GRPERRMSG=\"" + accountId + " not found in " + pwdfile + ".\"; " +
+            "GRPERRMSG=\"" + accountName + " not found in " + pwdfile + ".\"; " +
             "fi";
         
         // Get specified user attributes
-        Map<NativeAttribute, List<Object>> attributes = AbstractNISOp.constructNISUserAttributeParameters(entry, allowedNISattributes);
+        Map<NativeAttribute, List<Object>> attributes = AbstractNISOp.constructNISUserAttributeParameters(userEntry, allowedNISattributes);
         
         for (Map.Entry<NativeAttribute, List<Object>> it : attributes.entrySet()) {
             NativeAttribute key = it.getKey();
@@ -123,12 +122,12 @@ public class UpdateNISUserCommand extends AbstractNISOp {
                 break;
             }// switch
             if (matched) {
-                _log.ok(entry.getName() + " attribute '" + key.toString() + "' got value '" + value + "'");
+                _log.ok(userEntry.getName() + " attribute '" + key.toString() + "' got value '" + value + "'");
             }
         }// for
         
+        connection.doSudoStart();
         try {
-            connection.doSudoStart();
             connection.executeCommand(AbstractNISOp.whoIAm);
             try {
                 connection.executeMutexAcquireScript(pwdMutexFile, tmpPwdMutexFile, pwdPidFile);
@@ -165,9 +164,9 @@ public class UpdateNISUserCommand extends AbstractNISOp {
                             "GRPENTRY=`grep '^" + accountName + ":' " + shadowfile + "`; " +
                             "if [ -n \"$GRPENTRY\" ]; then " +
                               cpCmd + "-p " + shadowfile + " " + tmpPwdfile1 + "; " +
-                              grepCmd + "-v \"^" + accountId + ":\" " + tmpPwdfile1 + " > " + tmpPwdfile2 + "; " +
+                              grepCmd + "-v \"^" + accountName + ":\" " + tmpPwdfile1 + " > " + tmpPwdfile2 + "; " +
                               chownCmd + "$WHOIAM " + tmpPwdfile2 + "\n " +
-                              "echo $GRPENTRY | sed 's/^" +accountId + ":/" + newName + ":/g' >> " + tmpPwdfile2 + "; " +
+                              "echo $GRPENTRY | sed 's/^" +accountName + ":/" + newName + ":/g' >> " + tmpPwdfile2 + "; " +
                               diffCmd + shadowfile + " " + tmpPwdfile1 + " 2>&1 >/dev/null; " +
                               "RC=$?\n" +
                               "if [ $RC -eq 0 ]; then " +
@@ -180,9 +179,7 @@ public class UpdateNISUserCommand extends AbstractNISOp {
                             "GRPERRMSG=\"" + ERROR_MODIFYING + shadowfile + ", " + accountName + " not found.\"; " +
                             "fi";
 
-                        getOwner =
-                            "OWNER=`ls -l " + shadowfile + " | awk '{ print $3 }'`; " +
-                            "GOWNER=`ls -l " + shadowfile + " | awk '{ print $4 }'`";
+                        getOwner = initGetOwner(shadowfile);
 
                         connection.executeCommand(getOwner);
                         connection.executeCommand(shadowRename);
@@ -196,12 +193,12 @@ public class UpdateNISUserCommand extends AbstractNISOp {
                 }//if (recordUpdate)
                 
                 if (shell != null) {
-                    addNISShellUpdate(accountId, shell, connection);
+                    addNISShellUpdate(accountName, shell, connection);
                 }
 
-                final GuardedString password = getPassword(entry);
+                final GuardedString password = getPassword(userEntry);
                 if (password != null) {
-                    addNISPasswordUpdate(accountId, password, connection);
+                    addNISPasswordUpdate(accountName, password, connection);
                 }
 
                 AbstractNISOp.addNISMake("passwd", connection);

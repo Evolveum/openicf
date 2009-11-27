@@ -394,9 +394,42 @@ public class SolarisConnection {
      * @param accepts
      *            these are accepting strings, if they are found the result is
      *            returned. If empty set is given, the default accept is
-     *            {@link SolarisConnection#getRootShellPrompt()}. Note: in case
+     *            {@link SolarisConnection#getRootShellPrompt()}. Caution: in case
      *            <code>accepts</code> parameter is specified, it'll be the last
-     *            element in the response from the resource.
+     *            element in the response from the resource. If we don't respect this 
+     *            rule than we will loose precious output of the following commands, that 
+     *            are issued. <i>A larger illustration of violation of the previous contract
+     *            follows. It is above the basic usage, however we should be aware of 
+     *            consequences of violating contract for 'accepts' parameter.</i> 
+     *            EXAMPLE: see the following calls / respones from the {@link SolarisConnection}:
+     *            <pre>
+     *            out = conn.executeCommand("echo 'one'", Collections.<String>emptySet(), CollectionUtil.newSet("one"));
+     *            Assert.assertEquals("one", out); // will succeed
+     *            out = conn.executeCommand("echo 'two'", Collections.<String>emptySet(), CollectionUtil.newSet("two"));
+     *            Assert.assertEquals("two", out); // fail, due to empty output
+     *            out = conn.executeCommand("echo 'three'", Collections.<String>emptySet(), CollectionUtil.newSet("three"));
+     *            Assert.assertEquals("three", out); // fail, due to empty output
+     *            </pre>
+     *            If we analyze the previous example we will see the following sequence of request/response going on:
+     *            <pre>
+     *            >> echo 'one'
+     *            << one
+     *            >> echo 'two'
+     *            << two~ConnectorPrompt // at least this is what we expect, but we'll get an empty output
+     *                                   // because of {@link SolarisConnection#trimOutput(String)}, that cuts off everything after root shell prompt.
+     *            </pre>
+     *            The solution is to wait for rootShellPrompt after every 'accept' parameter, that doesn't terminate the output:
+     *            <pre>
+     *            out = conn.executeCommand("echo 'one'", Collections.<String>emptySet(), CollectionUtil.newSet("one"));
+     *            conn.executeCommand(null) // will cause waiting for the rootShellPrompt.
+     *            Assert.assertEquals("one", out); // will succeed
+     *            out = conn.executeCommand("echo 'two'", Collections.<String>emptySet(), CollectionUtil.newSet("two"));
+     *            conn.executeCommand(null) // will cause waiting for the rootShellPrompt.
+     *            Assert.assertEquals("two", out); // will succeed
+     *            out = conn.executeCommand("echo 'three'", Collections.<String>emptySet(), CollectionUtil.newSet("three"));
+     *            conn.executeCommand(null) // will cause waiting for the rootShellPrompt.
+     *            Assert.assertEquals("three", out); // will succeed
+     *            </pre>
      * 
      * @return the response from the resource when the command is successful,
      *         free of error messages. Otherwise throw a

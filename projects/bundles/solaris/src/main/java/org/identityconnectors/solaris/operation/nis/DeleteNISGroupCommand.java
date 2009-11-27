@@ -47,7 +47,7 @@ public class DeleteNISGroupCommand extends AbstractNISOp {
 
     private static void deleteImpl(String groupName, SolarisConnection connection) {
 
-        final String removeTmpFilesScript = AbstractNISOp.getRemoveGroupTmpFiles(connection);
+        final String removeTmpFilesScript = getRemoveGroupTmpFiles(connection);
         connection.executeCommand(removeTmpFilesScript);
         
         final String pwddir = AbstractNISOp.getNisPwdDir(connection);

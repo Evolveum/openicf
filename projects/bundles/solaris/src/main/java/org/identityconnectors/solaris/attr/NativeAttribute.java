@@ -93,22 +93,4 @@ public enum NativeAttribute {
     public String getName() {
         return this.toString();
     }
-
-    public String getCmdSwitch() {
-        throw new UnsupportedOperationException();
-    }
-    
-    private final String cmdSwitch;
-    
-    public String getCommandSwitch() {
-        return cmdSwitch;
-    }
-    
-    private NativeAttribute() {
-        this(null);
-    }
-    
-    private NativeAttribute(String cmdSwitch) {
-        this.cmdSwitch = cmdSwitch;
-    }
 }

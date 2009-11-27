@@ -26,7 +26,6 @@ import java.util.List;
 
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.StringUtil;
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.solaris.SolarisConnection;
@@ -90,9 +89,7 @@ public class CreateNISGroupCommand extends AbstractNISOp {
             groupRecord.append("newgid=" + gid + "; ");
         }
         
-        final String getOwner =
-            "OWNER=`ls -l " + groupFile + " | awk '{ print $3 }'`; " +
-            "GOWNER=`ls -l " + groupFile + " | awk '{ print $4 }'`";
+        final String getOwner = initGetOwner(groupFile);
 
         final String createRecord =
             "WS_GROUPNAME=`" + grepCmd + "\"^" + groupName + ":\" " + groupFile + "`; " +
@@ -128,8 +125,10 @@ public class CreateNISGroupCommand extends AbstractNISOp {
             
             conn.executeCommand(removeTmpFilesScript);
             conn.executeCommand(getOwner);
-            // TODO process this output ==> look for getCreateResult....
-            executeGroupRecord(conn, groupRecord.toString());
+            
+            final String groupRecourdOutput = conn.executeCommand(groupRecord.toString());
+            parseNisOutputForErrors(groupRecourdOutput);
+            
             conn.executeCommand(removeTmpFilesScript);
             
             Attribute usersAttr = group.searchForAttribute(NativeAttribute.USERS);
@@ -143,23 +142,6 @@ public class CreateNISGroupCommand extends AbstractNISOp {
             AbstractNISOp.addNISMake("group", conn);
         } finally {
             conn.executeMutexReleaseScript(grpMutexFile);
-        }
-    }
-
-    private static void executeGroupRecord(SolarisConnection conn,
-            final String groupRecord) {
-        
-        String groupRecordResult = conn.executeCommand(groupRecord.toString());
-        if (!StringUtil.isBlank(groupRecordResult)) {
-            if (groupRecordResult.contains(">")) {
-                int index = groupRecordResult.indexOf(">");
-                groupRecordResult = groupRecordResult.substring(index + 1, groupRecordResult.length());
-                groupRecordResult = groupRecordResult.trim();
-            }
-            
-            if (!StringUtil.isBlank(groupRecordResult)) {
-                throw new ConnectorException("ERROR: " + groupRecordResult);
-            }
         }
     }
 

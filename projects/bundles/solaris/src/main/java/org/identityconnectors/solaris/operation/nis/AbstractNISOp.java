@@ -174,8 +174,17 @@ private static final String DEFAULT_NISPWDDIR = "/etc";
      * @param groupName name of the new group.
      * @param userNames The list of usernames that we want to add to the new group.
      * @param conn
-     * 
+     * <p>
      * Note: used in both native and NIS attributes.
+     * <br/>
+     * <br/>
+     * Add commands to the script that will check to see which users exist.
+     * Only attempt to add the user that exist to the group. Generate
+     * and echo a list of users that do not exist, so that a message can be
+     * displayed indicating this.
+     * <p>
+     * Note 2: Any checks on users need to be done prior to invoking this
+     *       method.
      */
     public static void changeGroupMembers(String group,
             List<Object> userNames, boolean isNIS, SolarisConnection conn) {
@@ -328,5 +337,24 @@ private static final String DEFAULT_NISPWDDIR = "/etc";
         getOwner.append("OWNER=`ls -l "); getOwner.append(file); getOwner.append(" | awk '{ print $3 }'`; ");
         getOwner.append("GOWNER=`ls -l "); getOwner.append(file); getOwner.append(" | awk '{ print $4 }'`");
         return getOwner.toString();
+    }
+    
+    /**
+     * Only {@link CreateNISGroupCommand} and {@link UpdateNISGroupCommand} use this functionality
+     * to process output of some specific commands.
+     */
+    protected static void parseNisOutputForErrors(final String output) {
+        String out = new String(output);
+        out = out.trim();
+        if (out.length() > 0) {
+            if (out.contains(">")) {
+                out = out.substring(out.lastIndexOf(">") + 1);
+                out = out.trim();
+            }
+            
+            if (!StringUtil.isBlank(out)) {
+                throw new ConnectorException("ERROR: " + out);
+            }
+        }
     }
 }

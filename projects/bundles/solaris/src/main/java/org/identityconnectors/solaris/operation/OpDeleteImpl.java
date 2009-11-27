@@ -45,42 +45,44 @@ public class OpDeleteImpl extends AbstractOp {
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
         SolarisUtil.controlObjectClassValidity(objClass, acceptOC, getClass());
         
-        final String entryId = uid.getUidValue();
+        final String entryName = uid.getUidValue();
         
-        _log.info("{0} delete(''{1}'')",((objClass.is(ObjectClass.ACCOUNT_NAME))? "account" : "group") , entryId);
+        _log.info("{0} delete(''{1}'')",((objClass.is(ObjectClass.ACCOUNT_NAME))? "account" : "group") , entryName);
         
         if (objClass.is(ObjectClass.ACCOUNT_NAME)) {
             if (SolarisUtil.isNis(getConnection())) {
-                invokeNISUserDelete(entryId);
+                invokeNISUserDelete(entryName);
             } else {
-                invokeNativeUserDelete(entryId);
+                invokeNativeUserDelete(entryName);
             }
         } else if (objClass.is(ObjectClass.GROUP_NAME)) {
             if (SolarisUtil.isNis(getConnection())) {
-                invokeNISGroupDelete(entryId);
+                invokeNISGroupDelete(entryName);
             } else {
-                invokeNativeGroupDelete(entryId);
+                invokeNativeGroupDelete(entryName);
             }
+        } else {
+            throw new UnsupportedOperationException();
         }
 
         // TODO add handling of exceptions: existing user, etc.
-        _log.ok("userdel(''{0}'')", entryId);
+        _log.ok("userdel(''{0}'')", entryName);
 
     }
 
     /**
      * compare with NIS delete operation: {@see OpDeleteImpl#invokeNISGroupDelete(String)}
      */
-    private void invokeNativeGroupDelete(String groupId) {
-        DeleteNativeGroupCommand.delete(groupId, getConnection());
+    private void invokeNativeGroupDelete(String groupName) {
+        DeleteNativeGroupCommand.delete(groupName, getConnection());
     }
 
     /**
      * compare with Native delete operation: {@see OpDeleteImpl#invokeNativeGroupDelete(Uid)}
      */
-    private void invokeNISGroupDelete(String groupId) {
+    private void invokeNISGroupDelete(String groupName) {
         if (AbstractNISOp.isDefaultNisPwdDir(getConnection())) {
-            invokeNativeGroupDelete(groupId);
+            invokeNativeGroupDelete(groupName);
             
             /*
              * TODO in adapter, SRA#getDeleteNISUserScript sudo is missing (file another bug?)
@@ -92,25 +94,25 @@ public class OpDeleteImpl extends AbstractOp {
                 getConnection().doSudoReset();
             }
         } else {
-            DeleteNISGroupCommand.delete(groupId, getConnection());
+            DeleteNISGroupCommand.delete(groupName, getConnection());
         }
     }
 
     /**
      * compare with NIS delete operation: {@see OpDeleteImpl#invokeNISUserDelete(String)}
      */
-    private void invokeNativeUserDelete(final String accountId) {
-        DeleteNativeUserCommand.delete(accountId, getConnection());
+    private void invokeNativeUserDelete(final String accountName) {
+        DeleteNativeUserCommand.delete(accountName, getConnection());
     }
 
     /**
      * Compare with Native delete operation: {@see OpDeleteImpl#invokeNativeDelete(String)}
      */
-    private void invokeNISUserDelete(String accountId) {
+    private void invokeNISUserDelete(String accountName) {
         // If the password source file is in /etc then use the native
         // utilities
         if (AbstractNISOp.isDefaultNisPwdDir(getConnection())) {
-            invokeNativeUserDelete(accountId);
+            invokeNativeUserDelete(accountName);
             /*
              * TODO in adapter, SRA#getDeleteNISUserScript sudo is missing (file another bug?)
              */
@@ -121,7 +123,7 @@ public class OpDeleteImpl extends AbstractOp {
                 getConnection().doSudoReset();
             }
         } else {
-            DeleteNISUserCommand.delete(accountId, getConnection());
+            DeleteNISUserCommand.delete(accountName, getConnection());
         }
     }
 }

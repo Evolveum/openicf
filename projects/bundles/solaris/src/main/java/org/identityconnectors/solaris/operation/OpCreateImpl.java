@@ -62,9 +62,9 @@ public class OpCreateImpl extends AbstractOp {
         final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
 
         final Name name = (Name) attrMap.get(Name.NAME);
-        final String entryId = name.getNameValue();
+        final String entryName = name.getNameValue();
 
-        _log.info("~~~~~~~ create {0}(''{1}'') ~~~~~~~", oclass.getObjectClassValue(), entryId);
+        _log.info("~~~~~~~ create {0}(''{1}'') ~~~~~~~", oclass.getObjectClassValue(), entryName);
         
         final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(name.getNameValue(), oclass, attrs);
         if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
@@ -80,9 +80,11 @@ public class OpCreateImpl extends AbstractOp {
             } else {
                 invokeNativeGroupCreate(entry);
             }
+        } else {
+            throw new UnsupportedOperationException();
         }
         
-        return new Uid(entryId);
+        return new Uid(entryName);
     }
 
     /**

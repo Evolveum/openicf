@@ -238,9 +238,7 @@ public class CreateNISUserCommand extends AbstractNISOp {
         // variables that were used.
         "unset GRPERRMSG; unset PARERRMSG; unset SHLERRMSG;  unset dupuid; unset DUPUIDERRMSG; ";
         
-        String getOwner =
-            "OWNER=`ls -l " + pwdfile + " | awk '{ print $3 }'`; " +
-            "GOWNER=`ls -l " + pwdfile + " | awk '{ print $4 }'`";
+        String getOwner = initGetOwner(pwdfile);
 
         String createRecord1 =
             cpCmd + "-p " + pwdfile + " " + tmpPwdfile1 + "; " +
@@ -378,9 +376,7 @@ public class CreateNISUserCommand extends AbstractNISOp {
         final String removeTmpFilesScript = AbstractNISOp.getRemovePwdTmpFiles(connection);
 
         // Add script to remove entry in passwd file if shell update fails
-        String getOwner =
-            "OWNER=`ls -l " + pwdFile + " | awk '{ print $3 }'`; " +
-            "GOWNER=`ls -l " + pwdFile + " | awk '{ print $4 }'`";
+        String getOwner = initGetOwner(pwdFile);
 
         final String cleanUpScript = initPasswdShadowCleanUpScript(accountId, connection, pwdFile, shadowFile, getOwner);
         connection.executeCommand(cleanUpScript);

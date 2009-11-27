@@ -22,8 +22,8 @@
  */
 package org.identityconnectors.solaris.test;
 
-import static org.identityconnectors.solaris.test.SolarisTestCommon.getStringProperty;
 import static org.identityconnectors.solaris.test.SolarisTestCommon.getProperty;
+import static org.identityconnectors.solaris.test.SolarisTestCommon.getStringProperty;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,6 +32,7 @@ import java.util.Set;
 
 import junit.framework.Assert;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -42,7 +43,9 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConfiguration;
+import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
+import org.identityconnectors.solaris.attr.GroupAttribute;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,6 +54,8 @@ public class OpUpdateImplTest {
     
     private SolarisConfiguration config;
     private ConnectorFacade facade;
+    /** this is merely to execute some special scripts to verify the result of operations. */
+    private SolarisConnector testConnector;
 
     /**
      * set valid credentials based on build.groovy property file
@@ -60,6 +65,7 @@ public class OpUpdateImplTest {
     public void setUp() throws Exception {
         config = SolarisTestCommon.createConfiguration();
         facade = SolarisTestCommon.createConnectorFacade(config);
+        testConnector = SolarisTestCommon.createConnector(config);
         
         SolarisTestCommon.printIPAddress(config);
     }
@@ -68,6 +74,7 @@ public class OpUpdateImplTest {
     public void tearDown() throws Exception {
         config = null;
         facade = null;
+        testConnector = null;
     }
 
     /**
@@ -82,8 +89,8 @@ public class OpUpdateImplTest {
         final String username = ((Name) attrMap.get(Name.NAME)).getNameValue();
         final GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
         
+        Uid uid = facade.create(ObjectClass.ACCOUNT, attrs, null);
         try {
-            Uid uid = facade.create(ObjectClass.ACCOUNT, attrs, null);
             Assert.assertNotNull(uid);
         
             // try to authenticate 
@@ -121,7 +128,7 @@ public class OpUpdateImplTest {
         }
     }
     
-    @Test (expected=RuntimeException.class) 
+    @Test (expected=RuntimeException.class)  
     public void unknownObjectClass() {
         String username = config.getUserName();
         Set<Attribute> replaceAttributes = new HashSet<Attribute>();
@@ -133,7 +140,7 @@ public class OpUpdateImplTest {
                 username), replaceAttributes, null);
     }
     
-    @Test(expected = RuntimeException.class)
+    @Test(expected = RuntimeException.class) 
     public void testUpdateUnknownUid() {
         Set<Attribute> replaceAttributes = new HashSet<Attribute>();
         final GuardedString newPassword = getProperty("modified.samplePasswd", GuardedString.class);
@@ -143,6 +150,54 @@ public class OpUpdateImplTest {
         facade.update(ObjectClass.ACCOUNT, new Uid("NONEXISTING_UID___"), replaceAttributes, null);
     }
     
+    @Test
+    public void testUpdateGroup() {
+        final Set<Attribute> attrs = initSampleUser();
+        final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
+        final String username = ((Name) attrMap.get(Name.NAME)).getNameValue();
+        final GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
+        
+        Set<Attribute> grpAttrs = SolarisTestCommon.initSampleGroup("gsample", username);
+        Map<String, Attribute> grpAttrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(grpAttrs));
+        String groupName = ((Name) grpAttrMap.get(Name.NAME)).getNameValue();
+        
+        // create a new user
+        Uid uid = facade.create(ObjectClass.ACCOUNT, attrs, null);
+        try {
+            Assert.assertNotNull(uid);
+            
+            // create a group
+            facade.create(ObjectClass.GROUP, grpAttrs, null);
+            try {
+                // verify if group exists (throws ConnectorException in case of missing group)
+                String output = testConnector.getConnection().executeCommand("cat /etc/group | grep '" + groupName + "'");
+                Assert.assertTrue(output.contains(groupName));
+                Assert.assertTrue(output.contains(username));
+                
+                Set<Attribute> replaceAttributes = CollectionUtil.newSet(
+                        AttributeBuilder.build(GroupAttribute.USERS.getName(), CollectionUtil.newList("root"))
+                        );
+                facade.update(ObjectClass.GROUP, new Uid(groupName), replaceAttributes, null);
+                output = testConnector.getConnection().executeCommand("cat /etc/group | grep '" + groupName + "'");
+                Assert.assertTrue(output.contains(groupName));
+                Assert.assertTrue(output.contains("root"));
+                Assert.assertTrue(!output.contains(username));
+            } finally {
+                // cleanup the group
+                testConnector.getConnection().executeCommand("groupdel '" + groupName + "'");
+            }
+        } finally {
+            // cleanup the new user
+            facade.delete(ObjectClass.ACCOUNT, new Uid(username), null);
+            try {
+                facade.authenticate(ObjectClass.ACCOUNT, username, password, null);
+                Assert.fail(String.format("Account was not cleaned up: '%s'", username));
+            } catch (RuntimeException ex) {
+                //OK
+            }
+        }
+    }
+
     /* ************* AUXILIARY METHODS *********** */
 
 

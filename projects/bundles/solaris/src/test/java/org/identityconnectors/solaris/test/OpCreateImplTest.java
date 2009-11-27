@@ -155,9 +155,13 @@ public class OpCreateImplTest {
         try {
             // create a group
             facade.create(ObjectClass.GROUP, grpAttrs, null);
-
-            testConnector.getConnection().executeCommand("cat /etc/group | grep '" + groupName + "'", Collections.<String> emptySet(),
-                    CollectionUtil.newSet(groupName));
+            try {
+                // verify if group exists (throws ConnectorException in case of missing group)
+                testConnector.getConnection().executeCommand("cat /etc/group | grep '" + groupName + "'", Collections.<String> emptySet(), CollectionUtil.newSet(groupName));
+            } finally {
+                // cleanup the created group
+                testConnector.getConnection().executeCommand("groupdel '" + groupName + "'");
+            }
         } finally {
             // cleanup the new user
             facade.delete(ObjectClass.ACCOUNT, new Uid(username), null);
@@ -168,8 +172,6 @@ public class OpCreateImplTest {
             } catch (RuntimeException ex) {
                 // OK
             }
-            // cleanup the created group
-            testConnector.getConnection().executeCommand("groupdel '" + groupName + "'");
         }
     }
 }
