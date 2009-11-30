@@ -23,45 +23,31 @@
 package org.identityconnectors.solaris.operation.search.nodes;
 
 import java.util.List;
-import java.util.Set;
+
+import junit.framework.Assert;
 
 import org.identityconnectors.common.CollectionUtil;
-import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
+import org.junit.Test;
 
-
-/**
- * Multi value filter.
- * @author David Adam
- *
- */
-public class ContainsAllValuesNode extends AttributeNode {
-
-    private List<? extends Object> values;
-
-    public List<? extends Object> getValues() {
-        return values;
-    }
-    
-    public ContainsAllValuesNode(NativeAttribute nativeAttr, boolean isNot, List<? extends Object> values) {
-        super(nativeAttr, isNot);
-        this.values = values;
-    }
-
-    @Override
-    public boolean evaluate(SolarisEntry entry) {
-        Set<? extends Object> filterValues = CollectionUtil.newSet(getValues());
+public class ContainsAllValuesNodeTest {
+    @Test
+    public void test() {
+        final List<String> originalList = CollectionUtil.newList("foo", "bar", "baz");
+        // not negated result
+        Node swn = new ContainsAllValuesNode(NativeAttribute.NAME, false, originalList);
+        boolean result = swn.evaluate(new SolarisEntry.Builder("FooBarBaz").addAttr(NativeAttribute.NAME, originalList).build());
+        Assert.assertTrue(result);
+        result = swn.evaluate(new SolarisEntry.Builder("FooBarBaz").addAttr(NativeAttribute.NAME, CollectionUtil.newList("ahoj", "ship")).build());
+        Assert.assertFalse(result);
         
-        String filterAttrName = getAttributeName().getName();
-        for (Attribute attr : entry.getAttributeSet()) {
-            if (attr.getName().equals(filterAttrName)) {
-                Set<Object> attributeValues = CollectionUtil.newSet(attr.getValue());
-                return attributeValues.equals(filterValues) ^ isNot();
-            }
-        }
+        // negated result
+        swn = new ContainsAllValuesNode(NativeAttribute.NAME, true, originalList);
+        result = swn.evaluate(new SolarisEntry.Builder("FooBarBaz").addAttr(NativeAttribute.NAME, originalList).build());
+        Assert.assertFalse(result);        
+        result = swn.evaluate(new SolarisEntry.Builder("FooBarBaz").addAttr(NativeAttribute.NAME, CollectionUtil.newList("ahoj", "ship")).build());
+        Assert.assertTrue(result);
         
-        return false ^ isNot();
     }
-
 }

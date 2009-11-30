@@ -22,43 +22,27 @@
  */
 package org.identityconnectors.solaris.operation.search.nodes;
 
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
+import junit.framework.Assert;
+
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
+import org.junit.Test;
 
-
-
-/**
- * Single value filter.
- * @author David Adam
- *
- */
-public class StartsWithNode extends AttributeNode {
-
-    private String value;
-
-    public String getValue() {
-        return value;
+public class EndsWithNodeTest {
+    @Test
+    public void test() {
+        // not negated result
+        Node swn = new EndsWithNode(NativeAttribute.NAME, false, "FooBar");
+        boolean result = swn.evaluate(new SolarisEntry.Builder("XFooBar").addAttr(NativeAttribute.NAME, "XFooBar").build());
+        Assert.assertTrue(result);
+        result = swn.evaluate(new SolarisEntry.Builder("FooBarX").addAttr(NativeAttribute.NAME, "BarBaz").build());
+        Assert.assertFalse(result);
+        
+        // negated result
+        swn = new EndsWithNode(NativeAttribute.NAME, true, "FooBar");
+        result = swn.evaluate(new SolarisEntry.Builder("XFooBar").addAttr(NativeAttribute.NAME, "XFooBar").build());
+        Assert.assertFalse(result);
+        result = swn.evaluate(new SolarisEntry.Builder("FooBarX").addAttr(NativeAttribute.NAME, "BarBaz").build());
+        Assert.assertTrue(result);
     }
-    
-    public StartsWithNode(NativeAttribute nativeAttr, boolean isNot, String value) {
-        super(nativeAttr, isNot);
-        this.value = value;
-    }
-
-    @Override
-    public boolean evaluate(SolarisEntry entry) {
-        String filterAttrName = getAttributeName().getName();
-        for (Attribute attr : entry.getAttributeSet()) {
-            if (attr.getName().equals(filterAttrName)) {
-                String stringValue = AttributeUtil.getStringValue(attr);
-                if (stringValue.startsWith(getValue())) {
-                    return true ^ isNot();
-                }
-            }
-        }
-        return false ^ isNot();
-    }
-
 }

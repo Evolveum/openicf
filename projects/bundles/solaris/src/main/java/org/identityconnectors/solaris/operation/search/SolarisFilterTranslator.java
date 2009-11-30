@@ -61,7 +61,7 @@ public class SolarisFilterTranslator extends
     protected Node createContainsAllValuesExpression(
             ContainsAllValuesFilter filter, boolean not) {
         Attribute attr = filter.getAttribute();
-        return new ContainsAllValuesNode(translateFromConnectorAttribute(attr.getName()), attr.getValue(), not);
+        return new ContainsAllValuesNode(translateFromConnectorAttribute(attr.getName()), not, attr.getValue());
     }
 
     private NativeAttribute translateFromConnectorAttribute(String connectorAttribute) {

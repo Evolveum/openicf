@@ -22,6 +22,8 @@
  */
 package org.identityconnectors.solaris.operation.search.nodes;
 
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
@@ -47,7 +49,16 @@ public class EqualsNode extends AttributeNode {
 
     @Override
     public boolean evaluate(SolarisEntry entry) {
-        throw new UnsupportedOperationException();
+        String filterAttrName = getAttributeName().getName();
+        for (Attribute attr : entry.getAttributeSet()) {
+            if (attr.getName().equals(filterAttrName)) {
+                String stringValue = AttributeUtil.getStringValue(attr);
+                if (stringValue.equals(getValue())) {
+                    return true ^ isNot();
+                }
+            }
+        }
+        return false ^ isNot();
     }
 
 }
