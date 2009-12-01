@@ -34,6 +34,7 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.operation.nis.AbstractNISOp;
@@ -45,10 +46,13 @@ public class OpCreateImpl extends AbstractOp {
 
     private static final Log _log = Log.getLog(OpCreateImpl.class);
     
+    private SolarisConnection connection;
+    
     final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT, ObjectClass.GROUP};
     
-    public OpCreateImpl(SolarisConnector conn) {
-        super(conn);
+    public OpCreateImpl(SolarisConnector connector) {
+        super(connector);
+        connection = connector.getConnection();
     }
 
     /**
@@ -69,13 +73,13 @@ public class OpCreateImpl extends AbstractOp {
         final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(name.getNameValue(), oclass, attrs);
         if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
             final GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
-            if (getConnection().isNis()) {
+            if (connection.isNis()) {
                 invokeNISUserCreate(entry, password);
             } else {
                 invokeNativeUserCreate(entry, password);
             }
         } else if (oclass.is(ObjectClass.GROUP_NAME)) {
-            if (getConnection().isNis()) {
+            if (connection.isNis()) {
                 invokeNISGroupCreate(entry);
             } else {
                 invokeNativeGroupCreate(entry);
@@ -92,12 +96,12 @@ public class OpCreateImpl extends AbstractOp {
      * {@link OpCreateImpl#invokeNativeGroupCreate(SolarisEntry)}
      */
     private void invokeNISGroupCreate(final SolarisEntry group) {
-        if (AbstractNISOp.isDefaultNisPwdDir(getConnection())) {
+        if (AbstractNISOp.isDefaultNisPwdDir(connection)) {
             invokeNativeGroupCreate(group);
 
-            AbstractNISOp.addNISMake("group", getConnection());
+            AbstractNISOp.addNISMake("group", connection);
         } else {
-            CreateNISGroupCommand.create(group, getConnection());
+            CreateNISGroupCommand.create(group, connection);
         }
     }
 
@@ -106,7 +110,7 @@ public class OpCreateImpl extends AbstractOp {
      * {@link OpCreateImpl#invokeNISGroupCreate(SolarisEntry)}
      */
     private void invokeNativeGroupCreate(final SolarisEntry group) {
-        CreateNativeGroupCommand.create(group, getConnection());
+        CreateNativeGroupCommand.create(group, connection);
     }
 
     /**
@@ -115,18 +119,18 @@ public class OpCreateImpl extends AbstractOp {
      */
     private void invokeNISUserCreate(SolarisEntry entry, GuardedString password) {
         
-        if (AbstractNISOp.isDefaultNisPwdDir(getConnection())) {
+        if (AbstractNISOp.isDefaultNisPwdDir(connection)) {
             invokeNativeUserCreate(entry, password);
             
             // The user has to be added to the NIS database
-            getConnection().doSudoStart();
+            connection.doSudoStart();
             try {
-                AbstractNISOp.addNISMake("passwd", getConnection());
+                AbstractNISOp.addNISMake("passwd", connection);
             } finally {
-                getConnection().doSudoReset();
+                connection.doSudoReset();
             }
         } else {
-            CreateNISUserCommand.performNIS(entry, getConnection());
+            CreateNISUserCommand.performNIS(entry, connection);
         }
     }
     
@@ -136,6 +140,6 @@ public class OpCreateImpl extends AbstractOp {
      * {@see OpCreateImpl#invokeNISUserCreate(SolarisEntry, GuardedString)}
      */
     private void invokeNativeUserCreate(SolarisEntry entry, GuardedString password) {
-        CreateNativeUserCommand.createUser(entry, password, getConnection());
+        CreateNativeUserCommand.createUser(entry, password, connection);
     }
 }

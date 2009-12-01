@@ -34,6 +34,7 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.operation.nis.AbstractNISOp;
@@ -49,12 +50,15 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
 public class OpUpdateImpl extends AbstractOp {
     
     private static final Log _log = Log.getLog(OpUpdateImpl.class);
+    
+    private SolarisConnection connection;
 
     /** These objectclasses are valid for update operation. */
     final ObjectClass[] acceptOC = { ObjectClass.ACCOUNT, ObjectClass.GROUP };
 
-    public OpUpdateImpl(SolarisConnector conn) {
-        super(conn);
+    public OpUpdateImpl(SolarisConnector connector) {
+        super(connector);
+        connection = connector.getConnection();
     }
 
     /** main update method */
@@ -70,13 +74,13 @@ public class OpUpdateImpl extends AbstractOp {
         
         if (objclass.is(ObjectClass.ACCOUNT_NAME)) {
             final GuardedString passwd = SolarisUtil.getPasswordFromMap(attrMap);
-            if (getConnection().isNis()) {
+            if (connection.isNis()) {
                 invokeNISUserUpdate(entry, passwd);
             } else {
                 invokeNativeUserUpdate(entry, passwd);
             }
         } else if (objclass.is(ObjectClass.GROUP_NAME)) {
-            if (getConnection().isNis()) {
+            if (connection.isNis()) {
                 invokeNISGroupUpdate(entry);
             } else {
                 invokeNativeGroupUpdate(entry);
@@ -101,24 +105,24 @@ public class OpUpdateImpl extends AbstractOp {
      * Compare with NIS update operation: {@see OpUpdateImpl#invokeNISGroupUpdate(SolarisEntry)}
      */
     private void invokeNativeGroupUpdate(SolarisEntry groupEntry) {
-        UpdateNativeGroupCommand.updateGroup(groupEntry, getConnection());
+        UpdateNativeGroupCommand.updateGroup(groupEntry, connection);
     }
 
     /**
      * Compare with Native update operation: {@see OpUpdateImpl#invokeNativeGroupUpdate(SolarisEntry)}
      */
     private void invokeNISGroupUpdate(SolarisEntry groupEntry) {
-        if (AbstractNISOp.isDefaultNisPwdDir(getConnection())) {
+        if (AbstractNISOp.isDefaultNisPwdDir(connection)) {
             invokeNativeGroupUpdate(groupEntry);
             /* TODO just FYI: sudo added, it was missing in the adapter */
-            getConnection().doSudoStart();
+            connection.doSudoStart();
             try {
-                AbstractNISOp.addNISMake("group", getConnection());
+                AbstractNISOp.addNISMake("group", connection);
             } finally {
-                getConnection().doSudoReset();
+                connection.doSudoReset();
             }
         } else {
-            UpdateNISGroupCommand.updateGroup(groupEntry, getConnection());
+            UpdateNISGroupCommand.updateGroup(groupEntry, connection);
         }
     }
 
@@ -127,18 +131,18 @@ public class OpUpdateImpl extends AbstractOp {
      */
     private void invokeNISUserUpdate(final SolarisEntry userEntry,
             final GuardedString passwd) {
-        if (AbstractNISOp.isDefaultNisPwdDir(getConnection())) {
+        if (AbstractNISOp.isDefaultNisPwdDir(connection)) {
             invokeNativeUserUpdate(userEntry, passwd);
             
-            getConnection().doSudoStart();
+            connection.doSudoStart();
             try {
                 // The user has to be added to the NIS database
-                AbstractNISOp.addNISMake("passwd", getConnection());
+                AbstractNISOp.addNISMake("passwd", connection);
             } finally {
-                getConnection().doSudoReset();
+                connection.doSudoReset();
             }
         } else {
-            UpdateNISUserCommand.updateUser(userEntry, getConnection());
+            UpdateNISUserCommand.updateUser(userEntry, connection);
         }
     }
     
@@ -146,6 +150,6 @@ public class OpUpdateImpl extends AbstractOp {
      * Compare with other NIS implementation: {@see OpUpdateImpl#invokeNISUserUpdate(SolarisEntry, GuardedString)} 
      */
     private void invokeNativeUserUpdate(final SolarisEntry userEntry, final GuardedString passwd) {
-        UpdateNativeUserCommand.updateUser(userEntry, passwd, getConnection());
+        UpdateNativeUserCommand.updateUser(userEntry, passwd, connection);
     }
 }

@@ -24,13 +24,10 @@ package org.identityconnectors.solaris.operation;
 
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.framework.common.objects.Schema;
-import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 
 public abstract class AbstractOp {
-    private SolarisConfiguration _configuration;
-    private SolarisConnection _connection;
     private SolarisConnector _connector;
     
     public AbstractOp(SolarisConnector conn) {
@@ -38,23 +35,9 @@ public abstract class AbstractOp {
         
         final SolarisConnection connection = conn.getConnection();
         Assertions.nullCheck(connection, "connection");
-        _configuration = connection.getConfiguration();
-        _connection = connection;
-    }
-
-    protected final SolarisConfiguration getConfiguration() {
-        return _configuration;
-    }
-    
-    public final SolarisConnection getConnection() {
-        return _connection;
     }
     
     protected final Schema getSchema() {
         return _connector.schema();
-    }
-    
-    protected final String getRootShellPrompt() {
-        return _connection.getRootShellPrompt();
     }
 }

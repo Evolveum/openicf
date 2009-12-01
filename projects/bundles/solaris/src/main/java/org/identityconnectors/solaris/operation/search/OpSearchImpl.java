@@ -43,6 +43,7 @@ import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.attr.AccountAttribute;
@@ -59,6 +60,12 @@ public class OpSearchImpl extends AbstractOp {
     
     private static final Log _log = Log.getLog(OpSearchImpl.class);
     
+    private SolarisConnection connection;
+    
+    /**
+     * SHELL objectClass supports only Search operation. It encapsulates the
+     * shell types that are available on the given Solaris resource.
+     */
     public static final ObjectClass SHELL = new ObjectClass("shell");
     
     private final ObjectClass oclass;
@@ -71,9 +78,11 @@ public class OpSearchImpl extends AbstractOp {
     /** names of attributes to get translated to {@see NativeAttribute}-s. */
     private final Set<NativeAttribute> attrsToGetNative;
     
-    public OpSearchImpl(SolarisConnector conn, ObjectClass oclass, Node filter,
+    public OpSearchImpl(SolarisConnector connector, ObjectClass oclass, Node filter,
             ResultsHandler handler, OperationOptions options) {
-        super(conn);
+        super(connector);
+        connection = connector.getConnection();
+        
         this.oclass = oclass;
         this.handler = handler;
         
@@ -124,7 +133,7 @@ public class OpSearchImpl extends AbstractOp {
         
         if (oclass.is(SHELL.getObjectClassValue())) {
             final String cmd = "[ -f \"/etc/shells\" ] && cat /etc/shells";
-            final String out = getConnection().executeCommand(cmd);
+            final String out = connection.executeCommand(cmd);
             final List<String> items = parseResult(out);
             notifyHandler(oclass, handler, items);
             
@@ -194,8 +203,8 @@ public class OpSearchImpl extends AbstractOp {
      */
     private void complexSearch(ObjectClass oclass2, Set<NativeAttribute> requiredAttrs) {
         Iterator<SolarisEntry> entryIt = (oclass2.is(ObjectClass.ACCOUNT_NAME)) ? 
-                SolarisEntries.getAllAccounts(requiredAttrs, getConnection()) : 
-                    SolarisEntries.getAllGroups(requiredAttrs, getConnection());
+                SolarisEntries.getAllAccounts(requiredAttrs, connection) : 
+                    SolarisEntries.getAllGroups(requiredAttrs, connection);
 
         while (entryIt.hasNext()) {
             final SolarisEntry entry = entryIt.next();
@@ -217,9 +226,9 @@ public class OpSearchImpl extends AbstractOp {
     private void simpleSearch(ObjectClass oclass2, Set<NativeAttribute> requiredAttrs) {
         final SolarisEntry singleEntry; 
         if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
-            singleEntry = SolarisEntries.getAccount(((EqualsNode) filter).getValue(), requiredAttrs, getConnection());
+            singleEntry = SolarisEntries.getAccount(((EqualsNode) filter).getValue(), requiredAttrs, connection);
         } else { // GROUP
-            singleEntry = SolarisEntries.getGroup(((EqualsNode) filter).getValue(), requiredAttrs, getConnection());
+            singleEntry = SolarisEntries.getGroup(((EqualsNode) filter).getValue(), requiredAttrs, connection);
         }
         
         if (singleEntry != null) {

@@ -26,6 +26,7 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.operation.nis.AbstractNISOp;
@@ -36,10 +37,13 @@ public class OpDeleteImpl extends AbstractOp {
 
     private static final Log _log = Log.getLog(OpDeleteImpl.class);
     
+    private SolarisConnection connection;
+    
     final ObjectClass[] acceptOC = { ObjectClass.ACCOUNT, ObjectClass.GROUP };
 
-    public OpDeleteImpl(SolarisConnector conn) {
-        super(conn);
+    public OpDeleteImpl(SolarisConnector connector) {
+        super(connector);
+        connection = connector.getConnection();
     }
     
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
@@ -50,13 +54,13 @@ public class OpDeleteImpl extends AbstractOp {
         _log.info("{0} delete(''{1}'')",((objClass.is(ObjectClass.ACCOUNT_NAME))? "account" : "group") , entryName);
         
         if (objClass.is(ObjectClass.ACCOUNT_NAME)) {
-            if (getConnection().isNis()) {
+            if (connection.isNis()) {
                 invokeNISUserDelete(entryName);
             } else {
                 invokeNativeUserDelete(entryName);
             }
         } else if (objClass.is(ObjectClass.GROUP_NAME)) {
-            if (getConnection().isNis()) {
+            if (connection.isNis()) {
                 invokeNISGroupDelete(entryName);
             } else {
                 invokeNativeGroupDelete(entryName);
@@ -74,27 +78,27 @@ public class OpDeleteImpl extends AbstractOp {
      * compare with NIS delete operation: {@see OpDeleteImpl#invokeNISGroupDelete(String)}
      */
     private void invokeNativeGroupDelete(String groupName) {
-        DeleteNativeGroupCommand.delete(groupName, getConnection());
+        DeleteNativeGroupCommand.delete(groupName, connection);
     }
 
     /**
      * compare with Native delete operation: {@see OpDeleteImpl#invokeNativeGroupDelete(Uid)}
      */
     private void invokeNISGroupDelete(String groupName) {
-        if (AbstractNISOp.isDefaultNisPwdDir(getConnection())) {
+        if (AbstractNISOp.isDefaultNisPwdDir(connection)) {
             invokeNativeGroupDelete(groupName);
             
             /*
              * TODO in adapter, SRA#getDeleteNISUserScript sudo is missing (file another bug?)
              */
-            getConnection().doSudoStart();
+            connection.doSudoStart();
             try {
-                AbstractNISOp.addNISMake("group", getConnection());
+                AbstractNISOp.addNISMake("group", connection);
             } finally {
-                getConnection().doSudoReset();
+                connection.doSudoReset();
             }
         } else {
-            DeleteNISGroupCommand.delete(groupName, getConnection());
+            DeleteNISGroupCommand.delete(groupName, connection);
         }
     }
 
@@ -102,7 +106,7 @@ public class OpDeleteImpl extends AbstractOp {
      * compare with NIS delete operation: {@see OpDeleteImpl#invokeNISUserDelete(String)}
      */
     private void invokeNativeUserDelete(final String accountName) {
-        DeleteNativeUserCommand.delete(accountName, getConnection());
+        DeleteNativeUserCommand.delete(accountName, connection);
     }
 
     /**
@@ -111,19 +115,19 @@ public class OpDeleteImpl extends AbstractOp {
     private void invokeNISUserDelete(String accountName) {
         // If the password source file is in /etc then use the native
         // utilities
-        if (AbstractNISOp.isDefaultNisPwdDir(getConnection())) {
+        if (AbstractNISOp.isDefaultNisPwdDir(connection)) {
             invokeNativeUserDelete(accountName);
             /*
              * TODO in adapter, SRA#getDeleteNISUserScript sudo is missing (file another bug?)
              */
-            getConnection().doSudoStart();
+            connection.doSudoStart();
             try {
-                AbstractNISOp.addNISMake("passwd", getConnection());
+                AbstractNISOp.addNISMake("passwd", connection);
             } finally {
-                getConnection().doSudoReset();
+                connection.doSudoReset();
             }
         } else {
-            DeleteNISUserCommand.delete(accountName, getConnection());
+            DeleteNISUserCommand.delete(accountName, connection);
         }
     }
 }

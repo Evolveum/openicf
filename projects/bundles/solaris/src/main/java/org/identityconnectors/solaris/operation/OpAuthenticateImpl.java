@@ -41,11 +41,14 @@ public class OpAuthenticateImpl extends AbstractOp {
 
     private static final Log _log = Log.getLog(OpAuthenticateImpl.class);
     
+    private SolarisConnection connection;
+    
     private static final String MSG = "authenticateMessage";
     final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT};
     
-    public OpAuthenticateImpl(SolarisConnector conn) {
-        super(conn);
+    public OpAuthenticateImpl(SolarisConnector connector) {
+        super(connector);
+        connection = connector.getConnection();
     }
 
     public Uid authenticate(ObjectClass objectClass, String username,
@@ -56,9 +59,9 @@ public class OpAuthenticateImpl extends AbstractOp {
         final Map<String, SolarisConnection.ErrorHandler> rejectsMap = initRejectsMap(username);
         final String command = "exec login " + username + " TERM=vt00";
         
-        getConnection().executeCommand(command, Collections.<String>emptySet(), CollectionUtil.newSet("assword:"));
-        SolarisConnection.sendPassword(password, getConnection());
-        getConnection().executeCommand("echo '" + MSG + "'", rejectsMap, CollectionUtil.newSet(MSG));
+        connection.executeCommand(command, Collections.<String>emptySet(), CollectionUtil.newSet("assword:"));
+        SolarisConnection.sendPassword(password, connection);
+        connection.executeCommand("echo '" + MSG + "'", rejectsMap, CollectionUtil.newSet(MSG));
         _log.info("authenticate successful for user: '{0}'", username);
         
         return new Uid(username);
