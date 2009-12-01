@@ -42,7 +42,7 @@ public class ContainsNode extends SingleAttributeNode {
 
     @Override
     protected boolean evaluateImpl(String singleValue) {
-        return singleValue.contains(value);
+        return singleValue.contains(value) ^ isNot();
     }
 
 }

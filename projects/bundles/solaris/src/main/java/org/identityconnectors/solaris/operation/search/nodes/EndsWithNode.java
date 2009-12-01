@@ -42,7 +42,7 @@ public class EndsWithNode extends SingleAttributeNode {
 
     @Override
     protected boolean evaluateImpl(String singleValue) {
-        return singleValue.endsWith(value);
+        return singleValue.endsWith(value) ^ isNot();
     }
 
 }

@@ -46,7 +46,7 @@ public class EqualsNode extends SingleAttributeNode {
 
     @Override
     protected boolean evaluateImpl(String singleValue) {
-        return singleValue.equals(value);
+        return singleValue.equals(value) ^ isNot();
     }
 
 }

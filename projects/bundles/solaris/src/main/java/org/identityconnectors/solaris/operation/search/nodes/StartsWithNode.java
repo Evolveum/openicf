@@ -46,7 +46,7 @@ public class StartsWithNode extends SingleAttributeNode {
 
     @Override
     protected boolean evaluateImpl(String singleValue) {
-        return singleValue.startsWith(value);
+        return singleValue.startsWith(value) ^ isNot();
     }
 
 }

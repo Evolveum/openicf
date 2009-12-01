@@ -42,7 +42,7 @@ public abstract class SingleAttributeNode extends AttributeNode {
         
         String singleValue = (String) AttributeUtil.getSingleValue(result);
         
-        return (singleValue != null && evaluateImpl(singleValue)) ^ isNot();
+        return (singleValue != null && evaluateImpl(singleValue));
     }
 
     protected abstract boolean evaluateImpl(String singleValue);
