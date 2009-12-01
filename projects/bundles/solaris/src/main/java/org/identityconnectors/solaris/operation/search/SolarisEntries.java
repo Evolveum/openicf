@@ -30,7 +30,6 @@ import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.solaris.SolarisConnection;
-import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 
 /**
@@ -41,7 +40,7 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
 public class SolarisEntries {
 
     public static Iterator<SolarisEntry> getAllAccounts(Set<NativeAttribute> attrsToGet, SolarisConnection conn) {
-        String command = (!SolarisUtil.isNis(conn)) ? conn.buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"") : "ypcat passwd | cut -d: -f1";
+        String command = (!conn.isNis()) ? conn.buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"") : "ypcat passwd | cut -d: -f1";
         String out = conn.executeCommand(command);
         
         List<String> accountNames = getNewlineSeparatedItems(out);
@@ -56,7 +55,7 @@ public class SolarisEntries {
     }
 
     public static Iterator<SolarisEntry> getAllGroups(Set<NativeAttribute> attrsToGet, SolarisConnection conn) {
-        String cmd = (!SolarisUtil.isNis(conn)) ? "cut -d: -f1 /etc/group | grep -v \"^[+-]\"" : "ypcat group | cut -d: -f1";
+        String cmd = (!conn.isNis()) ? "cut -d: -f1 /etc/group | grep -v \"^[+-]\"" : "ypcat group | cut -d: -f1";
         String out = conn.executeCommand(cmd);
         
         List<String> groupNames = getNewlineSeparatedItems(out);

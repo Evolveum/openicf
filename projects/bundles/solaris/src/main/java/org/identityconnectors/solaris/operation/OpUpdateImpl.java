@@ -70,13 +70,13 @@ public class OpUpdateImpl extends AbstractOp {
         
         if (objclass.is(ObjectClass.ACCOUNT_NAME)) {
             final GuardedString passwd = SolarisUtil.getPasswordFromMap(attrMap);
-            if (SolarisUtil.isNis(getConnection())) {
+            if (getConnection().isNis()) {
                 invokeNISUserUpdate(entry, passwd);
             } else {
                 invokeNativeUserUpdate(entry, passwd);
             }
         } else if (objclass.is(ObjectClass.GROUP_NAME)) {
-            if (SolarisUtil.isNis(getConnection())) {
+            if (getConnection().isNis()) {
                 invokeNISGroupUpdate(entry);
             } else {
                 invokeNativeGroupUpdate(entry);

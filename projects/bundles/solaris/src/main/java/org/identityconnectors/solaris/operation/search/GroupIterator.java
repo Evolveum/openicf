@@ -30,7 +30,6 @@ import java.util.Set;
 
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.solaris.SolarisConnection;
-import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 
 class GroupIterator implements Iterator<SolarisEntry> {
@@ -61,10 +60,10 @@ class GroupIterator implements Iterator<SolarisEntry> {
      * @return the initialized entry, or Null in case the user was not found on the resource.
      */
     private SolarisEntry buildGroup(String groupName) {
-        String cmd = (!SolarisUtil.isNis(conn)) ? "grep '^" + groupName + ":' /etc/group"
+        String cmd = (!conn.isNis()) ? "grep '^" + groupName + ":' /etc/group"
                 : "ypmatch " + groupName + " group";
         String groupLine = conn.executeCommand(cmd);
-        if (SolarisUtil.isNis(conn) && groupLine.toLowerCase().contains("can't match")) {
+        if (conn.isNis() && groupLine.toLowerCase().contains("can't match")) {
             return null;
         }
         

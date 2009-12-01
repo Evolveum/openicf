@@ -854,6 +854,11 @@ public class SolarisConnection {
             executeCommand(SUDO_RESET_COMMAND);
         }
     }
+    
+    public boolean isNis() {
+        final String sysDB = getConfiguration().getSysDbType();
+        return sysDB != null && sysDB.equalsIgnoreCase("nis");
+    }
 
     /**
      * Use this class to construct a sequence of matchers.

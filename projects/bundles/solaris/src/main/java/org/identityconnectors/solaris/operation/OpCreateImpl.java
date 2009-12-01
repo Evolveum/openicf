@@ -69,13 +69,13 @@ public class OpCreateImpl extends AbstractOp {
         final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(name.getNameValue(), oclass, attrs);
         if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
             final GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
-            if (SolarisUtil.isNis(getConnection())) {
+            if (getConnection().isNis()) {
                 invokeNISUserCreate(entry, password);
             } else {
                 invokeNativeUserCreate(entry, password);
             }
         } else if (oclass.is(ObjectClass.GROUP_NAME)) {
-            if (SolarisUtil.isNis(getConnection())) {
+            if (getConnection().isNis()) {
                 invokeNISGroupCreate(entry);
             } else {
                 invokeNativeGroupCreate(entry);

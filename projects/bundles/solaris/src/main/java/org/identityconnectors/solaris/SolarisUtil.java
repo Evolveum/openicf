@@ -113,13 +113,4 @@ public class SolarisUtil {
         }
         return builder.build();
     }
-    
-    public static boolean isNis(SolarisConnection conn) {
-        final String sysDB = conn.getConfiguration().getSysDbType();
-        boolean sysDbType = false;
-        if ((sysDB != null) && sysDB.equalsIgnoreCase("nis")) {
-            sysDbType = true;
-        }
-        return sysDbType;
-    }
 }

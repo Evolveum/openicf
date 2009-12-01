@@ -50,13 +50,13 @@ public class OpDeleteImpl extends AbstractOp {
         _log.info("{0} delete(''{1}'')",((objClass.is(ObjectClass.ACCOUNT_NAME))? "account" : "group") , entryName);
         
         if (objClass.is(ObjectClass.ACCOUNT_NAME)) {
-            if (SolarisUtil.isNis(getConnection())) {
+            if (getConnection().isNis()) {
                 invokeNISUserDelete(entryName);
             } else {
                 invokeNativeUserDelete(entryName);
             }
         } else if (objClass.is(ObjectClass.GROUP_NAME)) {
-            if (SolarisUtil.isNis(getConnection())) {
+            if (getConnection().isNis()) {
                 invokeNISGroupDelete(entryName);
             } else {
                 invokeNativeGroupDelete(entryName);
