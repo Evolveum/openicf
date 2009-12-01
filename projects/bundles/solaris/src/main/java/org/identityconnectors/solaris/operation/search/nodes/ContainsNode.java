@@ -22,10 +22,7 @@
  */
 package org.identityconnectors.solaris.operation.search.nodes;
 
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 
 
@@ -34,13 +31,9 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
  * @author David Adam
  *
  */
-public class ContainsNode extends AttributeNode {
+public class ContainsNode extends SingleAttributeNode {
 
     private String value;
-
-    public String getValue() {
-        return value;
-    }
     
     public ContainsNode(NativeAttribute nativeAttr, boolean isNot, String value) {
         super(nativeAttr, isNot);
@@ -48,17 +41,8 @@ public class ContainsNode extends AttributeNode {
     }
 
     @Override
-    public boolean evaluate(SolarisEntry entry) {
-        String filterAttrName = getAttributeName().getName();
-        for (Attribute attr : entry.getAttributeSet()) {
-            if (attr.getName().equals(filterAttrName)) {
-                String stringValue = AttributeUtil.getStringValue(attr);
-                if (stringValue.contains(getValue())) {
-                    return true ^ isNot();
-                }
-            }
-        }
-        return false ^ isNot();
+    protected boolean evaluateImpl(String singleValue) {
+        return singleValue.contains(value);
     }
 
 }

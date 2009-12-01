@@ -22,10 +22,7 @@
  */
 package org.identityconnectors.solaris.operation.search.nodes;
 
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 
 
@@ -34,7 +31,7 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
  * @author David Adam
  *
  */
-public class StartsWithNode extends AttributeNode {
+public class StartsWithNode extends SingleAttributeNode {
 
     private String value;
 
@@ -48,17 +45,8 @@ public class StartsWithNode extends AttributeNode {
     }
 
     @Override
-    public boolean evaluate(SolarisEntry entry) {
-        String filterAttrName = getAttributeName().getName();
-        for (Attribute attr : entry.getAttributeSet()) {
-            if (attr.getName().equals(filterAttrName)) {
-                String stringValue = AttributeUtil.getStringValue(attr);
-                if (stringValue.startsWith(getValue())) {
-                    return true ^ isNot();
-                }
-            }
-        }
-        return false ^ isNot();
+    protected boolean evaluateImpl(String singleValue) {
+        return singleValue.startsWith(value);
     }
 
 }

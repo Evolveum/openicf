@@ -39,10 +39,6 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
 public class ContainsAllValuesNode extends AttributeNode {
 
     private List<? extends Object> values;
-
-    public List<? extends Object> getValues() {
-        return values;
-    }
     
     public ContainsAllValuesNode(NativeAttribute nativeAttr, boolean isNot, List<? extends Object> values) {
         super(nativeAttr, isNot);
@@ -51,17 +47,12 @@ public class ContainsAllValuesNode extends AttributeNode {
 
     @Override
     public boolean evaluate(SolarisEntry entry) {
-        Set<? extends Object> filterValues = CollectionUtil.newSet(getValues());
+        Set<? extends Object> filterValues = CollectionUtil.newSet(values);
         
-        String filterAttrName = getAttributeName().getName();
-        for (Attribute attr : entry.getAttributeSet()) {
-            if (attr.getName().equals(filterAttrName)) {
-                Set<Object> attributeValues = CollectionUtil.newSet(attr.getValue());
-                return attributeValues.equals(filterValues) ^ isNot();
-            }
-        }
+        NativeAttribute filterAttrName = getAttributeName();
+        Attribute result = entry.searchForAttribute(filterAttrName);
         
-        return false ^ isNot();
+        return (result != null && result.getValue() != null && result.getValue().containsAll(filterValues)) ^ isNot();
     }
 
 }

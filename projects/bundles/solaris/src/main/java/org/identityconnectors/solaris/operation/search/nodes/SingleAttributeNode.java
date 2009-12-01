@@ -22,31 +22,28 @@
  */
 package org.identityconnectors.solaris.operation.search.nodes;
 
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.solaris.attr.NativeAttribute;
+import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
-
-
-/**
- * Single value filter.
- * @author David Adam
- *
- */
-public class EqualsNode extends SingleAttributeNode {
-
-    private String value;
-
-    public String getValue() {
-        return value;
-    }
+public abstract class SingleAttributeNode extends AttributeNode {
     
-    public EqualsNode(NativeAttribute nativeAttr, boolean isNot, String value) {
+    public SingleAttributeNode(NativeAttribute nativeAttr, boolean isNot) {
         super(nativeAttr, isNot);
-        this.value = value;
     }
 
     @Override
-    protected boolean evaluateImpl(String singleValue) {
-        return singleValue.equals(value);
+    public boolean evaluate(SolarisEntry entry) {
+        NativeAttribute filterAttrName = getAttributeName();
+        Attribute result = entry.searchForAttribute(filterAttrName);
+        if (result == null)
+            return isNot();
+        
+        String singleValue = (String) AttributeUtil.getSingleValue(result);
+        
+        return (singleValue != null && evaluateImpl(singleValue)) ^ isNot();
     }
 
+    protected abstract boolean evaluateImpl(String singleValue);
 }

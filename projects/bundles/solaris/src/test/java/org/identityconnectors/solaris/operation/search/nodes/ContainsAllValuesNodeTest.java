@@ -37,14 +37,18 @@ public class ContainsAllValuesNodeTest {
         final List<String> originalList = CollectionUtil.newList("foo", "bar", "baz");
         // not negated result
         Node swn = new ContainsAllValuesNode(NativeAttribute.NAME, false, originalList);
-        boolean result = swn.evaluate(new SolarisEntry.Builder("FooBarBaz").addAttr(NativeAttribute.NAME, originalList).build());
+        
+        final List<String> newList = CollectionUtil.newList(originalList);
+        newList.add("boo");
+        
+        boolean result = swn.evaluate(new SolarisEntry.Builder("FooBarBaz").addAttr(NativeAttribute.NAME, newList).build());
         Assert.assertTrue(result);
         result = swn.evaluate(new SolarisEntry.Builder("FooBarBaz").addAttr(NativeAttribute.NAME, CollectionUtil.newList("ahoj", "ship")).build());
         Assert.assertFalse(result);
         
         // negated result
         swn = new ContainsAllValuesNode(NativeAttribute.NAME, true, originalList);
-        result = swn.evaluate(new SolarisEntry.Builder("FooBarBaz").addAttr(NativeAttribute.NAME, originalList).build());
+        result = swn.evaluate(new SolarisEntry.Builder("FooBarBaz").addAttr(NativeAttribute.NAME, newList).build());
         Assert.assertFalse(result);        
         result = swn.evaluate(new SolarisEntry.Builder("FooBarBaz").addAttr(NativeAttribute.NAME, CollectionUtil.newList("ahoj", "ship")).build());
         Assert.assertTrue(result);
