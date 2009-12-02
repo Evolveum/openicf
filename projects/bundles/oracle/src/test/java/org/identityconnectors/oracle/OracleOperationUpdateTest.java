@@ -710,6 +710,24 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
 		}
 		testConnector.dispose();
 	}
+	
+	@Test
+	public void testUpdateNotExistingUser(){
+        //Normal password update
+	    password = new GuardedString("newPassword".toCharArray());
+        Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
+        facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(passwordAttribute),null);
+	    //now delete
+	    facade.delete(ObjectClass.ACCOUNT, uid, null);
+	    //update again must throw UnknowUIDException
+	    try{
+	        facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(passwordAttribute),null);
+	        fail("Update of not existing user must throw UnknownUidException");
+	    }
+	    catch(UnknownUidException e){}
+	    //Here recreate test user, otherwise after method will fail 
+	    createTestUser();
+	}
 
     
     /** Test setting lockout parameter 

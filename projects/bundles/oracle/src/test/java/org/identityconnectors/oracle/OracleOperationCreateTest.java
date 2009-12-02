@@ -23,6 +23,7 @@ import java.util.Set;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -111,6 +112,22 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         assertNotNull(record);
         assertEqualsIgnoreCase(TEST_USER, record.getUserName());
         assertEquals("OPEN",record.getStatus());
+    }
+    
+    @Test
+    public void testCreateExistingUser(){
+        Attribute authentication = AttributeBuilder.build(OracleConstants.ORACLE_AUTHENTICATION_ATTR_NAME, OracleConstants.ORACLE_AUTH_LOCAL);
+        Attribute name = new Name(TEST_USER);
+        GuardedString password = new GuardedString("hello".toCharArray());
+        Attribute passwordAttribute = AttributeBuilder.buildPassword(password);
+        Uid uid = facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,passwordAttribute), null);
+        try{
+            facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(authentication,name,passwordAttribute), null);
+            fail("Create of existing user must throw AlreadyExistsException");
+        }
+        catch(AlreadyExistsException e){
+            facade.delete(ObjectClass.ACCOUNT, uid, null);
+        }
     }
     
     /** Test create of user with external authentication 

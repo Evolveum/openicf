@@ -1,6 +1,7 @@
 package org.identityconnectors.oracle;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -52,7 +53,6 @@ final class OracleOperationCreate extends AbstractOracleOperation implements Cre
         checkCreateAttributes(map);
         String userName = OracleConnectorHelper.getStringValue(map, Name.NAME, cfg.getConnectorMessages());
         new LocalizedAssert(cfg.getConnectorMessages()).assertNotBlank(userName,Name.NAME);
-        checkUserNotExist(userName);
         log.info("Creating user : [{0}]", userName);
         OracleUserAttributes.Builder builder = new OracleUserAttributes.Builder();
         builder.setUserName(userName);
@@ -84,6 +84,12 @@ final class OracleOperationCreate extends AbstractOracleOperation implements Cre
             log.info("User created : [{0}]", userName);
         } catch (Exception e) {
             SQLUtil.rollbackQuietly(adminConn);
+            if(e instanceof SQLException){
+                SQLException sqle = (SQLException) e;
+                if("42000".equals(sqle.getSQLState()) && 1920 == sqle.getErrorCode()){
+                    throw new AlreadyExistsException("User [" + userName + "] already exists");
+                }
+            }
             throw new ConnectorException(cfg.getConnectorMessages().format(MSG_CREATE_OF_USER_FAILED,null,userName),e);
         }
         return new Uid(userName);
@@ -100,12 +106,4 @@ final class OracleOperationCreate extends AbstractOracleOperation implements Cre
 			}
 		}
 	}
-
-	private void checkUserNotExist(String user) {
-        boolean userExist = new OracleUserReader(adminConn,cfg.getConnectorMessages()).userExist(user);
-        if(userExist){
-            throw new AlreadyExistsException("User " + user + " already exists");
-        }
-    }
-
 }
