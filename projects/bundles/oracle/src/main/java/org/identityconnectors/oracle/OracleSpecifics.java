@@ -3,6 +3,7 @@ package org.identityconnectors.oracle;
 import java.sql.*;
 import java.text.MessageFormat;
 import java.util.Hashtable;
+import java.util.List;
 
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLUtil;
@@ -162,6 +163,23 @@ final class OracleSpecifics {
 	    Object serialNumber = SQLUtil.selectSingleValue(systemConn, "select serial# from v$session where SID  = " +  sid);
 	    String killSql = MessageFormat.format("ALTER SYSTEM KILL SESSION {0} ", "'" + sid + "," + serialNumber + "'");
 	    SQLUtil.executeUpdateStatement(systemConn, killSql);
+	}
+	
+	static void execBatchStatemts(Connection conn, List<String> sqls) throws SQLException{
+	    if(sqls.isEmpty()){
+	        return;
+	    }
+	    Statement st = null;
+	    try{
+    	    st = conn.createStatement();
+    	    for(String sql : sqls){
+    	        st.addBatch(sql);
+    	    }
+    	    st.executeBatch();
+	    }
+	    finally{
+	        SQLUtil.closeQuietly(st);
+	    }
 	}
     
     

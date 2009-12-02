@@ -299,19 +299,19 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         SQLUtil.executeUpdateStatement(connector.getOrCreateAdminConnection(),"create table mytable(id number)");
         Attribute privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION","SELECT ON MYTABLE");
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(privileges), null);
-        List<String> privilegesRead = new OracleRolePrivReader(connector.getOrCreateAdminConnection()).readPrivileges(uid.getUidValue());
+        List<String> privilegesRead = new OracleRolePrivReader(connector.getOrCreateAdminConnection()).readAllPrivileges(uid.getUidValue());
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUserOwner() + ".MYTABLE"));
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("CREATE SESSION"));
         
         //If sending null or empty privileges attribute, all roles must get revoked
         privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME);
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(privileges), null);
-        privilegesRead = new OracleRolePrivReader(connector.getOrCreateAdminConnection()).readPrivileges(uid.getUidValue());
+        privilegesRead = new OracleRolePrivReader(connector.getOrCreateAdminConnection()).readAllPrivileges(uid.getUidValue());
         Assert.assertThat("All privileges must get revoked when sending null privileges attribute",privilegesRead, new IsEqual<List<String>>(Collections.<String>emptyList()));
         
         privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,Collections.emptyList());
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(privileges), null);
-        privilegesRead = new OracleRolePrivReader(connector.getOrCreateAdminConnection()).readPrivileges(uid.getUidValue());
+        privilegesRead = new OracleRolePrivReader(connector.getOrCreateAdminConnection()).readAllPrivileges(uid.getUidValue());
         Assert.assertThat("All privileges must get revoked when sending empty list privileges attribute",privilegesRead, new IsEqual<List<String>>(Collections.<String>emptyList()));
         
         SQLUtil.executeUpdateStatement(connector.getOrCreateAdminConnection(),"drop table mytable");
@@ -450,13 +450,13 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         SQLUtil.executeUpdateStatement(connector.getOrCreateAdminConnection(),"create table MYTABLE2(id number)");
         Attribute privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION","SELECT ON MYTABLE1");
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(privileges), null);
-        List<String> privilegesRead = new OracleRolePrivReader(connector.getOrCreateAdminConnection()).readPrivileges(uid.getUidValue());
+        List<String> privilegesRead = new OracleRolePrivReader(connector.getOrCreateAdminConnection()).readAllPrivileges(uid.getUidValue());
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUserOwner() + ".MYTABLE1"));
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("CREATE SESSION"));
         Assert.assertThat(privilegesRead, new IsNot<Iterable<String>>(JUnitMatchers.hasItem("SELECT ON " + testConf.getUser() + ".MYTABLE2")));
         privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,"SELECT ON MYTABLE2");
         facade.addAttributeValues(ObjectClass.ACCOUNT, uid, Collections.singleton(privileges), null);
-        privilegesRead = new OracleRolePrivReader(connector.getOrCreateAdminConnection()).readPrivileges(uid.getUidValue());
+        privilegesRead = new OracleRolePrivReader(connector.getOrCreateAdminConnection()).readAllPrivileges(uid.getUidValue());
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUserOwner() + ".MYTABLE1"));
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("CREATE SESSION"));
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUserOwner() + ".MYTABLE2"));
@@ -500,13 +500,13 @@ public class OracleOperationUpdateTest extends OracleConnectorAbstractTest{
         SQLUtil.executeUpdateStatement(connector.getOrCreateAdminConnection(),"create table MYTABLE2(id number)");
         Attribute privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,"CREATE SESSION","SELECT ON MYTABLE1","SELECT ON MYTABLE2");
         facade.update(ObjectClass.ACCOUNT, uid, Collections.singleton(privileges), null);
-        List<String> privilegesRead = new OracleRolePrivReader(connector.getOrCreateAdminConnection()).readPrivileges(uid.getUidValue());
+        List<String> privilegesRead = new OracleRolePrivReader(connector.getOrCreateAdminConnection()).readAllPrivileges(uid.getUidValue());
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUserOwner() + ".MYTABLE1"));
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUserOwner() + ".MYTABLE2"));
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("CREATE SESSION"));
         privileges = AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,"SELECT ON MYTABLE1");
         facade.removeAttributeValues(ObjectClass.ACCOUNT, uid, Collections.singleton(privileges), null);
-        privilegesRead = new OracleRolePrivReader(connector.getOrCreateAdminConnection()).readPrivileges(uid.getUidValue());
+        privilegesRead = new OracleRolePrivReader(connector.getOrCreateAdminConnection()).readAllPrivileges(uid.getUidValue());
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUserOwner() + ".MYTABLE2"));
         Assert.assertThat(privilegesRead, JUnitMatchers.hasItem("CREATE SESSION"));
         Assert.assertThat(privilegesRead, new IsNot<Iterable<String>>(JUnitMatchers.hasItem("SELECT ON " + testConf.getUserOwner() + ".MYTABLE1")));

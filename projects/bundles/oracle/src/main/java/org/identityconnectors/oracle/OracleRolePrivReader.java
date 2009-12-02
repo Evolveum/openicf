@@ -41,7 +41,19 @@ final class OracleRolePrivReader {
      * @param userName
      * @return
      */
-    List<String> readPrivileges(String userName){
+    List<String> readAllPrivileges(String userName){
+        List<String> privileges = new ArrayList<String>();
+        privileges.addAll(readSystemPrivileges(userName));
+        privileges.addAll(readObjectPrivileges(userName));
+        return privileges;
+    }
+    
+    /**
+     * Reads system privileges for user
+     * @param userName
+     * @return list of system privileges
+     */
+    List<String> readSystemPrivileges(String userName){
         List<String> privileges = new ArrayList<String>();
         try {
             final SQLParam userNameParam =  new SQLParam("Grantee", userName);
@@ -49,7 +61,22 @@ final class OracleRolePrivReader {
             for(Object[] row : selectRows){
                 privileges.add((String) row[0]);
             }
-            selectRows = SQLUtil.selectRows(conn, "select PRIVILEGE,OWNER,TABLE_NAME from DBA_TAB_PRIVS where Grantee = ?", userNameParam);
+            return privileges;
+        } catch (SQLException e) {
+            throw ConnectorException.wrap(e);
+        }
+    }
+    
+    /**
+     * Reads object privileges for user
+     * @param userName
+     * @return list of object privileges
+     */
+    List<String> readObjectPrivileges(String userName){
+        List<String> privileges = new ArrayList<String>();
+        try {
+            final SQLParam userNameParam =  new SQLParam("Grantee", userName);
+            List<Object[]> selectRows = SQLUtil.selectRows(conn, "select PRIVILEGE,OWNER,TABLE_NAME from DBA_TAB_PRIVS where Grantee = ?", userNameParam);
             for(Object[] row : selectRows){
                 String privilege = row[0] + " ON " + row[1] + "." + row[2];
                 privileges.add(privilege);
@@ -59,5 +86,7 @@ final class OracleRolePrivReader {
             throw ConnectorException.wrap(e);
         }
     }
+    
+    
 
 }

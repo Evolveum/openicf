@@ -205,7 +205,7 @@ final class OracleOperationSearch extends AbstractOracleOperation implements Sea
 			bld.addAttribute(OracleConnectorHelper.buildSingleAttribute(OracleConstants.ORACLE_TEMP_TS_QUOTA_ATTR_NAME,quota != null ? quota.toString() : null));
 		}
 		if(attributesToGet.contains(OracleConstants.ORACLE_PRIVS_ATTR_NAME)){
-			bld.addAttribute(AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,new OracleRolePrivReader(adminConn).readPrivileges(userName)));
+			bld.addAttribute(AttributeBuilder.build(OracleConstants.ORACLE_PRIVS_ATTR_NAME,new OracleRolePrivReader(adminConn).readAllPrivileges(userName)));
 		}
 		if(attributesToGet.contains(OracleConstants.ORACLE_ROLES_ATTR_NAME)){
 			bld.addAttribute(AttributeBuilder.build(OracleConstants.ORACLE_ROLES_ATTR_NAME,new OracleRolePrivReader(adminConn).readRoles(userName)));

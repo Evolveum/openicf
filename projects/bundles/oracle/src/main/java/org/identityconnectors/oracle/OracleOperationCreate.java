@@ -74,12 +74,8 @@ final class OracleOperationCreate extends AbstractOracleOperation implements Cre
                 privileges, String.class)); 
             //Now execute create and grant statements
             SQLUtil.executeUpdateStatement(adminConn, createSQL);
-            for(String sql : rolesSQL){
-                SQLUtil.executeUpdateStatement(adminConn, sql);
-            }
-            for(String sql : privilegesSQL){
-                SQLUtil.executeUpdateStatement(adminConn, sql);
-            }
+            OracleSpecifics.execBatchStatemts(adminConn, rolesSQL);
+            OracleSpecifics.execBatchStatemts(adminConn, privilegesSQL);
             adminConn.commit();
             log.info("User created : [{0}]", userName);
         } catch (Exception e) {

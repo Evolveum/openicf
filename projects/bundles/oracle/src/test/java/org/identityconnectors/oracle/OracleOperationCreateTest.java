@@ -502,7 +502,7 @@ public class OracleOperationCreateTest extends OracleConnectorAbstractTest {
         assertNotNull(record);
         assertEqualsIgnoreCase(TEST_USER, record.getUserName());
         OracleRolePrivReader roleReader = new OracleRolePrivReader(connector.getOrCreateAdminConnection());
-        final List<String> privRead = roleReader.readPrivileges(uid.getUidValue());
+        final List<String> privRead = roleReader.readAllPrivileges(uid.getUidValue());
         Assert.assertThat(privRead, JUnitMatchers.hasItem("CREATE SESSION"));
         Assert.assertThat(privRead, JUnitMatchers.hasItem("SELECT ON " + testConf.getUserOwner() + ".MYTABLE"));
     }

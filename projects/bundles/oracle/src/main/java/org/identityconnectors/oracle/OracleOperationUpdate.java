@@ -92,7 +92,7 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
             if(aPrivileges != null){
 				List<String> privileges = OracleConnectorHelper.castList(aPrivileges, String.class);
 	            if(!privileges.isEmpty()){
-	                List<String> currentPrivileges = new OracleRolePrivReader(adminConn).readPrivileges(caAttributes.getUserName());
+	                List<String> currentPrivileges = new OracleRolePrivReader(adminConn).readAllPrivileges(caAttributes.getUserName());
 	                List<String> revokePrivileges = new ArrayList<String>(currentPrivileges);
 	                revokePrivileges.removeAll(privileges);
 	                grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokePrivileges(caAttributes.getUserName(), revokePrivileges));
@@ -100,20 +100,18 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
 	            	grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildGrantPrivileges(caAttributes.getUserName(), privileges));
 	            }
 	            else{
-	                List<String> currentPrivileges = new OracleRolePrivReader(adminConn).readPrivileges(caAttributes.getUserName());
+	                List<String> currentPrivileges = new OracleRolePrivReader(adminConn).readAllPrivileges(caAttributes.getUserName());
 	                grantRevokeSQL.addAll(new OracleRolesAndPrivsBuilder(cfg.getCSSetup()).buildRevokePrivileges(caAttributes.getUserName(), currentPrivileges));
 	            }
             }
             if(alterSQL == null && grantRevokeSQL.isEmpty()){
-            	//This is dummy update with not DDL , is it valid ?
+            	//This is dummy update with no DDL , is it valid ?
             	//yes, if we e.g update roles to same roles, no ddl will be generated
             }
             if(alterSQL != null){
             	SQLUtil.executeUpdateStatement(adminConn, alterSQL);
             }
-            for(String sql : grantRevokeSQL){
-            	SQLUtil.executeUpdateStatement(adminConn, sql);
-            }
+            OracleSpecifics.execBatchStatemts(adminConn, grantRevokeSQL);
             adminConn.commit();
             log.info("User updated : [{0}]", uid.getUidValue());
             return uid;
