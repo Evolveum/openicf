@@ -111,7 +111,9 @@ final class OracleOperationUpdate extends AbstractOracleOperation implements Upd
             if(alterSQL != null){
             	SQLUtil.executeUpdateStatement(adminConn, alterSQL);
             }
-            OracleSpecifics.execBatchStatemts(adminConn, grantRevokeSQL);
+            //here we can use normal or batch updates
+            //actually on driver tested , there was no performance gain, so use just normal updates 
+            OracleSpecifics.execStatemts(adminConn, grantRevokeSQL);
             adminConn.commit();
             log.info("User updated : [{0}]", uid.getUidValue());
             return uid;

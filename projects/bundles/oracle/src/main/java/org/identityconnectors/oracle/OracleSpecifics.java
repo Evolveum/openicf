@@ -182,6 +182,21 @@ final class OracleSpecifics {
 	    }
 	}
     
+    static void execStatemts(Connection conn, List<String> sqls) throws SQLException{
+        if(sqls.isEmpty()){
+            return;
+        }
+        Statement st = null;
+        try{
+            st = conn.createStatement();
+            for(String sql : sqls){
+                st.executeUpdate(sql);
+            }
+        }
+        finally{
+            SQLUtil.closeQuietly(st);
+        }
+    }
     
     
 

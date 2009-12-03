@@ -74,8 +74,10 @@ final class OracleOperationCreate extends AbstractOracleOperation implements Cre
                 privileges, String.class)); 
             //Now execute create and grant statements
             SQLUtil.executeUpdateStatement(adminConn, createSQL);
-            OracleSpecifics.execBatchStatemts(adminConn, rolesSQL);
-            OracleSpecifics.execBatchStatemts(adminConn, privilegesSQL);
+            //here we can use normal or batch updates
+            //actually on driver tested , there was no performance gain, so use just normal updates 
+            OracleSpecifics.execStatemts(adminConn, rolesSQL);
+            OracleSpecifics.execStatemts(adminConn, privilegesSQL);
             adminConn.commit();
             log.info("User created : [{0}]", userName);
         } catch (Exception e) {
