@@ -22,26 +22,42 @@
  */
 package org.identityconnectors.solaris.operation;
 
-import java.util.Set;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.solaris.SolarisConnection;
+import org.identityconnectors.solaris.SolarisConnection.ErrorHandler;
 
 public class DeleteNativeGroupCommand {
-    private static final Set<String> errorMsgs = CollectionUtil.newSet("ERROR",
-            "does not exist", // HP-UX error
-            "command not found", // sudo
-            "not allowed to execute", // sudo
-            "annot remove"
-            );
 
-    public static void delete(String groupName, SolarisConnection conn) {
+    public static void delete(final String groupName, SolarisConnection conn) {
         
         String groupdelCmd = conn.buildCommand("groupdel");
+        
+        ErrorHandler defaultErrHandler = new ErrorHandler() {
+            public void handle(String buffer) {
+                throw new ConnectorException("ERROR: buffer content: <" + buffer + ">");
+            }
+        };
+        ErrorHandler unknownUidHandler = new ErrorHandler() {
+            public void handle(String buffer) {
+                throw new UnknownUidException("Unknown group: '" + groupName + "'. Buffer: <" + buffer + ">"); // TODO might erase buffer output for security reasons.
+            }
+        };
+        Map<String, ErrorHandler> rejectsMap = new LinkedHashMap<String, ErrorHandler>();
+        rejectsMap.put("ERROR.*does not exist", unknownUidHandler);
+        rejectsMap.put("does not exist", unknownUidHandler); // HP-UX error
+        rejectsMap.put("command not found", defaultErrHandler); // HP-UX error
+        rejectsMap.put("not allowed to execute", defaultErrHandler); // sudo 
+        rejectsMap.put("annot remove", defaultErrHandler); // sudo
+        rejectsMap.put("ERROR", defaultErrHandler);
 
         conn.doSudoStart();
         try {
-            conn.executeCommand(groupdelCmd + " '" + groupName + "'", errorMsgs);
+            conn.executeCommand(groupdelCmd + " '" + groupName + "'", rejectsMap, Collections.<String>emptySet());
         } finally {
             conn.doSudoReset();
         }

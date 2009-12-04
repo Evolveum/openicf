@@ -54,7 +54,7 @@ public class SolarisFilterTranslatorTest {
         Assert.assertTrue(result instanceof EqualsNode);
         EqualsNode eq = (EqualsNode) result;
         Assert.assertEquals(AccountAttribute.forAttributeName(connectorAttrName).getNative(), eq.getAttributeName());
-        Assert.assertEquals(username, eq.getValue());
+        Assert.assertEquals(username, eq.getSingleValue());
     }
     
     @Test

@@ -26,9 +26,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
-import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 
 /**
@@ -36,7 +34,7 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
  * @author David Adam
  *
  */
-public class ContainsAllValuesNode extends AttributeNode {
+public class ContainsAllValuesNode extends MultiAttributeNode {
 
     private List<? extends Object> values;
     
@@ -46,13 +44,8 @@ public class ContainsAllValuesNode extends AttributeNode {
     }
 
     @Override
-    public boolean evaluate(SolarisEntry entry) {
+    protected boolean evaluateImpl(List<? extends Object> multiValue) {
         Set<? extends Object> filterValues = CollectionUtil.newSet(values);
-        
-        NativeAttribute filterAttrName = getAttributeName();
-        Attribute result = entry.searchForAttribute(filterAttrName);
-        
-        return (result != null && result.getValue() != null && result.getValue().containsAll(filterValues)) ^ isNot();
+        return (multiValue != null && multiValue.containsAll(filterValues)) ^ isNot();
     }
-
 }

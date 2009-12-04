@@ -92,8 +92,24 @@ testsuite {
   
 
     gid.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
-    __NAME__.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
-    users.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
+    __NAME__.attribute.__GROUP__.oclasses = [
+      type: String.class,
+      readable: true,
+      createable: true,
+      updateable: false,
+      required: false,
+      multiValue: false,
+      returnedByDefault: true
+    ]
+    users.attribute.__GROUP__.oclasses = [
+      type: String.class,
+      readable: true,
+      createable: true,
+      updateable: true,
+      required: false,
+      multiValue: true,
+      returnedByDefault: true
+    ]// attrTemplate
     
     shell.attribute.shell.oclasses = [
       type: String.class,
@@ -141,6 +157,11 @@ testsuite {
   } //Schema
 
 }// testsuite
+
+gid = new ObjectNotFoundException()
+modified.gid = new ObjectNotFoundException()
+users = ["root"]
+modified.users = [] // empty list
 
 inactive = new ObjectNotFoundException()
 shell = new ObjectNotFoundException()

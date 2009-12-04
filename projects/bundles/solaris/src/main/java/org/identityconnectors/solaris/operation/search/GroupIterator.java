@@ -23,11 +23,13 @@
 package org.identityconnectors.solaris.operation.search;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
@@ -63,7 +65,7 @@ class GroupIterator implements Iterator<SolarisEntry> {
         String cmd = (!conn.isNis()) ? "grep '^" + groupName + ":' /etc/group"
                 : "ypmatch " + groupName + " group";
         String groupLine = conn.executeCommand(cmd);
-        if (conn.isNis() && groupLine.toLowerCase().contains("can't match")) {
+        if (StringUtil.isBlank(groupLine) || (conn.isNis() && groupLine.toLowerCase().contains("can't match"))) {
             return null;
         }
         
@@ -78,7 +80,7 @@ class GroupIterator implements Iterator<SolarisEntry> {
         String gid = groupTokens[2];
         // users is optional parameter, may be empty
         String usersLine = (groupTokens.length > 3) ? groupTokens[3].trim() : "";
-        List<String> usersList = Arrays.asList(usersLine.split(","));
+        List<String> usersList = (!StringUtil.isBlank(usersLine)) ? Arrays.asList(usersLine.split(",")) : Collections.<String>emptyList();
         
         SolarisEntry.Builder entryBuilder = new SolarisEntry.Builder(groupName).addAttr(NativeAttribute.NAME, groupName);
         for (NativeAttribute attrToGet : requiredAttrs) {

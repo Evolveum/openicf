@@ -66,13 +66,14 @@ public class SolarisFilterTranslator extends
 
     private NativeAttribute translateFromConnectorAttribute(String connectorAttribute) {
         ConnectorAttribute connAttr = null;
-        if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
+        if (connectorAttribute.equals(Uid.NAME)) {
+            connAttr = (oclass.is(ObjectClass.ACCOUNT_NAME)) ? AccountAttribute.NAME : GroupAttribute.GROUPNAME;
+        } else if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
             connAttr = AccountAttribute.forAttributeName(connectorAttribute);
-            if (connectorAttribute.equals(Uid.NAME)) {
-                connAttr = AccountAttribute.NAME;
-            }
         } else if (oclass.is(ObjectClass.GROUP_NAME)) {
             connAttr =  GroupAttribute.forAttributeName(connectorAttribute);
+        } else {
+            throw new IllegalArgumentException("ERROR: unable to find Solaris attribute for attribute name: " + connectorAttribute);
         }
         return connAttr.getNative();
     }
@@ -107,6 +108,6 @@ public class SolarisFilterTranslator extends
 
     @Override
     protected Node createEqualsExpression(EqualsFilter filter, boolean not) {
-        return new EqualsNode(translateFromConnectorAttribute(filter.getName()), not, (String) filter.getAttribute().getValue().get(0));
+        return new EqualsNode(translateFromConnectorAttribute(filter.getName()), not, filter.getAttribute().getValue());
     }
 }

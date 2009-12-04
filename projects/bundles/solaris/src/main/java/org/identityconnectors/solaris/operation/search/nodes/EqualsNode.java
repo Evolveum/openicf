@@ -22,6 +22,8 @@
  */
 package org.identityconnectors.solaris.operation.search.nodes;
 
+import java.util.List;
+
 import org.identityconnectors.solaris.attr.NativeAttribute;
 
 
@@ -31,22 +33,23 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
  * @author David Adam
  *
  */
-public class EqualsNode extends SingleAttributeNode {
+public class EqualsNode extends MultiAttributeNode {
 
-    private String value;
+    private List<? extends Object> values;
 
-    public String getValue() {
-        return value;
+    /** user this getter, if based on the context you are sure, that only a single value makes sense. */
+    public String getSingleValue() {
+        return (values != null && values.size() > 0) ? (String) values.get(0) : null;
     }
     
-    public EqualsNode(NativeAttribute nativeAttr, boolean isNot, String value) {
+    public EqualsNode(NativeAttribute nativeAttr, boolean isNot, List<? extends Object> values) {
         super(nativeAttr, isNot);
-        this.value = value;
+        this.values = values;
     }
 
     @Override
-    protected boolean evaluateImpl(String singleValue) {
-        return singleValue.equals(value) ^ isNot();
+    protected boolean evaluateImpl(List<? extends Object> multiValue) {
+        return multiValue.equals(values) ^ isNot();
     }
 
 }

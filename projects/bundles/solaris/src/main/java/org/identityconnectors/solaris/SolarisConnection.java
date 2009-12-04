@@ -472,6 +472,9 @@ public class SolarisConnection {
         for (Map.Entry<String, ErrorHandler> rejEntry : rejects.entrySet()) {
             ErrorClosure cec = new ErrorClosure(rejEntry.getValue());
             cecList.add(cec);
+            /*
+             * Errors are matched without respect to case. E.g. 'Error' and 'ERROR' is treated the same.
+             */
             builder.addCaseInsensitiveRegExpMatch(rejEntry.getKey(), cec);
         }
         
@@ -500,6 +503,138 @@ public class SolarisConnection {
         });
         
         try {
+            /*
+             * Implementation notes on Expect4J (v. 1.0)
+             * 
+             * 1) What is Expect4J and how it is used in the connector?
+             * 
+             * Expect4J is a wrapping library over SSH connection (provided by
+             * JSch library), that is capable of analyzing the response from the
+             * SSH connection. Expect supports various other connection types
+             * too: telnet, SSH keypair.
+             * 
+             * The role of Expect in SolarisConnector is to analyze the feedback
+             * from the resource, and to invoke the assigned actions based on
+             * the resource's feedback.
+             * 
+             * The previous paragraph sounds a bit generic, so let's be more
+             * specific about the way Expect analyzes the resource's response
+             * (referred as "response" further). Expect has two basic commands:
+             * -- send(string) -- that sends the string to an SSH connection *
+             * -- expect(Match[]) -- waits for response, that will contain the
+             *      given matches. A match consists of a [string, Closure] pair. If
+             *      the given string is matched, the Closure is executed. 
+             * 
+             * Expect follows the algorithm: 
+             * -- a) read the response from the resource 
+             * -- b) scan through matches, and choose a single winner match 
+             * that is in the response
+             * -- c) if no matches found try to read from the resource, until 
+             *         some time is left from timeout.
+             *         
+             * WARNING: Expect's way of matching patterns is pretty intricate!
+             * 
+             * Note: a Closure is a callback interface, that is invoked when 
+             * the associated matching string is matched.
+             * 
+             * 
+             * 
+             * 
+             * 
+             * 2) How does expect choose which matcher matches the response?
+             * 
+             * If you'd like to verify the following paragraphs in the code, 
+             * look at expect4j.Expect4j.runFirstMatch(List).
+             * 
+             * Expect receives a list of matchers (String, Closure) pairs.
+             * 
+             * 
+             * 
+             * What matters for Expect when choosing the "winner" matching string?
+             * 
+             * CRITERIA #1
+             * -- The order of matcher string *does matter*.
+             * 
+             * CRITERIA #2
+             * -- The position of match in the response for the given 
+             *      matcher *does matter*.
+             * 
+             * 
+             * 
+             * 
+             * == CRITERIA #1 explained -- "order matters" ==
+             * 
+             *    In general, the most specific matcher strings should come first 
+             * in the list of matchers that expect receives. The more generic 
+             * should come to the end of List.
+             * If we take an extreme example, when we have a matcher list:
+             * ["Error Foo specific", "Error"]
+             * In case the response is identical to the first matcher, than 
+             * it'll be the winner. The second matcher could be matched too, 
+             * but it is only coming as second, moreover it has the same 
+             * matching position -- see the criteria further.
+             * 
+             * 
+             * 
+             * == CRITERIA #2 explained -- "match position matters" ==
+             * 
+             *    If there are two matchers, one is _prefix_ of another 
+             * (for example the previous ["Error Foo specific", "Error"])
+             * so we can have cases, when both matchers are matched. 
+             * In this case Expect *prefers* the matcher who:
+             *  -- is matched as first
+             *  -- && match position is closer or equal to the start of the string.
+             * 
+             * Reflected back onto the example, if the responses are:
+             * matcher list: ["Error Foo specific", "Error"]
+             * response#1: "bla Error Foo specific bla bla"
+             * winner#1: "Error Foo specific" -- both matchers have the same position 
+             *            of the first match character (=4), so the one earlier on 
+             *            the matching list wins.
+             * 
+             * response#2: "bla Error bla Error Foo specific bla"
+             * winner #2: "Error" -- the earlier match position wins here.
+             * 
+             * 
+             * 
+             * 3) What part of the output do I get from expect in case of successful match?
+             * 
+             * Let's give an example:
+             * matcher list = ["Ahoj"]
+             * response: "foo bar baz Ahoj ship"
+             * returned output from expect: "foo bar baz Ahoj"
+             * 
+             * In other words, expect returns the response buffer content up to 
+             * the first successful match (including characters of this match).
+             * 
+             * Note: connector has and additional funcionality of altering the output:
+             * it deletes the trailing rootShellPrompt (e.g. typicalli $).
+             * 
+             * 
+             * 
+             * 4) What happens if the match is unsuccessful?
+             * A timeout occurs. This timeout can be registered by a timeout closure, 
+             * as it is done in the SolarisConnection too.
+             * 
+             * 
+             * 5) How do we handle connection errors?
+             * In case an error string is matched we enter into mode of special 
+             * processing, that is inherited from the Solaris resource adapter. 
+             * This means, that we try to read as much of error output as it is possible. 
+             * (We disregard any terminating characters exceptionally.)
+             * This fuctionality is visible in method: 
+             * org.identityconnectors.solaris.SolarisConnection.handleRejects(List<ErrorClosure>)
+             * .
+             * 
+             * 6) Can I pass regurlar expressions in matchers? 
+             * Yes, Expect4j uses Apache Oro regular expression library. 
+             * The regular expressions are matched throughout the whole response.
+             * For example:
+             * -- regexp: "ship"
+             * -- string to match: "ahoj ship"
+             * the match is successful, the initial other letters are ignored by the matcher.
+             * 
+             */
             _expect4j.expect(builder.build());
         } catch (Exception e) {
             throw ConnectorException.wrap(e);

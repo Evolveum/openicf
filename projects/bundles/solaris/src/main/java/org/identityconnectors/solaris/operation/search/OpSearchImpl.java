@@ -226,9 +226,9 @@ public class OpSearchImpl extends AbstractOp {
     private void simpleSearch(ObjectClass oclass2, Set<NativeAttribute> requiredAttrs) {
         final SolarisEntry singleEntry; 
         if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
-            singleEntry = SolarisEntries.getAccount(((EqualsNode) filter).getValue(), requiredAttrs, connection);
+            singleEntry = SolarisEntries.getAccount(((EqualsNode) filter).getSingleValue(), requiredAttrs, connection);
         } else { // GROUP
-            singleEntry = SolarisEntries.getGroup(((EqualsNode) filter).getValue(), requiredAttrs, connection);
+            singleEntry = SolarisEntries.getGroup(((EqualsNode) filter).getSingleValue(), requiredAttrs, connection);
         }
         
         if (singleEntry != null) {
@@ -238,15 +238,17 @@ public class OpSearchImpl extends AbstractOp {
     }
 
     /**
-     * @param account
-     * @return A connector object based on attributes of given 'account', that contains the ATTRS_TO_GET.
+     * @param entry can be both ACCOUNT and GROUP
+     * @return A connector object based on attributes of given 'entry', that contains the ATTRS_TO_GET.
      */
-    private ConnectorObject convertToConnectorObject(SolarisEntry account, ObjectClass oclass) {
+    private ConnectorObject convertToConnectorObject(SolarisEntry entry, ObjectClass oclass) {
         ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
-        Map<String, Attribute> indexedEntry = AttributeUtil.toMap(account.getAttributeSet());
+        Map<String, Attribute> indexedEntry = AttributeUtil.toMap(entry.getAttributeSet());
         
-        // add UID
-        builder.addAttribute(new Uid(account.getName()));
+        // add UID and Name (contract of ConnectorObject)
+        final String entryName = entry.getName();
+        builder.addAttribute(new Uid(entryName));
+        builder.addAttribute(new Name(entryName));
         
         // and rest of the attributes
         for (String attribute : attrsToGet) {

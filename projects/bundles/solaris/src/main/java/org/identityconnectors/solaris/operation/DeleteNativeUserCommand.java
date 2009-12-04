@@ -23,12 +23,13 @@
 package org.identityconnectors.solaris.operation;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.solaris.SolarisConnection;
+import org.identityconnectors.solaris.SolarisConnection.ErrorHandler;
 
 class DeleteNativeUserCommand {
     /**
@@ -40,7 +41,7 @@ class DeleteNativeUserCommand {
         // USERDEL accountId
         final String command = conn.buildCommand("userdel", ((conn.getConfiguration().isDelHomeDir()) ? "-r" : ""), accountId);
 
-        Map<String, SolarisConnection.ErrorHandler> rejectMap = initErrorMap(accountId);
+        Map<String, ErrorHandler> rejectMap = initRejectsMap(accountId);
         conn.executeCommand(command, rejectMap, Collections.<String> emptySet());
 
         final String output = conn.executeCommand("echo $?");
@@ -49,22 +50,57 @@ class DeleteNativeUserCommand {
         }
     }
 
-    private static Map<String, SolarisConnection.ErrorHandler> initErrorMap(final String accountId) {
-        final SolarisConnection.ErrorHandler unknownUidHandler = new SolarisConnection.ErrorHandler() {
+    private static Map<String, ErrorHandler> initRejectsMap(final String accountId) {
+        // initialize error handler
+        final String messageErrorDelete = "Error deleting user: ";
+        final ErrorHandler unknownUidHandler = new ErrorHandler() {
             public void handle(String buffer) {
-                throw new UnknownUidException("Error deleting user: " + accountId);
+                throw new UnknownUidException(messageErrorDelete + accountId);
             }
         };
         
-        final Map<String, SolarisConnection.ErrorHandler> result = CollectionUtil.newMap(
-                "does not exist", unknownUidHandler,
-                "nknown user", unknownUidHandler,
-                "ERROR", new SolarisConnection.ErrorHandler() {
-                    public void handle(String buffer) {
-                        throw new ConnectorException("Error when deleting user: " + accountId);
-                    }
+        // initialize rejects map
+        final Map<String, ErrorHandler> result = new LinkedHashMap<String, ErrorHandler>();
+        
+        final String rejectDoesNotExist = "does not exist";
+        result.put(rejectDoesNotExist, unknownUidHandler);
+        
+        final String rejectUnknownUser = "nknown user";
+        result.put(rejectUnknownUser, unknownUidHandler);
+        
+        result.put("ERROR", new ErrorHandler() {
+            public void handle(String buffer) {
+                /*
+                 * Initial state: originally we were throwing just ConnectorException here, because we 
+                 * assumed that if Expect4j matches, "ERROR", this means that none of other more specific
+                 * messages have been in the response. This assumption turned out to be wrong, thus we 
+                 * introduced the following change: 
+                 * 
+                 * Change description: we need to do an extra check of the buffer, if the buffer 
+                 * doesn't contain reject strings for more specific exceptions, that deserve 
+                 * UnknownUidException to be thrown.
+                 * 
+                 * Original motivation of this extra check:
+                 * Random errors in contract tests can occur because the wrong exception type is thrown.
+                 * 
+                 * How the error happens:
+                 * Expect4J reads the response from the resource partially (for instance just the start 
+                 * of the error message, containing "ERROR"), so will invoke the Closure for generic error
+                 * message, instead of the specific one. 
+                 * After Expect invokes the closure, the SolarisConnection marks, which error message was matched.
+                 * If an error messages is matched, SolarisConnection will try to read as much of the response, as it can.
+                 * This is were the connection comes to know the remaining part of the error message, 
+                 * which can contain the specific information we miss.
+                 * So even though Expect4j matched the generic message, based on full buffer content 
+                 * we need to throw a specific error message. 
+                 */
+                if (buffer.contains(rejectDoesNotExist) || buffer.contains(rejectDoesNotExist)) {
+                    throw new UnknownUidException(messageErrorDelete + accountId);
+                } else {
+                    throw new ConnectorException(messageErrorDelete + accountId);
                 }
-        );
+            }
+        });
         
         return result;
     }

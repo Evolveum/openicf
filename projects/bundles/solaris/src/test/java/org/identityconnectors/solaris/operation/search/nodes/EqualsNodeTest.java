@@ -24,6 +24,7 @@ package org.identityconnectors.solaris.operation.search.nodes;
 
 import junit.framework.Assert;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 import org.junit.Test;
@@ -32,14 +33,14 @@ public class EqualsNodeTest {
     @Test
     public void test() {
         // not negated result
-        Node swn = new EqualsNode(NativeAttribute.NAME, false, "FooBar");
+        Node swn = new EqualsNode(NativeAttribute.NAME, false, CollectionUtil.newList("FooBar"));
         boolean result = swn.evaluate(new SolarisEntry.Builder("FooBarBaz").addAttr(NativeAttribute.NAME, "FooBarBaz").build());
         Assert.assertFalse(result);
         result = swn.evaluate(new SolarisEntry.Builder("FooBarBaz").addAttr(NativeAttribute.NAME, "FooBar").build());
         Assert.assertTrue(result);
         
         // negated result
-        swn = new EqualsNode(NativeAttribute.NAME, true, "FooBar");
+        swn = new EqualsNode(NativeAttribute.NAME, true, CollectionUtil.newList("FooBar"));
         result = swn.evaluate(new SolarisEntry.Builder("FooBarBaz").addAttr(NativeAttribute.NAME, "FooBarBaz").build());
         Assert.assertTrue(result);
         result = swn.evaluate(new SolarisEntry.Builder("FooBarBaz").addAttr(NativeAttribute.NAME, "FooBar").build());
