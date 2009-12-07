@@ -649,7 +649,7 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
      */
     private List<String> readGrantsForModelUser(String modelUser) {
         final String SQL_SHOW_MODEL_USERS="SELECT host FROM mysql.user WHERE user = ?";
-        final String SQL_SHOW_GRANTS = "SHOW GRANTS FOR ?";
+        final String SQL_SHOW_GRANTS = "SHOW GRANTS FOR ?@?";
         PreparedStatement c1 = null;
         PreparedStatement c2 = null;
         ResultSet rs1 = null;
@@ -662,14 +662,14 @@ public class MySQLUserConnector implements PoolableConnector, CreateOp, SearchOp
             rs1 = c1.executeQuery();
             while (rs1.next()) {
                 final StringBuilder query = new StringBuilder(SQL_SHOW_GRANTS);
-                final String host = rs1.getString(1);
+                String host = rs1.getString(1);
+                if(StringUtil.isBlank(host)) {
+                    host="%"; //if host is blank, the all alias is used
+                }
                 log.ok("readGrantsFor host:{0}, user:{1}", host, modelUser);
-                //The host specification must be added when defined
-                if ((host != null) && !host.equals("") && !host.equals("%")) {
-                    query.append("@"+host);
-                }             
                 c2 = conn.getConnection().prepareStatement(query.toString());
                 c2.setString(1, modelUser);
+                c2.setString(2, host);
                 rs2 = c2.executeQuery();
                 while (rs2.next()) {
                     String grant = rs2.getString(1);
