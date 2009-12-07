@@ -161,6 +161,46 @@ public abstract class MySQLTestBase {
         //Delete it at the end
         quitellyDeleteUser(userName);
     }
+    
+    /**
+     * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
+     */
+    @Test
+    public void testCreateAllGrants() {
+        assertNotNull(facade);
+        MySQLUserConnection conn = null;
+        PreparedStatement ps = null;
+        ResultSet result = null;
+        String userName=TST_USER1;
+        quitellyDeleteUser(userName);
+        final List<SQLParam> values = new ArrayList<SQLParam>();
+        values.add(new SQLParam("userName", userName));
+        final Uid uid = createUser(userName, testPassword);
+        assertNotNull(uid);
+        assertEquals(userName, uid.getUidValue());
+        final String SQL_SG = "SELECT count(*) FROM mysql.user WHERE user=?";
+        try {
+            conn = MySQLUserConnection.getConnection(newConfiguration());
+            ps = conn.prepareStatement(SQL_SG, values);
+            result = ps.executeQuery();
+            if(result.next()) {
+                assertEquals("row count", 3, result.getInt(1));
+            } else {
+                fail("row count is not 3");
+            }
+            conn.commit();
+        } catch (SQLException ex) {
+            log.info("SELECT count(*) FROM mysqluser WHERE user={0}, sql exception {1}", userName, ex.getMessage());
+            fail("testCreateAllGrants fail");
+        } finally {
+            SQLUtil.closeQuietly(result);
+            SQLUtil.closeQuietly(ps);
+            SQLUtil.closeQuietly(conn);
+        }
+        //Delete it at the end
+        quitellyDeleteUser(userName);
+    }
+
 
     /**
      * Test method for {@link MySQLUserConnector#create(ObjectClass, Set, OperationOptions)}.
@@ -573,33 +613,32 @@ public abstract class MySQLTestBase {
     protected void quitellyDeleteUser(String userName) {
         PreparedStatement ps1 = null;
         PreparedStatement ps2 = null;
+        PreparedStatement ps3 = null;
         MySQLUserConnection conn = null;
         final List<SQLParam> values = new ArrayList<SQLParam>();
         values.add(new SQLParam("user", userName, Types.VARCHAR));
         final String SQL_DELETE_TEMPLATE = "DROP USER ?";
         final String SQL_DELETE_TEMPLATE_LOCAL = "DROP USER ?@'localhost'";
+        final String SQL_DELETE_TEMPLATE_SOMEHOST = "DROP USER ?@'localhost'"; //some-01-host
         log.info("quitelly Delete User {0}", userName);
         conn = MySQLUserConnection.getConnection(newConfiguration());
         try {
             ps1 = conn.prepareStatement(SQL_DELETE_TEMPLATE, values);
             ps1.execute();
+            ps2 = conn.prepareStatement(SQL_DELETE_TEMPLATE_LOCAL, values);
+            ps2.execute();
+            ps3 = conn.prepareStatement(SQL_DELETE_TEMPLATE_SOMEHOST, values);
+            ps3.execute();
             conn.commit();
         } catch (SQLException ex) {
             log.info("quitelly Delete User {0} has expected exception {1}", userName, ex.getMessage());
             quitellyDeleteUser41(userName);
         } finally {
             SQLUtil.closeQuietly(ps1);
-        }
-        try {
-            ps2 = conn.prepareStatement(SQL_DELETE_TEMPLATE_LOCAL, values);
-            ps2.execute();
-            conn.commit();
-        } catch (SQLException ex) {
-            log.info("quitelly Delete User {0} has expected exception {1}", userName, ex.getMessage());
-        } finally {
             SQLUtil.closeQuietly(ps2);
+            SQLUtil.closeQuietly(ps3);
             SQLUtil.closeQuietly(conn);
-        }        
+        }
         testUserFound(userName, false);
         log.ok("quitelly Delete User {0}", userName);
     }
@@ -668,7 +707,9 @@ public abstract class MySQLTestBase {
         final String SQL4 = "GRANT ALL PRIVILEGES ON `test`.* TO ?@'%'";
         final String SQL5 = "GRANT CREATE, DROP ON `mysql`.* TO ?@'localhost'";
         final String SQL6 = "GRANT ALL PRIVILEGES ON `test`.* TO ?@'localhost'";
-        final String[] stmts = { SQL1, SQL2, SQL3, SQL4, SQL5, SQL6 };
+        final String SQL7 = "GRANT SELECT, INSERT, UPDATE, DELETE ON *.* TO ?@'some-01-host' IDENTIFIED BY ?";
+        final String SQL8 = "GRANT CREATE, DROP ON `mysql`.* TO ?@'some-01-host'";
+        final String[] stmts = { SQL1, SQL2, SQL3, SQL4, SQL5, SQL6, SQL7, SQL8 };
         log.info("Creating the Test Model User {0}", userName);
         PreparedStatement ps = null;
         MySQLUserConnection conn = null;
