@@ -619,7 +619,7 @@ public abstract class MySQLTestBase {
         values.add(new SQLParam("user", userName, Types.VARCHAR));
         final String SQL_DELETE_TEMPLATE = "DROP USER ?";
         final String SQL_DELETE_TEMPLATE_LOCAL = "DROP USER ?@'localhost'";
-        final String SQL_DELETE_TEMPLATE_SOMEHOST = "DROP USER ?@'localhost'"; //some-01-host
+        final String SQL_DELETE_TEMPLATE_SOMEHOST = "DROP USER ?@'some-01-host'"; //some-01-host
         log.info("quitelly Delete User {0}", userName);
         conn = MySQLUserConnection.getConnection(newConfiguration());
         try {
@@ -672,6 +672,7 @@ public abstract class MySQLTestBase {
             ps4 = conn.getConnection().prepareStatement(SQL_DELETE_COLUMNS);
             ps4.setString(1, userName);
             ps4.execute();
+            conn.commit();
         } catch (SQLException e) {
             log.error(e, "expected delete user 41 error");
         } finally {
@@ -680,6 +681,7 @@ public abstract class MySQLTestBase {
             SQLUtil.closeQuietly(ps2);
             SQLUtil.closeQuietly(ps3);
             SQLUtil.closeQuietly(ps4);
+            SQLUtil.closeQuietly(conn);
         }
         log.ok("Deleted Uid: {0}", userName);
     }
