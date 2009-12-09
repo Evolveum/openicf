@@ -4,17 +4,37 @@
 package org.identityconnectors.oracle;
 
 
-import java.sql.*;
-import java.util.*;
+import static org.identityconnectors.oracle.OracleMessages.ORACLE_CANNOT_CREATE_TEST_USER;
 
-import org.identityconnectors.common.security.*;
-import org.identityconnectors.dbcommon.*;
-import org.identityconnectors.framework.common.exceptions.*;
-import org.identityconnectors.framework.common.objects.*;
-import org.identityconnectors.framework.common.objects.filter.*;
-import org.identityconnectors.framework.spi.*;
-import org.identityconnectors.framework.spi.operations.*;
-import org.identityconnectors.oracle.OracleConfiguration.*;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Set;
+
+import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.dbcommon.FilterWhereBuilder;
+import org.identityconnectors.dbcommon.SQLUtil;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.ResultsHandler;
+import org.identityconnectors.framework.common.objects.Schema;
+import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
+import org.identityconnectors.framework.spi.AttributeNormalizer;
+import org.identityconnectors.framework.spi.Configuration;
+import org.identityconnectors.framework.spi.ConnectorClass;
+import org.identityconnectors.framework.spi.PoolableConnector;
+import org.identityconnectors.framework.spi.operations.AuthenticateOp;
+import org.identityconnectors.framework.spi.operations.CreateOp;
+import org.identityconnectors.framework.spi.operations.DeleteOp;
+import org.identityconnectors.framework.spi.operations.SPIOperation;
+import org.identityconnectors.framework.spi.operations.SchemaOp;
+import org.identityconnectors.framework.spi.operations.SearchOp;
+import org.identityconnectors.framework.spi.operations.TestOp;
+import org.identityconnectors.framework.spi.operations.UpdateAttributeValuesOp;
+import org.identityconnectors.framework.spi.operations.UpdateOp;
+import org.identityconnectors.oracle.OracleConfiguration.ConnectionType;
 
 /**
  * Implementation of Oracle connector. It just delegates SPI calls to {@link AbstractOracleOperation} subclasses.
@@ -81,9 +101,40 @@ public final class OracleConnector implements PoolableConnector, AuthenticateOp,
         startSPI(TestOp.class);
         try{
         	OracleSpecifics.testConnection(adminConn);
+        	testUseDriverForAuthentication();
         }
         finally{
         	finsishSPI(TestOp.class);
+        }
+    }
+    
+    private void testUseDriverForAuthentication(){
+        if(cfg.isUseDriverForAuthentication()){
+            //Ok, here it means we are using datasource
+            //So try to get OracleDriverConnectionInfo and create connection
+            OracleDriverConnectionInfo connInfo = OracleSpecifics.parseConnectionInfo(adminConn, cfg.getConnectorMessages());
+            //Here we need some dummy user/password to test authenticate. Can these fail because of some resource configuration ?
+            //Create the user
+            String userName = "test" + System.currentTimeMillis();
+            try{
+                SQLUtil.executeUpdateStatement(adminConn, "create user " + userName + " identified by " + userName);
+                SQLUtil.executeUpdateStatement(adminConn, "grant create session to " + userName);
+                OracleDriverConnectionInfo newInfo = new OracleDriverConnectionInfo.Builder().setvalues(connInfo).setUser(userName).setPassword(new GuardedString(userName.toCharArray())).build();
+                Connection conn = OracleSpecifics.createDriverConnection(newInfo, cfg.getConnectorMessages());
+                conn.close();
+            }
+            catch(SQLException e){
+                throw new ConnectorException(ORACLE_CANNOT_CREATE_TEST_USER,e);
+            }
+            finally{
+                try{
+                    SQLUtil.executeUpdateStatement(adminConn, "drop user " + userName);
+                }
+                catch(SQLException e){
+                    //Should not happen
+                    throw new ConnectorException("Cannot drop testuser", e);
+                }
+            }
         }
     }
     

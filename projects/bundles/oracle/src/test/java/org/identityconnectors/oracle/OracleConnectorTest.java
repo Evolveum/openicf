@@ -85,6 +85,14 @@ public class OracleConnectorTest extends OracleConnectorAbstractTest{
     	c.init(testConf);
     	c.test();
     	c.dispose();
+    	
+    	//Now test with UseDriverForAuthentication
+    	c = new OracleConnector();
+    	OracleConfiguration cfg = DataSourceMockHelper.createDataSourceConfiguration();
+    	cfg.setUseDriverForAuthentication(true);
+    	c.init(cfg);
+    	c.test();
+    	c.dispose();
     }
     
     /** Test that connection is kept open when using driver */

@@ -5,17 +5,8 @@ package org.identityconnectors.oracle;
 
 import static org.junit.Assert.fail;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.sql.SQLException;
 import java.util.Collections;
-import java.util.Hashtable;
-
-import javax.naming.Context;
-import javax.naming.NamingException;
-import javax.naming.spi.InitialContextFactory;
-import javax.sql.DataSource;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.security.GuardedString;
@@ -32,7 +23,6 @@ import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
 import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.test.common.TestHelpers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.matchers.JUnitMatchers;
@@ -57,14 +47,14 @@ public class OracleOperationAuthenticateTest extends OracleConnectorAbstractTest
      */
     @Test
     public void testAuthenticateDS(){
-       OracleConfiguration cfg = createDataSourceConfiguration();
+       OracleConfiguration cfg = DataSourceMockHelper.createDataSourceConfiguration();
        ConnectorFacade facade = createFacade(cfg);
        testAuthenticate(facade);
     }
     
     @Test
     public void testAuthenticateForceUsingDriver(){
-        OracleConfiguration cfg = createDataSourceConfiguration();
+        OracleConfiguration cfg = DataSourceMockHelper.createDataSourceConfiguration();
         cfg.setUseDriverForAuthentication(true);
         ConnectorFacade facade = createFacade(cfg);
         testAuthenticate(facade);
@@ -217,50 +207,7 @@ public class OracleOperationAuthenticateTest extends OracleConnectorAbstractTest
     }
     
     
-    static OracleConfiguration createDataSourceConfiguration(){
-        OracleConfiguration conf = new OracleConfiguration();
-        conf.setConnectorMessages(TestHelpers.createDummyMessages());
-        conf.setDataSource("testDS");
-        conf.setDsJNDIEnv(dsJNDIEnv);
-        conf.setPort(null);
-        conf.setDriver(null);
-        return conf;
-    }
     
-    private static final String[] dsJNDIEnv = new String[]{"java.naming.factory.initial=" + MockContextFactory.class.getName()};
-    
-    public static class MockContextFactory implements InitialContextFactory{
-        public Context getInitialContext(Hashtable<?, ?> environment) throws NamingException {
-            Context context = (Context)Proxy.newProxyInstance(getClass().getClassLoader(),new Class[]{Context.class}, new ContextIH());
-            return context;
-        }
-    }
-    
-    private static class ContextIH implements InvocationHandler{
-
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            if(method.getName().equals("lookup")){
-                return Proxy.newProxyInstance(getClass().getClassLoader(),new Class[]{DataSource.class}, new DataSourceIH());
-            }
-            return null;
-        }
-    }
-    
-    private static class DataSourceIH implements InvocationHandler{
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            if(method.getName().equals("getConnection")){
-                if(method.getParameterTypes().length == 0){
-                    return OracleConfigurationTest.createThinConfiguration().createAdminConnection();
-                }
-                else if(method.getParameterTypes().length == 2){
-                    String user = (String) args[0];
-                    String password = (String) args[1];
-                    return OracleConfigurationTest.createThinConfiguration().createConnection(user, new GuardedString(password.toCharArray()));
-                }
-            }
-            throw new IllegalArgumentException("Invalid method");
-        }
-    }
     
     
     

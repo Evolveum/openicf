@@ -13,16 +13,9 @@ import static org.identityconnectors.oracle.OracleMessages.MSG_URL_DISPLAY;
 import static org.identityconnectors.oracle.OracleMessages.MSG_USER_AND_PASSWORD_MUST_BE_SET_BOTH_OR_NONE;
 import static org.identityconnectors.oracle.OracleMessages.MSG_USER_DISPLAY;
 import static org.identityconnectors.oracle.OracleMessages.MSG_USE_DRIVER_FOR_AUTHENTICATION_IS_JUST_FOR_DATASOURCE;
-import static org.identityconnectors.oracle.OracleMessages.ORACLE_CANNOT_CREATE_TEST_USER;
-
-import java.sql.Connection;
-import java.sql.SQLException;
 
 import org.identityconnectors.common.StringUtil;
-import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.LocalizedAssert;
-import org.identityconnectors.dbcommon.SQLUtil;
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.oracle.OracleConfiguration.ConnectionType;
 
 /** Helper class that validated {@link OracleConfiguration} */
@@ -38,42 +31,12 @@ final class OracleConfigurationValidator {
        }
        else{
     		validateImplicit();
-       } 
+       }
        if(cfg.isUseDriverForAuthentication()){
            if(!ConnectionType.DATASOURCE.equals(cfg.getConnType())){
                throw new IllegalArgumentException(cfg.getConnectorMessages().format(MSG_USE_DRIVER_FOR_AUTHENTICATION_IS_JUST_FOR_DATASOURCE, null) );
            }
-           //Ok, here it means we are using datasource
-           //So try to get OracleDriverConnectionInfo and create connection
-           Connection adminConn = null;
-           try{
-               adminConn = cfg.createAdminConnection();
-               OracleDriverConnectionInfo connInfo = OracleSpecifics.parseConnectionInfo(adminConn, cfg.getConnectorMessages());
-               //Here we need some dummy user/password to test authenticate. Can these fail because of some resource configuration ?
-               //Create the user
-               String userName = "test" + System.currentTimeMillis();
-               try{
-                   SQLUtil.executeUpdateStatement(adminConn, "create user " + userName + " identified by " + userName);
-                   SQLUtil.executeUpdateStatement(adminConn, "grant create session to " + userName);
-                   OracleDriverConnectionInfo newInfo = new OracleDriverConnectionInfo.Builder().setvalues(connInfo).setUser(userName).setPassword(new GuardedString(userName.toCharArray())).build();
-                   Connection conn = OracleSpecifics.createDriverConnection(newInfo, cfg.getConnectorMessages());
-                   conn.close();
-               }
-               catch(SQLException e){
-                   throw new ConnectorException(ORACLE_CANNOT_CREATE_TEST_USER,e);
-               }
-               finally{
-                   try{
-                       SQLUtil.executeUpdateStatement(adminConn, "drop user " + userName);
-                   }
-                   catch(SQLException e){}
-               }
-           }
-           finally{
-               SQLUtil.closeQuietly(adminConn);
-           }
        }
-
     }
 	
 	
