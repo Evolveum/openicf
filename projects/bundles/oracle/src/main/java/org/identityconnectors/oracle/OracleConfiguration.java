@@ -4,8 +4,6 @@
 package org.identityconnectors.oracle;
 
 
-import static org.identityconnectors.oracle.OracleMessages.MSG_NORMALIZER_DISPLAY;
-import static org.identityconnectors.oracle.OracleMessages.MSG_NORMALIZER_HELP;
 import static org.identityconnectors.oracle.OracleMessages.MSG_CS_DISPLAY;
 import static org.identityconnectors.oracle.OracleMessages.MSG_CS_HELP;
 import static org.identityconnectors.oracle.OracleMessages.MSG_DATABASE_DISPLAY;
@@ -20,6 +18,8 @@ import static org.identityconnectors.oracle.OracleMessages.MSG_DSJNDIENV_HELP;
 import static org.identityconnectors.oracle.OracleMessages.MSG_HOST_DISPLAY;
 import static org.identityconnectors.oracle.OracleMessages.MSG_HOST_HELP;
 import static org.identityconnectors.oracle.OracleMessages.MSG_INVALID_SOURCE_TYPE;
+import static org.identityconnectors.oracle.OracleMessages.MSG_NORMALIZER_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.MSG_NORMALIZER_HELP;
 import static org.identityconnectors.oracle.OracleMessages.MSG_PASSWORD_DISPLAY;
 import static org.identityconnectors.oracle.OracleMessages.MSG_PASSWORD_HELP;
 import static org.identityconnectors.oracle.OracleMessages.MSG_PORT_DISPLAY;
@@ -30,8 +30,10 @@ import static org.identityconnectors.oracle.OracleMessages.MSG_URL_DISPLAY;
 import static org.identityconnectors.oracle.OracleMessages.MSG_URL_HELP;
 import static org.identityconnectors.oracle.OracleMessages.MSG_USER_DISPLAY;
 import static org.identityconnectors.oracle.OracleMessages.MSG_USER_HELP;
-import static org.identityconnectors.oracle.OracleMessages.ORACLE_EXTRA_ATTRS_POLICY_DISPLAY;
-import static org.identityconnectors.oracle.OracleMessages.ORACLE_EXTRA_ATTRS_POLICY_HELP;
+import static org.identityconnectors.oracle.OracleMessages.MSG_USE_DRIVER_FOR_AUTHENTICATION_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.MSG_USE_DRIVER_FOR_AUTHENTICATION_HELP;
+import static org.identityconnectors.oracle.OracleMessages.MSG_EXTRA_ATTRS_POLICY_DISPLAY;
+import static org.identityconnectors.oracle.OracleMessages.MSG_EXTRA_ATTRS_POLICY_HELP;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -153,6 +155,8 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     private String normalizerString;
     /** NormalizerName we create in validator using normalizerString. Normalizer created by {@link OracleNormalizerName#createNormalizer(OracleCaseSensitivitySetup)} is sent then to SPI operations */
     private OracleNormalizerName normalizerName;
+    /** Force connector to use driver in authentication even when datasource is set */
+    private boolean useDriverForAuthentication;
     /**
      * Creates configuration
      */
@@ -195,10 +199,6 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
         	throw new IllegalArgumentException(msg.format(MSG_INVALID_SOURCE_TYPE,null));
         }
     }
-    
-    
-    
-    
     
     /**
      * Default clone implementation.
@@ -301,7 +301,7 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     /**
 	 * @return the extraAttributesPolicy
 	 */
-	@ConfigurationProperty(order = 10, displayMessageKey = ORACLE_EXTRA_ATTRS_POLICY_DISPLAY, helpMessageKey = ORACLE_EXTRA_ATTRS_POLICY_HELP)
+	@ConfigurationProperty(order = 10, displayMessageKey = MSG_EXTRA_ATTRS_POLICY_DISPLAY, helpMessageKey = MSG_EXTRA_ATTRS_POLICY_HELP)
     public String getExtraAttributesPolicyString() {
 		return extraAttributesPolicyString;
 	}
@@ -320,6 +320,12 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
 	public String getNormalizerString(){
 		return normalizerString;
 	}
+	
+	@ConfigurationProperty(order = 14, displayMessageKey = MSG_USE_DRIVER_FOR_AUTHENTICATION_DISPLAY, helpMessageKey = MSG_USE_DRIVER_FOR_AUTHENTICATION_HELP, required = false)
+	public boolean isUseDriverForAuthentication() {
+        return useDriverForAuthentication;
+    }
+	
 	
 	public void setNormalizerString(String normalizerString){
 		this.normalizerString = normalizerString;
@@ -432,6 +438,15 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     }
 
     /**
+     * Sets useDriverForAuthentication
+     * @param useDriverForAuthentication
+     */
+    public void setUseDriverForAuthentication(boolean useDriverForAuthentication) {
+        this.useDriverForAuthentication = useDriverForAuthentication;
+        this.connType = null;
+    }
+
+    /**
      * @param url the url to set
      */
     public void setUrl(String url) {
@@ -521,11 +536,12 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
     	validate();
     	String user = cs.normalizeAndFormatToken(OracleUserAttribute.SYSTEM_USER, this.user);
     	GuardedString password = cs.normalizeAndFormatToken(OracleUserAttribute.SYSTEM_PASSWORD, this.password);
-        return createConnection(user,password);
+        Connection conn = createConnection(user,password);
+        return conn;
     }
     
     
-    private Connection createConnection(String user,GuardedString password){
+    Connection createConnection(String user,GuardedString password){
         validate();
         Connection connection = null;
         if(ConnectionType.DATASOURCE.equals(connType)){
@@ -589,5 +605,9 @@ public final class OracleConfiguration extends AbstractConfiguration implements 
         }
 		
 	}
+
+    void resetUseDriverForAuthentication() {
+        useDriverForAuthentication = false;
+    }
 
 }

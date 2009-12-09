@@ -1,6 +1,6 @@
 package org.identityconnectors.oracle;
 
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.sql.*;
 
@@ -182,6 +182,20 @@ public class OracleSpecificsTest {
         }
         catch(UnsatisfiedLinkError e){
         }
+    }
+    
+    @Test
+    public void testParseConnectionInfo() throws SQLException {
+        Connection conn = createSystemThinDriverConnection();
+        OracleDriverConnectionInfo info = OracleSpecifics.parseConnectionInfo(conn, TestHelpers.createDummyMessages());
+        assertNotNull(info);
+        String user = testProps.getStringProperty("thin.user");
+        String passwordString = testProps.getStringProperty("thin.password");
+        OracleDriverConnectionInfo newInfo = new OracleDriverConnectionInfo.Builder().setvalues(info).setUser(user).setPassword(new GuardedString(passwordString.toCharArray())).build();
+        Connection conn1 = OracleSpecifics.createThinDriverConnection(newInfo, TestHelpers.createDummyMessages());
+        assertNotNull(conn1);
+        conn1.close();
+        conn.close();
     }
     
     

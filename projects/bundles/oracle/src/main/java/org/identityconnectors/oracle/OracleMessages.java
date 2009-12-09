@@ -25,15 +25,16 @@ final class OracleMessages {
 	static final String MSG_URL_HELP = "oracle.url.help";
 	static final String MSG_CS_DISPLAY = "oracle.cs.display";
 	static final String MSG_CS_HELP = "oracle.cs.help";
-	
-	static final String ORACLE_EXTRA_ATTRS_POLICY_DISPLAY = "oracle.extra.attrs.policy.display";
-	static final String ORACLE_EXTRA_ATTRS_POLICY_HELP = "oracle.extra.attrs.policy.help";
+	static final String MSG_EXTRA_ATTRS_POLICY_DISPLAY = "oracle.extra.attrs.policy.display";
+	static final String MSG_EXTRA_ATTRS_POLICY_HELP = "oracle.extra.attrs.policy.help";
 	static final String MSG_SOURCE_TYPE_DISPLAY = "oracle.source.type.display";
 	static final String MSG_SOURCE_TYPE_HELP = "oracle.source.type.help";
 	static final String MSG_DROP_CASCADE_DISPLAY = "oracle.drop.cascade.display";
 	static final String MSG_DROP_CASCADE_HELP = "oracle.drop.cascade.help";
 	static final String MSG_NORMALIZER_DISPLAY = "oracle.normalizer.display";
 	static final String MSG_NORMALIZER_HELP = "oracle.normalizer.help";
+    static final String MSG_USE_DRIVER_FOR_AUTHENTICATION_DISPLAY = "oracle.use.driver.for.authentication.display";
+    static final String MSG_USE_DRIVER_FOR_AUTHENTICATION_HELP = "oracle.use.driver.for.authentication.help";
 	
 	static final String MSG_USER_AND_PASSWORD_MUST_BE_SET_BOTH_OR_NONE = "oracle.user.and.password.must.be.set.both.or.none";
 	static final String MSG_INVALID_AUTH = "oracle.invalid.auth";
@@ -82,6 +83,8 @@ final class OracleMessages {
 	static final String MSG_EAP_INVALID_ELEMENTS_IN_MAP = "oracle.eap.invalid.elements.in.map";
 	static final String MSG_EAP_CANNOT_RESOLVE_SPI_OPERATION = "oracle.eap.cannot.resolve.spi.operation";
 	static final String MSG_CANNOT_FIND_USER =  "oracle.cannot.find.user=Cannot find Oracle user [{0}]";
-	
+	static final String MSG_USE_DRIVER_FOR_AUTHENTICATION_IS_JUST_FOR_DATASOURCE = "oracle.use.driver.for.authentication.is.just.for.datasource";
+	static final String MSG_ORACLE_PCI_CANNOT_GET_INFO = "oracle.pci.cannot.get.info";
+	static final String ORACLE_CANNOT_CREATE_TEST_USER = "oracle.cannot.create.test.user";
 	
 }

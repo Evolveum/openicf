@@ -39,22 +39,46 @@ final class OracleOperationAuthenticate extends AbstractOracleOperation implemen
         	return findUserByName(username);
         }
         log.info("Authenticate user: [{0}]", username);
+        if(cfg.isUseDriverForAuthentication()){
+            //This means datasource is used, so bypass it
+            doDriverAuthenticate(username, password);
+        }
+        else{
+            doCfgAuthenticate(username, password);
+        }
+        log.info("User authenticated : [{0}]",username);
+        return new Uid(username);
+    }
+
+    /**
+     * @param username
+     * @param password
+     */
+    private void doDriverAuthenticate(String username, GuardedString password) {
+        OracleDriverConnectionInfo connInfo = OracleSpecifics.parseConnectionInfo(adminConn, cfg.getConnectorMessages());
+        OracleDriverConnectionInfo newInfo = new OracleDriverConnectionInfo.Builder().setvalues(connInfo).setUser(username).setPassword(password).build();
+        Connection conn = null;
+        try{
+            conn = OracleSpecifics.createDriverConnection(newInfo, cfg.getConnectorMessages());
+        }
+        catch(RuntimeException e){
+            handleAuthenticationException(username, password, e);
+        }
+        finally{
+            SQLUtil.closeQuietly(conn);
+        }
+        
+    }
+
+    private void doCfgAuthenticate(String username, GuardedString password) {
         Connection conn = null;
         try{
             conn = cfg.createUserConnection(username, password);
         }
+        //adminConn.getClass().getInterfaces()
+        //adminConn.getClass().getMethod("getConnection").invoke(adminConn)
         catch(RuntimeException e){
-        	log.info("Authentication of user [{0}] failed", username);
-            if(e.getCause() instanceof SQLException){
-                SQLException sqlE = (SQLException) e.getCause();
-                if(StringUtil.isBlank(sqlE.getSQLState())){
-                	handleNotCompletedSQLEXception(e, sqlE, username, password);
-                }
-                else{
-                	handleSQLException(e, sqlE, username, password);
-                }
-            }
-            throw e;
+        	handleAuthenticationException(username, password, e);
         }
         //When we get connection from DS, test the connection
         try{
@@ -66,8 +90,20 @@ final class OracleOperationAuthenticate extends AbstractOracleOperation implemen
        	finally{
        		SQLUtil.closeQuietly(conn);
         }
-        log.info("User authenticated : [{0}]",username);
-        return new Uid(username);
+    }
+
+    private void handleAuthenticationException(String username, GuardedString password, RuntimeException e) {
+        log.info("Authentication of user [{0}] failed", username);
+        if(e.getCause() instanceof SQLException){
+            SQLException sqlE = (SQLException) e.getCause();
+            if(StringUtil.isBlank(sqlE.getSQLState())){
+            	handleNotCompletedSQLEXception(e, sqlE, username, password);
+            }
+            else{
+            	handleSQLException(e, sqlE, username, password);
+            }
+        }
+        throw e;
     }
 
 	private void killDSConnection(Connection conn) {

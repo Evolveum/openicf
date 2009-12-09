@@ -11,6 +11,7 @@ final class OracleDriverConnectionInfo {
     private final String user;
     private final GuardedString password;
     private final String url;
+    private final String protocol;
     String getHost() {
         return host;
     }
@@ -32,6 +33,9 @@ final class OracleDriverConnectionInfo {
     String getUrl(){
         return url;
     }
+    String getProtocol(){
+        return protocol;
+    }
     private OracleDriverConnectionInfo(Builder builder){
         this.database = builder.getDatabase();
         this.driver = builder.getDriver();
@@ -40,9 +44,10 @@ final class OracleDriverConnectionInfo {
         this.port = builder.getPort();
         this.user = builder.getUser();
         this.url = builder.getUrl();
+        this.protocol = builder.getProtocol();
     }
     
-    static class Builder{
+    static final class Builder{
         private String host;
         private String port;
         private String driver;
@@ -50,8 +55,12 @@ final class OracleDriverConnectionInfo {
         private String user;
         private GuardedString password;
         private String url;
+        private String protocol;
         String getHost() {
             return host;
+        }
+        String getProtocol() {
+            return protocol;
         }
         Builder setHost(String host) {
             this.host = host;
@@ -99,12 +108,26 @@ final class OracleDriverConnectionInfo {
             this.url = url;
             return this;
         }
+        Builder setProtocol(String protocol){
+            this.protocol = protocol;
+            return this;
+        }
+        Builder setvalues(OracleDriverConnectionInfo info){
+            this.database = info.database;
+            this.driver = info.driver;
+            this.host = info.driver;
+            this.password = info.password;
+            this.port = info.port;
+            this.url = info.url;
+            this.user = info.user;
+            this.protocol = info.protocol;
+            return this;
+        }
         Builder(){
         }
         OracleDriverConnectionInfo build(){
         	return new OracleDriverConnectionInfo(this);
         }
-        
     }
     
 }

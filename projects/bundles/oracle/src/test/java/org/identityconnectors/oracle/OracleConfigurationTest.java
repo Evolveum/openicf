@@ -140,6 +140,21 @@ public class OracleConfigurationTest {
         cfg.setDatabase("myDB");
         assertValidateFail(cfg, "validate must fail for custom URL configuration when database is not blank");
         
+        cfg = createDataSourceConfiguration();
+        cfg.validate();
+        cfg.setUseDriverForAuthentication(true);
+        cfg.validate();
+        
+        cfg = createOciConfiguration();
+        cfg.validate();
+        cfg.setUseDriverForAuthentication(true);
+        assertValidateFail(cfg, "validate must fail for oci cfg and useDriverForAuthentication=true");
+        
+        cfg = createThinConfiguration();
+        cfg.validate();
+        cfg.setUseDriverForAuthentication(true);
+        assertValidateFail(cfg, "validate must fail for thin cfg and useDriverForAuthentication=true");
+
     }
     
     @Test
@@ -393,7 +408,7 @@ public class OracleConfigurationTest {
         conf.setConnectorMessages(TestHelpers.createDummyMessages());
         conf.setDataSource("testDS");
         conf.setUser("user");
-        conf.setPassword(new GuardedString(new char[]{'t'}));
+        conf.setPassword(new GuardedString("myPassword".toCharArray()));
         conf.setDsJNDIEnv(dsJNDIEnv);
         conf.setPort(null);
         conf.setDriver(null);
@@ -413,12 +428,14 @@ public class OracleConfigurationTest {
         assertArrayEquals(dsConf.getDsJNDIEnv(), dsJNDIEnv);
         dsConf.validate();
         Connection conn = dsConf.createAdminConnection();
+        assertNotNull(conn);
+        conn.close();
         dsConf.setUser(null);
         dsConf.setPassword(null);
         dsConf.validate();
         conn = dsConf.createAdminConnection();
         assertNotNull(conn);
-        
+        conn.close();
         OracleConfiguration cfg = dsConf.clone();
         cfg.setDataSource(null);
         assertValidateFail(cfg, "Validate should fail for null datasource");
@@ -473,11 +490,11 @@ public class OracleConfigurationTest {
     
     /**
      * Mock for {@link InitialContextFactory}
+     * Must be public, used by jndi
      * @author kitko
      *
      */
     public static class MockContextFactory implements InitialContextFactory{
-        
         public Context getInitialContext(Hashtable<?, ?> environment) throws NamingException {
             Context context = (Context)Proxy.newProxyInstance(getClass().getClassLoader(),new Class[]{Context.class}, new ContextIH());
             return context;
