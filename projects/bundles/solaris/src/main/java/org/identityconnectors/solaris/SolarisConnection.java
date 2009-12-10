@@ -689,7 +689,6 @@ public class SolarisConnection {
         StringBuilder buffer = new StringBuilder(out);
         long start = System.nanoTime();
         while (System.nanoTime() - start <= ERROR_WAIT) {
-            System.out.println("trying ...");
             String tmp = null;
             try {
                 tmp = waitForImpl(".+", WAITFOR_TIMEOUT_FOR_ERROR, true);

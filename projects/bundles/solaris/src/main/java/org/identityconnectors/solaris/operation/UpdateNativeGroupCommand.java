@@ -51,7 +51,12 @@ public class UpdateNativeGroupCommand {
         final Set<Attribute> attrs = group.getAttributeSet();
         final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
         final String id = NativeAttribute.ID.getName();
-        final String gid = (attrMap.containsKey(id)) ? AttributeUtil.getStringValue(attrMap.get(id)) : null;
+        
+        final boolean isGidInAttributes = attrMap.containsKey(id);
+        final String gid = isGidInAttributes ? AttributeUtil.getStringValue(attrMap.get(id)) : null;
+        if (isGidInAttributes && gid == null) {
+            throw new IllegalArgumentException("Attribute 'group id' must not be null. (It is not required.)");
+        }
         
         if (gid != null) {
             String groupModCmd = conn.buildCommand("groupmod -g", gid, "'" + groupName + "'");
