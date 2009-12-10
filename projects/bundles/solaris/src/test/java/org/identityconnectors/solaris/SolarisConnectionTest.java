@@ -28,40 +28,22 @@ import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.solaris.test.SolarisTestCommon;
-import org.junit.After;
+import org.identityconnectors.solaris.test.SolarisTestBase;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-public class SolarisConnectionTest {
+public class SolarisConnectionTest extends SolarisTestBase {
     
-    private static SolarisConfiguration config;
     private static final String TIMEOUT_BETWEEN_MSGS = "0.5";
     private static final String LAST_ECHOED_INFO = "sausage.";
-    
-    /**
-     * set valid credentials based on build.groovy property file
-     * @throws Exception
-     */
-    @Before
-    public void setUp() throws Exception {
-        config = SolarisTestCommon.createConfiguration();
-        
-        SolarisTestCommon.printIPAddress(config);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        config = null;
-    }
     
     /** test connection to the configuration given by default credentials (build.groovy) */
     @Test
     public void testGoodConnection() {
-        SolarisConfiguration config = getConfig();
-        SolarisConnector connector = SolarisTestCommon.createConnector(config);
+        SolarisConnector connector = new SolarisConnector();
+        connector.init(getConfiguration());
+        
         try {
             connector.checkAlive();
         } finally {
@@ -74,12 +56,11 @@ public class SolarisConnectionTest {
      */
     @Test
     public void testErrorReplyScenario() {
-        SolarisConnection conn = new SolarisConnection(SolarisTestCommon.createConfiguration());
         Set<String> rejects = new HashSet<String>();
         final String ERROR = "ERROR";
         rejects.add(ERROR);
         try {
-            conn.executeCommand(
+            getConnection().executeCommand(
                     String.format("echo \"%s: ahoj ship\"", ERROR), 
                     rejects);
             Assert.fail("no exception thrown, when error found.");
@@ -90,10 +71,6 @@ public class SolarisConnectionTest {
     
     @Test @Ignore
     public void testErrorReplyScenarioWithTimeout() {
-        config = SolarisTestCommon.createConfiguration();
-//        config.setPort(23);
-//        config.setConnectionType("telnet");
-        SolarisConnection conn = new SolarisConnection(config);
         Set<String> rejects = new HashSet<String>();
         final String ERROR_MARKER = "ERROR";
         rejects.add(ERROR_MARKER);
@@ -101,7 +78,7 @@ public class SolarisConnectionTest {
             // Tougher test (it demands setting a long timeout on the connection.)
             //conn.executeCommand(String.format("export timeout=\"%s\" && echo  \"%s: ahoj\" && sleep \"$timeout\" && echo  \"ship\" && sleep \"$timeout\" && echo  \"egg\" && sleep \"$timeout\" && echo  \"spam\" && sleep \"$timeout\" && echo  \"%s\"", TIMEOUT_BETWEEN_MSGS, ERROR_MARKER, LAST_ECHOED_INFO), rejects);
             // Weaker test
-            conn.executeCommand(String.format("export timeout=\"%s\" && echo  \"%s: ahoj\" && sleep \"$timeout\" && echo \"%s\"", TIMEOUT_BETWEEN_MSGS, ERROR_MARKER, LAST_ECHOED_INFO), rejects);
+            getConnection().executeCommand(String.format("export timeout=\"%s\" && echo  \"%s: ahoj\" && sleep \"$timeout\" && echo \"%s\"", TIMEOUT_BETWEEN_MSGS, ERROR_MARKER, LAST_ECHOED_INFO), rejects);
             Assert.fail("no exception thrown, when error found.");
         } catch (ConnectorException e) {
             final String exMsg = e.getMessage();
@@ -115,30 +92,24 @@ public class SolarisConnectionTest {
     public void testSpecialAccepts() {
         final String MSG = "AHOJ";
         final String errMarker = "ERROR";
-        config = SolarisTestCommon.createConfiguration();
-        SolarisConnection conn = new SolarisConnection(config);
         
-        conn.executeCommand(String.format("echo \"%s\"", MSG), Collections.<String>emptySet(), CollectionUtil.newSet(MSG));
+        getConnection().executeCommand(String.format("echo \"%s\"", MSG), Collections.<String>emptySet(), CollectionUtil.newSet(MSG));
 
         try {
-            conn.executeCommand(String.format("echo \"%s %s\"", errMarker, MSG), CollectionUtil.newSet(errMarker), CollectionUtil.newSet(MSG));
+            getConnection().executeCommand(String.format("echo \"%s %s\"", errMarker, MSG), CollectionUtil.newSet(errMarker), CollectionUtil.newSet(MSG));
             Assert.fail("no exception thrown when error should be found in the output.");
         } catch (ConnectorException ex) {
             //OK
         }
     }
-    
-    /* ************* AUXILIARY METHODS *********** */
 
-    /**
-     * create configuration based on Unit test account
-     * @return
-     */
-    private SolarisConfiguration getConfig() {
-        return config;
+    @Override
+    public boolean createGroup() {
+        return false;
     }
 
-    public void testExecuteCommand() {
-    
+    @Override
+    public int getCreateUsersNumber() {
+        return 0;
     }
 }

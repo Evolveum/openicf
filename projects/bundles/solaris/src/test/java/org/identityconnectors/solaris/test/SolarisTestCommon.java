@@ -22,58 +22,45 @@
  */
 package org.identityconnectors.solaris.test;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.api.ConnectorFacadeFactory;
-import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeBuilder;
-import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
-import org.identityconnectors.solaris.attr.GroupAttribute;
-import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.test.common.PropertyBag;
 import org.identityconnectors.test.common.TestHelpers;
 
 /**
  * 
  * Create a solaris test configuration (for unit tests only)
- *
+ * 
  */
 public class SolarisTestCommon {
-    
+
     private static final PropertyBag testProps = TestHelpers.getProperties(SolarisConnector.class);
-    
-    /** used to view the ip address of the resource that we are connecting to */
-    public static void printIPAddress(SolarisConfiguration config) {
-        System.out.println("TEST HOST: " + config.getHostNameOrIpAddr());
-    }
-    
+
     /**
-     * create a new solaris connector and initialize it with the given configuration
-     * @param config the configuration to be used.
+     * create a new solaris connector and initialize it with the given
+     * configuration
+     * 
+     * @param config
+     *            the configuration to be used.
      */
-    public static SolarisConnector createConnector(SolarisConfiguration config) {
+    public static SolarisConnector createConnector() {
         SolarisConnector conn = new SolarisConnector();
-        conn.init(config);
-        
+        conn.init(createConfiguration());
         return conn;
     }
-    
-    public static String getStringProperty(String name) {
+
+    private static String getStringProperty(String name) {
         return testProps.getStringProperty(name);
     }
-    
-    public static <T> T getProperty(String name, Class<T> type) {
+
+    private static <T> T getProperty(String name, Class<T> type) {
         return testProps.getProperty(name, type);
     }
-    
 
     public static SolarisConfiguration createConfiguration() {
         // names of properties in the property file (build.groovy)
@@ -102,50 +89,17 @@ public class SolarisTestCommon {
 
         return config;
     }
-    
+
     /** for simulating API calls */
     public static ConnectorFacade createConnectorFacade(SolarisConfiguration conf) {
         ConnectorFacadeFactory factory = ConnectorFacadeFactory.getInstance();
         APIConfiguration apiCfg = TestHelpers.createTestConfiguration(SolarisConnector.class, conf);
         return factory.newInstance(apiCfg);
     }
-    
-    /** fill in sample user/password for sample user used in create */
-    public static Set<Attribute> initSampleUser() {
-        return initSampleUser(getStringProperty("sampleUser"));
-    }
-    
-    /** {@link SolarisTestCommon#initSampleUser()}*/
-    public static Set<Attribute> initSampleUser(String username) {
-        Set<Attribute> res = new HashSet<Attribute>();
-        
-        res.add(AttributeBuilder.build(Name.NAME, username));
-        
-        GuardedString samplePasswd = getProperty("samplePasswd", GuardedString.class);
-        res.add(AttributeBuilder.buildPassword(samplePasswd));
-        
-        return res;
-    }
-    
+
     public static SolarisConnection getSolarisConn() {
         SolarisConfiguration config = SolarisTestCommon.createConfiguration();
         SolarisConnection conn = new SolarisConnection(config);
         return conn;
-    }
-    
-    /** checks if the given attribute has same name of NativeAttribute. */
-    public static boolean checkIfNativeAttrPresent(NativeAttribute auths, Attribute attribute) {
-        if (auths.getName().equals(attribute.getName())) {
-            return true;
-        }
-        return false;
-    }
-
-    public static Set<Attribute> initSampleGroup(String groupName, String... usernames) {
-        Set<Attribute> res = new HashSet<Attribute>();
-        res.add(AttributeBuilder.build(Name.NAME, groupName));
-        
-        res.add(AttributeBuilder.build(GroupAttribute.USERS.getName(), Arrays.asList(usernames)));
-        return res;
     }
 }

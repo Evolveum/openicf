@@ -31,7 +31,7 @@ import org.junit.Test;
 public class OpSchemaTest {
     @Test
     public void test() {
-        SolarisConnector conn = SolarisTestCommon.createConnector(SolarisTestCommon.createConfiguration());
+        SolarisConnector conn = SolarisTestCommon.createConnector();
         Assert.assertNotNull(conn.schema());
         conn.dispose();
     }

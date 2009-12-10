@@ -27,7 +27,6 @@ import java.util.List;
 
 import junit.framework.Assert;
 
-import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.test.SolarisTestCommon;
 import org.junit.Test;
@@ -35,9 +34,8 @@ import org.junit.Test;
 public class CommandBuilderTest {
     @Test
     public void test() {
-        SolarisConfiguration config = new SolarisConfiguration();
+        // expecting that sudo is turned off by default.
         SolarisConnection conn = SolarisTestCommon.getSolarisConn();
-        config.setSudoAuth(false);
         String actual = conn.buildCommand("command", "arg1", "arg2", "arg3");
         String expected = "command arg1 arg2 arg3";
         List<String> parsedActual = parseList(actual);

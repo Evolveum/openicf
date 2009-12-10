@@ -26,36 +26,13 @@ import junit.framework.Assert;
 
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.solaris.SolarisConfiguration;
-import org.identityconnectors.test.common.TestHelpers;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-public class SolarisConfigurationTest {
-    
-    private static SolarisConfiguration config;
-    
-    /**
-     * set valid credentials based on build.groovy property file
-     * @throws Exception
-     */
-    @Before
-    public void setUp() throws Exception {
-        config = SolarisTestCommon.createConfiguration();
-        config.setConnectorMessages(TestHelpers.createDummyMessages());
-        
-        SolarisTestCommon.printIPAddress(config);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        config = null;
-    }
-    
+public class SolarisConfigurationTest extends SolarisTestBase {
     @Test
     public void testGoodConfiguration() {
-        SolarisConfiguration config = getConfig();
+        SolarisConfiguration config = getConfiguration();
         config.validate();
         // no IllegalArgumentException should be thrown for valid configuration
     }
@@ -63,7 +40,7 @@ public class SolarisConfigurationTest {
     /* **************** "MISSING" PROPERTY TESTS ***************** */
     @Test(expected = ConfigurationException.class)
     public void testMissingUsername() {
-        SolarisConfiguration config = getConfig();
+        SolarisConfiguration config = getConfiguration();
         config.setUserName(null);
         config.validate();
         Assert.fail("Configuration allowed a null admin username.");
@@ -71,7 +48,7 @@ public class SolarisConfigurationTest {
     
     @Test(expected = ConfigurationException.class)
     public void testMissingPassword() {
-        SolarisConfiguration config = getConfig();
+        SolarisConfiguration config = getConfiguration();
         config.setPassword(null);
         config.validate();
         Assert.fail("Configuration allowed a null password.");
@@ -79,7 +56,7 @@ public class SolarisConfigurationTest {
     
     @Test(expected = ConfigurationException.class)
     public void testMissingHostname() {
-        SolarisConfiguration config = getConfig();
+        SolarisConfiguration config = getConfiguration();
         config.setHostNameOrIpAddr(null);
         config.validate();
         Assert.fail("Configuration allowed a null hostname.");
@@ -87,7 +64,7 @@ public class SolarisConfigurationTest {
     
     @Test(expected = ConfigurationException.class)
     public void testMissingPort() {
-        SolarisConfiguration config = getConfig();
+        SolarisConfiguration config = getConfiguration();
         config.setPort(null);
         config.validate();
         Assert.fail("Configuration allowed a null port.");
@@ -95,17 +72,17 @@ public class SolarisConfigurationTest {
     
     @Test @Ignore
     public void testGetMessageProperty() {
-        String result = getConfig().getMessage("SOLARIS");
+        String result = getConfiguration().getMessage("SOLARIS");
         Assert.assertTrue(result.equals("Solaris"));
     }
 
-    /* ************* AUXILIARY METHODS *********** */
+    @Override
+    public boolean createGroup() {
+        return false;
+    }
 
-    /**
-     * create configuration based on Unit test account
-     * @return
-     */
-    private SolarisConfiguration getConfig() {
-        return config;
+    @Override
+    public int getCreateUsersNumber() {
+        return 0;
     }
 }

@@ -28,9 +28,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.identityconnectors.common.CollectionUtil;
-import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.test.SolarisTestCommon;
+import org.identityconnectors.solaris.test.SolarisTestBase;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -38,27 +37,36 @@ import org.junit.Test;
  * @author David Adam
  *
  */
-public class AccountIteratorTest {
-@Test
-public void test() {
-    // similar test to BlockAccountIteratorTest
-    SolarisConnection conn = SolarisTestCommon.getSolarisConn();
-    String command = conn.buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"");
-    String out = conn.executeCommand(command);
-    final List<String> usernames = SolarisEntries.getNewlineSeparatedItems(out);
-    
-    AccountIterator bai = new AccountIterator(usernames, EnumSet.of(NativeAttribute.NAME), conn);
-    List<String> retrievedUsernames = new ArrayList<String>();
-    while (bai.hasNext()) {
-        retrievedUsernames.add(bai.next().getName());
+public class AccountIteratorTest extends SolarisTestBase {
+    @Test
+    public void test() {
+        // similar test to BlockAccountIteratorTest
+        String command = getConnection().buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"");
+        String out = getConnection().executeCommand(command);
+        final List<String> usernames = SolarisEntries.getNewlineSeparatedItems(out);
+
+        AccountIterator bai = new AccountIterator(usernames, EnumSet.of(NativeAttribute.NAME), getConnection());
+        List<String> retrievedUsernames = new ArrayList<String>();
+        while (bai.hasNext()) {
+            retrievedUsernames.add(bai.next().getName());
+        }
+        Assert.assertEquals(CollectionUtil.newSet(usernames), CollectionUtil.newSet(retrievedUsernames));
+
+        try {
+            bai.next();
+            Assert.fail("no Exception was thrown after invalid call of next.");
+        } catch (NoSuchElementException nex) {
+            // OK
+        }
     }
-    Assert.assertEquals(CollectionUtil.newSet(usernames), CollectionUtil.newSet(retrievedUsernames));
-    
-    try {
-        bai.next();
-        Assert.fail("no Exception was thrown after invalid call of next.");
-    } catch (NoSuchElementException nex) {
-        // OK
+
+    @Override
+    public boolean createGroup() {
+        return false;
     }
-}
+
+    @Override
+    public int getCreateUsersNumber() {
+        return 0;
+    }
 }

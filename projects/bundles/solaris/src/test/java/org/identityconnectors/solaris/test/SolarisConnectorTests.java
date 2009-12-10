@@ -25,63 +25,27 @@ package org.identityconnectors.solaris.test;
 
 import junit.framework.Assert;
 
-import org.identityconnectors.framework.common.objects.Schema;
-import org.identityconnectors.solaris.SolarisConfiguration;
-import org.identityconnectors.solaris.SolarisConnector;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-public class SolarisConnectorTests {
-
-    private static SolarisConfiguration config;
-    
-    /**
-     * set valid credentials based on build.groovy property file
-     * @throws Exception
-     */
-    @Before
-    public void setUp() throws Exception {
-        config = SolarisTestCommon.createConfiguration();
-        
-        SolarisTestCommon.printIPAddress(config);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        config = null;
-    }
-    
-    /* ************ TEST CONNECTOR ************ */
-    
-    /** elementary schema test */
-    @Test
-    public void basicSchemaTest() {
-        SolarisConnector connector = SolarisTestCommon.createConnector(getConfig());
-        Schema schema = connector.schema();
-        Assert.assertNotNull(schema);
-    }
+public class SolarisConnectorTests extends SolarisTestBase {
         
     @Test
     public void testEcho() {
-        SolarisConfiguration config = getConfig();
-        SolarisConnector connector = SolarisTestCommon.createConnector(config);
         final String message = "HeLlO WoRlD";
-        String output = connector.getConnection().executeCommand(String.format("echo \"%s\"", message));
+        String output = getConnection().executeCommand(String.format("echo \"%s\"", message));
         /*
          * the output contains even the optional welcome message on Solaris.
          */
         Assert.assertTrue(output.contains(message));
     }
-    
-    /* ************* AUXILIARY METHODS *********** */
 
-    /**
-     * create configuration based on Unit test account
-     * @return
-     */
-    private SolarisConfiguration getConfig() {
-        return config;
+    @Override
+    public boolean createGroup() {
+        return false;
     }
-    
+
+    @Override
+    public int getCreateUsersNumber() {
+        return 0;
+    }
 }

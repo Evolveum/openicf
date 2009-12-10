@@ -23,42 +23,17 @@
 package org.identityconnectors.solaris.test;
 
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
-import org.identityconnectors.solaris.SolarisConfiguration;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-public class OpAuthenticateImplTest {
-    
-    private SolarisConfiguration config;
-    private ConnectorFacade facade;
-
-    /**
-     * set valid credentials based on build.groovy property file
-     * @throws Exception
-     */
-    @Before
-    public void setUp() throws Exception {
-        config = SolarisTestCommon.createConfiguration();
-        facade = SolarisTestCommon.createConnectorFacade(config);
-        
-        SolarisTestCommon.printIPAddress(config);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        config = null;
-        facade = null;
-    }
-    
+public class OpAuthenticateImplTest extends SolarisTestBase {
+   
     @Test
     public void testAuthenticateApiOp() {
-        GuardedString password = config.getPassword();
-        String username = config.getUserName();
-        facade.authenticate(ObjectClass.ACCOUNT, username, password, null);
+        GuardedString password = getConfiguration().getPassword();
+        String username = getConfiguration().getUserName();
+        getFacade().authenticate(ObjectClass.ACCOUNT, username, password, null);
     }
     
     /**
@@ -68,21 +43,21 @@ public class OpAuthenticateImplTest {
     public void testAuthenticateApiOpInvalidCredentials() {
         GuardedString password = new GuardedString(
                 "WRONG_PASSWORD_FOOBAR2135465".toCharArray());
-        String username = config.getUserName();
-        facade.authenticate(ObjectClass.ACCOUNT, username, password, null);
+        String username = getConfiguration().getUserName();
+        getFacade().authenticate(ObjectClass.ACCOUNT, username, password, null);
     }
     
     @Test (expected=IllegalArgumentException.class)
     public void unknownObjectClass() {
-        GuardedString password = config.getPassword();
-        String username = config.getUserName();
-        facade.authenticate(new ObjectClass("NONEXISTING_OBJECTCLASS"), username, password, null);
+        GuardedString password = getConfiguration().getPassword();
+        String username = getConfiguration().getUserName();
+        getFacade().authenticate(new ObjectClass("NONEXISTING_OBJECTCLASS"), username, password, null);
     }
     
     @Test (expected=RuntimeException.class)
     public void unknownUid() {
-        GuardedString password = config.getPassword();
-        facade.authenticate(ObjectClass.ACCOUNT, "NONEXISTING_UID___", password, null);
+        GuardedString password = getConfiguration().getPassword();
+        getFacade().authenticate(ObjectClass.ACCOUNT, "NONEXISTING_UID___", password, null);
     }
     
     /**
@@ -91,10 +66,20 @@ public class OpAuthenticateImplTest {
     @Test
     public void testTwiceAuthWithFailure() {
         try {
-            facade.authenticate(ObjectClass.ACCOUNT, "NONEXISTING_UID__", config.getPassword(), null);
+            getFacade().authenticate(ObjectClass.ACCOUNT, "NONEXISTING_UID__", getConfiguration().getPassword(), null);
         } catch (ConnectorException ex) {
             //OK
         }
-        facade.authenticate(ObjectClass.ACCOUNT, config.getUserName(), config.getPassword(), null);
+        getFacade().authenticate(ObjectClass.ACCOUNT, getConfiguration().getUserName(), getConfiguration().getPassword(), null);
+    }
+    
+    @Override
+    public boolean createGroup() {
+        return false;
+    }
+
+    @Override
+    public int getCreateUsersNumber() {
+        return 1;
     }
 }

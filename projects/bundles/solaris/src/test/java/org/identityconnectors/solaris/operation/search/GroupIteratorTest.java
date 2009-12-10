@@ -29,23 +29,21 @@ import java.util.NoSuchElementException;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.test.SolarisTestCommon;
+import org.identityconnectors.solaris.test.SolarisTestBase;
 import org.junit.Assert;
 import org.junit.Test;
 
 
-public class GroupIteratorTest {
+public class GroupIteratorTest extends SolarisTestBase {
     @Test
     public void test() {
         // similar test to BlockAccountIteratorTest
-        SolarisConnection conn = SolarisTestCommon.getSolarisConn();
-        String command = conn.buildCommand("cut -d: -f1 /etc/group");
-        String out = conn.executeCommand(command);
+        String command = getConnection().buildCommand("cut -d: -f1 /etc/group");
+        String out = getConnection().executeCommand(command);
         final List<String> groups = SolarisEntries.getNewlineSeparatedItems(out);
         
-        GroupIterator gi = new GroupIterator(groups, EnumSet.of(NativeAttribute.NAME, NativeAttribute.USERS, NativeAttribute.ID), conn);
+        GroupIterator gi = new GroupIterator(groups, EnumSet.of(NativeAttribute.NAME, NativeAttribute.USERS, NativeAttribute.ID), getConnection());
         List<String> retrievedGroups = new ArrayList<String>();
         while (gi.hasNext()) {
             SolarisEntry currentGroup = gi.next();
@@ -64,5 +62,15 @@ public class GroupIteratorTest {
         } catch (NoSuchElementException nex) {
             // OK
         }
+    }
+    
+    @Override
+    public boolean createGroup() {
+        return false;
+    }
+
+    @Override
+    public int getCreateUsersNumber() {
+        return 0;
     }
 }

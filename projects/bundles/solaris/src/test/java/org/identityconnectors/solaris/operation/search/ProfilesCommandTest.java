@@ -26,18 +26,26 @@ package org.identityconnectors.solaris.operation.search;
 import junit.framework.Assert;
 
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.test.SolarisTestCommon;
+import org.identityconnectors.solaris.test.SolarisTestBase;
 import org.junit.Test;
 
-public class ProfilesCommandTest {
+public class ProfilesCommandTest extends SolarisTestBase {
     @Test
     public void test() {
-        SolarisConnection conn = SolarisTestCommon.getSolarisConn();
-        Attribute result = ProfilesCommand.getProfilesAttributeFor("root", conn);
+        Attribute result = ProfilesCommand.getProfilesAttributeFor("root", getConnection());
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.getValue());
         Assert.assertEquals(NativeAttribute.PROFILES.getName(), result.getName());
+    }
+    
+    @Override
+    public boolean createGroup() {
+        return false;
+    }
+
+    @Override
+    public int getCreateUsersNumber() {
+        return 0;
     }
 }

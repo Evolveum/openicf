@@ -28,7 +28,6 @@ import java.util.Set;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
@@ -82,8 +81,6 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     private SolarisConfiguration _configuration;
 
     private static Schema _schema;
-    
-    private static String CHECK_ALIVE = "checkAlive";
 
     /**
      * {@see
@@ -104,14 +101,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      */
     public void checkAlive() {
         _log.info("checkAlive()");
-        try {
-            String out = getConnection().executeCommand("echo '" + CHECK_ALIVE + "'");
-            if (!out.contains(CHECK_ALIVE)) {
-                throw new RuntimeException("Solaris Connector no longer alive.");
-            }
-        } catch (Exception e) {
-            throw ConnectorException.wrap(e);
-        }
+        _connection.checkAlive();
     }
 
     /**

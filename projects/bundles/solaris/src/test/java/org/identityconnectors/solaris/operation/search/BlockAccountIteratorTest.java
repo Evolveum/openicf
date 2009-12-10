@@ -29,22 +29,20 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.identityconnectors.common.CollectionUtil;
-import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.test.SolarisTestCommon;
+import org.identityconnectors.solaris.test.SolarisTestBase;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class BlockAccountIteratorTest {
+public class BlockAccountIteratorTest extends SolarisTestBase {
     @Test 
     public void test() {
         // similar test to AccountIteratorTest
-       SolarisConnection conn = SolarisTestCommon.getSolarisConn();
-        String command = conn.buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"");
-        String out = conn.executeCommand(command);
+        String command = getConnection().buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"");
+        String out = getConnection().executeCommand(command);
         final List<String> usernames = SolarisEntries.getNewlineSeparatedItems(out);
         
-        BlockAccountIterator bai = new BlockAccountIterator(usernames, EnumSet.of(NativeAttribute.NAME), conn , 2);
+        BlockAccountIterator bai = new BlockAccountIterator(usernames, EnumSet.of(NativeAttribute.NAME), getConnection() , 2);
         List<String> retrievedUsernames = new ArrayList<String>();
         while (bai.hasNext()) {
             retrievedUsernames.add(bai.next().getName());
@@ -57,5 +55,15 @@ public class BlockAccountIteratorTest {
         } catch (NoSuchElementException nex) {
             // OK
         }
+    }
+    
+    @Override
+    public boolean createGroup() {
+        return false;
+    }
+
+    @Override
+    public int getCreateUsersNumber() {
+        return 0;
     }
 }

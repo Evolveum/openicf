@@ -28,25 +28,18 @@ import java.util.Iterator;
 import java.util.Set;
 
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
+import org.identityconnectors.solaris.test.SolarisTestBase;
 import org.identityconnectors.solaris.test.SolarisTestCommon;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-public class SolarisEntriesTest {
-    private SolarisConnection conn;
-
-    @Before
-    public void setUp() {
-        conn = SolarisTestCommon.getSolarisConn();
-    }
+public class SolarisEntriesTest extends SolarisTestBase {
     
     @Test
     public void testGetAccount() {
         final String userName = "root";
-        SolarisEntry result = SolarisEntries.getAccount(userName, EnumSet.of(NativeAttribute.AUTHS, NativeAttribute.PROFILES, NativeAttribute.NAME), conn);
+        SolarisEntry result = SolarisEntries.getAccount(userName, EnumSet.of(NativeAttribute.AUTHS, NativeAttribute.PROFILES, NativeAttribute.NAME), getConnection());
         Assert.assertTrue(result.getName().equals(userName));
         Set<Attribute> set = result.getAttributeSet();
         Assert.assertNotNull(set);
@@ -55,10 +48,10 @@ public class SolarisEntriesTest {
         boolean isProfiles = false;
         for (Attribute attribute : set) {
             if (!isAuths)
-                isAuths = SolarisTestCommon.checkIfNativeAttrPresent(NativeAttribute.AUTHS, attribute);
+                isAuths = NativeAttribute.AUTHS.getName().equals(attribute.getName());
             
             if (!isProfiles)
-                isProfiles = SolarisTestCommon.checkIfNativeAttrPresent(NativeAttribute.PROFILES, attribute);
+                isProfiles = NativeAttribute.PROFILES.getName().equals(attribute.getName());
             
             if (isAuths && isProfiles)
                 break;
@@ -72,7 +65,7 @@ public class SolarisEntriesTest {
         final NativeAttribute profilesAttr = NativeAttribute.PROFILES;
         final NativeAttribute rolesAttr = NativeAttribute.ROLES;
         
-        Iterator<SolarisEntry> result = SolarisEntries.getAllAccounts(EnumSet.of(profilesAttr, rolesAttr), conn);
+        Iterator<SolarisEntry> result = SolarisEntries.getAllAccounts(EnumSet.of(profilesAttr, rolesAttr), getConnection());
         while (result.hasNext()) {
             final SolarisEntry nextIt = result.next();
             final Set<Attribute> attributeSet = nextIt.getAttributeSet();
@@ -81,10 +74,10 @@ public class SolarisEntriesTest {
             boolean isRoles = false;
             for (Attribute attribute : attributeSet) {
                 if (!isProfiles)
-                    isProfiles = SolarisTestCommon.checkIfNativeAttrPresent(profilesAttr, attribute);
+                    isProfiles = profilesAttr.getName().equals(attribute.getName());
                 
                 if (!isRoles)
-                    isRoles = SolarisTestCommon.checkIfNativeAttrPresent(rolesAttr, attribute);
+                    isRoles = rolesAttr.getName().equals(attribute.getName());
                 
                 if (isProfiles && isRoles)
                     break;
@@ -97,5 +90,15 @@ public class SolarisEntriesTest {
             msg = String.format(basicMsg, nextIt.getName(), rolesAttr);
             Assert.assertTrue(msg, isRoles);
         }//while
+    }
+    
+    @Override
+    public boolean createGroup() {
+        return false;
+    }
+
+    @Override
+    public int getCreateUsersNumber() {
+        return 0;
     }
 }

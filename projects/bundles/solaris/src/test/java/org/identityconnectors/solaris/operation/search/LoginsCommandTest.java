@@ -28,17 +28,15 @@ import java.util.Set;
 import junit.framework.Assert;
 
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.test.SolarisTestCommon;
+import org.identityconnectors.solaris.test.SolarisTestBase;
 import org.junit.Test;
 
-public class LoginsCommandTest {
+public class LoginsCommandTest extends SolarisTestBase {
 
     @Test
     public void test() {
-       SolarisConnection conn = SolarisTestCommon.getSolarisConn();
-        SolarisEntry result = LoginsCommand.getAttributesFor("root", conn);
+        SolarisEntry result = LoginsCommand.getAttributesFor("root", getConnection());
         Assert.assertTrue(result.getAttributeSet().size() >= 5);
         Set<Attribute> attrSet = result.getAttributeSet();
         for (Attribute attribute : attrSet) {
@@ -49,5 +47,15 @@ public class LoginsCommandTest {
                 break;
             }
         }
+    }
+    
+    @Override
+    public boolean createGroup() {
+        return false;
+    }
+
+    @Override
+    public int getCreateUsersNumber() {
+        return 0;
     }
 }

@@ -22,156 +22,122 @@
  */
 package org.identityconnectors.solaris.test;
 
-
-
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import junit.framework.Assert;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.security.GuardedString;
-import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.solaris.SolarisConfiguration;
-import org.identityconnectors.solaris.SolarisConnector;
-import org.identityconnectors.solaris.SolarisUtil;
-import org.junit.After;
-import org.junit.Before;
+import org.identityconnectors.solaris.attr.GroupAttribute;
 import org.junit.Test;
 
-public class OpCreateImplTest {
-    
-    private SolarisConfiguration config;
-    private ConnectorFacade facade;
-    /** used only for test purposes & doublechecking the results. */
-    private SolarisConnector testConnector;
-
-    /**
-     * set valid credentials based on build.groovy property file
-     * @throws Exception
-     */
-    @Before
-    public void setUp() throws Exception {
-        config = SolarisTestCommon.createConfiguration();
-        facade = SolarisTestCommon.createConnectorFacade(config);
-        testConnector = SolarisTestCommon.createConnector(config);
-        
-        SolarisTestCommon.printIPAddress(config);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        config = null;
-        facade = null;
-        testConnector = null;
-    }
-    
+public class OpCreateImplTest extends SolarisTestBase {
     /**
      * creates a sample user
      */
     @Test
     public void testCreate() {
         // create a new user
-        final Set<Attribute> attrs = SolarisTestCommon.initSampleUser();
-        // Read only list of attributes
-        final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
-        final String username = ((Name) attrMap.get(Name.NAME)).getNameValue();
-        final GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
-        
+        final String username = "spams";
+        final GuardedString password = new GuardedString("samplePassword".toCharArray());
+        final Set<Attribute> attrs = CollectionUtil.newSet(AttributeBuilder.build(Name.NAME, username), AttributeBuilder.buildPassword(password));
+
         try {
             Uid uid = null;
             try {
-                uid = facade.create(ObjectClass.ACCOUNT, attrs, null);
+                uid = getFacade().create(ObjectClass.ACCOUNT, attrs, null);
             } catch (RuntimeException ex) {
-                Assert.fail(String.format(
-                        "Create failed for: '%s'\n ExceptionMessage: %s",
-                        username, ex.getMessage()));
+                Assert.fail(String.format("Create failed for: '%s'\n ExceptionMessage: %s", username, ex.getMessage()));
             }
             Assert.assertNotNull(uid);
-        
-            // try to authenticate 
-            try {
-                facade.authenticate(ObjectClass.ACCOUNT, username, password, null);
-            } catch (RuntimeException ex) {
-                Assert.fail(String.format("Authenticate failed for: '%s'\n ExceptionMessage: %s", username, ex.getMessage()));
-            }
+
+            // search for the created account
+            String command = (!getConnection().isNis()) ? "cut -d: -f1 /etc/passwd | grep '" + username + "'" : "ypcat passwd | cut -d: -f1 | grep '" + username + "'";
+            String out = getConnection().executeCommand(command);
+            Assert.assertTrue(String.format("user '%s' not found on the resource.", username), out.contains(username));
+            
         } finally {
             // cleanup the new user
-            facade.delete(ObjectClass.ACCOUNT, new Uid(username), null);
-            try {
-                facade.authenticate(ObjectClass.ACCOUNT, username, password, null);
-                Assert.fail(String.format("Account was not cleaned up: '%s'", username));
-            } catch (RuntimeException ex) {
-                //OK
+            if (!getConnection().isNis()) {
+                getConnection().executeCommand("userdel " + username);
+            } else {
+                try {
+                    // NIS delete is just way too big to inline it here:
+                    getFacade().delete(ObjectClass.ACCOUNT, new Uid(username), null);
+                } catch (RuntimeException ex) {
+                    // OK
+                }
             }
         }
     }
-    
-    @Test (expected=IllegalArgumentException.class)
+
+    @Test(expected = IllegalArgumentException.class)
     public void unknownObjectClass() {
-        final Set<Attribute> attrs = SolarisTestCommon.initSampleUser();
-        facade.create(new ObjectClass("NONEXISTING_OBJECTCLASS"), attrs, null);
+        final Set<Attribute> attrs = CollectionUtil.newSet(AttributeBuilder.build(Name.NAME, "foo"));
+        getFacade().create(new ObjectClass("NONEXISTING_OBJECTCLASS"), attrs, null);
     }
-    
-    @Test (expected=ConnectorException.class)
+
+    @Test(expected = ConnectorException.class)
     public void createExistingAccount() {
         final Set<Attribute> attrs = new HashSet<Attribute>();
         attrs.add(AttributeBuilder.build(Name.NAME, "root"));
         attrs.add(AttributeBuilder.build(OperationalAttributes.PASSWORD_NAME, new GuardedString("".toCharArray())));
-        facade.create(ObjectClass.ACCOUNT, attrs, null);
+        getFacade().create(ObjectClass.ACCOUNT, attrs, null);
     }
-    
-    @Test (expected=ConnectorException.class)
+
+    @Test(expected = ConnectorException.class)
     public void createExistingGroup() {
         final Set<Attribute> attrs = new HashSet<Attribute>();
         attrs.add(AttributeBuilder.build(Name.NAME, "root"));
-        facade.create(ObjectClass.GROUP, attrs, null);
+        getFacade().create(ObjectClass.GROUP, attrs, null);
     }
-    
+
     @Test
     public void createGroupTest() {
-        Set<Attribute> userAttrs = SolarisTestCommon.initSampleUser();
+        Set<Attribute> attrs = new HashSet<Attribute>();
+        final String groupName = "testgrp";
+        attrs.add(AttributeBuilder.build(Name.NAME, groupName));
+        attrs.add(AttributeBuilder.build(GroupAttribute.USERS.getName(), CollectionUtil.newList("root")));
 
-        Map<String, Attribute> userAttrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(userAttrs));
-        String username = ((Name) userAttrMap.get(Name.NAME)).getNameValue();
-        Set<Attribute> grpAttrs = SolarisTestCommon.initSampleGroup("gsample", username);
-        Map<String, Attribute> grpAttrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(grpAttrs));
-        String groupName = ((Name) grpAttrMap.get(Name.NAME)).getNameValue();
-
-        // create a user
-        facade.create(ObjectClass.ACCOUNT, userAttrs, null);
-
+        // create a group
+        getFacade().create(ObjectClass.GROUP, attrs, null);
         try {
-            // create a group
-            facade.create(ObjectClass.GROUP, grpAttrs, null);
-            try {
-                // verify if group exists (throws ConnectorException in case of missing group)
-                testConnector.getConnection().executeCommand("cat /etc/group | grep '" + groupName + "'", Collections.<String> emptySet(), CollectionUtil.newSet(groupName));
-            } finally {
-                // cleanup the created group
-                testConnector.getConnection().executeCommand("groupdel '" + groupName + "'");
-            }
+            // verify if group exists (throws ConnectorException in case of
+            // missing group)
+            String command = (!getConnection().isNis()) ? "cat /etc/group | grep '" + groupName + "'" : "ypcat group | grep '" + groupName + "'";
+            String out = getConnection().executeCommand(command);
+            Assert.assertTrue(out.contains(groupName));
+            Assert.assertTrue(out.contains("root"));
         } finally {
-            // cleanup the new user
-            facade.delete(ObjectClass.ACCOUNT, new Uid(username), null);
-            try {
-                final GuardedString password = SolarisUtil.getPasswordFromMap(userAttrMap);
-                facade.authenticate(ObjectClass.ACCOUNT, username, password, null);
-                Assert.fail(String.format("Account was not cleaned up: '%s'", username));
-            } catch (RuntimeException ex) {
-                // OK
+            // cleanup the created group
+            if (!getConnection().isNis()) {
+                getConnection().executeCommand("groupdel '" + groupName + "'");
+            } else {
+                // NIS delete is just way too big to inline it here:
+                try {
+                    getFacade().delete(ObjectClass.GROUP, new Uid(groupName), null);
+                } catch (RuntimeException ex) {
+                    // OK
+                }
             }
         }
+    }
+
+    @Override
+    public boolean createGroup() {
+        return false;
+    }
+
+    @Override
+    public int getCreateUsersNumber() {
+        return 0;
     }
 }

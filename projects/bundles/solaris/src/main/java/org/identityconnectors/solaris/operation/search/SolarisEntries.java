@@ -51,7 +51,7 @@ public class SolarisEntries {
         }
         
         // BlockAccount iterator is optimized for fetching info from 'logins' command and 'last login time' only.
-        return new BlockAccountIterator(accountNames, attrsToGet, conn, 30);
+        return new BlockAccountIterator(accountNames, attrsToGet, conn, 30 /* TODO what constant is optimal here? */);
     }
 
     public static Iterator<SolarisEntry> getAllGroups(Set<NativeAttribute> attrsToGet, SolarisConnection conn) {

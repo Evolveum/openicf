@@ -955,6 +955,13 @@ public class SolarisConnection {
         executeCommand(getMutexReleaseScript(uidMutexFile));
     }
     
+    public void checkAlive() {
+        String out = executeCommand("echo 'checkAlive'");
+        if (!out.contains("checkAlive")) {
+            throw new RuntimeException("Solaris Connector no longer alive.");
+        }
+    }
+    
     /*
      * SUDO
      */
