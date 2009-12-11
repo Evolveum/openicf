@@ -348,6 +348,17 @@ public class SolarisConnection {
     
     /**
      * {@see SolarisConnection#executeCommand(String, Set, Set)}
+     * 
+     * @param timeout
+     *            the time interval, that we will wait for the response (marked
+     *            by {@link SolarisConfiguration#getRootShellPrompt()}
+     */
+    public String executeCommand(String command, int timeout) {
+        return executeCommand(command, Collections.<String>emptySet(), Collections.<String>emptySet(), timeout);
+    }
+
+    /**
+     * {@see SolarisConnection#executeCommand(String, Set, Set)}
      */
     public String executeCommand(String command, Set<String> rejects) {
         return executeCommand(command, rejects, Collections.<String>emptySet());
@@ -370,76 +381,30 @@ public class SolarisConnection {
         }
         return executeCommand(command, CollectionUtil.asReadOnlyMap(rejectsMap), accepts);
     }
+    
+    /**
+     * {@see SolarisConnection#executeCommand(String, Set, Set)}
+     * 
+     * @param timeout
+     *            the time interval, that we will wait for the response (marked
+     *            by {@link SolarisConfiguration#getRootShellPrompt()}
+     */
+    private String executeCommand(String command, Set<String> rejects, Set<String> accepts, int timeout) {
+        Map<String, ErrorHandler> rejectsMap = new HashMap<String, ErrorHandler>();
+        for (String rej : rejects) {
+            // by default rejects throw ConnectorException.
+            rejectsMap.put(rej, defaultErrorHandler);
+        }
+        return executeCommand(command, CollectionUtil.asReadOnlyMap(rejectsMap), accepts, timeout);
+    }
 
     /**
-     * Execute a issue a command on the resource. Return the match of feedback
-     * up to the root shell prompt
-     * {@link SolarisConnection#getRootShellPrompt()}.
-     * 
-     * @param command
-     *            the executed command. In special cases (such as waiting for
-     *            the first prompt after login, the command can have {@code
-     *            null} value. If {@code command} is {@code null}, then we wait
-     *            for root shell prompt without executing any other commands
-     *            (given that {@code root shell prompt} was not overriden by
-     *            {@code accepts} parameter.
-     * 
-     * @param rejects
-     *            Map that contains error message,
-     *            {@link SolarisConnection.ErrorHandler} pairs. If the error
-     *            message is found in response from the resource, the error
-     *            handler is called. .
-     *            <p>
-     * 
-     * @param accepts
-     *            these are accepting strings, if they are found the result is
-     *            returned. If empty set is given, the default accept is
-     *            {@link SolarisConnection#getRootShellPrompt()}. Caution: in case
-     *            <code>accepts</code> parameter is specified, it'll be the last
-     *            element in the response from the resource. If we don't respect this 
-     *            rule than we will loose precious output of the following commands, that 
-     *            are issued. <i>A larger illustration of violation of the previous contract
-     *            follows. It is above the basic usage, however we should be aware of 
-     *            consequences of violating contract for 'accepts' parameter.</i> 
-     *            EXAMPLE: see the following calls / respones from the {@link SolarisConnection}:
-     *            <pre>
-     *            out = conn.executeCommand("echo 'one'", Collections.<String>emptySet(), CollectionUtil.newSet("one"));
-     *            Assert.assertEquals("one", out); // will succeed
-     *            out = conn.executeCommand("echo 'two'", Collections.<String>emptySet(), CollectionUtil.newSet("two"));
-     *            Assert.assertEquals("two", out); // fail, due to empty output
-     *            out = conn.executeCommand("echo 'three'", Collections.<String>emptySet(), CollectionUtil.newSet("three"));
-     *            Assert.assertEquals("three", out); // fail, due to empty output
-     *            </pre>
-     *            If we analyze the previous example we will see the following sequence of request/response going on:
-     *            <pre>
-     *            >> echo 'one'
-     *            << one
-     *            >> echo 'two'
-     *            << two~ConnectorPrompt // at least this is what we expect, but we'll get an empty output
-     *                                   // because of {@link SolarisConnection#trimOutput(String)}, that cuts off everything after root shell prompt.
-     *            </pre>
-     *            The solution is to wait for rootShellPrompt after every 'accept' parameter, that doesn't terminate the output:
-     *            <pre>
-     *            out = conn.executeCommand("echo 'one'", Collections.<String>emptySet(), CollectionUtil.newSet("one"));
-     *            conn.executeCommand(null) // will cause waiting for the rootShellPrompt.
-     *            Assert.assertEquals("one", out); // will succeed
-     *            out = conn.executeCommand("echo 'two'", Collections.<String>emptySet(), CollectionUtil.newSet("two"));
-     *            conn.executeCommand(null) // will cause waiting for the rootShellPrompt.
-     *            Assert.assertEquals("two", out); // will succeed
-     *            out = conn.executeCommand("echo 'three'", Collections.<String>emptySet(), CollectionUtil.newSet("three"));
-     *            conn.executeCommand(null) // will cause waiting for the rootShellPrompt.
-     *            Assert.assertEquals("three", out); // will succeed
-     *            </pre>
-     * 
-     * @return the response from the resource when the command is successful,
-     *         free of error messages. Otherwise throw a
-     *         {@link ConnectorException}.
-     * 
-     * @throws ConnectorException
-     *             in case a <code>rejects</code> string is found in the
-     *             response of the resource.
+     * {@link SolarisConnection#executeCommand(String, Map, Set)}
+     * @param timeout
+     *            the time interval, that we will wait for the response (marked
+     *            by {@link SolarisConfiguration#getRootShellPrompt()}
      */
-    public String executeCommand(String command, Map<String, ErrorHandler> rejects, Set<String> accepts) {
+    private String executeCommand(String command, Map<String, ErrorHandler> rejects, Set<String> accepts, int timeout) {
         try {
             if (command != null) {
                 sendInternal(command);
@@ -496,7 +461,7 @@ public class SolarisConnection {
         
         // #3 set the timeout for matching too
         final boolean[] isTimeoutMatched = new boolean[1];
-        builder.addTimeoutMatch(WAIT, new SolarisClosure() {
+        builder.addTimeoutMatch(timeout, new SolarisClosure() {
             public void run(ExpectState state) throws Exception {
                 isTimeoutMatched[0] = true;
             }
@@ -662,6 +627,78 @@ public class SolarisConnection {
         output = trimOutput(output);
 
         return output;
+    }
+    
+    /**
+     * Execute a issue a command on the resource. Return the match of feedback
+     * up to the root shell prompt
+     * {@link SolarisConnection#getRootShellPrompt()}.
+     * 
+     * @param command
+     *            the executed command. In special cases (such as waiting for
+     *            the first prompt after login, the command can have {@code
+     *            null} value. If {@code command} is {@code null}, then we wait
+     *            for root shell prompt without executing any other commands
+     *            (given that {@code root shell prompt} was not overriden by
+     *            {@code accepts} parameter.
+     * 
+     * @param rejects
+     *            Map that contains error message,
+     *            {@link SolarisConnection.ErrorHandler} pairs. If the error
+     *            message is found in response from the resource, the error
+     *            handler is called. .
+     *            <p>
+     * 
+     * @param accepts
+     *            these are accepting strings, if they are found the result is
+     *            returned. If empty set is given, the default accept is
+     *            {@link SolarisConnection#getRootShellPrompt()}. Caution: in case
+     *            <code>accepts</code> parameter is specified, it'll be the last
+     *            element in the response from the resource. If we don't respect this 
+     *            rule than we will loose precious output of the following commands, that 
+     *            are issued. <i>A larger illustration of violation of the previous contract
+     *            follows. It is above the basic usage, however we should be aware of 
+     *            consequences of violating contract for 'accepts' parameter.</i> 
+     *            EXAMPLE: see the following calls / respones from the {@link SolarisConnection}:
+     *            <pre>
+     *            out = conn.executeCommand("echo 'one'", Collections.<String>emptySet(), CollectionUtil.newSet("one"));
+     *            Assert.assertEquals("one", out); // will succeed
+     *            out = conn.executeCommand("echo 'two'", Collections.<String>emptySet(), CollectionUtil.newSet("two"));
+     *            Assert.assertEquals("two", out); // fail, due to empty output
+     *            out = conn.executeCommand("echo 'three'", Collections.<String>emptySet(), CollectionUtil.newSet("three"));
+     *            Assert.assertEquals("three", out); // fail, due to empty output
+     *            </pre>
+     *            If we analyze the previous example we will see the following sequence of request/response going on:
+     *            <pre>
+     *            >> echo 'one'
+     *            << one
+     *            >> echo 'two'
+     *            << two~ConnectorPrompt // at least this is what we expect, but we'll get an empty output
+     *                                   // because of {@link SolarisConnection#trimOutput(String)}, that cuts off everything after root shell prompt.
+     *            </pre>
+     *            The solution is to wait for rootShellPrompt after every 'accept' parameter, that doesn't terminate the output:
+     *            <pre>
+     *            out = conn.executeCommand("echo 'one'", Collections.<String>emptySet(), CollectionUtil.newSet("one"));
+     *            conn.executeCommand(null) // will cause waiting for the rootShellPrompt.
+     *            Assert.assertEquals("one", out); // will succeed
+     *            out = conn.executeCommand("echo 'two'", Collections.<String>emptySet(), CollectionUtil.newSet("two"));
+     *            conn.executeCommand(null) // will cause waiting for the rootShellPrompt.
+     *            Assert.assertEquals("two", out); // will succeed
+     *            out = conn.executeCommand("echo 'three'", Collections.<String>emptySet(), CollectionUtil.newSet("three"));
+     *            conn.executeCommand(null) // will cause waiting for the rootShellPrompt.
+     *            Assert.assertEquals("three", out); // will succeed
+     *            </pre>
+     * 
+     * @return the response from the resource when the command is successful,
+     *         free of error messages. Otherwise throw a
+     *         {@link ConnectorException}.
+     * 
+     * @throws ConnectorException
+     *             in case a <code>rejects</code> string is found in the
+     *             response of the resource.
+     */
+    public String executeCommand(String command, Map<String, ErrorHandler> rejects, Set<String> accepts) {
+        return executeCommand(command, rejects, accepts, WAIT);
     }
 
     private String trimOutput(String output) {

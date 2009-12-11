@@ -58,7 +58,11 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
     private final int blockSize;
     private int blockCount = -1;
 
-    public BlockAccountIterator(List<String> usernames, Set<NativeAttribute> attrsToGet, SolarisConnection conn, int blockSize) {
+    public BlockAccountIterator(List<String> usernames, Set<NativeAttribute> attrsToGet, SolarisConnection conn) {
+        this(usernames, attrsToGet, conn.getConfiguration().getBlockSize(), conn);
+    }
+    
+    BlockAccountIterator(List<String> usernames, Set<NativeAttribute> attrsToGet, int blockSize, SolarisConnection conn) {
         this.conn = conn;
         this.blockSize = blockSize;
 
@@ -100,7 +104,7 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
         conn.executeCommand(conn.buildCommand("rm -f", TMPFILE));
         
         String getUsersScript = buildGetUserScript(blockUserNames);
-        final String out = conn.executeCommand(getUsersScript);
+        final String out = conn.executeCommand(getUsersScript, conn.getConfiguration().getBlockFetchTimeout());
         
         conn.executeCommand(conn.buildCommand("rm -f", TMPFILE));
         conn.doSudoReset();

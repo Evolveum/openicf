@@ -42,7 +42,7 @@ public class BlockAccountIteratorTest extends SolarisTestBase {
         String out = getConnection().executeCommand(command);
         final List<String> usernames = SolarisEntries.getNewlineSeparatedItems(out);
         
-        BlockAccountIterator bai = new BlockAccountIterator(usernames, EnumSet.of(NativeAttribute.NAME), getConnection() , 2);
+        BlockAccountIterator bai = new BlockAccountIterator(usernames, EnumSet.of(NativeAttribute.NAME), 2 , getConnection());
         List<String> retrievedUsernames = new ArrayList<String>();
         while (bai.hasNext()) {
             retrievedUsernames.add(bai.next().getName());
