@@ -9,7 +9,7 @@ import org.identityconnectors.common.security.GuardedString
 connector {
   port = port
   rootShellPrompt = "#"
-  sudoAuth = false
+  sudoAuthorization = false
   connectionType = connectionType
 }
 
