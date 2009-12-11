@@ -200,91 +200,82 @@ public class SolarisConfiguration extends AbstractConfiguration {
      */
     private boolean makeDirectory;// (if to make home directory)
 
-    /*
-     * RA_HOME_BASE_DIR
+    /**
+     * <b>Home Base Directory</b>
      * 
-     * <b>Home Base Directory</b><br>Indicate the home directory base to be used
+     * <br>Indicate the home directory base to be used
      * when creating user home directories. The accountID will be appended to
      * this value to form the user home directory.
      */
     private String homeBaseDirectory;
 
-    /*
-     * RA_DEFAULT_PRIMARY_GROUP
+    /**
+     * <b>Default Primary Group</b>
      * 
-     * <b>Default Primary Group</b><br>Default group a new user will be placed
+     * <br>Default group a new user will be placed
      * in.
      */
     private String defaultPrimaryGroup;
 
-    /*
-     * RA_LOGIN_SHELL
+    /**
+     * <b>Login Shell</b><br>
      * 
-     * <b>Login Shell</b><br>Default shell a new user will be given.
+     * Default shell a new user will be given.
      */
     private String loginShell;
 
-    /*
-     * RA_SKEL_DIR
+    /**
+     * <b>Skeleton Directory</b><br>
      * 
-     * <b>Skeleton Directory</b><br>Specify a directory to use to copy default
+     * Specify a directory to use to copy default
      * files to the user''s home directory. Typically this is /etc/skel. This
      * directory must already exist.
      */
     private String skeletonDirectory;
 
-    /*
-     * RA_DEL_HOME_DIR
+    /**
+     * <b>Delete Home Directory</b><br>
      * 
-     * RESATTR_HELP_1=<b>Delete Home Directory</b><br>Specifies whether an
+     * Specifies whether an
      * accounts home directory should be deleted when the account is deleted.
      */
     private boolean deleteHomeDirectory = false;
 
-    /*
-     * RA_SYS_DB_TYPE
+    /**
+     * <b>System Database Type</b><br>
      * 
-     * <b>System Database Type</b><br>Specify the system database type in use.
+     * Specify the system database type in use.
      * The default type is FILES. Supported types are NIS.
      */
     private String systemDatabaseType = "FILES";
 
-    /*
-     * RA_NISDIR
+    /** 
+     * <b>NIS Build Directory</b><br>
      * 
-     * <b>NIS Build Directory</b><br>Enter the directory name where the NIS
+     * Enter the directory name where the NIS
      * build files are located.
      */
     private String nisBuildDirectory = "/var/yp";
 
     static final String DEFAULT_NISPWDDIR = "/etc";
-    /*
-     * RA_NISPWDDIR
+    
+    /**
+     * <b>NIS Password Source Directory</b><br>
      * 
-     * <b>NIS Password Source Directory</b><br>Enter the directory name where
+     * Enter the directory name where
      * the NIS password source files are located.
      */
     private String nisPwdDir = DEFAULT_NISPWDDIR;
 
-    /*
-     * RA_NISSHADOW
+    /** 
+     * <b>NIS Shadow Password Support</b><br>
      * 
-     * <b>NIS Shadow Password Support</b><br>Specify TRUE if the NIS database
+     * Specify TRUE if the NIS database
      * used shadow passwords, FALSE otherwise.
      */
     private boolean nisShadowPasswordSupport = false;
-
-    /*
-     * RA_NISSRCDIR
-     * 
-     * <b>NIS Source Directory</b><br>Enter the directory name where the NIS
-     * source files are located.
-     */
-    // TODO NISSRCDIR
-
-    // ===================================================================================
-    // ===================================================================================
-    // ===================================================================================
+    
+    
 
     /*            ********** CONSTRUCTOR ************ */
     public SolarisConfiguration() {
@@ -396,6 +387,38 @@ public class SolarisConfiguration extends AbstractConfiguration {
     public void setConnectionType(String connectionType) {
         this.connectionType = ConnectionType.toConnectionType(connectionType).toString();
     }
+    
+    public GuardedString getPrivateKey() {
+        return privateKey;
+    }
+
+    public void setPrivateKey(GuardedString privateKey) {
+        this.privateKey = privateKey;
+    }
+    
+    public GuardedString getPassphrase() {
+        return passphrase;
+    }
+
+    public void setPassphrase(GuardedString keyPassphrase) {
+        this.passphrase = keyPassphrase;
+    }
+    
+    public void setBlockSize(int blockSize) {
+        this.blockSize = blockSize;
+    }
+
+    public int getBlockSize() {
+        return blockSize;
+    }
+    
+    public void setBlockFetchTimeout(int blockFetchTimeout) {
+        this.blockFetchTimeout = blockFetchTimeout;
+    }
+
+    public int getBlockFetchTimeout() {
+        return blockFetchTimeout;
+    }
 
     public int getMutexAcquireTimeout() {
         return mutexAcquireTimeout;
@@ -404,15 +427,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
     public void setMutexAcquireTimeout(int mutexAcquireTimeout) {
         this.mutexAcquireTimeout = mutexAcquireTimeout;
     }
-
-    public String getSkeletonDirectory() {
-        return skeletonDirectory;
-    }
-
-    public void setSkeletonDirectory(String skelDir) {
-        skeletonDirectory = skelDir;
-    }
-
+    
     public boolean isMakeDirectory() {
         return makeDirectory;
     }
@@ -420,7 +435,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
     public void setMakeDirectory(boolean makeDir) {
         makeDirectory = makeDir;
     }
-
+    
     public String getHomeBaseDirectory() {
         return homeBaseDirectory;
     }
@@ -428,7 +443,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
     public void setHomeBaseDirectory(String homeBaseDir) {
         homeBaseDirectory = homeBaseDir;
     }
-
+    
     public String getDefaultPrimaryGroup() {
         return defaultPrimaryGroup;
     }
@@ -436,13 +451,21 @@ public class SolarisConfiguration extends AbstractConfiguration {
     public void setDefaultPrimaryGroup(String defaultPrimaryGroup) {
         this.defaultPrimaryGroup = defaultPrimaryGroup;
     }
-
+    
     public String getLoginShell() {
         return loginShell;
     }
 
     public void setLoginShell(String loginShell) {
         this.loginShell = loginShell;
+    }
+
+    public String getSkeletonDirectory() {
+        return skeletonDirectory;
+    }
+
+    public void setSkeletonDirectory(String skelDir) {
+        skeletonDirectory = skelDir;
     }
 
     public boolean isDeleteHomeDirectory() {
@@ -460,6 +483,14 @@ public class SolarisConfiguration extends AbstractConfiguration {
     public void setSystemDatabaseType(String sysDbType) {
         systemDatabaseType = sysDbType;
     }
+    
+    public String getNisBuildDirectory() {
+        return nisBuildDirectory;
+    }
+
+    public void setNisBuildDirectory(String nisDir) {
+        this.nisBuildDirectory = nisDir;
+    }
 
     public String getNisPwdDir() {
         return nisPwdDir;
@@ -469,52 +500,12 @@ public class SolarisConfiguration extends AbstractConfiguration {
         this.nisPwdDir = nisPwdDir;
     }
 
-    public String getNisBuildDirectory() {
-        return nisBuildDirectory;
-    }
-
-    public void setNisBuildDirectory(String nisDir) {
-        this.nisBuildDirectory = nisDir;
-    }
-
     public boolean isNisShadowPasswordSupport() {
         return nisShadowPasswordSupport;
     }
 
     public void setNisShadowPasswordSupport(boolean nisShadow) {
         nisShadowPasswordSupport = nisShadow;
-    }
-
-    public GuardedString getPassphrase() {
-        return passphrase;
-    }
-
-    public void setPassphrase(GuardedString keyPassphrase) {
-        this.passphrase = keyPassphrase;
-    }
-
-    public void setBlockSize(int blockSize) {
-        this.blockSize = blockSize;
-    }
-
-    public int getBlockSize() {
-        return blockSize;
-    }
-
-    public void setBlockFetchTimeout(int blockFetchTimeout) {
-        this.blockFetchTimeout = blockFetchTimeout;
-    }
-
-    public int getBlockFetchTimeout() {
-        return blockFetchTimeout;
-    }
-
-    public GuardedString getPrivateKey() {
-        return privateKey;
-    }
-
-    public void setPrivateKey(GuardedString privateKey) {
-        this.privateKey = privateKey;
     }
 
     /*            *********** AUXILIARY METHODS ***************** */
