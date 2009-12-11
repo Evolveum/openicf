@@ -51,7 +51,7 @@ public abstract class SolarisTestBase {
         configuration = connection.getConfiguration();
         facade = SolarisTestCommon.createConnectorFacade(getConfiguration());
 
-        System.out.println("TEST HOST: " + connection.getConfiguration().getHostNameOrIpAddr());
+        System.out.println("TEST HOST: " + connection.getConfiguration().getHost());
 
         generateUsers();
         generateGroup(CollectionUtil.newList("root") /* todo temporary solution FIXME */);

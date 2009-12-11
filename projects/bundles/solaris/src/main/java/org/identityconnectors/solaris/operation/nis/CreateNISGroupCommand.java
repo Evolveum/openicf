@@ -46,7 +46,7 @@ public class CreateNISGroupCommand extends AbstractNISOp {
 
     private static void impl(SolarisEntry group, SolarisConnection conn) {
         final String groupName = group.getName();
-        final String pwddir = AbstractNISOp.getNisPwdDir(conn);
+        final String pwddir = conn.getConfiguration().getNisPwdDir();
         StringBuffer groupRecord;
         String gid = null;
         String groupFile = pwddir + "/group";

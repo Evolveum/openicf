@@ -64,7 +64,7 @@ public class OpUpdateImplTest extends SolarisTestBase {
 
     @Test(expected = RuntimeException.class)
     public void unknownObjectClass() {
-        String username = getConfiguration().getUserName();
+        String username = getConfiguration().getRootUser();
         Set<Attribute> replaceAttributes = CollectionUtil.newSet(AttributeBuilder.buildPassword("buzz".toCharArray()));
         getFacade().update(new ObjectClass("NONEXISTING_OBJECTCLASS"), new Uid(username), replaceAttributes, null);
     }

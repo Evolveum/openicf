@@ -50,7 +50,7 @@ public class DeleteNISGroupCommand extends AbstractNISOp {
         final String removeTmpFilesScript = getRemoveGroupTmpFiles(connection);
         connection.executeCommand(removeTmpFilesScript);
         
-        final String pwddir = AbstractNISOp.getNisPwdDir(connection);
+        final String pwddir = connection.getConfiguration().getNisPwdDir();
         final String groupFile = pwddir + "/group";
         final String getOwner = initGetOwner(groupFile);
         final String workScript = initWorkScript(groupName, groupFile, connection);

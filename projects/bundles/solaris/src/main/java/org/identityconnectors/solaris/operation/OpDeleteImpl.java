@@ -85,7 +85,7 @@ public class OpDeleteImpl extends AbstractOp {
      * compare with Native delete operation: {@see OpDeleteImpl#invokeNativeGroupDelete(Uid)}
      */
     private void invokeNISGroupDelete(String groupName) {
-        if (AbstractNISOp.isDefaultNisPwdDir(connection)) {
+        if (connection.isDefaultNisPwdDir()) {
             invokeNativeGroupDelete(groupName);
             
             /*
@@ -115,7 +115,7 @@ public class OpDeleteImpl extends AbstractOp {
     private void invokeNISUserDelete(String accountName) {
         // If the password source file is in /etc then use the native
         // utilities
-        if (AbstractNISOp.isDefaultNisPwdDir(connection)) {
+        if (connection.isDefaultNisPwdDir()) {
             invokeNativeUserDelete(accountName);
             /*
              * TODO in adapter, SRA#getDeleteNISUserScript sudo is missing (file another bug?)

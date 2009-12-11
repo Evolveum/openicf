@@ -122,7 +122,7 @@ public class SolarisConnection {
 
     /** default constructor */
     public SolarisConnection(SolarisConfiguration configuration) {
-        this(configuration, configuration.getUserName(), configuration.getPassword());
+        this(configuration, configuration.getRootUser(), configuration.getCredentials());
     }
     
     /**
@@ -146,7 +146,7 @@ public class SolarisConnection {
         case SSH:
             _expect4j = createSSHConn(username, password);
             break;
-        case SSH_PUB_KEY:
+        case SSHPUBKEY:
             _expect4j = createSSHPubKeyConn(username);
             break;
         case TELNET:
@@ -178,7 +178,7 @@ public class SolarisConnection {
             _rootShellPrompt = CONNECTOR_PROMPT;
             executeCommand("PS1=\"" + CONNECTOR_PROMPT + "\"");
         } catch (Exception e) {
-            throw new ConnectorException(String.format("Connection failed to host '%s:%s' for user '%s'", _configuration.getHostNameOrIpAddr(), _configuration.getPort(), username), e);
+            throw new ConnectorException(String.format("Connection failed to host '%s:%s' for user '%s'", _configuration.getHost(), _configuration.getPort(), username), e);
         }
     }
 
@@ -186,7 +186,7 @@ public class SolarisConnection {
         Expect4j expect4j = null;
         try {
             expect4j = ExpectUtils.telnet(_configuration
-                    .getHostNameOrIpAddr(), _configuration.getPort());
+                    .getHost(), _configuration.getPort());
         } catch (Exception e1) {
             throw ConnectorException.wrap(e1);
         }
@@ -207,7 +207,7 @@ public class SolarisConnection {
         final JSch jsch=new JSch();
         
         final GuardedString privateKey = getConfiguration().getPrivateKey();
-        final GuardedString keyPassphrase = getConfiguration().getKeyPassphrase();
+        final GuardedString keyPassphrase = getConfiguration().getPassphrase();
         privateKey.access(new GuardedString.Accessor() {
             public void access(final char[] privateKeyClearText) {
                 keyPassphrase.access(new GuardedString.Accessor() {
@@ -232,7 +232,7 @@ public class SolarisConnection {
         
         Session session = null;
         try {
-            session = jsch.getSession(username, getConfiguration().getHostNameOrIpAddr(), getConfiguration().getPort());
+            session = jsch.getSession(username, getConfiguration().getHost(), getConfiguration().getPort());
         } catch (JSchException e) {
             throw ConnectorException.wrap(e);
         }
@@ -273,7 +273,7 @@ public class SolarisConnection {
         password.access(new GuardedString.Accessor() {
             public void access(char[] clearChars) {
                 try {
-                    result[0] = ExpectUtils.SSH(_configuration.getHostNameOrIpAddr(), 
+                    result[0] = ExpectUtils.SSH(_configuration.getHost(), 
                             username, new String(clearChars), _configuration.getPort());
                 } catch (Exception e) {
                     throw ConnectorException.wrap(e);
@@ -772,7 +772,7 @@ public class SolarisConnection {
      */
     public String buildCommand(String command, CharSequence... arguments) {
         StringBuilder buff = new StringBuilder();
-        if (_configuration.isSudoAuth()) {
+        if (_configuration.isSudoAuthorization()) {
             buff.append("sudo ");
         }
         buff.append(command);
@@ -815,7 +815,7 @@ public class SolarisConnection {
      */
     private String getAcquireMutexScript() {
         // This code is from SolarisResouceAdapter
-        Long timeout = getConfiguration().getMutexAcquireTimeout();
+        long timeout = getConfiguration().getMutexAcquireTimeout();
         String rmCmd = buildCommand("rm");
         String catCmd = buildCommand("cat");
 
@@ -870,7 +870,7 @@ public class SolarisConnection {
     }
     
     private String getAcquireMutexScript(String uidMutexFile, String tmpUidMutexFile, String pidFoundFile) {
-        Long timeout = getConfiguration().getMutexAcquireTimeout();
+        long timeout = getConfiguration().getMutexAcquireTimeout();
         String rmCmd = buildCommand("rm");
         String catCmd = buildCommand("cat");
 
@@ -970,7 +970,7 @@ public class SolarisConnection {
     // purely based on RA, TODO test 
     public void doSudoStart() {
         final SolarisConfiguration config = getConfiguration();
-        if (config.isSudoAuth()) {
+        if (config.isSudoAuthorization()) {
             try {
                 // 1) send sudo reset command
                 executeCommand(SUDO_RESET_COMMAND, CollectionUtil.newSet("not found"));
@@ -979,7 +979,7 @@ public class SolarisConnection {
                 executeCommand(SUDO_START_COMMAND, Collections.<String>emptySet(), CollectionUtil.newSet("assword:")); 
 
                 // TODO evaluate which password should be used:
-                GuardedString passwd = config.getPassword();
+                GuardedString passwd = config.getCredentials();
                 sendPassword(passwd, CollectionUtil.newSet("may not run", "not allowed to execute"), Collections.<String>emptySet(), this);
             } catch (Exception e) {
                 throw ConnectorException.wrap(e);
@@ -990,15 +990,19 @@ public class SolarisConnection {
     // purely based on RA, TODO test 
     public void doSudoReset() {
         final SolarisConfiguration config = getConfiguration();
-        if (config.isSudoAuth()) {
+        if (config.isSudoAuthorization()) {
             // send sudo reset command
             executeCommand(SUDO_RESET_COMMAND);
         }
     }
     
     public boolean isNis() {
-        final String sysDB = getConfiguration().getSysDbType();
+        final String sysDB = getConfiguration().getSystemDatabaseType();
         return sysDB != null && sysDB.equalsIgnoreCase("nis");
+    }
+    
+    public boolean isDefaultNisPwdDir() {
+        return _configuration.getNisPwdDir().equals(SolarisConfiguration.DEFAULT_NISPWDDIR);
     }
 
     /**

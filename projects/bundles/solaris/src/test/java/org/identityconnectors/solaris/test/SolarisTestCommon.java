@@ -74,12 +74,12 @@ public class SolarisTestCommon {
         // save configuration
         SolarisConfiguration config = new SolarisConfiguration();
 
-        config.setHostNameOrIpAddr(getStringProperty(PROP_HOST));
+        config.setHost(getStringProperty(PROP_HOST));
 
         final String password = getStringProperty(PROP_SYSTEM_PASSWORD);
-        config.setPassword(new GuardedString(password.toCharArray()));
+        config.setCredentials(new GuardedString(password.toCharArray()));
 
-        config.setUserName(getStringProperty(PROP_SYSTEM_USER));
+        config.setRootUser(getStringProperty(PROP_SYSTEM_USER));
 
         config.setPort(Integer.valueOf(getProperty(PROP_PORT, Integer.class)));
 

@@ -112,7 +112,7 @@ public class OpUpdateImpl extends AbstractOp {
      * Compare with Native update operation: {@see OpUpdateImpl#invokeNativeGroupUpdate(SolarisEntry)}
      */
     private void invokeNISGroupUpdate(SolarisEntry groupEntry) {
-        if (AbstractNISOp.isDefaultNisPwdDir(connection)) {
+        if (connection.isDefaultNisPwdDir()) {
             invokeNativeGroupUpdate(groupEntry);
             /* TODO just FYI: sudo added, it was missing in the adapter */
             connection.doSudoStart();
@@ -131,7 +131,7 @@ public class OpUpdateImpl extends AbstractOp {
      */
     private void invokeNISUserUpdate(final SolarisEntry userEntry,
             final GuardedString passwd) {
-        if (AbstractNISOp.isDefaultNisPwdDir(connection)) {
+        if (connection.isDefaultNisPwdDir()) {
             invokeNativeUserUpdate(userEntry, passwd);
             
             connection.doSudoStart();

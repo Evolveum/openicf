@@ -58,7 +58,7 @@ public class UpdateNISGroupCommand extends AbstractNISOp {
     }
 
     private static void impl(SolarisEntry group, SolarisConnection conn) {
-        final String pwddir = AbstractNISOp.getNisPwdDir(conn);
+        final String pwddir = conn.getConfiguration().getNisPwdDir();
         
         final String groupFile = pwddir + "/group";
         final String groupName = group.getName();

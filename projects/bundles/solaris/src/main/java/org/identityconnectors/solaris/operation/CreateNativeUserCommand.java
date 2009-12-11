@@ -171,10 +171,10 @@ class CreateNativeUserCommand  {
      */
     private static StringBuilder makeOptionalSkelDir(SolarisConnection conn) {
         StringBuilder makeDirectory = new StringBuilder();
-        Boolean configuredIsMakeDir = conn.getConfiguration().getMakeDir();
-        if ((configuredIsMakeDir != null) && configuredIsMakeDir) {
+        boolean configuredIsMakeDir = conn.getConfiguration().isMakeDirectory();
+        if (configuredIsMakeDir) {
             makeDirectory.append(" -m");
-            String skeldir = conn.getConfiguration().getSkelDir();
+            String skeldir = conn.getConfiguration().getSkeletonDirectory();
 
             if (skeldir != null) {
                 // note switch '-k' is specific for making skeleton directory, is not assigned to any {@link NativeAttribute}
@@ -186,7 +186,7 @@ class CreateNativeUserCommand  {
     
     /**
      * set the value for {@link NativeAttribute#DIR} according to the
-     * {@link SolarisConfiguration#getHomeBaseDir()} resource configuration
+     * {@link SolarisConfiguration#getHomeBaseDirectory()} resource configuration
      * (optional)
      * 
      * @param explicitHomeDirAttrValue
@@ -201,7 +201,7 @@ class CreateNativeUserCommand  {
         
         String homeDirectory = null;
         
-        String basedir = conn.getConfiguration().getHomeBaseDir();
+        String basedir = conn.getConfiguration().getHomeBaseDirectory();
         if ((basedir != null) && (basedir.length() > 0)) {
             // If there is a specific home directory specified for the
             // user then that takes priority.

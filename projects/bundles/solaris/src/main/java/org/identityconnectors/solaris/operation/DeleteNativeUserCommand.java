@@ -39,7 +39,7 @@ class DeleteNativeUserCommand {
      */
     static void delete(final String accountId, SolarisConnection conn) {
         // USERDEL accountId
-        final String command = conn.buildCommand("userdel", ((conn.getConfiguration().isDelHomeDir()) ? "-r" : ""), accountId);
+        final String command = conn.buildCommand("userdel", ((conn.getConfiguration().isDeleteHomeDirectory()) ? "-r" : ""), accountId);
 
         Map<String, ErrorHandler> rejectMap = initRejectsMap(accountId);
         conn.executeCommand(command, rejectMap, Collections.<String> emptySet());

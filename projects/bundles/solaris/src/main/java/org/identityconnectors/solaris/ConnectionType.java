@@ -26,7 +26,10 @@ package org.identityconnectors.solaris;
  * selector of connection type
  */
 public enum ConnectionType {
-    SSH(true), SSH_PUB_KEY(true), TELNET(false);
+    SSH(true), 
+    /** SSH public key connection type */
+    SSHPUBKEY(true), 
+    TELNET(false);
     
     private boolean isSelfAuthenticate;
 

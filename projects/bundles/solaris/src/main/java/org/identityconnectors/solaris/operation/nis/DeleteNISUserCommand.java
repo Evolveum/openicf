@@ -48,7 +48,7 @@ public class DeleteNISUserCommand extends AbstractNISOp {
 
     private static void deleteImpl(String accountName, SolarisConnection connection) {
 
-        final String pwddir = AbstractNISOp.getNisPwdDir(connection);
+        final String pwddir = connection.getConfiguration().getNisPwdDir();
         final String pwdFile = pwddir + "/passwd";
         final String shadowFile = pwddir + "/shadow";
         final String removeTmpFilesScript = AbstractNISOp.getRemovePwdTmpFiles(connection);
@@ -66,7 +66,7 @@ public class DeleteNISUserCommand extends AbstractNISOp {
         connection.executeCommand(null/*no command sent on purpose*/, CollectionUtil.newSet("ERROR"));
         connection.executeCommand(removeTmpFilesScript);
         
-        if (connection.getConfiguration().isNisShadow()) {
+        if (connection.getConfiguration().isNisShadowPasswordSupport()) {
             final String getOwnerShadow = initGetOwner(shadowFile);
             final String workScriptShadow = initWorkScript(accountName, shadowFile, connection);
             connection.executeCommand(getOwnerShadow);

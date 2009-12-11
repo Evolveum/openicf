@@ -82,32 +82,10 @@ public class AbstractNISOp {
         return password;
     }
     
-private static final String DEFAULT_NISPWDDIR = "/etc";
-    
-    public static String getNisPwdDir(SolarisConnection connection) {
-        String pwdDir = connection.getConfiguration().getNisPwdDir();
-        if (StringUtil.isBlank(pwdDir)) {
-            pwdDir = DEFAULT_NISPWDDIR;
-        }
-        return pwdDir;
-    }
-    
-    private static boolean isDefaultNisPwdDirImpl(String nisPwdDir) {
-        return nisPwdDir.equals(DEFAULT_NISPWDDIR);
-    }
-    
-    /**
-     * evaluate if the NisPwdDir (NIS password directory) is configured to the
-     * default one, defined by {@link CommonNIS#DEFAULT_NISPWDDIR}.
-     */
-    public static boolean isDefaultNisPwdDir(SolarisConnection conn) {
-        return isDefaultNisPwdDirImpl(getNisPwdDir(conn));
-    }
-    
     public static void addNISMake(String target, SolarisConnection conn) {
         final String makeCmd = conn.buildCommand("/usr/ccs/bin/make");
         
-        final String nisDir = getNISDir(conn);
+        final String nisDir = conn.getConfiguration().getNisBuildDirectory();
         
         StringBuilder buildscript = new StringBuilder("nisdomain=`domainname`; ");
         buildscript.append("cd " + nisDir + "/$nisdomain\n");
@@ -120,14 +98,6 @@ private static final String DEFAULT_NISPWDDIR = "/etc";
         } catch (Exception ex) {
             throw ConnectorException.wrap(ex);
         }
-    }
-
-    private static String getNISDir(SolarisConnection conn) {
-        final String nisDir = conn.getConfiguration().getNisDir();
-        if (StringUtil.isBlank(nisDir)) {
-            throw new ConnectorException("NIS directory not specified.");
-        }
-        return nisDir;
     }
     
     public static String getRemovePwdTmpFiles(SolarisConnection conn) {
@@ -212,7 +182,7 @@ private static final String DEFAULT_NISPWDDIR = "/etc";
             groupFile = "/etc/group";
             realUserCmd = conn.buildCommand("logins", "-ol $WSUSER 2>&1 | grep \"not found\"");
         } else {
-            String pwdDir = getNisPwdDir(conn);
+            String pwdDir = conn.getConfiguration().getNisPwdDir();
             groupFile = pwdDir + "/group";
             
             realUserCmd = "ypmatch $WSUSER passwd 2>&1 | grep \"an't match key\"";

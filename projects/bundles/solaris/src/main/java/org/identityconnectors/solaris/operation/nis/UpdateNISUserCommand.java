@@ -46,7 +46,7 @@ public class UpdateNISUserCommand extends AbstractNISOp {
     public static void updateUser(SolarisEntry userEntry, SolarisConnection connection) {
         // TODO eliminate duplicate accountId(Name)
         final String accountName = userEntry.getName();
-        String pwddir = AbstractNISOp.getNisPwdDir(connection);
+        String pwddir = connection.getConfiguration().getNisPwdDir();
         String pwdfile = pwddir + "/passwd";
         
         boolean recordUpdate = false;
@@ -157,7 +157,7 @@ public class UpdateNISUserCommand extends AbstractNISOp {
                     connection.executeCommand(updateUser);
                     connection.executeCommand(removeTmpFilesScript);
 
-                    if ((isRename == true) && connection.getConfiguration().isNisShadow()) {
+                    if ((isRename == true) && connection.getConfiguration().isNisShadowPasswordSupport()) {
                         // Make sure we get the rename to the shadow file 
                         String shadowfile = pwddir + "/shadow";
                         String shadowRename =
@@ -232,7 +232,7 @@ public class UpdateNISUserCommand extends AbstractNISOp {
 
     private static String initPasswdVars(SolarisConfiguration configuration) {
         StringBuilder builder = new StringBuilder();
-        builder.append(configuration.isNisShadow() ? "PASSWD=\"x\"; " : // password  held in shadow file
+        builder.append(configuration.isNisShadowPasswordSupport() ? "PASSWD=\"x\"; " : // password  held in shadow file
                 "PASSWD=`echo $ENTRYTEXT | cut -d: -f2`; " // password in passwd file
         );
         builder.append("SHELL=`echo $ENTRYTEXT | cut -d: -f7`");

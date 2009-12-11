@@ -27,13 +27,13 @@ testsuite {
 
   Validate.invalidConfig = [
     [port: null],
-    [password: null],
+    [credentials: null],
     [connectionType: 'boobar']
   ]//Validate
 
   Test.invalidConfig = [
-    [password: "nonsensePassword123456"], 
-    [userName: "nonsenseUserName123456"]
+    [credentials: "nonsensePassword123456"], 
+    [rootUser: "nonsenseUserName123456"]
   ]//Test
 
   Schema {

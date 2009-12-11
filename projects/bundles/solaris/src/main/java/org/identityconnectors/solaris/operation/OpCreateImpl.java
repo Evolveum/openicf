@@ -96,7 +96,7 @@ public class OpCreateImpl extends AbstractOp {
      * {@link OpCreateImpl#invokeNativeGroupCreate(SolarisEntry)}
      */
     private void invokeNISGroupCreate(final SolarisEntry group) {
-        if (AbstractNISOp.isDefaultNisPwdDir(connection)) {
+        if (connection.isDefaultNisPwdDir()) {
             invokeNativeGroupCreate(group);
 
             AbstractNISOp.addNISMake("group", connection);
@@ -119,7 +119,7 @@ public class OpCreateImpl extends AbstractOp {
      */
     private void invokeNISUserCreate(SolarisEntry entry, GuardedString password) {
         
-        if (AbstractNISOp.isDefaultNisPwdDir(connection)) {
+        if (connection.isDefaultNisPwdDir()) {
             invokeNativeUserCreate(entry, password);
             
             // The user has to be added to the NIS database

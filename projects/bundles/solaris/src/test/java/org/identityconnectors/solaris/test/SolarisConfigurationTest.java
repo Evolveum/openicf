@@ -41,7 +41,7 @@ public class SolarisConfigurationTest extends SolarisTestBase {
     @Test(expected = ConfigurationException.class)
     public void testMissingUsername() {
         SolarisConfiguration config = getConfiguration();
-        config.setUserName(null);
+        config.setRootUser(null);
         config.validate();
         Assert.fail("Configuration allowed a null admin username.");
     }
@@ -49,7 +49,7 @@ public class SolarisConfigurationTest extends SolarisTestBase {
     @Test(expected = ConfigurationException.class)
     public void testMissingPassword() {
         SolarisConfiguration config = getConfiguration();
-        config.setPassword(null);
+        config.setCredentials(null);
         config.validate();
         Assert.fail("Configuration allowed a null password.");
     }
@@ -57,7 +57,7 @@ public class SolarisConfigurationTest extends SolarisTestBase {
     @Test(expected = ConfigurationException.class)
     public void testMissingHostname() {
         SolarisConfiguration config = getConfiguration();
-        config.setHostNameOrIpAddr(null);
+        config.setHost(null);
         config.validate();
         Assert.fail("Configuration allowed a null hostname.");
     }
@@ -65,7 +65,7 @@ public class SolarisConfigurationTest extends SolarisTestBase {
     @Test(expected = ConfigurationException.class)
     public void testMissingPort() {
         SolarisConfiguration config = getConfiguration();
-        config.setPort(null);
+        config.setPort(-1);
         config.validate();
         Assert.fail("Configuration allowed a null port.");
     }

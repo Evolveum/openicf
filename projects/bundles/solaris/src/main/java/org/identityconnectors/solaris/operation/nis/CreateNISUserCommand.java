@@ -68,7 +68,7 @@ public class CreateNISUserCommand extends AbstractNISOp {
         String gecos = null;
         String homedir = null;
 
-        final String pwdDir = AbstractNISOp.getNisPwdDir(connection);
+        final String pwdDir = connection.getConfiguration().getNisPwdDir();
         String pwdfile = pwdDir + "/passwd";
         String shadowfile = pwdDir + "/shadow";
         String salt = "";
@@ -76,13 +76,13 @@ public class CreateNISUserCommand extends AbstractNISOp {
         String shadowOwner = "";
         String shadowRecord = "";
         
-        boolean shadow = config.isNisShadow();
+        boolean shadow = config.isNisShadowPasswordSupport();
         String cpCmd;
         String chownCmd;
         String diffCmd;
         String removeTmpFilesScript = AbstractNISOp.getRemovePwdTmpFiles(connection);
         
-        String basedir = config.getHomeBaseDir();
+        String basedir = config.getHomeBaseDirectory();
         if ((basedir != null) && (basedir.length() > 0)) {
             StringBuffer homedirBuffer = new StringBuffer(basedir);
 
@@ -370,7 +370,7 @@ public class CreateNISUserCommand extends AbstractNISOp {
         final String passwordCleanup = "unset INVALID_SHELL_ERRMSG; INVALID_SHELL_ERRMSG=`grep \"" + INVALID_SHELL + "\" " + tmpPwdfile3 + "`;";
         connection.executeCommand(passwordCleanup);
 
-        final String pwddir = AbstractNISOp.getNisPwdDir(connection);
+        final String pwddir = connection.getConfiguration().getNisPwdDir();
         final String pwdFile = pwddir + "/passwd";
         final String shadowFile = pwddir + "/shadow";
         final String removeTmpFilesScript = AbstractNISOp.getRemovePwdTmpFiles(connection);
@@ -412,7 +412,7 @@ public class CreateNISUserCommand extends AbstractNISOp {
         workScript.append(passwdEntryCleanup); 
 
         String shadowEntryCleanup = "";
-        if (connection.getConfiguration().isNisShadow()) {
+        if (connection.getConfiguration().isNisShadowPasswordSupport()) {
             // Do the same thing we just did but for the shadow file
             String getShadowOwner =
                 "OWNER=`ls -l " + shadowFile + " | awk '{ print $3 }'`; " +
