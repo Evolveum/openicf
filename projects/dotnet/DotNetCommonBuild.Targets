@@ -32,7 +32,7 @@
 
     <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />   
     <Target Name="SetRevision" Condition="'$(SVN_REVISION)' == ''">
-	    <SvnVersion LocalPath=".">
+	    <SvnVersion LocalPath="." UseLastCommittedRevision="true">
  		<Output TaskParameter="Revision" PropertyName="SVN_Revision" />
 	    </SvnVersion>
     </Target>	
