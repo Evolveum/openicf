@@ -116,11 +116,23 @@ public class OracleERPConfigurationTests extends OracleERPTestsBase {
         assertTrue("isManageSecuringAttrs", config.isManageSecuringAttrs());
         assertFalse("isNoSchemaId", config.isNoSchemaId());
         assertFalse("isReturnSobOrgAttrs", config.isReturnSobOrgAttrs());
-        assertNull("getUserAfterActionScript", config.getUserAfterActionScript());        
+        assertNull("getUserAfterActionScript", config.getUserAfterActionScript());
         assertNotNull("null getConnectionUrl", config.getConnectionUrl());
         
         config.validate();
-    }          
+    }
+    
+    /**
+     * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
+     */
+    @Test
+    public void testConfigUserPasswordAttribute() {
+        final OracleERPConfiguration config = getConfiguration(CONFIG_USER);
+        config.setPasswordAttribute("test");
+        assertNotNull("null config", config);
+        assertEquals("getPasswordAttribute", "test", config.getPasswordAttribute());
+        config.validate();
+    }    
  
     /**
      * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.

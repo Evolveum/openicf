@@ -53,5 +53,5 @@ public class OracleERPOperationSchemaTests extends OracleERPTestsBase {
         Set<ObjectClassInfo> objectInfos = schema.getObjectClassInfo();
         assertNotNull(objectInfos);
         assertEquals(9, objectInfos.size());
-    }    
+    }
 }

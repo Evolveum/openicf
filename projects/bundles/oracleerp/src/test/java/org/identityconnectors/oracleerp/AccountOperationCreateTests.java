@@ -93,4 +93,28 @@ public class AccountOperationCreateTests extends OracleERPTestsBase {
         
         testAttrSet(attrs, returned, OperationalAttributes.PASSWORD_NAME, OWNER);
     }
+    
+    /**
+     * Test method .
+     */
+    @Test
+    public void testCreateResourcePassword() {
+        final OracleERPConnector c = getConnector(CONFIG_SYSADM);
+        final Set<Attribute> attrs = getAttributeSet(ACCOUNT_ALL_ATTRS);
+        replaceNameByRandom(attrs);
+        
+        final Uid uid = c.create(ObjectClass.ACCOUNT, attrs, null);
+        assertNotNull(uid);
+
+        List<ConnectorObject> results = TestHelpers
+        .searchToList(c, ObjectClass.ACCOUNT, FilterBuilder.equalTo(uid));
+        assertTrue("expect 1 connector object", results.size() == 1);
+        final ConnectorObject co = results.get(0);
+        final Set<Attribute> returned = co.getAttributes();
+        System.out.println(returned);
+        
+        // Date text representations are not the same, skiped due to extra test
+        testAttrSet(attrs, returned, OperationalAttributes.PASSWORD_NAME,
+                OperationalAttributes.PASSWORD_EXPIRED_NAME, OWNER);
+    }    
 }

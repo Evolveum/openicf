@@ -105,7 +105,7 @@ final class AccountOperationCreate extends Operation implements CreateOp {
 
 
         // Get the User values
-        final AccountSQLCallBuilder asb = new AccountSQLCallBuilder(getCfg().app(), true);
+        final AccountSQLCallBuilder asb = new AccountSQLCallBuilder(getCfg(), true);
         //Add default owner
         asb.setAttribute(oclass, AttributeBuilder.build(OWNER, getCfg().getDefaultOwner()), options);
         

@@ -33,6 +33,7 @@ import java.util.Map;
 
 import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.dbcommon.SQLParam;
@@ -55,14 +56,11 @@ final class AccountSQLCall {
         return callSql;
     }
 
+    /** The sql params */
+    final private List<SQLParam> sqlParams;
     List<SQLParam> getSqlParams() {
         return sqlParams;
     }
-
-    /**
-     * The sql params
-     */
-    final private List<SQLParam> sqlParams;
 
     AccountSQLCall(final String callSQL, final List<SQLParam> sqlParams) {
         this.callSql = callSQL;
@@ -82,94 +80,52 @@ final class AccountSQLCall {
         /**
          * The create/update SQL string
          */
-        private boolean create = false;
+        final private boolean create;
 
         /**
-         * The schema id
+         * The OracleERPConfiguration
          */
-        private String schemaId = "";
+        final private OracleERPConfiguration cfg;
+        
+        /**
+         * The resourcePasswordAttrValue
+         */
+        private GuardedString resourcePassword = null;
+        /**
+         * The passwordAttrValue
+         */
+        private GuardedString password = null;
+        
+        /**
+         * The sqlPraram map
+         */
+        private Map<String, Object> sqlParamsMap = CollectionUtil.<Object> newCaseInsensitiveMap();
 
         /**
          * The sqlPraram map
          */
-        private Map<String, Object> sqlParamsMap = CollectionUtil
-                .<Object> newCaseInsensitiveMap();
-
-        /**
-         * The sqlPraram map
-         */
-        private Map<String, String> sqlNullMap = CollectionUtil
-                .<String> newCaseInsensitiveMap();
+        private Map<String, String> sqlNullMap = CollectionUtil.<String> newCaseInsensitiveMap();
 
         /**
          * The current date
          */
-        private final java.sql.Date currentDate = new java.sql.Date(System
-                .currentTimeMillis());
+        private final java.sql.Date currentDate = new java.sql.Date(System.currentTimeMillis());
 
         /**
          * The account
          *
          * @param create
          *            true/false for create/update
-         * @param schemaId
-         *            the configuration schema id
+         * @param cfg
+         *            the connector configuration
          */
-        public AccountSQLCallBuilder(final String schemaId, boolean create) {
+        public AccountSQLCallBuilder(final OracleERPConfiguration cfg, boolean create) {
             super();
             this.create = create;
-            this.schemaId = schemaId;
+            this.cfg = cfg;
         }
 
-        /**
-         * Build the AccountSQLCall object
-         * @return a AccountSQLCall
-         */
-        public AccountSQLCall build() {
-            final List<SQLParam> sqlParams = new ArrayList<SQLParam>();
-
-            // Check required columns
-            Assertions.nullCheck(sqlParamsMap.get(USER_NAME), Name.NAME);
-            Assertions.nullCheck(sqlParamsMap.get(OWNER), OWNER);
-            if (create) {
-                Assertions.nullCheck(sqlParamsMap.get(UNENCRYPT_PWD),
-                OperationalAttributes.PASSWORD_NAME);
-            }
-
-            final String fn = (create) ? CREATE_FNC : UPDATE_FNC;
-            log.ok("getUserCallSQL: {0}", fn);
-            StringBuilder body = new StringBuilder();
-            boolean first = true;
-            for (CallParam par : CALL_PARAMS) {
-                final String columnName = par.name;
-                final String parameterExpress = par.expression;
-
-                SQLParam val = getSqlParam(columnName);
-                String nullParam = getNullParam(columnName);
-                if (nullParam == null && val == null) {
-                    continue; // skip all non setup values
-                }
-                if (!first)
-                    body.append(", ");
-                if (val != null) {
-                    // exact value has advantage
-                    body.append(MessageFormat.format(parameterExpress, Q));
-                    sqlParams.add(val);
-                } else if (nullParam != null) {
-                    body.append(MessageFormat.format(parameterExpress, nullParam));
-                } else {
-                    throw new IllegalStateException();
-                }
-                first = false;
-            }
-
-            final String sql = createCallSQL(fn, body);
-
-            log.ok("getUserCallSQL done");
-            return new AccountSQLCall(sql, sqlParams);
-        }
-
-        /**
+         /**
          * Add the attribute to the builder
          *
          * @param oclass
@@ -199,6 +155,17 @@ final class AccountSQLCall {
                 final String userName = AttributeUtil.getAsStringValue(attr)
                         .toUpperCase();
                 setSqlValue(USER_NAME, userName);
+            } else if (StringUtil.isNotBlank(cfg.getPasswordAttribute()) && attr.is(cfg.getPasswordAttribute())) {
+                /*
+                 * cstmt1.setString(3, (String)accountAttrChanges.get(UNENCRYPT_PWD));
+                 * only set 'password_date' if password changed
+                 * if ((String)accountAttrChanges.get(UNENCRYPT_PWD) != null) {
+                 *   cstmt1.setDate(9, new java.sql.Date(
+                 *                    (new java.util.Date().getTime()) ));
+                 */
+                if (AttributeUtil.getSingleValue(attr) != null) {
+                	resourcePassword = AttributeUtil.getGuardedStringValue(attr);
+                }
             } else if (attr.is(OperationalAttributes.PASSWORD_NAME)) {
                 /*
                  * cstmt1.setString(3, (String)accountAttrChanges.get(UNENCRYPT_PWD));
@@ -208,10 +175,7 @@ final class AccountSQLCall {
                  *                    (new java.util.Date().getTime()) ));
                  */
                 if (AttributeUtil.getSingleValue(attr) != null) {
-                    final GuardedString password = AttributeUtil
-                            .getGuardedStringValue(attr);
-                    setSqlValue(UNENCRYPT_PWD, password);
-                    setSqlValue(PWD_DATE, currentDate);
+                    password = AttributeUtil.getGuardedStringValue(attr);
                 }
             } else if (attr.is(OperationalAttributes.PASSWORD_EXPIRED_NAME)
                     || attr.is(EXP_PWD)) {
@@ -497,6 +461,63 @@ final class AccountSQLCall {
             }
         }
 
+
+        /**
+         * Build the AccountSQLCall object
+         * @return a AccountSQLCall
+         */
+        public AccountSQLCall build() {
+            final List<SQLParam> sqlParams = new ArrayList<SQLParam>();
+            
+            // Update the password attribute, if defined and value is present
+            if (resourcePassword != null) {
+                setSqlValue(UNENCRYPT_PWD, resourcePassword);
+                setSqlValue(PWD_DATE, currentDate);
+            } else if (password != null) {
+                setSqlValue(UNENCRYPT_PWD, password);
+                setSqlValue(PWD_DATE, currentDate);
+            }
+
+            // Check required columns
+            Assertions.nullCheck(sqlParamsMap.get(USER_NAME), Name.NAME);
+            Assertions.nullCheck(sqlParamsMap.get(OWNER), OWNER);
+            if (create) {
+                Assertions.nullCheck(sqlParamsMap.get(UNENCRYPT_PWD), OperationalAttributes.PASSWORD_NAME);
+            }
+
+            final String fn = (create) ? CREATE_FNC : UPDATE_FNC;
+            log.ok("getUserCallSQL: {0}", fn);
+            StringBuilder body = new StringBuilder();
+            boolean first = true;
+            for (CallParam par : CALL_PARAMS) {
+                final String columnName = par.name;
+                final String parameterExpress = par.expression;
+
+                SQLParam val = getSqlParam(columnName);
+                String nullParam = getNullParam(columnName);
+                if (nullParam == null && val == null) {
+                    continue; // skip all non setup values
+                }
+                if (!first)
+                    body.append(", ");
+                if (val != null) {
+                    // exact value has advantage
+                    body.append(MessageFormat.format(parameterExpress, Q));
+                    sqlParams.add(val);
+                } else if (nullParam != null) {
+                    body.append(MessageFormat.format(parameterExpress, nullParam));
+                } else {
+                    throw new IllegalStateException();
+                }
+                first = false;
+            }
+
+            final String sql = createCallSQL(fn, body);
+
+            log.ok("getUserCallSQL done");
+            return new AccountSQLCall(sql, sqlParams);
+        }       
+        
         /**
          * Add parameter, and replace if exist
          *
@@ -526,7 +547,7 @@ final class AccountSQLCall {
             // The SQL call update function SQL template
             final String FND_USER_CALL = "fnd_user_pkg.";
             
-            return "{ call " + schemaId + FND_USER_CALL + fn + " ( " + body.toString() + " ) }";
+            return "{ call " + cfg.app() + FND_USER_CALL + fn + " ( " + body.toString() + " ) }";
         }        
 
         /**

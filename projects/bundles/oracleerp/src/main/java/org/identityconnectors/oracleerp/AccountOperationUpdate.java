@@ -124,7 +124,7 @@ final class AccountOperationUpdate extends Operation implements UpdateOp {
         }
 
         // Get the User values
-        final AccountSQLCallBuilder asb = new AccountSQLCallBuilder(getCfg().app(), false);
+        final AccountSQLCallBuilder asb = new AccountSQLCallBuilder(getCfg(), false);
         // add the id
         asb.setAttribute(objclass, AttributeBuilder.build(Uid.NAME, id), options);
         //Add default owner

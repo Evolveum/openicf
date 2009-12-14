@@ -25,8 +25,12 @@ package org.identityconnectors.oracleerp;
 import static org.identityconnectors.oracleerp.OracleERPUtil.*;
 
 import java.util.EnumSet;
+import java.util.Set;
 
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -199,7 +203,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         ocib.addAttributeInfo(AttributeInfoBuilder.build(RESPKEYS, String.class, MNCU));
         // name='SEC_ATTRS' type='string' required='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(SEC_ATTRS, String.class, M));
-        
+
 
         // name='userMenuNames' type='string' audit='false'
         ocib.addAttributeInfo(AttributeInfoBuilder.build(RESP_NAMES, String.class, MNCUD));
@@ -253,8 +257,19 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
         // <Views><String>Enable</String></Views>
         ocib.addAttributeInfo(OperationalAttributeInfos.ENABLE);
         // The expired password is not returned by default
-        ocib.addAttributeInfo(AttributeInfoBuilder.build(
-                OperationalAttributes.PASSWORD_EXPIRED_NAME, boolean.class, NRD));
+        ocib.addAttributeInfo(AttributeInfoBuilder.build(OperationalAttributes.PASSWORD_EXPIRED_NAME, boolean.class, NRD));
+
+        // name='passwordAttribute', there is restriction, the name must be unique, not exists in the attribute info set
+        if (StringUtil.isNotBlank(getCfg().getPasswordAttribute())) {
+            Set<AttributeInfo> currentInfos = ocib.build().getAttributeInfo();
+            for (AttributeInfo attributeInfo : currentInfos) {
+                if (attributeInfo.is(getCfg().getPasswordAttribute())) {
+                    throw new IllegalArgumentException(getCfg().getMessage(MSG_INVALID_PASSWORD_ATTRIBUTE, getCfg().getPasswordAttribute()));
+                }
+            }
+            // now it is clear we can add the new attribute
+            AttributeInfoBuilder.build(getCfg().getPasswordAttribute(), GuardedString.class, EnumSet.of(Flags.NOT_READABLE, Flags.NOT_RETURNED_BY_DEFAULT));
+        }
 
         return ocib.build();
     }

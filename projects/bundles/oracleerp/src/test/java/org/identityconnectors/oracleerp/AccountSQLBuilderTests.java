@@ -28,6 +28,7 @@ import java.sql.Timestamp;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.Name;
@@ -47,8 +48,10 @@ import org.junit.Test;
  */
 public class AccountSQLBuilderTests { 
        
+    static final GuardedString PASSWORD_TEMP = new GuardedString("passwd_temp".toCharArray());
+    static final GuardedString PASSWORD = new GuardedString("password".toCharArray());
     //Schema id
-    private static String SCHEMA_PREFIX="APPS.";
+    private OracleERPConfiguration CFG = new OracleERPConfiguration();
 
     /**
      * Test method
@@ -136,13 +139,136 @@ public class AccountSQLBuilderTests {
                 asc.getCallSql());
         //session is always null, so 16 params
         Assert.assertEquals("Invalid number of  SQL Params", 5, asc.getSqlParams().size());    
-    }       
+    }
+    
+    /**
+     * Test method
+     */
+    @Test
+    public void testCreateResourcePassword() {
+        final OracleERPConfiguration cfg = new OracleERPConfiguration();
+        cfg.setPasswordAttribute("passwd_temp");
+        final Set<Attribute> attrs = createAllAccountAttributes();
+        final AccountSQLCallBuilder asb =  new AccountSQLCallBuilder(cfg , true);
+        for (Attribute attribute : attrs) {
+            asb.setAttribute(ObjectClass.ACCOUNT, attribute, null);
+        }
+        asb.setAttribute(ObjectClass.ACCOUNT, AttributeBuilder.buildPassword(PASSWORD), null);
+        asb.setAttribute(ObjectClass.ACCOUNT, AttributeBuilder.build("passwd_temp", PASSWORD_TEMP), null);
+        final AccountSQLCall asc = asb.build();
+
+        //test sql
+        Assert.assertEquals("Invalid SQL",
+                        "{ call APPS.fnd_user_pkg.CreateUser ( x_user_name => ?, x_owner => upper(?), "+
+                        "x_unencrypted_password => ?, x_start_date => ?, x_end_date => ?, "+
+                        "x_last_logon_date => ?, x_description => ?, x_password_date => ?, "+
+                        "x_password_accesses_left => ?, x_password_lifespan_accesses => ?, "+
+                        "x_password_lifespan_days => ?, x_employee_id => ?, x_email_address => ?, "+
+                        "x_fax => ?, x_customer_id => ?, x_supplier_id => ? ) }",
+                        asc.getCallSql());
+        //session is always null, so 16 params
+        
+        Assert.assertEquals("Invalid number of  SQL Params", 16, asc.getSqlParams().size());
+        Assert.assertEquals("The SQL Password param value", PASSWORD_TEMP, asc.getSqlParams().get(2).getValue());
+    }
+    
+    /**
+     * Test method
+     */
+    @Test
+    public void testCreateResourcePasswordNotConfigured() {
+        final OracleERPConfiguration cfg = new OracleERPConfiguration();
+        final Set<Attribute> attrs = createAllAccountAttributes();
+        final AccountSQLCallBuilder asb =  new AccountSQLCallBuilder(cfg , true);
+        for (Attribute attribute : attrs) {
+            asb.setAttribute(ObjectClass.ACCOUNT, attribute, null);
+        }
+        asb.setAttribute(ObjectClass.ACCOUNT, AttributeBuilder.buildPassword(PASSWORD), null);
+        asb.setAttribute(ObjectClass.ACCOUNT, AttributeBuilder.build("passwd_temp", PASSWORD_TEMP), null);
+        final AccountSQLCall asc = asb.build();
+
+        //test sql
+        Assert.assertEquals("Invalid SQL",
+                        "{ call APPS.fnd_user_pkg.CreateUser ( x_user_name => ?, x_owner => upper(?), "+
+                        "x_unencrypted_password => ?, x_start_date => ?, x_end_date => ?, "+
+                        "x_last_logon_date => ?, x_description => ?, x_password_date => ?, "+
+                        "x_password_accesses_left => ?, x_password_lifespan_accesses => ?, "+
+                        "x_password_lifespan_days => ?, x_employee_id => ?, x_email_address => ?, "+
+                        "x_fax => ?, x_customer_id => ?, x_supplier_id => ? ) }",
+                        asc.getCallSql());
+        //session is always null, so 16 params
+        
+        Assert.assertEquals("Invalid number of  SQL Params", 16, asc.getSqlParams().size());
+        Assert.assertEquals("The SQL Password param value", PASSWORD, asc.getSqlParams().get(2).getValue());
+    }
+    
+    /**
+     * Test method
+     */
+    @Test
+    public void testCreateResourcePasswordConfiguredNotPresent() {
+        final OracleERPConfiguration cfg = new OracleERPConfiguration();
+        cfg.setPasswordAttribute("passwd_temp");
+        final Set<Attribute> attrs = createAllAccountAttributes();
+        final AccountSQLCallBuilder asb =  new AccountSQLCallBuilder(cfg , true);
+        for (Attribute attribute : attrs) {
+            asb.setAttribute(ObjectClass.ACCOUNT, attribute, null);
+        }
+        asb.setAttribute(ObjectClass.ACCOUNT, AttributeBuilder.buildPassword(PASSWORD), null);
+        //asb.setAttribute(ObjectClass.ACCOUNT, AttributeBuilder.build("passwd_temp", new GuardedString("passwd_temp".toCharArray())), null);
+        final AccountSQLCall asc = asb.build();
+
+        //test sql
+        Assert.assertEquals("Invalid SQL",
+                        "{ call APPS.fnd_user_pkg.CreateUser ( x_user_name => ?, x_owner => upper(?), "+
+                        "x_unencrypted_password => ?, x_start_date => ?, x_end_date => ?, "+
+                        "x_last_logon_date => ?, x_description => ?, x_password_date => ?, "+
+                        "x_password_accesses_left => ?, x_password_lifespan_accesses => ?, "+
+                        "x_password_lifespan_days => ?, x_employee_id => ?, x_email_address => ?, "+
+                        "x_fax => ?, x_customer_id => ?, x_supplier_id => ? ) }",
+                        asc.getCallSql());
+        //session is always null, so 16 params
+        
+        Assert.assertEquals("Invalid number of  SQL Params", 16, asc.getSqlParams().size());
+        Assert.assertEquals("The SQL Password param value", PASSWORD, asc.getSqlParams().get(2).getValue());
+    }
+    
+    /**
+     * Test method
+     */
+    @Test
+    public void testCreateResourcePasswordConfiguredPresentNull() {
+        final OracleERPConfiguration cfg = new OracleERPConfiguration();
+        cfg.setPasswordAttribute("passwd_temp");
+        final Set<Attribute> attrs = createAllAccountAttributes();
+        final AccountSQLCallBuilder asb =  new AccountSQLCallBuilder(cfg , true);
+        for (Attribute attribute : attrs) {
+            asb.setAttribute(ObjectClass.ACCOUNT, attribute, null);
+        }
+        asb.setAttribute(ObjectClass.ACCOUNT, AttributeBuilder.buildPassword(PASSWORD), null);
+        asb.setAttribute(ObjectClass.ACCOUNT, AttributeBuilder.build("passwd_temp"), null);
+        final AccountSQLCall asc = asb.build();
+
+        //test sql
+        Assert.assertEquals("Invalid SQL",
+                        "{ call APPS.fnd_user_pkg.CreateUser ( x_user_name => ?, x_owner => upper(?), "+
+                        "x_unencrypted_password => ?, x_start_date => ?, x_end_date => ?, "+
+                        "x_last_logon_date => ?, x_description => ?, x_password_date => ?, "+
+                        "x_password_accesses_left => ?, x_password_lifespan_accesses => ?, "+
+                        "x_password_lifespan_days => ?, x_employee_id => ?, x_email_address => ?, "+
+                        "x_fax => ?, x_customer_id => ?, x_supplier_id => ? ) }",
+                        asc.getCallSql());
+        //session is always null, so 16 params
+        
+        Assert.assertEquals("Invalid number of  SQL Params", 16, asc.getSqlParams().size());
+        Assert.assertEquals("The SQL Password param value", PASSWORD, asc.getSqlParams().get(2).getValue());
+    }
     
     /**
      * 
      * @return the All account attributes
      */
-    static public Set<Attribute> createAllAccountAttributes() {
+    Set<Attribute> createAllAccountAttributes() {
         final Set<Attribute> attrs = createRequiredAccountAttributes();
         attrs.add(AttributeBuilder.buildPasswordExpired(false));                
         attrs.add(AttributeBuilder.build(START_DATE, (new Timestamp(System.currentTimeMillis()-10*24*3600000)).toString()));
@@ -164,7 +290,7 @@ public class AccountSQLBuilderTests {
     /**
      * @return the All attributes null
      */
-    static public Set<Attribute> createNullAccountAttributes() {
+    Set<Attribute> createNullAccountAttributes() {
         Set<Attribute> attrs = createRequiredAccountAttributes();
         attrs.add(AttributeBuilder.buildPasswordExpired(false));        
         attrs.add(AttributeBuilder.build(START_DATE, new java.sql.Timestamp(System.currentTimeMillis()).toString()));
@@ -187,7 +313,7 @@ public class AccountSQLBuilderTests {
     /**
      * @return the 
      */
-    static public Set<Attribute> createRequiredAccountAttributes() {
+    Set<Attribute> createRequiredAccountAttributes() {
         final Set<Attribute> attrs = CollectionUtil.newSet();       
         attrs.add(AttributeBuilder.build(Name.NAME, "TSTUSER"));
         attrs.add(AttributeBuilder.buildPassword("tstpwd".toCharArray()));
@@ -202,8 +328,8 @@ public class AccountSQLBuilderTests {
      * @param attrs
      * @return the builder result
      */
-    static public AccountSQLCall buildSQLCalll(boolean create, final Set<Attribute> attrs) {
-        final AccountSQLCallBuilder asb =  new AccountSQLCallBuilder(SCHEMA_PREFIX, create);        
+    public AccountSQLCall buildSQLCalll(boolean create, final Set<Attribute> attrs) {
+        final AccountSQLCallBuilder asb =  new AccountSQLCallBuilder(CFG , create);
         for (Attribute attribute : attrs) {
             asb.setAttribute(ObjectClass.ACCOUNT, attribute, null);
         }

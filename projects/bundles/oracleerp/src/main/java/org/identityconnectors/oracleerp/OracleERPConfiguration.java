@@ -550,6 +550,31 @@ final public class OracleERPConfiguration extends AbstractConfiguration implemen
         this.clientEncryptionLevel = clientEncryptionLevel;
     }
 
+
+    /**
+     * Password Attribute
+     * Define resource specific password attribute
+     */
+    private String passwordAttribute = "";
+
+
+    /**
+     * Getter for the passwordAttribute attribute.
+     * @return passwordAttribute
+     */
+    public String getPasswordAttribute() {
+        return passwordAttribute;
+    }
+
+    /**
+     * Setter for the passwordAttribute attribute.
+     * @param passwordAttribute
+     */
+    @ConfigurationProperty(order=20 ,displayMessageKey="PASSWORD_ATTRIBUTE_DISPLAY", helpMessageKey="PASSWORD_ATTRIBUTE_HELP")
+    public void setPasswordAttribute(String passwordAttribute) {
+        this.passwordAttribute = passwordAttribute;
+    }    
+    
     /**
      * Responsibility Id
      */

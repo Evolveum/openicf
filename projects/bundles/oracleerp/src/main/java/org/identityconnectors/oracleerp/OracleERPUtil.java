@@ -168,48 +168,6 @@ class OracleERPUtil {
     static final String AUDITOR_RESP = "auditorResp";
     static final String AUDITOR_OBJECT = "auditorObject";
 
-    // format flags for processing responsibilities strings, used by getResp() and getResps() methods
-    static final int RESP_FMT_KEYS = 0; // return responsibilities with keys only.
-    static final int RESP_FMT_NORMALIZE_DATES = 1; // return whole responsibilities with time data removed from date columns.
-    static final int ORA_01403 = 1403;
-
-    // Validate messages constants
-    static final String MSG_USER_BLANK = "msg.user.blank";
-    static final String MSG_PASSWORD_BLANK = "msg.password.blank";
-    static final String MSG_HOST_BLANK = "msg.host.blank";
-    static final String MSG_PORT_BLANK = "msg.port.blank";
-    static final String MSG_DATABASE_BLANK = "msg.database.blank";
-    static final String MSG_DRIVER_BLANK = "msg.driver.blank";
-    static final String MSG_DRIVER_NOT_FOUND = "msg.jdbc.driver.not.found";
-    static final String MSG_UNKNOWN_OPERATION_TYPE = "msg.unknown.operation.type";
-    static final String MSG_UNSUPPORTED_OPERATION = "msg.unsupported.operation";
-    static final String MSG_HR_LINKING_ERROR = "msg.hr.linking.error";
-    static final String MSG_USER_NOT_FOUND = "msg.user.not.found";
-    static final String MSG_COULD_NOT_ENABLE_USER = "msg.could.not.enable.user";
-    static final String MSG_COULD_NOT_DISABLE_USER = "msg.could.not.disable.user";
-    static final String MSG_COULD_NOT_RENAME_USER = "msg.could.not.rename.user";
-    static final String MSG_ACCOUNT_NOT_UPDATE = "msg.account.not.update";
-    static final String MSG_ACCOUNT_NAME_REQUIRED = "msg.acount.name.required";
-    static final String MSG_ACCOUNT_UID_REQUIRED = "msg.acount.uid.required";
-    static final String MSG_COULD_NOT_READ = "msg.could.not.read";
-    static final String MSG_ACCOUNT_NOT_CREATE = "msg.account.not.create";
-    static final String MSG_ACCOUNT_NOT_DELETE = "msg.account.not.delete";
-    static final String MSG_ACCOUNT_NOT_READ = "msg.account.not.read";
-    static final String MSG_ACCOUNT_OBJECT_CLASS_REQUIRED = "msg.acount.object.class.required";
-    static final String MSG_AUTH_FAILED = "msg.auth.op.failed";
-    static final String MSG_PASSWORD_EXPIRED = "msg.password.expired";
-    static final String MSG_ACCOUNT_DISABLED = "msg.account.disabled";
-    static final String MSG_INVALID_RESPONSIBILITY = "msg.invalid.responsibility";
-    static final String MSG_COULD_NOT_EXECUTE = "msg.could.not.execute";
-    static final String MSG_FAILED_ADD_RESP = "msg.failed.add.responsibility";
-    static final String MSG_FAILED_DELETE_RESP = "msg.failed.delete.responsibility";
-    static final String MSG_FAILED_UPDATE_RESP = "msg.failed.update.responsibility";
-    static final String MSG_INVALID_SECURING_ATTRIBUTE = "msg.invalid.securing.attribute";
-    static final String MSG_UNSUPPORTED_ATTRIBUTE = "msg.unsupported.attribute";
-    static final String MSG_INVALID_ACCOUNT_INCLUDED = "msg.invalid.account.included";
-
-    
-
     /**
      * object class name definitions
      * responsibilities, responsibilityNames, applications, securityGroups, auditorResps
@@ -269,7 +227,6 @@ class OracleERPUtil {
      */
     static final String ACTIVE_ACCOUNTS_ONLY_WHERE_CLAUSE = "(START_DATE - SYSDATE <= 0) AND ((END_DATE IS NULL) OR (END_DATE - SYSDATE > 0))";
     static final String ACTIVE_PEOPLE_ONLY_WHERE_CLAUSE = "(EFFECTIVE_START_DATE - SYSDATE <= 0) and ((EFFECTIVE_END_DATE IS NULL) or (EFFECTIVE_END_DATE - SYSDATE > 0))";
-
     
     /**
      * Scripting support
@@ -288,7 +245,49 @@ class OracleERPUtil {
     static final String ACTION_CONTEXT = "actionContext";
     static final String ERRORS = "errors";
     static final String TRACE = "trace";
+    
 
+    // format flags for processing responsibilities strings, used by getResp() and getResps() methods
+    static final int RESP_FMT_KEYS = 0; // return responsibilities with keys only.
+    static final int RESP_FMT_NORMALIZE_DATES = 1; // return whole responsibilities with time data removed from date columns.
+    static final int ORA_01403 = 1403;
+
+    // Validate messages constants
+    static final String MSG_USER_BLANK = "msg.user.blank";
+    static final String MSG_PASSWORD_BLANK = "msg.password.blank";
+    static final String MSG_HOST_BLANK = "msg.host.blank";
+    static final String MSG_PORT_BLANK = "msg.port.blank";
+    static final String MSG_DATABASE_BLANK = "msg.database.blank";
+    static final String MSG_DRIVER_BLANK = "msg.driver.blank";
+    static final String MSG_DRIVER_NOT_FOUND = "msg.jdbc.driver.not.found";
+    static final String MSG_UNKNOWN_OPERATION_TYPE = "msg.unknown.operation.type";
+    static final String MSG_UNSUPPORTED_OPERATION = "msg.unsupported.operation";
+    static final String MSG_HR_LINKING_ERROR = "msg.hr.linking.error";
+    static final String MSG_USER_NOT_FOUND = "msg.user.not.found";
+    static final String MSG_COULD_NOT_ENABLE_USER = "msg.could.not.enable.user";
+    static final String MSG_COULD_NOT_DISABLE_USER = "msg.could.not.disable.user";
+    static final String MSG_COULD_NOT_RENAME_USER = "msg.could.not.rename.user";
+    static final String MSG_ACCOUNT_NOT_UPDATE = "msg.account.not.update";
+    static final String MSG_ACCOUNT_NAME_REQUIRED = "msg.acount.name.required";
+    static final String MSG_ACCOUNT_UID_REQUIRED = "msg.acount.uid.required";
+    static final String MSG_COULD_NOT_READ = "msg.could.not.read";
+    static final String MSG_ACCOUNT_NOT_CREATE = "msg.account.not.create";
+    static final String MSG_ACCOUNT_NOT_DELETE = "msg.account.not.delete";
+    static final String MSG_ACCOUNT_NOT_READ = "msg.account.not.read";
+    static final String MSG_ACCOUNT_OBJECT_CLASS_REQUIRED = "msg.acount.object.class.required";
+    static final String MSG_AUTH_FAILED = "msg.auth.op.failed";
+    static final String MSG_PASSWORD_EXPIRED = "msg.password.expired";
+    static final String MSG_ACCOUNT_DISABLED = "msg.account.disabled";
+    static final String MSG_INVALID_RESPONSIBILITY = "msg.invalid.responsibility";
+    static final String MSG_COULD_NOT_EXECUTE = "msg.could.not.execute";
+    static final String MSG_FAILED_ADD_RESP = "msg.failed.add.responsibility";
+    static final String MSG_FAILED_DELETE_RESP = "msg.failed.delete.responsibility";
+    static final String MSG_FAILED_UPDATE_RESP = "msg.failed.update.responsibility";
+    static final String MSG_INVALID_SECURING_ATTRIBUTE = "msg.invalid.securing.attribute";
+    static final String MSG_UNSUPPORTED_ATTRIBUTE = "msg.unsupported.attribute";
+    static final String MSG_INVALID_ACCOUNT_INCLUDED = "msg.invalid.account.included";    
+    static final String MSG_INVALID_PASSWORD_ATTRIBUTE = "msg.invalid.password.attribute";
+    
     /**
      * Get default attributes to get from schema
      * @param ais attribute info set

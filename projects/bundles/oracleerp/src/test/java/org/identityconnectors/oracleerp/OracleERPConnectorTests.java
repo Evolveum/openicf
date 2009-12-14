@@ -101,7 +101,7 @@ public class OracleERPConnectorTests extends OracleERPTestsBase {
         OracleERPConnector conn = getConnector(cfg);
         assertNotNull("null connector instance",conn);        
         conn.test();
-    }    
+    }
     
     /**
      * Test method for {@link OracleERPConfiguration#getConnectionUrl()}.
@@ -114,4 +114,23 @@ public class OracleERPConnectorTests extends OracleERPTestsBase {
         assertNotNull("null connector instance",conn);        
         conn.test();
     }
+    
+
+    @Test
+    public void testConnectorPasswordAttribute() {
+        OracleERPConfiguration cfg = getConfiguration(CONFIG_SYSADM);
+        cfg.setPasswordAttribute("test_pwd");
+        OracleERPConnector conn = getConnector(cfg);
+        assertNotNull("null connector instance",conn);        
+        conn.test();
+    }
+    
+    @Test(expected=IllegalArgumentException.class)
+    public void testConnectorWrongPasswordAttribute() {
+        OracleERPConfiguration cfg = getConfiguration(CONFIG_SYSADM);
+        cfg.setPasswordAttribute("description"); // it is duplicite
+        OracleERPConnector conn = getConnector(cfg);
+        assertNotNull("null connector instance",conn);
+        conn.test();
+    }    
 }
