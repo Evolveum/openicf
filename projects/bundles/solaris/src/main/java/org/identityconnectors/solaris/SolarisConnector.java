@@ -51,6 +51,7 @@ import org.identityconnectors.framework.spi.operations.AuthenticateOp;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
+import org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp;
 import org.identityconnectors.framework.spi.operations.ScriptOnResourceOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
@@ -218,12 +219,10 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         }//for
         
         //GROUP supports no authentication:
-        final ObjectClassInfoBuilder ociB = new ObjectClassInfoBuilder();
-        ociB.setType(ObjectClass.GROUP_NAME);
-        ociB.addAllAttributeInfo(attributes);
-        final ObjectClassInfo ociInfo = ociB.build();
-        schemaBuilder.defineObjectClass(ociInfo);
-        schemaBuilder.removeSupportedObjectClass(AuthenticateOp.class, ociInfo);
+        final ObjectClassInfo ociInfoGroup = new ObjectClassInfoBuilder().setType(ObjectClass.GROUP_NAME).addAllAttributeInfo(attributes).build();
+        schemaBuilder.defineObjectClass(ociInfoGroup);
+        schemaBuilder.removeSupportedObjectClass(AuthenticateOp.class, ociInfoGroup);
+        schemaBuilder.removeSupportedObjectClass(ScriptOnConnectorOp.class, ociInfoGroup);
         
         /*
          * ACCOUNT
@@ -244,7 +243,9 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
             attributes.add(newAttr);
         }
         attributes.add(OperationalAttributeInfos.PASSWORD);
-        schemaBuilder.defineObjectClass(ObjectClass.ACCOUNT_NAME, attributes);
+        final ObjectClassInfo ociInfoAccount = new ObjectClassInfoBuilder().setType(ObjectClass.ACCOUNT_NAME).addAllAttributeInfo(attributes).build();
+        schemaBuilder.defineObjectClass(ociInfoAccount);
+        schemaBuilder.removeSupportedObjectClass(ScriptOnConnectorOp.class, ociInfoAccount);
         
         /*
          * SHELL
@@ -260,6 +261,8 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         schemaBuilder.removeSupportedObjectClass(UpdateOp.class, ociInfoShell);
         schemaBuilder.removeSupportedObjectClass(DeleteOp.class, ociInfoShell);
         schemaBuilder.removeSupportedObjectClass(SchemaOp.class, ociInfoShell);
+        schemaBuilder.removeSupportedObjectClass(ScriptOnConnectorOp.class, ociInfoShell);
+        schemaBuilder.removeSupportedObjectClass(ScriptOnResourceOp.class, ociInfoShell);
         
         _schema = schemaBuilder.build();
         return _schema;
