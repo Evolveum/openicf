@@ -22,6 +22,7 @@
  */
 package org.identityconnectors.solaris.test;
 
+import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;
@@ -55,37 +56,39 @@ public class SolarisTestCommon {
     }
 
     private static String getStringProperty(String name) {
-        return testProps.getStringProperty(name);
+        return getProperty(name, String.class);
     }
 
-    private static <T> T getProperty(String name, Class<T> type) {
-        return testProps.getProperty(name, type);
+    public static <T> T getProperty(String name, Class<T> type) {
+        T value = testProps.getProperty(name, type);
+        Assertions.nullCheck(value, name);
+        return value;
     }
 
-    public static SolarisConfiguration createConfiguration() {
+    private static SolarisConfiguration createConfiguration() {
         // names of properties in the property file (build.groovy)
-        final String PROP_HOST = "host";
-        final String PROP_SYSTEM_PASSWORD = "pass";
-        final String PROP_SYSTEM_USER = "user";
-        final String PROP_PORT = "port";
-        final String PROP_CONN_TYPE = "connectionType";
-        final String ROOT_SHELL_PROMPT = "rootShellPrompt";
+        final String propHost = "host";
+        final String propLoginPassword = "pass";
+        final String propLoginUser = "user";
+        final String propPort = "port";
+        final String propConnectionType = "connectionType";
+        final String propRootShellPrompt = "rootShellPrompt";
 
         // save configuration
         SolarisConfiguration config = new SolarisConfiguration();
 
-        config.setHost(getStringProperty(PROP_HOST));
+        config.setHost(getStringProperty(propHost));
 
-        final String password = getStringProperty(PROP_SYSTEM_PASSWORD);
-        config.setCredentials(new GuardedString(password.toCharArray()));
+        final String password = getStringProperty(propLoginPassword);
+        config.setPassword(new GuardedString(password.toCharArray()));
 
-        config.setRootUser(getStringProperty(PROP_SYSTEM_USER));
+        config.setLoginUser(getStringProperty(propLoginUser));
 
-        config.setPort(Integer.valueOf(getProperty(PROP_PORT, Integer.class)));
+        config.setPort(Integer.valueOf(getProperty(propPort, Integer.class)));
 
-        config.setConnectionType(getStringProperty(PROP_CONN_TYPE));
+        config.setConnectionType(getStringProperty(propConnectionType));
 
-        config.setRootShellPrompt(getStringProperty(ROOT_SHELL_PROMPT));
+        config.setLoginShellPrompt(getStringProperty(propRootShellPrompt));
 
         return config;
     }
@@ -98,7 +101,7 @@ public class SolarisTestCommon {
     }
 
     public static SolarisConnection getSolarisConn() {
-        SolarisConfiguration config = SolarisTestCommon.createConfiguration();
+        SolarisConfiguration config = createConfiguration();
         SolarisConnection conn = new SolarisConnection(config);
         return conn;
     }

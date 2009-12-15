@@ -27,8 +27,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.solaris.test.SolarisTestBase;
+import org.identityconnectors.solaris.test.SolarisTestCommon;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -37,6 +40,7 @@ public class SolarisConnectionTest extends SolarisTestBase {
     
     private static final String TIMEOUT_BETWEEN_MSGS = "0.5";
     private static final String LAST_ECHOED_INFO = "sausage.";
+    private final Log log = Log.getLog(SolarisConnectionTest.class);
     
     /** test connection to the configuration given by default credentials (build.groovy) */
     @Test
@@ -101,6 +105,64 @@ public class SolarisConnectionTest extends SolarisTestBase {
         } catch (ConnectorException ex) {
             //OK
         }
+    }
+
+    @Test
+    public void testTelnetConnection() {
+        if (!SolarisTestCommon.getProperty("unitTests.SolarisConnection.testTelnetMode", Boolean.class)) {
+            log.info("skipping testTelnetConnection test, because the resource doesn't support it.");
+            return;
+        }
+        
+        // connection is recreated after every test method call so we are free to modify it.
+        SolarisConfiguration config = getConnection().getConfiguration();
+        config.setPort(23);
+        config.setConnectionType(ConnectionType.TELNET.toString());
+        SolarisConnection conn = new SolarisConnection(config);
+        
+        String out = conn.executeCommand("echo 'ahoj ship'");
+        Assert.assertTrue(out.contains("ahoj ship"));
+        conn.dispose();
+    }
+
+    @Test 
+    public void testSSHPubKeyConnection() {
+        if (!SolarisTestCommon.getProperty("unitTests.SolarisConnection.testSSHPubkeyMode", Boolean.class)) {
+            log.info("skipping testSSHPubKeyConnection test, because the resource doesn't support it.");
+            return;
+        }
+        
+        // connection is recreated after every test method call so we are free to modify it.
+        SolarisConfiguration config = getConnection().getConfiguration();
+        config.setPassphrase(SolarisTestCommon.getProperty("rootPassphrase", GuardedString.class));
+        config.setPrivateKey(SolarisTestCommon.getProperty("rootPrivateKey", GuardedString.class));
+        config.setConnectionType(ConnectionType.SSHPUBKEY.toString());
+        SolarisConnection conn = new SolarisConnection(config);
+        
+        String out = conn.executeCommand("echo 'ahoj ship'");
+        Assert.assertTrue(out.contains("ahoj ship"));
+        conn.dispose();
+    }
+    
+    @Test @Ignore // TODO comment ignore
+    public void testSudoAuthorization() {
+        if (!SolarisTestCommon.getProperty("unitTests.SolarisConnection.testsudoAuthorization", Boolean.class)) {
+            log.info("skipping testSSHPubKeyConnection test, because the resource doesn't support it.");
+            return;
+        }
+        
+        // connection is recreated after every test method call so we are free to modify it.
+        SolarisConfiguration config = getConnection().getConfiguration();
+        config.setSudoAuthorization(true);
+        config.setLoginUser("david");
+        config.setPassword(new GuardedString(SolarisTestCommon.getProperty("pass", String.class).toCharArray()));
+        config.setCredentials(new GuardedString(SolarisTestCommon.getProperty("pass", String.class).toCharArray()));
+        
+        SolarisConnection conn = new SolarisConnection(config);
+        
+        String out = conn.executeCommand("echo 'ahoj ship'");
+        Assert.assertTrue(out.contains("ahoj ship"));
+        conn.dispose();        
     }
 
     @Override

@@ -33,6 +33,7 @@ import java.util.Set;
 
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
@@ -106,7 +107,7 @@ public class SolarisConnection {
         }
     };
     
-    private String _rootShellPrompt;
+    private String _loginShellPrompt;
     private Expect4j _expect4j;
     
     /**
@@ -119,38 +120,32 @@ public class SolarisConnection {
 
     private final Log log = Log.getLog(SolarisConnection.class);
     
-
-    /** default constructor */
-    public SolarisConnection(SolarisConfiguration configuration) {
-        this(configuration, configuration.getRootUser(), configuration.getCredentials());
-    }
-    
     /**
      * Specific constructor used by OpAuthenticateImpl. In most cases consider
      * using {@link SolarisConnection#SolarisConnection(SolarisConfiguration)}
      */
-    public SolarisConnection(SolarisConfiguration configuration,
-            final String username, final GuardedString password) {
+    public SolarisConnection(SolarisConfiguration configuration) {
         if (configuration == null) {
             throw new ConfigurationException(
                     "Cannot create a SolarisConnection on a null configuration.");
         }
         _configuration = configuration;
         
-        _rootShellPrompt = _configuration.getRootShellPrompt();
-
-        final ConnectionType connType = ConnectionType
-                .toConnectionType(_configuration.getConnectionType());
+        _loginShellPrompt = configuration.getLoginShellPrompt();
         
+        final String loginUser = configuration.getLoginUser();
+        final GuardedString password = configuration.getPassword();
+
+        final ConnectionType connType = ConnectionType.toConnectionType(configuration.getConnectionType());
         switch (connType) {
         case SSH:
-            _expect4j = createSSHConn(username, password);
+            _expect4j = createSSHConn(loginUser, password);
             break;
         case SSHPUBKEY:
-            _expect4j = createSSHPubKeyConn(username);
+            _expect4j = createSSHPubKeyConn(loginUser);
             break;
         case TELNET:
-            _expect4j = createTelnetConn(username, password);
+            _expect4j = createTelnetConn(loginUser, password);
             break;
         }
         
@@ -159,34 +154,46 @@ public class SolarisConnection {
                 /*
                  * telnet doesn't authenticate automatically, so an extra step is needed:
                  */
-                executeCommand(null, Collections.<String>emptySet(), CollectionUtil.newSet("login"));
-                executeCommand(username.trim(), Collections.<String>emptySet(), CollectionUtil.newSet("assword"));
+                executeCommand(null, Collections.<String>emptySet(), CollectionUtil.newSet("login")/* wait for login prompt */);
+                executeCommand(loginUser.trim(), Collections.<String>emptySet(), CollectionUtil.newSet("assword"));
                 sendPassword(password, this);
             }
             
-            executeCommand(null/* no command sent here */, CollectionUtil.newSet("incorrect"));
+            executeCommand(null/* no command sent here, wait for shellPrompt */, CollectionUtil.newSet("incorrect"));
             /*
              * turn off the echoing of keyboard input on the resource.
              * Saves bandwith too.
              */
             executeCommand("stty -echo");
             
+            // if the login and root users are different, we will need to su to root here.
+            final String rootUser = (!StringUtil.isBlank(configuration.getRootUser())) ? configuration.getRootUser() : loginUser; // rootuser equals to loginUser, if it is not defined in the configuration.
+            if (!configuration.isSudoAuthorization() && !loginUser.equals(rootUser)) {
+                executeCommand("su " + rootUser, CollectionUtil.newSet("Unknown id", "does not exist"), CollectionUtil.newSet("assword:"));
+                
+                // we need to change the type of rootShellPrompt here (we used loginUser's up to now)
+                final String rootShellPrompt = (!StringUtil.isBlank(configuration.getRootShellPrompt())) ? configuration.getRootShellPrompt() : _loginShellPrompt;
+                _loginShellPrompt = rootShellPrompt;
+                
+                sendPassword(password, CollectionUtil.newSet("Sorry", "incorrect password"), Collections.<String>emptySet() /* wait for rootShellPrompt */, this);
+                executeCommand("stty -echo");
+            }
+            
             /*
              * Change root shell prompt, for simplier parsing of the output.
              * Revert the changes after the connection is closed.
              */
-            _rootShellPrompt = CONNECTOR_PROMPT;
+            _loginShellPrompt = CONNECTOR_PROMPT;
             executeCommand("PS1=\"" + CONNECTOR_PROMPT + "\"");
         } catch (Exception e) {
-            throw new ConnectorException(String.format("Connection failed to host '%s:%s' for user '%s'", _configuration.getHost(), _configuration.getPort(), username), e);
+            throw new ConnectorException(String.format("Connection failed to host '%s:%s' for user '%s'", _configuration.getHost(), _configuration.getPort(), loginUser), e);
         }
     }
 
     private Expect4j createTelnetConn(String username, GuardedString password) {
         Expect4j expect4j = null;
         try {
-            expect4j = ExpectUtils.telnet(_configuration
-                    .getHost(), _configuration.getPort());
+            expect4j = ExpectUtils.telnet(_configuration.getHost(), _configuration.getPort());
         } catch (Exception e1) {
             throw ConnectorException.wrap(e1);
         }
@@ -784,10 +791,19 @@ public class SolarisConnection {
         return buffer.toString();
     }
 
-    /** once connection is disposed it won't be used at all. */
+    /**
+     * once connection is disposed it won't be used at all. This method performs
+     * logoff and assigns null to the internal expect libraries reference.
+     */
     public void dispose() {
         try {
             sendInternal("exit");
+            final String loginUser = getConfiguration().getLoginUser();
+            // rootuser equals to loginUser, if it is not defined in the configuration.
+            final String rootUser = (!StringUtil.isBlank(getConfiguration().getRootUser())) ? getConfiguration().getRootUser() : getConfiguration().getLoginUser();
+            if (!loginUser.equals(rootUser)) {
+                sendInternal("exit");
+            }
         } catch (IOException e) {
             // OK
         }
@@ -799,6 +815,9 @@ public class SolarisConnection {
     }
     
     /**
+     * The method formats the given command, and inserts {@code sudo} prefix in front
+     * of the command according to the state of the connection's {@link SolarisConnection#_configuration}.
+     * 
      * @param command
      *            the command can be a chain of strings separated by spaces. In
      *            case for some reason we want to delegate the chaining to this
@@ -806,6 +825,9 @@ public class SolarisConnection {
      * @param arguments
      *            optional parameter for chaining extra arguments at the end of
      *            command.
+     * <br>
+     * Note: Don't use this method, if you want to have a plain command, <b>withouth</b> 
+     * the {@code sudo} prefix. 
      */
     public String buildCommand(String command, CharSequence... arguments) {
         StringBuilder buff = new StringBuilder();
@@ -835,7 +857,7 @@ public class SolarisConnection {
     }
 
     public String getRootShellPrompt() {
-        return _rootShellPrompt;
+        return _loginShellPrompt;
     }
     
     /*

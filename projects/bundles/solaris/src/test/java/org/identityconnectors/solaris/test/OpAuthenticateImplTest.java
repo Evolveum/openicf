@@ -31,8 +31,8 @@ public class OpAuthenticateImplTest extends SolarisTestBase {
    
     @Test
     public void testAuthenticateApiOp() {
-        GuardedString password = getConfiguration().getCredentials();
-        String username = getConfiguration().getRootUser();
+        GuardedString password = getConfiguration().getPassword();
+        String username = getConfiguration().getLoginUser();
         getFacade().authenticate(ObjectClass.ACCOUNT, username, password, null);
     }
     
@@ -43,20 +43,20 @@ public class OpAuthenticateImplTest extends SolarisTestBase {
     public void testAuthenticateApiOpInvalidCredentials() {
         GuardedString password = new GuardedString(
                 "WRONG_PASSWORD_FOOBAR2135465".toCharArray());
-        String username = getConfiguration().getRootUser();
+        String username = getConfiguration().getLoginUser();
         getFacade().authenticate(ObjectClass.ACCOUNT, username, password, null);
     }
     
     @Test (expected=IllegalArgumentException.class)
     public void unknownObjectClass() {
-        GuardedString password = getConfiguration().getCredentials();
-        String username = getConfiguration().getRootUser();
+        GuardedString password = getConfiguration().getPassword();
+        String username = getConfiguration().getLoginUser();
         getFacade().authenticate(new ObjectClass("NONEXISTING_OBJECTCLASS"), username, password, null);
     }
     
     @Test (expected=RuntimeException.class)
     public void unknownUid() {
-        GuardedString password = getConfiguration().getCredentials();
+        GuardedString password = getConfiguration().getPassword();
         getFacade().authenticate(ObjectClass.ACCOUNT, "NONEXISTING_UID___", password, null);
     }
     
@@ -66,11 +66,11 @@ public class OpAuthenticateImplTest extends SolarisTestBase {
     @Test
     public void testTwiceAuthWithFailure() {
         try {
-            getFacade().authenticate(ObjectClass.ACCOUNT, "NONEXISTING_UID__", getConfiguration().getCredentials(), null);
+            getFacade().authenticate(ObjectClass.ACCOUNT, "NONEXISTING_UID__", getConfiguration().getPassword(), null);
         } catch (ConnectorException ex) {
             //OK
         }
-        getFacade().authenticate(ObjectClass.ACCOUNT, getConfiguration().getRootUser(), getConfiguration().getCredentials(), null);
+        getFacade().authenticate(ObjectClass.ACCOUNT, getConfiguration().getLoginUser(), getConfiguration().getPassword(), null);
     }
     
     @Override

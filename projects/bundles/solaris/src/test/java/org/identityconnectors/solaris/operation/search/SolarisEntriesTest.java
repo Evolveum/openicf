@@ -30,7 +30,6 @@ import java.util.Set;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.test.SolarisTestBase;
-import org.identityconnectors.solaris.test.SolarisTestCommon;
 import org.junit.Assert;
 import org.junit.Test;
 

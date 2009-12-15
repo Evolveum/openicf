@@ -8,7 +8,7 @@ import org.identityconnectors.common.security.GuardedString
 
 connector {
   port = port
-  rootShellPrompt = "#"
+  loginShellPrompt = "#"
   sudoAuthorization = false
   connectionType = connectionType
 }
@@ -27,13 +27,16 @@ testsuite {
 
   Validate.invalidConfig = [
     [port: null],
-    [credentials: null],
-    [connectionType: 'boobar']
+    [password: null],
+    [loginUser: null],
+    [loginUser: ""],
+    [connectionType: 'boobar'],
+    [sudoAuthorization: true, credentials: null]
   ]//Validate
 
   Test.invalidConfig = [
-    [credentials: "nonsensePassword123456"], 
-    [rootUser: "nonsenseUserName123456"]
+    [password: "nonsensePassword123456"], 
+    [loginUser: "nonsenseUserName123456"]
   ]//Test
 
   Schema {

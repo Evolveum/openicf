@@ -26,10 +26,9 @@ import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
-import org.identityconnectors.framework.spi.Configuration;
 import org.identityconnectors.solaris.operation.search.SolarisEntries;
 
-public class SolarisConfiguration extends AbstractConfiguration {
+public final class SolarisConfiguration extends AbstractConfiguration {
 
     public static final int DEFAULT_MUTEX_ACQUIRE_TIMEOUT = 60;
 
@@ -282,26 +281,6 @@ public class SolarisConfiguration extends AbstractConfiguration {
         // default constructor
     }
 
-    /**
-     * cloning constructor, deep copy
-     */
-    public SolarisConfiguration(Configuration config) {
-        if (config == null) {
-            throw new AssertionError("Configuration cannot be null");
-        }
-
-        if (config instanceof SolarisConfiguration) {
-            final SolarisConfiguration cfg = (SolarisConfiguration) config;
-            this.rootUser = cfg.getRootUser();
-            this.credentials = cfg.getCredentials();
-            this.host = cfg.getHost();
-            this.port = cfg.getPort();
-            this.connectionType = cfg.getConnectionType();
-        } else {
-            throw new AssertionError("cannot clone other types than SolarisConfiguration");
-        }
-    }
-
     /*            ********** GET / SET ************ */
     // @ConfigurationProperty(required = true)
     public String getHost() {
@@ -526,12 +505,17 @@ public class SolarisConfiguration extends AbstractConfiguration {
     @Override
     public void validate() {
         String msg = "'%s' cannot be null or empty.";
-        if (StringUtil.isBlank(getRootUser())) {
-            throw new ConfigurationException(String.format(msg, "UserName"));
+        boolean isLoginUserCredentials = !StringUtil.isBlank(loginUser) && !StringUtil.isBlank(loginShellPrompt) && password != null;
+        if (!isLoginUserCredentials) {
+            throw new ConfigurationException(String.format(msg, "[loginUser, loginShellPrompt, password]")); 
+        } 
+        
+        if (connectionType.equals(ConnectionType.SSHPUBKEY.toString()) && (passphrase == null || privateKey == null)) {
+            throw new ConfigurationException(String.format(msg, "[passphares, privateKey]"));
         }
-
-        if (getCredentials() == null) {
-            throw new ConfigurationException(String.format(msg, "Password"));
+        
+        if (isSudoAuthorization() && getCredentials() == null) {
+            throw new ConfigurationException("Root Password missing. In case of sudo authorization for every command you should provide root password too ('credentials' property).");
         }
 
         if (StringUtil.isBlank(getHost())) {
@@ -546,9 +530,7 @@ public class SolarisConfiguration extends AbstractConfiguration {
             throw new ConfigurationException(String.format(msg, "Connection type"));
         }
 
-        if (StringUtil.isBlank(rootShellPrompt)) {
-            throw new ConfigurationException(String.format(msg, "Root shell prompt"));
-        }
+        
 
     }
 }
