@@ -158,6 +158,13 @@ testsuite {
       UpdateApiOp: ['__ACCOUNT__', '__GROUP__']
     ]//operations
   } //Schema
+  
+  ScriptOnResource {
+    language = "bash"
+    script = "echo 'ahoj ship'"
+    testsuite.ScriptOnResource.arguments = null
+    result = "ahoj ship"
+  } //ScriptOnResource
 
 }// testsuite
 

@@ -40,6 +40,7 @@ import org.identityconnectors.framework.common.objects.OperationalAttributeInfos
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Schema;
 import org.identityconnectors.framework.common.objects.SchemaBuilder;
+import org.identityconnectors.framework.common.objects.ScriptContext;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.AttributeInfo.Flags;
 import org.identityconnectors.framework.common.objects.filter.FilterTranslator;
@@ -50,6 +51,7 @@ import org.identityconnectors.framework.spi.operations.AuthenticateOp;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
+import org.identityconnectors.framework.spi.operations.ScriptOnResourceOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
@@ -58,6 +60,7 @@ import org.identityconnectors.solaris.attr.GroupAttribute;
 import org.identityconnectors.solaris.operation.OpAuthenticateImpl;
 import org.identityconnectors.solaris.operation.OpCreateImpl;
 import org.identityconnectors.solaris.operation.OpDeleteImpl;
+import org.identityconnectors.solaris.operation.OpSolarisScriptOnConnectorImpl;
 import org.identityconnectors.solaris.operation.OpUpdateImpl;
 import org.identityconnectors.solaris.operation.search.OpSearchImpl;
 import org.identityconnectors.solaris.operation.search.SolarisFilterTranslator;
@@ -69,7 +72,7 @@ import org.identityconnectors.solaris.operation.search.nodes.Node;
  */
 @ConnectorClass(displayNameKey = "Solaris", configurationClass = SolarisConfiguration.class)
 public class SolarisConnector implements PoolableConnector, AuthenticateOp,
-        SchemaOp, CreateOp, DeleteOp, UpdateOp, SearchOp<Node>, TestOp {
+        SchemaOp, CreateOp, DeleteOp, UpdateOp, SearchOp<Node>, TestOp, ScriptOnResourceOp {
 
     /**
      * Setup logging for the {@link SolarisConnector}.
@@ -286,5 +289,13 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      */
     public Configuration getConfiguration() {
         return _configuration;
+    }
+
+    /**
+     * supported scripting language is {@code /bin/sh} shell, that is present on
+     * every Solaris resource.
+     */
+    public Object runScriptOnResource(ScriptContext request, OperationOptions options) {
+        return new OpSolarisScriptOnConnectorImpl(this).runScriptOnResource(request, options);
     }
 }
