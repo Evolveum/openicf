@@ -268,7 +268,7 @@ final class OracleERPOperationSchema extends Operation implements SchemaOp {
                 }
             }
             // now it is clear we can add the new attribute
-            AttributeInfoBuilder.build(getCfg().getPasswordAttribute(), GuardedString.class, EnumSet.of(Flags.NOT_READABLE, Flags.NOT_RETURNED_BY_DEFAULT));
+            ocib.addAttributeInfo(AttributeInfoBuilder.build(getCfg().getPasswordAttribute(), GuardedString.class, EnumSet.of(Flags.NOT_READABLE, Flags.NOT_RETURNED_BY_DEFAULT)));
         }
 
         return ocib.build();
