@@ -27,12 +27,19 @@
         <Company>Sun Microsystems, Inc.</Company>
         <Copyright>Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.</Copyright>
         <FrameworkDistDir>$(MSBuildProjectDirectory)\..\Dist</FrameworkDistDir>
+        <FrameworkRootDir>$(MSBuildProjectDirectory)\..\..\</FrameworkRootDir>
     </PropertyGroup>
 
     <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
 
     <Target Name="SetRevision" Condition="'$(SVN_REVISION)' == ''">
-        <SvnVersion LocalPath=".">
+        <!--
+            Use the "framework" directory to compute the SVN revision.
+            That way, even if the last change to the framework was made in two
+            separate check-ins (for Java and .NET), both the Java and .NET framework
+            get the same revision (that of the last change of the "framework" directory).
+        -->
+        <SvnVersion LocalPath="$(FrameworkRootDir)" UseLastCommittedRevision="true">
             <Output TaskParameter="Revision" PropertyName="SVN_REVISION" />
         </SvnVersion>
     </Target>
