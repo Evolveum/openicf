@@ -29,7 +29,7 @@ import org.identityconnectors.solaris.SolarisConfiguration;
 import org.junit.Ignore;
 import org.junit.Test;
 
-public class SolarisConfigurationTest extends SolarisTestBase {
+public class SolarisConfigurationTest {
     @Test
     public void testGoodConfiguration() {
         SolarisConfiguration config = getConfiguration();
@@ -41,7 +41,7 @@ public class SolarisConfigurationTest extends SolarisTestBase {
     @Test(expected = ConfigurationException.class)
     public void testMissingUsername() {
         SolarisConfiguration config = getConfiguration();
-        config.setRootUser(null);
+        config.setLoginUser(null);
         config.validate();
         Assert.fail("Configuration allowed a null admin username.");
     }
@@ -49,7 +49,7 @@ public class SolarisConfigurationTest extends SolarisTestBase {
     @Test(expected = ConfigurationException.class)
     public void testMissingPassword() {
         SolarisConfiguration config = getConfiguration();
-        config.setCredentials(null);
+        config.setPassword(null);
         config.validate();
         Assert.fail("Configuration allowed a null password.");
     }
@@ -62,6 +62,10 @@ public class SolarisConfigurationTest extends SolarisTestBase {
         Assert.fail("Configuration allowed a null hostname.");
     }
     
+    private SolarisConfiguration getConfiguration() {
+        return SolarisTestCommon.createConfiguration();
+    }
+
     @Test(expected = ConfigurationException.class)
     public void testMissingPort() {
         SolarisConfiguration config = getConfiguration();
@@ -70,19 +74,9 @@ public class SolarisConfigurationTest extends SolarisTestBase {
         Assert.fail("Configuration allowed a null port.");
     }
     
-    @Test @Ignore
+    @Test @Ignore // TODO
     public void testGetMessageProperty() {
         String result = getConfiguration().getMessage("SOLARIS");
         Assert.assertTrue(result.equals("Solaris"));
-    }
-
-    @Override
-    public boolean createGroup() {
-        return false;
-    }
-
-    @Override
-    public int getCreateUsersNumber() {
-        return 0;
     }
 }

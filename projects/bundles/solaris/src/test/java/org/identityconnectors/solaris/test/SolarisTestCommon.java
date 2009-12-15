@@ -65,7 +65,7 @@ public class SolarisTestCommon {
         return value;
     }
 
-    private static SolarisConfiguration createConfiguration() {
+    public static SolarisConfiguration createConfiguration() {
         // names of properties in the property file (build.groovy)
         final String propHost = "host";
         final String propLoginPassword = "pass";
