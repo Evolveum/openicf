@@ -467,10 +467,9 @@ public class SolarisConnection {
         }
         
         // #3 set the timeout for matching too
-        final boolean[] isTimeoutMatched = new boolean[1];
         builder.addTimeoutMatch(timeout, new SolarisClosure() {
             public void run(ExpectState state) throws Exception {
-                isTimeoutMatched[0] = true;
+                throw new ConnectorException("executeCommand: timeout occured, and no ERROR matched. Buffer: <" + state.getBuffer() + ">");
             }
         });
         
@@ -624,11 +623,6 @@ public class SolarisConnection {
         if (output == null) {
             // handle error message processing, throw an exception if error found
             handleRejects(cecList);
-            
-            // no reject thrown and exception, so timeout occurred.
-            if (isTimeoutMatched[0]) {
-                throw new ConnectorException("executeCommand: timeout occured, and no ERROR or useful message matched.");
-            }
         }
         
         output = trimOutput(output);
