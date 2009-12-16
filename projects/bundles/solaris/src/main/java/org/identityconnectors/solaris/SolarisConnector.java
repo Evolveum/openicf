@@ -222,7 +222,6 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         final ObjectClassInfo ociInfoGroup = new ObjectClassInfoBuilder().setType(ObjectClass.GROUP_NAME).addAllAttributeInfo(attributes).build();
         schemaBuilder.defineObjectClass(ociInfoGroup);
         schemaBuilder.removeSupportedObjectClass(AuthenticateOp.class, ociInfoGroup);
-        schemaBuilder.removeSupportedObjectClass(ScriptOnConnectorOp.class, ociInfoGroup);
         
         /*
          * ACCOUNT
@@ -245,7 +244,6 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         attributes.add(OperationalAttributeInfos.PASSWORD);
         final ObjectClassInfo ociInfoAccount = new ObjectClassInfoBuilder().setType(ObjectClass.ACCOUNT_NAME).addAllAttributeInfo(attributes).build();
         schemaBuilder.defineObjectClass(ociInfoAccount);
-        schemaBuilder.removeSupportedObjectClass(ScriptOnConnectorOp.class, ociInfoAccount);
         
         /*
          * SHELL
@@ -261,8 +259,6 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         schemaBuilder.removeSupportedObjectClass(UpdateOp.class, ociInfoShell);
         schemaBuilder.removeSupportedObjectClass(DeleteOp.class, ociInfoShell);
         schemaBuilder.removeSupportedObjectClass(SchemaOp.class, ociInfoShell);
-        schemaBuilder.removeSupportedObjectClass(ScriptOnConnectorOp.class, ociInfoShell);
-        schemaBuilder.removeSupportedObjectClass(ScriptOnResourceOp.class, ociInfoShell);
         
         _schema = schemaBuilder.build();
         return _schema;

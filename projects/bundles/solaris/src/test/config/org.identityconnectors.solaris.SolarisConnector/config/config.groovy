@@ -153,8 +153,8 @@ testsuite {
       CreateApiOp: ['__ACCOUNT__', '__GROUP__'],
       SearchApiOp: ['__ACCOUNT__', 'shell', '__GROUP__'],
       DeleteApiOp: ['__ACCOUNT__', '__GROUP__'],
-      ScriptOnConnectorApiOp: [],
-      ScriptOnResourceApiOp: ['__ACCOUNT__', '__GROUP__'],
+      ScriptOnConnectorApiOp: ['__ACCOUNT__', 'shell', '__GROUP__'] /* connector doesn't support this, but framework needs it */,
+      ScriptOnResourceApiOp: ['__ACCOUNT__', 'shell', '__GROUP__'],
       TestApiOp: ['__ACCOUNT__', 'shell', '__GROUP__'],
       UpdateApiOp: ['__ACCOUNT__', '__GROUP__']
     ]//operations

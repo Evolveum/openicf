@@ -50,6 +50,9 @@ public class OpSolarisScriptOnConnectorImpl {
         if (StringUtil.isBlank(scriptLanguage))
             throw new IllegalArgumentException("Script language is missing.");
         
+        if (!scriptLanguage.equals("bash"))
+            throw new IllegalArgumentException("ScriptLanguage is '"+ scriptLanguage + "'. The only accepted script language is 'bash'.");
+        
         if (StringUtil.isBlank(scriptText))
             throw new IllegalArgumentException("scriptText is missing");
         
