@@ -24,18 +24,23 @@ package org.identityconnectors.solaris;
 
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.ObjectClassInfo;
 import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder;
 import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
 import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
 import org.identityconnectors.framework.common.objects.ResultsHandler;
 import org.identityconnectors.framework.common.objects.Schema;
@@ -50,14 +55,15 @@ import org.identityconnectors.framework.spi.PoolableConnector;
 import org.identityconnectors.framework.spi.operations.AuthenticateOp;
 import org.identityconnectors.framework.spi.operations.CreateOp;
 import org.identityconnectors.framework.spi.operations.DeleteOp;
+import org.identityconnectors.framework.spi.operations.ResolveUsernameOp;
 import org.identityconnectors.framework.spi.operations.SchemaOp;
-import org.identityconnectors.framework.spi.operations.ScriptOnConnectorOp;
 import org.identityconnectors.framework.spi.operations.ScriptOnResourceOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
 import org.identityconnectors.solaris.attr.AccountAttribute;
 import org.identityconnectors.solaris.attr.GroupAttribute;
+import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.OpAuthenticateImpl;
 import org.identityconnectors.solaris.operation.OpCreateImpl;
 import org.identityconnectors.solaris.operation.OpDeleteImpl;
@@ -65,7 +71,9 @@ import org.identityconnectors.solaris.operation.OpSolarisScriptOnConnectorImpl;
 import org.identityconnectors.solaris.operation.OpUpdateImpl;
 import org.identityconnectors.solaris.operation.search.OpSearchImpl;
 import org.identityconnectors.solaris.operation.search.SolarisFilterTranslator;
+import org.identityconnectors.solaris.operation.search.nodes.EqualsNode;
 import org.identityconnectors.solaris.operation.search.nodes.Node;
+import org.identityconnectors.test.common.ToListResultsHandler;
 
 /**
  * @author David Adam
@@ -73,7 +81,7 @@ import org.identityconnectors.solaris.operation.search.nodes.Node;
  */
 @ConnectorClass(displayNameKey = "Solaris", configurationClass = SolarisConfiguration.class)
 public class SolarisConnector implements PoolableConnector, AuthenticateOp,
-        SchemaOp, CreateOp, DeleteOp, UpdateOp, SearchOp<Node>, TestOp, ScriptOnResourceOp {
+        SchemaOp, CreateOp, DeleteOp, UpdateOp, SearchOp<Node>, TestOp, ScriptOnResourceOp, ResolveUsernameOp {
 
     /**
      * Setup logging for the {@link SolarisConnector}.
@@ -222,6 +230,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         final ObjectClassInfo ociInfoGroup = new ObjectClassInfoBuilder().setType(ObjectClass.GROUP_NAME).addAllAttributeInfo(attributes).build();
         schemaBuilder.defineObjectClass(ociInfoGroup);
         schemaBuilder.removeSupportedObjectClass(AuthenticateOp.class, ociInfoGroup);
+        schemaBuilder.removeSupportedObjectClass(ResolveUsernameOp.class, ociInfoGroup);
         
         /*
          * ACCOUNT
@@ -259,6 +268,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         schemaBuilder.removeSupportedObjectClass(UpdateOp.class, ociInfoShell);
         schemaBuilder.removeSupportedObjectClass(DeleteOp.class, ociInfoShell);
         schemaBuilder.removeSupportedObjectClass(SchemaOp.class, ociInfoShell);
+        schemaBuilder.removeSupportedObjectClass(ResolveUsernameOp.class, ociInfoShell);
         
         _schema = schemaBuilder.build();
         return _schema;
@@ -296,5 +306,21 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      */
     public Object runScriptOnResource(ScriptContext request, OperationOptions options) {
         return new OpSolarisScriptOnConnectorImpl(this).runScriptOnResource(request, options);
+    }
+
+    public Uid resolveUsername(ObjectClass objectClass, String username, OperationOptions options) {
+        List<ConnectorObject> searchResult = null;
+        if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
+            ToListResultsHandler handler = new ToListResultsHandler();
+            Node query = new EqualsNode(NativeAttribute.NAME, false, CollectionUtil.newList(username));
+            executeQuery(objectClass, query, handler, new OperationOptionsBuilder().build());
+            searchResult = handler.getObjects();
+            if (searchResult.isEmpty()) {
+                throw new UnknownUidException(String.format("userName: '%s' cannot be resolved", username));
+            }
+        } else {
+            throw new IllegalArgumentException("ObjectClass: '" + objectClass.getObjectClassValue() + "' is not supported by ResolveUsernameOp.");
+        }
+        return searchResult.get(0).getUid();
     }
 }

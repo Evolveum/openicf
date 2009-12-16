@@ -156,14 +156,15 @@ testsuite {
       ScriptOnConnectorApiOp: ['__ACCOUNT__', 'shell', '__GROUP__'] /* connector doesn't support this, but framework needs it */,
       ScriptOnResourceApiOp: ['__ACCOUNT__', 'shell', '__GROUP__'],
       TestApiOp: ['__ACCOUNT__', 'shell', '__GROUP__'],
-      UpdateApiOp: ['__ACCOUNT__', '__GROUP__']
+      UpdateApiOp: ['__ACCOUNT__', '__GROUP__'],
+      ResolveUsernameApiOp: ['__ACCOUNT__']
     ]//operations
   } //Schema
   
   ScriptOnResource {
     language = "bash"
     script = "echo 'ahoj ship'"
-    testsuite.ScriptOnResource.arguments = null
+    arguments = null
     result = "ahoj ship"
   } //ScriptOnResource
 
