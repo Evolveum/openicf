@@ -623,9 +623,9 @@ public class SolarisConnection {
         if (output == null) {
             // handle error message processing, throw an exception if error found
             handleRejects(cecList);
+        } else {
+            output = trimOutput(output);
         }
-        
-        output = trimOutput(output);
 
         return output;
     }
@@ -1067,7 +1067,7 @@ public class SolarisConnection {
      * </ul>
      * @author David Adam
      */
-    private final class MatchBuilder {
+    private final static class MatchBuilder {
         private List<Match> matches;
 
         public MatchBuilder() {

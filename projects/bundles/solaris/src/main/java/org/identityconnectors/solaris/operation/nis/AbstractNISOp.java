@@ -313,8 +313,7 @@ public class AbstractNISOp {
      * Only {@link CreateNISGroupCommand} and {@link UpdateNISGroupCommand} use this functionality
      * to process output of some specific commands.
      */
-    protected static void parseNisOutputForErrors(final String output) {
-        String out = new String(output);
+    protected static void parseNisOutputForErrors(String out) {
         out = out.trim();
         if (out.length() > 0) {
             if (out.contains(">")) {
