@@ -134,7 +134,6 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
                 line = line.substring(index + SHELL_CONT_CHARS.length());
             }
             
-            //TODO clarify meaning of this section.
             if (isLast) {
                 if (!it.hasNext()) {
                     throw new ConnectorException(String.format("User '%s' is missing last login time.", currentAccount));
@@ -202,26 +201,6 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
         getUsersScript.append("WSUSERLIST=\"");
         getUsersScript.append(connUserList.toString() + "\n\";");
         getUsersScript.append("for user in $WSUSERLIST; do ");
-        
-        // FIXME (there's a conditional for USER_TIME_LAST_LOGIN in adapter, why?)
-//        if (getAttrTypeFromMapName(USER_TIME_LAST_LOGIN) != null) {
-//            String getUserScript =
-//                loginsCmd + " -oxma -l $user 2>>" + TMPFILE + "; " +
-//                "LASTLOGIN=`" + lastCmd + " -1 $user`; " +
-//                "if [ -z \"$LASTLOGIN\" ]; then " +
-//                  "echo \"wtmp begins\" ; " +
-//                "else " +
-//                  "echo $LASTLOGIN; " +
-//                "fi; ";
-//
-//            getUsersScript.append(getUserScript);
-//
-//        } else {
-//            getUsersScript.append(loginsCmd + " -oxma -l $user 2>>" +
-//                                  TMPFILE + "; ");
-//        }
-//
-//        getUsersScript.append("done");
         
         String getScript = null;
         if (isLast) {

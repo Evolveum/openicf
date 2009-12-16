@@ -44,7 +44,6 @@ public class UpdateNISUserCommand extends AbstractNISOp {
     private static final String UID_NOT_UNIQUE = "uid is not unique.";
     
     public static void updateUser(SolarisEntry userEntry, SolarisConnection connection) {
-        // TODO eliminate duplicate accountId(Name)
         final String accountName = userEntry.getName();
         String pwddir = connection.getConfiguration().getNisPwdDir();
         String pwdfile = pwddir + "/passwd";

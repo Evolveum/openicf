@@ -54,7 +54,7 @@ public abstract class SolarisTestBase {
         System.out.println("TEST HOST: " + connection.getConfiguration().getHost());
 
         generateUsers();
-        generateGroup(CollectionUtil.newList("root") /* todo temporary solution FIXME */);
+        generateGroup(CollectionUtil.newList("root"));
     }
 
     @After

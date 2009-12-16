@@ -81,7 +81,6 @@ public class DeleteNISUserCommand extends AbstractNISOp {
         connection.executeCommand(removeTmpFilesScript);
         
         // The user has to be removed from the NIS database
-        // TODO this comment doesn't make much sense (from adapter)
         AbstractNISOp.addNISMake("passwd", connection);
     }
 

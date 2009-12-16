@@ -56,7 +56,6 @@ public class DeleteNISGroupCommand extends AbstractNISOp {
         final String workScript = initWorkScript(groupName, groupFile, connection);
         // Add script to remove the entry from the file
         connection.executeCommand(getOwner);
-        // TODO process output ==< see capture token
         String out = connection.executeCommand(workScript);
         if (out.length() > 0) {
             if (out.contains(">")) {
@@ -72,8 +71,8 @@ public class DeleteNISGroupCommand extends AbstractNISOp {
         if (!out.equals("0")) {
             throw new UnknownUidException("Error deleting group: " + groupName);
         }
-        // TODO process output ==< see capture token, but in the adapter there is no real action.
-        /*out = */connection.executeCommand(removeTmpFilesScript);
+
+        connection.executeCommand(removeTmpFilesScript);
         
         // The user has to be added to the NIS database
         AbstractNISOp.addNISMake("group", connection);
