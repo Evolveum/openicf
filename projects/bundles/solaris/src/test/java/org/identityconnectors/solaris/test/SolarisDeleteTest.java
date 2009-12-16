@@ -28,7 +28,7 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class OpDeleteImplTest extends SolarisTestBase {
+public class SolarisDeleteTest extends SolarisTestBase {
     @Test(expected = ConnectorException.class)
     public void testDeleteUnknownUid() {
         getFacade().delete(ObjectClass.ACCOUNT, new Uid("nonExistingUid"), null);

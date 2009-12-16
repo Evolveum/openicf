@@ -36,7 +36,7 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.attr.GroupAttribute;
 import org.junit.Test;
 
-public class OpUpdateImplTest extends SolarisTestBase {
+public class SolarisUpdateTest extends SolarisTestBase {
 
     /**
      * create a new user and try to change its password, and later try to

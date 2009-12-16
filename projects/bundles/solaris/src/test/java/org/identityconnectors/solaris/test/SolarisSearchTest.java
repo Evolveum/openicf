@@ -33,11 +33,11 @@ import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
-import org.identityconnectors.solaris.operation.search.OpSearchImpl;
+import org.identityconnectors.solaris.operation.search.SolarisSearch;
 import org.identityconnectors.test.common.ToListResultsHandler;
 import org.junit.Test;
 
-public class OpSearchImplTest extends SolarisTestBase {
+public class SolarisSearchTest extends SolarisTestBase {
     private static final int NR_OF_USERS = 3;
 
     /**
@@ -86,7 +86,7 @@ public class OpSearchImplTest extends SolarisTestBase {
     @Test
     public void testGetShells() {
         ToListResultsHandler handler = new ToListResultsHandler();
-        getFacade().search(OpSearchImpl.SHELL, null, handler, null);
+        getFacade().search(SolarisSearch.SHELL, null, handler, null);
         List<ConnectorObject> result = handler.getObjects();
         Assert.assertNotNull(result);
 

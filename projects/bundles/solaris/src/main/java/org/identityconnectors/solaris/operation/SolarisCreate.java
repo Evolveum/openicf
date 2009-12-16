@@ -38,19 +38,19 @@ import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.operation.nis.AbstractNISOp;
-import org.identityconnectors.solaris.operation.nis.CreateNISGroupCommand;
-import org.identityconnectors.solaris.operation.nis.CreateNISUserCommand;
+import org.identityconnectors.solaris.operation.nis.CreateNISGroup;
+import org.identityconnectors.solaris.operation.nis.CreateNISUser;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
-public class OpCreateImpl extends AbstractOp {
+public class SolarisCreate extends AbstractOp {
 
-    private static final Log _log = Log.getLog(OpCreateImpl.class);
+    private static final Log _log = Log.getLog(SolarisCreate.class);
     
     private SolarisConnection connection;
     
     final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT, ObjectClass.GROUP};
     
-    public OpCreateImpl(SolarisConnector connector) {
+    public SolarisCreate(SolarisConnector connector) {
         super(connector);
         connection = connector.getConnection();
     }
@@ -93,7 +93,7 @@ public class OpCreateImpl extends AbstractOp {
 
     /**
      * Compare with Native create operation:
-     * {@link OpCreateImpl#invokeNativeGroupCreate(SolarisEntry)}
+     * {@link SolarisCreate#invokeNativeGroupCreate(SolarisEntry)}
      */
     private void invokeNISGroupCreate(final SolarisEntry group) {
         if (connection.isDefaultNisPwdDir()) {
@@ -101,21 +101,21 @@ public class OpCreateImpl extends AbstractOp {
 
             AbstractNISOp.addNISMake("group", connection);
         } else {
-            CreateNISGroupCommand.create(group, connection);
+            CreateNISGroup.create(group, connection);
         }
     }
 
     /**
      * Compare with other NIS implementation counterpart:
-     * {@link OpCreateImpl#invokeNISGroupCreate(SolarisEntry)}
+     * {@link SolarisCreate#invokeNISGroupCreate(SolarisEntry)}
      */
     private void invokeNativeGroupCreate(final SolarisEntry group) {
-        CreateNativeGroupCommand.create(group, connection);
+        CreateNativeGroup.create(group, connection);
     }
 
     /**
      * Compare with Native create operation 
-     * {@link OpCreateImpl#invokeNativeUserCreate(SolarisEntry, GuardedString)}
+     * {@link SolarisCreate#invokeNativeUserCreate(SolarisEntry, GuardedString)}
      */
     private void invokeNISUserCreate(SolarisEntry entry, GuardedString password) {
         
@@ -130,7 +130,7 @@ public class OpCreateImpl extends AbstractOp {
                 connection.doSudoReset();
             }
         } else {
-            CreateNISUserCommand.performNIS(entry, connection);
+            CreateNISUser.performNIS(entry, connection);
         }
     }
     
@@ -140,6 +140,6 @@ public class OpCreateImpl extends AbstractOp {
      * {@see OpCreateImpl#invokeNISUserCreate(SolarisEntry, GuardedString)}
      */
     private void invokeNativeUserCreate(SolarisEntry entry, GuardedString password) {
-        CreateNativeUserCommand.createUser(entry, password, connection);
+        CreateNativeUser.createUser(entry, password, connection);
     }
 }

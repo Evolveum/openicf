@@ -27,7 +27,7 @@ import java.util.Collections;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.solaris.SolarisConnection;
 
-public class DeleteNISUserCommand extends AbstractNISOp {
+public class DeleteNISUser extends AbstractNISOp {
 
     public static void delete(String accountId, SolarisConnection connection) {
 

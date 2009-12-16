@@ -37,16 +37,16 @@ import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 
-public class OpAuthenticateImpl extends AbstractOp {
+public class SolarisAuthenticate extends AbstractOp {
 
-    private static final Log _log = Log.getLog(OpAuthenticateImpl.class);
+    private static final Log _log = Log.getLog(SolarisAuthenticate.class);
     
     private SolarisConnection connection;
     
     private static final String MSG = "authenticateMessage";
     final ObjectClass[] acceptOC = {ObjectClass.ACCOUNT};
     
-    public OpAuthenticateImpl(SolarisConnector connector) {
+    public SolarisAuthenticate(SolarisConnector connector) {
         super(connector);
         connection = connector.getConnection();
     }

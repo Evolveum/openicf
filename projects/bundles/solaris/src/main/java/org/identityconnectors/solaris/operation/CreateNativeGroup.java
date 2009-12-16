@@ -34,7 +34,7 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.nis.AbstractNISOp;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
-public class CreateNativeGroupCommand {
+public class CreateNativeGroup {
     /**
      * Create a native group.
      * @param group The entry that should be created. The new group's name is defined by {@link SolarisEntry#getName()}.

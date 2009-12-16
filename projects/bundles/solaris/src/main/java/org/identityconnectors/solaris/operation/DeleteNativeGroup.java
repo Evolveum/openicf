@@ -31,7 +31,7 @@ import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnection.ErrorHandler;
 
-public class DeleteNativeGroupCommand {
+public class DeleteNativeGroup {
 
     public static void delete(final String groupName, SolarisConnection conn) {
         

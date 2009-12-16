@@ -56,9 +56,9 @@ import org.identityconnectors.solaris.operation.search.nodes.EqualsNode;
 import org.identityconnectors.solaris.operation.search.nodes.Node;
 
 
-public class OpSearchImpl extends AbstractOp {
+public class SolarisSearch extends AbstractOp {
     
-    private static final Log _log = Log.getLog(OpSearchImpl.class);
+    private static final Log _log = Log.getLog(SolarisSearch.class);
     
     private SolarisConnection connection;
     
@@ -78,7 +78,7 @@ public class OpSearchImpl extends AbstractOp {
     /** names of attributes to get translated to {@see NativeAttribute}-s. */
     private final Set<NativeAttribute> attrsToGetNative;
     
-    public OpSearchImpl(SolarisConnector connector, ObjectClass oclass, Node filter,
+    public SolarisSearch(SolarisConnector connector, ObjectClass oclass, Node filter,
             ResultsHandler handler, OperationOptions options) {
         super(connector);
         connection = connector.getConnection();

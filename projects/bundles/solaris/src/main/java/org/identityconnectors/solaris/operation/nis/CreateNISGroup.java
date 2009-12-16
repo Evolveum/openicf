@@ -32,7 +32,7 @@ import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
-public class CreateNISGroupCommand extends AbstractNISOp {
+public class CreateNISGroup extends AbstractNISOp {
     
     
     public static void create(SolarisEntry group, SolarisConnection conn) {        

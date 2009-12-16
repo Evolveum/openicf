@@ -29,16 +29,16 @@ import junit.framework.Assert;
 import org.identityconnectors.common.CollectionUtil;
 import org.junit.Test;
 
-public class UpdateNISGroupCommandTest {
+public class UpdateNISGroupTest {
     @Test
     public void testListFormatter() {
         List<String> users = CollectionUtil.newList("foo", "bar", "baz");
         String SEPARATOR = ",";
-        String result = UpdateNISGroupCommand.listToString(users, SEPARATOR);
+        String result = UpdateNISGroup.listToString(users, SEPARATOR);
         Assert.assertEquals("foo, bar, baz", result.trim());
         
         users = CollectionUtil.newList("foo");
-        result = UpdateNISGroupCommand.listToString(users, SEPARATOR);
+        result = UpdateNISGroup.listToString(users, SEPARATOR);
         Assert.assertEquals("foo", result.trim());
     }
 }

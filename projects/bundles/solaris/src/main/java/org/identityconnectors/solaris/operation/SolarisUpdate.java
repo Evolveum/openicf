@@ -38,8 +38,8 @@ import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.operation.nis.AbstractNISOp;
-import org.identityconnectors.solaris.operation.nis.UpdateNISGroupCommand;
-import org.identityconnectors.solaris.operation.nis.UpdateNISUserCommand;
+import org.identityconnectors.solaris.operation.nis.UpdateNISGroup;
+import org.identityconnectors.solaris.operation.nis.UpdateNISUser;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 /**
@@ -47,16 +47,16 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
  * 
  * @author David Adam
  */
-public class OpUpdateImpl extends AbstractOp {
+public class SolarisUpdate extends AbstractOp {
     
-    private static final Log _log = Log.getLog(OpUpdateImpl.class);
+    private static final Log _log = Log.getLog(SolarisUpdate.class);
     
     private SolarisConnection connection;
 
     /** These objectclasses are valid for update operation. */
     final ObjectClass[] acceptOC = { ObjectClass.ACCOUNT, ObjectClass.GROUP };
 
-    public OpUpdateImpl(SolarisConnector connector) {
+    public SolarisUpdate(SolarisConnector connector) {
         super(connector);
         connection = connector.getConnection();
     }
@@ -105,7 +105,7 @@ public class OpUpdateImpl extends AbstractOp {
      * Compare with NIS update operation: {@see OpUpdateImpl#invokeNISGroupUpdate(SolarisEntry)}
      */
     private void invokeNativeGroupUpdate(SolarisEntry groupEntry) {
-        UpdateNativeGroupCommand.updateGroup(groupEntry, connection);
+        UpdateNativeGroup.updateGroup(groupEntry, connection);
     }
 
     /**
@@ -122,7 +122,7 @@ public class OpUpdateImpl extends AbstractOp {
                 connection.doSudoReset();
             }
         } else {
-            UpdateNISGroupCommand.updateGroup(groupEntry, connection);
+            UpdateNISGroup.updateGroup(groupEntry, connection);
         }
     }
 
@@ -142,7 +142,7 @@ public class OpUpdateImpl extends AbstractOp {
                 connection.doSudoReset();
             }
         } else {
-            UpdateNISUserCommand.updateUser(userEntry, connection);
+            UpdateNISUser.updateUser(userEntry, connection);
         }
     }
     
@@ -150,6 +150,6 @@ public class OpUpdateImpl extends AbstractOp {
      * Compare with other NIS implementation: {@see OpUpdateImpl#invokeNISUserUpdate(SolarisEntry, GuardedString)} 
      */
     private void invokeNativeUserUpdate(final SolarisEntry userEntry, final GuardedString passwd) {
-        UpdateNativeUserCommand.updateUser(userEntry, passwd, connection);
+        UpdateNativeUser.updateUser(userEntry, passwd, connection);
     }
 }

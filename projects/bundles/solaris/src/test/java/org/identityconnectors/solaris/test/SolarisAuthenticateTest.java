@@ -27,7 +27,7 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.junit.Test;
 
-public class OpAuthenticateImplTest extends SolarisTestBase {
+public class SolarisAuthenticateTest extends SolarisTestBase {
    
     @Test
     public void testAuthenticateApiOp() {

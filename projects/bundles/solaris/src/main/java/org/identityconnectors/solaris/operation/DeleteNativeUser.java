@@ -31,7 +31,7 @@ import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnection.ErrorHandler;
 
-class DeleteNativeUserCommand {
+class DeleteNativeUser {
     /**
      * implementation of the Native Delete operation.
      * 

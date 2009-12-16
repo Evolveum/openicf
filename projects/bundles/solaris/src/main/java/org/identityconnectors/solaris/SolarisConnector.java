@@ -64,12 +64,12 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
 import org.identityconnectors.solaris.attr.AccountAttribute;
 import org.identityconnectors.solaris.attr.GroupAttribute;
 import org.identityconnectors.solaris.attr.NativeAttribute;
-import org.identityconnectors.solaris.operation.OpAuthenticateImpl;
-import org.identityconnectors.solaris.operation.OpCreateImpl;
-import org.identityconnectors.solaris.operation.OpDeleteImpl;
-import org.identityconnectors.solaris.operation.OpSolarisScriptOnConnectorImpl;
-import org.identityconnectors.solaris.operation.OpUpdateImpl;
-import org.identityconnectors.solaris.operation.search.OpSearchImpl;
+import org.identityconnectors.solaris.operation.SolarisAuthenticate;
+import org.identityconnectors.solaris.operation.SolarisCreate;
+import org.identityconnectors.solaris.operation.SolarisDelete;
+import org.identityconnectors.solaris.operation.SolarisScriptOnConnector;
+import org.identityconnectors.solaris.operation.SolarisUpdate;
+import org.identityconnectors.solaris.operation.search.SolarisSearch;
 import org.identityconnectors.solaris.operation.search.SolarisFilterTranslator;
 import org.identityconnectors.solaris.operation.search.nodes.EqualsNode;
 import org.identityconnectors.solaris.operation.search.nodes.Node;
@@ -141,7 +141,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
             GuardedString password, OperationOptions options) {
         Uid uid = null;
         try {
-            uid = new OpAuthenticateImpl(this).authenticate(objectClass, username, password, options);
+            uid = new SolarisAuthenticate(this).authenticate(objectClass, username, password, options);
         } finally {
             // after unsuccessful authenticate the connection might be in an unusable state. We have to create a new connection then.
             _connection.dispose();
@@ -153,23 +153,23 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     /** {@inheritDoc} */
     public Uid create(ObjectClass oclass, Set<Attribute> attrs,
             OperationOptions options) {        
-        return new OpCreateImpl(this).create(oclass, attrs, options);
+        return new SolarisCreate(this).create(oclass, attrs, options);
     }
     
     /** {@inheritDoc} */
     public void delete(ObjectClass objClass, Uid uid, OperationOptions options) {
         
-        new OpDeleteImpl(this).delete(objClass, uid, options);
+        new SolarisDelete(this).delete(objClass, uid, options);
     }
     
     public Uid update(ObjectClass objclass, Uid uid,
             Set<Attribute> replaceAttributes, OperationOptions options) {
-        return new OpUpdateImpl(this).update(objclass, uid, AttributeUtil.addUid(replaceAttributes, uid), options);
+        return new SolarisUpdate(this).update(objclass, uid, AttributeUtil.addUid(replaceAttributes, uid), options);
     }
     
     public void executeQuery(ObjectClass oclass, Node query,
             ResultsHandler handler, OperationOptions options) {
-        new OpSearchImpl(this, oclass, query, handler, options).executeQuery();
+        new SolarisSearch(this, oclass, query, handler, options).executeQuery();
     }
 
     public FilterTranslator<Node> createFilterTranslator(
@@ -247,9 +247,9 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
          */
         attributes = new HashSet<AttributeInfo>();
         attributes.add(
-                AttributeInfoBuilder.build(OpSearchImpl.SHELL.getObjectClassValue(), String.class, EnumSet.of(Flags.MULTIVALUED, Flags.NOT_RETURNED_BY_DEFAULT, Flags.NOT_UPDATEABLE))
+                AttributeInfoBuilder.build(SolarisSearch.SHELL.getObjectClassValue(), String.class, EnumSet.of(Flags.MULTIVALUED, Flags.NOT_RETURNED_BY_DEFAULT, Flags.NOT_UPDATEABLE))
                 );
-        final ObjectClassInfo ociInfoShell = new ObjectClassInfoBuilder().addAllAttributeInfo(attributes).setType(OpSearchImpl.SHELL.getObjectClassValue()).build();
+        final ObjectClassInfo ociInfoShell = new ObjectClassInfoBuilder().addAllAttributeInfo(attributes).setType(SolarisSearch.SHELL.getObjectClassValue()).build();
         schemaBuilder.defineObjectClass(ociInfoShell);
         schemaBuilder.removeSupportedObjectClass(AuthenticateOp.class, ociInfoShell);
         schemaBuilder.removeSupportedObjectClass(CreateOp.class, ociInfoShell);
@@ -293,7 +293,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      * every Solaris resource.
      */
     public Object runScriptOnResource(ScriptContext request, OperationOptions options) {
-        return new OpSolarisScriptOnConnectorImpl(this).runScriptOnResource(request, options);
+        return new SolarisScriptOnConnector(this).runScriptOnResource(request, options);
     }
 
     public Uid resolveUsername(ObjectClass objectClass, String username, OperationOptions options) {

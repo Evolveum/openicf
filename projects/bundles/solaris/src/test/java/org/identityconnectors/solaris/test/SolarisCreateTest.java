@@ -39,7 +39,7 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.attr.GroupAttribute;
 import org.junit.Test;
 
-public class OpCreateImplTest extends SolarisTestBase {
+public class SolarisCreateTest extends SolarisTestBase {
     /**
      * creates a sample user
      */

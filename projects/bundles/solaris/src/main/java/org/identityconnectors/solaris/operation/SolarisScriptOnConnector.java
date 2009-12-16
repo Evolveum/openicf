@@ -29,11 +29,11 @@ import org.identityconnectors.framework.common.objects.ScriptContext;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 
-public class OpSolarisScriptOnConnectorImpl {
+public class SolarisScriptOnConnector {
 
     private SolarisConnection connection;
 
-    public OpSolarisScriptOnConnectorImpl(SolarisConnector solarisConnector) {
+    public SolarisScriptOnConnector(SolarisConnector solarisConnector) {
         connection = solarisConnector.getConnection();
     }
 

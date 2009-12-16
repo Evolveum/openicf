@@ -39,8 +39,8 @@ import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.solaris.command.RegExpCaseInsensitiveMatch;
-import org.identityconnectors.solaris.operation.OpCreateImpl;
-import org.identityconnectors.solaris.operation.OpUpdateImpl;
+import org.identityconnectors.solaris.operation.SolarisCreate;
+import org.identityconnectors.solaris.operation.SolarisUpdate;
 
 import com.jcraft.jsch.ChannelShell;
 import com.jcraft.jsch.JSch;
@@ -861,8 +861,8 @@ public class SolarisConnection {
     private static final String pidFoundFile = "/tmp/WSpidfound.$$";
     /**
      * Mutexing script is used to prevent race conditions when creating
-     * multiple users. These conditions are present at {@link OpCreateImpl} and
-     * {@link OpUpdateImpl}. The code is taken from the resource adapter.
+     * multiple users. These conditions are present at {@link SolarisCreate} and
+     * {@link SolarisUpdate}. The code is taken from the resource adapter.
      */
     private String getAcquireMutexScript() {
         // This code is from SolarisResouceAdapter

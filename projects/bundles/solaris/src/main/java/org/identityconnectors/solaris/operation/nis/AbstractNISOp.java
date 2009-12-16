@@ -309,7 +309,7 @@ public class AbstractNISOp {
     }
     
     /**
-     * Only {@link CreateNISGroupCommand} and {@link UpdateNISGroupCommand} use this functionality
+     * Only {@link CreateNISGroup} and {@link UpdateNISGroup} use this functionality
      * to process output of some specific commands.
      */
     protected static void parseNisOutputForErrors(String out) {

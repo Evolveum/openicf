@@ -36,8 +36,8 @@ import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
-public class CreateNISUserCommand extends AbstractNISOp {
-    private static final Log _log = Log.getLog(CreateNISUserCommand.class);
+public class CreateNISUser extends AbstractNISOp {
+    private static final Log _log = Log.getLog(CreateNISUser.class);
     
     private final static Set<String> chshRejects = CollectionUtil.newSet("password:", "passwd:");
 

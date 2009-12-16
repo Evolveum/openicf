@@ -26,7 +26,7 @@ import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.solaris.SolarisConnection;
 
-public class DeleteNISGroupCommand extends AbstractNISOp {
+public class DeleteNISGroup extends AbstractNISOp {
 
     public static void delete(String groupName, SolarisConnection connection) {
 

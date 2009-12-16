@@ -36,7 +36,7 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.nis.AbstractNISOp;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
-public class UpdateNativeGroupCommand {
+public class UpdateNativeGroup {
     public static void updateGroup(SolarisEntry group, SolarisConnection conn) {
         conn.doSudoStart();
         try {

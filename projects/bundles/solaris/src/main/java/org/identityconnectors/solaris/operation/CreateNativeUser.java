@@ -37,7 +37,7 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
  * @author David Adam
  *
  */
-class CreateNativeUserCommand  {
+class CreateNativeUser  {
     private final static Map<NativeAttribute, String> createSwitches = CommandSwitches.commonSwitches;
     
     private final static Set<String> errorsUseradd = CollectionUtil.newSet("invalid", "ERROR", "command not found", "not allowed to execute");
@@ -79,7 +79,7 @@ class CreateNativeUserCommand  {
      * @param conn
      * @return the create command line switches based on entry's attribute/value
      *         pairs. Return a zero-length string in case no switch (
-     *         {@link CreateNativeUserCommand#createSwitches}) matched the attributes in
+     *         {@link CreateNativeUser#createSwitches}) matched the attributes in
      *         given entry.
      */
     private static String formatCreateCommandSwitches(SolarisEntry entry, SolarisConnection conn) {

@@ -30,18 +30,18 @@ import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
 import org.identityconnectors.solaris.operation.nis.AbstractNISOp;
-import org.identityconnectors.solaris.operation.nis.DeleteNISGroupCommand;
-import org.identityconnectors.solaris.operation.nis.DeleteNISUserCommand;
+import org.identityconnectors.solaris.operation.nis.DeleteNISGroup;
+import org.identityconnectors.solaris.operation.nis.DeleteNISUser;
 
-public class OpDeleteImpl extends AbstractOp {
+public class SolarisDelete extends AbstractOp {
 
-    private static final Log _log = Log.getLog(OpDeleteImpl.class);
+    private static final Log _log = Log.getLog(SolarisDelete.class);
     
     private SolarisConnection connection;
     
     final ObjectClass[] acceptOC = { ObjectClass.ACCOUNT, ObjectClass.GROUP };
 
-    public OpDeleteImpl(SolarisConnector connector) {
+    public SolarisDelete(SolarisConnector connector) {
         super(connector);
         connection = connector.getConnection();
     }
@@ -77,7 +77,7 @@ public class OpDeleteImpl extends AbstractOp {
      * compare with NIS delete operation: {@see OpDeleteImpl#invokeNISGroupDelete(String)}
      */
     private void invokeNativeGroupDelete(String groupName) {
-        DeleteNativeGroupCommand.delete(groupName, connection);
+        DeleteNativeGroup.delete(groupName, connection);
     }
 
     /**
@@ -97,7 +97,7 @@ public class OpDeleteImpl extends AbstractOp {
                 connection.doSudoReset();
             }
         } else {
-            DeleteNISGroupCommand.delete(groupName, connection);
+            DeleteNISGroup.delete(groupName, connection);
         }
     }
 
@@ -105,7 +105,7 @@ public class OpDeleteImpl extends AbstractOp {
      * compare with NIS delete operation: {@see OpDeleteImpl#invokeNISUserDelete(String)}
      */
     private void invokeNativeUserDelete(final String accountName) {
-        DeleteNativeUserCommand.delete(accountName, connection);
+        DeleteNativeUser.delete(accountName, connection);
     }
 
     /**
@@ -126,7 +126,7 @@ public class OpDeleteImpl extends AbstractOp {
                 connection.doSudoReset();
             }
         } else {
-            DeleteNISUserCommand.delete(accountName, connection);
+            DeleteNISUser.delete(accountName, connection);
         }
     }
 }

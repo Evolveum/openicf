@@ -40,7 +40,7 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
  * @author David Adam
  * 
  */
-class UpdateNativeUserCommand extends CommandSwitches {
+class UpdateNativeUser extends CommandSwitches {
     private static final Set<String> usermodErrors = CollectionUtil.newSet("ERROR", "command not found", "not allowed to execute");
     
     private final static Map<NativeAttribute, String> updateSwitches;
