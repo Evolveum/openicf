@@ -82,7 +82,6 @@ public class SolarisConnection {
     /** set the timeout for waiting on reply. */
     public static final int WAIT = 24000;
     
-    //TODO might be a configuration property
     private static final String HOST_END_OF_LINE_TERMINATOR = "\n";
     /* 
      * Root Shell Prompt used by the connector.
@@ -210,7 +209,6 @@ public class SolarisConnection {
      * SSHPubKeyConnection#OpenSession() method and ExpectUtils#SSH()
      */
     private Expect4j createSSHPubKeyConn(final String username) {
-        // FIXME add unit tests for this.
         final JSch jsch=new JSch();
         
         final GuardedString privateKey = getConfiguration().getPrivateKey();
@@ -417,7 +415,7 @@ public class SolarisConnection {
                 sendInternal(command);
             }
         } catch (Exception e) {
-            // TODO finish ex...
+            throw new ConnectorException("Error occured in SolarisConnection, during send(). Exception message: " + e.getMessage());
         }
         
         /*
@@ -1020,7 +1018,6 @@ public class SolarisConnection {
     private static final String SUDO_START_COMMAND = "sudo -v";
     private static final String SUDO_RESET_COMMAND = "sudo -k";
     
-    // purely based on RA, TODO test 
     public void doSudoStart() {
         final SolarisConfiguration config = getConfiguration();
         if (config.isSudoAuthorization()) {
@@ -1031,7 +1028,6 @@ public class SolarisConnection {
                 // 2) send sudo start command
                 executeCommand(SUDO_START_COMMAND, Collections.<String>emptySet(), CollectionUtil.newSet("assword:")); 
 
-                // TODO evaluate which password should be used:
                 GuardedString passwd = config.getCredentials();
                 sendPassword(passwd, CollectionUtil.newSet("may not run", "not allowed to execute"), Collections.<String>emptySet(), this);
             } catch (Exception e) {
@@ -1040,7 +1036,6 @@ public class SolarisConnection {
         }
     }
     
-    // purely based on RA, TODO test 
     public void doSudoReset() {
         final SolarisConfiguration config = getConfiguration();
         if (config.isSudoAuthorization()) {

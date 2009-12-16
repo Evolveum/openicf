@@ -90,7 +90,6 @@ public class AbstractNISOp {
         StringBuilder buildscript = new StringBuilder("nisdomain=`domainname`; ");
         buildscript.append("cd " + nisDir + "/$nisdomain\n");
 
-        // TODO question: where do we get the Makefile???
         buildscript.append(makeCmd + "-f ../Makefile " + target + "; cd");
         try {
             conn.executeCommand(buildscript.toString());

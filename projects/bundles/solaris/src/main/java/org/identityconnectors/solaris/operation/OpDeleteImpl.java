@@ -69,7 +69,6 @@ public class OpDeleteImpl extends AbstractOp {
             throw new UnsupportedOperationException();
         }
 
-        // TODO add handling of exceptions: existing user, etc.
         _log.ok("userdel(''{0}'')", entryName);
 
     }

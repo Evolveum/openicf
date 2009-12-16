@@ -144,7 +144,7 @@ public class SolarisConnectionTest extends SolarisTestBase {
         conn.dispose();
     }
     
-    @Test @Ignore // TODO comment ignore
+    @Test
     public void testSudoAuthorization() {
         if (!SolarisTestCommon.getProperty("unitTests.SolarisConnection.testsudoAuthorization", Boolean.class)) {
             log.info("skipping testSSHPubKeyConnection test, because the resource doesn't support it.");

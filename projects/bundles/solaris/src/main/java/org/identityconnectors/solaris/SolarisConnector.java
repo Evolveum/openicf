@@ -152,19 +152,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
 
     /** {@inheritDoc} */
     public Uid create(ObjectClass oclass, Set<Attribute> attrs,
-            OperationOptions options) {
-
-        // FIXME later:
-//    	// check if the objectclass exists, and throw an exception if yes.
-//    	Map<String, Attribute> entryAttrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
-//    	String entryName = ((Name) entryAttrMap.get(Name.NAME)).getNameValue();
-//    	ToListResultsHandler resultsHandler = new ToListResultsHandler();
-//    	executeQuery(oclass, new EqualsNode(NativeAttribute.NAME, false, entryName), resultsHandler, null);    	
-//    	if (resultsHandler.getObjects().size() > 0) {
-//    		String msg = String.format("%s already exists: '%s'.", (oclass.is(ObjectClass.ACCOUNT_NAME)) ? "account" : "group", entryName);
-//    		throw new IllegalArgumentException(msg);
-//    	}
-        
+            OperationOptions options) {        
         return new OpCreateImpl(this).create(oclass, attrs, options);
     }
     
