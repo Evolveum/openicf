@@ -26,6 +26,7 @@ import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConfigurationException;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
+import org.identityconnectors.framework.spi.ConfigurationProperty;
 import org.identityconnectors.solaris.operation.search.SolarisEntries;
 
 public final class SolarisConfiguration extends AbstractConfiguration {
@@ -282,7 +283,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
     }
 
     /*            ********** GET / SET ************ */
-    // @ConfigurationProperty(required = true)
+    @ConfigurationProperty(order = 1, required = true)
     public String getHost() {
         return host;
     }
@@ -291,6 +292,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         host = nameOrIpAddr;
     }
 
+    @ConfigurationProperty(order = 2)
     public int getPort() {
         return port;
     }
@@ -303,6 +305,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         this.loginUser = loginUser;
     }
 
+    @ConfigurationProperty(order = 3, required = true)
     public String getLoginUser() {
         return loginUser;
     }
@@ -311,6 +314,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         this.password = password;
     }
 
+    @ConfigurationProperty(order = 4, required = true)
     public GuardedString getPassword() {
         return password;
     }
@@ -319,11 +323,12 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         this.loginShellPrompt = loginShellPrompt;
     }
 
+    @ConfigurationProperty(order = 5, required = true)
     public String getLoginShellPrompt() {
         return loginShellPrompt;
     }
 
-    // @ConfigurationProperty(required = true)
+    @ConfigurationProperty(order = 6)
     public String getRootUser() {
         return rootUser;
     }
@@ -332,7 +337,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         rootUser = name;
     }
 
-    // @ConfigurationProperty(required = true)
+    @ConfigurationProperty(order = 7)
     public GuardedString getCredentials() {
         return credentials;
     }
@@ -341,7 +346,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         credentials = password;
     }
 
-    // @ConfigurationProperty(required = true)
+    @ConfigurationProperty(order = 8)
     public String getRootShellPrompt() {
         return rootShellPrompt;
     }
@@ -350,6 +355,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         this.rootShellPrompt = rootShellPrompt;
     }
 
+    @ConfigurationProperty(order = 9)
     public boolean isSudoAuthorization() {
         return sudoAuthorization;
     }
@@ -358,7 +364,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         this.sudoAuthorization = sudoAuth;
     }
 
-    // @ConfigurationProperty(required = true)
+    @ConfigurationProperty(order = 10)
     public String getConnectionType() {
         return connectionType;
     }
@@ -367,6 +373,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         this.connectionType = ConnectionType.toConnectionType(connectionType).toString();
     }
     
+    @ConfigurationProperty(order = 11)
     public GuardedString getPrivateKey() {
         return privateKey;
     }
@@ -375,6 +382,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         this.privateKey = privateKey;
     }
     
+    @ConfigurationProperty(order = 12)
     public GuardedString getPassphrase() {
         return passphrase;
     }
@@ -382,11 +390,12 @@ public final class SolarisConfiguration extends AbstractConfiguration {
     public void setPassphrase(GuardedString keyPassphrase) {
         this.passphrase = keyPassphrase;
     }
-    
+
     public void setBlockSize(int blockSize) {
         this.blockSize = blockSize;
     }
 
+    @ConfigurationProperty(order = 13)
     public int getBlockSize() {
         return blockSize;
     }
@@ -395,10 +404,12 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         this.blockFetchTimeout = blockFetchTimeout;
     }
 
+    @ConfigurationProperty(order = 14)
     public int getBlockFetchTimeout() {
         return blockFetchTimeout;
     }
 
+    @ConfigurationProperty(order = 15)
     public int getMutexAcquireTimeout() {
         return mutexAcquireTimeout;
     }
@@ -407,6 +418,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         this.mutexAcquireTimeout = mutexAcquireTimeout;
     }
     
+    @ConfigurationProperty(order = 16)
     public boolean isMakeDirectory() {
         return makeDirectory;
     }
@@ -415,6 +427,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         makeDirectory = makeDir;
     }
     
+    @ConfigurationProperty(order = 17)
     public String getHomeBaseDirectory() {
         return homeBaseDirectory;
     }
@@ -423,6 +436,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         homeBaseDirectory = homeBaseDir;
     }
     
+    @ConfigurationProperty(order = 18)
     public String getDefaultPrimaryGroup() {
         return defaultPrimaryGroup;
     }
@@ -431,6 +445,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         this.defaultPrimaryGroup = defaultPrimaryGroup;
     }
     
+    @ConfigurationProperty(order = 19)
     public String getLoginShell() {
         return loginShell;
     }
@@ -439,6 +454,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         this.loginShell = loginShell;
     }
 
+    @ConfigurationProperty(order = 20)
     public String getSkeletonDirectory() {
         return skeletonDirectory;
     }
@@ -447,6 +463,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         skeletonDirectory = skelDir;
     }
 
+    @ConfigurationProperty(order = 21)
     public boolean isDeleteHomeDirectory() {
         return deleteHomeDirectory;
     }
@@ -455,6 +472,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         this.deleteHomeDirectory = delHomeDir;
     }
 
+    @ConfigurationProperty(order = 22)
     public String getSystemDatabaseType() {
         return systemDatabaseType;
     }
@@ -463,6 +481,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         systemDatabaseType = sysDbType;
     }
     
+    @ConfigurationProperty(order = 23)
     public String getNisBuildDirectory() {
         return nisBuildDirectory;
     }
@@ -471,6 +490,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         this.nisBuildDirectory = nisDir;
     }
 
+    @ConfigurationProperty(order = 24)
     public String getNisPwdDir() {
         return nisPwdDir;
     }
@@ -479,6 +499,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         this.nisPwdDir = nisPwdDir;
     }
 
+    @ConfigurationProperty(order = 25)
     public boolean isNisShadowPasswordSupport() {
         return nisShadowPasswordSupport;
     }
