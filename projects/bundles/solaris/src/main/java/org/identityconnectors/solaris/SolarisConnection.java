@@ -158,7 +158,7 @@ public class SolarisConnection {
                 sendPassword(password, this);
             }
             
-            executeCommand(null/* no command sent here, wait for shellPrompt */, CollectionUtil.newSet("incorrect"));
+            waitForRootShellPrompt(CollectionUtil.newSet("incorrect"));
             /*
              * turn off the echoing of keyboard input on the resource.
              * Saves bandwith too.
@@ -739,16 +739,23 @@ public class SolarisConnection {
         }
         return trimOutput(buffer.toString());
     }
-    
+
     /**
-     * @throws {@link ConnectorException} in case of timeout in waiting for rootShellPrompt character.
+     * wait for shell prompt
+     * 
+     * @param rejects
+     *            throw {@link ConnectorException} if a reject is matched in the
+     *            feedback up to the rootShellPrompt.
+     * @throws {@link ConnectorException} in case of timeout in waiting for
+     *         rootShellPrompt character.
      */
+    public void waitForRootShellPrompt(Set<String> rejects) {
+        executeCommand(null, rejects);
+    }
+    
+    /** {@see SolarisConnection#waitForRootShellPrompt(Set)} */
     public void waitForRootShellPrompt() {
-        try {
-            waitForImpl(getRootShellPrompt(), WAIT, false);
-        } catch (Exception ex) {
-            throw ConnectorException.wrap(ex);
-        }
+        executeCommand(null, Collections.<String>emptySet());
     }
     
     private String waitForImpl(final String string, final int millis, boolean caseInsensitive) throws MalformedPatternException, Exception {

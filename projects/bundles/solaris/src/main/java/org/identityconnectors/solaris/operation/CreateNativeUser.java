@@ -26,8 +26,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
@@ -88,7 +90,7 @@ class CreateNativeUser  {
         for (Attribute attr : entry.getAttributeSet()) {
             NativeAttribute nAttrName = NativeAttribute.forAttributeName(attr.getName());
             // assuming Single values only
-            String value = (attr.getValue().size() > 0) ? (String) attr.getValue().get(0) : null;
+            String value = AttributeUtil.getStringValue(attr);//;(attr.getValue().size() > 0) ? (String) attr.getValue().get(0) : null;
 
             /* 
              * append command line switch
@@ -134,7 +136,7 @@ class CreateNativeUser  {
         
         String loginShell = null;
         String configuredLoginShell = conn.getConfiguration().getLoginShell();
-        if ((configuredLoginShell != null) && (configuredLoginShell.length() > 0)) {
+        if (!StringUtil.isBlank(configuredLoginShell)) {
             // If there is a specific login shell specified for the
             // user then that takes priority.
             loginShell = configuredLoginShell;
@@ -151,7 +153,7 @@ class CreateNativeUser  {
         
         String defaultPrimaryGroup = null;
         String configuredDefPrimGroup = conn.getConfiguration().getDefaultPrimaryGroup();
-        if ((configuredDefPrimGroup != null) && (configuredDefPrimGroup.length() > 0)) {
+        if (!StringUtil.isBlank(configuredDefPrimGroup)) {
             // If there is a specific default primary group specified for the
             // user then that takes priority.
             defaultPrimaryGroup = configuredDefPrimGroup;
@@ -176,7 +178,7 @@ class CreateNativeUser  {
             makeDirectory.append(" -m");
             String skeldir = conn.getConfiguration().getSkeletonDirectory();
 
-            if (skeldir != null) {
+            if (!StringUtil.isBlank(skeldir)) {
                 // note switch '-k' is specific for making skeleton directory, is not assigned to any {@link NativeAttribute}
                 makeDirectory.append(" -k " + skeldir + " ");
             }

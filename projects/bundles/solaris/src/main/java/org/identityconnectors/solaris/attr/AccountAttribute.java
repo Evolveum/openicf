@@ -39,9 +39,14 @@ public enum AccountAttribute implements ConnectorAttribute {
     GROUP("group", NativeAttribute.GROUP_PRIM),
     SECONDARY_GROUP("secondary_group", NativeAttribute.GROUPS_SEC),
     
-    /* Native attribute for NAME and FRAMEWORK_UID should be identical. */
+    /** 
+     * Both {@link Uid} and {@link @Name} are mapped to {@link NativeAttribute#NAME}.
+     * Provided this they must be always identical. 
+     */
     NAME(Name.NAME, NativeAttribute.NAME),
-    /* This is the solaris native 'uid', *NOT* the one defined by the framework. */
+    /** 
+     * This is the solaris native 'uid', *NOT* the one defined by the framework ({@link Uid}, that should be <b>immutable</b>, whereas Solaris native uid is <b>mutable</b>). 
+     */
     UID("uid", NativeAttribute.NAME),
     
     EXPIRE("expire", NativeAttribute.USER_EXPIRE),

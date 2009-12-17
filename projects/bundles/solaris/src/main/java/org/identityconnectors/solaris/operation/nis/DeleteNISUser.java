@@ -60,10 +60,10 @@ public class DeleteNISUser extends AbstractNISOp {
         connection.executeCommand(getOwner);
         connection.executeCommand(workScript);
         // two extra 'waitFor(rootShellPrompt)'-s are needed, because they are produced by the script
-        // waitFor #1
-        connection.executeCommand(null);
-        // waitFor #2 -- it should not result in ERROR.
-        connection.executeCommand(null/*no command sent on purpose*/, CollectionUtil.newSet("ERROR"));
+        // waitFor root shell prompt #1
+        connection.waitForRootShellPrompt();
+        // waitFor root shell prompt #2 -- it should not result in ERROR.
+        connection.waitForRootShellPrompt(CollectionUtil.newSet("ERROR"));
         connection.executeCommand(removeTmpFilesScript);
         
         if (connection.getConfiguration().isNisShadowPasswordSupport()) {
@@ -72,10 +72,10 @@ public class DeleteNISUser extends AbstractNISOp {
             connection.executeCommand(getOwnerShadow);
             connection.executeCommand(workScriptShadow);
             // two extra 'waitFor(rootShellPrompt)'-s are needed, because they are produced by the script
-            // waitFor #1
-            connection.executeCommand(null, Collections.<String>emptySet());
-            // waitFor #2
-            connection.executeCommand(null, Collections.<String>emptySet());
+            // waitFor root shell prompt #1
+            connection.waitForRootShellPrompt();
+            // waitFor root shell prompt #2
+            connection.waitForRootShellPrompt();
         }
         
         connection.executeCommand(removeTmpFilesScript);

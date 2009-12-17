@@ -93,7 +93,7 @@ public class AbstractNISOp {
         buildscript.append(makeCmd + "-f ../Makefile " + target + "; cd");
         try {
             conn.executeCommand(buildscript.toString());
-            conn.waitForRootShellPrompt();// one of the waitFor(RootShellPrompt) is hidden in executeCommand impl.
+            conn.waitForRootShellPrompt();
         } catch (Exception ex) {
             throw ConnectorException.wrap(ex);
         }
