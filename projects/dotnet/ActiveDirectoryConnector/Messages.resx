@@ -279,4 +279,13 @@
   <data name="ex_InvalidSearchContextInConfiguration" xml:space="preserve">
     <value>An invalid search context was supplied:  {0}</value>
   </data>
+  <data name="confParam_Container_invalid_path" xml:space="preserve">
+    <value>Container '{0}' could not be recognized as a distinguished name (DN)  </value>
+  </data>
+  <data name="ex_ConfigErrors" xml:space="preserve">
+    <value>Configuration errors: {0}</value>
+  </data>
+  <data name="ex_ContainerNotFound" xml:space="preserve">
+    <value>Could not find the Container '{0}', the following message was returned from the server: {1}</value>
+  </data>
 </root>

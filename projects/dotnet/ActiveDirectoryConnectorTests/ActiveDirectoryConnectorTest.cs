@@ -43,65 +43,55 @@ namespace Org.IdentityConnectors.ActiveDirectory
     public class ActiveDirectoryConnectorTest
     {
         Random _rand = new Random();  
-        public static readonly string CONFIG_PROPERTY_USER = "config_user";
-        public static readonly string CONFIG_PROPERTY_PASSWORD = "config_password";
-        public static readonly string CONFIG_PROPERTY_HOST = "config_host";
-        public static readonly string CONFIG_PROPERTY_PORT = "config_port";
-        public static readonly string CONFIG_PROPERTY_CONTAINER = "config_container";
-        public static readonly string CONFIG_PROPERTY_SCRIPT_USER_LOCAL = "config_script_user_local";
-        public static readonly string CONFIG_PROPERTY_SCRIPT_PASSWORD_LOCAL = "config_script_password_local";
-        public static readonly string CONFIG_PROPERTY_SCRIPT_USER_DOMAIN = "config_script_user_domain";
-        public static readonly string CONFIG_PROPERTY_SCRIPT_PASSWORD_DOMAIN = "config_script_password_domain";
-        public static readonly string CONFIG_PROPERTY_LDAPHOSTNAME = "config_ldap_hostname";
-        public static readonly string CONFIG_PROPERTY_SEARCH_CONTEXT = "config_search_context";
-        public static readonly string config_PROPERTY_SYNC_CONTAINER_ROOT = "config_sync_container_root";
-        public static readonly string config_PROPERTY_SYNC_CONTAINER_CHILD = "config_sync_container_child";
-        public static readonly string CONFIG_PROPERTY_DOMAIN_NAME = "config_domain_name";
-        public static readonly string CONFIG_PROPERTY_SYNC_DOMAIN_CONTROLLER = "config_sync_domain_controller";
-        public static readonly string CONFIG_PROPERTY_GC_DOMAIN_CONTROLLER = "config_sync_gc_domain_controller";
-        public static readonly string TEST_PARAM_SHARED_HOME_FOLDER = "test_param_shared_home_folder";
+        
         
         // having troubles with duplicate random numbers
         public static List<int> randomList = new List<int>();
 
         [Test]
-        public void TestConfiguration() {
-            ActiveDirectoryConfiguration config = new ActiveDirectoryConfiguration();
-            config.ConnectorMessages = TestHelpers.CreateDummyMessages();
-            String directoryAdminName = GetProperty(CONFIG_PROPERTY_USER);
-            config.DirectoryAdminName = directoryAdminName;
-            Assert.AreEqual(directoryAdminName, config.DirectoryAdminName);
-        }
-
-        [Test]
         public void TestTest()
         {
             ActiveDirectoryConnector connectorGood = new ActiveDirectoryConnector();
-            ActiveDirectoryConfiguration config = (ActiveDirectoryConfiguration)GetConfiguration();
+            ActiveDirectoryConfiguration config = (ActiveDirectoryConfiguration)ConfigHelper.GetConfiguration();
             connectorGood.Init(config);
             connectorGood.Test();
 
-            bool threwException = false;
+            var objectClass = config.ObjectClass;
             try
             {
                 config.ObjectClass = "BadObjectClass";
                 ActiveDirectoryConnector connectorBad = new ActiveDirectoryConnector();
                 connectorBad.Init(config);
                 connectorBad.Test();
+
+                Assert.Fail( "Bad configuration should have caused an exception" );
             }
             catch (ConnectorException e)
             {
-                threwException = true;
+                config.ObjectClass = objectClass;
             }
 
-            Assert.IsTrue(threwException, "Bad configuration should have caused an exception");
+            var container = config.Container;
+            try
+            {
+                config.Container += ",DC=BadDC";
+                ActiveDirectoryConnector connectorBad = new ActiveDirectoryConnector();
+                connectorBad.Init( config );
+                connectorBad.Test();
+
+                Assert.Fail( "Configuration with bad DC in Container should have caused an exception" );
+            }
+            catch (ConnectorException e)
+            {
+                config.Container = container;
+            }
         }
 
         [Test]
         public void TestSchema()
         {
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
             Schema schema = connector.Schema();
             Boolean foundOptionalAttributes = false;
             Boolean foundOperationalAttributes = false;
@@ -152,7 +142,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
 
             // create user
             ICollection<ConnectorAttribute> createAttributes = GetNormalAttributes_Account();
@@ -164,7 +154,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 new List<ConnectorAttribute>();
             Name oldName = ConnectorAttributeUtil.GetNameFromAttributes(createAttributes);
             String newName = ActiveDirectoryUtils.GetRelativeName(oldName);
-            newName = newName.Trim() + "_new, " + GetProperty(CONFIG_PROPERTY_CONTAINER);
+            newName = newName.Trim() + "_new, " + GetProperty( ConfigHelper.CONFIG_PROPERTY_CONTAINER );
             updateReplaceAttrs.Add(ConnectorAttributeBuilder.Build(
                 Name.NAME, newName));
             updateReplaceAttrs.Add(ConnectorAttributeBuilder.Build(
@@ -192,7 +182,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
 
             Uid uidToDelete = null;
             try
@@ -221,7 +211,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     new List<ConnectorAttribute>();
                 Name oldName = ConnectorAttributeUtil.GetNameFromAttributes(createAttributes);
                 String newName = ActiveDirectoryUtils.GetRelativeName(oldName);
-                newName = newName.Trim() + "_new, " + GetProperty(CONFIG_PROPERTY_CONTAINER);
+                newName = newName.Trim() + "_new, " + GetProperty( ConfigHelper.CONFIG_PROPERTY_CONTAINER );
 
                 updateReplaceAttrs.Add(createUid);
                 updateReplaceAttrs.Add(ConnectorAttributeBuilder.Build(
@@ -256,7 +246,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
             Uid createUid = null;
             try
             {
@@ -279,7 +269,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
             Uid createUid = null;
             try
             {
@@ -302,7 +292,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
             Uid createUid = null;
             try
             {
@@ -327,7 +317,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            ActiveDirectoryConfiguration config = (ActiveDirectoryConfiguration)GetConfiguration();
+            ActiveDirectoryConfiguration config = (ActiveDirectoryConfiguration)ConfigHelper.GetConfiguration();
             config.CreateHomeDirectory = true;
             connector.Init(config);
             Uid userUid = null;
@@ -337,7 +327,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 ICollection<ConnectorAttribute> createAttributes = GetNormalAttributes_Account();
 
                 // read the homedir path, and append the samaccountname
-                StringBuilder homeDirPathBuilder = new StringBuilder(GetProperty(TEST_PARAM_SHARED_HOME_FOLDER));
+                StringBuilder homeDirPathBuilder = new StringBuilder( GetProperty( ConfigHelper.TEST_PARAM_SHARED_HOME_FOLDER ) );
                 if (!homeDirPathBuilder.ToString().EndsWith("\\"))
                 {
                     homeDirPathBuilder.Append('\\');
@@ -419,7 +409,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            ActiveDirectoryConfiguration config = (ActiveDirectoryConfiguration)GetConfiguration();
+            ActiveDirectoryConfiguration config = (ActiveDirectoryConfiguration)ConfigHelper.GetConfiguration();
             config.CreateHomeDirectory = false;
             connector.Init(config);
             Uid userUid = null;
@@ -429,7 +419,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 ICollection<ConnectorAttribute> createAttributes = GetNormalAttributes_Account();
 
                 // read the homedir path, and append the samaccountname
-                StringBuilder homeDirPathBuilder = new StringBuilder(GetProperty(TEST_PARAM_SHARED_HOME_FOLDER));
+                StringBuilder homeDirPathBuilder = new StringBuilder( GetProperty( ConfigHelper.TEST_PARAM_SHARED_HOME_FOLDER ) );
                 if (!homeDirPathBuilder.ToString().EndsWith("\\"))
                 {
                     homeDirPathBuilder.Append('\\');
@@ -468,7 +458,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void TestSearchNoFilter_Account()
         {
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            Configuration config = GetConfiguration();
+            Configuration config = ConfigHelper.GetConfiguration();
             config.ConnectorMessages = TestHelpers.CreateDummyMessages();
             connector.Init(config);
 
@@ -527,7 +517,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void TestSearchNoFilter_Group()
         {
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
             ICollection<Uid> createdUids = new HashSet<Uid>();
 
             try
@@ -584,7 +574,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void TestSearchByName_account()
         {
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
 
             Uid createUid = null;
 
@@ -655,7 +645,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void TestSearchByName_group()
         {
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
 
             Uid createUid = null;
 
@@ -726,7 +716,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void TestSearchByCNWithWildcard_account()
         {
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
 
             Uid uid1 = null;
             Uid uid2 = null;
@@ -774,7 +764,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void TestSearchByRegularAttribute_account()
         {
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
 
             Uid createUid = null;
 
@@ -828,7 +818,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void TestSearchByRegularAttributeWithWildcard_account()
         {
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
 
             ICollection<Uid> uids = new HashSet<Uid>();
 
@@ -893,7 +883,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
             Uid createUid = null;
 
             try
@@ -920,7 +910,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
             Uid createUid = null;
 
             try
@@ -954,18 +944,18 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
 
             try
             {
                 RunScript(connector, "", "", "");
-                RunScript(connector, GetProperty(CONFIG_PROPERTY_SCRIPT_USER_LOCAL),
-                    GetProperty(CONFIG_PROPERTY_SCRIPT_PASSWORD_LOCAL), "");
-                RunScript(connector, GetProperty(CONFIG_PROPERTY_SCRIPT_USER_DOMAIN),
-                    GetProperty(CONFIG_PROPERTY_SCRIPT_PASSWORD_DOMAIN), "");
+                RunScript( connector, GetProperty( ConfigHelper.CONFIG_PROPERTY_SCRIPT_USER_LOCAL ),
+                    GetProperty( ConfigHelper.CONFIG_PROPERTY_SCRIPT_PASSWORD_LOCAL ), "" );
+                RunScript( connector, GetProperty( ConfigHelper.CONFIG_PROPERTY_SCRIPT_USER_DOMAIN ),
+                    GetProperty( ConfigHelper.CONFIG_PROPERTY_SCRIPT_PASSWORD_DOMAIN ), "" );
 
                 // now try one with the prefix set
-                ActiveDirectoryConfiguration prefixConfig = (ActiveDirectoryConfiguration)GetConfiguration();
+                ActiveDirectoryConfiguration prefixConfig = (ActiveDirectoryConfiguration)ConfigHelper.GetConfiguration();
                 string prefix = "UnitTest_";
                 connector.Dispose();
                 connector.Init(prefixConfig);
@@ -976,7 +966,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 bool scriptFailed = false;
                 try
                 {
-                    RunScript(connector, GetProperty(CONFIG_PROPERTY_USER), "bogus", "");
+                    RunScript( connector, GetProperty( ConfigHelper.CONFIG_PROPERTY_USER ), "bogus", "" );
                 }
                 catch (Exception e)
                 {
@@ -994,7 +984,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
             Uid groupUid = null;
             Uid userUid = null;
             try 
@@ -1033,7 +1023,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void TestRemoveAttributeValue()
         {
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
 
             Uid createUid = null;
 
@@ -1043,7 +1033,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 ICollection<ConnectorAttribute> attributes = new HashSet<ConnectorAttribute>();
 
                 attributes.Add(ConnectorAttributeBuilder.Build(
-                    "ad_container", GetProperty(CONFIG_PROPERTY_CONTAINER)));
+                    "ad_container", GetProperty( ConfigHelper.CONFIG_PROPERTY_CONTAINER ) ) );
                 attributes.Add(ConnectorAttributeBuilder.Build(
                     "userPassword", "secret"));
                 attributes.Add(ConnectorAttributeBuilder.Build(
@@ -1056,7 +1046,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     "displayName", "nunit test user " + randomNumber));
                 attributes.Add(ConnectorAttributeBuilder.Build(
                     Name.NAME, "cn=nunit" + randomNumber + "," +
-                    GetProperty(CONFIG_PROPERTY_CONTAINER)));
+                    GetProperty( ConfigHelper.CONFIG_PROPERTY_CONTAINER ) ) );
                 attributes.Add(ConnectorAttributeBuilder.Build(
                     "mail", "nunitUser" + randomNumber + "@some.com"));
                 attributes.Add(ConnectorAttributeBuilder.Build(
@@ -1096,7 +1086,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void TestContainerChange_account()
         {
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
 
             Uid createOuUid = null;
             Uid createUserUid = null;
@@ -1162,7 +1152,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void TestContainerChange_group()
         {
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
 
             Uid createOuUid = null;
             Uid createGroupUid = null;
@@ -1237,7 +1227,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
             Uid createUid = null;
 
             try
@@ -1272,7 +1262,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
             Uid createUid = null;
 
             try
@@ -1310,8 +1300,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void TestSyncGC()
         {
             // test with searchChildDomain (uses GC)
-            TestSync(true, GetProperty(config_PROPERTY_SYNC_CONTAINER_ROOT, null));
-            TestSync(true, GetProperty(config_PROPERTY_SYNC_CONTAINER_CHILD, null));
+            TestSync( true, GetProperty( ConfigHelper.config_PROPERTY_SYNC_CONTAINER_ROOT, null ) );
+            TestSync( true, GetProperty( ConfigHelper.config_PROPERTY_SYNC_CONTAINER_CHILD, null ) );
         }
 
         // test sync
@@ -1319,8 +1309,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void TestSyncDC()
         {
             // test withouth searchChildDomains (uses DC)
-            TestSync(false, GetProperty(config_PROPERTY_SYNC_CONTAINER_ROOT, null));
-            TestSync(false, GetProperty(config_PROPERTY_SYNC_CONTAINER_CHILD, null));
+            TestSync( false, GetProperty( ConfigHelper.config_PROPERTY_SYNC_CONTAINER_ROOT, null ) );
+            TestSync( false, GetProperty( ConfigHelper.config_PROPERTY_SYNC_CONTAINER_CHILD, null ) );
         }
 
         [Test]
@@ -1328,7 +1318,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
             Uid createUid = null;
 
             try
@@ -1416,7 +1406,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
             Uid createUid = null;
 
             try
@@ -1534,7 +1524,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
             Uid uidAccount = null;
             Uid uidGroup = null;
             Uid uidOu = null;
@@ -1664,7 +1654,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
             Uid createUid = null;
 
             try
@@ -1746,7 +1736,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
             Uid createUid = null;
 
             try
@@ -1859,8 +1849,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            ActiveDirectoryConfiguration configuration = 
-                (ActiveDirectoryConfiguration)GetConfiguration();
+            ActiveDirectoryConfiguration configuration =
+                (ActiveDirectoryConfiguration)ConfigHelper.GetConfiguration();
             configuration.SearchContext = container;
             configuration.SearchChildDomains = searchChildDomains;
             connector.Init(configuration);
@@ -1959,8 +1949,8 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            ActiveDirectoryConfiguration configuration = 
-                (ActiveDirectoryConfiguration)GetConfiguration();
+            ActiveDirectoryConfiguration configuration =
+                (ActiveDirectoryConfiguration)ConfigHelper.GetConfiguration();
             configuration.SearchChildDomains = false;
             connector.Init(configuration);
             SyncToken noGCToken = connector.GetLatestSyncToken(ObjectClass.ACCOUNT);
@@ -2280,7 +2270,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public void TestOuSearch()
         {
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            ActiveDirectoryConfiguration config = (ActiveDirectoryConfiguration)GetConfiguration();
+            ActiveDirectoryConfiguration config = (ActiveDirectoryConfiguration)ConfigHelper.GetConfiguration();
             connector.Init(config);
             ObjectClass OUObjectClass = ActiveDirectoryConnector.ouObjectClass;
             
@@ -2294,7 +2284,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         {
             //Initialize Connector
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
             Uid userUid = null;
             try
             {
@@ -2363,22 +2353,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
             VerifyObject(attributes, GetConnectorObjectFromUid(connector, oclass, uid));
         }
 
-
-        public Configuration GetConfiguration()
-        {
-            ActiveDirectoryConfiguration config = new ActiveDirectoryConfiguration();
-            config.DomainName = GetProperty(CONFIG_PROPERTY_DOMAIN_NAME);
-            config.LDAPHostName = GetProperty(CONFIG_PROPERTY_LDAPHOSTNAME);
-            config.DirectoryAdminName = GetProperty(CONFIG_PROPERTY_USER);
-            config.DirectoryAdminPassword = GetProperty(CONFIG_PROPERTY_PASSWORD);
-            config.Container = GetProperty(CONFIG_PROPERTY_CONTAINER);
-            config.SearchContext = GetProperty(CONFIG_PROPERTY_SEARCH_CONTEXT);
-            config.SyncDomainController = GetProperty(CONFIG_PROPERTY_SYNC_DOMAIN_CONTROLLER);
-            config.SyncGlobalCatalogServer = GetProperty(CONFIG_PROPERTY_GC_DOMAIN_CONTROLLER);
-            config.ConnectorMessages = TestHelpers.CreateDummyMessages();
-            return config;
-        }
-
         /**
          * NOTES:
          * - cn and __NAME__ should be the same.  Test if they are not
@@ -2396,7 +2370,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             // the container ... is a fabricated attribute
             attributes.Add(ConnectorAttributeBuilder.Build(
-                "ad_container", GetProperty(CONFIG_PROPERTY_CONTAINER)));
+                "ad_container", GetProperty( ConfigHelper.CONFIG_PROPERTY_CONTAINER ) ) );
             attributes.Add(ConnectorAttributeBuilder.Build(
                 "userPassword", "secret"));
             attributes.Add(ConnectorAttributeBuilder.Build(
@@ -2409,7 +2383,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 "displayName", "nunit test user " + randomNumber));
             attributes.Add(ConnectorAttributeBuilder.Build(
                 Name.NAME, "cn=nunit" + randomNumber + "," +
-                GetProperty(CONFIG_PROPERTY_CONTAINER)));
+                GetProperty( ConfigHelper.CONFIG_PROPERTY_CONTAINER ) ) );
             attributes.Add(ConnectorAttributeBuilder.Build(
                 "mail", "nunitUser" + randomNumber + "@some.com"));
             attributes.Add(ConnectorAttributeBuilder.Build(
@@ -2424,7 +2398,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             // the container ... is a fabricated attribute
             attributes.Add(ConnectorAttributeBuilder.Build(
-                "ad_container", GetProperty(CONFIG_PROPERTY_CONTAINER)));
+                "ad_container", GetProperty( ConfigHelper.CONFIG_PROPERTY_CONTAINER ) ) );
             GuardedString password = new GuardedString();
             foreach (char c in "secret")
             {
@@ -2581,7 +2555,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             // now set name operational attribute
             attributes.Add(ConnectorAttributeBuilder.Build(
                 Name.NAME, "cn=nunit" + randomNumber + "," +
-                GetProperty(CONFIG_PROPERTY_CONTAINER)));
+                GetProperty( ConfigHelper.CONFIG_PROPERTY_CONTAINER ) ) );
 
 
             /*
@@ -2606,7 +2580,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 "description", "Original Description" + randomNumber));
             attributes.Add(ConnectorAttributeBuilder.Build(
                 Name.NAME, "cn=nunitGroup" + randomNumber + "," +
-                GetProperty(CONFIG_PROPERTY_CONTAINER)));
+                GetProperty( ConfigHelper.CONFIG_PROPERTY_CONTAINER ) ) );
             attributes.Add(ConnectorAttributeBuilder.Build(
                 "groupType", 4));
             return attributes;
@@ -2619,7 +2593,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
 
             attributes.Add(ConnectorAttributeBuilder.Build(
                 Name.NAME, "ou=nunitOU" + randomNumber + "," +
-                GetProperty(CONFIG_PROPERTY_CONTAINER)));
+                GetProperty( ConfigHelper.CONFIG_PROPERTY_CONTAINER ) ) );
             return attributes;
         }
 
@@ -2775,7 +2749,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
             ICollection<string> attributesToGet = new HashSet<String>();
 
             ActiveDirectoryConnector connector = new ActiveDirectoryConnector();
-            connector.Init(GetConfiguration());
+            connector.Init( ConfigHelper.GetConfiguration() );
             Schema schema = connector.Schema();
             ObjectClassInfo ocInfo = schema.FindObjectClassInfo(oclass.GetObjectClassValue());
             Assert.IsNotNull(ocInfo);

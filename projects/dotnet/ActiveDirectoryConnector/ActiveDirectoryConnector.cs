@@ -37,6 +37,7 @@ using System.DirectoryServices.ActiveDirectory;
 using Org.IdentityConnectors.Framework.Common;
 using System.Text;
 using Org.IdentityConnectors.Common.Script;
+using System.Globalization;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
@@ -246,6 +247,7 @@ namespace Org.IdentityConnectors.ActiveDirectory
         public virtual void Init(Configuration configuration)
         {
             Trace.TraceInformation("Active Directory Init method");
+            configuration.Validate();
             _configuration = (ActiveDirectoryConfiguration)configuration;
             _utils = new ActiveDirectoryUtils(_configuration);
         }
@@ -678,12 +680,6 @@ namespace Org.IdentityConnectors.ActiveDirectory
                 }
             }
         }
-
-        // this is the path that all searches come from unless otherwise directed
-        private string GetSearchContainerPath()
-        {
-            return GetSearchContainerPath(UseGlobalCatalog(), _configuration.LDAPHostName, _configuration.Container);
-        }
       
         private string GetSearchContainerPath(bool useGC, string hostname, string searchContainer)
         {
@@ -759,26 +755,29 @@ namespace Org.IdentityConnectors.ActiveDirectory
                     _configuration.ObjectClass));
             }
 
-            // see if SearchContainer is valid
-            if (!DirectoryEntry.Exists(GetSearchContainerPath()))
+            try
             {
-                throw new ConnectorException(
-                    _configuration.ConnectorMessages.Format(
-                    "ex_InvalidSearchContainerInConfiguration",
-                    "An invalid search container was supplied:  {0}",
-                    _configuration.Container));
+                // see if the Container exists
+                if (!DirectoryEntry.Exists( GetSearchContainerPath( UseGlobalCatalog(),
+                                                                  _configuration.LDAPHostName, _configuration.Container ) ))
+                {
+                    throw new ConnectorException(
+                        _configuration.ConnectorMessages.Format(
+                            "ex_InvalidContainerInConfiguration",
+                            "An invalid container was supplied:  {0}",
+                            _configuration.Container ) );
+                }
             }
-
-            // see if the Context exists 
-            
-            if (!DirectoryEntry.Exists(GetSearchContainerPath(UseGlobalCatalog(), 
-                _configuration.LDAPHostName, _configuration.Container)))
+            catch (DirectoryServicesCOMException dscex)
             {
+                Trace.TraceError( string.Format( CultureInfo.InvariantCulture,
+                    "Failed to determine whether the Container '{0}' exists. Exception: {1}", _configuration.Container, dscex ) );
+
                 throw new ConnectorException(
-                    _configuration.ConnectorMessages.Format(
-                    "ex_InvalidContainerInConfiguration",
-                    "An invalid container was supplied:  {0}",
-                    _configuration.Container));
+                        _configuration.ConnectorMessages.Format(
+                            "ex_ContainerNotFound",
+                            "Could not find the Container '{0}', the following message was returned from the server: {1}",
+                            _configuration.Container, dscex.Message ), dscex );
             }
         }
 

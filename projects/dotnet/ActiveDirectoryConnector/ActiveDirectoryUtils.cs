@@ -34,6 +34,7 @@ using System.Security;
 using ActiveDs;
 using Org.IdentityConnectors.Common.Security;
 using System.DirectoryServices.ActiveDirectory;
+using System.Runtime.InteropServices;
 
 namespace Org.IdentityConnectors.ActiveDirectory
 {
@@ -768,6 +769,39 @@ namespace Org.IdentityConnectors.ActiveDirectory
             largeInteger.HighPart = (int)(int64Value >> 32); ;
             largeInteger.LowPart = (int)(int64Value & 0xFFFFFFFF);
             return largeInteger;
+        }
+
+        /// <summary>
+        /// Determines whether <paramref name="dn"/> is a valid distinguished name.
+        /// </summary>
+        /// <param name="dn">The string representation of the distinguished name to validate.</param>
+        /// <returns>
+        /// 	<c>true</c> if <paramref name="dn"/> is valid; otherwise, <c>false</c>.
+        /// </returns>
+        /// <remarks>A DN is valid if it can be processed by the AD API. This method does not test RFC 2253 compliance,
+        /// but only basic syntactical check.</remarks>
+        internal static bool IsValidDn(string dn)
+        {
+            var result = false;
+            try
+            {
+                if (getADSPathname( null, null, dn ) != null)
+                {
+                    result = true;
+                }
+            }
+            catch (COMException comex)
+            {
+                if (comex.ErrorCode == -2147463168) //E_ADS_BAD_PATHNAME
+                {
+                    result = false;
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return result;
         }
     }
 

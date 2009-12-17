@@ -104,50 +104,68 @@ namespace Org.IdentityConnectors.ActiveDirectory
             LDAPHostName = "";
         }
 
+        /// <summary>
+        /// Determines if the configuration is valid.
+        /// </summary>
+        /// <remarks>See <see cref="Org.IdentityConnectors.Framework.Spi.Configuration"/> for the definition of a valid
+        /// configuration.</remarks>
+        /// <exception cref="Org.IdentityConnectors.Framework.Common.Exceptions.ConfigurationException"/>
+        /// Thrown when the configuration is not valid.</exception>
         public override void Validate()
         {
-            String message = "Configuration errors:  ";
+            var message = new StringBuilder();
+
             Boolean foundError = false;
 
             // can't lookup the schema without the domain name
             if ((DomainName == null) || (DomainName.Length == 0))
             {
-                message += ConnectorMessages.Format(
-                            "confReqParam_domainName", "Domain name not supplied  ");
+                message.Append(ConnectorMessages.Format(
+                                   "confReqParam_domainName", "Domain name not supplied  "));
                 foundError = true;
             }
 
             if ((DirectoryAdminName == null) || (DirectoryAdminName.Length == 0))
             {
-                message += ConnectorMessages.Format(
-                            "confReqParam_adminName", "Directory administrator name not supplied  ");
+                message.Append(ConnectorMessages.Format(
+                                   "confReqParam_adminName", "Directory administrator name not supplied  "));
                 foundError = true;
             }
 
             if ((DirectoryAdminPassword == null) || (DirectoryAdminPassword.Length == 0))
             {
-                message += ConnectorMessages.Format(
-                            "confReqParam_adminPass", "Directory administrator password not supplied  ");
+                message.Append(ConnectorMessages.Format(
+                                   "confReqParam_adminPass", "Directory administrator password not supplied  "));
                 foundError = true;
             }
 
             if ((ObjectClass == null) || (ObjectClass.Length == 0))
             {
-                message += ConnectorMessages.Format(
-                            "confReqParam_objClass", "ObjectClass was not supplied  ");
+                message.Append(ConnectorMessages.Format(
+                                   "confReqParam_objClass", "ObjectClass was not supplied  "));
                 foundError = true;
             }
 
-            if ((Container == null) || (Container.Length == 0))
+            if (string.IsNullOrEmpty(Container))
             {
-                message += ConnectorMessages.Format(
-                            "confReqParam_Container", "Container was not supplied  ");
+                message.Append(ConnectorMessages.Format(
+                                   "confReqParam_Container", "Container was not supplied  "));
                 foundError = true;
+            }
+            else
+            {
+                if (!ActiveDirectoryUtils.IsValidDn(Container))
+                {
+                    message.Append( ConnectorMessages.Format(
+                                   "confParam_Container_invalid_path", @"Container '{0}' could not be recognized as a distinguished name (DN)  ", Container ) );
+                    foundError = true;
+                }
             }
 
             if (foundError)
             {
-                throw new ConfigurationException(message);
+                throw new ConfigurationException( ConnectorMessages.Format(
+                    "ex_ConfigErrors", "Configuration errors: {0}", message.ToString() ) );
             }
         }
     }
