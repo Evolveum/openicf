@@ -51,6 +51,14 @@
     <antcall target="contract-tests" inheritAll="false">
         <param name="testConfig" value="solaris10"/>
     </antcall>
+
+    <!-- solaris 10 *NIS* configuration -->
+    <antcall target="contract-dist" inheritAll="false">
+        <param name="testConfig" value="solaris10NIS"/>
+    </antcall>
+    <antcall target="contract-tests" inheritAll="false">
+        <param name="testConfig" value="solaris10NIS"/>
+    </antcall>
 </target>
 
 
@@ -68,6 +76,10 @@
 
     <antcall target="connector-build.run-unit-tests">
         <param name="testConfig" value="solaris10"/>
+    </antcall>
+
+    <antcall target="connector-build.run-unit-tests">
+        <param name="testConfig" value="solaris10NIS"/>
     </antcall>
 </target>
 
