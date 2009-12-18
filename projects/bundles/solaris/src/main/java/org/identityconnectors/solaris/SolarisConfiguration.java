@@ -275,7 +275,19 @@ public final class SolarisConfiguration extends AbstractConfiguration {
      */
     private boolean nisShadowPasswordSupport = false;
     
-    
+    /**
+     * <b>Command Timeout</b><br/>
+     * 
+     * This is the time that we wait for, when we are capturing some string from
+     * the response of the resource.
+     * 
+     * Note (backward compatibility): This is the successor of Default Capture
+     * Timeout, Default Wait For Timeout, Default Wait For Ignore Case Timeout
+     * from the Solaris resource adapter <br/>
+     * 
+     * Units: milliseconds.
+     */
+    private int commandTimeout = 24000;
 
     /*            ********** CONSTRUCTOR ************ */
     public SolarisConfiguration() {
@@ -506,6 +518,15 @@ public final class SolarisConfiguration extends AbstractConfiguration {
 
     public void setNisShadowPasswordSupport(boolean nisShadow) {
         nisShadowPasswordSupport = nisShadow;
+    }
+
+    @ConfigurationProperty(order = 26)
+    public int getCommandTimeout() {
+        return commandTimeout;
+    }
+
+    public void setCommandTimeout(int commandTimeout) {
+        this.commandTimeout = commandTimeout;
     }
 
     /*            *********** AUXILIARY METHODS ***************** */

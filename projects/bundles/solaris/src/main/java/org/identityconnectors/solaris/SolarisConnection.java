@@ -78,9 +78,6 @@ public class SolarisConnection {
      * Constant's unit: millisecond.
      */
     private static final int WAITFOR_TIMEOUT_FOR_ERROR = 600;
-
-    /** set the timeout for waiting on reply. */
-    public static final int WAIT = 24000;
     
     private static final String HOST_END_OF_LINE_TERMINATOR = "\n";
     /* 
@@ -697,7 +694,7 @@ public class SolarisConnection {
      *             response of the resource.
      */
     public String executeCommand(String command, Map<String, ErrorHandler> rejects, Set<String> accepts) {
-        return executeCommand(command, rejects, accepts, WAIT);
+        return executeCommand(command, rejects, accepts, getConfiguration().getCommandTimeout());
     }
 
     private String trimOutput(String output) {
