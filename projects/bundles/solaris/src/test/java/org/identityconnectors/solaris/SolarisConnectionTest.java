@@ -155,6 +155,7 @@ public class SolarisConnectionTest extends SolarisTestBase {
         SolarisConfiguration config = getConnection().getConfiguration();
         config.setSudoAuthorization(true);
         config.setLoginUser("david");
+        config.setLoginShellPrompt("\\$");
         config.setPassword(new GuardedString(SolarisTestCommon.getProperty("pass", String.class).toCharArray()));
         config.setCredentials(new GuardedString(SolarisTestCommon.getProperty("pass", String.class).toCharArray()));
         
