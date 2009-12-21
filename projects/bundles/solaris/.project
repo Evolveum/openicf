@@ -18,7 +18,7 @@
 		<link>
 			<name>config-private</name>
 			<type>2</type>
-			<location>/home/david/.connectors/connector-solaris/config</location>
+			<locationURI>USER_HOME/.connectors/connector-solaris/config</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>
