@@ -1096,13 +1096,13 @@ directory using command:
       <td><a name = "ConnServerInEclipse"></a><span style="font-weight: bold;">Running tests on Connector Server inside Eclipse</span>
         <ul>
            <li>add these properties as <strong>VM arguments</strong> in the running configuration:
-                <pre>-Dproject.name=connector-foo
--DuseConnectorServer=true
--DbundleVersion=1.0.0.0
+                <pre>
+			-DuseConnectorServer=true
                 </pre>
             </li>
             <li> 
                  the rest of the settings remains as shown in section <a href="#eclipse">Running Contract Tests in Eclipse</a>.
+		 Note that tests read configuration as classpath resources, so you must have your private and public configuration on classpath. See <a href="#Locating_Config_Files">Locating configuration files for details</a>. 
             </li>
         </ul>
       </td>
