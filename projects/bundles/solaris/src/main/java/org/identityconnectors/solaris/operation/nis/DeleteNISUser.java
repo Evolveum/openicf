@@ -22,8 +22,6 @@
  */
 package org.identityconnectors.solaris.operation.nis;
 
-import java.util.Collections;
-
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.solaris.SolarisConnection;
 

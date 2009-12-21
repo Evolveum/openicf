@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry excluding="**/.svn/*" kind="src" path="src/main/java"/>
+	<classpathentry kind="src" path="config-private"/>
 	<classpathentry excluding="**/.svn/*" kind="src" path="src/test/java"/>
 	<classpathentry excluding="**/.svn/*" kind="src" path="src/test/config"/>
-	<classpathentry excluding="**/.svn/*" kind="src" path="config-private"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Connector Framework"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Connector Framework - Internal"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Connector Common Test Library"/>
 	<classpathentry kind="lib" path="lib/commons-net-1.4.1.jar"/>
-	<classpathentry kind="lib" path="lib/expect4j-1.0.jar"/>
-	<classpathentry kind="lib" path="lib/jakarta-oro-2.0.8.jar"/>
+	<classpathentry kind="lib" path="lib/jakarta-oro-2.0.8.jar" sourcepath="/home/david/Programs/development/jakarta-oro/jakarta-oro-2.0.8/src/java"/>
 	<classpathentry kind="lib" path="lib/jsch-0.1.41.jar"/>
+	<classpathentry kind="lib" path="/home/david/Programs/development/expect4j/src/expect4j-read-only/target/classes" sourcepath="/home/david/Programs/development/expect4j/src/expect4j-read-only/src"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>

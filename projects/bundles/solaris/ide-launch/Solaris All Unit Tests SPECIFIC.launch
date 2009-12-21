@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launchConfiguration type="org.eclipse.jdt.junit.launchconfig">
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
-<listEntry value="/Connector Contract Tests/src/org/identityconnectors/contract/data/GroovyDataProviderTest.java"/>
+<listEntry value="/Connector Contract Tests/src/test/java/org/identityconnectors/contract/data/GroovyDataProviderTest.java"/>
 </listAttribute>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
 <listEntry value="1"/>
@@ -22,4 +22,5 @@
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.identityconnectors.contract.data.GroovyDataProviderTest"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="Connector Contract Tests"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dproject.name=connector-solaris"/>
+<stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value=""/>
 </launchConfiguration>

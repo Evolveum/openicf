@@ -61,7 +61,12 @@ public abstract class SolarisTestBase {
     public void afterTestMethods() {
         cleanUpUsers();
         cleanupGroup();
-        connection.dispose();
+        try {
+            if (connection != null) 
+                connection.dispose();
+        } catch (Exception ex) {
+            //OK
+        }
     }
 
     public SolarisConnection getConnection() {

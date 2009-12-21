@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.jdt.junit.launchconfig">
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
 <listEntry value="/Solaris Connector/src/org/identityconnectors/solaris/test/OpAuthenticateImplTest.java"/>
@@ -19,7 +19,7 @@
 <listEntry value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;runtimeClasspathEntry path=&quot;3&quot; projectName=&quot;Connector Common Test Library&quot; type=&quot;1&quot;/&gt;&#10;"/>
 </listAttribute>
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
-<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.identityconnectors.solaris.test.OpAuthenticateImplTest"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.identityconnectors.solaris.test.SolarisAuthenticateTest"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="Solaris Connector"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dproject.name=connector-solaris"/>
 </launchConfiguration>

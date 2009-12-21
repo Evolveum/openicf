@@ -165,6 +165,22 @@ public class SolarisConnectionTest extends SolarisTestBase {
         Assert.assertTrue(out.contains("ahoj ship"));
         conn.dispose();        
     }
+    
+    @Test
+    public void checkAliveTest() {
+        try {
+            getConnection().checkAlive();
+        } catch (Exception ex) {
+            Assert.fail("no exception is expected.");
+        }
+        getConnection().dispose();
+        try {
+            getConnection().checkAlive();
+            Assert.fail("exception should be thrown");
+        } catch (Exception ex) {
+            // OK
+        }
+    }
 
     @Override
     public boolean createGroup() {
