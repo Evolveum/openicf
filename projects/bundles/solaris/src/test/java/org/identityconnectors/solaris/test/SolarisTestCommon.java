@@ -79,8 +79,8 @@ public class SolarisTestCommon {
 
         config.setHost(getStringProperty(propHost));
 
-        final String password = getStringProperty(propLoginPassword);
-        config.setPassword(new GuardedString(password.toCharArray()));
+        final GuardedString password = getProperty(propLoginPassword, GuardedString.class);
+        config.setPassword(password);
 
         config.setLoginUser(getStringProperty(propLoginUser));
 
