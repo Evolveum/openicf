@@ -452,7 +452,7 @@ public class SolarisConnection {
             for (String acc : accepts) {
                 SolarisClosure closure = new SolarisClosure();
                 captureClosures.add(closure);
-                builder.addRegExpMatch(acc, closure);
+                builder.addCaseInsensitiveRegExpMatch(acc, closure);
             }
         } else {
             // by default rootShellPrompt is added.
