@@ -66,31 +66,71 @@ public class SolarisTestCommon {
     }
 
     public static SolarisConfiguration createConfiguration() {
-        // names of properties in the property file (build.groovy)
-        final String propHost = "host";
-        final String propLoginPassword = "pass";
-        final String propLoginUser = "user";
-        final String propPort = "port";
-        final String propConnectionType = "connectionType";
-        final String propRootShellPrompt = "rootShellPrompt";
-
         // save configuration
         SolarisConfiguration config = new SolarisConfiguration();
 
-        config.setHost(getStringProperty(propHost));
+        config.setHost(getStringProperty("host"));
 
-        final GuardedString password = getProperty(propLoginPassword, GuardedString.class);
+        final GuardedString password = getProperty("pass", GuardedString.class);
         config.setPassword(password);
 
-        config.setLoginUser(getStringProperty(propLoginUser));
+        config.setLoginUser(getStringProperty("user"));
 
-        config.setPort(Integer.valueOf(getProperty(propPort, Integer.class)));
+        config.setPort(Integer.valueOf(getProperty("port", Integer.class)));
 
-        config.setConnectionType(getStringProperty(propConnectionType));
+        config.setConnectionType(getStringProperty("connectionType"));
 
-        config.setLoginShellPrompt(getStringProperty(propRootShellPrompt));
+        config.setLoginShellPrompt(getStringProperty("rootShellPrompt"));
+        
+        String propName = "systemDatabaseType";
+        if (isStringPropertyDefined(propName)) {
+            config.setSystemDatabaseType(getStringProperty(propName));
+        }
+        
+        propName = "nisBuildDirectory";
+        if (isStringPropertyDefined(propName)) {
+            config.setNisBuildDirectory(getStringProperty(propName));
+        }
+        
+        propName = "nisPwdDir";
+        if (isStringPropertyDefined(propName)) {
+            config.setNisPwdDir(getStringProperty(propName));
+        }
+        
+        propName = "nisShadowPasswordSupport";
+        if (isPropertyDefined(propName, Boolean.class)) {
+            config.setNisShadowPasswordSupport(getProperty(propName, Boolean.class));
+        }
+        
+        propName = "defaultPrimaryGroup";
+        if (isStringPropertyDefined(propName)) {
+            config.setDefaultPrimaryGroup(getStringProperty(propName));
+        }
+
+        propName = "loginShell";
+        if (isStringPropertyDefined(propName)) {
+            config.setLoginShell(getStringProperty(propName));
+        }
+
+        propName = "homeBaseDirectory";
+        if (isStringPropertyDefined(propName)) {
+            config.setHomeBaseDirectory(getStringProperty(propName));
+        }
 
         return config;
+    }
+
+    private static boolean isStringPropertyDefined(String propName) {
+        return isPropertyDefined(propName, String.class);
+    }
+    
+    private static <T> boolean isPropertyDefined(String propName, Class<T> type) {
+        try {
+            getProperty(propName, type);
+            return true;
+        } catch (IllegalArgumentException ex) {
+            return false;
+        }
     }
 
     /** for simulating API calls */
