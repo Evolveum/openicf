@@ -356,7 +356,7 @@ public class CreateNISUser extends AbstractNISOp {
      */
     private static void addNISShellUpdateWithCleanup(String accountId,
             String shell, SolarisConnection connection) {
-        final String passwdCmd = connection.executeCommand("passwd");
+        final String passwdCmd = connection.buildCommand("passwd");
         
         final String passwordRecord = passwdCmd + "-r nis -e " + accountId + " 2>&1 | tee " + tmpPwdfile3 + " ; ";
         try {
