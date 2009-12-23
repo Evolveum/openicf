@@ -2317,6 +2317,65 @@ namespace Org.IdentityConnectors.ActiveDirectory
             }
         }
 
+        [Test]
+        public void TestObjectRename()
+        {
+            var sut = new ActiveDirectoryConnector();
+            sut.Init( ConfigHelper.GetConfiguration() );
+
+            RenameObjectAndVerify( sut, ObjectClass.ACCOUNT, GetNormalAttributes_Account() );
+            RenameObjectAndVerify( sut, ActiveDirectoryConnector.groupObjectClass, GetNormalAttributes_Group() );
+            RenameObjectAndVerify( sut, ActiveDirectoryConnector.ouObjectClass, GetNormalAttributes_OrganizationalUnit() );
+        }
+
+        private void RenameObjectAndVerify(ActiveDirectoryConnector connector, ObjectClass oc, ICollection<ConnectorAttribute> createAttributes)
+        {
+            Uid createdUid = null;
+            Uid updatedUid = null;
+            try
+            {
+                // create the objec
+                createdUid = CreateAndVerifyObject( connector, oc, createAttributes );
+
+                // update the name of the object
+                var oldName = ConnectorAttributeUtil.GetNameFromAttributes( createAttributes );
+                var newName = ActiveDirectoryUtils.GetRelativeName( oldName );
+                newName = newName.Trim() + "_new, " + GetProperty( ConfigHelper.CONFIG_PROPERTY_CONTAINER );
+
+                updatedUid = UpdateReplaceAndVerifyObject( connector, oc, createdUid,
+                                                          new List<ConnectorAttribute>() { ConnectorAttributeBuilder.Build( Name.NAME, newName ) } );
+
+                if (oc.Equals( ObjectClass.ACCOUNT ))
+                {
+                    Assert.AreEqual( createdUid, updatedUid, "The Uid of an object of type ACCOUNT must not change." );
+                }
+
+                // test if the original object exists
+                var nameFilter = FilterBuilder.EqualTo( ConnectorAttributeBuilder.Build( Name.NAME, oldName.Value ) );
+                var optionsBuilder = new OperationOptionsBuilder()
+                {
+                    AttributesToGet = new[] { Name.NAME }
+                };
+                var originalObjects = TestHelpers.SearchToList( connector, oc, nameFilter, optionsBuilder.Build() );
+                Assert.AreEqual( 0, originalObjects.Count,
+                                string.Format( System.Globalization.CultureInfo.InvariantCulture,
+                                              "An object of type '{0}' with the original name exists.", oc ) );
+            }
+            finally
+            {
+                if (createdUid != null)
+                {
+                    DeleteAndVerifyObject( connector, oc, createdUid, false, false );
+                }
+
+                //make sure that the updated object is deleted as well
+                if (updatedUid != null)
+                {
+                    DeleteAndVerifyObject( connector, oc, updatedUid, false, false );
+                }
+            }
+        }
+
         public Uid CreateAndVerifyObject(ActiveDirectoryConnector connector,
             ObjectClass oclass, ICollection<ConnectorAttribute> attributes)
         {
