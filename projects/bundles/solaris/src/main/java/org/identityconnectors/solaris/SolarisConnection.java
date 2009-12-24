@@ -332,7 +332,12 @@ public class SolarisConnection {
         passwd.access(new GuardedString.Accessor() {
             public void access(char[] clearChars) {
                 try {
-                    // send the password
+                    for (char c : clearChars) {
+                        if (Character.isISOControl(c)) {
+                            throw new IllegalArgumentException("User password contains one or more control characters.");
+                        }
+                    }
+                    
                     conn.sendInternal(new String(clearChars));
                 } catch (IOException e) {
                     throw ConnectorException.wrap(e);
