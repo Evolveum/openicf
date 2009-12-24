@@ -176,9 +176,9 @@ public final class SolarisConfiguration extends AbstractConfiguration {
      * Specify the number of seconds a block fetch operation is to execute
      * before timing out. The default value is 600 seconds.
      * 
-     * Unit: seconds
+     * Unit: milliseconds
      */
-    private int blockFetchTimeout = 600;
+    private int blockFetchTimeout = 6000;
 
     /*
      * RA_MUTEX_ACQUIRE_TIMEOUT Mutex Acquire Timeout

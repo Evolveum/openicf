@@ -38,7 +38,7 @@ public class BlockAccountIteratorTest extends SolarisTestBase {
     @Test 
     public void test() {
         // similar test to AccountIteratorTest
-        String command = getConnection().buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"");
+        String command = (!getConnection().isNis()) ? getConnection().buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"") : "ypcat passwd | cut -d: -f1";
         String out = getConnection().executeCommand(command);
         final List<String> usernames = SolarisEntries.getNewlineSeparatedItems(out);
         
