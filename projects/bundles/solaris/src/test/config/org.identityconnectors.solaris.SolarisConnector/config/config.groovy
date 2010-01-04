@@ -91,11 +91,18 @@ testsuite {
       multiValue: false,
       returnedByDefault: false
     ]
-
-  
-
-    gid.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
-    __NAME__.attribute.__GROUP__.oclasses = [
+    
+    attrMultiValuedTemplate = [
+      type: String.class,
+      readable: true,
+      createable: true,
+      updateable: true,
+      required: false,
+      multiValue: true,
+      returnedByDefault: true
+    ]
+    
+    attrNotUpdateableTemplate = [
       type: String.class,
       readable: true,
       createable: true,
@@ -104,15 +111,12 @@ testsuite {
       multiValue: false,
       returnedByDefault: true
     ]
-    users.attribute.__GROUP__.oclasses = [
-      type: String.class,
-      readable: true,
-      createable: true,
-      updateable: true,
-      required: false,
-      multiValue: true,
-      returnedByDefault: true
-    ]// attrTemplate
+
+  
+
+    gid.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.testsuite.Schema.attrTemplate")
+    __NAME__.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrNotUpdateableTemplate")
+    users.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrMultiValuedTemplate")
     
     shell.attribute.shell.oclasses = [
       type: String.class,
@@ -135,7 +139,7 @@ testsuite {
     warn.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     dir.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     comment.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
-    uid.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrNotRequiredNotReturnedTemplate")
+    uid.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     lock.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     time_last_login.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     authorization.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")

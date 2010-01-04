@@ -28,11 +28,16 @@ import java.util.Set;
 
 import junit.framework.Assert;
 
+import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
+import org.identityconnectors.solaris.attr.AccountAttribute;
+import org.identityconnectors.solaris.attr.GroupAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisSearch;
 import org.identityconnectors.test.common.ToListResultsHandler;
 import org.junit.Test;
@@ -112,10 +117,65 @@ public class SolarisSearchTest extends SolarisTestBase {
             }
         }
     }
+    
+    /**
+     * this test requires a previously created account
+     */
+    @Test
+    public void testFetchUid() {
+        String username = formatName(0);
+        ToListResultsHandler handler = new ToListResultsHandler();
+        getFacade().search(ObjectClass.ACCOUNT, 
+                FilterBuilder.equalTo(AttributeBuilder.build(Name.NAME, username)), handler, 
+                new OperationOptionsBuilder().setAttributesToGet(AccountAttribute.UID.getName()).build()
+                );
+        Assert.assertTrue("no results returned", handler.getObjects().size() == 1);
+        ConnectorObject accountEntry = handler.getObjects().get(0);
+        for (Attribute attr : accountEntry.getAttributes()) {
+            if (attr.getName().equals(AccountAttribute.UID.getName())) {
+                
+                String uidValue = (String) AttributeUtil.getSingleValue(attr);
+                String out = getConnection().executeCommand("logins -oxma -l \"" + username + "\"");
+                String realUid = out.split(":")[1];
+                
+                Assert.assertEquals(realUid, uidValue);
+                return;
+            }
+        }
+        Assert.fail("no uid attribute found");
+    }
+    
+    /**
+     * This test requires previously created group.
+     */
+    @Test
+    public void testFetchGid() {
+        String groupName = getGroupName();
+        ToListResultsHandler handler = new ToListResultsHandler();
+        getFacade().search(ObjectClass.GROUP, 
+                FilterBuilder.equalTo(AttributeBuilder.build(Name.NAME, groupName)), handler, 
+                new OperationOptionsBuilder().setAttributesToGet(GroupAttribute.GID.getName()).build()
+                );
+        Assert.assertTrue("no results returned", handler.getObjects().size() == 1);
+        ConnectorObject accountEntry = handler.getObjects().get(0);
+        for (Attribute attr : accountEntry.getAttributes()) {
+            if (attr.getName().equals(GroupAttribute.GID.getName())) {
+                
+                String uidValue = (String) AttributeUtil.getSingleValue(attr);
+                String cmd = (!getConnection().isNis()) ? "cut -d: -f1,3 /etc/group | grep -v \"^[+-]\"" : "ypcat group | cut -d: -f1,3";
+                cmd += " | grep " + groupName;
+                String out = getConnection().executeCommand(cmd);
+                
+                Assert.assertEquals(out.split(":")[1].trim(), uidValue);
+                return;
+            }
+        }
+        Assert.fail("no uid attribute found");
+    }
 
     @Override
     public boolean createGroup() {
-        return false;
+        return true;
     }
 
     @Override

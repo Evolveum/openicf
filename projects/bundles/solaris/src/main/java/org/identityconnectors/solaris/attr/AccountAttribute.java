@@ -47,7 +47,7 @@ public enum AccountAttribute implements ConnectorAttribute {
     /** 
      * This is the solaris native 'uid', *NOT* the one defined by the framework ({@link Uid}, that should be <b>immutable</b>, whereas Solaris native uid is <b>mutable</b>). 
      */
-    UID("uid", NativeAttribute.NAME),
+    UID("uid", NativeAttribute.ID),
     
     EXPIRE("expire", NativeAttribute.USER_EXPIRE),
     INACTIVE("inactive", NativeAttribute.USER_INACTIVE), 

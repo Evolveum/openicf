@@ -204,7 +204,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
             case USERS:
                 attributes.add(AttributeInfoBuilder.build(attr.getName(), String.class, EnumSet.of(Flags.MULTIVALUED)));
                 break;
-            case GROUPNAME:
+            case GROUPNAME: // adapter also didn't support update of Group's name
                 attributes.add(AttributeInfoBuilder.build(attr.getName(), String.class, EnumSet.of(Flags.NOT_UPDATEABLE)));
                 break;
 
@@ -228,13 +228,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         for (AccountAttribute attr : AccountAttribute.values()) {
             AttributeInfo newAttr = null;
             
-            if (!attr.equals(AccountAttribute.UID)) {
-                newAttr = AttributeInfoBuilder.build(attr.getName());
-            } else {
-                // 'uid' is not returned by default, as __NAME__ already contains this information. 
-                // This attribute is there just for sake of backward compatibility.
-                newAttr = AttributeInfoBuilder.build(attr.getName(), String.class, EnumSet.of(Flags.NOT_RETURNED_BY_DEFAULT));
-            }
+            newAttr = AttributeInfoBuilder.build(attr.getName());
             
             attributes.add(newAttr);
         }
