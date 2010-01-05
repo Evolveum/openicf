@@ -18,7 +18,7 @@
 		<link>
 			<name>config-private</name>
 			<type>2</type>
-			<locationURI>USER_HOME/.connectors/connector-3270freehost/config</locationURI>
+			<locationURI>USER_HOME/.connectors/3270freehost/config</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>
