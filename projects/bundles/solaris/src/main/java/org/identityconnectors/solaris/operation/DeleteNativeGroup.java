@@ -48,7 +48,14 @@ public class DeleteNativeGroup {
             }
         };
         Map<String, ErrorHandler> rejectsMap = new LinkedHashMap<String, ErrorHandler>();
+        /*
+         * This is a workaround to throw UnknownUidException. 
+         * Unfortunately Expect4j doesn't match the input as expected.
+         */
+        rejectsMap.put("UX.*ERROR.*does not exist", unknownUidHandler);
+        rejectsMap.put("groupdel:.*ERROR.*does not exist", unknownUidHandler);
         rejectsMap.put("ERROR.*does not exist", unknownUidHandler);
+        
         rejectsMap.put("does not exist", unknownUidHandler); // HP-UX error
         rejectsMap.put("command not found", defaultErrHandler); // HP-UX error
         rejectsMap.put("not allowed to execute", defaultErrHandler); // sudo 
