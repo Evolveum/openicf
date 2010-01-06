@@ -24,7 +24,6 @@
 <listEntry value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot;?&gt;&#13;&#10;&lt;runtimeClasspathEntry externalArchive=&quot;C:/wrk/ic-private/config/.connectors/connector-oracleerp/lib/ojdbc14.jar&quot; path=&quot;3&quot; type=&quot;2&quot;/&gt;&#13;&#10;"/>
 </listAttribute>
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
-<stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/1.5"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.identityconnectors.contract.test.ContractTestSuite"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="Connector Contract Tests"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-DtestConfig=11_5_10&#13;&#10;-DbundleJar=dist/org.identityconnectors.oracleerp-1.0.0.jar&#13;&#10;-DbundleName=org.identityconnectors.oracleerp&#13;&#10;-DbundleVersion=1.0.0&#13;&#10;-DconnectorName=org.identityconnectors.oracleerp.OracleERPConnector"/>
