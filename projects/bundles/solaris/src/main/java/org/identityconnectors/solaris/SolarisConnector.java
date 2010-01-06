@@ -22,14 +22,17 @@
  */
 package org.identityconnectors.solaris;
 
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeInfo;
@@ -61,6 +64,7 @@ import org.identityconnectors.framework.spi.operations.ScriptOnResourceOp;
 import org.identityconnectors.framework.spi.operations.SearchOp;
 import org.identityconnectors.framework.spi.operations.TestOp;
 import org.identityconnectors.framework.spi.operations.UpdateOp;
+import org.identityconnectors.solaris.SolarisConnection.ErrorHandler;
 import org.identityconnectors.solaris.attr.AccountAttribute;
 import org.identityconnectors.solaris.attr.GroupAttribute;
 import org.identityconnectors.solaris.attr.NativeAttribute;
@@ -69,8 +73,8 @@ import org.identityconnectors.solaris.operation.SolarisCreate;
 import org.identityconnectors.solaris.operation.SolarisDelete;
 import org.identityconnectors.solaris.operation.SolarisScriptOnConnector;
 import org.identityconnectors.solaris.operation.SolarisUpdate;
-import org.identityconnectors.solaris.operation.search.SolarisSearch;
 import org.identityconnectors.solaris.operation.search.SolarisFilterTranslator;
+import org.identityconnectors.solaris.operation.search.SolarisSearch;
 import org.identityconnectors.solaris.operation.search.nodes.EqualsNode;
 import org.identityconnectors.solaris.operation.search.nodes.Node;
 import org.identityconnectors.test.common.ToListResultsHandler;
@@ -264,6 +268,74 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         _log.info("test()");
         _configuration.validate();        
         checkAlive();
+        testCheckCommandsAndPermissions();
+    }
+
+    /**
+     * Check the resource and determine if the commands (used by the connector) 
+     * available and the account given has permission to execute them.
+     */
+    private void testCheckCommandsAndPermissions() {
+        getConnection().doSudoStart();
+        try {
+            // determine if the required commands (by connector) are present
+            Set<String> requiredCommands = getRequiredCommands(getConnection().isNis());
+            StringBuilder args = new StringBuilder();
+            for (String c : requiredCommands) {
+                args.append(c).append(" ");
+            }
+            String whichCmd = getConnection().buildCommand("which", args.toString());
+            String out = getConnection().executeCommand(whichCmd, CollectionUtil.newSet("which: not found"));
+            final String no = "no ";
+            final String in = " in ";
+            for (String line : out.split("\n")) {
+                final int indexOfNo = line.indexOf(no);
+                final int indexOfIn = line.indexOf(in);
+                if (line.contains(no) && line.contains(in) && indexOfNo < indexOfIn) {
+                    String param1 = line.substring(indexOfNo + no.length(), indexOfIn);
+                    String param2 = line.substring(indexOfIn + in.length());
+                    throw new ConnectorException(String.format("Failed to find '%s' in the path '%s'", param1, param2));
+                }
+            }
+            
+            // Check if the connector has write access to /tmp folder
+            final String tmpFileName = "/tmp/SConnectorTmpAccessTest";
+            out = getConnection().executeCommand("touch " + tmpFileName);
+            if (out.length() > 0) {
+                throw new ConnectorException("ERROR: buffer: <" + out + ">");
+            }
+            getConnection().executeCommand("rm -f " + tmpFileName);
+            
+            // Execute the read-only command (last) to see if they we have
+            // permission to execute it            
+            Map<String, ErrorHandler> reject = CollectionUtil.<String, ErrorHandler>newMap("[P,p]ermission|[d,D]enied|not allowed|Sorry,", new ErrorHandler() {
+                public void handle(String buffer) {
+                    throw new ConnectorException("Invalid resource configuration: permission denied for execution of \"last\" command. Buffer: <" + buffer + ">");
+                }
+            });
+            getConnection().executeCommand("last -n 1", reject, Collections.<String>emptySet());
+        } finally {
+            getConnection().doSudoReset();
+        }
+    }
+
+    private Set<String> getRequiredCommands(boolean isNis) {
+        Set<String> result = CollectionUtil.newSet(
+                // required file commands for all unix connectors
+                "ls", "cp", "mv", "rm", "sed", "cat", "cut", "awk", "grep", "diff", "echo", "sort", "touch", "chown", "chmod",
+                "sleep"
+                );
+        if (isNis) {
+            result.addAll(CollectionUtil.newSet("ypcat", "ypmatch", "yppasswd"));
+        } else {
+            result.addAll(CollectionUtil.newSet(
+                    //user
+                    "last", "useradd", "usermod", "userdel", "passwd",
+                    //group
+                    "groupadd", "groupmod", "groupdel"
+                    ));
+        }
+        return result;
     }
 
     /* ********************** GET / SET methods ********************* */
