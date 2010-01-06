@@ -153,17 +153,22 @@ public class SolarisConnectionTest extends SolarisTestBase {
         
         // connection is recreated after every test method call so we are free to modify it.
         SolarisConfiguration config = getConnection().getConfiguration();
-        config.setSudoAuthorization(true);
-        config.setLoginUser("david");
-        config.setLoginShellPrompt("\\$");
-        config.setPassword(SolarisTestCommon.getProperty("pass", GuardedString.class));
-        config.setCredentials(SolarisTestCommon.getProperty("pass", GuardedString.class));
+        config = setupSudoAuthorizationConfig(config);
         
         SolarisConnection conn = new SolarisConnection(config);
         
         String out = conn.executeCommand("echo 'ahoj ship'");
         Assert.assertTrue(out.contains("ahoj ship"));
         conn.dispose();        
+    }
+
+    private SolarisConfiguration setupSudoAuthorizationConfig(SolarisConfiguration config) {
+        config.setSudoAuthorization(true);
+        config.setLoginUser("david");
+        config.setLoginShellPrompt("\\$");
+        config.setPassword(SolarisTestCommon.getProperty("pass", GuardedString.class));
+        config.setCredentials(SolarisTestCommon.getProperty("pass", GuardedString.class));
+        return config;
     }
     
     @Test
@@ -193,6 +198,104 @@ public class SolarisConnectionTest extends SolarisTestBase {
         } catch (IllegalArgumentException ex) {
             // OK
         }
+    }
+    
+    @Test
+    public void testConnectorConstruction() {
+        //SolarisConfiguration config = getConnection().getConfiguration();
+        implTestConnectorConstruction(false);
+        if (SolarisTestCommon.getProperty("unitTests.SolarisConnection.testsudoAuthorization", Boolean.class)) {
+            //config = getConnection().getConfiguration();
+            //config = setupSudoAuthorizationConfig(config);
+            implTestConnectorConstruction(true);
+        }
+    }
+
+    private void implTestConnectorConstruction(boolean isSudoAuthorization) {
+        SolarisConfiguration config = reloadConfig(isSudoAuthorization);
+        
+        // negative test: bad host
+        config.setHost("111.111.111.111");
+        try {
+            new SolarisConnection(config).checkAlive();
+            Assert.fail("Expected bad host to fail.");
+        } catch (Exception ex) {
+            // OK
+        }
+        
+        // negative test: bad port
+        config = reloadConfig(isSudoAuthorization);
+        try {
+            new SolarisConnection(config).checkAlive();
+            Assert.fail("Expected bad port to fail.");
+        } catch (Exception ex) {
+            // OK
+        }
+        
+        // negative test: bad admin
+        config = reloadConfig(isSudoAuthorization);
+        if (!isSudoAuthorization) {
+            config.setRootUser("badAdminUser");
+        } else {
+            config.setLoginUser("badAdminUser");
+        }
+        try {
+            new SolarisConnection(config).checkAlive();
+            Assert.fail("Expected bad admin to fail.");
+        } catch (Exception ex) {
+            // OK
+        }
+        
+        // negative test: bad admin password
+        //    avoiding bad admin password test for SSHPubKey connection
+        //    as it does not use the password at all.
+        if (!ConnectionType.toConnectionType(config.getConnectionType()).equals(ConnectionType.SSHPUBKEY)) {
+            config = reloadConfig(isSudoAuthorization);
+            if (!isSudoAuthorization) {
+                config.setCredentials(new GuardedString("badPassword".toCharArray()));
+            } else {
+                config.setPassword(new GuardedString("badPassword".toCharArray()));
+            }
+            try {
+                new SolarisConnection(config).checkAlive();
+                Assert.fail("Expected bad admin password to fail.");
+            } catch (Exception ex) {
+                // OK
+            }
+        }
+        
+        // negative test: bad shell prompt
+        config = reloadConfig(isSudoAuthorization);
+        if (!isSudoAuthorization) {
+            config.setRootShellPrompt("badRootShellPrompt");
+        } else {
+            config.setLoginShellPrompt("badLoginShellPrompt");
+        }
+        try {
+            new SolarisConnection(config).checkAlive();
+            Assert.fail("Expected bad shell prompt to fail.");
+        } catch (Exception ex) {
+            // OK
+        }
+        
+        // negative test: bad conn type
+        config = reloadConfig(isSudoAuthorization);
+        try {
+            config.setConnectionType("nonExistingConnetionType");
+            new SolarisConnection(config).checkAlive();
+            Assert.fail("Expected bad connection type to fail.");
+        } catch (Exception ex) {
+            // OK
+        }
+    }
+
+    private SolarisConfiguration reloadConfig(boolean isSudoAuthorization) {
+        SolarisConfiguration config = getConnection().getConfiguration();
+        if (isSudoAuthorization) {
+            config = setupSudoAuthorizationConfig(config);
+        }
+        
+        return config;
     }
 
     @Override
