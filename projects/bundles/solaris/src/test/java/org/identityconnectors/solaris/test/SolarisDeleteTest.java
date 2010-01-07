@@ -88,6 +88,6 @@ public class SolarisDeleteTest extends SolarisTestBase {
     }
 
     private String getUserName() {
-        return formatName(0);
+        return getUsername(0);
     }
 }

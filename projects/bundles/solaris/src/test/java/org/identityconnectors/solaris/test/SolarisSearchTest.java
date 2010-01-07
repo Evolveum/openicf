@@ -57,7 +57,7 @@ public class SolarisSearchTest extends SolarisTestBase {
 
         Set<String> expectedNames = new HashSet<String>();
         for (int i = 0; i < NR_OF_USERS; i++) {
-            expectedNames.add(formatName(i));
+            expectedNames.add(getUsername(i));
         }
 
         for (ConnectorObject connectorObject : handler.getObjects()) {
@@ -72,7 +72,7 @@ public class SolarisSearchTest extends SolarisTestBase {
      */
     @Test
     public void testSearchWithFilter() {
-        String username = formatName(0);
+        String username = getUsername(0);
 
         ToListResultsHandler handler = new ToListResultsHandler();
         getFacade().search(ObjectClass.ACCOUNT, 
@@ -123,7 +123,7 @@ public class SolarisSearchTest extends SolarisTestBase {
      */
     @Test
     public void testFetchUid() {
-        String username = formatName(0);
+        String username = getUsername(0);
         ToListResultsHandler handler = new ToListResultsHandler();
         getFacade().search(ObjectClass.ACCOUNT, 
                 FilterBuilder.equalTo(AttributeBuilder.build(Name.NAME, username)), handler, 

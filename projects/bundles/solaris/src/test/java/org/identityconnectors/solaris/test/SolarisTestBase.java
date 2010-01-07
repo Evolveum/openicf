@@ -40,6 +40,7 @@ import org.junit.After;
 import org.junit.Before;
 
 public abstract class SolarisTestBase {
+    public static final String SAMPLE_PASSWD = "samplePasswd";
     private static final String testgroupName = "testgrp";
     private SolarisConnection connection;
     private SolarisConfiguration configuration;
@@ -85,7 +86,7 @@ public abstract class SolarisTestBase {
         for (int i = 0; i < getCreateUsersNumber(); i++) {
             Set<Attribute> attrs = new HashSet<Attribute>();
             attrs.add(AttributeBuilder.build(Name.NAME, formatName(i)));
-            attrs.add(AttributeBuilder.buildPassword("samplePasswd".toCharArray()));
+            attrs.add(AttributeBuilder.buildPassword(SAMPLE_PASSWD.toCharArray()));
 
             facade.create(ObjectClass.ACCOUNT, attrs, null);
         }
@@ -99,6 +100,22 @@ public abstract class SolarisTestBase {
                 // OK
             }
         }
+    }
+    
+    /**
+     * Test use a special format for usernames. Get the username created by 
+     * the {@link SolarisTestBase} class, and control that the given {@code i}
+     * is in given range from 0 to {@link SolarisTestBase#getCreateUsersNumber()}.
+     * 
+     * @param i the ID for the user.
+     * @return the username for given iterator
+     * @throws {@link RuntimeException} if the user with the given {@code i} wasn't created
+     */
+    public String getUsername(int i) {
+        if (i >= getCreateUsersNumber() || i < 0)
+            throw new RuntimeException("param 'i' is out of bounds.");
+        
+        return formatName(i);
     }
 
     static String formatName(int i) {
