@@ -24,13 +24,10 @@ package org.identityconnectors.solaris;
 
 import static org.identityconnectors.solaris.SolarisMessages.MSG_NOT_SUPPORTED_OBJECTCLASS;
 
-import java.util.Map;
 import java.util.Set;
 
-import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
-import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
@@ -76,15 +73,6 @@ public class SolarisUtil {
      */
     public static String limitString(StringBuilder data) {
         return limitString(data, DEFAULT_LIMIT /* == max length of line from SolarisResourceAdapter#getUpdateNativeUserScript(), line userattribparams */).toString();
-    }
-    
-    /** helper method for getting the password from an attribute map */
-    public static GuardedString getPasswordFromMap(Map<String, Attribute> attrMap) {
-        Attribute attrPasswd = attrMap.get(OperationalAttributes.PASSWORD_NAME);
-        if (attrPasswd == null) {
-            throw new IllegalArgumentException("Password missing from attribute map");
-        }
-        return AttributeUtil.getGuardedStringValue(attrPasswd);
     }
     
     public static void controlObjectClassValidity(ObjectClass oclass, ObjectClass[] acceptedObjectClasses, Class<? extends AbstractOp> operation) {

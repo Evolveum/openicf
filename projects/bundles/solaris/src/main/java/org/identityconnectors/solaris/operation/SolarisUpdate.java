@@ -33,6 +33,7 @@ import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
@@ -73,7 +74,12 @@ public class SolarisUpdate extends AbstractOp {
         final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(uid.getUidValue(), objclass, replaceAttributes);
         
         if (objclass.is(ObjectClass.ACCOUNT_NAME)) {
-            final GuardedString passwd = SolarisUtil.getPasswordFromMap(attrMap);
+            GuardedString passwd = null; 
+            Attribute attrPasswd = attrMap.get(OperationalAttributes.PASSWORD_NAME);
+            if (attrPasswd != null) {
+                passwd = AttributeUtil.getGuardedStringValue(attrPasswd); 
+            }
+            
             if (connection.isNis()) {
                 invokeNISUserUpdate(entry, passwd);
             } else {

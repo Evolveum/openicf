@@ -33,6 +33,7 @@ import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
+import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
@@ -72,7 +73,12 @@ public class SolarisCreate extends AbstractOp {
         
         final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(name.getNameValue(), oclass, attrs);
         if (oclass.is(ObjectClass.ACCOUNT_NAME)) {
-            final GuardedString password = SolarisUtil.getPasswordFromMap(attrMap);
+            GuardedString password = null;
+            Attribute attrPasswd = attrMap.get(OperationalAttributes.PASSWORD_NAME);
+            if (attrPasswd != null) {
+                password = AttributeUtil.getGuardedStringValue(attrPasswd);
+            }
+            
             if (connection.isNis()) {
                 invokeNISUserCreate(entry, password);
             } else {
