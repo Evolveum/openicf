@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ====================
   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
   
@@ -66,9 +66,6 @@
     <None Include="license.rtf" />
   </ItemGroup>
   <Import Project="ExtBuild.proj" />
-  <Target Name="AfterBuild">
-    <Copy SourceFiles="bin\$(Configuration)\ServiceInstall.msi" DestinationFiles="bin\$(Configuration)\ServiceInstall-$(SVN_REVISION).msi" />
-  </Target>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj">
       <Name>Common</Name>

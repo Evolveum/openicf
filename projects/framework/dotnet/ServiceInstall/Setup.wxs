@@ -1,12 +1,12 @@
-﻿<?xml version="1.0"?>
+<?xml version="1.0"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 	<Product Id="*"
 		Name="Connector Server"
 		Language="1033"
-		Version="1.2.0.0"
+		Version="!(bind.FileVersion.Framework.dll)"
 		UpgradeCode="2C19FE30-F6A7-482D-A50F-C1E64D34C024"
 		Manufacturer="Sun Microsystems">
-		<Package Description="#Description"
+		<Package Description="Version: !(bind.FileVersion.Framework.dll)"
 			Comments="Comments"
 			InstallerVersion="200"
 			Compressed="yes"/>
