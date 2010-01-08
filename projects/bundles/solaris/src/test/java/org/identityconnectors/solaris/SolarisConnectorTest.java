@@ -38,6 +38,7 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.solaris.attr.AccountAttribute;
 import org.identityconnectors.solaris.test.SolarisTestBase;
+import org.identityconnectors.solaris.test.SolarisTestCommon;
 import org.identityconnectors.test.common.ToListResultsHandler;
 import org.junit.Test;
 
@@ -85,8 +86,57 @@ public class SolarisConnectorTest extends SolarisTestBase {
             }
         }
         
-         
+        // negative test: create
+        Set<Attribute> attrs = CollectionUtil.newSet(AttributeBuilder.build(Name.NAME, "donaldduck"), 
+                AttributeBuilder.buildPassword("sample_1".toCharArray()),
+                AttributeBuilder.build(AccountAttribute.SHELL.getName(), "/invalid/shell"));
+        try {
+            getFacade().create(ObjectClass.ACCOUNT, attrs, null);
+            Assert.fail("did not fail when creating user with invalid data");
+        } catch (Exception ex) {
+            // OK
+        } finally {
+            try {
+                getFacade().delete(ObjectClass.ACCOUNT, new Uid("sample_1"), null);
+            } catch (Exception ex) {
+                //OK
+            }
+        }
     }
+    
+    /**
+     * Error should be thrown when changing the "uid" of the user to // the same
+     * value of the another existing user in the resource.
+     */
+    @Test
+    public void testDuplicateCreate() {
+        Set<Attribute> attrs = CollectionUtil.newSet(
+                AttributeBuilder.build(Name.NAME, getUsername()), // duplicate username
+                AttributeBuilder.buildPassword("sample_1".toCharArray()));
+        try {
+            getFacade().create(ObjectClass.ACCOUNT, attrs, null);
+            Assert.fail("expected exception on create of user with non-unique username (==uid)");
+        } catch (Exception ex) {
+            // OK 
+        }
+    }
+    
+    /**
+     * Error should be thrown when changing the "uid" of the user to // the same
+     * value of the another existing user in the resource.
+     */
+    @Test
+    public void testDuplicateUpdate() {
+        Set<Attribute> replaceAttrs = CollectionUtil.newSet(AttributeBuilder.build(Name.NAME, getSecondUsername())); // duplicate username
+        try {
+            getFacade().update(ObjectClass.ACCOUNT, new Uid(getUsername()), replaceAttrs, null);
+            Assert.fail("expected exception on update of user with non-unique username (==uid)");
+        } catch (Exception ex) {
+            // OK 
+        }
+    }
+    
+    
 
     /**
      * check if the user has the given attribute set to the given value.
@@ -116,10 +166,14 @@ public class SolarisConnectorTest extends SolarisTestBase {
 
     @Override
     public int getCreateUsersNumber() {
-        return 1;
+        return 2;
     }
     
     private String getUsername() {
         return getUsername(0);
+    }
+    
+    private String getSecondUsername() {
+        return getUsername(1);
     }
 }

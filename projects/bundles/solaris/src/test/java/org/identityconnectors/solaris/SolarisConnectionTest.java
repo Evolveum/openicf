@@ -205,8 +205,6 @@ public class SolarisConnectionTest extends SolarisTestBase {
         //SolarisConfiguration config = getConnection().getConfiguration();
         implTestConnectorConstruction(false);
         if (SolarisTestCommon.getProperty("unitTests.SolarisConnection.testsudoAuthorization", Boolean.class)) {
-            //config = getConnection().getConfiguration();
-            //config = setupSudoAuthorizationConfig(config);
             implTestConnectorConstruction(true);
         }
     }
