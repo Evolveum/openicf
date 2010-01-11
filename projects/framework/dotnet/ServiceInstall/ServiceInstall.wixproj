@@ -28,9 +28,7 @@
     <OutputType>Package</OutputType>
     <RootNamespace>ServiceInstall</RootNamespace>
     <OutputName>ServiceInstall</OutputName>
-    <WixToolPath Condition=" '$(WixToolPath)' == '' ">$(WIX_HOME)</WixToolPath>
-    <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(WixToolPath)\wix.targets</WixTargetsPath>
-    <WixTasksPath Condition=" '$(WixTasksPath)' == '' ">$(WixToolPath)\WixTasks.dll</WixTasksPath>
+    <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.0\Wix.targets</WixTargetsPath>
     <SupressIces>ICE45</SupressIces>
     <WixVariables>WixUILicenseRtf=license.rtf</WixVariables>
   </PropertyGroup>
@@ -56,11 +54,9 @@
     <Optimize>True</Optimize>
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
   </PropertyGroup>
-  <Import Project="$(WixToolPath)\wix.targets" />
+  <Import Project="$(WixTargetsPath)" />
   <ItemGroup>
-    <WixExtension Include="WixUIExtension">
-      <HintPath>$(WixToolPath)\WixUIExtension.dll</HintPath>
-    </WixExtension>
+    <WixExtension Include="WixUIExtension"/>
     <Compile Include="Files.wxs" />
     <Compile Include="Setup.wxs" />
     <None Include="license.rtf" />
