@@ -29,6 +29,9 @@ namespace Org.IdentityConnectors.Common
     /// </summary>
     public static class Assertions
     {
+        private const string NULL_FORMAT = "Parameter '{0}' must not be null.";
+        private const string BLANK_FORMAT = "Parameter '{0}' must not be blank.";
+
         /// <summary>
         /// Throws <see cref="ArgumentNullException" /> if the parameter <paramref name="o"/>
         /// is <code>null</code>.
@@ -39,11 +42,31 @@ namespace Org.IdentityConnectors.Common
         /// message with the name of the parameter.</exception>
         public static void NullCheck(Object o, String param)
         {
-            String FORMAT = "Parameter '{0}' must not be null.";
             if (o == null)
             {
-                throw new ArgumentNullException(String.Format(FORMAT, param));
+                throw new ArgumentNullException(String.Format(NULL_FORMAT, param));
             }
+        }
+
+        /// <summary>
+        /// Throws <see cref="ArgumentNullException" /> if the parameter <paramref name="o"/>
+        /// is <code>null</code>, otherwise returns its value.
+        /// </summary>
+        /// <typeparam name="T">the type of the parameter to check for <code>null</code>. Must be a reference type.</typeparam>
+        /// <param name="o">check if the object is <code>null</code>.</param>
+        /// <param name="param">name of the parameter to check for <code>null</code>.</param>
+        /// <returns>the value of the parameter <paramref name="o"/>.</returns>
+        /// <exception cref="ArgumentNullException">if <paramref name="o"/> is <code>null</code> and constructs a
+        /// message with the name of the parameter.</exception>
+        public static T NullChecked<T>(T o, String param) where T : class
+        {
+            // Avoid calling NullCheck() here to reuse code: it deepens the stack trace.
+            // We want the exception to be thrown as close to the call site as possible.
+            if (o == null)
+            {
+                throw new ArgumentNullException(String.Format(NULL_FORMAT, param));
+            }
+            return o;
         }
 
         /// <summary>
@@ -56,11 +79,30 @@ namespace Org.IdentityConnectors.Common
         /// message with the name of the parameter.</exception>
         public static void BlankCheck(String o, String param)
         {
-            String FORMAT = "Parameter '{0}' must not be blank.";
             if (StringUtil.IsBlank(o))
             {
-                throw new ArgumentException(String.Format(FORMAT, param));
+                throw new ArgumentException(String.Format(BLANK_FORMAT, param));
             }
+        }
+
+        /// <summary>
+        /// Throws <see cref="ArgumentException" /> if the parameter <paramref name="o"/>
+        /// is <code>null</code> or blank, otherwise returns its value.
+        /// </summary>
+        /// <param name="o">value to test for blank.</param>
+        /// <param name="param">name of the parameter to check.</param>
+        /// <returns>the value of the parameter <paramref name="o"/>.</returns>
+        /// <exception cref="ArgumentException">if <paramref name="o"/> is <code>null</code> or  blank and constructs a
+        /// message with the name of the parameter.</exception>
+        public static String BlankChecked(String o, String param)
+        {
+            // Avoid calling BlankCheck() here to reuse code: it deepens the stack trace.
+            // We want the exception to be thrown as close to the call site as possible.
+            if (StringUtil.IsBlank(o))
+            {
+                throw new ArgumentException(String.Format(BLANK_FORMAT, param));
+            }
+            return o;
         }
     }
 }
