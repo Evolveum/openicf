@@ -32,7 +32,7 @@ import org.identityconnectors.framework.spi.ConnectorClass;
                              "org.identityconnectors.rw3270.wrq.Messages",  
                              "org.identityconnectors.rw3270.freehost3270.Messages"})
 public class RacfClConnector extends RacfConnector {
-    
+    //TODO implement the CL specific code 
 
     
 }

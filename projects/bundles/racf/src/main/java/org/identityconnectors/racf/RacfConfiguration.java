@@ -36,6 +36,8 @@ import org.identityconnectors.framework.spi.ConfigurationProperty;
 import org.identityconnectors.rw3270.RW3270Configuration;
 
 public class RacfConfiguration extends AbstractConfiguration implements MessagesInterface {
+    
+    //TODO _ldapUserName, _ldapPassword, _suffix, _isUseSsl, _hostLdapPortNumber seems to be LDAP specific
     private String         _ldapUserName;
     private GuardedString  _ldapPassword;
     private String         _suffix;

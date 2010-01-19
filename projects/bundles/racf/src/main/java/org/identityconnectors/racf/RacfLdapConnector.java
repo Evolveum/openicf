@@ -32,4 +32,5 @@ import org.identityconnectors.framework.spi.ConnectorClass;
                              "org.identityconnectors.rw3270.wrq.Messages",  
                              "org.identityconnectors.rw3270.freehost3270.Messages"})
 public class RacfLdapConnector extends RacfConnector {
+    //TODO implement the LDAP specific code
 }
