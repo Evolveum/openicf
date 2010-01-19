@@ -29,15 +29,13 @@ import java.lang.reflect.Array;
 
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.script.Script;
-import org.identityconnectors.common.script.ScriptBuilder;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.objects.ConnectorMessages;
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
 import org.identityconnectors.rw3270.RW3270Configuration;
 
-public class RacfConfiguration extends AbstractConfiguration {
+public class RacfConfiguration extends AbstractConfiguration implements MessagesInterface {
     private String         _ldapUserName;
     private GuardedString  _ldapPassword;
     private String         _suffix;
@@ -74,104 +72,20 @@ public class RacfConfiguration extends AbstractConfiguration {
     private String[]       _asPrivateKey;
     private String[]       _asFilterChangesBy;
 
-    private static class OurRW3270Configuration implements RW3270Configuration {
-        private RacfConfiguration     _config;
-        private int                 _index;
-
-        public OurRW3270Configuration(RacfConfiguration config, int index) {
-            _config = config;
-            _index = index;
-        }
-
-        public Script getConnectScript() {
-            return _config.getConnectScript();
-        }
-
-        public String getConnectionClassName() {
-            return _config.getConnectionClassName();
-        }
-
-        public String[] getConnectionProperties() {
-            return _config.getConnectionProperties();
-        }
-
-        public Script getDisconnectScript() {
-            return _config.getDisconnectScript();
-        }
-
-        public String getHostNameOrIpAddr() {
-            return _config.getHostNameOrIpAddr();
-        }
-
-        public Integer getHostTelnetPortNumber() {
-            return _config.getHostTelnetPortNumber();
-        }
-
-        public GuardedString getPassword() {
-            return _config.getPasswords()[_index];
-        }
-
-        public String getUserName() {
-            return _config.getUserNames()[_index];
-        }
-
-        public void setConnectScript(Script script) {
-            _config.setConnectScript(script);
-        }
-
-        public void setConnectionClassName(String className) {
-            _config.setConnectionClassName(className);
-        }
-
-        public void setConnectionProperties(String[] properties) {
-            _config.setConnectionProperties(properties);
-        }
-
-        public void setDisconnectScript(Script script) {
-            _config.setDisconnectScript(script);
-        }
-
-        public void setHostNameOrIpAddr(String nameOrIpAddr) {
-            _config.setHostNameOrIpAddr(nameOrIpAddr);
-        }
-
-        public void setHostTelnetPortNumber(Integer port) {
-            _config.setHostTelnetPortNumber(port);
-        }
-
-        public void setPassword(GuardedString password) {
-            GuardedString[] passwords = _config.getPasswords();
-            passwords[_index] = password;
-            _config.setPasswords(passwords);
-        }
-
-        public void setUserName(String name) {
-            String[] userNames = _config.getUserNames();
-            userNames[_index] = name;
-            _config.setUserNames(userNames);
-        }
-
-        public ConnectorMessages getConnectorMessages() {
-            return _config.getConnectorMessages();
-        }
-
-        public void setConnectorMessages(ConnectorMessages messages) {
-            _config.setConnectorMessages(messages);
-        }
-
-        public void validate() {
-            _config.validate();
-        }
-    }
-
     public RW3270Configuration getRW3270Configuration(int index) {
-        return new OurRW3270Configuration(this, index);
+        return new RW3270ConfigurationProxy(this, index);
     }
 
+    /* (non-Javadoc)
+     * @see org.identityconnectors.racf.MessagesInterfac#getMessage(java.lang.String)
+     */
     public String getMessage(String key) {
         return getConnectorMessages().format(key, key);
     }
 
+    /* (non-Javadoc)
+     * @see org.identityconnectors.racf.MessagesInterfac#getMessage(java.lang.String, java.lang.Object)
+     */
     public String getMessage(String key, Object... objects) {
         return getConnectorMessages().format(key, key, objects);
     }
@@ -236,37 +150,37 @@ public class RacfConfiguration extends AbstractConfiguration {
         }
     }
 
-    private Script getLoginScript() {
-        String script =
-            "connection.connect();\n" +
-            "connection.waitFor(\"PRESS THE ENTER KEY\", SHORT_WAIT);\n" +
-            "connection.send(\"TSO[enter]\");\n" +
-            "connection.waitFor(\"ENTER USERID -\", SHORT_WAIT);\n" +
-            "connection.send(USERNAME+\"[enter]\");\n" +
-            "connection.waitFor(\"Password  ===>\", SHORT_WAIT);\n" +
-            "connection.send(PASSWORD);\n" +
-            "connection.send(\"[enter]\");\n" +
-            "connection.waitFor(\"\\\\*\\\\*\\\\*\", SHORT_WAIT);\n" +
-            "connection.send(\"[enter]\");\n" +
-            "connection.waitFor(\"Option ===>\", SHORT_WAIT);\n" +
-            "connection.send(\"[pf3]\");\n" +
-            "connection.waitFor(\" READY\\\\s{74}\", SHORT_WAIT);";
-        ScriptBuilder builder = new ScriptBuilder();
-        builder.setScriptLanguage("GROOVY");
-        builder.setScriptText(script);
-        return builder.build();
-    }
-
-    private Script getLogoffScript() {
-        String script = "connection.send(\"LOGOFF[enter]\");\n";
-        //            "connection.send(\"LOGOFF[enter]\");\n" +
-        //            "connection.waitFor(\"=====>\", SHORT_WAIT);\n" +
-        //            "connection.dispose();\n";
-        ScriptBuilder builder = new ScriptBuilder();
-        builder.setScriptLanguage("GROOVY");
-        builder.setScriptText(script);
-        return builder.build();
-    }
+//    private Script getLoginScript() {
+//        String script =
+//            "connection.connect();\n" +
+//            "connection.waitFor(\"PRESS THE ENTER KEY\", SHORT_WAIT);\n" +
+//            "connection.send(\"TSO[enter]\");\n" +
+//            "connection.waitFor(\"ENTER USERID -\", SHORT_WAIT);\n" +
+//            "connection.send(USERNAME+\"[enter]\");\n" +
+//            "connection.waitFor(\"Password  ===>\", SHORT_WAIT);\n" +
+//            "connection.send(PASSWORD);\n" +
+//            "connection.send(\"[enter]\");\n" +
+//            "connection.waitFor(\"\\\\*\\\\*\\\\*\", SHORT_WAIT);\n" +
+//            "connection.send(\"[enter]\");\n" +
+//            "connection.waitFor(\"Option ===>\", SHORT_WAIT);\n" +
+//            "connection.send(\"[pf3]\");\n" +
+//            "connection.waitFor(\" READY\\\\s{74}\", SHORT_WAIT);";
+//        ScriptBuilder builder = new ScriptBuilder();
+//        builder.setScriptLanguage("GROOVY");
+//        builder.setScriptText(script);
+//        return builder.build();
+//    }
+//
+//    private Script getLogoffScript() {
+//        String script = "connection.send(\"LOGOFF[enter]\");\n";
+//        //            "connection.send(\"LOGOFF[enter]\");\n" +
+//        //            "connection.waitFor(\"=====>\", SHORT_WAIT);\n" +
+//        //            "connection.dispose();\n";
+//        ScriptBuilder builder = new ScriptBuilder();
+//        builder.setScriptLanguage("GROOVY");
+//        builder.setScriptText(script);
+//        return builder.build();
+//    }
     
     boolean isNoLdap() {
         return (StringUtil.isBlank(_suffix) || _hostLdapPortNumber==null || isBlank(_ldapPassword) || StringUtil.isBlank(_ldapUserName));
@@ -531,9 +445,9 @@ public class RacfConfiguration extends AbstractConfiguration {
         _hostLdapPortNumber = hostPortNumber;
     }
 
-    private String escape(String string) {
-        return string.replaceAll("#", "\\#");
-    }
+//    private String escape(String string) {
+//        return string.replaceAll("#", "\\#");
+//    }
 
     @ConfigurationProperty(order=8)
     public String[] getUserNames() {
@@ -736,6 +650,7 @@ public class RacfConfiguration extends AbstractConfiguration {
         _asDecryptorClass = decryptorClass;
     }
 
+    @SuppressWarnings("unchecked")
     private <T> T[] arrayCopy(T[] array) {
         if (array==null)
             return null;
