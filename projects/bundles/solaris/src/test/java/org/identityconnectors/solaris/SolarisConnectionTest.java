@@ -295,6 +295,48 @@ public class SolarisConnectionTest extends SolarisTestBase {
         
         return config;
     }
+    
+    /**
+     * test that repetitive open of sessions doesn't cause exception.
+     * This test shows if some resources are not cleaned up properly.
+     */
+    @Test
+    public void testSessionSSHClose() {
+        SolarisConfiguration config = SolarisTestCommon.createConfiguration();
+        testSessionRepetitiveCreation(config);
+    }
+
+    private void testSessionRepetitiveCreation(SolarisConfiguration config) {
+        try {
+            for (int i = 0; i < 100; i++) {
+                SolarisConnection connection = new SolarisConnection(config);
+                try {
+                    // empty on purpose
+                } finally {
+                    if (connection != null)
+                        connection.dispose();
+                }
+            }
+        } catch (Exception ex) {
+            Assert.fail("no exception should be thrown when cyclically calling creating and closing a connection.");
+        }
+    }
+    
+    /** analogical to {@link SolarisConnectionTest#testSessionSSHClose()} */
+    @Test
+    public void testSSHPubKeySessionClose() {
+        if (!SolarisTestCommon.getProperty("unitTests.SolarisConnection.testSSHPubkeyMode", Boolean.class)) {
+            log.info("skipping testSSHPubKeyConnection test, because the resource doesn't support it.");
+            return;
+        }
+        
+        SolarisConfiguration config = getConnection().getConfiguration();
+        config.setPassphrase(SolarisTestCommon.getProperty("rootPassphrase", GuardedString.class));
+        config.setPrivateKey(SolarisTestCommon.getProperty("rootPrivateKey", GuardedString.class));
+        config.setConnectionType(ConnectionType.SSHPUBKEY.toString());
+        
+        testSessionRepetitiveCreation(config);
+    }
 
     @Override
     public boolean createGroup() {

@@ -115,6 +115,10 @@ public class SolarisConnection {
     }
 
     private final Log log = Log.getLog(SolarisConnection.class);
+
+    private Session session;
+
+    private ChannelShell channel;
     
     /**
      * Specific constructor used by OpAuthenticateImpl. In most cases consider
@@ -135,13 +139,13 @@ public class SolarisConnection {
         final ConnectionType connType = ConnectionType.toConnectionType(configuration.getConnectionType());
         switch (connType) {
         case SSH:
-            expect4j = createSSHConn(loginUser, password);
+            createSSHConn(loginUser, password);
             break;
         case SSHPUBKEY:
-            expect4j = createSSHPubKeyConn(loginUser);
+            createSSHPubKeyConn(loginUser);
             break;
         case TELNET:
-            expect4j = createTelnetConn(loginUser, password);
+            createTelnetConn(loginUser, password);
             break;
         }
         
@@ -186,26 +190,25 @@ public class SolarisConnection {
         }
     }
 
-    private Expect4j createTelnetConn(String username, GuardedString password) {
+    private void createTelnetConn(String username, GuardedString password) {
         Expect4j expect4j = null;
         try {
             expect4j = ExpectUtils.telnet(configuration.getHost(), configuration.getPort());
         } catch (Exception e1) {
             throw ConnectorException.wrap(e1);
         }
-        return expect4j;
+        this.expect4j = expect4j;
     }
 
     /**
      * Connect to the resource using privateKey + passphrase pair.
      * 
      * @param username
-     * @return initialized instance of Expect4J library used for the connection.
      * 
      * Implementational note: this piece of code is a combination of the adapter's
      * SSHPubKeyConnection#OpenSession() method and ExpectUtils#SSH()
      */
-    private Expect4j createSSHPubKeyConn(final String username) {
+    private void createSSHPubKeyConn(final String username) {
         final JSch jsch=new JSch();
         
         final GuardedString privateKey = getConfiguration().getPrivateKey();
@@ -214,10 +217,25 @@ public class SolarisConnection {
             public void access(final char[] privateKeyClearText) {
                 keyPassphrase.access(new GuardedString.Accessor() {
                     public void access(final char[] keyPassphraseClearText) {
+                        final String identityName = "IdentityConnector";
                         try {
-                            jsch.addIdentity("IdentityConnector", convertToBytes(privateKeyClearText), null, convertToBytes(keyPassphraseClearText));
+                            jsch.addIdentity(identityName, convertToBytes(privateKeyClearText), null, convertToBytes(keyPassphraseClearText));
+                            session = jsch.getSession(username, getConfiguration().getHost(), getConfiguration().getPort());
+                            
+                            Hashtable<String, String> config = new Hashtable<String, String>();
+                            config.put("StrictHostKeyChecking", "no");
+                            session.setConfig(config);
+                            session.setDaemonThread(true);
+                            
+                            session.connect(3 * 1000);//making a connection with timeout.
                         } catch (JSchException e) {
                             throw ConnectorException.wrap(e);
+                        } finally {
+                            try {
+                                jsch.removeIdentity(identityName);
+                            } catch (JSchException e) {
+                                // OK
+                            }
                         }
                     }
 
@@ -230,26 +248,8 @@ public class SolarisConnection {
                     }
                 });
             }
-        });
+        }); 
         
-        Session session = null;
-        try {
-            session = jsch.getSession(username, getConfiguration().getHost(), getConfiguration().getPort());
-        } catch (JSchException e) {
-            throw ConnectorException.wrap(e);
-        }
-        
-        Hashtable<String, String> config = new Hashtable<String, String>();
-        config.put("StrictHostKeyChecking", "no");
-        session.setConfig(config);
-        session.setDaemonThread(true);
-        try {
-            session.connect(3 * 1000);//making a connection with timeout.
-        } catch (JSchException e) {
-            throw ConnectorException.wrap(e);
-        } 
-        
-        ChannelShell channel = null;
         try {
             channel = (ChannelShell) session.openChannel("shell");
         } catch (JSchException e) {
@@ -266,24 +266,48 @@ public class SolarisConnection {
             throw ConnectorException.wrap(e);
         }
 
-        return expect;
+        expect4j = expect;
     }
 
-    private Expect4j createSSHConn(final String username, GuardedString password) {
-        final Expect4j[] result = new Expect4j[1];
-        
+    
+    private void createSSHConn(final String username, GuardedString password) {
+        JSch jsch = new JSch();
+
+        try {
+            session = jsch.getSession(username, configuration.getHost(), configuration.getPort());
+        } catch (JSchException e) {
+            throw ConnectorException.wrap(e);
+        }
         password.access(new GuardedString.Accessor() {
             public void access(char[] clearChars) {
+                session.setPassword(new String(clearChars));
+                java.util.Hashtable<Object, Object> config = new java.util.Hashtable<Object, Object>();
+                config.put("StrictHostKeyChecking", "no");
+                session.setConfig(config);
+                session.setDaemonThread(true);
+
                 try {
-                    result[0] = ExpectUtils.SSH(configuration.getHost(), 
-                            username, new String(clearChars), configuration.getPort());
-                } catch (Exception e) {
+                    session.connect(3 * 1000);
+                } catch (JSchException e) {
                     throw ConnectorException.wrap(e);
+                } finally {
+                    session.setPassword(""); // cleaning password, as it is no longer used
                 }
             }
         });
+        
+        
+        try {
+            channel = (ChannelShell) session.openChannel("shell");
 
-        return result[0];
+            channel.setPtyType("vt102");
+
+            expect4j = new Expect4j(channel.getInputStream(), channel.getOutputStream());
+
+            channel.connect(5 * 1000);
+        } catch (Exception ex) {
+            throw ConnectorException.wrap(ex);
+        }
     }
 
     /* *************** METHODS ****************** */
@@ -809,10 +833,17 @@ public class SolarisConnection {
             // OK
         }
         log.info("dispose()");
+        
         if (expect4j != null) {
             expect4j.close();
             expect4j = null;
         }
+        
+        if (channel != null)
+            channel.disconnect();
+        
+        if (session != null)
+            session.disconnect();
     }
     
     /**
