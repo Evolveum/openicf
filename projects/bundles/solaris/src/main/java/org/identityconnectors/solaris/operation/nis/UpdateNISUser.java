@@ -38,7 +38,7 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 public class UpdateNISUser extends AbstractNISOp {
-    private static final Log _log = Log.getLog(UpdateNISUser.class);
+    private static final Log log = Log.getLog(UpdateNISUser.class);
     
     private static final String NO_PRIMARY_GROUP = "No primary group";
     private static final String UID_NOT_UNIQUE = "uid is not unique.";
@@ -121,7 +121,7 @@ public class UpdateNISUser extends AbstractNISOp {
                 break;
             }// switch
             if (matched) {
-                _log.ok(userEntry.getName() + " attribute '" + key.toString() + "' got value '" + value + "'");
+                log.ok(userEntry.getName() + " attribute '" + key.toString() + "' got value '" + value + "'");
             }
         }// for
         
@@ -241,7 +241,7 @@ public class UpdateNISUser extends AbstractNISOp {
 
     private static Pair<Boolean,String> initPasswordRecord1(String accountName, String uid,
             String gid, String homedir, final boolean recordUpdate) {
-        boolean _recordUpdate = recordUpdate;
+        boolean recordUpdateTmp = recordUpdate;
         StringBuffer passwordRecord1 = new StringBuffer(
                 // The connection to the resource is pooled.  Clear the environment
                 // variables that will be used.
@@ -255,14 +255,14 @@ public class UpdateNISUser extends AbstractNISOp {
             passwordRecord1.append("if [ -z \"$GROUP\" ]; then\n");
             passwordRecord1.append("GRPERRMSG=\"" + NO_PRIMARY_GROUP + " matches in ypmatch " + gid + " group.\"; ");
             passwordRecord1.append("fi; ");
-            _recordUpdate = true;
+            recordUpdateTmp = true;
         } else {
             passwordRecord1.append("GROUP=`echo $ENTRYTEXT | cut -d: -f4`; ");
         }
         
         if (homedir != null) {
             passwordRecord1.append("HOMEDIR=" + homedir +"; ");
-            _recordUpdate = true;            
+            recordUpdateTmp = true;            
         } else {
             passwordRecord1.append("HOMEDIR=`echo $ENTRYTEXT | cut -d: -f6`; ");
         }
@@ -274,12 +274,12 @@ public class UpdateNISUser extends AbstractNISOp {
             passwordRecord1.append("if [ \"$dupuid\" ]; then\n");
             passwordRecord1.append("DUPUIDERRMSG=\"" + UID_NOT_UNIQUE + " change uid " + uid  + " to some other unique value." + "\"; ");
             passwordRecord1.append("fi; ");
-            _recordUpdate = true;
+            recordUpdateTmp = true;
         } else {
             passwordRecord1.append("NEWUID=`echo $ENTRYTEXT | cut -d: -f3`; ");
         }
         
-        return new Pair<Boolean, String>(_recordUpdate, passwordRecord1.toString());
+        return new Pair<Boolean, String>(recordUpdateTmp, passwordRecord1.toString());
     }
 
     /**

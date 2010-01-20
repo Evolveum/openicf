@@ -58,7 +58,7 @@ import org.identityconnectors.solaris.operation.search.nodes.Node;
 
 public class SolarisSearch extends AbstractOp {
     
-    private static final Log _log = Log.getLog(SolarisSearch.class);
+    private static final Log log = Log.getLog(SolarisSearch.class);
     
     private SolarisConnection connection;
     
@@ -128,7 +128,7 @@ public class SolarisSearch extends AbstractOp {
      * @param filter contains the filters. Is created by {@link SolarisFilterTranslator}
      */
     public void executeQuery() {
-        _log.info("search ({0})", filter.toString());
+        log.info("search ({0})", filter.toString());
         SolarisUtil.controlObjectClassValidity(oclass, acceptOC, getClass());
         
         if (oclass.is(SHELL.getObjectClassValue())) {
@@ -153,7 +153,7 @@ public class SolarisSearch extends AbstractOp {
         } else {
             complexSearch(oclass, requiredAttrs);
         }
-        _log.info("search successfully finished.");
+        log.info("search successfully finished.");
     }
 
     /** 

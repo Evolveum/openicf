@@ -90,11 +90,11 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     /**
      * Setup logging for the {@link SolarisConnector}.
      */
-    private static final Log _log = Log.getLog(SolarisConnector.class);
+    private static final Log log = Log.getLog(SolarisConnector.class);
 
-    private SolarisConnection _connection;
+    private SolarisConnection connection;
 
-    private SolarisConfiguration _configuration;
+    private SolarisConfiguration configuration;
 
     private static Schema _schema;
 
@@ -104,8 +104,8 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      * .framework.spi.Configuration)}
      */
     public void init(Configuration cfg) {
-        _configuration = (SolarisConfiguration) cfg;
-        _connection = initConnection(_configuration);
+        configuration = (SolarisConfiguration) cfg;
+        connection = initConnection(configuration);
     }
 
     private SolarisConnection initConnection(final SolarisConfiguration configuration) {
@@ -116,8 +116,8 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      * {@see org.identityconnectors.framework.spi.PoolableConnector#checkAlive()}
      */
     public void checkAlive() {
-        _log.info("checkAlive()");
-        _connection.checkAlive();
+        log.info("checkAlive()");
+        connection.checkAlive();
     }
 
     /**
@@ -126,11 +126,11 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      * {@see org.identityconnectors.framework.spi.Connector#dispose()}
      */
     public void dispose() {
-        _log.info("dispose()");
-        _configuration = null;
-        if (_connection != null) {
-            _connection.dispose();
-            _connection = null;
+        log.info("dispose()");
+        configuration = null;
+        if (connection != null) {
+            connection.dispose();
+            connection = null;
         }
     }
 
@@ -148,8 +148,8 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
             uid = new SolarisAuthenticate(this).authenticate(objectClass, username, password, options);
         } finally {
             // after unsuccessful authenticate the connection might be in an unusable state. We have to create a new connection then.
-            _connection.dispose();
-            _connection = null;
+            connection.dispose();
+            connection = null;
         }
         return uid; 
     }
@@ -178,7 +178,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
 
     public FilterTranslator<Node> createFilterTranslator(
             ObjectClass oclass, OperationOptions options) {
-        _log.info("creating Filter translator.");
+        log.info("creating Filter translator.");
         return new SolarisFilterTranslator(oclass);
     }
     
@@ -191,7 +191,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
     
     // FIXME: control schema identity with adapter.
     public Schema schema() {
-        _log.info("schema()");
+        log.info("schema()");
         return SchemaHolder.schema;
     }
 
@@ -265,8 +265,8 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
      * @throws Exception if the test of connection was failed.
      */
     public void test() {
-        _log.info("test()");
-        _configuration.validate();        
+        log.info("test()");
+        configuration.validate();        
         checkAlive();
         testCheckCommandsAndPermissions();
     }
@@ -340,18 +340,18 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
 
     /* ********************** GET / SET methods ********************* */
     public SolarisConnection getConnection() {
-        if (_connection != null)
-            return _connection;
+        if (connection != null)
+            return connection;
         
-        _connection = initConnection(_configuration);
-        return _connection;
+        connection = initConnection(configuration);
+        return connection;
     }
     
     /**
      * {@see org.identityconnectors.framework.spi.Connector#getConfiguration()}
      */
     public Configuration getConfiguration() {
-        return _configuration;
+        return configuration;
     }
 
     /**

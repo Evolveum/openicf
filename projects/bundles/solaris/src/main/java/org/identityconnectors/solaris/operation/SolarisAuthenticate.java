@@ -39,7 +39,7 @@ import org.identityconnectors.solaris.SolarisUtil;
 
 public class SolarisAuthenticate extends AbstractOp {
 
-    private static final Log _log = Log.getLog(SolarisAuthenticate.class);
+    private static final Log log = Log.getLog(SolarisAuthenticate.class);
     
     private SolarisConnection connection;
     
@@ -54,7 +54,7 @@ public class SolarisAuthenticate extends AbstractOp {
     public Uid authenticate(ObjectClass objectClass, String username,
             GuardedString password, OperationOptions options) {
         SolarisUtil.controlObjectClassValidity(objectClass, acceptOC, getClass());
-        _log.info("authenticate (user: '{0}')", username);
+        log.info("authenticate (user: '{0}')", username);
         
         final Map<String, SolarisConnection.ErrorHandler> rejectsMap = initRejectsMap(username);
         final String command = "exec login " + username + " TERM=vt00";
@@ -62,7 +62,7 @@ public class SolarisAuthenticate extends AbstractOp {
         connection.executeCommand(command, Collections.<String>emptySet(), CollectionUtil.newSet("assword:"));
         SolarisConnection.sendPassword(password, connection);
         connection.executeCommand("echo '" + MSG + "'", rejectsMap, CollectionUtil.newSet(MSG));
-        _log.info("authenticate successful for user: '{0}'", username);
+        log.info("authenticate successful for user: '{0}'", username);
         
         return new Uid(username);
         /*

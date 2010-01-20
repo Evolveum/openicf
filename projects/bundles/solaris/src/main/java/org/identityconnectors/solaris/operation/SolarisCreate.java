@@ -45,7 +45,7 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 public class SolarisCreate extends AbstractOp {
 
-    private static final Log _log = Log.getLog(SolarisCreate.class);
+    private static final Log log = Log.getLog(SolarisCreate.class);
     
     private SolarisConnection connection;
     
@@ -69,7 +69,7 @@ public class SolarisCreate extends AbstractOp {
         final Name name = (Name) attrMap.get(Name.NAME);
         final String entryName = name.getNameValue();
 
-        _log.info("~~~~~~~ create {0}(''{1}'') ~~~~~~~", oclass.getObjectClassValue(), entryName);
+        log.info("~~~~~~~ create {0}(''{1}'') ~~~~~~~", oclass.getObjectClassValue(), entryName);
         
         final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(name.getNameValue(), oclass, attrs);
         if (oclass.is(ObjectClass.ACCOUNT_NAME)) {

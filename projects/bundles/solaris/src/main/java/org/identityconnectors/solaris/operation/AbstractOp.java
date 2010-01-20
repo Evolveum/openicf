@@ -28,16 +28,16 @@ import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 
 public abstract class AbstractOp {
-    private SolarisConnector _connector;
+    private SolarisConnector connector;
     
     public AbstractOp(SolarisConnector conn) {
-        _connector = conn;
+        connector = conn;
         
         final SolarisConnection connection = conn.getConnection();
         Assertions.nullCheck(connection, "connection");
     }
     
     protected final Schema getSchema() {
-        return _connector.schema();
+        return connector.schema();
     }
 }

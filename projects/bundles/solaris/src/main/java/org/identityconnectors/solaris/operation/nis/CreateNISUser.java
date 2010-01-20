@@ -37,7 +37,7 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 public class CreateNISUser extends AbstractNISOp {
-    private static final Log _log = Log.getLog(CreateNISUser.class);
+    private static final Log log = Log.getLog(CreateNISUser.class);
     
     private final static Set<String> chshRejects = CollectionUtil.newSet("password:", "passwd:");
 
@@ -92,19 +92,19 @@ public class CreateNISUser extends AbstractNISOp {
 
             homedirBuffer.append(accountId);
             homedir = homedirBuffer.toString();
-            _log.ok(accountId + " got " + homedir + " from Configuration attribute 'homeBaseDir'");
+            log.ok(accountId + " got " + homedir + " from Configuration attribute 'homeBaseDir'");
         }
         
         String loginGroup = config.getDefaultPrimaryGroup();
         if ((loginGroup != null) && (loginGroup.length() > 0)) {
             gid = loginGroup;
-            _log.ok(accountId + " got " + loginGroup + " from Configuration attribute 'defaultPrimaryGroup'");
+            log.ok(accountId + " got " + loginGroup + " from Configuration attribute 'defaultPrimaryGroup'");
         }
         
         String loginShell  = config.getLoginShell();
         if ((loginShell != null) && (loginShell.length() > 0)) {
             shell = loginShell;
-            _log.ok(accountId + " got " + loginShell + " from Configuration attribute 'loginShell'");
+            log.ok(accountId + " got " + loginShell + " from Configuration attribute 'loginShell'");
         }
         
         // Get specified user attributes, which can override above resource attributes
@@ -135,7 +135,7 @@ public class CreateNISUser extends AbstractNISOp {
                 break;
             }// switch
             if (matched) {
-                _log.ok(entry.getName() + " attribute '" + key.toString() + "' got value '" + value + "'");
+                log.ok(entry.getName() + " attribute '" + key.toString() + "' got value '" + value + "'");
             }
         }// for
         

@@ -35,7 +35,7 @@ import org.identityconnectors.solaris.operation.nis.DeleteNISUser;
 
 public class SolarisDelete extends AbstractOp {
 
-    private static final Log _log = Log.getLog(SolarisDelete.class);
+    private static final Log log = Log.getLog(SolarisDelete.class);
     
     private SolarisConnection connection;
     
@@ -51,7 +51,7 @@ public class SolarisDelete extends AbstractOp {
         
         final String entryName = uid.getUidValue();
         
-        _log.info("{0} delete(''{1}'')",((objClass.is(ObjectClass.ACCOUNT_NAME))? "account" : "group") , entryName);
+        log.info("{0} delete(''{1}'')",((objClass.is(ObjectClass.ACCOUNT_NAME))? "account" : "group") , entryName);
         
         if (objClass.is(ObjectClass.ACCOUNT_NAME)) {
             if (connection.isNis()) {
@@ -69,7 +69,7 @@ public class SolarisDelete extends AbstractOp {
             throw new UnsupportedOperationException();
         }
 
-        _log.ok("userdel(''{0}'')", entryName);
+        log.ok("userdel(''{0}'')", entryName);
 
     }
 

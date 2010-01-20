@@ -103,15 +103,15 @@ public class SolarisConnection {
         }
     };
     
-    private String _loginShellPrompt;
-    private Expect4j _expect4j;
+    private String loginShellPrompt;
+    private Expect4j expect4j;
     
     /**
      * the configuration object from which this connection is created.
      */
-    private SolarisConfiguration _configuration;
+    private SolarisConfiguration configuration;
     public SolarisConfiguration getConfiguration() {
-        return _configuration;
+        return configuration;
     }
 
     private final Log log = Log.getLog(SolarisConnection.class);
@@ -120,14 +120,14 @@ public class SolarisConnection {
      * Specific constructor used by OpAuthenticateImpl. In most cases consider
      * using {@link SolarisConnection#SolarisConnection(SolarisConfiguration)}
      */
-    public SolarisConnection(SolarisConfiguration configuration) {
-        if (configuration == null) {
+    public SolarisConnection(SolarisConfiguration config) {
+        if (config == null) {
             throw new ConfigurationException(
                     "Cannot create a SolarisConnection on a null configuration.");
         }
-        _configuration = configuration;
+        configuration = config;
         
-        _loginShellPrompt = configuration.getLoginShellPrompt();
+        loginShellPrompt = configuration.getLoginShellPrompt();
         
         final String loginUser = configuration.getLoginUser();
         final GuardedString password = configuration.getPassword();
@@ -135,13 +135,13 @@ public class SolarisConnection {
         final ConnectionType connType = ConnectionType.toConnectionType(configuration.getConnectionType());
         switch (connType) {
         case SSH:
-            _expect4j = createSSHConn(loginUser, password);
+            expect4j = createSSHConn(loginUser, password);
             break;
         case SSHPUBKEY:
-            _expect4j = createSSHPubKeyConn(loginUser);
+            expect4j = createSSHPubKeyConn(loginUser);
             break;
         case TELNET:
-            _expect4j = createTelnetConn(loginUser, password);
+            expect4j = createTelnetConn(loginUser, password);
             break;
         }
         
@@ -168,8 +168,8 @@ public class SolarisConnection {
                 executeCommand("su " + rootUser, CollectionUtil.newSet("Unknown id", "does not exist"), CollectionUtil.newSet("assword:"));
                 
                 // we need to change the type of rootShellPrompt here (we used loginUser's up to now)
-                final String rootShellPrompt = (!StringUtil.isBlank(configuration.getRootShellPrompt())) ? configuration.getRootShellPrompt() : _loginShellPrompt;
-                _loginShellPrompt = rootShellPrompt;
+                final String rootShellPrompt = (!StringUtil.isBlank(configuration.getRootShellPrompt())) ? configuration.getRootShellPrompt() : loginShellPrompt;
+                loginShellPrompt = rootShellPrompt;
                 
                 sendPassword(password, CollectionUtil.newSet("Sorry", "incorrect password"), Collections.<String>emptySet() /* wait for rootShellPrompt */, this);
                 executeCommand("stty -echo");
@@ -179,17 +179,17 @@ public class SolarisConnection {
              * Change root shell prompt, for simplier parsing of the output.
              * Revert the changes after the connection is closed.
              */
-            _loginShellPrompt = CONNECTOR_PROMPT;
+            loginShellPrompt = CONNECTOR_PROMPT;
             executeCommand("PS1=\"" + CONNECTOR_PROMPT + "\"");
         } catch (Exception e) {
-            throw new ConnectorException(String.format("Connection failed to host '%s:%s' for user '%s'", _configuration.getHost(), _configuration.getPort(), loginUser), e);
+            throw new ConnectorException(String.format("Connection failed to host '%s:%s' for user '%s'", configuration.getHost(), configuration.getPort(), loginUser), e);
         }
     }
 
     private Expect4j createTelnetConn(String username, GuardedString password) {
         Expect4j expect4j = null;
         try {
-            expect4j = ExpectUtils.telnet(_configuration.getHost(), _configuration.getPort());
+            expect4j = ExpectUtils.telnet(configuration.getHost(), configuration.getPort());
         } catch (Exception e1) {
             throw ConnectorException.wrap(e1);
         }
@@ -275,8 +275,8 @@ public class SolarisConnection {
         password.access(new GuardedString.Accessor() {
             public void access(char[] clearChars) {
                 try {
-                    result[0] = ExpectUtils.SSH(_configuration.getHost(), 
-                            username, new String(clearChars), _configuration.getPort());
+                    result[0] = ExpectUtils.SSH(configuration.getHost(), 
+                            username, new String(clearChars), configuration.getPort());
                 } catch (Exception e) {
                     throw ConnectorException.wrap(e);
                 }
@@ -292,7 +292,7 @@ public class SolarisConnection {
      * @param string
      */
     private void sendInternal(String string) throws IOException {
-        _expect4j.send(string + HOST_END_OF_LINE_TERMINATOR);
+        expect4j.send(string + HOST_END_OF_LINE_TERMINATOR);
     }
     
     /**
@@ -606,7 +606,7 @@ public class SolarisConnection {
              * the match is successful, the initial other letters are ignored by the matcher.
              * 
              */
-            _expect4j.expect(builder.build());
+            expect4j.expect(builder.build());
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         }
@@ -787,7 +787,7 @@ public class SolarisConnection {
             }
         });
         
-        _expect4j.expect(builder.build());
+        expect4j.expect(builder.build());
         
         return buffer.toString();
     }
@@ -809,15 +809,15 @@ public class SolarisConnection {
             // OK
         }
         log.info("dispose()");
-        if (_expect4j != null) {
-            _expect4j.close();
-            _expect4j = null;
+        if (expect4j != null) {
+            expect4j.close();
+            expect4j = null;
         }
     }
     
     /**
      * The method formats the given command, and inserts {@code sudo} prefix in front
-     * of the command according to the state of the connection's {@link SolarisConnection#_configuration}.
+     * of the command according to the state of the connection's {@link SolarisConnection#configuration}.
      * 
      * @param command
      *            the command can be a chain of strings separated by spaces. In
@@ -832,7 +832,7 @@ public class SolarisConnection {
      */
     public String buildCommand(String command, CharSequence... arguments) {
         StringBuilder buff = new StringBuilder();
-        if (_configuration.isSudoAuthorization()) {
+        if (configuration.isSudoAuthorization()) {
             buff.append("sudo ");
         }
         buff.append(command);
@@ -858,7 +858,7 @@ public class SolarisConnection {
     }
 
     public String getRootShellPrompt() {
-        return _loginShellPrompt;
+        return loginShellPrompt;
     }
     
     /*
@@ -1059,7 +1059,7 @@ public class SolarisConnection {
     }
     
     public boolean isDefaultNisPwdDir() {
-        return _configuration.getNisPwdDir().equals(SolarisConfiguration.DEFAULT_NISPWDDIR);
+        return configuration.getNisPwdDir().equals(SolarisConfiguration.DEFAULT_NISPWDDIR);
     }
 
     /**

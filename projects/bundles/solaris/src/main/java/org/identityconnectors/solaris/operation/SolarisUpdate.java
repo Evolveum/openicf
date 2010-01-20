@@ -50,7 +50,7 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
  */
 public class SolarisUpdate extends AbstractOp {
     
-    private static final Log _log = Log.getLog(SolarisUpdate.class);
+    private static final Log log = Log.getLog(SolarisUpdate.class);
     
     private SolarisConnection connection;
 
@@ -65,7 +65,7 @@ public class SolarisUpdate extends AbstractOp {
     /** main update method */
     public Uid update(ObjectClass objclass, Uid uid, Set<Attribute> replaceAttributes, OperationOptions options) {
 
-        _log.info("update ('{0}', name: '{1}'", objclass.toString(), uid.getUidValue());
+        log.info("update ('{0}', name: '{1}'", objclass.toString(), uid.getUidValue());
 
         SolarisUtil.controlObjectClassValidity(objclass, acceptOC, getClass());
 
@@ -95,7 +95,7 @@ public class SolarisUpdate extends AbstractOp {
             throw new UnsupportedOperationException();
         }
 
-        _log.info("update successful ('{0}', name: '{1}')",
+        log.info("update successful ('{0}', name: '{1}')",
                 objclass.toString(), uid.getUidValue());
         
         Uid newUid = uid; // uid is the uid before update.
