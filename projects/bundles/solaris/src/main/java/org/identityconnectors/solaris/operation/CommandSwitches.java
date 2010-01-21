@@ -23,10 +23,13 @@
 package org.identityconnectors.solaris.operation;
 
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
@@ -81,7 +84,13 @@ class CommandSwitches {
         for (Attribute attr : entry.getAttributeSet()) {
             NativeAttribute nAttrName = NativeAttribute.forAttributeName(attr.getName());
             // assuming Single values only
-            String value = (attr.getValue().size() > 0) ? (String) attr.getValue().get(0) : null;
+            List<Object> values = attr.getValue();
+            if (values == null) {
+                // workaround for contract tests (UpdateApitOpTests#testUpdateToNull()):
+                // because Unix cannot accept null arguments in update, we need to throw an exception to satisfy the contract.
+                throw new ConnectorException(String.format("Attribute '%s' has a null value, expecting singleValue", attr.getName()));
+            }
+            String value = AttributeUtil.getStringValue(attr);
 
             /* 
              * append command line switch
