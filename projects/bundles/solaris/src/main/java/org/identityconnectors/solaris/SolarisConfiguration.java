@@ -367,6 +367,15 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         this.rootShellPrompt = rootShellPrompt;
     }
 
+    /**
+     * Compare with {@link SolarisConfiguration#isSuAuthorization()}
+     * 
+     * SudoAuthorization turned on means, that we log in with an ordinary
+     * {@link SolarisConfiguration#loginUser} and add the {@code sudo} prefix
+     * before every command that needs root privileges.
+     * 
+     * @return true if sudoAuthorization is turned on
+     */
     @ConfigurationProperty(order = 9)
     public boolean isSudoAuthorization() {
         return sudoAuthorization;
@@ -531,6 +540,26 @@ public final class SolarisConfiguration extends AbstractConfiguration {
 
     /*            *********** AUXILIARY METHODS ***************** */
     /**
+     * Compare with {@link SolarisConfiguration#isSudoAuthorization()}.
+     * 
+     * Means that we log in with an ordinary user (
+     * {@link SolarisConfiguration#loginUser}) that lacks administrator
+     * privileges. But later on we issue an {@code su} command to switch to the
+     * root shell. {@link SolarisConfiguration#rootUser} and
+     * {@link SolarisConfiguration#credentials} credentials are used when we
+     * switch to superuser.
+     * 
+     * This switch using {@code su} happens only once in lifecycle of the
+     * {@link SolarisConnection}.
+     * 
+     * @return true if {@code su authorization} is used for the current
+     *         configuration.
+     */
+    public boolean isSuAuthorization() {
+        return !isSudoAuthorization() && !StringUtil.isBlank(rootUser) && !loginUser.equals(rootUser); 
+    }
+    
+    /**
      * Get the Localization message for the current key
      */
     public String getMessage(String key) {
@@ -572,7 +601,8 @@ public final class SolarisConfiguration extends AbstractConfiguration {
             throw new ConfigurationException(String.format(msg, "Connection type"));
         }
 
-        
-
+        if (!StringUtil.isBlank(rootUser) && credentials == null) {
+            throw new ConfigurationException(String.format(msg, "[rootUser, credentials]"));
+        }
     }
 }

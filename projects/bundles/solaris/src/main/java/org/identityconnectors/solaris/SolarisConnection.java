@@ -167,8 +167,8 @@ public class SolarisConnection {
             executeCommand("stty -echo");
             
             // if the login and root users are different, we will need to su to root here.
-            final String rootUser = (!StringUtil.isBlank(configuration.getRootUser())) ? configuration.getRootUser() : loginUser; // rootuser equals to loginUser, if it is not defined in the configuration.
-            if (!configuration.isSudoAuthorization() && !loginUser.equals(rootUser)) {
+            final String rootUser = configuration.getRootUser();
+            if (!configuration.isSudoAuthorization() && configuration.isSuAuthorization()) {
                 executeCommand("su " + rootUser, CollectionUtil.newSet("Unknown id", "does not exist"), CollectionUtil.newSet("assword:"));
                 
                 // we need to change the type of rootShellPrompt here (we used loginUser's up to now)
@@ -823,10 +823,7 @@ public class SolarisConnection {
     public void dispose() {
         try {
             sendInternal("exit");
-            final String loginUser = getConfiguration().getLoginUser();
-            // rootuser equals to loginUser, if it is not defined in the configuration.
-            final String rootUser = (!StringUtil.isBlank(getConfiguration().getRootUser())) ? getConfiguration().getRootUser() : getConfiguration().getLoginUser();
-            if (!loginUser.equals(rootUser)) {
+            if (configuration.isSuAuthorization()) {
                 sendInternal("exit");
             }
         } catch (IOException e) {
