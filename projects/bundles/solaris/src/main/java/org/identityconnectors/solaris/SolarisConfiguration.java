@@ -74,7 +74,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
      * 
      * This property is coupled with {@link SolarisConfiguration#loginUser}.
      */
-    private String loginShellPrompt; // NEW
+    private String loginShellPrompt;
 
     /**
      * <b>Root User</b>
@@ -602,7 +602,11 @@ public final class SolarisConfiguration extends AbstractConfiguration {
         }
 
         if (!StringUtil.isBlank(rootUser) && credentials == null) {
-            throw new ConfigurationException(String.format(msg, "[rootUser, credentials]"));
+            throw new ConfigurationException("Missing 'credentials' property. Both 'rootUser' and 'credentials' have to be defined.");
+        }
+        
+        if (!StringUtil.isBlank(rootUser) && StringUtil.isBlank(rootShellPrompt)) {
+            throw new ConfigurationException("Missing 'credentials' property. Both 'rootUser' and 'rootShellPrompt' have to be defined.");
         }
     }
 }

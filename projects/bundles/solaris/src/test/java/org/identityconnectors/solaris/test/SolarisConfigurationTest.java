@@ -86,7 +86,7 @@ public class SolarisConfigurationTest {
     
     @Test
     public void testIsSuAuthorization() {
-        GuardedString dummyPassword = new GuardedString("".toCharArray());
+        GuardedString dummyPassword = new GuardedString("dummy".toCharArray());
         SolarisConfiguration config = getConfiguration();
         config.setLoginUser("loginuser");
         config.setPassword(dummyPassword);
@@ -97,6 +97,7 @@ public class SolarisConfigurationTest {
         config.setPassword(dummyPassword);
         config.setRootUser("rootUser");
         config.setCredentials(dummyPassword);
+        config.setRootShellPrompt("#");
         Assert.assertTrue(config.isSuAuthorization());
         
         config = getConfiguration();
@@ -105,7 +106,33 @@ public class SolarisConfigurationTest {
         config.setPassword(dummyPassword);
         config.setRootUser(loginUser);
         config.setCredentials(dummyPassword);
+        config.setRootShellPrompt("#");
         Assert.assertFalse(config.isSuAuthorization());
+    }
+    
+    @Test
+    public void testIsCorrectRootuser() {
+        SolarisConfiguration config = getConfiguration();
+        config.setRootUser("root");
+        config.setCredentials(null);
+        config.setRootShellPrompt("#");
+        try {
+            config.validate();
+            Assert.fail("configurationException expected for missing credentials.");
+        } catch (ConfigurationException ex) {
+            //OK
+        }
+        
+        config = getConfiguration();
+        config.setRootUser("root");
+        config.setCredentials(new GuardedString("dummy".toCharArray()));
+        config.setRootShellPrompt(null);
+        try {
+            config.validate();
+            Assert.fail("configurationException expected for missing credentials.");
+        } catch (ConfigurationException ex) {
+            //OK
+        }
     }
     
     @Test @Ignore // TODO
