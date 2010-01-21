@@ -231,8 +231,16 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         attributes.add(OperationalAttributeInfos.PASSWORD);
         for (AccountAttribute attr : AccountAttribute.values()) {
             AttributeInfo newAttr = null;
-            
-            newAttr = AttributeInfoBuilder.build(attr.getName());
+            switch (attr) {
+            case MIN:
+            case MAX:
+            case INACTIVE:
+                newAttr = AttributeInfoBuilder.build(attr.getName(), int.class);
+                break;
+            default:
+                newAttr = AttributeInfoBuilder.build(attr.getName());
+                break;
+            }
             
             attributes.add(newAttr);
         }

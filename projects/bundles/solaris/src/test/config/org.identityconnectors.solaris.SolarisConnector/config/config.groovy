@@ -61,6 +61,16 @@ testsuite {
       multiValue: false,
       returnedByDefault: true
     ]// attrTemplate
+    
+    attrTemplateInt = [
+      type: int.class,
+      readable: true,
+      createable: true,
+      updateable: true,
+      required: false,
+      multiValue: false,
+      returnedByDefault: true
+    ]// attrTemplate
   
     attrRequiredTemplate = [
       type: String.class,
@@ -129,9 +139,9 @@ testsuite {
     ]
     __NAME__.attribute.shell.oclasses = Lazy.get("testsuite.Schema.attrRequiredTemplate")
 
-    inactive.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
-    min.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
-    max.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
+    inactive.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateInt")
+    min.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateInt")
+    max.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateInt")
     secondary_group.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     group.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     __NAME__.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
