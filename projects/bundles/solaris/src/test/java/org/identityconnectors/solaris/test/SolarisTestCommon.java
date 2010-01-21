@@ -61,7 +61,6 @@ public class SolarisTestCommon {
 
     public static <T> T getProperty(String name, Class<T> type) {
         T value = testProps.getProperty(name, type);
-        Assertions.nullCheck(value, name);
         return value;
     }
 
@@ -70,19 +69,34 @@ public class SolarisTestCommon {
         SolarisConfiguration config = new SolarisConfiguration();
 
         config.setHost(getStringProperty("host"));
-
-        final GuardedString password = getProperty("pass", GuardedString.class);
-        config.setPassword(password);
-
-        config.setLoginUser(getStringProperty("user"));
-
         config.setPort(Integer.valueOf(getProperty("port", Integer.class)));
-
         config.setConnectionType(getStringProperty("connectionType"));
 
-        config.setLoginShellPrompt(getStringProperty("rootShellPrompt"));
+        // login user credentials
+        config.setLoginUser(getStringProperty("user"));
         
-        String propName = "systemDatabaseType";
+        final GuardedString password = getProperty("pass", GuardedString.class);
+        config.setPassword(password);
+        
+        config.setLoginShellPrompt(getStringProperty("loginShellPrompt"));
+        
+        // root user credentials
+        String propName = "credentials";
+        if (isPropertyDefined(propName, GuardedString.class)) {
+            config.setCredentials(getProperty(propName, GuardedString.class));
+        }
+
+        propName = "rootUser";
+        if (isStringPropertyDefined(propName)) {
+            config.setRootUser(getStringProperty(propName));
+        }
+        
+        propName = "rootShellPrompt";
+        if (isStringPropertyDefined(propName)) {
+            config.setRootShellPrompt(getStringProperty(propName));
+        }
+        
+        propName = "systemDatabaseType";
         if (isStringPropertyDefined(propName)) {
             config.setSystemDatabaseType(getStringProperty(propName));
         }
