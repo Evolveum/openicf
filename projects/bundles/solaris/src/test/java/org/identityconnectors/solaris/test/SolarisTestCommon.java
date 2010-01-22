@@ -42,19 +42,6 @@ public class SolarisTestCommon {
 
     private static final PropertyBag testProps = TestHelpers.getProperties(SolarisConnector.class);
 
-    /**
-     * create a new solaris connector and initialize it with the given
-     * configuration
-     * 
-     * @param config
-     *            the configuration to be used.
-     */
-    public static SolarisConnector createConnector() {
-        SolarisConnector conn = new SolarisConnector();
-        conn.init(createConfiguration());
-        return conn;
-    }
-
     private static String getStringProperty(String name) {
         return getProperty(name, String.class);
     }

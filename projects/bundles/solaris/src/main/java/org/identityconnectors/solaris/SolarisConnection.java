@@ -660,6 +660,11 @@ public class SolarisConnection {
      * up to the root shell prompt
      * {@link SolarisConnection#getRootShellPrompt()}.
      * 
+     * Warning: all the matches (rejects, accepts parameter) are interpreted as
+     * regular expressions (see {@link Pattern}). Be careful with special
+     * symbols, such as {@code $, ^}, as they should be escaped. For instance to
+     * match the {@code $} prompt you should use {@code \\$}.
+     * 
      * @param command
      *            the executed command. In special cases (such as waiting for
      *            the first prompt after login, the command can have {@code
