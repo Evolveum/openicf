@@ -33,6 +33,7 @@ import org.identityconnectors.framework.common.exceptions.InvalidCredentialExcep
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
@@ -53,8 +54,28 @@ public class SolarisAuthenticate extends AbstractOp {
 
     public Uid authenticate(ObjectClass objectClass, String username,
             GuardedString password, OperationOptions options) {
+        // The script works by trying to execute another login from
+        // within the system, then tries to echo a unique string back
+        // but makes sure that the text incorrect didn't come back.
+        // N.B. from here on, the SolarisConnection will be logged in
+        // as the authenticated user (assuming the authentication succeeded)
+        // and NOT as root.  If the connection is reused after the
+        // authentication, things may not behave as expected.  The logout
+        // that will presumably be called eventually will logout all
+        // the way out of the system, including the original root shell.
+        
         SolarisUtil.controlObjectClassValidity(objectClass, acceptOC, getClass());
         log.info("authenticate (user: '{0}')", username);
+        
+        final SolarisConfiguration configuration = connection.getConfiguration();
+        final String loginShellPrompt = configuration.getLoginShellPrompt();
+        // in case we logged in with different user that the root user, the following applies:
+        // since we have to exec login from the lowest shell, we have to exit
+        // here to the login shell from the root shell before we can
+        // authenticate the user.
+        if (!configuration.isSudoAuthorization() && configuration.isSuAuthorization()) {
+            connection.executeCommand("exit", Collections.<String>emptySet(), CollectionUtil.newSet(loginShellPrompt));
+        }
         
         final Map<String, SolarisConnection.ErrorHandler> rejectsMap = initRejectsMap(username);
         final String command = "exec login " + username + " TERM=vt00";
@@ -65,38 +86,6 @@ public class SolarisAuthenticate extends AbstractOp {
         log.info("authenticate successful for user: '{0}'", username);
         
         return new Uid(username);
-        /*
-            // since we have to exec login from the lowest shell, we have to exit
-    // here to the login shell from the root shell before we can
-    // authenticate the user.
-    if (!sudoAuthorization() && !loginUser.equals(rootUser)) {
-        script.addToken(new ScriptToken.Send("exit"));
-        script.addToken(new ScriptToken.WaitFor(loginShellPrompt, getWaitFor().getTimeout()));
-    }
-
-        // By specifying the TERM variable, we prevent a ttytype command
-        //   from running out of the default /etc/profile on HP-UX.  The
-        //   ttytype command is bad because it "eats" input.  Since we
-        //   are not waiting on a shell prompt (we don't know what the
-        //   prompt would look like), we immediately send the echo
-        //   command.  When ttytype "eats" it, it is never executed and
-        //   therefore our script will fail.  This is obviously fragile,
-        //   but I guess no more fragile than the entire concept of
-        //   scripting.
-        // It doesn't hurt to use it on other platforms since we shouldn't
-        //   be doing anything that requires a specific term type.
-    script.addToken(new ScriptToken.Send("exec login " + accountID +
-                                  " TERM=vt100"));
-    script.addToken(new ScriptToken.WaitForIgnoreCase("assword:", getWaitForIgnoreCase().getTimeout()));
-    script.addToken(new ScriptToken.SendPassword(password));
-    script.addToken(
-        new ScriptToken.Send("echo '" + UNIQUE_MESSAGE + "'"));
-    script.addToken(new ScriptToken.WaitFor(UNIQUE_MESSAGE, new String[]{"incorrect", "lowest level \"shell\""},
-            getWaitFor().getTimeout()));
-
-    return script;
-    }
-         */
     }
 
     private Map<String, SolarisConnection.ErrorHandler> initRejectsMap(final String username) {

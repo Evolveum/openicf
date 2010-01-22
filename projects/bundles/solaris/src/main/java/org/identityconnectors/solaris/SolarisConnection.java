@@ -175,7 +175,8 @@ public class SolarisConnection {
                 final String rootShellPrompt = (!StringUtil.isBlank(configuration.getRootShellPrompt())) ? configuration.getRootShellPrompt() : loginShellPrompt;
                 loginShellPrompt = rootShellPrompt;
                 
-                sendPassword(password, CollectionUtil.newSet("Sorry", "incorrect password"), Collections.<String>emptySet() /* wait for rootShellPrompt */, this);
+                final GuardedString rootPassword = configuration.getCredentials();
+                sendPassword(rootPassword, CollectionUtil.newSet("Sorry", "incorrect password"), Collections.<String>emptySet() /* wait for rootShellPrompt */, this);
                 executeCommand("stty -echo");
             }
             

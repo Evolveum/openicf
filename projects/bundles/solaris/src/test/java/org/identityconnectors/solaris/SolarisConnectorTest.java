@@ -38,7 +38,6 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.solaris.attr.AccountAttribute;
 import org.identityconnectors.solaris.test.SolarisTestBase;
-import org.identityconnectors.solaris.test.SolarisTestCommon;
 import org.identityconnectors.test.common.ToListResultsHandler;
 import org.junit.Test;
 

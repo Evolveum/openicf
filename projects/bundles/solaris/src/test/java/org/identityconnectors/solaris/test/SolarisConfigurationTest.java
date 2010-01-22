@@ -90,6 +90,9 @@ public class SolarisConfigurationTest {
         SolarisConfiguration config = getConfiguration();
         config.setLoginUser("loginuser");
         config.setPassword(dummyPassword);
+        config.setRootShellPrompt(null);
+        config.setRootUser(null);
+        config.setCredentials(null);
         Assert.assertFalse(config.isSuAuthorization());
         
         config = getConfiguration();

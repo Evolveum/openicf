@@ -107,24 +107,6 @@ public class SolarisConnectionTest extends SolarisTestBase {
         }
     }
 
-    @Test
-    public void testTelnetConnection() {
-        if (!SolarisTestCommon.getProperty("unitTests.SolarisConnection.testTelnetMode", Boolean.class)) {
-            log.info("skipping testTelnetConnection test, because the resource doesn't support it.");
-            return;
-        }
-        
-        // connection is recreated after every test method call so we are free to modify it.
-        SolarisConfiguration config = getConnection().getConfiguration();
-        config.setPort(23);
-        config.setConnectionType(ConnectionType.TELNET.toString());
-        SolarisConnection conn = new SolarisConnection(config);
-        
-        String out = conn.executeCommand("echo 'ahoj ship'");
-        Assert.assertTrue(out.contains("ahoj ship"));
-        conn.dispose();
-    }
-
     @Test 
     public void testSSHPubKeyConnection() {
         if (!SolarisTestCommon.getProperty("unitTests.SolarisConnection.testSSHPubkeyMode", Boolean.class)) {
@@ -153,22 +135,13 @@ public class SolarisConnectionTest extends SolarisTestBase {
         
         // connection is recreated after every test method call so we are free to modify it.
         SolarisConfiguration config = getConnection().getConfiguration();
-        config = setupSudoAuthorizationConfig(config);
+        config.setSudoAuthorization(true);
         
         SolarisConnection conn = new SolarisConnection(config);
         
         String out = conn.executeCommand("echo 'ahoj ship'");
         Assert.assertTrue(out.contains("ahoj ship"));
         conn.dispose();        
-    }
-
-    private SolarisConfiguration setupSudoAuthorizationConfig(SolarisConfiguration config) {
-        config.setSudoAuthorization(true);
-        config.setLoginUser("david");
-        config.setLoginShellPrompt("\\$");
-        config.setPassword(SolarisTestCommon.getProperty("pass", GuardedString.class));
-        config.setCredentials(SolarisTestCommon.getProperty("pass", GuardedString.class));
-        return config;
     }
     
     @Test
@@ -290,7 +263,7 @@ public class SolarisConnectionTest extends SolarisTestBase {
     private SolarisConfiguration reloadConfig(boolean isSudoAuthorization) {
         SolarisConfiguration config = getConnection().getConfiguration();
         if (isSudoAuthorization) {
-            config = setupSudoAuthorizationConfig(config);
+            config.setSudoAuthorization(true);
         }
         
         return config;
@@ -299,8 +272,10 @@ public class SolarisConnectionTest extends SolarisTestBase {
     /**
      * test that repetitive open of sessions doesn't cause exception.
      * This test shows if some resources are not cleaned up properly.
+     * 
+     * These tests verify Issue #614. Turned off, just in cases of changes to SolarisConnection are these tests needed.
      */
-    @Test
+    @Test @Ignore 
     public void testSessionSSHClose() {
         SolarisConfiguration config = SolarisTestCommon.createConfiguration();
         testSessionRepetitiveCreation(config);
@@ -322,8 +297,11 @@ public class SolarisConnectionTest extends SolarisTestBase {
         }
     }
     
-    /** analogical to {@link SolarisConnectionTest#testSessionSSHClose()} */
-    @Test
+    /** 
+     * analogical to {@link SolarisConnectionTest#testSessionSSHClose()} 
+     * These tests verify Issue #614. Turned off, just in cases of changes to SolarisConnection are these tests needed.
+     */
+    @Test @Ignore
     public void testSSHPubKeySessionClose() {
         if (!SolarisTestCommon.getProperty("unitTests.SolarisConnection.testSSHPubkeyMode", Boolean.class)) {
             log.info("skipping testSSHPubKeyConnection test, because the resource doesn't support it.");
