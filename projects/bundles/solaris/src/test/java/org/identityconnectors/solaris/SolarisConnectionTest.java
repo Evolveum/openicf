@@ -160,7 +160,11 @@ public class SolarisConnectionTest extends SolarisTestBase {
         }
     }
     
-    /** verify if the connector is resistant to password exploits */
+    /**
+     * verify if the connector is resistant to password exploits. Password is
+     * invalid if it contains control characters (such as carriage return and
+     * newline).
+     */
     @Test
     public void testPasswordExploit() {
         // we shouldn't be able to send some special characters with the password!
@@ -196,6 +200,7 @@ public class SolarisConnectionTest extends SolarisTestBase {
         
         // negative test: bad port
         config = reloadConfig(isSudoAuthorization);
+        config.setPort(1);
         try {
             new SolarisConnection(config).checkAlive();
             Assert.fail("Expected bad port to fail.");

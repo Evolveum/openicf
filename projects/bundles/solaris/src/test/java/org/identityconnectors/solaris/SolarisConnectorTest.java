@@ -28,6 +28,7 @@ import java.util.Set;
 import junit.framework.Assert;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
@@ -156,6 +157,90 @@ public class SolarisConnectorTest extends SolarisTestBase {
         ConnectorObject co = l.get(0);
         Attribute attr = co.getAttributeByName(expectedAttribute.getName());
         return CollectionUtil.equals(attr.getValue(), expectedAttribute.getValue());
+    }
+    
+    /**
+     * Update to an existing Uid should throw exception.
+     */
+    @Test 
+    public void testDuplicateUid() {
+        // check if both of users exist:
+        checkUser(getUsername(), AttributeBuilder.build(Name.NAME, getUsername()));
+        checkUser(getSecondUsername(), AttributeBuilder.build(Name.NAME, getSecondUsername()));
+        
+        // fetch the uid of first user:
+        String out = getConnection().executeCommand("logins -oxma -l \"" + getUsername() + "\"");
+        String firstUid = out.split(":")[1];
+        
+        // update second users' uid to the first:
+        try {
+            getFacade().update(ObjectClass.ACCOUNT, new Uid(getSecondUsername()),
+                    CollectionUtil.newSet(AttributeBuilder.build(AccountAttribute.UID.getName(), firstUid)), null);
+            Assert.fail("Update of 'solaris uid' attribute the with an existing uid should throw RuntimeException.");
+        } catch (RuntimeException ex) {
+            // OK
+        }
+    }
+    
+    /**
+     * Password shouldn't contain control sequence characters 
+     */
+    @Test
+    public void testControlCharPassword() {
+        List<Character> controlChars = getControlChars();
+        
+        // basic test of connection, if it filters invalid password
+        for (Character controlCharacter : controlChars) {
+            try {
+                String passwd = new StringBuilder().append("foo").append(controlCharacter).append("bar").toString();
+                SolarisConnection.sendPassword(new GuardedString(passwd.toCharArray()), getConnection());
+                Assert.fail("Exception should be thrown when attempt to send control chars within the password");
+            } catch (RuntimeException ex) {
+                // OK
+            }
+        }
+    }
+    
+    /** analogical to {@link SolarisConnectorTest#testControlCharPassword()}, but for create. */
+    @Test
+    public void testCreateControlCharPasswd() {
+        String dummyUser = "bugsbunny";
+        try {
+            String controlChar = "\r";
+            String password = new StringBuilder().append("foo").append(controlChar).append("bar").toString();
+            getFacade().create(ObjectClass.ACCOUNT, CollectionUtil.newSet(AttributeBuilder.build(Name.NAME, dummyUser), AttributeBuilder.buildPassword(password.toCharArray())), null);
+            Assert.fail("Exception should be thrown when password containing control char sent.");
+        } catch (RuntimeException ex) {
+            // OK
+        } finally {
+            try {
+                getFacade().delete(ObjectClass.ACCOUNT, new Uid(dummyUser), null);
+            } catch (Exception ex) {
+                // OK
+            }
+        }
+    }
+    
+    /**analogical to {@link SolarisConnectorTest#testControlCharPassword()}, but for update. */
+    @Test
+    public void testUpdateControlCharPasswd() {
+        String controlChar = "\n";
+        String password = new StringBuilder().append("foo").append(controlChar).append("bar").toString();
+        try {
+            getFacade().update(ObjectClass.ACCOUNT, new Uid(getUsername()), CollectionUtil.newSet(AttributeBuilder.buildPassword(password.toCharArray())), null);
+            Assert.fail("Exception should be thrown when password containing control char sent.");
+        } catch (RuntimeException ex) {
+            // OK
+        }
+    }
+
+    private List<Character> getControlChars() {
+        List<Character> controlChars = CollectionUtil.newList();
+        for (char i = 0; i <= 0x001F; i++)
+            controlChars.add(i);
+        for (char i = 0x007F; i <= 0x009F; i++)
+            controlChars.add(i);
+        return controlChars;
     }
 
     @Override
