@@ -22,7 +22,6 @@
  */
 package org.identityconnectors.solaris.test;
 
-import org.identityconnectors.common.Assertions;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.APIConfiguration;
 import org.identityconnectors.framework.api.ConnectorFacade;

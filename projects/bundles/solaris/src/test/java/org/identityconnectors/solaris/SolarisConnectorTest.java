@@ -36,6 +36,7 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.solaris.attr.AccountAttribute;
 import org.identityconnectors.solaris.test.SolarisTestBase;
@@ -105,8 +106,8 @@ public class SolarisConnectorTest extends SolarisTestBase {
     }
     
     /**
-     * Error should be thrown when changing the "uid" of the user to // the same
-     * value of the another existing user in the resource.
+     * Error should be thrown when attemting to create a user using an already 
+     * existing username. (Usernames are inherently unique on Unix).
      */
     @Test
     public void testDuplicateCreate() {
@@ -231,6 +232,19 @@ public class SolarisConnectorTest extends SolarisTestBase {
             Assert.fail("Exception should be thrown when password containing control char sent.");
         } catch (RuntimeException ex) {
             // OK
+        }
+    }
+    
+    @Test
+    public void testCreateUidWithNonUniqueValue() {
+        final String username2 = getSecondUsername();
+        
+        try {
+            getFacade().create(ObjectClass.ACCOUNT, CollectionUtil.newSet(AttributeBuilder.build(Name.NAME, "bugsBunny"), AttributeBuilder.buildPassword("foopass".toCharArray()), AttributeBuilder.build(AccountAttribute.UID.getName(), username2)), null);
+            Assert.fail("Create of user ID with existing uid should fail - throw an exception.");
+        } catch (RuntimeException ex) {
+            // OK
+            System.out.println(ex.toString());
         }
     }
 
