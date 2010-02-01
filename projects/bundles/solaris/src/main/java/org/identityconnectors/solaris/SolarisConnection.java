@@ -288,7 +288,7 @@ public class SolarisConnection {
                 session.setDaemonThread(true);
 
                 try {
-                    session.connect(3 * 1000);
+                    session.connect(/*3 * 1000*/); // in adapter there's no timeout given
                 } catch (JSchException e) {
                     throw ConnectorException.wrap(e);
                 } finally {
@@ -305,7 +305,7 @@ public class SolarisConnection {
 
             expect4j = new Expect4j(channel.getInputStream(), channel.getOutputStream());
 
-            channel.connect(5 * 1000);
+            channel.connect(/*5 * 1000*/); // in adapter there's no timeout given
         } catch (Exception ex) {
             throw ConnectorException.wrap(ex);
         }
