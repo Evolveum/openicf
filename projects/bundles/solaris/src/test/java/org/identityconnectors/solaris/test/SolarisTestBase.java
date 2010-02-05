@@ -40,6 +40,7 @@ import org.junit.After;
 import org.junit.Before;
 
 public abstract class SolarisTestBase {
+    /** this password is used to initialize all the test users */
     public static final String SAMPLE_PASSWD = "samplePasswd";
     private static final String testgroupName = "testgrp";
     private SolarisConnection connection;

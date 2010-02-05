@@ -29,6 +29,7 @@ import junit.framework.Assert;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
@@ -36,7 +37,6 @@ import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
 import org.identityconnectors.framework.common.objects.Uid;
-import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.solaris.attr.AccountAttribute;
 import org.identityconnectors.solaris.test.SolarisTestBase;
@@ -119,6 +119,46 @@ public class SolarisConnectorTest extends SolarisTestBase {
             Assert.fail("expected exception on create of user with non-unique username (==uid)");
         } catch (Exception ex) {
             // OK 
+        }
+    }
+    
+    @Test
+    public void testResetPassword() {
+        final String username = "bugsBunny";
+        final String oldPassword = "bugsPasswd";
+        Set<Attribute> attrs = CollectionUtil.newSet(AttributeBuilder.build(Name.NAME, username), 
+                AttributeBuilder.buildPassword(oldPassword.toCharArray()),
+                AttributeBuilder.build(AccountAttribute.PASSWD_FORCE_CHANGE.getName(), Boolean.TRUE.toString()));
+        // cleanup the user if it's there from previous runs
+        try {
+            getFacade().delete(ObjectClass.ACCOUNT, new Uid(username), null);
+        } catch (Exception ex) {
+            // OK
+        }
+        
+        getFacade().create(ObjectClass.ACCOUNT, attrs, null);
+        try {
+            // check if user exists
+            String out = getConnection().executeCommand("logins -oxma -l " + username);
+            Assert.assertTrue("user " + username + " is missing, buffer: <" + out + ">", out.contains(username));
+
+            // lets change the password for checking expire password.
+            final String newPasswd = "changedpwd";
+            Set<Attribute> replaceAttributes = CollectionUtil.newSet(
+                    AttributeBuilder.buildPassword(newPasswd.toCharArray())
+                    );
+            getFacade().update(ObjectClass.ACCOUNT, new Uid(username), replaceAttributes, null);
+
+            try {
+                getFacade().authenticate(ObjectClass.ACCOUNT, username, new GuardedString(newPasswd.toCharArray()), null);
+                Assert.fail("expected to wait for 'new password:' prompt failed.");
+            } catch (ConnectorException ex) {
+                if (!ex.getMessage().contains("New Password:")) {
+                    Assert.fail("expected to wait for 'new password:' prompt failed with exception: " + ex.getMessage());
+                }
+            }
+        } finally {
+            getFacade().delete(ObjectClass.ACCOUNT, new Uid(username), null);
         }
     }
     
