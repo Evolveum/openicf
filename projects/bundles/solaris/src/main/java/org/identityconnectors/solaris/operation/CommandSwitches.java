@@ -23,8 +23,10 @@
 package org.identityconnectors.solaris.operation;
 
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
@@ -42,6 +44,15 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
 class CommandSwitches {
     //create and update operation switches (identical for both operations)
     static final Map<NativeAttribute, String> commonSwitches;
+    
+    // set of parameters that allow to pass null values (to erase existing values),
+    // such as an empty string.
+    private static final Set<NativeAttribute> passNullParams = EnumSet.of(
+            NativeAttribute.GROUPS_SEC, 
+            NativeAttribute.COMMENT, 
+            NativeAttribute.USER_EXPIRE, 
+            NativeAttribute.AUTHS, 
+            NativeAttribute.PROFILES);
 
     static {
         Map<NativeAttribute, String> switchMap = new EnumMap<NativeAttribute, String>(NativeAttribute.class);
@@ -65,9 +76,14 @@ class CommandSwitches {
 //        _CU_switches.put(NativeAttribute.LAST_LOGIN, null);
 //        _CU_switches.put(NativeAttribute.USERS, null);
     }
-    
+
     /**
-     * creates command line switches construction
+     * creates command line switches construction.
+     * 
+     * <b>Contract:</b>
+     * <p>
+     * {@link NativeAttribute#LOCK} and {@link NativeAttribute#PWSTAT} are
+     * command-line switches without any argument.
      * 
      * @param entry
      *            the account that is source of values for the switches
@@ -92,22 +108,32 @@ class CommandSwitches {
             }
             String value = AttributeUtil.getStringValue(attr);
 
-            /* 
-             * append command line switch
-             */
-            String cmdSwitchForAttr = switches.get(nAttrName);
-            if (cmdSwitchForAttr != null) {
-                buffer.append(cmdSwitchForAttr);
-                buffer.append(" ");
-
-                /*
-                 * append the single-value for the given switch
-                 */
-                if (value != null) {
-                    // quote value
-                    buffer.append("\"" + value + "\"");
-                    buffer.append(" ");
+            // if the value is null, it means that there's an attempt to
+            // clear or remove the attribute on the resource. 
+            // Some command line switches allow to pass empty argument, 
+            // these are in Set CommandSwitches#passNullParams.
+            if (value == null) {
+                if (passNullParams.contains(nAttrName)) {
+                    value = "";
+                } else {
+                    continue;
                 }
+            }
+            
+            // append command line switch
+            String cmdSwitchForAttr = switches.get(nAttrName);
+            if (cmdSwitchForAttr != null) {                
+                //Special case passwd -f and -l because unlike the other flags it
+                // shouldn't have a value
+                switch (nAttrName) {
+                case LOCK:
+                case PWSTAT:
+                    buffer.append(cmdSwitchForAttr).append(" ");
+                    break;
+                default:
+                    buffer.append(cmdSwitchForAttr).append(" \"").append(value).append("\" ");
+                    break;
+                }                
             }
         }// for
         return buffer.toString().trim();

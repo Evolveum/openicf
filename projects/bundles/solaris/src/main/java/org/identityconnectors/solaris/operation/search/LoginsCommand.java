@@ -40,7 +40,6 @@ import static org.identityconnectors.solaris.attr.NativeAttribute.USER_INACTIVE;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
@@ -161,14 +160,16 @@ class LoginsCommand {
         
         /* PWSTAT + PASSWD_LOCK */
         final String pwstat = tokenIt.next();
+        boolean isPwStat = false;
+        boolean isLock = false;
         if ("PS".equals(pwstat)) {
-            bldr.addAttr(PWSTAT, Boolean.TRUE.toString());
-        } else if ("LK".equals(pwstat)) {
-            bldr.addAttr(LOCK, Boolean.TRUE.toString());
-        } else {
-            bldr.addAttr(LOCK, Collections.emptyList());
-            bldr.addAttr(PWSTAT, Collections.emptyList());
+            isPwStat = true;
+        } 
+        if ("LK".equals(pwstat)) {
+            isLock = true;
         }
+        bldr.addAttr(PWSTAT, Boolean.toString(isPwStat));
+        bldr.addAttr(LOCK, Boolean.toString(isLock));
         
         /* PASSWD CHANGE - skip */
         tokenIt.next();
