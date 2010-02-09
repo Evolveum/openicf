@@ -85,10 +85,22 @@ public class SolarisUtil {
         throw new IllegalArgumentException(String.format(
                 MSG_NOT_SUPPORTED_OBJECTCLASS, oclass, operation.getName()));
     }
-    
-    public static SolarisEntry forConnectorAttributeSet(String userName, ObjectClass oclass, Set<Attribute> attrs) {
+
+    /**
+     * Translate the given connector attributes to their native solaris
+     * counterpart.
+     * 
+     * Contract: PASSWORD and UID shouldn't be contained in the attribute set,
+     * they supposed to be handled separately, outside of SolarisEntry.
+     * 
+     * @param entryName the entry's name (can be either GROUP or ACCOUNT)
+     * @param oclass object class type
+     * @param attrs connector attributes
+     * @return the translated attributes encapsulated
+     */
+    public static SolarisEntry forConnectorAttributeSet(String entryName, ObjectClass oclass, Set<Attribute> attrs) {
         // translate connector attributes to native counterparts
-        final SolarisEntry.Builder builder = new SolarisEntry.Builder(userName);
+        final SolarisEntry.Builder builder = new SolarisEntry.Builder(entryName);
         for (Attribute attribute : attrs) {
             final ConnectorAttribute accAttrName = (oclass.is(ObjectClass.ACCOUNT_NAME)) ? AccountAttribute.forAttributeName(attribute.getName()) : GroupAttribute.forAttributeName(attribute.getName());
             if (accAttrName != null) {
