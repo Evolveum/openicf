@@ -136,7 +136,7 @@ public class SolarisCreate extends AbstractOp {
                 connection.doSudoReset();
             }
         } else {
-            CreateNISUser.performNIS(entry, connection);
+            CreateNISUser.performNIS(entry, password, connection);
         }
     }
     

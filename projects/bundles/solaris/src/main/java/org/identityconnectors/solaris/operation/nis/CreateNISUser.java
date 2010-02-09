@@ -56,7 +56,7 @@ public class CreateNISUser extends AbstractNISOp {
     
     private final static Set<String> shellRejects = CollectionUtil.newSet(INVALID_SHELL);
     
-    public static void performNIS(SolarisEntry entry, SolarisConnection connection) {
+    public static void performNIS(SolarisEntry entry, GuardedString password, SolarisConnection connection) {
 
         final SolarisConfiguration config = connection.getConfiguration();
         
@@ -316,7 +316,6 @@ public class CreateNISUser extends AbstractNISOp {
                     addNISShellUpdateWithCleanup(accountId, shell, connection);
                 }
                 
-                GuardedString password = getPassword(entry);
                 if (password != null) {
                     addNISPasswordUpdate(accountId, password, connection);
                 }
@@ -330,8 +329,6 @@ public class CreateNISUser extends AbstractNISOp {
             // The reject below can throw an exception when the script is executed, so reset sudo before that test
             connection.doSudoReset();
         }
-        
-        // TODO:  Need to add to groups (++++++++++++++++++++++++++++++++++++++++++++++++)
     }
 
     private static void addNISPasswordUpdate(String accountId,

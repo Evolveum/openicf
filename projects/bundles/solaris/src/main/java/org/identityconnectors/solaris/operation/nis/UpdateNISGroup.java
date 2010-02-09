@@ -71,9 +71,11 @@ public class UpdateNISGroup extends AbstractNISOp {
         List<Object> users = (usersModified) ? attrMap.get(NativeAttribute.USERS.getName()).getValue() : Collections.emptyList();
         users = CollectionUtil.asReadOnlyList(users);
         
-        String gid = AttributeUtil.getStringValue(attrMap.get(NativeAttribute.ID));
+        Attribute idAttr = attrMap.get(NativeAttribute.ID);
+        String gid = (idAttr != null) ? AttributeUtil.getStringValue(idAttr) : null;
         
-        String newName = AttributeUtil.getStringValue(attrMap.get(NativeAttribute.NAME.getName()));
+        Attribute nameAttr = attrMap.get(NativeAttribute.NAME.getName());
+        String newName = (nameAttr != null) ? AttributeUtil.getStringValue(nameAttr) : null;
         if (newName == null) {
             newName = groupName;
         }
