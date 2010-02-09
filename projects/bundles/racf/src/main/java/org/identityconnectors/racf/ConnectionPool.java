@@ -249,6 +249,9 @@ public class ConnectionPool {
             return true;
         if (!oldConfiguration.getDisconnectScript().equals(newConfiguration.getDisconnectScript()))
             return true;
+        //The pool must be re-initialized, when the other connection implementation is selected
+        if (!oldConfiguration.getConnectionClassName().equals(newConfiguration.getConnectionClassName()))
+            return true;
         return false;
     }
 
@@ -452,7 +455,7 @@ public class ConnectionPool {
             for (QueueEntry entry : _activeConnections.toArray(new QueueEntry[0])) {
                 try {
                     _log.info("closing active connection for "+entry._connection.getConfiguration().getUserName()+" on "+_currentConfiguration.getHostNameOrIpAddr());
-                    entry._connection.logoutUser();
+                    entry._connection.dispose(); //dispose will do an logout entry._connection.logoutUser(); 
                     _activeConnections.remove(entry);
                     _inactiveConnections.add(entry);
                 } catch (Exception e) {
@@ -460,7 +463,6 @@ public class ConnectionPool {
                     _badConnections.add(entry);
                     _log.severe("failed to logout connection in closeAllConnections: userName '"+entry._connection.getConfiguration().getUserName()+"':"+e);
                 }
-                entry._connection.dispose();
                 entry._connection = null;
             }
         } catch (InterruptedException ie) {
