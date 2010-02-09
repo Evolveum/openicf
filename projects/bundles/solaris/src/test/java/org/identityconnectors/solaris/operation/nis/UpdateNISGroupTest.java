@@ -35,7 +35,7 @@ public class UpdateNISGroupTest {
         List<String> users = CollectionUtil.newList("foo", "bar", "baz");
         String SEPARATOR = ",";
         String result = UpdateNISGroup.listToString(users, SEPARATOR);
-        Assert.assertEquals("foo, bar, baz", result.trim());
+        Assert.assertEquals("foo,bar,baz", result.trim());
         
         users = CollectionUtil.newList("foo");
         result = UpdateNISGroup.listToString(users, SEPARATOR);

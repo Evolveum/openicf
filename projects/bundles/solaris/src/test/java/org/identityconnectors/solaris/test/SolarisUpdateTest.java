@@ -82,16 +82,17 @@ public class SolarisUpdateTest extends SolarisTestBase {
         final String groupName = getGroupName();
 
         // verify if group exists
-        final String command = (!getConnection().isNis()) ? "cat /etc/group | grep '" + groupName + "'" : "ypcat group | cut -d: -f1 | grep '" + groupName + "'";
+        final String command = (!getConnection().isNis()) ? "cat /etc/group | grep '" + groupName + "'" : "ypcat group | grep '" + groupName + "'";
         String output = getConnection().executeCommand(command);
         Assert.assertTrue(output.contains(groupName));
 
         Set<Attribute> replaceAttributes = CollectionUtil.newSet(AttributeBuilder.build(GroupAttribute.USERS.getName(), CollectionUtil.newList("root", username)));
         getFacade().update(ObjectClass.GROUP, new Uid(groupName), replaceAttributes, null);
         output = getConnection().executeCommand(command);
-        Assert.assertTrue(output.contains(groupName));
-        Assert.assertTrue(output.contains(username));
-        Assert.assertTrue(output.contains("root"));
+        String msg = "Output is missing attribute '%s', buffer: <%s>";
+        Assert.assertTrue(String.format(msg, groupName, output), output.contains(groupName));
+        Assert.assertTrue(String.format(msg, username, output), output.contains(username));
+        Assert.assertTrue(String.format(msg, "root", output), output.contains("root"));
     }
 
     /*    ************* AUXILIARY METHODS *********** */

@@ -66,12 +66,12 @@ public class UpdateNISGroup extends AbstractNISOp {
         Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(group.getAttributeSet()));
         attrMap = CollectionUtil.asReadOnlyMap(attrMap);
         
-        boolean usersModified = attrMap.containsKey(NativeAttribute.USERS);
-        
-        List<Object> users = (usersModified) ? attrMap.get(NativeAttribute.USERS.getName()).getValue() : Collections.emptyList();
+        boolean usersModified = attrMap.containsKey(NativeAttribute.USERS.getName());
+        Attribute usersAttr = attrMap.get(NativeAttribute.USERS.getName());
+        List<Object> users = (usersModified && usersAttr != null) ? usersAttr.getValue() : Collections.emptyList();
         users = CollectionUtil.asReadOnlyList(users);
         
-        Attribute idAttr = attrMap.get(NativeAttribute.ID);
+        Attribute idAttr = attrMap.get(NativeAttribute.ID.getName());
         String gid = (idAttr != null) ? AttributeUtil.getStringValue(idAttr) : null;
         
         Attribute nameAttr = attrMap.get(NativeAttribute.NAME.getName());
@@ -128,7 +128,7 @@ public class UpdateNISGroup extends AbstractNISOp {
             Object user = iter.next();
             result.append(user.toString());
             if (iter.hasNext()) {
-                result.append(separator + " ");
+                result.append(separator);
             }
         }
         return result.toString();
