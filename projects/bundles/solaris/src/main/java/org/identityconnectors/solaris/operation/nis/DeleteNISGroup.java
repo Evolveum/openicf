@@ -57,9 +57,10 @@ public class DeleteNISGroup extends AbstractNISOp {
         // Add script to remove the entry from the file
         connection.executeCommand(getOwner);
         String out = connection.executeCommand(workScript);
+        out = out.trim();
         if (out.length() > 0) {
             if (out.contains(">")) {
-                out = out.substring(out.indexOf(">"), out.length());
+                out = out.substring(out.lastIndexOf(">") + 1, out.length());
                 out = out.trim();
             }
             if (out.length() > 0) {
