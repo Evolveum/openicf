@@ -153,7 +153,7 @@ public class WrqConnection extends RW3270BaseConnection implements ECLPSListener
         } catch (Exception e) {
             throw ConnectorException.wrap(e);
         } finally {
-            _session.dispose();
+            _session.StopCommunication();
             _session = null;
         }
     }
