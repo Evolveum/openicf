@@ -278,13 +278,20 @@ public class SolarisConnectorTest extends SolarisTestBase {
     @Test
     public void testCreateUidWithNonUniqueValue() {
         final String username2 = getSecondUsername();
+        final String dummyUser = "bugsBunny";
         
         try {
-            getFacade().create(ObjectClass.ACCOUNT, CollectionUtil.newSet(AttributeBuilder.build(Name.NAME, "bugsBunny"), AttributeBuilder.buildPassword("foopass".toCharArray()), AttributeBuilder.build(AccountAttribute.UID.getName(), username2)), null);
+            getFacade().create(ObjectClass.ACCOUNT, CollectionUtil.newSet(AttributeBuilder.build(Name.NAME, dummyUser), AttributeBuilder.buildPassword("foopass".toCharArray()), AttributeBuilder.build(AccountAttribute.UID.getName(), username2)), null);
             Assert.fail("Create of user ID with existing uid should fail - throw an exception.");
         } catch (RuntimeException ex) {
             // OK
             System.out.println(ex.toString());
+        } finally {
+            try {
+                getFacade().delete(ObjectClass.ACCOUNT, new Uid(dummyUser), null);
+            } catch (Exception ex) {
+                // OK
+            }
         }
     }
 
