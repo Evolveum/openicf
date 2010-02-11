@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
@@ -39,6 +40,7 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
+import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.nis.AbstractNISOp;
 import org.identityconnectors.solaris.operation.nis.UpdateNISGroup;
 import org.identityconnectors.solaris.operation.nis.UpdateNISUser;
@@ -74,6 +76,7 @@ public class SolarisUpdate extends AbstractOp {
         final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(replaceAttributes));
         final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(uid.getUidValue(), objclass, replaceAttributes);
         
+        final String newName = fetchName(attrMap);
         if (objclass.is(ObjectClass.ACCOUNT_NAME)) {
             GuardedString passwd = null; 
             Attribute attrPasswd = attrMap.get(OperationalAttributes.PASSWORD_NAME);
@@ -83,9 +86,12 @@ public class SolarisUpdate extends AbstractOp {
             
             if (connection.isNis()) {
                 // NIS doesn't control duplicate account names so we need to do it in advance
-                if (SolarisUtil.exists(objclass, entry, connection)) {
+                if (StringUtil.isNotBlank(newName) && 
+                        SolarisUtil.exists(objclass, new SolarisEntry.Builder(newName).build(), connection) &&
+                        !newName.equals(entry.getName())) {
                     throw new AlreadyExistsException("Account already exits: " + entry.getName());
                 }
+                
                 invokeNISUserUpdate(entry, passwd);
             } else {
                 invokeNativeUserUpdate(entry, passwd);
@@ -93,9 +99,12 @@ public class SolarisUpdate extends AbstractOp {
         } else if (objclass.is(ObjectClass.GROUP_NAME)) {
             if (connection.isNis()) {
                 // NIS doesn't control duplicate account names so we need to do it in advance
-                if (SolarisUtil.exists(objclass, entry, connection)) {
+                if (StringUtil.isNotBlank(newName) && 
+                        SolarisUtil.exists(objclass, new SolarisEntry.Builder(newName).build(), connection) &&
+                        !newName.equals(entry.getName())) {
                     throw new AlreadyExistsException("Group already exits: " + entry.getName());
                 }
+                
                 invokeNISGroupUpdate(entry);
             } else {
                 invokeNativeGroupUpdate(entry);
@@ -114,6 +123,15 @@ public class SolarisUpdate extends AbstractOp {
             newUid = new Uid(name);
         }
         return newUid;
+    }
+
+    private String fetchName(final Map<String, Attribute> attrMap) {
+        String newName = null;
+        Attribute nameAttr = attrMap.get(NativeAttribute.NAME);
+        if (attrMap.get(NativeAttribute.NAME) != null) {
+            newName = AttributeUtil.getStringValue(nameAttr);
+        }
+        return newName;
     }
 
     /**
