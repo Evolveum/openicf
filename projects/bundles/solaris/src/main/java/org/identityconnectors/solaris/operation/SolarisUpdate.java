@@ -28,6 +28,7 @@ import java.util.Set;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
@@ -81,12 +82,20 @@ public class SolarisUpdate extends AbstractOp {
             }
             
             if (connection.isNis()) {
+                // NIS doesn't control duplicate account names so we need to do it in advance
+                if (SolarisUtil.exists(objclass, entry, connection)) {
+                    throw new AlreadyExistsException("Account already exits: " + entry.getName());
+                }
                 invokeNISUserUpdate(entry, passwd);
             } else {
                 invokeNativeUserUpdate(entry, passwd);
             }
         } else if (objclass.is(ObjectClass.GROUP_NAME)) {
             if (connection.isNis()) {
+                // NIS doesn't control duplicate account names so we need to do it in advance
+                if (SolarisUtil.exists(objclass, entry, connection)) {
+                    throw new AlreadyExistsException("Group already exits: " + entry.getName());
+                }
                 invokeNISGroupUpdate(entry);
             } else {
                 invokeNativeGroupUpdate(entry);

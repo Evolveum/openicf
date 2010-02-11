@@ -24,6 +24,8 @@ package org.identityconnectors.solaris;
 
 import static org.identityconnectors.solaris.SolarisMessages.MSG_NOT_SUPPORTED_OBJECTCLASS;
 
+import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
@@ -34,7 +36,9 @@ import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.attr.AccountAttribute;
 import org.identityconnectors.solaris.attr.ConnectorAttribute;
 import org.identityconnectors.solaris.attr.GroupAttribute;
+import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.AbstractOp;
+import org.identityconnectors.solaris.operation.search.SolarisEntries;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 
@@ -112,5 +116,30 @@ public class SolarisUtil {
             }
         }
         return builder.build();
+    }
+
+    /**
+     * Search for the existence of given entry based on its unique identificator.
+     * @param entryType type of entry 
+     * @param entry check the presence of this entry
+     * @param conn 
+     * @return true if entry exists, false otherwise
+     */
+    public static boolean exists(ObjectClass entryType, SolarisEntry entry, SolarisConnection conn) {
+        Iterator<SolarisEntry> result = null;
+        if (entryType.is(ObjectClass.ACCOUNT_NAME)) {
+            result = SolarisEntries.getAllAccounts(EnumSet.of(NativeAttribute.NAME), conn);
+        } else if (entryType.is(ObjectClass.GROUP_NAME)) {
+            result = SolarisEntries.getAllGroups(EnumSet.of(NativeAttribute.NAME), conn);
+        } else {
+            throw new ConnectorException("Non existing object class: " + entryType.toString());
+        }
+        while (result != null && result.hasNext()) {
+            SolarisEntry it = result.next();
+            if (it.getName().equals(entry.getName())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

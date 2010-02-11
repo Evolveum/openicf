@@ -22,6 +22,9 @@
  */
 package org.identityconnectors.solaris;
 
+import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.solaris.operation.search.SolarisEntry;
+import org.identityconnectors.solaris.test.SolarisTestBase;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -29,7 +32,7 @@ import org.junit.Test;
  * @author David Adam
  *
  */
-public class SolarisUtilTest {
+public class SolarisUtilTest extends SolarisTestBase {
     @Test
     public void test() {
         StringBuilder input = new StringBuilder();
@@ -47,5 +50,23 @@ public class SolarisUtilTest {
             String msg = String.format("String exceeds the maximal limit '%s', as it is: '%s'", limit , trimmedStringLength);
             Assert.assertTrue(msg, trimmedStringLength <= limit);
         }
+    }
+    
+    @Test
+    public void testExists() {
+        Assert.assertTrue(SolarisUtil.exists(ObjectClass.ACCOUNT, new SolarisEntry.Builder("root").build(), getConnection()));
+        Assert.assertFalse(SolarisUtil.exists(ObjectClass.ACCOUNT, new SolarisEntry.Builder("batmans").build(), getConnection()));
+        Assert.assertTrue(SolarisUtil.exists(ObjectClass.GROUP, new SolarisEntry.Builder("root").build(), getConnection()));
+        Assert.assertFalse(SolarisUtil.exists(ObjectClass.GROUP, new SolarisEntry.Builder("batmans").build(), getConnection()));
+    }
+
+    @Override
+    public boolean createGroup() {
+        return false;
+    }
+
+    @Override
+    public int getCreateUsersNumber() {
+        return 0;
     }
 }

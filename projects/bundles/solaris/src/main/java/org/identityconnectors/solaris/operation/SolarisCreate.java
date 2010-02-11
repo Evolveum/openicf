@@ -28,6 +28,7 @@ import java.util.Set;
 
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.Name;
@@ -80,6 +81,10 @@ public class SolarisCreate extends AbstractOp {
             }
             
             if (connection.isNis()) {
+                // NIS doesn't control duplicate account names so we need to do it in advance
+                if (SolarisUtil.exists(oclass, entry, connection)) {
+                    throw new AlreadyExistsException("Account already exits: " + entry.getName());
+                }
                 invokeNISUserCreate(entry, password);
             } else {
                 invokeNativeUserCreate(entry, password);
@@ -88,6 +93,10 @@ public class SolarisCreate extends AbstractOp {
             if (connection.isNis()) {
                 invokeNISGroupCreate(entry);
             } else {
+                // NIS doesn't control duplicate account names so we need to do it in advance
+                if (SolarisUtil.exists(oclass, entry, connection)) {
+                    throw new AlreadyExistsException("Group already exits: " + entry.getName());
+                }
                 invokeNativeGroupCreate(entry);
             }
         } else {
