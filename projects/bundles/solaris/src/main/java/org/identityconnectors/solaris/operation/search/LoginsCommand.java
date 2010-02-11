@@ -73,18 +73,15 @@ class LoginsCommand {
      */
     public static SolarisEntry getAttributesFor(String username, SolarisConnection conn) {
         SolarisEntry entry = null;
-        try {
-            final String cmd = conn.buildCommand("logins -oxma -l ", username);
-            String out = conn.executeCommand(cmd);
-            
-            if (out.endsWith("was not found")) {
-                throw new UnknownUidException("Unknown username: " + username);
-            }
-            
-            entry = getEntry(out, username);
-        } catch (Exception e) {
-            throw ConnectorException.wrap(e);
+        final String cmd = conn.buildCommand("logins -oxma -l ", username);
+        String out = conn.executeCommand(cmd);
+
+        if (out.endsWith("was not found")) {
+            throw new UnknownUidException("Unknown username: " + username);
         }
+
+        entry = getEntry(out, username);
+
         return entry;
     }
 
