@@ -22,16 +22,22 @@
  */
 package org.identityconnectors.solaris.operation;
 
+import java.util.EnumSet;
+
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.SolarisConnector;
 import org.identityconnectors.solaris.SolarisUtil;
+import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.nis.AbstractNISOp;
 import org.identityconnectors.solaris.operation.nis.DeleteNISGroup;
 import org.identityconnectors.solaris.operation.nis.DeleteNISUser;
+import org.identityconnectors.solaris.operation.search.SolarisEntries;
+import org.identityconnectors.solaris.operation.search.SolarisEntry;
 
 public class SolarisDelete extends AbstractOp {
 
@@ -55,12 +61,24 @@ public class SolarisDelete extends AbstractOp {
         
         if (objClass.is(ObjectClass.ACCOUNT_NAME)) {
             if (connection.isNis()) {
+                // NIS is not able to signal that account is missing, so search in advance:
+                SolarisEntry searchedEntry = SolarisEntries.getAccount(entryName, EnumSet.of(NativeAttribute.NAME), connection);
+                if (searchedEntry == null) {
+                    throw new UnknownUidException("user does not exist: " + entryName);
+                }
+                
                 invokeNISUserDelete(entryName);
             } else {
                 invokeNativeUserDelete(entryName);
             }
         } else if (objClass.is(ObjectClass.GROUP_NAME)) {
             if (connection.isNis()) {
+                // NIS is not able to signal that group is missing, so search in advance:
+                SolarisEntry searchedEntry = SolarisEntries.getGroup(entryName, EnumSet.of(NativeAttribute.NAME), connection);
+                if (searchedEntry == null) {
+                    throw new UnknownUidException("user does not exist: " + entryName);
+                }
+                
                 invokeNISGroupDelete(entryName);
             } else {
                 invokeNativeGroupDelete(entryName);

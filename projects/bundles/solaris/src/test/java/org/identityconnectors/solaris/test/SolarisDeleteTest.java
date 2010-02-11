@@ -29,9 +29,14 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class SolarisDeleteTest extends SolarisTestBase {
-    @Test(expected = ConnectorException.class)
+    @Test
     public void testDeleteUnknownUid() {
-        getFacade().delete(ObjectClass.ACCOUNT, new Uid("nonExistingUid"), null);
+        try {
+            getFacade().delete(ObjectClass.ACCOUNT, new Uid("nonExistingUid"), null);
+            Assert.fail("no exception was thrown when attempt to create a nonexisting account");
+        } catch (ConnectorException ex) {
+            // OK
+        }
     }
 
     @Test(expected = IllegalArgumentException.class)
