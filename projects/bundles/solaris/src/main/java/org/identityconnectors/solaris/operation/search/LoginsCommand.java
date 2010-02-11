@@ -83,7 +83,7 @@ class LoginsCommand {
             
             entry = getEntry(out, username);
         } catch (Exception e) {
-            ConnectorException.wrap(e);
+            throw ConnectorException.wrap(e);
         }
         return entry;
     }

@@ -109,7 +109,13 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
         conn.executeCommand(conn.buildCommand("rm -f", TMPFILE));
         conn.doSudoReset();
         
-        return processOutput(out);
+        List<SolarisEntry> fetchedEntries = processOutput(out);
+        if (fetchedEntries.size() != blockUserNames.size()) {
+            throw new RuntimeException("ERROR: expecting to return " + blockUserNames.size() + " instead of " + fetchedEntries.size());
+            // TODO possibly compare by content.
+        }
+        
+        return fetchedEntries;
     }
 
     /** retrieve account info from the output */

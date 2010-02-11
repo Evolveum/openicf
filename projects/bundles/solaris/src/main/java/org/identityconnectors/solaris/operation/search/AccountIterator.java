@@ -85,9 +85,11 @@ public class AccountIterator implements Iterator<SolarisEntry> {
      */
     private SolarisEntry buildUser(String name) {
         SolarisEntry.Builder entryBuilder = new SolarisEntry.Builder(name).addAttr(NativeAttribute.NAME, name);
+        
+        // we need to execute Logins command always, to figure out if the user exists at all.
+        SolarisEntry loginsEntry = LoginsCommand.getAttributesFor(name, conn);
+        
         if (isLogins) {
-            SolarisEntry loginsEntry = LoginsCommand.getAttributesFor(name, conn);
-            
             // Null indicates that the user was not found.
             if (loginsEntry == null)
                 return null;
