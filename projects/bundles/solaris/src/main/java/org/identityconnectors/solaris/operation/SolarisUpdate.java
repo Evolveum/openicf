@@ -175,7 +175,7 @@ public class SolarisUpdate extends AbstractOp {
                 connection.doSudoReset();
             }
         } else {
-            UpdateNISUser.updateUser(userEntry, connection);
+            UpdateNISUser.updateUser(userEntry, passwd, connection);
         }
     }
     

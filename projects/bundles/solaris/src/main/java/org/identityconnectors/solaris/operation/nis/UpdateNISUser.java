@@ -43,7 +43,7 @@ public class UpdateNISUser extends AbstractNISOp {
     private static final String NO_PRIMARY_GROUP = "No primary group";
     private static final String UID_NOT_UNIQUE = "uid is not unique.";
     
-    public static void updateUser(SolarisEntry userEntry, SolarisConnection connection) {
+    public static void updateUser(SolarisEntry userEntry, final GuardedString passwd, SolarisConnection connection) {
         final String accountName = userEntry.getName();
         String pwddir = connection.getConfiguration().getNisPwdDir();
         String pwdfile = pwddir + "/passwd";
@@ -195,9 +195,8 @@ public class UpdateNISUser extends AbstractNISOp {
                     addNISShellUpdate(accountName, shell, connection);
                 }
 
-                final GuardedString password = getPassword(userEntry);
-                if (password != null) {
-                    addNISPasswordUpdate(accountName, password, connection);
+                if (passwd != null) {
+                    addNISPasswordUpdate(accountName, passwd, connection);
                 }
 
                 AbstractNISOp.addNISMake("passwd", connection);
