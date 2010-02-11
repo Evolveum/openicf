@@ -76,7 +76,7 @@ public class SolarisUpdate extends AbstractOp {
         final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(replaceAttributes));
         final SolarisEntry entry = SolarisUtil.forConnectorAttributeSet(uid.getUidValue(), objclass, replaceAttributes);
         
-        final String newName = fetchName(attrMap);
+        final String newName = fetchName(entry);
         if (objclass.is(ObjectClass.ACCOUNT_NAME)) {
             GuardedString passwd = null; 
             Attribute attrPasswd = attrMap.get(OperationalAttributes.PASSWORD_NAME);
@@ -125,11 +125,11 @@ public class SolarisUpdate extends AbstractOp {
         return newUid;
     }
 
-    private String fetchName(final Map<String, Attribute> attrMap) {
+    private String fetchName(SolarisEntry entry) {
         String newName = null;
-        Attribute nameAttr = attrMap.get(NativeAttribute.NAME.getName());
-        if (attrMap.get(NativeAttribute.NAME) != null) {
-            newName = AttributeUtil.getStringValue(nameAttr);
+        Attribute newNameAttr = entry.searchForAttribute(NativeAttribute.NAME);
+        if (newNameAttr != null) {
+            newName = AttributeUtil.getStringValue(newNameAttr);
         }
         return newName;
     }
