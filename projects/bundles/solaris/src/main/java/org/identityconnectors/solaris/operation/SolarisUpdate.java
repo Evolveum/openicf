@@ -127,7 +127,7 @@ public class SolarisUpdate extends AbstractOp {
 
     private String fetchName(final Map<String, Attribute> attrMap) {
         String newName = null;
-        Attribute nameAttr = attrMap.get(NativeAttribute.NAME);
+        Attribute nameAttr = attrMap.get(NativeAttribute.NAME.getName());
         if (attrMap.get(NativeAttribute.NAME) != null) {
             newName = AttributeUtil.getStringValue(nameAttr);
         }
