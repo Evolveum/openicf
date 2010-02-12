@@ -77,11 +77,11 @@
     <antcall target="connector-build.run-unit-tests">
         <param name="testConfig" value="solaris10"/>
     </antcall>
-<!--
+
     <antcall target="connector-build.run-unit-tests">
         <param name="testConfig" value="solaris10NIS"/>
     </antcall>
--->
+
 </target>
 
 
