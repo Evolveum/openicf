@@ -35,7 +35,12 @@
   enclosed by brackets [] replaced by your own identifying information: 
   "Portions Copyrighted [year] [name of copyright owner]"
 -->
-<project name="connector-googleapps" default="all"> 
-    <property name="framework.dir" value="/Users/warrenstrange/src/packages/connector_toolkit"/>
+<project name="connector-googleapps" default="all">
+
+    <!-- Build against 1.1 Framework -->
+    <property name="framework.dir" value="/Users/warrenstrange/src/packages/connector_toolkit-1.1.5263"/>
+   
     <import file="${framework.dir}/connector_build.xml"/>
+
+    <target name="AAAquicktest" depends="compile-test,run-unit-tests"/>
 </project>

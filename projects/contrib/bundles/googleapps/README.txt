@@ -29,29 +29,6 @@ the ant classpath. Preferences->Ant->Classpath
 1) Edit build.xml to point to the connectors toolkit directory. You can
 download this from the identity connectors project
 
-2) You need to add the following libraries to the Netbeans project:
-GoogleApps
-Junit4.5
-groovy-all
-connector-framework.jar
-connector-framework-internal.jar
-
-
-The Google Apps jar files are in the lib directory. The following
-jars are needed:
-
-gdata-appsforyourdomain-1.0.jar
-gdata-client-1.0.jar
-gdata-core-1.0.jar
-google-collect-1.0.rc1.jar
-
-
-**** Note that the lib/nblibaries.properties file references these jars files
-. You should be able to edit this file for your environment (you
-may have to close and re-open the project after editing this file). 
-
-
-
 
 
 
