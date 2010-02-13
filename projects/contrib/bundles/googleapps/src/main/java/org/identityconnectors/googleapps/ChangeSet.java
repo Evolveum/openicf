@@ -50,7 +50,7 @@ import java.util.List;
  *
  * This can save on bandwidth. The trivial implementation is to delete
  * all of the current list items, then add in the new ones - but this
- * can cause additional traffic to the resource. This class computes the
+ * can cause additional traffic to the target resource. This class computes the
  * minimal change set (minimal set of things to add, and delete).
  *
  * @author warrenstrange

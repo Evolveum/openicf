@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.identityconnectors.googleapps;
+package org.identityconnectors.googleapps.test;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,7 +19,6 @@ import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.Name;
-import org.identityconnectors.framework.common.objects.OperationalAttributeInfos;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.googleapps.GoogleAppsConnector;
@@ -35,6 +34,7 @@ import org.identityconnectors.googleapps.GoogleAppsConnector;
  */
 public class TestAccount {
 
+ 
  
     private String accountId;
     private String password;
@@ -64,6 +64,7 @@ public class TestAccount {
         setQuota(new Integer(25600));
        
         getNicknames().add("testalias-" + x);
+       
         
     }
 
@@ -164,9 +165,7 @@ public class TestAccount {
             } else {
                 map.put(OperationalAttributes.PASSWORD_NAME, new GuardedString(getPassword().toCharArray()));
             }
-        } else {
-            map.put(OperationalAttributes.PASSWORD_NAME, getPassword());
-        }
+        } 
 
         map.put(GoogleAppsConnector.ATTR_GIVEN_NAME, getGivenName());
         map.put(GoogleAppsConnector.ATTR_FAMILY_NAME, getFamilyName());
@@ -199,8 +198,6 @@ public class TestAccount {
             TestAccount tstObj = (TestAccount) obj;
 
             ret = tstObj.getAccountId().equals(accountId) && tstObj.getFamilyName().equals(familyName) && tstObj.getGivenName().equals(givenName) && tstObj.getNicknames().equals(getNicknames());
-
-
         }
         return ret;
     }

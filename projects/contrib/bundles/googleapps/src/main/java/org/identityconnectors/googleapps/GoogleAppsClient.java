@@ -57,8 +57,8 @@ import com.google.gdata.data.appsforyourdomain.provisioning.UserEntry;
 import com.google.gdata.data.appsforyourdomain.provisioning.UserFeed;
 import com.google.gdata.util.ServiceException;
 
+
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -211,6 +211,17 @@ public class GoogleAppsClient {
         }
     }
 
+    /**
+     * The google java api does not have a remove owner api?.
+     * See http://code.google.com/p/gdata-java-client/issues/detail?id=179
+     * 
+     * @param groupId
+     * @param user
+     */
+    void removeGroupOwner(String groupId, String user) {
+       throw new RuntimeException("Google API does not implment remove group owner?");
+    }
+
     List<String> getGroupMembershipsForUser(String accountId) {
         List<String> l = new ArrayList<String>();
         try {
@@ -227,6 +238,8 @@ public class GoogleAppsClient {
         return l;
     }
 
+
+   
     /**
      * An iterator over google apps accounts.  This is wrapper around 
      * the google apps iterator mechanism. Google apps returns results

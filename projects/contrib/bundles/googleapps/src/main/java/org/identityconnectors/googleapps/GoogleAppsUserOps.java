@@ -181,6 +181,7 @@ public class GoogleAppsUserOps {
      *
      * @param ue google apps UesrEntry object
      * @param nicknames list of nicknames
+     * @param gropus - list of groups this user belongs to
      * @return a connectorOject
      */
     private ConnectorObject makeConnectorObject(UserEntry ue, List<String> nicknames, List<String> groups) {
@@ -260,6 +261,8 @@ public class GoogleAppsUserOps {
         AttributesAccessor a = new AttributesAccessor(replaceAttrs);
         final String accountId = uid.getUidValue();
 
+
+
         final GoogleAppsClient g = gc.getConnection();
         // this an optimization in case the update only includes nicknames
         // we can skip the update on the other attributes
@@ -308,8 +311,7 @@ public class GoogleAppsUserOps {
             // google apps does not have a "delete all" nicknames request -
             // so we don't have the option to delete all and then add in the update list
             //ChangeSet changes = new ChangeSet(currentNames, nicknamesToUpdate);
-            ChangeSetExecutor changeSetExecutor = new ChangeSetExecutor(currentNames, nicknamesToUpdate) {
-
+           new ChangeSetExecutor(currentNames, nicknamesToUpdate) {
                 @Override
                 public void doAdd(String nickname) {
                     log.info("Adding nickname ${0} to user {1}", nickname, accountId);
@@ -323,7 +325,39 @@ public class GoogleAppsUserOps {
                     g.deleteNickname(nickname);
 
                 }
-            };
+           }.execute();
+        }
+
+        // update group membership
+        List<String> groupsToUpdate = a.findStringList(GoogleAppsConnector.ATTR_GROUP_LIST);
+
+        if (groupsToUpdate != null) {
+            // we don't get a list of the deltas - so we need to
+            // read the current list to compare what we need to add/delete
+            // google apps does not have a "delete all" nicknames request -
+            // so we don't have the option to delete all and then add in the update list
+
+            List<String> currentGroups = g.getGroupMembershipsForUser(accountId);
+
+            log.info("Existing groups for account {0} are: {1}", accountId, currentGroups);
+           
+           new ChangeSetExecutor(currentGroups, groupsToUpdate) {
+                @Override
+                public void doAdd(String group) {
+                    log.info("Adding group ${0} to user {1}", group, accountId);
+                    g.addGroupMember(group, accountId);
+
+                }
+
+                @Override
+                public void doRemove(String group) {
+                    log.info("Removing user from group {0}", group);
+                    g.removeGroupMember(group,accountId);
+                }
+           }.execute();
+
+           
+
         }
 
         return new Uid((accountId));

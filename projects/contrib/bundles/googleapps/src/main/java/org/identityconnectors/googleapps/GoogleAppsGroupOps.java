@@ -117,7 +117,53 @@ public class GoogleAppsGroupOps {
                 groupId, groupName, description, permissions);
         g.updateGroup(groupId, groupName, description, permissions);
 
-       
+
+          // update group membership
+        if (members != null) {
+            List<String> currentMembers = g.getMembersAsList(groupId);
+
+            log.info("Existing groups for group {0} are: {1}", groupId, currentMembers);
+
+           new ChangeSetExecutor(currentMembers, members) {
+                @Override
+                public void doAdd(String user) {
+                    log.info("Adding user {0}", user);
+                    g.addGroupMember(groupId,user);
+
+                }
+
+                @Override
+                public void doRemove(String user) {
+                    log.info("Removing user {0}", user);
+                    g.removeGroupMember(groupId,user);
+                }
+           }.execute();
+        }
+
+          // update owners
+        if (owners != null) {
+            List<String> currentOwners = g.getMembersAsList(groupId);
+
+            log.info("Existing groups for group {0} are: {1}", groupId, currentOwners);
+
+           new ChangeSetExecutor(currentOwners, owners) {
+                @Override
+                public void doAdd(String user) {
+                    log.info("Adding user {0}", user);
+                    g.addGroupOwner(groupId,user);
+
+                }
+
+                @Override
+                public void doRemove(String user) {
+                    log.info("Removing user {0}", user);
+                    g.removeGroupOwner(groupId,user);
+                }
+           }.execute();
+        }
+
+
+
         return uid;
     }
 

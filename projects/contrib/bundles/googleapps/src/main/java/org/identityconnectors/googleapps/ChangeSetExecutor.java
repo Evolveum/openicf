@@ -59,22 +59,24 @@ public abstract class ChangeSetExecutor {
 
     public ChangeSetExecutor(List<String> existingList, List<String> updatedList) {
         changes = new ChangeSet(existingList, updatedList);
-        execute();
     }
 
     /**
-     * Add the item to the list of items on the resource
+     * Add the item to the list of items on the target resource
      * @param item
      */
     public abstract void doAdd(String item);
 
     /**
-     * remove the item from the list of items on the resource
+     * remove the item from the list of items on the target resource
      * @param item
      */
     public abstract void doRemove(String item);
 
-    private void execute() {
+    /**
+     * Apply all off the adds and removes on the target
+     */
+    public void execute() {
         // toAdd now contains all the net new names we need to add
         // add the new names
         for (String n : changes.itemsToBeAdded()) {

@@ -37,9 +37,10 @@
  * "Portions Copyrighted [year] [name of copyright owner]"
  * -----------
  */
-package org.identityconnectors.googleapps;
+package org.identityconnectors.googleapps.test;
+
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -50,9 +51,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import junit.framework.TestCase;
 import org.identityconnectors.common.IOUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -69,6 +72,8 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import org.identityconnectors.googleapps.*;
+
 /**
  * Tests for the GoogleAppsConnector.
  *
@@ -81,7 +86,7 @@ import org.junit.Test;
  *
  * @author  Warren Strange
  */
-public class GoogleAppsConnectorTests {
+public class GoogleAppsConnectorTests extends TestCase {
 
     /*
      * Example test properties. On your computer, these are defined in your
@@ -92,30 +97,29 @@ public class GoogleAppsConnectorTests {
      */
     private GoogleAppsConnection conn;
     private GoogleAppsConnector gapps;
-
     public static String testGroup; // primary group to add a user to - init from config
-
     public static String testDomain; // Domain - s init from config
-    
-    // Setup/Teardown
 
+    // Setup/Teardown
     /**
      * Creates the google apps connector
      *
      * For testing we are controlling this (and not defering to the framework)
      */
     @Before
-    public void createConnector() throws Exception {
+    public void setUp() throws Exception {
         GoogleAppsConfiguration config = newConfiguration();
         gapps = new GoogleAppsConnector();
         gapps.init(config);
         gapps.test();
 
+
+
         //System.out.println("Set up google apps connector")
     }
 
     @After
-    public void destroyConnector() {
+    public void tearDown() {
         // no-op as there are no consumed resources
     }
 
@@ -148,11 +152,10 @@ public class GoogleAppsConnectorTests {
      * designing tests we need to make sure we do not trigger this
      * condition. 
      */
-    //@Ignore("Ignore for now so hudson build works")
     @Test
-    public void testCreateReadUpdateDeleteUser() {
+    public void XXtestCreateReadUpdateDeleteUser() {
         TestAccount tst = new TestAccount();
-        tst.getGroups().add(testGroup);
+
         System.out.println("Creating test account " + tst.toString());
         Set<Attribute> attrSet = tst.toAttributeSet(true);
         assertNotNull(attrSet);
@@ -202,8 +205,8 @@ public class GoogleAppsConnectorTests {
         // test the group membership
         ConnectorObject obj = fetchGroup(testGroup);
         Attribute a = obj.getAttributeByName(GoogleAppsConnector.ATTR_MEMBER_LIST);
-        assertTrue( a.getValue().contains( tst.getAccountId() + "@" + testDomain));
-        
+        assertTrue(a.getValue().contains(tst.getAccountId() + "@" + testDomain));
+
 
         // delete the test account
         gapps.delete(ObjectClass.ACCOUNT, uid, null);
@@ -211,8 +214,8 @@ public class GoogleAppsConnectorTests {
 
     }
 
-    private ConnectorObject fetchConnectorObject(String id , ObjectClass clazz, String[] optionalAttrs) {
-         Filter filter = FilterBuilder.equalTo(new Name(id));
+    private ConnectorObject fetchConnectorObject(String id, ObjectClass clazz, String[] optionalAttrs) {
+        Filter filter = FilterBuilder.equalTo(new Name(id));
 
         OperationOptionsBuilder builder = new OperationOptionsBuilder();
         builder.setAttributesToGet(Arrays.asList(optionalAttrs));
@@ -230,9 +233,8 @@ public class GoogleAppsConnectorTests {
 
         return obj;
     }
-
-    private static final String accountOptionalAttrs[] = { GoogleAppsConnector.ATTR_NICKNAME_LIST,GoogleAppsConnector.ATTR_GROUP_LIST, };
-    private static final String groupOptionalAttrs[] = { GoogleAppsConnector.ATTR_MEMBER_LIST,GoogleAppsConnector.ATTR_OWNER_LIST, };
+    private static final String accountOptionalAttrs[] = {GoogleAppsConnector.ATTR_NICKNAME_LIST, GoogleAppsConnector.ATTR_GROUP_LIST,};
+    private static final String groupOptionalAttrs[] = {GoogleAppsConnector.ATTR_MEMBER_LIST, GoogleAppsConnector.ATTR_OWNER_LIST,};
 
     private TestAccount fetchAccount(String id) {
         return TestAccount.fromConnectorObject(fetchConnectorObject(id, ObjectClass.ACCOUNT, accountOptionalAttrs));
@@ -250,9 +252,8 @@ public class GoogleAppsConnectorTests {
      * There will alwayws be an admin account (i.e. at least one)
      *
      */
-    @Ignore("Ignore for now so hudson build works")
-    @Test
-    public void testSearchAll() {
+    //@Test
+    public void XXtestSearchAll() {
         Filter filter = null; // return all results
         List<ConnectorObject> r = TestHelpers.searchToList(gapps, ObjectClass.ACCOUNT, filter);
 
@@ -267,13 +268,12 @@ public class GoogleAppsConnectorTests {
      * Test nicknames. These are aliases for the user's email.
      *
      */
-    @Ignore("Ignore for now so hudson build works")
     @Test
-    public void testNicknames() {
+    public void XXtestNicknames() {
         int NUMBER_NICKS = 3;
 
         TestAccount test1 = new TestAccount();
-        test1.getGroups().add(testGroup);
+
 
         String suffix = "n" + test1.getAccountId();
 
@@ -335,59 +335,88 @@ public class GoogleAppsConnectorTests {
 
     }
 
-    @Ignore("Ignore for now so hudson build works")
     @Test
     public void testGroups() {
-        // create a group
+        //create test group
+        Uid gid = gapps.create(ObjectClass.GROUP, makeGroupAttrs(testGroup, "testGroup", "test group dsecription", "", null),
+                null);
+        assertTrue(gid != null);
 
-        String id = "testgroup@identric.org";
 
-        Set<Attribute> attr = makeGroupAttrs(id, "test group", "test description", "");
-
-        Uid uid = gapps.create(ObjectClass.GROUP, attr, null);
-
-        assertTrue(uid != null);
-
-        attr = makeGroupAttrs("testgroup@identric.org", "test group",
-                "NEW DESCRIPTION", "");
+        Set<Attribute> attr = makeGroupAttrs(testGroup, "testGroup", "NEW DESCRIPTION", "", null);
 
         // update the description
-        gapps.update(ObjectClass.GROUP, uid, attr, null);
+        gapps.update(ObjectClass.GROUP, gid, attr, null);
 
         // read it back
-        ConnectorObject o = fetchGroup(id);
-       
-        
-        // delete it
-        gapps.delete(ObjectClass.GROUP, uid, null);
+        ConnectorObject o = fetchGroup(testGroup);
 
-        
+        assertEquals(AttributeUtil.getAsStringValue(o.getAttributeByName(GoogleAppsConnector.ATTR_GROUP_DESCRIPTION)),
+                "NEW DESCRIPTION");
+
+        // add a user to the group
+        TestAccount t1 = new TestAccount();
+        t1.getGroups().add(testGroup);
+        Set<Attribute> attrSet = t1.toAttributeSet(true);
+
+        // create the account
+        Uid uid = gapps.create(ObjectClass.ACCOUNT, attrSet, null);
+
+
+        // fetch via group membership
+        o = fetchGroup(testGroup);
+        List<Object> users = o.getAttributeByName(GoogleAppsConnector.ATTR_MEMBER_LIST).getValue();
+
+        assertTrue(users.contains(t1.getAccountId() + "@" + testDomain));
+
+        // add a second user via group object
+        TestAccount t2 = new TestAccount();
+        attrSet = t2.toAttributeSet(true);
+
+        // create the account
+        Uid uid2 = gapps.create(ObjectClass.ACCOUNT, attrSet, null);
+
+        List<String> ulist = new ArrayList<String>();
+        ulist.add(t2.getAccountId() + "@" + testDomain);
+
+        attrSet = makeGroupAttrs(testGroup, "testGroup", "NEW DESCRIPTION", "", ulist);
+
+        // should ADD user t2, and delete user t1
+        gapps.update(ObjectClass.GROUP, gid, attrSet, null);
+         // fetch via group membership
+        o = fetchGroup(testGroup);
+        users = o.getAttributeByName(GoogleAppsConnector.ATTR_MEMBER_LIST).getValue();
+
+        assertTrue(users.contains(t2.getAccountId() + "@" + testDomain));
+        assertEquals(users.size(), 1);
+
+
+        //
+
+        // delete user
+        gapps.delete(ObjectClass.ACCOUNT, uid, null);
+        gapps.delete(ObjectClass.ACCOUNT, uid2, null);
+        // delete the group
+        gapps.delete(ObjectClass.GROUP, gid, null);
+
+
     }
 
-    private Set<Attribute> makeGroupAttrs(String id, String name, String descrip, String perms) {
+    private Set<Attribute> makeGroupAttrs(String id, String name, String descrip, String perms, List<String> members) {
         Set<Attribute> attr = new HashSet<Attribute>();
-        attr.add( AttributeBuilder.build(Name.NAME, id));
-        attr.add( AttributeBuilder.build(GoogleAppsConnector.ATTR_GROUP_DESCRIPTION, descrip));
+        attr.add(AttributeBuilder.build(Name.NAME, id));
+        attr.add(AttributeBuilder.build(GoogleAppsConnector.ATTR_GROUP_DESCRIPTION, descrip));
         attr.add(AttributeBuilder.build(GoogleAppsConnector.ATTR_GROUP_TEXT_NAME, name));
         attr.add(AttributeBuilder.build(GoogleAppsConnector.ATTR_GROUP_PERMISSIONS, perms));
+
+        if( members != null )
+            attr.add(AttributeBuilder.build(GoogleAppsConnector.ATTR_MEMBER_LIST, members));
+        
         return attr;
     }
 
-
-    /*
-     *
-     * todo: Why do we need this again?
-    static class TrueFilter implements Filter {
-        public boolean accept(ConnectorObject obj) {
-            return true;
-        }
-    }
-     *
-     * */
-     
-
     /**
-     * @return
+     * @return new gogole apps config
      */
     public GoogleAppsConfiguration newConfiguration() {
         GoogleAppsConfiguration config = new GoogleAppsConfiguration();
@@ -398,7 +427,7 @@ public class GoogleAppsConnectorTests {
         config.setDomain(properties.getStringProperty("connector.domain"));
 
         testGroup = properties.getStringProperty("connector.testGroup");
-        testDomain =  properties.getStringProperty("connector.domain");
+        testDomain = properties.getStringProperty("connector.domain");
 
         config.validate();
 
@@ -408,5 +437,5 @@ public class GoogleAppsConnectorTests {
 
     static String getResourceAsString(String res) {
         return IOUtil.getResourceAsString(GoogleAppsConnectorTests.class, res);
-    }  
+    }
 }
