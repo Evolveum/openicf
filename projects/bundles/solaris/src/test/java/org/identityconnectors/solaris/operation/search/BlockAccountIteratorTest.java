@@ -24,6 +24,7 @@
 package org.identityconnectors.solaris.operation.search;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -37,10 +38,15 @@ import org.junit.Test;
 public class BlockAccountIteratorTest extends SolarisTestBase {
     @Test 
     public void test() {
+        if (getConnection().isNis()) {
+            // skip tests for NIS configuration, as block account iterator doesn't support iterating over NIS accounts.
+            return;
+        }
+        
         // similar test to AccountIteratorTest
         String command = (!getConnection().isNis()) ? getConnection().buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"") : "ypcat passwd | cut -d: -f1";
         String out = getConnection().executeCommand(command);
-        final List<String> usernames = SolarisEntries.getNewlineSeparatedItems(out);
+        final List<String> usernames = Arrays.asList(out.split("\n"));
         
         BlockAccountIterator bai = new BlockAccountIterator(usernames, EnumSet.of(NativeAttribute.NAME), 2 , getConnection());
         List<String> retrievedUsernames = new ArrayList<String>();

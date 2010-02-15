@@ -23,15 +23,23 @@
 
 package org.identityconnectors.solaris.operation.search;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 
+/**
+ * Iterators through Solaris accounts (both native and NIS)
+ * @author David Adam
+ */
 public class AccountIterator implements Iterator<SolarisEntry> {
 
     /** bunch of boolean flags says if the command is needed to be launched (based on attributes to get) */
@@ -40,15 +48,31 @@ public class AccountIterator implements Iterator<SolarisEntry> {
     private boolean isAuths;
     private boolean isLast;
     private boolean isRoles;
+    
+    private static final Log log = Log.getLog(AccountIterator.class);
 
+    /**
+     * Implementational note: in case of NIS this is iterator through entry
+     * lines, in case of native accounts it iterates over username list.
+     * 
+     * By entry line we mean the line that resembles ":" separated list, like in
+     * /etc/passwd.
+     */
     private Iterator<String> it;
     private SolarisConnection conn;
     
     private SolarisEntry nextEntry;
 
-    public AccountIterator(List<String> usernames, Set<NativeAttribute> attrsToGet, SolarisConnection conn) {
+    AccountIterator(Set<NativeAttribute> attrsToGet, SolarisConnection conn) {
+        this(Collections.<String>emptyList(), attrsToGet, conn);
+    }
+    
+    AccountIterator(List<String> usernames, Set<NativeAttribute> attrsToGet, SolarisConnection conn) {
         this.conn = conn;
         
+        if (CollectionUtil.isEmpty(usernames)) {
+            usernames = fillUsernames();
+        }
         it = usernames.iterator();
         
         isLogins = LoginsCommand.isLoginsRequired(attrsToGet);
@@ -58,6 +82,13 @@ public class AccountIterator implements Iterator<SolarisEntry> {
         isRoles = attrsToGet.contains(NativeAttribute.ROLES);
     }
     
+    private List<String> fillUsernames() {
+        String command = (!conn.isNis()) ? conn.buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"") : "ypcat passwd | cut -d: -f1";
+        String newLineSeparatedUsernames = conn.executeCommand(command);
+        String[] entries = newLineSeparatedUsernames.split("\n");
+        return Arrays.asList(entries);
+    }
+
     public boolean hasNext() {
         while ((nextEntry == null) && it.hasNext()) {
             nextEntry = buildUser(it.next());
@@ -80,38 +111,88 @@ public class AccountIterator implements Iterator<SolarisEntry> {
 
     /**
      * get the user entry for given username
-     * @param name
+     * @param username
      * @return the initialized entry, or Null in case the user was not found on the resource.
      */
-    private SolarisEntry buildUser(String name) {
-        SolarisEntry.Builder entryBuilder = new SolarisEntry.Builder(name).addAttr(NativeAttribute.NAME, name);
+    private SolarisEntry buildUser(String username) {
+        if (conn.isNis()) {
+            return buildNISUser(username);
+        }
+        SolarisEntry.Builder entryBuilder = new SolarisEntry.Builder(username).addAttr(NativeAttribute.NAME, username);
         
         // we need to execute Logins command always, to figure out if the user exists at all.
-        SolarisEntry loginsEntry = LoginsCommand.getAttributesFor(name, conn);
+        SolarisEntry loginsEntry = LoginsCommand.getAttributesFor(username, conn);
+
+        // Null indicates that the user was not found.
+        if (loginsEntry == null) {
+            return null;
+        }
         
         if (isLogins) {
-            // Null indicates that the user was not found.
-            if (loginsEntry == null)
-                return null;
-            
             entryBuilder.addAllAttributesFrom(loginsEntry);
         }
         if (isProfiles) {
-            final Attribute profiles = ProfilesCommand.getProfilesAttributeFor(name, conn);
+            final Attribute profiles = ProfilesCommand.getProfilesAttributeFor(username, conn);
             entryBuilder.addAttr(NativeAttribute.PROFILES, profiles.getValue());
         }
         if (isAuths) {
-            final Attribute auths = AuthsCommand.getAuthsAttributeFor(name, conn);
+            final Attribute auths = AuthsCommand.getAuthsAttributeFor(username, conn);
             entryBuilder.addAttr(NativeAttribute.AUTHS, auths.getValue());
         }
         if (isLast) {
-            final Attribute last = LastCommand.getLastAttributeFor(name, conn);
+            final Attribute last = LastCommand.getLastAttributeFor(username, conn);
             entryBuilder.addAttr(NativeAttribute.LAST_LOGIN, last.getValue());
         }
         if (isRoles) {
-            final Attribute roles = RolesCommand.getRolesAttributeFor(name, conn);
+            final Attribute roles = RolesCommand.getRolesAttributeFor(username, conn);
             entryBuilder.addAttr(NativeAttribute.ROLES, roles.getValue());
         }
+        return entryBuilder.build();
+    }
+
+    /**
+     * constructs and returns the basic user based on the output of 'ypmatch userid passwd'
+     * @param name
+     * @return the initialized entry if entry found, otherwise null
+     */
+    private SolarisEntry buildNISUser(String username) {
+        String command = new StringBuilder("ypmatch \"").append(username).append("\" passwd").toString();
+        String usernameEntry = conn.executeCommand(command);
+        // The output from is colon delimited and looks like this:
+        // name:x(passwd in shadow file):uid:pgrp-num:comment:homedir:shell
+        List<String> attributes = Arrays.asList(usernameEntry.split(":", -1));
+        if (CollectionUtil.isEmpty(attributes) || attributes.size() < 2) {
+            return null;
+        }
+        Iterator<String> attrIt = attributes.iterator();
+        
+        String accountId = attrIt.next();
+        if (!accountId.equals(username)) {
+            log.warn("The fetched username differs from what was expected: fetched = '" +  accountId + "', expected = '" + username + "'.");
+            return null;
+        }
+        SolarisEntry.Builder entryBuilder = new SolarisEntry.Builder(username).addAttr(NativeAttribute.NAME, username);
+        
+        //This gets the password field. We don't use it.
+        attrIt.next(); // skip password field
+        
+        if (isLogins) {
+            String userUid = attrIt.next();
+            entryBuilder.addAttr(NativeAttribute.ID, userUid);
+            String group = attrIt.next();
+            entryBuilder.addAttr(NativeAttribute.GROUP_PRIM, group);
+            String comment = attrIt.next();
+            entryBuilder.addAttr(NativeAttribute.COMMENT, comment);
+            String dir = attrIt.next();
+            entryBuilder.addAttr(NativeAttribute.DIR, dir);
+            String shell = attrIt.next();
+            entryBuilder.addAttr(NativeAttribute.SHELL, shell);
+        }
+        
+        if (isLast || isRoles || isAuths) {
+            log.warn("Last, Roles, Auths attributes are not supported for NIS accounts. Skipping them.");
+        }
+        
         return entryBuilder.build();
     }
 

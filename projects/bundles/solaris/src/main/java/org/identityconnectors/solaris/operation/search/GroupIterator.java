@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.solaris.SolarisConnection;
@@ -41,10 +42,21 @@ class GroupIterator implements Iterator<SolarisEntry> {
     private SolarisEntry nextEntry;
     private Set<NativeAttribute> requiredAttrs;
 
-    public GroupIterator(List<String> groupNames,
+    GroupIterator (Set<NativeAttribute> requiredAttrs, SolarisConnection connection) {
+        this(Collections.<String>emptyList(), requiredAttrs, connection);
+    }
+    
+    GroupIterator(List<String> groupNames,
             Set<NativeAttribute> requiredAttrs, SolarisConnection connection) {
         
         this.conn = connection;
+        
+        if (CollectionUtil.isEmpty(groupNames)) {
+            String command = (!conn.isNis()) ? "cut -d: -f1 /etc/group | grep -v \"^[+-]\"" : "ypcat group | cut -d: -f1" ;
+            String groupsSeparatedByNewline = connection.executeCommand(command);
+            String[] groupNamesList = groupsSeparatedByNewline.split("\n");
+            groupNames = Arrays.asList(groupNamesList);
+        }
         it = groupNames.iterator();
         this.requiredAttrs = requiredAttrs;
     }
@@ -69,7 +81,7 @@ class GroupIterator implements Iterator<SolarisEntry> {
             return null;
         }
         
-        String[] groupTokens = groupLine.split(":");
+        String[] groupTokens = groupLine.split(":", -1);
         if (groupTokens.length < 3)
             throw new ConnectorException("ERROR: invalid format of /etc/group file: <" + groupLine + ">");
         

@@ -25,17 +25,26 @@ package org.identityconnectors.solaris.operation.search;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 
+/**
+ * Used for iterations blockwise on a list of given accounts, or the iterator
+ * can fetch the accounts list on its own. Note: does not support NIS accounts,
+ * use {@link AccountIterator} instead.
+ * 
+ * @author David Adam
+ */
 public class BlockAccountIterator implements Iterator<SolarisEntry> {
 
     private static final String SHELL_CONT_CHARS = "> ";
@@ -57,15 +66,29 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
     /** size of the blocks that the accounts are iterated. */
     private final int blockSize;
     private int blockCount = -1;
+    
+    BlockAccountIterator(Set<NativeAttribute> attrsToGet, SolarisConnection conn) {
+        this(Collections.<String>emptyList(), attrsToGet, conn);
+    }
 
-    public BlockAccountIterator(List<String> usernames, Set<NativeAttribute> attrsToGet, SolarisConnection conn) {
+    BlockAccountIterator(List<String> usernames, Set<NativeAttribute> attrsToGet, SolarisConnection conn) {
         this(usernames, attrsToGet, conn.getConfiguration().getBlockSize(), conn);
     }
     
     BlockAccountIterator(List<String> usernames, Set<NativeAttribute> attrsToGet, int blockSize, SolarisConnection conn) {
+        if (conn.isNis()) {
+            throw new UnsupportedOperationException("internal error: BlockAccountIterator does not support NIS accounts, use AccountIterator instead.");
+        }
         this.conn = conn;
         this.blockSize = blockSize;
 
+        if (CollectionUtil.isEmpty(usernames)) {
+            // fetch usernames
+            String command = conn.buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"");
+            String usernamesNewLineSeparated = conn.executeCommand(command);
+            String[] usernamesList = usernamesNewLineSeparated.split("\n");
+            usernames = Arrays.asList(usernamesList);
+        }
         accounts = usernames;
         usernameIter = accounts.listIterator();
         entryIter = initNextBlockOfAccounts();

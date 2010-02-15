@@ -45,13 +45,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
-import org.identityconnectors.framework.common.exceptions.UnknownUidException;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 
 class LoginsCommand {
 
+    private static final Log log = Log.getLog(LoginsCommand.class);
+    
     /** a hard-coded set of constants used provided by Logins command. DO NOT CHANGE */
     private static final Set<NativeAttribute> set;
     static {
@@ -77,7 +78,7 @@ class LoginsCommand {
         String out = conn.executeCommand(cmd);
 
         if (out.endsWith("was not found")) {
-            throw new UnknownUidException("Unknown username: " + username);
+            return null;
         }
 
         entry = getEntry(out, username);
@@ -95,7 +96,7 @@ class LoginsCommand {
         final SolarisEntry.Builder bldr = new SolarisEntry.Builder(username);
         
         /* tokens delimited by ":" */
-        final String[] tokens = accountLine.split(":");
+        final String[] tokens = accountLine.split(":", -1);
         final Iterator<String> tokenIt = Arrays.asList(tokens).iterator();
         
         /*
@@ -112,9 +113,9 @@ class LoginsCommand {
         
         /* NAME */
         final String foundUser = tokenIt.next();
-        if (foundUser == null || !username.equals(foundUser)) {
-            String msg = String.format("the logins command returned a different user than expected. Expecting: '%s', Returned: '%s'", username, foundUser);
-            throw new RuntimeException(msg);
+        if (!username.equals(foundUser)) {
+            log.warn("The fetched username differs from what was expected: fetched = '" +  foundUser + "', expected = '" + username + "'.");
+            return null;
         }
         bldr.addAttr(NAME, username);
         /* USER UID */

@@ -55,8 +55,11 @@ public class SolarisEntriesTest extends SolarisTestBase {
             if (isAuths && isProfiles)
                 break;
         }
-        Assert.assertTrue(isAuths);
-        Assert.assertTrue(isProfiles);
+        if (!getConnection().isNis()) {
+            // NIS doesn't support auths and profiles command TODO
+            Assert.assertTrue(isAuths);
+            Assert.assertTrue(isProfiles);
+        }
     }
     
     @Test
@@ -84,10 +87,14 @@ public class SolarisEntriesTest extends SolarisTestBase {
             
             final String basicMsg = "Entry: '%s' is missing attribute: '%s'";
             String msg = String.format(basicMsg, nextIt.getName(), profilesAttr);
-            Assert.assertTrue(msg, isProfiles);
+            if (!getConnection().isNis()) { // NIS doesn't support profiles command TODO
+                Assert.assertTrue(msg, isProfiles);
+            }
             
             msg = String.format(basicMsg, nextIt.getName(), rolesAttr);
-            Assert.assertTrue(msg, isRoles);
+            if (!getConnection().isNis()) { // NIS doesn't support roles command TODO
+                Assert.assertTrue(msg, isRoles);
+            }
         }//while
     }
     

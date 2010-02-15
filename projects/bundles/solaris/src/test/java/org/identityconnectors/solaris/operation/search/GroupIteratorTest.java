@@ -23,6 +23,7 @@
 package org.identityconnectors.solaris.operation.search;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -41,7 +42,7 @@ public class GroupIteratorTest extends SolarisTestBase {
         // similar test to BlockAccountIteratorTest
         String command = (getConnection().isNis()) ? "ypcat group | cut -d: -f1" : "cut -d: -f1 /etc/group | grep -v \"^[+-]\"";
         String out = getConnection().executeCommand(command);
-        final List<String> groups = SolarisEntries.getNewlineSeparatedItems(out);
+        final List<String> groups = Arrays.asList(out.split("\n"));
         
         GroupIterator gi = new GroupIterator(groups, EnumSet.of(NativeAttribute.NAME, NativeAttribute.USERS, NativeAttribute.ID), getConnection());
         List<String> retrievedGroups = new ArrayList<String>();

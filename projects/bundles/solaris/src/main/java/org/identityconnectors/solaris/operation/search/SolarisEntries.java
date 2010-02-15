@@ -23,9 +23,7 @@
 
 package org.identityconnectors.solaris.operation.search;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
@@ -40,27 +38,17 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
 public class SolarisEntries {
 
     public static Iterator<SolarisEntry> getAllAccounts(Set<NativeAttribute> attrsToGet, SolarisConnection conn) {
-        String command = (!conn.isNis()) ? conn.buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"") : "ypcat passwd | cut -d: -f1";
-        String out = conn.executeCommand(command);
-        
-        List<String> accountNames = getNewlineSeparatedItems(out);
-        
         // Impl. note: use AccountIterator in case specific attributes are required, that we won't be able to fetch from BlockAccountIteratr
-        if (attrsToGet.contains(NativeAttribute.PROFILES) || attrsToGet.contains(NativeAttribute.AUTHS) || attrsToGet.contains(NativeAttribute.ROLES)) {
-            return new AccountIterator(accountNames, attrsToGet, conn);
+        if (conn.isNis() || attrsToGet.contains(NativeAttribute.PROFILES) || attrsToGet.contains(NativeAttribute.AUTHS) || attrsToGet.contains(NativeAttribute.ROLES)) {
+            return new AccountIterator(attrsToGet, conn);
         }
         
         // BlockAccount iterator is optimized for fetching info from 'logins' command and 'last login time' only.
-        return new BlockAccountIterator(accountNames, attrsToGet, conn);
+        return new BlockAccountIterator(attrsToGet, conn);
     }
 
     public static Iterator<SolarisEntry> getAllGroups(Set<NativeAttribute> attrsToGet, SolarisConnection conn) {
-        String cmd = (!conn.isNis()) ? "cut -d: -f1 /etc/group | grep -v \"^[+-]\"" : "ypcat group | cut -d: -f1";
-        String out = conn.executeCommand(cmd);
-        
-        List<String> groupNames = getNewlineSeparatedItems(out);
-        
-        return new GroupIterator(groupNames, attrsToGet, conn);
+        return new GroupIterator(attrsToGet, conn);
     }
 
     /**
@@ -76,19 +64,5 @@ public class SolarisEntries {
         // the result will be an Iterable collection with a single element returned.
         GroupIterator it = new GroupIterator(CollectionUtil.newList(groupName), attrsToGet, conn);
         return (it != null && it.hasNext()) ? it.next() : null;
-    }
-    
-    /**
-     * get items from a string, that are separated by newline. 
-     * @param usernameLines the list of items separated by newline
-     * @return the list of items as string. All newline or surrounding whitespace is erased.
-     */
-    static List<String> getNewlineSeparatedItems(String usernameLines) {
-        String[] lines = usernameLines.split("\n");
-        List<String> result = new ArrayList<String>(lines.length);
-        for (String username : lines) {
-            result.add(username.trim());
-        }
-        return result;
     }
 }

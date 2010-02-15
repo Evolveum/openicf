@@ -177,7 +177,7 @@ public class SolarisConnectionTest extends SolarisTestBase {
         }
     }
     
-    @Test
+    @Test @Ignore // to speed up the tests.
     public void testConnectorConstruction() {
         //SolarisConfiguration config = getConnection().getConfiguration();
         implTestConnectorConstruction(false);
