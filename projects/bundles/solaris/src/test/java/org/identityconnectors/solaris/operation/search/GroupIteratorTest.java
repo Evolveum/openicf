@@ -42,7 +42,11 @@ public class GroupIteratorTest extends SolarisTestBase {
         // similar test to BlockAccountIteratorTest
         String command = (getConnection().isNis()) ? "ypcat group | cut -d: -f1" : "cut -d: -f1 /etc/group | grep -v \"^[+-]\"";
         String out = getConnection().executeCommand(command);
-        final List<String> groups = Arrays.asList(out.split("\n"));
+        String[] tmp = out.split("\n");
+        List<String> groups = CollectionUtil.newList();
+        for (String string : tmp) {
+            groups.add(string.trim());
+        }
         
         GroupIterator gi = new GroupIterator(groups, EnumSet.of(NativeAttribute.NAME, NativeAttribute.USERS, NativeAttribute.ID), getConnection());
         List<String> retrievedGroups = new ArrayList<String>();
