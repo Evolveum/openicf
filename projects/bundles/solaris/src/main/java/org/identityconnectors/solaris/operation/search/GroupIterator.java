@@ -55,7 +55,10 @@ class GroupIterator implements Iterator<SolarisEntry> {
             String command = (!conn.isNis()) ? "cut -d: -f1 /etc/group | grep -v \"^[+-]\"" : "ypcat group | cut -d: -f1" ;
             String groupsSeparatedByNewline = connection.executeCommand(command);
             String[] groupNamesList = groupsSeparatedByNewline.split("\n");
-            groupNames = Arrays.asList(groupNamesList);
+            groupNames = CollectionUtil.newList();
+            for (String string : groupNamesList) {
+                groupNames.add(string.trim());
+            }
         }
         it = groupNames.iterator();
         this.requiredAttrs = requiredAttrs;
