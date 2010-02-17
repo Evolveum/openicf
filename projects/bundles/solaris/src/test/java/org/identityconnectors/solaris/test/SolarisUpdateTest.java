@@ -45,6 +45,10 @@ public class SolarisUpdateTest extends SolarisTestBase {
     @Test
     public void testUpdate() {
         final String username = getUserName();
+        if (isTrustedExtensions()) {
+            String command = "usermod -K min_label=ADMIN_LOW -K clearance=ADMIN_HIGH " + username; 
+            getConnection().executeCommand(command);
+        }
 
         Set<Attribute> replaceAttributes = new HashSet<Attribute>();
         final GuardedString newPassword = new GuardedString("buzz".toCharArray());

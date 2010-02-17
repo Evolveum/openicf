@@ -24,7 +24,6 @@
 package org.identityconnectors.solaris.operation.search;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -46,7 +45,11 @@ public class BlockAccountIteratorTest extends SolarisTestBase {
         // similar test to AccountIteratorTest
         String command = (!getConnection().isNis()) ? getConnection().buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"") : "ypcat passwd | cut -d: -f1";
         String out = getConnection().executeCommand(command);
-        final List<String> usernames = Arrays.asList(out.split("\n"));
+        String[] tmp = out.split("\n");
+        List<String> usernames = CollectionUtil.newList();
+        for (String string : tmp) {
+            usernames.add(string.trim());
+        }
         
         BlockAccountIterator bai = new BlockAccountIterator(usernames, EnumSet.of(NativeAttribute.NAME), 2 , getConnection());
         List<String> retrievedUsernames = new ArrayList<String>();

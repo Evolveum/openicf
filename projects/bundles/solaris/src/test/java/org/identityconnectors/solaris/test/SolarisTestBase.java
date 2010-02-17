@@ -46,6 +46,19 @@ public abstract class SolarisTestBase {
     private SolarisConnection connection;
     private SolarisConfiguration configuration;
     private ConnectorFacade facade;
+    private boolean isTrustedExtensions;
+    
+    public boolean isTrustedExtensions() {
+        return isTrustedExtensions;
+    }
+
+    public SolarisTestBase() {
+        try {
+            isTrustedExtensions = SolarisTestCommon.getProperty("isSolarisTx", Boolean.class);
+        } catch (Exception ex) {
+            // OK
+        }
+    }
 
     @Before
     public void beforeTestMethods() {

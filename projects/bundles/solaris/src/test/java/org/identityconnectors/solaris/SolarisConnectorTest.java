@@ -137,6 +137,10 @@ public class SolarisConnectorTest extends SolarisTestBase {
         }
         
         getFacade().create(ObjectClass.ACCOUNT, attrs, null);
+        if (isTrustedExtensions()) {
+            String command = "usermod -K min_label=ADMIN_LOW -K clearance=ADMIN_HIGH " + username; 
+            getConnection().executeCommand(command);
+        }
         try {
             // check if user exists
             String out = getConnection().executeCommand("logins -oxma -l " + username);
