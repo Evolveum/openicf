@@ -53,12 +53,12 @@
     </antcall>
 
     <!-- solaris 10 *NIS* configuration -->
-<!--    <antcall target="contract-dist" inheritAll="false">
+    <antcall target="contract-dist" inheritAll="false">
         <param name="testConfig" value="solaris10NIS"/>
     </antcall>
     <antcall target="contract-tests" inheritAll="false">
         <param name="testConfig" value="solaris10NIS"/>
-    </antcall>-->
+    </antcall>
 
     <!-- solaris 10 Tx configuration -->
     <antcall target="contract-dist" inheritAll="false">
