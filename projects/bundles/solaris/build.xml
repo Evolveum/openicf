@@ -82,8 +82,8 @@
         <param name="testConfig" value="solaris10NIS"/>
     </antcall>
 
-    <antcall target="connector-build.run-unit-tests">^M
-        <param name="testConfig" value="solaris10tx"/>^M
+    <antcall target="connector-build.run-unit-tests">
+        <param name="testConfig" value="solaris10tx"/>
     </antcall>
 
 </target>
