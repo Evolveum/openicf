@@ -59,6 +59,14 @@
     <antcall target="contract-tests" inheritAll="false">
         <param name="testConfig" value="solaris10NIS"/>
     </antcall>-->
+
+    <!-- solaris 10 Tx configuration -->
+    <antcall target="contract-dist" inheritAll="false">
+        <param name="testConfig" value="solaris10tx"/>
+    </antcall>
+    <antcall target="contract-tests" inheritAll="false">
+        <param name="testConfig" value="solaris10tx"/>
+    </antcall>
 </target>
 
 
