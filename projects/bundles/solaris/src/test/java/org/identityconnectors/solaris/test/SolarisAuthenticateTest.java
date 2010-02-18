@@ -25,9 +25,29 @@ package org.identityconnectors.solaris.test;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class SolarisAuthenticateTest extends SolarisTestBase {
+    
+    @Test
+    public void testPositiveAuth() {
+        String username = getUsername(0);
+        /*
+         * This is an additional workaround for Solaris Trusted extension configuration.
+         */
+        if (isTrustedExtensions()) {
+            String command = "usermod -K min_label=ADMIN_LOW -K clearance=ADMIN_HIGH " + username; 
+            getConnection().executeCommand(command);
+        }
+        
+        GuardedString passwd = new GuardedString(SAMPLE_PASSWD.toCharArray());
+        try {
+            getFacade().authenticate(ObjectClass.ACCOUNT, username, passwd, null);
+        } catch (Exception ex) {
+            Assert.fail("Unexpected exception thrown during authenticate. Exception message:" + ex.getMessage());
+        }
+    }
    
     @Test
     public void testAuthenticateApiOp() {
