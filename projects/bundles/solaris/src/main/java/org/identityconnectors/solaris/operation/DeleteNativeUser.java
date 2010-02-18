@@ -71,6 +71,8 @@ class DeleteNativeUser {
         result.put("ERROR", new ErrorHandler() {
             public void handle(String buffer) {
                 /*
+                 * contract tests workaround: (issue is not right type of exception)
+                 * 
                  * Initial state: originally we were throwing just ConnectorException here, because we 
                  * assumed that if Expect4j matches, "ERROR", this means that none of other more specific
                  * messages have been in the response. This assumption turned out to be wrong, thus we 
@@ -94,7 +96,7 @@ class DeleteNativeUser {
                  * So even though Expect4j matched the generic message, based on full buffer content 
                  * we need to throw a specific error message. 
                  */
-                if (buffer.contains(rejectDoesNotExist) || buffer.contains(rejectDoesNotExist)) {
+                if (buffer.contains(rejectDoesNotExist) || buffer.contains(rejectUnknownUser)) {
                     throw new UnknownUidException(messageErrorDelete + accountId);
                 } else {
                     throw new ConnectorException(messageErrorDelete + accountId);
