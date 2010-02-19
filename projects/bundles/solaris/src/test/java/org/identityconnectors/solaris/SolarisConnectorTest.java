@@ -28,11 +28,14 @@ import java.util.Set;
 import junit.framework.Assert;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.api.ConnectorFacade;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
@@ -40,8 +43,11 @@ import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.solaris.attr.AccountAttribute;
+import org.identityconnectors.solaris.attr.GroupAttribute;
 import org.identityconnectors.solaris.test.SolarisTestBase;
+import org.identityconnectors.solaris.test.SolarisTestCommon;
 import org.identityconnectors.test.common.ToListResultsHandler;
+import org.junit.Ignore;
 import org.junit.Test;
 
 
@@ -187,34 +193,6 @@ public class SolarisConnectorTest extends SolarisTestBase {
             getFacade().delete(ObjectClass.ACCOUNT, new Uid(username), null);
         }
     }
-    
-    /**
-     * Check for reset password, when force_change is set to true explicitly.
-     * User login should prompt for New Password: prompt, if password is changed/reset.
-     */
-    @Test
-    public void testResetPassword2() {
-        String username = createResetPasswordUser(true);
-        try {
-            // check if user exists
-            String out = getConnection().executeCommand("logins -oxma -l " + username);
-            Assert.assertTrue("user " + username + " is missing, buffer: <" + out + ">", out.contains(username));
-            
-            final String newPasswd = changePasswordForResetPasswordTest(username);
-            try {
-                getFacade().authenticate(ObjectClass.ACCOUNT, username, new GuardedString(newPasswd.toCharArray()), null);
-                Assert.fail("expected to wait for new password: prompt failed.");
-            } catch (Exception ex) {
-                if (ex.getMessage().contains("New Password:")) {
-                    log.ok("test testResetPassword2 passed");
-                } else {
-                    Assert.fail("expected to wait for new password: prompt failed with unexpected exception: " + ex.getMessage());
-                }
-            }
-        } finally {
-            getFacade().delete(ObjectClass.ACCOUNT, new Uid(username), null);
-        }
-    }
 
     private String changePasswordForResetPasswordTest(final String username) {
         // lets change the password for checking expire password.
@@ -247,6 +225,127 @@ public class SolarisConnectorTest extends SolarisTestBase {
         return username;
     }
     
+    /**
+     * Test for false positives during account deletions.
+     */
+    @Test
+    public void testUserDeletion() {
+        // special configuration for this test + facade
+        SolarisConfiguration config = SolarisTestCommon.createConfiguration();
+        // Set up the resource to not make the home directory but attempt to remove it when the
+        // user is deleted.
+        config.setMakeDirectory(false);
+        config.setDeleteHomeDirectory(true);
+        ConnectorFacade facade = SolarisTestCommon.createConnectorFacade(config);
+        
+        String username = "mrbean";
+        String password = "snoopy";
+        facade.create(ObjectClass.ACCOUNT, CollectionUtil.newSet(AttributeBuilder.build(Name.NAME, username), AttributeBuilder.buildPassword(password.toCharArray())), null);
+        try {
+            String command = (!getConnection().isNis()) ? "logins -oxma -l " + username : "ypmatch " + username + " passwd";
+            String out = getConnection().executeCommand(command);
+            Assert.assertTrue("user '" + username + "' is missing", out.contains(username));
+            
+            try {
+                facade.delete(ObjectClass.ACCOUNT, new Uid(username), null);
+                Assert.fail("deleted the user when deletion should have failed.");
+            } catch (Exception ex) {
+                // OK
+            }
+        } finally {
+            // we are using the original facade here, because it has a correct configuration.
+            getFacade().delete(ObjectClass.ACCOUNT, new Uid(username), null);
+        }
+    }
+    
+    /**
+     * Test create, update, search, delete operations on {@link ObjectClass#GROUP}
+     */
+    @Test @Ignore // until it is fully implemented, SRA...
+    public void testGroupCRUD() {
+        doGroupCRUD(getConfiguration().isSudoAuthorization());
+    }
+    
+    private void doGroupCRUD(boolean isSudoAuthorization) {
+        final String groupName = "connGroup";
+        // this user belongs to group named after groupName above.
+        final String belongingUser = getUsername();
+        final String groupNameForUpdate = "connNewGroup";
+
+        try {
+            cleanGroup(groupName);
+            cleanGroup(groupNameForUpdate);
+        } catch (Exception ex) {
+            Assert.fail("Failed to clean up preliminary groups.");
+        }
+        
+        final Set<Attribute> groupAttrs = CollectionUtil.newSet(
+                AttributeBuilder.build(Name.NAME, groupName), 
+                AttributeBuilder.build(GroupAttribute.USERS.getName(),getUsername(), belongingUser)
+                );
+        getFacade().create(ObjectClass.GROUP, groupAttrs, null);
+        
+        // creating a duplicate group, exception expected.
+        try {
+            getFacade().create(ObjectClass.GROUP, groupAttrs, null);
+            Assert.fail("Attempt to create a duplicate group should fail.");
+        } catch (Exception ex) {
+            // OK 
+        }
+        
+        // retrieve the recently created group
+        ToListResultsHandler handler = new ToListResultsHandler();
+        Set<String> attributesToGet = CollectionUtil.newSet(GroupAttribute.GID.getName());
+        if (!getConnection().isNis()) {
+            attributesToGet.add(GroupAttribute.USERS.getName());
+        }
+        getFacade().search(ObjectClass.GROUP, 
+                FilterBuilder.equalTo(AttributeBuilder.build(Name.NAME, groupName)), handler, 
+                new OperationOptionsBuilder().setAttributesToGet(attributesToGet).build());
+        List<ConnectorObject> result = handler.getObjects();
+        Assert.assertTrue("failed retrieving group: " + groupName, result.size() > 0);
+
+        ConnectorObject co = result.get(0);
+        if (!getConnection().isNis()) {
+            Attribute usersAttr = co.getAttributeByName(GroupAttribute.USERS.getName());
+            Assert.assertNotNull(usersAttr);
+            boolean found = false;
+            for (Object it : usersAttr.getValue()) {
+                if (it.toString().equals(belongingUser)) {
+                    found = true;
+                    break;
+                }
+            }
+            String msg = String.format("user '%s' is missing from group '%s'.", belongingUser, groupName);
+            Assert.assertTrue(msg, found);
+        }
+        
+        Attribute gidAttr = co.getAttributeByName(GroupAttribute.GID.getName());
+        Assert.assertNotNull(gidAttr);
+        String gid = AttributeUtil.getStringValue(gidAttr);
+        Assert.assertTrue(StringUtil.isNotBlank(gid));
+        
+        // Create a new group object with a duplicate gid, this one should fail
+        try {
+            getFacade().create(ObjectClass.GROUP, CollectionUtil.newSet(AttributeBuilder.build(Name.NAME, groupNameForUpdate), 
+                    AttributeBuilder.build(GroupAttribute.GID.getName(), gid)), null);
+            Assert.fail("improperly create a gropu with duplicate id, exception should be thrown.");
+        } catch (Exception ex) {
+            // OK
+        }
+        
+        // Update the the group that was just created
+        // TODO to be continued.
+    }
+
+    private void cleanGroup(String groupName) {
+        ToListResultsHandler handler = new ToListResultsHandler();
+        getFacade().search(ObjectClass.GROUP, FilterBuilder.equalTo(AttributeBuilder.build(Name.NAME, groupName)), handler, null);
+        if (handler.getObjects().size() > 0) {
+            getFacade().delete(ObjectClass.GROUP, new Uid(groupName), null);
+        }
+    }
+
     /**
      * Error should be thrown when changing the "uid" of the user to // the same
      * value of the another existing user in the resource.

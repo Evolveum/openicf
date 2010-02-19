@@ -36,6 +36,43 @@
         <param name="testConfig" value="opensolaris"/>
     </antcall>
 
+    <!-- solaris 10 Tx configuration -->
+    <antcall target="contract-dist" inheritAll="false">
+        <param name="testConfig" value="solaris10tx"/>
+    </antcall>
+    <antcall target="contract-tests" inheritAll="false">
+        <param name="testConfig" value="solaris10tx"/>
+    </antcall>
+</target>
+
+
+
+<!-- **** UNIT TESTS **** --> 
+<target name="run-unit-tests" depends="test-init, instrument, build-testclasspath">
+        
+    <antcall target="connector-build.run-unit-tests">
+        <param name="testConfig" value="opensolaris"/>
+    </antcall>
+
+    <antcall target="connector-build.run-unit-tests">
+        <param name="testConfig" value="solaris10tx"/>
+    </antcall>
+
+</target>
+
+
+
+
+
+
+<!-- NIGHTLY BUILDS --> 
+
+
+
+
+<!-- **** CONTRACT TESTS **** -->
+    <target name="night-contract-tests" depends="contract-init">
+
     <!-- solaris 9 configuration -->
     <antcall target="contract-dist" inheritAll="false">
         <param name="testConfig" value="solaris9"/>
@@ -59,24 +96,13 @@
     <antcall target="contract-tests" inheritAll="false">
         <param name="testConfig" value="solaris10NIS"/>
     </antcall>
-
-    <!-- solaris 10 Tx configuration -->
-    <antcall target="contract-dist" inheritAll="false">
-        <param name="testConfig" value="solaris10tx"/>
-    </antcall>
-    <antcall target="contract-tests" inheritAll="false">
-        <param name="testConfig" value="solaris10tx"/>
-    </antcall>
 </target>
 
 
 
 <!-- **** UNIT TESTS **** --> 
-<target name="run-unit-tests" depends="test-init, instrument, build-testclasspath">
-        
-    <antcall target="connector-build.run-unit-tests">
-        <param name="testConfig" value="opensolaris"/>
-    </antcall>
+<target name="nigth-unit-tests" depends="test-init, instrument, build-testclasspath">
+
 
     <antcall target="connector-build.run-unit-tests">
         <param name="testConfig" value="solaris9"/>
@@ -88,10 +114,6 @@
 
     <antcall target="connector-build.run-unit-tests">
         <param name="testConfig" value="solaris10NIS"/>
-    </antcall>
-
-    <antcall target="connector-build.run-unit-tests">
-        <param name="testConfig" value="solaris10tx"/>
     </antcall>
 
 </target>
