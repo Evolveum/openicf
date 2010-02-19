@@ -177,13 +177,17 @@ public class SolarisConnectionTest extends SolarisTestBase {
         }
     }
     
-    @Test @Ignore // to speed up the tests.
+    @Test 
     public void testConnectorConstruction() {
-        //SolarisConfiguration config = getConnection().getConfiguration();
-        implTestConnectorConstruction(false);
-        if (SolarisTestCommon.getProperty("unitTests.SolarisConnection.testsudoAuthorization", Boolean.class)) {
-            implTestConnectorConstruction(true);
+        //
+        boolean isSudoAuthorization = false;
+        try {
+            isSudoAuthorization = SolarisTestCommon.getProperty("unitTests.SolarisConnection.testsudoAuthorization", Boolean.class);
+        } catch (Exception ex) {
+            // OK
         }
+        
+        implTestConnectorConstruction(isSudoAuthorization);
     }
 
     private void implTestConnectorConstruction(boolean isSudoAuthorization) {
