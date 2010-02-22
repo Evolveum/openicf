@@ -69,6 +69,7 @@
 
 
 
+<target name="nightly-tests" depends="night-unit-tests, night-contract-tests"/>
 
 <!-- **** CONTRACT TESTS **** -->
     <target name="night-contract-tests" depends="contract-init">
@@ -101,7 +102,7 @@
 
 
 <!-- **** UNIT TESTS **** --> 
-<target name="nigth-unit-tests" depends="test-init, instrument, build-testclasspath">
+<target name="night-unit-tests" depends="jar, compile-test, test-init, instrument, build-testclasspath">
 
 
     <antcall target="connector-build.run-unit-tests">
