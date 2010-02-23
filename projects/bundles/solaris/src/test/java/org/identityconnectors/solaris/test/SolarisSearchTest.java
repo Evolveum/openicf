@@ -135,7 +135,8 @@ public class SolarisSearchTest extends SolarisTestBase {
             if (attr.getName().equals(AccountAttribute.UID.getName())) {
                 
                 String uidValue = (String) AttributeUtil.getSingleValue(attr);
-                String out = getConnection().executeCommand("logins -oxma -l \"" + username + "\"");
+                String loginsCmd = (!getConnection().isNis()) ? "logins -oxma -l " + username : "ypmatch \"" + username + "\" passwd";
+                String out = getConnection().executeCommand(loginsCmd);
                 String realUid = out.split(":")[1];
                 
                 Assert.assertEquals(realUid, uidValue);

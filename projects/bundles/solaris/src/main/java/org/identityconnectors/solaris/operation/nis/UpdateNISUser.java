@@ -32,6 +32,7 @@ import org.identityconnectors.common.Pair;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
@@ -62,8 +63,9 @@ public class UpdateNISUser extends AbstractNISOp {
         final String grepCmd = connection.buildCommand("grep");
         
         // Test for a rename operation
-        String newName = getNameValue(userEntry);
-        if (!newName.equals(userEntry.getName())) {
+        Attribute nameAttr = userEntry.searchForAttribute(NativeAttribute.NAME);
+        String newName = (nameAttr != null) ? AttributeUtil.getStringValue(nameAttr) : accountName;
+        if (newName != null && !newName.equals(userEntry.getName())) {
             // Make sure we update the entry
             recordUpdate = true;
             isRename = true;
@@ -279,28 +281,5 @@ public class UpdateNISUser extends AbstractNISOp {
         }
         
         return new Pair<Boolean, String>(recordUpdateTmp, passwordRecord1.toString());
-    }
-
-    /**
-     * return the value of new name, based on the given entry
-     * 
-     * @param entry
-     *            whose Attributes are searched for new value of
-     *            {@link NativeAttribute#NAME}
-     * @return the name of the entry:
-     *         <ul>
-     *         <li>no change in name -- return the original name</li>
-     *         <li>change in name -- return the changed name</li>
-     *         </ul>
-     */
-    private static String getNameValue(SolarisEntry entry) {
-        String value = entry.getName();
-        for (Attribute attr : entry.getAttributeSet()) {
-            if (attr.is(NativeAttribute.NAME.getName())) {
-                value = (String) attr.getValue().get(0);
-                break;
-            }
-        }
-        return value;
     }
 }

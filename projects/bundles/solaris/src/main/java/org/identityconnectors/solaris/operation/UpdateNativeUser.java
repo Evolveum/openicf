@@ -29,6 +29,7 @@ import java.util.Set;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.framework.common.objects.OperationalAttributes;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
@@ -76,9 +77,8 @@ class UpdateNativeUser extends CommandSwitches {
     }
 
     private static String updateUserImpl(SolarisEntry entry, SolarisConnection conn) {
-        String newName = findNewName(entry);
-        if (newName == null)
-            newName = entry.getName();
+        Attribute nameAttr = entry.searchForAttribute(NativeAttribute.NAME);
+        String newName = (nameAttr != null) ? AttributeUtil.getStringValue(nameAttr) : entry.getName();
         
         /*
          * UPDATE OF USER ATTRIBUTES (except password) {@see PasswdCommand}
@@ -173,15 +173,5 @@ class UpdateNativeUser extends CommandSwitches {
             "done";
         
         return getGroups;
-    }
-
-    private static String findNewName(SolarisEntry entry) {
-        for (Attribute attr : entry.getAttributeSet()) {
-            NativeAttribute nativeAttr = NativeAttribute.forAttributeName(attr.getName());
-            if (nativeAttr.equals(NativeAttribute.NAME)) {
-                return (String) attr.getValue().get(0);
-            }
-        }
-        return null;
     }
 }

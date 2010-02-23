@@ -23,7 +23,6 @@
 package org.identityconnectors.solaris;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -146,7 +145,8 @@ public class SolarisConnectorTest extends SolarisTestBase {
         final String username = createResetPasswordUser(true);
         try {
             // check if user exists
-            String out = getConnection().executeCommand("logins -oxma -l " + username);
+            String loginsCmd = (!getConnection().isNis()) ? "logins -oxma -l " + username : "ypmatch \"" + username + "\" passwd";
+            String out = getConnection().executeCommand(loginsCmd);
             Assert.assertTrue("user " + username + " is missing, buffer: <" + out + ">", out.contains(username));
 
             final String newPasswd = changePasswordForResetPasswordTest(username);
@@ -176,7 +176,8 @@ public class SolarisConnectorTest extends SolarisTestBase {
         String username = createResetPasswordUser(false);
         try {
             // check if user exists
-            String out = getConnection().executeCommand("logins -oxma -l " + username);
+            String loginsCmd = (!getConnection().isNis()) ? "logins -oxma -l " + username : "ypmatch \"" + username + "\" passwd";
+            String out = getConnection().executeCommand(loginsCmd);
             Assert.assertTrue("user " + username + " is missing, buffer: <" + out + ">", out.contains(username));
 
             final String newPasswd = changePasswordForResetPasswordTest(username);
@@ -396,7 +397,8 @@ public class SolarisConnectorTest extends SolarisTestBase {
         checkUser(getSecondUsername(), AttributeBuilder.build(Name.NAME, getSecondUsername()));
         
         // fetch the uid of first user:
-        String out = getConnection().executeCommand("logins -oxma -l \"" + getUsername() + "\"");
+        String loginsCmd = (!getConnection().isNis()) ? "logins -oxma -l " + getUsername() : "ypmatch \"" + getUsername() + "\" passwd";
+        String out = getConnection().executeCommand(loginsCmd);
         String firstUid = out.split(":")[1];
         
         // update second users' uid to the first:
