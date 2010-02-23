@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
@@ -52,7 +53,8 @@ class CommandSwitches {
             NativeAttribute.COMMENT, 
             NativeAttribute.USER_EXPIRE, 
             NativeAttribute.AUTHS, 
-            NativeAttribute.PROFILES);
+            NativeAttribute.PROFILES,
+            NativeAttribute.ROLES);
 
     static {
         Map<NativeAttribute, String> switchMap = new EnumMap<NativeAttribute, String>(NativeAttribute.class);
@@ -112,7 +114,7 @@ class CommandSwitches {
             // clear or remove the attribute on the resource. 
             // Some command line switches allow to pass empty argument, 
             // these are in Set CommandSwitches#passNullParams.
-            if (value == null) {
+            if (StringUtil.isBlank(value)) {
                 if (passNullParams.contains(nAttrName)) {
                     value = "";
                 } else {
