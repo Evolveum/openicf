@@ -1097,6 +1097,33 @@ public class SolarisConnection {
     }
 
     /**
+     * This method returns true if Solaris version is 8 or 9 otherwise return
+     * false.
+     */
+    public boolean isVersionLT10() {
+        String versionOut = executeCommand("uname -r");
+        if (StringUtil.isBlank(versionOut)) {
+            return true;
+        }
+        
+        versionOut = versionOut.trim();
+        String[] version = versionOut.split("\\.");
+        boolean isVersionLT10 = true;
+        if (version.length >= 2) {
+            try {
+                int minor = Integer.parseInt(version[1]);
+                if (minor >= 10) {
+                    isVersionLT10 = false;
+                }
+            } catch (NumberFormatException e) {
+                // OK
+            }
+        }
+        
+        return isVersionLT10;
+    }
+
+    /**
      * Use this class to construct a sequence of matchers.
      * Matchers consists of two parts:
      * <ul>

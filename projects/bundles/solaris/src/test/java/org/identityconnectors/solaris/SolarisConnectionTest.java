@@ -324,6 +324,22 @@ public class SolarisConnectionTest extends SolarisTestBase {
         
         testSessionRepetitiveCreation(config);
     }
+    
+    /**
+     * this test needs a 'isVersionLT10' test property defined.
+     */
+    @Test
+    public void testIsVersionLT10() {
+        final String testPropName = "unitTests.isVersionLT10";
+        boolean isVersionLT10expected = false;
+        try {
+            isVersionLT10expected = SolarisTestCommon.getProperty(testPropName, Boolean.class);
+        } catch (IllegalArgumentException ex) {
+            log.info("skipping testIsVersionLT10() because test property '" + testPropName + "' is not defined.");
+        }
+        
+        Assert.assertEquals(isVersionLT10expected, getConnection().isVersionLT10());
+    }
 
     @Override
     public boolean createGroup() {
