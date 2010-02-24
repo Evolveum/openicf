@@ -120,6 +120,8 @@ public class SolarisConnection {
 
     private ChannelShell channel;
     
+    private Boolean isVersionLT10;
+    
     /**
      * Specific constructor used by OpAuthenticateImpl. In most cases consider
      * using {@link SolarisConnection#SolarisConnection(SolarisConfiguration)}
@@ -1031,19 +1033,39 @@ public class SolarisConnection {
     private String getMutexReleaseScript() {
         return getMutexReleaseScript(pidMutexFile);
     }
-    
+
+    /**
+     * Acquires Mutex before manipulating users or groups. Prevents concurrency
+     * issues.
+     * 
+     * Finally the {@link SolarisConnection#executeMutexReleaseScript()} should
+     * be called to release the allocated mutex.
+     */
     public void executeMutexAcquireScript() {
-        executeCommand(getAcquireMutexScript(), CollectionUtil.newSet("ERROR"));
+        if (isVersionLT10()) {
+            executeCommand(getAcquireMutexScript(), CollectionUtil.newSet("ERROR"));
+        }
     }
     
+    /** 
+     * Acquires Mutex before manipulating users or groups. Prevents concurrency
+     * issues. This is a special version used for operations on Solaris with NIS user database.
+     * 
+     * Finally the {@link SolarisConnection#executeMutexReleaseScript(String)} should
+     * be called to release the allocated mutex.
+     */
     public void executeMutexAcquireScript(String uidMutexFile, String tmpUidMutexFile, String pidFoundFile) {
         executeCommand(getAcquireMutexScript(uidMutexFile, tmpUidMutexFile, pidFoundFile), CollectionUtil.newSet("ERROR"));
     }
     
+    /** {@see SolarisConnection#executeMutexAcquireScript()} */
     public void executeMutexReleaseScript() {
-        executeCommand(getMutexReleaseScript());
+        if (isVersionLT10()) {
+            executeCommand(getMutexReleaseScript());
+        }
     }
     
+    /** {@see SolarisConnection#executeMutexAcquireScript(String, String, String)} */
     public void executeMutexReleaseScript(String uidMutexFile) {
         executeCommand(getMutexReleaseScript(uidMutexFile));
     }
@@ -1101,6 +1123,13 @@ public class SolarisConnection {
      * false.
      */
     public boolean isVersionLT10() {
+        if (isVersionLT10 == null) {
+            isVersionLT10 = initIsVersionLT10();
+        }
+        return isVersionLT10;
+    }
+
+    private boolean initIsVersionLT10() {
         String versionOut = executeCommand("uname -r");
         if (StringUtil.isBlank(versionOut)) {
             return true;
