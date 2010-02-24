@@ -22,6 +22,7 @@
  */
 package org.identityconnectors.solaris.test;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -74,10 +75,17 @@ public class SolarisUpdateTest extends SolarisTestBase {
     }
 
     @Test(expected = RuntimeException.class)
-    public void testUpdateUnknownUid() {
+    public void testUpdateUnknownUsername() {
         Set<Attribute> replaceAttributes = CollectionUtil.newSet(AttributeBuilder.buildPassword("buzz".toCharArray()));
 
         getFacade().update(ObjectClass.ACCOUNT, new Uid("NONEXISTING_UID___"), replaceAttributes, null);
+    }
+    
+    @Test(expected = RuntimeException.class)
+    public void testUpdateUnknownGroupname() {
+        Set<Attribute> replaceAttributes = CollectionUtil.newSet(AttributeBuilder.build(GroupAttribute.USERS.getName(), Collections.emptyList()));
+
+        getFacade().update(ObjectClass.GROUP, new Uid("NONEXISTING_UID___"), replaceAttributes, null);
     }
 
     @Test

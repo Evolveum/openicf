@@ -104,9 +104,16 @@ class CommandSwitches {
             // assuming Single values only
             List<Object> values = attr.getValue();
             if (values == null) {
-                // workaround for contract tests (UpdateApitOpTests#testUpdateToNull()):
-                // because Unix cannot accept null arguments in update, we need to throw an exception to satisfy the contract.
-                throw new ConnectorException(String.format("Attribute '%s' has a null value, expecting singleValue", attr.getName()));
+                switch (nAttrName) {
+                case LOCK:
+                case PWSTAT:
+                    // do nothing, these attributes allow to pass null value.
+                    break;
+                default:
+                    // workaround for contract tests (UpdateApitOpTests#testUpdateToNull()):
+                    // because Unix cannot accept null arguments in update, we need to throw an exception to satisfy the contract.
+                    throw new ConnectorException(String.format("Attribute '%s' has a null value, expecting singleValue", attr.getName()));
+                }
             }
             String value = AttributeUtil.getStringValue(attr);
 
@@ -117,9 +124,7 @@ class CommandSwitches {
             if (StringUtil.isBlank(value)) {
                 if (passNullParams.contains(nAttrName)) {
                     value = "";
-                } else {
-                    continue;
-                }
+                } 
             }
             
             // append command line switch
@@ -133,7 +138,10 @@ class CommandSwitches {
                     buffer.append(cmdSwitchForAttr).append(" ");
                     break;
                 default:
-                    buffer.append(cmdSwitchForAttr).append(" \"").append(value).append("\" ");
+                    buffer.append(cmdSwitchForAttr);
+                    if (value != null) {
+                        buffer.append(" \"").append(value).append("\" ");
+                    }
                     break;
                 }                
             }

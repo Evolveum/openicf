@@ -71,6 +71,8 @@ class UpdateNativeUser extends CommandSwitches {
 
                 PasswdCommand.configureUserPassword(entryWithNewName, password, conn);
             }
+            
+            PasswdCommand.configurePasswordProperties(entry, conn);
         } finally {
             conn.doSudoReset();
         }
