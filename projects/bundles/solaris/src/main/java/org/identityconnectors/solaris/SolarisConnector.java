@@ -235,7 +235,11 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
             case MIN:
             case MAX:
             case INACTIVE:
-                newAttr = AttributeInfoBuilder.build(attr.getName(), int.class);
+                newAttr = AttributeInfoBuilder.build(attr.getName(), int.class, EnumSet.of(Flags.NOT_RETURNED_BY_DEFAULT));
+                break;
+            case PASSWD_FORCE_CHANGE:
+            case LOCK:
+                newAttr = AttributeInfoBuilder.build(attr.getName(), boolean.class, EnumSet.of(Flags.NOT_RETURNED_BY_DEFAULT));
                 break;
             default:
                 newAttr = AttributeInfoBuilder.build(attr.getName());

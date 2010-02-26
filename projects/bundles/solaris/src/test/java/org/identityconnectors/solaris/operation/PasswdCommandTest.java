@@ -25,6 +25,7 @@ package org.identityconnectors.solaris.operation;
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
+import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.solaris.attr.AccountAttribute;
@@ -56,15 +57,12 @@ public class PasswdCommandTest extends SolarisTestBase {
     /**
      * Test for {@link NativeAttribute#LOCK}.
      * 
-     * The connector supports only one-way lock of an account, once it is locked
-     * it cannot be unlocked. 
-     * <br>
-     * The resource itself supports unlocking but this would be a change w.r.t.
-     * what the adapter did.
+     * If an account is locked, authentication should fail.
      */
     @Test
     public void testLock() {
         String username = getUsername();
+        enableTrustedLogin(username);
         GuardedString password = new GuardedString(SAMPLE_PASSWD.toCharArray());
         
         // authentication involves login, so try to authenticate
@@ -75,12 +73,66 @@ public class PasswdCommandTest extends SolarisTestBase {
         }
         
         // lock the account, then authenticate should fail
-        getFacade().update(ObjectClass.ACCOUNT, new Uid(username), CollectionUtil.newSet(AttributeBuilder.build(AccountAttribute.LOCK.getName())), null);
+        getFacade().update(ObjectClass.ACCOUNT, new Uid(username), CollectionUtil.newSet(AttributeBuilder.build(AccountAttribute.LOCK.getName(), Boolean.TRUE.toString())), null);
         try {
             getFacade().authenticate(ObjectClass.ACCOUNT, username, password, null);
             Assert.fail("Locked account should not able to login.");
         } catch (Exception ex) {
             // OK
+        }
+    }
+    
+    /**
+     * Test for {@link NativeAttribute#LOCK}
+     * 
+     * If an account is unlocked authentication should succeed. {@see PasswdCommandTest#testLock()}
+     */
+    @Test
+    public void testUnLock() {
+        String username = "connuser";
+        GuardedString passwd = new GuardedString("foo123".toCharArray());
+        // create a locked account, login should fail
+        getFacade().create(ObjectClass.ACCOUNT, CollectionUtil.newSet(AttributeBuilder.build(Name.NAME, username), AttributeBuilder.buildPassword(passwd), AttributeBuilder.build(AccountAttribute.LOCK.getName(), Boolean.TRUE.toString())), null);
+        try {
+            enableTrustedLogin(username);
+            try {
+                getFacade().authenticate(ObjectClass.ACCOUNT, username, passwd, null);
+                Assert.fail("expecting to fail when we attempt to authenticate a locked account.");
+            } catch (Exception ex) {
+                // OK
+            }
+            // unlock the account, authenticate should succeed.
+            getFacade().update(ObjectClass.ACCOUNT, new Uid(username), CollectionUtil.newSet(AttributeBuilder.build(AccountAttribute.LOCK.getName(), Boolean.FALSE.toString())), null);
+            try {
+                getFacade().authenticate(ObjectClass.ACCOUNT, username, passwd, null);
+            } catch (Exception ex) {
+                Assert.fail("authentication of an unlocked account should pass, but received a failure.");
+            }
+            
+        } finally {
+            getFacade().delete(ObjectClass.ACCOUNT, new Uid(username), null);
+        }
+    }
+    
+    @Test
+    public void testFailLock() {
+        try {
+            getFacade().update(ObjectClass.ACCOUNT, new Uid(getUsername()), CollectionUtil.newSet(AttributeBuilder.build(AccountAttribute.LOCK.getName())), null);
+            Assert.fail("passing null option to Lock should cause failure. It must have a boolean value.");
+        } catch (Exception ex) {
+            // OK
+        }
+        try {
+            getFacade().create(ObjectClass.ACCOUNT, CollectionUtil.newSet(AttributeBuilder.build(Name.NAME, "fooconn"), AttributeBuilder.buildPassword("foo134".toCharArray()), AttributeBuilder.build(AccountAttribute.LOCK.getName())), null);
+            Assert.fail("passing null option to Lock should cause failure. It must have a boolean value.");
+        } catch (Exception ex) {
+            // OK
+        } finally {
+            try {
+                getFacade().delete(ObjectClass.ACCOUNT, new Uid("foo134"), null);
+            } catch (Exception ex) {
+                // OK
+            }
         }
     }
     

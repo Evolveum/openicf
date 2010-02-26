@@ -62,14 +62,24 @@ testsuite {
       returnedByDefault: true
     ]// attrTemplate
     
-    attrTemplateInt = [
+    attrTemplateIntNRBD = [
       type: int.class,
       readable: true,
       createable: true,
       updateable: true,
       required: false,
       multiValue: false,
-      returnedByDefault: true
+      returnedByDefault: false
+    ]// attrTemplate
+    
+    attrTemplateBooleanNRBD = [
+      type: boolean.class,
+      readable: true,
+      createable: true,
+      updateable: true,
+      required: false,
+      multiValue: false,
+      returnedByDefault: false
     ]// attrTemplate
   
     attrRequiredTemplate = [
@@ -139,9 +149,9 @@ testsuite {
     ]
     __NAME__.attribute.shell.oclasses = Lazy.get("testsuite.Schema.attrRequiredTemplate")
 
-    inactive.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateInt")
-    min.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateInt")
-    max.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateInt")
+    inactive.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateIntNRBD")
+    min.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateIntNRBD")
+    max.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateIntNRBD")
     secondary_group.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     group.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     __NAME__.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
@@ -150,13 +160,13 @@ testsuite {
     dir.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     comment.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     uid.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
-    lock.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
+    lock.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateBooleanNRBD")
     time_last_login.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     authorization.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     profile.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     __PASSWORD__.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrPasswdTemplate")
     role.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
-    force_change.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
+    force_change.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateBooleanNRBD")
     shell.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
 
     operations = [

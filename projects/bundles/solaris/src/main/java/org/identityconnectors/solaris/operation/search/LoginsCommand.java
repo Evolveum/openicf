@@ -45,6 +45,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
@@ -166,8 +167,8 @@ class LoginsCommand {
         if ("LK".equals(pwstat)) {
             isLock = true;
         }
-        bldr.addAttr(PWSTAT, Boolean.toString(isPwStat));
-        bldr.addAttr(LOCK, Boolean.toString(isLock));
+        bldr.addAttr(PWSTAT, CollectionUtil.newList(isPwStat));
+        bldr.addAttr(LOCK, CollectionUtil.newList(isLock));
         
         /* PASSWD CHANGE - skip */
         tokenIt.next();

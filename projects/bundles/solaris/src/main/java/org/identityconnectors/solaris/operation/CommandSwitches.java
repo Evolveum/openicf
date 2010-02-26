@@ -104,16 +104,9 @@ class CommandSwitches {
             // assuming Single values only
             List<Object> values = attr.getValue();
             if (values == null) {
-                switch (nAttrName) {
-                case LOCK:
-                case PWSTAT:
-                    // do nothing, these attributes allow to pass null value.
-                    break;
-                default:
-                    // workaround for contract tests (UpdateApitOpTests#testUpdateToNull()):
-                    // because Unix cannot accept null arguments in update, we need to throw an exception to satisfy the contract.
-                    throw new ConnectorException(String.format("Attribute '%s' has a null value, expecting singleValue", attr.getName()));
-                }
+                // workaround for contract tests (UpdateApitOpTests#testUpdateToNull()):
+                // because Unix cannot accept null arguments in update, we need to throw an exception to satisfy the contract.
+                throw new ConnectorException(String.format("Attribute '%s' has a null value, expecting singleValue", attr.getName()));
             }
             String value = AttributeUtil.getStringValue(attr);
 
@@ -134,8 +127,15 @@ class CommandSwitches {
                 // shouldn't have a value
                 switch (nAttrName) {
                 case LOCK:
-                case PWSTAT:
                     buffer.append(cmdSwitchForAttr).append(" ");
+                    break;
+                case PWSTAT:
+                    boolean isPasswordForceChange = Boolean.parseBoolean(value);
+                    if (isPasswordForceChange) {
+                        buffer.append(cmdSwitchForAttr).append(" ");
+                    } else {
+                        throw new ConnectorException("Solaris allows to set 'force_change' attribute only to 'true' value. Anything else is invalid and will be ignored.");
+                    }
                     break;
                 default:
                     buffer.append(cmdSwitchForAttr);

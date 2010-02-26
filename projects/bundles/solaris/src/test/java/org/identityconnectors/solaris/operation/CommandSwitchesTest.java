@@ -44,11 +44,18 @@ public class CommandSwitchesTest extends SolarisTestBase {
         Map<NativeAttribute, String> switches = new HashMap<NativeAttribute, String>();
         
         for (NativeAttribute attr : NativeAttribute.values()) {
-            bldr.addAttr(attr, VALUE_MARKER + attr.getName());
+            String attrValue = VALUE_MARKER + attr.getName();
+            // PWSTAT is special attribute, that accepts true only values, so we need to workaround this.
+            if (attr.equals(NativeAttribute.PWSTAT)) {
+                attrValue = "true";
+            }
+            bldr.addAttr(attr, attrValue);
             switches.put(attr, COMMAND_LINE_SWITCH_MARKER + attr.getName());
         }
         SolarisEntry entry = bldr.build();
 
+        // see the contract in CommandSwitches#formatCommandSwitches
+        String generatedCommandLineSwitches = CommandSwitches.formatCommandSwitches(entry, getConnection(), switches);
         for (NativeAttribute attr : NativeAttribute.values()) {
             // this is a contract of attribute formatting
             String regexp = null;
@@ -58,14 +65,13 @@ public class CommandSwitchesTest extends SolarisTestBase {
             case PWSTAT:
                 regexp = COMMAND_LINE_SWITCH_MARKER + attrName + "([\\s][^\"]|[\\s]*$|[\\s]+[" + COMMAND_LINE_SWITCH_MARKER + "])";
                 //assert '-ATTR -ATTR' =~ /-ATTR([\s][^"]|[\s]*$|[\s]+[-])/
-                break;                
+                break;
             default:
                 regexp = COMMAND_LINE_SWITCH_MARKER + attrName + "[\\s]+\"" + VALUE_MARKER + attrName + "\"";
                 //assert '-ATTR "V_ATTR"' =~ /-ATTR[\s]+"V_ATTR"/
                 break;
             }
-            // see the contract in CommandSwitches#formatCommandSwitches
-            String generatedCommandLineSwitches = CommandSwitches.formatCommandSwitches(entry, getConnection(), switches);
+            
             String msg = String.format("Invalid command line formatter: output: <%s> doesn't match regexp: <%s>", generatedCommandLineSwitches, regexp);
             Pattern p = Pattern.compile(regexp);            
             Matcher m = p.matcher(generatedCommandLineSwitches);

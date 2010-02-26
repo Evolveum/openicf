@@ -33,13 +33,7 @@ public class SolarisAuthenticateTest extends SolarisTestBase {
     @Test
     public void testPositiveAuth() {
         String username = getUsername(0);
-        /*
-         * This is an additional workaround for Solaris Trusted extension configuration.
-         */
-        if (isTrustedExtensions()) {
-            String command = "usermod -K min_label=ADMIN_LOW -K clearance=ADMIN_HIGH " + username; 
-            getConnection().executeCommand(command);
-        }
+        enableTrustedLogin(username);
         
         GuardedString passwd = new GuardedString(SAMPLE_PASSWD.toCharArray());
         try {

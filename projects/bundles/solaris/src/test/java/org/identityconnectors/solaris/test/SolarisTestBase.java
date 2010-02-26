@@ -47,10 +47,6 @@ public abstract class SolarisTestBase {
     private SolarisConfiguration configuration;
     private ConnectorFacade facade;
     private boolean isTrustedExtensions;
-    
-    public boolean isTrustedExtensions() {
-        return isTrustedExtensions;
-    }
 
     public SolarisTestBase() {
         try {
@@ -161,6 +157,20 @@ public abstract class SolarisTestBase {
             throw new RuntimeException("Group was not initialized. Change the Unit test's createGroup() value to true.");
         }
         return testgroupName;  
+    }
+    
+    /**
+     * Enable authentication for the given user.
+     * 
+     * When Solaris Trusted extensions are enabled, an extra command is needed to be executed after create.
+     * 
+     * @param username which will be enabled to login.
+     */
+    public void enableTrustedLogin(final String username) {
+        if (isTrustedExtensions) {
+            String command = "usermod -K min_label=ADMIN_LOW -K clearance=ADMIN_HIGH " + username; 
+            getConnection().executeCommand(command);
+        }
     }
 
     public abstract int getCreateUsersNumber();

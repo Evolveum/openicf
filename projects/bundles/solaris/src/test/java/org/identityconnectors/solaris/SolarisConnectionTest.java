@@ -177,7 +177,7 @@ public class SolarisConnectionTest extends SolarisTestBase {
         }
     }
     
-    @Test 
+    @Test
     public void testConnectorConstruction() {
         //
         boolean isSudoAuthorization = false;

@@ -28,8 +28,11 @@ import java.util.Map;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
+import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
@@ -42,18 +45,6 @@ import org.identityconnectors.solaris.operation.search.SolarisEntry;
 class PasswdCommand extends CommandSwitches {
 
     private static final String NEW_PASSWORD_MATCH = "ew Password:";
-    
-    // passwd operation switches
-    private static final Map<NativeAttribute, String> passwdSwitches;
-    static {
-        passwdSwitches = new EnumMap<NativeAttribute, String>(NativeAttribute.class);
-        passwdSwitches.put(NativeAttribute.PWSTAT, "-f");
-        //passwdSwitches.put(NativeAttribute.PW_LAST_CHANGE, null); // this is not used attribute (see LoginsCommand and its SVIDRA counterpart). TODO erase this comment.
-        passwdSwitches.put(NativeAttribute.MIN_DAYS_BETWEEN_CHNG, "-x");
-        passwdSwitches.put(NativeAttribute.MAX_DAYS_BETWEEN_CHNG, "-n");
-        passwdSwitches.put(NativeAttribute.DAYS_BEFORE_TO_WARN, "-w");
-        passwdSwitches.put(NativeAttribute.LOCK, "-l");
-    }
     
     private final static Set<String> passwdRejects = CollectionUtil.newSet("Permission denied", "command not found", "not allowed to execute");
     
@@ -71,6 +62,7 @@ class PasswdCommand extends CommandSwitches {
     }
     
     public static void configurePasswordProperties(SolarisEntry entry, SolarisConnection conn) {
+        Map<NativeAttribute, String> passwdSwitches = buildPasswdSwitches(entry, conn);
         final String cmdSwitches = CommandSwitches.formatCommandSwitches(entry, conn, passwdSwitches);
         if (cmdSwitches.length() == 0) {
             return; // no password related attribute present in the entry.
@@ -86,5 +78,34 @@ class PasswdCommand extends CommandSwitches {
         } catch (Exception ex) {
             throw ConnectorException.wrap(ex);
         }
+    }
+
+    private static Map<NativeAttribute, String> buildPasswdSwitches(SolarisEntry entry, SolarisConnection conn) {
+        Map<NativeAttribute, String> passwdSwitches = new EnumMap<NativeAttribute, String>(NativeAttribute.class);
+        passwdSwitches.put(NativeAttribute.PWSTAT, "-f");
+        //passwdSwitches.put(NativeAttribute.PW_LAST_CHANGE, null); // this is not used attribute (see LoginsCommand and its SVIDRA counterpart). TODO erase this comment.
+        passwdSwitches.put(NativeAttribute.MIN_DAYS_BETWEEN_CHNG, "-x");
+        passwdSwitches.put(NativeAttribute.MAX_DAYS_BETWEEN_CHNG, "-n");
+        passwdSwitches.put(NativeAttribute.DAYS_BEFORE_TO_WARN, "-w");
+        
+        String lockFlag = null;
+        Attribute lock = entry.searchForAttribute(NativeAttribute.LOCK);
+        if (lock != null) {
+            String lockValue = AttributeUtil.getStringValue(lock);
+            if (StringUtil.isNotBlank(lockValue)) {
+                boolean isLock = Boolean.parseBoolean(lockValue);
+                if (isLock == false) {
+                    // *unlocking* differs in Solaris 8,9 and in Solaris 10+:
+                    lockFlag = (conn.isVersionLT10()) ? "-df" : "-u" ;
+                    passwdSwitches.put(NativeAttribute.LOCK, lockFlag);
+                } else {
+                    lockFlag = "-l";
+                }
+            }
+        }
+        if (lockFlag != null) {
+            passwdSwitches.put(NativeAttribute.LOCK, lockFlag);
+        }
+        return passwdSwitches;
     }
 }

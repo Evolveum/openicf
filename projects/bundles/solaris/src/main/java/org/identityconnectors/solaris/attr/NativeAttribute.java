@@ -44,6 +44,13 @@ public enum NativeAttribute {
     /**
      * USER attribute. Other nick for {@link NativeAttribute.PWSTAT} in the
      * adapter for this attribute was PASSWORD_FORCE_CHANGE.
+     * 
+     * Solaris resource allows only update of this attribute to true. E.g. we
+     * can turn on enforcing of changing user's password upon next login. But
+     * there is no way to turn this off.
+     * 
+     * The only way to deactivate force_change is to have the user log in, and 
+     * change her password.
      */
     PWSTAT,
 //    /** USER attribute */ // not used see SVIDRA#
