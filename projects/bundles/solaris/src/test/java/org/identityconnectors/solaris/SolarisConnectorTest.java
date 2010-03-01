@@ -212,7 +212,7 @@ public class SolarisConnectorTest extends SolarisTestBase {
         final String oldPassword = "bugsPasswd";
         Set<Attribute> attrs = CollectionUtil.newSet(AttributeBuilder.build(Name.NAME, username), 
                 AttributeBuilder.buildPassword(oldPassword.toCharArray()),
-                AttributeBuilder.build(AccountAttribute.PASSWD_FORCE_CHANGE.getName(), Boolean.toString(isForceChange)));
+                AttributeBuilder.build(AccountAttribute.PASSWD_FORCE_CHANGE.getName(), isForceChange));
         // cleanup the user if it's there from previous runs
         try {
             getFacade().delete(ObjectClass.ACCOUNT, new Uid(username), null);

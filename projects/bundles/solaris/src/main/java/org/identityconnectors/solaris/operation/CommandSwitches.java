@@ -108,13 +108,13 @@ class CommandSwitches {
                 // because Unix cannot accept null arguments in update, we need to throw an exception to satisfy the contract.
                 throw new ConnectorException(String.format("Attribute '%s' has a null value, expecting singleValue", attr.getName()));
             }
-            String value = AttributeUtil.getStringValue(attr);
+            Object value = AttributeUtil.getSingleValue(attr);
 
             // if the value is null, it means that there's an attempt to
             // clear or remove the attribute on the resource. 
             // Some command line switches allow to pass empty argument, 
             // these are in Set CommandSwitches#passNullParams.
-            if (StringUtil.isBlank(value)) {
+            if (value == null || StringUtil.isBlank(value.toString())) {
                 if (passNullParams.contains(nAttrName)) {
                     value = "";
                 } 
@@ -130,7 +130,7 @@ class CommandSwitches {
                     buffer.append(cmdSwitchForAttr).append(" ");
                     break;
                 case PWSTAT:
-                    boolean isPasswordForceChange = Boolean.parseBoolean(value);
+                    boolean isPasswordForceChange = (Boolean) value;
                     if (isPasswordForceChange) {
                         buffer.append(cmdSwitchForAttr).append(" ");
                     } else {
@@ -140,7 +140,7 @@ class CommandSwitches {
                 default:
                     buffer.append(cmdSwitchForAttr);
                     if (value != null) {
-                        buffer.append(" \"").append(value).append("\" ");
+                        buffer.append(" \"").append(value.toString()).append("\" ");
                     }
                     break;
                 }                

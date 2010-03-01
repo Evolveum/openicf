@@ -47,7 +47,7 @@ public class CommandSwitchesTest extends SolarisTestBase {
             Object attrValue = VALUE_MARKER + attr.getName();
             // PWSTAT is special attribute, that accepts true only values, so we need to workaround this.
             if (attr.equals(NativeAttribute.PWSTAT)) {
-                attrValue = "true";
+                attrValue = true;
             }
             bldr.addAttr(attr, attrValue);
             switches.put(attr, COMMAND_LINE_SWITCH_MARKER + attr.getName());
