@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.AlreadyExistsException;
@@ -68,6 +69,9 @@ public class SolarisCreate extends AbstractOp {
         final Map<String, Attribute> attrMap = new HashMap<String, Attribute>(AttributeUtil.toMap(attrs));
 
         final Name name = (Name) attrMap.get(Name.NAME);
+        if (name == null || StringUtil.isBlank(name.getNameValue())) {
+            throw new IllegalArgumentException("Name attribute is missing.");
+        }
         final String entryName = name.getNameValue();
 
         log.info("~~~~~~~ create {0}(''{1}'') ~~~~~~~", oclass.getObjectClassValue(), entryName);

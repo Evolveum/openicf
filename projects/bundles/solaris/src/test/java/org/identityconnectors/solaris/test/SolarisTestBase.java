@@ -152,7 +152,7 @@ public abstract class SolarisTestBase {
         }
     }
     
-    String getGroupName() {
+    public String getGroupName() {
         if (!createGroup()) {
             throw new RuntimeException("Group was not initialized. Change the Unit test's createGroup() value to true.");
         }

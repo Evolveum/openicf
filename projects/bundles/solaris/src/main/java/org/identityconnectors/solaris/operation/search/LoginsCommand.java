@@ -140,7 +140,7 @@ class LoginsCommand {
         }
         
         final int numSecondaryGroups = (totalTokens-MIN_TOKENS)/2;
-        final List<Object> secondaryGroupNames = new ArrayList<Object>(numSecondaryGroups);
+        final List<String> secondaryGroupNames = new ArrayList<String>(numSecondaryGroups);
         
         for (int i = 0; i < numSecondaryGroups; i++) {
             // store secondary group name

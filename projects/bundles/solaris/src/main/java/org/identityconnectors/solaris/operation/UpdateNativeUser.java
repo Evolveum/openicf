@@ -66,7 +66,7 @@ class UpdateNativeUser extends CommandSwitches {
             // PASSWORD UPDATE
             if (password != null) {
                 // the username could have changed in update, so we need to change the password for the new username:
-                final SolarisEntry entryWithNewName = (!newName.equals(entry.getName())) ? 
+                final SolarisEntry entryWithNewName = (newName != null) ? 
                         new SolarisEntry.Builder(newName).addAllAttributesFrom(entry).build() : entry;
 
                 PasswdCommand.configureUserPassword(entryWithNewName, password, conn);
@@ -78,9 +78,17 @@ class UpdateNativeUser extends CommandSwitches {
         }
     }
 
+    /**
+     * preform the user update.
+     * 
+     * @param entry
+     * @param conn
+     * @return the new username, null otherwise (if the username hasn't been changed).
+     */
     private static String updateUserImpl(SolarisEntry entry, SolarisConnection conn) {
         Attribute nameAttr = entry.searchForAttribute(NativeAttribute.NAME);
-        String newName = (nameAttr != null) ? AttributeUtil.getStringValue(nameAttr) : entry.getName();
+        // newName is null, if the name hasn't changed.
+        String newName = (nameAttr != null) ? AttributeUtil.getStringValue(nameAttr) : null;
         
         /*
          * UPDATE OF USER ATTRIBUTES (except password) {@see PasswdCommand}

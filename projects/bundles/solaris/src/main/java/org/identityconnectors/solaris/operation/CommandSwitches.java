@@ -104,47 +104,63 @@ class CommandSwitches {
             // assuming Single values only
             List<Object> values = attr.getValue();
             if (values == null) {
-                // workaround for contract tests (UpdateApitOpTests#testUpdateToNull()):
-                // because Unix cannot accept null arguments in update, we need to throw an exception to satisfy the contract.
+                // workaround for contract tests
+                // (UpdateApitOpTests#testUpdateToNull()):
+                // because Unix cannot accept null arguments in update, we need
+                // to throw an exception to satisfy the contract.
                 throw new ConnectorException(String.format("Attribute '%s' has a null value, expecting singleValue", attr.getName()));
             }
-            Object value = AttributeUtil.getSingleValue(attr);
 
-            // if the value is null, it means that there's an attempt to
-            // clear or remove the attribute on the resource. 
-            // Some command line switches allow to pass empty argument, 
-            // these are in Set CommandSwitches#passNullParams.
-            if (value == null || StringUtil.isBlank(value.toString())) {
-                if (passNullParams.contains(nAttrName)) {
-                    value = "";
-                } 
+            boolean isSingleValue = values.size() < 2;
+            if (isSingleValue) {
+                Object value = AttributeUtil.getSingleValue(attr);
+
+                // if the value is null, it means that there's an attempt to
+                // clear or remove the attribute on the resource.
+                // Some command line switches allow to pass empty argument,
+                // these are in Set CommandSwitches#passNullParams.
+                if (value == null || StringUtil.isBlank(value.toString())) {
+                    if (passNullParams.contains(nAttrName)) {
+                        values = CollectionUtil.newList((Object) "");
+                    }
+                }
             }
-            
+
             // append command line switch
             String cmdSwitchForAttr = switches.get(nAttrName);
-            if (cmdSwitchForAttr != null) {                
-                //Special case passwd -f and -l because unlike the other flags it
-                // shouldn't have a value
-                switch (nAttrName) {
-                case LOCK:
-                    buffer.append(cmdSwitchForAttr).append(" ");
-                    break;
-                case PWSTAT:
-                    boolean isPasswordForceChange = (Boolean) value;
-                    if (isPasswordForceChange) {
-                        buffer.append(cmdSwitchForAttr).append(" ");
-                    } else {
-                        throw new ConnectorException("Solaris allows to set 'force_change' attribute only to 'true' value. Anything else is invalid and will be ignored.");
-                    }
-                    break;
-                default:
-                    buffer.append(cmdSwitchForAttr);
-                    if (value != null) {
-                        buffer.append(" \"").append(value.toString()).append("\" ");
-                    }
-                    break;
-                }                
+            if (cmdSwitchForAttr == null) {
+                continue;
             }
+
+            // Special case passwd -f and -l because unlike the other flags it
+            // shouldn't have a value
+            switch (nAttrName) {
+            case LOCK:
+                buffer.append(cmdSwitchForAttr).append(" ");
+                break;
+            case PWSTAT:
+                boolean isPasswordForceChange = (Boolean) values.get(0);
+                if (isPasswordForceChange) {
+                    buffer.append(cmdSwitchForAttr).append(" ");
+                } else {
+                    throw new ConnectorException(
+                            "Solaris allows to set 'force_change' attribute only to 'true' value. Anything else is invalid and will be ignored.");
+                }
+                break;
+            default:
+                buffer.append(cmdSwitchForAttr).append(" ");
+
+                boolean first = true;
+                for (Object itValue : values) {
+                    if (!first) {
+                        buffer.append(",");
+                    }
+                    buffer.append("\"").append(itValue.toString()).append("\"");
+                    first = false;
+                }
+                buffer.append(" ");
+                break;
+            }// switch
         }// for
         return buffer.toString().trim();
     }
