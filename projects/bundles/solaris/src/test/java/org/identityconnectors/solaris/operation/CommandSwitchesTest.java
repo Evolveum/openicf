@@ -44,7 +44,7 @@ public class CommandSwitchesTest extends SolarisTestBase {
         Map<NativeAttribute, String> switches = new HashMap<NativeAttribute, String>();
         
         for (NativeAttribute attr : NativeAttribute.values()) {
-            String attrValue = VALUE_MARKER + attr.getName();
+            Object attrValue = VALUE_MARKER + attr.getName();
             // PWSTAT is special attribute, that accepts true only values, so we need to workaround this.
             if (attr.equals(NativeAttribute.PWSTAT)) {
                 attrValue = "true";

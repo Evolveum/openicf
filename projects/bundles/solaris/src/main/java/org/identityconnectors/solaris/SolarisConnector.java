@@ -211,6 +211,9 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
             case GROUPNAME: // adapter also didn't support update of Group's name
                 attributes.add(AttributeInfoBuilder.build(attr.getName(), String.class, EnumSet.of(Flags.NOT_UPDATEABLE)));
                 break;
+            case GID:
+                attributes.add(AttributeInfoBuilder.build(attr.getName(), int.class, EnumSet.of(Flags.NOT_RETURNED_BY_DEFAULT)));
+                break;
 
             default:
                 attributes.add(AttributeInfoBuilder.build(attr.getName()));
@@ -235,6 +238,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
             case MIN:
             case MAX:
             case INACTIVE:
+            case UID:
                 newAttr = AttributeInfoBuilder.build(attr.getName(), int.class, EnumSet.of(Flags.NOT_RETURNED_BY_DEFAULT));
                 break;
             case PASSWD_FORCE_CHANGE:

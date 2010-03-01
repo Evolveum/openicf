@@ -134,10 +134,10 @@ public class SolarisSearchTest extends SolarisTestBase {
         for (Attribute attr : accountEntry.getAttributes()) {
             if (attr.getName().equals(AccountAttribute.UID.getName())) {
                 
-                String uidValue = (String) AttributeUtil.getSingleValue(attr);
+                int uidValue = (Integer) AttributeUtil.getSingleValue(attr);
                 String loginsCmd = (!getConnection().isNis()) ? "logins -oxma -l " + username : "ypmatch \"" + username + "\" passwd";
                 String out = getConnection().executeCommand(loginsCmd);
-                String realUid = out.split(":")[1];
+                int realUid = Integer.valueOf(out.split(":")[1]);
                 
                 Assert.assertEquals(realUid, uidValue);
                 return;
@@ -162,12 +162,13 @@ public class SolarisSearchTest extends SolarisTestBase {
         for (Attribute attr : accountEntry.getAttributes()) {
             if (attr.getName().equals(GroupAttribute.GID.getName())) {
                 
-                String uidValue = (String) AttributeUtil.getSingleValue(attr);
+                int gidValue = (Integer) AttributeUtil.getSingleValue(attr);
                 String cmd = (!getConnection().isNis()) ? "cut -d: -f1,3 /etc/group | grep -v \"^[+-]\"" : "ypcat group | cut -d: -f1,3";
                 cmd += " | grep " + groupName;
                 String out = getConnection().executeCommand(cmd);
+                int expected = Integer.valueOf(out.split(":")[1]);
                 
-                Assert.assertEquals(out.split(":")[1].trim(), uidValue);
+                Assert.assertEquals(expected, gidValue);
                 return;
             }
         }

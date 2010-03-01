@@ -181,7 +181,7 @@ public class AccountIterator implements Iterator<SolarisEntry> {
         attrIt.next(); // skip password field
         
         if (isLogins) {
-            String userUid = attrIt.next();
+            int userUid = Integer.valueOf(attrIt.next());
             entryBuilder.addAttr(NativeAttribute.ID, userUid);
             String group = attrIt.next();
             entryBuilder.addAttr(NativeAttribute.GROUP_PRIM, group);

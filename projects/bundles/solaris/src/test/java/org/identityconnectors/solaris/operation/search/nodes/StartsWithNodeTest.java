@@ -48,7 +48,7 @@ public class StartsWithNodeTest {
         Assert.assertFalse(result);
         result = swn.evaluate(new SolarisEntry.Builder("FooBarBaz").addAttr(NativeAttribute.NAME, "BarBaz").build());
         Assert.assertTrue(result);
-        result = swn.evaluate(new SolarisEntry.Builder("FooBarBaz").addAttr(NativeAttribute.ID, "BarBaz").build());
+        result = swn.evaluate(new SolarisEntry.Builder("FooBarBaz").addAttr(NativeAttribute.ID, 25).build());
         Assert.assertTrue(result);
         result = swn.evaluate(new SolarisEntry.Builder("FooBarBaz").build());
         Assert.assertTrue(result);

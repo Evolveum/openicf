@@ -120,7 +120,7 @@ class LoginsCommand {
         }
         bldr.addAttr(NAME, username);
         /* USER UID */
-        bldr.addAttr(ID, tokenIt.next());
+        bldr.addAttr(ID, Integer.valueOf(tokenIt.next()));
         
         /* PRIMARY GROUP NAME */
         bldr.addAttr(GROUP_PRIM, tokenIt.next());
@@ -167,17 +167,17 @@ class LoginsCommand {
         if ("LK".equals(pwstat)) {
             isLock = true;
         }
-        bldr.addAttr(PWSTAT, CollectionUtil.newList(isPwStat));
-        bldr.addAttr(LOCK, CollectionUtil.newList(isLock));
+        bldr.addAttr(PWSTAT, isPwStat);
+        bldr.addAttr(LOCK, isLock);
         
         /* PASSWD CHANGE - skip */
         tokenIt.next();
         
         
         
-        bldr.addAttr(MIN_DAYS_BETWEEN_CHNG, tokenIt.next());
-        bldr.addAttr(MAX_DAYS_BETWEEN_CHNG, tokenIt.next());
-        bldr.addAttr(DAYS_BEFORE_TO_WARN, tokenIt.next());
+        bldr.addAttr(MIN_DAYS_BETWEEN_CHNG, Integer.valueOf(tokenIt.next()));
+        bldr.addAttr(MAX_DAYS_BETWEEN_CHNG, Integer.valueOf(tokenIt.next()));
+        bldr.addAttr(DAYS_BEFORE_TO_WARN, Integer.valueOf(tokenIt.next()));
         
         /* USER INACTIVE */
         String userInactive = tokenIt.next();

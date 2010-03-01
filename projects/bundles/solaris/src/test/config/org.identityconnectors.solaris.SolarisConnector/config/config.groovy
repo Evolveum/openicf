@@ -134,7 +134,7 @@ testsuite {
 
   
 
-    gid.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.testsuite.Schema.attrTemplate")
+    gid.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.testsuite.Schema.attrTemplateIntNRBD")
     __NAME__.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrNotUpdateableTemplate")
     users.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrMultiValuedTemplate")
     
@@ -159,7 +159,7 @@ testsuite {
     warn.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     dir.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     comment.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
-    uid.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
+    uid.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateIntNRBD")
     lock.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateBooleanNRBD")
     time_last_login.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     authorization.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")

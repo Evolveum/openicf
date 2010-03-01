@@ -59,7 +59,7 @@ public class SolarisEntry {
         }
         
         /** add a singlevalue attr */
-        public Builder addAttr(NativeAttribute name, String value) {
+        public Builder addAttr(NativeAttribute name, Object value) {
             attrSet.add(AttributeBuilder.build(name.getName(), value));
             return this;
         }
