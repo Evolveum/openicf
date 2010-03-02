@@ -135,7 +135,7 @@ testsuite {
   
 
     gid.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.testsuite.Schema.attrTemplateIntNRBD")
-    __NAME__.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrNotUpdateableTemplate")
+    __NAME__.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrRequiredTemplate")
     users.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrMultiValuedTemplate")
     
     shell.attribute.shell.oclasses = [
@@ -152,9 +152,9 @@ testsuite {
     inactive.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateIntNRBD")
     min.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateIntNRBD")
     max.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateIntNRBD")
-    secondary_group.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
+    secondary_group.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrMultiValuedTemplate")
     group.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
-    __NAME__.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
+    __NAME__.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrRequiredTemplate")
     expire.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     warn.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     dir.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
@@ -162,10 +162,10 @@ testsuite {
     uid.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateIntNRBD")
     lock.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateBooleanNRBD")
     time_last_login.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
-    authorization.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
-    profile.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
+    authorization.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrMultiValuedTemplate")
+    profile.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrMultiValuedTemplate")
     __PASSWORD__.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrPasswdTemplate")
-    role.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
+    role.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrMultiValuedTemplate")
     force_change.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateBooleanNRBD")
     shell.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
 

@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
-import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
@@ -95,16 +94,17 @@ class PasswdCommand extends CommandSwitches {
         String lockFlag = null;
         Attribute lock = entry.searchForAttribute(NativeAttribute.LOCK);
         if (lock != null) {
-            String lockValue = AttributeUtil.getStringValue(lock);
-            if (StringUtil.isNotBlank(lockValue)) {
-                boolean isLock = Boolean.parseBoolean(lockValue);
-                if (isLock == false) {
-                    // *unlocking* differs in Solaris 8,9 and in Solaris 10+:
-                    lockFlag = (conn.isVersionLT10()) ? "-df" : "-u" ;
-                    passwdSwitches.put(NativeAttribute.LOCK, lockFlag);
-                } else {
-                    lockFlag = "-l";
-                }
+            Object lockValue = AttributeUtil.getSingleValue(lock);
+            if (lockValue == null) {
+                throw new IllegalArgumentException("missing value for attribute LOCK");
+            }
+            boolean isLock = (Boolean) lockValue;
+            if (isLock) {
+                lockFlag = "-l";
+            } else {
+                // *unlocking* differs in Solaris 8,9 and in Solaris 10+:
+                lockFlag = (conn.isVersionLT10()) ? "-df" : "-u";
+                passwdSwitches.put(NativeAttribute.LOCK, lockFlag);
             }
         }
         if (lockFlag != null) {

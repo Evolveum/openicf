@@ -111,8 +111,8 @@ class CommandSwitches {
                 throw new ConnectorException(String.format("Attribute '%s' has a null value, expecting singleValue", attr.getName()));
             }
 
-            boolean isSingleValue = values.size() < 2;
-            if (isSingleValue) {
+            if (nAttrName.isSingleValue()) {
+                // this provides validation for single value attributes.
                 Object value = AttributeUtil.getSingleValue(attr);
 
                 // if the value is null, it means that there's an attempt to

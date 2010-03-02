@@ -208,8 +208,8 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
             case USERS:
                 attributes.add(AttributeInfoBuilder.build(attr.getName(), String.class, EnumSet.of(Flags.MULTIVALUED)));
                 break;
-            case GROUPNAME: // adapter also didn't support update of Group's name
-                attributes.add(AttributeInfoBuilder.build(attr.getName(), String.class, EnumSet.of(Flags.NOT_UPDATEABLE)));
+            case GROUPNAME:
+                attributes.add(AttributeInfoBuilder.build(attr.getName(), String.class, EnumSet.of(Flags.REQUIRED)));
                 break;
             case GID:
                 attributes.add(AttributeInfoBuilder.build(attr.getName(), int.class, EnumSet.of(Flags.NOT_RETURNED_BY_DEFAULT)));
@@ -235,6 +235,9 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
         for (AccountAttribute attr : AccountAttribute.values()) {
             AttributeInfo newAttr = null;
             switch (attr) {
+            case NAME:
+                newAttr = AttributeInfoBuilder.build(attr.getName(), String.class, EnumSet.of(Flags.REQUIRED));
+                break;
             case MIN:
             case MAX:
             case INACTIVE:
@@ -245,6 +248,12 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
             case LOCK:
                 newAttr = AttributeInfoBuilder.build(attr.getName(), boolean.class, EnumSet.of(Flags.NOT_RETURNED_BY_DEFAULT));
                 break;
+            case SECONDARY_GROUP:
+            case ROLES:
+            case AUTHORIZATION:
+            case PROFILE:
+                newAttr = AttributeInfoBuilder.build(attr.getName(), String.class, EnumSet.of(Flags.MULTIVALUED));
+                break;
             default:
                 newAttr = AttributeInfoBuilder.build(attr.getName());
                 break;
@@ -252,7 +261,6 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
             
             attributes.add(newAttr);
         }
-        attributes.add(OperationalAttributeInfos.PASSWORD);
         final ObjectClassInfo ociInfoAccount = new ObjectClassInfoBuilder().setType(ObjectClass.ACCOUNT_NAME).addAllAttributeInfo(attributes).build();
         schemaBuilder.defineObjectClass(ociInfoAccount);
         

@@ -28,19 +28,19 @@ import java.util.Map;
 
 public enum NativeAttribute {
     /** USER/GROUP attribute */
-    NAME,
+    NAME(true),
     /** USER/GROUP attribute */
-    ID,
+    ID(true),
     /** USER attribute: primary group */
-    GROUP_PRIM,
+    GROUP_PRIM(true),
     /** USER attribute */
-    COMMENT, 
+    COMMENT(true), 
     /** USER attribute: secondary groups */
-    GROUPS_SEC,
+    GROUPS_SEC(false),
     /** USER attribute */
-    DIR,
+    DIR(true),
     /** USER attribute */
-    SHELL,
+    SHELL(true),
     /**
      * USER attribute. Other nick for {@link NativeAttribute.PWSTAT} in the
      * adapter for this attribute was PASSWORD_FORCE_CHANGE.
@@ -52,34 +52,40 @@ public enum NativeAttribute {
      * The only way to deactivate force_change is to have the user log in, and 
      * change her password.
      */
-    PWSTAT,
+    PWSTAT(true),
 //    /** USER attribute */ // not used see SVIDRA#
 //    PW_LAST_CHANGE,
     /** USER attribute */
-    MIN_DAYS_BETWEEN_CHNG,
+    MIN_DAYS_BETWEEN_CHNG(true),
     /** USER attribute */
-    MAX_DAYS_BETWEEN_CHNG,
+    MAX_DAYS_BETWEEN_CHNG(true),
     /** USER attribute */
-    DAYS_BEFORE_TO_WARN,
+    DAYS_BEFORE_TO_WARN(true),
     /** USER attribute */
-    USER_EXPIRE, 
+    USER_EXPIRE(true), 
     /** USER attribute */
-    USER_INACTIVE,
+    USER_INACTIVE(true),
     /** USER attribute */
-    LOCK,
+    LOCK(true),
     
     /** USER attribute */
-    ROLES, 
+    ROLES(false), 
     /** USER attribute */
-    AUTHS, 
+    AUTHS(false), 
     /** USER attribute */
-    PROFILES,
+    PROFILES(false),
     /** USER attribute: time when the user was last logged in */
-    LAST_LOGIN,
+    LAST_LOGIN(true),
     
     
     /** GROUP attribute */
-    USERS;
+    USERS(false);
+    
+    private boolean isSingleValue;
+
+    private NativeAttribute(boolean isSingleValue) {
+        this.isSingleValue = isSingleValue;
+    }
 
     private static final Map<String, NativeAttribute> stringToNative = new HashMap<String, NativeAttribute>();
     static {
@@ -99,5 +105,10 @@ public enum NativeAttribute {
     /** @return String representation of the native attribute name. */
     public String getName() {
         return this.toString();
+    }
+    
+    /** @return true if the attribute is singleValue, false if it is multivalue */
+    public boolean isSingleValue() {
+        return isSingleValue;
     }
 }
