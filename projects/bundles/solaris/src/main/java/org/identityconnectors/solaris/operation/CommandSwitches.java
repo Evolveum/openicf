@@ -150,15 +150,16 @@ class CommandSwitches {
             default:
                 buffer.append(cmdSwitchForAttr).append(" ");
 
+                buffer.append("\"");
                 boolean first = true;
                 for (Object itValue : values) {
                     if (!first) {
                         buffer.append(",");
                     }
-                    buffer.append("\"").append(itValue.toString()).append("\"");
+                    buffer.append(itValue.toString());
                     first = false;
                 }
-                buffer.append(" ");
+                buffer.append("\" ");
                 break;
             }// switch
         }// for

@@ -23,12 +23,14 @@
 package org.identityconnectors.solaris.operation;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import junit.framework.Assert;
 
+import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.operation.search.SolarisEntry;
 import org.identityconnectors.solaris.test.SolarisTestBase;
@@ -77,6 +79,43 @@ public class CommandSwitchesTest extends SolarisTestBase {
             Matcher m = p.matcher(generatedCommandLineSwitches);
             Assert.assertTrue(msg, m.find());
         }
+    }
+    
+    @Test
+    public void testFormatMultiValueSwitches() {
+        List<String> values = CollectionUtil.newList("foo", "bar", "baz");
+        final String expectedMultivalueArgument = "\"foo,bar,baz\""; 
+        
+        List<NativeAttribute> multivalueAttributes = CollectionUtil.newList();
+        for (NativeAttribute it : NativeAttribute.values()) {
+            if (!it.isSingleValue()) {
+                multivalueAttributes.add(it);
+            }
+        }
+        
+        SolarisEntry.Builder bldr = new SolarisEntry.Builder("foo");
+        Map<NativeAttribute, String> switches = new HashMap<NativeAttribute, String>();
+        for (NativeAttribute it : multivalueAttributes) {
+            bldr.addAttr(it, values);
+            switches.put(it, COMMAND_LINE_SWITCH_MARKER + it.getName());
+        }
+        
+        String generatedCommandLineSwitches = CommandSwitches.formatCommandSwitches(bldr.build(), getConnection(), switches);
+        String[] switchElements = generatedCommandLineSwitches.split(COMMAND_LINE_SWITCH_MARKER);
+        for (NativeAttribute attr : multivalueAttributes) {
+            String foundCluster = searchCluster(attr, switchElements);
+            Assert.assertNotNull("attribute '" + attr.getName() + "' is missing", foundCluster);
+            Assert.assertTrue(foundCluster.contains(expectedMultivalueArgument));
+        }
+    }
+
+    private String searchCluster(NativeAttribute attr, String[] switchElements) {
+        for (String it : switchElements) {
+            if (it.contains(attr.getName())) {
+                return it;
+            }
+        }
+        return null;
     }
 
     @Override
