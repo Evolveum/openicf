@@ -522,7 +522,7 @@ namespace Org.IdentityConnectors.Exchange
         {
             this.configuration = (ExchangeConfiguration)configuration;
             base.Init(configuration);            
-            this.runspace = new RunSpaceInstance(RunSpaceInstance.SnapIn.Exchange);
+            this.runspace = new RunSpaceInstance(RunSpaceInstance.SnapIn.Exchange, configuration.ConnectorMessages);
         }
 
         /// <summary>

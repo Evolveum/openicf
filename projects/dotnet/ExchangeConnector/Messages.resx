@@ -141,7 +141,6 @@
   <data name="ex_wrong_update_type" xml:space="preserve">
     <value>Update type [{0}] not supported</value>
   </data>
-  <!-- Active directory messages -->
   <data name="display_CreateHomeDirectory" xml:space="preserve">
     <value>Create Home Directory</value>
   </data>
@@ -301,5 +300,10 @@
   <data name="ex_InvalidSearchContextInConfiguration" xml:space="preserve">
     <value>An invalid search context was supplied:  {0}</value>
   </data>
-  <!-- end of  Active directory messages -->
+  <data name="ex_NoPowerShellSnapins" xml:space="preserve">
+    <value>There are no registered PowerShell snap-ins.</value>
+  </data>
+  <data name="ex_NoSupportedExchangeSnapin" xml:space="preserve">
+    <value>There is no supported Exchange PowerShell snap-in registered.</value>
+  </data>
 </root>

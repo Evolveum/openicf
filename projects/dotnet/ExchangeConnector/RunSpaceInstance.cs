@@ -33,8 +33,11 @@ namespace Org.IdentityConnectors.Exchange
     using System.Management.Automation;
     using System.Management.Automation.Runspaces;
     using System.Text;
+    using System.Linq;
 
     using Org.IdentityConnectors.Framework.Common.Exceptions;
+    using Org.IdentityConnectors.Framework.Common.Objects;
+    using Org.IdentityConnectors.Common;
 
     /// <summary>
     /// <para>
@@ -62,9 +65,14 @@ namespace Org.IdentityConnectors.Exchange
         private static readonly string ClassName = typeof(RunSpaceInstance).ToString();
 
         /// <summary>
-        /// The exchange snap in name which needs to be loaded
+        /// The Exchange 2007 snap in name which needs to be loaded
         /// </summary>
-        private const string ExchangeSnapIn = "Microsoft.Exchange.Management.PowerShell.Admin";
+        private const string Exchange2007SnapIn = "Microsoft.Exchange.Management.PowerShell.Admin";
+
+        /// <summary>
+        /// The Exchange 2010 snap in name which needs to be loaded
+        /// </summary>
+        private const string Exchange2010SnapIn = "Microsoft.Exchange.Management.PowerShell.E2010";
 
         /// <summary>
         /// Instance variable keeping the <see cref="RunspaceConfiguration"/>
@@ -80,13 +88,22 @@ namespace Org.IdentityConnectors.Exchange
         /// <see cref="RunspaceInvoke"/> instance, managed resource
         /// </summary>
         private RunspaceInvoke runSpaceInvoke;
+
+        /// <summary>
+        /// The catalog of localized messages.
+        /// </summary>
+        private ConnectorMessages _messageCatalog;
         
         /// <summary>
         /// Initializes a new instance of the <see cref="RunSpaceInstance" /> class. 
         /// </summary>
         /// <param name="snapin">Type of snapin to be loaded</param>
-        public RunSpaceInstance(SnapIn snapin)
+        /// <param name="messageCatalog">The message catalog used for conveying localized messages.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="messageCatalog"/> is null.</exception>
+        public RunSpaceInstance(SnapIn snapin, ConnectorMessages messageCatalog)
         {
+            _messageCatalog = Assertions.NullChecked(messageCatalog, "messageCatalog");
+
             // initialize this
             this.InitRunSpace(snapin);
         }
@@ -105,6 +122,15 @@ namespace Org.IdentityConnectors.Exchange
             /// MS Exchange snapin
             /// </summary>
             Exchange
+        }
+
+        /// <summary>
+        /// Defines the various supported Exchange versions.
+        /// </summary>
+        private enum ExchangeVersion
+        {
+            E2007,
+            E2010
         }
         
         /// <summary>
@@ -305,6 +331,7 @@ namespace Org.IdentityConnectors.Exchange
                     }
                 }
             }
+            _messageCatalog = null;
         }
 
         /// <summary>
@@ -323,11 +350,24 @@ namespace Org.IdentityConnectors.Exchange
             switch (snapin)
             {
                 case SnapIn.Exchange:
-                    // used for force load of the exchange dll's
-                    AppDomain.CurrentDomain.AssemblyResolve +=
-                                     new ResolveEventHandler(ExchangeUtility.AssemblyResolver);
+                    var serverVersion = GetExchangeServerVersion();
+                    switch (serverVersion)
+                    {
+                        case ExchangeVersion.E2007:
+                            // used for force load of the exchange dll's
+                            AppDomain.CurrentDomain.AssemblyResolve +=
+                                             new ResolveEventHandler(ExchangeUtility.AssemblyResolver2007);
 
-                    this.runSpaceConfig.AddPSSnapIn(ExchangeSnapIn, out snapOutput);
+                            this.runSpaceConfig.AddPSSnapIn(Exchange2007SnapIn, out snapOutput);
+                            break;
+                        case ExchangeVersion.E2010:
+                            // used for force load of the exchange dll's
+                            AppDomain.CurrentDomain.AssemblyResolve +=
+                                             new ResolveEventHandler(ExchangeUtility.AssemblyResolver2010);
+
+                            this.runSpaceConfig.AddPSSnapIn(Exchange2010SnapIn, out snapOutput);
+                            break;
+                    }
                     break;
             }
 
@@ -343,6 +383,81 @@ namespace Org.IdentityConnectors.Exchange
             this.runSpaceInvoke = new RunspaceInvoke(this.runSpace);
 
             Debug.WriteLine(MethodName + ":exit", ClassName);
+        }
+
+        /// <summary>
+        /// Determines the version of the Exchange server. 
+        /// </summary>
+        /// <remarks>As the remote management functionality is not utilized, the Exchange powershell snap-in must be registered
+        /// on the local computer. Different snap-in is used to manage Exchange 2007 and 2010, hence the server version is determined by the
+        /// registered snap-in.
+        /// </remarks>
+        /// <returns>The version of the Exchange server to manage.</returns>
+        /// <exception cref="ConnectorException">Thrown when the version cannot be determined.</exception>
+        private ExchangeVersion GetExchangeServerVersion()
+        {
+            const string MethodName = "GetServerVersion";
+            Debug.WriteLine(MethodName + ":entry", ClassName);
+
+            const string ExchangeSnapinNamePrefix = "Microsoft.Exchange.Management.PowerShell.";
+
+            ExchangeVersion? version = null;
+            using (var runspace = RunspaceFactory.CreateRunspace())
+            {
+                runspace.Open();
+
+                using (var pipeline = runspace.CreatePipeline())
+                {
+                    var getSnapinsCommand = new Command("Get-PSSnapin");
+                    getSnapinsCommand.Parameters.Add("Registered");
+
+                    pipeline.Commands.Add(getSnapinsCommand);
+
+                    var snapinList = pipeline.Invoke();
+
+                    PipelineReader<object> reader = pipeline.Error;
+                    CheckErrors((IList)reader.ReadToEnd());
+
+                    runspace.Close();
+
+                    if ((snapinList == null) || (snapinList.Count == 0))
+                    {
+                        Debug.WriteLine("No snap-in returned");
+                        throw new ConnectorException(_messageCatalog.Format("ex_NoPowerShellSnapins", "There are no registered PowerShell snap-ins."));
+                    }
+
+                    foreach (var snapin in snapinList)
+                    {
+                        if ((snapin.Properties["Name"] != null) &&
+                            (snapin.Properties["Name"].Value != null) &&
+                            (snapin.Properties["Name"].Value.ToString().StartsWith(ExchangeSnapinNamePrefix,
+                            StringComparison.InvariantCultureIgnoreCase)))
+                        {
+                            var snapinName = snapin.Properties["Name"].Value.ToString();
+                            switch (snapinName.Substring(ExchangeSnapinNamePrefix.Length))
+                            {
+                                case "Admin":
+                                    //Microsoft.Exchange.Management.PowerShell.Admin snap-in is used to manage Exchange 2007
+                                    version = ExchangeVersion.E2007;
+                                    break;
+                                case "E2010":
+                                    //Microsoft.Exchange.Management.PowerShell.E2010 snap-in is used to manage Exchange 2010
+                                    version = ExchangeVersion.E2010;
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!version.HasValue)
+            {
+                throw new ConnectorException(_messageCatalog.Format("ex_NoSupportedExchangeSnapin",
+                    "There is no supported Exchange PowerShell snap-in registered."));
+            }
+
+            Debug.WriteLine(MethodName + ":exit", ClassName);
+            return version.Value;
         }        
     }
 }

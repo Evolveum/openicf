@@ -231,7 +231,7 @@ namespace Org.IdentityConnectors.Exchange
             this.configuration = (ExchangeConfiguration)configuration;
 
             // create runspace instance, will be alive as long as the connector instance is alive
-            this.runspace = new RunSpaceInstance(RunSpaceInstance.SnapIn.Exchange);
+            this.runspace = new RunSpaceInstance(RunSpaceInstance.SnapIn.Exchange, configuration.ConnectorMessages);
 
             // read the object class info definitions
             this.mapOcInfo = ExchangeUtility.GetOCInfo();
