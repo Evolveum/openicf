@@ -109,6 +109,9 @@ public class SolarisUpdate extends AbstractOp {
             } else {
                 invokeNativeGroupUpdate(entry);
             }
+            
+            // Rename was separate operation in Adapter
+            RenameGroup.renameGroup(entry, connection);
         } else {
             throw new UnsupportedOperationException();
         }
@@ -147,7 +150,7 @@ public class SolarisUpdate extends AbstractOp {
     private void invokeNISGroupUpdate(SolarisEntry groupEntry) {
         if (connection.isDefaultNisPwdDir()) {
             invokeNativeGroupUpdate(groupEntry);
-            /* TODO just FYI: sudo added, it was missing in the adapter */
+            
             connection.doSudoStart();
             try {
                 AbstractNISOp.addNISMake("group", connection);

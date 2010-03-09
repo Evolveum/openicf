@@ -54,9 +54,9 @@ public class AbstractNISOp {
     final static String duplicateGroupIdMsg = "Duplicate group id";
     
     // GROUP "Mutex" files
-    final static String grpMutexFile = "/tmp/WSgrplock";
-    final static String tmpGrpMutexFile = "/tmp/WSgrplock.$$";
-    final static String grpPidFile = "/tmp/WSgrppid.$$";
+    protected final static String grpMutexFile = "/tmp/WSgrplock";
+    protected final static String tmpGrpMutexFile = "/tmp/WSgrplock.$$";
+    protected final static String grpPidFile = "/tmp/WSgrppid.$$";
     
     // This is a major string to look for if you want to do rejects on shadow file errors
     final static String ERROR_MODIFYING = "Error modifying ";
