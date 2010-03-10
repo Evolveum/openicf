@@ -22,6 +22,8 @@
  */
 package org.identityconnectors.solaris.operation;
 
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -29,6 +31,7 @@ import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
 import org.identityconnectors.solaris.SolarisConfiguration;
 import org.identityconnectors.solaris.SolarisConnection;
@@ -87,21 +90,17 @@ class CreateNativeUser  {
     private static String formatCreateCommandSwitches(SolarisEntry entry, SolarisConnection conn) {
         StringBuilder buffer = makeOptionalSkelDir(conn);
         
+        // normalize attribute values:
+        Set<Attribute> normalizedAttributes = CollectionUtil.newSet();
+        Set<NativeAttribute> normalizedAttributeType = EnumSet.of(NativeAttribute.DIR, NativeAttribute.GROUP_PRIM, NativeAttribute.SHELL);
         for (Attribute attr : entry.getAttributeSet()) {
-            NativeAttribute nAttrName = NativeAttribute.forAttributeName(attr.getName());
-            // assuming Single values only
-            String value = AttributeUtil.getStringValue(attr);//;(attr.getValue().size() > 0) ? (String) attr.getValue().get(0) : null;
-
-            /* 
-             * append command line switch
-             */
-            String cmdSwitchForAttr = createSwitches.get(nAttrName);
-            if (cmdSwitchForAttr != null) {
-                buffer.append(cmdSwitchForAttr);
-                buffer.append(" ");
-
-                // preprocess the values and use resource configuration values to control them.
-                switch (nAttrName) {
+            List<? extends Object> values = attr.getValue();
+            NativeAttribute attrType = NativeAttribute.forAttributeName(attr.getName());
+            if (normalizedAttributeType.contains(attrType)) {
+                // expecting all attributes to be single-value, that are normalized.
+                String value = AttributeUtil.getStringValue(attr);
+                
+                switch (attrType) {
                 case DIR:
                     value = setHomeDirValue(value, entry, conn);
                     break;
@@ -112,17 +111,14 @@ class CreateNativeUser  {
                     value = setShellValue(value, conn);
                     break;
                 }
-
-                /*
-                 * append the single-value for the given switch
-                 */
-                if (value != null) {
-                    // quote value
-                    buffer.append("\"" + value + "\"");
-                    buffer.append(" ");
-                }
+                
+                values = CollectionUtil.newList(value);
             }
-        }// for
+            normalizedAttributes.add(AttributeBuilder.build(attr.getName(), values));
+        }
+        
+        buffer.append(CommandSwitches.formatCommandSwitches(entry, conn, createSwitches));
+        
         return buffer.toString().trim();
     }
 

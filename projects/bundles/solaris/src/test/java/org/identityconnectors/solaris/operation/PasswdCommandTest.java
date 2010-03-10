@@ -23,6 +23,7 @@
 package org.identityconnectors.solaris.operation;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.Name;
@@ -41,17 +42,33 @@ import org.junit.Test;
  * {@link NativeAttribute#MAX_DAYS_BETWEEN_CHNG}, {@link NativeAttribute#LOCK},
  * {@link NativeAttribute#DAYS_BEFORE_TO_WARN}.
  * 
+ * Prerequisite of this test is to have password aging enabled in /etc/default/passwd:
+ * MAXWEEKS=2
+ * MINWEEKS=1
+ * HISTORY=10
+ * {@link http://blogs.sun.com/gbrunett/entry/solaris_10_password_history}
+ * 
  * @author David Adam
  */
 public class PasswdCommandTest extends SolarisTestBase {
-    @Test @Ignore
+    private static Log log = Log.getLog(PasswdCommandTest.class);
+    
+    @Test @Ignore // FIXME need further settings on the resource
     public void testMinDays() {
-        // TODO
+        if (getConnection().isNis()) {
+            log.ok("skipping testMinDays for NIS accounts.");
+            return;
+        }
+        genericTest(AccountAttribute.MIN, CollectionUtil.newList(1), CollectionUtil.newList(2), "batman");
     }
     
-    @Test @Ignore
+    @Test
     public void testMaxDays() {
-        // TODO
+        if (getConnection().isNis()) {
+            log.ok("skipping testMaxDays for NIS accounts.");
+            return;
+        }
+        genericTest(AccountAttribute.MAX, CollectionUtil.newList(2), CollectionUtil.newList(1), "batman");
     }
 
     /**
@@ -73,7 +90,7 @@ public class PasswdCommandTest extends SolarisTestBase {
         }
         
         // lock the account, then authenticate should fail
-        getFacade().update(ObjectClass.ACCOUNT, new Uid(username), CollectionUtil.newSet(AttributeBuilder.build(AccountAttribute.LOCK.getName(), Boolean.TRUE.toString())), null);
+        getFacade().update(ObjectClass.ACCOUNT, new Uid(username), CollectionUtil.newSet(AttributeBuilder.build(AccountAttribute.LOCK.getName(), Boolean.TRUE)), null);
         try {
             getFacade().authenticate(ObjectClass.ACCOUNT, username, password, null);
             Assert.fail("Locked account should not able to login.");
@@ -87,13 +104,14 @@ public class PasswdCommandTest extends SolarisTestBase {
      * 
      * If an account is unlocked authentication should succeed. {@see PasswdCommandTest#testLock()}
      */
-    @Test
+    @Test @Ignore // FIXME need further settings on the resource
     public void testUnLock() {
         String username = "connuser";
         GuardedString passwd = new GuardedString("foo123".toCharArray());
         // create a locked account, login should fail
-        getFacade().create(ObjectClass.ACCOUNT, CollectionUtil.newSet(AttributeBuilder.build(Name.NAME, username), AttributeBuilder.buildPassword(passwd), AttributeBuilder.build(AccountAttribute.LOCK.getName(), Boolean.TRUE.toString())), null);
         try {
+            getFacade().create(ObjectClass.ACCOUNT, CollectionUtil.newSet(AttributeBuilder.build(Name.NAME, username), AttributeBuilder.buildPassword(passwd), AttributeBuilder.build(AccountAttribute.LOCK.getName(), Boolean.TRUE)), null);
+        
             enableTrustedLogin(username);
             try {
                 getFacade().authenticate(ObjectClass.ACCOUNT, username, passwd, null);
@@ -102,7 +120,7 @@ public class PasswdCommandTest extends SolarisTestBase {
                 // OK
             }
             // unlock the account, authenticate should succeed.
-            getFacade().update(ObjectClass.ACCOUNT, new Uid(username), CollectionUtil.newSet(AttributeBuilder.build(AccountAttribute.LOCK.getName(), Boolean.FALSE.toString())), null);
+            getFacade().update(ObjectClass.ACCOUNT, new Uid(username), CollectionUtil.newSet(AttributeBuilder.build(AccountAttribute.LOCK.getName(), Boolean.FALSE)), null);
             try {
                 getFacade().authenticate(ObjectClass.ACCOUNT, username, passwd, null);
             } catch (Exception ex) {
@@ -136,9 +154,13 @@ public class PasswdCommandTest extends SolarisTestBase {
         }
     }
     
-    @Test @Ignore
+    @Test @Ignore // FIXME need further settings on the resource
     public void testDaysBeforeWarn() {
-        // TODO
+        if (getConnection().isNis()) {
+            log.ok("skipping testDaysBeforeWarn for NIS accounts.");
+            return;
+        }
+        genericTest(AccountAttribute.WARN, CollectionUtil.newList(2), CollectionUtil.newList(4), "batman");
     }
 
     @Override

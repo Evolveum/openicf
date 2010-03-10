@@ -87,8 +87,8 @@ class PasswdCommand extends CommandSwitches {
         Map<NativeAttribute, String> passwdSwitches = new EnumMap<NativeAttribute, String>(NativeAttribute.class);
         passwdSwitches.put(NativeAttribute.PWSTAT, "-f");
         //passwdSwitches.put(NativeAttribute.PW_LAST_CHANGE, null); // this is not used attribute (see LoginsCommand and its SVIDRA counterpart). TODO erase this comment.
-        passwdSwitches.put(NativeAttribute.MIN_DAYS_BETWEEN_CHNG, "-x");
-        passwdSwitches.put(NativeAttribute.MAX_DAYS_BETWEEN_CHNG, "-n");
+        passwdSwitches.put(NativeAttribute.MIN_DAYS_BETWEEN_CHNG, "-n");
+        passwdSwitches.put(NativeAttribute.MAX_DAYS_BETWEEN_CHNG, "-x");
         passwdSwitches.put(NativeAttribute.DAYS_BEFORE_TO_WARN, "-w");
         
         String lockFlag = null;
