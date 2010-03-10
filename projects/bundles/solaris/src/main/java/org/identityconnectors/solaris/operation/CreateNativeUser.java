@@ -149,7 +149,7 @@ class CreateNativeUser  {
         
         String defaultPrimaryGroup = null;
         String configuredDefPrimGroup = conn.getConfiguration().getDefaultPrimaryGroup();
-        if (!StringUtil.isBlank(configuredDefPrimGroup)) {
+        if (StringUtil.isNotBlank(configuredDefPrimGroup)) {
             // If there is a specific default primary group specified for the
             // user then that takes priority.
             defaultPrimaryGroup = configuredDefPrimGroup;
@@ -174,7 +174,7 @@ class CreateNativeUser  {
             makeDirectory.append(" -m");
             String skeldir = conn.getConfiguration().getSkeletonDirectory();
 
-            if (!StringUtil.isBlank(skeldir)) {
+            if (StringUtil.isNotBlank(skeldir)) {
                 // note switch '-k' is specific for making skeleton directory, is not assigned to any {@link NativeAttribute}
                 makeDirectory.append(" -k " + skeldir + " ");
             }

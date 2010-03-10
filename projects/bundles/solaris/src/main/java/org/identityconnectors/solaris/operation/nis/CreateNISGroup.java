@@ -85,7 +85,7 @@ public class CreateNISGroup extends AbstractNISOp {
         
         // Create and perform script for adding group file entry
         groupRecord = new StringBuffer();
-        if (!StringUtil.isBlank(gid)) {
+        if (StringUtil.isNotBlank(gid)) {
             groupRecord.append("newgid=" + gid + "; ");
         }
         

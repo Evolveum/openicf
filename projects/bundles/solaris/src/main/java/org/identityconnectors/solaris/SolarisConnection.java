@@ -174,7 +174,7 @@ public class SolarisConnection {
                 executeCommand("su " + rootUser, CollectionUtil.newSet("Unknown id", "does not exist"), CollectionUtil.newSet("assword:"));
                 
                 // we need to change the type of rootShellPrompt here (we used loginUser's up to now)
-                final String rootShellPrompt = (!StringUtil.isBlank(configuration.getRootShellPrompt())) ? configuration.getRootShellPrompt() : loginShellPrompt;
+                final String rootShellPrompt = (StringUtil.isNotBlank(configuration.getRootShellPrompt())) ? configuration.getRootShellPrompt() : loginShellPrompt;
                 loginShellPrompt = rootShellPrompt;
                 
                 final GuardedString rootPassword = configuration.getCredentials();

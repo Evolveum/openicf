@@ -320,7 +320,7 @@ public class AbstractNISOp {
                 out = out.trim();
             }
             
-            if (!StringUtil.isBlank(out)) {
+            if (StringUtil.isNotBlank(out)) {
                 throw new ConnectorException("ERROR: " + out);
             }
         }

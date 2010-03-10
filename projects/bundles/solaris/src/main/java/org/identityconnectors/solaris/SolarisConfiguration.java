@@ -556,7 +556,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
      *         configuration.
      */
     public boolean isSuAuthorization() {
-        return !isSudoAuthorization() && !StringUtil.isBlank(rootUser) && !loginUser.equals(rootUser); 
+        return !isSudoAuthorization() && StringUtil.isNotBlank(rootUser) && !loginUser.equals(rootUser); 
     }
     
     /**
@@ -576,7 +576,7 @@ public final class SolarisConfiguration extends AbstractConfiguration {
     @Override
     public void validate() {
         String msg = "'%s' cannot be null or empty.";
-        boolean isLoginUserCredentials = !StringUtil.isBlank(loginUser) && !StringUtil.isBlank(loginShellPrompt) && password != null;
+        boolean isLoginUserCredentials = StringUtil.isNotBlank(loginUser) && StringUtil.isNotBlank(loginShellPrompt) && password != null;
         if (!isLoginUserCredentials) {
             throw new ConfigurationException(String.format(msg, "[loginUser, loginShellPrompt, password]")); 
         } 
@@ -601,11 +601,11 @@ public final class SolarisConfiguration extends AbstractConfiguration {
             throw new ConfigurationException(String.format(msg, "Connection type"));
         }
 
-        if (!StringUtil.isBlank(rootUser) && credentials == null) {
+        if (StringUtil.isNotBlank(rootUser) && credentials == null) {
             throw new ConfigurationException("Missing 'credentials' property. Both 'rootUser' and 'credentials' have to be defined.");
         }
         
-        if (!StringUtil.isBlank(rootUser) && StringUtil.isBlank(rootShellPrompt)) {
+        if (StringUtil.isNotBlank(rootUser) && StringUtil.isBlank(rootShellPrompt)) {
             throw new ConfigurationException("Missing 'credentials' property. Both 'rootUser' and 'rootShellPrompt' have to be defined.");
         }
     }

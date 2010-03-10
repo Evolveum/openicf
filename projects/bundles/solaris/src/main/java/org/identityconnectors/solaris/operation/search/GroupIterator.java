@@ -95,7 +95,7 @@ class GroupIterator implements Iterator<SolarisEntry> {
         int gid = Integer.valueOf(groupTokens[2]);
         // users is optional parameter, may be empty
         String usersLine = (groupTokens.length > 3) ? groupTokens[3].trim() : "";
-        List<String> usersList = (!StringUtil.isBlank(usersLine)) ? Arrays.asList(usersLine.split(",")) : Collections.<String>emptyList();
+        List<String> usersList = (StringUtil.isNotBlank(usersLine)) ? Arrays.asList(usersLine.split(",")) : Collections.<String>emptyList();
         
         SolarisEntry.Builder entryBuilder = new SolarisEntry.Builder(groupName).addAttr(NativeAttribute.NAME, groupName);
         for (NativeAttribute attrToGet : requiredAttrs) {
