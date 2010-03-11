@@ -44,7 +44,7 @@ public class AccountIteratorTest extends SolarisTestBase {
         String command = (!getConnection().isNis()) ? getConnection().buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"") : "ypcat passwd | cut -d: -f1";
         String out = getConnection().executeCommand(command);
         String[] tmp = out.split("\n");
-        List<String> usernames = CollectionUtil.newList();
+        List<String> usernames = CollectionUtil.<String>newList();
         for (String string : tmp) {
             usernames.add(string.trim());
         }

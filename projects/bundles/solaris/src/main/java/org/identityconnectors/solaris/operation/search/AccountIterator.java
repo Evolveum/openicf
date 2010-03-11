@@ -86,7 +86,7 @@ public class AccountIterator implements Iterator<SolarisEntry> {
         String command = (!conn.isNis()) ? conn.buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"") : "ypcat passwd | cut -d: -f1";
         String newLineSeparatedUsernames = conn.executeCommand(command);
         String[] entries = newLineSeparatedUsernames.split("\n");
-        List<String> result = CollectionUtil.newList();
+        List<String> result = CollectionUtil.<String>newList();
         for (String string : entries) {
             result.add(string.trim());
         }

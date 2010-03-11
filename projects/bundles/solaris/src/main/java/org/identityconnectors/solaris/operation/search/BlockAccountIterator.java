@@ -87,7 +87,7 @@ public class BlockAccountIterator implements Iterator<SolarisEntry> {
             String command = conn.buildCommand("cut -d: -f1 /etc/passwd | grep -v \"^[+-]\"");
             String usernamesNewLineSeparated = conn.executeCommand(command);
             String[] usernamesList = usernamesNewLineSeparated.split("\n");
-            usernames = CollectionUtil.newList();
+            usernames = CollectionUtil.<String>newList();
             for (String string : usernamesList) {
                 usernames.add(string.trim());
             }

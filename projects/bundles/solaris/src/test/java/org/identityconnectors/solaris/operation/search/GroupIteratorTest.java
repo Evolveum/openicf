@@ -42,7 +42,7 @@ public class GroupIteratorTest extends SolarisTestBase {
         String command = (getConnection().isNis()) ? "ypcat group | cut -d: -f1" : "cut -d: -f1 /etc/group | grep -v \"^[+-]\"";
         String out = getConnection().executeCommand(command);
         String[] tmp = out.split("\n");
-        List<String> groups = CollectionUtil.newList();
+        List<String> groups = CollectionUtil.<String>newList();
         for (String string : tmp) {
             groups.add(string.trim());
         }

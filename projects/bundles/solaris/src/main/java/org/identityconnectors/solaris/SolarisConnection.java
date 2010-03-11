@@ -480,7 +480,7 @@ public class SolarisConnection {
         // #2 Adding RootShellPrompt matcher or other acceptance matchers if given
         List<SolarisClosure> captureClosures = null;
         if (accepts.size() > 0) {
-            captureClosures = CollectionUtil.newList();
+            captureClosures = CollectionUtil.<SolarisClosure>newList();
             for (String acc : accepts) {
                 SolarisClosure closure = new SolarisClosure();
                 captureClosures.add(closure);

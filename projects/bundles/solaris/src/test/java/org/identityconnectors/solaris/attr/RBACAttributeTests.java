@@ -102,7 +102,7 @@ public class RBACAttributeTests extends SolarisTestBase {
 
     private Set<String> parseProfiles(String profilesOut, String skipString) {
         String[] lines = profilesOut.split("\n");
-        Set<String> result = CollectionUtil.newSet();
+        Set<String> result = CollectionUtil.<String>newSet();
         for (String line : lines) {
             if (line.contains(skipString))
                 continue;

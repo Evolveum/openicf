@@ -384,7 +384,7 @@ public class SolarisConnectorTest extends SolarisTestBase {
     }
 
     private List<Character> getControlChars() {
-        List<Character> controlChars = CollectionUtil.newList();
+        List<Character> controlChars = CollectionUtil.<Character>newList();
         for (char i = 0; i <= 0x001F; i++)
             controlChars.add(i);
         for (char i = 0x007F; i <= 0x009F; i++)

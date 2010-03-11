@@ -86,7 +86,7 @@ public class CommandSwitchesTest extends SolarisTestBase {
         List<String> values = CollectionUtil.newList("foo", "bar", "baz");
         final String expectedMultivalueArgument = "\"foo,bar,baz\""; 
         
-        List<NativeAttribute> multivalueAttributes = CollectionUtil.newList();
+        List<NativeAttribute> multivalueAttributes = CollectionUtil.<NativeAttribute>newList();
         for (NativeAttribute it : NativeAttribute.values()) {
             if (!it.isSingleValue()) {
                 multivalueAttributes.add(it);

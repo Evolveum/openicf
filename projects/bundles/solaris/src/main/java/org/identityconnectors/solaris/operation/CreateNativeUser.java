@@ -91,7 +91,7 @@ class CreateNativeUser  {
         StringBuilder buffer = makeOptionalSkelDir(conn);
         
         // normalize attribute values:
-        Set<Attribute> normalizedAttributes = CollectionUtil.newSet();
+        Set<Attribute> normalizedAttributes = CollectionUtil.<Attribute>newSet();
         Set<NativeAttribute> normalizedAttributeType = EnumSet.of(NativeAttribute.DIR, NativeAttribute.GROUP_PRIM, NativeAttribute.SHELL);
         for (Attribute attr : entry.getAttributeSet()) {
             List<? extends Object> values = attr.getValue();
