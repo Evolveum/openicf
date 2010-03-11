@@ -48,7 +48,14 @@ import org.junit.Test;
  * <li>{@link AccountAttribute#MIN}</li>
  * <li>{@link AccountAttribute#WARN}</li>
  * </ul>
- * {@link AccountAttribute
+ * 
+ * The role-based access control related attributes are tested in {@link RBACAttributeTests}, these attributes are:
+ * <ul>
+ * <li>{@link AccountAttribute#ROLES}</li>
+ * <li>{@link AccountAttribute#AUTHORIZATION}</li>
+ * <li>{@link AccountAttribute#PROFILE}</li>
+ * </ul>
+ * 
  * @author David Adam
  *
  */

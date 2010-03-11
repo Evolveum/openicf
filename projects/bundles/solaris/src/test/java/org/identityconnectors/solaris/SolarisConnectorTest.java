@@ -22,7 +22,6 @@
  */
 package org.identityconnectors.solaris;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -487,130 +486,6 @@ public class SolarisConnectorTest extends SolarisTestBase {
         for (char i = 0x007F; i <= 0x009F; i++)
             controlChars.add(i);
         return controlChars;
-    }
-
-    /**
-     * test preconditions: tests assume that Operator is allowed to use 'Printer
-     * Management' and 'Media Backup' profiles.
-     */
-    @Test
-    public void testUpdateProfiles() {
-        if (getConnection().isNis()) {
-            log.info("skipping test for NIS configuration");
-            return;
-        }
-        
-        String username = getUsername();
-        String profileToUpdate = "Operator";
-         
-        // check preconditions
-        String checkOperatorProfiles = getConnection().executeCommand("cat /etc/security/prof_attr | grep ^" + profileToUpdate + ":");
-        Assert.assertTrue("test preconditions not satisfied", checkOperatorProfiles.contains(profileToUpdate));
-
-        // update profile
-        getFacade().update(ObjectClass.ACCOUNT, new Uid(username), CollectionUtil.newSet(AttributeBuilder.build(AccountAttribute.PROFILE.getName(), profileToUpdate)), null);
-        String profilesOut = getConnection().executeCommand(getConnection().buildCommand("profiles", username));
-        Assert.assertTrue("user has not been updated to match the profiles of '" + profileToUpdate + "' config role.", profilesOut.contains(profileToUpdate));
-    }
-    
-    /**
-     * an empty parameter passed to Profiles should clean up all except basic profiles.
-     */
-    @Test
-    public void testUpdateProfilesEmpty() {
-        if (getConnection().isNis()) {
-            log.info("skipping test for NIS configuration");
-            return;
-        }
-        
-        String username = getUsername();
-        String profileToUpdate = "";
-
-        // add the Operator profile, so we have at least one item to delete.
-        String operatorRole = "Operator";
-        getFacade().update(ObjectClass.ACCOUNT, new Uid(username), CollectionUtil.newSet(AttributeBuilder.build(AccountAttribute.PROFILE.getName(), operatorRole)), null);
-        String profilesOut = getConnection().executeCommand(getConnection().buildCommand("profiles", username));
-        Assert.assertTrue(profilesOut.contains(operatorRole));
-        Set<String> profilesBefore = parseProfiles(profilesOut, username);
-        
-        getFacade().update(ObjectClass.ACCOUNT, new Uid(username), CollectionUtil.newSet(AttributeBuilder.build(AccountAttribute.PROFILE.getName(), profileToUpdate)), null);
-        
-        profilesOut = getConnection().executeCommand(getConnection().buildCommand("profiles", username));
-        Set<String> profilesAfter = parseProfiles(profilesOut, username);
-        Assert.assertTrue(profilesAfter.size() < profilesBefore.size());
-        Assert.assertTrue(!profilesAfter.contains(operatorRole));
-    }
-
-    private Set<String> parseProfiles(String profilesOut, String skipString) {
-        String[] lines = profilesOut.split("\n");
-        Set<String> result = CollectionUtil.newSet();
-        for (String line : lines) {
-            if (line.contains(skipString))
-                continue;
-            
-            result.add(line.trim());
-        }
-        return result;
-    }
-    
-    @Test
-    public void testRoles() {
-        if (getConnection().isNis()) {
-            log.info("skipping test for NIS configuration");
-            return;
-        }
-        
-        String username = getUsername();
-        String rolesOut = getConnection().executeCommand("roles " + username);
-        Assert.assertTrue(rolesOut.contains("No roles"));
-        
-        // create a fictive role
-        final String fictiveRole = "solarisconnectorrole";
-        getConnection().executeCommand("roleadd " + fictiveRole);
-        try {
-            // set the 'fictiveRole' for the user
-            getFacade().update(ObjectClass.ACCOUNT, new Uid(username), CollectionUtil.newSet(AttributeBuilder.build(AccountAttribute.ROLES.getName(), fictiveRole)), null);
-            rolesOut = getConnection().executeCommand("roles " + username);
-            Assert.assertTrue(rolesOut.contains(fictiveRole));
-            
-            // erase all roles for the user
-            getFacade().update(ObjectClass.ACCOUNT, new Uid(username), CollectionUtil.newSet(AttributeBuilder.build(AccountAttribute.ROLES.getName(), "")), null);
-            rolesOut = getConnection().executeCommand("roles " + username);
-            Assert.assertTrue(rolesOut.contains("No roles"));
-        } finally {
-            //delete the fictive role
-            getConnection().executeCommand("roledel " + fictiveRole);
-        }
-    }
-    
-    @Test
-    public void testAuths() {
-        if (getConnection().isNis()) {
-            log.info("skipping test for NIS configuration");
-            return;
-        }
-        
-        String username = getUsername();
-        final String newAuthorization = "solaris.admin.printer.delete";
-        // control preconditions
-        String authsOut = getConnection().executeCommand("auths " + username);
-        List<String> authorizations = Arrays.asList(authsOut.split(","));
-        String msg = String.format("Preconditions were not met. By default users shouldn't have '%s' authorization.", newAuthorization);
-        for (String auth : authorizations) {
-            Assert.assertTrue(msg, !auth.contains(newAuthorization));
-        }
-        
-        // add a new authorization
-        getFacade().update(ObjectClass.ACCOUNT, new Uid(username), CollectionUtil.newSet(AttributeBuilder.build(AccountAttribute.AUTHORIZATION.getName(), newAuthorization)), null);
-        authsOut = getConnection().executeCommand("auths " + username);
-        authorizations = Arrays.asList(authsOut.split(","));
-        Assert.assertTrue(authorizations.contains(newAuthorization));        
-        
-        // remove new authorization
-        getFacade().update(ObjectClass.ACCOUNT, new Uid(username), CollectionUtil.newSet(AttributeBuilder.build(AccountAttribute.AUTHORIZATION.getName(), "")), null);
-        authsOut = getConnection().executeCommand("auths " + username);
-        authorizations = Arrays.asList(authsOut.split(","));
-        Assert.assertFalse(authorizations.contains(newAuthorization));
     }
 
     @Override
