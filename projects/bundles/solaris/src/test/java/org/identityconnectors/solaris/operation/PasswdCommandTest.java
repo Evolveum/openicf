@@ -67,7 +67,7 @@ public class PasswdCommandTest extends SolarisTestBase {
     @Test 
     public void testPasswordAgingAttributesWithUpdate() {
         if (getConnection().isNis()) {
-            log.info("skipping test '' for NIS configuration, as it is not supported there.");
+            log.info("skipping test 'testPasswordAgingAttributesWithUpdate' for NIS configuration, as it is not supported there.");
             return;
         }
         
@@ -96,7 +96,7 @@ public class PasswdCommandTest extends SolarisTestBase {
     @Test
     public void testPasswordAgingAttributesWithCreate() {
         if (getConnection().isNis()) {
-            log.info("skipping test '' for NIS configuration, as it is not supported there.");
+            log.info("skipping test 'testPasswordAgingAttributesWithCreate' for NIS configuration, as it is not supported there.");
             return;
         }
         String username = "batman";
