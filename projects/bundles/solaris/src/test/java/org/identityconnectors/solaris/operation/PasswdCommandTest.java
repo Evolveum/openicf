@@ -95,6 +95,10 @@ public class PasswdCommandTest extends SolarisTestBase {
     
     @Test
     public void testPasswordAgingAttributesWithCreate() {
+        if (getConnection().isNis()) {
+            log.info("skipping test '' for NIS configuration, as it is not supported there.");
+            return;
+        }
         String username = "batman";
         ToListResultsHandler handler = new ToListResultsHandler();
         getFacade().search(ObjectClass.ACCOUNT, FilterBuilder.equalTo(AttributeBuilder.build(Name.NAME, username)), handler, null);
