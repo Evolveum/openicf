@@ -2,22 +2,157 @@
 <head>
 <title>Coding Conventions</title>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<style>
+    .bad {
+        color: #f00;
+    }
+</style>
 </head>
 <div id="projecthome" class="app">
- <h3>Coding Conventions</h3>
- <p>The Identity Connectors project follows the Java standard <a href="http://java.sun.com/docs/codeconv">
- coding conventions</a>. They include standards for filenames, 
- file organization, indentation, comments, declarations, statements, white space, naming conventions, and
-general programming practices. Code examples are included.</p>
- <h3>Commit rules</h3>
- <p>These rules should be followed with the best possible effort:</p>
- <ul>
+<h3>Coding Conventions</h3>
+
+<p>Identity Connectors code guidelines are based on the <a href="http://java.sun.com/docs/codeconv">Sun Code Conventions for the Java Programming Language</a>
+with the following additions and modifications:</p>
+
+<h4>Indentation (chapter 4)</h4>
+
+<p>Tabs are disallowed; use only spaces. The unit of identation must be 4 characters, i.e.:</p>
+
+<pre>
+class Example {
+    public void method() {
+        System.out.println();
+    }
+}
+</pre>
+
+<p>Line length can be as much as 160 characters. Wrapping lines at much less than 80 characters is discouraged.</p>
+
+<p>When wrapping lines, the wrapped line(s) should always be indented by two indenting levels:</p>
+
+<pre>
+class Example {
+
+    public void methodWithManyArguments(String argument1, String argument2, int argument3,
+            SomeLongClassName argument4, AnotherClassName argument5)
+            throws SomeException {
+                ...
+    }
+}
+</pre>
+
+<h4>Blank spaces (section 8.2)</h4>
+
+<p>Use a space between generic arguments:</p>
+
+<pre>
+Map&lt;String, Object&gt; map;
+
+class Example&lt;K, V&gt; {
+    ...
+}
+</pre>
+
+<h4>Naming conventions (chapter 9)</h4>
+
+<p>Only use the constant naming convention (<code>LIKE_THIS</code>) for true constants.
+For example, private static mutable fields are not constants. Use:</p>
+
+<pre>
+private final Map&lt;String, Object&gt; objectCache = new HashMap&lt;String, Object&gt;();
+</pre>
+
+<p>instead of</p>
+
+<pre>
+private final Map&lt;String, Object&gt; <span class="bad">OBJECT_CACHE</span> = new HashMap&lt;String, Object&gt;(); // Not a constant!
+</pre>
+
+<p>Do not use any sort of Hungarian notation. For example, the following is discouraged:</p>
+
+<pre>
+String <span class="bad">sName</span> = "...";
+HashMap<String, Object> <span class="bad">hmCache</span> = ...; // Name it "cacheMap" if you really must emphasize that it is a map.
+</pre>
+
+<h4>Generics</h4>
+
+<p> Use generics whenever possible. Enable javac warnings by adding</p>
+
+<pre>
+java.compilerargs=-Xlint -Xlint:-serial
+</pre>
+
+<p>to your connector's build.properties, and make sure there are no warnings.</p>
+
+<h4>Class Size</h4>
+
+<p> Keep your classes small. By all means, do not put the implementation of all connector operations
+in the connector class if that would lead to a class with several thousand lines of code.
+Instead, create a dedicated class for each operation, as the LDAP or Oracle connectors do.</p>
+
+<h4>Best Practices</h4>
+
+Follow the best practices common in the Java community, such as those in Josh Bloch's book Effective Java. A list of the most important ones follows.
+
+<h5><code>hashCode()</code> and <code>equals()</code></h5>
+
+<p>Always obey the contract of the <code>hashCode()</code> and <code>equals()</code> methods.
+When overriding one of these methods, always override the other one too.</p>
+
+<h5>Member Accesibility</h5>
+
+<p>Minimize the accessibility of classes and members. For example, write:
+
+<pre>
+private String name;
+</pre>
+
+<p>instead of</p>
+
+<pre>
+<span class="bad">String name</span>; // No access modifier means package-private.
+</pre>
+
+<h5>Code against Interfaces</h5>
+
+Code against interfaces, not implementation classes, whenever possible. For example, write
+
+<pre>
+Map&lt;String, Object&gt; cache = ...
+
+void myMethod(List&lt;SomeObject&gt; objects) {
+    ...
+}
+</pre>
+
+<p>instead of</p>
+
+<pre>
+<span class="bad">HashMap</span>&lt;String, Object&gt; cache = ...
+
+void myMethod(<span class="bad">ArrayList</span>&lt;SomeObject&gt; objects) {
+    ...
+}
+</pre>
+
+<h5>Minimize mutability</h5>
+
+<p>Minimize the amount of mutable state. Make final and private as many fields as possible, ideally all of them.
+Do not provide methods that modify the object's state. Initialize the state in a constructor, not in an <code>init()</code> method.</p>
+
+<h3>Commit rules</h3>
+
+<p>These rules should be followed with the best possible effort:</p>
+
+<ul>
     <li>commit only buildable code</li>
     <li>all tests should pass (if you need commit anyway use <code>@Ignore</code>)</li>
     <li>do <strong>NOT</strong> commit proprietary files</li>
     <li>do <strong>NOT</strong> commit build artifacts</li>
-    <li>use "Issue #&lt;number&gt; comment" template</li>
+    <li>use "Issue #&lt;number&gt;: comment" template</li>
     <li>propagate changes to downstream projects</li>
- </ul>
+</ul>
+
 </div>
 </html>
