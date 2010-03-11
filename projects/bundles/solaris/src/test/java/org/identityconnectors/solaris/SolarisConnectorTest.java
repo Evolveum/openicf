@@ -29,10 +29,8 @@ import junit.framework.Assert;
 
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.StringUtil;
-import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.api.ConnectorFacade;
-import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeUtil;
@@ -52,7 +50,6 @@ import org.junit.Test;
 
 
 public class SolarisConnectorTest extends SolarisTestBase {
-    private static final Log log = Log.getLog(SolarisConnectorTest.class);
     
     @Test
     public void testBasicTest() {
@@ -129,99 +126,6 @@ public class SolarisConnectorTest extends SolarisTestBase {
         } catch (Exception ex) {
             // OK 
         }
-    }
-
-    /**
-     * check behaviour of reset password attribute. If it is true, the user
-     * should change her password on the next login, thus the "new password:"
-     * prompt signalizes this fact.
-     * 
-     * {@see SolarisConnectorTest#testNegativeResetPassword()}, {@see
-     * SolarisConnectorTest#testResetPassword2()}.
-     */
-    @Test
-    public void testResetPassword() {
-        final String username = createResetPasswordUser(true);
-        try {
-            // check if user exists
-            String loginsCmd = (!getConnection().isNis()) ? "logins -oxma -l " + username : "ypmatch \"" + username + "\" passwd";
-            String out = getConnection().executeCommand(loginsCmd);
-            Assert.assertTrue("user " + username + " is missing, buffer: <" + out + ">", out.contains(username));
-
-            final String newPasswd = changePasswordForResetPasswordTest(username);
-
-            try {
-                getFacade().authenticate(ObjectClass.ACCOUNT, username, new GuardedString(newPasswd.toCharArray()), null);
-                Assert.fail("expected to wait for 'new password:' prompt failed.");
-            } catch (ConnectorException ex) {
-                if (!ex.getMessage().contains("New Password:")) {
-                    Assert.fail("expected to wait for 'new password:' prompt failed with exception: " + ex.getMessage());
-                } else {
-                    log.ok("test testResetPassword passed");
-                }
-            }
-        } finally {
-            getFacade().delete(ObjectClass.ACCOUNT, new Uid(username), null);
-        }
-    }
-    
-    /**
-     * Negative testcase.
-     * Check for reset password should not happen, when force_change is set to false explicitly.
-     * User login should not prompt for New Password: prompt, even if password is changed/reset.
-     */
-    @Test
-    public void testNegativeResetPassword() {
-        String username = createResetPasswordUser(false);
-        try {
-            // check if user exists
-            String loginsCmd = (!getConnection().isNis()) ? "logins -oxma -l " + username : "ypmatch \"" + username + "\" passwd";
-            String out = getConnection().executeCommand(loginsCmd);
-            Assert.assertTrue("user " + username + " is missing, buffer: <" + out + ">", out.contains(username));
-
-            final String newPasswd = changePasswordForResetPasswordTest(username);
-
-            try {
-                getFacade().authenticate(ObjectClass.ACCOUNT, username, new GuardedString(newPasswd.toCharArray()), null);
-                log.ok("test testNegativeResetPassword passed");
-            } catch (ConnectorException ex) {
-                if (ex.getMessage().contains("New Password:")) {
-                    Assert.fail("expected to login successfully without waiting for new password: prompt.");
-                } else {
-                    Assert.fail("expected to login successfully, but failed with unexpected exception: " + ex.getMessage());
-                }
-            }
-        } finally {
-            getFacade().delete(ObjectClass.ACCOUNT, new Uid(username), null);
-        }
-    }
-
-    private String changePasswordForResetPasswordTest(final String username) {
-        // lets change the password for checking expire password.
-        final String newPasswd = "changedpwd";
-        Set<Attribute> replaceAttributes = CollectionUtil.newSet(
-                AttributeBuilder.buildPassword(newPasswd.toCharArray())
-                );
-        getFacade().update(ObjectClass.ACCOUNT, new Uid(username), replaceAttributes, null);
-        return newPasswd;
-    }
-
-    private String createResetPasswordUser(boolean isForceChange) {
-        final String username = "bugsBunny";
-        final String oldPassword = "bugsPasswd";
-        Set<Attribute> attrs = CollectionUtil.newSet(AttributeBuilder.build(Name.NAME, username), 
-                AttributeBuilder.buildPassword(oldPassword.toCharArray()),
-                AttributeBuilder.build(AccountAttribute.PASSWD_FORCE_CHANGE.getName(), isForceChange));
-        // cleanup the user if it's there from previous runs
-        try {
-            getFacade().delete(ObjectClass.ACCOUNT, new Uid(username), null);
-        } catch (Exception ex) {
-            // OK
-        }
-        
-        getFacade().create(ObjectClass.ACCOUNT, attrs, null);
-        enableTrustedLogin(username);
-        return username;
     }
     
     /**
