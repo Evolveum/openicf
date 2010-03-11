@@ -22,9 +22,20 @@
  */
 package org.identityconnectors.solaris.attr;
 
+import java.util.List;
+
+import junit.framework.Assert;
+
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
+import org.identityconnectors.framework.common.objects.Name;
+import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
+import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.solaris.operation.PasswdCommandTest;
 import org.identityconnectors.solaris.test.SolarisTestBase;
+import org.identityconnectors.test.common.ToListResultsHandler;
 import org.junit.Test;
 
 /**
@@ -78,4 +89,43 @@ public class AccountAttributeTest extends SolarisTestBase {
         return 0;
     }
     
+    private <E> void genericTest(AccountAttribute attr, List<E> createValue, List<E> updateValue, String username) {
+        // the account should be brand new
+        ToListResultsHandler handler = new ToListResultsHandler();
+        getFacade().search(ObjectClass.ACCOUNT, FilterBuilder.equalTo(AttributeBuilder.build(Name.NAME, username)), handler, new OperationOptionsBuilder().setAttributesToGet(CollectionUtil.newSet(Name.NAME)).build());
+        if (handler.getObjects().size() >= 1) {
+            throw new RuntimeException("Please provide a brand new accountname, account '" + username + "' already exits");
+        }
+
+        // create a new account with create value
+        try {
+            // create can throw exceptions even because the password aging is
+            // disabled, but even than we need to do a cleanup of the created
+            // account.
+            getFacade().create(ObjectClass.ACCOUNT, CollectionUtil.newSet(
+                AttributeBuilder.build(Name.NAME, username), 
+                AttributeBuilder.build(attr.getName(), createValue)), null);
+        
+        
+            // check if create value was set
+            handler = new ToListResultsHandler();
+            getFacade().search(ObjectClass.ACCOUNT, FilterBuilder.equalTo(AttributeBuilder.build(Name.NAME, username)), handler, new OperationOptionsBuilder().setAttributesToGet(attr.getName()).build());
+            Assert.assertTrue(handler.getObjects().size() > 0);
+            Assert.assertEquals(createValue, handler.getObjects().get(0).getAttributeByName(attr.getName()).getValue());
+            
+            // update the value
+            getFacade().update(ObjectClass.ACCOUNT, new Uid(username), CollectionUtil.newSet(AttributeBuilder.build(attr.getName(), updateValue)), null);
+            // check if update value was set
+            handler = new ToListResultsHandler();
+            getFacade().search(ObjectClass.ACCOUNT, FilterBuilder.equalTo(AttributeBuilder.build(Name.NAME, username)), handler, new OperationOptionsBuilder().setAttributesToGet(attr.getName()).build());
+            Assert.assertTrue(handler.getObjects().size() > 0);
+            Assert.assertEquals(updateValue, handler.getObjects().get(0).getAttributeByName(attr.getName()).getValue());
+        } finally {
+            try {
+                getFacade().delete(ObjectClass.ACCOUNT, new Uid(username), null);
+            } catch (Exception ex) {
+                // OK
+            }
+        }
+    }
 }

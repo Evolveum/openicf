@@ -22,18 +22,26 @@
  */
 package org.identityconnectors.solaris.operation;
 
+import java.util.Set;
+
 import org.identityconnectors.common.CollectionUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
+import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
 import org.identityconnectors.framework.common.objects.Uid;
+import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.solaris.attr.AccountAttribute;
+import org.identityconnectors.solaris.attr.ConnectorAttribute;
 import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.test.SolarisTestBase;
+import org.identityconnectors.test.common.ToListResultsHandler;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -53,22 +61,75 @@ import org.junit.Test;
 public class PasswdCommandTest extends SolarisTestBase {
     private static Log log = Log.getLog(PasswdCommandTest.class);
     
-    @Test @Ignore // FIXME need further settings on the resource
-    public void testMinDays() {
+    /**
+     * order of setting the password aging attributes should be respected: max, min, warn.
+     */
+    @Test 
+    public void testPasswordAgingAttributesWithUpdate() {
         if (getConnection().isNis()) {
-            log.ok("skipping testMinDays for NIS accounts.");
+            log.info("skipping test '' for NIS configuration, as it is not supported there.");
             return;
         }
-        genericTest(AccountAttribute.MIN, CollectionUtil.newList(1), CollectionUtil.newList(2), "batman");
+        
+        String username = getUsername();
+        Set<Attribute> passwordAgingAttrs = CollectionUtil.newSet(
+                AttributeBuilder.build(AccountAttribute.MIN.getName(), 2), 
+                AttributeBuilder.build(AccountAttribute.MAX.getName(), 5), 
+                AttributeBuilder.build(AccountAttribute.WARN.getName(), 4)
+                );
+        getFacade().update(ObjectClass.ACCOUNT, new Uid(username), passwordAgingAttrs, null);
+        
+        ToListResultsHandler handler = new ToListResultsHandler();
+        getFacade().search(ObjectClass.ACCOUNT, 
+                FilterBuilder.equalTo(AttributeBuilder.build(Name.NAME, username)), handler, 
+                new OperationOptionsBuilder().setAttributesToGet(CollectionUtil.newSet(
+                AccountAttribute.MAX.getName(), AccountAttribute.MIN.getName(), AccountAttribute.WARN.getName())).build()
+                );
+        
+        Assert.assertTrue(handler.getObjects().size() >= 1);
+        ConnectorObject result = handler.getObjects().get(0);
+        Assert.assertTrue(controlAttributeValue(2, AccountAttribute.MIN, result));
+        Assert.assertTrue(controlAttributeValue(5, AccountAttribute.MAX, result));
+        Assert.assertTrue(controlAttributeValue(4, AccountAttribute.WARN, result));
     }
     
     @Test
-    public void testMaxDays() {
-        if (getConnection().isNis()) {
-            log.ok("skipping testMaxDays for NIS accounts.");
-            return;
+    public void testPasswordAgingAttributesWithCreate() {
+        String username = "batman";
+        ToListResultsHandler handler = new ToListResultsHandler();
+        getFacade().search(ObjectClass.ACCOUNT, FilterBuilder.equalTo(AttributeBuilder.build(Name.NAME, username)), handler, null);
+        Assert.assertTrue("user '" + username + "' should be cleaned up", handler.getObjects().size() <= 0);
+        try {
+            Set<Attribute> attrs = CollectionUtil.newSet(
+                    AttributeBuilder.build(Name.NAME, username), 
+                    AttributeBuilder.build(AccountAttribute.MIN.getName(), 1), 
+                    AttributeBuilder.build(AccountAttribute.MAX.getName(), 4), 
+                    AttributeBuilder.build(AccountAttribute.WARN.getName(), 2));
+            getFacade().create(ObjectClass.ACCOUNT, attrs, null);
+            
+            getFacade().search(ObjectClass.ACCOUNT, 
+                    FilterBuilder.equalTo(AttributeBuilder.build(Name.NAME, username)), handler, 
+                    new OperationOptionsBuilder().setAttributesToGet(CollectionUtil.newSet(
+                    AccountAttribute.MAX.getName(), AccountAttribute.MIN.getName(), AccountAttribute.WARN.getName())).build()
+                    );
+            Assert.assertTrue(handler.getObjects().size() >= 1);
+            ConnectorObject result = handler.getObjects().get(0);
+            Assert.assertTrue(controlAttributeValue(1, AccountAttribute.MIN, result));
+            Assert.assertTrue(controlAttributeValue(4, AccountAttribute.MAX, result));
+            Assert.assertTrue(controlAttributeValue(2, AccountAttribute.WARN, result));
+        } finally {
+            try {
+                getFacade().delete(ObjectClass.ACCOUNT, new Uid(username), null);
+            } catch (Exception ex) {
+                //OK 
+            }
         }
-        genericTest(AccountAttribute.MAX, CollectionUtil.newList(2), CollectionUtil.newList(1), "batman");
+    }
+
+    private boolean controlAttributeValue(int i, ConnectorAttribute attr, ConnectorObject co) {
+        Attribute attrFound = co.getAttributeByName(attr.getName());
+        Object valueFound = AttributeUtil.getSingleValue(attrFound);
+        return valueFound.equals(i);
     }
 
     /**
@@ -104,7 +165,7 @@ public class PasswdCommandTest extends SolarisTestBase {
      * 
      * If an account is unlocked authentication should succeed. {@see PasswdCommandTest#testLock()}
      */
-    @Test @Ignore // FIXME need further settings on the resource
+    @Test 
     public void testUnLock() {
         String username = "connuser";
         GuardedString passwd = new GuardedString("foo123".toCharArray());
@@ -132,6 +193,9 @@ public class PasswdCommandTest extends SolarisTestBase {
         }
     }
     
+    /**
+     * null is unacceptable value for LOCK attribute.
+     */
     @Test
     public void testFailLock() {
         try {
@@ -153,15 +217,6 @@ public class PasswdCommandTest extends SolarisTestBase {
             }
         }
     }
-    
-    @Test @Ignore // FIXME need further settings on the resource
-    public void testDaysBeforeWarn() {
-        if (getConnection().isNis()) {
-            log.ok("skipping testDaysBeforeWarn for NIS accounts.");
-            return;
-        }
-        genericTest(AccountAttribute.WARN, CollectionUtil.newList(2), CollectionUtil.newList(4), "batman");
-    }
 
     @Override
     public boolean createGroup() {
@@ -170,7 +225,6 @@ public class PasswdCommandTest extends SolarisTestBase {
 
     @Override
     public int getCreateUsersNumber() {
-        // TODO Auto-generated method stub
         return 1;
     }
     
