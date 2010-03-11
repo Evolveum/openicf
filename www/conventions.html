@@ -2,11 +2,6 @@
 <head>
 <title>Coding Conventions</title>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<style>
-    .bad {
-        color: #f00;
-    }
-</style>
 </head>
 <div id="projecthome" class="app">
 <h3>Coding Conventions</h3>
@@ -65,14 +60,14 @@ private final Map&lt;String, Object&gt; objectCache = new HashMap&lt;String, Obj
 <p>instead of</p>
 
 <pre>
-private final Map&lt;String, Object&gt; <span class="bad">OBJECT_CACHE</span> = new HashMap&lt;String, Object&gt;(); // Not a constant!
+private final Map&lt;String, Object&gt; <span style="color: #f00">OBJECT_CACHE</span> = new HashMap&lt;String, Object&gt;(); // Not a constant!
 </pre>
 
 <p>Do not use any sort of Hungarian notation. For example, the following is discouraged:</p>
 
 <pre>
-String <span class="bad">sName</span> = "...";
-HashMap<String, Object> <span class="bad">hmCache</span> = ...; // Name it "cacheMap" if you really must emphasize that it is a map.
+String <span style="color: #f00">sName</span> = "...";
+HashMap<String, Object> <span style="color: #f00">hmCache</span> = ...; // Name it "cacheMap" if you really must emphasize that it is a map.
 </pre>
 
 <h4>Generics</h4>
@@ -111,7 +106,7 @@ private String name;
 <p>instead of</p>
 
 <pre>
-<span class="bad">String name</span>; // No access modifier means package-private.
+<span style="color: #f00">String name</span>; // No access modifier means package-private.
 </pre>
 
 <h5>Code against Interfaces</h5>
@@ -129,9 +124,9 @@ void myMethod(List&lt;SomeObject&gt; objects) {
 <p>instead of</p>
 
 <pre>
-<span class="bad">HashMap</span>&lt;String, Object&gt; cache = ...
+<span style="color: #f00">HashMap</span>&lt;String, Object&gt; cache = ...
 
-void myMethod(<span class="bad">ArrayList</span>&lt;SomeObject&gt; objects) {
+void myMethod(<span style="color: #f00">ArrayList</span>&lt;SomeObject&gt; objects) {
     ...
 }
 </pre>
