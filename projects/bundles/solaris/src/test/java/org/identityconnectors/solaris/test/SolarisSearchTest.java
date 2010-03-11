@@ -137,7 +137,9 @@ public class SolarisSearchTest extends SolarisTestBase {
                 int uidValue = (Integer) AttributeUtil.getSingleValue(attr);
                 String loginsCmd = (!getConnection().isNis()) ? "logins -oxma -l " + username : "ypmatch \"" + username + "\" passwd";
                 String out = getConnection().executeCommand(loginsCmd);
-                int realUid = Integer.valueOf(out.split(":")[1]);
+                // workaround: position of Uid differs in NIS / Native files of Solaris:
+                int uidPosition = (!getConnection().isNis()) ? 1 : 2;
+                int realUid = Integer.valueOf(out.split(":")[uidPosition]);
                 
                 Assert.assertEquals(realUid, uidValue);
                 return;

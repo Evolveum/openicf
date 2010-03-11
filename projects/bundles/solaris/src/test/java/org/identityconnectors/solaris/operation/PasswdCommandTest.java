@@ -42,6 +42,7 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.test.SolarisTestBase;
 import org.identityconnectors.test.common.ToListResultsHandler;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -143,6 +144,11 @@ public class PasswdCommandTest extends SolarisTestBase {
      */
     @Test
     public void testLock() {
+        if (getConnection().isNis()) {
+            // TODO Workaround on Solaris NIS: there doesn't seem to be a way how to handle user locks on NIS.
+            log.info("skipping test 'testLock', as LOCK attribute is not supported by the connector on NIS.");
+            return;
+        }
         String username = getUsername();
         enableTrustedLogin(username);
         GuardedString password = new GuardedString(SAMPLE_PASSWD.toCharArray());
@@ -169,8 +175,13 @@ public class PasswdCommandTest extends SolarisTestBase {
      * 
      * If an account is unlocked authentication should succeed. {@see PasswdCommandTest#testLock()}
      */
-    @Test 
+    @Test
     public void testUnLock() {
+        if (getConnection().isNis()) {
+            // TODO Workaround on Solaris NIS: there doesn't seem to be a way how to handle user locks on NIS.
+            log.info("skipping test 'testLock', as LOCK attribute is not supported by the connector on NIS.");
+            return;
+        }
         String username = "connuser";
         GuardedString passwd = new GuardedString("foo123".toCharArray());
         // create a locked account, login should fail
@@ -202,6 +213,11 @@ public class PasswdCommandTest extends SolarisTestBase {
      */
     @Test
     public void testFailLock() {
+        if (getConnection().isNis()) {
+            // TODO Workaround on Solaris NIS: there doesn't seem to be a way how to handle user locks on NIS.
+            log.info("skipping test 'testLock', as LOCK attribute is not supported by the connector on NIS.");
+            return;
+        }
         try {
             getFacade().update(ObjectClass.ACCOUNT, new Uid(getUsername()), CollectionUtil.newSet(AttributeBuilder.build(AccountAttribute.LOCK.getName())), null);
             Assert.fail("passing null option to Lock should cause failure. It must have a boolean value.");

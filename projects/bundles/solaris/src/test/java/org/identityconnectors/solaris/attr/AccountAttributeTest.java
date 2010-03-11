@@ -41,6 +41,7 @@ import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.solaris.operation.PasswdCommandTest;
 import org.identityconnectors.solaris.test.SolarisTestBase;
 import org.identityconnectors.test.common.ToListResultsHandler;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -101,6 +102,11 @@ public class AccountAttributeTest extends SolarisTestBase {
      */
     @Test
     public void testResetPassword() {
+        if (getConnection().isNis()) {
+            // Workaround: skipping. TODO Solaris NIS scripts in connector doesn't support forcing password change on Solaris NIS.
+            log.info("skipping test 'testUserDeletion' for Solaris NIS configuration.");
+            return;
+        }
         final String username = createResetPasswordUser(true);
         try {
             // check if user exists
@@ -133,6 +139,11 @@ public class AccountAttributeTest extends SolarisTestBase {
      */
     @Test
     public void testNegativeResetPassword() {
+        if (getConnection().isNis()) {
+            // Workaround: skipping. TODO Solaris NIS scripts in connector doesn't support forcing password change on Solaris NIS.
+            log.info("skipping test 'testUserDeletion' for Solaris NIS configuration.");
+            return;
+        }
         String username = createResetPasswordUser(false);
         try {
             // check if user exists

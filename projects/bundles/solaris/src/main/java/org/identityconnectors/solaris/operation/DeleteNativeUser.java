@@ -96,10 +96,11 @@ class DeleteNativeUser {
                  * So even though Expect4j matched the generic message, based on full buffer content 
                  * we need to throw a specific error message. 
                  */
+                String msg = messageErrorDelete + "'" + accountId + "', buffer: <" + buffer + ">";
                 if (buffer.contains(rejectDoesNotExist) || buffer.contains(rejectUnknownUser)) {
-                    throw new UnknownUidException(messageErrorDelete + accountId);
+                    throw new UnknownUidException(msg);
                 } else {
-                    throw new ConnectorException(messageErrorDelete + accountId);
+                    throw new ConnectorException(msg);
                 }
             }
         });
