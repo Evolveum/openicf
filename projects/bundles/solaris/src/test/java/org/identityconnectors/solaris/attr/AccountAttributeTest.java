@@ -28,11 +28,14 @@ import java.util.Set;
 import junit.framework.Assert;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.AttributeBuilder;
+import org.identityconnectors.framework.common.objects.AttributeUtil;
+import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.Name;
 import org.identityconnectors.framework.common.objects.ObjectClass;
 import org.identityconnectors.framework.common.objects.OperationOptionsBuilder;
@@ -41,7 +44,6 @@ import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.solaris.operation.PasswdCommandTest;
 import org.identityconnectors.solaris.test.SolarisTestBase;
 import org.identityconnectors.test.common.ToListResultsHandler;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -196,6 +198,40 @@ public class AccountAttributeTest extends SolarisTestBase {
         return username;
     }
 
+    @Test
+    public void testTimeLastLogin() {
+        if (getConnection().isNis()) {
+            log.info("skipping test 'testTimeLastLogin' for NIS configuration, as it doesn't support attribute: " + AccountAttribute.TIME_LAST_LOGIN.getName());
+            return;
+        }
+        String username = "connuser";
+        String password = "blueray1";
+
+        getFacade().create(ObjectClass.ACCOUNT,
+                CollectionUtil.newSet(AttributeBuilder.build(Name.NAME, username), AttributeBuilder.buildPassword(password.toCharArray())), null);
+        try{
+            // this involves doing 'login'
+            getFacade().authenticate(ObjectClass.ACCOUNT, username, new GuardedString(password.toCharArray()), null);
+            // get the date
+            String out = getConnection().executeCommand("date");
+            Assert.assertTrue(StringUtil.isNotBlank(out));
+            String month = out.split(" ")[1];
+
+            // check that last attribute contains the month of last login.
+            ToListResultsHandler handler = new ToListResultsHandler();
+            getFacade().search(ObjectClass.ACCOUNT, FilterBuilder.equalTo(AttributeBuilder.build(Name.NAME, username)), handler,
+                    new OperationOptionsBuilder().setAttributesToGet(AccountAttribute.TIME_LAST_LOGIN.getName()).build());
+            Assert.assertTrue(handler.getObjects().size() >= 1);
+            ConnectorObject co = handler.getObjects().get(0);
+            Attribute lastAttr = co.getAttributeByName(AccountAttribute.TIME_LAST_LOGIN.getName());
+            String lastValue = AttributeUtil.getStringValue(lastAttr);
+            String msg = String.format("expected to found the current login's month '%s' in the value of %s attribute command '%s', but it is missing.",
+                    AccountAttribute.TIME_LAST_LOGIN.getName(), month, lastValue);
+            Assert.assertTrue(msg, StringUtil.isNotBlank(lastValue) && lastValue.contains(month));
+        } finally {
+            getFacade().delete(ObjectClass.ACCOUNT, new Uid(username), null);
+        }
+    }
     
     @Override
     public boolean createGroup() {
