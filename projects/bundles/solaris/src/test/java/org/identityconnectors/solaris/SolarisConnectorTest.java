@@ -296,6 +296,24 @@ public class SolarisConnectorTest extends SolarisTestBase {
         Assert.assertTrue("the requested attribute is missing", l.size() == 1);
         ConnectorObject co = l.get(0);
         Attribute attr = co.getAttributeByName(expectedAttribute.getName());
+        // workaround for shell attribute, as sometimes /bin/sh is a simlink to /sbin/sh, 
+        // and the system treats it as the same shell. So we should compare only stuff after
+        // the last slash.
+        if (attr.getName().equals(AccountAttribute.SHELL.getName())) {
+            String expectedShell = AttributeUtil.getStringValue(expectedAttribute);
+            String actualShell = AttributeUtil.getStringValue(attr);
+            int i = expectedShell.lastIndexOf("/");
+            if (i != -1) {
+                expectedShell = expectedShell.substring(i + 1);
+            }
+            i = actualShell.lastIndexOf("/");
+            if (i != -1) {
+                actualShell = actualShell.substring(i + 1);
+            }
+            expectedShell = expectedShell.trim();
+            actualShell = actualShell.trim();
+            return expectedShell.equals(actualShell);
+        }
         return CollectionUtil.equals(attr.getValue(), expectedAttribute.getValue());
     }
     
