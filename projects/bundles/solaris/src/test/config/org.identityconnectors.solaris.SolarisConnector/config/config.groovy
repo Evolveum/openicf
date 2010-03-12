@@ -161,7 +161,15 @@ testsuite {
     comment.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     uid.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateIntNRBD")
     lock.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateBooleanNRBD")
-    time_last_login.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
+    time_last_login.attribute.__ACCOUNT__.oclasses = [
+      type: String.class,
+      readable: true,
+      createable: true,
+      updateable: false,
+      required: false,
+      multiValue: false,
+      returnedByDefault: false
+    ]// time_last_login
     authorization.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrMultiValuedTemplate")
     profile.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrMultiValuedTemplate")
     __PASSWORD__.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrPasswdTemplate")
