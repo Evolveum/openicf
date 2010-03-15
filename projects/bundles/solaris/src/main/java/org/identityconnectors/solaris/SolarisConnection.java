@@ -318,8 +318,9 @@ public class SolarisConnection {
      * send a command to the resource, no end of line needed.
      * @param string
      */
-    private void sendInternal(String string) throws IOException {
+    private void sendInternal(String string, boolean isLog) throws IOException {
         expect4j.send(string + HOST_END_OF_LINE_TERMINATOR);
+        log.ok((isLog) ? ("Data: " + string + "\n") : "Data: *******\n");
     }
     
     /**
@@ -365,7 +366,7 @@ public class SolarisConnection {
                         }
                     }
                     
-                    conn.sendInternal(new String(clearChars));
+                    conn.sendInternal(new String(clearChars), false);
                 } catch (IOException e) {
                     throw ConnectorException.wrap(e);
                 }
@@ -441,7 +442,7 @@ public class SolarisConnection {
     private String executeCommand(String command, Map<String, ErrorHandler> rejects, Set<String> accepts, int timeout) {
         try {
             if (command != null) {
-                sendInternal(command);
+                sendInternal(command, true);
             }
         } catch (Exception e) {
             throw new ConnectorException("Error occured in SolarisConnection, during send(). Exception message: " + e.getMessage());
@@ -651,6 +652,7 @@ public class SolarisConnection {
             // handle error message processing, throw an exception if error found
             handleRejects(cecList);
         } else {
+            log.ok("Data:" + output + "\n");
             output = trimOutput(output);
         }
 
@@ -830,9 +832,9 @@ public class SolarisConnection {
      */
     public void dispose() {
         try {
-            sendInternal("exit");
+            sendInternal("exit", true);
             if (configuration.isSuAuthorization()) {
-                sendInternal("exit");
+                sendInternal("exit", true);
             }
         } catch (IOException e) {
             // OK
