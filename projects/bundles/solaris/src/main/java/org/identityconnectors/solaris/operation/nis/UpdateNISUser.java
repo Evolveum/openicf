@@ -137,9 +137,12 @@ public class UpdateNISUser extends AbstractNISOp {
                 recordUpdate = response.first;
                 final String passwordRecord1 = response.second;
                 
-                final String passwordRecord2 = (gecos != null) ? ("GECOS=\"" + gecos + "\"; ") : ("GECOS=`echo $ENTRYTEXT | cut -d: -f5`; ");
+                final String passwordRecord2;
                 if (gecos != null) {
+                    passwordRecord2 = ("GECOS=\"" + gecos + "\"; ");
                     recordUpdate = true;
+                } else {
+                    passwordRecord2 = ("GECOS=`echo $ENTRYTEXT | cut -d: -f5`; ");
                 }
                 
                 if (recordUpdate) {

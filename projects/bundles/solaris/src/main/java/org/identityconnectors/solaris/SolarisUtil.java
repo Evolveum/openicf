@@ -128,7 +128,7 @@ public class SolarisUtil {
     public static boolean exists(ObjectClass entryType, SolarisEntry entry, SolarisConnection conn) {
         Iterator<SolarisEntry> result = null;
         if (entryType.is(ObjectClass.ACCOUNT_NAME)) {
-            result = SolarisEntries.getAllAccounts(EnumSet.of(NativeAttribute.NAME), conn);
+            return SolarisEntries.getAccount(entry.getName(), EnumSet.of(NativeAttribute.NAME), conn) != null;
         } else if (entryType.is(ObjectClass.GROUP_NAME)) {
             result = SolarisEntries.getAllGroups(EnumSet.of(NativeAttribute.NAME), conn);
         } else {

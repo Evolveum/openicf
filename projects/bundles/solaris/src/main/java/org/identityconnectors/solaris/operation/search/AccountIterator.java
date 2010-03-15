@@ -23,7 +23,6 @@
 
 package org.identityconnectors.solaris.operation.search;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -31,7 +30,6 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
-import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
@@ -48,8 +46,6 @@ public class AccountIterator implements Iterator<SolarisEntry> {
     private boolean isAuths;
     private boolean isLast;
     private boolean isRoles;
-    
-    private static final Log log = Log.getLog(AccountIterator.class);
 
     /**
      * Implementational note: in case of NIS this is iterator through entry
@@ -119,9 +115,9 @@ public class AccountIterator implements Iterator<SolarisEntry> {
      * @return the initialized entry, or Null in case the user was not found on the resource.
      */
     private SolarisEntry buildUser(String username) {
-        if (conn.isNis()) {
-            return buildNISUser(username);
-        }
+//        if (conn.isNis()) {
+//            return buildNISUser(username);
+//        }
         SolarisEntry.Builder entryBuilder = new SolarisEntry.Builder(username).addAttr(NativeAttribute.NAME, username);
         
         // we need to execute Logins command always, to figure out if the user exists at all.
@@ -154,51 +150,51 @@ public class AccountIterator implements Iterator<SolarisEntry> {
         return entryBuilder.build();
     }
 
-    /**
-     * constructs and returns the basic user based on the output of 'ypmatch userid passwd'
-     * @param name
-     * @return the initialized entry if entry found, otherwise null
-     */
-    private SolarisEntry buildNISUser(String username) {
-        String command = new StringBuilder("ypmatch \"").append(username).append("\" passwd").toString();
-        String usernameEntry = conn.executeCommand(command);
-        // The output from is colon delimited and looks like this:
-        // name:x(passwd in shadow file):uid:pgrp-num:comment:homedir:shell
-        List<String> attributes = Arrays.asList(usernameEntry.split(":", -1));
-        if (CollectionUtil.isEmpty(attributes) || attributes.size() < 2) {
-            return null;
-        }
-        Iterator<String> attrIt = attributes.iterator();
-        
-        String accountId = attrIt.next();
-        if (!accountId.equals(username)) {
-            log.warn("The fetched username differs from what was expected: fetched = '" +  accountId + "', expected = '" + username + "'.");
-            return null;
-        }
-        SolarisEntry.Builder entryBuilder = new SolarisEntry.Builder(username).addAttr(NativeAttribute.NAME, username);
-        
-        //This gets the password field. We don't use it.
-        attrIt.next(); // skip password field
-        
-        if (isLogins) {
-            int userUid = Integer.valueOf(attrIt.next());
-            entryBuilder.addAttr(NativeAttribute.ID, userUid);
-            String group = attrIt.next();
-            entryBuilder.addAttr(NativeAttribute.GROUP_PRIM, group);
-            String comment = attrIt.next();
-            entryBuilder.addAttr(NativeAttribute.COMMENT, comment);
-            String dir = attrIt.next();
-            entryBuilder.addAttr(NativeAttribute.DIR, dir);
-            String shell = attrIt.next();
-            entryBuilder.addAttr(NativeAttribute.SHELL, shell);
-        }
-        
-        if (isLast || isRoles || isAuths) {
-            log.warn("Last, Roles, Auths attributes are not supported for NIS accounts. Skipping them.");
-        }
-        
-        return entryBuilder.build();
-    }
+//    /**
+//     * constructs and returns the basic user based on the output of 'ypmatch userid passwd'
+//     * @param name
+//     * @return the initialized entry if entry found, otherwise null
+//     */
+//    private SolarisEntry buildNISUser(String username) {
+//        String command = new StringBuilder("ypmatch \"").append(username).append("\" passwd").toString();
+//        String usernameEntry = conn.executeCommand(command);
+//        // The output from is colon delimited and looks like this:
+//        // name:x(passwd in shadow file):uid:pgrp-num:comment:homedir:shell
+//        List<String> attributes = Arrays.asList(usernameEntry.split(":", -1));
+//        if (CollectionUtil.isEmpty(attributes) || attributes.size() < 2) {
+//            return null;
+//        }
+//        Iterator<String> attrIt = attributes.iterator();
+//        
+//        String accountId = attrIt.next();
+//        if (!accountId.equals(username)) {
+//            log.warn("The fetched username differs from what was expected: fetched = '" +  accountId + "', expected = '" + username + "'.");
+//            return null;
+//        }
+//        SolarisEntry.Builder entryBuilder = new SolarisEntry.Builder(username).addAttr(NativeAttribute.NAME, username);
+//        
+//        //This gets the password field. We don't use it.
+//        attrIt.next(); // skip password field
+//        
+//        if (isLogins) {
+//            int userUid = Integer.valueOf(attrIt.next());
+//            entryBuilder.addAttr(NativeAttribute.ID, userUid);
+//            String group = attrIt.next();
+//            entryBuilder.addAttr(NativeAttribute.GROUP_PRIM, group);
+//            String comment = attrIt.next();
+//            entryBuilder.addAttr(NativeAttribute.COMMENT, comment);
+//            String dir = attrIt.next();
+//            entryBuilder.addAttr(NativeAttribute.DIR, dir);
+//            String shell = attrIt.next();
+//            entryBuilder.addAttr(NativeAttribute.SHELL, shell);
+//        }
+//        
+//        if (isLast || isRoles || isAuths) {
+//            log.warn("Last, Roles, Auths attributes are not supported for NIS accounts. Skipping them.");
+//        }
+//        
+//        return entryBuilder.build();
+//    }
 
     public void remove() {
         throw new UnsupportedOperationException("Internal error: AccountIterators do not allow remove().");
