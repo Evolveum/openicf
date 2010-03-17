@@ -42,7 +42,6 @@ import org.identityconnectors.solaris.attr.NativeAttribute;
 import org.identityconnectors.solaris.test.SolarisTestBase;
 import org.identityconnectors.test.common.ToListResultsHandler;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**

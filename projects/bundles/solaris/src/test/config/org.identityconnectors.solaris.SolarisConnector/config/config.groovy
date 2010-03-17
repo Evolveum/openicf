@@ -156,7 +156,7 @@ testsuite {
     group.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     __NAME__.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrRequiredTemplate")
     expire.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
-    warn.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
+    warn.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateIntNRBD")
     dir.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     comment.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplate")
     uid.attribute.__ACCOUNT__.oclasses = Lazy.get("testsuite.Schema.attrTemplateIntNRBD")

@@ -240,6 +240,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
                 break;
             case MIN:
             case MAX:
+            case WARN:
             case INACTIVE:
             case UID:
                 newAttr = AttributeInfoBuilder.build(attr.getName(), int.class, EnumSet.of(Flags.NOT_RETURNED_BY_DEFAULT));
