@@ -94,6 +94,11 @@ public class AccountAttributeTest extends SolarisTestBase {
     public void testSecondaryGroup() {
         genericTest(AccountAttribute.SECONDARY_GROUP, CollectionUtil.newList("root"), CollectionUtil.newList("root", getGroupName()), "cmark");
     }
+    
+    @Test
+    public void testInactive() {
+        genericTest(AccountAttribute.INACTIVE, CollectionUtil.newList(13), CollectionUtil.newList(3), "cmark");
+    }
 
     /**
      * check behaviour of {@link AccountAttribute#PASSWD_FORCE_CHANGE}
