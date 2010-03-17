@@ -253,7 +253,7 @@ public class SolarisConnector implements PoolableConnector, AuthenticateOp,
             case ROLES:
             case AUTHORIZATION:
             case PROFILE:
-                newAttr = AttributeInfoBuilder.build(attr.getName(), String.class, EnumSet.of(Flags.MULTIVALUED));
+                newAttr = AttributeInfoBuilder.build(attr.getName(), String.class, EnumSet.of(Flags.MULTIVALUED, Flags.NOT_RETURNED_BY_DEFAULT));
                 break;
             case TIME_LAST_LOGIN:
                 newAttr = AttributeInfoBuilder.build(attr.getName(), String.class, EnumSet.of(Flags.NOT_UPDATEABLE, Flags.NOT_RETURNED_BY_DEFAULT));

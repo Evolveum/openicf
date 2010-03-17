@@ -119,7 +119,7 @@ testsuite {
       updateable: true,
       required: false,
       multiValue: true,
-      returnedByDefault: true
+      returnedByDefault: false
     ]
     
     attrNotUpdateableTemplate = [
@@ -136,7 +136,15 @@ testsuite {
 
     gid.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.testsuite.Schema.attrTemplateIntNRBD")
     __NAME__.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrRequiredTemplate")
-    users.attribute.__GROUP__.oclasses = Lazy.get("testsuite.Schema.attrMultiValuedTemplate")
+    users.attribute.__GROUP__.oclasses = [
+      type: String.class,
+      readable: true,
+      createable: true,
+      updateable: true,
+      required: false,
+      multiValue: true,
+      returnedByDefault: true
+    ]
     
     shell.attribute.shell.oclasses = [
       type: String.class,
