@@ -22,8 +22,11 @@
  */
 package org.identityconnectors.solaris.attr;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import junit.framework.Assert;
 
@@ -99,6 +102,68 @@ public class AccountAttributeTest extends SolarisTestBase {
     public void testInactive() {
         genericTest(AccountAttribute.INACTIVE, CollectionUtil.newList(13), CollectionUtil.newList(3), "cmark");
     }
+    
+    /**
+     * Inactive attribute must be some future date, positive test.
+     */
+    @Test 
+    public void testExpire() {
+        // fetch the current date, and generate two dates in the future.
+        String currentDate = getConnection().executeCommand("date");
+        // assuming that last 4-digit number of the output is the date.
+        Matcher m = Pattern.compile("\\d\\d\\d\\d").matcher(currentDate);
+        int thisYear = -1;
+        if (m.find()) {
+            thisYear = Integer.valueOf(currentDate.substring(m.start(), m.end()));
+        } else {
+            Assert.fail("wrong date received, no 4-digit year present: " + currentDate);
+        }
+        
+        String createDate = formatTestDate(thisYear + 3);
+        String updateDate = formatTestDate(thisYear + 4);
+        
+        genericTest(AccountAttribute.EXPIRE, CollectionUtil.newList(createDate), CollectionUtil.newList(updateDate), "cmark", new Equalable() {
+            // compare two strings, but ignore the '/' delimiters of the date. For example:
+            // equals("1/1/2010", "112010") == true
+            // equals("1/2/2010", "112010") == false
+            public boolean equals(List<? extends Object> o1, List<? extends Object> o2) {
+                Assert.assertTrue(o1.size() == 1 && o2.size() == 1);
+                String first = o1.get(0).toString();
+                String second = o2.get(0).toString();
+                first = reformat(first);
+                second = reformat(second);
+                return first.equals(second);
+            }
+
+            private String reformat(String dateString) {
+                dateString = dateString.replaceAll("/", "").trim();
+                if (dateString.startsWith("0") && dateString.length() > 1) {
+                    dateString = dateString.substring(1);
+                }
+                return dateString;
+            }
+        });
+    }
+    
+    /**
+     * create a first January date for given year in Unix format, acceptable for
+     * {@link NativeAttribute#USER_INACTIVE} tests.
+     */
+    private String formatTestDate(int yearInt) {
+        String year = Integer.valueOf(yearInt).toString();
+        // user last 2 digits of the year for the date.
+        String shortYear = year.substring(year.length() - 2);
+        
+        return String.format("01/02/%s", shortYear);
+    }
+
+//    /**
+//     * Negative test: for inactive any past date should result in failure.
+//     */
+//    @Test
+//    public void testInactiveNegative() {
+//        
+//    }
 
     /**
      * check behaviour of {@link AccountAttribute#PASSWD_FORCE_CHANGE}
@@ -249,6 +314,14 @@ public class AccountAttributeTest extends SolarisTestBase {
     }
     
     private <E> void genericTest(AccountAttribute attr, List<E> createValue, List<E> updateValue, String username) {
+        genericTest(attr, createValue, updateValue, username, new Equalable() {
+            public boolean equals(List<? extends Object> o1, List<? extends Object> o2) {
+                return o1.equals(o2);
+            }
+        });
+    }
+    
+    private <E> void genericTest(AccountAttribute attr, List<E> createValue, List<E> updateValue, String username, Equalable eq) {
         // the account should be brand new
         ToListResultsHandler handler = new ToListResultsHandler();
         getFacade().search(ObjectClass.ACCOUNT, FilterBuilder.equalTo(AttributeBuilder.build(Name.NAME, username)), handler, new OperationOptionsBuilder().setAttributesToGet(CollectionUtil.newSet(Name.NAME)).build());
@@ -270,7 +343,7 @@ public class AccountAttributeTest extends SolarisTestBase {
             handler = new ToListResultsHandler();
             getFacade().search(ObjectClass.ACCOUNT, FilterBuilder.equalTo(AttributeBuilder.build(Name.NAME, username)), handler, new OperationOptionsBuilder().setAttributesToGet(attr.getName()).build());
             Assert.assertTrue(handler.getObjects().size() > 0);
-            Assert.assertEquals(createValue, handler.getObjects().get(0).getAttributeByName(attr.getName()).getValue());
+            Assert.assertTrue(eq.equals(createValue, handler.getObjects().get(0).getAttributeByName(attr.getName()).getValue()));
             
             // update the value
             getFacade().update(ObjectClass.ACCOUNT, new Uid(username), CollectionUtil.newSet(AttributeBuilder.build(attr.getName(), updateValue)), null);
@@ -278,7 +351,7 @@ public class AccountAttributeTest extends SolarisTestBase {
             handler = new ToListResultsHandler();
             getFacade().search(ObjectClass.ACCOUNT, FilterBuilder.equalTo(AttributeBuilder.build(Name.NAME, username)), handler, new OperationOptionsBuilder().setAttributesToGet(attr.getName()).build());
             Assert.assertTrue(handler.getObjects().size() > 0);
-            Assert.assertEquals(updateValue, handler.getObjects().get(0).getAttributeByName(attr.getName()).getValue());
+            Assert.assertTrue(eq.equals(updateValue, handler.getObjects().get(0).getAttributeByName(attr.getName()).getValue()));
         } finally {
             try {
                 getFacade().delete(ObjectClass.ACCOUNT, new Uid(username), null);
@@ -286,5 +359,9 @@ public class AccountAttributeTest extends SolarisTestBase {
                 // OK
             }
         }
+    }
+    
+    private interface Equalable {
+        public boolean equals(List<? extends Object> o1, List<? extends Object> o2);
     }
 }
