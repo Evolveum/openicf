@@ -28,19 +28,24 @@ import java.util.Map;
 
 public enum NativeAttribute {
     /** USER/GROUP attribute */
-    NAME(true),
+    NAME,
     /** USER/GROUP attribute */
-    ID(true),
+    ID,
     /** USER attribute: primary group */
-    GROUP_PRIM(true),
+    GROUP_PRIM,
     /** USER attribute */
-    COMMENT(true), 
+    COMMENT, 
     /** USER attribute: secondary groups */
-    GROUPS_SEC(false),
+    GROUPS_SEC() {
+        @Override
+        public boolean isSingleValue() {
+            return false;
+        }
+    },
     /** USER attribute */
-    DIR(true),
+    DIR,
     /** USER attribute */
-    SHELL(true),
+    SHELL,
     /**
      * USER attribute. Other nick for {@link NativeAttribute.PWSTAT} in the
      * adapter for this attribute was PASSWORD_FORCE_CHANGE.
@@ -52,41 +57,53 @@ public enum NativeAttribute {
      * The only way to deactivate force_change is to have the user log in, and 
      * change her password.
      */
-    PWSTAT(true),
-//    /** USER attribute */ // not used see SVIDRA#
-//    PW_LAST_CHANGE,
+    PWSTAT,
     /** USER attribute */
-    MIN_DAYS_BETWEEN_CHNG(true),
+    MIN_DAYS_BETWEEN_CHNG,
     /** USER attribute */
-    MAX_DAYS_BETWEEN_CHNG(true),
+    MAX_DAYS_BETWEEN_CHNG,
     /** USER attribute */
-    DAYS_BEFORE_TO_WARN(true),
+    DAYS_BEFORE_TO_WARN,
     /** USER attribute */
-    USER_EXPIRE(true), 
+    USER_EXPIRE, 
     /** USER attribute */
-    USER_INACTIVE(true),
+    USER_INACTIVE,
     /** USER attribute */
-    LOCK(true),
+    LOCK,
     
     /** USER attribute */
-    ROLES(false), 
+    ROLES {
+        @Override
+        public boolean isSingleValue() {
+            return false;
+        }
+    }, 
     /** USER attribute */
-    AUTHS(false), 
+    AUTHS {
+        @Override
+        public boolean isSingleValue() {
+            return false;
+        }
+    }, 
     /** USER attribute */
-    PROFILES(false),
+    PROFILES {
+        @Override
+        public boolean isSingleValue() {
+            return false;
+        }
+    },
     /** USER attribute: time when the user was last logged in */
-    LAST_LOGIN(true),
+    LAST_LOGIN,
     
     
     /** GROUP attribute */
-    USERS(false);
+    USERS {
+        @Override
+        public boolean isSingleValue() {
+            return false;
+        }
+    };
     
-    private boolean isSingleValue;
-
-    private NativeAttribute(boolean isSingleValue) {
-        this.isSingleValue = isSingleValue;
-    }
-
     private static final Map<String, NativeAttribute> stringToNative = new HashMap<String, NativeAttribute>();
     static {
         for (NativeAttribute accAttr : values()) {
@@ -109,6 +126,6 @@ public enum NativeAttribute {
     
     /** @return true if the attribute is singleValue, false if it is multivalue */
     public boolean isSingleValue() {
-        return isSingleValue;
+        return true;
     }
 }
