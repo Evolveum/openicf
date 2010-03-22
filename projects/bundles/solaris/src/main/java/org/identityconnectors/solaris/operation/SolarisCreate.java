@@ -95,12 +95,12 @@ public class SolarisCreate extends AbstractOp {
             }
         } else if (oclass.is(ObjectClass.GROUP_NAME)) {
             if (connection.isNis()) {
-                invokeNISGroupCreate(entry);
-            } else {
                 // NIS doesn't control duplicate account names so we need to do it in advance
                 if (SolarisUtil.exists(oclass, entry, connection)) {
                     throw new AlreadyExistsException("Group already exits: " + entry.getName());
                 }
+                invokeNISGroupCreate(entry);
+            } else {
                 invokeNativeGroupCreate(entry);
             }
         } else {
