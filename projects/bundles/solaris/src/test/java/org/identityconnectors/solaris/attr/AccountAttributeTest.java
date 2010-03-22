@@ -240,6 +240,7 @@ public class AccountAttributeTest extends SolarisTestBase {
 
         getFacade().create(ObjectClass.ACCOUNT,
                 CollectionUtil.newSet(AttributeBuilder.build(Name.NAME, username), AttributeBuilder.buildPassword(password.toCharArray())), null);
+        enableTrustedLogin(username);
         try{
             // this involves doing 'login'
             getFacade().authenticate(ObjectClass.ACCOUNT, username, new GuardedString(password.toCharArray()), null);
