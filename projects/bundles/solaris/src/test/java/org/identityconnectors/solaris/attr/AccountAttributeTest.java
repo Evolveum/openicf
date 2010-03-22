@@ -22,7 +22,6 @@
  */
 package org.identityconnectors.solaris.attr;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -98,6 +97,28 @@ public class AccountAttributeTest extends SolarisTestBase {
         genericTest(AccountAttribute.SECONDARY_GROUP, CollectionUtil.newList("root"), CollectionUtil.newList("root", getGroupName()), "cmark");
     }
     
+    private static final Equalable dateComparator = new Equalable() {
+        // compare two strings, but ignore the '/' delimiters of the date. For example:
+        // equals("1/1/2010", "112010") == true
+        // equals("1/2/2010", "112010") == false
+        public boolean equals(List<? extends Object> o1, List<? extends Object> o2) {
+            Assert.assertTrue(o1.size() == 1 && o2.size() == 1);
+            String first = o1.get(0).toString();
+            String second = o2.get(0).toString();
+            first = reformat(first);
+            second = reformat(second);
+            return first.equals(second);
+        }
+
+        private String reformat(String dateString) {
+            dateString = dateString.replaceAll("/", "").trim();
+            if (dateString.startsWith("0") && dateString.length() > 1) {
+                dateString = dateString.substring(1);
+            }
+            return dateString;
+        }
+    };
+    
     @Test
     public void testInactive() {
         genericTest(AccountAttribute.INACTIVE, CollectionUtil.newList(13), CollectionUtil.newList(3), "cmark");
@@ -122,27 +143,7 @@ public class AccountAttributeTest extends SolarisTestBase {
         String createDate = formatTestDate(thisYear + 3);
         String updateDate = formatTestDate(thisYear + 4);
         
-        genericTest(AccountAttribute.EXPIRE, CollectionUtil.newList(createDate), CollectionUtil.newList(updateDate), "cmark", new Equalable() {
-            // compare two strings, but ignore the '/' delimiters of the date. For example:
-            // equals("1/1/2010", "112010") == true
-            // equals("1/2/2010", "112010") == false
-            public boolean equals(List<? extends Object> o1, List<? extends Object> o2) {
-                Assert.assertTrue(o1.size() == 1 && o2.size() == 1);
-                String first = o1.get(0).toString();
-                String second = o2.get(0).toString();
-                first = reformat(first);
-                second = reformat(second);
-                return first.equals(second);
-            }
-
-            private String reformat(String dateString) {
-                dateString = dateString.replaceAll("/", "").trim();
-                if (dateString.startsWith("0") && dateString.length() > 1) {
-                    dateString = dateString.substring(1);
-                }
-                return dateString;
-            }
-        });
+        genericTest(AccountAttribute.EXPIRE, CollectionUtil.newList(createDate), CollectionUtil.newList(updateDate), "cmark", dateComparator);
     }
     
     /**
@@ -157,13 +158,18 @@ public class AccountAttributeTest extends SolarisTestBase {
         return String.format("01/02/%s", shortYear);
     }
 
-//    /**
-//     * Negative test: for inactive any past date should result in failure.
-//     */
-//    @Test
-//    public void testInactiveNegative() {
-//        
-//    }
+    /**
+     * Negative test: for inactive any past date should result in failure.
+     */
+    @Test
+    public void testExpireNegative() {
+        try {
+            genericTest(AccountAttribute.EXPIRE, CollectionUtil.newList("01/01/84"/* a past date */), CollectionUtil.newList("01/01/80"), "cmark", dateComparator);
+            Assert.fail("past date should fail");
+        } catch (ConnectorException ex) {
+            // OK
+        }
+    }
 
     /**
      * check behaviour of {@link AccountAttribute#PASSWD_FORCE_CHANGE}
