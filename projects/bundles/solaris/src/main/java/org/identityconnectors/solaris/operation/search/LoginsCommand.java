@@ -179,8 +179,8 @@ class LoginsCommand {
         bldr.addAttr(DAYS_BEFORE_TO_WARN, Integer.valueOf(tokenIt.next()));
         
         /* USER INACTIVE */
-        String userInactive = tokenIt.next();
-        if (userInactive.equals("-1")) {
+        Integer userInactive = Integer.valueOf(tokenIt.next());
+        if (userInactive.equals(-1)) {
             // This is set to not expire and security modules may
             // not even be installed on the host so reset this to null.
             userInactive = null;
