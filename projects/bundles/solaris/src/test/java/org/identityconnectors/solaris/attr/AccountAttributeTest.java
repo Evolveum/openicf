@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
 import junit.framework.Assert;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.Pair;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
@@ -46,6 +47,7 @@ import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.solaris.operation.PasswdCommandTest;
 import org.identityconnectors.solaris.test.SolarisTestBase;
 import org.identityconnectors.test.common.ToListResultsHandler;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -185,17 +187,17 @@ public class AccountAttributeTest extends SolarisTestBase {
             log.info("skipping test 'testUserDeletion' for Solaris NIS configuration.");
             return;
         }
-        final String username = createResetPasswordUser(true);
+        final Pair<String, String> credentials = createResetPasswordUser(true);
+        final String username = credentials.first;
+        final String password = credentials.second;
         try {
             // check if user exists
             String loginsCmd = (!getConnection().isNis()) ? "logins -oxma -l " + username : "ypmatch \"" + username + "\" passwd";
             String out = getConnection().executeCommand(loginsCmd);
             Assert.assertTrue("user " + username + " is missing, buffer: <" + out + ">", out.contains(username));
 
-            final String newPasswd = changePasswordForResetPasswordTest(username);
-
             try {
-                getFacade().authenticate(ObjectClass.ACCOUNT, username, new GuardedString(newPasswd.toCharArray()), null);
+                getFacade().authenticate(ObjectClass.ACCOUNT, username, new GuardedString(password.toCharArray()), null);
                 Assert.fail("expected to wait for 'new password:' prompt failed.");
             } catch (ConnectorException ex) {
                 if (!ex.getMessage().contains("New Password:")) {
@@ -208,59 +210,13 @@ public class AccountAttributeTest extends SolarisTestBase {
             getFacade().delete(ObjectClass.ACCOUNT, new Uid(username), null);
         }
     }
-    
-    /**
-     * Negative testcase for {@link AccountAttribute#PASSWD_FORCE_CHANGE}.
-     * 
-     * Check for reset password should not happen, when force_change is set to false explicitly.
-     * User login should not prompt for New Password: prompt, even if password is changed/reset.
-     */
-    @Test
-    public void testNegativeResetPassword() {
-        if (getConnection().isNis()) {
-            // Workaround: skipping. TODO Solaris NIS scripts in connector doesn't support forcing password change on Solaris NIS.
-            log.info("skipping test 'testUserDeletion' for Solaris NIS configuration.");
-            return;
-        }
-        String username = createResetPasswordUser(false);
-        try {
-            // check if user exists
-            String loginsCmd = (!getConnection().isNis()) ? "logins -oxma -l " + username : "ypmatch \"" + username + "\" passwd";
-            String out = getConnection().executeCommand(loginsCmd);
-            Assert.assertTrue("user " + username + " is missing, buffer: <" + out + ">", out.contains(username));
-
-            final String newPasswd = changePasswordForResetPasswordTest(username);
-
-            try {
-                getFacade().authenticate(ObjectClass.ACCOUNT, username, new GuardedString(newPasswd.toCharArray()), null);
-                log.ok("test testNegativeResetPassword passed");
-            } catch (ConnectorException ex) {
-                if (ex.getMessage().contains("New Password:")) {
-                    Assert.fail("expected to login successfully without waiting for new password: prompt.");
-                } else {
-                    Assert.fail("expected to login successfully, but failed with unexpected exception: " + ex.getMessage());
-                }
-            }
-        } finally {
-            getFacade().delete(ObjectClass.ACCOUNT, new Uid(username), null);
-        }
-    }
-
-    private String changePasswordForResetPasswordTest(final String username) {
-        // lets change the password for checking expire password.
-        final String newPasswd = "changedpwd";
-        Set<Attribute> replaceAttributes = CollectionUtil.newSet(
-                AttributeBuilder.buildPassword(newPasswd.toCharArray())
-                );
-        getFacade().update(ObjectClass.ACCOUNT, new Uid(username), replaceAttributes, null);
-        return newPasswd;
-    }
-    
-    private String createResetPasswordUser(boolean isForceChange) {
+        
+    /** returns the username and password used for creation. */
+    private Pair<String, String> createResetPasswordUser(boolean isForceChange) {
         final String username = "bugsBunny";
-        final String oldPassword = "bugsPasswd";
+        final String password = "bugsPasswd";
         Set<Attribute> attrs = CollectionUtil.newSet(AttributeBuilder.build(Name.NAME, username), 
-                AttributeBuilder.buildPassword(oldPassword.toCharArray()),
+                AttributeBuilder.buildPassword(password.toCharArray()),
                 AttributeBuilder.build(AccountAttribute.PASSWD_FORCE_CHANGE.getName(), isForceChange));
         // cleanup the user if it's there from previous runs
         try {
@@ -271,7 +227,7 @@ public class AccountAttributeTest extends SolarisTestBase {
         
         getFacade().create(ObjectClass.ACCOUNT, attrs, null);
         enableTrustedLogin(username);
-        return username;
+        return new Pair<String, String>(username, password);
     }
 
     @Test

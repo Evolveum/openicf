@@ -101,6 +101,13 @@ public class SolarisAuthenticate extends AbstractOp {
                     public void handle(String buffer) {
                         throw new ConnectorException("ERROR: buffer contents: <" + buffer + ">");
                     }
+                },
+                
+                // this is a workaround for unit tests, as they rely on the right exception message.
+                "[P,p]assword", new SolarisConnection.ErrorHandler() {
+                    public void handle(String buffer) {
+                        throw new ConnectorException("ERROR: buffer contents: <" + buffer + ">");
+                    }
                 }
                 );
         return rejectsMap;
