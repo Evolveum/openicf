@@ -47,7 +47,6 @@ import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.solaris.operation.PasswdCommandTest;
 import org.identityconnectors.solaris.test.SolarisTestBase;
 import org.identityconnectors.test.common.ToListResultsHandler;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
