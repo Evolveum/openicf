@@ -30,6 +30,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.identityconnectors.common.CollectionUtil;
+import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.solaris.SolarisConnection;
 import org.identityconnectors.solaris.attr.NativeAttribute;
@@ -83,8 +84,10 @@ public class AccountIterator implements Iterator<SolarisEntry> {
         String newLineSeparatedUsernames = conn.executeCommand(command);
         String[] entries = newLineSeparatedUsernames.split("\n");
         List<String> result = CollectionUtil.<String>newList();
-        for (String string : entries) {
-            result.add(string.trim());
+        for (String username : entries) {
+            if (StringUtil.isNotBlank(username)) {
+                result.add(username.trim());
+            }
         }
         return result;
     }

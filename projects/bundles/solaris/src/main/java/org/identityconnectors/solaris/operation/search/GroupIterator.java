@@ -56,8 +56,10 @@ class GroupIterator implements Iterator<SolarisEntry> {
             String groupsSeparatedByNewline = connection.executeCommand(command);
             String[] groupNamesList = groupsSeparatedByNewline.split("\n");
             groupNames = CollectionUtil.<String>newList();
-            for (String string : groupNamesList) {
-                groupNames.add(string.trim());
+            for (String groupName : groupNamesList) {
+                if (StringUtil.isNotBlank(groupName)) {
+                    groupNames.add(groupName.trim());
+                }
             }
         }
         it = groupNames.iterator();
