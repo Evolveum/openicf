@@ -102,7 +102,8 @@ namespace Org.IdentityConnectors.Exchange
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="messageCatalog"/> is null.</exception>
         public RunSpaceInstance(SnapIn snapin, ConnectorMessages messageCatalog)
         {
-            _messageCatalog = Assertions.NullChecked(messageCatalog, "messageCatalog");
+            Assertions.NullCheck( messageCatalog, "messageCatalog" );
+            _messageCatalog = messageCatalog;
 
             // initialize this
             this.InitRunSpace(snapin);
