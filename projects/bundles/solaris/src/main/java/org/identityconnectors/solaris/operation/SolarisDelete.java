@@ -69,7 +69,7 @@ public class SolarisDelete extends AbstractOp {
                 
                 invokeNISUserDelete(entryName);
             } else {
-                invokeNativeUserDelete(entryName);
+                DeleteNativeUser.delete(entryName, connection);
             }
         } else if (objClass.is(ObjectClass.GROUP_NAME)) {
             if (connection.isNis()) {
@@ -81,7 +81,7 @@ public class SolarisDelete extends AbstractOp {
                 
                 invokeNISGroupDelete(entryName);
             } else {
-                invokeNativeGroupDelete(entryName);
+                DeleteNativeGroup.delete(entryName, connection);
             }
         } else {
             throw new UnsupportedOperationException();
@@ -92,18 +92,11 @@ public class SolarisDelete extends AbstractOp {
     }
 
     /**
-     * compare with NIS delete operation: {@see OpDeleteImpl#invokeNISGroupDelete(String)}
-     */
-    private void invokeNativeGroupDelete(String groupName) {
-        DeleteNativeGroup.delete(groupName, connection);
-    }
-
-    /**
      * compare with Native delete operation: {@see OpDeleteImpl#invokeNativeGroupDelete(Uid)}
      */
     private void invokeNISGroupDelete(String groupName) {
         if (connection.isDefaultNisPwdDir()) {
-            invokeNativeGroupDelete(groupName);
+            DeleteNativeGroup.delete(groupName, connection);
             
             /*
              * TODO in adapter, SRA#getDeleteNISUserScript sudo is missing (file another bug?)
@@ -120,20 +113,13 @@ public class SolarisDelete extends AbstractOp {
     }
 
     /**
-     * compare with NIS delete operation: {@see OpDeleteImpl#invokeNISUserDelete(String)}
-     */
-    private void invokeNativeUserDelete(final String accountName) {
-        DeleteNativeUser.delete(accountName, connection);
-    }
-
-    /**
      * Compare with Native delete operation: {@see OpDeleteImpl#invokeNativeDelete(String)}
      */
     private void invokeNISUserDelete(String accountName) {
         // If the password source file is in /etc then use the native
         // utilities
         if (connection.isDefaultNisPwdDir()) {
-            invokeNativeUserDelete(accountName);
+            DeleteNativeUser.delete(accountName, connection);
             /*
              * TODO in adapter, SRA#getDeleteNISUserScript sudo is missing (file another bug?)
              */

@@ -94,7 +94,7 @@ public class SolarisUpdate extends AbstractOp {
                 
                 invokeNISUserUpdate(entry, passwd);
             } else {
-                invokeNativeUserUpdate(entry, passwd);
+                UpdateNativeUser.updateUser(entry, passwd, connection);
             }
         } else if (objclass.is(ObjectClass.GROUP_NAME)) {
             if (connection.isNis()) {
@@ -107,7 +107,7 @@ public class SolarisUpdate extends AbstractOp {
                 
                 invokeNISGroupUpdate(entry);
             } else {
-                invokeNativeGroupUpdate(entry);
+                UpdateNativeGroup.updateGroup(entry, connection);
             }
             
             // Rename was separate operation in Adapter
@@ -138,18 +138,11 @@ public class SolarisUpdate extends AbstractOp {
     }
 
     /**
-     * Compare with NIS update operation: {@see OpUpdateImpl#invokeNISGroupUpdate(SolarisEntry)}
-     */
-    private void invokeNativeGroupUpdate(SolarisEntry groupEntry) {
-        UpdateNativeGroup.updateGroup(groupEntry, connection);
-    }
-
-    /**
      * Compare with Native update operation: {@see OpUpdateImpl#invokeNativeGroupUpdate(SolarisEntry)}
      */
     private void invokeNISGroupUpdate(SolarisEntry groupEntry) {
         if (connection.isDefaultNisPwdDir()) {
-            invokeNativeGroupUpdate(groupEntry);
+            UpdateNativeGroup.updateGroup(groupEntry, connection);
             
             connection.doSudoStart();
             try {
@@ -168,7 +161,7 @@ public class SolarisUpdate extends AbstractOp {
     private void invokeNISUserUpdate(final SolarisEntry userEntry,
             final GuardedString passwd) {
         if (connection.isDefaultNisPwdDir()) {
-            invokeNativeUserUpdate(userEntry, passwd);
+            UpdateNativeUser.updateUser(userEntry, passwd, connection);
             
             connection.doSudoStart();
             try {
@@ -180,12 +173,5 @@ public class SolarisUpdate extends AbstractOp {
         } else {
             UpdateNISUser.updateUser(userEntry, passwd, connection);
         }
-    }
-    
-    /** 
-     * Compare with other NIS implementation: {@see OpUpdateImpl#invokeNISUserUpdate(SolarisEntry, GuardedString)} 
-     */
-    private void invokeNativeUserUpdate(final SolarisEntry userEntry, final GuardedString passwd) {
-        UpdateNativeUser.updateUser(userEntry, passwd, connection);
     }
 }

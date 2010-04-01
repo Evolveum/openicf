@@ -91,7 +91,7 @@ public class SolarisCreate extends AbstractOp {
                 }
                 invokeNISUserCreate(entry, password);
             } else {
-                invokeNativeUserCreate(entry, password);
+                CreateNativeUser.createUser(entry, password, connection);
             }
         } else if (oclass.is(ObjectClass.GROUP_NAME)) {
             if (connection.isNis()) {
@@ -101,7 +101,7 @@ public class SolarisCreate extends AbstractOp {
                 }
                 invokeNISGroupCreate(entry);
             } else {
-                invokeNativeGroupCreate(entry);
+                CreateNativeGroup.create(entry, connection);
             }
         } else {
             throw new UnsupportedOperationException();
@@ -116,20 +116,12 @@ public class SolarisCreate extends AbstractOp {
      */
     private void invokeNISGroupCreate(final SolarisEntry group) {
         if (connection.isDefaultNisPwdDir()) {
-            invokeNativeGroupCreate(group);
+            CreateNativeGroup.create(group, connection);
 
             AbstractNISOp.addNISMake("group", connection);
         } else {
             CreateNISGroup.create(group, connection);
         }
-    }
-
-    /**
-     * Compare with other NIS implementation counterpart:
-     * {@link SolarisCreate#invokeNISGroupCreate(SolarisEntry)}
-     */
-    private void invokeNativeGroupCreate(final SolarisEntry group) {
-        CreateNativeGroup.create(group, connection);
     }
 
     /**
@@ -139,7 +131,7 @@ public class SolarisCreate extends AbstractOp {
     private void invokeNISUserCreate(SolarisEntry entry, GuardedString password) {
         
         if (connection.isDefaultNisPwdDir()) {
-            invokeNativeUserCreate(entry, password);
+            CreateNativeUser.createUser(entry, password, connection);
             
             // The user has to be added to the NIS database
             connection.doSudoStart();
@@ -151,14 +143,5 @@ public class SolarisCreate extends AbstractOp {
         } else {
             CreateNISUser.performNIS(entry, password, connection);
         }
-    }
-    
-
-    /**
-     * Compare with other NIS implementation counterpart: 
-     * {@see OpCreateImpl#invokeNISUserCreate(SolarisEntry, GuardedString)}
-     */
-    private void invokeNativeUserCreate(SolarisEntry entry, GuardedString password) {
-        CreateNativeUser.createUser(entry, password, connection);
     }
 }
