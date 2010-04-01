@@ -219,8 +219,8 @@ public class UpdateNISUser extends AbstractNISOp {
             GuardedString password, SolarisConnection connection) {
         final String passwdCmd = connection.buildCommand("yppasswd", account);
         connection.executeCommand(passwdCmd, Collections.<String>emptySet(), CollectionUtil.newSet(" password:"));
-        SolarisConnection.sendPassword(password, Collections.<String>emptySet(), CollectionUtil.newSet("new password:"), connection);
-        SolarisConnection.sendPassword(password, CollectionUtil.newSet(" denied"), Collections.<String>emptySet(), connection);
+        connection.sendPassword(password, Collections.<String>emptySet(), CollectionUtil.newSet("new password:"));
+        connection.sendPassword(password, CollectionUtil.newSet(" denied"), Collections.<String>emptySet());
     }
 
     private static void addNISShellUpdate(String account, String shell,

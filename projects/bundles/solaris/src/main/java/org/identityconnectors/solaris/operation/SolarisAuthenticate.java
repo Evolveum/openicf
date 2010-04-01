@@ -81,7 +81,7 @@ public class SolarisAuthenticate extends AbstractOp {
         final String command = "exec login " + username + " TERM=vt00";
         
         connection.executeCommand(command, Collections.<String>emptySet(), CollectionUtil.newSet("assword:"));
-        SolarisConnection.sendPassword(password, connection);
+        connection.sendPassword(password);
         connection.executeCommand("echo '" + MSG + "'", rejectsMap, CollectionUtil.newSet(MSG));
         log.info("authenticate successful for user: '{0}'", username);
         

@@ -339,8 +339,8 @@ public class CreateNISUser extends AbstractNISOp {
         try {
             connection.executeCommand(passwdCmd, Collections.<String>emptySet(), CollectionUtil.newSet("password:"));
 
-            SolarisConnection.sendPassword(password, Collections.<String>emptySet(), CollectionUtil.newSet("new password:"), connection);
-            SolarisConnection.sendPassword(password, CollectionUtil.newSet(" denied"), Collections.<String>emptySet(), connection);
+            connection.sendPassword(password, Collections.<String>emptySet(), CollectionUtil.newSet("new password:"));
+            connection.sendPassword(password, CollectionUtil.newSet(" denied"), Collections.<String>emptySet());
         } catch (Exception ex) {
             throw ConnectorException.wrap(ex);
         }

@@ -170,7 +170,7 @@ public class SolarisConnectionTest extends SolarisTestBase {
         // we shouldn't be able to send some special characters with the password!
         String exploit = "nonSensePassWord \n echo 'Popeye'";
         try {
-            SolarisConnection.sendPassword(new GuardedString(exploit.toCharArray()), getConnection());
+            getConnection().sendPassword(new GuardedString(exploit.toCharArray()));
             Assert.fail("no exception thrown  upon sending a password exploit.");
         } catch (IllegalArgumentException ex) {
             // OK

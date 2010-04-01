@@ -56,9 +56,9 @@ class PasswdCommand extends CommandSwitches {
             String command = conn.buildCommand("passwd -r files", entry.getName());
             conn.executeCommand(command, passwdRejects, CollectionUtil.newSet(NEW_PASSWORD_MATCH));
 
-            SolarisConnection.sendPassword(password, Collections.<String>emptySet(), CollectionUtil.newSet(NEW_PASSWORD_MATCH), conn);
+            conn.sendPassword(password, Collections.<String>emptySet(), CollectionUtil.newSet(NEW_PASSWORD_MATCH));
 
-            SolarisConnection.sendPassword(password, Collections.<String>emptySet(), Collections.<String>emptySet(), conn);
+            conn.sendPassword(password, Collections.<String>emptySet(), Collections.<String>emptySet());
         } catch (Exception ex) {
             throw ConnectorException.wrap(ex);
         }

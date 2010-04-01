@@ -158,7 +158,7 @@ public class SolarisConnection {
                  */
                 executeCommand(null, Collections.<String>emptySet(), CollectionUtil.newSet("login")/* wait for login prompt */);
                 executeCommand(loginUser.trim(), Collections.<String>emptySet(), CollectionUtil.newSet("assword"));
-                sendPassword(password, this);
+                sendPassword(password);
             }
             
             waitForRootShellPrompt(CollectionUtil.newSet("incorrect"));
@@ -178,7 +178,7 @@ public class SolarisConnection {
                 loginShellPrompt = rootShellPrompt;
                 
                 final GuardedString rootPassword = configuration.getCredentials();
-                sendPassword(rootPassword, CollectionUtil.newSet("Sorry", "incorrect password"), Collections.<String>emptySet() /* wait for rootShellPrompt */, this);
+                sendPassword(rootPassword, CollectionUtil.newSet("Sorry", "incorrect password"), Collections.<String>emptySet() /* wait for rootShellPrompt */);
                 executeCommand("stty -echo");
             }
             
@@ -341,22 +341,16 @@ public class SolarisConnection {
      * Note on usage of params 'rejects', 'accepts': If none of the parameters are given, we wait for RootShellPrompt
      * Note: compare with {@link SolarisUtil#sendPassword(GuardedString, SolarisConnection)}
      */
-    public static String sendPassword(GuardedString passwd, Set<String> rejects, Set<String> accepts, final SolarisConnection conn) {
-        sendPasswdImpl(passwd, conn);
+    public String sendPassword(GuardedString passwd, Set<String> rejects, Set<String> accepts) {
+        sendPassword(passwd);
         
-        return conn.executeCommand(null/* no command is executed here */, rejects, accepts);
+        return executeCommand(null/* no command is executed here */, rejects, accepts);
     }
     
     /** 
      * just send a password but don't anticipate any response from the resource.
-     * Compare with {@link SolarisUtil#sendPassword(GuardedString, Set, Set, SolarisConnection)}
      */
-    public static void sendPassword(GuardedString passwd, SolarisConnection conn) {
-        sendPasswdImpl(passwd, conn);
-    }
-
-    private static void sendPasswdImpl(GuardedString passwd,
-            final SolarisConnection conn) {
+    public void sendPassword(GuardedString passwd) {
         passwd.access(new GuardedString.Accessor() {
             public void access(char[] clearChars) {
                 try {
@@ -366,7 +360,7 @@ public class SolarisConnection {
                         }
                     }
                     
-                    conn.sendInternal(new String(clearChars), false);
+                    sendInternal(new String(clearChars), false);
                 } catch (IOException e) {
                     throw ConnectorException.wrap(e);
                 }
@@ -1096,7 +1090,7 @@ public class SolarisConnection {
                 executeCommand(SUDO_START_COMMAND, Collections.<String>emptySet(), CollectionUtil.newSet("assword:")); 
 
                 GuardedString passwd = config.getCredentials();
-                sendPassword(passwd, CollectionUtil.newSet("may not run", "not allowed to execute"), Collections.<String>emptySet(), this);
+                sendPassword(passwd, CollectionUtil.newSet("may not run", "not allowed to execute"), Collections.<String>emptySet());
             } catch (Exception e) {
                 throw ConnectorException.wrap(e);
             }

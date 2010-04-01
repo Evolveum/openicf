@@ -352,7 +352,7 @@ public class SolarisConnectorTest extends SolarisTestBase {
         for (Character controlCharacter : controlChars) {
             try {
                 String passwd = new StringBuilder().append("foo").append(controlCharacter).append("bar").toString();
-                SolarisConnection.sendPassword(new GuardedString(passwd.toCharArray()), getConnection());
+                getConnection().sendPassword(new GuardedString(passwd.toCharArray()));
                 Assert.fail("Exception should be thrown when attempt to send control chars within the password");
             } catch (RuntimeException ex) {
                 // OK
